@@ -3,43 +3,6 @@
   "balance": 1,
   "tasks": [],
   "shop": [],
-  "history": [
-    {
-      "id": 1769969328009,
-      "type": "earn",
-      "amount": 1,
-      "description": "12123123123",
-      "date": "2026-02-01T18:08:48.009Z",
-      "taskId": 1769966857302
-    },
-    {
-      "id": 1769966891483,
-      "type": "spend",
-      "amount": 1,
-      "description": "tetet",
-      "date": "2026-02-01T17:28:11.483Z"
-    },
-    {
-      "id": 1769966888090,
-      "type": "spend",
-      "amount": 1,
-      "description": "tetet",
-      "date": "2026-02-01T17:28:08.090Z"
-    },
-    {
-      "id": 1769966881830,
-      "type": "earn",
-      "amount": 1,
-      "description": "12123123123",
-      "date": "2026-02-01T17:28:01.830Z"
-    },
-    {
-      "id": 1769966880210,
-      "type": "earn",
-      "amount": 1,
-      "description": "12123123123",
-      "date": "2026-02-01T17:28:00.210Z"
-    }
-  ],
+  "history": [],
   "requests": []
 }

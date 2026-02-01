@@ -322,9 +322,28 @@ function renderHistory() {
                 <div class="history-item__amount">
                     ${isEarn ? '+' : '-'}${entry.amount} 🪙
                 </div>
+                    <div class="card__actions" style="margin-left: 10px;">
+                         <button class="btn btn--danger btn--small" onclick="deleteHistoryItem(${entry.id})">🗑️</button>
+                    </div>
             </div>
         `;
     }).join('');
+}
+
+function deleteHistoryItem(id) {
+    if (!confirm('Удалить эту запись из истории?')) return;
+    history = history.filter(h => h.id !== id);
+    scheduleSave();
+    renderAll();
+    showToast('Запись удалена', 'info');
+}
+
+function clearHistory() {
+    if (!confirm('Очистить ВСЮ историю? Это нельзя отменить.')) return;
+    history = [];
+    scheduleSave();
+    renderAll();
+    showToast('История очищена', 'info');
 }
 
 function renderAll() {
@@ -978,7 +997,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('import-tasks-btn').addEventListener('click', () => openImportModal('tasks'));
     document.getElementById('import-shop-btn').addEventListener('click', () => openImportModal('shop'));
     document.getElementById('import-submit').addEventListener('click', processImport);
+    document.getElementById('import-submit').addEventListener('click', processImport);
     document.getElementById('import-cancel').addEventListener('click', () => closeModal('import-modal'));
+
+    // History
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', clearHistory);
+    }
 });
 
 // ===== Import Functions =====
