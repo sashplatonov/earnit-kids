@@ -1,0 +1,135 @@
+<!-- Модальное окно: PIN -->
+<div class="modal" id="pin-modal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <h3>🔐 Вход администратора</h3>
+        <p>Введите PIN-код:</p>
+        <input type="password" class="input" id="pin-input" maxlength="6" placeholder="••••">
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="pin-cancel">Отмена</button>
+            <button class="btn btn--primary" id="pin-submit">Войти</button>
+        </div>
+        <p class="hint" id="pin-hint">Первый вход? PIN будет сохранён.</p>
+    </div>
+</div>
+
+<!-- Модальное окно: Редактирование задания -->
+<div class="modal" id="task-modal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <h3 id="task-modal-title">Добавить задание</h3>
+        <div class="form-group">
+            <label for="task-name">Название</label>
+            <input type="text" class="input" id="task-name" placeholder="Помыть посуду">
+        </div>
+        <div class="form-group">
+            <label for="task-coins">Монеты</label>
+            <input type="number" class="input" id="task-coins" placeholder="10" min="1">
+        </div>
+        <div class="form-group">
+            <label for="task-comment">Комментарий</label>
+            <textarea class="input textarea" id="task-comment" placeholder="Дополнительная информация..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="task-freq-limit">Частота (раз в период)</label>
+            <div class="input-group">
+                <input type="number" class="input" id="task-freq-limit" placeholder="Без лимита" min="0">
+                <select class="input" id="task-freq-period">
+                    <option value="day">в день</option>
+                    <option value="week">в неделю</option>
+                    <option value="month">в месяц</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="task-cancel">Отмена</button>
+            <button class="btn btn--danger hidden" id="task-delete">Удалить</button>
+            <button class="btn btn--primary" id="task-save">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно: Редактирование товара -->
+<div class="modal" id="shop-modal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <h3 id="shop-modal-title">Добавить товар</h3>
+        <div class="form-group">
+            <label for="shop-name">Название</label>
+            <input type="text" class="input" id="shop-name" placeholder="Час игры на планшете">
+        </div>
+        <div class="form-group">
+            <label for="shop-price">Цена (монеты)</label>
+            <input type="number" class="input" id="shop-price" placeholder="50" min="1">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="shop-rsd">Лимит RSD</label>
+                <input type="number" class="input" id="shop-rsd" placeholder="1500" min="0">
+            </div>
+            <div class="form-group">
+                <label for="shop-type">Тип</label>
+                <select class="input" id="shop-type">
+                    <option value="micro">🧁 Микро</option>
+                    <option value="small">📚 Малая</option>
+                    <option value="large">💅 Крупная (1/мес)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="shop-freq-limit">Частота (раз в период)</label>
+            <div class="input-group">
+                <input type="number" class="input" id="shop-freq-limit" placeholder="1" min="1" value="1">
+                <select class="input" id="shop-freq-period">
+                    <option value="day">в день</option>
+                    <option value="week">в неделю</option>
+                    <option value="month">в месяц</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="shop-comment">Комментарий</label>
+            <textarea class="input textarea" id="shop-comment" placeholder="Дополнительная информация..."></textarea>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="shop-cancel">Отмена</button>
+            <button class="btn btn--danger hidden" id="shop-delete">Удалить</button>
+            <button class="btn btn--primary" id="shop-save">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно: Подтверждение действия -->
+<div class="modal" id="confirm-modal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <h3 id="confirm-title">Подтвердите действие</h3>
+        <p id="confirm-message">Вы уверены?</p>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="confirm-cancel">Отмена</button>
+            <button class="btn btn--primary" id="confirm-ok">Подтвердить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно: Быстрый импорт -->
+<div class="modal" id="import-modal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content modal__content--wide">
+        <h3 id="import-modal-title">📋 Быстрый импорт</h3>
+        <p class="hint">Формат: название | монеты | комментарий (по одному на строку)</p>
+        <div class="form-group">
+            <textarea class="input textarea textarea--large" id="import-text" placeholder="Помыть посуду | 5 | Хорошо вымыть
+Убрать комнату | 10
+Сделать уроки | 15 | Все предметы"></textarea>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="import-cancel">Отмена</button>
+            <button class="btn btn--primary" id="import-submit">Импортировать</button>
+        </div>
+    </div>
+</div>

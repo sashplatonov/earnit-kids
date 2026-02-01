@@ -1,0 +1,22 @@
+<!-- Секция заявок -->
+<section class="section hidden" id="requests-section">
+    <!-- Секция для админа: Входящие заявки -->
+    <div class="admin-only hidden">
+        <h2>📬 Входящие заявки</h2>
+        <div class="history-list" id="incoming-requests-list"></div>
+        <div class="empty-state" id="incoming-requests-empty">
+            <span class="empty-state__icon">📭</span>
+            <p>Нет новых заявок</p>
+        </div>
+    </div>
+
+    <!-- Секция для всех: Мои активные заявки -->
+    <div style="margin-top: 2rem;">
+        <h2>⏳ Мои отправленные заявки</h2>
+        <div class="history-list" id="my-requests-list"></div>
+        <div class="empty-state" id="my-requests-empty">
+            <span class="empty-state__icon">📨</span>
+            <p>Нет активных заявок</p>
+        </div>
+    </div>
+</section>

@@ -115,8 +115,8 @@ function checkLimits(item, rsdPrice) {
     const stats = getMonthlyStats(currentMonth);
 
     // 1. Check budget limit
-    if (stats.rsdSpent + rsdPrice > 10000) {
-        return `Превышен месячный лимит (осталось ${10000 - stats.rsdSpent} RSD)`;
+    if (stats.rsdSpent + rsdPrice > CONFIG.MONTHLY_LIMIT) {
+        return `Превышен месячный лимит (осталось ${CONFIG.MONTHLY_LIMIT - stats.rsdSpent} ${CONFIG.RSD_SYMBOL})`;
     }
 
     // 2. Check large purchase limit
@@ -161,7 +161,7 @@ function updateBalance() {
     if (document.getElementById('rsd-spent')) {
         document.getElementById('rsd-spent').textContent = stats.rsdSpent.toLocaleString();
 
-        const progress = Math.min((stats.rsdSpent / 10000) * 100, 100);
+        const progress = Math.min((stats.rsdSpent / CONFIG.MONTHLY_LIMIT) * 100, 100);
         const bar = document.getElementById('rsd-progress');
         bar.style.width = `${progress}%`;
         bar.className = 'progress-bar';
@@ -198,8 +198,7 @@ function renderTasks() {
     container.innerHTML = tasks.slice().reverse().map(task => {
         let tags = [];
         if (task.frequency) {
-            const periods = { 'day': 'день', 'week': 'неделю', 'month': 'месяц' };
-            tags.push(`<span class="tag">${task.frequency.limit}/${periods[task.frequency.period] || 'пер'}</span>`);
+            tags.push(`<span class="tag">${task.frequency.limit}/${CONFIG.PERIODS[task.frequency.period].display || 'пер'}</span>`);
         }
 
         return `
@@ -250,15 +249,14 @@ function renderShop() {
         // Format tags
         let tags = [];
         if (item.type) {
-            const types = { 'micro': '🧁 Микро', 'small': '📚 Малая', 'large': '💅 Крупная' };
-            tags.push(`<span class="tag tag--${item.type}">${types[item.type] || item.type}</span>`);
+            const label = CONFIG.SHOP_ITEM_TYPES[item.type] ? CONFIG.SHOP_ITEM_TYPES[item.type].label : item.type;
+            tags.push(`<span class="tag tag--${item.type}">${label}</span>`);
         }
         if (item.rsdLimit) {
-            tags.push(`<span class="tag tag--rsd">до ${item.rsdLimit} RSD</span>`);
+            tags.push(`<span class="tag tag--rsd">до ${item.rsdLimit} ${CONFIG.RSD_SYMBOL}</span>`);
         }
         if (item.frequency) {
-            const periods = { 'day': 'день', 'week': 'неделю', 'month': 'месяц' };
-            tags.push(`<span class="tag">${item.frequency.limit}/${periods[item.frequency.period] || 'пер'}</span>`);
+            tags.push(`<span class="tag">${item.frequency.limit}/${CONFIG.PERIODS[item.frequency.period].display || 'пер'}</span>`);
         }
 
         return `
@@ -805,7 +803,7 @@ function buyItem(itemId) {
     }
 
     // Ask for actual RSD price
-    const rsdInput = prompt(`Покупка "${item.name}"\nВведите стоимость в RSD (макс ${item.rsdLimit || 10000}):`, '0');
+    const rsdInput = prompt(`Покупка "${item.name}"\nВведите стоимость в ${CONFIG.RSD_SYMBOL} (макс ${item.rsdLimit || CONFIG.MONTHLY_LIMIT}):`, '0');
     if (rsdInput === null) return; // Cancelled
 
     const rsdPrice = parseInt(rsdInput);
@@ -828,7 +826,7 @@ function buyItem(itemId) {
 
     showConfirm(
         'Подтвердите покупку',
-        `Купить "${item.name}" за ${item.price} 🪙 и ${rsdPrice} RSD?`,
+        `Купить "${item.name}" за ${item.price} 🪙 и ${rsdPrice} ${CONFIG.RSD_SYMBOL}?`,
         () => {
             balance -= item.price; // Coins spent logic
             // Note: RSD are just tracked, not subtracted from a balance (budget is a limit)
@@ -880,9 +878,9 @@ function handleConfirm() {
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const icons = {
-        success: '✓',
-        error: '✕',
-        info: 'ℹ'
+        success: CONFIG.ICONS.SUCCESS,
+        error: CONFIG.ICONS.ERROR,
+        info: CONFIG.ICONS.INFO
     };
 
     const toast = document.createElement('div');
@@ -897,7 +895,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, CONFIG.TOAST_DURATION);
 }
 
 // ===== Tab Navigation =====

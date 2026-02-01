@@ -52,7 +52,13 @@ function saveData(data) {
 
 // Serve static file
 function serveStatic(req, res) {
-    let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+    // Check if searching for root
+    if (req.url === '/' || req.url === '/index.html') {
+        serveIndex(res);
+        return;
+    }
+
+    let filePath = path.join(__dirname, req.url);
     const ext = path.extname(filePath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
@@ -70,6 +76,44 @@ function serveStatic(req, res) {
             res.end(content);
         }
     });
+}
+
+// Serve composed index.html
+function serveIndex(res) {
+    const componentOrder = [
+        'head.html',
+        'header.html',
+        'nav.html',
+        'main_start.html',
+        'section_tasks.html',
+        'section_requests.html',
+        'section_shop.html',
+        'section_history.html',
+        'section_rules.html',
+        'main_end.html',
+        'modals.html',
+        'scripts.html'
+    ];
+
+    const componentsDir = path.join(__dirname, 'views', 'components');
+    let fullHtml = '';
+    let hasError = false;
+
+    // Synchronous reading for simplicity in this dev server
+    // (Async is better for prod, but this ensures order easily for this small task)
+    try {
+        componentOrder.forEach(file => {
+            const content = fs.readFileSync(path.join(componentsDir, file), 'utf8');
+            fullHtml += content + '\n';
+        });
+
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(fullHtml);
+    } catch (err) {
+        console.error('Error assembling index:', err.message);
+        res.writeHead(500);
+        res.end('Server Error: Could not assemble index.html');
+    }
 }
 
 // Parse JSON body

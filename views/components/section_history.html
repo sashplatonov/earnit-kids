@@ -1,0 +1,33 @@
+<!-- Секция истории -->
+<section class="section hidden" id="history-section">
+    <h2>История операций</h2>
+
+    <!-- Статистика бюджета -->
+    <div class="budget-stats" id="budget-stats">
+        <div class="stat-card">
+            <div class="stat-card__icon">💵</div>
+            <div class="stat-card__content">
+                <div class="stat-card__value"><span id="rsd-spent">0</span> / 10,000 RSD</div>
+                <div class="stat-card__label">Потрачено в этом месяце</div>
+            </div>
+            <div class="stat-card__progress">
+                <div class="progress-bar" id="rsd-progress"></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__icon" id="large-icon">⬜</div>
+            <div class="stat-card__content">
+                <div class="stat-card__value" id="large-purchase">Нет</div>
+                <div class="stat-card__label">Крупная покупка месяца</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-list" id="history-list">
+        <!-- Записи истории -->
+    </div>
+    <div class="empty-state" id="history-empty">
+        <span class="empty-state__icon">📊</span>
+        <p>История пока пуста</p>
+    </div>
+</section>
