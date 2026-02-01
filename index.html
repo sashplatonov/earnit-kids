@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <header class="header">
         <div class="header__logo">
@@ -38,9 +40,10 @@
         <section class="section" id="tasks-section">
             <div class="section__header">
                 <h2>За что можно заработать</h2>
-                <button class="btn btn--add admin-only hidden" id="add-task-btn">
-                    <span>+ Добавить задание</span>
-                </button>
+                <div class="section__buttons admin-only hidden">
+                    <button class="btn btn--add" id="add-task-btn">+ Добавить</button>
+                    <button class="btn btn--secondary" id="import-tasks-btn">📋 Быстрый импорт</button>
+                </div>
             </div>
             <div class="cards" id="tasks-list">
                 <!-- Карточки заданий -->
@@ -55,9 +58,10 @@
         <section class="section hidden" id="shop-section">
             <div class="section__header">
                 <h2>Магазин наград</h2>
-                <button class="btn btn--add admin-only hidden" id="add-shop-btn">
-                    <span>+ Добавить товар</span>
-                </button>
+                <div class="section__buttons admin-only hidden">
+                    <button class="btn btn--add" id="add-shop-btn">+ Добавить</button>
+                    <button class="btn btn--secondary" id="import-shop-btn">📋 Быстрый импорт</button>
+                </div>
             </div>
             <div class="cards" id="shop-list">
                 <!-- Карточки товаров -->
@@ -111,7 +115,8 @@
             </div>
             <div class="form-group">
                 <label for="task-comment">Комментарий</label>
-                <textarea class="input textarea" id="task-comment" placeholder="Дополнительная информация..."></textarea>
+                <textarea class="input textarea" id="task-comment"
+                    placeholder="Дополнительная информация..."></textarea>
             </div>
             <div class="modal__actions">
                 <button class="btn btn--secondary" id="task-cancel">Отмена</button>
@@ -136,7 +141,8 @@
             </div>
             <div class="form-group">
                 <label for="shop-comment">Комментарий</label>
-                <textarea class="input textarea" id="shop-comment" placeholder="Дополнительная информация..."></textarea>
+                <textarea class="input textarea" id="shop-comment"
+                    placeholder="Дополнительная информация..."></textarea>
             </div>
             <div class="modal__actions">
                 <button class="btn btn--secondary" id="shop-cancel">Отмена</button>
@@ -159,9 +165,28 @@
         </div>
     </div>
 
+    <!-- Модальное окно: Быстрый импорт -->
+    <div class="modal" id="import-modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content modal__content--wide">
+            <h3 id="import-modal-title">📋 Быстрый импорт</h3>
+            <p class="hint">Формат: название | монеты | комментарий (по одному на строку)</p>
+            <div class="form-group">
+                <textarea class="input textarea textarea--large" id="import-text" placeholder="Помыть посуду | 5 | Хорошо вымыть
+Убрать комнату | 10
+Сделать уроки | 15 | Все предметы"></textarea>
+            </div>
+            <div class="modal__actions">
+                <button class="btn btn--secondary" id="import-cancel">Отмена</button>
+                <button class="btn btn--primary" id="import-submit">Импортировать</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast уведомления -->
     <div class="toast-container" id="toast-container"></div>
 
     <script src="app.js"></script>
 </body>
+
 </html>

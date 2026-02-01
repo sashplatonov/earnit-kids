@@ -11,6 +11,7 @@ let adminPin = null;
 let editingTaskId = null;
 let editingShopId = null;
 let confirmCallback = null;
+let importType = null; // 'tasks' | 'shop'
 
 // ===== API Functions =====
 async function loadDataFromServer() {
@@ -576,4 +577,81 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+    // Import modals
+    document.getElementById('import-tasks-btn').addEventListener('click', () => openImportModal('tasks'));
+    document.getElementById('import-shop-btn').addEventListener('click', () => openImportModal('shop'));
+    document.getElementById('import-submit').addEventListener('click', processImport);
+    document.getElementById('import-cancel').addEventListener('click', () => closeModal('import-modal'));
 });
+
+// ===== Import Functions =====
+function openImportModal(type) {
+    importType = type;
+    const title = document.getElementById('import-modal-title');
+    const textarea = document.getElementById('import-text');
+
+    if (type === 'tasks') {
+        title.textContent = '📋 Быстрый импорт заданий';
+        textarea.placeholder = 'Помыть посуду | 5 | Хорошо вымыть\nУбрать комнату | 10\nСделать уроки | 15 | Все предметы';
+    } else {
+        title.textContent = '🛒 Быстрый импорт товаров';
+        textarea.placeholder = 'Час игры | 20\nМороженое | 15 | Любое на выбор\nПоход в кино | 50';
+    }
+
+    textarea.value = '';
+    openModal('import-modal');
+    textarea.focus();
+}
+
+function processImport() {
+    const text = document.getElementById('import-text').value.trim();
+    if (!text) {
+        showToast('Введите данные для импорта', 'error');
+        return;
+    }
+
+    const lines = text.split('\n').filter(line => line.trim());
+    let count = 0;
+
+    for (const line of lines) {
+        const parts = line.split('|').map(p => p.trim());
+        if (parts.length < 2) continue;
+
+        const name = parts[0];
+        const value = parseInt(parts[1]);
+        const comment = parts[2] || '';
+
+        if (!name || !value || value < 1) continue;
+
+        if (importType === 'tasks') {
+            tasks.push({
+                id: Date.now() + count,
+                name,
+                coins: value,
+                comment
+            });
+        } else {
+            shopItems.push({
+                id: Date.now() + count,
+                name,
+                price: value,
+                comment
+            });
+        }
+        count++;
+    }
+
+    if (count > 0) {
+        scheduleSave();
+        if (importType === 'tasks') {
+            renderTasks();
+        } else {
+            renderShop();
+        }
+        closeModal('import-modal');
+        showToast(`Импортировано: ${count} ${importType === 'tasks' ? 'заданий' : 'товаров'}`, 'success');
+    } else {
+        showToast('Не удалось распознать данные', 'error');
+    }
+}
