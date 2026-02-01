@@ -1,0 +1,27 @@
+🪙 Coin Shop Server running at http://localhost:3000
+   Data file: /Users/sash/Documents/Dev/projects/coins-kids-shop-web/data.json
+2026-02-01T18:36:15.489Z GET /api/data
+2026-02-01T18:36:15.502Z POST /api/login
+2026-02-01T18:36:15.515Z POST /api/login
+2026-02-01T18:36:15.528Z POST /api/login
+2026-02-01T18:36:15.544Z POST /api/login
+2026-02-01T18:36:15.560Z POST /api/login
+2026-02-01T18:36:15.572Z POST /api/login
+2026-02-01T18:36:15.584Z POST /api/login
+2026-02-01T18:36:24.101Z GET /
+2026-02-01T18:36:24.124Z GET /style.css
+2026-02-01T18:36:24.128Z GET /js/config.js
+2026-02-01T18:36:24.128Z GET /js/app.js
+2026-02-01T18:36:24.170Z GET /api/data
+2026-02-01T18:36:37.856Z GET /
+2026-02-01T18:36:37.874Z GET /style.css
+2026-02-01T18:36:37.874Z GET /js/config.js
+2026-02-01T18:36:37.874Z GET /js/app.js
+2026-02-01T18:36:37.921Z GET /api/data
+2026-02-01T18:38:08.839Z GET /
+2026-02-01T18:38:08.866Z GET /style.css
+2026-02-01T18:38:08.867Z GET /js/config.js
+2026-02-01T18:38:08.867Z GET /js/app.js
+2026-02-01T18:38:08.910Z GET /api/data
+2026-02-01T18:38:14.824Z POST /api/login
+2026-02-01T18:38:23.502Z POST /api/login

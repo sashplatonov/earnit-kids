@@ -20,12 +20,15 @@ async function loadDataFromServer() {
         const response = await fetch(API_URL);
         if (response.ok) {
             const data = await response.json();
-            adminPin = data.pin;
+            // adminPin = data.pin; // OLD: Insecure
+            // Store whether PIN is set (helper for UI)
+            window.isPinSet = data.isPinSet;
+
             balance = data.balance || 0;
             tasks = data.tasks || [];
             shopItems = data.shop || [];
             history = data.history || [];
-            requests = data.requests || []; // Load requests
+            requests = data.requests || [];
             return true;
         }
     } catch (err) {
@@ -37,18 +40,31 @@ async function loadDataFromServer() {
 async function saveDataToServer() {
     try {
         const data = {
-            pin: adminPin,
+            // pin: adminPin, // Don't send PIN usually
             balance: balance,
             tasks: tasks,
             shop: shopItems,
             history: history,
-            requests: requests // Save requests
+            requests: requests
         };
+
+        // If we want to CHANGE the PIN, we need to add it here.
+        // For now, we only change it during initial setup in checkPin.
+        // If adminPin is set in memory (during setup), send it.
+        if (typeof adminPin !== 'undefined' && adminPin !== null) {
+            data.pin = adminPin;
+        }
+
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
+
+        // After save, clear adminPin from memory to be safe? 
+        // Or keep it if we want to allow "Change PIN" feature later.
+        // For now, let's keep it simple.
+
         return response.ok;
     } catch (err) {
         console.error('Failed to save to server:', err);
@@ -322,9 +338,9 @@ function renderHistory() {
                 <div class="history-item__amount">
                     ${isEarn ? '+' : '-'}${entry.amount} 🪙
                 </div>
-                    <div class="card__actions" style="margin-left: 10px;">
-                         <button class="btn btn--danger btn--small" onclick="deleteHistoryItem(${entry.id})">🗑️</button>
-                    </div>
+                <div class="card__actions" style="margin-left: 10px;">
+                     <button class="btn btn--danger btn--small" onclick="deleteHistoryItem(${entry.id})">🗑️</button>
+                </div>
             </div>
         `;
     }).join('');
@@ -367,37 +383,64 @@ function toggleAdminMode() {
         document.getElementById('pin-input').value = '';
         document.getElementById('pin-input').focus();
 
-        // Показываем подсказку только если PIN ещё не установлен
-        document.getElementById('pin-hint').classList.toggle('hidden', !!adminPin);
+        // Показываем подсказку если PIN ещё не установлен
+        const hint = document.getElementById('pin-hint');
+        if (window.isPinSet) {
+            hint.classList.add('hidden');
+            document.getElementById('pin-modal-title').textContent = 'Введите PIN';
+        } else {
+            hint.classList.remove('hidden');
+            hint.textContent = 'Придумайте PIN-код для входа';
+            document.getElementById('pin-modal-title').textContent = 'Создание PIN';
+        }
     }
 }
 
-function checkPin() {
+async function checkPin() {
     const input = document.getElementById('pin-input').value;
     if (!input || input.length < 4) {
         showToast('PIN должен быть минимум 4 символа', 'error');
         return;
     }
 
-    if (!adminPin) {
-        // Первый вход - сохраняем PIN
-        adminPin = input;
-        scheduleSave();
+    if (!window.isPinSet) {
+        // Setup new PIN
+        adminPin = input; // Temporarily store to save
+        await saveDataToServer();
+        adminPin = null; // Clear from memory
+        window.isPinSet = true;
+
         isAdmin = true;
         closeModal('pin-modal');
         updateAdminUI();
         showToast('PIN сохранён! Вы вошли как администратор', 'success');
-    } else if (adminPin === input) {
-        // Правильный PIN
-        isAdmin = true;
-        closeModal('pin-modal');
-        updateAdminUI();
-        showToast('Добро пожаловать, администратор!', 'success');
-    } else {
-        // Неправильный PIN
-        showToast('Неверный PIN-код', 'error');
-        document.getElementById('pin-input').value = '';
-        document.getElementById('pin-input').focus();
+        return;
+    }
+
+    // Server-side validation
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: input })
+        });
+
+        if (res.ok) {
+            isAdmin = true;
+            closeModal('pin-modal');
+            updateAdminUI();
+            showToast('Добро пожаловать, администратор!', 'success');
+        } else if (res.status === 429) {
+            const data = await res.json();
+            showToast(data.error || 'Слишком много попыток', 'error');
+        } else {
+            showToast('Неверный PIN-код', 'error');
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-input').focus();
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Ошибка сети', 'error');
     }
 }
 
