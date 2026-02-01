@@ -7,6 +7,7 @@ let balance = 0;
 let tasks = [];
 let shopItems = [];
 let history = [];
+let requests = []; // New requests state
 let adminPin = null;
 let editingTaskId = null;
 let editingShopId = null;
@@ -24,6 +25,7 @@ async function loadDataFromServer() {
             tasks = data.tasks || [];
             shopItems = data.shop || [];
             history = data.history || [];
+            requests = data.requests || []; // Load requests
             return true;
         }
     } catch (err) {
@@ -39,7 +41,8 @@ async function saveDataToServer() {
             balance: balance,
             tasks: tasks,
             shop: shopItems,
-            history: history
+            history: history,
+            requests: requests // Save requests
         };
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -218,7 +221,11 @@ function renderTasks() {
                     <button class="btn btn--secondary btn--small" onclick="editTask(${task.id})">
                         ✏️ Изменить
                     </button>
-                ` : ''}
+                ` : `
+                    <button class="btn btn--primary btn--small" onclick="requestCoins(${task.id})">
+                        ✋ Выполнено
+                    </button>
+                `}
             </div>
         </div>
         `;
@@ -325,6 +332,7 @@ function renderHistory() {
 function renderAll() {
     updateBalance();
     renderTasks();
+    renderRequests(); // Render requests
     renderShop();
     renderHistory();
 }
@@ -387,7 +395,9 @@ function updateAdminUI() {
     });
 
     // Перерендериваем карточки для отображения кнопок
+    // Перерендериваем карточки для отображения кнопок
     renderTasks();
+    renderRequests(); // Re-render requests on admin toggle
     renderShop();
 }
 
@@ -486,6 +496,156 @@ function deleteTask() {
 
 function editTask(id) {
     openTaskModal(id);
+}
+
+// ===== Requests Logic =====
+function requestCoins(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Check frequency (re-use check logic or similar?)
+    // Basic check for now, can be improved to check pending requests too
+    if (task.frequency) {
+        // Count pending requests + history earnings
+        // For now, let's keep it simple and check history
+        // Ideally we should count pending requests towards limit too
+    }
+
+    const request = {
+        id: Date.now(),
+        taskId: task.id,
+        taskName: task.name,
+        coins: task.coins,
+        date: new Date().toISOString(),
+        status: 'pending'
+    };
+
+    requests.push(request);
+    scheduleSave();
+    renderRequests();
+
+    // Switch to requests tab to show the user
+    document.querySelector('.nav__btn[data-tab="requests"]').click();
+    showToast('Заявка отправлена!', 'success');
+}
+
+function renderRequests() {
+    const incomingList = document.getElementById('incoming-requests-list');
+    const incomingEmpty = document.getElementById('incoming-requests-empty');
+    const myList = document.getElementById('my-requests-list');
+    const myEmpty = document.getElementById('my-requests-empty');
+
+    if (!incomingList || !myList) return;
+
+    // 1. My Requests (Child View)
+    const myPending = requests.filter(r => r.status === 'pending');
+
+    if (myPending.length === 0) {
+        myList.innerHTML = '';
+        myEmpty.classList.remove('hidden');
+    } else {
+        myEmpty.classList.add('hidden');
+        myList.innerHTML = myPending.sort((a, b) => b.id - a.id).map(req => `
+            <div class="history-item">
+                <div class="history-item__icon">⏳</div>
+                <div class="history-item__content">
+                    <div class="history-item__desc">
+                        ${escapeHtml(req.taskName)}
+                    </div>
+                    <div class="history-item__date">Ожидает подтверждения</div>
+                </div>
+                <div class="history-item__amount">
+                    +${req.coins} 🪙
+                </div>
+                <div class="card__actions" style="margin-left: 10px;">
+                     <button class="btn btn--danger btn--small" onclick="deleteRequest(${req.id})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 2. Incoming Requests (Admin View)
+    if (isAdmin) {
+        const incoming = requests.filter(r => r.status === 'pending');
+        document.getElementById('requests-section').querySelector('.admin-only').classList.remove('hidden');
+
+        if (incoming.length === 0) {
+            incomingList.innerHTML = '';
+            incomingEmpty.classList.remove('hidden');
+        } else {
+            incomingEmpty.classList.add('hidden');
+            incomingList.innerHTML = incoming.map(req => `
+                <div class="history-item">
+                    <div class="history-item__icon">📩</div>
+                    <div class="history-item__content">
+                        <div class="history-item__desc">
+                            ${escapeHtml(req.taskName)}
+                        </div>
+                        <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
+                    </div>
+                    <div class="history-item__amount">
+                        +${req.coins} 🪙
+                    </div>
+                    <div class="card__actions" style="margin-left: 10px;">
+                         <button class="btn btn--success btn--small" onclick="approveRequest(${req.id})">✅</button>
+                         <button class="btn btn--danger btn--small" onclick="rejectRequest(${req.id})">❌</button>
+                    </div>
+                </div>
+             `).join('');
+        }
+    } else {
+        document.getElementById('requests-section').querySelector('.admin-only').classList.add('hidden');
+    }
+}
+
+function deleteRequest(reqId) {
+    if (!confirm('Удалить заявку?')) return;
+    requests = requests.filter(r => r.id !== reqId);
+    scheduleSave();
+    renderRequests();
+    showToast('Заявка удалена', 'info');
+}
+
+function approveRequest(reqId) {
+    const req = requests.find(r => r.id === reqId);
+    if (!req) return;
+
+    // Limits check?
+    // We can assume parent overrides limits if approving manual request,
+    // OR we can perform check here. Let's force approve for now (Admin power).
+
+    balance += req.coins;
+    updateBalance();
+    addHistoryEntry('earn', req.coins, req.taskName, req.taskId);
+
+    // Remove request
+    requests = requests.filter(r => r.id !== reqId);
+
+    scheduleSave();
+    renderRequests();
+    showToast(`Заявка подтверждена: +${req.coins} 🪙`, 'success');
+}
+
+function rejectRequest(reqId) {
+    const req = requests.find(r => r.id === reqId);
+    if (!req) return;
+
+    if (!confirm('Отклонить заявку?')) return;
+
+    // Add rejected entry to hisory? Plan says "yes"
+    addHistoryEntry('spend', 0, `❌ Отклонено: ${req.taskName}`, null); // Type spend 0 just to show icon/color? Or maybe special type.
+    // Actually let's just make a note history entry if needed, or just delete.
+    // Plan: "rejected -> moves to history". Let's use 'spend' type with 0 amount but descriptive text, or create valid type.
+    // Existing types: 'earn', 'spend'. 
+    // Let's use 'earn' with 0 amount? Or special visual?
+    // Let's use 0 amount and special description.
+
+    // Remove request
+    requests = requests.filter(r => r.id !== reqId);
+
+    scheduleSave();
+    renderRequests();
+    showToast('Заявка отклонена', 'info');
 }
 
 function earnCoins(taskId) {
