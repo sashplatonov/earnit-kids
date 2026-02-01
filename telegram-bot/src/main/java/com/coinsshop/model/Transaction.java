@@ -3,11 +3,11 @@ package com.coinsshop.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record Request(
-        long id,
-        long taskId,
-        String taskName,
-        int coins,
+public record Transaction(
+        String id,
         String date,
-        String status) {
+        String description,
+        int amount,
+        String type // "earn" or "spend"
+) {
 }
