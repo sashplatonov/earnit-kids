@@ -75,14 +75,109 @@ function addHistoryEntry(type, amount, description) {
     renderHistory();
 }
 
+// ===== Limits Logic =====
+function getMonthlyStats(monthKey) {
+    let rsdSpent = 0;
+    let largePurchase = null;
+    let itemCounts = {};
+
+    history.forEach(entry => {
+        if (entry.type !== 'spend' || !entry.date.startsWith(monthKey)) return;
+
+        if (entry.rsdAmount) rsdSpent += entry.rsdAmount;
+
+        if (entry.itemId) {
+            itemCounts[entry.itemId] = (itemCounts[entry.itemId] || 0) + 1;
+
+            // Check large purchase
+            const item = shopItems.find(i => i.id === entry.itemId);
+            if (item && item.type === 'large') {
+                largePurchase = item.name;
+            }
+        }
+    });
+
+    return { rsdSpent, largePurchase, itemCounts };
+}
+
+function checkLimits(item, rsdPrice) {
+    const now = new Date();
+    const currentMonth = now.toISOString().slice(0, 7);
+    const stats = getMonthlyStats(currentMonth);
+
+    // 1. Check budget limit
+    if (stats.rsdSpent + rsdPrice > 10000) {
+        return `Превышен месячный лимит (осталось ${10000 - stats.rsdSpent} RSD)`;
+    }
+
+    // 2. Check large purchase limit
+    if (item.type === 'large' && stats.largePurchase) {
+        return `Уже была крупная покупка в этом месяце (${stats.largePurchase})`;
+    }
+
+    // 3. Check frequency
+    if (item.frequency) {
+        const { limit, period } = item.frequency;
+        let count = 0;
+        let startDate = new Date();
+
+        if (period === 'day') startDate.setHours(0, 0, 0, 0);
+        if (period === 'week') startDate.setDate(startDate.getDate() - startDate.getDay() + 1); // Monday
+        if (period === 'month') startDate.setDate(1);
+
+        const startTime = startDate.getTime();
+
+        history.forEach(h => {
+            if (h.itemId === item.id && new Date(h.date).getTime() >= startTime) {
+                count++;
+            }
+        });
+
+        if (count >= limit) {
+            return `Лимит частоты: ${limit} раз(а) в ${period}`;
+        }
+    }
+
+    return null; // OK
+}
+
 // ===== UI Rendering =====
 function updateBalance() {
     document.getElementById('balance').textContent = balance;
+
+    // Update budget stats
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const stats = getMonthlyStats(currentMonth);
+
+    if (document.getElementById('rsd-spent')) {
+        document.getElementById('rsd-spent').textContent = stats.rsdSpent.toLocaleString();
+
+        const progress = Math.min((stats.rsdSpent / 10000) * 100, 100);
+        const bar = document.getElementById('rsd-progress');
+        bar.style.width = `${progress}%`;
+        bar.className = 'progress-bar';
+        if (progress > 90) bar.classList.add('danger');
+        else if (progress > 70) bar.classList.add('warning');
+
+        const largeEl = document.getElementById('large-purchase');
+        const largeIcon = document.getElementById('large-icon');
+
+        if (stats.largePurchase) {
+            largeEl.textContent = stats.largePurchase;
+            largeIcon.textContent = '✅';
+            largeIcon.style.background = 'rgba(16, 185, 129, 0.2)';
+        } else {
+            largeEl.textContent = 'Нет';
+            largeIcon.textContent = '⬜';
+            largeIcon.style.background = 'rgba(255, 255, 255, 0.1)';
+        }
+    }
 }
 
 function renderTasks() {
     const container = document.getElementById('tasks-list');
     const emptyState = document.getElementById('tasks-empty');
+    if (!container) return;
 
     if (tasks.length === 0) {
         container.innerHTML = '';
@@ -91,7 +186,7 @@ function renderTasks() {
     }
 
     emptyState.classList.add('hidden');
-    container.innerHTML = tasks.map(task => `
+    container.innerHTML = tasks.slice().reverse().map(task => `
         <div class="card" data-id="${task.id}">
             <div class="card__header">
                 <h3 class="card__title">${escapeHtml(task.name)}</h3>
@@ -118,6 +213,7 @@ function renderTasks() {
 function renderShop() {
     const container = document.getElementById('shop-list');
     const emptyState = document.getElementById('shop-empty');
+    if (!container) return;
 
     if (shopItems.length === 0) {
         container.innerHTML = '';
@@ -128,6 +224,21 @@ function renderShop() {
     emptyState.classList.add('hidden');
     container.innerHTML = shopItems.map(item => {
         const canAfford = balance >= item.price;
+
+        // Format tags
+        let tags = [];
+        if (item.type) {
+            const types = { 'micro': '🧁 Микро', 'small': '📚 Малая', 'large': '💅 Крупная' };
+            tags.push(`<span class="tag tag--${item.type}">${types[item.type] || item.type}</span>`);
+        }
+        if (item.rsdLimit) {
+            tags.push(`<span class="tag tag--rsd">до ${item.rsdLimit} RSD</span>`);
+        }
+        if (item.frequency) {
+            const periods = { 'day': 'день', 'week': 'неделю', 'month': 'месяц' };
+            tags.push(`<span class="tag">${item.frequency.limit}/${periods[item.frequency.period] || 'пер'}</span>`);
+        }
+
         return `
             <div class="card ${canAfford ? 'card--affordable' : ''}" data-id="${item.id}">
                 <div class="card__header">
@@ -137,6 +248,7 @@ function renderShop() {
                         <span>🪙</span>
                     </div>
                 </div>
+                <div style="margin-bottom:0.5rem;">${tags.join('')}</div>
                 ${item.comment ? `<p class="card__comment">${escapeHtml(item.comment)}</p>` : ''}
                 <div class="card__actions">
                     <button class="btn btn--primary btn--small" 
@@ -158,6 +270,7 @@ function renderShop() {
 function renderHistory() {
     const container = document.getElementById('history-list');
     const emptyState = document.getElementById('history-empty');
+    if (!container) return;
 
     if (history.length === 0) {
         container.innerHTML = '';
@@ -166,7 +279,7 @@ function renderHistory() {
     }
 
     emptyState.classList.add('hidden');
-    container.innerHTML = history.map(entry => {
+    container.innerHTML = history.slice(0, 50).map(entry => {
         const isEarn = entry.type === 'earn';
         const date = new Date(entry.date);
         const formattedDate = date.toLocaleDateString('ru-RU', {
@@ -180,7 +293,10 @@ function renderHistory() {
             <div class="history-item history-item--${entry.type}">
                 <div class="history-item__icon">${isEarn ? '💰' : '🛍️'}</div>
                 <div class="history-item__content">
-                    <div class="history-item__desc">${escapeHtml(entry.description)}</div>
+                    <div class="history-item__desc">
+                        ${escapeHtml(entry.description)}
+                        ${entry.rsdAmount ? `<span class="tag tag--rsd" style="font-size:0.75em;margin-left:0.5em;">${entry.rsdAmount} RSD</span>` : ''}
+                    </div>
                     <div class="history-item__date">${formattedDate}</div>
                 </div>
                 <div class="history-item__amount">
@@ -370,12 +486,28 @@ function openShopModal(itemId = null) {
         document.getElementById('shop-name').value = item.name;
         document.getElementById('shop-price').value = item.price;
         document.getElementById('shop-comment').value = item.comment || '';
+        document.getElementById('shop-rsd').value = item.rsdLimit || '';
+        document.getElementById('shop-type').value = item.type || 'small';
+
+        if (item.frequency) {
+            document.getElementById('shop-freq-limit').value = item.frequency.limit;
+            document.getElementById('shop-freq-period').value = item.frequency.period;
+        } else {
+            document.getElementById('shop-freq-limit').value = 1;
+            document.getElementById('shop-freq-period').value = 'week';
+        }
+
         deleteBtn.classList.remove('hidden');
     } else {
         title.textContent = 'Добавить товар';
         document.getElementById('shop-name').value = '';
         document.getElementById('shop-price').value = '';
         document.getElementById('shop-comment').value = '';
+        document.getElementById('shop-rsd').value = '';
+        document.getElementById('shop-type').value = 'small';
+        document.getElementById('shop-freq-limit').value = 1;
+        document.getElementById('shop-freq-period').value = 'week';
+
         deleteBtn.classList.add('hidden');
     }
 
@@ -387,26 +519,33 @@ function saveShopItem() {
     const price = parseInt(document.getElementById('shop-price').value);
     const comment = document.getElementById('shop-comment').value.trim();
 
-    if (!name) {
-        showToast('Введите название товара', 'error');
-        return;
-    }
-    if (!price || price < 1) {
-        showToast('Введите цену', 'error');
-        return;
-    }
+    // New fields
+    const rsdLimit = parseInt(document.getElementById('shop-rsd').value) || 0;
+    const type = document.getElementById('shop-type').value;
+    const freqLimit = parseInt(document.getElementById('shop-freq-limit').value) || 0;
+    const freqPeriod = document.getElementById('shop-freq-period').value;
+
+    if (!name) return showToast('Введите название', 'error');
+    if (!price || price < 1) return showToast('Введите цену', 'error');
+
+    const newItem = {
+        name,
+        price,
+        comment,
+        rsdLimit,
+        type,
+        frequency: freqLimit > 0 ? { limit: freqLimit, period: freqPeriod } : null
+    };
 
     if (editingShopId) {
         const index = shopItems.findIndex(i => i.id === editingShopId);
         if (index !== -1) {
-            shopItems[index] = { ...shopItems[index], name, price, comment };
+            shopItems[index] = { ...shopItems[index], id: editingShopId, ...newItem };
         }
     } else {
         shopItems.push({
             id: Date.now(),
-            name,
-            price,
-            comment
+            ...newItem
         });
     }
 
@@ -441,14 +580,49 @@ function buyItem(itemId) {
         return;
     }
 
+    // Ask for actual RSD price
+    const rsdInput = prompt(`Покупка "${item.name}"\nВведите стоимость в RSD (макс ${item.rsdLimit || 10000}):`, '0');
+    if (rsdInput === null) return; // Cancelled
+
+    const rsdPrice = parseInt(rsdInput);
+    if (isNaN(rsdPrice) || rsdPrice < 0) {
+        showToast('Некорректная сумма RSD', 'error');
+        return;
+    }
+
+    if (item.rsdLimit && rsdPrice > item.rsdLimit) {
+        showToast(`Цена выше лимита товара (${item.rsdLimit} RSD)`, 'error');
+        return;
+    }
+
+    // Check global limits
+    const limitError = checkLimits(item, rsdPrice);
+    if (limitError) {
+        showToast(limitError, 'error');
+        return;
+    }
+
     showConfirm(
         'Подтвердите покупку',
-        `Купить "${item.name}" за ${item.price} 🪙?`,
+        `Купить "${item.name}" за ${item.price} 🪙 и ${rsdPrice} RSD?`,
         () => {
-            balance -= item.price;
-            updateBalance();
-            addHistoryEntry('spend', item.price, item.name);
-            renderShop();
+            balance -= item.price; // Coins spent logic
+            // Note: RSD are just tracked, not subtracted from a balance (budget is a limit)
+
+            // Add history with extended data
+            const entry = {
+                id: Date.now(),
+                type: 'spend',
+                amount: item.price,
+                description: item.name,
+                date: new Date().toISOString(),
+                itemId: item.id,
+                rsdAmount: rsdPrice
+            };
+            history.unshift(entry);
+
+            scheduleSave();
+            renderAll();
             showToast(`Вы купили: ${item.name}!`, 'success');
         }
     );
