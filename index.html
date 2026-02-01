@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Монетки - Детский магазин</title>
+    <meta name="description" content="Система управления монетками для детей. Зарабатывай и трать!">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="header__logo">
+            <span class="header__icon">🪙</span>
+            <h1>Монетки</h1>
+        </div>
+        <div class="header__balance">
+            <span class="balance__label">Баланс:</span>
+            <span class="balance__value" id="balance">0</span>
+            <span class="balance__coin">🪙</span>
+        </div>
+        <button class="btn btn--admin" id="admin-toggle">
+            <span class="btn__icon">🔐</span>
+            <span class="btn__text">Вход админа</span>
+        </button>
+    </header>
+
+    <nav class="nav">
+        <button class="nav__btn active" data-tab="tasks">📋 Задания</button>
+        <button class="nav__btn" data-tab="shop">🛒 Магазин</button>
+        <button class="nav__btn" data-tab="history">📊 История</button>
+    </nav>
+
+    <main class="main">
+        <!-- Секция заданий -->
+        <section class="section" id="tasks-section">
+            <div class="section__header">
+                <h2>За что можно заработать</h2>
+                <button class="btn btn--add admin-only hidden" id="add-task-btn">
+                    <span>+ Добавить задание</span>
+                </button>
+            </div>
+            <div class="cards" id="tasks-list">
+                <!-- Карточки заданий -->
+            </div>
+            <div class="empty-state" id="tasks-empty">
+                <span class="empty-state__icon">📋</span>
+                <p>Пока нет заданий</p>
+            </div>
+        </section>
+
+        <!-- Секция магазина -->
+        <section class="section hidden" id="shop-section">
+            <div class="section__header">
+                <h2>Магазин наград</h2>
+                <button class="btn btn--add admin-only hidden" id="add-shop-btn">
+                    <span>+ Добавить товар</span>
+                </button>
+            </div>
+            <div class="cards" id="shop-list">
+                <!-- Карточки товаров -->
+            </div>
+            <div class="empty-state" id="shop-empty">
+                <span class="empty-state__icon">🛒</span>
+                <p>Магазин пока пуст</p>
+            </div>
+        </section>
+
+        <!-- Секция истории -->
+        <section class="section hidden" id="history-section">
+            <h2>История операций</h2>
+            <div class="history-list" id="history-list">
+                <!-- Записи истории -->
+            </div>
+            <div class="empty-state" id="history-empty">
+                <span class="empty-state__icon">📊</span>
+                <p>История пока пуста</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Модальное окно: PIN -->
+    <div class="modal" id="pin-modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <h3>🔐 Вход администратора</h3>
+            <p>Введите PIN-код:</p>
+            <input type="password" class="input" id="pin-input" maxlength="6" placeholder="••••">
+            <div class="modal__actions">
+                <button class="btn btn--secondary" id="pin-cancel">Отмена</button>
+                <button class="btn btn--primary" id="pin-submit">Войти</button>
+            </div>
+            <p class="hint" id="pin-hint">Первый вход? PIN будет сохранён.</p>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Редактирование задания -->
+    <div class="modal" id="task-modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <h3 id="task-modal-title">Добавить задание</h3>
+            <div class="form-group">
+                <label for="task-name">Название</label>
+                <input type="text" class="input" id="task-name" placeholder="Помыть посуду">
+            </div>
+            <div class="form-group">
+                <label for="task-coins">Монеты</label>
+                <input type="number" class="input" id="task-coins" placeholder="10" min="1">
+            </div>
+            <div class="form-group">
+                <label for="task-comment">Комментарий</label>
+                <textarea class="input textarea" id="task-comment" placeholder="Дополнительная информация..."></textarea>
+            </div>
+            <div class="modal__actions">
+                <button class="btn btn--secondary" id="task-cancel">Отмена</button>
+                <button class="btn btn--danger hidden" id="task-delete">Удалить</button>
+                <button class="btn btn--primary" id="task-save">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Редактирование товара -->
+    <div class="modal" id="shop-modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <h3 id="shop-modal-title">Добавить товар</h3>
+            <div class="form-group">
+                <label for="shop-name">Название</label>
+                <input type="text" class="input" id="shop-name" placeholder="Час игры на планшете">
+            </div>
+            <div class="form-group">
+                <label for="shop-price">Цена (монеты)</label>
+                <input type="number" class="input" id="shop-price" placeholder="50" min="1">
+            </div>
+            <div class="form-group">
+                <label for="shop-comment">Комментарий</label>
+                <textarea class="input textarea" id="shop-comment" placeholder="Дополнительная информация..."></textarea>
+            </div>
+            <div class="modal__actions">
+                <button class="btn btn--secondary" id="shop-cancel">Отмена</button>
+                <button class="btn btn--danger hidden" id="shop-delete">Удалить</button>
+                <button class="btn btn--primary" id="shop-save">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Подтверждение действия -->
+    <div class="modal" id="confirm-modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <h3 id="confirm-title">Подтвердите действие</h3>
+            <p id="confirm-message">Вы уверены?</p>
+            <div class="modal__actions">
+                <button class="btn btn--secondary" id="confirm-cancel">Отмена</button>
+                <button class="btn btn--primary" id="confirm-ok">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast уведомления -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

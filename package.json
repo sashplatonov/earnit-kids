@@ -1,0 +1,9 @@
+{
+  "name": "coins-kids-shop",
+  "version": "1.0.0",
+  "description": "Kids Coin Shop - minimal coin management system",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

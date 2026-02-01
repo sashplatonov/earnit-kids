@@ -14,12 +14,18 @@ A minimal web application for managing kids' reward coins. Parents can award coi
 ## Quick Start
 
 ```bash
-# Clone and run
 node server.js
-
-# Open in browser
-open http://localhost:3000
+# → http://localhost:3000
 ```
+
+## Docker
+
+```bash
+docker compose up -d
+# → http://localhost:3000
+```
+
+Data persists in `data.json` on host.
 
 ## Deployment (VPS with nginx)
 
