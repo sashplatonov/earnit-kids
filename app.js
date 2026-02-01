@@ -62,7 +62,7 @@ function scheduleSave() {
     }, 500);
 }
 
-function addHistoryEntry(type, amount, description) {
+function addHistoryEntry(type, amount, description, relatedId = null) {
     const entry = {
         id: Date.now(),
         type: type, // 'earn' | 'spend'
@@ -70,6 +70,12 @@ function addHistoryEntry(type, amount, description) {
         description: description,
         date: new Date().toISOString()
     };
+
+    if (relatedId) {
+        if (type === 'spend') entry.itemId = relatedId;
+        else if (type === 'earn') entry.taskId = relatedId;
+    }
+
     history.unshift(entry);
     scheduleSave();
     renderHistory();
@@ -186,7 +192,14 @@ function renderTasks() {
     }
 
     emptyState.classList.add('hidden');
-    container.innerHTML = tasks.slice().reverse().map(task => `
+    container.innerHTML = tasks.slice().reverse().map(task => {
+        let tags = [];
+        if (task.frequency) {
+            const periods = { 'day': 'день', 'week': 'неделю', 'month': 'месяц' };
+            tags.push(`<span class="tag">${task.frequency.limit}/${periods[task.frequency.period] || 'пер'}</span>`);
+        }
+
+        return `
         <div class="card" data-id="${task.id}">
             <div class="card__header">
                 <h3 class="card__title">${escapeHtml(task.name)}</h3>
@@ -195,6 +208,7 @@ function renderTasks() {
                     <span>🪙</span>
                 </div>
             </div>
+            ${tags.length ? `<div style="margin-bottom:0.5rem;">${tags.join('')}</div>` : ''}
             ${task.comment ? `<p class="card__comment">${escapeHtml(task.comment)}</p>` : ''}
             <div class="card__actions">
                 ${isAdmin ? `
@@ -207,7 +221,8 @@ function renderTasks() {
                 ` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderShop() {
@@ -391,12 +406,23 @@ function openTaskModal(taskId = null) {
         document.getElementById('task-name').value = task.name;
         document.getElementById('task-coins').value = task.coins;
         document.getElementById('task-comment').value = task.comment || '';
+
+        if (task.frequency) {
+            document.getElementById('task-freq-limit').value = task.frequency.limit;
+            document.getElementById('task-freq-period').value = task.frequency.period;
+        } else {
+            document.getElementById('task-freq-limit').value = '';
+            document.getElementById('task-freq-period').value = 'day';
+        }
+
         deleteBtn.classList.remove('hidden');
     } else {
         title.textContent = 'Добавить задание';
         document.getElementById('task-name').value = '';
         document.getElementById('task-coins').value = '';
         document.getElementById('task-comment').value = '';
+        document.getElementById('task-freq-limit').value = '';
+        document.getElementById('task-freq-period').value = 'day';
         deleteBtn.classList.add('hidden');
     }
 
@@ -407,6 +433,8 @@ function saveTask() {
     const name = document.getElementById('task-name').value.trim();
     const coins = parseInt(document.getElementById('task-coins').value);
     const comment = document.getElementById('task-comment').value.trim();
+    const freqLimit = parseInt(document.getElementById('task-freq-limit').value) || 0;
+    const freqPeriod = document.getElementById('task-freq-period').value;
 
     if (!name) {
         showToast('Введите название задания', 'error');
@@ -417,19 +445,24 @@ function saveTask() {
         return;
     }
 
+    const taskData = {
+        name,
+        coins,
+        comment,
+        frequency: freqLimit > 0 ? { limit: freqLimit, period: freqPeriod } : null
+    };
+
     if (editingTaskId) {
         // Редактирование
         const index = tasks.findIndex(t => t.id === editingTaskId);
         if (index !== -1) {
-            tasks[index] = { ...tasks[index], name, coins, comment };
+            tasks[index] = { ...tasks[index], ...taskData };
         }
     } else {
         // Создание
         tasks.push({
             id: Date.now(),
-            name,
-            coins,
-            comment
+            ...taskData
         });
     }
 
@@ -459,13 +492,44 @@ function earnCoins(taskId) {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
+    // Check frequency limit
+    if (task.frequency) {
+        const { limit, period } = task.frequency;
+        let count = 0;
+        let startDate = new Date();
+
+        if (period === 'day') startDate.setHours(0, 0, 0, 0);
+        if (period === 'week') startDate.setDate(startDate.getDate() - startDate.getDay() + 1); // Monday
+        if (period === 'month') startDate.setDate(1);
+
+        const startTime = startDate.getTime();
+
+        history.forEach(h => {
+            // We need to check 'earn' events for this task
+            // We'll use description match for now as we don't store taskId for earning yet
+            // OR better: let's start storing taskId for earning too!
+            // For legacy compat, we check description match if taskId missing
+            const isMatch = h.taskId === task.id || (h.type === 'earn' && h.description === task.name);
+
+            if (isMatch && new Date(h.date).getTime() >= startTime) {
+                count++;
+            }
+        });
+
+        if (count >= limit) {
+            showToast(`Лимит исчерпан: ${limit} раз(а) в ${period}`, 'error');
+            return;
+        }
+    }
+
     showConfirm(
         'Начислить монеты?',
         `Начислить ${task.coins} 🪙 за "${task.name}"?`,
         () => {
             balance += task.coins;
             updateBalance();
-            addHistoryEntry('earn', task.coins, task.name);
+            // Start sending taskId for earns too
+            addHistoryEntry('earn', task.coins, task.name, task.id);
             renderShop(); // Обновляем доступность покупок
             showToast(`+${task.coins} 🪙 начислено!`, 'success');
         }

@@ -267,6 +267,18 @@
                 <textarea class="input textarea" id="task-comment"
                     placeholder="Дополнительная информация..."></textarea>
             </div>
+
+            <div class="form-group">
+                <label for="task-freq-limit">Частота (раз в период)</label>
+                <div class="input-group">
+                    <input type="number" class="input" id="task-freq-limit" placeholder="Без лимита" min="0">
+                    <select class="input" id="task-freq-period">
+                        <option value="day">в день</option>
+                        <option value="week">в неделю</option>
+                        <option value="month">в месяц</option>
+                    </select>
+                </div>
+            </div>
             <div class="modal__actions">
                 <button class="btn btn--secondary" id="task-cancel">Отмена</button>
                 <button class="btn btn--danger hidden" id="task-delete">Удалить</button>

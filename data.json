@@ -6,7 +6,11 @@
       "id": 1769966857302,
       "name": "12123123123",
       "coins": 1,
-      "comment": ""
+      "comment": "",
+      "frequency": {
+        "limit": 2,
+        "period": "month"
+      }
     }
   ],
   "shop": [
