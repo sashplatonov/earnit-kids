@@ -49,6 +49,54 @@ function verifyTelegramAuth(data, botToken) {
     return hmac === hash;
 }
 
+// Common logic for Telegram Login (Redirect or Callback)
+async function handleTelegramLogin(req, res, data, isRedirect = false) {
+    const botToken = process.env.BOT_TOKEN;
+
+    if (!botToken) {
+        console.warn('BOT_TOKEN is not set in environment variables!');
+        if (isRedirect) return redirectWithError(res, 'Server configuration error');
+        return sendJSON(res, { error: 'Сервер не настроен для входа через Telegram' }, 500);
+    }
+
+    if (!verifyTelegramAuth(data, botToken)) {
+        if (isRedirect) return redirectWithError(res, 'Invalid auth');
+        return sendJSON(res, { error: 'Ошибка проверки данных Telegram' }, 401);
+    }
+
+    // Check if this telegram user is allowed
+    const savedData = loadData();
+    const allowedUsername = savedData.child_telegram_username;
+    const allowedId = savedData.child_telegram_id;
+
+    const isAllowed = (allowedUsername && String(data.username).toLowerCase() === String(allowedUsername).replace('@', '').toLowerCase()) ||
+        (allowedId && String(data.id) === String(allowedId));
+
+    if (!isAllowed && (allowedUsername || allowedId)) {
+        if (isRedirect) return redirectWithError(res, 'Access denied for this Telegram account');
+        return sendJSON(res, { error: 'Этот аккаунт Telegram не привязан к магазину' }, 403);
+    }
+
+    // Success - set persistent auth cookies
+    res.setHeader('Set-Cookie', [
+        `app_auth_tg=${data.id}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`,
+        `app_tg_hash=${data.hash}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`
+    ]);
+
+    if (isRedirect) {
+        res.writeHead(302, { 'Location': '/' });
+        return res.end();
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ success: true }));
+}
+
+function redirectWithError(res, msg) {
+    res.writeHead(302, { 'Location': '/?error=' + encodeURIComponent(msg) });
+    res.end();
+}
+
 // Handle API requests
 async function handleAPI(req, res) {
     const url = req.url;
@@ -120,41 +168,23 @@ async function handleAPI(req, res) {
             }
         }
 
-        // POST /api/auth/telegram
+        // POST /api/auth/telegram (Callback mode)
         if (url === '/api/auth/telegram' && method === 'POST') {
             const body = await parseBody(req);
-            const botToken = process.env.BOT_TOKEN;
+            return handleTelegramLogin(req, res, body);
+        }
 
-            if (!botToken) {
-                console.warn('BOT_TOKEN is not set in environment variables!');
-                return sendJSON(res, { error: 'Сервер не настроен для входа через Telegram' }, 500);
+        // GET /api/auth/telegram-redirect (Redirect mode)
+        if (url.startsWith('/api/auth/telegram-redirect') && method === 'GET') {
+            const queryString = url.split('?')[1] || '';
+            const params = new URLSearchParams(queryString);
+            const data = {};
+            for (const [key, value] of params.entries()) {
+                data[key] = value;
             }
 
-            if (!verifyTelegramAuth(body, botToken)) {
-                return sendJSON(res, { error: 'Ошибка проверки данных Telegram' }, 401);
-            }
-
-            // check if this telegram user is allowed
-            const savedData = loadData();
-            const allowedUsername = savedData.child_telegram_username;
-            const allowedId = savedData.child_telegram_id;
-
-            const isAllowed = (allowedUsername && String(body.username).toLowerCase() === String(allowedUsername).replace('@', '').toLowerCase()) ||
-                (allowedId && String(body.id) === String(allowedId));
-
-            if (!isAllowed && (allowedUsername || allowedId)) {
-                return sendJSON(res, { error: 'Этот аккаунт Telegram не привязан к магазину' }, 403);
-            }
-
-            // Success - set a persistent auth cookie
-            res.writeHead(200, {
-                'Content-Type': 'application/json',
-                'Set-Cookie': [
-                    `app_auth_tg=${body.id}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly`,
-                    `app_tg_hash=${body.hash}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly`
-                ]
-            });
-            return res.end(JSON.stringify({ success: true }));
+            await handleTelegramLogin(req, res, data, true);
+            return;
         }
 
         // POST /api/data - save all data (SECURE: Preserve PIN if not provided)

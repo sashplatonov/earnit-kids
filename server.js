@@ -122,10 +122,17 @@ const server = http.createServer(async (req, res) => {
     const serverPin = savedData.pin;
 
     // Paths that don't require auth
-    const isAuthPath = req.url === '/api/login' || req.url === '/api/auth/telegram';
+    const isAuthPath = req.url === '/api/login' || req.url === '/api/auth/telegram' || req.url.startsWith('/api/auth/telegram-redirect');
     const isPublicStatic = req.url === '/style.css' || req.url === '/favicon.ico' || req.url.startsWith('/img/');
 
     const isAuthenticated = (serverPin && cookies.app_auth === String(serverPin)) || !!cookies.app_auth_tg;
+
+    // Verbose logging for debugging
+    if (req.url === '/' || req.url.startsWith('/api/auth')) {
+        console.log(`[DEBUG] ${new Date().toISOString()} ${req.method} ${req.url}`);
+        console.log(`[DEBUG] Cookies: ${JSON.stringify(cookies)}`);
+        console.log(`[DEBUG] Auth status: ${isAuthenticated}`);
+    }
 
     // If PIN is not set yet, allow access to set it (admin logic) or if already authenticated
     if (!isAuthenticated && !isAuthPath && !isPublicStatic) {
@@ -147,4 +154,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
     console.log(`🪙 Coin Shop Server running at http://localhost:${PORT}`);
+    console.log(`🤖 Telegram Bot Username: ${process.env.BOT_USERNAME || 'NOT SET'}`);
+    console.log(`🔑 Telegram Bot Token: ${process.env.BOT_TOKEN ? 'SET (starts with ' + process.env.BOT_TOKEN.slice(0, 5) + '...)' : 'MISSING'}`);
 });
