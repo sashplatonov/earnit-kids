@@ -254,6 +254,11 @@
                 </div>
 
                 <button id="login-btn" class="btn-login">Войти</button>
+                <div style="margin-top: 1rem; margin-bottom: 1rem;">
+                    <a href="#" id="forgot-password-link"
+                        style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.9rem;">Забыли
+                        пароль?</a>
+                </div>
                 <button id="show-register-btn" class="btn-secondary">Создать Новый Магазин Монет</button>
             </div>
 
@@ -279,6 +284,19 @@
                 <button id="show-login-btn" class="btn-secondary">Уже есть аккаунт? Войти</button>
             </div>
 
+            <!-- Forgot Password Modal (hidden by default) -->
+            <div id="forgot-password-form" class="register-form">
+                <p class="login-subtitle">Восстановление пароля</p>
+                <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                    Введите ваш Email, и мы отправим вам пароли администратора и ребёнка.
+                </p>
+                <div class="pin-container">
+                    <input type="email" id="forgot-email" class="input-field" placeholder="Ваш Email">
+                </div>
+                <button id="send-recovery-btn" class="btn-login">Отправить</button>
+                <button id="show-login-from-forgot-btn" class="btn-secondary">Вернуться ко входу</button>
+            </div>
+
             <div id="error-msg" class="error-message"></div>
             <div id="success-msg" class="success-message"></div>
         </div>
@@ -291,6 +309,12 @@
         const registerBtn = document.getElementById('register-btn');
         const showRegisterBtn = document.getElementById('show-register-btn');
         const showLoginBtn = document.getElementById('show-login-btn');
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+        const forgotPasswordForm = document.getElementById('forgot-password-form');
+        const showLoginFromForgotBtn = document.getElementById('show-login-from-forgot-btn');
+        const sendRecoveryBtn = document.getElementById('send-recovery-btn');
+        const forgotEmailInput = document.getElementById('forgot-email');
+
         const pinInput = document.getElementById('pin-input');
         const emailInput = document.getElementById('email-input');
         const errorMsg = document.getElementById('error-msg');
@@ -306,6 +330,21 @@
         showLoginBtn.addEventListener('click', () => {
             loginForm.classList.remove('hidden');
             registerForm.classList.remove('active');
+            forgotPasswordForm.classList.remove('active');
+            hideMessages();
+        });
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('active');
+            forgotPasswordForm.classList.add('active');
+            hideMessages();
+        });
+
+        showLoginFromForgotBtn.addEventListener('click', () => {
+            loginForm.classList.remove('hidden');
+            forgotPasswordForm.classList.remove('active');
             hideMessages();
         });
 
@@ -433,11 +472,56 @@
             }
         }
 
+        // Password Recovery
+        async function doRecover() {
+            const email = forgotEmailInput.value.trim();
+            if (!email || !email.includes('@')) {
+                showError('Введите корректный Email');
+                return;
+            }
+
+            sendRecoveryBtn.disabled = true;
+            sendRecoveryBtn.textContent = 'Отправка...';
+            hideMessages();
+
+            try {
+                const res = await fetch('api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showSuccess('Пароли отправлены на ваш Email!');
+                    setTimeout(() => {
+                        showLoginFromForgotBtn.click();
+                        emailInput.value = email;
+                    }, 3000);
+                } else {
+                    showError(data.error || 'Ошибка восстановления');
+                    sendRecoveryBtn.disabled = false;
+                    sendRecoveryBtn.textContent = 'Отправить';
+                }
+            } catch (err) {
+                console.error(err);
+                showError('Ошибка связи с сервером');
+                sendRecoveryBtn.disabled = false;
+                sendRecoveryBtn.textContent = 'Отправить';
+            }
+        }
+
         loginBtn.addEventListener('click', doLogin);
         registerBtn.addEventListener('click', doRegister);
+        sendRecoveryBtn.addEventListener('click', doRecover);
 
         pinInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doLogin();
+        });
+
+        forgotEmailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doRecover();
         });
 
         // Auto-focus on load

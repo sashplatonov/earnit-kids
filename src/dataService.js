@@ -333,6 +333,35 @@ function updateLastActivity(familyId) {
     }
 }
 
+// Recover Password
+async function recoverPassword(email) {
+    const families = loadFamilies();
+
+    // Check if email belongs to super admin
+    if (families.super_admin && families.super_admin.email === email) {
+        const { sendEmail } = require('./emailService');
+        const subject = 'Восстановление пароля - Монетки (Super Admin)';
+        const text = `Здравствуйте!\n\nВы запросили восстановление пароля для Super Admin.\n\nВаш пароль: ${families.super_admin.password}\n\nС уважением,\nКоманда Магазина Монеток`;
+        const html = `<h2>Восстановление пароля</h2><p>Здравствуйте!</p><p>Вы запросили восстановление пароля для <b>Super Admin</b>.</p><p>Ваш пароль: <b>${families.super_admin.password}</b></p><br><p>С уважением,<br>Команда Магазина Монеток</p>`;
+
+        return await sendEmail({ to: email, subject, text, html });
+    }
+
+    // Find family by email
+    const entry = Object.entries(families.families).find(([id, data]) => data.email === email);
+    if (!entry) {
+        return { success: false, error: 'Пользователь с таким Email не найден' };
+    }
+
+    const [familyId, data] = entry;
+    const { sendEmail } = require('./emailService');
+    const subject = 'Восстановление пароля - Монетки';
+    const text = `Здравствуйте!\n\nВы запросили восстановление паролей для вашего магазина "${data.name}".\n\nПароль администратора: ${data.admin_password}\nПароль ребёнка: ${data.child_password}\n\nС уважением,\nКоманда Магазина Монеток`;
+    const html = `<h2>Восстановление пароля</h2><p>Здравствуйте!</p><p>Вы запросили восстановление паролей для вашего магазина "<b>${data.name}</b>".</p><p>Пароль администратора: <b>${data.admin_password}</b></p><p>Пароль ребёнка: <b>${data.child_password}</b></p><br><p>С уважением,<br>Команда Магазина Монеток</p>`;
+
+    return await sendEmail({ to: email, subject, text, html });
+}
+
 module.exports = {
     loadFamilies,
     saveFamilies,
@@ -346,5 +375,6 @@ module.exports = {
     loadBaseData,
     saveBaseData,
     toggleFamilyBlock,
-    updateLastActivity
+    updateLastActivity,
+    recoverPassword
 };

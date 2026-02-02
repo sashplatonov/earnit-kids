@@ -1,4 +1,4 @@
-const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock, updateLastActivity } = require('./dataService');
+const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock, updateLastActivity, recoverPassword } = require('./dataService');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -89,6 +89,24 @@ async function handleAPI(req, res) {
                 return sendJSON(res, { success: true, familyId: result.familyId });
             } else {
                 return sendJSON(res, { error: result.error }, 400);
+            }
+        }
+
+        // POST /api/forgot-password
+        if (url === '/api/forgot-password' && method === 'POST') {
+            const body = await parseBody(req);
+            const { email } = body;
+
+            if (!email) {
+                return sendJSON(res, { error: 'Email обязателен' }, 400);
+            }
+
+            const result = await recoverPassword(email);
+
+            if (result.success) {
+                return sendJSON(res, { success: true });
+            } else {
+                return sendJSON(res, { error: result.error || 'Ошибка восстановления' }, 400);
             }
         }
 
