@@ -11,51 +11,102 @@ const { DATA_DIR } = require('../config');
 function createBackup(req, res) {
     if (!fs.existsSync(DATA_DIR)) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'Data folder not found' }));
+        return res.end(JSON.stringify({ error: 'Data folder not found at ' + DATA_DIR }));
+    }
+
+    const files = fs.readdirSync(DATA_DIR);
+    if (files.length === 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Data folder is empty' }));
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `backup-data-${timestamp}.zip`;
-
-    // Use zip command to stream to stdout
-    // -r: recursive
-    // -: stream to stdout
-    // data: the folder to zip
-    // We run the command from the parent directory of DATA_DIR to preserve 'data/' prefix in zip
     const parentDir = path.dirname(DATA_DIR);
     const dataFolderName = path.basename(DATA_DIR);
 
-    const zip = spawn('zip', ['-r', '-', dataFolderName], { cwd: parentDir });
+    // Try zip first, then fallback to tar
+    let tool = 'zip';
+    let args = ['-r', '-', dataFolderName];
+    let extension = 'zip';
+    let mimeType = 'application/zip';
 
-    res.writeHead(200, {
-        'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'no-cache'
-    });
-
-    zip.stdout.pipe(res);
-
-    zip.stderr.on('data', (data) => {
-        console.error(`Backup stderr: ${data}`);
-    });
-
-    zip.on('error', (err) => {
-        console.error('Failed to start backup process:', err);
-        if (!res.headersSent) {
+    try {
+        const { execSync } = require('child_process');
+        execSync('zip -v');
+    } catch (err) {
+        console.log('Zip not found, trying tar...');
+        try {
+            const { execSync } = require('child_process');
+            execSync('tar --version');
+            tool = 'tar';
+            args = ['-cz', dataFolderName];
+            extension = 'tar.gz';
+            mimeType = 'application/gzip';
+        } catch (tarErr) {
+            console.error('Neither zip nor tar found');
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Failed to start backup process' }));
+            return res.end(JSON.stringify({
+                error: 'System backup utilities (zip/tar) not found.',
+                details: 'Please install zip or tar on the server.'
+            }));
+        }
+    }
+
+    const filename = `backup-data-${timestamp}.${extension}`;
+    console.log(`Starting backup using ${tool} for ${dataFolderName} in ${parentDir}`);
+
+    const proc = spawn(tool, args, { cwd: parentDir });
+
+    let headersSent = false;
+
+    proc.stdout.on('data', (chunk) => {
+        if (!headersSent) {
+            res.writeHead(200, {
+                'Content-Type': mimeType,
+                'Content-Disposition': `attachment; filename="${filename}"`,
+                'Cache-Control': 'no-cache'
+            });
+            headersSent = true;
+        }
+        res.write(chunk);
+    });
+
+    proc.stderr.on('data', (data) => {
+        console.error(`Backup ${tool} stderr: ${data}`);
+    });
+
+    proc.on('error', (err) => {
+        console.error(`Failed to start ${tool} process:`, err);
+        if (!headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Failed to start backup process: ${err.message}` }));
+        } else {
+            res.end();
         }
     });
 
-    zip.on('close', (code) => {
+    proc.on('close', (code) => {
+        console.log(`Backup process (${tool}) exited with code ${code}`);
         if (code !== 0) {
-            console.error(`Backup process exited with code ${code}`);
+            if (!headersSent) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: `Backup failed with exit code ${code}` }));
+            } else {
+                res.end();
+            }
+        } else {
+            if (!headersSent) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Backup produced no data' }));
+            } else {
+                res.end();
+            }
         }
     });
 
     req.on('close', () => {
-        if (zip.exitCode === null) {
-            zip.kill();
+        if (proc.exitCode === null) {
+            proc.kill();
         }
     });
 }

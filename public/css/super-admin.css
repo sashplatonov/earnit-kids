@@ -68,6 +68,13 @@
     border-radius: 1rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    margin-top: 1rem;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .families-table h2 {
@@ -408,11 +415,15 @@ textarea {
     }
 
     .families-table {
-        overflow-x: auto;
+        margin-top: 1.5rem;
     }
 
     table {
-        min-width: 600px;
+        min-width: 800px;
+    }
+
+    .hide-mobile {
+        display: none !important;
     }
 
     .modal-content {

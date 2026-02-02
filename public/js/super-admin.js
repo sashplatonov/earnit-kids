@@ -135,28 +135,30 @@ function renderFamilies() {
         const lastActivityDate = family.last_activity ? new Date(family.last_activity).toLocaleString('ru-RU') : '-';
 
         tr.innerHTML = `
-            <td style="opacity:0.5">#${family.id}</td>
+            <td style="opacity:0.5" class="hide-mobile">#${family.id}</td>
             <td><strong>${family.name}</strong></td>
-            <td>${family.email || '-'}</td>
-            <td><code>${family.admin_password || 'N/A'}</code></td>
-            <td>
+            <td class="hide-mobile">${family.email || '-'}</td>
+            <td class="hide-mobile"><code>${family.admin_password || 'N/A'}</code></td>
+            <td class="hide-mobile">
                 <div style="display:flex; gap:0.3rem; align-items:center">
                     <button class="view-btn" style="padding:0.2rem 0.4rem; font-size:0.7rem" onclick="copyMagicLink('${family.child_token}')">Copy Link</button>
                     ${family.child_token ? '<span title="Link Exists">🔗</span>' : ''}
                 </div>
             </td>
-            <td>${family.tasksCount || 0}</td>
-            <td>${family.shopCount || 0}</td>
-            <td>${family.monthly_limit || 10000}</td>
+            <td class="hide-mobile">${family.tasksCount || 0}</td>
+            <td class="hide-mobile">${family.shopCount || 0}</td>
+            <td class="hide-mobile">${family.monthly_limit || 10000}</td>
             <td>${family.isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>'}</td>
-            <td>${createdDate}</td>
-            <td style="font-size:0.9rem">${lastActivityDate}</td>
+            <td class="hide-mobile">${createdDate}</td>
+            <td class="hide-mobile" style="font-size:0.9rem">${lastActivityDate}</td>
             <td>
-                <button class="view-btn" onclick="viewFamily('${family.id}')">Просмотр</button>
-                <button class="block-btn ${family.isBlocked ? 'unblock' : ''}" 
-                        onclick="toggleBlock('${family.id}', ${!family.isBlocked})">
-                    ${family.isBlocked ? 'Разблок.' : 'Блок.'}
-                </button>
+                <div style="display:flex; gap:4px">
+                    <button class="view-btn" onclick="viewFamily('${family.id}')">👁️</button>
+                    <button class="block-btn ${family.isBlocked ? 'unblock' : ''}" 
+                            onclick="toggleBlock('${family.id}', ${!family.isBlocked})">
+                        ${family.isBlocked ? '🔓' : '🔒'}
+                    </button>
+                </div>
             </td>
         `;
         tbody.appendChild(tr);
