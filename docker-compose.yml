@@ -2,11 +2,13 @@ services:
   coins-kids-shop:
     build: .
     container_name: coins-kids-shop
-    ports:
-      - "65501:3000"
+    #ports:
+    #  - "65501:3000"
     volumes:
       - ./data.json:/app/data.json
-    environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - BOT_USERNAME=${BOT_USERNAME}
     restart: unless-stopped
+    networks:
+      - proxy
+networks:
+  proxy:
+    external: true
