@@ -28,21 +28,23 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 
 ## 📂 Project Structure
 
-```text
-├── data/                # Database files (families.json, baseData.json, etc.)
-├── js/modules/          # Modular frontend logic (state, ui, api, actions)
-├── src/                 # Backend logic (API handlers, data services)
-├── views/               # UI components and templates
-│   └── components/      # Partial HTML files assembled by the server
-├── telegram-bot/        # Java source code for the Telegram bot
-├── server.js            # Main entry point (HTTP server)
+├── public/              # Static assets (css, js/client, images)
+├── src/                 # Backend source code
+│   ├── config/          # Global configuration and constants
+│   ├── controllers/     # API and View routing logic
+│   ├── middleware/      # Security, body-parser, and auth filters
+│   ├── routes/          # Route dispatchers (logic-less)
+│   └── services/        # Business logic & data access (auth, email, data)
+├── views/               # HTML templates and components
+│   └── components/      # UI pieces assembled by the server
+├── data/                # Local JSON database storage
 └── Dockerfile           # Web app containerization
 ```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
--   Node.js (v14+)
+-   Node.js (v20+)
 -   Docker (optional)
 
 ### Local Development
@@ -63,9 +65,11 @@ The application will be available at `http://localhost:3000`. Data is persisted 
 ## 🔐 Security
 
 -   **Authentication**: The site requires passwords for access (minimum 6 characters).
--   **Super Admin**: Default credentials are `admin@coinshop.com` / `000000`. Configurable via `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` environment variables.
+-   **Security Headers**: Implements `Helmet`-like security headers (XSS Protection, Frame Options, CSP-ready).
 -   **Rate Limiting**: The API blocks IPs after multiple failed login attempts to prevent brute-force attacks.
--   **Cookie Safety**: Authentication is handled via `HttpOnly` cookies, preventing XSS-based token theft.
+-   **Cookie Safety**: Authentication is handled via `HttpOnly`, `SameSite=Lax` cookies.
+-   **Data Isolation**: Client-side JS is strictly separated from server-side logic in `/public`.
+-   **Input Sanitization**: Basic protection against directory traversal and JSON injection.
 
 ## 🤖 Telegram Bot
 

@@ -44,6 +44,7 @@ async function sendEmail({ to, subject, text, html }) {
             return { success: false, error: error.message };
         }
     } else {
+        const { DATA_DIR } = require('../config');
         const logEntry = `
 ========================================
 Date: ${new Date().toISOString()}
@@ -53,10 +54,11 @@ Subject: ${subject}
 ${text}
 ========================================
 `;
-        const logFile = path.join(__dirname, '../data/emails.log');
+        const logFile = path.join(DATA_DIR, 'emails.log');
+        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
         fs.appendFileSync(logFile, logEntry);
 
-        console.log('[EMAIL MOCK] Email saved to data/emails.log. Configure SMTP in .env to send real emails.');
+        console.log('[EMAIL MOCK] Email saved to emails.log in DATA_DIR. Configure SMTP in .env to send real emails.');
         return { success: true, mock: true };
     }
 }
