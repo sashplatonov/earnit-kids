@@ -1,3 +1,5 @@
 server.log
-data/
+data/families
+data/families.json
+
 .env
