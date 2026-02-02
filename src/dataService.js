@@ -3,7 +3,7 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const FAMILIES_FILE = path.join(DATA_DIR, 'families.json');
-const TEMPLATES_FILE = path.join(DATA_DIR, 'templates.json');
+const FAMILIES_DATA_DIR = path.join(DATA_DIR, 'families');
 
 const DEFAULT_FAMILY_DATA = {
     balance: 0,
@@ -13,42 +13,44 @@ const DEFAULT_FAMILY_DATA = {
     requests: []
 };
 
-// Ensure data directory exists
+// Ensure data directories exist
 function ensureDataDir() {
     if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
     }
+    if (!fs.existsSync(FAMILIES_DATA_DIR)) {
+        fs.mkdirSync(FAMILIES_DATA_DIR, { recursive: true });
+    }
 }
 
-// Load templates
-function loadTemplates() {
-    try {
-        if (fs.existsSync(TEMPLATES_FILE)) {
-            const content = fs.readFileSync(TEMPLATES_FILE, 'utf8');
-            return JSON.parse(content);
-        }
-    } catch (err) {
-        console.error('Error loading templates:', err.message);
-    }
-    return { templates: {} };
-}
+
 
 // Load families registry
 function loadFamilies() {
     ensureDataDir();
+    let data;
     try {
         if (fs.existsSync(FAMILIES_FILE)) {
             const content = fs.readFileSync(FAMILIES_FILE, 'utf8');
-            return JSON.parse(content);
+            data = JSON.parse(content);
         }
     } catch (err) {
         console.error('Error loading families:', err.message);
     }
-    return {
-        super_admin: { email: 'admin@coinshop.com', password: '000000' },
-        families: {},
-        next_family_id: 1
+
+    if (!data) {
+        data = {
+            families: {}
+        };
+    }
+
+    // Use environment variables for super admin, or fallback to file, or default
+    data.super_admin = {
+        email: process.env.SUPER_ADMIN_EMAIL || (data.super_admin ? data.super_admin.email : 'admin@coinshop.com'),
+        password: process.env.SUPER_ADMIN_PASSWORD || (data.super_admin ? data.super_admin.password : '000000')
     };
+
+    return data;
 }
 
 // Save families registry
@@ -159,10 +161,15 @@ function findFamilyById(familyId) {
 // Load data for a specific family
 function loadFamilyData(familyId) {
     ensureDataDir();
-    const familyFile = path.join(DATA_DIR, `family_${familyId}.json`);
+    const familyFile = path.join(FAMILIES_DATA_DIR, `${familyId}.json`);
+    // Fallback for old files if they exist (migration-friendly)
+    const oldFamilyFile = path.join(DATA_DIR, `family_${familyId}.json`);
     try {
         if (fs.existsSync(familyFile)) {
             const content = fs.readFileSync(familyFile, 'utf8');
+            return { ...DEFAULT_FAMILY_DATA, ...JSON.parse(content) };
+        } else if (fs.existsSync(oldFamilyFile)) {
+            const content = fs.readFileSync(oldFamilyFile, 'utf8');
             return { ...DEFAULT_FAMILY_DATA, ...JSON.parse(content) };
         }
     } catch (err) {
@@ -174,7 +181,7 @@ function loadFamilyData(familyId) {
 // Save data for a specific family
 function saveFamilyData(familyId, data) {
     ensureDataDir();
-    const familyFile = path.join(DATA_DIR, `family_${familyId}.json`);
+    const familyFile = path.join(FAMILIES_DATA_DIR, `${familyId}.json`);
     try {
         fs.writeFileSync(familyFile, JSON.stringify(data, null, 2), 'utf8');
         return true;
@@ -206,18 +213,20 @@ function registerFamily(familyName, email, adminPassword, childPassword) {
         return { success: false, error: 'Пароли родителя и ребёнка должны отличаться' };
     }
 
-    const familyId = String(families.next_family_id);
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+    const sanitizedEmail = email.replace(/[^a-zA-Z0-9]/g, '_');
+    const familyId = `${sanitizedEmail}_${dateStr}_${timeStr}`;
 
     // Create family entry
     families.families[familyId] = {
-        name: familyName || `Семья ${familyId}`,
+        name: familyName || `Шоп ${familyId}`,
         email: email,
-        created_at: new Date().toISOString(),
+        created_at: now.toISOString(),
         admin_password: adminPassword,
         child_password: childPassword
     };
-
-    families.next_family_id++;
 
     if (saveFamilies(families)) {
         // Create default family data
@@ -334,7 +343,6 @@ module.exports = {
     saveFamilyData,
     registerFamily,
     changePassword,
-    loadTemplates,
     loadBaseData,
     saveBaseData,
     toggleFamilyBlock,

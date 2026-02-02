@@ -4,13 +4,13 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 
 ## ✨ Features
 
--   **Dual-Role Authentication** — Separate PIN-based logins for Admin (Parents) and Children.
+-   **Dual-Role Authentication** — Separate password-based logins for Admin (Parents) and Children.
+-   **Super Admin Panel** — Manage multiple families, block/unblock accounts, and manage base catalog.
 -   **Task Management** — Create, edit, and delete tasks with reward values (Admin).
 -   **Virtual Shop** — Manage a catalog of items kids can "buy" with their earned coins (Admin).
 -   **Earning & Spending** — Simple UI for awarding coins and processing purchases.
 -   **Coin Requests** — Children can send requests for custom coin amounts for approval (Admin).
 -   **Transaction History** — Detailed log of all earnings, spendings, and approvals.
--   **Quick Import** — Bulk import tasks or shop items using a simple pipe-separated format.
 -   **Session Security** — Secure `HttpOnly` cookies with a 24-hour session duration and rate-limited login attempts.
 -   **Mobile First** — Fully responsive design optimized for phones and tablets.
 
@@ -19,7 +19,7 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 ### Web Application
 -   **Backend**: Pure Node.js (no external dependencies like Express).
 -   **Frontend**: Vanilla HTML5, CSS3, and modern ES Modules.
--   **Storage**: Local `data.json` file for simplicity and portability.
+-   **Storage**: Flat-file database in `data/` directory.
 -   **Deployment**: Docker & Docker Compose support.
 
 ### Telegram Bot
@@ -29,12 +29,12 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 ## 📂 Project Structure
 
 ```text
+├── data/                # Database files (families.json, baseData.json, etc.)
 ├── js/modules/          # Modular frontend logic (state, ui, api, actions)
 ├── src/                 # Backend logic (API handlers, data services)
 ├── views/               # UI components and templates
 │   └── components/      # Partial HTML files assembled by the server
 ├── telegram-bot/        # Java source code for the Telegram bot
-├── data.json            # Flat-file database
 ├── server.js            # Main entry point (HTTP server)
 └── Dockerfile           # Web app containerization
 ```
@@ -58,11 +58,12 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 ```bash
 docker compose up -d --build
 ```
-The application will be available at `http://localhost:3000`. Data is persisted via a volume mapping to `data.json`.
+The application will be available at `http://localhost:3000`. Data is persisted via a volume mapping to the `data/` directory.
 
 ## 🔐 Security
 
--   **PIN Protection**: The site requires a 6-digit PIN for access. Default PINs are `000000` for both Admin and Child.
+-   **Authentication**: The site requires passwords for access (minimum 6 characters).
+-   **Super Admin**: Default credentials are `admin@coinshop.com` / `000000`. Configurable via `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` environment variables.
 -   **Rate Limiting**: The API blocks IPs after multiple failed login attempts to prevent brute-force attacks.
 -   **Cookie Safety**: Authentication is handled via `HttpOnly` cookies, preventing XSS-based token theft.
 

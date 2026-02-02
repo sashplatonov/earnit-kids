@@ -1,4 +1,4 @@
-const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadTemplates, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock, updateLastActivity } = require('./dataService');
+const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock, updateLastActivity } = require('./dataService');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -62,11 +62,7 @@ async function handleAPI(req, res) {
     }
 
     try {
-        // GET /api/templates - get available templates (Legacy but kept for compatibility if needed)
-        if (url === '/api/templates' && method === 'GET') {
-            const templates = loadTemplates();
-            return sendJSON(res, templates);
-        }
+
 
         // GET /api/base-data - get base tasks and products
         if (url === '/api/base-data' && method === 'GET') {
@@ -298,7 +294,7 @@ async function handleSuperAdminAPI(req, res) {
         }
 
         // GET /api/super/family/:id/data - get family data
-        const getFamilyMatch = url.match(/^\/api\/super\/family\/(\d+)\/data$/);
+        const getFamilyMatch = url.match(/^\/api\/super\/family\/([^/]+)\/data$/);
         if (getFamilyMatch && method === 'GET') {
             const familyId = getFamilyMatch[1];
             const data = loadFamilyData(familyId);
@@ -313,7 +309,7 @@ async function handleSuperAdminAPI(req, res) {
         }
 
         // POST /api/super/family/:id/data - update family data
-        const postFamilyMatch = url.match(/^\/api\/super\/family\/(\d+)\/data$/);
+        const postFamilyMatch = url.match(/^\/api\/super\/family\/([^/]+)\/data$/);
         if (postFamilyMatch && method === 'POST') {
             const familyId = postFamilyMatch[1];
             const body = await parseBody(req);
@@ -326,7 +322,7 @@ async function handleSuperAdminAPI(req, res) {
         }
 
         // POST /api/super/family/:id/block
-        const blockFamilyMatch = url.match(/^\/api\/super\/family\/(\d+)\/block$/);
+        const blockFamilyMatch = url.match(/^\/api\/super\/family\/([^/]+)\/block$/);
         if (blockFamilyMatch && method === 'POST') {
             const familyId = blockFamilyMatch[1];
             const body = await parseBody(req);
