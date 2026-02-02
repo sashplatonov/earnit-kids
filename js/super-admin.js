@@ -89,7 +89,6 @@ function renderFamilies() {
             <td><strong>${family.name}</strong></td>
             <td>${family.email || '-'}</td>
             <td><code>${family.adminPin || 'N/A'}</code></td>
-            <td><code>${family.childPin || 'N/A'}</code></td>
             <td>
                 <div style="display:flex; gap:0.3rem; align-items:center">
                     <button class="view-btn" style="padding:0.2rem 0.4rem; font-size:0.7rem" onclick="copyMagicLink('${family.childToken}')">Copy Link</button>

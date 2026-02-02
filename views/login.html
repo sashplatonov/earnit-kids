@@ -275,9 +275,6 @@
 
                     <label class="form-label">Пароль родителя (мин. 6 символов)</label>
                     <input type="password" id="admin-pin" class="input-field pin-input" placeholder="Пароль">
-
-                    <label class="form-label">Пароль ребёнка (мин. 6 символов)</label>
-                    <input type="password" id="child-pin" class="input-field pin-input" placeholder="Пароль">
                 </div>
 
                 <button id="register-btn" class="btn-login">Зарегистрировать</button>
@@ -418,20 +415,15 @@
             const familyName = document.getElementById('family-name').value.trim();
             const regEmail = document.getElementById('reg-email').value.trim();
             const adminPin = document.getElementById('admin-pin').value;
-            const childPin = document.getElementById('child-pin').value;
+            // childPin is no longer used, backend will generate a random one
 
             if (!regEmail || !regEmail.includes('@')) {
                 showError('Введите корректный Email');
                 return;
             }
 
-            if (adminPin.length < 6 || childPin.length < 6) {
-                showError('Пароли должны быть не менее 6 символов');
-                return;
-            }
-
-            if (adminPin === childPin) {
-                showError('Пароли родителя и ребёнка должны быть разными');
+            if (adminPin.length < 6) {
+                showError('Пароль должен быть не менее 6 символов');
                 return;
             }
 
@@ -443,7 +435,7 @@
                 const res = await fetch('api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ familyName, email: regEmail, adminPin, childPin })
+                    body: JSON.stringify({ familyName, email: regEmail, adminPin })
                 });
 
                 const data = await res.json();

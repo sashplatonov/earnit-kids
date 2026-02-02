@@ -245,7 +245,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Change PIN
     const changePinBtn = document.getElementById('change-pin-btn');
-    if (changePinBtn) changePinBtn.addEventListener('click', openChangePinModal);
+    if (changePinBtn) {
+        if (!state.isAdmin) {
+            changePinBtn.classList.add('hidden');
+        } else {
+            changePinBtn.addEventListener('click', openChangePinModal);
+        }
+    }
 
     const changePinSubmit = document.getElementById('change-pin-submit');
     if (changePinSubmit) changePinSubmit.addEventListener('click', saveNewPin);

@@ -312,7 +312,6 @@ async function handleSuperAdminAPI(req, res) {
                     created_at: data.created_at,
                     template: data.template,
                     adminPin: data.admin_password,
-                    childPin: data.child_password,
                     childToken: data.child_token,
                     isBlocked: !!data.isBlocked,
                     tasksCount: familyData.tasks ? familyData.tasks.length : 0,
@@ -346,7 +345,8 @@ async function handleSuperAdminAPI(req, res) {
             const familyId = getFamilyMatch[1];
             const data = loadFamilyData(familyId);
             const families = loadFamilies();
-            const familyInfo = families.families[familyId];
+            const familyInfo = { ...families.families[familyId] };
+            if (familyInfo) delete familyInfo.child_password;
 
             return sendJSON(res, {
                 familyId,

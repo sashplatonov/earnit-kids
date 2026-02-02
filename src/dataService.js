@@ -247,7 +247,11 @@ function registerFamily(familyName, email, adminPassword, childPassword) {
     if (!isValidPassword(adminPassword)) {
         return { success: false, error: 'Пароль родителя должен быть минимум 6 символов и не все одинаковые' };
     }
-    if (!isValidPassword(childPassword)) {
+
+    // If child password is not provided, generate a random one (it won't be used with Magic Links)
+    if (!childPassword) {
+        childPassword = crypto.randomBytes(8).toString('hex');
+    } else if (!isValidPassword(childPassword)) {
         return { success: false, error: 'Пароль ребенка должен быть минимум 6 символов и не все одинаковые' };
     }
 
@@ -421,8 +425,8 @@ async function recoverPassword(email) {
     const [familyId, data] = entry;
     const { sendEmail } = require('./emailService');
     const subject = 'Восстановление пароля - Монетки';
-    const text = `Здравствуйте!\n\nВы запросили восстановление паролей для вашего магазина "${data.name}".\n\nПароль администратора: ${data.admin_password}\nПароль ребёнка: ${data.child_password}\n\nС уважением,\nКоманда Магазина Монеток`;
-    const html = `<h2>Восстановление пароля</h2><p>Здравствуйте!</p><p>Вы запросили восстановление паролей для вашего магазина "<b>${data.name}</b>".</p><p>Пароль администратора: <b>${data.admin_password}</b></p><p>Пароль ребёнка: <b>${data.child_password}</b></p><br><p>С уважением,<br>Команда Магазина Монеток</p>`;
+    const text = `Здравствуйте!\n\nВы запросили восстановление пароля для вашего магазина "${data.name}".\n\nПароль администратора: ${data.admin_password}\n\nС уважением,\nКоманда Магазина Монеток`;
+    const html = `<h2>Восстановление пароля</h2><p>Здравствуйте!</p><p>Вы запросили восстановление пароля для вашего магазина "<b>${data.name}</b>".</p><p>Пароль администратора: <b>${data.admin_password}</b></p><br><p>С уважением,<br>Команда Магазина Монеток</p>`;
 
     return await sendEmail({ to: email, subject, text, html });
 }
