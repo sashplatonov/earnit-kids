@@ -124,6 +124,7 @@ function serveIndex(res) {
         'section_about.html',
         'section_history.html',
         'section_rules.html',
+        'section_settings.html',
         'main_end.html',
         'modals.html',
         'scripts.html'

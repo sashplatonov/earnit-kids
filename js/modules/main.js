@@ -222,10 +222,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rulesCancel = document.getElementById('rules-cancel');
     if (rulesCancel) rulesCancel.addEventListener('click', () => closeModal('rules-modal'));
 
-    // Show catalog button if admin
+    // Show catalog and settings buttons if admin
     if (state.isAdmin) {
         const catBtn = document.getElementById('nav-catalog');
         if (catBtn) catBtn.classList.remove('hidden');
+        const setBtn = document.getElementById('nav-settings');
+        if (setBtn) setBtn.classList.remove('hidden');
     }
 
     // Event Listeners
@@ -247,16 +249,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Change PIN
-    const changePinBtn = document.getElementById('change-pin-btn');
+    const changePinBtn = document.getElementById('settings-change-pin-btn');
     if (changePinBtn) {
-        if (!state.isAdmin) {
-            changePinBtn.classList.add('hidden');
-        } else {
-            changePinBtn.addEventListener('click', openChangePinModal);
-        }
+        changePinBtn.addEventListener('click', openChangePinModal);
     }
 
-    const editFamilyNameBtn = document.getElementById('edit-family-name-btn');
+    const editFamilyNameBtn = document.getElementById('settings-edit-family-btn');
     if (editFamilyNameBtn) {
         editFamilyNameBtn.addEventListener('click', openFamilySettingsModal);
     }
@@ -274,9 +272,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (changePinCancel) changePinCancel.addEventListener('click', () => closeModal('change-pin-modal'));
 
     // Child Link Modal
-    const childLinkBtn = document.getElementById('child-link-btn');
+    const childLinkBtn = document.getElementById('settings-child-link-btn');
     if (childLinkBtn) {
-        if (state.isAdmin) childLinkBtn.classList.remove('hidden');
         childLinkBtn.addEventListener('click', async () => {
             try {
                 const res = await fetch('/api/child-link');

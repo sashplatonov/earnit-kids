@@ -1,0 +1,48 @@
+<!-- Секция настроек -->
+<section class="section hidden" id="settings-section">
+    <div class="section__header">
+        <h2>Настройки</h2>
+    </div>
+
+    <div class="cards" id="settings-cards">
+        <div class="card admin-only">
+            <div class="card__header">
+                <h3 class="card__title">Название магазина</h3>
+                <div class="card__icon">✏️</div>
+            </div>
+            <p class="card__comment">Измените название, которое отображается в заголовке магазина</p>
+            <div class="card__actions">
+                <button class="btn btn--primary btn--small" id="settings-edit-family-btn">
+                    Изменить название
+                </button>
+            </div>
+        </div>
+
+        <div class="card admin-only">
+            <div class="card__header">
+                <h3 class="card__title">Безопасность</h3>
+                <div class="card__icon">🔑</div>
+            </div>
+            <p class="card__comment">Смените пароль администратора для входа в панель управления</p>
+            <div class="card__actions">
+                <button class="btn btn--secondary btn--small" id="settings-change-pin-btn">
+                    Сменить пароль
+                </button>
+            </div>
+        </div>
+
+        <div class="card admin-only">
+            <div class="card__header">
+                <h3 class="card__title">Доступ ребенка</h3>
+                <div class="card__icon">🔗</div>
+            </div>
+            <p class="card__comment">Сгенерируйте и скопируйте прямую ссылку для входа ребенка без ввода пароля</p>
+            <div class="card__actions">
+                <button class="btn btn--success btn--small" id="settings-child-link-btn"
+                    style="display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center;">
+                    <span>🔗 Ссылка для ребенка</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
