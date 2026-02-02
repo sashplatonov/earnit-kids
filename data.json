@@ -1,9 +1,9 @@
 {
-  "child_telegram_username": "@thereigo",
+  "admin_pin": "444444",
+  "child_pin": "111111",
   "balance": 0,
   "tasks": [],
   "shop": [],
   "history": [],
-  "requests": [],
-  "pin": "4444"
+  "requests": []
 }

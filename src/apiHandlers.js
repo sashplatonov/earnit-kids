@@ -1,5 +1,4 @@
 const { loadData, saveData } = require('./dataService');
-const crypto = require('crypto');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -31,72 +30,6 @@ function sendJSON(res, data, status = 200) {
     res.end(JSON.stringify(data));
 }
 
-// Verify Telegram Hash
-function verifyTelegramAuth(data, botToken) {
-    if (!botToken) return false;
-
-    const { hash, ...params } = data;
-    const dataCheckString = Object.keys(params)
-        .sort()
-        .map(key => `${key}=${params[key]}`)
-        .join('\n');
-
-    const secretKey = crypto.createHash('sha256').update(botToken).digest();
-    const hmac = crypto.createHmac('sha256', secretKey)
-        .update(dataCheckString)
-        .digest('hex');
-
-    return hmac === hash;
-}
-
-// Common logic for Telegram Login (Redirect or Callback)
-async function handleTelegramLogin(req, res, data, isRedirect = false) {
-    const botToken = process.env.BOT_TOKEN;
-
-    if (!botToken) {
-        console.warn('BOT_TOKEN is not set in environment variables!');
-        if (isRedirect) return redirectWithError(res, 'Server configuration error');
-        return sendJSON(res, { error: 'Сервер не настроен для входа через Telegram' }, 500);
-    }
-
-    if (!verifyTelegramAuth(data, botToken)) {
-        if (isRedirect) return redirectWithError(res, 'Invalid auth');
-        return sendJSON(res, { error: 'Ошибка проверки данных Telegram' }, 401);
-    }
-
-    // Check if this telegram user is allowed
-    const savedData = loadData();
-    const allowedUsername = savedData.child_telegram_username;
-    const allowedId = savedData.child_telegram_id;
-
-    const isAllowed = (allowedUsername && String(data.username).toLowerCase() === String(allowedUsername).replace('@', '').toLowerCase()) ||
-        (allowedId && String(data.id) === String(allowedId));
-
-    if (!isAllowed && (allowedUsername || allowedId)) {
-        if (isRedirect) return redirectWithError(res, 'Access denied for this Telegram account');
-        return sendJSON(res, { error: 'Этот аккаунт Telegram не привязан к магазину' }, 403);
-    }
-
-    // Success - set persistent auth cookies
-    res.setHeader('Set-Cookie', [
-        `app_auth_tg=${data.id}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`,
-        `app_tg_hash=${data.hash}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`
-    ]);
-
-    if (isRedirect) {
-        res.writeHead(302, { 'Location': '/' });
-        return res.end();
-    }
-
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ success: true }));
-}
-
-function redirectWithError(res, msg) {
-    res.writeHead(302, { 'Location': '/?error=' + encodeURIComponent(msg) });
-    res.end();
-}
-
 // Handle API requests
 async function handleAPI(req, res) {
     const url = req.url;
@@ -114,17 +47,18 @@ async function handleAPI(req, res) {
     }
 
     try {
-        // GET /api/data - load all data (SECURE: Don't send PIN)
+        // GET /api/data - load all data (SECURE: Don't send PINs)
         if (url === '/api/data' && method === 'GET') {
             const data = loadData();
-            // Remove PIN from response
-            const { pin, ...safeData } = data;
-            // Tell client if PIN is set
-            safeData.isPinSet = !!pin;
+            // Remove PINs from response
+            const { admin_pin, child_pin, ...safeData } = data;
+            // Tell client if PINs are set
+            safeData.isAdminPinSet = !!admin_pin;
+            safeData.isChildPinSet = !!child_pin;
             return sendJSON(res, safeData);
         }
 
-        // POST /api/login - new endpoint for auth
+        // POST /api/login
         if (url === '/api/login' && method === 'POST') {
             const clientIp = req.socket.remoteAddress;
             const now = Date.now();
@@ -143,59 +77,82 @@ async function handleAPI(req, res) {
 
             const body = await parseBody(req);
             const savedData = loadData();
-            const serverPin = savedData.pin;
 
-            if (!serverPin) {
-                // No PIN set yet, allow access to set it
-                return sendJSON(res, { success: true, message: 'PIN not set' });
-            }
+            const isAdmin = String(body.pin) === String(savedData.admin_pin);
+            const isChild = String(body.pin) === String(savedData.child_pin);
 
-            if (String(body.pin) === String(serverPin)) {
+            if (isAdmin || isChild) {
                 // Success - reset attempts
                 delete ipAttempts[clientIp];
+
+                const role = isAdmin ? 'admin' : 'child';
 
                 // Set authenticated cookie for 24 hours
                 res.writeHead(200, {
                     'Content-Type': 'application/json',
-                    'Set-Cookie': `app_auth=${body.pin}; Max-Age=${24 * 60 * 60}; Path=/; HttpOnly`
+                    'Set-Cookie': [
+                        `app_auth=${body.pin}; Max-Age=${24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`,
+                        `app_role=${role}; Max-Age=${24 * 60 * 60}; Path=/; SameSite=Lax`
+                    ]
                 });
-                return res.end(JSON.stringify({ success: true }));
+                return res.end(JSON.stringify({ success: true, role }));
             } else {
                 // Fail - increment attempts
                 attempts.count++;
                 ipAttempts[clientIp] = attempts;
-                return sendJSON(res, { error: 'Invalid PIN' }, 401);
+                return sendJSON(res, { error: 'Неверный ПИН-код' }, 401);
             }
         }
 
-        // POST /api/auth/telegram (Callback mode)
-        if (url === '/api/auth/telegram' && method === 'POST') {
+        // POST /api/logout
+        if (url === '/api/logout' && method === 'POST') {
+            res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Set-Cookie': [
+                    'app_auth=; Max-Age=0; Path=/; HttpOnly',
+                    'app_role=; Max-Age=0; Path=/'
+                ]
+            });
+            return res.end(JSON.stringify({ success: true }));
+        }
+
+        // POST /api/change-pin
+        if (url === '/api/change-pin' && method === 'POST') {
             const body = await parseBody(req);
-            return handleTelegramLogin(req, res, body);
-        }
+            const { oldPin, newPin, role } = body;
 
-        // GET /api/auth/telegram-redirect (Redirect mode)
-        if (url.startsWith('/api/auth/telegram-redirect') && method === 'GET') {
-            const queryString = url.split('?')[1] || '';
-            const params = new URLSearchParams(queryString);
-            const data = {};
-            for (const [key, value] of params.entries()) {
-                data[key] = value;
+            if (!newPin || newPin.length < 6 || !/^\d+$/.test(newPin)) {
+                return sendJSON(res, { error: 'ПИН-код должен состоять минимум из 6 цифр' }, 400);
             }
 
-            await handleTelegramLogin(req, res, data, true);
-            return;
+            const currentData = loadData();
+            const pinField = role === 'admin' ? 'admin_pin' : 'child_pin';
+
+            if (String(oldPin) !== String(currentData[pinField])) {
+                return sendJSON(res, { error: 'Старый ПИН-код неверен' }, 401);
+            }
+
+            currentData[pinField] = newPin;
+            if (saveData(currentData)) {
+                // Update cookie with new PIN
+                res.writeHead(200, {
+                    'Content-Type': 'application/json',
+                    'Set-Cookie': `app_auth=${newPin}; Max-Age=${24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`
+                });
+                return res.end(JSON.stringify({ success: true }));
+            } else {
+                return sendJSON(res, { error: 'Ошибка сохранения' }, 500);
+            }
         }
 
-        // POST /api/data - save all data (SECURE: Preserve PIN if not provided)
+        // POST /api/data - save all data
         if (url === '/api/data' && method === 'POST') {
             const body = await parseBody(req);
             const currentData = loadData();
 
-            // If body.pin is missing or null, keep existing PIN
-            if (body.pin === undefined || body.pin === null) {
-                body.pin = currentData.pin;
-            }
+            // Preserve PINs
+            body.admin_pin = currentData.admin_pin;
+            body.child_pin = currentData.child_pin;
 
             if (saveData(body)) {
                 return sendJSON(res, { success: true });

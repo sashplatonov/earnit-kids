@@ -119,19 +119,20 @@ const server = http.createServer(async (req, res) => {
     // Authentication Logic
     const cookies = getCookies(req);
     const savedData = loadData();
-    const serverPin = savedData.pin;
+    const adminPin = savedData.admin_pin;
+    const childPin = savedData.child_pin;
 
     // Paths that don't require auth
-    const isAuthPath = req.url === '/api/login' || req.url === '/api/auth/telegram' || req.url.startsWith('/api/auth/telegram-redirect');
-    const isPublicStatic = req.url === '/style.css' || req.url === '/favicon.ico' || req.url.startsWith('/img/');
+    const isAuthPath = req.url === '/api/login' || req.url === '/api/logout';
+    const isPublicStatic = req.url === '/style.css' || req.url === '/favicon.ico' || req.url.startsWith('/img/') || req.url.startsWith('/js/');
 
-    const isAuthenticated = (serverPin && cookies.app_auth === String(serverPin)) || !!cookies.app_auth_tg;
+    const isAuthenticated = (adminPin && cookies.app_auth === String(adminPin)) ||
+        (childPin && cookies.app_auth === String(childPin));
 
     // Verbose logging for debugging
-    if (req.url === '/' || req.url.startsWith('/api/auth')) {
+    if (req.url === '/' || req.url.startsWith('/api/login')) {
         console.log(`[DEBUG] ${new Date().toISOString()} ${req.method} ${req.url}`);
-        console.log(`[DEBUG] Cookies: ${JSON.stringify(cookies)}`);
-        console.log(`[DEBUG] Auth status: ${isAuthenticated}`);
+        console.log(`[DEBUG] Auth status: ${isAuthenticated} (role: ${cookies.app_role})`);
     }
 
     // If PIN is not set yet, allow access to set it (admin logic) or if already authenticated

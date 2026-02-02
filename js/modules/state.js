@@ -1,5 +1,6 @@
 export const state = {
     isAdmin: false,
+    role: 'child',
     balance: 0,
     tasks: [],
     shopItems: [],

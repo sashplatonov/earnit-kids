@@ -303,17 +303,11 @@ export function renderAll() {
 }
 
 export function updateAdminUI() {
-    const adminBtn = document.getElementById('admin-toggle');
-    if (adminBtn) {
-        adminBtn.classList.toggle('active', state.isAdmin);
-        const textSpan = adminBtn.querySelector('.btn__text');
-        if (textSpan) textSpan.textContent = state.isAdmin ? 'Выход' : 'Вход админа';
-    }
-
     document.querySelectorAll('.admin-only').forEach(el => {
         el.classList.toggle('hidden', !state.isAdmin);
     });
 
+    // Hide settings button if it exists and user is not admin
     const settingsBtn = document.getElementById('settings-btn');
     if (settingsBtn) settingsBtn.classList.toggle('hidden', !state.isAdmin);
 }

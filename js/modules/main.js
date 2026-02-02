@@ -1,11 +1,11 @@
-import { loadDataFromServer } from './api.js';
+import { loadDataFromServer, logout } from './api.js';
 import { state, setState } from './state.js';
-import { renderAll, updateAdminUI, renderTasks, renderShop } from './ui.js';
+import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
-import { toggleAdminMode, checkPin, openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openSettingsModal, saveSettings } from './admin.js';
+import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin } from './admin.js';
 
-// Import logic (moved from app.js)
+// Import logic
 let importType = null;
 function openImportModal(type) {
     importType = type;
@@ -93,19 +93,30 @@ window.app = {
     deleteRequest
 };
 
+// Helper to get cookie value
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
+    // Determine role from cookie
+    const role = getCookie('app_role') || 'child';
+
     // Load data
     const data = await loadDataFromServer();
     if (data) {
         setState({
-            isPinSet: data.isPinSet,
+            isAdmin: role === 'admin',
+            role: role,
+            isPinSet: data.isAdminPinSet,
             balance: data.balance || 0,
             tasks: data.tasks || [],
             shopItems: data.shop || [],
             history: data.history || [],
-            requests: data.requests || [],
-            child_telegram_username: data.child_telegram_username || ''
+            requests: data.requests || []
         });
     } else {
         showToast('Не удалось загрузить данные с сервера', 'error');
@@ -115,20 +126,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Event Listeners
 
-    // Admin
-    const adminToggle = document.getElementById('admin-toggle');
-    if (adminToggle) adminToggle.addEventListener('click', toggleAdminMode);
-
-    const pinSubmit = document.getElementById('pin-submit');
-    if (pinSubmit) pinSubmit.addEventListener('click', checkPin);
-
-    const pinCancel = document.getElementById('pin-cancel');
-    if (pinCancel) pinCancel.addEventListener('click', () => closeModal('pin-modal'));
-
-    const pinInput = document.getElementById('pin-input');
-    if (pinInput) pinInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') checkPin();
+    // Logout
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+        if (await logout()) {
+            window.location.href = '/';
+        } else {
+            showToast('Ошибка при выходе', 'error');
+        }
     });
+
+    // Change PIN
+    const changePinBtn = document.getElementById('change-pin-btn');
+    if (changePinBtn) changePinBtn.addEventListener('click', openChangePinModal);
+
+    const changePinSubmit = document.getElementById('change-pin-submit');
+    if (changePinSubmit) changePinSubmit.addEventListener('click', saveNewPin);
+
+    const changePinCancel = document.getElementById('change-pin-cancel');
+    if (changePinCancel) changePinCancel.addEventListener('click', () => closeModal('change-pin-modal'));
 
     // Tasks
     const addTaskBtn = document.getElementById('add-task-btn');
@@ -161,23 +177,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (confirmOk) confirmOk.addEventListener('click', handleConfirm);
 
     const confirmCancel = document.getElementById('confirm-cancel');
-    if (confirmCancel) confirmCancel.addEventListener('click', () => {
-        handleConfirm(); // Cleanup handles nulling callback without calling it if we modify handleConfirm logic or just manually:
-        // Actually handleConfirm calls callback. We want to CANCEL.
-        // Re-implementing cancel inline or import specialized cancel
-        closeModal('confirm-modal');
-        // also null callback
-        // window.app... wait, callback is in module scope of utils/actions. 
-        // We need a clearConfirmCallback in utils? Or handleConfirm just closes if no callback?
-        // existing handleConfirm calls it.
-        // Let's just use closeModal here and assume callback is overwritten next time or ignored.
-        // Ideally utils should export cancelConfirm()
-    });
+    if (confirmCancel) confirmCancel.addEventListener('click', () => closeModal('confirm-modal'));
 
     // Tabs
     document.querySelectorAll('.nav__btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            // Switch tab logic
             const tabName = btn.dataset.tab;
             document.querySelectorAll('.nav__btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
@@ -218,14 +222,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast('История очищена', 'info');
         });
     }
-
-    // Settings
-    const settingsBtn = document.getElementById('settings-btn');
-    if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
-
-    const settingsSave = document.getElementById('settings-save');
-    if (settingsSave) settingsSave.addEventListener('click', saveSettings);
-
-    const settingsCancel = document.getElementById('settings-cancel');
-    if (settingsCancel) settingsCancel.addEventListener('click', () => closeModal('settings-modal'));
 });

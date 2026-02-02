@@ -4,7 +4,8 @@ const path = require('path');
 const DATA_FILE = path.join(__dirname, '../data.json');
 
 const DEFAULT_DATA = {
-    pin: null,
+    admin_pin: "000000",
+    child_pin: "000000",
     balance: 0,
     tasks: [],
     shop: [],

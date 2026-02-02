@@ -1,90 +1,35 @@
 import { state, setState, notify } from './state.js';
-import { login, saveDataToServer } from './api.js';
-import { updateAdminUI, renderTasks, renderShop, renderAll } from './ui.js';
+import { changePin, saveDataToServer } from './api.js';
+import { renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, showConfirm } from './utils.js';
 import { scheduleSave } from './actions.js';
 
 let editingTaskId = null;
 let editingShopId = null;
 
-// Admin Toggle Logic
-export function toggleAdminMode() {
-    if (state.isAdmin) {
-        // Logout
-        setState({ isAdmin: false });
-        updateAdminUI();
-        showToast('Вы вышли из режима администратора', 'info');
-    } else {
-        // Login
-        openModal('pin-modal');
-        const input = document.getElementById('pin-input');
-        if (input) {
-            input.value = '';
-            input.focus();
-        }
-
-        // Hint logic
-        const hint = document.getElementById('pin-hint');
-        const title = document.getElementById('pin-modal-title');
-
-        if (state.isPinSet) {
-            if (hint) hint.classList.add('hidden');
-            if (title) title.textContent = 'Введите PIN';
-        } else {
-            if (hint) {
-                hint.classList.remove('hidden');
-                hint.textContent = 'Придумайте PIN-код для входа';
-            }
-            if (title) title.textContent = 'Создание PIN';
-        }
-    }
+// PIN Changing Logic
+export function openChangePinModal() {
+    document.getElementById('old-pin').value = '';
+    document.getElementById('new-pin').value = '';
+    openModal('change-pin-modal');
 }
 
-export async function checkPin() {
-    const input = document.getElementById('pin-input').value;
-    if (!input || input.length < 4) {
-        showToast('PIN должен быть минимум 4 символа', 'error');
+export async function saveNewPin() {
+    const oldPin = document.getElementById('old-pin').value;
+    const newPin = document.getElementById('new-pin').value;
+
+    if (!newPin || newPin.length < 6) {
+        showToast('Новый ПИН-код должен быть не менее 6 знаков', 'error');
         return;
     }
 
-    if (!state.isPinSet) {
-        const success = await saveDataToServer({
-            pin: input,
-            balance: state.balance,
-            tasks: state.tasks,
-            shop: state.shopItems,
-            history: state.history,
-            requests: state.requests
-        });
-
-        if (success) {
-            setState({ isAdmin: true, isPinSet: true });
-            closeModal('pin-modal');
-            updateAdminUI();
-            showToast('PIN сохранён! Вы вошли как администратор', 'success');
-        } else {
-            showToast('Ошибка сохранения PIN', 'error');
-        }
-        return;
-    }
-
-    // Server-side validation
-    const result = await login(input);
+    const result = await changePin(oldPin, newPin, state.role);
 
     if (result.success) {
-        setState({ isAdmin: true });
-        closeModal('pin-modal');
-        updateAdminUI();
-        showToast('Добро пожаловать, администратор!', 'success');
-    } else if (result.status === 429) {
-        showToast(result.error || 'Слишком много попыток', 'error');
+        showToast('ПИН-код успешно изменен', 'success');
+        closeModal('change-pin-modal');
     } else {
-        showToast('Неверный PIN-код', 'error');
-        const el = document.getElementById('pin-input');
-        if (el) {
-            el.value = '';
-            el.focus();
-        }
+        showToast(result.error || 'Ошибка при смене ПИН-кода', 'error');
     }
 }
 
@@ -164,14 +109,7 @@ export function deleteTask() {
     if (!editingTaskId) return;
 
     showConfirm('Удалить задание?', 'Это действие нельзя отменить.', () => {
-        const newState = { ...state };
-        newState.tasks = newState.tasks.filter(t => t.id !== editingTaskId);
-        setState(newState); // Triggers notify if we used direct assignment in `tasks` logic? 
-        // We modified array in place in saveTask, here we replace. 
-        // Consistency: best to manipulate state object and call setState or rely on ref references.
-        // Since `state` is exported as const ref to obj, modifying properties works if observers read them.
-        // `notify()` is key.
-
+        state.tasks = state.tasks.filter(t => t.id !== editingTaskId);
         scheduleSave();
         renderTasks();
         closeModal('task-modal');
@@ -279,47 +217,4 @@ export function deleteShopItem() {
 
 export function editShopItem(id) {
     openShopModal(id);
-}
-
-// Settings
-export function openSettingsModal() {
-    document.getElementById('settings-tg-username').value = state.child_telegram_username || '';
-    document.getElementById('settings-pin').value = '';
-    openModal('settings-modal');
-}
-
-export async function saveSettings() {
-    const tgUsername = document.getElementById('settings-tg-username').value.trim();
-    const newPin = document.getElementById('settings-pin').value.trim();
-
-    const dataToSave = {
-        ...state,
-        child_telegram_username: tgUsername
-    };
-
-    if (newPin) {
-        if (newPin.length < 4) {
-            return showToast('Новый PIN должен быть минимум 4 символа', 'error');
-        }
-        dataToSave.pin = newPin;
-    }
-
-    const success = await saveDataToServer({
-        pin: dataToSave.pin, // api handles preserving existing if missing, but here we explicitly sending
-        child_telegram_username: dataToSave.child_telegram_username,
-        balance: state.balance,
-        tasks: state.tasks,
-        shop: state.shopItems,
-        history: state.history,
-        requests: state.requests
-    });
-
-    if (success) {
-        setState({ child_telegram_username: tgUsername });
-        closeModal('settings-modal');
-        showToast('Настройки сохранены!', 'success');
-        if (newPin) showToast('PIN-код обновлен', 'info');
-    } else {
-        showToast('Ошибка при сохранении настроек', 'error');
-    }
 }

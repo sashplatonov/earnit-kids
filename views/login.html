@@ -10,64 +10,38 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --login-bg: radial-gradient(circle at top right, #1a1a2e, #16213e);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
         .login-page {
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 1rem;
-            background: radial-gradient(circle at top right, var(--color-bg-light), var(--color-bg));
+            padding: 1.5rem;
+            background: var(--login-bg);
+            font-family: 'Nunito', sans-serif;
+            color: white;
         }
 
         .login-card {
-            background: var(--gradient-card);
-            padding: 2.5rem;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            animation: modalSlide 0.4s ease;
+            border: 1px solid var(--card-border);
+            animation: fadeIn 0.6s ease-out;
         }
 
-        .login-logo {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            display: inline-block;
-            animation: coin-bounce 2s ease-in-out infinite;
-        }
-
-        .login-title {
-            font-size: 1.75rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            background: var(--gradient-gold);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .login-subtitle {
-            color: var(--color-text-muted);
-            margin-bottom: 2rem;
-            font-weight: 600;
-        }
-
-        .pin-input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .pin-input {
-            letter-spacing: 0.5em;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            padding: 1rem;
-        }
-
-        @keyframes modalSlide {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(20px);
@@ -78,6 +52,124 @@
                 transform: translateY(0);
             }
         }
+
+        .login-logo {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .login-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffd700 0%, #ffae00 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 2.5rem;
+            font-weight: 600;
+        }
+
+        .pin-container {
+            margin-bottom: 2rem;
+        }
+
+        .pin-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--card-border);
+            border-radius: 1rem;
+            color: white;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 0.5em;
+            padding: 1rem;
+            text-align: center;
+            width: 100%;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .pin-input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #ffd700 0%, #ffae00 100%);
+            border: none;
+            border-radius: 1rem;
+            color: #1a1a2e;
+            cursor: pointer;
+            font-size: 1.25rem;
+            font-weight: 800;
+            padding: 1.25rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px -5px rgba(255, 174, 0, 0.4);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(255, 174, 0, 0.5);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.2);
+            border-radius: 0.75rem;
+            color: #ff4757;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            display: none;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
     </style>
 </head>
 
@@ -86,43 +178,17 @@
         <div class="login-card">
             <div class="login-logo">🪙</div>
             <h1 class="login-title">Магазин Монеток</h1>
-            <p id="login-instruction" class="login-subtitle">Выберите способ входа</p>
+            <p class="login-subtitle">Введите ПИН-код для входа</p>
 
-            <div id="auth-methods" style="display: flex; flex-direction: column; gap: 1rem;">
-                <!-- Telegram Login Widget -->
-                <div id="tg-login-container">
-                    <script async src="https://telegram.org/js/telegram-widget.js?22"
-                        data-telegram-login="{{BOT_USERNAME}}" data-size="large"
-                        data-auth-url="/api/auth/telegram-redirect" data-request-access="write"></script>
-                </div>
-
-                <div class="divider" style="margin: 0.5rem 0; color: var(--color-text-muted); font-size: 0.9rem;">или
-                </div>
-
-                <button id="show-pin-btn" class="btn btn--secondary" style="width: 100%;">
-                    Войти по ПИН-коду
-                </button>
+            <div class="pin-container">
+                <input type="password" id="pin-input" class="pin-input" placeholder="••••••" inputmode="numeric"
+                    maxlength="10" autocomplete="current-password">
             </div>
 
-            <div id="pin-auth-form" style="display: none;">
-                <div class="form-group pin-input-group">
-                    <input type="password" id="pin-input" class="input pin-input" placeholder="••••" inputmode="numeric"
-                        maxlength="8" autocomplete="one-time-code">
-                </div>
+            <button id="login-btn" class="btn-login">Войти</button>
 
-                <button id="login-btn" class="btn btn--primary" style="width: 100%; height: 56px; font-size: 1.1rem;">
-                    Войти
-                </button>
-
-                <button id="back-to-methods" class="btn"
-                    style="margin-top: 1rem; background: transparent; color: var(--color-text-muted);">
-                    ← Назад
-                </button>
-            </div>
-
-            <div id="error-msg" class="hint"
-                style="color: var(--color-danger); margin-top: 1rem; display: none; font-weight: 700;">
-                ❌ Ошибка входа
+            <div id="error-msg" class="error-message">
+                ❌ Неверный ПИН-код
             </div>
         </div>
     </div>
@@ -131,61 +197,16 @@
         const btn = document.getElementById('login-btn');
         const input = document.getElementById('pin-input');
         const error = document.getElementById('error-msg');
-        const pinAuthForm = document.getElementById('pin-auth-form');
-        const authMethods = document.getElementById('auth-methods');
-        const showPinBtn = document.getElementById('show-pin-btn');
-        const backToMethods = document.getElementById('back-to-methods');
-        const loginInstruction = document.getElementById('login-instruction');
-
-        // Toggle forms
-        showPinBtn.addEventListener('click', () => {
-            authMethods.style.display = 'none';
-            pinAuthForm.style.display = 'block';
-            loginInstruction.textContent = 'Введите ПИН-код';
-            input.focus();
-        });
-
-        backToMethods.addEventListener('click', () => {
-            authMethods.style.display = 'flex';
-            pinAuthForm.style.display = 'none';
-            loginInstruction.textContent = 'Выберите способ входа';
-            error.style.display = 'none';
-        });
-
-        // Telegram Auth Callback
-        async function onTelegramAuth(user) {
-            error.style.display = 'none';
-            try {
-                const res = await fetch('/api/auth/telegram', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(user)
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    window.location.reload();
-                } else {
-                    error.textContent = '❌ ' + (data.error || 'Доступ запрещен');
-                    error.style.display = 'block';
-                }
-            } catch (err) {
-                console.error(err);
-                error.textContent = '❌ Ошибка связи с сервером';
-                error.style.display = 'block';
-            }
-        }
 
         async function doLogin() {
             const pin = input.value;
-            if (!pin) {
-                input.focus();
+            if (pin.length < 6) {
+                showError('ПИН-код должен быть не менее 6 знаков');
                 return;
             }
 
             btn.disabled = true;
-            btn.textContent = 'Проверка...';
+            btn.textContent = 'Вход...';
             error.style.display = 'none';
 
             try {
@@ -200,17 +221,27 @@
                 if (res.ok) {
                     window.location.reload();
                 } else {
-                    error.style.display = 'block';
-                    btn.textContent = 'Войти в систему';
+                    showError(data.error || 'Ошибка входа');
+                    btn.textContent = 'Войти';
                     btn.disabled = false;
                     input.value = '';
                     input.focus();
                 }
             } catch (err) {
                 console.error(err);
-                btn.textContent = 'Ошибка';
+                showError('Ошибка связи с сервером');
+                btn.textContent = 'Войти';
                 btn.disabled = false;
             }
+        }
+
+        function showError(msg) {
+            error.textContent = '❌ ' + msg;
+            error.style.display = 'block';
+            // Trigger shake animation
+            error.style.animation = 'none';
+            error.offsetHeight; // force reflow
+            error.style.animation = null;
         }
 
         btn.addEventListener('click', doLogin);
