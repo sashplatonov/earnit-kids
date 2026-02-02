@@ -524,8 +524,13 @@
             if (e.key === 'Enter') doRecover();
         });
 
-        // Auto-focus on load
+        // Auto-focus on load and check errors
         window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            if (error === 'invalid_token') {
+                showError('Недействительная или просроченная ссылка для входа.');
+            }
             if (emailInput) emailInput.focus();
         });
     </script>

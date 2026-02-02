@@ -19,7 +19,7 @@ if (fs.existsSync(envPath)) {
 }
 
 const { handleAPI, handleSuperAdminAPI } = require('./src/apiHandlers');
-const { findFamilyByEmail } = require('./src/dataService');
+const { findFamilyByEmail, authenticateChildByToken } = require('./src/dataService');
 
 const PORT = process.env.PORT || 3000;
 
@@ -150,6 +150,33 @@ function serveIndex(res) {
 // Create server
 const server = http.createServer(async (req, res) => {
     console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+    const url = req.url;
+
+    // Handle magic link for child login
+    if (url.startsWith('/login-child/')) {
+        const token = url.split('/login-child/')[1];
+        const authResult = authenticateChildByToken(token);
+
+        if (authResult.success) {
+            const maxAge = 365 * 24 * 60 * 60; // 1 year for children links
+            const cookiesArr = [
+                `app_auth=${authResult.email}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`,
+                `app_role=child; Max-Age=${maxAge}; Path=/; SameSite=Lax`,
+                `family_id=${authResult.familyId}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`
+            ];
+
+            res.writeHead(302, {
+                'Location': '/',
+                'Set-Cookie': cookiesArr
+            });
+            res.end();
+            return;
+        } else {
+            res.writeHead(302, { 'Location': '/login.html?error=invalid_token' });
+            res.end();
+            return;
+        }
+    }
 
     // Authentication Logic
     const cookies = getCookies(req);

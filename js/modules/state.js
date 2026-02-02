@@ -8,6 +8,7 @@ export const state = {
     requests: [],
     isPinSet: false,
     familyId: null,
+    familyName: '',
     baseData: { tasks: [], products: [] }
 };
 

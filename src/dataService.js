@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const FAMILIES_FILE = path.join(DATA_DIR, 'families.json');
@@ -49,6 +50,21 @@ function loadFamilies() {
         email: process.env.SUPER_ADMIN_EMAIL || (data.super_admin ? data.super_admin.email : 'admin@coinshop.com'),
         password: process.env.SUPER_ADMIN_PASSWORD || (data.super_admin ? data.super_admin.password : '000000')
     };
+
+    // Migration: ensure all families have a child_token
+    let needsSave = false;
+    if (data.families) {
+        Object.values(data.families).forEach(family => {
+            if (!family.child_token) {
+                family.child_token = crypto.randomBytes(32).toString('hex');
+                needsSave = true;
+            }
+        });
+    }
+
+    if (needsSave) {
+        saveFamilies(data);
+    }
 
     return data;
 }
@@ -125,6 +141,32 @@ function authenticateUser(email, password) {
     }
 
     return { success: false, error: 'Пользователь не найден' };
+}
+
+// Authenticate child by magic token
+function authenticateChildByToken(token) {
+    if (!token) return { success: false, error: 'Токен отсутствует' };
+
+    const families = loadFamilies();
+    const entry = Object.entries(families.families).find(([id, data]) => data.child_token === token);
+
+    if (entry) {
+        const [familyId, data] = entry;
+
+        if (data.isBlocked) {
+            return { success: false, error: 'Аккаунт заблокирован. Обратитесь к администратору.' };
+        }
+
+        return {
+            success: true,
+            role: 'child',
+            familyName: data.name,
+            familyId: familyId,
+            email: data.email
+        };
+    }
+
+    return { success: false, error: 'Неверная ссылка или токен' };
 }
 
 // Find family by Email
@@ -225,7 +267,8 @@ function registerFamily(familyName, email, adminPassword, childPassword) {
         email: email,
         created_at: now.toISOString(),
         admin_password: adminPassword,
-        child_password: childPassword
+        child_password: childPassword,
+        child_token: crypto.randomBytes(32).toString('hex')
     };
 
     if (saveFamilies(families)) {
@@ -236,6 +279,28 @@ function registerFamily(familyName, email, adminPassword, childPassword) {
     }
 
     return { success: false, error: 'Ошибка сохранения' };
+}
+
+// Get child login link
+function getChildLoginLink(familyId, req) {
+    const families = loadFamilies();
+    const family = families.families[familyId];
+    if (!family || !family.child_token) return null;
+
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    return `${protocol}://${host}/login-child/${family.child_token}`;
+}
+
+// Regenerate child token
+function regenerateChildToken(familyId) {
+    const families = loadFamilies();
+    if (families.families[familyId]) {
+        families.families[familyId].child_token = crypto.randomBytes(32).toString('hex');
+        saveFamilies(families);
+        return true;
+    }
+    return false;
 }
 
 // Change Password for a family member
@@ -368,6 +433,7 @@ module.exports = {
     findFamilyByEmail,
     findFamilyById,
     authenticateUser,
+    authenticateChildByToken,
     loadFamilyData,
     saveFamilyData,
     registerFamily,
@@ -376,5 +442,7 @@ module.exports = {
     saveBaseData,
     toggleFamilyBlock,
     updateLastActivity,
-    recoverPassword
+    recoverPassword,
+    getChildLoginLink,
+    regenerateChildToken
 };

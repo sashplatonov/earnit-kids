@@ -1,4 +1,4 @@
-import { loadDataFromServer, logout, loadBaseData } from './api.js';
+import { loadDataFromServer, logout, loadBaseData, regenerateChildToken } from './api.js';
 import { state, setState } from './state.js';
 import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
@@ -190,6 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             shopItems: data.shop || [],
             history: data.history || [],
             requests: data.requests || [],
+            familyName: data.familyName || '',
             baseData: baseData
         });
     } else {
@@ -251,6 +252,63 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const changePinCancel = document.getElementById('change-pin-cancel');
     if (changePinCancel) changePinCancel.addEventListener('click', () => closeModal('change-pin-modal'));
+
+    // Child Link Modal
+    const childLinkBtn = document.getElementById('child-link-btn');
+    if (childLinkBtn) {
+        if (state.isAdmin) childLinkBtn.classList.remove('hidden');
+        childLinkBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/child-link');
+                const data = await res.json();
+                if (data.link) {
+                    const input = document.getElementById('child-link-input');
+                    if (input) input.value = data.link;
+                    openModal('child-link-modal');
+                } else {
+                    showToast('Ошибка получения ссылки: ' + (data.error || 'неизвестно'), 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сети', 'error');
+            }
+        });
+    }
+
+    const copyLinkBtn = document.getElementById('copy-child-link-btn');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', () => {
+            const input = document.getElementById('child-link-input');
+            if (input) {
+                input.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Ссылка скопирована!', 'success');
+                } catch (err) {
+                    showToast('Не удалось скопировать', 'error');
+                }
+            }
+        });
+    }
+
+    const childLinkClose = document.getElementById('child-link-close');
+    if (childLinkClose) {
+        childLinkClose.addEventListener('click', () => closeModal('child-link-modal'));
+    }
+
+    const regenerateChildLinkBtn = document.getElementById('regenerate-child-link-btn');
+    if (regenerateChildLinkBtn) {
+        regenerateChildLinkBtn.addEventListener('click', async () => {
+            if (!confirm('Вы уверены, что хотите обновить ссылку? Старая ссылка перестанет работать.')) return;
+            const data = await regenerateChildToken();
+            if (data && data.link) {
+                const input = document.getElementById('child-link-input');
+                if (input) input.value = data.link;
+                showToast('Ссылка обновлена', 'success');
+            } else {
+                showToast('Ошибка при обновлении ссылки', 'error');
+            }
+        });
+    }
 
     // Tasks
     const addTaskBtn = document.getElementById('add-task-btn');

@@ -301,6 +301,7 @@ export function renderAll() {
     renderShop();
     renderHistory();
     updateAdminUI();
+    updateShopNameUI();
 }
 
 export function updateAdminUI() {
@@ -311,4 +312,11 @@ export function updateAdminUI() {
     // Hide settings button if it exists and user is not admin
     const settingsBtn = document.getElementById('settings-btn');
     if (settingsBtn) settingsBtn.classList.toggle('hidden', !state.isAdmin);
+}
+
+export function updateShopNameUI() {
+    const shopNameEl = document.getElementById('shop-name-display');
+    if (shopNameEl) {
+        shopNameEl.textContent = state.familyName || '';
+    }
 }

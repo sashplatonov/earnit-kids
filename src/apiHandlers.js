@@ -1,4 +1,4 @@
-const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock, updateLastActivity, recoverPassword } = require('./dataService');
+const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, authenticateChildByToken, toggleFamilyBlock, updateLastActivity, recoverPassword, getChildLoginLink, regenerateChildToken } = require('./dataService');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -213,9 +213,13 @@ async function handleAPI(req, res) {
             }
 
             const data = loadFamilyData(familyId);
+            const families = loadFamilies();
+            const familyInfo = families.families[familyId];
+
             // Add role info for frontend
             data.isAdmin = role === 'admin';
             data.familyId = familyId;
+            data.familyName = familyInfo ? familyInfo.name : 'Магазин';
             return sendJSON(res, data);
         }
 
@@ -244,6 +248,30 @@ async function handleAPI(req, res) {
                 return sendJSON(res, { success: true });
             } else {
                 return sendJSON(res, { error: 'Failed to save' }, 500);
+            }
+        }
+
+        // GET /api/child-link - get child login link (admin only)
+        if (url === '/api/child-link' && method === 'GET') {
+            const { familyId, role } = getFamilyContext(req);
+            if (!familyId || role !== 'admin') {
+                return sendJSON(res, { error: 'Forbidden' }, 403);
+            }
+            const link = getChildLoginLink(familyId, req);
+            return sendJSON(res, { link });
+        }
+
+        // POST /api/regenerate-token - regenerate child link (admin only)
+        if (url === '/api/regenerate-token' && method === 'POST') {
+            const { familyId, role } = getFamilyContext(req);
+            if (!familyId || role !== 'admin') {
+                return sendJSON(res, { error: 'Forbidden' }, 403);
+            }
+            if (regenerateChildToken(familyId)) {
+                const link = getChildLoginLink(familyId, req);
+                return sendJSON(res, { success: true, link });
+            } else {
+                return sendJSON(res, { error: 'Failed' }, 500);
             }
         }
 
@@ -285,6 +313,7 @@ async function handleSuperAdminAPI(req, res) {
                     template: data.template,
                     adminPin: data.admin_password,
                     childPin: data.child_password,
+                    childToken: data.child_token,
                     isBlocked: !!data.isBlocked,
                     tasksCount: familyData.tasks ? familyData.tasks.length : 0,
                     shopCount: familyData.shop ? familyData.shop.length : 0,
@@ -351,6 +380,17 @@ async function handleSuperAdminAPI(req, res) {
                 return sendJSON(res, { success: true });
             } else {
                 return sendJSON(res, { error: result.error || 'Failed to update block status' }, 500);
+            }
+        }
+
+        // POST /api/super/family/:id/regenerate-token
+        const regenMatch = url.match(/^\/api\/super\/family\/([^/]+)\/regenerate-token$/);
+        if (regenMatch && method === 'POST') {
+            const familyId = regenMatch[1];
+            if (regenerateChildToken(familyId)) {
+                return sendJSON(res, { success: true });
+            } else {
+                return sendJSON(res, { error: 'Failed to regenerate' }, 500);
             }
         }
 

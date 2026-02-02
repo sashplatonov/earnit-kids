@@ -89,3 +89,15 @@ export async function login(pin) {
         return { success: false, error: 'Network Error' };
     }
 }
+
+export async function regenerateChildToken() {
+    try {
+        const response = await fetch('/api/regenerate-token', { method: 'POST' });
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (err) {
+        console.error('Failed to regenerate token:', err);
+    }
+    return null;
+}

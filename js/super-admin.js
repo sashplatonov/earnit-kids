@@ -90,6 +90,12 @@ function renderFamilies() {
             <td>${family.email || '-'}</td>
             <td><code>${family.adminPin || 'N/A'}</code></td>
             <td><code>${family.childPin || 'N/A'}</code></td>
+            <td>
+                <div style="display:flex; gap:0.3rem; align-items:center">
+                    <button class="view-btn" style="padding:0.2rem 0.4rem; font-size:0.7rem" onclick="copyMagicLink('${family.childToken}')">Copy Link</button>
+                    ${family.childToken ? '<span title="Link Exists">🔗</span>' : ''}
+                </div>
+            </td>
             <td>${family.tasksCount || 0}</td>
             <td>${family.shopCount || 0}</td>
             <td>${family.isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>'}</td>
@@ -326,6 +332,14 @@ function renderFamilyDetails(familyData) {
                 <strong>Баланс</strong>
                 <div>${familyData.data.balance} 🪙</div>
             </div>
+            <div class="detail-item" style="grid-column: span 2">
+                <strong>Magic Link (Ребенок)</strong>
+                <div style="display:flex; gap:0.5rem; margin-top:0.3rem">
+                    <input type="text" readonly value="${window.location.origin}/login-child/${familyData.familyInfo.child_token}" style="flex:1; font-size:0.8rem" id="modal-magic-link">
+                    <button class="view-btn" onclick="copyMagicLink('${familyData.familyInfo.child_token}')">Copy</button>
+                    <button class="block-btn" style="background:#f59e0b" onclick="regenerateToken('${familyData.familyId}')">Refresh</button>
+                </div>
+            </div>
         </div>
 
         <h3>📋 Задания (${familyData.data.tasks.length})</h3>
@@ -422,3 +436,34 @@ async function toggleBlock(familyId, shouldBlock) {
         alert('Ошибка связи с сервером');
     }
 }
+
+window.copyMagicLink = (token) => {
+    if (!token) return alert('Token missing');
+    const link = `${window.location.origin}/login-child/${token}`;
+    navigator.clipboard.writeText(link).then(() => {
+        alert('Link copied to clipboard');
+    }).catch(err => {
+        console.error('Failed to copy link:', err);
+        alert('Failed to copy. See console.');
+    });
+};
+
+window.regenerateToken = async (familyId) => {
+    if (!confirm('Regenerate child link? Old link will stop working.')) return;
+    try {
+        const res = await fetch(`/api/super/family/${familyId}/regenerate-token`, { method: 'POST' });
+        if (res.ok) {
+            alert('Token regenerated');
+            // Re-view to update modal
+            viewFamily(familyId);
+            // Reload list in background
+            loadFamilies();
+        } else {
+            alert('Failed to regenerate');
+        }
+    } catch (err) {
+        console.error('Error:', err);
+        alert('Server error');
+    }
+};
+

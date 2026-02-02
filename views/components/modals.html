@@ -140,3 +140,21 @@
         </div>
     </div>
 </div>
+
+<!-- Модальное окно: Ссылка для ребенка -->
+<div class="modal" id="child-link-modal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <h3>🔗 Ссылка для входа ребенка</h3>
+        <p>Отправьте эту ссылку ребенку, чтобы он мог войти без пароля.</p>
+        <div class="form-group">
+            <input type="text" class="input" id="child-link-input" readonly>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="child-link-close">Закрыть</button>
+            <button class="btn btn--danger" id="regenerate-child-link-btn"
+                style="padding: 0.5rem 0.8rem; font-size: 0.8rem;">Обновить ссылку</button>
+            <button class="btn btn--primary" id="copy-child-link-btn">Копировать</button>
+        </div>
+    </div>
+</div>
