@@ -3,9 +3,10 @@ export const LOGIN_URL = 'api/login';
 export const LOGOUT_URL = 'api/logout';
 export const CHANGE_PIN_URL = 'api/change-pin';
 
+// ...existing code...
 export async function loadDataFromServer() {
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch('api/data');
         if (response.ok) {
             return await response.json();
         }
@@ -14,6 +15,19 @@ export async function loadDataFromServer() {
     }
     return null;
 }
+
+export async function loadBaseData() {
+    try {
+        const response = await fetch('api/base-data');
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (err) {
+        console.error('Failed to load base data:', err);
+    }
+    return { tasks: [], products: [] };
+}
+// ...existing code...
 
 export async function saveDataToServer(data) {
     try {

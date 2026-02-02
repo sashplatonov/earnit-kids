@@ -2,17 +2,17 @@
 <div class="modal" id="change-pin-modal">
     <div class="modal__backdrop"></div>
     <div class="modal__content">
-        <h3>🔑 Сменить ПИН-код</h3>
-        <p>Для смены введите старый и новый ПИН-код</p>
+        <h3>🔑 Сменить Пароль</h3>
+        <p>Для смены введите старый и новый пароль</p>
         <div class="form-group">
-            <label for="old-pin">Старый ПИН-код</label>
-            <input type="password" class="input" id="old-pin" maxlength="10" placeholder="••••••">
+            <label for="old-pin">Старый пароль</label>
+            <input type="password" class="input" id="old-pin" placeholder="••••••">
         </div>
         <div class="form-group">
-            <label for="new-pin">Новый ПИН-код</label>
-            <input type="password" class="input" id="new-pin" maxlength="10" placeholder="••••••">
+            <label for="new-pin">Новый пароль (мин. 6 символов)</label>
+            <input type="password" class="input" id="new-pin" placeholder="••••••">
         </div>
-        <p class="hint">Минимум 6 цифр</p>
+        <p class="hint">Минимум 6 символов, не все одинаковые</p>
         <div class="modal__actions">
             <button class="btn btn--secondary" id="change-pin-cancel">Отмена</button>
             <button class="btn btn--primary" id="change-pin-submit">Сохранить</button>

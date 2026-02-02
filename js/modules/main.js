@@ -1,11 +1,89 @@
-import { loadDataFromServer, logout } from './api.js';
+import { loadDataFromServer, logout, loadBaseData } from './api.js';
 import { state, setState } from './state.js';
 import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
 import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin } from './admin.js';
 
-// Import logic
+// Catalog Logic
+function renderCatalog() {
+    const ageInput = document.getElementById('catalog-age-filter');
+    const ignoreAgeCheckbox = document.getElementById('catalog-ignore-age');
+    if (!ageInput) return;
+
+    const age = parseInt(ageInput.value) || 7;
+    const ignoreAge = ignoreAgeCheckbox ? ignoreAgeCheckbox.checked : false;
+
+    const tasksList = document.getElementById('catalog-tasks-list');
+    const productsList = document.getElementById('catalog-products-list');
+
+    if (tasksList && state.baseData.tasks) {
+        const tasks = state.baseData.tasks.filter(t => ignoreAge || (age >= t.age_min && age <= t.age_max));
+        tasksList.innerHTML = tasks.map(t => `
+            <div class="catalog-item">
+                <div class="catalog-info">
+                    <span class="catalog-name">${t.name}</span>
+                    <span class="catalog-meta">${t.coins} 🪙 | ${t.age_min}-${t.age_max} л.</span>
+                </div>
+                <button class="btn-add" onclick="window.app.addCatalogItem('task', '${t.id}')">+</button>
+            </div>
+        `).join('');
+    }
+
+    if (productsList && state.baseData.products) {
+        const products = state.baseData.products.filter(p => ignoreAge || (age >= p.age_min && age <= p.age_max));
+        productsList.innerHTML = products.map(p => `
+            <div class="catalog-item">
+                <div class="catalog-info">
+                    <span class="catalog-name">${p.name}</span>
+                    <span class="catalog-meta">${p.price} 🪙 | ${p.age_min}-${p.age_max} л.</span>
+                </div>
+                <button class="btn-add" onclick="window.app.addCatalogItem('product', '${p.id}')">+</button>
+            </div>
+        `).join('');
+    }
+}
+
+function addCatalogItem(type, id) {
+    const source = type === 'task' ? state.baseData.tasks : state.baseData.products;
+    const item = source.find(i => i.id === id);
+
+    if (!item) return;
+
+    // Check for duplicates by name
+    const existing = type === 'task'
+        ? state.tasks.find(t => t.name === item.name)
+        : state.shopItems.find(i => i.name === item.name);
+
+    if (existing) {
+        showToast('Такой ' + (type === 'task' ? 'задание' : 'товар') + ' уже есть!', 'error');
+        return;
+    }
+
+    const newItem = {
+        ...item,
+        id: Date.now(), // New unique ID
+        frequency: { limit: 1, period: 'day' } // Default frequency
+    };
+
+    // Clean up base data specific fields if needed
+    delete newItem.age_min;
+    delete newItem.age_max;
+
+    if (type === 'task') {
+        state.tasks.push(newItem);
+        renderTasks();
+        showToast('Задание добавлено', 'success');
+    } else {
+        state.shopItems.push(newItem);
+        renderShop();
+        showToast('Товар добавлен', 'success');
+    }
+
+    scheduleSave();
+}
+
+// Import logic (Existing...)
 let importType = null;
 function openImportModal(type) {
     importType = type;
@@ -90,7 +168,8 @@ window.app = {
     deleteHistoryItem,
     approveRequest,
     rejectRequest,
-    deleteRequest
+    deleteRequest,
+    addCatalogItem
 };
 
 // Helper to get cookie value
@@ -108,23 +187,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load data
     const data = await loadDataFromServer();
     if (data) {
+        // Load Base Data if Admin
+        let baseData = { tasks: [], products: [] };
+        if (data.isAdmin) {
+            baseData = await loadBaseData() || baseData;
+        }
+
         setState({
-            isAdmin: role === 'admin',
-            role: role,
-            isPinSet: data.isAdminPinSet,
+            isAdmin: data.isAdmin || false,
+            role: data.isAdmin ? 'admin' : 'child',
+            familyId: data.familyId || null,
             balance: data.balance || 0,
             tasks: data.tasks || [],
             shopItems: data.shop || [],
             history: data.history || [],
-            requests: data.requests || []
+            requests: data.requests || [],
+            baseData: baseData
         });
     } else {
         showToast('Не удалось загрузить данные с сервера', 'error');
     }
 
     renderAll();
+    // Render catalog if admin
+    if (state.isAdmin) renderCatalog();
+
+    // Show catalog button if admin
+    if (state.isAdmin) {
+        const catBtn = document.getElementById('nav-catalog');
+        if (catBtn) catBtn.classList.remove('hidden');
+    }
 
     // Event Listeners
+
+    // Catalog Filter
+    const ageFilter = document.getElementById('catalog-age-filter');
+    if (ageFilter) {
+        ageFilter.addEventListener('input', renderCatalog);
+        ageFilter.addEventListener('change', renderCatalog);
+    }
+
+    const ignoreAge = document.getElementById('catalog-ignore-age');
+    if (ignoreAge) {
+        ignoreAge.addEventListener('change', renderCatalog);
+    }
 
     // Logout
     const logoutBtn = document.getElementById('logout-btn');

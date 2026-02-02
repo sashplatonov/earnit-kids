@@ -7,7 +7,8 @@ export const state = {
     history: [],
     requests: [],
     isPinSet: false,
-    child_telegram_username: ''
+    familyId: null,
+    baseData: { tasks: [], products: [] }
 };
 
 // Simple event bus for state changes

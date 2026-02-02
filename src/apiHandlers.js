@@ -1,4 +1,4 @@
-const { loadData, saveData } = require('./dataService');
+const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadTemplates, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock } = require('./dataService');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -24,10 +24,24 @@ function parseBody(req) {
 // Send JSON response
 function sendJSON(res, data, status = 200) {
     res.writeHead(status, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Content-Type': 'application/json'
     });
     res.end(JSON.stringify(data));
+}
+
+// Get family context from cookies
+function getFamilyContext(req) {
+    const cookies = {};
+    const rc = req.headers.cookie;
+    rc && rc.split(';').forEach((cookie) => {
+        const parts = cookie.split('=');
+        cookies[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+
+    return {
+        familyId: cookies.family_id || null,
+        role: cookies.app_role || null
+    };
 }
 
 // Handle API requests
@@ -38,24 +52,48 @@ async function handleAPI(req, res) {
     // CORS preflight
     if (method === 'OPTIONS') {
         res.writeHead(204, {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': req.headers.origin || '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type'
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Credentials': 'true'
         });
         res.end();
         return;
     }
 
     try {
-        // GET /api/data - load all data (SECURE: Don't send PINs)
-        if (url === '/api/data' && method === 'GET') {
-            const data = loadData();
-            // Remove PINs from response
-            const { admin_pin, child_pin, ...safeData } = data;
-            // Tell client if PINs are set
-            safeData.isAdminPinSet = !!admin_pin;
-            safeData.isChildPinSet = !!child_pin;
-            return sendJSON(res, safeData);
+        // GET /api/templates - get available templates (Legacy but kept for compatibility if needed)
+        if (url === '/api/templates' && method === 'GET') {
+            const templates = loadTemplates();
+            return sendJSON(res, templates);
+        }
+
+        // GET /api/base-data - get base tasks and products
+        if (url === '/api/base-data' && method === 'GET') {
+            const { familyId } = getFamilyContext(req);
+            if (!familyId) {
+                return sendJSON(res, { error: 'Unauthorized' }, 401);
+            }
+            const data = loadBaseData();
+            return sendJSON(res, data);
+        }
+
+        // POST /api/register - register new family
+        if (url === '/api/register' && method === 'POST') {
+            const body = await parseBody(req);
+            const { familyName, email, adminPin, childPin } = body;
+
+            if (!email) {
+                return sendJSON(res, { error: 'Email обязателен' }, 400);
+            }
+
+            const result = registerFamily(familyName, email, adminPin, childPin);
+
+            if (result.success) {
+                return sendJSON(res, { success: true, familyId: result.familyId });
+            } else {
+                return sendJSON(res, { error: result.error }, 400);
+            }
         }
 
         // POST /api/login
@@ -76,31 +114,44 @@ async function handleAPI(req, res) {
             }
 
             const body = await parseBody(req);
-            const savedData = loadData();
+            const { email, pin } = body; // 'pin' field contains password from frontend
 
-            const isAdmin = String(body.pin) === String(savedData.admin_pin);
-            const isChild = String(body.pin) === String(savedData.child_pin);
+            if (!email || !pin) {
+                return sendJSON(res, { error: 'Введите Email и Пароль' }, 400);
+            }
 
-            if (isAdmin || isChild) {
+            const authResult = authenticateUser(email, pin);
+
+            if (authResult.success) {
                 // Success - reset attempts
                 delete ipAttempts[clientIp];
 
-                const role = isAdmin ? 'admin' : 'child';
+                // Set authenticated cookies for 24 hours
+                const maxAge = 24 * 60 * 60;
+                const cookies = [
+                    `app_auth=${email}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`,
+                    `app_role=${authResult.role}; Max-Age=${maxAge}; Path=/; SameSite=Lax`
+                ];
 
-                // Set authenticated cookie for 24 hours
+                if (authResult.familyId) {
+                    cookies.push(`family_id=${authResult.familyId}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`);
+                }
+
                 res.writeHead(200, {
                     'Content-Type': 'application/json',
-                    'Set-Cookie': [
-                        `app_auth=${body.pin}; Max-Age=${24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`,
-                        `app_role=${role}; Max-Age=${24 * 60 * 60}; Path=/; SameSite=Lax`
-                    ]
+                    'Set-Cookie': cookies
                 });
-                return res.end(JSON.stringify({ success: true, role }));
+
+                return res.end(JSON.stringify({
+                    success: true,
+                    role: authResult.role,
+                    familyName: authResult.familyName
+                }));
             } else {
                 // Fail - increment attempts
                 attempts.count++;
                 ipAttempts[clientIp] = attempts;
-                return sendJSON(res, { error: 'Неверный ПИН-код' }, 401);
+                return sendJSON(res, { error: authResult.error || 'Неверный Email или Пароль' }, 401);
             }
         }
 
@@ -110,51 +161,70 @@ async function handleAPI(req, res) {
                 'Content-Type': 'application/json',
                 'Set-Cookie': [
                     'app_auth=; Max-Age=0; Path=/; HttpOnly',
-                    'app_role=; Max-Age=0; Path=/'
+                    'app_role=; Max-Age=0; Path=/',
+                    'family_id=; Max-Age=0; Path=/; HttpOnly'
                 ]
             });
             return res.end(JSON.stringify({ success: true }));
         }
 
-        // POST /api/change-pin
+        // POST /api/change-pin (kept endpoint name for compatibility, but changes password)
         if (url === '/api/change-pin' && method === 'POST') {
+            const { familyId, role } = getFamilyContext(req);
+
+            if (!familyId) {
+                return sendJSON(res, { error: 'Unauthorized' }, 401);
+            }
+
             const body = await parseBody(req);
-            const { oldPin, newPin, role } = body;
+            const { oldPin, newPin } = body; // oldPin/newPin contain passwords
 
-            if (!newPin || newPin.length < 6 || !/^\d+$/.test(newPin)) {
-                return sendJSON(res, { error: 'ПИН-код должен состоять минимум из 6 цифр' }, 400);
-            }
+            const result = changePassword(familyId, role, oldPin, newPin);
 
-            const currentData = loadData();
-            const pinField = role === 'admin' ? 'admin_pin' : 'child_pin';
-
-            if (String(oldPin) !== String(currentData[pinField])) {
-                return sendJSON(res, { error: 'Старый ПИН-код неверен' }, 401);
-            }
-
-            currentData[pinField] = newPin;
-            if (saveData(currentData)) {
-                // Update cookie with new PIN
-                res.writeHead(200, {
-                    'Content-Type': 'application/json',
-                    'Set-Cookie': `app_auth=${newPin}; Max-Age=${24 * 60 * 60}; Path=/; HttpOnly; SameSite=Lax`
-                });
-                return res.end(JSON.stringify({ success: true }));
+            if (result.success) {
+                // Update cookie?? Actually we store email in cookie, so no need to update cookie unless email changed.
+                // Passwords are not in cookies anymore.
+                return sendJSON(res, { success: true });
             } else {
-                return sendJSON(res, { error: 'Ошибка сохранения' }, 500);
+                return sendJSON(res, { error: result.error }, 400);
             }
         }
 
-        // POST /api/data - save all data
+        // GET /api/data - load family data
+        if (url === '/api/data' && method === 'GET') {
+            const { familyId, role } = getFamilyContext(req);
+
+            if (!familyId) {
+                return sendJSON(res, { error: 'Unauthorized' }, 401);
+            }
+
+            const data = loadFamilyData(familyId);
+            // Add role info for frontend
+            data.isAdmin = role === 'admin';
+            data.familyId = familyId;
+            return sendJSON(res, data);
+        }
+
+        // POST /api/data - save family data (admin only)
         if (url === '/api/data' && method === 'POST') {
+            const { familyId, role } = getFamilyContext(req);
+
+            if (!familyId) {
+                return sendJSON(res, { error: 'Unauthorized' }, 401);
+            }
+
+            // Only admin can save data
+            if (role !== 'admin') {
+                return sendJSON(res, { error: 'Forbidden: Admin only' }, 403);
+            }
+
             const body = await parseBody(req);
-            const currentData = loadData();
 
-            // Preserve PINs
-            body.admin_pin = currentData.admin_pin;
-            body.child_pin = currentData.child_pin;
+            // Don't allow overwriting certain fields
+            delete body.familyId;
+            delete body.isAdmin;
 
-            if (saveData(body)) {
+            if (saveFamilyData(familyId, body)) {
                 return sendJSON(res, { success: true });
             } else {
                 return sendJSON(res, { error: 'Failed to save' }, 500);
@@ -165,8 +235,115 @@ async function handleAPI(req, res) {
         sendJSON(res, { error: 'Not Found' }, 404);
 
     } catch (err) {
+        console.error('API Error:', err);
         sendJSON(res, { error: err.message }, 400);
     }
 }
 
-module.exports = { handleAPI };
+// Handle super admin API requests
+async function handleSuperAdminAPI(req, res) {
+    const url = req.url;
+    const method = req.method;
+
+    // Get role from context
+    const { role } = getFamilyContext(req);
+
+    if (role !== 'super_admin') {
+        return sendJSON(res, { error: 'Forbidden: Super Admin only' }, 403);
+    }
+
+    try {
+        // GET /api/super/families - list all families
+        if (url === '/api/super/families' && method === 'GET') {
+            const families = loadFamilies();
+
+            // Map families and attach PINs
+            // Map families and attach PINs
+            const familyList = Object.entries(families.families || {}).map(([id, data]) => {
+                const familyData = loadFamilyData(id);
+                return {
+                    id,
+                    name: data.name,
+                    email: data.email,
+                    created_at: data.created_at,
+                    template: data.template,
+                    adminPin: data.admin_password,
+                    childPin: data.child_password,
+                    isBlocked: !!data.isBlocked,
+                    tasksCount: familyData.tasks ? familyData.tasks.length : 0,
+                    shopCount: familyData.shop ? familyData.shop.length : 0
+                };
+            });
+
+            return sendJSON(res, { families: familyList });
+        }
+
+        // GET /api/super/base-data
+        if (url === '/api/super/base-data' && method === 'GET') {
+            const data = loadBaseData();
+            return sendJSON(res, data);
+        }
+
+        // POST /api/super/base-data
+        if (url === '/api/super/base-data' && method === 'POST') {
+            const body = await parseBody(req);
+            if (saveBaseData(body)) {
+                return sendJSON(res, { success: true });
+            } else {
+                return sendJSON(res, { error: 'Failed to save base data' }, 500);
+            }
+        }
+
+        // GET /api/super/family/:id/data - get family data
+        const getFamilyMatch = url.match(/^\/api\/super\/family\/(\d+)\/data$/);
+        if (getFamilyMatch && method === 'GET') {
+            const familyId = getFamilyMatch[1];
+            const data = loadFamilyData(familyId);
+            const families = loadFamilies();
+            const familyInfo = families.families[familyId];
+
+            return sendJSON(res, {
+                familyId,
+                familyInfo,
+                data
+            });
+        }
+
+        // POST /api/super/family/:id/data - update family data
+        const postFamilyMatch = url.match(/^\/api\/super\/family\/(\d+)\/data$/);
+        if (postFamilyMatch && method === 'POST') {
+            const familyId = postFamilyMatch[1];
+            const body = await parseBody(req);
+
+            if (saveFamilyData(familyId, body)) {
+                return sendJSON(res, { success: true });
+            } else {
+                return sendJSON(res, { error: 'Failed to save' }, 500);
+            }
+        }
+
+        // POST /api/super/family/:id/block
+        const blockFamilyMatch = url.match(/^\/api\/super\/family\/(\d+)\/block$/);
+        if (blockFamilyMatch && method === 'POST') {
+            const familyId = blockFamilyMatch[1];
+            const body = await parseBody(req);
+            const { isBlocked } = body;
+
+            const result = toggleFamilyBlock(familyId, isBlocked);
+            if (result.success) {
+                return sendJSON(res, { success: true });
+            } else {
+                return sendJSON(res, { error: result.error || 'Failed to update block status' }, 500);
+            }
+        }
+
+        // 404 for unknown super admin routes
+        sendJSON(res, { error: 'Not Found' }, 404);
+
+    } catch (err) {
+        console.error('Super Admin API Error:', err);
+        sendJSON(res, { error: err.message }, 400);
+    }
+}
+
+module.exports = { handleAPI, handleSuperAdminAPI };

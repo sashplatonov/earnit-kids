@@ -1,9 +1,8 @@
-// Simple Node.js server with JSON file storage
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
-const { handleAPI } = require('./src/apiHandlers');
-const { loadData } = require('./src/dataService');
+const { handleAPI, handleSuperAdminAPI } = require('./src/apiHandlers');
+const { findFamilyByEmail } = require('./src/dataService');
 
 const PORT = process.env.PORT || 3000;
 
@@ -69,11 +68,27 @@ function serveStatic(req, res) {
 function serveLogin(res) {
     const loginPath = path.join(__dirname, 'views', 'login.html');
     fs.readFile(loginPath, 'utf8', (err, content) => {
-        const botUsername = process.env.BOT_USERNAME || 'CoinsShopBot';
-        const modifiedContent = content.replace(/{{BOT_USERNAME}}/g, botUsername);
-
+        if (err) {
+            res.writeHead(500);
+            res.end('Server Error');
+            return;
+        }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(modifiedContent);
+        res.end(content);
+    });
+}
+
+// Serve super admin page
+function serveSuperAdmin(res) {
+    const superAdminPath = path.join(__dirname, 'views', 'super-admin.html');
+    fs.readFile(superAdminPath, 'utf8', (err, content) => {
+        if (err) {
+            res.writeHead(500);
+            res.end('Server Error');
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(content);
     });
 }
 
@@ -87,6 +102,7 @@ function serveIndex(res) {
         'section_tasks.html',
         'section_requests.html',
         'section_shop.html',
+        'section_catalog.html',
         'section_history.html',
         'section_rules.html',
         'main_end.html',
@@ -118,24 +134,47 @@ const server = http.createServer(async (req, res) => {
 
     // Authentication Logic
     const cookies = getCookies(req);
-    const savedData = loadData();
-    const adminPin = savedData.admin_pin;
-    const childPin = savedData.child_pin;
 
     // Paths that don't require auth
-    const isAuthPath = req.url === '/api/login' || req.url === '/api/logout';
-    const isPublicStatic = req.url === '/style.css' || req.url === '/favicon.ico' || req.url.startsWith('/img/') || req.url.startsWith('/js/');
+    const isAuthPath = req.url === '/api/login' || req.url === '/api/logout' || req.url === '/api/register';
+    const isPublicStatic = req.url === '/style.css' || req.url === '/favicon.ico' ||
+        req.url.startsWith('/img/') || req.url.startsWith('/js/');
 
-    const isAuthenticated = (adminPin && cookies.app_auth === String(adminPin)) ||
-        (childPin && cookies.app_auth === String(childPin));
+    // Check authentication via family_id cookie (set during login)
+    const familyId = cookies.family_id;
+    const appAuth = cookies.app_auth;
+    const appRole = cookies.app_role;
 
-    // Verbose logging for debugging
-    if (req.url === '/' || req.url.startsWith('/api/login')) {
-        console.log(`[DEBUG] ${new Date().toISOString()} ${req.method} ${req.url}`);
-        console.log(`[DEBUG] Auth status: ${isAuthenticated} (role: ${cookies.app_role})`);
+    // Verify that the PIN still maps to this family (or super admin)
+    let isAuthenticated = false;
+    let isSuperAdmin = false;
+
+    if (appAuth) {
+        // Authenticate via Email token (appAuth cookie now stores email)
+        const user = findFamilyByEmail(appAuth);
+
+        if (user) {
+            // Check if Super Admin
+            if (user.isSuperAdmin && appRole === 'super_admin') {
+                isAuthenticated = true;
+                isSuperAdmin = true;
+            }
+            // Check if Regular Family Member
+            else if (familyId && user.id === familyId) {
+                // Verify role is valid for this family
+                if (appRole === 'admin' || appRole === 'child') {
+                    isAuthenticated = true;
+                }
+            }
+        }
     }
 
-    // If PIN is not set yet, allow access to set it (admin logic) or if already authenticated
+    // Debug logging for auth issues
+    if (req.url === '/' || req.url.startsWith('/api/login')) {
+        console.log(`[DEBUG] Auth status: ${isAuthenticated}, familyId: ${familyId}, role: ${cookies.app_role}`);
+    }
+
+    // If not authenticated and not on auth/public path
     if (!isAuthenticated && !isAuthPath && !isPublicStatic) {
         if (req.url.startsWith('/api/')) {
             res.writeHead(401, { 'Content-Type': 'application/json' });
@@ -144,6 +183,17 @@ const server = http.createServer(async (req, res) => {
         }
         // Redirect or serve login page for all other requests
         return serveLogin(res);
+    }
+
+    // Super admin routes
+    if (isAuthenticated && isSuperAdmin) {
+        if (req.url.startsWith('/api/super/')) {
+            await handleSuperAdminAPI(req, res);
+            return;
+        }
+        if (req.url === '/' || req.url === '/index.html') {
+            return serveSuperAdmin(res);
+        }
     }
 
     if (req.url.startsWith('/api/')) {
@@ -155,6 +205,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
     console.log(`🪙 Coin Shop Server running at http://localhost:${PORT}`);
-    console.log(`🤖 Telegram Bot Username: ${process.env.BOT_USERNAME || 'NOT SET'}`);
-    console.log(`🔑 Telegram Bot Token: ${process.env.BOT_TOKEN ? 'SET (starts with ' + process.env.BOT_TOKEN.slice(0, 5) + '...)' : 'MISSING'}`);
+    console.log(`📁 Data directory: ./data/`);
 });

@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход - Монетки</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23ffd700%22 /><text x=%2250%22 y=%2265%22 font-family=%22sans-serif%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22black%22>C</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -90,25 +92,32 @@
         }
 
         .pin-container {
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
-        .pin-input {
+        .input-field {
             background: rgba(0, 0, 0, 0.2);
             border: 2px solid var(--card-border);
             border-radius: 1rem;
             color: white;
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: 0.5em;
+            font-size: 1.25rem;
+            font-weight: 700;
             padding: 1rem;
             text-align: center;
             width: 100%;
             transition: all 0.3s ease;
             outline: none;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
         }
 
-        .pin-input:focus {
+        .input-field.pin-input {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+
+        .input-field:focus {
             border-color: #ffd700;
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
             background: rgba(0, 0, 0, 0.3);
@@ -126,6 +135,7 @@
             width: 100%;
             transition: all 0.3s ease;
             box-shadow: 0 10px 20px -5px rgba(255, 174, 0, 0.4);
+            margin-bottom: 1rem;
         }
 
         .btn-login:hover {
@@ -143,16 +153,45 @@
             transform: none;
         }
 
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.75rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
         .error-message {
             background: rgba(255, 71, 87, 0.1);
             border: 1px solid rgba(255, 71, 87, 0.2);
             border-radius: 0.75rem;
             color: #ff4757;
             font-weight: 700;
-            margin-top: 1.5rem;
+            margin-top: 1rem;
             padding: 1rem;
             display: none;
             animation: shake 0.4s ease-in-out;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 0.75rem;
+            color: #10b981;
+            font-weight: 700;
+            margin-top: 1rem;
+            padding: 1rem;
+            display: none;
         }
 
         @keyframes shake {
@@ -170,6 +209,30 @@
                 transform: translateX(5px);
             }
         }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .register-form {
+            display: none;
+        }
+
+        .register-form.active {
+            display: block;
+        }
+
+        .login-form.hidden {
+            display: none;
+        }
+
+        .form-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-align: left;
+        }
     </style>
 </head>
 
@@ -178,42 +241,119 @@
         <div class="login-card">
             <div class="login-logo">🪙</div>
             <h1 class="login-title">Магазин Монеток</h1>
-            <p class="login-subtitle">Введите ПИН-код для входа</p>
 
-            <div class="pin-container">
-                <input type="password" id="pin-input" class="pin-input" placeholder="••••••" inputmode="numeric"
-                    maxlength="10" autocomplete="current-password">
+            <!-- Login Form -->
+            <div id="login-form" class="login-form">
+                <p class="login-subtitle">Введите Email и Пароль для входа</p>
+
+                <div class="pin-container">
+                    <input type="email" id="email-input" class="input-field" placeholder="Email"
+                        autocomplete="username">
+                    <input type="password" id="pin-input" class="input-field pin-input" placeholder="Пароль"
+                        autocomplete="current-password">
+                </div>
+
+                <button id="login-btn" class="btn-login">Войти</button>
+                <button id="show-register-btn" class="btn-secondary">Создать Новый Магазин Монет</button>
             </div>
 
-            <button id="login-btn" class="btn-login">Войти</button>
+            <!-- Register Form -->
+            <div id="register-form" class="register-form">
+                <p class="login-subtitle">Создание Нового Магазина Монет</p>
 
-            <div id="error-msg" class="error-message">
-                ❌ Неверный ПИН-код
+                <div class="pin-container">
+                    <label class="form-label">Название магазина</label>
+                    <input type="text" id="family-name" class="input-field" placeholder="Например: Семья Ивановых">
+
+                    <label class="form-label">Email родителя</label>
+                    <input type="email" id="reg-email" class="input-field" placeholder="Email для входа">
+
+                    <label class="form-label">Пароль родителя (мин. 6 символов)</label>
+                    <input type="password" id="admin-pin" class="input-field pin-input" placeholder="Пароль">
+
+                    <label class="form-label">Пароль ребёнка (мин. 6 символов)</label>
+                    <input type="password" id="child-pin" class="input-field pin-input" placeholder="Пароль">
+                </div>
+
+                <button id="register-btn" class="btn-login">Зарегистрировать</button>
+                <button id="show-login-btn" class="btn-secondary">Уже есть аккаунт? Войти</button>
             </div>
+
+            <div id="error-msg" class="error-message"></div>
+            <div id="success-msg" class="success-message"></div>
         </div>
     </div>
 
     <script>
-        const btn = document.getElementById('login-btn');
-        const input = document.getElementById('pin-input');
-        const error = document.getElementById('error-msg');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const showRegisterBtn = document.getElementById('show-register-btn');
+        const showLoginBtn = document.getElementById('show-login-btn');
+        const pinInput = document.getElementById('pin-input');
+        const emailInput = document.getElementById('email-input');
+        const errorMsg = document.getElementById('error-msg');
+        const successMsg = document.getElementById('success-msg');
 
+        // Toggle forms
+        showRegisterBtn.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('active');
+            hideMessages();
+        });
+
+        showLoginBtn.addEventListener('click', () => {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.remove('active');
+            hideMessages();
+        });
+
+        function hideMessages() {
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = '❌ ' + msg;
+            errorMsg.style.display = 'block';
+            successMsg.style.display = 'none';
+            errorMsg.style.animation = 'none';
+            errorMsg.offsetHeight;
+            errorMsg.style.animation = null;
+        }
+
+        function showSuccess(msg) {
+            successMsg.textContent = '✅ ' + msg;
+            successMsg.style.display = 'block';
+            errorMsg.style.display = 'none';
+        }
+
+        // Login
         async function doLogin() {
-            const pin = input.value;
-            if (pin.length < 6) {
-                showError('ПИН-код должен быть не менее 6 знаков');
+            const email = emailInput.value.trim();
+            const pin = pinInput.value;
+
+            // Allow super admin login without email (or check logic later)
+            if (pin !== '000000' && !email) {
+                showError('Введите Email');
                 return;
             }
 
-            btn.disabled = true;
-            btn.textContent = 'Вход...';
-            error.style.display = 'none';
+            if (pin.length < 6) {
+                showError('Пароль должен быть не менее 6 знаков');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Вход...';
+            hideMessages();
 
             try {
                 const res = await fetch('api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pin })
+                    body: JSON.stringify({ email, pin })
                 });
 
                 const data = await res.json();
@@ -222,35 +362,88 @@
                     window.location.reload();
                 } else {
                     showError(data.error || 'Ошибка входа');
-                    btn.textContent = 'Войти';
-                    btn.disabled = false;
-                    input.value = '';
-                    input.focus();
+                    loginBtn.textContent = 'Войти';
+                    loginBtn.disabled = false;
+                    pinInput.value = '';
                 }
             } catch (err) {
                 console.error(err);
                 showError('Ошибка связи с сервером');
-                btn.textContent = 'Войти';
-                btn.disabled = false;
+                loginBtn.textContent = 'Войти';
+                loginBtn.disabled = false;
             }
         }
 
-        function showError(msg) {
-            error.textContent = '❌ ' + msg;
-            error.style.display = 'block';
-            // Trigger shake animation
-            error.style.animation = 'none';
-            error.offsetHeight; // force reflow
-            error.style.animation = null;
+        // Register
+        async function doRegister() {
+            const familyName = document.getElementById('family-name').value.trim();
+            const regEmail = document.getElementById('reg-email').value.trim();
+            const adminPin = document.getElementById('admin-pin').value;
+            const childPin = document.getElementById('child-pin').value;
+
+            if (!regEmail || !regEmail.includes('@')) {
+                showError('Введите корректный Email');
+                return;
+            }
+
+            if (adminPin.length < 6 || childPin.length < 6) {
+                showError('Пароли должны быть не менее 6 символов');
+                return;
+            }
+
+            if (adminPin === childPin) {
+                showError('Пароли родителя и ребёнка должны быть разными');
+                return;
+            }
+
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Регистрация...';
+            hideMessages();
+
+            try {
+                const res = await fetch('api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ familyName, email: regEmail, adminPin, childPin })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showSuccess('Семья зарегистрирована! Теперь войдите.');
+                    registerBtn.textContent = 'Зарегистрировать';
+                    registerBtn.disabled = false;
+
+                    // Switch to login form and prefill email
+                    setTimeout(() => {
+                        showLoginBtn.click();
+                        emailInput.value = regEmail;
+                        pinInput.focus();
+                    }, 1500);
+                } else {
+                    showError(data.error || 'Ошибка регистрации');
+                    registerBtn.textContent = 'Зарегистрировать';
+                    registerBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                showError('Ошибка связи с сервером');
+                registerBtn.textContent = 'Зарегистрировать';
+                registerBtn.disabled = false;
+            }
         }
 
-        btn.addEventListener('click', doLogin);
-        input.addEventListener('keypress', (e) => {
+        loginBtn.addEventListener('click', doLogin);
+        registerBtn.addEventListener('click', doRegister);
+
+        pinInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doLogin();
         });
 
         // Auto-focus on load
-        window.addEventListener('load', () => input.focus());
+        window.addEventListener('load', () => {
+            if (emailInput) emailInput.focus();
+        });
     </script>
 </body>
 

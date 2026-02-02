@@ -19,17 +19,17 @@ export async function saveNewPin() {
     const newPin = document.getElementById('new-pin').value;
 
     if (!newPin || newPin.length < 6) {
-        showToast('Новый ПИН-код должен быть не менее 6 знаков', 'error');
+        showToast('Новый пароль должен быть не менее 6 символов', 'error');
         return;
     }
 
     const result = await changePin(oldPin, newPin, state.role);
 
     if (result.success) {
-        showToast('ПИН-код успешно изменен', 'success');
+        showToast('Пароль успешно изменен', 'success');
         closeModal('change-pin-modal');
     } else {
-        showToast(result.error || 'Ошибка при смене ПИН-кода', 'error');
+        showToast(result.error || 'Ошибка при смене пароля', 'error');
     }
 }
 
