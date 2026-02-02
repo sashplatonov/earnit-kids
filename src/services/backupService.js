@@ -60,4 +60,81 @@ function createBackup(req, res) {
     });
 }
 
-module.exports = { createBackup };
+/**
+ * Restores the data folder from a zip backup
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res 
+ */
+async function restoreBackup(req, res) {
+    const parentDir = path.dirname(DATA_DIR);
+    const tempZipPath = path.join(parentDir, `temp_restore_${Date.now()}.zip`);
+    const writeStream = fs.createWriteStream(tempZipPath);
+
+    req.pipe(writeStream);
+
+    writeStream.on('finish', () => {
+        // 1. Back up current data just in case
+        const oldDataDir = DATA_DIR + '_old_' + Date.now();
+
+        try {
+            if (fs.existsSync(DATA_DIR)) {
+                fs.renameSync(DATA_DIR, oldDataDir);
+            }
+
+            // 2. Unzip
+            // -o: overwrite files without prompting
+            // -d: specify directory to extract to
+            const unzip = spawn('unzip', ['-o', tempZipPath, '-d', parentDir]);
+
+            unzip.on('close', (code) => {
+                // Remove temp zip
+                if (fs.existsSync(tempZipPath)) {
+                    fs.unlinkSync(tempZipPath);
+                }
+
+                if (code === 0) {
+                    // Success! Remove old data backup
+                    if (fs.existsSync(oldDataDir)) {
+                        spawn('rm', ['-rf', oldDataDir]);
+                    }
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true }));
+                } else {
+                    console.error(`Unzip exited with code ${code}`);
+                    // Fail! Rollback
+                    if (fs.existsSync(DATA_DIR)) {
+                        spawn('rm', ['-rf', DATA_DIR]);
+                    }
+                    if (fs.existsSync(oldDataDir)) {
+                        fs.renameSync(oldDataDir, DATA_DIR);
+                    }
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Failed to extract backup. Is it a valid zip?' }));
+                }
+            });
+
+            unzip.stderr.on('data', (data) => {
+                console.error(`Unzip stderr: ${data}`);
+            });
+
+        } catch (err) {
+            console.error('Restore error:', err);
+            // Rollback if possible
+            if (fs.existsSync(oldDataDir) && !fs.existsSync(DATA_DIR)) {
+                try {
+                    fs.renameSync(oldDataDir, DATA_DIR);
+                } catch (e) { console.error('Rollback failed:', e); }
+            }
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Restore failed: ' + err.message }));
+        }
+    });
+
+    writeStream.on('error', (err) => {
+        console.error('File write error:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to save uploaded file' }));
+    });
+}
+
+module.exports = { createBackup, restoreBackup };

@@ -16,6 +16,51 @@ document.getElementById('backup-btn').addEventListener('click', () => {
     window.location.href = '/api/super/backup';
 });
 
+// Restore
+document.getElementById('restore-btn').addEventListener('click', () => {
+    document.getElementById('restore-input').click();
+});
+
+document.getElementById('restore-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!confirm('ВНИМАНИЕ!\n\nЭто действие ПОЛНОСТЬЮ ЗАМЕНИТ текущую базу данных данными из бэкапа.\nВсе текущие изменения будут потеряны.\n\nВы уверены, что хотите продолжить?')) {
+        e.target.value = '';
+        return;
+    }
+
+    const btn = document.getElementById('restore-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⌛ Загрузка...';
+
+    try {
+        const res = await fetch('/api/super/restore', {
+            method: 'POST',
+            body: file,
+            headers: {
+                'Content-Type': 'application/zip'
+            }
+        });
+
+        const result = await res.json();
+        if (res.ok && result.success) {
+            alert('Данные успешно восстановлены! Страница будет перезагружена.');
+            window.location.reload();
+        } else {
+            alert('Ошибка при восстановлении: ' + (result.error || 'Неизвестная ошибка'));
+        }
+    } catch (err) {
+        console.error('Restore error:', err);
+        alert('Ошибка связи с сервером');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        e.target.value = '';
+    }
+});
+
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
     try {

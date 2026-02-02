@@ -1,6 +1,6 @@
 const {
     loadFamilyData, saveFamilyData, updateLastActivity,
-    loadFamilies, findFamilyByEmail, getChildLoginLink,
+    loadFamilies, saveFamilies, findFamilyByEmail, getChildLoginLink,
     regenerateChildToken, updateFamilySettings
 } = require('../services/familyService');
 const {
@@ -8,7 +8,7 @@ const {
     registerFamily, isValidPassword, changePassword, recoverPassword
 } = require('../services/authService');
 const { loadBaseData, saveBaseData } = require('../services/baseDataService');
-const { createBackup } = require('../services/backupService');
+const { createBackup, restoreBackup } = require('../services/backupService');
 const parseBody = require('../middleware/body-parser');
 const { getCookies } = require('./viewController');
 
@@ -182,6 +182,10 @@ async function handleSuperAdminAPI(req, res) {
 
     if (url === '/api/super/backup' && method === 'GET') {
         return createBackup(req, res);
+    }
+
+    if (url === '/api/super/restore' && method === 'POST') {
+        return restoreBackup(req, res);
     }
 
     if (url === '/api/super/base-data' && method === 'POST') {
