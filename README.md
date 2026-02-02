@@ -1,103 +1,77 @@
 # 🪙 Kids Coin Shop
 
-A minimal web application for managing kids' reward coins. Parents can award coins for completed tasks, and kids can spend them in a virtual shop.
+A modern, minimal web application for managing kids' reward coins. Parents can award coins for completed tasks, and kids can spend them in a virtual shop. Featuring a zero-dependency Node.js backend and a modular, component-based frontend.
 
-## Features
+## ✨ Features
 
-- **Task List** — Define tasks with coin rewards (admin only)
-- **Shop** — Items kids can purchase with coins (admin only)
-- **Coin Earning** — Parents award coins when tasks are completed
-- **Purchasing** — Kids buy items (balance validation)
-- **History** — Full transaction log for both earning and spending
-- **PIN Protection** — The site is closed with a PIN code by default
-- **Session Duration** — Login lasts for 24 hours (via HttpOnly cookies)
+-   **Dual-Role Authentication** — Separate PIN-based logins for Admin (Parents) and Children.
+-   **Task Management** — Create, edit, and delete tasks with reward values (Admin).
+-   **Virtual Shop** — Manage a catalog of items kids can "buy" with their earned coins (Admin).
+-   **Earning & Spending** — Simple UI for awarding coins and processing purchases.
+-   **Coin Requests** — Children can send requests for custom coin amounts for approval (Admin).
+-   **Transaction History** — Detailed log of all earnings, spendings, and approvals.
+-   **Quick Import** — Bulk import tasks or shop items using a simple pipe-separated format.
+-   **Session Security** — Secure `HttpOnly` cookies with a 24-hour session duration and rate-limited login attempts.
+-   **Mobile First** — Fully responsive design optimized for phones and tablets.
 
-## Security
+## 🛠 Tech Stack
 
-The entire application is protected by a PIN code. Upon first access, or after 24 hours, users will be prompted to enter the PIN to view the site content.
+### Web Application
+-   **Backend**: Pure Node.js (no external dependencies like Express).
+-   **Frontend**: Vanilla HTML5, CSS3, and modern ES Modules.
+-   **Storage**: Local `data.json` file for simplicity and portability.
+-   **Deployment**: Docker & Docker Compose support.
 
-### Access Control
-The PIN used for global access is the same as the parent/admin PIN stored in `data.json`.
+### Telegram Bot
+-   **Language**: Java (Maven project).
+-   **Purpose**: Provides an alternative interface for managing tasks and notifications via Telegram.
 
-### Cookies
-The authentication state is stored in a secure `HttpOnly` cookie named `app_auth`. This prevents client-side scripts from accessing the authentication token, protecting against XSS attacks.
+## 📂 Project Structure
 
-### Docker Port Conflict
-If you encounter a "port is already allocated" error when running `docker compose up`, it's because an old container is still running. Use:
+```text
+├── js/modules/          # Modular frontend logic (state, ui, api, actions)
+├── src/                 # Backend logic (API handlers, data services)
+├── views/               # UI components and templates
+│   └── components/      # Partial HTML files assembled by the server
+├── telegram-bot/        # Java source code for the Telegram bot
+├── data.json            # Flat-file database
+├── server.js            # Main entry point (HTTP server)
+└── Dockerfile           # Web app containerization
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+-   Node.js (v14+)
+-   Docker (optional)
+
+### Local Development
+1.  Clone the repository.
+2.  Create a `.env` file from `.env.example`.
+3.  Start the server:
+    ```bash
+    npm start
+    ```
+4.  Open `http://localhost:3000` in your browser.
+
+### Docker Deployment
 ```bash
-docker compose down --remove-orphans
 docker compose up -d --build
 ```
+The application will be available at `http://localhost:3000`. Data is persisted via a volume mapping to `data.json`.
 
-### Other Security Options
-- **VPN (Tailscale)**: The most secure way. Don't expose ports 80/443 to the public internet. Use Tailscale to access the site via a private IP.
-- **Cloudflare Tunnel**: Secure access without opening ports, allows using Google/Telegram for login.
-- **HTTPS**: Always use HTTPS (via Let's Encrypt/Nginx) when using passwords.
+## 🔐 Security
 
-```bash
-node server.js
-# → http://localhost:3000
-```
+-   **PIN Protection**: The site requires a 6-digit PIN for access. Default PINs are `000000` for both Admin and Child.
+-   **Rate Limiting**: The API blocks IPs after multiple failed login attempts to prevent brute-force attacks.
+-   **Cookie Safety**: Authentication is handled via `HttpOnly` cookies, preventing XSS-based token theft.
 
-## Docker
+## 🤖 Telegram Bot
 
-```bash
-docker compose up -d
-# → http://localhost:3000
-```
+The project includes a Telegram bot located in the `/telegram-bot` directory. It is built with Java and Maven.
+-   **Configuration**: Requires `BOT_TOKEN` in the `.env` file.
+-   **Build**: Use `mvn clean compile exec:java` inside the `telegram-bot` directory.
 
-Data persists in `data.json` on host.
-
-## Deployment (VPS with nginx)
-
-### 1. Copy files to server
-```bash
-scp -r * user@your-server:/var/www/coins/
-```
-
-### 2. Run with PM2 (auto-restart)
-```bash
-npm install -g pm2
-cd /var/www/coins
-pm2 start server.js --name coins
-pm2 save && pm2 startup
-```
-
-### 3. Configure nginx reverse proxy
-```nginx
-server {
-    listen 80;
-    server_name coins.example.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-### 4. Reload nginx
-```bash
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-## Data Storage
-
-All data is stored in `data.json`:
-- Admin PIN
-- Current balance
-- Tasks list
-- Shop items
-- Transaction history
-
-## Tech Stack
-
-- **Frontend**: Vanilla HTML/CSS/JS
-- **Backend**: Node.js (no dependencies)
-- **Storage**: JSON file
-
-## License
+## 📝 License
 
 MIT
