@@ -113,27 +113,6 @@ function renderBaseData() {
     renderList('products', baseData.products, document.getElementById('base-products-list'));
 }
 
-function renderList(type, items, container) {
-    container.innerHTML = '';
-    items.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.innerHTML = `
-            <div class="item-header">
-                <span>${item.name}</span>
-                <span>${item.coins || item.price} 🪙</span>
-            </div>
-            <div class="item-meta">
-                Возраст: ${item.age_min}-${item.age_max} лет | ${item.category || 'Без категории'}
-            </div>
-            <div class="item-actions">
-                <button class="btn-sm btn-edit" onclick="editItem('${type}', ${index})">✏️</button>
-                <button class="btn-sm btn-del" onclick="deleteItem('${type}', ${index})">🗑️</button>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
 
 function renderList(type, items, container) {
     container.innerHTML = '';
@@ -147,10 +126,8 @@ function renderList(type, items, container) {
     }, {});
 
     Object.keys(grouped).sort().forEach(cat => {
-        const catHeader = document.createElement('h4');
-        catHeader.style.margin = '1rem 0 0.5rem 0';
-        catHeader.style.color = 'rgba(255,255,255,0.5)';
-        catHeader.style.fontSize = '0.9rem';
+        const catHeader = document.createElement('h3');
+        catHeader.className = 'grid-category-header';
         catHeader.textContent = cat;
         container.appendChild(catHeader);
 

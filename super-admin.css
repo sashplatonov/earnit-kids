@@ -346,3 +346,14 @@ textarea {
     border-radius: 0.5rem;
     cursor: pointer;
 }
+
+.grid-category-header {
+    grid-column: 1 / -1;
+    margin: 1.5rem 0 0.5rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #eee;
+    color: #ffd700;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
