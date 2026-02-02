@@ -17,21 +17,24 @@ function ensureDataDir() {
 
 function loadFamilies() {
     ensureDataDir();
-    if (!fs.existsSync(FAMILIES_FILE)) return { families: {} };
-    try {
-        const content = fs.readFileSync(FAMILIES_FILE, 'utf8');
-        const data = JSON.parse(content);
+    let data = { families: {} };
 
-        // Ensure super_admin from env
-        data.super_admin = {
-            email: process.env.SUPER_ADMIN_EMAIL || (data.super_admin ? data.super_admin.email : 'admin@coinshop.com'),
-            password: process.env.SUPER_ADMIN_PASSWORD || (data.super_admin ? data.super_admin.password : '000000')
-        };
-        return data;
-    } catch (err) {
-        console.error('Error loading families:', err.message);
-        return { families: {} };
+    if (fs.existsSync(FAMILIES_FILE)) {
+        try {
+            const content = fs.readFileSync(FAMILIES_FILE, 'utf8');
+            data = JSON.parse(content);
+        } catch (err) {
+            console.error('Error loading families:', err.message);
+        }
     }
+
+    // Ensure super_admin is always set from env or existing data or defaults
+    data.super_admin = {
+        email: process.env.SUPER_ADMIN_EMAIL || (data.super_admin ? data.super_admin.email : 'admin@admin.com'),
+        password: process.env.SUPER_ADMIN_PASSWORD || (data.super_admin ? data.super_admin.password : '000000')
+    };
+
+    return data;
 }
 
 function saveFamilies(familiesData) {
