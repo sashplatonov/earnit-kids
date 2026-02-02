@@ -69,13 +69,11 @@ function serveStatic(req, res) {
 function serveLogin(res) {
     const loginPath = path.join(__dirname, 'views', 'login.html');
     fs.readFile(loginPath, 'utf8', (err, content) => {
-        if (err) {
-            res.writeHead(500);
-            res.end('Error loading login page');
-            return;
-        }
+        const botUsername = process.env.BOT_USERNAME || 'CoinsShopBot';
+        const modifiedContent = content.replace(/{{BOT_USERNAME}}/g, botUsername);
+
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(content);
+        res.end(modifiedContent);
     });
 }
 
@@ -124,10 +122,10 @@ const server = http.createServer(async (req, res) => {
     const serverPin = savedData.pin;
 
     // Paths that don't require auth
-    const isAuthPath = req.url === '/api/login';
+    const isAuthPath = req.url === '/api/login' || req.url === '/api/auth/telegram';
     const isPublicStatic = req.url === '/style.css' || req.url === '/favicon.ico' || req.url.startsWith('/img/');
 
-    const isAuthenticated = serverPin && cookies.app_auth === String(serverPin);
+    const isAuthenticated = (serverPin && cookies.app_auth === String(serverPin)) || !!cookies.app_auth_tg;
 
     // If PIN is not set yet, allow access to set it (admin logic) or if already authenticated
     if (!isAuthenticated && !isAuthPath && !isPublicStatic) {

@@ -5,7 +5,8 @@ export const state = {
     shopItems: [],
     history: [],
     requests: [],
-    isPinSet: false
+    isPinSet: false,
+    child_telegram_username: ''
 };
 
 // Simple event bus for state changes

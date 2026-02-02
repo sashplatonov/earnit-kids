@@ -3,7 +3,10 @@ services:
     build: .
     container_name: coins-kids-shop
     ports:
-      - "3000:3000"
+      - "80:3000"
     volumes:
       - ./data.json:/app/data.json
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_USERNAME=${BOT_USERNAME}
     restart: unless-stopped

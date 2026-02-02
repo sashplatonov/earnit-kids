@@ -313,4 +313,7 @@ export function updateAdminUI() {
     document.querySelectorAll('.admin-only').forEach(el => {
         el.classList.toggle('hidden', !state.isAdmin);
     });
+
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) settingsBtn.classList.toggle('hidden', !state.isAdmin);
 }

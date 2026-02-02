@@ -133,3 +133,27 @@
         </div>
     </div>
 </div>
+
+<!-- Модальное окно: Настройки -->
+<div class="modal" id="settings-modal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+        <h3>⚙️ Настройки системы</h3>
+
+        <div class="form-group">
+            <label for="settings-tg-username">Telegram логин ребенка</label>
+            <input type="text" class="input" id="settings-tg-username" placeholder="@username">
+            <p class="hint">Только этот пользователь сможет входить через Telegram</p>
+        </div>
+
+        <div class="form-group">
+            <label for="settings-pin">Изменить PIN-код</label>
+            <input type="password" class="input" id="settings-pin" placeholder="••••">
+        </div>
+
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="settings-cancel">Отмена</button>
+            <button class="btn btn--primary" id="settings-save">Сохранить</button>
+        </div>
+    </div>
+</div>

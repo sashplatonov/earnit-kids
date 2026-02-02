@@ -1,4 +1,5 @@
 const { loadData, saveData } = require('./dataService');
+const crypto = require('crypto');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -28,6 +29,24 @@ function sendJSON(res, data, status = 200) {
         'Access-Control-Allow-Origin': '*'
     });
     res.end(JSON.stringify(data));
+}
+
+// Verify Telegram Hash
+function verifyTelegramAuth(data, botToken) {
+    if (!botToken) return false;
+
+    const { hash, ...params } = data;
+    const dataCheckString = Object.keys(params)
+        .sort()
+        .map(key => `${key}=${params[key]}`)
+        .join('\n');
+
+    const secretKey = crypto.createHash('sha256').update(botToken).digest();
+    const hmac = crypto.createHmac('sha256', secretKey)
+        .update(dataCheckString)
+        .digest('hex');
+
+    return hmac === hash;
 }
 
 // Handle API requests
@@ -99,6 +118,43 @@ async function handleAPI(req, res) {
                 ipAttempts[clientIp] = attempts;
                 return sendJSON(res, { error: 'Invalid PIN' }, 401);
             }
+        }
+
+        // POST /api/auth/telegram
+        if (url === '/api/auth/telegram' && method === 'POST') {
+            const body = await parseBody(req);
+            const botToken = process.env.BOT_TOKEN;
+
+            if (!botToken) {
+                console.warn('BOT_TOKEN is not set in environment variables!');
+                return sendJSON(res, { error: 'Сервер не настроен для входа через Telegram' }, 500);
+            }
+
+            if (!verifyTelegramAuth(body, botToken)) {
+                return sendJSON(res, { error: 'Ошибка проверки данных Telegram' }, 401);
+            }
+
+            // check if this telegram user is allowed
+            const savedData = loadData();
+            const allowedUsername = savedData.child_telegram_username;
+            const allowedId = savedData.child_telegram_id;
+
+            const isAllowed = (allowedUsername && String(body.username).toLowerCase() === String(allowedUsername).replace('@', '').toLowerCase()) ||
+                (allowedId && String(body.id) === String(allowedId));
+
+            if (!isAllowed && (allowedUsername || allowedId)) {
+                return sendJSON(res, { error: 'Этот аккаунт Telegram не привязан к магазину' }, 403);
+            }
+
+            // Success - set a persistent auth cookie
+            res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Set-Cookie': [
+                    `app_auth_tg=${body.id}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly`,
+                    `app_tg_hash=${body.hash}; Max-Age=${30 * 24 * 60 * 60}; Path=/; HttpOnly`
+                ]
+            });
+            return res.end(JSON.stringify({ success: true }));
         }
 
         // POST /api/data - save all data (SECURE: Preserve PIN if not provided)

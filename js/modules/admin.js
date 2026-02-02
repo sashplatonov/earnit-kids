@@ -280,3 +280,46 @@ export function deleteShopItem() {
 export function editShopItem(id) {
     openShopModal(id);
 }
+
+// Settings
+export function openSettingsModal() {
+    document.getElementById('settings-tg-username').value = state.child_telegram_username || '';
+    document.getElementById('settings-pin').value = '';
+    openModal('settings-modal');
+}
+
+export async function saveSettings() {
+    const tgUsername = document.getElementById('settings-tg-username').value.trim();
+    const newPin = document.getElementById('settings-pin').value.trim();
+
+    const dataToSave = {
+        ...state,
+        child_telegram_username: tgUsername
+    };
+
+    if (newPin) {
+        if (newPin.length < 4) {
+            return showToast('Новый PIN должен быть минимум 4 символа', 'error');
+        }
+        dataToSave.pin = newPin;
+    }
+
+    const success = await saveDataToServer({
+        pin: dataToSave.pin, // api handles preserving existing if missing, but here we explicitly sending
+        child_telegram_username: dataToSave.child_telegram_username,
+        balance: state.balance,
+        tasks: state.tasks,
+        shop: state.shopItems,
+        history: state.history,
+        requests: state.requests
+    });
+
+    if (success) {
+        setState({ child_telegram_username: tgUsername });
+        closeModal('settings-modal');
+        showToast('Настройки сохранены!', 'success');
+        if (newPin) showToast('PIN-код обновлен', 'info');
+    } else {
+        showToast('Ошибка при сохранении настроек', 'error');
+    }
+}

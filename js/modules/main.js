@@ -3,7 +3,7 @@ import { state, setState } from './state.js';
 import { renderAll, updateAdminUI, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
-import { toggleAdminMode, checkPin, openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem } from './admin.js';
+import { toggleAdminMode, checkPin, openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openSettingsModal, saveSettings } from './admin.js';
 
 // Import logic (moved from app.js)
 let importType = null;
@@ -104,7 +104,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             tasks: data.tasks || [],
             shopItems: data.shop || [],
             history: data.history || [],
-            requests: data.requests || []
+            requests: data.requests || [],
+            child_telegram_username: data.child_telegram_username || ''
         });
     } else {
         showToast('Не удалось загрузить данные с сервера', 'error');
@@ -217,4 +218,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast('История очищена', 'info');
         });
     }
+
+    // Settings
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
+
+    const settingsSave = document.getElementById('settings-save');
+    if (settingsSave) settingsSave.addEventListener('click', saveSettings);
+
+    const settingsCancel = document.getElementById('settings-cancel');
+    if (settingsCancel) settingsCancel.addEventListener('click', () => closeModal('settings-modal'));
 });
