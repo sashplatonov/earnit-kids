@@ -33,6 +33,26 @@ export async function saveNewPin() {
     }
 }
 
+export async function saveNewPinInline() {
+    const oldPin = document.getElementById('settings-old-pin-inline').value;
+    const newPin = document.getElementById('settings-new-pin-inline').value;
+
+    if (!newPin || newPin.length < 6) {
+        showToast('Новый пароль должен быть не менее 6 символов', 'error');
+        return;
+    }
+
+    const result = await changePin(oldPin, newPin, state.role);
+
+    if (result.success) {
+        showToast('Пароль успешно изменен', 'success');
+        document.getElementById('settings-old-pin-inline').value = '';
+        document.getElementById('settings-new-pin-inline').value = '';
+    } else {
+        showToast(result.error || 'Ошибка при смене пароля', 'error');
+    }
+}
+
 // Task Editing
 export function openTaskModal(taskId = null) {
     editingTaskId = taskId;
@@ -241,5 +261,73 @@ export async function saveFamilySettings() {
         closeModal('family-settings-modal');
     } else {
         showToast('Ошибка при обновлении настроек', 'error');
+    }
+}
+
+export async function saveFamilySettingsInline() {
+    const name = document.getElementById('settings-family-name-inline').value.trim();
+    const monthlyLimit = parseInt(document.getElementById('settings-monthly-limit-inline').value);
+
+    if (!name) {
+        showToast('Название не может быть пустым', 'error');
+        return;
+    }
+
+    const result = await updateFamilySettingsOnServer({ name, monthly_limit: monthlyLimit });
+    if (result && result.success) {
+        setState({ familyName: name, monthlyLimit: monthlyLimit });
+        showToast('Настройки обновлены!', 'success');
+    } else {
+        showToast('Ошибка при обновлении настроек', 'error');
+    }
+}
+
+export async function refreshChildLinkInline() {
+    const input = document.getElementById('settings-child-link-input-inline');
+    if (!input) return;
+
+    try {
+        const res = await fetch('/api/child-link');
+        const data = await res.json();
+        if (data.link) {
+            input.value = data.link;
+        }
+    } catch (err) {
+        console.error('Error fetching child link:', err);
+    }
+}
+
+export async function copyChildLinkInline() {
+    const input = document.getElementById('settings-child-link-input-inline');
+    if (input && input.value) {
+        input.select();
+        try {
+            document.execCommand('copy');
+            showToast('Ссылка скопирована!', 'success');
+            const status = document.getElementById('child-link-status');
+            if (status) {
+                status.classList.remove('hidden');
+                setTimeout(() => status.classList.add('hidden'), 3000);
+            }
+        } catch (err) {
+            showToast('Не удалось скопировать', 'error');
+        }
+    }
+}
+
+export async function regenerateChildLinkInline() {
+    if (!confirm('Вы уверены, что хотите обновить ссылку? Старая ссылка перестанет работать.')) return;
+    try {
+        const res = await fetch('/api/regenerate-child-token', { method: 'POST' });
+        const data = await res.json();
+        if (data.link) {
+            const input = document.getElementById('settings-child-link-input-inline');
+            if (input) input.value = data.link;
+            showToast('Ссылка обновлена', 'success');
+        } else {
+            showToast('Ошибка при обновлении ссылки', 'error');
+        }
+    } catch (err) {
+        showToast('Ошибка сети', 'error');
     }
 }

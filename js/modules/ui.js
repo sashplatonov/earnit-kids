@@ -320,4 +320,8 @@ export function updateShopNameUI() {
     if (shopNameEl) {
         shopNameEl.textContent = state.familyName || '';
     }
+    const nameInp = document.getElementById('settings-family-name-inline');
+    if (nameInp) {
+        nameInp.value = state.familyName || '';
+    }
 }

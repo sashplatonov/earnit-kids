@@ -3,25 +3,57 @@ import { state, setState } from './state.js';
 import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
-import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings } from './admin.js';
+import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings, saveFamilySettingsInline, saveNewPinInline, copyChildLinkInline, refreshChildLinkInline, regenerateChildLinkInline } from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
 
 // Catalog Logic
 function renderCatalog() {
-    const ageInput = document.getElementById('catalog-age-filter');
-    const ageVal = document.getElementById('age-val');
-    if (!ageInput) return;
+    const minInput = document.getElementById('catalog-age-min-filter');
+    const maxInput = document.getElementById('catalog-age-max-filter');
+    const minValSpan = document.getElementById('age-min-val');
+    const maxValSpan = document.getElementById('age-max-val');
+    const rangeHighlight = document.getElementById('slider-range-highlight');
 
-    const age = parseInt(ageInput.value) || 7;
-    if (ageVal) ageVal.textContent = age;
+    if (!minInput || !maxInput) return;
+
+    let minAge = parseInt(minInput.value);
+    let maxAge = parseInt(maxInput.value);
+
+    // Keep min < max
+    if (minAge > maxAge) {
+        // Find which one was just moved
+        // For simplicity, we just swap or cap
+        const lastMoved = document.activeElement;
+        if (lastMoved === minInput) {
+            minAge = maxAge;
+            minInput.value = minAge;
+        } else {
+            maxAge = minAge;
+            maxInput.value = maxAge;
+        }
+    }
+
+    if (minValSpan) minValSpan.textContent = minAge;
+    if (maxValSpan) maxValSpan.textContent = maxAge;
+
+    // Update range highlight
+    if (rangeHighlight) {
+        const minPercent = ((minAge - 7) / (18 - 7)) * 100;
+        const maxPercent = ((maxAge - 7) / (18 - 7)) * 100;
+        rangeHighlight.style.left = minPercent + '%';
+        rangeHighlight.style.width = (maxPercent - minPercent) + '%';
+    }
 
     const tasksList = document.getElementById('catalog-tasks-list');
     const productsList = document.getElementById('catalog-products-list');
 
-    if (tasksList && state.baseData.tasks) {
-        const tasks = state.baseData.tasks.filter(t => age >= t.age_min && age <= t.age_max);
+    // Filtering logic: show item if its age range overlaps with selected range
+    // Item is [t.age_min, t.age_max], Selected is [minAge, maxAge]
+    // Overlap if (t.age_min <= maxAge && t.age_max >= minAge)
 
-        // Group by category
+    if (tasksList && state.baseData.tasks) {
+        const tasks = state.baseData.tasks.filter(t => t.age_min <= maxAge && t.age_max >= minAge);
+
         const grouped = tasks.reduce((acc, t) => {
             const cat = t.category || 'Без категории';
             if (!acc[cat]) acc[cat] = [];
@@ -49,9 +81,8 @@ function renderCatalog() {
     }
 
     if (productsList && state.baseData.products) {
-        const products = state.baseData.products.filter(p => age >= p.age_min && age <= p.age_max);
+        const products = state.baseData.products.filter(p => p.age_min <= maxAge && p.age_max >= minAge);
 
-        // Group by category
         const grouped = products.reduce((acc, p) => {
             const cat = p.category || 'Без категории';
             if (!acc[cat]) acc[cat] = [];
@@ -159,7 +190,11 @@ window.app = {
     deleteRequest,
     addCatalogItem,
     openFamilySettingsModal,
-    saveFamilySettings
+    saveFamilySettings,
+    saveFamilySettingsInline,
+    saveNewPinInline,
+    copyChildLinkInline,
+    regenerateChildLinkInline
 };
 
 // Helper to get cookie value
@@ -228,15 +263,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (catBtn) catBtn.classList.remove('hidden');
         const setBtn = document.getElementById('nav-settings');
         if (setBtn) setBtn.classList.remove('hidden');
+        const childLinkBtn = document.getElementById('nav-child-link');
+        if (childLinkBtn) childLinkBtn.classList.remove('hidden');
     }
 
     // Event Listeners
 
     // Catalog Filter
-    const ageFilter = document.getElementById('catalog-age-filter');
-    if (ageFilter) {
-        ageFilter.addEventListener('input', renderCatalog);
-    }
+    const ageMinFilter = document.getElementById('catalog-age-min-filter');
+    const ageMaxFilter = document.getElementById('catalog-age-max-filter');
+    if (ageMinFilter) ageMinFilter.addEventListener('input', renderCatalog);
+    if (ageMaxFilter) ageMaxFilter.addEventListener('input', renderCatalog);
 
     // Logout
     const logoutBtn = document.getElementById('logout-btn');
@@ -254,24 +291,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         changePinBtn.addEventListener('click', openChangePinModal);
     }
 
-    const editFamilyNameBtn = document.getElementById('settings-edit-family-btn');
-    if (editFamilyNameBtn) {
-        editFamilyNameBtn.addEventListener('click', openFamilySettingsModal);
+    // Inline Settings Save
+    const saveMainBtn = document.getElementById('settings-save-main-btn');
+    if (saveMainBtn) saveMainBtn.addEventListener('click', saveFamilySettingsInline);
+
+    const savePinBtn = document.getElementById('settings-save-pin-btn');
+    if (savePinBtn) savePinBtn.addEventListener('click', saveNewPinInline);
+
+    const copyLinkBtnInline = document.getElementById('settings-copy-link-btn');
+    if (copyLinkBtnInline) copyLinkBtnInline.addEventListener('click', copyChildLinkInline);
+
+    const regenerateLinkBtnInline = document.getElementById('settings-regenerate-link-btn');
+    if (regenerateLinkBtnInline) regenerateLinkBtnInline.addEventListener('click', regenerateChildLinkInline);
+
+    // Initial populate settings if admin
+    if (state.isAdmin) {
+        const nameInp = document.getElementById('settings-family-name-inline');
+        if (nameInp) nameInp.value = state.familyName || '';
+        const limitInp = document.getElementById('settings-monthly-limit-inline');
+        if (limitInp) limitInp.value = state.monthlyLimit || 2000;
+
+        // Populate child link
+        refreshChildLinkInline();
     }
 
-    const familySettingsSave = document.getElementById('family-settings-save');
-    if (familySettingsSave) familySettingsSave.addEventListener('click', saveFamilySettings);
-
-    const familySettingsCancel = document.getElementById('family-settings-cancel');
-    if (familySettingsCancel) familySettingsCancel.addEventListener('click', () => closeModal('family-settings-modal'));
-
-    const changePinSubmit = document.getElementById('change-pin-submit');
-    if (changePinSubmit) changePinSubmit.addEventListener('click', saveNewPin);
-
-    const changePinCancel = document.getElementById('change-pin-cancel');
-    if (changePinCancel) changePinCancel.addEventListener('click', () => closeModal('change-pin-modal'));
-
-    // Child Link Modal
+    // Child Link Modal (Legacy or other uses, keeping for now or replacing)
     const childLinkBtn = document.getElementById('settings-child-link-btn');
     if (childLinkBtn) {
         childLinkBtn.addEventListener('click', async () => {

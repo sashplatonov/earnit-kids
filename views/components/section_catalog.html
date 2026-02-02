@@ -5,11 +5,18 @@
 
         <div class="filter-card">
             <div class="filter-group">
-                <label>Возраст ребенка: <span id="age-val">7</span> лет</label>
-                <div class="slider-container">
-                    <span>7</span>
-                    <input type="range" id="catalog-age-filter" value="7" min="7" max="18" class="age-slider">
-                    <span>18</span>
+                <label>Возраст: от <span id="age-min-val">7</span> до <span id="age-max-val">18</span> лет</label>
+                <div class="slider-container dual-slider" style="position: relative; height: 30px; margin-top: 10px;">
+                    <input type="range" id="catalog-age-min-filter" value="7" min="7" max="18" class="age-slider"
+                        style="position: absolute; pointer-events: none; z-index: 2; width: 100%; -webkit-appearance: none; background: transparent;">
+                    <input type="range" id="catalog-age-max-filter" value="18" min="7" max="18" class="age-slider"
+                        style="position: absolute; pointer-events: none; z-index: 1; width: 100%; -webkit-appearance: none; background: transparent;">
+                    <div class="slider-track"
+                        style="position: absolute; top: 13px; height: 6px; background: rgba(255,255,255,0.1); width: 100%; border-radius: 3px;">
+                    </div>
+                    <div id="slider-range-highlight"
+                        style="position: absolute; top: 13px; height: 6px; background: #6366f1; border-radius: 3px; z-index: 0;">
+                    </div>
                 </div>
             </div>
             <p class="hint">Показываем задания для этого возраста</p>
@@ -125,5 +132,27 @@
 
     .btn-add:hover {
         background: #27ae60;
+    }
+
+    /* Dual Range Slider Styles */
+    .age-slider::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #fff;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .age-slider::-moz-range-thumb {
+        pointer-events: auto;
+        width: 18px;
+        height: 18px;
+        background: #fff;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
     }
 </style>

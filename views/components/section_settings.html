@@ -1,48 +1,101 @@
 <!-- Секция настроек -->
 <section class="section hidden" id="settings-section">
     <div class="section__header">
-        <h2>Настройки</h2>
+        <h2>⚙️ Настройки магазина</h2>
     </div>
 
-    <div class="cards" id="settings-cards">
-        <div class="card admin-only">
+    <div class="cards" id="settings-cards" style="grid-template-columns: 1fr;">
+        <!-- Название магазина и Лимит -->
+        <div class="card admin-only" style="max-width: 600px; margin: 0 auto;">
             <div class="card__header">
-                <h3 class="card__title">Название магазина</h3>
-                <div class="card__icon">✏️</div>
+                <h3 class="card__title">Основные настройки</h3>
+                <div class="card__icon">🏠</div>
             </div>
-            <p class="card__comment">Измените название, которое отображается в заголовке магазина</p>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="settings-family-name-inline">Название магазина</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" class="input" id="settings-family-name-inline" placeholder="Название магазина">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="settings-monthly-limit-inline">Лимит трат в месяц (RSD)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" class="input" id="settings-monthly-limit-inline" min="0" placeholder="2000">
+                </div>
+            </div>
+
             <div class="card__actions">
-                <button class="btn btn--primary btn--small" id="settings-edit-family-btn">
-                    Изменить название
+                <button class="btn btn--primary" id="settings-save-main-btn" style="width: 100%;">
+                    ✅ Сохранить основные настройки
                 </button>
             </div>
         </div>
 
-        <div class="card admin-only">
+        <!-- Смена пароля -->
+        <div class="card admin-only" style="max-width: 600px; margin: 0 auto; margin-top: 1.5rem;">
             <div class="card__header">
-                <h3 class="card__title">Безопасность</h3>
+                <h3 class="card__title">Безопасность (Смена пароля)</h3>
                 <div class="card__icon">🔑</div>
             </div>
-            <p class="card__comment">Смените пароль администратора для входа в панель управления</p>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="settings-old-pin-inline">Старый пароль</label>
+                <input type="password" class="input" id="settings-old-pin-inline" placeholder="••••••">
+            </div>
+
+            <div class="form-group">
+                <label for="settings-new-pin-inline">Новый пароль (мин. 6 символов)</label>
+                <input type="password" class="input" id="settings-new-pin-inline" placeholder="••••••">
+                <p class="hint" style="text-align: left; margin-top: 0.25rem;">Минимум 6 символов, не все одинаковые</p>
+            </div>
+
             <div class="card__actions">
-                <button class="btn btn--secondary btn--small" id="settings-change-pin-btn">
-                    Сменить пароль
+                <button class="btn btn--secondary" id="settings-save-pin-btn" style="width: 100%;">
+                    🔑 Обновить пароль
                 </button>
             </div>
         </div>
+    </div>
+</section>
 
-        <div class="card admin-only">
-            <div class="card__header">
-                <h3 class="card__title">Доступ ребенка</h3>
-                <div class="card__icon">🔗</div>
+<!-- Секция ссылки для ребенка (вынесена на верхний уровень) -->
+<section class="section hidden" id="child-link-section">
+    <div class="section__header">
+        <h2>🔗 Доступ для ребенка</h2>
+    </div>
+
+    <div class="card admin-only" style="max-width: 600px; margin: 0 auto;">
+        <div class="card__header">
+            <h3 class="card__title">Прямая ссылка для входа</h3>
+            <div class="card__icon">🔗</div>
+        </div>
+        <p class="card__comment" style="margin-bottom: 1.5rem;">
+            Отправьте эту ссылку ребенку (например, в Telegram или WhatsApp).
+            По этой ссылке ребенок сможет войти в магазин сразу, без ввода пароля.
+        </p>
+
+        <div class="form-group">
+            <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+                <input type="text" class="input" id="settings-child-link-input-inline" readonly
+                    style="background: rgba(0,0,0,0.2); font-family: monospace; font-size: 0.9rem;">
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <button class="btn btn--primary" id="settings-copy-link-btn" style="flex: 2;">
+                        📋 Скопировать ссылку
+                    </button>
+                    <button class="btn btn--danger btn--small" id="settings-regenerate-link-btn" title="Обновить ссылку"
+                        style="flex: 1;">
+                        🔄 Обновить
+                    </button>
+                </div>
             </div>
-            <p class="card__comment">Сгенерируйте и скопируйте прямую ссылку для входа ребенка без ввода пароля</p>
-            <div class="card__actions">
-                <button class="btn btn--success btn--small" id="settings-child-link-btn"
-                    style="display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center;">
-                    <span>🔗 Ссылка для ребенка</span>
-                </button>
-            </div>
+        </div>
+
+        <div id="child-link-status"
+            style="margin-top: 1rem; text-align: center; font-size: 0.9rem; color: var(--color-success);"
+            class="hidden">
+            ✅ Ссылка скопирована!
         </div>
     </div>
 </section>
