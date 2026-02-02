@@ -8,6 +8,7 @@ const {
     registerFamily, isValidPassword, changePassword, recoverPassword
 } = require('../services/authService');
 const { loadBaseData, saveBaseData } = require('../services/baseDataService');
+const { createBackup } = require('../services/backupService');
 const parseBody = require('../middleware/body-parser');
 const { getCookies } = require('./viewController');
 
@@ -177,6 +178,10 @@ async function handleSuperAdminAPI(req, res) {
 
     if (url === '/api/super/base-data' && method === 'GET') {
         return sendJSON(res, loadBaseData());
+    }
+
+    if (url === '/api/super/backup' && method === 'GET') {
+        return createBackup(req, res);
     }
 
     if (url === '/api/super/base-data' && method === 'POST') {

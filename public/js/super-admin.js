@@ -11,6 +11,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
+// Backup
+document.getElementById('backup-btn').addEventListener('click', () => {
+    window.location.href = '/api/super/backup';
+});
+
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
     try {
