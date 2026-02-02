@@ -4,7 +4,7 @@ const fs = require('fs');
 const { DATA_DIR } = require('../config');
 
 /**
- * Creates a zip backup of the data folder and streams it to the response
+ * Creates a tar backup of the data folder and streams it to the response
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res 
  */
@@ -24,32 +24,22 @@ function createBackup(req, res) {
     const parentDir = path.dirname(DATA_DIR);
     const dataFolderName = path.basename(DATA_DIR);
 
-    // Try zip first, then fallback to tar
-    let tool = 'zip';
-    let args = ['-r', '-', dataFolderName];
-    let extension = 'zip';
-    let mimeType = 'application/zip';
+    // Use tar with gzip compression
+    const tool = 'tar';
+    const args = ['-czf', '-', dataFolderName];
+    const extension = 'tar.gz';
+    const mimeType = 'application/gzip';
 
     try {
         const { execSync } = require('child_process');
-        execSync('zip -v');
-    } catch (err) {
-        console.log('Zip not found, trying tar...');
-        try {
-            const { execSync } = require('child_process');
-            execSync('tar --version');
-            tool = 'tar';
-            args = ['-cz', dataFolderName];
-            extension = 'tar.gz';
-            mimeType = 'application/gzip';
-        } catch (tarErr) {
-            console.error('Neither zip nor tar found');
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            return res.end(JSON.stringify({
-                error: 'System backup utilities (zip/tar) not found.',
-                details: 'Please install zip or tar on the server.'
-            }));
-        }
+        execSync('tar --version');
+    } catch (tarErr) {
+        console.error('Tar not found');
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+            error: 'System backup utility (tar) not found.',
+            details: 'Please install tar on the server.'
+        }));
     }
 
     const filename = `backup-data-${timestamp}.${extension}`;
@@ -112,14 +102,14 @@ function createBackup(req, res) {
 }
 
 /**
- * Restores the data folder from a zip backup
+ * Restores the data folder from a tar backup
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res 
  */
 async function restoreBackup(req, res) {
     const parentDir = path.dirname(DATA_DIR);
-    const tempZipPath = path.join(parentDir, `temp_restore_${Date.now()}.zip`);
-    const writeStream = fs.createWriteStream(tempZipPath);
+    const tempTarPath = path.join(parentDir, `temp_restore_${Date.now()}.tar.gz`);
+    const writeStream = fs.createWriteStream(tempTarPath);
 
     req.pipe(writeStream);
 
@@ -157,15 +147,17 @@ async function restoreBackup(req, res) {
                 }
             }
 
-            // 2. Unzip
-            // -o: overwrite files without prompting
-            // -d: specify directory to extract to
-            const unzip = spawn('unzip', ['-o', tempZipPath, '-d', parentDir]);
+            // 2. Untar (gzip)
+            // -x: extract
+            // -z: uncompress with gzip
+            // -f: file
+            // -C: directory to change to before extracting
+            const untar = spawn('tar', ['-xzf', tempTarPath, '-C', parentDir]);
 
-            unzip.on('close', (code) => {
-                // Remove temp zip
-                if (fs.existsSync(tempZipPath)) {
-                    fs.unlinkSync(tempZipPath);
+            untar.on('close', (code) => {
+                // Remove temp tar
+                if (fs.existsSync(tempTarPath)) {
+                    fs.unlinkSync(tempTarPath);
                 }
 
                 if (code === 0) {
@@ -176,16 +168,16 @@ async function restoreBackup(req, res) {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ success: true }));
                 } else {
-                    console.error(`Unzip exited with code ${code}`);
+                    console.error(`Tar extract exited with code ${code}`);
                     // Fail! Rollback
                     rollback(DATA_DIR, oldDataDir, dataDirWasRenamed);
                     res.writeHead(500, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Failed to extract backup. Is it a valid zip?' }));
+                    res.end(JSON.stringify({ error: 'Failed to extract backup. Is it a valid tar file?' }));
                 }
             });
 
-            unzip.stderr.on('data', (data) => {
-                console.error(`Unzip stderr: ${data}`);
+            untar.stderr.on('data', (data) => {
+                console.error(`Tar extract stderr: ${data}`);
             });
 
         } catch (err) {

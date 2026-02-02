@@ -40,7 +40,7 @@ document.getElementById('restore-input').addEventListener('change', async (e) =>
             method: 'POST',
             body: file,
             headers: {
-                'Content-Type': 'application/zip'
+                'Content-Type': 'application/gzip'
             }
         });
 
