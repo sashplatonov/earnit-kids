@@ -8,9 +8,9 @@
                 <label>Возраст: от <span id="age-min-val">7</span> до <span id="age-max-val">18</span> лет</label>
                 <div class="slider-container dual-slider" style="position: relative; height: 30px; margin-top: 10px;">
                     <input type="range" id="catalog-age-min-filter" value="7" min="7" max="18" class="age-slider"
-                        style="position: absolute; pointer-events: none; z-index: 2; width: 100%; -webkit-appearance: none; background: transparent;">
+                        style="position: absolute; pointer-events: none; z-index: 2; width: 100%; -webkit-appearance: none; appearance: none; background: transparent;">
                     <input type="range" id="catalog-age-max-filter" value="18" min="7" max="18" class="age-slider"
-                        style="position: absolute; pointer-events: none; z-index: 1; width: 100%; -webkit-appearance: none; background: transparent;">
+                        style="position: absolute; pointer-events: none; z-index: 1; width: 100%; -webkit-appearance: none; appearance: none; background: transparent;">
                     <div class="slider-track"
                         style="position: absolute; top: 13px; height: 6px; background: rgba(255,255,255,0.1); width: 100%; border-radius: 3px;">
                     </div>
@@ -132,6 +132,20 @@
 
     .btn-add:hover {
         background: #27ae60;
+    }
+
+    @media (max-width: 480px) {
+        .catalog-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .btn-add {
+            width: 100%;
+            margin-left: 0;
+            padding: 0.75rem;
+        }
     }
 
     /* Dual Range Slider Styles */
