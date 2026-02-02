@@ -97,6 +97,7 @@ function renderFamilies() {
             </td>
             <td>${family.tasksCount || 0}</td>
             <td>${family.shopCount || 0}</td>
+            <td>${family.monthlyLimit || 2000}</td>
             <td>${family.isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>'}</td>
             <td>${createdDate}</td>
             <td style="font-size:0.9rem">${lastActivityDate}</td>
@@ -330,6 +331,10 @@ function renderFamilyDetails(familyData) {
             <div class="detail-item">
                 <strong>Баланс</strong>
                 <div>${familyData.data.balance} 🪙</div>
+            </div>
+            <div class="detail-item">
+                <strong>Лимит (мес)</strong>
+                <div>${familyData.familyInfo.monthly_limit || 2000}</div>
             </div>
             <div class="detail-item" style="grid-column: span 2">
                 <strong>Magic Link (Ребенок)</strong>

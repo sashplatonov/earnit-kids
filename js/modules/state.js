@@ -9,6 +9,7 @@ export const state = {
     isPinSet: false,
     familyId: null,
     familyName: '',
+    monthlyLimit: 2000,
     baseData: { tasks: [], products: [] }
 };
 

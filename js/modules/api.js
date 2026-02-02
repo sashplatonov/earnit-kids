@@ -101,3 +101,19 @@ export async function regenerateChildToken() {
     }
     return null;
 }
+
+export async function updateFamilySettingsOnServer(settings) {
+    try {
+        const response = await fetch('/api/update-family-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (err) {
+        console.error('Failed to update family settings:', err);
+    }
+    return null;
+}

@@ -272,7 +272,8 @@ function registerFamily(familyName, email, adminPassword, childPassword) {
         created_at: now.toISOString(),
         admin_password: adminPassword,
         child_password: childPassword,
-        child_token: crypto.randomBytes(32).toString('hex')
+        child_token: crypto.randomBytes(32).toString('hex'),
+        monthly_limit: 2000 // Default monthly limit
     };
 
     if (saveFamilies(families)) {
@@ -364,6 +365,41 @@ function toggleFamilyBlock(familyId, isBlocked) {
     return { success: false, error: 'Ошибка сохранения' };
 }
 
+// Update Family Name
+function updateFamilyName(familyId, newName) {
+    const families = loadFamilies();
+    const family = families.families[familyId];
+
+    if (!family) {
+        return { success: false, error: 'Семья не найдена' };
+    }
+
+    family.name = newName;
+
+    if (saveFamilies(families)) {
+        return { success: true };
+    }
+    return { success: false, error: 'Ошибка сохранения' };
+}
+
+// Update Family Settings
+function updateFamilySettings(familyId, settings) {
+    const families = loadFamilies();
+    const family = families.families[familyId];
+
+    if (!family) {
+        return { success: false, error: 'Семья не найдена' };
+    }
+
+    if (settings.name) family.name = settings.name;
+    if (settings.monthly_limit !== undefined) family.monthly_limit = parseInt(settings.monthly_limit);
+
+    if (saveFamilies(families)) {
+        return { success: true };
+    }
+    return { success: false, error: 'Ошибка сохранения' };
+}
+
 const BASE_DATA_FILE = path.join(DATA_DIR, 'baseData.json');
 
 // Load base data
@@ -448,5 +484,7 @@ module.exports = {
     updateLastActivity,
     recoverPassword,
     getChildLoginLink,
-    regenerateChildToken
+    regenerateChildToken,
+    updateFamilyName,
+    updateFamilySettings
 };

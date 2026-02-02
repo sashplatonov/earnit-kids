@@ -1,4 +1,4 @@
-const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, authenticateChildByToken, toggleFamilyBlock, updateLastActivity, recoverPassword, getChildLoginLink, regenerateChildToken } = require('./dataService');
+const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, authenticateChildByToken, toggleFamilyBlock, updateLastActivity, recoverPassword, getChildLoginLink, regenerateChildToken, updateFamilyName, updateFamilySettings } = require('./dataService');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -220,6 +220,7 @@ async function handleAPI(req, res) {
             data.isAdmin = role === 'admin';
             data.familyId = familyId;
             data.familyName = familyInfo ? familyInfo.name : 'Магазин';
+            data.monthlyLimit = familyInfo ? (familyInfo.monthly_limit || 2000) : 2000;
             return sendJSON(res, data);
         }
 
@@ -275,6 +276,40 @@ async function handleAPI(req, res) {
             }
         }
 
+        // POST /api/update-family-name - update family name (admin only)
+        if (url === '/api/update-family-name' && method === 'POST') {
+            const { familyId, role } = getFamilyContext(req);
+            if (!familyId || role !== 'admin') {
+                return sendJSON(res, { error: 'Forbidden' }, 403);
+            }
+            const body = await parseBody(req);
+            const { newName } = body;
+            if (!newName) {
+                return sendJSON(res, { error: 'Имя не может быть пустым' }, 400);
+            }
+            const result = updateFamilyName(familyId, newName);
+            if (result.success) {
+                return sendJSON(res, { success: true });
+            } else {
+                return sendJSON(res, { error: result.error || 'Failed' }, 500);
+            }
+        }
+
+        // POST /api/update-family-settings - update family name and monthly limit (admin only)
+        if (url === '/api/update-family-settings' && method === 'POST') {
+            const { familyId, role } = getFamilyContext(req);
+            if (!familyId || role !== 'admin') {
+                return sendJSON(res, { error: 'Forbidden' }, 403);
+            }
+            const body = await parseBody(req);
+            const result = updateFamilySettings(familyId, body);
+            if (result.success) {
+                return sendJSON(res, { success: true });
+            } else {
+                return sendJSON(res, { error: result.error || 'Failed' }, 500);
+            }
+        }
+
         // 404 for unknown API routes
         sendJSON(res, { error: 'Not Found' }, 404);
 
@@ -316,7 +351,8 @@ async function handleSuperAdminAPI(req, res) {
                     isBlocked: !!data.isBlocked,
                     tasksCount: familyData.tasks ? familyData.tasks.length : 0,
                     shopCount: familyData.shop ? familyData.shop.length : 0,
-                    lastActivity: data.last_activity || null
+                    lastActivity: data.last_activity || null,
+                    monthlyLimit: data.monthly_limit || 2000
                 };
             });
 

@@ -52,7 +52,8 @@ function updateBudgetStats() {
     if (document.getElementById('rsd-spent')) {
         document.getElementById('rsd-spent').textContent = stats.rsdSpent.toLocaleString();
 
-        const progress = Math.min((stats.rsdSpent / CONFIG.MONTHLY_LIMIT) * 100, 100);
+        const monthlyLimit = state.monthlyLimit || CONFIG.MONTHLY_LIMIT;
+        const progress = Math.min((stats.rsdSpent / monthlyLimit) * 100, 100);
         const bar = document.getElementById('rsd-progress');
         if (bar) {
             bar.style.width = `${progress}%`;

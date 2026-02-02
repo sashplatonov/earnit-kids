@@ -3,7 +3,7 @@ import { state, setState } from './state.js';
 import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
-import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin } from './admin.js';
+import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings } from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
 
 // Catalog Logic
@@ -157,7 +157,9 @@ window.app = {
     approveRequest,
     rejectRequest,
     deleteRequest,
-    addCatalogItem
+    addCatalogItem,
+    openFamilySettingsModal,
+    saveFamilySettings
 };
 
 // Helper to get cookie value
@@ -191,6 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             history: data.history || [],
             requests: data.requests || [],
             familyName: data.familyName || '',
+            monthlyLimit: data.monthlyLimit || 2000,
             baseData: baseData
         });
     } else {
@@ -252,6 +255,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             changePinBtn.addEventListener('click', openChangePinModal);
         }
     }
+
+    const editFamilyNameBtn = document.getElementById('edit-family-name-btn');
+    if (editFamilyNameBtn) {
+        editFamilyNameBtn.addEventListener('click', openFamilySettingsModal);
+    }
+
+    const familySettingsSave = document.getElementById('family-settings-save');
+    if (familySettingsSave) familySettingsSave.addEventListener('click', saveFamilySettings);
+
+    const familySettingsCancel = document.getElementById('family-settings-cancel');
+    if (familySettingsCancel) familySettingsCancel.addEventListener('click', () => closeModal('family-settings-modal'));
 
     const changePinSubmit = document.getElementById('change-pin-submit');
     if (changePinSubmit) changePinSubmit.addEventListener('click', saveNewPin);

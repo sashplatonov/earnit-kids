@@ -1,5 +1,5 @@
 import { state, setState, notify } from './state.js';
-import { changePin, saveDataToServer } from './api.js';
+import { changePin, saveDataToServer, updateFamilySettingsOnServer } from './api.js';
 import { renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, showConfirm } from './utils.js';
 import { scheduleSave } from './actions.js';
@@ -217,4 +217,29 @@ export function deleteShopItem() {
 
 export function editShopItem(id) {
     openShopModal(id);
+}
+
+export function openFamilySettingsModal() {
+    document.getElementById('settings-family-name').value = state.familyName || '';
+    document.getElementById('settings-monthly-limit').value = state.monthlyLimit || 2000;
+    openModal('family-settings-modal');
+}
+
+export async function saveFamilySettings() {
+    const name = document.getElementById('settings-family-name').value.trim();
+    const monthlyLimit = parseInt(document.getElementById('settings-monthly-limit').value);
+
+    if (!name) {
+        showToast('Название не может быть пустым', 'error');
+        return;
+    }
+
+    const result = await updateFamilySettingsOnServer({ name, monthly_limit: monthlyLimit });
+    if (result && result.success) {
+        setState({ familyName: name, monthlyLimit: monthlyLimit });
+        showToast('Настройки обновлены!', 'success');
+        closeModal('family-settings-modal');
+    } else {
+        showToast('Ошибка при обновлении настроек', 'error');
+    }
 }
