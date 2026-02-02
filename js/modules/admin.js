@@ -136,7 +136,7 @@ export function openShopModal(itemId = null) {
         document.getElementById('shop-name').value = item.name;
         document.getElementById('shop-price').value = item.price;
         document.getElementById('shop-comment').value = item.comment || '';
-        document.getElementById('shop-rsd').value = item.rsdLimit || '';
+        document.getElementById('shop-money-limit').value = item.money_limit || '';
         document.getElementById('shop-type').value = item.type || 'small';
 
         if (item.frequency) {
@@ -153,7 +153,7 @@ export function openShopModal(itemId = null) {
         document.getElementById('shop-name').value = '';
         document.getElementById('shop-price').value = '';
         document.getElementById('shop-comment').value = '';
-        document.getElementById('shop-rsd').value = '';
+        document.getElementById('shop-money-limit').value = '';
         document.getElementById('shop-type').value = 'small';
         document.getElementById('shop-freq-limit').value = 1;
         document.getElementById('shop-freq-period').value = 'week';
@@ -168,7 +168,7 @@ export function saveShopItem() {
     const name = document.getElementById('shop-name').value.trim();
     const price = parseInt(document.getElementById('shop-price').value);
     const comment = document.getElementById('shop-comment').value.trim();
-    const rsdLimit = parseInt(document.getElementById('shop-rsd').value) || 0;
+    const moneyLimit = parseInt(document.getElementById('shop-money-limit').value) || null;
     const type = document.getElementById('shop-type').value;
     const freqLimit = parseInt(document.getElementById('shop-freq-limit').value) || 0;
     const freqPeriod = document.getElementById('shop-freq-period').value;
@@ -180,7 +180,7 @@ export function saveShopItem() {
         name,
         price,
         comment,
-        rsdLimit,
+        money_limit: moneyLimit,
         type,
         frequency: freqLimit > 0 ? { limit: freqLimit, period: freqPeriod } : null
     };

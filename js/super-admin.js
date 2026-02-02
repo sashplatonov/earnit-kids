@@ -135,11 +135,15 @@ function renderList(type, items, container) {
             // Find original index in baseData[type]
             const originalIndex = baseData[type].findIndex(i => i.id === item.id);
             const card = document.createElement('div');
+            const freqText = item.frequency ? ` (${item.frequency.limit}/${item.frequency.period})` : '';
+            const moneyLimitText = item.money_limit ? ` | Limit: ${item.money_limit} 🪙` : '';
             card.className = 'item-card';
             card.innerHTML = `
                 <div class="item-header">
                     <span>${item.name}</span>
-                    <span>${item.coins || item.price} 🪙</span>
+                </div>
+                <div class="item-meta" style="color: #6366f1; font-weight: 600;">
+                    ${item.coins || item.price} 🪙 ${freqText}${moneyLimitText}
                 </div>
                 <div class="item-meta">
                     Возраст: ${item.age_min}-${item.age_max} лет
@@ -180,6 +184,26 @@ window.editItem = (type, index) => {
             <label>Возраст (макс)</label>
             <input type="number" id="edit-max" value="${item.age_max}">
         </div>
+        <div style="display: flex; gap: 1rem; border-top: 1px solid #eee; padding-top: 1rem; margin-top: 1rem;">
+            <div class="input-group" style="flex: 1">
+                <label>Лимит (раз)</label>
+                <input type="number" id="edit-limit" value="${item.frequency ? item.frequency.limit : ''}" placeholder="Без лимита">
+            </div>
+            <div class="input-group" style="flex: 1">
+                <label>Период</label>
+                <select id="edit-period">
+                    <option value="day" ${(item.frequency && item.frequency.period === 'day') ? 'selected' : ''}>В день</option>
+                    <option value="week" ${(item.frequency && item.frequency.period === 'week') ? 'selected' : ''}>В неделю</option>
+                    <option value="month" ${(item.frequency && item.frequency.period === 'month') ? 'selected' : ''}>В месяц</option>
+                </select>
+            </div>
+        </div>
+        ${!isTask ? `
+        <div class="input-group">
+            <label>Денежный лимит (монеты)</label>
+            <input type="number" id="edit-money-limit" value="${item.money_limit || ''}" placeholder="Без лимита">
+        </div>
+        ` : ''}
         <button class="save-btn" onclick="saveItem('${type}', ${index})">Сохранить</button>
     `;
 
@@ -191,16 +215,31 @@ window.editItem = (type, index) => {
 window.addItem = (type) => editItem(type, -1);
 
 window.saveItem = async (type, index) => {
+    const isTask = type === 'tasks';
     const newItem = {
         id: index === -1 ? Date.now().toString() : (type === 'tasks' ? baseData.tasks[index].id : baseData.products[index].id),
         name: document.getElementById('edit-name').value,
         category: document.getElementById('edit-category').value,
         age_min: parseInt(document.getElementById('edit-min').value),
-        age_max: parseInt(document.getElementById('edit-max').value)
+        age_max: parseInt(document.getElementById('edit-max').value),
     };
 
+    const limit = parseInt(document.getElementById('edit-limit').value);
+    const period = document.getElementById('edit-period').value;
+    if (limit > 0) {
+        newItem.frequency = { limit, period };
+    } else {
+        newItem.frequency = null;
+    }
+
+    if (!isTask) {
+        const moneyLimit = parseInt(document.getElementById('edit-money-limit').value);
+        if (moneyLimit > 0) newItem.money_limit = moneyLimit;
+        else newItem.money_limit = null;
+    }
+
     const cost = parseInt(document.getElementById('edit-cost').value);
-    if (type === 'tasks') newItem.coins = cost;
+    if (isTask) newItem.coins = cost;
     else newItem.price = cost;
 
     if (index === -1) {
@@ -316,12 +355,16 @@ function renderFamilyDetails(familyData) {
                 </tr>
             </thead>
             <tbody>
-                ${familyData.data.shop.map(item => `
+                ${familyData.data.shop.map(item => {
+        const freqText = item.frequency ? `<br><small>${item.frequency.limit}/${item.frequency.period}</small>` : '';
+        const limitText = item.money_limit ? `<br><small>Limit: ${item.money_limit}🪙</small>` : '';
+        return `
                     <tr>
-                        <td>${item.name}</td>
+                        <td>${item.name}${freqText}${limitText}</td>
                         <td>${item.price} 🪙</td>
                     </tr>
-                `).join('')}
+                `;
+    }).join('')}
             </tbody>
         </table>
 

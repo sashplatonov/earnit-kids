@@ -111,17 +111,19 @@ export function buyItem(itemId) {
     }
 
     // Ask for actual RSD price
-    const rsdInput = prompt(`Покупка "${item.name}"\nВведите стоимость в ${CONFIG.RSD_SYMBOL} (макс ${item.rsdLimit || CONFIG.MONTHLY_LIMIT}):`, '0');
+    const limit = item.moneyLimit || item.money_limit || item.rsdLimit;
+    const limitLabel = limit ? ` (макс ${limit})` : '';
+    const rsdInput = prompt(`Покупка "${item.name}"\nВведите стоимость в деньгах ${limitLabel}:`, '0');
     if (rsdInput === null) return; // Cancelled
 
     const rsdPrice = parseInt(rsdInput);
     if (isNaN(rsdPrice) || rsdPrice < 0) {
-        showToast('Некорректная сумма RSD', 'error');
+        showToast('Некорректная сумма', 'error');
         return;
     }
 
-    if (item.rsdLimit && rsdPrice > item.rsdLimit) {
-        showToast(`Цена выше лимита товара (${item.rsdLimit} RSD)`, 'error');
+    if (limit && rsdPrice > limit) {
+        showToast(`Цена выше лимита товара (${limit})`, 'error');
         return;
     }
 
@@ -134,7 +136,7 @@ export function buyItem(itemId) {
 
     showConfirm(
         'Подтвердите покупку',
-        `Купить "${item.name}" за ${item.price} 🪙 и ${rsdPrice} ${CONFIG.RSD_SYMBOL}?`,
+        `Купить "${item.name}" за ${item.price} 🪙 и ${rsdPrice} в деньгах?`,
         () => {
             state.balance -= item.price;
             addHistoryEntry('spend', item.price, item.name, item.id, rsdPrice);

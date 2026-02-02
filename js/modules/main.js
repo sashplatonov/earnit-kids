@@ -32,15 +32,18 @@ function renderCatalog() {
         let html = '';
         Object.keys(grouped).sort().forEach(cat => {
             html += `<div class="category-header">${cat}</div>`;
-            html += grouped[cat].map(t => `
+            html += grouped[cat].map(t => {
+                const freqText = t.frequency ? ` | ${t.frequency.limit}/${t.frequency.period}` : '';
+                return `
                 <div class="catalog-item">
                     <div class="catalog-info">
                         <span class="catalog-name">${t.name}</span>
-                        <span class="catalog-meta">${t.coins} 🪙 | ${t.age_min}-${t.age_max} л.</span>
+                        <span class="catalog-meta">${t.coins} 🪙 | ${t.age_min}-${t.age_max} л.${freqText}</span>
                     </div>
                     <button class="btn-add" onclick="window.app.addCatalogItem('task', '${t.id}')">+</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         });
         tasksList.innerHTML = html;
     }
@@ -59,15 +62,19 @@ function renderCatalog() {
         let html = '';
         Object.keys(grouped).sort().forEach(cat => {
             html += `<div class="category-header">${cat}</div>`;
-            html += grouped[cat].map(p => `
-                <div class="catalog-item">
-                    <div class="catalog-info">
-                        <span class="catalog-name">${p.name}</span>
-                        <span class="catalog-meta">${p.price} 🪙 | ${p.age_min}-${p.age_max} л.</span>
+            html += grouped[cat].map(p => {
+                const freqText = p.frequency ? ` | ${p.frequency.limit}/${p.frequency.period}` : '';
+                const limitText = p.money_limit ? ` | Lim: ${p.money_limit}🪙` : '';
+                return `
+                    <div class="catalog-item">
+                        <div class="catalog-info">
+                            <span class="catalog-name">${p.name}</span>
+                            <span class="catalog-meta">${p.price} 🪙 | ${p.age_min}-${p.age_max} л.${freqText}${limitText}</span>
+                        </div>
+                        <button class="btn-add" onclick="window.app.addCatalogItem('product', '${p.id}')">+</button>
                     </div>
-                    <button class="btn-add" onclick="window.app.addCatalogItem('product', '${p.id}')">+</button>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         });
         productsList.innerHTML = html;
     }
@@ -116,7 +123,8 @@ function addCatalogItem(type, id) {
     const newItem = {
         ...item,
         id: Date.now(), // New unique ID
-        frequency: { limit: 1, period: 'day' } // Default frequency
+        frequency: item.frequency || { limit: 1, period: 'day' }, // Use item freq or default
+        money_limit: item.money_limit || null
     };
 
     // Clean up base data specific fields if needed

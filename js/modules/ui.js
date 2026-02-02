@@ -146,8 +146,9 @@ export function renderShop() {
             const label = CONFIG.SHOP_ITEM_TYPES[item.type] ? CONFIG.SHOP_ITEM_TYPES[item.type].label : item.type;
             tags.push(`<span class="tag tag--${item.type}">${label}</span>`);
         }
-        if (item.rsdLimit) {
-            tags.push(`<span class="tag tag--rsd">до ${item.rsdLimit} ${CONFIG.RSD_SYMBOL}</span>`);
+        const mLimit = item.moneyLimit || item.money_limit;
+        if (mLimit) {
+            tags.push(`<span class="tag tag--rsd">Lim: ${mLimit} 🪙</span>`);
         }
         if (item.frequency) {
             tags.push(`<span class="tag">${item.frequency.limit}/${CONFIG.PERIODS[item.frequency.period].display || 'пер'}</span>`);
