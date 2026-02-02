@@ -1,9 +1,269 @@
 {
-  "admin_pin": "444444",
-  "child_pin": "111111",
+  "admin_pin": "131313",
+  "child_pin": "200807",
   "balance": 0,
-  "tasks": [],
-  "shop": [],
+  "tasks": [
+    {
+      "id": 1,
+      "name": "🎒 Школа: Полный день",
+      "coins": 2,
+      "frequency": {
+        "limit": 1,
+        "period": "day"
+      },
+      "comment": "Без пропусков и опозданий (макс 2 🪙/день)"
+    },
+    {
+      "id": 2,
+      "name": "🧺 Дом: Малое дело",
+      "coins": 2,
+      "frequency": {
+        "limit": 2,
+        "period": "day"
+      },
+      "comment": "15–20 мин: посуда, пыль, кровать, мусор (дом макс 6 🪙/день)"
+    },
+    {
+      "id": 3,
+      "name": "🧺 Дом: Среднее дело",
+      "coins": 4,
+      "frequency": {
+        "limit": 1,
+        "period": "day"
+      },
+      "comment": "30–45 мин: уборка зоны, готовка, белье, магазин (дом макс 6 🪙/день)"
+    },
+    {
+      "id": 4,
+      "name": "🧺 Дом: Большое дело",
+      "coins": 6,
+      "frequency": {
+        "limit": 3,
+        "period": "week"
+      },
+      "comment": "60+ мин: генуборка, пол, шкаф, важное поручение (дом макс 6 🪙/день)"
+    },
+    {
+      "id": 5,
+      "name": "🏃‍♀️ Шаги: 10,000",
+      "coins": 2,
+      "frequency": {
+        "limit": 1,
+        "period": "day"
+      },
+      "comment": "За день по телефону или часам"
+    },
+    {
+      "id": 6,
+      "name": "💪 Преодоление",
+      "coins": 5,
+      "frequency": {
+        "limit": 3,
+        "period": "week"
+      },
+      "comment": "Сложный шаг (то, что откладывала/боялась), макс 5 🪙/день"
+    },
+    {
+      "id": 7,
+      "name": "📚 Проект: Сдача предмета",
+      "coins": 60,
+      "comment": "Сдала один предмет прошлого года"
+    }
+  ],
+  "shop": [
+    {
+      "id": 1,
+      "name": "🧁 Кофе / чай / десерт",
+      "price": 8,
+      "type": "micro",
+      "rsdLimit": 450,
+      "frequency": {
+        "limit": 20,
+        "period": "month"
+      },
+      "comment": "До 1 раза в день, 5 в неделю"
+    },
+    {
+      "id": 2,
+      "name": "💄 Косметика (маленькая)",
+      "price": 20,
+      "type": "micro",
+      "rsdLimit": 1200,
+      "frequency": {
+        "limit": 4,
+        "period": "month"
+      },
+      "comment": "До 1 раза в неделю"
+    },
+    {
+      "id": 3,
+      "name": "✏️ Канцелярия для учебы",
+      "price": 20,
+      "type": "micro",
+      "rsdLimit": 800,
+      "frequency": {
+        "limit": 4,
+        "period": "month"
+      },
+      "comment": "До 1 раза в неделю"
+    },
+    {
+      "id": 4,
+      "name": "📚 Книга / комикс",
+      "price": 25,
+      "type": "small",
+      "rsdLimit": 1500,
+      "frequency": {
+        "limit": 3,
+        "period": "month"
+      },
+      "comment": "До 1 раза в неделю"
+    },
+    {
+      "id": 5,
+      "name": "📱 Мобильный пакет",
+      "price": 40,
+      "type": "small",
+      "rsdLimit": 1500,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Повышенный трафик (макс 2 за 900)"
+    },
+    {
+      "id": 6,
+      "name": "🛒 Покупка на Temu",
+      "price": 45,
+      "type": "small",
+      "rsdLimit": 3000,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Не чаще 1 заказа в 2 недели"
+    },
+    {
+      "id": 7,
+      "name": "💅 Маникюр",
+      "price": 60,
+      "type": "large",
+      "rsdLimit": 3500,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Ваша '1 крупная' покупка"
+    },
+    {
+      "id": 8,
+      "name": "👁️ Ресницы",
+      "price": 70,
+      "type": "large",
+      "rsdLimit": 4500,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Ваша '1 крупная' покупка"
+    },
+    {
+      "id": 9,
+      "name": "🎧 Наушники / гаджет",
+      "price": 120,
+      "type": "large",
+      "rsdLimit": 8000,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Ваша '1 крупная' покупка"
+    },
+    {
+      "id": 10,
+      "name": "👕 Одежда базовая",
+      "price": 120,
+      "type": "large",
+      "rsdLimit": 8000,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Ваша '1 крупная' покупка"
+    },
+    {
+      "id": 11,
+      "name": "🎁 Большая покупка",
+      "price": 150,
+      "type": "large",
+      "rsdLimit": 15000,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Не чаще 1 раза в 2 месяца, отдельное согласование"
+    },
+    {
+      "id": 12,
+      "name": "🏠 'Теплый вечер'",
+      "price": 20,
+      "type": "activity",
+      "rsdLimit": 0,
+      "frequency": {
+        "limit": 1,
+        "period": "week"
+      },
+      "comment": "Фильм/настолка + чай, без разговоров про школу"
+    },
+    {
+      "id": 13,
+      "name": "🍕 'Выход в кафе'",
+      "price": 40,
+      "type": "activity",
+      "rsdLimit": 2500,
+      "frequency": {
+        "limit": 2,
+        "period": "month"
+      },
+      "comment": "Кафе/пицца вместе, 60–90 минут"
+    },
+    {
+      "id": 14,
+      "name": "🎬 'Кино/музей/каток'",
+      "price": 60,
+      "type": "activity",
+      "rsdLimit": 3500,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "1 совместное мероприятие"
+    },
+    {
+      "id": 15,
+      "name": "🧩 'Мой выбор'",
+      "price": 70,
+      "type": "activity",
+      "rsdLimit": 4500,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "Она выбирает маршрут/активность (2–3 часа)"
+    },
+    {
+      "id": 16,
+      "name": "🚆 'Мини-поездка'",
+      "price": 100,
+      "type": "activity",
+      "rsdLimit": 3000,
+      "frequency": {
+        "limit": 1,
+        "period": "month"
+      },
+      "comment": "1 раз в 2 месяца, полдня вне дома"
+    }
+  ],
   "history": [],
   "requests": []
 }

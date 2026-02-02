@@ -11,7 +11,8 @@ const CONFIG = {
     SHOP_ITEM_TYPES: {
         micro: { label: '🧁 Микро', value: 'micro' },
         small: { label: '📚 Малая', value: 'small' },
-        large: { label: '💅 Крупная (1/мес)', value: 'large', limit: 1 } // limit per month for this type
+        large: { label: '💅 Крупная (1/мес)', value: 'large', limit: 1 }, // limit per month for this type
+        activity: { label: '🤝 С родителями', value: 'activity' }
     },
 
     // Task Frequency Periods
