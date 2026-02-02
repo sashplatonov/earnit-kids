@@ -124,7 +124,7 @@ function renderList(type, items, container) {
                 <span>${item.coins || item.price} 🪙</span>
             </div>
             <div class="item-meta">
-                Возраст: ${item.age_min}-${item.age_max} лет
+                Возраст: ${item.age_min}-${item.age_max} лет | ${item.category || 'Без категории'}
             </div>
             <div class="item-actions">
                 <button class="btn-sm btn-edit" onclick="editItem('${type}', ${index})">✏️</button>
@@ -132,6 +132,48 @@ function renderList(type, items, container) {
             </div>
         `;
         container.appendChild(card);
+    });
+}
+
+function renderList(type, items, container) {
+    container.innerHTML = '';
+
+    // Group by category
+    const grouped = items.reduce((acc, item) => {
+        const cat = item.category || 'Без категории';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(item);
+        return acc;
+    }, {});
+
+    Object.keys(grouped).sort().forEach(cat => {
+        const catHeader = document.createElement('h4');
+        catHeader.style.margin = '1rem 0 0.5rem 0';
+        catHeader.style.color = 'rgba(255,255,255,0.5)';
+        catHeader.style.fontSize = '0.9rem';
+        catHeader.textContent = cat;
+        container.appendChild(catHeader);
+
+        grouped[cat].forEach(item => {
+            // Find original index in baseData[type]
+            const originalIndex = baseData[type].findIndex(i => i.id === item.id);
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.innerHTML = `
+                <div class="item-header">
+                    <span>${item.name}</span>
+                    <span>${item.coins || item.price} 🪙</span>
+                </div>
+                <div class="item-meta">
+                    Возраст: ${item.age_min}-${item.age_max} лет
+                </div>
+                <div class="item-actions">
+                    <button class="btn-sm btn-edit" onclick="editItem('${type}', ${originalIndex})">✏️</button>
+                    <button class="btn-sm btn-del" onclick="deleteItem('${type}', ${originalIndex})">🗑️</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
     });
 }
 
@@ -144,6 +186,10 @@ window.editItem = (type, index) => {
         <div class="input-group">
             <label>Название</label>
             <input type="text" id="edit-name" value="${item.name}">
+        </div>
+        <div class="input-group">
+            <label>Категория</label>
+            <input type="text" id="edit-category" value="${item.category || ''}" placeholder="Напр: Дом, Учеба...">
         </div>
         <div class="input-group">
             <label>${isTask ? 'Награда (монеты)' : 'Цена (монеты)'}</label>
@@ -171,6 +217,7 @@ window.saveItem = async (type, index) => {
     const newItem = {
         id: index === -1 ? Date.now().toString() : (type === 'tasks' ? baseData.tasks[index].id : baseData.products[index].id),
         name: document.getElementById('edit-name').value,
+        category: document.getElementById('edit-category').value,
         age_min: parseInt(document.getElementById('edit-min').value),
         age_max: parseInt(document.getElementById('edit-max').value)
     };

@@ -5,13 +5,12 @@
 
         <div class="filter-card">
             <div class="filter-group">
-                <label>Возраст ребенка:</label>
-                <input type="number" id="catalog-age-filter" value="7" min="4" max="18" class="age-input">
-                <span>лет</span>
-                <label style="margin-left: 1.5rem; display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="catalog-ignore-age" style="width: auto; margin-right: 0.5rem;">
-                    Все возраста
-                </label>
+                <label>Возраст ребенка: <span id="age-val">7</span> лет</label>
+                <div class="slider-container">
+                    <span>7</span>
+                    <input type="range" id="catalog-age-filter" value="7" min="7" max="18" class="age-slider">
+                    <span>18</span>
+                </div>
             </div>
             <p class="hint">Показываем задания для этого возраста</p>
         </div>
@@ -40,20 +39,32 @@
 
     .filter-group {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
         gap: 0.5rem;
-        font-size: 1.2rem;
-        font-weight: bold;
+        font-size: 1.1rem;
     }
 
-    .age-input {
-        width: 60px;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
-        border: none;
-        font-size: 1.2rem;
-        text-align: center;
+    .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .age-slider {
+        flex: 1;
+        cursor: pointer;
+    }
+
+    .category-header {
+        text-align: left;
+        font-size: 0.9rem;
+        color: rgba(255, 215, 0, 0.7);
+        margin: 1rem 0 0.5rem 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     .catalog-grid {

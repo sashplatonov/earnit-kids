@@ -9,39 +9,91 @@ import { renderRules, openEditRules, saveRules } from './rules.js';
 // Catalog Logic
 function renderCatalog() {
     const ageInput = document.getElementById('catalog-age-filter');
-    const ignoreAgeCheckbox = document.getElementById('catalog-ignore-age');
+    const ageVal = document.getElementById('age-val');
     if (!ageInput) return;
 
     const age = parseInt(ageInput.value) || 7;
-    const ignoreAge = ignoreAgeCheckbox ? ignoreAgeCheckbox.checked : false;
+    if (ageVal) ageVal.textContent = age;
 
     const tasksList = document.getElementById('catalog-tasks-list');
     const productsList = document.getElementById('catalog-products-list');
 
     if (tasksList && state.baseData.tasks) {
-        const tasks = state.baseData.tasks.filter(t => ignoreAge || (age >= t.age_min && age <= t.age_max));
-        tasksList.innerHTML = tasks.map(t => `
-            <div class="catalog-item">
-                <div class="catalog-info">
-                    <span class="catalog-name">${t.name}</span>
-                    <span class="catalog-meta">${t.coins} 🪙 | ${t.age_min}-${t.age_max} л.</span>
+        const tasks = state.baseData.tasks.filter(t => age >= t.age_min && age <= t.age_max);
+
+        // Group by category
+        const grouped = tasks.reduce((acc, t) => {
+            const cat = t.category || 'Без категории';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(t);
+            return acc;
+        }, {});
+
+        let html = '';
+        Object.keys(grouped).sort().forEach(cat => {
+            html += `<div class="category-header">${cat}</div>`;
+            html += grouped[cat].map(t => `
+                <div class="catalog-item">
+                    <div class="catalog-info">
+                        <span class="catalog-name">${t.name}</span>
+                        <span class="catalog-meta">${t.coins} 🪙 | ${t.age_min}-${t.age_max} л.</span>
+                    </div>
+                    <button class="btn-add" onclick="window.app.addCatalogItem('task', '${t.id}')">+</button>
                 </div>
-                <button class="btn-add" onclick="window.app.addCatalogItem('task', '${t.id}')">+</button>
-            </div>
-        `).join('');
+            `).join('');
+        });
+        tasksList.innerHTML = html;
     }
 
     if (productsList && state.baseData.products) {
-        const products = state.baseData.products.filter(p => ignoreAge || (age >= p.age_min && age <= p.age_max));
-        productsList.innerHTML = products.map(p => `
-            <div class="catalog-item">
-                <div class="catalog-info">
-                    <span class="catalog-name">${p.name}</span>
-                    <span class="catalog-meta">${p.price} 🪙 | ${p.age_min}-${p.age_max} л.</span>
+        const products = state.baseData.products.filter(p => age >= p.age_min && age <= p.age_max);
+
+        // Group by category
+        const grouped = products.reduce((acc, p) => {
+            const cat = p.category || 'Без категории';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(p);
+            return acc;
+        }, {});
+
+        let html = '';
+        Object.keys(grouped).sort().forEach(cat => {
+            html += `<div class="category-header">${cat}</div>`;
+            html += grouped[cat].map(p => `
+                <div class="catalog-item">
+                    <div class="catalog-info">
+                        <span class="catalog-name">${p.name}</span>
+                        <span class="catalog-meta">${p.price} 🪙 | ${p.age_min}-${p.age_max} л.</span>
+                    </div>
+                    <button class="btn-add" onclick="window.app.addCatalogItem('product', '${p.id}')">+</button>
                 </div>
-                <button class="btn-add" onclick="window.app.addCatalogItem('product', '${p.id}')">+</button>
-            </div>
-        `).join('');
+            `).join('');
+        });
+        productsList.innerHTML = html;
+    }
+}
+
+// About Logic
+async function loadAboutContent() {
+    const container = document.getElementById('about-content');
+    if (!container) return;
+
+    try {
+        const res = await fetch('/data/about.md');
+        if (res.ok) {
+            const text = await res.text();
+
+            if (window.marked) {
+                container.innerHTML = window.marked.parse(text);
+            } else {
+                container.innerHTML = `<pre>${text}</pre>`;
+            }
+        } else {
+            container.innerHTML = '<p>Ошибка: Файл не найден</p>';
+        }
+    } catch (err) {
+        console.error('Error loading about content:', err);
+        container.innerHTML = '<p>Ошибка загрузки содержания</p>';
     }
 }
 
@@ -138,6 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderAll();
     renderRules();
+    loadAboutContent();
     // Render catalog if admin
     if (state.isAdmin) renderCatalog();
 
@@ -169,12 +222,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ageFilter = document.getElementById('catalog-age-filter');
     if (ageFilter) {
         ageFilter.addEventListener('input', renderCatalog);
-        ageFilter.addEventListener('change', renderCatalog);
-    }
-
-    const ignoreAge = document.getElementById('catalog-ignore-age');
-    if (ignoreAge) {
-        ignoreAge.addEventListener('change', renderCatalog);
     }
 
     // Logout

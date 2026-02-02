@@ -12,6 +12,7 @@ const MIME_TYPES = {
     '.css': 'text/css; charset=utf-8',
     '.js': 'application/javascript; charset=utf-8',
     '.json': 'application/json; charset=utf-8',
+    '.md': 'text/markdown; charset=utf-8',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.ico': 'image/x-icon'
@@ -103,6 +104,7 @@ function serveIndex(res) {
         'section_requests.html',
         'section_shop.html',
         'section_catalog.html',
+        'section_about.html',
         'section_history.html',
         'section_rules.html',
         'main_end.html',
