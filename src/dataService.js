@@ -273,7 +273,7 @@ function registerFamily(familyName, email, adminPassword, childPassword) {
         admin_password: adminPassword,
         child_password: childPassword,
         child_token: crypto.randomBytes(32).toString('hex'),
-        monthly_limit: 2000 // Default monthly limit
+        monthly_limit: 10000 // Default monthly limit
     };
 
     if (saveFamilies(families)) {

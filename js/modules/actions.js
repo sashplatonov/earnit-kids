@@ -22,7 +22,7 @@ export function scheduleSave() {
     }, 500);
 }
 
-export function addHistoryEntry(type, amount, description, relatedId = null, rsdAmount = 0) {
+export function addHistoryEntry(type, amount, description, relatedId = null, moneyAmount = 0) {
     const entry = {
         id: Date.now(),
         type: type, // 'earn' | 'spend'
@@ -31,7 +31,7 @@ export function addHistoryEntry(type, amount, description, relatedId = null, rsd
         date: new Date().toISOString()
     };
 
-    if (rsdAmount) entry.rsdAmount = rsdAmount;
+    if (moneyAmount) entry.moneyAmount = moneyAmount;
 
     if (relatedId) {
         if (type === 'spend') entry.itemId = relatedId;
@@ -46,19 +46,19 @@ export function addHistoryEntry(type, amount, description, relatedId = null, rsd
     updateBalanceUI(); // Update stats potentially
 }
 
-export function checkLimits(item, rsdPrice) {
+export function checkLimits(item, moneyPrice) {
     const now = new Date();
     const currentMonth = now.toISOString().slice(0, 7);
 
     // Calculate stats locally since we need them for check
-    let rsdSpent = 0;
+    let moneySpent = 0;
     let largePurchase = null;
-    let count = 0;
 
     // 1. Calc monthly stats
     state.history.forEach(entry => {
         if (entry.type !== 'spend' || !entry.date.startsWith(currentMonth)) return;
-        if (entry.rsdAmount) rsdSpent += entry.rsdAmount;
+        const amount = entry.moneyAmount || entry.rsdAmount || 0;
+        moneySpent += amount;
         if (entry.itemId) {
             const histItem = state.shopItems.find(i => i.id === entry.itemId);
             if (histItem && histItem.type === 'large') largePurchase = histItem.name;
@@ -66,8 +66,9 @@ export function checkLimits(item, rsdPrice) {
     });
 
     // 1. Check budget limit
-    if (rsdSpent + rsdPrice > CONFIG.MONTHLY_LIMIT) {
-        return `Превышен месячный лимит (осталось ${CONFIG.MONTHLY_LIMIT - rsdSpent} ${CONFIG.RSD_SYMBOL})`;
+    const monthlyLimit = state.monthlyLimit || CONFIG.MONTHLY_LIMIT;
+    if (moneySpent + moneyPrice > monthlyLimit) {
+        return `Превышен месячный лимит (осталось ${monthlyLimit - moneySpent})`;
     }
 
     // 2. Check large purchase limit
@@ -110,25 +111,25 @@ export function buyItem(itemId) {
         return;
     }
 
-    // Ask for actual RSD price
-    const limit = item.moneyLimit || item.money_limit || item.rsdLimit;
+    // Ask for actual money value
+    const limit = item.moneyLimit || item.money_limit;
     const limitLabel = limit ? ` (макс ${limit})` : '';
-    const rsdInput = prompt(`Покупка "${item.name}"\nВведите стоимость в деньгах ${limitLabel}:`, '0');
-    if (rsdInput === null) return; // Cancelled
+    const moneyInput = prompt(`Покупка "${item.name}"\nВведите стоимость в деньгах${limitLabel}:`, '0');
+    if (moneyInput === null) return; // Cancelled
 
-    const rsdPrice = parseInt(rsdInput);
-    if (isNaN(rsdPrice) || rsdPrice < 0) {
+    const moneyPrice = parseInt(moneyInput);
+    if (isNaN(moneyPrice) || moneyPrice < 0) {
         showToast('Некорректная сумма', 'error');
         return;
     }
 
-    if (limit && rsdPrice > limit) {
+    if (limit && moneyPrice > limit) {
         showToast(`Цена выше лимита товара (${limit})`, 'error');
         return;
     }
 
     // Check global limits
-    const limitError = checkLimits(item, rsdPrice);
+    const limitError = checkLimits(item, moneyPrice);
     if (limitError) {
         showToast(limitError, 'error');
         return;
@@ -136,10 +137,10 @@ export function buyItem(itemId) {
 
     showConfirm(
         'Подтвердите покупку',
-        `Купить "${item.name}" за ${item.price} 🪙 и ${rsdPrice} в деньгах?`,
+        `Купить "${item.name}" за ${item.price} 🪙 и ${moneyPrice} в деньгах?`,
         () => {
             state.balance -= item.price;
-            addHistoryEntry('spend', item.price, item.name, item.id, rsdPrice);
+            addHistoryEntry('spend', item.price, item.name, item.id, moneyPrice);
             scheduleSave();
             renderAll();
             showToast(`Вы купили: ${item.name}!`, 'success');

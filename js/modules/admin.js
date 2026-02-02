@@ -241,13 +241,13 @@ export function editShopItem(id) {
 
 export function openFamilySettingsModal() {
     document.getElementById('settings-family-name').value = state.familyName || '';
-    document.getElementById('settings-monthly-limit').value = state.monthlyLimit || 2000;
+    document.getElementById('settings-money-limit').value = state.monthlyLimit || 10000;
     openModal('family-settings-modal');
 }
 
 export async function saveFamilySettings() {
     const name = document.getElementById('settings-family-name').value.trim();
-    const monthlyLimit = parseInt(document.getElementById('settings-monthly-limit').value);
+    const monthlyLimit = parseInt(document.getElementById('settings-money-limit').value);
 
     if (!name) {
         showToast('Название не может быть пустым', 'error');
@@ -266,7 +266,7 @@ export async function saveFamilySettings() {
 
 export async function saveFamilySettingsInline() {
     const name = document.getElementById('settings-family-name-inline').value.trim();
-    const monthlyLimit = parseInt(document.getElementById('settings-monthly-limit-inline').value);
+    const monthlyLimit = parseInt(document.getElementById('settings-money-limit-inline').value);
 
     if (!name) {
         showToast('Название не может быть пустым', 'error');

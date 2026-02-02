@@ -3,8 +3,7 @@ import { escapeHtml } from './utils.js';
 
 // Helper to access global CONFIG
 const CONFIG = window.CONFIG || {
-    MONTHLY_LIMIT: 2000,
-    RSD_SYMBOL: 'RSD',
+    MONTHLY_LIMIT: 10000,
     PERIODS: {
         day: { display: 'день' },
         week: { display: 'нед' },
@@ -24,14 +23,15 @@ export function updateBalanceUI() {
 }
 
 function getMonthlyStats(monthKey) {
-    let rsdSpent = 0;
+    let moneySpent = 0;
     let largePurchase = null;
     let itemCounts = {};
 
     state.history.forEach(entry => {
         if (entry.type !== 'spend' || !entry.date.startsWith(monthKey)) return;
 
-        if (entry.rsdAmount) rsdSpent += entry.rsdAmount;
+        const amount = entry.moneyAmount || entry.rsdAmount || 0;
+        moneySpent += amount;
 
         if (entry.itemId) {
             itemCounts[entry.itemId] = (itemCounts[entry.itemId] || 0) + 1;
@@ -42,19 +42,23 @@ function getMonthlyStats(monthKey) {
         }
     });
 
-    return { rsdSpent, largePurchase, itemCounts };
+    return { moneySpent, largePurchase, itemCounts };
 }
 
 function updateBudgetStats() {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const stats = getMonthlyStats(currentMonth);
 
-    if (document.getElementById('rsd-spent')) {
-        document.getElementById('rsd-spent').textContent = stats.rsdSpent.toLocaleString();
+    const spentEl = document.getElementById('money-spent') || document.getElementById('rsd-spent');
+    if (spentEl) {
+        spentEl.textContent = stats.moneySpent.toLocaleString();
 
         const monthlyLimit = state.monthlyLimit || CONFIG.MONTHLY_LIMIT;
-        const progress = Math.min((stats.rsdSpent / monthlyLimit) * 100, 100);
-        const bar = document.getElementById('rsd-progress');
+        const limitEl = document.getElementById('money-limit') || document.getElementById('rsd-limit');
+        if (limitEl) limitEl.textContent = monthlyLimit.toLocaleString();
+
+        const progress = Math.min((stats.moneySpent / monthlyLimit) * 100, 100);
+        const bar = document.getElementById('money-progress') || document.getElementById('rsd-progress');
         if (bar) {
             bar.style.width = `${progress}%`;
             bar.className = 'progress-bar';
@@ -149,7 +153,7 @@ export function renderShop() {
         }
         const mLimit = item.moneyLimit || item.money_limit;
         if (mLimit) {
-            tags.push(`<span class="tag tag--rsd">Lim: ${mLimit} 🪙</span>`);
+            tags.push(`<span class="tag tag--money">Lim: ${mLimit} 🪙</span>`);
         }
         if (item.frequency) {
             tags.push(`<span class="tag">${item.frequency.limit}/${CONFIG.PERIODS[item.frequency.period].display || 'пер'}</span>`);
@@ -280,7 +284,7 @@ export function renderHistory() {
                 <div class="history-item__content">
                     <div class="history-item__desc">
                         ${escapeHtml(entry.description)}
-                        ${entry.rsdAmount ? `<span class="tag tag--rsd" style="font-size:0.75em;margin-left:0.5em;">${entry.rsdAmount} RSD</span>` : ''}
+                        ${(entry.moneyAmount || entry.rsdAmount) ? `<span class="tag tag--money" style="font-size:0.75em;margin-left:0.5em;">${entry.moneyAmount || entry.rsdAmount}</span>` : ''}
                     </div>
                     <div class="history-item__date">${formattedDate}</div>
                 </div>

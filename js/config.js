@@ -2,7 +2,6 @@ const CONFIG = {
     // Currency & Budget
     MONTHLY_LIMIT: 10000,
     CURRENCY_SYMBOL: '🪙',
-    RSD_SYMBOL: 'RSD',
 
     // Limits
     MAX_DAILY_COINS: 10,

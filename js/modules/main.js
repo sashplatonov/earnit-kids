@@ -308,8 +308,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (state.isAdmin) {
         const nameInp = document.getElementById('settings-family-name-inline');
         if (nameInp) nameInp.value = state.familyName || '';
-        const limitInp = document.getElementById('settings-monthly-limit-inline');
-        if (limitInp) limitInp.value = state.monthlyLimit || 2000;
+        const limitInp = document.getElementById('settings-money-limit-inline');
+        if (limitInp) limitInp.value = state.monthlyLimit || 10000;
 
         // Populate child link
         refreshChildLinkInline();

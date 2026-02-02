@@ -681,9 +681,6 @@ body {
     display: none !important;
 }
 
-.admin-only {
-    /* Managed via JS */
-}
 
 /* ===== Budget Stats ===== */
 .budget-stats {
@@ -951,7 +948,7 @@ body {
     background: rgba(239, 68, 68, 0.2);
 }
 
-.tag--rsd {
+.tag--money {
     color: #BAE6FD;
     background: rgba(14, 165, 233, 0.2);
 }
