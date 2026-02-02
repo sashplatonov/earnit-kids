@@ -86,7 +86,13 @@ async function handleAPI(req, res) {
             if (String(body.pin) === String(serverPin)) {
                 // Success - reset attempts
                 delete ipAttempts[clientIp];
-                return sendJSON(res, { success: true });
+
+                // Set authenticated cookie for 24 hours
+                res.writeHead(200, {
+                    'Content-Type': 'application/json',
+                    'Set-Cookie': `app_auth=${body.pin}; Max-Age=${24 * 60 * 60}; Path=/; HttpOnly`
+                });
+                return res.end(JSON.stringify({ success: true }));
             } else {
                 // Fail - increment attempts
                 attempts.count++;

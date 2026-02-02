@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Монетки</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            background: radial-gradient(circle at top right, var(--color-bg-light), var(--color-bg));
+        }
+
+        .login-card {
+            background: var(--gradient-card);
+            padding: 2.5rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: modalSlide 0.4s ease;
+        }
+
+        .login-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: coin-bounce 2s ease-in-out infinite;
+        }
+
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-gold);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-subtitle {
+            color: var(--color-text-muted);
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .pin-input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .pin-input {
+            letter-spacing: 0.5em;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            padding: 1rem;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-page">
+        <div class="login-card">
+            <div class="login-logo">🪙</div>
+            <h1 class="login-title">Магазин Монеток</h1>
+            <p class="login-subtitle">Введите ПИН-код для входа</p>
+
+            <div class="form-group pin-input-group">
+                <input type="password" id="pin-input" class="input pin-input" placeholder="••••" inputmode="numeric"
+                    maxlength="8" autocomplete="one-time-code">
+            </div>
+
+            <button id="login-btn" class="btn btn--primary" style="width: 100%; height: 56px; font-size: 1.1rem;">
+                Войти в систему
+            </button>
+            <div id="error-msg" class="hint"
+                style="color: var(--color-danger); margin-top: 1rem; display: none; font-weight: 700;">
+                ❌ Неверный ПИН-код
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('login-btn');
+        const input = document.getElementById('pin-input');
+        const error = document.getElementById('error-msg');
+
+        async function doLogin() {
+            const pin = input.value;
+            if (!pin) {
+                input.focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Проверка...';
+            error.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    error.style.display = 'block';
+                    btn.textContent = 'Войти в систему';
+                    btn.disabled = false;
+                    input.value = '';
+                    input.focus();
+                }
+            } catch (err) {
+                console.error(err);
+                btn.textContent = 'Ошибка';
+                btn.disabled = false;
+            }
+        }
+
+        btn.addEventListener('click', doLogin);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        // Auto-focus on load
+        window.addEventListener('load', () => input.focus());
+    </script>
+</body>
+
+</html>

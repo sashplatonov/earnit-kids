@@ -9,9 +9,30 @@ A minimal web application for managing kids' reward coins. Parents can award coi
 - **Coin Earning** — Parents award coins when tasks are completed
 - **Purchasing** — Kids buy items (balance validation)
 - **History** — Full transaction log for both earning and spending
-- **PIN Protection** — Simple admin authentication
+- **PIN Protection** — The site is closed with a PIN code by default
+- **Session Duration** — Login lasts for 24 hours (via HttpOnly cookies)
 
-## Quick Start
+## Security
+
+The entire application is protected by a PIN code. Upon first access, or after 24 hours, users will be prompted to enter the PIN to view the site content.
+
+### Access Control
+The PIN used for global access is the same as the parent/admin PIN stored in `data.json`.
+
+### Cookies
+The authentication state is stored in a secure `HttpOnly` cookie named `app_auth`. This prevents client-side scripts from accessing the authentication token, protecting against XSS attacks.
+
+### Docker Port Conflict
+If you encounter a "port is already allocated" error when running `docker compose up`, it's because an old container is still running. Use:
+```bash
+docker compose down --remove-orphans
+docker compose up -d --build
+```
+
+### Other Security Options
+- **VPN (Tailscale)**: The most secure way. Don't expose ports 80/443 to the public internet. Use Tailscale to access the site via a private IP.
+- **Cloudflare Tunnel**: Secure access without opening ports, allows using Google/Telegram for login.
+- **HTTPS**: Always use HTTPS (via Let's Encrypt/Nginx) when using passwords.
 
 ```bash
 node server.js

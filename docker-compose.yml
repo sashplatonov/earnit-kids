@@ -1,6 +1,7 @@
 services:
-  app:
+  coins-kids-shop:
     build: .
+    container_name: coins-kids-shop
     ports:
       - "3000:3000"
     volumes:
