@@ -1,4 +1,4 @@
-const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadTemplates, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock } = require('./dataService');
+const { loadFamilyData, saveFamilyData, changePassword, registerFamily, loadTemplates, loadFamilies, findFamilyByEmail, loadBaseData, saveBaseData, authenticateUser, toggleFamilyBlock, updateLastActivity } = require('./dataService');
 
 // Rate limiting store: { ip: { count, resetTime } }
 const ipAttempts = {};
@@ -225,6 +225,8 @@ async function handleAPI(req, res) {
             delete body.isAdmin;
 
             if (saveFamilyData(familyId, body)) {
+                // Update last activity
+                updateLastActivity(familyId);
                 return sendJSON(res, { success: true });
             } else {
                 return sendJSON(res, { error: 'Failed to save' }, 500);
@@ -271,7 +273,8 @@ async function handleSuperAdminAPI(req, res) {
                     childPin: data.child_password,
                     isBlocked: !!data.isBlocked,
                     tasksCount: familyData.tasks ? familyData.tasks.length : 0,
-                    shopCount: familyData.shop ? familyData.shop.length : 0
+                    shopCount: familyData.shop ? familyData.shop.length : 0,
+                    lastActivity: data.last_activity || null
                 };
             });
 

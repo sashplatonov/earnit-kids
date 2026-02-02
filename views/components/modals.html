@@ -122,21 +122,21 @@
         </div>
     </div>
 </div>
+</div>
 
-<!-- Модальное окно: Быстрый импорт -->
-<div class="modal" id="import-modal">
+<!-- Модальное окно: Редактирование правил -->
+<div class="modal" id="rules-modal">
     <div class="modal__backdrop"></div>
     <div class="modal__content modal__content--wide">
-        <h3 id="import-modal-title">📋 Быстрый импорт</h3>
-        <p class="hint">Формат: название | монеты | комментарий (по одному на строку)</p>
+        <h3>✏️ Редактировать Правила</h3>
+        <p class="hint">Используйте Markdown для форматирования.</p>
         <div class="form-group">
-            <textarea class="input textarea textarea--large" id="import-text" placeholder="Помыть посуду | 5 | Хорошо вымыть
-Убрать комнату | 10
-Сделать уроки | 15 | Все предметы"></textarea>
+            <textarea class="input textarea textarea--large" id="rules-text"
+                style="height: 400px; font-family: monospace;"></textarea>
         </div>
         <div class="modal__actions">
-            <button class="btn btn--secondary" id="import-cancel">Отмена</button>
-            <button class="btn btn--primary" id="import-submit">Импортировать</button>
+            <button class="btn btn--secondary" id="rules-cancel">Отмена</button>
+            <button class="btn btn--primary" id="rules-save">Сохранить</button>
         </div>
     </div>
 </div>

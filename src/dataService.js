@@ -314,6 +314,16 @@ function saveBaseData(data) {
     }
 }
 
+// Update Last Activity
+function updateLastActivity(familyId) {
+    const families = loadFamilies();
+    const family = families.families[familyId];
+    if (family) {
+        family.last_activity = new Date().toISOString();
+        saveFamilies(families);
+    }
+}
+
 module.exports = {
     loadFamilies,
     saveFamilies,
@@ -326,7 +336,7 @@ module.exports = {
     changePassword,
     loadTemplates,
     loadBaseData,
-    loadBaseData,
     saveBaseData,
-    toggleFamilyBlock
+    toggleFamilyBlock,
+    updateLastActivity
 };

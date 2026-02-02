@@ -4,6 +4,7 @@ import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
 import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin } from './admin.js';
+import { renderRules, openEditRules, saveRules } from './rules.js';
 
 // Catalog Logic
 function renderCatalog() {
@@ -83,80 +84,7 @@ function addCatalogItem(type, id) {
     scheduleSave();
 }
 
-// Import logic (Existing...)
-let importType = null;
-function openImportModal(type) {
-    importType = type;
-    const title = document.getElementById('import-modal-title');
-    const textarea = document.getElementById('import-text');
 
-    if (type === 'tasks') {
-        if (title) title.textContent = '📋 Быстрый импорт заданий';
-        if (textarea) textarea.placeholder = 'Помыть посуду | 5 | Хорошо вымыть\nУбрать комнату | 10\nСделать уроки | 15 | Все предметы';
-    } else {
-        if (title) title.textContent = '🛒 Быстрый импорт товаров';
-        if (textarea) textarea.placeholder = 'Час игры | 20\nМороженое | 15 | Любое на выбор\nПоход в кино | 50';
-    }
-
-    if (textarea) {
-        textarea.value = '';
-        openModal('import-modal');
-        textarea.focus();
-    }
-}
-
-function processImport() {
-    const textarea = document.getElementById('import-text');
-    const text = textarea ? textarea.value.trim() : '';
-    if (!text) {
-        showToast('Введите данные для импорта', 'error');
-        return;
-    }
-
-    const lines = text.split('\n').filter(line => line.trim());
-    let count = 0;
-
-    for (const line of lines) {
-        const parts = line.split('|').map(p => p.trim());
-        if (parts.length < 2) continue;
-
-        const name = parts[0];
-        const value = parseInt(parts[1]);
-        const comment = parts[2] || '';
-
-        if (!name || !value || value < 1) continue;
-
-        if (importType === 'tasks') {
-            state.tasks.push({
-                id: Date.now() + count,
-                name,
-                coins: value,
-                comment
-            });
-        } else {
-            state.shopItems.push({
-                id: Date.now() + count,
-                name,
-                price: value,
-                comment
-            });
-        }
-        count++;
-    }
-
-    if (count > 0) {
-        scheduleSave();
-        if (importType === 'tasks') {
-            renderTasks();
-        } else {
-            renderShop();
-        }
-        closeModal('import-modal');
-        showToast(`Импортировано: ${count} ${importType === 'tasks' ? 'заданий' : 'товаров'}`, 'success');
-    } else {
-        showToast('Не удалось распознать данные', 'error');
-    }
-}
 
 // Global Exports for HTML event handlers
 window.app = {
@@ -209,8 +137,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     renderAll();
+    renderRules();
     // Render catalog if admin
     if (state.isAdmin) renderCatalog();
+
+    // Show rules edit button if admin
+    if (state.isAdmin) {
+        const editRulesBtn = document.getElementById('edit-rules-btn');
+        if (editRulesBtn) {
+            editRulesBtn.classList.remove('hidden');
+            editRulesBtn.parentElement.classList.remove('hidden');
+            editRulesBtn.addEventListener('click', openEditRules);
+        }
+    }
+
+    const rulesSave = document.getElementById('rules-save');
+    if (rulesSave) rulesSave.addEventListener('click', saveRules);
+
+    const rulesCancel = document.getElementById('rules-cancel');
+    if (rulesCancel) rulesCancel.addEventListener('click', () => closeModal('rules-modal'));
 
     // Show catalog button if admin
     if (state.isAdmin) {
@@ -304,18 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Import
-    const importTasksBtn = document.getElementById('import-tasks-btn');
-    if (importTasksBtn) importTasksBtn.addEventListener('click', () => openImportModal('tasks'));
 
-    const importShopBtn = document.getElementById('import-shop-btn');
-    if (importShopBtn) importShopBtn.addEventListener('click', () => openImportModal('shop'));
-
-    const importSubmit = document.getElementById('import-submit');
-    if (importSubmit) importSubmit.addEventListener('click', processImport);
-
-    const importCancel = document.getElementById('import-cancel');
-    if (importCancel) importCancel.addEventListener('click', () => closeModal('import-modal'));
 
     // History
     const clearHistoryBtn = document.getElementById('clear-history-btn');

@@ -801,6 +801,84 @@ body {
     font-size: 1.1rem;
 }
 
+/* Markdown Rules Styling */
+.rules-content h1,
+.rules-content h2,
+.rules-content h3 {
+    color: var(--color-text);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.rules-content h2 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.rules-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+}
+
+.rules-content ul,
+.rules-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.rules-content li {
+    margin-bottom: 0.5rem;
+    color: var(--color-text-muted);
+}
+
+.rules-content strong {
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+.rules-content em {
+    color: var(--color-secondary);
+    font-style: italic;
+}
+
+.rules-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.rules-content th,
+.rules-content td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rules-content th {
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.rules-content tr:last-child td {
+    border-bottom: none;
+}
+
+.rules-content blockquote {
+    border-left: 4px solid var(--color-primary);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: var(--color-text-dim);
+}
+
+
+
 .rules-table {
     width: 100%;
     border-collapse: collapse;
