@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) logoutBtn.addEventListener('click', async () => {
         if (await logout()) {
-            window.location.href = '/';
+            window.location.reload();
         } else {
             showToast('Ошибка при выходе', 'error');
         }

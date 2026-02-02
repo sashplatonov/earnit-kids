@@ -1,7 +1,7 @@
-export const API_URL = '/api/data';
-export const LOGIN_URL = '/api/login';
-export const LOGOUT_URL = '/api/logout';
-export const CHANGE_PIN_URL = '/api/change-pin';
+export const API_URL = 'api/data';
+export const LOGIN_URL = 'api/login';
+export const LOGOUT_URL = 'api/logout';
+export const CHANGE_PIN_URL = 'api/change-pin';
 
 export async function loadDataFromServer() {
     try {
