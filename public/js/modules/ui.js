@@ -36,7 +36,7 @@ function getMonthlyStats(monthKey) {
 
         if (entry.itemId) {
             itemCounts[entry.itemId] = (itemCounts[entry.itemId] || 0) + 1;
-            const item = state.shopItems.find(i => i.id === entry.itemId);
+            const item = state.shopItems.find(i => i.id == entry.itemId);
             if (item && item.type === 'large') {
                 largePurchase = item.name;
             }

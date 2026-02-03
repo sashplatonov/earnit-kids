@@ -60,7 +60,7 @@ export function checkLimits(item, moneyPrice) {
         const amount = entry.moneyAmount || entry.rsdAmount || 0;
         moneySpent += amount;
         if (entry.itemId) {
-            const histItem = state.shopItems.find(i => i.id === entry.itemId);
+            const histItem = state.shopItems.find(i => i.id == entry.itemId);
             if (histItem && histItem.type === 'large') largePurchase = histItem.name;
         }
     });
@@ -89,7 +89,7 @@ export function checkLimits(item, moneyPrice) {
         let freqCount = 0;
 
         state.history.forEach(h => {
-            if (h.itemId === item.id && new Date(h.date).getTime() >= startTime) {
+            if (h.itemId == item.id && new Date(h.date).getTime() >= startTime) {
                 freqCount++;
             }
         });
@@ -103,7 +103,7 @@ export function checkLimits(item, moneyPrice) {
 }
 
 export function buyItem(itemId) {
-    const item = state.shopItems.find(i => i.id === itemId);
+    const item = state.shopItems.find(i => i.id == itemId);
     if (!item) return;
 
     if (state.balance < item.price) {
@@ -149,7 +149,7 @@ export function buyItem(itemId) {
 }
 
 export function earnCoins(taskId) {
-    const task = state.tasks.find(t => t.id === taskId);
+    const task = state.tasks.find(t => t.id == taskId);
     if (!task) return;
 
     // Check frequency limit
@@ -165,7 +165,7 @@ export function earnCoins(taskId) {
         let count = 0;
 
         state.history.forEach(h => {
-            const isMatch = h.taskId === task.id || (h.type === 'earn' && h.description === task.name);
+            const isMatch = h.taskId == task.id || (h.type === 'earn' && h.description === task.name);
             if (isMatch && new Date(h.date).getTime() >= startTime) {
                 count++;
             }
@@ -190,8 +190,11 @@ export function earnCoins(taskId) {
 }
 
 export function requestCoins(taskId) {
-    const task = state.tasks.find(t => t.id === taskId);
-    if (!task) return;
+    const task = state.tasks.find(t => t.id == taskId);
+    if (!task) {
+        console.warn('Task not found for request:', taskId);
+        return;
+    }
 
     const request = {
         id: Date.now(),
@@ -216,7 +219,7 @@ export function requestCoins(taskId) {
 export function deleteHistoryItem(id) {
     if (!confirm('Удалить эту запись из истории?')) return;
     const newState = { ...state };
-    newState.history = newState.history.filter(h => h.id !== id);
+    newState.history = newState.history.filter(h => h.id != id);
     setState(newState);
 
     scheduleSave();
@@ -225,14 +228,14 @@ export function deleteHistoryItem(id) {
 }
 
 export function approveRequest(reqId) {
-    const req = state.requests.find(r => r.id === reqId);
+    const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
 
     state.balance += req.coins;
     addHistoryEntry('earn', req.coins, req.taskName, req.taskId);
 
     // Remove request
-    state.requests = state.requests.filter(r => r.id !== reqId);
+    state.requests = state.requests.filter(r => r.id != reqId);
 
     scheduleSave();
     renderAll();
@@ -240,13 +243,13 @@ export function approveRequest(reqId) {
 }
 
 export function rejectRequest(reqId) {
-    const req = state.requests.find(r => r.id === reqId);
+    const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
 
     if (!confirm('Отклонить заявку?')) return;
 
     // Remove request
-    state.requests = state.requests.filter(r => r.id !== reqId);
+    state.requests = state.requests.filter(r => r.id != reqId);
 
     scheduleSave();
     renderRequests();
@@ -255,7 +258,7 @@ export function rejectRequest(reqId) {
 
 export function deleteRequest(reqId) {
     if (!confirm('Удалить заявку?')) return;
-    state.requests = state.requests.filter(r => r.id !== reqId);
+    state.requests = state.requests.filter(r => r.id != reqId);
     scheduleSave();
     renderRequests();
     showToast('Заявка удалена', 'info');

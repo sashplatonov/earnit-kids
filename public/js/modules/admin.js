@@ -60,7 +60,7 @@ export function openTaskModal(taskId = null) {
     const deleteBtn = document.getElementById('task-delete');
 
     if (taskId) {
-        const task = state.tasks.find(t => t.id === taskId);
+        const task = state.tasks.find(t => t.id == taskId);
         if (!task) return;
 
         if (title) title.textContent = 'Редактировать задание';
@@ -111,7 +111,7 @@ export function saveTask() {
     };
 
     if (editingTaskId) {
-        const index = state.tasks.findIndex(t => t.id === editingTaskId);
+        const index = state.tasks.findIndex(t => t.id == editingTaskId);
         if (index !== -1) {
             state.tasks[index] = { ...state.tasks[index], ...taskData };
         }
@@ -152,7 +152,7 @@ export function openShopModal(itemId = null) {
     const deleteBtn = document.getElementById('shop-delete');
 
     if (itemId) {
-        const item = state.shopItems.find(i => i.id === itemId);
+        const item = state.shopItems.find(i => i.id == itemId);
         if (!item) return;
 
         if (title) title.textContent = 'Редактировать товар';
@@ -212,7 +212,7 @@ export function saveShopItem() {
     };
 
     if (editingShopId) {
-        const index = state.shopItems.findIndex(i => i.id === editingShopId);
+        const index = state.shopItems.findIndex(i => i.id == editingShopId);
         if (index !== -1) {
             state.shopItems[index] = { ...state.shopItems[index], id: editingShopId, ...newItem };
         }
@@ -324,7 +324,7 @@ export async function copyChildLinkInline() {
 export async function regenerateChildLinkInline() {
     if (!confirm('Вы уверены, что хотите обновить ссылку? Старая ссылка перестанет работать.')) return;
     try {
-        const res = await fetch('/api/regenerate-child-token', { method: 'POST' });
+        const res = await fetch('/api/regenerate-token', { method: 'POST' });
         const data = await res.json();
         if (data.link) {
             const input = document.getElementById('settings-child-link-input-inline');

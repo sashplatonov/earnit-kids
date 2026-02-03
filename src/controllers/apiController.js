@@ -117,7 +117,7 @@ async function handleAPI(req, res) {
         return sendJSON(res, data);
     }
 
-    if (url === '/api/data' && method === 'POST' && role === 'admin') {
+    if (url === '/api/data' && method === 'POST' && (role === 'admin' || role === 'child')) {
         const body = await parseBody(req);
         if (await saveFamilyData(familyId, body)) {
             await updateLastActivity(familyId);
