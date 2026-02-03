@@ -29,9 +29,6 @@ function authenticateUser(email, password) {
         if (data.admin_password === password) {
             return { success: true, role: 'admin', familyName: data.name, familyId: familyId };
         }
-        if (data.child_password === password) {
-            return { success: true, role: 'child', familyName: data.name, familyId: familyId };
-        }
     }
     return { success: false, error: 'Неверные учетные данные' };
 }
@@ -49,7 +46,7 @@ function authenticateChildByToken(token) {
     return { success: false, error: 'Неверная ссылка' };
 }
 
-function registerFamily(familyName, email, adminPassword, childPassword) {
+function registerFamily(familyName, email, adminPassword) {
     const familiesData = loadFamilies();
     if (Object.values(familiesData.families).some(f => f.email === email)) {
         return { success: false, error: 'Email уже зарегистрирован' };
@@ -59,19 +56,15 @@ function registerFamily(familyName, email, adminPassword, childPassword) {
         return { success: false, error: 'Слабый пароль родителя' };
     }
 
-    if (!childPassword) {
-        childPassword = crypto.randomBytes(8).toString('hex');
-    }
-
     const familyId = `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
     familiesData.families[familyId] = {
         name: familyName || `Шоп ${familyId}`,
         email: email,
         created_at: new Date().toISOString(),
         admin_password: adminPassword,
-        child_password: childPassword,
         child_token: crypto.randomBytes(32).toString('hex'),
-        monthly_limit: 10000
+        monthly_limit: 10000,
+        child_nickname: ''
     };
 
     if (saveFamilies(familiesData)) {
@@ -86,13 +79,12 @@ function changePassword(familyId, role, oldPassword, newPassword) {
     const family = familiesData.families[familyId];
     if (!family) return { success: false, error: 'Family not found' };
 
-    const currentPass = role === 'admin' ? family.admin_password : family.child_password;
-    if (currentPass !== oldPassword) return { success: false, error: 'Incorrect old password' };
+    if (role !== 'admin') return { success: false, error: 'Forbidden' };
+    if (family.admin_password !== oldPassword) return { success: false, error: 'Incorrect old password' };
 
     if (!isValidPassword(newPassword)) return { success: false, error: 'Weak password' };
 
-    if (role === 'admin') family.admin_password = newPassword;
-    else family.child_password = newPassword;
+    family.admin_password = newPassword;
 
     if (saveFamilies(familiesData)) return { success: true };
     return { success: false, error: 'Save failed' };
