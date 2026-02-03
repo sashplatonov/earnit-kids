@@ -175,9 +175,9 @@ function renderBaseData() {
 function renderList(type, items, container) {
     container.innerHTML = '';
 
-    // Group by category
+    // Group by group
     const grouped = items.reduce((acc, item) => {
-        const cat = item.category || 'Без категории';
+        const cat = item.group || item.category || 'Без категории';
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(item);
         return acc;
@@ -227,8 +227,8 @@ window.editItem = (type, index) => {
             <input type="text" id="edit-name" value="${item.name}">
         </div>
         <div class="input-group">
-            <label>Категория</label>
-            <input type="text" id="edit-category" value="${item.category || ''}" placeholder="Напр: Дом, Учеба...">
+            <label>Группа</label>
+            <input type="text" id="edit-group" value="${item.group || item.category || ''}" placeholder="Напр: Дом, Учеба...">
         </div>
         <div class="input-group">
             <label>${isTask ? 'Награда (монеты)' : 'Цена (монеты)'}</label>
@@ -277,7 +277,7 @@ window.saveItem = async (type, index) => {
     const newItem = {
         id: index === -1 ? Date.now().toString() : (type === 'tasks' ? baseData.tasks[index].id : baseData.products[index].id),
         name: document.getElementById('edit-name').value,
-        category: document.getElementById('edit-category').value,
+        group: document.getElementById('edit-group').value,
         age_min: parseInt(document.getElementById('edit-min').value),
         age_max: parseInt(document.getElementById('edit-max').value),
     };

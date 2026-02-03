@@ -95,40 +95,60 @@ export function renderTasks() {
     }
 
     if (emptyState) emptyState.classList.add('hidden');
-    container.innerHTML = state.tasks.slice().reverse().map(task => {
-        let tags = [];
-        if (task.frequency) {
-            tags.push(`<span class="tag">${task.frequency.limit}/${CONFIG.PERIODS[task.frequency.period].display || 'пер'}</span>`);
-        }
 
-        return `
-        <div class="card" data-id="${task.id}">
-            <div class="card__header">
-                <h3 class="card__title">${escapeHtml(task.name)}</h3>
-                <div class="card__coins">
-                    <span>${task.coins}</span>
-                    <span>🪙</span>
+    // Grouping logic
+    const grouped = state.tasks.reduce((acc, t) => {
+        const g = t.group || 'Без категории';
+        if (!acc[g]) acc[g] = [];
+        acc[g].push(t);
+        return acc;
+    }, {});
+
+    let html = '';
+    const sortedGroups = Object.keys(grouped).sort((a, b) => {
+        if (a === 'Без категории') return 1;
+        if (b === 'Без категории') return -1;
+        return a.localeCompare(b);
+    });
+
+    sortedGroups.forEach(groupName => {
+        html += `<div class="group-header">${escapeHtml(groupName)}</div>`;
+        html += grouped[groupName].slice().reverse().map(task => {
+            let tags = [];
+            if (task.frequency) {
+                tags.push(`<span class="tag">${task.frequency.limit}/${CONFIG.PERIODS[task.frequency.period].display || 'пер'}</span>`);
+            }
+
+            return `
+            <div class="card" data-id="${task.id}">
+                <div class="card__header">
+                    <h3 class="card__title">${escapeHtml(task.name)}</h3>
+                    <div class="card__coins">
+                        <span>${task.coins}</span>
+                        <span>🪙</span>
+                    </div>
+                </div>
+                ${tags.length ? `<div style="margin-bottom:0.5rem;">${tags.join('')}</div>` : ''}
+                ${task.comment ? `<p class="card__comment">${escapeHtml(task.comment)}</p>` : ''}
+                <div class="card__actions">
+                    ${state.isAdmin ? `
+                        <button class="btn btn--success btn--small" onclick="window.app.earnCoins(${task.id})">
+                            ✓ Начислить
+                        </button>
+                        <button class="btn btn--secondary btn--small" onclick="window.app.editTask(${task.id})">
+                            ✏️ Изменить
+                        </button>
+                    ` : `
+                        <button class="btn btn--primary btn--small" onclick="window.app.requestCoins(${task.id})">
+                            ✋ Выполнено
+                        </button>
+                    `}
                 </div>
             </div>
-            ${tags.length ? `<div style="margin-bottom:0.5rem;">${tags.join('')}</div>` : ''}
-            ${task.comment ? `<p class="card__comment">${escapeHtml(task.comment)}</p>` : ''}
-            <div class="card__actions">
-                ${state.isAdmin ? `
-                    <button class="btn btn--success btn--small" onclick="window.app.earnCoins(${task.id})">
-                        ✓ Начислить
-                    </button>
-                    <button class="btn btn--secondary btn--small" onclick="window.app.editTask(${task.id})">
-                        ✏️ Изменить
-                    </button>
-                ` : `
-                    <button class="btn btn--primary btn--small" onclick="window.app.requestCoins(${task.id})">
-                        ✋ Выполнено
-                    </button>
-                `}
-            </div>
-        </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    });
+    container.innerHTML = html;
 }
 
 export function renderShop() {
@@ -143,48 +163,68 @@ export function renderShop() {
     }
 
     if (emptyState) emptyState.classList.add('hidden');
-    container.innerHTML = state.shopItems.map(item => {
-        const canAfford = state.balance >= item.price;
 
-        let tags = [];
-        if (item.type) {
-            const label = CONFIG.SHOP_ITEM_TYPES[item.type] ? CONFIG.SHOP_ITEM_TYPES[item.type].label : item.type;
-            tags.push(`<span class="tag tag--${item.type}">${label}</span>`);
-        }
-        const mLimit = item.moneyLimit || item.money_limit;
-        if (mLimit) {
-            tags.push(`<span class="tag tag--money">Lim: ${mLimit} 🪙</span>`);
-        }
-        if (item.frequency) {
-            tags.push(`<span class="tag">${item.frequency.limit}/${CONFIG.PERIODS[item.frequency.period].display || 'пер'}</span>`);
-        }
+    // Grouping logic
+    const grouped = state.shopItems.reduce((acc, item) => {
+        const g = item.group || 'Без категории';
+        if (!acc[g]) acc[g] = [];
+        acc[g].push(item);
+        return acc;
+    }, {});
 
-        return `
-            <div class="card ${canAfford ? 'card--affordable' : ''}" data-id="${item.id}">
-                <div class="card__header">
-                    <h3 class="card__title">${escapeHtml(item.name)}</h3>
-                    <div class="card__coins">
-                        <span>${item.price}</span>
-                        <span>🪙</span>
+    let html = '';
+    const sortedGroups = Object.keys(grouped).sort((a, b) => {
+        if (a === 'Без категории') return 1;
+        if (b === 'Без категории') return -1;
+        return a.localeCompare(b);
+    });
+
+    sortedGroups.forEach(groupName => {
+        html += `<div class="group-header">${escapeHtml(groupName)}</div>`;
+        html += grouped[groupName].map(item => {
+            const canAfford = state.balance >= item.price;
+
+            let tags = [];
+            if (item.type) {
+                const label = CONFIG.SHOP_ITEM_TYPES[item.type] ? CONFIG.SHOP_ITEM_TYPES[item.type].label : item.type;
+                tags.push(`<span class="tag tag--${item.type}">${label}</span>`);
+            }
+            const mLimit = item.moneyLimit || item.money_limit;
+            if (mLimit) {
+                tags.push(`<span class="tag tag--money">Lim: ${mLimit} 🪙</span>`);
+            }
+            if (item.frequency) {
+                tags.push(`<span class="tag">${item.frequency.limit}/${CONFIG.PERIODS[item.frequency.period].display || 'пер'}</span>`);
+            }
+
+            return `
+                <div class="card ${canAfford ? 'card--affordable' : ''}" data-id="${item.id}">
+                    <div class="card__header">
+                        <h3 class="card__title">${escapeHtml(item.name)}</h3>
+                        <div class="card__coins">
+                            <span>${item.price}</span>
+                            <span>🪙</span>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:0.5rem;">${tags.join('')}</div>
+                    ${item.comment ? `<p class="card__comment">${escapeHtml(item.comment)}</p>` : ''}
+                    <div class="card__actions">
+                        <button class="btn btn--primary btn--small" 
+                                onclick="window.app.buyItem(${item.id})" 
+                                ${!canAfford ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+                            🛒 ${canAfford ? 'Купить' : 'Не хватает'}
+                        </button>
+                        ${state.isAdmin ? `
+                            <button class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">
+                                ✏️ Изменить
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
-                <div style="margin-bottom:0.5rem;">${tags.join('')}</div>
-                ${item.comment ? `<p class="card__comment">${escapeHtml(item.comment)}</p>` : ''}
-                <div class="card__actions">
-                    <button class="btn btn--primary btn--small" 
-                            onclick="window.app.buyItem(${item.id})" 
-                            ${!canAfford ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
-                        🛒 ${canAfford ? 'Купить' : 'Не хватает'}
-                    </button>
-                    ${state.isAdmin ? `
-                        <button class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">
-                            ✏️ Изменить
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    });
+    container.innerHTML = html;
 }
 
 export function renderRequests() {
@@ -268,35 +308,80 @@ export function renderHistory() {
     }
 
     if (emptyState) emptyState.classList.add('hidden');
-    container.innerHTML = state.history.slice(0, 50).map(entry => {
-        const isEarn = entry.type === 'earn';
-        const date = new Date(entry.date);
-        const formattedDate = date.toLocaleDateString('ru-RU', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
 
-        return `
-            <div class="history-item history-item--${entry.type}">
-                <div class="history-item__icon">${isEarn ? '💰' : '🛍️'}</div>
-                <div class="history-item__content">
-                    <div class="history-item__desc">
-                        ${escapeHtml(entry.description)}
-                        ${(entry.moneyAmount || entry.rsdAmount) ? `<span class="tag tag--money" style="font-size:0.75em;margin-left:0.5em;">${entry.moneyAmount || entry.rsdAmount}</span>` : ''}
-                    </div>
-                    <div class="history-item__date">${formattedDate}</div>
-                </div>
-                <div class="history-item__amount">
-                    ${isEarn ? '+' : '-'}${entry.amount} 🪙
-                </div>
-                <div class="card__actions" style="margin-left: 10px;">
-                     <button class="btn btn--danger btn--small" onclick="window.app.deleteHistoryItem(${entry.id})">🗑️</button>
+    // Grouping history by month
+    const grouped = state.history.reduce((acc, entry) => {
+        const date = new Date(entry.date);
+        const monthKey = entry.date.slice(0, 7); // YYYY-MM
+        if (!acc[monthKey]) {
+            acc[monthKey] = {
+                items: [],
+                earned: 0,
+                spent: 0,
+                moneySpent: 0
+            };
+        }
+        acc[monthKey].items.push(entry);
+        if (entry.type === 'earn') {
+            acc[monthKey].earned += entry.amount;
+        } else {
+            acc[monthKey].spent += entry.amount;
+            acc[monthKey].moneySpent += (entry.moneyAmount || entry.rsdAmount || 0);
+        }
+        return acc;
+    }, {});
+
+    let html = '';
+    const sortedMonths = Object.keys(grouped).sort().reverse();
+
+    sortedMonths.forEach(monthKey => {
+        const [year, month] = monthKey.split('-');
+        const monthName = new Date(year, month - 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+        const stats = grouped[monthKey];
+
+        html += `
+            <div class="history-month-header">
+                <div class="month-title">${monthName}</div>
+                <div class="month-stats">
+                    <span class="earn">+${stats.earned} 🪙</span> | 
+                    <span class="spend">-${stats.spent} 🪙</span>
+                    ${stats.moneySpent > 0 ? ` | <span class="money">-${stats.moneySpent.toLocaleString()} 💸</span>` : ''}
                 </div>
             </div>
         `;
-    }).join('');
+
+        html += stats.items.sort((a, b) => new Date(b.date) - new Date(a.date)).map(entry => {
+            const isEarn = entry.type === 'earn';
+            const itemDate = new Date(entry.date);
+            const formattedDate = itemDate.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="history-item history-item--${entry.type}">
+                    <div class="history-item__icon">${isEarn ? '💰' : '🛍️'}</div>
+                    <div class="history-item__content">
+                        <div class="history-item__desc">
+                            ${escapeHtml(entry.description)}
+                            ${(entry.moneyAmount || entry.rsdAmount) ? `<span class="tag tag--money" style="font-size:0.75em;margin-left:0.5em;">${entry.moneyAmount || entry.rsdAmount}</span>` : ''}
+                        </div>
+                        <div class="history-item__date">${formattedDate}</div>
+                    </div>
+                    <div class="history-item__amount">
+                        ${isEarn ? '+' : '-'}${entry.amount} 🪙
+                    </div>
+                    <div class="card__actions" style="margin-left: 10px;">
+                         <button class="btn btn--danger btn--small" onclick="window.app.deleteHistoryItem(${entry.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    });
+
+    container.innerHTML = html;
 }
 
 export function renderAll() {

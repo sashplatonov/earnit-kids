@@ -7,7 +7,7 @@ module.exports = {
     DATA_DIR,
     FAMILIES_FILE: path.join(DATA_DIR, 'families.json'),
     FAMILIES_DATA_DIR: path.join(DATA_DIR, 'families'),
-    BASE_DATA_FILE: path.join(DATA_DIR, 'baseData.json'),
+    BASE_DATA_FILE: path.join(__dirname, 'baseData.json'),
     MAX_ATTEMPTS: 5,
     BLOCK_WINDOW_MS: 15 * 60 * 1000,
     MIME_TYPES: {

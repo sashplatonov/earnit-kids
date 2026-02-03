@@ -65,6 +65,7 @@ export function openTaskModal(taskId = null) {
 
         if (title) title.textContent = 'Редактировать задание';
         document.getElementById('task-name').value = task.name;
+        document.getElementById('task-group').value = task.group || '';
         document.getElementById('task-coins').value = task.coins;
         document.getElementById('task-comment').value = task.comment || '';
 
@@ -80,6 +81,7 @@ export function openTaskModal(taskId = null) {
     } else {
         if (title) title.textContent = 'Добавить задание';
         document.getElementById('task-name').value = '';
+        document.getElementById('task-group').value = '';
         document.getElementById('task-coins').value = '';
         document.getElementById('task-comment').value = '';
         document.getElementById('task-freq-limit').value = '';
@@ -102,6 +104,7 @@ export function saveTask() {
 
     const taskData = {
         name,
+        group: document.getElementById('task-group').value.trim(),
         coins,
         comment,
         frequency: freqLimit > 0 ? { limit: freqLimit, period: freqPeriod } : null
@@ -154,6 +157,7 @@ export function openShopModal(itemId = null) {
 
         if (title) title.textContent = 'Редактировать товар';
         document.getElementById('shop-name').value = item.name;
+        document.getElementById('shop-group').value = item.group || '';
         document.getElementById('shop-price').value = item.price;
         document.getElementById('shop-comment').value = item.comment || '';
         document.getElementById('shop-money-limit').value = item.money_limit || '';
@@ -171,6 +175,7 @@ export function openShopModal(itemId = null) {
     } else {
         if (title) title.textContent = 'Добавить товар';
         document.getElementById('shop-name').value = '';
+        document.getElementById('shop-group').value = '';
         document.getElementById('shop-price').value = '';
         document.getElementById('shop-comment').value = '';
         document.getElementById('shop-money-limit').value = '';
@@ -198,6 +203,7 @@ export function saveShopItem() {
 
     const newItem = {
         name,
+        group: document.getElementById('shop-group').value.trim(),
         price,
         comment,
         money_limit: moneyLimit,

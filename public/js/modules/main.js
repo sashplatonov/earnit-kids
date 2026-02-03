@@ -55,7 +55,7 @@ function renderCatalog() {
         const tasks = state.baseData.tasks.filter(t => t.age_min <= maxAge && t.age_max >= minAge);
 
         const grouped = tasks.reduce((acc, t) => {
-            const cat = t.category || 'Без категории';
+            const cat = t.group || t.category || 'Без категории';
             if (!acc[cat]) acc[cat] = [];
             acc[cat].push(t);
             return acc;
@@ -84,7 +84,7 @@ function renderCatalog() {
         const products = state.baseData.products.filter(p => p.age_min <= maxAge && p.age_max >= minAge);
 
         const grouped = products.reduce((acc, p) => {
-            const cat = p.category || 'Без категории';
+            const cat = p.group || p.category || 'Без категории';
             if (!acc[cat]) acc[cat] = [];
             acc[cat].push(p);
             return acc;
@@ -117,7 +117,7 @@ async function loadAboutContent() {
     if (!container) return;
 
     try {
-        const res = await fetch('/data/about.md');
+        const res = await fetch('/about.md');
         if (res.ok) {
             const text = await res.text();
 
@@ -154,6 +154,7 @@ function addCatalogItem(type, id) {
     const newItem = {
         ...item,
         id: Date.now(), // New unique ID
+        group: item.group || item.category || '', // Use group or category
         frequency: item.frequency || { limit: 1, period: 'day' }, // Use item freq or default
         money_limit: item.money_limit || null
     };
