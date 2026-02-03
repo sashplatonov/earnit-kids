@@ -253,6 +253,7 @@ window.editItem = (type, index) => {
                     <option value="day" ${(item.frequency && item.frequency.period === 'day') ? 'selected' : ''}>В день</option>
                     <option value="week" ${(item.frequency && item.frequency.period === 'week') ? 'selected' : ''}>В неделю</option>
                     <option value="month" ${(item.frequency && item.frequency.period === 'month') ? 'selected' : ''}>В месяц</option>
+                    <option value="year" ${(item.frequency && item.frequency.period === 'year') ? 'selected' : ''}>В год</option>
                 </select>
             </div>
         </div>

@@ -18,7 +18,8 @@ const CONFIG = {
     PERIODS: {
         day: { label: 'в день', display: 'день' },
         week: { label: 'в неделю', display: 'неделю' },
-        month: { label: 'в месяц', display: 'месяц' }
+        month: { label: 'в месяц', display: 'месяц' },
+        year: { label: 'в год', display: 'год' }
     },
 
     // UI

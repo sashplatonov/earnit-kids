@@ -7,7 +7,8 @@ const CONFIG = window.CONFIG || {
     PERIODS: {
         day: { display: 'день' },
         week: { display: 'нед' },
-        month: { display: 'мес' }
+        month: { display: 'мес' },
+        year: { display: 'год' }
     },
     SHOP_ITEM_TYPES: {
         small: { label: 'Мелочь' },
@@ -115,8 +116,10 @@ export function renderTasks() {
         html += `<div class="group-header">${escapeHtml(groupName)}</div>`;
         html += grouped[groupName].slice().reverse().map(task => {
             let tags = [];
-            if (task.frequency) {
-                tags.push(`<span class="tag">${task.frequency.limit}/${CONFIG.PERIODS[task.frequency.period].display || 'пер'}</span>`);
+            if (task.frequency && task.frequency.period) {
+                const periodInfo = CONFIG.PERIODS[task.frequency.period];
+                const display = periodInfo ? periodInfo.display : task.frequency.period;
+                tags.push(`<span class="tag">${task.frequency.limit}/${display}</span>`);
             }
 
             return `
@@ -193,8 +196,10 @@ export function renderShop() {
             if (mLimit) {
                 tags.push(`<span class="tag tag--money">Lim: ${mLimit} 🪙</span>`);
             }
-            if (item.frequency) {
-                tags.push(`<span class="tag">${item.frequency.limit}/${CONFIG.PERIODS[item.frequency.period].display || 'пер'}</span>`);
+            if (item.frequency && item.frequency.period) {
+                const periodInfo = CONFIG.PERIODS[item.frequency.period];
+                const display = periodInfo ? periodInfo.display : item.frequency.period;
+                tags.push(`<span class="tag">${item.frequency.limit}/${display}</span>`);
             }
 
             return `
