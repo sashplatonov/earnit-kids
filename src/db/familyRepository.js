@@ -9,10 +9,7 @@ const { query, getClient } = require('./connection');
  * @returns {Promise<Object>} Object with families and super_admin
  */
 async function findAll() {
-    const [familiesResult, superAdminResult] = await Promise.all([
-        query('SELECT * FROM families ORDER BY created_at DESC'),
-        query('SELECT * FROM super_admin LIMIT 1')
-    ]);
+    const familiesResult = await query('SELECT * FROM families ORDER BY created_at DESC');
 
     const families = {};
     for (const row of familiesResult.rows) {
@@ -29,16 +26,11 @@ async function findAll() {
         };
     }
 
-    const superAdmin = superAdminResult.rows[0] || null;
-
     return {
         families,
-        super_admin: superAdmin ? {
-            email: process.env.SUPER_ADMIN_EMAIL || superAdmin.email,
-            password: process.env.SUPER_ADMIN_PASSWORD || superAdmin.password
-        } : {
-            email: process.env.SUPER_ADMIN_EMAIL || 'admin@admin.com',
-            password: process.env.SUPER_ADMIN_PASSWORD || '000000'
+        super_admin: {
+            email: process.env.SUPER_ADMIN_EMAIL,
+            password: process.env.SUPER_ADMIN_PASSWORD
         }
     };
 }
@@ -62,19 +54,13 @@ async function findById(familyId) {
  * @returns {Promise<Object|null>}
  */
 async function findByEmail(email) {
-    // Check super admin first
-    const superAdminResult = await query(
-        'SELECT * FROM super_admin WHERE email = $1',
-        [email]
-    );
-
-    if (superAdminResult.rows.length > 0) {
-        const sa = superAdminResult.rows[0];
+    // Check super admin first (from environment variables)
+    if (email === process.env.SUPER_ADMIN_EMAIL) {
         return {
             id: 'super_admin',
             isSuperAdmin: true,
-            email: process.env.SUPER_ADMIN_EMAIL || sa.email,
-            password: process.env.SUPER_ADMIN_PASSWORD || sa.password,
+            email: process.env.SUPER_ADMIN_EMAIL,
+            password: process.env.SUPER_ADMIN_PASSWORD,
             name: 'Super Admin'
         };
     }

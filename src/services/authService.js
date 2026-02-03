@@ -27,34 +27,45 @@ function isValidPassword(password) {
  * @returns {Promise<Object>}
  */
 async function authenticateUser(email, password) {
+    console.log(`🔐 Authentication attempt for email: ${email}`);
     const familiesData = await familyRepository.findAll();
 
     // Super Admin check (from env or database)
     const superAdmin = familiesData.super_admin;
     if (superAdmin && superAdmin.email === email) {
+        console.log('  - Email matches super admin');
         const expectedPassword = process.env.SUPER_ADMIN_PASSWORD || superAdmin.password;
         if (expectedPassword === password) {
+            console.log('  - Super admin login SUCCESS');
             return { success: true, role: 'super_admin', familyName: 'Super Admin', familyId: null };
+        } else {
+            console.log('  - Super admin login FAILED: Incorrect password');
         }
     }
 
     // Family check
     const family = await familyRepository.findByEmail(email);
     if (family && !family.isSuperAdmin) {
+        console.log(`  - Found family: ${family.name}`);
         if (family.isBlocked) {
+            console.log('  - Login FAILED: Account is blocked');
             return { success: false, error: 'Аккаунт заблокирован' };
         }
 
         if (family.admin_password === password) {
+            console.log('  - Family admin login SUCCESS');
             return {
                 success: true,
                 role: 'admin',
                 familyName: family.name,
                 familyId: family.id
             };
+        } else {
+            console.log('  - Family admin login FAILED: Incorrect password');
         }
     }
 
+    console.log('  - Authentication FAILED: User not found or incorrect credentials');
     return { success: false, error: 'Неверные учетные данные' };
 }
 

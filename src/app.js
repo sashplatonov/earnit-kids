@@ -65,6 +65,12 @@ const server = http.createServer(async (req, res) => {
 });
 
 async function startServer() {
+    // Validate Super Admin credentials
+    if (!process.env.SUPER_ADMIN_EMAIL || !process.env.SUPER_ADMIN_PASSWORD) {
+        console.error('❌ CRITICAL ERROR: SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD not set in environment variables');
+        process.exit(1);
+    }
+
     // Test database connection
     console.log('🔌 Testing database connection...');
     const dbConnected = await testConnection();
@@ -80,14 +86,19 @@ async function startServer() {
     try {
         const { migrate } = require('../scripts/migrate');
         const { runDataMigration } = require('../scripts/migrate-data');
+        const familyRepository = require('./db/familyRepository');
 
         // 1. Run schema migrations
         await migrate();
 
         // 2. Run data migration (JSON -> DB)
         await runDataMigration();
+
+        // Check super admin status
+        console.log(`🔑 Super Admin credentials loaded: ${process.env.SUPER_ADMIN_EMAIL}`);
+
     } catch (err) {
-        console.error('❌ Failed to run migrations:', err.message);
+        console.error('❌ Failed to run migrations or startup checks:', err.message);
         process.exit(1);
     }
 

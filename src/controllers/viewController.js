@@ -16,15 +16,28 @@ function getCookies(req) {
 async function isAuthenticated(req) {
     const cookies = getCookies(req);
     const { family_id, app_auth, app_role } = cookies;
-    if (!app_auth) return false;
+    if (!app_auth) {
+        if (req.url === '/' || req.url === '/index.html') {
+            console.log('🔍 Authenticating: No app_auth cookie found');
+        }
+        return false;
+    }
 
     const user = await findFamilyByEmail(app_auth);
-    if (!user) return false;
+    if (!user) {
+        console.log(`🔍 Authenticating: User not found in DB for email: ${app_auth}`);
+        return false;
+    }
 
-    if (user.isSuperAdmin && app_role === 'super_admin') return true;
+    if (user.isSuperAdmin && app_role === 'super_admin') {
+        return true;
+    }
+
     if (family_id && user.id === family_id) {
         return app_role === 'admin' || app_role === 'child';
     }
+
+    console.log(`🔍 Authenticating: Failed for email: ${app_auth}, role: ${app_role}, familyId: ${family_id}`);
     return false;
 }
 

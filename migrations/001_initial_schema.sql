@@ -118,6 +118,3 @@ CREATE TABLE IF NOT EXISTS super_admin (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-INSERT INTO super_admin (email, password)
-VALUES ('admin@admin.com', '000000')
-ON CONFLICT (email) DO NOTHING;
