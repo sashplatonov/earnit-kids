@@ -546,7 +546,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const error = urlParams.get('error');
             if (error === 'invalid_token') {
-                showError('Недействительная или просроченная ссылка для входа.');
+                showError('Эта ссылка для входа больше не работает. Пожалуйста, попросите родителей прислать вам новую ссылку из настроек магазина.');
             }
             if (emailInput) emailInput.focus();
         });

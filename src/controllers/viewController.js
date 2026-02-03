@@ -29,7 +29,7 @@ function isAuthenticated(req) {
 }
 
 function serveStatic(req, res) {
-    let urlPath = req.url;
+    let urlPath = req.url.split('?')[0];
     // Map root style.css etc to public/css/
     if (urlPath === '/style.css') urlPath = '/css/style.css';
     if (urlPath === '/super-admin.css') urlPath = '/css/super-admin.css';

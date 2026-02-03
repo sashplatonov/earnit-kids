@@ -81,7 +81,7 @@ async function handleAuthAPI(req, res) {
 }
 
 async function handleMagicLink(req, res) {
-    const token = req.url.split('/login-child/')[1];
+    const token = req.url.split('?')[0].split('/login-child/')[1];
     const authResult = authenticateChildByToken(token);
 
     if (authResult.success) {

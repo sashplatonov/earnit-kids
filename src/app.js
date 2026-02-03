@@ -43,18 +43,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
+        const [pathOnly, queryString] = url.split('?');
+
         // Magic Link
-        if (url.startsWith('/login-child/')) {
+        if (pathOnly.startsWith('/login-child/')) {
             await handleMagicLink(req, res);
             return;
         }
 
         // Static Files and Views
-        if (!url.startsWith('/api/')) {
-            if (url === '/' || url === '/index.html') {
+        if (!pathOnly.startsWith('/api/')) {
+            if (pathOnly === '/' || pathOnly === '/index.html') {
                 return serveIndex(req, res);
             }
-            if (url === '/login.html') {
+            if (pathOnly === '/login.html') {
                 return serveLogin(req, res);
             }
             return serveStatic(req, res);
