@@ -445,6 +445,12 @@ export function updateShopNameUI() {
     if (shopNameEl) {
         shopNameEl.textContent = state.familyName || '';
     }
+
+    const nicknameEl = document.getElementById('child-nickname-display');
+    if (nicknameEl) {
+        nicknameEl.textContent = state.childNickname ? `(${state.childNickname})` : '';
+    }
+
     const nameInp = document.getElementById('settings-family-name-inline');
     if (nameInp) {
         nameInp.value = state.familyName || '';
