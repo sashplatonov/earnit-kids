@@ -6,7 +6,7 @@
             "coins": 2,
             "age_min": 7,
             "age_max": 18,
-            "group": "🎒 Школа и учебные привычки",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -19,7 +19,7 @@
             "coins": 2,
             "age_min": 7,
             "age_max": 18,
-            "group": "🎒 Школа и учебные привычки",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -32,7 +32,7 @@
             "coins": 6,
             "age_min": 10,
             "age_max": 18,
-            "group": "🎒 Школа и учебные привычки",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -45,7 +45,7 @@
             "coins": 2,
             "age_min": 7,
             "age_max": 18,
-            "group": "🧺 Дом и быт",
+            "group": "🏠 Дом и быт",
             "frequency": {
                 "limit": 2,
                 "period": "day"
@@ -58,7 +58,7 @@
             "coins": 4,
             "age_min": 7,
             "age_max": 18,
-            "group": "🧺 Дом и быт",
+            "group": "🏠 Дом и быт",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -71,7 +71,7 @@
             "coins": 6,
             "age_min": 10,
             "age_max": 18,
-            "group": "🧺 Дом и быт",
+            "group": "🏠 Дом и быт",
             "frequency": {
                 "limit": 3,
                 "period": "week"
@@ -84,7 +84,7 @@
             "coins": 4,
             "age_min": 10,
             "age_max": 18,
-            "group": "🧺 Дом и быт",
+            "group": "🏠 Дом и быт",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -96,7 +96,7 @@
             "coins": 6,
             "age_min": 12,
             "age_max": 18,
-            "group": "🧺 Дом и быт",
+            "group": "🏠 Дом и быт",
             "frequency": {
                 "limit": 2,
                 "period": "week"
@@ -109,7 +109,7 @@
             "coins": 2,
             "age_min": 12,
             "age_max": 18,
-            "group": "🏃 Движение и здоровье",
+            "group": "🏃 Здоровье и привычки",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -121,7 +121,7 @@
             "coins": 2,
             "age_min": 7,
             "age_max": 18,
-            "group": "🏃 Движение и здоровье",
+            "group": "🏃 Здоровье и привычки",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -133,7 +133,7 @@
             "coins": 1,
             "age_min": 7,
             "age_max": 18,
-            "group": "🏃 Движение и здоровье",
+            "group": "🏃 Здоровье и привычки",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -145,7 +145,7 @@
             "coins": 1,
             "age_min": 7,
             "age_max": 12,
-            "group": "🏃 Движение и здоровье",
+            "group": "🏃 Здоровье и привычки",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -157,7 +157,7 @@
             "coins": 1,
             "age_min": 7,
             "age_max": 12,
-            "group": "🏃 Движение и здоровье",
+            "group": "🏃 Здоровье и привычки",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -169,7 +169,7 @@
             "coins": 2,
             "age_min": 7,
             "age_max": 14,
-            "group": "🏃 Движение и здоровье",
+            "group": "🏃 Здоровье и привычки",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -181,7 +181,7 @@
             "coins": 2,
             "age_min": 10,
             "age_max": 18,
-            "group": "🏃 Движение и здоровье",
+            "group": "🏃 Здоровье и привычки",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -193,7 +193,7 @@
             "coins": 5,
             "age_min": 12,
             "age_max": 18,
-            "group": "💪 Сложные шаги и ответственность",
+            "group": "💪 Ответственность и рост",
             "frequency": {
                 "limit": 3,
                 "period": "week"
@@ -206,7 +206,7 @@
             "coins": 5,
             "age_min": 12,
             "age_max": 18,
-            "group": "💪 Сложные шаги и ответственность",
+            "group": "💪 Ответственность и рост",
             "frequency": {
                 "limit": 3,
                 "period": "week"
@@ -218,7 +218,7 @@
             "coins": 3,
             "age_min": 10,
             "age_max": 18,
-            "group": "💪 Сложные шаги и ответственность",
+            "group": "💪 Ответственность и рост",
             "frequency": {
                 "limit": 3,
                 "period": "week"
@@ -231,7 +231,7 @@
             "coins": 3,
             "age_min": 7,
             "age_max": 14,
-            "group": "🧠 Развитие и навыки",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -243,7 +243,7 @@
             "coins": 3,
             "age_min": 10,
             "age_max": 18,
-            "group": "🧠 Развитие и навыки",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -256,7 +256,7 @@
             "coins": 5,
             "age_min": 12,
             "age_max": 18,
-            "group": "🧠 Развитие и навыки",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 3,
                 "period": "week"
@@ -268,7 +268,7 @@
             "coins": 4,
             "age_min": 12,
             "age_max": 18,
-            "group": "🧠 Развитие и навыки",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 2,
                 "period": "week"
@@ -280,7 +280,7 @@
             "coins": 2,
             "age_min": 7,
             "age_max": 18,
-            "group": "🧘 Саморегуляция и отношения",
+            "group": "🤝 Общение и отношения",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -292,7 +292,7 @@
             "coins": 1,
             "age_min": 7,
             "age_max": 18,
-            "group": "🧘 Саморегуляция и отношения",
+            "group": "🤝 Общение и отношения",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -304,7 +304,7 @@
             "coins": 2,
             "age_min": 10,
             "age_max": 18,
-            "group": "🧘 Саморегуляция и отношения",
+            "group": "🤝 Общение и отношения",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -316,7 +316,7 @@
             "coins": 3,
             "age_min": 10,
             "age_max": 18,
-            "group": "🧘 Саморегуляция и отношения",
+            "group": "🤝 Общение и отношения",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -328,7 +328,7 @@
             "coins": 4,
             "age_min": 10,
             "age_max": 18,
-            "group": "🧘 Саморегуляция и отношения",
+            "group": "🤝 Общение и отношения",
             "frequency": {
                 "limit": 3,
                 "period": "week"
@@ -340,7 +340,7 @@
             "coins": 3,
             "age_min": 12,
             "age_max": 18,
-            "group": "🧘 Саморегуляция и отношения",
+            "group": "🤝 Общение и отношения",
             "frequency": {
                 "limit": 3,
                 "period": "week"
@@ -352,7 +352,7 @@
             "coins": 60,
             "age_min": 12,
             "age_max": 18,
-            "group": "📚 Проект: сдача предметов",
+            "group": "📚 Учеба и развитие",
             "frequency": {
                 "limit": 10,
                 "period": "year"
@@ -367,7 +367,7 @@
             "price": 8,
             "age_min": 12,
             "age_max": 18,
-            "group": "🛍️ Мелкие покупки",
+            "group": "🍦 Кафе и вкусности",
             "frequency": {
                 "limit": 2,
                 "period": "day"
@@ -380,7 +380,7 @@
             "price": 6,
             "age_min": 7,
             "age_max": 18,
-            "group": "🛍️ Мелкие покупки",
+            "group": "🍦 Кафе и вкусности",
             "frequency": {
                 "limit": 2,
                 "period": "day"
@@ -393,7 +393,7 @@
             "price": 5,
             "age_min": 7,
             "age_max": 18,
-            "group": "🛍️ Мелкие покупки",
+            "group": "🍦 Кафе и вкусности",
             "frequency": {
                 "limit": 2,
                 "period": "day"
@@ -406,7 +406,7 @@
             "price": 20,
             "age_min": 12,
             "age_max": 18,
-            "group": "🛍️ Мелкие покупки",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -419,7 +419,7 @@
             "price": 20,
             "age_min": 7,
             "age_max": 18,
-            "group": "🛍️ Мелкие покупки",
+            "group": "🎨 Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -432,7 +432,7 @@
             "price": 15,
             "age_min": 10,
             "age_max": 18,
-            "group": "🛍️ Мелкие покупки",
+            "group": "🎨 Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "day"
@@ -445,7 +445,7 @@
             "price": 25,
             "age_min": 7,
             "age_max": 18,
-            "group": "🛍️ Покупки и вещи",
+            "group": "🎨 Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -458,7 +458,7 @@
             "price": 45,
             "age_min": 10,
             "age_max": 18,
-            "group": "🛍️ Покупки и вещи",
+            "group": "🎨 Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -471,7 +471,7 @@
             "price": 25,
             "age_min": 7,
             "age_max": 18,
-            "group": "🛍️ Покупки и вещи",
+            "group": "🎨 Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -484,7 +484,7 @@
             "price": 45,
             "age_min": 10,
             "age_max": 18,
-            "group": "🛍️ Покупки и вещи",
+            "group": "🎨 Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -497,7 +497,7 @@
             "price": 25,
             "age_min": 10,
             "age_max": 18,
-            "group": "🛍️ Покупки и вещи",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -510,7 +510,7 @@
             "price": 45,
             "age_min": 10,
             "age_max": 18,
-            "group": "🛍️ Покупки и вещи",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -523,7 +523,7 @@
             "price": 70,
             "age_min": 10,
             "age_max": 18,
-            "group": "🛍️ Покупки и вещи",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -615,7 +615,7 @@
             "price": 20,
             "age_min": 7,
             "age_max": 18,
-            "group": "🤝 Время с родителями",
+            "group": "💖 Время с семьей",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -628,7 +628,7 @@
             "price": 40,
             "age_min": 10,
             "age_max": 18,
-            "group": "🤝 Время с родителями",
+            "group": "💖 Время с семьей",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -641,7 +641,7 @@
             "price": 60,
             "age_min": 10,
             "age_max": 18,
-            "group": "🤝 Время с родителями",
+            "group": "💖 Время с семьей",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -654,7 +654,7 @@
             "price": 70,
             "age_min": 12,
             "age_max": 18,
-            "group": "🤝 Время с родителями",
+            "group": "💖 Время с семьей",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -667,7 +667,7 @@
             "price": 100,
             "age_min": 12,
             "age_max": 18,
-            "group": "🤝 Время с родителями",
+            "group": "💖 Время с семьей",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -680,7 +680,7 @@
             "price": 40,
             "age_min": 12,
             "age_max": 18,
-            "group": "📱 Связь и подписки",
+            "group": "📱 Цифра и гаджеты",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -693,7 +693,7 @@
             "price": 40,
             "age_min": 12,
             "age_max": 18,
-            "group": "📱 Связь и подписки",
+            "group": "📱 Цифра и гаджеты",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -706,7 +706,7 @@
             "price": 40,
             "age_min": 12,
             "age_max": 18,
-            "group": "📱 Связь и подписки",
+            "group": "📱 Цифра и гаджеты",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -719,7 +719,7 @@
             "price": 60,
             "age_min": 14,
             "age_max": 18,
-            "group": "⭐ Крупные покупки",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -732,7 +732,7 @@
             "price": 70,
             "age_min": 14,
             "age_max": 18,
-            "group": "⭐ Крупные покупки",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -745,7 +745,7 @@
             "price": 60,
             "age_min": 10,
             "age_max": 18,
-            "group": "⭐ Крупные покупки",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -758,7 +758,7 @@
             "price": 120,
             "age_min": 10,
             "age_max": 18,
-            "group": "⭐ Крупные покупки",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -771,7 +771,7 @@
             "price": 120,
             "age_min": 10,
             "age_max": 18,
-            "group": "⭐ Крупные покупки",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -784,7 +784,7 @@
             "price": 120,
             "age_min": 12,
             "age_max": 18,
-            "group": "⭐ Крупные покупки",
+            "group": "📱 Цифра и гаджеты",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -797,7 +797,7 @@
             "price": 150,
             "age_min": 12,
             "age_max": 18,
-            "group": "⭐ Крупные покупки",
+            "group": "🏆 Крупные цели",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -810,7 +810,7 @@
             "price": 60,
             "age_min": 7,
             "age_max": 18,
-            "group": "🎁 Подарки и впечатления",
+            "group": "� Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -823,7 +823,7 @@
             "price": 60,
             "age_min": 7,
             "age_max": 18,
-            "group": "🎁 Подарки и впечатления",
+            "group": "� Хобби и увлечения",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -836,7 +836,7 @@
             "price": 40,
             "age_min": 7,
             "age_max": 14,
-            "group": "🎁 Подарки и впечатления",
+            "group": "� Развлечения и время",
             "frequency": {
                 "limit": 1,
                 "period": "week"
@@ -849,7 +849,7 @@
             "price": 100,
             "age_min": 12,
             "age_max": 18,
-            "group": "🎁 Подарки и впечатления",
+            "group": "� Развлечения и время",
             "frequency": {
                 "limit": 1,
                 "period": "month"
@@ -862,7 +862,7 @@
             "price": 25,
             "age_min": 10,
             "age_max": 18,
-            "group": "🎁 Подарки и впечатления",
+            "group": "💄 Красота и стиль",
             "frequency": {
                 "limit": 1,
                 "period": "week"
