@@ -5,6 +5,7 @@ import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
 import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings, saveFamilySettingsInline, saveNewPinInline, copyChildLinkInline, refreshChildLinkInline, regenerateChildLinkInline } from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
+import { handleSearch, addNewFriend, refreshFriends, saveNickname } from './friends.js';
 
 // Catalog Logic
 function renderCatalog() {
@@ -195,7 +196,10 @@ window.app = {
     saveFamilySettingsInline,
     saveNewPinInline,
     copyChildLinkInline,
-    regenerateChildLinkInline
+    regenerateChildLinkInline,
+    addNewFriend,
+    handleSearch,
+    saveNickname
 };
 
 // Helper to get cookie value
@@ -229,9 +233,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             history: data.history || [],
             requests: data.requests || [],
             familyName: data.familyName || '',
+            childNickname: data.childNickname || null,
             monthlyLimit: data.monthlyLimit || 2000,
             baseData: baseData
         });
+
+        if (!data.isAdmin) {
+            await refreshFriends();
+        }
     } else {
         showToast('Не удалось загрузить данные с сервера', 'error');
     }
@@ -259,11 +268,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (rulesCancel) rulesCancel.addEventListener('click', () => closeModal('rules-modal'));
 
     // Show catalog and settings buttons if admin
+    const setBtn = document.getElementById('nav-settings');
+    if (setBtn) setBtn.classList.remove('hidden');
+
     if (state.isAdmin) {
         const catBtn = document.getElementById('nav-catalog');
         if (catBtn) catBtn.classList.remove('hidden');
-        const setBtn = document.getElementById('nav-settings');
-        if (setBtn) setBtn.classList.remove('hidden');
         const childLinkBtn = document.getElementById('nav-child-link');
         if (childLinkBtn) childLinkBtn.classList.remove('hidden');
     }
@@ -437,4 +447,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast('История очищена', 'info');
         });
     }
+
+    // Friends Section
+    const searchBtn = document.getElementById('friend-search-btn');
+    if (searchBtn) searchBtn.addEventListener('click', handleSearch);
+
+    const searchInput = document.getElementById('friend-search-input');
+    if (searchInput) searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSearch();
+    });
+
+    const saveNicknameBtn = document.getElementById('settings-save-nickname-btn');
+    if (saveNicknameBtn) saveNicknameBtn.addEventListener('click', saveNickname);
 });

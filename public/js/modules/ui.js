@@ -384,12 +384,39 @@ export function renderHistory() {
     container.innerHTML = html;
 }
 
+export function renderFriends() {
+    const container = document.getElementById('friends-list');
+    const emptyState = document.getElementById('friends-empty');
+    if (!container) return;
+
+    if (!state.friends || state.friends.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    container.innerHTML = state.friends.map(friend => `
+        <div class="friend-item">
+            <div class="friend-info">
+                <span class="friend-nickname">${escapeHtml(friend.nickname)}</span>
+                <span class="friend-balance">💰 ${friend.balance} 🪙</span>
+            </div>
+            <div class="friend-actions">
+                <!-- Можно добавить удаление или другие действия -->
+            </div>
+        </div>
+    `).join('');
+}
+
 export function renderAll() {
     updateBalanceUI();
     renderTasks();
     renderRequests();
     renderShop();
     renderHistory();
+    renderFriends();
     updateAdminUI();
     updateShopNameUI();
 }
@@ -399,9 +426,13 @@ export function updateAdminUI() {
         el.classList.toggle('hidden', !state.isAdmin);
     });
 
-    // Hide settings button if it exists and user is not admin
-    const settingsBtn = document.getElementById('settings-btn');
-    if (settingsBtn) settingsBtn.classList.toggle('hidden', !state.isAdmin);
+    document.querySelectorAll('.child-only').forEach(el => {
+        el.classList.toggle('hidden', state.isAdmin);
+    });
+
+    // Keep settings button visible for everyone to access profiles/nicknames
+    const settingsBtn = document.getElementById('settings-btn') || document.getElementById('nav-settings');
+    if (settingsBtn) settingsBtn.classList.remove('hidden');
 }
 
 export function updateShopNameUI() {
@@ -412,5 +443,10 @@ export function updateShopNameUI() {
     const nameInp = document.getElementById('settings-family-name-inline');
     if (nameInp) {
         nameInp.value = state.familyName || '';
+    }
+
+    const nicknameInp = document.getElementById('settings-nickname');
+    if (nicknameInp) {
+        nicknameInp.value = state.childNickname || '';
     }
 }

@@ -1,7 +1,8 @@
 const {
     loadFamilyData, saveFamilyData, updateLastActivity,
     loadFamilies, saveFamilies, findFamilyByEmail, getChildLoginLink,
-    regenerateChildToken, updateFamilySettings
+    regenerateChildToken, updateFamilySettings,
+    updateNickname, searchByNickname, addFriend, getFriendsData
 } = require('../services/familyService');
 const {
     authenticateUser, authenticateChildByToken,
@@ -111,6 +112,7 @@ async function handleAPI(req, res) {
         const familyInfo = families.families[familyId];
         data.isAdmin = role === 'admin';
         data.familyName = familyInfo ? familyInfo.name : 'Shop';
+        data.childNickname = familyInfo ? familyInfo.child_nickname : null;
         data.monthlyLimit = familyInfo ? (familyInfo.monthly_limit || 10000) : 10000;
         return sendJSON(res, data);
     }
@@ -150,6 +152,30 @@ async function handleAPI(req, res) {
         const body = await parseBody(req);
         const result = updateFamilySettings(familyId, body);
         return sendJSON(res, result, result.success ? 200 : 400);
+    }
+
+    if (url === '/api/update-nickname' && method === 'POST' && role === 'child') {
+        const body = await parseBody(req);
+        const result = updateNickname(familyId, body.nickname);
+        return sendJSON(res, result, result.success ? 200 : 400);
+    }
+
+    if (url.startsWith('/api/search-user') && method === 'GET' && role === 'child') {
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        const nickname = urlObj.searchParams.get('nickname');
+        const results = searchByNickname(nickname);
+        return sendJSON(res, results);
+    }
+
+    if (url === '/api/add-friend' && method === 'POST' && role === 'child') {
+        const body = await parseBody(req);
+        const result = addFriend(familyId, body.friendId);
+        return sendJSON(res, result, result.success ? 200 : 400);
+    }
+
+    if (url === '/api/friends-list' && method === 'GET' && role === 'child') {
+        const friends = getFriendsData(familyId);
+        return sendJSON(res, friends);
     }
 
     sendJSON(res, { error: 'Not Found or Forbidden' }, 404);

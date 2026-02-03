@@ -117,3 +117,55 @@ export async function updateFamilySettingsOnServer(settings) {
     }
     return null;
 }
+
+export async function updateNickname(nickname) {
+    try {
+        const response = await fetch('/api/update-nickname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nickname })
+        });
+        return await response.json();
+    } catch (err) {
+        console.error('Failed to update nickname:', err);
+        return { success: false, error: 'Ошибка сети' };
+    }
+}
+
+export async function searchUsers(nickname) {
+    try {
+        const response = await fetch(`/api/search-user?nickname=${encodeURIComponent(nickname)}`);
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (err) {
+        console.error('Failed to search users:', err);
+    }
+    return [];
+}
+
+export async function addFriend(friendId) {
+    try {
+        const response = await fetch('/api/add-friend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ friendId })
+        });
+        return await response.json();
+    } catch (err) {
+        console.error('Failed to add friend:', err);
+        return { success: false, error: 'Ошибка сети' };
+    }
+}
+
+export async function loadFriendsList() {
+    try {
+        const response = await fetch('/api/friends-list');
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (err) {
+        console.error('Failed to load friends list:', err);
+    }
+    return [];
+}

@@ -33,6 +33,27 @@
             </div>
         </div>
 
+        <!-- Профиль ребенка (Ник) -->
+        <div class="card child-only" style="max-width: 600px; margin: 0 auto;">
+            <div class="card__header">
+                <h3 class="card__title">Мой профиль</h3>
+                <div class="card__icon">👤</div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="settings-nickname">Твой ник (уникальный, от 3 символов)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" class="input" id="settings-nickname" placeholder="Придумай крутой ник">
+                </div>
+            </div>
+
+            <div class="card__actions">
+                <button class="btn btn--primary" id="settings-save-nickname-btn" style="width: 100%;">
+                    ✅ Сохранить ник
+                </button>
+            </div>
+        </div>
+
         <!-- Смена пароля -->
         <div class="card admin-only" style="max-width: 600px; margin: 0 auto; margin-top: 1.5rem;">
             <div class="card__header">

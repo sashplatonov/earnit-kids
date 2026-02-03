@@ -6,6 +6,8 @@ export const state = {
     shopItems: [],
     history: [],
     requests: [],
+    friends: [],
+    childNickname: null,
     isPinSet: false,
     familyId: null,
     familyName: '',

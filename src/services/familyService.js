@@ -7,7 +7,8 @@ const DEFAULT_FAMILY_DATA = {
     tasks: [],
     shop: [],
     history: [],
-    requests: []
+    requests: [],
+    friends: []
 };
 
 function ensureDataDir() {
@@ -132,6 +133,69 @@ function findFamilyByEmail(email) {
     return null;
 }
 
+function updateNickname(familyId, nickname) {
+    if (!nickname || nickname.length < 3) return { success: false, error: 'Nickname too short' };
+    const families = loadFamilies();
+
+    // Check if nickname is unique
+    const normalizedNickname = nickname.toLowerCase();
+    const isTaken = Object.entries(families.families).some(([id, data]) =>
+        id !== familyId && data.child_nickname && data.child_nickname.toLowerCase() === normalizedNickname
+    );
+    if (isTaken) return { success: false, error: 'Nickname already taken' };
+
+    if (families.families[familyId]) {
+        families.families[familyId].child_nickname = nickname;
+        if (saveFamilies(families)) return { success: true };
+    }
+    return { success: false, error: 'Failed to save nickname' };
+}
+
+function searchByNickname(nickname) {
+    if (!nickname || nickname.length < 3) return [];
+    const families = loadFamilies();
+    const normalized = nickname.toLowerCase();
+
+    return Object.entries(families.families)
+        .filter(([id, data]) => data.child_nickname && data.child_nickname.toLowerCase().includes(normalized))
+        .map(([id, data]) => ({
+            id,
+            nickname: data.child_nickname
+        }));
+}
+
+function addFriend(familyId, friendId) {
+    if (familyId === friendId) return { success: false, error: 'Cannot add yourself' };
+
+    const families = loadFamilies();
+    if (!families.families[friendId]) return { success: false, error: 'User not found' };
+
+    const data = loadFamilyData(familyId);
+    if (!data.friends) data.friends = [];
+
+    if (data.friends.includes(friendId)) return { success: false, error: 'Already friends' };
+
+    data.friends.push(friendId);
+    if (saveFamilyData(familyId, data)) return { success: true };
+    return { success: false, error: 'Failed to add friend' };
+}
+
+function getFriendsData(familyId) {
+    const data = loadFamilyData(familyId);
+    const friends = data.friends || [];
+    const families = loadFamilies();
+
+    return friends.map(friendId => {
+        const friendInfo = families.families[friendId];
+        const friendData = loadFamilyData(friendId);
+        return {
+            id: friendId,
+            nickname: friendInfo ? (friendInfo.child_nickname || 'Unknown') : 'Unknown',
+            balance: friendData.balance || 0
+        };
+    });
+}
+
 module.exports = {
     loadFamilies,
     saveFamilies,
@@ -142,5 +206,9 @@ module.exports = {
     regenerateChildToken,
     updateFamilySettings,
     findFamilyByEmail,
+    updateNickname,
+    searchByNickname,
+    addFriend,
+    getFriendsData,
     DEFAULT_FAMILY_DATA
 };
