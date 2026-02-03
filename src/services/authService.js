@@ -1,7 +1,17 @@
-const crypto = require('crypto');
-const { loadFamilies, saveFamilies, loadFamilyData, saveFamilyData } = require('./familyService');
-const { DEFAULT_FAMILY_DATA } = require('./familyService');
+/**
+ * Auth Service - Authentication business logic
+ * Uses PostgreSQL database via repositories
+ */
 
+const crypto = require('crypto');
+const familyRepository = require('../db/familyRepository');
+const familyDataRepository = require('../db/familyDataRepository');
+
+/**
+ * Validate password strength
+ * @param {string} password 
+ * @returns {boolean}
+ */
 function isValidPassword(password) {
     if (!password || password.length < 6) return false;
     const firstChar = password[0];
@@ -10,45 +20,82 @@ function isValidPassword(password) {
     return true;
 }
 
-function authenticateUser(email, password) {
-    const familiesData = loadFamilies();
+/**
+ * Authenticate user (parent or super admin)
+ * @param {string} email 
+ * @param {string} password 
+ * @returns {Promise<Object>}
+ */
+async function authenticateUser(email, password) {
+    const familiesData = await familyRepository.findAll();
 
-    // Super Admin
-    if (familiesData.super_admin && familiesData.super_admin.email === email) {
-        if (familiesData.super_admin.password === password) {
+    // Super Admin check (from env or database)
+    const superAdmin = familiesData.super_admin;
+    if (superAdmin && superAdmin.email === email) {
+        const expectedPassword = process.env.SUPER_ADMIN_PASSWORD || superAdmin.password;
+        if (expectedPassword === password) {
             return { success: true, role: 'super_admin', familyName: 'Super Admin', familyId: null };
         }
     }
 
-    // Family
-    const entry = Object.entries(familiesData.families).find(([id, data]) => data.email === email);
-    if (entry) {
-        const [familyId, data] = entry;
-        if (data.isBlocked) return { success: false, error: 'Аккаунт заблокирован' };
+    // Family check
+    const family = await familyRepository.findByEmail(email);
+    if (family && !family.isSuperAdmin) {
+        if (family.isBlocked) {
+            return { success: false, error: 'Аккаунт заблокирован' };
+        }
 
-        if (data.admin_password === password) {
-            return { success: true, role: 'admin', familyName: data.name, familyId: familyId };
+        if (family.admin_password === password) {
+            return {
+                success: true,
+                role: 'admin',
+                familyName: family.name,
+                familyId: family.id
+            };
         }
     }
+
     return { success: false, error: 'Неверные учетные данные' };
 }
 
-function authenticateChildByToken(token) {
-    if (!token) return { success: false, error: 'Токен отсутствует' };
-    const familiesData = loadFamilies();
-    const entry = Object.entries(familiesData.families).find(([id, data]) => data.child_token === token);
-
-    if (entry) {
-        const [familyId, data] = entry;
-        if (data.isBlocked) return { success: false, error: 'Аккаунт заблокирован' };
-        return { success: true, role: 'child', familyName: data.name, familyId: familyId, email: data.email };
+/**
+ * Authenticate child by token (magic link)
+ * @param {string} token 
+ * @returns {Promise<Object>}
+ */
+async function authenticateChildByToken(token) {
+    if (!token) {
+        return { success: false, error: 'Токен отсутствует' };
     }
+
+    const family = await familyRepository.findByChildToken(token);
+    if (family) {
+        if (family.isBlocked) {
+            return { success: false, error: 'Аккаунт заблокирован' };
+        }
+        return {
+            success: true,
+            role: 'child',
+            familyName: family.name,
+            familyId: family.id,
+            email: family.email
+        };
+    }
+
     return { success: false, error: 'Неверная ссылка' };
 }
 
-function registerFamily(familyName, email, adminPassword) {
-    const familiesData = loadFamilies();
-    if (Object.values(familiesData.families).some(f => f.email === email)) {
+/**
+ * Register a new family
+ * @param {string} familyName 
+ * @param {string} email 
+ * @param {string} adminPassword 
+ * @returns {Promise<Object>}
+ */
+async function registerFamily(familyName, email, adminPassword) {
+    // Check if email exists
+    const existing = await familyRepository.findByEmail(email);
+    if (existing && !existing.isSuperAdmin) {
         return { success: false, error: 'Email уже зарегистрирован' };
     }
 
@@ -57,63 +104,94 @@ function registerFamily(familyName, email, adminPassword) {
     }
 
     const familyId = `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
-    familiesData.families[familyId] = {
-        name: familyName || `Шоп ${familyId}`,
-        email: email,
-        created_at: new Date().toISOString(),
-        admin_password: adminPassword,
-        child_token: crypto.randomBytes(32).toString('hex'),
-        monthly_limit: 10000,
-        child_nickname: ''
-    };
 
-    if (saveFamilies(familiesData)) {
-        saveFamilyData(familyId, { ...DEFAULT_FAMILY_DATA });
-        return { success: true, familyId };
+    try {
+        const result = await familyRepository.create({
+            family_id: familyId,
+            name: familyName || `Шоп ${familyId}`,
+            email: email,
+            admin_password: adminPassword,
+            child_token: crypto.randomBytes(32).toString('hex'),
+            monthly_limit: 10000,
+            child_nickname: ''
+        });
+
+        if (result.success) {
+            return { success: true, familyId };
+        }
+        return { success: false, error: 'Ошибка сохранения' };
+    } catch (err) {
+        console.error('Registration error:', err.message);
+        if (err.code === '23505') { // unique violation
+            return { success: false, error: 'Email уже зарегистрирован' };
+        }
+        return { success: false, error: 'Ошибка сохранения' };
     }
-    return { success: false, error: 'Ошибка сохранения' };
 }
 
-function changePassword(familyId, role, oldPassword, newPassword) {
-    const familiesData = loadFamilies();
-    const family = familiesData.families[familyId];
-    if (!family) return { success: false, error: 'Family not found' };
+/**
+ * Change password
+ * @param {string} familyId 
+ * @param {string} role 
+ * @param {string} oldPassword 
+ * @param {string} newPassword 
+ * @returns {Promise<Object>}
+ */
+async function changePassword(familyId, role, oldPassword, newPassword) {
+    const family = await familyRepository.findById(familyId);
+    if (!family) {
+        return { success: false, error: 'Family not found' };
+    }
 
-    if (role !== 'admin') return { success: false, error: 'Forbidden' };
-    if (family.admin_password !== oldPassword) return { success: false, error: 'Incorrect old password' };
+    if (role !== 'admin') {
+        return { success: false, error: 'Forbidden' };
+    }
 
-    if (!isValidPassword(newPassword)) return { success: false, error: 'Weak password' };
+    if (family.admin_password !== oldPassword) {
+        return { success: false, error: 'Incorrect old password' };
+    }
 
-    family.admin_password = newPassword;
+    if (!isValidPassword(newPassword)) {
+        return { success: false, error: 'Weak password' };
+    }
 
-    if (saveFamilies(familiesData)) return { success: true };
+    if (await familyRepository.update(familyId, { admin_password: newPassword })) {
+        return { success: true };
+    }
     return { success: false, error: 'Save failed' };
 }
 
+/**
+ * Recover password via email
+ * @param {string} email 
+ * @returns {Promise<Object>}
+ */
 async function recoverPassword(email) {
-    const familiesData = loadFamilies();
     const { sendEmail } = require('./emailService');
 
-    const entry = Object.entries(familiesData.families).find(([id, data]) => data.email === email);
-
     // Check Super Admin
-    if (familiesData.super_admin && familiesData.super_admin.email === email) {
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+    const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+
+    if (superAdminEmail && superAdminEmail === email && superAdminPassword) {
         return await sendEmail({
             to: email,
             subject: 'Восстановление пароля - Super Admin',
-            text: `Ваш пароль: ${familiesData.super_admin.password}`,
-            html: `<h2>Восстановление пароля</h2><p>Ваш пароль: <b>${familiesData.super_admin.password}</b></p>`
+            text: `Ваш пароль: ${superAdminPassword}`,
+            html: `<h2>Восстановление пароля</h2><p>Ваш пароль: <b>${superAdminPassword}</b></p>`
         });
     }
 
-    if (!entry) return { success: false, error: 'User not found' };
+    const family = await familyRepository.findByEmail(email);
+    if (!family || family.isSuperAdmin) {
+        return { success: false, error: 'User not found' };
+    }
 
-    const [id, data] = entry;
     return await sendEmail({
         to: email,
         subject: 'Восстановление пароля - Монетки',
-        text: `Ваш пароль администратора: ${data.admin_password}`,
-        html: `<h2>Восстановление пароля</h2><p>Пароль администратора: <b>${data.admin_password}</b></p>`
+        text: `Ваш пароль администратора: ${family.admin_password}`,
+        html: `<h2>Восстановление пароля</h2><p>Пароль администратора: <b>${family.admin_password}</b></p>`
     });
 }
 

@@ -1,47 +1,44 @@
-const fs = require('fs');
-const path = require('path');
-const { FAMILIES_FILE, FAMILIES_DATA_DIR, DATA_DIR } = require('../config');
+/**
+ * Family Service - Business logic layer for family operations
+ * Uses PostgreSQL database via repositories
+ */
 
-const DEFAULT_FAMILY_DATA = {
-    balance: 0,
-    tasks: [],
-    shop: [],
-    history: [],
-    requests: [],
-    friends: []
-};
+const crypto = require('crypto');
+const familyRepository = require('../db/familyRepository');
+const familyDataRepository = require('../db/familyDataRepository');
 
-function ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (!fs.existsSync(FAMILIES_DATA_DIR)) fs.mkdirSync(FAMILIES_DATA_DIR, { recursive: true });
+const DEFAULT_FAMILY_DATA = familyDataRepository.DEFAULT_FAMILY_DATA;
+
+/**
+ * Load all families (compatible with old JSON format)
+ * @returns {Promise<Object>}
+ */
+async function loadFamilies() {
+    return await familyRepository.findAll();
 }
 
-function loadFamilies() {
-    ensureDataDir();
-    let data = { families: {} };
-
-    if (fs.existsSync(FAMILIES_FILE)) {
-        try {
-            const content = fs.readFileSync(FAMILIES_FILE, 'utf8');
-            data = JSON.parse(content);
-        } catch (err) {
-            console.error('Error loading families:', err.message);
-        }
-    }
-
-    // Ensure super_admin is always set from env or existing data or defaults
-    data.super_admin = {
-        email: process.env.SUPER_ADMIN_EMAIL || (data.super_admin ? data.super_admin.email : 'admin@admin.com'),
-        password: process.env.SUPER_ADMIN_PASSWORD || (data.super_admin ? data.super_admin.password : '000000')
-    };
-
-    return data;
-}
-
-function saveFamilies(familiesData) {
-    ensureDataDir();
+/**
+ * Save families data (compatibility layer - updates individual families)
+ * @param {Object} familiesData 
+ * @returns {Promise<boolean>}
+ */
+async function saveFamilies(familiesData) {
+    // This is a compatibility layer - in the new system, we update individual families
+    // For bulk operations, iterate through families
     try {
-        fs.writeFileSync(FAMILIES_FILE, JSON.stringify(familiesData, null, 2), 'utf8');
+        for (const [familyId, data] of Object.entries(familiesData.families || {})) {
+            const existing = await familyRepository.findById(familyId);
+            if (existing) {
+                await familyRepository.update(familyId, {
+                    name: data.name,
+                    admin_password: data.admin_password,
+                    child_token: data.child_token,
+                    monthly_limit: data.monthly_limit,
+                    child_nickname: data.child_nickname,
+                    is_blocked: data.isBlocked
+                });
+            }
+        }
         return true;
     } catch (err) {
         console.error('Error saving families:', err.message);
@@ -49,42 +46,41 @@ function saveFamilies(familiesData) {
     }
 }
 
-function loadFamilyData(familyId) {
-    const familyFile = path.join(FAMILIES_DATA_DIR, `${familyId}.json`);
-    try {
-        if (fs.existsSync(familyFile)) {
-            const content = fs.readFileSync(familyFile, 'utf8');
-            return { ...DEFAULT_FAMILY_DATA, ...JSON.parse(content) };
-        }
-    } catch (err) {
-        console.error(`Error loading family ${familyId} data:`, err.message);
-    }
-    return { ...DEFAULT_FAMILY_DATA };
+/**
+ * Load family data (balance, tasks, shop, etc.)
+ * @param {string} familyId 
+ * @returns {Promise<Object>}
+ */
+async function loadFamilyData(familyId) {
+    return await familyDataRepository.getFamilyData(familyId);
 }
 
-function saveFamilyData(familyId, data) {
-    ensureDataDir();
-    const familyFile = path.join(FAMILIES_DATA_DIR, `${familyId}.json`);
-    try {
-        fs.writeFileSync(familyFile, JSON.stringify(data, null, 2), 'utf8');
-        return true;
-    } catch (err) {
-        console.error(`Error saving family ${familyId} data:`, err.message);
-        return false;
-    }
+/**
+ * Save family data
+ * @param {string} familyId 
+ * @param {Object} data 
+ * @returns {Promise<boolean>}
+ */
+async function saveFamilyData(familyId, data) {
+    return await familyDataRepository.saveFamilyData(familyId, data);
 }
 
-function updateLastActivity(familyId) {
-    const families = loadFamilies();
-    if (families.families[familyId]) {
-        families.families[familyId].last_activity = new Date().toISOString();
-        saveFamilies(families);
-    }
+/**
+ * Update last activity timestamp
+ * @param {string} familyId 
+ */
+async function updateLastActivity(familyId) {
+    await familyRepository.updateLastActivity(familyId);
 }
 
-function getChildLoginLink(familyId, req) {
-    const families = loadFamilies();
-    const family = families.families[familyId];
+/**
+ * Get child login link
+ * @param {string} familyId 
+ * @param {Object} req 
+ * @returns {Promise<string|null>}
+ */
+async function getChildLoginLink(familyId, req) {
+    const family = await familyRepository.findById(familyId);
     if (!family || !family.child_token) return null;
 
     const protocol = req.headers['x-forwarded-proto'] || 'http';
@@ -92,108 +88,106 @@ function getChildLoginLink(familyId, req) {
     return `${protocol}://${host}/login-child/${family.child_token}`;
 }
 
-function regenerateChildToken(familyId) {
-    const families = loadFamilies();
-    const crypto = require('crypto');
-    if (families.families[familyId]) {
-        families.families[familyId].child_token = crypto.randomBytes(32).toString('hex');
-        saveFamilies(families);
-        return true;
-    }
-    return false;
+/**
+ * Regenerate child token
+ * @param {string} familyId 
+ * @returns {Promise<boolean>}
+ */
+async function regenerateChildToken(familyId) {
+    const newToken = crypto.randomBytes(32).toString('hex');
+    return await familyRepository.update(familyId, { child_token: newToken });
 }
 
-function updateFamilySettings(familyId, settings) {
-    const families = loadFamilies();
-    const family = families.families[familyId];
+/**
+ * Update family settings
+ * @param {string} familyId 
+ * @param {Object} settings 
+ * @returns {Promise<Object>}
+ */
+async function updateFamilySettings(familyId, settings) {
+    const family = await familyRepository.findById(familyId);
     if (!family) return { success: false, error: 'Not found' };
-    if (settings.name) family.name = settings.name;
-    if (settings.monthly_limit !== undefined) family.monthly_limit = parseInt(settings.monthly_limit);
-    if (saveFamilies(families)) return { success: true };
+
+    const updateData = {};
+    if (settings.name) updateData.name = settings.name;
+    if (settings.monthly_limit !== undefined) updateData.monthly_limit = parseInt(settings.monthly_limit);
+
+    if (await familyRepository.update(familyId, updateData)) {
+        return { success: true };
+    }
     return { success: false, error: 'Save failed' };
 }
 
-function findFamilyByEmail(email) {
-    const families = loadFamilies();
-
-    // Check Super Admin
-    if (families.super_admin && families.super_admin.email === email) {
-        return {
-            id: 'super_admin',
-            isSuperAdmin: true,
-            email: email,
-            name: 'Super Admin'
-        };
-    }
-
-    const entry = Object.entries(families.families).find(([id, data]) => data.email === email);
-    if (entry) {
-        return { id: entry[0], ...entry[1] };
-    }
-    return null;
+/**
+ * Find family by email
+ * @param {string} email 
+ * @returns {Promise<Object|null>}
+ */
+async function findFamilyByEmail(email) {
+    return await familyRepository.findByEmail(email);
 }
 
-function updateNickname(familyId, nickname) {
-    if (!nickname || nickname.length < 3) return { success: false, error: 'Nickname too short' };
-    const families = loadFamilies();
+/**
+ * Update child nickname
+ * @param {string} familyId 
+ * @param {string} nickname 
+ * @returns {Promise<Object>}
+ */
+async function updateNickname(familyId, nickname) {
+    if (!nickname || nickname.length < 3) {
+        return { success: false, error: 'Nickname too short' };
+    }
 
-    // Check if nickname is unique
-    const normalizedNickname = nickname.toLowerCase();
-    const isTaken = Object.entries(families.families).some(([id, data]) =>
-        id !== familyId && data.child_nickname && data.child_nickname.toLowerCase() === normalizedNickname
-    );
-    if (isTaken) return { success: false, error: 'Nickname already taken' };
+    const isTaken = await familyRepository.isNicknameTaken(nickname, familyId);
+    if (isTaken) {
+        return { success: false, error: 'Nickname already taken' };
+    }
 
-    if (families.families[familyId]) {
-        families.families[familyId].child_nickname = nickname;
-        if (saveFamilies(families)) return { success: true };
+    if (await familyRepository.update(familyId, { child_nickname: nickname })) {
+        return { success: true };
     }
     return { success: false, error: 'Failed to save nickname' };
 }
 
-function searchByNickname(nickname) {
+/**
+ * Search families by nickname
+ * @param {string} nickname 
+ * @returns {Promise<Array>}
+ */
+async function searchByNickname(nickname) {
     if (!nickname || nickname.length < 3) return [];
-    const families = loadFamilies();
-    const normalized = nickname.toLowerCase();
-
-    return Object.entries(families.families)
-        .filter(([id, data]) => data.child_nickname && data.child_nickname.toLowerCase().includes(normalized))
-        .map(([id, data]) => ({
-            id,
-            nickname: data.child_nickname
-        }));
+    return await familyRepository.searchByNickname(nickname);
 }
 
-function addFriend(familyId, friendId) {
-    if (familyId === friendId) return { success: false, error: 'Cannot add yourself' };
+/**
+ * Add friend
+ * @param {string} familyId 
+ * @param {string} friendId 
+ * @returns {Promise<Object>}
+ */
+async function addFriend(familyId, friendId) {
+    if (familyId === friendId) {
+        return { success: false, error: 'Cannot add yourself' };
+    }
 
-    const families = loadFamilies();
-    if (!families.families[friendId]) return { success: false, error: 'User not found' };
+    const friend = await familyRepository.findById(friendId);
+    if (!friend) {
+        return { success: false, error: 'User not found' };
+    }
 
-    const data = loadFamilyData(familyId);
-    if (!data.friends) data.friends = [];
-
-    if (data.friends.includes(friendId)) return { success: false, error: 'Already friends' };
-
-    data.friends.push(friendId);
-    if (saveFamilyData(familyId, data)) return { success: true };
-    return { success: false, error: 'Failed to add friend' };
+    if (await familyDataRepository.addFriend(familyId, friendId)) {
+        return { success: true };
+    }
+    return { success: false, error: 'Already friends or failed to add' };
 }
 
-function getFriendsData(familyId) {
-    const data = loadFamilyData(familyId);
-    const friends = data.friends || [];
-    const families = loadFamilies();
-
-    return friends.map(friendId => {
-        const friendInfo = families.families[friendId];
-        const friendData = loadFamilyData(friendId);
-        return {
-            id: friendId,
-            nickname: friendInfo ? (friendInfo.child_nickname || 'Unknown') : 'Unknown',
-            balance: friendData.balance || 0
-        };
-    });
+/**
+ * Get friends data with balances
+ * @param {string} familyId 
+ * @returns {Promise<Array>}
+ */
+async function getFriendsData(familyId) {
+    return await familyDataRepository.getFriendsData(familyId);
 }
 
 module.exports = {

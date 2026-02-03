@@ -34,7 +34,7 @@ async function handleAuthAPI(req, res) {
     if (url === '/api/login' && method === 'POST') {
         const body = await parseBody(req);
         const { email, pin } = body;
-        const result = authenticateUser(email, pin);
+        const result = await authenticateUser(email, pin);
 
         if (result.success) {
             const maxAge = 24 * 60 * 60;
@@ -53,7 +53,7 @@ async function handleAuthAPI(req, res) {
     if (url === '/api/register' && method === 'POST') {
         const body = await parseBody(req);
         const { familyName, email, adminPin } = body;
-        const result = registerFamily(familyName, email, adminPin);
+        const result = await registerFamily(familyName, email, adminPin);
         return sendJSON(res, result, result.success ? 200 : 400);
     }
 
@@ -82,7 +82,7 @@ async function handleAuthAPI(req, res) {
 
 async function handleMagicLink(req, res) {
     const token = req.url.split('?')[0].split('/login-child/')[1];
-    const authResult = authenticateChildByToken(token);
+    const authResult = await authenticateChildByToken(token);
 
     if (authResult.success) {
         const maxAge = 365 * 24 * 60 * 60;
@@ -107,8 +107,8 @@ async function handleAPI(req, res) {
     const method = req.method;
 
     if (url === '/api/data' && method === 'GET') {
-        const data = loadFamilyData(familyId);
-        const families = loadFamilies();
+        const data = await loadFamilyData(familyId);
+        const families = await loadFamilies();
         const familyInfo = families.families[familyId];
         data.isAdmin = role === 'admin';
         data.familyName = familyInfo ? familyInfo.name : 'Shop';
@@ -119,8 +119,8 @@ async function handleAPI(req, res) {
 
     if (url === '/api/data' && method === 'POST' && role === 'admin') {
         const body = await parseBody(req);
-        if (saveFamilyData(familyId, body)) {
-            updateLastActivity(familyId);
+        if (await saveFamilyData(familyId, body)) {
+            await updateLastActivity(familyId);
             return sendJSON(res, { success: true });
         }
         return sendJSON(res, { error: 'Save failed' }, 500);
@@ -133,48 +133,48 @@ async function handleAPI(req, res) {
     if (url === '/api/change-pin' && method === 'POST') {
         const body = await parseBody(req);
         const { oldPin, newPin } = body;
-        const result = changePassword(familyId, role, oldPin, newPin);
+        const result = await changePassword(familyId, role, oldPin, newPin);
         return sendJSON(res, result, result.success ? 200 : 400);
     }
 
     if (url === '/api/child-link' && method === 'GET' && role === 'admin') {
-        const link = getChildLoginLink(familyId, req);
+        const link = await getChildLoginLink(familyId, req);
         return sendJSON(res, { link });
     }
 
     if (url === '/api/regenerate-token' && method === 'POST' && role === 'admin') {
-        if (regenerateChildToken(familyId)) {
-            return sendJSON(res, { success: true, link: getChildLoginLink(familyId, req) });
+        if (await regenerateChildToken(familyId)) {
+            return sendJSON(res, { success: true, link: await getChildLoginLink(familyId, req) });
         }
     }
 
     if (url === '/api/update-family-settings' && method === 'POST' && role === 'admin') {
         const body = await parseBody(req);
-        const result = updateFamilySettings(familyId, body);
+        const result = await updateFamilySettings(familyId, body);
         return sendJSON(res, result, result.success ? 200 : 400);
     }
 
     if (url === '/api/update-nickname' && method === 'POST' && role === 'child') {
         const body = await parseBody(req);
-        const result = updateNickname(familyId, body.nickname);
+        const result = await updateNickname(familyId, body.nickname);
         return sendJSON(res, result, result.success ? 200 : 400);
     }
 
     if (url.startsWith('/api/search-user') && method === 'GET' && role === 'child') {
         const urlObj = new URL(req.url, `http://${req.headers.host}`);
         const nickname = urlObj.searchParams.get('nickname');
-        const results = searchByNickname(nickname);
+        const results = await searchByNickname(nickname);
         return sendJSON(res, results);
     }
 
     if (url === '/api/add-friend' && method === 'POST' && role === 'child') {
         const body = await parseBody(req);
-        const result = addFriend(familyId, body.friendId);
+        const result = await addFriend(familyId, body.friendId);
         return sendJSON(res, result, result.success ? 200 : 400);
     }
 
     if (url === '/api/friends-list' && method === 'GET' && role === 'child') {
-        const friends = getFriendsData(familyId);
+        const friends = await getFriendsData(familyId);
         return sendJSON(res, friends);
     }
 
@@ -189,16 +189,17 @@ async function handleSuperAdminAPI(req, res) {
     const method = req.method;
 
     if (url === '/api/super/families' && method === 'GET') {
-        const familiesData = loadFamilies();
-        const familyList = Object.entries(familiesData.families).map(([id, data]) => {
-            const familyData = loadFamilyData(id);
-            return {
+        const familiesData = await loadFamilies();
+        const familyList = [];
+        for (const [id, data] of Object.entries(familiesData.families)) {
+            const familyData = await loadFamilyData(id);
+            familyList.push({
                 id,
                 ...data,
                 tasksCount: familyData.tasks ? familyData.tasks.length : 0,
                 shopCount: familyData.shop ? familyData.shop.length : 0
-            };
-        });
+            });
+        }
         return sendJSON(res, { families: familyList });
     }
 
@@ -224,14 +225,14 @@ async function handleSuperAdminAPI(req, res) {
     if (familyMatch) {
         const fId = familyMatch[1];
         if (method === 'GET') {
-            const families = loadFamilies();
+            const families = await loadFamilies();
             const familyInfo = families.families[fId];
             if (!familyInfo) return sendJSON(res, { error: 'Not found' }, 404);
-            return sendJSON(res, { familyId: fId, familyInfo, data: loadFamilyData(fId) });
+            return sendJSON(res, { familyId: fId, familyInfo, data: await loadFamilyData(fId) });
         }
         if (method === 'POST') {
             const body = await parseBody(req);
-            if (saveFamilyData(fId, body)) return sendJSON(res, { success: true });
+            if (await saveFamilyData(fId, body)) return sendJSON(res, { success: true });
             return sendJSON(res, { error: 'Failed' }, 500);
         }
     }
@@ -240,10 +241,10 @@ async function handleSuperAdminAPI(req, res) {
     if (blockMatch && method === 'POST') {
         const fId = blockMatch[1];
         const body = await parseBody(req);
-        const families = loadFamilies();
+        const families = await loadFamilies();
         if (families.families[fId]) {
             families.families[fId].isBlocked = body.isBlocked;
-            if (saveFamilies(families)) return sendJSON(res, { success: true });
+            if (await saveFamilies(families)) return sendJSON(res, { success: true });
         }
         return sendJSON(res, { error: 'Failed' }, 404);
     }
@@ -251,7 +252,7 @@ async function handleSuperAdminAPI(req, res) {
     const regenMatch = url.match(/^\/api\/super\/family\/([^/]+)\/regenerate-token$/);
     if (regenMatch && method === 'POST') {
         const fId = regenMatch[1];
-        if (regenerateChildToken(fId)) {
+        if (await regenerateChildToken(fId)) {
             return sendJSON(res, { success: true });
         }
         return sendJSON(res, { error: 'Failed' }, 404);

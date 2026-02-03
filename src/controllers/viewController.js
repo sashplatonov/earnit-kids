@@ -13,12 +13,12 @@ function getCookies(req) {
     return list;
 }
 
-function isAuthenticated(req) {
+async function isAuthenticated(req) {
     const cookies = getCookies(req);
     const { family_id, app_auth, app_role } = cookies;
     if (!app_auth) return false;
 
-    const user = findFamilyByEmail(app_auth);
+    const user = await findFamilyByEmail(app_auth);
     if (!user) return false;
 
     if (user.isSuperAdmin && app_role === 'super_admin') return true;
@@ -86,8 +86,8 @@ function serveSuperAdmin(req, res) {
     });
 }
 
-function serveIndex(req, res) {
-    if (!isAuthenticated(req)) {
+async function serveIndex(req, res) {
+    if (!(await isAuthenticated(req))) {
         return serveLogin(req, res);
     }
 

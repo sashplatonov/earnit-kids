@@ -3,3 +3,4 @@ data/families
 data/families.json
 
 .env
+/node_modules

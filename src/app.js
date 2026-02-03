@@ -1,19 +1,8 @@
 const http = require('http');
 const path = require('path');
-const fs = require('fs');
 
-// Load environment variables manually
-const envPath = path.join(__dirname, '../.env');
-if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split('\n').forEach(line => {
-        const trimmedLine = line.trim();
-        if (trimmedLine && !trimmedLine.startsWith('#')) {
-            const [key, ...valueParts] = trimmedLine.split('=');
-            if (key) process.env[key.trim()] = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
-        }
-    });
-}
+// Load environment variables
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const config = require('./config');
 const { setSecurityHeaders } = require('./middleware/security');
@@ -22,6 +11,7 @@ const { handleMagicLink } = require('./controllers/apiController');
 const { serveStatic, serveIndex, serveLogin, serveSuperAdmin } = require('./controllers/viewController');
 const { loadFamilies, loadFamilyData } = require('./services/familyService');
 const { loadBaseData } = require('./services/baseDataService');
+const { testConnection } = require('./db/connection');
 
 
 const server = http.createServer(async (req, res) => {
@@ -57,7 +47,7 @@ const server = http.createServer(async (req, res) => {
         // Static Files and Views
         if (!pathOnly.startsWith('/api/')) {
             if (pathOnly === '/' || pathOnly === '/index.html') {
-                return serveIndex(req, res);
+                return await serveIndex(req, res);
             }
             if (pathOnly === '/login.html') {
                 return serveLogin(req, res);
@@ -74,31 +64,66 @@ const server = http.createServer(async (req, res) => {
     }
 });
 
-server.listen(config.PORT, () => {
-    console.log(`🪙 Coin Shop Server running at http://localhost:${config.PORT}`);
+async function startServer() {
+    // Test database connection
+    console.log('🔌 Testing database connection...');
+    const dbConnected = await testConnection();
 
-    // DevOps Stats
-    try {
-        const familiesData = loadFamilies();
-        const familyIds = Object.keys(familiesData.families);
-        const shopStats = familyIds.reduce((acc, id) => {
-            const data = loadFamilyData(id);
-            acc.tasks += (data.tasks || []).length;
-            acc.products += (data.shop || []).length;
-            return acc;
-        }, { tasks: 0, products: 0 });
-
-        const catalog = loadBaseData();
-
-        console.log('-------------------------------------------');
-        console.log('📊 APP STARTUP STATISTICS:');
-        console.log(`🏠 Total Shops (Families): ${familyIds.length}`);
-        console.log(`✅ Total tasks in all shops: ${shopStats.tasks}`);
-        console.log(`🎁 Total products in all shops: ${shopStats.products}`);
-        console.log(`📚 Global Catalog: ${catalog.tasks.length} tasks, ${catalog.products.length} products`);
-        console.log('-------------------------------------------');
-    } catch (err) {
-        console.error('Error generating startup stats:', err.message);
+    if (!dbConnected) {
+        console.error('❌ Database connection failed. Please check DATABASE_URL in .env');
+        process.exit(1);
     }
-});
 
+    console.log('✅ Database connection successful');
+
+    // Run migrations automatically
+    try {
+        const { migrate } = require('../scripts/migrate');
+        const { runDataMigration } = require('../scripts/migrate-data');
+
+        // 1. Run schema migrations
+        await migrate();
+
+        // 2. Run data migration (JSON -> DB)
+        await runDataMigration();
+    } catch (err) {
+        console.error('❌ Failed to run migrations:', err.message);
+        process.exit(1);
+    }
+
+    server.listen(config.PORT, async () => {
+        console.log(`🪙 Coin Shop Server running at http://localhost:${config.PORT}`);
+
+        // DevOps Stats
+        try {
+            const familiesData = await loadFamilies();
+            const familyIds = Object.keys(familiesData.families);
+
+            let tasksCount = 0;
+            let productsCount = 0;
+
+            for (const id of familyIds) {
+                const data = await loadFamilyData(id);
+                tasksCount += (data.tasks || []).length;
+                productsCount += (data.shop || []).length;
+            }
+
+            const catalog = loadBaseData();
+
+            console.log('-------------------------------------------');
+            console.log('📊 APP STARTUP STATISTICS:');
+            console.log(`🏠 Total Shops (Families): ${familyIds.length}`);
+            console.log(`✅ Total tasks in all shops: ${tasksCount}`);
+            console.log(`🎁 Total products in all shops: ${productsCount}`);
+            console.log(`📚 Global Catalog: ${catalog.tasks.length} tasks, ${catalog.products.length} products`);
+            console.log('-------------------------------------------');
+        } catch (err) {
+            console.error('Error generating startup stats:', err.message);
+        }
+    });
+}
+
+startServer().catch(err => {
+    console.error('Failed to start server:', err.message);
+    process.exit(1);
+});
