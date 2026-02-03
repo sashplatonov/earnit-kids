@@ -28,7 +28,7 @@ async function getFamilyData(familyId) {
         query('SELECT balance FROM family_data WHERE family_id = $1', [dbId]),
         query('SELECT * FROM tasks WHERE family_id = $1 ORDER BY created_at', [dbId]),
         query('SELECT * FROM shop_items WHERE family_id = $1 ORDER BY created_at', [dbId]),
-        query('SELECT * FROM history WHERE family_id = $1 ORDER BY created_at DESC LIMIT 100', [dbId]),
+        query('SELECT * FROM history WHERE family_id = $1 ORDER BY created_at DESC LIMIT 200', [dbId]),
         query('SELECT * FROM requests WHERE family_id = $1 ORDER BY created_at DESC', [dbId]),
         query(`SELECT f.family_id FROM friends fr 
                JOIN families f ON f.id = fr.friend_family_id 
@@ -54,17 +54,29 @@ async function getFamilyData(familyId) {
             frequency: row.frequency,
             money_limit: row.money_limit
         })),
-        history: historyResult.rows.map(row => ({
-            type: row.type,
-            ...row.data,
-            timestamp: row.created_at
-        })),
+        history: historyResult.rows.map(row => {
+            const entry = {
+                id: row.external_id ? parseInt(row.external_id) : row.id,
+                type: row.type,
+                amount: row.amount,
+                description: row.description,
+                date: row.created_at,
+                moneyAmount: row.money_amount
+            };
+            if (row.related_id) {
+                if (row.type === 'spend') entry.itemId = parseInt(row.related_id);
+                else if (row.type === 'earn') entry.taskId = parseInt(row.related_id);
+                entry.relatedId = parseInt(row.related_id);
+            }
+            return entry;
+        }),
         requests: requestsResult.rows.map(row => ({
-            id: row.id,
-            type: row.type,
-            ...row.data,
+            id: row.external_id ? parseInt(row.external_id) : row.id,
+            taskId: row.task_id ? parseInt(row.task_id) : null,
+            taskName: row.task_name,
+            coins: row.coins,
             status: row.status,
-            created_at: row.created_at
+            date: row.created_at
         })),
         friends: friendsResult.rows.map(row => row.family_id)
     };
@@ -121,16 +133,24 @@ async function saveFamilyData(familyId, data) {
             }
         }
 
-        // Update history (append only for new items)
+        // Update history
         if (data.history !== undefined && Array.isArray(data.history)) {
-            // For history, we replace entirely to sync state
             await client.query('DELETE FROM history WHERE family_id = $1', [dbId]);
             for (const entry of data.history) {
-                const { type, timestamp, ...entryData } = entry;
+                const relatedId = entry.itemId || entry.taskId || entry.relatedId || null;
                 await client.query(
-                    `INSERT INTO history (family_id, type, data, created_at)
-                     VALUES ($1, $2, $3, $4)`,
-                    [dbId, type || 'unknown', JSON.stringify(entryData), timestamp || new Date()]
+                    `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                    [
+                        dbId,
+                        entry.id || null,
+                        entry.type || 'unknown',
+                        entry.amount || 0,
+                        entry.description || '',
+                        entry.moneyAmount || 0,
+                        relatedId,
+                        entry.date || entry.timestamp || new Date()
+                    ]
                 );
             }
         }
@@ -139,11 +159,18 @@ async function saveFamilyData(familyId, data) {
         if (data.requests !== undefined && Array.isArray(data.requests)) {
             await client.query('DELETE FROM requests WHERE family_id = $1', [dbId]);
             for (const req of data.requests) {
-                const { id, type, status, created_at, ...reqData } = req;
                 await client.query(
-                    `INSERT INTO requests (family_id, type, data, status, created_at)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [dbId, type || 'unknown', JSON.stringify(reqData), status || 'pending', created_at || new Date()]
+                    `INSERT INTO requests (family_id, external_id, task_id, task_name, coins, status, created_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [
+                        dbId,
+                        req.id || null,
+                        req.taskId || null,
+                        req.taskName || '',
+                        req.coins || 0,
+                        req.status || 'pending',
+                        req.date || req.created_at || new Date()
+                    ]
                 );
             }
         }
@@ -202,10 +229,20 @@ async function addHistoryEntry(familyId, entry) {
     const dbId = await familyRepository.getDbId(familyId);
     if (!dbId) return false;
 
-    const { type, ...data } = entry;
+    const relatedId = entry.itemId || entry.taskId || entry.relatedId || null;
     const result = await query(
-        'INSERT INTO history (family_id, type, data) VALUES ($1, $2, $3)',
-        [dbId, type || 'unknown', JSON.stringify(data)]
+        `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+            dbId,
+            entry.id || null,
+            entry.type || 'unknown',
+            entry.amount || 0,
+            entry.description || '',
+            entry.moneyAmount || 0,
+            relatedId,
+            entry.date || entry.timestamp || new Date()
+        ]
     );
     return result.rowCount > 0;
 }
@@ -220,10 +257,18 @@ async function addRequest(familyId, request) {
     const dbId = await familyRepository.getDbId(familyId);
     if (!dbId) return false;
 
-    const { type, ...data } = request;
     const result = await query(
-        'INSERT INTO requests (family_id, type, data) VALUES ($1, $2, $3) RETURNING id',
-        [dbId, type || 'unknown', JSON.stringify(data)]
+        `INSERT INTO requests (family_id, external_id, task_id, task_name, coins, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [
+            dbId,
+            request.id || null,
+            request.taskId || null,
+            request.taskName || '',
+            request.coins || 0,
+            request.status || 'pending',
+            request.date || request.created_at || new Date()
+        ]
     );
     return result.rows[0]?.id || null;
 }

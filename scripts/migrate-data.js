@@ -140,11 +140,21 @@ async function migrateFamilyData(client, dbId, familyId) {
         // Insert history
         if (data.history && Array.isArray(data.history)) {
             for (const entry of data.history) {
-                const { type, timestamp, ...entryData } = entry;
+                const { type, timestamp, id, amount, description, moneyAmount, itemId, taskId, relatedId, ...rest } = entry;
+                const finalRelatedId = itemId || taskId || relatedId || null;
                 await client.query(
-                    `INSERT INTO history (family_id, type, data, created_at)
-                     VALUES ($1, $2, $3, $4)`,
-                    [dbId, type || 'unknown', JSON.stringify(entryData), timestamp || new Date()]
+                    `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                    [
+                        dbId,
+                        id || null,
+                        type || 'unknown',
+                        amount || 0,
+                        description || '',
+                        moneyAmount || 0,
+                        finalRelatedId,
+                        timestamp || entry.date || new Date()
+                    ]
                 );
             }
             console.log(`    📜 Migrated ${data.history.length} history entries`);
@@ -153,11 +163,19 @@ async function migrateFamilyData(client, dbId, familyId) {
         // Insert requests
         if (data.requests && Array.isArray(data.requests)) {
             for (const req of data.requests) {
-                const { id, type, status, created_at, ...reqData } = req;
+                const { id, type, status, created_at, taskId, taskName, coins, date, ...rest } = req;
                 await client.query(
-                    `INSERT INTO requests (family_id, type, data, status, created_at)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [dbId, type || 'unknown', JSON.stringify(reqData), status || 'pending', created_at || new Date()]
+                    `INSERT INTO requests (family_id, external_id, task_id, task_name, coins, status, created_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [
+                        dbId,
+                        id || null,
+                        taskId || null,
+                        taskName || '',
+                        coins || 0,
+                        status || 'pending',
+                        created_at || date || new Date()
+                    ]
                 );
             }
             console.log(`    📨 Migrated ${data.requests.length} requests`);
