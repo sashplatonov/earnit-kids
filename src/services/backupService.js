@@ -1,225 +1,285 @@
-const { spawn, spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { DATA_DIR } = require('../config');
+const { Pool } = require('pg');
 
 /**
- * Creates a tar backup of the data folder and streams it to the response
+ * Creates a PostgreSQL backup using pg_dump and streams it to the response
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res 
  */
 function createBackup(req, res) {
-    if (!fs.existsSync(DATA_DIR)) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'Data folder not found at ' + DATA_DIR }));
-    }
-
-    const files = fs.readdirSync(DATA_DIR);
-    if (files.length === 0) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'Data folder is empty' }));
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'DATABASE_URL is not configured' }));
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const parentDir = path.dirname(DATA_DIR);
-    const dataFolderName = path.basename(DATA_DIR);
+    const filename = `backup-pg-${timestamp}.dump`;
 
-    // Use tar with gzip compression
-    const tool = 'tar';
-    const args = ['-czf', '-', dataFolderName];
-    const extension = 'tar.gz';
-    const mimeType = 'application/gzip';
+    // pg_dump -F c -d [url] (Custom format, compressed)
+    const args = ['-F', 'c', dbUrl];
 
-    try {
-        const { execSync } = require('child_process');
-        execSync('tar --version');
-    } catch (tarErr) {
-        console.error('Tar not found');
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-            error: 'System backup utility (tar) not found.',
-            details: 'Please install tar on the server.'
-        }));
-    }
-
-    const filename = `backup-data-${timestamp}.${extension}`;
-    console.log(`Starting backup using ${tool} for ${dataFolderName} in ${parentDir}`);
-
-    const proc = spawn(tool, args, { cwd: parentDir });
+    console.log(`Starting DB backup...`);
 
     let headersSent = false;
+    let finished = false;
+
+    const proc = spawn('pg_dump', args);
 
     proc.stdout.on('data', (chunk) => {
-        if (!headersSent) {
+        if (!headersSent && !finished) {
             res.writeHead(200, {
-                'Content-Type': mimeType,
+                'Content-Type': 'application/octet-stream',
                 'Content-Disposition': `attachment; filename="${filename}"`,
                 'Cache-Control': 'no-cache'
             });
             headersSent = true;
         }
-        res.write(chunk);
+        if (!finished) res.write(chunk);
     });
 
     proc.stderr.on('data', (data) => {
-        console.error(`Backup ${tool} stderr: ${data}`);
+        console.error(`pg_dump stderr: ${data}`);
     });
 
     proc.on('error', (err) => {
-        console.error(`Failed to start ${tool} process:`, err);
+        if (finished) return;
+        finished = true;
+        console.error(`Failed to start pg_dump:`, err);
+
+        const isEnoent = err.code === 'ENOENT';
+        const msg = isEnoent
+            ? 'Инструмент pg_dump не установлен на сервере. Пожалуйста, установите postgresql-client.'
+            : `Ошибка запуска процесса бэкапа: ${err.message}`;
+
         if (!headersSent) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: `Failed to start backup process: ${err.message}` }));
+            res.end(JSON.stringify({ error: msg, code: err.code }));
         } else {
             res.end();
         }
     });
 
     proc.on('close', (code) => {
-        console.log(`Backup process (${tool}) exited with code ${code}`);
+        if (finished) return;
+        finished = true;
+        console.log(`pg_dump exited with code ${code}`);
+
         if (code !== 0) {
             if (!headersSent) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: `Backup failed with exit code ${code}` }));
+                res.end(JSON.stringify({ error: `Бэкап завершился с ошибкой (код ${code})` }));
             } else {
                 res.end();
             }
         } else {
             if (!headersSent) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Backup produced no data' }));
+                res.end(JSON.stringify({ error: 'Бэкап не произвел данных' }));
             } else {
                 res.end();
             }
         }
     });
+}
 
-    req.on('close', () => {
-        if (proc.exitCode === null) {
-            proc.kill();
+/**
+ * Restores the PostgreSQL database from a uploaded dump file using pg_restore
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res 
+ */
+function restoreBackup(req, res) {
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'DATABASE_URL is not configured' }));
+    }
+
+    const tempPath = path.join(process.cwd(), `temp_restore_${Date.now()}.dump`);
+    const writeStream = fs.createWriteStream(tempPath);
+
+    req.pipe(writeStream);
+
+    writeStream.on('finish', () => {
+        console.log('Backup file uploaded, starting restore...');
+
+        const args = ['-d', dbUrl, '--clean', '--if-exists', '--no-owner', tempPath];
+        const proc = spawn('pg_restore', args);
+        let finished = false;
+
+        proc.stderr.on('data', (data) => {
+            console.error(`pg_restore stderr: ${data}`);
+        });
+
+        proc.on('error', (err) => {
+            if (finished) return;
+            finished = true;
+            console.error('Failed to start pg_restore:', err);
+            cleanup();
+
+            const isEnoent = err.code === 'ENOENT';
+            const msg = isEnoent
+                ? 'Инструмент pg_restore не установлен на сервере. Пожалуйста, установите postgresql-client.'
+                : 'Ошибка запуска процесса восстановления';
+
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: msg, code: err.code }));
+        });
+
+        proc.on('close', (code) => {
+            if (finished) return;
+            finished = true;
+            console.log(`pg_restore exited with code ${code}`);
+            cleanup();
+
+            if (code === 0 || code === 1) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true }));
+            } else {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: `Restore failed with exit code ${code}` }));
+            }
+        });
+    });
+
+    writeStream.on('error', (err) => {
+        console.error('File write error:', err);
+        cleanup();
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to upload backup file' }));
+    });
+
+    function cleanup() {
+        if (fs.existsSync(tempPath)) {
+            fs.unlinkSync(tempPath);
+        }
+    }
+}
+
+/**
+ * Copies the current database to the reserve database
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res 
+ */
+function copyToReserve(req, res) {
+    const dbUrl = process.env.DATABASE_URL;
+    const reserveDbUrl = process.env.RESERVE_DATABASE_URL;
+
+    if (!dbUrl || !reserveDbUrl) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+            error: 'DATABASE_URL or RESERVE_DATABASE_URL is not configured'
+        }));
+    }
+
+    console.log('Starting DB copy to reserve...');
+
+    let finished = false;
+    const dump = spawn('pg_dump', ['-F', 'c', dbUrl]);
+    const restore = spawn('pg_restore', ['-d', reserveDbUrl, '--clean', '--if-exists', '--no-owner']);
+
+    dump.stdout.pipe(restore.stdin);
+
+    let dumpError = '';
+    let restoreError = '';
+
+    dump.stderr.on('data', (d) => dumpError += d.toString());
+    restore.stderr.on('data', (d) => restoreError += d.toString());
+
+    dump.on('error', (err) => {
+        if (finished) return;
+        finished = true;
+        console.error('Dump error:', err);
+
+        const isEnoent = err.code === 'ENOENT';
+        const msg = isEnoent
+            ? 'Инструмент pg_dump не установлен на сервере.'
+            : 'Ошибка процесса дампа';
+
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg, code: err.code }));
+        restore.kill();
+    });
+
+    restore.on('error', (err) => {
+        if (finished) return;
+        finished = true;
+        console.error('Restore error:', err);
+
+        const isEnoent = err.code === 'ENOENT';
+        const msg = isEnoent
+            ? 'Инструмент pg_restore не установлен на сервере.'
+            : 'Ошибка процесса восстановления';
+
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg, code: err.code }));
+        dump.kill();
+    });
+
+    restore.on('close', (code) => {
+        if (finished) return;
+        finished = true;
+        console.log(`Copy process finished. Restore exit code: ${code}`);
+        if (code === 0 || code === 1) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true }));
+        } else {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: `Копирование не удалось (код ${code})`,
+                details: { dumpError, restoreError }
+            }));
         }
     });
 }
 
 /**
- * Restores the data folder from a tar backup
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse} res 
+ * Checks if the reserve database is configured and accessible
  */
-async function restoreBackup(req, res) {
-    const parentDir = path.dirname(DATA_DIR);
-    const tempTarPath = path.join(parentDir, `temp_restore_${Date.now()}.tar.gz`);
-    const writeStream = fs.createWriteStream(tempTarPath);
-
-    req.pipe(writeStream);
-
-    writeStream.on('finish', async () => {
-        const oldDataDir = DATA_DIR + '_old_' + Date.now();
-        let backupCreated = false;
-        let dataDirWasRenamed = false;
-
-        try {
-            if (fs.existsSync(DATA_DIR)) {
-                try {
-                    // Try to rename the whole directory (fastest if on same device)
-                    fs.renameSync(DATA_DIR, oldDataDir);
-                    backupCreated = true;
-                    dataDirWasRenamed = true;
-                } catch (err) {
-                    if (err.code === 'EXDEV' || err.code === 'EBUSY') {
-                        // Cross-device or mount point error. Fallback to copy and clean.
-                        console.log('Cross-device restore detected, falling back to copy...');
-                        fs.mkdirSync(oldDataDir, { recursive: true });
-                        const cp = spawnSync('cp', ['-r', path.join(DATA_DIR, '.'), oldDataDir]);
-                        if (cp.status !== 0) {
-                            throw new Error('Failed to copy current data for backup');
-                        }
-                        backupCreated = true;
-
-                        // Clear current data directory contents instead of deleting the directory (mount point)
-                        const files = fs.readdirSync(DATA_DIR);
-                        for (const file of files) {
-                            fs.rmSync(path.join(DATA_DIR, file), { recursive: true, force: true });
-                        }
-                    } else {
-                        throw err;
-                    }
-                }
-            }
-
-            // 2. Untar (gzip)
-            // -x: extract
-            // -z: uncompress with gzip
-            // -f: file
-            // -C: directory to change to before extracting
-            const untar = spawn('tar', ['-xzf', tempTarPath, '-C', parentDir]);
-
-            untar.on('close', (code) => {
-                // Remove temp tar
-                if (fs.existsSync(tempTarPath)) {
-                    fs.unlinkSync(tempTarPath);
-                }
-
-                if (code === 0) {
-                    // Success! Remove old data backup
-                    if (fs.existsSync(oldDataDir)) {
-                        spawn('rm', ['-rf', oldDataDir]);
-                    }
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ success: true }));
-                } else {
-                    console.error(`Tar extract exited with code ${code}`);
-                    // Fail! Rollback
-                    rollback(DATA_DIR, oldDataDir, dataDirWasRenamed);
-                    res.writeHead(500, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Failed to extract backup. Is it a valid tar file?' }));
-                }
-            });
-
-            untar.stderr.on('data', (data) => {
-                console.error(`Tar extract stderr: ${data}`);
-            });
-
-        } catch (err) {
-            console.error('Restore error:', err);
-            // Rollback if possible
-            rollback(DATA_DIR, oldDataDir, dataDirWasRenamed);
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Restore failed: ' + err.message }));
-        }
-    });
-
-    /**
-     * Helper to rollback changes in case of failure
-     */
-    function rollback(dataDir, oldDir, wasRenamed) {
-        if (!fs.existsSync(oldDir)) return;
-
-        try {
-            if (wasRenamed) {
-                // If we successfully renamed the original dir, just rename it back
-                if (fs.existsSync(dataDir)) {
-                    spawnSync('rm', ['-rf', dataDir]);
-                }
-                fs.renameSync(oldDir, dataDir);
-            } else {
-                // If we copied contents, copy them back
-                const files = fs.readdirSync(dataDir);
-                for (const file of files) {
-                    fs.rmSync(path.join(dataDir, file), { recursive: true, force: true });
-                }
-                spawnSync('cp', ['-r', path.join(oldDir, '.'), dataDir]);
-            }
-        } catch (e) {
-            console.error('Rollback failed:', e);
-        }
+async function checkReserveDbConnection() {
+    const url = process.env.RESERVE_DATABASE_URL;
+    if (!url) {
+        return { success: false, error: 'RESERVE_DATABASE_URL is not set in .env' };
     }
 
-    writeStream.on('error', (err) => {
-        console.error('File write error:', err);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to save uploaded file' }));
+    // Try to connect directly
+    const testPool = new Pool({
+        connectionString: url,
+        connectionTimeoutMillis: 5000,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
     });
+
+    try {
+        await testPool.query('SELECT 1');
+        await testPool.end();
+        return { success: true };
+    } catch (err) {
+        await testPool.end().catch(() => { });
+
+        // If "database does not exist", it means the host/credentials are correct but the name is wrong
+        // Let's try to verify if the server itself is reachable by connecting to 'postgres' DB
+        try {
+            const baseUrl = url.substring(0, url.lastIndexOf('/') + 1) + 'postgres';
+            const basePool = new Pool({
+                connectionString: baseUrl,
+                connectionTimeoutMillis: 3000,
+                ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
+            });
+            await basePool.query('SELECT 1');
+            await basePool.end();
+            return {
+                success: false,
+                error: `БД не найдена, но сервер доступен. Ошибка: ${err.message}. Проверьте название БД в URL.`
+            };
+        } catch (baseErr) {
+            return {
+                success: false,
+                error: `Не удалось подключиться к серверу БД: ${err.message}. Проверьте хост, порт и Docker-окружение.`
+            };
+        }
+    }
 }
 
-module.exports = { createBackup, restoreBackup };
+module.exports = { createBackup, restoreBackup, copyToReserve, checkReserveDbConnection };

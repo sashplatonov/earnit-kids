@@ -73,14 +73,15 @@ async function startServer() {
 
     // Test database connection
     console.log('🔌 Testing database connection...');
-    const dbConnected = await testConnection();
-
-    if (!dbConnected) {
-        console.error('❌ Database connection failed. Please check DATABASE_URL in .env');
+    try {
+        await testConnection();
+        console.log('✅ Database connection successful');
+    } catch (err) {
+        console.error('❌ Database connection failed!');
+        console.error('Error details:', err);
+        console.error('\n💡 Please check your DATABASE_URL in the .env file.');
         process.exit(1);
     }
-
-    console.log('✅ Database connection successful');
 
     // Run migrations automatically
     try {

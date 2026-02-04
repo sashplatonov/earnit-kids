@@ -2,14 +2,10 @@ services:
   coins-kids-shop:
     build: .
     container_name: coins-kids-shop
+    env_file:
+      - .env
     environment:
-      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL}
-      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD}
-    volumes:
-      - ./data:/app/data
+      - PORT=3000
+    ports:
+      - "3000:3000"
     restart: unless-stopped
-    networks:
-      - proxy
-networks:
-  proxy:
-    external: true

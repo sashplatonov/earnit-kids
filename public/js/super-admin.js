@@ -8,20 +8,23 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'database') {
+            checkReserveStatus();
+        }
     });
 });
 
-// Backup
-document.getElementById('backup-btn').addEventListener('click', () => {
-    window.location.href = '/api/super/backup';
+// Backup Postgres
+document.getElementById('pg-backup-btn').addEventListener('click', () => {
+    window.location.href = '/api/super/db-backup';
 });
 
-// Restore
-document.getElementById('restore-btn').addEventListener('click', () => {
-    document.getElementById('restore-input').click();
+// Restore Postgres
+document.getElementById('pg-restore-btn').addEventListener('click', () => {
+    document.getElementById('pg-restore-input').click();
 });
 
-document.getElementById('restore-input').addEventListener('change', async (e) => {
+document.getElementById('pg-restore-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -30,36 +33,108 @@ document.getElementById('restore-input').addEventListener('change', async (e) =>
         return;
     }
 
-    const btn = document.getElementById('restore-btn');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '⌛ Загрузка...';
+    setDbStatus('Загрузка бэкапа и восстановление...', 'info');
 
     try {
-        const res = await fetch('/api/super/restore', {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Note: Using fetch with body: file automatically sets Content-Type?
+        // Actually, previous code piped file directly. Let's do that to match backend expectation.
+
+        const res = await fetch('/api/super/db-restore', {
             method: 'POST',
             body: file,
             headers: {
-                'Content-Type': 'application/gzip'
+                'Content-Type': 'application/octet-stream'
             }
         });
 
         const result = await res.json();
         if (res.ok && result.success) {
-            alert('Данные успешно восстановлены! Страница будет перезагружена.');
-            window.location.reload();
+            setDbStatus('Данные успешно восстановлены! Страница будет перезагружена.', 'success');
+            setTimeout(() => window.location.reload(), 2000);
         } else {
-            alert('Ошибка при восстановлении: ' + (result.error || 'Неизвестная ошибка'));
+            setDbStatus('Ошибка при восстановлении: ' + (result.error || 'Неизвестная ошибка'), 'error');
         }
     } catch (err) {
         console.error('Restore error:', err);
-        alert('Ошибка связи с сервером');
+        setDbStatus('Ошибка связи с сервером', 'error');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
         e.target.value = '';
     }
 });
+
+// Copy to Reserve
+document.getElementById('pg-copy-reserve-btn').addEventListener('click', async () => {
+    if (!confirm('Вы уверены, что хотите скопировать текущую БД в резервную? Старая резервная БД будет очищена.')) {
+        return;
+    }
+
+    setDbStatus('Копирование базы данных...', 'info');
+    const btn = document.getElementById('pg-copy-reserve-btn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/super/db-copy-reserve', { method: 'POST' });
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+            setDbStatus('База данных успешно скопирована в резерв!', 'success');
+        } else {
+            console.error('Copy error:', result);
+            setDbStatus('Ошибка копирования: ' + (result.error || 'См. консоль'), 'error');
+            if (result.details) console.log(result.details);
+        }
+    } catch (err) {
+        console.error('Copy request error:', err);
+        setDbStatus('Ошибка связи с сервером', 'error');
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+async function checkReserveStatus() {
+    const statusEl = document.getElementById('reserve-db-status');
+    const copyBtn = document.getElementById('pg-copy-reserve-btn');
+
+    try {
+        const res = await fetch('/api/super/db-reserve-status');
+        const data = await res.json();
+
+        if (data.success) {
+            statusEl.innerHTML = '<span style="color: #10b981;">✅ Резервная БД доступна</span>';
+            copyBtn.disabled = false;
+        } else {
+            statusEl.innerHTML = `<span style="color: #ef4444;">❌ ${data.error || 'Ошибка подключения'}</span>`;
+            copyBtn.disabled = true;
+            statusEl.title = data.error || '';
+        }
+    } catch (err) {
+        statusEl.innerHTML = '<span style="color: #ef4444;">❌ Ошибка проверки статуса</span>';
+        copyBtn.disabled = true;
+    }
+}
+
+function setDbStatus(msg, type) {
+    const el = document.getElementById('db-status-msg');
+    el.style.display = 'block';
+    el.textContent = msg;
+
+    if (type === 'error') {
+        el.style.background = '#fee2e2';
+        el.style.color = '#ef4444';
+        el.style.border = '1px solid #fca5a5';
+    } else if (type === 'success') {
+        el.style.background = '#dcfce7';
+        el.style.color = '#10b981';
+        el.style.border = '1px solid #86efac';
+    } else {
+        el.style.background = '#eff6ff';
+        el.style.color = '#3b82f6';
+        el.style.border = '1px solid #93c5fd';
+    }
+}
 
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {

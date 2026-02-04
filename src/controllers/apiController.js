@@ -9,7 +9,7 @@ const {
     registerFamily, isValidPassword, changePassword, recoverPassword
 } = require('../services/authService');
 const { loadBaseData, saveBaseData } = require('../services/baseDataService');
-const { createBackup, restoreBackup } = require('../services/backupService');
+const { createBackup, restoreBackup, copyToReserve, checkReserveDbConnection } = require('../services/backupService');
 const parseBody = require('../middleware/body-parser');
 const { getCookies } = require('./viewController');
 
@@ -207,12 +207,21 @@ async function handleSuperAdminAPI(req, res) {
         return sendJSON(res, loadBaseData());
     }
 
-    if (url === '/api/super/backup' && method === 'GET') {
+    if (url === '/api/super/db-backup' && method === 'GET') {
         return createBackup(req, res);
     }
 
-    if (url === '/api/super/restore' && method === 'POST') {
+    if (url === '/api/super/db-restore' && method === 'POST') {
         return restoreBackup(req, res);
+    }
+
+    if (url === '/api/super/db-copy-reserve' && method === 'POST') {
+        return copyToReserve(req, res);
+    }
+
+    if (url === '/api/super/db-reserve-status' && method === 'GET') {
+        const result = await checkReserveDbConnection();
+        return sendJSON(res, result);
     }
 
     if (url === '/api/super/base-data' && method === 'POST') {

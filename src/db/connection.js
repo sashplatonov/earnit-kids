@@ -46,13 +46,8 @@ async function getClient() {
  * @returns {Promise<boolean>}
  */
 async function testConnection() {
-    try {
-        await pool.query('SELECT NOW()');
-        return true;
-    } catch (err) {
-        console.error('Database connection test failed:', err.message);
-        return false;
-    }
+    await pool.query('SELECT NOW()');
+    return true;
 }
 
 module.exports = {
