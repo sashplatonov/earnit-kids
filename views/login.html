@@ -511,7 +511,7 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    showSuccess('Пароли отправлены на ваш Email!');
+                    showSuccess('Ссылка на восстановление пароля на ваш Email!');
                     setTimeout(() => {
                         showLoginFromForgotBtn.click();
                         emailInput.value = email;

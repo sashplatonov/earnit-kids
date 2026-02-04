@@ -133,4 +133,30 @@ async function serveIndex(req, res) {
     }
 }
 
-module.exports = { serveStatic, serveIndex, serveLogin, serveSuperAdmin, getCookies };
+function serveResetPassword(req, res) {
+    const resetPath = path.join(__dirname, '../../views', 'reset-password.html');
+    fs.readFile(resetPath, 'utf8', (err, content) => {
+        if (err) {
+            res.writeHead(500);
+            res.end('Server Error');
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(content);
+    });
+}
+
+function serveVerify(req, res) {
+    const verifyPath = path.join(__dirname, '../../views', 'verify.html');
+    fs.readFile(verifyPath, 'utf8', (err, content) => {
+        if (err) {
+            res.writeHead(500);
+            res.end('Server Error');
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(content);
+    });
+}
+
+module.exports = { serveStatic, serveIndex, serveLogin, serveSuperAdmin, serveResetPassword, serveVerify, getCookies };

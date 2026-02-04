@@ -8,7 +8,7 @@ const config = require('./config');
 const { setSecurityHeaders } = require('./middleware/security');
 const apiRoutes = require('./routes/api');
 const { handleMagicLink } = require('./controllers/apiController');
-const { serveStatic, serveIndex, serveLogin, serveSuperAdmin } = require('./controllers/viewController');
+const { serveStatic, serveIndex, serveLogin, serveSuperAdmin, serveResetPassword, serveVerify } = require('./controllers/viewController');
 const { loadFamilies, loadFamilyData } = require('./services/familyService');
 const { loadBaseData } = require('./services/baseDataService');
 const { testConnection } = require('./db/connection');
@@ -51,6 +51,12 @@ const server = http.createServer(async (req, res) => {
             }
             if (pathOnly === '/login.html') {
                 return serveLogin(req, res);
+            }
+            if (pathOnly === '/reset-password') {
+                return serveResetPassword(req, res);
+            }
+            if (pathOnly === '/verify') {
+                return serveVerify(req, res);
             }
             return serveStatic(req, res);
         }

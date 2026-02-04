@@ -6,7 +6,7 @@ const {
 } = require('../services/familyService');
 const {
     authenticateUser, authenticateChildByToken,
-    registerFamily, isValidPassword, changePassword, recoverPassword
+    registerFamily, isValidPassword, changePassword, recoverPassword, resetPasswordWithToken, verifyEmailToken
 } = require('../services/authService');
 const { loadBaseData, saveBaseData } = require('../services/baseDataService');
 const { createBackup, restoreBackup, copyToReserve, checkReserveDbConnection } = require('../services/backupService');
@@ -74,6 +74,21 @@ async function handleAuthAPI(req, res) {
         const { email } = body;
         if (!email) return sendJSON(res, { error: 'Email required' }, 400);
         const result = await recoverPassword(email);
+        return sendJSON(res, result, result.success ? 200 : 400);
+    }
+
+    if (url === '/api/reset-password' && method === 'POST') {
+        const body = await parseBody(req);
+        const { email, token, password } = body;
+        if (!email || !token || !password) return sendJSON(res, { error: 'Missing fields' }, 400);
+        const result = await resetPasswordWithToken(email, token, password);
+        return sendJSON(res, result, result.success ? 200 : 400);
+    }
+
+    if (url === '/api/verify' && method === 'POST') {
+        const body = await parseBody(req);
+        const { email, token } = body;
+        const result = await verifyEmailToken(email, token);
         return sendJSON(res, result, result.success ? 200 : 400);
     }
 

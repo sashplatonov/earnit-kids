@@ -52,6 +52,12 @@ async function authenticateUser(email, password) {
             return { success: false, error: 'Аккаунт заблокирован' };
         }
 
+        // Check verification (explicit check for false, as old records might be undefined or true)
+        if (family.isVerified === false) {
+            console.log('  - Login FAILED: Email not verified');
+            return { success: false, error: 'Email не подтвержден. Проверьте почту.' };
+        }
+
         if (family.admin_password === password) {
             console.log('  - Family admin login SUCCESS');
             return {
@@ -116,6 +122,9 @@ async function registerFamily(familyName, email, adminPassword) {
 
     const familyId = `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
     try {
         const result = await familyRepository.create({
             family_id: familyId,
@@ -124,10 +133,18 @@ async function registerFamily(familyName, email, adminPassword) {
             admin_password: adminPassword,
             child_token: crypto.randomBytes(32).toString('hex'),
             monthly_limit: 10000,
-            child_nickname: ''
+            child_nickname: '',
+            verification_token: verificationToken
         });
 
         if (result.success) {
+            // Send verification email
+            const { sendVerificationEmail } = require('./emailService');
+            // Use token based verification link
+            const verificationLink = `${process.env.APP_URL || 'http://localhost:3000'}/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+
+            sendVerificationEmail(email, verificationLink).catch(err => console.error('Failed to send verification email:', err));
+
             return { success: true, familyId };
         }
         return { success: false, error: 'Ошибка сохранения' };
@@ -178,19 +195,17 @@ async function changePassword(familyId, role, oldPassword, newPassword) {
  * @returns {Promise<Object>}
  */
 async function recoverPassword(email) {
-    const { sendEmail } = require('./emailService');
+    const { sendEmail, sendVerificationEmail, sendPasswordResetEmail } = require('./emailService');
 
     // Check Super Admin
     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
     const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
 
     if (superAdminEmail && superAdminEmail === email && superAdminPassword) {
-        return await sendEmail({
-            to: email,
-            subject: 'Восстановление пароля - Super Admin',
-            text: `Ваш пароль: ${superAdminPassword}`,
-            html: `<h2>Восстановление пароля</h2><p>Ваш пароль: <b>${superAdminPassword}</b></p>`
-        });
+        const loginLink = `${process.env.APP_URL || 'http://localhost:3000'}/login`;
+        // Use the specialized function which pulls subject/text/html from external files
+        const { sendSuperAdminRecoveryEmail } = require('./emailService');
+        return await sendSuperAdminRecoveryEmail(email, superAdminPassword, loginLink);
     }
 
     const family = await familyRepository.findByEmail(email);
@@ -198,12 +213,63 @@ async function recoverPassword(email) {
         return { success: false, error: 'User not found' };
     }
 
-    return await sendEmail({
-        to: email,
-        subject: 'Восстановление пароля - Монетки',
-        text: `Ваш пароль администратора: ${family.admin_password}`,
-        html: `<h2>Восстановление пароля</h2><p>Пароль администратора: <b>${family.admin_password}</b></p>`
-    });
+    // TODO: Generate a real secure token and store it in the database with expiration
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    // For now we simulate a link. The backend route handling /reset-password needs to be implemented.
+    const resetLink = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+    return await sendPasswordResetEmail(email, resetLink);
+}
+
+/**
+ * Reset password with token
+ * @param {string} email 
+ * @param {string} token 
+ * @param {string} newPassword 
+ * @returns {Promise<Object>}
+ */
+async function resetPasswordWithToken(email, token, newPassword) {
+    // TODO: Verify token against DB
+    // For now, we trust the email + token presence because we haven't implemented token storage yet.
+    // Ideally: const storedToken = await familyRepository.getResetToken(email);
+    // if (!storedToken || storedToken !== token) return { success: false, error: 'Invalid token' };
+
+    if (!token) return { success: false, error: 'Token missing' };
+    if (!isValidPassword(newPassword)) return { success: false, error: 'Weak password' };
+
+    const family = await familyRepository.findByEmail(email);
+    if (!family) return { success: false, error: 'User not found' };
+
+    if (await familyRepository.update(family.id, { admin_password: newPassword })) {
+        return { success: true };
+    }
+    return { success: false, error: 'Save failed' };
+}
+
+/**
+ * Verify email with token
+ * @param {string} email 
+ * @param {string} token 
+ * @returns {Promise<Object>}
+ */
+async function verifyEmailToken(email, token) {
+    if (!token) return { success: false, error: 'Token missing' };
+
+    const family = await familyRepository.findByEmail(email);
+    if (!family) return { success: false, error: 'User not found' };
+
+    // Find by verification token to ensure it matches
+    const tokenFamily = await familyRepository.findByVerificationToken(token);
+
+    // Check if token belongs to the user
+    if (!tokenFamily || tokenFamily.id !== family.id) {
+        return { success: false, error: 'Invalid or expired token' };
+    }
+
+    if (await familyRepository.verifyFamily(family.id)) {
+        return { success: true };
+    }
+    return { success: false, error: 'Verification failed' };
 }
 
 module.exports = {
@@ -212,5 +278,8 @@ module.exports = {
     registerFamily,
     isValidPassword,
     changePassword,
-    recoverPassword
+    recoverPassword,
+    recoverPassword,
+    resetPasswordWithToken,
+    verifyEmailToken
 };

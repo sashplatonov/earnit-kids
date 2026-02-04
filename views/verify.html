@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение Email - Coins Kids Shop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .verify-card {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2rem;
+            color: #FFD700;
+            text-shadow: 2px 2px #f39c12;
+            margin-bottom: 2rem;
+        }
+
+        #message {
+            margin-top: 1rem;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            color: #2196F3;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: transform 0.1s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="verify-card">
+        <div class="logo">🪙 Coins Shop</div>
+        <h2>Подтверждение Email</h2>
+        <div id="message" class="loading">Проверка ссылки...</div>
+        <a href="/login.html" id="loginBtn" class="btn-primary" style="display: none;">Войти</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const email = urlParams.get('email');
+        const messageDiv = document.getElementById('message');
+        const loginBtn = document.getElementById('loginBtn');
+
+        if (!token || !email) {
+            messageDiv.textContent = 'Неверная ссылка подтверждения.';
+            messageDiv.className = 'error';
+        } else {
+            verifyEmail();
+        }
+
+        async function verifyEmail() {
+            try {
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageDiv.textContent = 'Email успешно подтвержден!';
+                    messageDiv.className = 'success';
+                    loginBtn.style.display = 'inline-block';
+                } else {
+                    messageDiv.textContent = data.error || 'Ошибка подтверждения';
+                    messageDiv.className = 'error';
+                }
+            } catch (err) {
+                messageDiv.textContent = 'Ошибка сервера';
+                messageDiv.className = 'error';
+            }
+        }
+    </script>
+</body>
+
+</html>

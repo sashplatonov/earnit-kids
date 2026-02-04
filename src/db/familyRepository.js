@@ -21,6 +21,7 @@ async function findAll() {
             monthly_limit: row.monthly_limit,
             child_nickname: row.child_nickname,
             isBlocked: row.is_blocked,
+            isVerified: row.is_verified,
             created_at: row.created_at,
             last_activity: row.last_activity
         };
@@ -82,6 +83,7 @@ async function findByEmail(email) {
             monthly_limit: row.monthly_limit,
             child_nickname: row.child_nickname,
             isBlocked: row.is_blocked,
+            isVerified: row.is_verified,
             created_at: row.created_at,
             last_activity: row.last_activity
         };
@@ -133,10 +135,20 @@ async function create(data) {
 
         // Insert family
         const familyResult = await client.query(
-            `INSERT INTO families (family_id, name, email, admin_password, child_token, monthly_limit, child_nickname)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO families (family_id, name, email, admin_password, child_token, monthly_limit, child_nickname, is_verified, verification_token)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING *`,
-            [data.family_id, data.name, data.email, data.admin_password, data.child_token, data.monthly_limit || 10000, data.child_nickname || '']
+            [
+                data.family_id,
+                data.name,
+                data.email,
+                data.admin_password,
+                data.child_token,
+                data.monthly_limit || 10000,
+                data.child_nickname || '',
+                false, // is_verified
+                data.verification_token // verification_token
+            ]
         );
 
         const family = familyResult.rows[0];
@@ -281,6 +293,31 @@ async function deleteFamily(familyId) {
     return result.rowCount > 0;
 }
 
+async function verifyFamily(familyId) {
+    const result = await query(
+        'UPDATE families SET is_verified = TRUE, verification_token = NULL WHERE family_id = $1',
+        [familyId]
+    );
+    return result.rowCount > 0;
+}
+
+async function findByVerificationToken(token) {
+    const result = await query(
+        'SELECT * FROM families WHERE verification_token = $1',
+        [token]
+    );
+    if (result.rows.length > 0) {
+        const row = result.rows[0];
+        return {
+            id: row.family_id,
+            dbId: row.id,
+            email: row.email,
+            verification_token: row.verification_token
+        };
+    }
+    return null;
+}
+
 module.exports = {
     findAll,
     findById,
@@ -292,5 +329,7 @@ module.exports = {
     getDbId,
     isNicknameTaken,
     searchByNickname,
-    deleteFamily
+    deleteFamily,
+    verifyFamily,
+    findByVerificationToken
 };
