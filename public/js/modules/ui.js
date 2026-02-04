@@ -114,7 +114,7 @@ export function renderTasks() {
 
     sortedGroups.forEach(groupName => {
         html += `<div class="group-header">${escapeHtml(groupName)}</div>`;
-        html += grouped[groupName].slice().reverse().map(task => {
+        html += grouped[groupName].sort((a, b) => a.coins - b.coins).map(task => {
             let tags = [];
             if (task.frequency && task.frequency.period) {
                 const periodInfo = CONFIG.PERIODS[task.frequency.period];
@@ -184,7 +184,7 @@ export function renderShop() {
 
     sortedGroups.forEach(groupName => {
         html += `<div class="group-header">${escapeHtml(groupName)}</div>`;
-        html += grouped[groupName].map(item => {
+        html += grouped[groupName].sort((a, b) => a.price - b.price).map(item => {
             const canAfford = state.balance >= item.price;
 
             let tags = [];
@@ -237,6 +237,14 @@ export function renderRequests() {
     const incomingEmpty = document.getElementById('incoming-requests-empty');
     const myList = document.getElementById('my-requests-list');
     const myEmpty = document.getElementById('my-requests-empty');
+
+    // Update Counter
+    const pendingCount = state.requests.filter(r => r.status === 'pending').length;
+    const navBadge = document.getElementById('requests-counter');
+    if (navBadge) {
+        navBadge.textContent = pendingCount;
+        navBadge.classList.toggle('hidden', pendingCount === 0);
+    }
 
     if (!incomingList || !myList) return;
 

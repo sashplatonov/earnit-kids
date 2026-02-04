@@ -65,7 +65,7 @@ function renderCatalog() {
         let html = '';
         Object.keys(grouped).sort().forEach(cat => {
             html += `<div class="category-header">${cat}</div>`;
-            html += grouped[cat].map(t => {
+            html += grouped[cat].sort((a, b) => a.coins - b.coins).map(t => {
                 const freqText = t.frequency ? ` | ${t.frequency.limit}/${t.frequency.period}` : '';
                 return `
                 <div class="catalog-item">
@@ -94,7 +94,7 @@ function renderCatalog() {
         let html = '';
         Object.keys(grouped).sort().forEach(cat => {
             html += `<div class="category-header">${cat}</div>`;
-            html += grouped[cat].map(p => {
+            html += grouped[cat].sort((a, b) => a.price - b.price).map(p => {
                 const freqText = p.frequency ? ` | ${p.frequency.limit}/${p.frequency.period}` : '';
                 const limitText = p.money_limit ? ` | Lim: ${p.money_limit}🪙` : '';
                 return `

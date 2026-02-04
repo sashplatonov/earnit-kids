@@ -1146,3 +1146,15 @@ body {
     color: var(--color-warning);
     font-weight: 600;
 }
+/* ===== Nav Counter ===== */
+.nav__counter {
+    background: var(--color-danger);
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    font-weight: 700;
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+}
