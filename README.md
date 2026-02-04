@@ -2,42 +2,49 @@
 
 A modern, minimal web application for managing kids' reward coins. Parents can award coins for completed tasks, and kids can spend them in a virtual shop. Featuring a zero-dependency Node.js backend and a modular, component-based frontend.
 
+## 🌐 Live Demo
+
+The project is deployed and available at: [https://coins-kids-shop.onrender.com/](https://coins-kids-shop.onrender.com/)
+
 ## ✨ Features
 
--   **Dual-Role Authentication** — Separate password-based logins for Admin (Parents) and Children.
+-   **Dual-Role Authentication** — Password-based login for Admin (Parents) and Magic Links for Children.
 -   **Super Admin Panel** — Manage multiple families, block/unblock accounts, and manage base catalog.
 -   **Task Management** — Create, edit, and delete tasks with reward values (Admin).
 -   **Virtual Shop** — Manage a catalog of items kids can "buy" with their earned coins (Admin).
 -   **Earning & Spending** — Simple UI for awarding coins and processing purchases.
 -   **Coin Requests** — Children can send requests for custom coin amounts for approval (Admin).
 -   **Transaction History** — Detailed log of all earnings, spendings, and approvals.
--   **Session Security** — Secure `HttpOnly` cookies with a 24-hour session duration and rate-limited login attempts.
+-   **Database Management** — Integrated backup and restore functionality (PostgreSQL).
+-   **Session Security** — Secure `HttpOnly` cookies with session management.
 -   **Mobile First** — Fully responsive design optimized for phones and tablets.
 
 ## 🛠 Tech Stack
 
 ### Web Application
--   **Backend**: Pure Node.js (no external dependencies like Express).
+-   **Backend**: Pure Node.js (no external dependencies like Express for core logic).
 -   **Frontend**: Vanilla HTML5, CSS3, and modern ES Modules.
--   **Storage**: Flat-file database in `data/` directory.
--   **Deployment**: Docker & Docker Compose support.
+-   **Database**: PostgreSQL (with automated migrations).
+-   **Deployment**: Docker & Docker Compose.
 
 ### Telegram Bot
 -   **Language**: Java (Maven project).
--   **Purpose**: Provides an alternative interface for managing tasks and notifications via Telegram.
+-   **Purpose**: Optional interface for notifications and task management.
 
 ## 📂 Project Structure
 
+```
 ├── public/              # Static assets (css, js/client, images)
 ├── src/                 # Backend source code
 │   ├── config/          # Global configuration and constants
 │   ├── controllers/     # API and View routing logic
 │   ├── middleware/      # Security, body-parser, and auth filters
-│   ├── routes/          # Route dispatchers (logic-less)
-│   └── services/        # Business logic & data access (auth, email, data)
+│   ├── routes/          # Route dispatchers
+│   ├── services/        # Business logic & data access (auth, db, services)
+│   └── db/              # Database connection and initialization
 ├── views/               # HTML templates and components
-│   └── components/      # UI pieces assembled by the server
-├── data/                # Local JSON database storage
+├── migrations/          # SQL migration files
+├── scripts/             # Utility scripts (data migration, etc.)
 └── Dockerfile           # Web app containerization
 ```
 
@@ -45,37 +52,63 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 
 ### Prerequisites
 -   Node.js (v20+)
+-   PostgreSQL
 -   Docker (optional)
 
 ### Local Development
 1.  Clone the repository.
-2.  Create a `.env` file from `.env.example`.
-3.  Start the server:
+2.  Create a `.env` file from `.env.example` and configure your database settings.
+3.  Install dependencies:
+    ```bash
+    npm install
+    ```
+4.  Run migrations:
+    ```bash
+    npm run migrate
+    ```
+5.  Start the server:
     ```bash
     npm start
     ```
-4.  Open `http://localhost:3000` in your browser.
+6.  Open `http://localhost:3000` in your browser.
 
 ### Docker Deployment
+
+To build and run the application in a Docker container:
+
+**Rebuild and Start:**
 ```bash
 docker compose up -d --build
 ```
-The application will be available at `http://localhost:3000`. Data is persisted via a volume mapping to the `data/` directory.
+
+**Stop:**
+```bash
+docker compose down
+```
+
+**View Logs:**
+```bash
+docker compose logs -f
+```
+
+The application will be available at `http://localhost:3000`.
+
+## 📋 TODO
+
+- [ ] **Testing**: Implement unit and integration tests for core services and API routes.
+- [ ] **Notifications**: Add email or push notifications for parents when a child submits a request.
+- [ ] **Analytics**: Create a dashboard for parents to track coin earning/spending trends over time.
+- [ ] **UI Refinement**: Continue improving the responsiveness of the Super Admin tables.
+- [ ] **Backup Automation**: Implement scheduled database backups.
+- [ ] **Security**: Add second-factor authentication (2FA) for Admin accounts.
 
 ## 🔐 Security
 
--   **Authentication**: The site requires passwords for access (minimum 6 characters).
--   **Security Headers**: Implements `Helmet`-like security headers (XSS Protection, Frame Options, CSP-ready).
--   **Rate Limiting**: The API blocks IPs after multiple failed login attempts to prevent brute-force attacks.
--   **Cookie Safety**: Authentication is handled via `HttpOnly`, `SameSite=Lax` cookies.
--   **Data Isolation**: Client-side JS is strictly separated from server-side logic in `/public`.
--   **Input Sanitization**: Basic protection against directory traversal and JSON injection.
-
-## 🤖 Telegram Bot
-
-The project includes a Telegram bot located in the `/telegram-bot` directory. It is built with Java and Maven.
--   **Configuration**: Requires `BOT_TOKEN` in the `.env` file.
--   **Build**: Use `mvn clean compile exec:java` inside the `telegram-bot` directory.
+-   **Authentication**: Secure password hashing and Magic Link authentication.
+-   **Security Headers**: Implements security headers (XSS Protection, Frame Options).
+-   **Rate Limiting**: Protection against brute-force attacks on login.
+-   **Cookie Safety**: `HttpOnly`, `SameSite=Lax` cookies for session management.
+-   **Data Integrity**: Automated PostgreSQL migrations and backup system.
 
 ## 📝 License
 
