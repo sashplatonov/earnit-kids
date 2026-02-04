@@ -95,6 +95,9 @@ The application will be available at `http://localhost:3000`.
 
 ## 📋 TODO
 
+- [ ] **Email Verification**
+- [ ] **Email Password Recovery**
+- [ ] **Security**: Add second-factor authentication (2FA) for Admin accounts.
 - [ ] **Testing**: Implement unit and integration tests for core services and API routes.
 - [ ] **Notifications**: Add email or push notifications for parents when a child submits a request.
 - [ ] **Analytics**: Create a dashboard for parents to track coin earning/spending trends over time.
