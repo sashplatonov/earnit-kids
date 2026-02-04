@@ -146,7 +146,7 @@ async function create(data) {
                 data.child_token,
                 data.monthly_limit || 10000,
                 data.child_nickname || '',
-                false, // is_verified
+                data.isVerified !== undefined ? data.isVerified : false, // is_verified
                 data.verification_token // verification_token
             ]
         );

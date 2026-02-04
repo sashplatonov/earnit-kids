@@ -2,7 +2,7 @@ const { handleAPI, handleSuperAdminAPI, handleAuthAPI } = require('../controller
 
 async function apiRoutes(req, res) {
     const url = req.url;
-    if (url.startsWith('/api/login') || url.startsWith('/api/logout') || url.startsWith('/api/register') || url.startsWith('/api/forgot-password') || url.startsWith('/api/reset-password') || url.startsWith('/api/verify')) {
+    if (url.startsWith('/api/login') || url.startsWith('/api/logout') || url.startsWith('/api/register') || url.startsWith('/api/forgot-password') || url.startsWith('/api/reset-password') || url.startsWith('/api/verify') || url.startsWith('/api/auth-config')) {
         await handleAuthAPI(req, res);
         return;
     }

@@ -466,7 +466,14 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    showSuccess('Семья зарегистрирована! Теперь войдите.');
+                    const verificationEnabled = window.authConfig ? window.authConfig.emailVerificationEnabled : true;
+
+                    if (verificationEnabled) {
+                        showSuccess('Семья зарегистрирована! ПРОВЕРЬТЕ ПОЧТУ для подтверждения.');
+                    } else {
+                        showSuccess('Семья зарегистрирована! Теперь войдите.');
+                    }
+
                     registerBtn.textContent = 'Зарегистрировать';
                     registerBtn.disabled = false;
 
@@ -475,7 +482,7 @@
                         showLoginBtn.click();
                         emailInput.value = regEmail;
                         pinInput.focus();
-                    }, 1500);
+                    }, 3000); // Increased timeout to let user read the message
                 } else {
                     showError(data.error || 'Ошибка регистрации');
                     registerBtn.textContent = 'Зарегистрировать';
@@ -541,14 +548,32 @@
             if (e.key === 'Enter') doRecover();
         });
 
-        // Auto-focus on load and check errors
-        window.addEventListener('load', () => {
+        // Auto-focus on load and check auth config
+        window.addEventListener('load', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const error = urlParams.get('error');
             if (error === 'invalid_token') {
                 showError('Эта ссылка для входа больше не работает. Пожалуйста, попросите родителей прислать вам новую ссылку из настроек магазина.');
             }
             if (emailInput) emailInput.focus();
+
+            // Fetch Auth Config
+            try {
+                const res = await fetch('api/auth-config');
+                if (res.ok) {
+                    const config = await res.json();
+
+                    // Toggle Password Recovery
+                    if (!config.passwordRecoveryEnabled) {
+                        if (forgotPasswordLink) forgotPasswordLink.style.display = 'none';
+                    }
+
+                    // Store config for registration flow
+                    window.authConfig = config;
+                }
+            } catch (err) {
+                console.error('Failed to load auth config', err);
+            }
         });
     </script>
 </body>

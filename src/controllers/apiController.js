@@ -92,6 +92,13 @@ async function handleAuthAPI(req, res) {
         return sendJSON(res, result, result.success ? 200 : 400);
     }
 
+    if (url === '/api/auth-config' && method === 'GET') {
+        return sendJSON(res, {
+            emailVerificationEnabled: process.env.ENABLE_EMAIL_VERIFICATION !== 'false',
+            passwordRecoveryEnabled: process.env.ENABLE_PASSWORD_RECOVERY !== 'false'
+        });
+    }
+
     sendJSON(res, { error: 'Not Found' }, 404);
 }
 

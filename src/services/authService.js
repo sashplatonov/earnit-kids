@@ -52,8 +52,9 @@ async function authenticateUser(email, password) {
             return { success: false, error: 'Аккаунт заблокирован' };
         }
 
-        // Check verification (explicit check for false, as old records might be undefined or true)
-        if (family.isVerified === false) {
+        // Check verification (only if enabled)
+        const emailVerificationEnabled = process.env.ENABLE_EMAIL_VERIFICATION !== 'false';
+        if (emailVerificationEnabled && family.isVerified === false) {
             console.log('  - Login FAILED: Email not verified');
             return { success: false, error: 'Email не подтвержден. Проверьте почту.' };
         }
@@ -122,8 +123,12 @@ async function registerFamily(familyName, email, adminPassword) {
 
     const familyId = `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
 
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    // Feature Flag: Email Verification
+    const emailVerificationEnabled = process.env.ENABLE_EMAIL_VERIFICATION !== 'false';
+    const isVerified = !emailVerificationEnabled;
+
+    // Generate verification token only if needed
+    const verificationToken = emailVerificationEnabled ? crypto.randomBytes(32).toString('hex') : null;
 
     try {
         const result = await familyRepository.create({
@@ -134,16 +139,19 @@ async function registerFamily(familyName, email, adminPassword) {
             child_token: crypto.randomBytes(32).toString('hex'),
             monthly_limit: 10000,
             child_nickname: '',
+            isVerified: isVerified,
             verification_token: verificationToken
         });
 
         if (result.success) {
-            // Send verification email
-            const { sendVerificationEmail } = require('./emailService');
-            // Use token based verification link
-            const verificationLink = `${process.env.APP_URL || 'http://localhost:3000'}/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+            // Send verification email only if enabled
+            if (emailVerificationEnabled) {
+                const { sendVerificationEmail } = require('./emailService');
+                // Use token based verification link
+                const verificationLink = `${process.env.APP_URL || 'http://localhost:3000'}/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
 
-            sendVerificationEmail(email, verificationLink).catch(err => console.error('Failed to send verification email:', err));
+                sendVerificationEmail(email, verificationLink).catch(err => console.error('Failed to send verification email:', err));
+            }
 
             return { success: true, familyId };
         }
@@ -195,6 +203,11 @@ async function changePassword(familyId, role, oldPassword, newPassword) {
  * @returns {Promise<Object>}
  */
 async function recoverPassword(email) {
+    // Feature Flag: Password Recovery
+    if (process.env.ENABLE_PASSWORD_RECOVERY === 'false') {
+        return { success: false, error: 'Функция восстановления пароля отключена' };
+    }
+
     const { sendEmail, sendVerificationEmail, sendPasswordResetEmail } = require('./emailService');
 
     // Check Super Admin
