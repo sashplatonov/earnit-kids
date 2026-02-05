@@ -20,7 +20,7 @@ const CONFIG = window.CONFIG || {
 export function updateBalanceUI() {
     let displayBalance = state.balance;
     if (state.isAdmin && state.currentChildId) {
-        const child = state.children.find(c => c.id === state.currentChildId);
+        const child = state.children.find(c => c.id == state.currentChildId);
         if (child) displayBalance = child.balance;
     }
     const balanceEl = document.getElementById('balance');
@@ -163,7 +163,7 @@ export function renderTasks() {
     // Filter tasks based on currentChildId if admin
     let tasksToRender = state.tasks;
     if (state.isAdmin && state.currentChildId) {
-        tasksToRender = state.tasks.filter(t => t.childId === state.currentChildId);
+        tasksToRender = state.tasks.filter(t => t.childId == state.currentChildId);
     }
 
     // Grouping logic
@@ -239,7 +239,7 @@ export function renderShop() {
     // Filter shop items
     let shopToRender = state.shopItems;
     if (state.isAdmin && state.currentChildId) {
-        shopToRender = state.shopItems.filter(i => i.childId === state.currentChildId);
+        shopToRender = state.shopItems.filter(i => i.childId == state.currentChildId);
     }
 
     // Grouping logic
@@ -316,7 +316,7 @@ export function renderRequests() {
     // Filter Requests by Child if Admin
     let relevantRequests = state.requests;
     if (state.isAdmin && state.currentChildId) {
-        relevantRequests = state.requests.filter(r => r.childId === state.currentChildId);
+        relevantRequests = state.requests.filter(r => r.childId == state.currentChildId);
     } else if (state.isAdmin) {
         // If "All Data" was removed, currentChildId should be set. If not, filtered requests = [].
         // But let's keep all if no child selected just in case (though we want to enforce selection).
@@ -375,7 +375,7 @@ export function renderRequests() {
             if (incomingEmpty) incomingEmpty.classList.add('hidden');
             incomingList.innerHTML = incoming.map(req => {
                 // Find child name
-                const child = state.children.find(c => c.id === req.childId);
+                const child = state.children.find(c => c.id == req.childId);
                 const childName = child ? child.name : 'Unknown';
 
                 return `
@@ -419,7 +419,7 @@ export function renderHistory() {
     // Filter history
     let historyToRender = state.history;
     if (state.isAdmin && state.currentChildId) {
-        historyToRender = state.history.filter(h => h.childId === state.currentChildId);
+        historyToRender = state.history.filter(h => h.childId == state.currentChildId);
     }
 
     // Grouping history by month
@@ -511,7 +511,7 @@ export function renderFriends() {
     let friendsToRender = state.friends;
     if (state.isAdmin && state.currentChildId) {
         // If we have ownerChildId info (from repository update)
-        friendsToRender = state.friends.filter(f => !f.ownerChildId || f.ownerChildId === state.currentChildId);
+        friendsToRender = state.friends.filter(f => !f.ownerChildId || f.ownerChildId == state.currentChildId);
     }
 
     if (friendsToRender.length === 0) {
@@ -557,7 +557,7 @@ export function renderChildSwitcher() {
         return;
     }
 
-    const currentChild = state.children.find(c => c.id === state.currentChildId);
+    const currentChild = state.children.find(c => c.id == state.currentChildId);
     const childName = currentChild ? currentChild.name : 'Выберите ребенка';
 
     let html = `

@@ -142,19 +142,20 @@ function addCatalogItem(type, id) {
 
     if (!item) return;
 
-    // Check for duplicates by name
+    // Check for duplicates by name (Scoped to current child)
     const existing = type === 'task'
-        ? state.tasks.find(t => t.name === item.name)
-        : state.shopItems.find(i => i.name === item.name);
+        ? state.tasks.find(t => t.name === item.name && t.childId == state.currentChildId)
+        : state.shopItems.find(i => i.name === item.name && i.childId == state.currentChildId);
 
     if (existing) {
-        showToast('Такой ' + (type === 'task' ? 'задание' : 'товар') + ' уже есть!', 'error');
+        showToast('Такой ' + (type === 'task' ? 'задание' : 'товар') + ' уже есть у этого ребенка!', 'error');
         return;
     }
 
     const newItem = {
         ...item,
         id: Date.now(), // New unique ID
+        childId: state.currentChildId, // Assign to current child
         group: item.group || item.category || '', // Use group or category
         frequency: item.frequency || { limit: 1, period: 'day' }, // Use item freq or default
         money_limit: item.money_limit || null

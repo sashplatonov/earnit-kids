@@ -133,7 +133,7 @@ export function deleteTask() {
     if (!editingTaskId) return;
 
     showConfirm('Удалить задание?', 'Это действие нельзя отменить.', () => {
-        state.tasks = state.tasks.filter(t => t.id !== editingTaskId);
+        state.tasks = state.tasks.filter(t => t.id != editingTaskId);
         scheduleSave();
         renderTasks();
         closeModal('task-modal');
@@ -235,7 +235,7 @@ export function deleteShopItem() {
     if (!editingShopId) return;
 
     showConfirm('Удалить товар?', 'Это действие нельзя отменить.', () => {
-        state.shopItems = state.shopItems.filter(i => i.id !== editingShopId);
+        state.shopItems = state.shopItems.filter(i => i.id != editingShopId);
         scheduleSave();
         renderShop();
         closeModal('shop-modal');
@@ -303,7 +303,7 @@ export async function saveFamilySettingsInline() {
 
         if (childRes.success) {
             // Update state
-            const childIndex = state.children.findIndex(c => c.id === state.currentChildId);
+            const childIndex = state.children.findIndex(c => c.id == state.currentChildId);
             if (childIndex !== -1) {
                 state.children[childIndex].name = childName;
                 state.children[childIndex].monthlyLimit = isNaN(mLimit) ? 0 : mLimit;
@@ -384,10 +384,11 @@ export async function regenerateChildLinkInline() {
     }
 }
 export function switchChild(childId) {
-    const child = state.children.find(c => c.id === childId);
+    const child = state.children.find(c => c.id == childId);
     if (child) {
         setState({
             currentChildId: childId,
+            balance: child.balance || 0,
             monthlyLimit: child.monthlyLimit !== undefined ? child.monthlyLimit : 10000,
             dailyCoinLimit: child.dailyCoinLimit !== undefined ? child.dailyCoinLimit : 0
         });
