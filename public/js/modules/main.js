@@ -3,7 +3,7 @@ import { state, setState } from './state.js';
 import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
-import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings, saveFamilySettingsInline, saveNewPinInline, copyChildLinkInline, refreshChildLinkInline, regenerateChildLinkInline } from './admin.js';
+import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings, saveFamilySettingsInline, saveNewPinInline, copyChildLinkInline, refreshChildLinkInline, regenerateChildLinkInline, switchChild, openAddChildModal, saveNewChild } from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
 import { handleSearch, addNewFriend, refreshFriends, saveNickname } from './friends.js';
 
@@ -197,6 +197,8 @@ window.app = {
     saveNewPinInline,
     copyChildLinkInline,
     regenerateChildLinkInline,
+    switchChild,
+    openAddChildModal,
     addNewFriend,
     handleSearch,
     saveNickname
@@ -234,12 +236,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             requests: data.requests || [],
             familyName: data.familyName || '',
             childNickname: data.childNickname || null,
-            monthlyLimit: data.monthlyLimit || 2000,
+            monthlyLimit: data.monthlyLimit || 10000,
+            dailyCoinLimit: data.dailyCoinLimit || 0,
+            children: data.children || [],
             baseData: baseData
         });
 
         if (!data.isAdmin) {
             await refreshFriends();
+        } else {
+            // If Children exist and no currentChildId (initial load), select first child
+            if (state.children && state.children.length > 0 && !state.currentChildId) {
+                switchChild(state.children[0].id);
+            }
         }
     } else {
         showToast('Не удалось загрузить данные с сервера', 'error');
@@ -459,4 +468,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const saveNicknameBtn = document.getElementById('settings-save-nickname-btn');
     if (saveNicknameBtn) saveNicknameBtn.addEventListener('click', saveNickname);
+
+    const addChildSave = document.getElementById('add-child-save');
+    if (addChildSave) addChildSave.addEventListener('click', saveNewChild);
+
+    const addChildCancel = document.getElementById('add-child-cancel');
+    if (addChildCancel) addChildCancel.addEventListener('click', () => closeModal('add-child-modal'));
 });

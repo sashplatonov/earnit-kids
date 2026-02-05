@@ -8,11 +8,13 @@ The project is deployed and available at: [https://coins-kids-shop.onrender.com/
 
 ## ✨ Features
 
--   **Dual-Role Authentication** — Password-based login for Admin (Parents) and Magic Links for Children.
+-   **Dual-Role Authentication** — Password-based login for Admin (Parents) with recovery options and unique Magic Links for each Child.
+-   **Multi-Child Management** — Add multiple children to a single family account, each with their own balance, limits, and magic links.
 -   **Super Admin Panel** — Manage multiple families, block/unblock accounts, and manage base catalog.
--   **Task Management** — Create, edit, and delete tasks with reward values (Admin).
--   **Virtual Shop** — Manage a catalog of items kids can "buy" with their earned coins (Admin).
--   **Earning & Spending** — Simple UI for awarding coins and processing purchases.
+-   **Daily Coin Limits** — Set individual daily earning limits for each child to keep the economy balanced.
+-   **Task Management** — Create, edit, and delete tasks with reward values and usage limits.
+-   **Virtual Shop** — Manage a catalog of items kids can "buy" with their earned coins.
+-   **Earning & Spending** — Simple UI for awarding coins and processing purchases across all children.
 -   **Coin Requests** — Children can send requests for custom coin amounts for approval (Admin).
 -   **Transaction History** — Detailed log of all earnings, spendings, and approvals.
 -   **Database Management** — Integrated backup and restore functionality (PostgreSQL).
@@ -95,15 +97,13 @@ The application will be available at `http://localhost:3000`.
 
 ## 📋 TODO
 
-- [ ] **Email Verification**
-- [ ] **Email Password Recovery**
 - [ ] **Security**: Add second-factor authentication (2FA) for Admin accounts.
 - [ ] **Testing**: Implement unit and integration tests for core services and API routes.
 - [ ] **Notifications**: Add email or push notifications for parents when a child submits a request.
 - [ ] **Analytics**: Create a dashboard for parents to track coin earning/spending trends over time.
 - [ ] **UI Refinement**: Continue improving the responsiveness of the Super Admin tables.
 - [ ] **Backup Automation**: Implement scheduled database backups.
-- [ ] **Security**: Add second-factor authentication (2FA) for Admin accounts.
+- [ ] **Language Support**: Add multi-language support (i18n).
 
 ## 🔐 Security
 

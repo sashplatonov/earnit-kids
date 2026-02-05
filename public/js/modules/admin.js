@@ -1,6 +1,6 @@
 import { state, setState, notify } from './state.js';
-import { changePin, saveDataToServer, updateFamilySettingsOnServer } from './api.js';
-import { renderTasks, renderShop } from './ui.js';
+import { changePin, saveDataToServer, updateFamilySettingsOnServer, addChild, getChildLink, regenerateChildToken, updateChildSettings } from './api.js';
+import { renderTasks, renderShop, renderAll } from './ui.js';
 import { showToast, closeModal, openModal, showConfirm } from './utils.js';
 import { scheduleSave } from './actions.js';
 
@@ -104,6 +104,7 @@ export function saveTask() {
 
     const taskData = {
         name,
+        childId: state.currentChildId, // Assign to current child
         group: document.getElementById('task-group').value.trim(),
         coins,
         comment,
@@ -203,6 +204,7 @@ export function saveShopItem() {
 
     const newItem = {
         name,
+        childId: state.currentChildId, // Assign to current child
         group: document.getElementById('shop-group').value.trim(),
         price,
         comment,
@@ -262,7 +264,7 @@ export async function saveFamilySettings() {
 
     const result = await updateFamilySettingsOnServer({ name, monthly_limit: monthlyLimit });
     if (result && result.success) {
-        setState({ familyName: name, monthlyLimit: monthlyLimit });
+        setState({ familyName: name });
         showToast('Настройки обновлены!', 'success');
         closeModal('family-settings-modal');
     } else {
@@ -272,29 +274,70 @@ export async function saveFamilySettings() {
 
 export async function saveFamilySettingsInline() {
     const name = document.getElementById('settings-family-name-inline').value.trim();
-    const monthlyLimit = parseInt(document.getElementById('settings-money-limit-inline').value);
+    // const monthlyLimit = parseInt(document.getElementById('settings-money-limit-inline').value); // Use child limit now
 
     if (!name) {
         showToast('Название не может быть пустым', 'error');
         return;
     }
 
-    const result = await updateFamilySettingsOnServer({ name, monthly_limit: monthlyLimit });
-    if (result && result.success) {
-        setState({ familyName: name, monthlyLimit: monthlyLimit });
-        showToast('Настройки обновлены!', 'success');
+    // Update Family Name
+    const familyRes = await updateFamilySettingsOnServer({ name });
+    if (familyRes && familyRes.success) {
+        setState({ familyName: name });
     } else {
-        showToast('Ошибка при обновлении настроек', 'error');
+        return showToast('Ошибка при обновлении названия семьи', 'error');
     }
+
+    // If child selected, update child settings
+    if (state.currentChildId) {
+        const childName = document.getElementById('settings-child-name-inline')?.value.trim();
+        const mLimit = parseInt(document.getElementById('settings-money-limit-inline')?.value);
+        const dayLimit = parseInt(document.getElementById('settings-day-coin-limit-inline')?.value);
+
+        const childRes = await updateChildSettings(state.familyId, state.currentChildId, {
+            name: childName,
+            monthly_limit: isNaN(mLimit) ? 0 : mLimit,
+            daily_coin_limit: isNaN(dayLimit) ? 0 : dayLimit
+        });
+
+        if (childRes.success) {
+            // Update state
+            const childIndex = state.children.findIndex(c => c.id === state.currentChildId);
+            if (childIndex !== -1) {
+                state.children[childIndex].name = childName;
+                state.children[childIndex].monthlyLimit = isNaN(mLimit) ? 0 : mLimit;
+                state.children[childIndex].dailyCoinLimit = isNaN(dayLimit) ? 0 : dayLimit;
+                renderChildSwitcher(); // Update name in tabs
+            }
+        } else {
+            return showToast('Ошибка при обновлении настроек ребенка', 'error');
+        }
+    }
+
+    showToast('Настройки обновлены!', 'success');
+    renderAll();
 }
 
 export async function refreshChildLinkInline() {
     const input = document.getElementById('settings-child-link-input-inline');
     if (!input) return;
 
+    // If we have a current child selected, get THEIR link.
+    // Otherwise, maybe disable or show generic msg?
+    const childId = state.currentChildId;
+    // Default to first child if none selected? Or just fail?
+    // Let's assume parent settings allows selecting child for link in future.
+    // For now, if currentChildId is set, use it. If not, maybe use first.
+
+    const targetId = childId || (state.children.length > 0 ? state.children[0].id : null);
+    if (!targetId) {
+        input.value = 'Сначала добавьте ребенка';
+        return;
+    }
+
     try {
-        const res = await fetch('/api/child-link');
-        const data = await res.json();
+        const data = await getChildLink(targetId);
         if (data.link) {
             input.value = data.link;
         }
@@ -323,9 +366,12 @@ export async function copyChildLinkInline() {
 
 export async function regenerateChildLinkInline() {
     if (!confirm('Вы уверены, что хотите обновить ссылку? Старая ссылка перестанет работать.')) return;
+
+    const childId = state.currentChildId || (state.children.length > 0 ? state.children[0].id : null);
+    if (!childId) return showToast('Нет выбранного ребенка', 'error');
+
     try {
-        const res = await fetch('/api/regenerate-token', { method: 'POST' });
-        const data = await res.json();
+        const data = await regenerateChildToken(childId);
         if (data.link) {
             const input = document.getElementById('settings-child-link-input-inline');
             if (input) input.value = data.link;
@@ -335,5 +381,53 @@ export async function regenerateChildLinkInline() {
         }
     } catch (err) {
         showToast('Ошибка сети', 'error');
+    }
+}
+export function switchChild(childId) {
+    const child = state.children.find(c => c.id === childId);
+    if (child) {
+        setState({
+            currentChildId: childId,
+            monthlyLimit: child.monthlyLimit !== undefined ? child.monthlyLimit : 10000,
+            dailyCoinLimit: child.dailyCoinLimit !== undefined ? child.dailyCoinLimit : 0
+        });
+    } else {
+        setState({ currentChildId: childId });
+    }
+    renderAll();
+
+    // Update settings fields if they exist
+    if (child) {
+        const nameInp = document.getElementById('settings-child-name-inline');
+        if (nameInp) nameInp.value = child.name;
+
+        const limitInp = document.getElementById('settings-money-limit-inline');
+        if (limitInp) limitInp.value = child.monthlyLimit !== undefined ? child.monthlyLimit : 10000;
+
+        const dayLimitInp = document.getElementById('settings-day-coin-limit-inline');
+        if (dayLimitInp) dayLimitInp.value = child.dailyCoinLimit !== undefined ? child.dailyCoinLimit : 0;
+
+        refreshChildLinkInline();
+    }
+}
+
+export function openAddChildModal() {
+    document.getElementById('new-child-name').value = '';
+    openModal('add-child-modal');
+}
+
+export async function saveNewChild() {
+    const name = document.getElementById('new-child-name').value.trim();
+    if (!name) return showToast('Введите имя', 'error');
+
+    const result = await addChild(name);
+    if (result.success) {
+        showToast('Ребенок добавлен!', 'success');
+        closeModal('add-child-modal');
+        // Reload page or just reload data?
+        // Data reload is better but full reload ensures state consistency for now
+        window.location.reload();
+    } else {
+        showToast('Ошибка: ' + (result.error || 'Не удалось добавить'), 'error');
     }
 }

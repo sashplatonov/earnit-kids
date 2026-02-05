@@ -40,6 +40,24 @@ export function addHistoryEntry(type, amount, description, relatedId = null, mon
         entry.relatedId = relatedId;
     }
 
+    if (relatedId) {
+        if (type === 'spend') entry.itemId = relatedId;
+        else if (type === 'earn') entry.taskId = relatedId;
+        // fallback to just saving it
+        entry.relatedId = relatedId;
+    }
+
+    // Add childId to history entry so strict filtering works
+    // If admin, currentChildId. If child, infer?
+    // 'state.currentChildId' is what we view.
+    // If child is logged in, they are usually viewing themselves.
+    // Ideally history entry should have 'childId'.
+    if (state.currentChildId) {
+        entry.childId = state.currentChildId;
+    } else if (state.role === 'child' && state.children.length > 0) {
+        entry.childId = state.children[0].id;
+    }
+
     state.history.unshift(entry);
     scheduleSave();
     renderHistory();
@@ -102,6 +120,39 @@ export function checkLimits(item, moneyPrice) {
     return null; // OK
 }
 
+export function checkDailyCoinLimit(childId, amount) {
+    // If Admin is acting but on a specific child
+    // In multi-child, state.balance is updated. 
+    // We need to know who is 'earning'.
+    // If state.role == 'child', childId = state.currentChildId (which is likely set or implicit).
+    // If state.role == 'admin', childId = state.currentChildId.
+
+    // We need to look at the child's limit.
+    const child = state.children.find(c => c.id === childId);
+    if (!child) return null; // Can't check limit
+
+    const limit = child.dailyCoinLimit;
+    if (!limit || limit <= 0) return null; // No limit
+
+    // Calculate today's earnings
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    let earnedToday = 0;
+
+    // Check history (which should be filtered by child if loaded correctly or check all)
+    // Note: state.history might contain ALL history if family data loaded.
+    // We should filter by childId in history entry.
+    state.history.forEach(h => {
+        if (h.type === 'earn' && h.date.startsWith(today) && h.childId === childId) {
+            earnedToday += h.amount;
+        }
+    });
+
+    if (earnedToday + amount > limit) {
+        return `Превышен дневной лимит монет (${earnedToday}/${limit})`;
+    }
+    return null;
+}
+
 export function buyItem(itemId) {
     const item = state.shopItems.find(i => i.id == itemId);
     if (!item) return;
@@ -139,7 +190,16 @@ export function buyItem(itemId) {
         'Подтвердите покупку',
         `Купить "${item.name}" за ${item.price} 🪙 и ${moneyPrice} в деньгах?`,
         () => {
-            state.balance -= item.price;
+            // Update specific child balance logic needed?
+            // "state.balance" is used for display. 
+            // If admin, we should update state.children match.
+            if (state.isAdmin && state.currentChildId) {
+                const child = state.children.find(c => c.id === state.currentChildId);
+                if (child) child.balance -= item.price;
+            } else {
+                state.balance -= item.price;
+            }
+
             addHistoryEntry('spend', item.price, item.name, item.id, moneyPrice);
             scheduleSave();
             renderAll();
@@ -177,11 +237,28 @@ export function earnCoins(taskId) {
         }
     }
 
+
+
+    // Check coin limit
+    const actingId = state.role === 'admin' ? state.currentChildId : (state.children.length > 0 ? state.children[0].id : null);
+    const limitErr = checkDailyCoinLimit(actingId, task.coins);
+    if (limitErr) {
+        showToast(limitErr, 'error');
+        return;
+    }
+
     showConfirm(
         'Начислить монеты?',
         `Начислить ${task.coins} 🪙 за "${task.name}"?`,
         () => {
-            state.balance += task.coins;
+            // Update balance
+            if (state.isAdmin && state.currentChildId) {
+                const child = state.children.find(c => c.id === state.currentChildId);
+                if (child) child.balance += task.coins;
+            } else {
+                state.balance += task.coins;
+            }
+
             addHistoryEntry('earn', task.coins, task.name, task.id);
             renderShop(); // Update shop availability
             showToast(`+${task.coins} 🪙 начислено!`, 'success');
@@ -231,7 +308,19 @@ export function approveRequest(reqId) {
     const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
 
-    state.balance += req.coins;
+    // Check limit
+    const limitErr = checkDailyCoinLimit(req.childId, req.coins);
+    if (limitErr && !confirm(`${limitErr}. Все равно начислить?`)) {
+        return;
+    }
+
+    // Find child and update local balance if admin view
+    if (state.isAdmin) {
+        const child = state.children.find(c => c.id === req.childId);
+        if (child) child.balance += req.coins;
+    } else {
+        state.balance += req.coins;
+    }
     addHistoryEntry('earn', req.coins, req.taskName, req.taskId);
 
     // Remove request

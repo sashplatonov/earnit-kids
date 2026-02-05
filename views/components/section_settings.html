@@ -20,9 +20,22 @@
             </div>
 
             <div class="form-group">
-                <label for="settings-money-limit-inline">Лимит трат в месяц</label>
+                <label for="settings-money-limit-inline">Лимит трат в месяц (ребенка)</label>
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="number" class="input" id="settings-money-limit-inline" min="0" placeholder="10000">
+                </div>
+            </div>
+
+            <!-- New fields for child specific settings -->
+            <div class="form-group" id="settings-child-fields">
+                <div class="form-group">
+                    <label for="settings-child-name-inline">Имя ребенка</label>
+                    <input type="text" class="input" id="settings-child-name-inline" placeholder="Имя">
+                </div>
+                <div class="form-group">
+                    <label for="settings-day-coin-limit-inline">Лимит заработка монет в день</label>
+                    <input type="number" class="input" id="settings-day-coin-limit-inline" min="0"
+                        placeholder="0 (Без лимита)">
                 </div>
             </div>
 

@@ -12,7 +12,10 @@ export const state = {
     familyId: null,
     familyName: '',
     monthlyLimit: 10000,
-    baseData: { tasks: [], products: [] }
+    dailyCoinLimit: 0,
+    baseData: { tasks: [], products: [] },
+    children: [],
+    currentChildId: null
 };
 
 // Simple event bus for state changes

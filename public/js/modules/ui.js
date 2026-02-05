@@ -18,8 +18,13 @@ const CONFIG = window.CONFIG || {
 };
 
 export function updateBalanceUI() {
+    let displayBalance = state.balance;
+    if (state.isAdmin && state.currentChildId) {
+        const child = state.children.find(c => c.id === state.currentChildId);
+        if (child) displayBalance = child.balance;
+    }
     const balanceEl = document.getElementById('balance');
-    if (balanceEl) balanceEl.textContent = state.balance;
+    if (balanceEl) balanceEl.textContent = displayBalance;
     updateBudgetStats();
 }
 
@@ -46,17 +51,37 @@ function getMonthlyStats(monthKey) {
     return { moneySpent, largePurchase, itemCounts };
 }
 
+function getDailyStats() {
+    const today = new Date().toISOString().slice(0, 10);
+    let earnedToday = 0;
+    state.history.forEach(entry => {
+        if (entry.type === 'earn' && entry.date.startsWith(today)) {
+            earnedToday += (entry.amount || 0);
+        }
+    });
+    return { earnedToday };
+}
+
 function updateBudgetStats() {
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const now = new Date();
+    const currentMonth = now.toISOString().slice(0, 7);
     const stats = getMonthlyStats(currentMonth);
 
+    // Monthly Spend Stats
     const spentEl = document.getElementById('money-spent') || document.getElementById('rsd-spent');
     if (spentEl) {
         spentEl.textContent = stats.moneySpent.toLocaleString();
 
-        const monthlyLimit = state.monthlyLimit || CONFIG.MONTHLY_LIMIT;
+        const monthlyLimit = (state.monthlyLimit !== undefined && state.monthlyLimit !== null) ? state.monthlyLimit : CONFIG.MONTHLY_LIMIT;
         const limitEl = document.getElementById('money-limit') || document.getElementById('rsd-limit');
         if (limitEl) limitEl.textContent = monthlyLimit.toLocaleString();
+
+        const remainingMoneyEl = document.getElementById('money-remaining');
+        if (remainingMoneyEl) {
+            const remaining = Math.max(0, monthlyLimit - stats.moneySpent);
+            remainingMoneyEl.textContent = `(осталось ${remaining.toLocaleString()})`;
+            remainingMoneyEl.style.color = remaining === 0 ? '#ff4757' : 'rgba(255,255,255,0.6)';
+        }
 
         const progress = Math.min((stats.moneySpent / monthlyLimit) * 100, 100);
         const bar = document.getElementById('money-progress') || document.getElementById('rsd-progress');
@@ -66,20 +91,58 @@ function updateBudgetStats() {
             if (progress > 90) bar.classList.add('danger');
             else if (progress > 70) bar.classList.add('warning');
         }
+    }
 
-        const largeEl = document.getElementById('large-purchase');
-        const largeIcon = document.getElementById('large-icon');
+    // Daily Coin Limit Stats
+    const dailyStats = getDailyStats();
+    const earnedTodayEl = document.getElementById('coins-earned-today');
+    if (earnedTodayEl) {
+        earnedTodayEl.textContent = dailyStats.earnedToday;
 
-        if (largeEl && largeIcon) {
-            if (stats.largePurchase) {
-                largeEl.textContent = stats.largePurchase;
-                largeIcon.textContent = '✅';
-                largeIcon.style.background = 'rgba(16, 185, 129, 0.2)';
+        const dailyLimit = state.dailyCoinLimit || 0;
+        const dailyLimitEl = document.getElementById('coins-daily-limit');
+        if (dailyLimitEl) {
+            dailyLimitEl.textContent = dailyLimit > 0 ? dailyLimit : '∞';
+        }
+
+        const remainingEl = document.getElementById('coins-daily-remaining');
+        if (remainingEl) {
+            if (dailyLimit > 0) {
+                const remaining = Math.max(0, dailyLimit - dailyStats.earnedToday);
+                remainingEl.textContent = `(осталось ${remaining})`;
+                remainingEl.style.color = remaining === 0 ? '#ff4757' : 'rgba(255,255,255,0.6)';
             } else {
-                largeEl.textContent = 'Нет';
-                largeIcon.textContent = '⬜';
-                largeIcon.style.background = 'rgba(255, 255, 255, 0.1)';
+                remainingEl.textContent = '';
             }
+        }
+
+        const dailyBar = document.getElementById('coins-daily-progress');
+        if (dailyBar) {
+            if (dailyLimit > 0) {
+                const progress = Math.min((dailyStats.earnedToday / dailyLimit) * 100, 100);
+                dailyBar.style.width = `${progress}%`;
+                dailyBar.className = 'progress-bar';
+                if (progress >= 100) dailyBar.classList.add('danger');
+                else if (progress > 80) dailyBar.classList.add('warning');
+                dailyBar.parentElement.style.display = 'block';
+            } else {
+                dailyBar.parentElement.style.display = 'none';
+            }
+        }
+    }
+
+    const largeEl = document.getElementById('large-purchase');
+    const largeIcon = document.getElementById('large-icon');
+
+    if (largeEl && largeIcon) {
+        if (stats.largePurchase) {
+            largeEl.textContent = stats.largePurchase;
+            largeIcon.textContent = '✅';
+            largeIcon.style.background = 'rgba(16, 185, 129, 0.2)';
+        } else {
+            largeEl.textContent = 'Нет';
+            largeIcon.textContent = '⬜';
+            largeIcon.style.background = 'rgba(255, 255, 255, 0.1)';
         }
     }
 }
@@ -97,8 +160,14 @@ export function renderTasks() {
 
     if (emptyState) emptyState.classList.add('hidden');
 
+    // Filter tasks based on currentChildId if admin
+    let tasksToRender = state.tasks;
+    if (state.isAdmin && state.currentChildId) {
+        tasksToRender = state.tasks.filter(t => t.childId === state.currentChildId);
+    }
+
     // Grouping logic
-    const grouped = state.tasks.reduce((acc, t) => {
+    const grouped = tasksToRender.reduce((acc, t) => {
         const g = t.group || 'Без категории';
         if (!acc[g]) acc[g] = [];
         acc[g].push(t);
@@ -167,8 +236,14 @@ export function renderShop() {
 
     if (emptyState) emptyState.classList.add('hidden');
 
+    // Filter shop items
+    let shopToRender = state.shopItems;
+    if (state.isAdmin && state.currentChildId) {
+        shopToRender = state.shopItems.filter(i => i.childId === state.currentChildId);
+    }
+
     // Grouping logic
-    const grouped = state.shopItems.reduce((acc, item) => {
+    const grouped = shopToRender.reduce((acc, item) => {
         const g = item.group || 'Без категории';
         if (!acc[g]) acc[g] = [];
         acc[g].push(item);
@@ -238,8 +313,21 @@ export function renderRequests() {
     const myList = document.getElementById('my-requests-list');
     const myEmpty = document.getElementById('my-requests-empty');
 
+    // Filter Requests by Child if Admin
+    let relevantRequests = state.requests;
+    if (state.isAdmin && state.currentChildId) {
+        relevantRequests = state.requests.filter(r => r.childId === state.currentChildId);
+    } else if (state.isAdmin) {
+        // If "All Data" was removed, currentChildId should be set. If not, filtered requests = [].
+        // But let's keep all if no child selected just in case (though we want to enforce selection).
+        // User said "Only requests of selected child". So if no child selected -> empty?
+        // Let's assume currentChildId is always set if children exist.
+        // If no child selected (e.g. no children), show empty.
+        if (state.children.length > 0) relevantRequests = []; // Hide if not selected
+    }
+
     // Update Counter
-    const pendingCount = state.requests.filter(r => r.status === 'pending').length;
+    const pendingCount = relevantRequests.filter(r => r.status === 'pending').length;
     const navBadge = document.getElementById('requests-counter');
     if (navBadge) {
         navBadge.textContent = pendingCount;
@@ -277,7 +365,7 @@ export function renderRequests() {
     // Admin View
     const adminSection = document.getElementById('requests-section')?.querySelector('.admin-only');
     if (state.isAdmin) {
-        const incoming = state.requests.filter(r => r.status === 'pending');
+        const incoming = relevantRequests.filter(r => r.status === 'pending');
         if (adminSection) adminSection.classList.remove('hidden');
 
         if (incoming.length === 0) {
@@ -285,11 +373,17 @@ export function renderRequests() {
             if (incomingEmpty) incomingEmpty.classList.remove('hidden');
         } else {
             if (incomingEmpty) incomingEmpty.classList.add('hidden');
-            incomingList.innerHTML = incoming.map(req => `
+            incomingList.innerHTML = incoming.map(req => {
+                // Find child name
+                const child = state.children.find(c => c.id === req.childId);
+                const childName = child ? child.name : 'Unknown';
+
+                return `
                 <div class="history-item">
                     <div class="history-item__icon">📩</div>
                     <div class="history-item__content">
                         <div class="history-item__desc">
+                            <span class="tag" style="margin-right: 5px;">${escapeHtml(childName)}</span> 
                             ${escapeHtml(req.taskName)}
                         </div>
                         <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
@@ -302,7 +396,7 @@ export function renderRequests() {
                          <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest(${req.id})">❌</button>
                     </div>
                 </div>
-             `).join('');
+             `}).join('');
         }
     } else {
         if (adminSection) adminSection.classList.add('hidden');
@@ -322,8 +416,14 @@ export function renderHistory() {
 
     if (emptyState) emptyState.classList.add('hidden');
 
+    // Filter history
+    let historyToRender = state.history;
+    if (state.isAdmin && state.currentChildId) {
+        historyToRender = state.history.filter(h => h.childId === state.currentChildId);
+    }
+
     // Grouping history by month
-    const grouped = state.history.reduce((acc, entry) => {
+    const grouped = historyToRender.reduce((acc, entry) => {
         const date = new Date(entry.date);
         const monthKey = entry.date.slice(0, 7); // YYYY-MM
         if (!acc[monthKey]) {
@@ -408,9 +508,21 @@ export function renderFriends() {
         return;
     }
 
+    let friendsToRender = state.friends;
+    if (state.isAdmin && state.currentChildId) {
+        // If we have ownerChildId info (from repository update)
+        friendsToRender = state.friends.filter(f => !f.ownerChildId || f.ownerChildId === state.currentChildId);
+    }
+
+    if (friendsToRender.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
     if (emptyState) emptyState.classList.add('hidden');
 
-    container.innerHTML = state.friends.map(friend => `
+    container.innerHTML = friendsToRender.map(friend => `
         <div class="friend-item">
             <div class="friend-info">
                 <span class="friend-nickname">${escapeHtml(friend.nickname)}</span>
@@ -432,6 +544,160 @@ export function renderAll() {
     renderFriends();
     updateAdminUI();
     updateShopNameUI();
+    renderChildSwitcher(); // Add this
+}
+
+export function renderChildSwitcher() {
+    if (!state.isAdmin) return;
+    const container = document.getElementById('child-switcher-container');
+    if (!container) return;
+
+    if (state.children.length === 0) {
+        container.innerHTML = `<button class="btn btn--primary btn--small" onclick="window.app.openAddChildModal()">+ Ребенок</button>`;
+        return;
+    }
+
+    const currentChild = state.children.find(c => c.id === state.currentChildId);
+    const childName = currentChild ? currentChild.name : 'Выберите ребенка';
+
+    let html = `
+        <div class="child-menu">
+            <button class="child-menu-btn" onclick="this.parentElement.classList.toggle('active')">
+                <span class="child-menu-btn__icon">👶</span>
+                <span class="child-menu-btn__name">${escapeHtml(childName)}</span>
+                <span class="child-menu-btn__arrow">▼</span>
+            </button>
+            <div class="child-menu-dropdown">
+    `;
+
+    state.children.forEach(child => {
+        const isActive = state.currentChildId === child.id;
+        html += `
+            <div class="child-menu-item ${isActive ? 'active' : ''}" 
+                 onclick="window.app.switchChild(${child.id}); this.closest('.child-menu').classList.remove('active')">
+                <span class="child-menu-item__name">${escapeHtml(child.name)}</span>
+                <span class="child-menu-item__balance">${child.balance} 🪙</span>
+            </div>
+        `;
+    });
+
+    html += `
+                <div class="child-menu-divider"></div>
+                <div class="child-menu-item add-child-item" onclick="window.app.openAddChildModal(); this.closest('.child-menu').classList.remove('active')">
+                    <span class="child-menu-item__icon">+</span>
+                    <span class="child-menu-item__name">Добавить ребенка</span>
+                </div>
+            </div>
+        </div>
+        <style>
+            .child-menu {
+                position: relative;
+            }
+            .child-menu-btn {
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 8px 14px;
+                color: white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-family: inherit;
+                font-weight: 700;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .child-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.15);
+                border-color: rgba(255, 255, 255, 0.2);
+                transform: translateY(-1px);
+            }
+            .child-menu-btn__arrow {
+                font-size: 0.7em;
+                opacity: 0.6;
+                transition: transform 0.25s;
+            }
+            .child-menu.active .child-menu-btn__arrow {
+                transform: rotate(180deg);
+            }
+            .child-menu-dropdown {
+                display: none;
+                position: absolute;
+                top: 100%;
+                right: 0;
+                margin-top: 10px;
+                background: #1e1e30;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                min-width: 220px;
+                z-index: 1000;
+                overflow: hidden;
+                animation: dropdownFade 0.2s ease-out;
+            }
+            @keyframes dropdownFade {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .child-menu.active .child-menu-dropdown {
+                display: block;
+            }
+            .child-menu-item {
+                padding: 12px 18px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-size: 0.95rem;
+            }
+            .child-menu-item:hover {
+                background: rgba(255, 255, 255, 0.08);
+            }
+            .child-menu-item.active {
+                background: rgba(255, 215, 0, 0.15);
+                color: #ffd700;
+            }
+            .child-menu-item__name {
+                font-weight: 600;
+            }
+            .child-menu-item__balance {
+                font-size: 0.85em;
+                opacity: 0.8;
+                background: rgba(0,0,0,0.2);
+                padding: 2px 8px;
+                border-radius: 8px;
+            }
+            .child-menu-divider {
+                height: 1px;
+                background: rgba(255, 255, 255, 0.1);
+                margin: 4px 0;
+            }
+            .child-menu-item.add-child-item {
+                color: rgba(255, 255, 255, 0.5);
+                font-weight: 500;
+                justify-content: flex-start;
+                gap: 12px;
+            }
+            .child-menu-item.add-child-item:hover {
+                color: white;
+                background: rgba(16, 185, 129, 0.1);
+            }
+        </style>
+    `;
+
+    // Add click outside listener once
+    if (!window._childMenuListener) {
+        window._childMenuListener = true;
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.child-menu')) {
+                document.querySelectorAll('.child-menu.active').forEach(el => el.classList.remove('active'));
+            }
+        });
+    }
+
+    container.innerHTML = html;
 }
 
 export function updateAdminUI() {

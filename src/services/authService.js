@@ -86,17 +86,19 @@ async function authenticateChildByToken(token) {
         return { success: false, error: 'Токен отсутствует' };
     }
 
-    const family = await familyRepository.findByChildToken(token);
-    if (family) {
-        if (family.isBlocked) {
+    const data = await familyRepository.findByChildToken(token);
+    if (data) {
+        if (data.isBlocked) {
             return { success: false, error: 'Аккаунт заблокирован' };
         }
         return {
             success: true,
             role: 'child',
-            familyName: family.name,
-            familyId: family.id,
-            email: family.email
+            familyName: data.name,
+            familyId: data.id,
+            email: data.email,
+            childId: data.currentChild ? data.currentChild.id : null,
+            childName: data.currentChild ? data.currentChild.name : 'Unknown'
         };
     }
 
@@ -291,7 +293,6 @@ module.exports = {
     registerFamily,
     isValidPassword,
     changePassword,
-    recoverPassword,
     recoverPassword,
     resetPasswordWithToken,
     verifyEmailToken

@@ -32,10 +32,7 @@ async function saveFamilies(familiesData) {
                 await familyRepository.update(familyId, {
                     name: data.name,
                     admin_password: data.admin_password,
-                    child_token: data.child_token,
-                    monthly_limit: data.monthly_limit,
-                    child_nickname: data.child_nickname,
-                    is_blocked: data.isBlocked
+                    isBlocked: data.isBlocked
                 });
             }
         }
@@ -49,20 +46,22 @@ async function saveFamilies(familiesData) {
 /**
  * Load family data (balance, tasks, shop, etc.)
  * @param {string} familyId 
+ * @param {number|null} childId
  * @returns {Promise<Object>}
  */
-async function loadFamilyData(familyId) {
-    return await familyDataRepository.getFamilyData(familyId);
+async function loadFamilyData(familyId, childId = null) {
+    return await familyDataRepository.getFamilyData(familyId, childId);
 }
 
 /**
  * Save family data
  * @param {string} familyId 
  * @param {Object} data 
+ * @param {number|null} childId - The child performing the action (if any)
  * @returns {Promise<boolean>}
  */
-async function saveFamilyData(familyId, data) {
-    return await familyDataRepository.saveFamilyData(familyId, data);
+async function saveFamilyData(familyId, data, childId = null) {
+    return await familyDataRepository.saveFamilyData(familyId, data, childId);
 }
 
 /**
@@ -76,26 +75,60 @@ async function updateLastActivity(familyId) {
 /**
  * Get child login link
  * @param {string} familyId 
+ * @param {number} childId
  * @param {Object} req 
  * @returns {Promise<string|null>}
  */
-async function getChildLoginLink(familyId, req) {
+async function getChildLoginLink(familyId, childId, req) {
     const family = await familyRepository.findById(familyId);
-    if (!family || !family.child_token) return null;
+    if (!family) return null;
+
+    // Check if child belongs to family
+    const child = family.children.find(c => c.id === parseInt(childId));
+    if (!child || !child.token) return null;
 
     const protocol = req.headers['x-forwarded-proto'] || 'http';
     const host = req.headers.host;
-    return `${protocol}://${host}/login-child/${family.child_token}`;
+    return `${protocol}://${host}/login-child/${child.token}`;
 }
 
 /**
  * Regenerate child token
  * @param {string} familyId 
+ * @param {number} childId
  * @returns {Promise<boolean>}
  */
-async function regenerateChildToken(familyId) {
+async function regenerateChildToken(familyId, childId) {
+    // Verify ownership
+    const family = await familyRepository.findById(familyId);
+    if (!family) return false;
+    const child = family.children.find(c => c.id === parseInt(childId));
+    if (!child) return false;
+
     const newToken = crypto.randomBytes(32).toString('hex');
-    return await familyRepository.update(familyId, { child_token: newToken });
+    return await familyRepository.updateChild(childId, { token: newToken });
+}
+
+/**
+ * Create a new child
+ * @param {string} familyId 
+ * @param {string} name 
+ * @returns {Promise<Object>}
+ */
+async function addChild(familyId, name) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const child = await familyRepository.createChild(familyId, name, token);
+    return { success: !!child, child };
+}
+
+/**
+ * Delete a child
+ * @param {string} familyId 
+ * @param {number} childId 
+ * @returns {Promise<boolean>}
+ */
+async function deleteChild(familyId, childId) {
+    return await familyRepository.deleteChild(childId, familyId);
 }
 
 /**
@@ -110,7 +143,11 @@ async function updateFamilySettings(familyId, settings) {
 
     const updateData = {};
     if (settings.name) updateData.name = settings.name;
-    if (settings.monthly_limit !== undefined) updateData.monthly_limit = parseInt(settings.monthly_limit);
+
+    // monthly_limit is now per child. If settings has it, do we update ALL children?
+    // Or this is legacy?
+    // Let's assume this updates only Family Name/Admin Password.
+    // Child updates should go through updateChild.
 
     if (await familyRepository.update(familyId, updateData)) {
         return { success: true };
@@ -130,23 +167,42 @@ async function findFamilyByEmail(email) {
 /**
  * Update child nickname
  * @param {string} familyId 
+ * @param {number} childId
  * @param {string} nickname 
  * @returns {Promise<Object>}
  */
-async function updateNickname(familyId, nickname) {
-    if (!nickname || nickname.length < 3) {
+async function updateNickname(familyId, childId, nickname) {
+    if (!nickname || nickname.length < 1) {
         return { success: false, error: 'Nickname too short' };
     }
 
-    const isTaken = await familyRepository.isNicknameTaken(nickname, familyId);
-    if (isTaken) {
-        return { success: false, error: 'Nickname already taken' };
-    }
+    // Verify ownership
+    const family = await familyRepository.findById(familyId);
+    if (!family) return { success: false, error: 'Family not found' };
+    const child = family.children.find(c => c.id === parseInt(childId));
+    if (!child) return { success: false, error: 'Child not found' };
 
-    if (await familyRepository.update(familyId, { child_nickname: nickname })) {
+    if (await familyRepository.updateChild(childId, updateData)) {
         return { success: true };
     }
-    return { success: false, error: 'Failed to save nickname' };
+    return { success: false, error: 'Failed to save child settings' };
+}
+
+async function updateChildSettings(familyId, childId, settings) {
+    const family = await familyRepository.findById(familyId);
+    if (!family) return { success: false, error: 'Family not found' };
+    const child = family.children.find(c => c.id === parseInt(childId));
+    if (!child) return { success: false, error: 'Child not found' };
+
+    const updateData = {};
+    if (settings.monthly_limit !== undefined) updateData.monthly_limit = settings.monthly_limit;
+    if (settings.daily_coin_limit !== undefined) updateData.daily_coin_limit = settings.daily_coin_limit;
+    if (settings.name) updateData.name = settings.name;
+
+    if (await familyRepository.updateChild(childId, updateData)) {
+        return { success: true };
+    }
+    return { success: false, error: 'Failed to update' };
 }
 
 /**
@@ -160,22 +216,22 @@ async function searchByNickname(nickname) {
 }
 
 /**
- * Add friend
- * @param {string} familyId 
- * @param {string} friendId 
+ * Add friend (Child to Child)
+ * @param {number} childId 
+ * @param {number} friendChildId 
  * @returns {Promise<Object>}
  */
-async function addFriend(familyId, friendId) {
-    if (familyId === friendId) {
+async function addFriend(childId, friendChildId) {
+    if (childId === friendChildId) {
         return { success: false, error: 'Cannot add yourself' };
     }
 
-    const friend = await familyRepository.findById(friendId);
-    if (!friend) {
+    const friendCheck = await familyRepository.findChildById(friendChildId);
+    if (!friendCheck) {
         return { success: false, error: 'User not found' };
     }
 
-    if (await familyDataRepository.addFriend(familyId, friendId)) {
+    if (await familyDataRepository.addFriend(childId, friendChildId)) {
         return { success: true };
     }
     return { success: false, error: 'Already friends or failed to add' };
@@ -184,10 +240,11 @@ async function addFriend(familyId, friendId) {
 /**
  * Get friends data with balances
  * @param {string} familyId 
+ * @param {number} childId
  * @returns {Promise<Array>}
  */
-async function getFriendsData(familyId) {
-    return await familyDataRepository.getFriendsData(familyId);
+async function getFriendsData(familyId, childId) {
+    return await familyDataRepository.getFriendsData(familyId, childId);
 }
 
 module.exports = {
@@ -204,5 +261,8 @@ module.exports = {
     searchByNickname,
     addFriend,
     getFriendsData,
+    updateChildSettings, // New
+    addChild, // New
+    deleteChild, // New
     DEFAULT_FAMILY_DATA
 };

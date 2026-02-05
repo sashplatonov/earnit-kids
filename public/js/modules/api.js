@@ -90,9 +90,9 @@ export async function login(pin) {
     }
 }
 
-export async function regenerateChildToken() {
+export async function regenerateChildToken(childId) {
     try {
-        const response = await fetch('/api/regenerate-token', { method: 'POST' });
+        const response = await fetch(`/api/children/${childId}/regenerate-token`, { method: 'POST' });
         if (response.ok) {
             return await response.json();
         }
@@ -100,6 +100,37 @@ export async function regenerateChildToken() {
         console.error('Failed to regenerate token:', err);
     }
     return null;
+}
+
+export async function addChild(name) {
+    try {
+        const response = await fetch('/api/children', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        return await response.json();
+    } catch (err) {
+        return { success: false, error: 'Network error' };
+    }
+}
+
+export async function deleteChild(childId) {
+    try {
+        const response = await fetch(`/api/children/${childId}`, { method: 'DELETE' });
+        return await response.json();
+    } catch (err) {
+        return { success: false, error: 'Network error' };
+    }
+}
+
+export async function getChildLink(childId) {
+    try {
+        const response = await fetch(`/api/children/${childId}/link`);
+        return await response.json();
+    } catch (err) {
+        return { success: false, error: 'Network error' };
+    }
 }
 
 export async function updateFamilySettingsOnServer(settings) {
@@ -116,6 +147,19 @@ export async function updateFamilySettingsOnServer(settings) {
         console.error('Failed to update family settings:', err);
     }
     return null;
+}
+export async function updateChildSettings(familyId, childId, settings) {
+    try {
+        const response = await fetch(`/api/children/${childId}/settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        return await response.json();
+    } catch (err) {
+        console.error('Failed to update child settings:', err);
+        return { success: false, error: 'Network error' };
+    }
 }
 
 export async function updateNickname(nickname) {
