@@ -11,13 +11,12 @@ export function scheduleSave() {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(async () => {
         await saveDataToServer({
-            // pin: state.adminPin, // Logic from original app.js: only send if set?
-            // Actually, server handles PIN preservation. We just send data.
             balance: state.balance,
             tasks: state.tasks,
             shop: state.shopItems,
             history: state.history,
-            requests: state.requests
+            requests: state.requests,
+            children: state.children // Include children for balance sync
         });
     }, 500);
 }
@@ -195,7 +194,10 @@ export function buyItem(itemId) {
             // If admin, we should update state.children match.
             if (state.isAdmin && state.currentChildId) {
                 const child = state.children.find(c => c.id === state.currentChildId);
-                if (child) child.balance -= item.price;
+                if (child) {
+                    child.balance -= item.price;
+                    state.balance = child.balance; // Sync back for UI
+                }
             } else {
                 state.balance -= item.price;
             }
@@ -254,7 +256,10 @@ export function earnCoins(taskId) {
             // Update balance
             if (state.isAdmin && state.currentChildId) {
                 const child = state.children.find(c => c.id === state.currentChildId);
-                if (child) child.balance += task.coins;
+                if (child) {
+                    child.balance += task.coins;
+                    state.balance = child.balance; // Sync back
+                }
             } else {
                 state.balance += task.coins;
             }
@@ -317,7 +322,12 @@ export function approveRequest(reqId) {
     // Find child and update local balance if admin view
     if (state.isAdmin) {
         const child = state.children.find(c => c.id === req.childId);
-        if (child) child.balance += req.coins;
+        if (child) {
+            child.balance += req.coins;
+            if (req.childId === state.currentChildId) {
+                state.balance = child.balance; // Sync if currently viewing
+            }
+        }
     } else {
         state.balance += req.coins;
     }
@@ -351,4 +361,32 @@ export function deleteRequest(reqId) {
     scheduleSave();
     renderRequests();
     showToast('Заявка удалена', 'info');
+}
+
+export function adminAwardCoins() {
+    if (!state.isAdmin) return;
+    const childId = state.currentChildId;
+    if (!childId) return showToast('Сначала выберите ребенка', 'error');
+
+    const amountInput = prompt('Введите количество монет для начисления:');
+    if (amountInput === null) return;
+    const amount = parseInt(amountInput);
+    if (isNaN(amount) || amount === 0) return showToast('Некорректная сумма', 'error');
+
+    const description = prompt('Введите описание (причина начисления):', 'Бонус от родителей');
+    if (description === null) return;
+
+    // Update balance
+    const child = state.children.find(c => c.id === childId);
+    if (child) {
+        child.balance += amount;
+        state.balance = child.balance;
+    } else {
+        state.balance += amount;
+    }
+
+    addHistoryEntry(amount > 0 ? 'earn' : 'spend', Math.abs(amount), description.trim() || 'Начисление вне заданий');
+    scheduleSave();
+    renderAll();
+    showToast(`${amount > 0 ? 'Начислено' : 'Списано'}: ${Math.abs(amount)} 🪙`, 'success');
 }

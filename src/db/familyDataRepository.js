@@ -186,21 +186,21 @@ async function saveFamilyData(familyId, data, actingChildId = null) {
     try {
         await client.query('BEGIN');
 
-        // Update balance (Only if specific child or data has info)
+        // Update balance (if child is acting)
         if (data.balance !== undefined && actingChildId) {
             await client.query('UPDATE children SET balance = $1 WHERE id = $2', [data.balance, actingChildId]);
         }
 
-        // Scope deletion/updates
-        // If actingChildId, we delete ONLY that child's tasks.
-        // If Admin (actingChildId=null), do we delete ALL tasks? 
-        // CAREFUL: Admin usually saves the whole state. 
-        // If Admin is using the new dashboard, they might be saving "one child's" data?
-        // Let's assume:
-        // If actingChildId is set -> Sync for that child.
-        // If not set -> Full sync (legacy behavior), so replace ALL tasks for family?
-        // BUT data might now have childId in them.
+        // Update balances for all children if provided (Admin view)
+        if (data.children && Array.isArray(data.children) && !actingChildId) {
+            for (const child of data.children) {
+                if (child.id && child.balance !== undefined) {
+                    await client.query('UPDATE children SET balance = $1 WHERE id = $2', [child.balance, child.id]);
+                }
+            }
+        }
 
+        // Scope deletion/updates
         let deleteWhere = 'WHERE family_id = $1';
         let deleteParams = [dbId];
 
@@ -213,9 +213,7 @@ async function saveFamilyData(familyId, data, actingChildId = null) {
         if (data.tasks !== undefined) {
             await client.query(`DELETE FROM tasks ${deleteWhere}`, deleteParams);
             for (const task of data.tasks) {
-                // Use actingChildId OR task.childId OR defaultChildId
                 const targetChildId = actingChildId || task.childId || defaultChildId;
-
                 await client.query(
                     `INSERT INTO tasks (family_id, child_id, task_id, name, coins, group_name, frequency, comment, money_limit)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
@@ -242,10 +240,32 @@ async function saveFamilyData(familyId, data, actingChildId = null) {
         }
 
         // Update history
-        // Legacy "Full Sync" of history is bad for massive history.
-        // But we stick to it for compatibility.
         if (data.history !== undefined && Array.isArray(data.history)) {
-            await client.query(`DELETE FROM history ${deleteWhere}`, deleteParams);
+            // IF Admin saves, we ONLY delete the records that we are REPLACING.
+            // Since UI sends only top 200, we shouldn't delete everything.
+            // For now, let's delete only those with external_id present in the incoming list OR delete onlyActingChild's history.
+            
+            if (actingChildId) {
+                await client.query('DELETE FROM history WHERE child_id = $1', [actingChildId]);
+            } else {
+                // Admin saving: We only delete records for the children that are in the history provided.
+                // Or just delete the last 200? 
+                // A better way: ONLY delete what we are about to re-insert if it has an ID.
+                // But for simplicity and to match the "sync" model:
+                // Let's delete history only for the child that is "targeted" in the UI (if we knew it).
+                // Actually, let's look at the IDs.
+                const historyIds = data.history.map(h => h.id).filter(id => id);
+                if (historyIds.length > 0) {
+                     // Delete only those that match the IDs we are sending (to avoid duplicates)
+                     // and maybe the latest ones?
+                     // BUT the UI might have deleted some items!
+                     // OK, let's stick to deleting ALL history for the family ONLY IF the history list is "long enough"
+                     // OR just delete history for the children mentioned in history list.
+                     const targetChildIds = [...new Set(data.history.map(h => h.childId || defaultChildId))];
+                     await client.query('DELETE FROM history WHERE family_id = $1 AND child_id = ANY($2)', [dbId, targetChildIds]);
+                }
+            }
+
             for (const entry of data.history) {
                 const targetChildId = actingChildId || entry.childId || defaultChildId;
                 const relatedId = entry.itemId || entry.taskId || entry.relatedId || null;

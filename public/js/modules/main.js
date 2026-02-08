@@ -2,7 +2,7 @@ import { loadDataFromServer, logout, loadBaseData, regenerateChildToken } from '
 import { state, setState } from './state.js';
 import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
-import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest } from './actions.js';
+import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, adminAwardCoins } from './actions.js';
 import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings, saveFamilySettingsInline, saveNewPinInline, copyChildLinkInline, refreshChildLinkInline, regenerateChildLinkInline, switchChild, openAddChildModal, saveNewChild } from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
 import { handleSearch, addNewFriend, refreshFriends, saveNickname } from './friends.js';
@@ -202,7 +202,8 @@ window.app = {
     openAddChildModal,
     addNewFriend,
     handleSearch,
-    saveNickname
+    saveNickname,
+    adminAwardCoins
 };
 
 // Helper to get cookie value
