@@ -126,6 +126,16 @@ docker compose logs -f
 
 The application will be available at `http://localhost:3000`.
 
+## 📱 Mobile Shell
+
+The static UI can be embedded inside a Capacitor wrapper for iOS/Android. The `mobile/` folder already contains `capacitor.config.json` and instructions for syncing with the web assets. The wrapper points at `https://coins-kids-shop.onrender.com` by default, so no API changes are required.
+
+- Run `cd mobile && npm install` once per machine and keep `npm run sync` (or `npx cap sync`) up-to-date after you change anything under `public/`.
+- Add platforms with `npx cap add ios` / `npx cap add android` and open them via `npm run open:ios` / `npm run open:android`.
+- Universal/App Links are controlled by the JSON files in `public/.well-known/`—replace the placeholders with your actual team/app IDs and Android signing fingerprint before submission.
+
+See `mobile/README.md` for full instructions, including release guidance and platform-specific requirements.
+
 ## 📋 TODO
 
 - [ ] **Security**: Add second-factor authentication (2FA) for Admin accounts.

@@ -1,0 +1,11 @@
+{
+  "appId": "com.coins.kids",
+  "appName": "Coins Kids Shop",
+  "webDir": "../public",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "server": {
+    "url": "https://coins-kids-shop.onrender.com",
+    "cleartext": false
+  }
+}

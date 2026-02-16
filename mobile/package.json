@@ -1,0 +1,18 @@
+{
+  "name": "coins-kids-shop-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capacitor shell for the Coins Kids Shop web app",
+  "scripts": {
+    "sync": "npx cap sync",
+    "open:ios": "npx cap open ios",
+    "open:android": "npx cap open android",
+    "update": "npx cap update"
+  },
+  "dependencies": {
+    "@capacitor/core": "^5.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^5.0.4"
+  }
+}
