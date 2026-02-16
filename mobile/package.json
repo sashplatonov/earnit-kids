@@ -10,6 +10,7 @@
     "update": "npx cap update"
   },
   "dependencies": {
+    "@capacitor/android": "^5.7.8",
     "@capacitor/core": "^5.0.4"
   },
   "devDependencies": {

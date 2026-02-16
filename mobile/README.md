@@ -24,7 +24,10 @@ This folder holds the Capacitor wrapper that hosts the existing web UI (`../publ
 - Use `npm run sync` before each native build so the latest static assets are packaged.
 - The web backend must continue to set cookies with `Secure`, `HttpOnly`, and `SameSite=Lax` — see `src/controllers/apiController.js` for the logic used today.
 
-## Next steps
-1. Run `npx cap open ios` and adjust signing/capabilities in Xcode.
-2. Run `npx cap open android` and configure the AndroidManifest/gradle settings.
-3. Replace the placeholder Universal Link metadata and push the files to your HTTPS host before submitting the apps.
+## Publishing tips
+This folder contains helper docs for both stores. Start by reading the overview below and then open the store-specific guide you need:
+
+- `README-ios.md` – complete App Store prep and testing walkthrough (including free testing with a standard Apple ID).  
+- `README-android.md` – Google Play workflow and how to test an APK/AAB without an account fee.
+
+Follow the instructions in the respective doc before you start building your first submission. Each guide explains how to configure deep links, signing, store listings, and how to rerun `npm run sync` + rebuild for updates. Check `README-android.md` when you run `./gradlew bundleRelease`, because the Gradle wrapper lives inside the generated `android/` directory.
