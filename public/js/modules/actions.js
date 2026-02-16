@@ -66,6 +66,7 @@ export function addHistoryEntry(type, amount, description, relatedId = null, mon
 export function checkLimits(item, moneyPrice) {
     const now = new Date();
     const currentMonth = now.toISOString().slice(0, 7);
+    const actingChildId = state.isAdmin ? state.currentChildId : null;
 
     // Calculate stats locally since we need them for check
     let moneySpent = 0;
@@ -73,6 +74,7 @@ export function checkLimits(item, moneyPrice) {
 
     // 1. Calc monthly stats
     state.history.forEach(entry => {
+        if (actingChildId && entry.childId != actingChildId) return;
         if (entry.type !== 'spend' || !entry.date.startsWith(currentMonth)) return;
         const amount = entry.moneyAmount || entry.rsdAmount || 0;
         moneySpent += amount;
@@ -106,6 +108,7 @@ export function checkLimits(item, moneyPrice) {
         let freqCount = 0;
 
         state.history.forEach(h => {
+            if (actingChildId && h.childId != actingChildId) return;
             if (h.itemId == item.id && new Date(h.date).getTime() >= startTime) {
                 freqCount++;
             }
@@ -127,7 +130,7 @@ export function checkDailyCoinLimit(childId, amount) {
     // If state.role == 'admin', childId = state.currentChildId.
 
     // We need to look at the child's limit.
-    const child = state.children.find(c => c.id === childId);
+    const child = state.children.find(c => c.id == childId);
     if (!child) return null; // Can't check limit
 
     const limit = child.dailyCoinLimit;
@@ -141,7 +144,7 @@ export function checkDailyCoinLimit(childId, amount) {
     // Note: state.history might contain ALL history if family data loaded.
     // We should filter by childId in history entry.
     state.history.forEach(h => {
-        if (h.type === 'earn' && h.date.startsWith(today) && h.childId === childId) {
+        if (h.type === 'earn' && h.date.startsWith(today) && h.childId == childId) {
             earnedToday += h.amount;
         }
     });
@@ -214,7 +217,16 @@ export function earnCoins(taskId) {
     const task = state.tasks.find(t => t.id == taskId);
     if (!task) return;
 
+    const actingId = state.role === 'admin'
+        ? state.currentChildId
+        : (state.children.length > 0 ? state.children[0].id : null);
+    if (!actingId) {
+        showToast('Сначала выберите ребенка', 'error');
+        return;
+    }
+
     // Check frequency limit
+    let frequencyLimitWarning = null;
     if (task.frequency) {
         const { limit, period } = task.frequency;
         let startDate = new Date();
@@ -227,6 +239,7 @@ export function earnCoins(taskId) {
         let count = 0;
 
         state.history.forEach(h => {
+            if (h.childId != actingId) return;
             const isMatch = h.taskId == task.id || (h.type === 'earn' && h.description === task.name);
             if (isMatch && new Date(h.date).getTime() >= startTime) {
                 count++;
@@ -234,40 +247,51 @@ export function earnCoins(taskId) {
         });
 
         if (count >= limit) {
-            showToast(`Лимит исчерпан: ${limit} раз(а) в ${period}`, 'error');
-            return;
+            if (period === 'day' || period === 'week') {
+                frequencyLimitWarning = `Лимит исчерпан: ${limit} раз(а) в ${period}`;
+            } else {
+                showToast(`Лимит исчерпан: ${limit} раз(а) в ${period}`, 'error');
+                return;
+            }
         }
     }
 
-
-
     // Check coin limit
-    const actingId = state.role === 'admin' ? state.currentChildId : (state.children.length > 0 ? state.children[0].id : null);
     const limitErr = checkDailyCoinLimit(actingId, task.coins);
-    if (limitErr) {
-        showToast(limitErr, 'error');
+    const warnings = [];
+    if (frequencyLimitWarning) warnings.push(frequencyLimitWarning);
+    if (limitErr) warnings.push(limitErr);
+
+    const applyEarn = () => {
+        // Update balance
+        if (state.isAdmin && state.currentChildId) {
+            const child = state.children.find(c => c.id === state.currentChildId);
+            if (child) {
+                child.balance += task.coins;
+                state.balance = child.balance; // Sync back
+            }
+        } else {
+            state.balance += task.coins;
+        }
+
+        addHistoryEntry('earn', task.coins, task.name, task.id);
+        renderShop(); // Update shop availability
+        showToast(`+${task.coins} 🪙 начислено!`, 'success');
+    };
+
+    if (warnings.length > 0) {
+        showConfirm(
+            'Превышен лимит',
+            `${warnings.join('. ')}. Все равно начислить?`,
+            applyEarn
+        );
         return;
     }
 
     showConfirm(
         'Начислить монеты?',
         `Начислить ${task.coins} 🪙 за "${task.name}"?`,
-        () => {
-            // Update balance
-            if (state.isAdmin && state.currentChildId) {
-                const child = state.children.find(c => c.id === state.currentChildId);
-                if (child) {
-                    child.balance += task.coins;
-                    state.balance = child.balance; // Sync back
-                }
-            } else {
-                state.balance += task.coins;
-            }
-
-            addHistoryEntry('earn', task.coins, task.name, task.id);
-            renderShop(); // Update shop availability
-            showToast(`+${task.coins} 🪙 начислено!`, 'success');
-        }
+        applyEarn
     );
 }
 

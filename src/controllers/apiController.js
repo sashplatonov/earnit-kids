@@ -39,7 +39,9 @@ async function handleAuthAPI(req, res) {
         const result = await authenticateUser(email, pin);
 
         if (result.success) {
-            const maxAge = 24 * 60 * 60;
+            const maxAge = result.role === 'admin'
+                ? 30 * 24 * 60 * 60
+                : 24 * 60 * 60;
             const cookiesArr = [
                 `app_auth=${email}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`,
                 `app_role=${result.role}; Max-Age=${maxAge}; Path=/; SameSite=Lax`

@@ -28,12 +28,19 @@ export function updateBalanceUI() {
     updateBudgetStats();
 }
 
-function getMonthlyStats(monthKey) {
+function getActiveChildId() {
+    if (state.isAdmin) return state.currentChildId || null;
+    if (state.children && state.children.length > 0) return state.children[0].id;
+    return null;
+}
+
+function getMonthlyStats(monthKey, childId = null) {
     let moneySpent = 0;
     let largePurchase = null;
     let itemCounts = {};
 
     state.history.forEach(entry => {
+        if (childId && entry.childId != childId) return;
         if (entry.type !== 'spend' || !entry.date.startsWith(monthKey)) return;
 
         const amount = entry.moneyAmount || entry.rsdAmount || 0;
@@ -51,10 +58,11 @@ function getMonthlyStats(monthKey) {
     return { moneySpent, largePurchase, itemCounts };
 }
 
-function getDailyStats() {
+function getDailyStats(childId = null) {
     const today = new Date().toISOString().slice(0, 10);
     let earnedToday = 0;
     state.history.forEach(entry => {
+        if (childId && entry.childId != childId) return;
         if (entry.type === 'earn' && entry.date.startsWith(today)) {
             earnedToday += (entry.amount || 0);
         }
@@ -62,10 +70,22 @@ function getDailyStats() {
     return { earnedToday };
 }
 
+function updateHeaderEarnedCounter(earnedToday, dailyLimit) {
+    const summaryEl = document.getElementById('header-earned-summary');
+    if (!summaryEl) return;
+
+    const limitText = dailyLimit > 0 ? dailyLimit : '∞';
+    summaryEl.textContent = `Сегодня: ${earnedToday}/${limitText} 🪙`;
+    summaryEl.style.color = dailyLimit > 0 && earnedToday >= dailyLimit
+        ? '#ffd6d6'
+        : 'rgba(255,255,255,0.9)';
+}
+
 function updateBudgetStats() {
     const now = new Date();
     const currentMonth = now.toISOString().slice(0, 7);
-    const stats = getMonthlyStats(currentMonth);
+    const activeChildId = getActiveChildId();
+    const stats = getMonthlyStats(currentMonth, state.isAdmin ? activeChildId : null);
 
     // Monthly Spend Stats
     const spentEl = document.getElementById('money-spent') || document.getElementById('rsd-spent');
@@ -94,7 +114,7 @@ function updateBudgetStats() {
     }
 
     // Daily Coin Limit Stats
-    const dailyStats = getDailyStats();
+    const dailyStats = getDailyStats(state.isAdmin ? activeChildId : null);
     const earnedTodayEl = document.getElementById('coins-earned-today');
     if (earnedTodayEl) {
         earnedTodayEl.textContent = dailyStats.earnedToday;
@@ -130,6 +150,8 @@ function updateBudgetStats() {
             }
         }
     }
+
+    updateHeaderEarnedCounter(dailyStats.earnedToday, state.dailyCoinLimit || 0);
 
     const largeEl = document.getElementById('large-purchase');
     const largeIcon = document.getElementById('large-icon');
@@ -336,30 +358,35 @@ export function renderRequests() {
 
     if (!incomingList || !myList) return;
 
-    const myPending = state.requests.filter(r => r.status === 'pending');
-
-    if (myPending.length === 0) {
+    if (state.isAdmin) {
         myList.innerHTML = '';
-        if (myEmpty) myEmpty.classList.remove('hidden');
-    } else {
         if (myEmpty) myEmpty.classList.add('hidden');
-        myList.innerHTML = myPending.sort((a, b) => b.id - a.id).map(req => `
-            <div class="history-item">
-                <div class="history-item__icon">⏳</div>
-                <div class="history-item__content">
-                    <div class="history-item__desc">
-                        ${escapeHtml(req.taskName)}
+    } else {
+        const myPending = state.requests.filter(r => r.status === 'pending');
+
+        if (myPending.length === 0) {
+            myList.innerHTML = '';
+            if (myEmpty) myEmpty.classList.remove('hidden');
+        } else {
+            if (myEmpty) myEmpty.classList.add('hidden');
+            myList.innerHTML = myPending.sort((a, b) => b.id - a.id).map(req => `
+                <div class="history-item">
+                    <div class="history-item__icon">⏳</div>
+                    <div class="history-item__content">
+                        <div class="history-item__desc">
+                            ${escapeHtml(req.taskName)}
+                        </div>
+                        <div class="history-item__date">Ожидает подтверждения</div>
                     </div>
-                    <div class="history-item__date">Ожидает подтверждения</div>
+                    <div class="history-item__amount">
+                        +${req.coins} 🪙
+                    </div>
+                    <div class="card__actions" style="margin-left: 10px;">
+                         <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">🗑️</button>
+                    </div>
                 </div>
-                <div class="history-item__amount">
-                    +${req.coins} 🪙
-                </div>
-                <div class="card__actions" style="margin-left: 10px;">
-                     <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">🗑️</button>
-                </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
     }
 
     // Admin View
