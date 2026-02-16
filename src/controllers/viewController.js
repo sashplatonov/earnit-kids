@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const { MIME_TYPES } = require('../config');
 const { findFamilyByEmail } = require('../services/familyService');
+const { getBuildVersion } = require('../utils/buildVersion');
 
 // Read package.json to get app version
 const packageJsonPath = path.join(__dirname, '../../package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const APP_VERSION = packageJson.version;
+const BUILD_VERSION = getBuildVersion();
 
 function getCookies(req) {
     const list = {};
@@ -132,6 +134,7 @@ async function serveIndex(req, res) {
         
         // Replace version placeholder with actual version
         fullHtml = fullHtml.replace(/\{\{APP_VERSION\}\}/g, APP_VERSION);
+        fullHtml = fullHtml.replace(/\{\{BUILD_VERSION\}\}/g, BUILD_VERSION);
         
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(fullHtml);
