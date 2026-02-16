@@ -3,6 +3,11 @@ const path = require('path');
 const { MIME_TYPES } = require('../config');
 const { findFamilyByEmail } = require('../services/familyService');
 
+// Read package.json to get app version
+const packageJsonPath = path.join(__dirname, '../../package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+const APP_VERSION = packageJson.version;
+
 function getCookies(req) {
     const list = {};
     const rc = req.headers.cookie;
@@ -124,6 +129,10 @@ async function serveIndex(req, res) {
         componentOrder.forEach(file => {
             fullHtml += fs.readFileSync(path.join(componentsDir, file), 'utf8') + '\n';
         });
+        
+        // Replace version placeholder with actual version
+        fullHtml = fullHtml.replace(/\{\{APP_VERSION\}\}/g, APP_VERSION);
+        
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(fullHtml);
     } catch (err) {
