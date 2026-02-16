@@ -9,6 +9,30 @@ const packageJsonPath = path.join(__dirname, '../../package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const APP_VERSION = packageJson.version;
 const BUILD_VERSION = getBuildVersion();
+const CLARITY_PROJECT_ID = (process.env.CLARITY_PROJECT_ID || '').trim();
+
+function getClarityScript() {
+    if (!CLARITY_PROJECT_ID || !/^[a-zA-Z0-9]+$/.test(CLARITY_PROJECT_ID)) {
+        return '';
+    }
+
+    return `<script type="text/javascript">
+(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");
+</script>`;
+}
+
+const CLARITY_SCRIPT = getClarityScript();
+
+function applyCommonTemplateData(html) {
+    return html
+        .replace(/\{\{APP_VERSION\}\}/g, APP_VERSION)
+        .replace(/\{\{BUILD_VERSION\}\}/g, BUILD_VERSION)
+        .replace(/\{\{CLARITY_SCRIPT\}\}/g, CLARITY_SCRIPT);
+}
 
 function getCookies(req) {
     const list = {};
@@ -88,6 +112,7 @@ function serveLogin(req, res) {
             res.end('Server Error');
             return;
         }
+        content = applyCommonTemplateData(content);
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(content);
     });
@@ -101,6 +126,7 @@ function serveSuperAdmin(req, res) {
             res.end('Server Error');
             return;
         }
+        content = applyCommonTemplateData(content);
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(content);
     });
@@ -131,11 +157,9 @@ async function serveIndex(req, res) {
         componentOrder.forEach(file => {
             fullHtml += fs.readFileSync(path.join(componentsDir, file), 'utf8') + '\n';
         });
-        
-        // Replace version placeholder with actual version
-        fullHtml = fullHtml.replace(/\{\{APP_VERSION\}\}/g, APP_VERSION);
-        fullHtml = fullHtml.replace(/\{\{BUILD_VERSION\}\}/g, BUILD_VERSION);
-        
+
+        fullHtml = applyCommonTemplateData(fullHtml);
+
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(fullHtml);
     } catch (err) {
@@ -153,6 +177,7 @@ function serveResetPassword(req, res) {
             res.end('Server Error');
             return;
         }
+        content = applyCommonTemplateData(content);
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(content);
     });
@@ -166,6 +191,7 @@ function serveVerify(req, res) {
             res.end('Server Error');
             return;
         }
+        content = applyCommonTemplateData(content);
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(content);
     });
