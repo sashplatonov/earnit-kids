@@ -12,13 +12,28 @@
             </div>
         </div>
     </div>
-    <div class="header__version" style="font-size: 0.8rem; color: #666; margin-top: 5px;">Версия: {{APP_VERSION}}</div>
+    <div class="header__version">
+        <span class="header__version-label">Версия: {{APP_VERSION}}</span>
+        <span class="header__build-label">Сборка {{BUILD_VERSION}}</span>
+    </div>
     <div class="header__balance">
-        <span class="balance__label">Баланс:</span>
-        <span class="balance__value" id="balance">0</span>
-        <span class="balance__coin">🪙</span>
-        <span class="header__earned-summary" id="header-earned-summary">Сегодня: 0/∞ 🪙</span>
-        <button class="btn btn--success btn--small admin-only hidden" onclick="window.app.adminAwardCoins()" style="margin-left: 5px; border-radius: 50%; width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;" title="Начислить монеты">+</button>
+        <div class="header__balance-main">
+            <span class="balance__label">Баланс:</span>
+            <span class="balance__value" id="balance">0</span>
+            <span class="balance__coin">🪙</span>
+        </div>
+        <div class="header__earned" aria-live="polite">
+            <span class="header__earned-label">Сегодня</span>
+            <div class="header__earned-track" title="Ежедневный лимит">
+                <div class="progress-bar header__earned-progress" id="header-earned-progress"></div>
+            </div>
+            <div class="header__earned-meta">
+                <span class="header__earned-number" id="header-earned-count">0</span>
+                <span class="header__earned-unit">🪙</span>
+                <span class="header__earned-limit" id="header-earned-limit-note">Лимит: ∞</span>
+            </div>
+        </div>
+        <button class="btn btn--success btn--small admin-only hidden" onclick="window.app.adminAwardCoins()" title="Начислить монеты">+</button>
     </div>
     <div class="header__actions" style="display: flex; gap: 0.5rem; align-items: center;">
         <div id="child-switcher-container" class="admin-only hidden"></div>

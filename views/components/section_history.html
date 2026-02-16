@@ -25,14 +25,17 @@
             <div class="stat-card__icon">🪙</div>
             <div class="stat-card__content">
                 <div class="stat-card__value">
-                    <span id="coins-earned-today">0</span> / <span id="coins-daily-limit">∞</span>
-                    <span id="coins-daily-remaining"
-                        style="font-size: 0.8em; font-weight: 400; margin-left: 4px;"></span>
+                    <div class="stat-card__value-head">
+                        <span class="stat-card__value-number" id="coins-earned-today">0</span>
+                        <span class="stat-card__value-unit">🪙</span>
+                    </div>
+                    <div class="stat-card__value-note" id="coins-daily-limit">Лимит: ∞</div>
                 </div>
                 <div class="stat-card__label">Заработано сегодня</div>
-            </div>
-            <div class="stat-card__progress">
-                <div class="progress-bar" id="coins-daily-progress"></div>
+                <div class="stat-card__progress stat-card__progress--coins">
+                    <div class="progress-bar" id="coins-daily-progress"></div>
+                </div>
+                <div class="stat-card__meta" id="coins-daily-remaining"></div>
             </div>
         </div>
 

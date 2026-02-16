@@ -70,15 +70,28 @@ function getDailyStats(childId = null) {
     return { earnedToday };
 }
 
-function updateHeaderEarnedCounter(earnedToday, dailyLimit) {
-    const summaryEl = document.getElementById('header-earned-summary');
-    if (!summaryEl) return;
+function updateHeaderEarnedDisplay(earnedToday, dailyLimit) {
+    const countEl = document.getElementById('header-earned-count');
+    const limitNoteEl = document.getElementById('header-earned-limit-note');
+    const track = document.getElementById('header-earned-progress');
 
-    const limitText = dailyLimit > 0 ? dailyLimit : '∞';
-    summaryEl.textContent = `Сегодня: ${earnedToday}/${limitText} 🪙`;
-    summaryEl.style.color = dailyLimit > 0 && earnedToday >= dailyLimit
-        ? '#ffd6d6'
-        : 'rgba(255,255,255,0.9)';
+    if (countEl) countEl.textContent = earnedToday;
+    if (limitNoteEl) {
+        limitNoteEl.textContent = dailyLimit > 0 ? `Лимит: ${dailyLimit}` : 'Лимит: ∞';
+    }
+
+    if (!track) return;
+
+    if (dailyLimit > 0) {
+        const progress = Math.min((earnedToday / dailyLimit) * 100, 100);
+        track.style.width = `${progress}%`;
+        track.style.background = progress >= 100
+            ? 'linear-gradient(90deg, #f87171, #ef4444)'
+            : 'linear-gradient(90deg, #a3f7bf, #22c55e)';
+    } else {
+        track.style.width = '0%';
+        track.style.background = 'rgba(255, 255, 255, 0.5)';
+    }
 }
 
 function updateBudgetStats() {
@@ -122,36 +135,40 @@ function updateBudgetStats() {
         const dailyLimit = state.dailyCoinLimit || 0;
         const dailyLimitEl = document.getElementById('coins-daily-limit');
         if (dailyLimitEl) {
-            dailyLimitEl.textContent = dailyLimit > 0 ? dailyLimit : '∞';
+            dailyLimitEl.textContent = dailyLimit > 0 ? `Лимит: ${dailyLimit}` : 'Лимит: ∞';
         }
 
         const remainingEl = document.getElementById('coins-daily-remaining');
         if (remainingEl) {
             if (dailyLimit > 0) {
                 const remaining = Math.max(0, dailyLimit - dailyStats.earnedToday);
-                remainingEl.textContent = `(осталось ${remaining})`;
-                remainingEl.style.color = remaining === 0 ? '#ff4757' : 'rgba(255,255,255,0.6)';
+                remainingEl.textContent = `Осталось: ${remaining} 🪙`;
+                remainingEl.style.color = remaining === 0 ? '#ff6b6b' : 'rgba(255,255,255,0.7)';
             } else {
-                remainingEl.textContent = '';
+                remainingEl.textContent = 'Лимит не установлен';
+                remainingEl.style.color = 'rgba(255,255,255,0.55)';
             }
         }
 
         const dailyBar = document.getElementById('coins-daily-progress');
         if (dailyBar) {
+            dailyBar.className = 'progress-bar';
             if (dailyLimit > 0) {
                 const progress = Math.min((dailyStats.earnedToday / dailyLimit) * 100, 100);
                 dailyBar.style.width = `${progress}%`;
-                dailyBar.className = 'progress-bar';
+                dailyBar.classList.remove('warning', 'danger');
                 if (progress >= 100) dailyBar.classList.add('danger');
                 else if (progress > 80) dailyBar.classList.add('warning');
-                dailyBar.parentElement.style.display = 'block';
+                if (dailyBar.parentElement) dailyBar.parentElement.style.opacity = 1;
             } else {
-                dailyBar.parentElement.style.display = 'none';
+                dailyBar.style.width = '0%';
+                dailyBar.classList.remove('warning', 'danger');
+                if (dailyBar.parentElement) dailyBar.parentElement.style.opacity = 0.45;
             }
         }
     }
 
-    updateHeaderEarnedCounter(dailyStats.earnedToday, state.dailyCoinLimit || 0);
+    updateHeaderEarnedDisplay(dailyStats.earnedToday, state.dailyCoinLimit || 0);
 
     const largeEl = document.getElementById('large-purchase');
     const largeIcon = document.getElementById('large-icon');
