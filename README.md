@@ -85,6 +85,24 @@ The shop is scoped per child and supports both direct parent purchases and child
     ```
 6.  Open `http://localhost:3000` in your browser.
 
+### Automated Testing
+-   Run lint + unit/smoke tests:
+    ```bash
+    npm run check
+    ```
+-   Install Playwright browser (first run only):
+    ```bash
+    npm run playwright:install
+    ```
+-   Run browser UI E2E tests:
+    ```bash
+    npm run test:ui:e2e
+    ```
+-   Full build validation (includes UI E2E):
+    ```bash
+    npm run build
+    ```
+
 ### Docker Deployment
 
 To build and run the application in a Docker container:

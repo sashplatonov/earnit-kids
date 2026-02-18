@@ -1,6 +1,6 @@
 const CHILD_SWITCHER_STYLE = `
     <style>
-        .child-menu { position: relative; }
+        .child-menu { position: relative; z-index: 2100; }
         .child-menu-btn {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -38,7 +38,7 @@ const CHILD_SWITCHER_STYLE = `
             border-radius: 16px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             min-width: 220px;
-            z-index: 1000;
+            z-index: 2100;
             overflow: hidden;
             animation: dropdownFade 0.2s ease-out;
         }
@@ -84,6 +84,28 @@ const CHILD_SWITCHER_STYLE = `
             color: white;
             background: rgba(16, 185, 129, 0.1);
         }
+        @media (max-width: 480px) {
+            .child-menu-btn {
+                padding: 6px 10px;
+                gap: 6px;
+                font-size: 0.85rem;
+            }
+
+            .child-menu-dropdown {
+                left: 0;
+                right: auto;
+                width: calc(100vw - 1rem);
+                max-width: 300px;
+                margin-left: -0.25rem;
+                border-radius: 12px;
+                z-index: 2100;
+            }
+
+            .child-menu-item {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+            }
+        }
     </style>
 `;
 
@@ -103,7 +125,10 @@ function ensureChildMenuOutsideClickListener() {
     window._childMenuListener = true;
     document.addEventListener('click', (event) => {
         if (event.target.closest('.child-menu')) return;
-        document.querySelectorAll('.child-menu.active').forEach((el) => el.classList.remove('active'));
+        const activeMenus = document.querySelectorAll('.child-menu.active');
+        if (!activeMenus.length) return;
+        activeMenus.forEach((el) => el.classList.remove('active'));
+        document.dispatchEvent(new CustomEvent('child-menu-visibility', { detail: { isActive: false } }));
     });
 }
 
@@ -126,7 +151,7 @@ export function renderChildSwitcherUI(state, escapeHtml) {
 
     container.innerHTML = `
         <div class="child-menu">
-            <button class="child-menu-btn" onclick="this.parentElement.classList.toggle('active')">
+            <button type="button" class="child-menu-btn" data-child-toggle>
                 <span class="child-menu-btn__icon">👶</span>
                 <span class="child-menu-btn__name">${escapeHtml(childName)}</span>
                 <span class="child-menu-btn__arrow">▼</span>
@@ -144,4 +169,14 @@ export function renderChildSwitcherUI(state, escapeHtml) {
     `;
 
     ensureChildMenuOutsideClickListener();
+
+    const childMenu = container.querySelector('.child-menu');
+    const toggleButton = childMenu?.querySelector('[data-child-toggle]');
+    if (childMenu && toggleButton) {
+        toggleButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const isActive = childMenu.classList.toggle('active');
+            document.dispatchEvent(new CustomEvent('child-menu-visibility', { detail: { isActive } }));
+        });
+    }
 }
