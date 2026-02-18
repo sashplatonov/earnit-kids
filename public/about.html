@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О проекте - Магазин Монеток</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style id="about-landing-style">
+        :root {
+            --login-bg: radial-gradient(circle at top right, #1a1a2e, #16213e);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --gold: #ffd700;
+            --gold-dark: #ffae00;
+            --soft-text: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Nunito', sans-serif;
+            color: #fff;
+            background: var(--login-bg);
+            padding: 1rem;
+        }
+
+        .shell {
+            max-width: 1040px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .shell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.2rem;
+            border-bottom: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--gold);
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #1a1a2e;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border-radius: 10px;
+            padding: 0.55rem 0.85rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .content {
+            padding: 1rem;
+        }
+
+        .about-landing {
+            color: #f8fafc;
+        }
+
+        .about-landing * {
+            box-sizing: border-box;
+        }
+
+        .about-hero {
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 1.4rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .about-badge {
+            display: inline-block;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(248, 250, 252, 0.08);
+            border: 1px solid rgba(251, 191, 36, 0.55);
+            color: #fde68a;
+            font-weight: 700;
+            font-size: 0.82rem;
+            margin-bottom: 1rem;
+        }
+
+        .about-hero h1 {
+            font-size: clamp(1.8rem, 3.8vw, 2.9rem);
+            line-height: 1.1;
+            margin: 0 0 0.85rem;
+        }
+
+        .about-lead {
+            font-size: 1.06rem;
+            color: var(--soft-text);
+            margin-bottom: 1.2rem;
+        }
+
+        .about-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .about-btn {
+            text-decoration: none;
+            padding: 0.72rem 1.15rem;
+            border-radius: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .about-btn-primary {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #111827;
+        }
+
+        .about-btn-primary:hover {
+            filter: brightness(1.05);
+        }
+
+        .about-btn-ghost {
+            border: 1px solid rgba(251, 191, 36, 0.55);
+            color: #fde68a;
+            background: rgba(251, 191, 36, 0.08);
+        }
+
+        .about-grid {
+            display: grid;
+            gap: 0.9rem;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        }
+
+        .about-stat {
+            background: rgba(30, 41, 59, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 14px;
+            padding: 0.9rem;
+        }
+
+        .about-stat strong {
+            display: block;
+            font-size: 1.35rem;
+            color: #fde68a;
+        }
+
+        .about-showcase {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.33);
+            margin-top: 0.25rem;
+        }
+
+        .about-section {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1.1rem 0;
+        }
+
+        .about-section h2 {
+            margin-top: 0;
+            font-size: 1.45rem;
+            color: #fde68a;
+        }
+
+        .about-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.95rem;
+        }
+
+        .about-card {
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 14px;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.58);
+        }
+
+        .about-card h3 {
+            margin: 0 0 0.35rem;
+            font-size: 1.05rem;
+        }
+
+        .about-card p,
+        .about-section li,
+        .about-section p {
+            color: var(--soft-text);
+        }
+
+        .about-gallery {
+            display: grid;
+            gap: 0.7rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+
+        .about-gallery img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+        }
+
+        .about-footer-note {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .shell {
+                border-radius: 16px;
+            }
+
+            .shell-header {
+                padding: 0.8rem;
+            }
+
+            .content {
+                padding: 0.65rem;
+            }
+
+            .about-hero,
+            .about-section {
+                padding: 1.1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="shell">
+        <header class="shell-header">
+            <div class="brand">Магазин Монеток</div>
+            <a class="back-link" href="/login.html">Ко входу</a>
+        </header>
+
+        <div class="content">
+            <div id="about-landing-content" class="about-landing">
+                <section class="about-hero">
+                    <span class="about-badge">Kids Coin Shop</span>
+                    <h1>Семейный магазин мотивации, где ребёнок видит честную связь: усилие -> награда.</h1>
+                    <p class="about-lead">
+                        Дети выполняют задания, получают монеты и отправляют заявки на покупки.
+                        Родители подтверждают решения, контролируют лимиты и видят прозрачную историю.
+                    </p>
+
+                    <div class="about-actions">
+                        <a class="about-btn about-btn-primary" href="/login.html">Открыть магазин</a>
+                        <a class="about-btn about-btn-ghost" href="#how-it-works">Как это работает</a>
+                    </div>
+
+                    <img class="about-showcase" src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=1600&q=80" alt="Родитель и ребёнок обсуждают цели">
+
+                    <div class="about-grid" style="margin-top: 1rem;">
+                        <div class="about-stat"><strong>1 сервис</strong> для родителей и детей</div>
+                        <div class="about-stat"><strong>100%</strong> прозрачная история действий</div>
+                        <div class="about-stat"><strong>Гибкие</strong> лимиты и правила семьи</div>
+                    </div>
+                </section>
+
+                <section id="how-it-works" class="about-section">
+                    <h2>Как это работает</h2>
+                    <div class="about-cards">
+                        <article class="about-card">
+                            <h3>1. Настройте задания</h3>
+                            <p>Добавьте полезные действия, стоимость в монетах и ограничения по частоте.</p>
+                        </article>
+                        <article class="about-card">
+                            <h3>2. Ребёнок зарабатывает</h3>
+                            <p>За выполнение задач начисляются монеты в личный баланс ребёнка.</p>
+                        </article>
+                        <article class="about-card">
+                            <h3>3. Выбор награды</h3>
+                            <p>Ребёнок выбирает товар из своего магазина и отправляет заявку на покупку.</p>
+                        </article>
+                        <article class="about-card">
+                            <h3>4. Подтверждение родителем</h3>
+                            <p>После одобрения монеты списываются автоматически, а история обновляется.</p>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="about-section">
+                    <h2>Почему это удобно семье</h2>
+                    <ul>
+                        <li>Мотивация становится понятной: ребёнок видит результат своих усилий.</li>
+                        <li>Меньше споров: все правила, заявки и решения фиксируются в системе.</li>
+                        <li>Поддержка нескольких детей: отдельные балансы, ссылки и настройки.</li>
+                        <li>Можно учитывать и монеты, и реальные денежные лимиты в покупках.</li>
+                    </ul>
+                </section>
+
+                <section class="about-section">
+                    <h2>Что внутри</h2>
+                    <div class="about-gallery">
+                        <img src="https://images.unsplash.com/photo-1573497491208-6b1acb260507?auto=format&fit=crop&w=1000&q=80" alt="Семья обсуждает цели">
+                        <img src="https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=1000&q=80" alt="Ребёнок планирует задания">
+                        <img src="https://images.unsplash.com/photo-1464349153735-7db50ed83c84?auto=format&fit=crop&w=1000&q=80" alt="Монеты и прогресс">
+                    </div>
+                </section>
+
+                <section class="about-section">
+                    <h2>Готовы начать?</h2>
+                    <p>Запустите семейный магазин и начните с одной небольшой цели уже сегодня.</p>
+                    <p><a class="about-btn about-btn-primary" href="/login.html">Создать или войти</a></p>
+                    <p class="about-footer-note">Kids Coin Shop помогает развивать ответственность и сохранять контроль над семейными правилами.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

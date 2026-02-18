@@ -118,14 +118,19 @@ async function loadAboutContent() {
     if (!container) return;
 
     try {
-        const res = await fetch('/about.md');
+        const res = await fetch('/about.html');
         if (res.ok) {
-            const text = await res.text();
+            const html = await res.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const styleNode = doc.getElementById('about-landing-style');
+            const contentNode = doc.getElementById('about-landing-content');
 
-            if (window.marked) {
-                container.innerHTML = window.marked.parse(text);
+            if (contentNode) {
+                const styleHtml = styleNode ? styleNode.outerHTML : '';
+                container.innerHTML = `${styleHtml}${contentNode.outerHTML}`;
             } else {
-                container.innerHTML = `<pre>${text}</pre>`;
+                container.innerHTML = '<p>Ошибка: Не найден контент страницы</p>';
             }
         } else {
             container.innerHTML = '<p>Ошибка: Файл не найден</p>';
