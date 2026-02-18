@@ -87,23 +87,6 @@ body {
     animation: coin-bounce 2s ease-in-out infinite;
 }
 
-.header__version {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 0.2rem;
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.header__version-label,
-.header__build-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-}
-
 @keyframes coin-bounce {
 
     0%,
@@ -214,6 +197,12 @@ body {
     padding: 1rem;
     background: var(--color-bg-light);
     border-bottom: 1px solid var(--color-bg-card);
+}
+
+.nav--pending {
+    opacity: 0;
+    visibility: hidden;
+    min-height: 66px;
 }
 
 .nav__btn {
@@ -328,6 +317,26 @@ body {
     padding: 1.5rem;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.app-footer {
+    margin-top: 2rem;
+    padding: 0.75rem 0 0.25rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    color: rgba(148, 163, 184, 0.6);
+    user-select: none;
+}
+
+.app-footer__meta {
+    letter-spacing: 0.25px;
+}
+
+.app-footer__dot {
+    opacity: 0.55;
 }
 
 .section {

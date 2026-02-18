@@ -213,6 +213,11 @@ function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+function revealTopNav() {
+    const nav = document.querySelector('.nav');
+    if (nav) nav.classList.remove('nav--pending');
+}
+
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
     // Determine role from cookie
@@ -288,6 +293,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const childLinkBtn = document.getElementById('nav-child-link');
         if (childLinkBtn) childLinkBtn.classList.remove('hidden');
     }
+
+    revealTopNav();
 
     // Event Listeners
 

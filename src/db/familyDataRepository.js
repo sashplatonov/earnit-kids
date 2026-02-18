@@ -142,9 +142,12 @@ async function getFamilyData(familyId, childId = null) {
         requests: requestsResult.rows.map(row => ({
             id: row.external_id ? parseInt(row.external_id) : row.id,
             childId: row.child_id,
+            requestType: row.request_type || 'earn',
             taskId: row.task_id ? parseInt(row.task_id) : null,
+            itemId: row.item_id ? parseInt(row.item_id) : null,
             taskName: row.task_name,
             coins: row.coins,
+            moneyAmount: row.money_amount || 0,
             status: row.status,
             date: row.created_at
         })),
@@ -293,15 +296,18 @@ async function saveFamilyData(familyId, data, actingChildId = null) {
             for (const req of data.requests) {
                 const targetChildId = actingChildId || req.childId || defaultChildId;
                 await client.query(
-                    `INSERT INTO requests (family_id, child_id, external_id, task_id, task_name, coins, status, created_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                    `INSERT INTO requests (family_id, child_id, external_id, request_type, task_id, item_id, task_name, coins, money_amount, status, created_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
                     [
                         dbId,
                         targetChildId,
                         req.id || null,
+                        req.requestType || 'earn',
                         req.taskId || null,
+                        req.itemId || null,
                         req.taskName || '',
                         req.coins || 0,
+                        req.moneyAmount || 0,
                         req.status || 'pending',
                         req.date || req.created_at || new Date()
                     ]
@@ -381,15 +387,18 @@ async function addRequest(familyId, request) {
     if (!childId) return false;
 
     const result = await query(
-        `INSERT INTO requests (family_id, child_id, external_id, task_id, task_name, coins, status, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        `INSERT INTO requests (family_id, child_id, external_id, request_type, task_id, item_id, task_name, coins, money_amount, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
         [
             dbId,
             childId,
             request.id || null,
+            request.requestType || 'earn',
             request.taskId || null,
+            request.itemId || null,
             request.taskName || '',
             request.coins || 0,
+            request.moneyAmount || 0,
             request.status || 'pending',
             request.date || request.created_at || new Date()
         ]

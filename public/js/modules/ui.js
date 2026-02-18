@@ -352,18 +352,8 @@ export function renderRequests() {
     const myList = document.getElementById('my-requests-list');
     const myEmpty = document.getElementById('my-requests-empty');
 
-    // Filter Requests by Child if Admin
+    // Parent should see requests for all children.
     let relevantRequests = state.requests;
-    if (state.isAdmin && state.currentChildId) {
-        relevantRequests = state.requests.filter(r => r.childId == state.currentChildId);
-    } else if (state.isAdmin) {
-        // If "All Data" was removed, currentChildId should be set. If not, filtered requests = [].
-        // But let's keep all if no child selected just in case (though we want to enforce selection).
-        // User said "Only requests of selected child". So if no child selected -> empty?
-        // Let's assume currentChildId is always set if children exist.
-        // If no child selected (e.g. no children), show empty.
-        if (state.children.length > 0) relevantRequests = []; // Hide if not selected
-    }
 
     // Update Counter
     const pendingCount = relevantRequests.filter(r => r.status === 'pending').length;
@@ -390,13 +380,12 @@ export function renderRequests() {
                 <div class="history-item">
                     <div class="history-item__icon">⏳</div>
                     <div class="history-item__content">
-                        <div class="history-item__desc">
-                            ${escapeHtml(req.taskName)}
-                        </div>
+                        <div class="history-item__desc">${escapeHtml(req.taskName)}</div>
                         <div class="history-item__date">Ожидает подтверждения</div>
                     </div>
                     <div class="history-item__amount">
-                        +${req.coins} 🪙
+                        ${req.requestType === 'shop_purchase' ? '-' : '+'}${req.coins} 🪙
+                        ${(req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : ''}
                     </div>
                     <div class="card__actions" style="margin-left: 10px;">
                          <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">🗑️</button>
@@ -428,12 +417,14 @@ export function renderRequests() {
                     <div class="history-item__content">
                         <div class="history-item__desc">
                             <span class="tag" style="margin-right: 5px;">${escapeHtml(childName)}</span> 
+                            ${req.requestType === 'shop_purchase' ? 'Покупка: ' : 'Задание: '}
                             ${escapeHtml(req.taskName)}
                         </div>
                         <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
                     </div>
                     <div class="history-item__amount">
-                        +${req.coins} 🪙
+                        ${req.requestType === 'shop_purchase' ? '-' : '+'}${req.coins} 🪙
+                        ${(req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : ''}
                     </div>
                     <div class="card__actions" style="margin-left: 10px;">
                          <button class="btn btn--success btn--small" onclick="window.app.approveRequest(${req.id})">✅</button>

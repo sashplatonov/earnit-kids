@@ -200,7 +200,7 @@ export function saveShopItem() {
     const freqPeriod = document.getElementById('shop-freq-period').value;
 
     if (!name) return showToast('Введите название', 'error');
-    if (!price || price < 1) return showToast('Введите цену', 'error');
+    if (isNaN(price) || price < 0) return showToast('Введите корректную цену', 'error');
 
     const newItem = {
         name,
