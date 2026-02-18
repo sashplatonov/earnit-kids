@@ -365,15 +365,20 @@ function setupTabControls() {
     const tabButtons = document.querySelectorAll('.nav__btn, .nav__dropdown-item');
     const moreBtn = document.getElementById('nav-more-btn');
     const moreDropdown = document.getElementById('nav-more-dropdown');
+    const closeChildMenus = () => {
+        document.querySelectorAll('.child-menu.active').forEach((el) => el.classList.remove('active'));
+    };
 
     const closeMoreDropdown = () => {
         if (!moreDropdown || moreDropdown.classList.contains('hidden')) return;
         moreDropdown.classList.add('hidden');
         if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+        closeChildMenus();
     };
 
     const openMoreDropdown = () => {
         if (!moreDropdown || !moreDropdown.classList.contains('hidden')) return;
+        closeChildMenus();
         moreDropdown.classList.remove('hidden');
         if (moreBtn) moreBtn.setAttribute('aria-expanded', 'true');
     };
@@ -386,6 +391,8 @@ function setupTabControls() {
         document.querySelectorAll('.section').forEach((section) => section.classList.add('hidden'));
         const targetSection = document.getElementById(`${tabName}-section`);
         if (targetSection) targetSection.classList.remove('hidden');
+        closeChildMenus();
+        closeMoreDropdown();
     };
 
     tabButtons.forEach((btn) => {
@@ -407,6 +414,10 @@ function setupTabControls() {
             if (!event.target.closest('.nav__more-wrapper')) closeMoreDropdown();
         });
     }
+
+    document.addEventListener('child-menu-visibility', (event) => {
+        if (event.detail?.isActive) closeMoreDropdown();
+    });
 
     const balanceButton = document.querySelector('.header__balance');
     if (balanceButton) {
