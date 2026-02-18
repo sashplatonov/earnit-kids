@@ -118,6 +118,8 @@ body {
     transition: box-shadow var(--transition-normal), transform var(--transition-normal);
     border: 1px solid rgba(255, 255, 255, 0.4);
     position: relative;
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
 }
 
 .header__balance:hover {
@@ -201,16 +203,30 @@ body {
 
 .balance__coin {
     font-size: 1.25rem;
-    animation: coin-spin 3s linear infinite;
+    animation: coin-rotate 5s linear infinite;
+    transform-origin: center;
+    will-change: transform;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
 }
 
-@keyframes coin-spin {
+@keyframes coin-rotate {
     0% {
-        transform: rotateY(0deg);
+        transform: rotate(0deg);
     }
 
     100% {
-        transform: rotateY(360deg);
+        transform: rotate(360deg);
+    }
+}
+
+.header__balance:focus-visible {
+    outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .balance__coin {
+        animation: none;
     }
 }
 
