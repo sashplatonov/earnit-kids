@@ -3,10 +3,10 @@
 This document walks through every step needed to publish (or test without paying) the App Store build based on the Capacitor shell.
 
 ## 1. Setup / requirements
-- Apple Developer Program: enroll at [developer.apple.com/programs](https://developer.apple.com/programs/) (annual fee applies only when you publish).  
-- Apple ID: any Apple ID works for local builds; to upload builds you need an account tied to the Developer Program.  
+- Apple Developer Program: required only for App Store publishing, not for simulator testing.  
+- Apple ID: any Apple ID works for local builds and simulator usage; for App Store uploads you need an account tied to the Developer Program.  
 - Tools: install Xcode (latest stable release) and the `npm` toolchain inside `mobile/`.
-- Make sure `capacitator.config.json` uses the bundle ID you plan to ship (for testing you can use `com.yourcompany.coinskids`).
+- Make sure `capacitor.config.json` uses the bundle ID you plan to ship (for testing you can use `com.yourcompany.coinskids`).
 
 ## 2. Prepare the Capacitor iOS project
 1. `cd mobile`  
@@ -22,10 +22,10 @@ This document walks through every step needed to publish (or test without paying
 5. Set the deployment target to iOS 16+ (or the version you support).
 
 ## 4. Test without paying (free Apple ID)
-1. Connect a device or launch a simulator in Xcode.  
-2. Run the project (`Cmd+R`). Xcode uses your free Apple ID to sign the build automatically.  
-3. You can install the app on up to 3 physical devices.  
-4. Limitations: builds expire every 7 days; just rerun `npm run sync` → rebuild to refresh.  
+1. Launch an iOS Simulator in Xcode (this path is fully free).  
+2. Run the project (`Cmd+R`).  
+3. Optional physical-device test: use a free Apple ID for signing in Xcode.  
+4. Free Apple ID limitation (device install only): builds expire every 7 days; rerun `npm run sync` and rebuild to refresh.  
 5. For extra safety turn on `Product → Scheme → Edit Scheme → Build Configuration = Debug` before running.
 
 ## 5. Archive & upload (paid account)

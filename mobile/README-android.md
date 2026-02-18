@@ -3,7 +3,7 @@
 Follow this guide to publish the Capacitor shell on Google Play and to test without spending $25.
 
 ## 1. Requirements
-- Google Play Console account: creating one costs $25 (one-time). For internal testing without publishing you can skip it entirely and install APKs directly.  
+- Google Play Console account: required only for publishing to Google Play ($25 one-time). For emulator/device testing without publishing you can skip it entirely and install APKs directly.  
 - Android Studio + Java SDK installed.  
 - `mobile/capacitor.config.json` should contain `appId = com.yourcompany.coinskids`.
 

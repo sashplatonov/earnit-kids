@@ -130,11 +130,82 @@ The application will be available at `http://localhost:3000`.
 
 The static UI can be embedded inside a Capacitor wrapper for iOS/Android. The `mobile/` folder already contains `capacitor.config.json` and instructions for syncing with the web assets. The wrapper points at `https://coins-kids-shop.onrender.com` by default, so no API changes are required.
 
-- Run `cd mobile && npm install` once per machine and keep `npm run sync` (or `npx cap sync`) up-to-date after you change anything under `public/`.
-- Add platforms with `npx cap add ios` / `npx cap add android` and open them via `npm run open:ios` / `npm run open:android`.
-- Universal/App Links are controlled by the JSON files in `public/.well-known/`—replace the placeholders with your actual team/app IDs and Android signing fingerprint before submission.
+### Prerequisites
+- Node.js 20.x or 22.x (LTS recommended).
+- Android Studio with Android SDK + Emulator.
+- Xcode (for iOS Simulator, macOS only).
 
-See `mobile/README.md` for full instructions, including release guidance and platform-specific requirements.
+### Local test on Android/iOS without store payments
+You can test both platforms locally without paying Google Play or Apple App Store fees.
+
+1. Install mobile dependencies:
+   ```bash
+   cd mobile
+   npm install
+   ```
+2. Generate/refresh native platforms:
+   ```bash
+   npx cap add android
+   npx cap add ios
+   npm run sync
+   ```
+   If the platform already exists, `cap add` can fail. In that case remove the old platform folder and run the command again.
+
+### Run on Android emulator (free)
+1. Start an emulator from Android Studio Device Manager.
+2. Open native project:
+   ```bash
+   cd mobile
+   npm run sync
+   npm run open:android
+   ```
+3. In Android Studio choose the running emulator and press `Run`.
+
+No Google Play Console account is required for emulator testing or local APK installs.
+
+### Run on iOS simulator (free)
+1. Open native iOS project:
+   ```bash
+   cd mobile
+   npm run sync
+   npm run open:ios
+   ```
+2. In Xcode choose an iPhone Simulator and press `Cmd+R`.
+
+No paid Apple Developer subscription is required to run in iOS Simulator.
+
+### Quick smoke-check after launch
+- Login screen opens.
+- Admin login works.
+- Child switcher works.
+- Task reward adds coins.
+- Shop purchase request can be created and approved/rejected.
+- History updates after earn/spend actions.
+
+### Troubleshooting
+- If `npx cap` fails or packages look broken, run:
+  ```bash
+  cd mobile
+  rm -rf node_modules package-lock.json
+  npm install
+  ```
+- If Android/iOS project is corrupted, remove the platform folder and re-add it:
+  ```bash
+  cd mobile
+  npx cap add android
+  npx cap add ios
+  npm run sync
+  ```
+- If app shows a blank page, verify `mobile/capacitor.config.json` `server.url` is reachable.
+
+### Deep links and release prep
+Universal/App Links are controlled by `public/.well-known/apple-app-site-association` and `public/.well-known/assetlinks.json`.
+Replace placeholders (`TEAMID`, `REPLACE_WITH_SHA256`) before store submission.
+
+For detailed store workflows and signing steps, see:
+- `mobile/README.md`
+- `mobile/README-ios.md`
+- `mobile/README-android.md`
 
 ## 📋 TODO
 
