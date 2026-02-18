@@ -7,14 +7,20 @@
     "start": "node src/app.js",
     "migrate": "node scripts/migrate.js",
     "migrate:data": "node scripts/migrate-data.js",
-    "test": "node --test tests/*.test.js",
+    "test": "node --test tests/*.test.js tests/ui/*.test.js",
+    "test:ui:smoke": "node --test tests/ui/*.test.js",
+    "test:ui:e2e": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright test",
+    "test:ui": "npm run test:ui:smoke && npm run test:ui:e2e",
+    "playwright:install": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright install chromium",
     "lint": "npm run lint:syntax && npm run lint:commonjs && npm run lint:eslint",
     "lint:syntax": "node scripts/lint-syntax.js",
     "lint:commonjs": "node scripts/lint-commonjs.js",
     "lint:eslint": "eslint src scripts public/js tests --max-warnings=0",
-    "check": "npm run lint && npm test"
+    "check": "npm run lint && npm test",
+    "build": "npm run check && npm run test:ui:e2e"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "eslint": "^9.21.0"
   },
   "dependencies": {
