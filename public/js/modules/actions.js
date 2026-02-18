@@ -21,7 +21,28 @@ export function scheduleSave() {
     }, 500);
 }
 
-export function addHistoryEntry(type, amount, description, relatedId = null, moneyAmount = 0) {
+function getActingChildId() {
+    if (state.currentChildId) return state.currentChildId;
+    if (state.isAdmin) return null;
+    if (state.role === 'child' && state.children.length > 0) return state.children[0].id;
+
+    const fromTask = state.tasks.find(t => t.childId)?.childId;
+    if (fromTask) return fromTask;
+    const fromShop = state.shopItems.find(i => i.childId)?.childId;
+    if (fromShop) return fromShop;
+    const fromHistory = state.history.find(h => h.childId)?.childId;
+    if (fromHistory) return fromHistory;
+    const fromRequest = state.requests.find(r => r.childId)?.childId;
+    if (fromRequest) return fromRequest;
+    return null;
+}
+
+export function addHistoryEntry(type, amount, description, options = {}) {
+    const {
+        relatedId = null,
+        moneyAmount = 0,
+        childIdOverride = null
+    } = options;
     const entry = {
         id: Date.now(),
         type: type, // 'earn' | 'spend'
@@ -39,23 +60,7 @@ export function addHistoryEntry(type, amount, description, relatedId = null, mon
         entry.relatedId = relatedId;
     }
 
-    if (relatedId) {
-        if (type === 'spend') entry.itemId = relatedId;
-        else if (type === 'earn') entry.taskId = relatedId;
-        // fallback to just saving it
-        entry.relatedId = relatedId;
-    }
-
-    // Add childId to history entry so strict filtering works
-    // If admin, currentChildId. If child, infer?
-    // 'state.currentChildId' is what we view.
-    // If child is logged in, they are usually viewing themselves.
-    // Ideally history entry should have 'childId'.
-    if (state.currentChildId) {
-        entry.childId = state.currentChildId;
-    } else if (state.role === 'child' && state.children.length > 0) {
-        entry.childId = state.children[0].id;
-    }
+    entry.childId = childIdOverride || getActingChildId();
 
     state.history.unshift(entry);
     scheduleSave();
@@ -63,10 +68,10 @@ export function addHistoryEntry(type, amount, description, relatedId = null, mon
     updateBalanceUI(); // Update stats potentially
 }
 
-export function checkLimits(item, moneyPrice) {
+export function checkLimits(item, moneyPrice, childIdOverride = null) {
     const now = new Date();
     const currentMonth = now.toISOString().slice(0, 7);
-    const actingChildId = state.isAdmin ? state.currentChildId : null;
+    const actingChildId = childIdOverride || getActingChildId();
 
     // Calculate stats locally since we need them for check
     let moneySpent = 0;
@@ -164,33 +169,69 @@ export function buyItem(itemId) {
         return;
     }
 
-    // Ask for actual money value
-    const limit = item.moneyLimit || item.money_limit;
-    const limitLabel = limit ? ` (макс ${limit})` : '';
-    const moneyInput = prompt(`Покупка "${item.name}"\nВведите стоимость в деньгах${limitLabel}:`, '0');
-    if (moneyInput === null) return; // Cancelled
-
-    const moneyPrice = parseInt(moneyInput);
-    if (isNaN(moneyPrice) || moneyPrice < 0) {
-        showToast('Некорректная сумма', 'error');
+    const actingId = getActingChildId();
+    if (!actingId) {
+        showToast('Сначала выберите ребенка', 'error');
         return;
     }
 
-    if (limit && moneyPrice > limit) {
-        showToast(`Цена выше лимита товара (${limit})`, 'error');
-        return;
+    // Ask for real-money amount only when the item has a positive money limit.
+    const limit = item.moneyLimit || item.money_limit;
+    let moneyPrice = 0;
+    if (limit && limit > 0) {
+        const moneyInput = prompt(`Покупка "${item.name}"\nВведите стоимость в деньгах (макс ${limit}):`, '0');
+        if (moneyInput === null) return;
+
+        moneyPrice = parseInt(moneyInput);
+        if (isNaN(moneyPrice) || moneyPrice < 0) {
+            showToast('Некорректная сумма', 'error');
+            return;
+        }
+
+        if (moneyPrice > limit) {
+            showToast(`Цена выше лимита товара (${limit})`, 'error');
+            return;
+        }
     }
 
     // Check global limits
-    const limitError = checkLimits(item, moneyPrice);
+    const limitError = checkLimits(item, moneyPrice, actingId);
     if (limitError) {
         showToast(limitError, 'error');
         return;
     }
 
+    if (!state.isAdmin) {
+        showConfirm(
+            'Отправить заявку на покупку?',
+            `"${item.name}" за ${item.price} 🪙${moneyPrice ? ` и ${moneyPrice} в деньгах` : ''}`,
+            () => {
+                state.requests.push({
+                    id: Date.now(),
+                    childId: actingId,
+                    requestType: 'shop_purchase',
+                    itemId: item.id,
+                    taskId: item.id,
+                    taskName: item.name,
+                    coins: item.price,
+                    moneyAmount: moneyPrice,
+                    status: 'pending',
+                    date: new Date().toISOString()
+                });
+
+                scheduleSave();
+                renderRequests();
+                const reqBtn = document.querySelector('.nav__btn[data-tab="requests"]');
+                if (reqBtn) reqBtn.click();
+                showToast('Заявка на покупку отправлена', 'success');
+            }
+        );
+        return;
+    }
+
     showConfirm(
         'Подтвердите покупку',
-        `Купить "${item.name}" за ${item.price} 🪙 и ${moneyPrice} в деньгах?`,
+        `Купить "${item.name}" за ${item.price} 🪙${moneyPrice ? ` и ${moneyPrice} в деньгах` : ''}?`,
         () => {
             // Update specific child balance logic needed?
             // "state.balance" is used for display. 
@@ -205,7 +246,7 @@ export function buyItem(itemId) {
                 state.balance -= item.price;
             }
 
-            addHistoryEntry('spend', item.price, item.name, item.id, moneyPrice);
+            addHistoryEntry('spend', item.price, item.name, { relatedId: item.id, moneyAmount: moneyPrice });
             scheduleSave();
             renderAll();
             showToast(`Вы купили: ${item.name}!`, 'success');
@@ -274,7 +315,7 @@ export function earnCoins(taskId) {
             state.balance += task.coins;
         }
 
-        addHistoryEntry('earn', task.coins, task.name, task.id);
+        addHistoryEntry('earn', task.coins, task.name, { relatedId: task.id });
         renderShop(); // Update shop availability
         showToast(`+${task.coins} 🪙 начислено!`, 'success');
     };
@@ -304,6 +345,8 @@ export function requestCoins(taskId) {
 
     const request = {
         id: Date.now(),
+        childId: getActingChildId(),
+        requestType: 'earn',
         taskId: task.id,
         taskName: task.name,
         coins: task.coins,
@@ -324,6 +367,29 @@ export function requestCoins(taskId) {
 
 export function deleteHistoryItem(id) {
     if (!confirm('Удалить эту запись из истории?')) return;
+    const removedEntry = state.history.find(h => h.id == id);
+
+    if (removedEntry) {
+        const delta = removedEntry.type === 'earn'
+            ? -(removedEntry.amount || 0)
+            : (removedEntry.type === 'spend' ? (removedEntry.amount || 0) : 0);
+        const targetChildId = removedEntry.childId || getActingChildId();
+
+        if (targetChildId) {
+            const child = state.children.find(c => c.id == targetChildId);
+            if (child) {
+                child.balance += delta;
+                if (!state.isAdmin || state.currentChildId == targetChildId) {
+                    state.balance = child.balance;
+                }
+            } else {
+                state.balance += delta;
+            }
+        } else {
+            state.balance += delta;
+        }
+    }
+
     const newState = { ...state };
     newState.history = newState.history.filter(h => h.id != id);
     setState(newState);
@@ -336,6 +402,43 @@ export function deleteHistoryItem(id) {
 export function approveRequest(reqId) {
     const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
+
+    if (req.requestType === 'shop_purchase') {
+        const child = state.children.find(c => c.id == req.childId);
+        if (child && child.balance < req.coins) {
+            showToast(`Недостаточно монет у ребенка (${child.name})`, 'error');
+            return;
+        }
+
+        const shopItem = state.shopItems.find(i => i.id == (req.itemId || req.taskId));
+        if (shopItem) {
+            const limitErr = checkLimits(shopItem, req.moneyAmount || 0, req.childId);
+            if (limitErr && !confirm(`${limitErr}. Все равно подтвердить?`)) {
+                return;
+            }
+        }
+
+        if (state.isAdmin && child) {
+            child.balance -= req.coins;
+            if (req.childId === state.currentChildId) {
+                state.balance = child.balance;
+            }
+        } else {
+            state.balance -= req.coins;
+        }
+
+        addHistoryEntry('spend', req.coins, req.taskName || 'Покупка', {
+            relatedId: req.itemId || req.taskId,
+            moneyAmount: req.moneyAmount || 0,
+            childIdOverride: req.childId
+        });
+        state.requests = state.requests.filter(r => r.id != reqId);
+
+        scheduleSave();
+        renderAll();
+        showToast(`Покупка подтверждена: -${req.coins} 🪙`, 'success');
+        return;
+    }
 
     // Check limit
     const limitErr = checkDailyCoinLimit(req.childId, req.coins);
@@ -355,7 +458,11 @@ export function approveRequest(reqId) {
     } else {
         state.balance += req.coins;
     }
-    addHistoryEntry('earn', req.coins, req.taskName, req.taskId);
+    addHistoryEntry('earn', req.coins, req.taskName, {
+        relatedId: req.taskId,
+        moneyAmount: 0,
+        childIdOverride: req.childId
+    });
 
     // Remove request
     state.requests = state.requests.filter(r => r.id != reqId);

@@ -142,9 +142,12 @@ async function getFamilyData(familyId, childId = null) {
         requests: requestsResult.rows.map(row => ({
             id: row.external_id ? parseInt(row.external_id) : row.id,
             childId: row.child_id,
+            requestType: row.request_type || 'earn',
             taskId: row.task_id ? parseInt(row.task_id) : null,
+            itemId: row.item_id ? parseInt(row.item_id) : null,
             taskName: row.task_name,
             coins: row.coins,
+            moneyAmount: row.money_amount || 0,
             status: row.status,
             date: row.created_at
         })),
@@ -155,6 +158,166 @@ async function getFamilyData(familyId, childId = null) {
             ownerChildId: row.owner_child_id // Only if parent view
         }))
     };
+}
+
+async function resolveDefaultChildId(familyId, actingChildId) {
+    if (actingChildId) return actingChildId;
+
+    const children = await familyRepository.getChildren(familyId);
+    if (children.length > 0) return children[0].id;
+    return null;
+}
+
+function buildDeleteScope(dbId, actingChildId) {
+    if (!actingChildId) {
+        return { deleteWhere: 'WHERE family_id = $1', deleteParams: [dbId] };
+    }
+    return {
+        deleteWhere: 'WHERE family_id = $1 AND child_id = $2',
+        deleteParams: [dbId, actingChildId]
+    };
+}
+
+async function syncBalances(client, data, actingChildId) {
+    if (data.balance !== undefined && actingChildId) {
+        await client.query('UPDATE children SET balance = $1 WHERE id = $2', [data.balance, actingChildId]);
+    }
+
+    if (!Array.isArray(data.children) || actingChildId) return;
+
+    for (const child of data.children) {
+        if (!child.id || child.balance === undefined) continue;
+        await client.query('UPDATE children SET balance = $1 WHERE id = $2', [child.balance, child.id]);
+    }
+}
+
+async function syncTasks(client, syncContext) {
+    const { dbId, data, actingChildId, defaultChildId, deleteWhere, deleteParams } = syncContext;
+    if (data.tasks === undefined) return;
+
+    await client.query(`DELETE FROM tasks ${deleteWhere}`, deleteParams);
+    for (const task of data.tasks) {
+        const targetChildId = actingChildId || task.childId || defaultChildId;
+        await client.query(
+            `INSERT INTO tasks (family_id, child_id, task_id, name, coins, group_name, frequency, comment, money_limit)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [
+                dbId,
+                targetChildId,
+                task.id,
+                task.name,
+                task.coins || 0,
+                task.group || null,
+                task.frequency ? JSON.stringify(task.frequency) : null,
+                task.comment || null,
+                task.money_limit || null
+            ]
+        );
+    }
+}
+
+async function syncShop(client, syncContext) {
+    const { dbId, data, actingChildId, defaultChildId, deleteWhere, deleteParams } = syncContext;
+    if (data.shop === undefined) return;
+
+    await client.query(`DELETE FROM shop_items ${deleteWhere}`, deleteParams);
+    for (const item of data.shop) {
+        const targetChildId = actingChildId || item.childId || defaultChildId;
+        await client.query(
+            `INSERT INTO shop_items (family_id, child_id, item_id, name, price, group_name, frequency, money_limit)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [
+                dbId,
+                targetChildId,
+                item.id,
+                item.name,
+                item.price || 0,
+                item.group || null,
+                item.frequency ? JSON.stringify(item.frequency) : null,
+                item.money_limit || null
+            ]
+        );
+    }
+}
+
+async function deleteHistoryScope(client, dbId, data, actingChildId, defaultChildId) {
+    if (actingChildId) {
+        await client.query('DELETE FROM history WHERE child_id = $1', [actingChildId]);
+        return;
+    }
+
+    const historyIds = data.history.map((entry) => entry.id).filter((id) => id);
+    if (historyIds.length === 0) return;
+
+    const targetChildIds = [...new Set(data.history.map((entry) => entry.childId || defaultChildId))];
+    await client.query('DELETE FROM history WHERE family_id = $1 AND child_id = ANY($2)', [dbId, targetChildIds]);
+}
+
+async function syncHistory(client, dbId, data, actingChildId, defaultChildId) {
+    if (!Array.isArray(data.history)) return;
+
+    await deleteHistoryScope(client, dbId, data, actingChildId, defaultChildId);
+    for (const entry of data.history) {
+        const targetChildId = actingChildId || entry.childId || defaultChildId;
+        const relatedId = entry.itemId || entry.taskId || entry.relatedId || null;
+        await client.query(
+            `INSERT INTO history (family_id, child_id, external_id, type, amount, description, money_amount, related_id, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [
+                dbId,
+                targetChildId,
+                entry.id || null,
+                entry.type || 'unknown',
+                entry.amount || 0,
+                entry.description || '',
+                entry.moneyAmount || 0,
+                relatedId,
+                entry.date || entry.timestamp || new Date()
+            ]
+        );
+    }
+}
+
+async function syncRequests(client, syncContext) {
+    const { dbId, data, actingChildId, defaultChildId, deleteWhere, deleteParams } = syncContext;
+    if (!Array.isArray(data.requests)) return;
+
+    await client.query(`DELETE FROM requests ${deleteWhere}`, deleteParams);
+    for (const req of data.requests) {
+        const targetChildId = actingChildId || req.childId || defaultChildId;
+        await client.query(
+            `INSERT INTO requests (family_id, child_id, external_id, request_type, task_id, item_id, task_name, coins, money_amount, status, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            [
+                dbId,
+                targetChildId,
+                req.id || null,
+                req.requestType || 'earn',
+                req.taskId || null,
+                req.itemId || null,
+                req.taskName || '',
+                req.coins || 0,
+                req.moneyAmount || 0,
+                req.status || 'pending',
+                req.date || req.created_at || new Date()
+            ]
+        );
+    }
+}
+
+async function syncFriends(client, data, actingChildId) {
+    if (!Array.isArray(data.friends) || !actingChildId) return;
+
+    await client.query('DELETE FROM friends WHERE child_id = $1', [actingChildId]);
+    for (const friendItem of data.friends) {
+        const friendChildId = typeof friendItem === 'object' ? friendItem.friendChildId : null;
+        if (!friendChildId) continue;
+        await client.query(
+            `INSERT INTO friends (child_id, friend_child_id) VALUES ($1, $2)
+             ON CONFLICT DO NOTHING`,
+            [actingChildId, friendChildId]
+        );
+    }
 }
 
 /**
@@ -168,163 +331,28 @@ async function saveFamilyData(familyId, data, actingChildId = null) {
     const dbId = await familyRepository.getDbId(familyId);
     if (!dbId) return false;
 
-    // Consistency Check: If no actingChildId, and data doesn't contain childId info, we have a problem.
-    // But we can fetch the "default" child for the family if needed?
-    // Let's assume the Controller handles logic of "who is acting".
+    const defaultChildId = await resolveDefaultChildId(familyId, actingChildId);
+    if (!defaultChildId) return false;
 
-    let defaultChildId = actingChildId;
-    if (!defaultChildId) {
-        // Admin saving: Try to find a default child if not specified in items?
-        // Or fetch first child.
-        const children = await familyRepository.getChildren(familyId);
-        if (children.length > 0) defaultChildId = children[0].id;
-    }
-
-    if (!defaultChildId) return false; // No children, cannot save data
+    const { deleteWhere, deleteParams } = buildDeleteScope(dbId, actingChildId);
+    const syncContext = {
+        dbId,
+        data,
+        actingChildId,
+        defaultChildId,
+        deleteWhere,
+        deleteParams
+    };
 
     const client = await getClient();
     try {
         await client.query('BEGIN');
-
-        // Update balance (if child is acting)
-        if (data.balance !== undefined && actingChildId) {
-            await client.query('UPDATE children SET balance = $1 WHERE id = $2', [data.balance, actingChildId]);
-        }
-
-        // Update balances for all children if provided (Admin view)
-        if (data.children && Array.isArray(data.children) && !actingChildId) {
-            for (const child of data.children) {
-                if (child.id && child.balance !== undefined) {
-                    await client.query('UPDATE children SET balance = $1 WHERE id = $2', [child.balance, child.id]);
-                }
-            }
-        }
-
-        // Scope deletion/updates
-        let deleteWhere = 'WHERE family_id = $1';
-        let deleteParams = [dbId];
-
-        if (actingChildId) {
-            deleteWhere += ' AND child_id = $2';
-            deleteParams.push(actingChildId);
-        }
-
-        // Update tasks
-        if (data.tasks !== undefined) {
-            await client.query(`DELETE FROM tasks ${deleteWhere}`, deleteParams);
-            for (const task of data.tasks) {
-                const targetChildId = actingChildId || task.childId || defaultChildId;
-                await client.query(
-                    `INSERT INTO tasks (family_id, child_id, task_id, name, coins, group_name, frequency, comment, money_limit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                    [dbId, targetChildId, task.id, task.name, task.coins || 0, task.group || null,
-                        task.frequency ? JSON.stringify(task.frequency) : null,
-                        task.comment || null, task.money_limit || null]
-                );
-            }
-        }
-
-        // Update shop items
-        if (data.shop !== undefined) {
-            await client.query(`DELETE FROM shop_items ${deleteWhere}`, deleteParams);
-            for (const item of data.shop) {
-                const targetChildId = actingChildId || item.childId || defaultChildId;
-                await client.query(
-                    `INSERT INTO shop_items (family_id, child_id, item_id, name, price, group_name, frequency, money_limit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                    [dbId, targetChildId, item.id, item.name, item.price || 0, item.group || null,
-                        item.frequency ? JSON.stringify(item.frequency) : null,
-                        item.money_limit || null]
-                );
-            }
-        }
-
-        // Update history
-        if (data.history !== undefined && Array.isArray(data.history)) {
-            // IF Admin saves, we ONLY delete the records that we are REPLACING.
-            // Since UI sends only top 200, we shouldn't delete everything.
-            // For now, let's delete only those with external_id present in the incoming list OR delete onlyActingChild's history.
-            
-            if (actingChildId) {
-                await client.query('DELETE FROM history WHERE child_id = $1', [actingChildId]);
-            } else {
-                // Admin saving: We only delete records for the children that are in the history provided.
-                // Or just delete the last 200? 
-                // A better way: ONLY delete what we are about to re-insert if it has an ID.
-                // But for simplicity and to match the "sync" model:
-                // Let's delete history only for the child that is "targeted" in the UI (if we knew it).
-                // Actually, let's look at the IDs.
-                const historyIds = data.history.map(h => h.id).filter(id => id);
-                if (historyIds.length > 0) {
-                     // Delete only those that match the IDs we are sending (to avoid duplicates)
-                     // and maybe the latest ones?
-                     // BUT the UI might have deleted some items!
-                     // OK, let's stick to deleting ALL history for the family ONLY IF the history list is "long enough"
-                     // OR just delete history for the children mentioned in history list.
-                     const targetChildIds = [...new Set(data.history.map(h => h.childId || defaultChildId))];
-                     await client.query('DELETE FROM history WHERE family_id = $1 AND child_id = ANY($2)', [dbId, targetChildIds]);
-                }
-            }
-
-            for (const entry of data.history) {
-                const targetChildId = actingChildId || entry.childId || defaultChildId;
-                const relatedId = entry.itemId || entry.taskId || entry.relatedId || null;
-                await client.query(
-                    `INSERT INTO history (family_id, child_id, external_id, type, amount, description, money_amount, related_id, created_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                    [
-                        dbId,
-                        targetChildId,
-                        entry.id || null,
-                        entry.type || 'unknown',
-                        entry.amount || 0,
-                        entry.description || '',
-                        entry.moneyAmount || 0,
-                        relatedId,
-                        entry.date || entry.timestamp || new Date()
-                    ]
-                );
-            }
-        }
-
-        // Update requests
-        if (data.requests !== undefined && Array.isArray(data.requests)) {
-            await client.query(`DELETE FROM requests ${deleteWhere}`, deleteParams);
-            for (const req of data.requests) {
-                const targetChildId = actingChildId || req.childId || defaultChildId;
-                await client.query(
-                    `INSERT INTO requests (family_id, child_id, external_id, task_id, task_name, coins, status, created_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                    [
-                        dbId,
-                        targetChildId,
-                        req.id || null,
-                        req.taskId || null,
-                        req.taskName || '',
-                        req.coins || 0,
-                        req.status || 'pending',
-                        req.date || req.created_at || new Date()
-                    ]
-                );
-            }
-        }
-
-        // Friends
-        if (data.friends !== undefined && Array.isArray(data.friends) && actingChildId) {
-            // Only sync friends for specific child for now.
-            await client.query('DELETE FROM friends WHERE child_id = $1', [actingChildId]);
-            for (const fItem of data.friends) {
-                // fItem might be ID or object
-                let friendChildId = typeof fItem === 'object' ? fItem.friendChildId : null;
-                if (!friendChildId) continue;
-                // We don't verify if friend exists in this bulk sync to be fast, but DB constraint will check
-                await client.query(
-                    `INSERT INTO friends (child_id, friend_child_id) VALUES ($1, $2)
-                     ON CONFLICT DO NOTHING`,
-                    [actingChildId, friendChildId]
-                );
-            }
-        }
+        await syncBalances(client, data, actingChildId);
+        await syncTasks(client, syncContext);
+        await syncShop(client, syncContext);
+        await syncHistory(client, dbId, data, actingChildId, defaultChildId);
+        await syncRequests(client, syncContext);
+        await syncFriends(client, data, actingChildId);
 
         await client.query('COMMIT');
         return true;
@@ -381,15 +409,18 @@ async function addRequest(familyId, request) {
     if (!childId) return false;
 
     const result = await query(
-        `INSERT INTO requests (family_id, child_id, external_id, task_id, task_name, coins, status, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        `INSERT INTO requests (family_id, child_id, external_id, request_type, task_id, item_id, task_name, coins, money_amount, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
         [
             dbId,
             childId,
             request.id || null,
+            request.requestType || 'earn',
             request.taskId || null,
+            request.itemId || null,
             request.taskName || '',
             request.coins || 0,
+            request.moneyAmount || 0,
             request.status || 'pending',
             request.date || request.created_at || new Date()
         ]

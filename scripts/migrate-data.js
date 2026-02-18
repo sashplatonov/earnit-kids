@@ -72,6 +72,104 @@ async function migrateFamily(client, familyId, familyData) {
     return dbId;
 }
 
+async function upsertFamilyBalance(client, dbId, balance) {
+    await client.query(
+        'INSERT INTO family_data (family_id, balance) VALUES ($1, $2) ON CONFLICT (family_id) DO UPDATE SET balance = $2',
+        [dbId, balance || 0]
+    );
+}
+
+async function migrateTasks(client, dbId, tasks) {
+    if (!Array.isArray(tasks)) return;
+
+    for (const task of tasks) {
+        await client.query(
+            `INSERT INTO tasks (family_id, task_id, name, coins, group_name, frequency, comment, money_limit)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (family_id, task_id) DO NOTHING`,
+            [
+                dbId,
+                task.id,
+                task.name,
+                task.coins || 0,
+                task.group || null,
+                task.frequency ? JSON.stringify(task.frequency) : null,
+                task.comment || null,
+                task.money_limit || null
+            ]
+        );
+    }
+    console.log(`    📝 Migrated ${tasks.length} tasks`);
+}
+
+async function migrateShopItems(client, dbId, shopItems) {
+    if (!Array.isArray(shopItems)) return;
+
+    for (const item of shopItems) {
+        await client.query(
+            `INSERT INTO shop_items (family_id, item_id, name, price, group_name, frequency, money_limit)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (family_id, item_id) DO NOTHING`,
+            [
+                dbId,
+                item.id,
+                item.name,
+                item.price || 0,
+                item.group || null,
+                item.frequency ? JSON.stringify(item.frequency) : null,
+                item.money_limit || null
+            ]
+        );
+    }
+    console.log(`    🛍️  Migrated ${shopItems.length} shop items`);
+}
+
+async function migrateHistory(client, dbId, history) {
+    if (!Array.isArray(history)) return;
+
+    for (const entry of history) {
+        const { type, timestamp, id, amount, description, moneyAmount, itemId, taskId, relatedId } = entry;
+        const finalRelatedId = itemId || taskId || relatedId || null;
+        await client.query(
+            `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [
+                dbId,
+                id || null,
+                type || 'unknown',
+                amount || 0,
+                description || '',
+                moneyAmount || 0,
+                finalRelatedId,
+                timestamp || entry.date || new Date()
+            ]
+        );
+    }
+    console.log(`    📜 Migrated ${history.length} history entries`);
+}
+
+async function migrateRequests(client, dbId, requests) {
+    if (!Array.isArray(requests)) return;
+
+    for (const req of requests) {
+        const { id, status, created_at, taskId, taskName, coins, date } = req;
+        await client.query(
+            `INSERT INTO requests (family_id, external_id, task_id, task_name, coins, status, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+                dbId,
+                id || null,
+                taskId || null,
+                taskName || '',
+                coins || 0,
+                status || 'pending',
+                created_at || date || new Date()
+            ]
+        );
+    }
+    console.log(`    📨 Migrated ${requests.length} requests`);
+}
+
 async function migrateFamilyData(client, dbId, familyId) {
     const familyFile = path.join(FAMILIES_DATA_DIR, `${familyId}.json`);
 
@@ -87,99 +185,11 @@ async function migrateFamilyData(client, dbId, familyId) {
 
     try {
         const data = JSON.parse(fs.readFileSync(familyFile, 'utf8'));
-
-        // Insert balance
-        await client.query(
-            'INSERT INTO family_data (family_id, balance) VALUES ($1, $2) ON CONFLICT (family_id) DO UPDATE SET balance = $2',
-            [dbId, data.balance || 0]
-        );
-
-        // Insert tasks
-        if (data.tasks && Array.isArray(data.tasks)) {
-            for (const task of data.tasks) {
-                await client.query(
-                    `INSERT INTO tasks (family_id, task_id, name, coins, group_name, frequency, comment, money_limit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                     ON CONFLICT (family_id, task_id) DO NOTHING`,
-                    [
-                        dbId,
-                        task.id,
-                        task.name,
-                        task.coins || 0,
-                        task.group || null,
-                        task.frequency ? JSON.stringify(task.frequency) : null,
-                        task.comment || null,
-                        task.money_limit || null
-                    ]
-                );
-            }
-            console.log(`    📝 Migrated ${data.tasks.length} tasks`);
-        }
-
-        // Insert shop items
-        if (data.shop && Array.isArray(data.shop)) {
-            for (const item of data.shop) {
-                await client.query(
-                    `INSERT INTO shop_items (family_id, item_id, name, price, group_name, frequency, money_limit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7)
-                     ON CONFLICT (family_id, item_id) DO NOTHING`,
-                    [
-                        dbId,
-                        item.id,
-                        item.name,
-                        item.price || 0,
-                        item.group || null,
-                        item.frequency ? JSON.stringify(item.frequency) : null,
-                        item.money_limit || null
-                    ]
-                );
-            }
-            console.log(`    🛍️  Migrated ${data.shop.length} shop items`);
-        }
-
-        // Insert history
-        if (data.history && Array.isArray(data.history)) {
-            for (const entry of data.history) {
-                const { type, timestamp, id, amount, description, moneyAmount, itemId, taskId, relatedId, ...rest } = entry;
-                const finalRelatedId = itemId || taskId || relatedId || null;
-                await client.query(
-                    `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                    [
-                        dbId,
-                        id || null,
-                        type || 'unknown',
-                        amount || 0,
-                        description || '',
-                        moneyAmount || 0,
-                        finalRelatedId,
-                        timestamp || entry.date || new Date()
-                    ]
-                );
-            }
-            console.log(`    📜 Migrated ${data.history.length} history entries`);
-        }
-
-        // Insert requests
-        if (data.requests && Array.isArray(data.requests)) {
-            for (const req of data.requests) {
-                const { id, type, status, created_at, taskId, taskName, coins, date, ...rest } = req;
-                await client.query(
-                    `INSERT INTO requests (family_id, external_id, task_id, task_name, coins, status, created_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                    [
-                        dbId,
-                        id || null,
-                        taskId || null,
-                        taskName || '',
-                        coins || 0,
-                        status || 'pending',
-                        created_at || date || new Date()
-                    ]
-                );
-            }
-            console.log(`    📨 Migrated ${data.requests.length} requests`);
-        }
+        await upsertFamilyBalance(client, dbId, data.balance);
+        await migrateTasks(client, dbId, data.tasks);
+        await migrateShopItems(client, dbId, data.shop);
+        await migrateHistory(client, dbId, data.history);
+        await migrateRequests(client, dbId, data.requests);
 
         // Friends will be migrated in a second pass (need all families first)
         return data.friends || [];
