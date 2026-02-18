@@ -434,15 +434,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (confirmCancel) confirmCancel.addEventListener('click', () => closeModal('confirm-modal'));
 
     // Tabs
-    document.querySelectorAll('.nav__btn').forEach(btn => {
+    const tabButtons = document.querySelectorAll('.nav__btn, .nav__dropdown-item');
+    const moreBtn = document.getElementById('nav-more-btn');
+    const moreDropdown = document.getElementById('nav-more-dropdown');
+
+    function closeMoreDropdown() {
+        if (moreDropdown && !moreDropdown.classList.contains('hidden')) {
+            moreDropdown.classList.add('hidden');
+            if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function openMoreDropdown() {
+        if (moreDropdown && moreDropdown.classList.contains('hidden')) {
+            moreDropdown.classList.remove('hidden');
+            if (moreBtn) moreBtn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function activateTab(tabName) {
+        if (!tabName) return;
+        tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+        document.querySelectorAll('.section').forEach(section => section.classList.add('hidden'));
+        const targetSection = document.getElementById(`${tabName}-section`);
+        if (targetSection) targetSection.classList.remove('hidden');
+    }
+
+    tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            const tabName = btn.dataset.tab;
-            document.querySelectorAll('.nav__btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
-            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            const section = document.getElementById(`${tabName}-section`);
-            if (section) section.classList.remove('hidden');
+            activateTab(btn.dataset.tab);
+            if (btn.classList.contains('nav__dropdown-item')) {
+                closeMoreDropdown();
+            }
         });
     });
+
+    if (moreBtn && moreDropdown) {
+        moreBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (moreDropdown.classList.contains('hidden')) {
+                openMoreDropdown();
+            } else {
+                closeMoreDropdown();
+            }
+        });
+
+        moreDropdown.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.nav__more-wrapper')) {
+                closeMoreDropdown();
+            }
+        });
+    }
+
+    const balanceButton = document.querySelector('.header__balance');
+    if (balanceButton) {
+        balanceButton.addEventListener('click', () => {
+            activateTab('history');
+            closeMoreDropdown();
+        });
+        balanceButton.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                activateTab('history');
+                closeMoreDropdown();
+            }
+        });
+    }
+
+    activateTab('tasks');
 
     // Modals backdrop
     document.querySelectorAll('.modal__backdrop').forEach(backdrop => {

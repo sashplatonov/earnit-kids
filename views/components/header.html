@@ -12,12 +12,13 @@
             </div>
         </div>
     </div>
-    <div class="header__balance">
+    <div class="header__balance" tabindex="0" role="button" aria-label="Открыть историю">
         <div class="header__balance-main">
             <span class="balance__label">Баланс:</span>
             <span class="balance__value" id="balance">0</span>
             <span class="balance__coin">🪙</span>
         </div>
+        <div class="header__balance-hint">📊</div>
         <div class="header__earned" aria-live="polite">
             <span class="header__earned-label">Сегодня</span>
             <div class="header__earned-track" title="Ежедневный лимит">
@@ -30,11 +31,5 @@
             </div>
         </div>
         <button class="btn btn--success btn--small admin-only hidden" onclick="window.app.adminAwardCoins()" title="Начислить монеты">+</button>
-    </div>
-    <div class="header__actions" style="display: flex; gap: 0.5rem; align-items: center;">
-        <div id="child-switcher-container" class="admin-only hidden"></div>
-        <button class="btn btn--danger" id="logout-btn" title="Выход">
-            🚪
-        </button>
     </div>
 </header>

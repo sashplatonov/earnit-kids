@@ -740,6 +740,10 @@ export function updateAdminUI() {
         el.classList.toggle('hidden', !state.isAdmin);
     });
 
+    document.querySelectorAll('.parent-only').forEach(el => {
+        el.classList.toggle('hidden', !state.isAdmin);
+    });
+
     document.querySelectorAll('.child-only').forEach(el => {
         el.classList.toggle('hidden', state.isAdmin);
     });

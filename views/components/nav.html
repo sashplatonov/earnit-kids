@@ -1,13 +1,22 @@
 <nav class="nav nav--pending">
-    <button class="nav__btn active" data-tab="tasks">📋 Задания</button>
-    <button class="nav__btn" data-tab="requests">📩 Заявки <span id="requests-counter"
-            class="nav__counter hidden">0</span></button>
-    <button class="nav__btn" data-tab="shop">🛒 Магазин</button>
-    <button class="nav__btn hidden" id="nav-catalog" data-tab="catalog">📚 Каталог</button>
-    <button class="nav__btn" data-tab="about">ℹ️ О магазине</button>
-    <button class="nav__btn" data-tab="history">📊 История</button>
-    <button class="nav__btn" data-tab="rules">📖 Правила</button>
-    <button class="nav__btn" data-tab="friends">👥 Друзья</button>
-    <button class="nav__btn admin-only hidden" id="nav-child-link" data-tab="child-link">🔗 Ссылка для ребенка</button>
-    <button class="nav__btn" id="nav-settings" data-tab="settings">⚙️ Настройки</button>
+    <div class="nav__primary">
+        <div id="child-switcher-container" class="nav__child-switcher parent-only hidden"></div>
+        <button class="nav__btn active" data-tab="tasks">📋 Задания</button>
+        <button class="nav__btn" data-tab="requests">📩 Заявки <span id="requests-counter"
+                class="nav__counter hidden">0</span></button>
+        <button class="nav__btn" data-tab="shop">🛒 Магазин</button>
+        <button class="nav__btn parent-only hidden" id="nav-catalog" data-tab="catalog">📚 Каталог</button>
+        <div class="nav__more-wrapper">
+            <button class="nav__more" id="nav-more-btn" aria-haspopup="true" aria-expanded="false"
+                aria-controls="nav-more-dropdown" title="Дополнительные разделы">⋯</button>
+            <div class="nav__dropdown hidden" id="nav-more-dropdown">
+                <button class="nav__dropdown-item" data-tab="rules">📖 Правила</button>
+                <button class="nav__dropdown-item" data-tab="about">ℹ️ О магазине</button>
+                <button class="nav__dropdown-item" data-tab="friends">👥 Друзья</button>
+                <button class="nav__dropdown-item parent-only hidden" id="nav-child-link" data-tab="child-link">🔗 Ссылка</button>
+                <button class="nav__dropdown-item" id="nav-settings" data-tab="settings">⚙️ Настройки</button>
+                <button class="nav__dropdown-item nav__dropdown-action" id="logout-btn">🚪 Выйти</button>
+            </div>
+        </div>
+    </div>
 </nav>
