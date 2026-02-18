@@ -218,277 +218,193 @@ function revealTopNav() {
     if (nav) nav.classList.remove('nav--pending');
 }
 
-// Initialization
-document.addEventListener('DOMContentLoaded', async () => {
-    // Determine role from cookie
-    const role = getCookie('app_role') || 'child';
+function bindClick(id, handler) {
+    const element = document.getElementById(id);
+    if (element) element.addEventListener('click', handler);
+}
 
-    // Load data
-    const data = await loadDataFromServer();
-    if (data) {
-        // Load Base Data if Admin
-        let baseData = { tasks: [], products: [] };
-        if (data.isAdmin) {
-            baseData = await loadBaseData() || baseData;
-        }
+function bindInput(id, handler) {
+    const element = document.getElementById(id);
+    if (element) element.addEventListener('input', handler);
+}
 
-        setState({
-            isAdmin: data.isAdmin || false,
-            role: data.isAdmin ? 'admin' : 'child',
-            familyId: data.familyId || null,
-            balance: data.balance || 0,
-            tasks: data.tasks || [],
-            shopItems: data.shop || [],
-            history: data.history || [],
-            requests: data.requests || [],
-            familyName: data.familyName || '',
-            childNickname: data.childNickname || null,
-            monthlyLimit: data.monthlyLimit || 10000,
-            dailyCoinLimit: data.dailyCoinLimit || 0,
-            children: data.children || [],
-            baseData: baseData
-        });
+function showAdminNavActions() {
+    bindClick('edit-rules-btn', openEditRules);
 
-        if (!data.isAdmin) {
-            await refreshFriends();
-        } else {
-            // If Children exist and no currentChildId (initial load), select first child
-            if (state.children && state.children.length > 0 && !state.currentChildId) {
-                switchChild(state.children[0].id);
-            }
-        }
-    } else {
-        showToast('Не удалось загрузить данные с сервера', 'error');
+    const editRulesBtn = document.getElementById('edit-rules-btn');
+    if (editRulesBtn) {
+        editRulesBtn.classList.remove('hidden');
+        editRulesBtn.parentElement.classList.remove('hidden');
     }
 
-    renderAll();
-    renderRules();
-    loadAboutContent();
-    // Render catalog if admin
-    if (state.isAdmin) renderCatalog();
+    const catBtn = document.getElementById('nav-catalog');
+    if (catBtn) catBtn.classList.remove('hidden');
 
-    // Show rules edit button if admin
-    if (state.isAdmin) {
-        const editRulesBtn = document.getElementById('edit-rules-btn');
-        if (editRulesBtn) {
-            editRulesBtn.classList.remove('hidden');
-            editRulesBtn.parentElement.classList.remove('hidden');
-            editRulesBtn.addEventListener('click', openEditRules);
+    const childLinkBtn = document.getElementById('nav-child-link');
+    if (childLinkBtn) childLinkBtn.classList.remove('hidden');
+}
+
+function setupSettingsControls() {
+    bindClick('settings-change-pin-btn', openChangePinModal);
+    bindClick('settings-save-main-btn', saveFamilySettingsInline);
+    bindClick('settings-save-pin-btn', saveNewPinInline);
+    bindClick('settings-copy-link-btn', copyChildLinkInline);
+    bindClick('settings-regenerate-link-btn', regenerateChildLinkInline);
+    bindClick('settings-save-nickname-btn', saveNickname);
+
+    if (!state.isAdmin) return;
+
+    const nameInp = document.getElementById('settings-family-name-inline');
+    if (nameInp) nameInp.value = state.familyName || '';
+
+    const limitInp = document.getElementById('settings-money-limit-inline');
+    if (limitInp) limitInp.value = state.monthlyLimit || 10000;
+
+    refreshChildLinkInline();
+}
+
+async function fetchLegacyChildLink() {
+    try {
+        const res = await fetch('/api/child-link');
+        const data = await res.json();
+        if (!data.link) {
+            showToast(`Ошибка получения ссылки: ${data.error || 'неизвестно'}`, 'error');
+            return;
         }
+
+        const input = document.getElementById('child-link-input');
+        if (input) input.value = data.link;
+        openModal('child-link-modal');
+    } catch (err) {
+        showToast('Ошибка сети', 'error');
     }
+}
 
-    const rulesSave = document.getElementById('rules-save');
-    if (rulesSave) rulesSave.addEventListener('click', saveRules);
+function setupChildLinkControls() {
+    bindClick('settings-child-link-btn', fetchLegacyChildLink);
+    bindClick('child-link-close', () => closeModal('child-link-modal'));
 
-    const rulesCancel = document.getElementById('rules-cancel');
-    if (rulesCancel) rulesCancel.addEventListener('click', () => closeModal('rules-modal'));
+    bindClick('copy-child-link-btn', () => {
+        const input = document.getElementById('child-link-input');
+        if (!input) return;
 
-    // Show catalog and settings buttons if admin
-    const setBtn = document.getElementById('nav-settings');
-    if (setBtn) setBtn.classList.remove('hidden');
-
-    if (state.isAdmin) {
-        const catBtn = document.getElementById('nav-catalog');
-        if (catBtn) catBtn.classList.remove('hidden');
-        const childLinkBtn = document.getElementById('nav-child-link');
-        if (childLinkBtn) childLinkBtn.classList.remove('hidden');
-    }
-
-    revealTopNav();
-
-    // Event Listeners
-
-    // Catalog Filter
-    const ageMinFilter = document.getElementById('catalog-age-min-filter');
-    const ageMaxFilter = document.getElementById('catalog-age-max-filter');
-    if (ageMinFilter) ageMinFilter.addEventListener('input', renderCatalog);
-    if (ageMaxFilter) ageMaxFilter.addEventListener('input', renderCatalog);
-
-    // Logout
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) logoutBtn.addEventListener('click', async () => {
-        if (await logout()) {
-            window.location.reload();
-        } else {
-            showToast('Ошибка при выходе', 'error');
+        input.select();
+        try {
+            document.execCommand('copy');
+            showToast('Ссылка скопирована!', 'success');
+        } catch (err) {
+            showToast('Не удалось скопировать', 'error');
         }
     });
 
-    // Change PIN
-    const changePinBtn = document.getElementById('settings-change-pin-btn');
-    if (changePinBtn) {
-        changePinBtn.addEventListener('click', openChangePinModal);
-    }
+    bindClick('regenerate-child-link-btn', async () => {
+        if (!confirm('Вы уверены, что хотите обновить ссылку? Старая ссылка перестанет работать.')) return;
+        const data = await regenerateChildToken();
+        if (!data || !data.link) {
+            showToast('Ошибка при обновлении ссылки', 'error');
+            return;
+        }
 
-    // Inline Settings Save
-    const saveMainBtn = document.getElementById('settings-save-main-btn');
-    if (saveMainBtn) saveMainBtn.addEventListener('click', saveFamilySettingsInline);
+        const input = document.getElementById('child-link-input');
+        if (input) input.value = data.link;
+        showToast('Ссылка обновлена', 'success');
+    });
+}
 
-    const savePinBtn = document.getElementById('settings-save-pin-btn');
-    if (savePinBtn) savePinBtn.addEventListener('click', saveNewPinInline);
+function setupTaskAndShopControls() {
+    bindClick('add-task-btn', () => openTaskModal());
+    bindClick('task-save', saveTask);
+    bindClick('task-cancel', () => closeModal('task-modal'));
+    bindClick('task-delete', deleteTask);
 
-    const copyLinkBtnInline = document.getElementById('settings-copy-link-btn');
-    if (copyLinkBtnInline) copyLinkBtnInline.addEventListener('click', copyChildLinkInline);
+    bindClick('add-shop-btn', () => openShopModal());
+    bindClick('shop-save', saveShopItem);
+    bindClick('shop-cancel', () => closeModal('shop-modal'));
+    bindClick('shop-delete', deleteShopItem);
+}
 
-    const regenerateLinkBtnInline = document.getElementById('settings-regenerate-link-btn');
-    if (regenerateLinkBtnInline) regenerateLinkBtnInline.addEventListener('click', regenerateChildLinkInline);
+function setupRulesControls() {
+    bindClick('rules-save', saveRules);
+    bindClick('rules-cancel', () => closeModal('rules-modal'));
+}
 
-    // Initial populate settings if admin
-    if (state.isAdmin) {
-        const nameInp = document.getElementById('settings-family-name-inline');
-        if (nameInp) nameInp.value = state.familyName || '';
-        const limitInp = document.getElementById('settings-money-limit-inline');
-        if (limitInp) limitInp.value = state.monthlyLimit || 10000;
+function setupCatalogFilters() {
+    bindInput('catalog-age-min-filter', renderCatalog);
+    bindInput('catalog-age-max-filter', renderCatalog);
+}
 
-        // Populate child link
-        refreshChildLinkInline();
-    }
+function setupGeneralControls() {
+    bindClick('logout-btn', async () => {
+        if (await logout()) window.location.reload();
+        else showToast('Ошибка при выходе', 'error');
+    });
 
-    // Child Link Modal (Legacy or other uses, keeping for now or replacing)
-    const childLinkBtn = document.getElementById('settings-child-link-btn');
-    if (childLinkBtn) {
-        childLinkBtn.addEventListener('click', async () => {
-            try {
-                const res = await fetch('/api/child-link');
-                const data = await res.json();
-                if (data.link) {
-                    const input = document.getElementById('child-link-input');
-                    if (input) input.value = data.link;
-                    openModal('child-link-modal');
-                } else {
-                    showToast('Ошибка получения ссылки: ' + (data.error || 'неизвестно'), 'error');
-                }
-            } catch (err) {
-                showToast('Ошибка сети', 'error');
-            }
+    bindClick('confirm-ok', handleConfirm);
+    bindClick('confirm-cancel', () => closeModal('confirm-modal'));
+    bindClick('add-child-save', saveNewChild);
+    bindClick('add-child-cancel', () => closeModal('add-child-modal'));
+    bindClick('friend-search-btn', handleSearch);
+
+    const searchInput = document.getElementById('friend-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') handleSearch();
         });
     }
 
-    const copyLinkBtn = document.getElementById('copy-child-link-btn');
-    if (copyLinkBtn) {
-        copyLinkBtn.addEventListener('click', () => {
-            const input = document.getElementById('child-link-input');
-            if (input) {
-                input.select();
-                try {
-                    document.execCommand('copy');
-                    showToast('Ссылка скопирована!', 'success');
-                } catch (err) {
-                    showToast('Не удалось скопировать', 'error');
-                }
-            }
-        });
-    }
+    bindClick('clear-history-btn', () => {
+        if (!confirm('Очистить ВСЮ историю? Это нельзя отменить.')) return;
+        setState({ history: [] });
+        scheduleSave();
+        renderAll();
+        showToast('История очищена', 'info');
+    });
+}
 
-    const childLinkClose = document.getElementById('child-link-close');
-    if (childLinkClose) {
-        childLinkClose.addEventListener('click', () => closeModal('child-link-modal'));
-    }
-
-    const regenerateChildLinkBtn = document.getElementById('regenerate-child-link-btn');
-    if (regenerateChildLinkBtn) {
-        regenerateChildLinkBtn.addEventListener('click', async () => {
-            if (!confirm('Вы уверены, что хотите обновить ссылку? Старая ссылка перестанет работать.')) return;
-            const data = await regenerateChildToken();
-            if (data && data.link) {
-                const input = document.getElementById('child-link-input');
-                if (input) input.value = data.link;
-                showToast('Ссылка обновлена', 'success');
-            } else {
-                showToast('Ошибка при обновлении ссылки', 'error');
-            }
-        });
-    }
-
-    // Tasks
-    const addTaskBtn = document.getElementById('add-task-btn');
-    if (addTaskBtn) addTaskBtn.addEventListener('click', () => openTaskModal());
-
-    const taskSave = document.getElementById('task-save');
-    if (taskSave) taskSave.addEventListener('click', saveTask);
-
-    const taskCancel = document.getElementById('task-cancel');
-    if (taskCancel) taskCancel.addEventListener('click', () => closeModal('task-modal'));
-
-    const taskDelete = document.getElementById('task-delete');
-    if (taskDelete) taskDelete.addEventListener('click', deleteTask);
-
-    // Shop
-    const addShopBtn = document.getElementById('add-shop-btn');
-    if (addShopBtn) addShopBtn.addEventListener('click', () => openShopModal());
-
-    const shopSave = document.getElementById('shop-save');
-    if (shopSave) shopSave.addEventListener('click', saveShopItem);
-
-    const shopCancel = document.getElementById('shop-cancel');
-    if (shopCancel) shopCancel.addEventListener('click', () => closeModal('shop-modal'));
-
-    const shopDelete = document.getElementById('shop-delete');
-    if (shopDelete) shopDelete.addEventListener('click', deleteShopItem);
-
-    // Confirmation
-    const confirmOk = document.getElementById('confirm-ok');
-    if (confirmOk) confirmOk.addEventListener('click', handleConfirm);
-
-    const confirmCancel = document.getElementById('confirm-cancel');
-    if (confirmCancel) confirmCancel.addEventListener('click', () => closeModal('confirm-modal'));
-
-    // Tabs
+function setupTabControls() {
     const tabButtons = document.querySelectorAll('.nav__btn, .nav__dropdown-item');
     const moreBtn = document.getElementById('nav-more-btn');
     const moreDropdown = document.getElementById('nav-more-dropdown');
 
-    function closeMoreDropdown() {
-        if (moreDropdown && !moreDropdown.classList.contains('hidden')) {
-            moreDropdown.classList.add('hidden');
-            if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
-        }
-    }
+    const closeMoreDropdown = () => {
+        if (!moreDropdown || moreDropdown.classList.contains('hidden')) return;
+        moreDropdown.classList.add('hidden');
+        if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+    };
 
-    function openMoreDropdown() {
-        if (moreDropdown && moreDropdown.classList.contains('hidden')) {
-            moreDropdown.classList.remove('hidden');
-            if (moreBtn) moreBtn.setAttribute('aria-expanded', 'true');
-        }
-    }
+    const openMoreDropdown = () => {
+        if (!moreDropdown || !moreDropdown.classList.contains('hidden')) return;
+        moreDropdown.classList.remove('hidden');
+        if (moreBtn) moreBtn.setAttribute('aria-expanded', 'true');
+    };
 
-    function activateTab(tabName) {
+    const activateTab = (tabName) => {
         if (!tabName) return;
-        tabButtons.forEach(btn => {
+        tabButtons.forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
-        document.querySelectorAll('.section').forEach(section => section.classList.add('hidden'));
+        document.querySelectorAll('.section').forEach((section) => section.classList.add('hidden'));
         const targetSection = document.getElementById(`${tabName}-section`);
         if (targetSection) targetSection.classList.remove('hidden');
-    }
+    };
 
-    tabButtons.forEach(btn => {
+    tabButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
             activateTab(btn.dataset.tab);
-            if (btn.classList.contains('nav__dropdown-item')) {
-                closeMoreDropdown();
-            }
+            if (btn.classList.contains('nav__dropdown-item')) closeMoreDropdown();
         });
     });
 
     if (moreBtn && moreDropdown) {
         moreBtn.addEventListener('click', (event) => {
             event.stopPropagation();
-            if (moreDropdown.classList.contains('hidden')) {
-                openMoreDropdown();
-            } else {
-                closeMoreDropdown();
-            }
+            if (moreDropdown.classList.contains('hidden')) openMoreDropdown();
+            else closeMoreDropdown();
         });
 
-        moreDropdown.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
-
+        moreDropdown.addEventListener('click', (event) => event.stopPropagation());
         document.addEventListener('click', (event) => {
-            if (!event.target.closest('.nav__more-wrapper')) {
-                closeMoreDropdown();
-            }
+            if (!event.target.closest('.nav__more-wrapper')) closeMoreDropdown();
         });
     }
 
@@ -499,53 +415,97 @@ document.addEventListener('DOMContentLoaded', async () => {
             closeMoreDropdown();
         });
         balanceButton.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                activateTab('history');
-                closeMoreDropdown();
-            }
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            activateTab('history');
+            closeMoreDropdown();
         });
     }
 
     activateTab('tasks');
+}
 
-    // Modals backdrop
-    document.querySelectorAll('.modal__backdrop').forEach(backdrop => {
+function setupModalBackdropClose() {
+    document.querySelectorAll('.modal__backdrop').forEach((backdrop) => {
         backdrop.addEventListener('click', () => {
             const modal = backdrop.closest('.modal');
             if (modal) modal.classList.remove('active');
         });
     });
+}
 
-
-
-    // History
-    const clearHistoryBtn = document.getElementById('clear-history-btn');
-    if (clearHistoryBtn) {
-        clearHistoryBtn.addEventListener('click', () => {
-            if (!confirm('Очистить ВСЮ историю? Это нельзя отменить.')) return;
-            setState({ history: [] });
-            scheduleSave();
-            renderAll();
-            showToast('История очищена', 'info');
-        });
+async function initializeFromServer() {
+    const data = await loadDataFromServer();
+    if (!data) {
+        showToast('Не удалось загрузить данные с сервера', 'error');
+        return;
     }
 
-    // Friends Section
-    const searchBtn = document.getElementById('friend-search-btn');
-    if (searchBtn) searchBtn.addEventListener('click', handleSearch);
+    let baseData = { tasks: [], products: [] };
+    if (data.isAdmin) {
+        baseData = await loadBaseData() || baseData;
+    }
 
-    const searchInput = document.getElementById('friend-search-input');
-    if (searchInput) searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleSearch();
+    setState(buildInitialState(data, baseData));
+
+    if (!data.isAdmin) {
+        await refreshFriends();
+        return;
+    }
+
+    if (state.children && state.children.length > 0 && !state.currentChildId) {
+        switchChild(state.children[0].id);
+    }
+}
+
+function buildInitialState(data, baseData) {
+    return {
+        isAdmin: Boolean(data.isAdmin),
+        role: data.isAdmin ? 'admin' : 'child',
+        familyId: data.familyId ?? null,
+        balance: data.balance ?? 0,
+        tasks: data.tasks ?? [],
+        shopItems: data.shop ?? [],
+        history: data.history ?? [],
+        requests: data.requests ?? [],
+        familyName: data.familyName ?? '',
+        childNickname: data.childNickname ?? null,
+        monthlyLimit: data.monthlyLimit ?? 10000,
+        dailyCoinLimit: data.dailyCoinLimit ?? 0,
+        children: data.children ?? [],
+        baseData
+    };
+}
+
+async function initializeApp() {
+    const role = getCookie('app_role') || 'child';
+    await initializeFromServer();
+
+    renderAll();
+    renderRules();
+    loadAboutContent();
+    if (state.isAdmin) renderCatalog();
+
+    if (state.isAdmin) showAdminNavActions();
+    const setBtn = document.getElementById('nav-settings');
+    if (setBtn) setBtn.classList.remove('hidden');
+
+    setupRulesControls();
+    setupCatalogFilters();
+    setupSettingsControls();
+    setupChildLinkControls();
+    setupTaskAndShopControls();
+    setupGeneralControls();
+    setupTabControls();
+    setupModalBackdropClose();
+    revealTopNav();
+
+    return role;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp().catch((err) => {
+        console.error('App init failed:', err);
+        showToast('Ошибка инициализации приложения', 'error');
     });
-
-    const saveNicknameBtn = document.getElementById('settings-save-nickname-btn');
-    if (saveNicknameBtn) saveNicknameBtn.addEventListener('click', saveNickname);
-
-    const addChildSave = document.getElementById('add-child-save');
-    if (addChildSave) addChildSave.addEventListener('click', saveNewChild);
-
-    const addChildCancel = document.getElementById('add-child-cancel');
-    if (addChildCancel) addChildCancel.addEventListener('click', () => closeModal('add-child-modal'));
 });

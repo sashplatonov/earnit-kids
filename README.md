@@ -21,6 +21,17 @@ The project is deployed and available at: [https://coins-kids-shop.onrender.com/
 -   **Session Security** — Secure `HttpOnly` cookies with session management.
 -   **Mobile First** — Fully responsive design optimized for phones and tablets.
 
+## 🛒 Shop Flow
+
+The shop is scoped per child and supports both direct parent purchases and child purchase requests.
+
+-   **Family Catalog + Personal Shop**: Parents can add products from the global catalog to a selected child's shop.
+-   **Child Purchase Requests**: Children can submit shop purchase requests (`requestType: shop_purchase`) instead of spending coins directly.
+-   **Parent Approval**: Parents approve or reject requests; approved purchases are written to history as `spend` operations and deduct child balance.
+-   **Money-Aware Purchases**: Items can include a `money_limit`; when set, purchase flow asks for real-money amount and validates limits.
+-   **Frequency Limits**: Shop items may define `frequency` (`limit` + `period`) and are validated against purchase history.
+-   **Per-Child Data Isolation**: Tasks, shop items, requests, and history are stored with `child_id` and loaded by active child context.
+
 ## 🛠 Tech Stack
 
 ### Web Application

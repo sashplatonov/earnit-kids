@@ -1,3 +1,5 @@
+import { renderFamilyDetails } from './modules/super-admin-family-details.js';
+
 let familiesData = [];
 let baseData = { tasks: [], products: [] };
 
@@ -433,111 +435,6 @@ window.viewFamily = async (familyId) => {
     }
 };
 
-// Render family details in modal
-function renderFamilyDetails(familyData) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalBody = document.getElementById('modal-body');
-
-    modalTitle.textContent = familyData.familyInfo.name;
-
-    let html = `
-        <div class="detail-grid">
-            <div class="detail-item">
-                <strong>ID семьи</strong>
-                <div>#${familyData.familyId}</div>
-            </div>
-            <div class="detail-item">
-                <strong>Дата создания</strong>
-                <div>${new Date(familyData.familyInfo.created_at).toLocaleString('ru-RU')}</div>
-            </div>
-            <div class="detail-item">
-                <strong>Email</strong>
-                <div>${familyData.familyInfo.email || '-'}</div>
-            </div>
-            <div class="detail-item">
-                <strong>Баланс</strong>
-                <div>${familyData.data.balance} 🪙</div>
-            </div>
-            <div class="detail-item">
-                <strong>Лимит (мес)</strong>
-                <div>${familyData.familyInfo.monthly_limit || 10000}</div>
-            </div>
-            <div class="detail-item" style="grid-column: span 2">
-                <strong>Дети (${familyData.familyInfo.children.length})</strong>
-                <div style="margin-top:0.5rem; display:flex; flex-direction:column; gap:0.5rem;">
-                    ${familyData.familyInfo.children.map(c => `
-                        <div style="display:flex; gap:0.5rem; align-items:center; background: #f9fafb; padding: 0.5rem; border-radius: 6px;">
-                            <span style="font-weight:bold; min-width: 80px;">${c.name}</span>
-                            <span style="font-size:0.8rem; color:#666">Bal: ${c.balance}</span>
-                            <div style="flex:1; display:flex; gap:0.3rem;">
-                                <input type="text" readonly value="${window.location.origin}/login-child/${c.token}" style="flex:1; font-size:0.8rem; border:1px solid #ddd; padding:2px 4px; border-radius:4px;">
-                                <button class="view-btn" onclick="copyMagicLink('${c.token}')">Copy</button>
-                                <button class="block-btn" style="background:#f59e0b; padding:2px 6px;" onclick="regenerateToken(null, ${c.id})">Refresh</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        </div>
-
-        <h3>📋 Задания (${familyData.data.tasks.length})</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Название</th>
-                    <th>Награда</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${familyData.data.tasks.map(task => `
-                    <tr>
-                        <td>${task.name}</td>
-                        <td>${task.coins} 🪙</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-
-        <h3>🏪 Магазин (${familyData.data.shop.length})</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Название</th>
-                    <th>Цена</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${familyData.data.shop.map(item => {
-        const freqText = item.frequency ? `<br><small>${item.frequency.limit}/${item.frequency.period}</small>` : '';
-        const limitText = item.money_limit ? `<br><small>Limit: ${item.money_limit}🪙</small>` : '';
-        return `
-                    <tr>
-                        <td>${item.name}${freqText}${limitText}</td>
-                        <td>${item.price} 🪙</td>
-                    </tr>
-                `;
-    }).join('')}
-            </tbody>
-        </table>
-
-        <h3>📜 История (${familyData.data.history.length})</h3>
-        ${familyData.data.history.length === 0 ? '<p>Нет записей</p>' : `
-            <table>
-                <tbody>
-                    ${familyData.data.history.slice(-10).reverse().map(h => `
-                        <tr>
-                            <td>${new Date(h.timestamp).toLocaleString('ru-RU')}</td>
-                            <td>${h.action}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `}
-    `;
-
-    modalBody.innerHTML = html;
-}
-
 // Close modal
 document.getElementById('modal-close').addEventListener('click', () => {
     document.getElementById('family-modal').classList.remove('active');
@@ -627,4 +524,3 @@ window.regenerateToken = async (familyId, childId) => {
         alert('Server error');
     }
 };
-

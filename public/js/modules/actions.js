@@ -37,7 +37,12 @@ function getActingChildId() {
     return null;
 }
 
-export function addHistoryEntry(type, amount, description, relatedId = null, moneyAmount = 0, childIdOverride = null) {
+export function addHistoryEntry(type, amount, description, options = {}) {
+    const {
+        relatedId = null,
+        moneyAmount = 0,
+        childIdOverride = null
+    } = options;
     const entry = {
         id: Date.now(),
         type: type, // 'earn' | 'spend'
@@ -241,7 +246,7 @@ export function buyItem(itemId) {
                 state.balance -= item.price;
             }
 
-            addHistoryEntry('spend', item.price, item.name, item.id, moneyPrice);
+            addHistoryEntry('spend', item.price, item.name, { relatedId: item.id, moneyAmount: moneyPrice });
             scheduleSave();
             renderAll();
             showToast(`Вы купили: ${item.name}!`, 'success');
@@ -310,7 +315,7 @@ export function earnCoins(taskId) {
             state.balance += task.coins;
         }
 
-        addHistoryEntry('earn', task.coins, task.name, task.id);
+        addHistoryEntry('earn', task.coins, task.name, { relatedId: task.id });
         renderShop(); // Update shop availability
         showToast(`+${task.coins} 🪙 начислено!`, 'success');
     };
@@ -422,7 +427,11 @@ export function approveRequest(reqId) {
             state.balance -= req.coins;
         }
 
-        addHistoryEntry('spend', req.coins, req.taskName || 'Покупка', req.itemId || req.taskId, req.moneyAmount || 0, req.childId);
+        addHistoryEntry('spend', req.coins, req.taskName || 'Покупка', {
+            relatedId: req.itemId || req.taskId,
+            moneyAmount: req.moneyAmount || 0,
+            childIdOverride: req.childId
+        });
         state.requests = state.requests.filter(r => r.id != reqId);
 
         scheduleSave();
@@ -449,7 +458,11 @@ export function approveRequest(reqId) {
     } else {
         state.balance += req.coins;
     }
-    addHistoryEntry('earn', req.coins, req.taskName, req.taskId, 0, req.childId);
+    addHistoryEntry('earn', req.coins, req.taskName, {
+        relatedId: req.taskId,
+        moneyAmount: 0,
+        childIdOverride: req.childId
+    });
 
     // Remove request
     state.requests = state.requests.filter(r => r.id != reqId);
