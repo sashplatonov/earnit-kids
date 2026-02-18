@@ -37,6 +37,15 @@ function getActingChildId() {
     return null;
 }
 
+function buildTaskHistoryDescription(task) {
+    if (!task) return '';
+
+    const parts = [task.name];
+    if (task.group) parts.push(`Группа: ${task.group}`);
+    if (task.comment) parts.push(`Описание: ${task.comment}`);
+    return parts.join(' | ');
+}
+
 export function addHistoryEntry(type, amount, description, options = {}) {
     const {
         relatedId = null,
@@ -175,24 +184,9 @@ export function buyItem(itemId) {
         return;
     }
 
-    // Ask for real-money amount only when the item has a positive money limit.
+    // Always use the maximum configured money limit for shop item.
     const limit = item.moneyLimit || item.money_limit;
-    let moneyPrice = 0;
-    if (limit && limit > 0) {
-        const moneyInput = prompt(`Покупка "${item.name}"\nВведите стоимость в деньгах (макс ${limit}):`, '0');
-        if (moneyInput === null) return;
-
-        moneyPrice = parseInt(moneyInput);
-        if (isNaN(moneyPrice) || moneyPrice < 0) {
-            showToast('Некорректная сумма', 'error');
-            return;
-        }
-
-        if (moneyPrice > limit) {
-            showToast(`Цена выше лимита товара (${limit})`, 'error');
-            return;
-        }
-    }
+    const moneyPrice = (limit && limit > 0) ? limit : 0;
 
     // Check global limits
     const limitError = checkLimits(item, moneyPrice, actingId);
@@ -204,7 +198,7 @@ export function buyItem(itemId) {
     if (!state.isAdmin) {
         showConfirm(
             'Отправить заявку на покупку?',
-            `"${item.name}" за ${item.price} 🪙${moneyPrice ? ` и ${moneyPrice} в деньгах` : ''}`,
+            `"${item.name}" за ${item.price} 🪙`,
             () => {
                 state.requests.push({
                     id: Date.now(),
@@ -231,7 +225,7 @@ export function buyItem(itemId) {
 
     showConfirm(
         'Подтвердите покупку',
-        `Купить "${item.name}" за ${item.price} 🪙${moneyPrice ? ` и ${moneyPrice} в деньгах` : ''}?`,
+        `Купить "${item.name}" за ${item.price} 🪙?`,
         () => {
             // Update specific child balance logic needed?
             // "state.balance" is used for display. 
@@ -303,6 +297,8 @@ export function earnCoins(taskId) {
     if (frequencyLimitWarning) warnings.push(frequencyLimitWarning);
     if (limitErr) warnings.push(limitErr);
 
+    const historyDescription = buildTaskHistoryDescription(task);
+
     const applyEarn = () => {
         // Update balance
         if (state.isAdmin && state.currentChildId) {
@@ -315,7 +311,7 @@ export function earnCoins(taskId) {
             state.balance += task.coins;
         }
 
-        addHistoryEntry('earn', task.coins, task.name, { relatedId: task.id });
+        addHistoryEntry('earn', task.coins, historyDescription, { relatedId: task.id });
         renderShop(); // Update shop availability
         showToast(`+${task.coins} 🪙 начислено!`, 'success');
     };
@@ -330,8 +326,8 @@ export function earnCoins(taskId) {
     }
 
     showConfirm(
-        'Начислить монеты?',
-        `Начислить ${task.coins} 🪙 за "${task.name}"?`,
+        'Выполнить задание?',
+        `Подтвердить выполнение задания "${task.name}"?`,
         applyEarn
     );
 }
@@ -458,7 +454,10 @@ export function approveRequest(reqId) {
     } else {
         state.balance += req.coins;
     }
-    addHistoryEntry('earn', req.coins, req.taskName, {
+    const sourceTask = state.tasks.find(t => t.id == req.taskId && (!req.childId || t.childId == req.childId));
+    const historyDescription = buildTaskHistoryDescription(sourceTask) || req.taskName;
+
+    addHistoryEntry('earn', req.coins, historyDescription, {
         relatedId: req.taskId,
         moneyAmount: 0,
         childIdOverride: req.childId
