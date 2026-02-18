@@ -1,12 +1,12 @@
-export const API_URL = 'api/data';
-export const LOGIN_URL = 'api/login';
-export const LOGOUT_URL = 'api/logout';
-export const CHANGE_PIN_URL = 'api/change-pin';
+export const API_URL = '/api/data';
+export const LOGIN_URL = '/api/login';
+export const LOGOUT_URL = '/api/logout';
+export const CHANGE_PIN_URL = '/api/change-pin';
 
 // ...existing code...
 export async function loadDataFromServer() {
     try {
-        const response = await fetch('api/data');
+        const response = await fetch('/api/data');
         if (response.ok) {
             return await response.json();
         }
@@ -18,7 +18,7 @@ export async function loadDataFromServer() {
 
 export async function loadBaseData() {
     try {
-        const response = await fetch('api/base-data');
+        const response = await fetch('/api/base-data');
         if (response.ok) {
             return await response.json();
         }

@@ -416,7 +416,7 @@
             hideMessages();
 
             try {
-                const res = await fetch('api/login', {
+                const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, pin })
@@ -462,7 +462,7 @@
             hideMessages();
 
             try {
-                const res = await fetch('api/register', {
+                const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ familyName, email: regEmail, adminPin })
@@ -514,7 +514,7 @@
             hideMessages();
 
             try {
-                const res = await fetch('api/forgot-password', {
+                const res = await fetch('/api/forgot-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
@@ -564,7 +564,7 @@
 
             // Fetch Auth Config
             try {
-                const res = await fetch('api/auth-config');
+                const res = await fetch('/api/auth-config');
                 if (res.ok) {
                     const config = await res.json();
 

@@ -103,6 +103,7 @@ function handleAuthConfig(res) {
 }
 
 async function handleAuthAPI(req, res) {
+    const pathname = new URL(req.url, 'http://localhost').pathname.replace(/\/+$/, '') || '/';
     const handlers = {
         'POST /api/login': () => handleLogin(req, res),
         'POST /api/register': () => handleRegister(req, res),
@@ -113,7 +114,7 @@ async function handleAuthAPI(req, res) {
         'GET /api/auth-config': () => handleAuthConfig(res)
     };
 
-    const handler = handlers[`${req.method} ${req.url}`];
+    const handler = handlers[`${req.method} ${pathname}`];
     if (!handler) return sendJSON(res, { error: 'Not Found' }, 404);
     await handler();
 }
