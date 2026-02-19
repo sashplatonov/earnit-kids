@@ -104,7 +104,13 @@ function serveStatic(req, res) {
     });
 }
 
-function serveLogin(req, res) {
+async function serveLogin(req, res) {
+    if (await isAuthenticated(req)) {
+        res.writeHead(302, { Location: '/' });
+        res.end();
+        return;
+    }
+
     const loginPath = path.join(__dirname, '../../views', 'login.html');
     fs.readFile(loginPath, 'utf8', (err, content) => {
         if (err) {

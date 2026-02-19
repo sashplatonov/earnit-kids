@@ -425,7 +425,7 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    window.location.reload();
+                    window.location.href = '/';
                 } else {
                     showError(data.error || 'Ошибка входа');
                     loginBtn.textContent = 'Войти';
