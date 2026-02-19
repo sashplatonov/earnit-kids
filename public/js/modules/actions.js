@@ -1,7 +1,7 @@
 import { state, notify, setState } from './state.js';
 import { saveDataToServer } from './api.js';
 import { renderAll, updateBalanceUI, renderTasks, renderShop, renderHistory, renderRequests } from './ui.js';
-import { showToast, showConfirm } from './utils.js';
+import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
 
 // Helper to access global CONFIG
 const CONFIG = window.CONFIG;
@@ -217,7 +217,7 @@ export function buyItem(itemId) {
                 renderRequests();
                 const reqBtn = document.querySelector('.nav__btn[data-tab="requests"]');
                 if (reqBtn) reqBtn.click();
-                showToast('Заявка на покупку отправлена', 'success');
+                showMobileEventNotification('Заявка на покупку отправлена', 'success', 'Новая заявка');
             }
         );
         return;
@@ -243,7 +243,7 @@ export function buyItem(itemId) {
             addHistoryEntry('spend', item.price, item.name, { relatedId: item.id, moneyAmount: moneyPrice });
             scheduleSave();
             renderAll();
-            showToast(`Вы купили: ${item.name}!`, 'success');
+            showMobileEventNotification(`Вы купили: ${item.name}!`, 'success', 'Баланс изменён');
         }
     );
 }
@@ -313,7 +313,7 @@ export function earnCoins(taskId) {
 
         addHistoryEntry('earn', task.coins, historyDescription, { relatedId: task.id });
         renderShop(); // Update shop availability
-        showToast(`+${task.coins} 🪙 начислено!`, 'success');
+        showMobileEventNotification(`+${task.coins} 🪙 начислено!`, 'success', 'Баланс изменён');
     };
 
     if (warnings.length > 0) {
@@ -358,7 +358,7 @@ export function requestCoins(taskId) {
     const reqBtn = document.querySelector('.nav__btn[data-tab="requests"]');
     if (reqBtn) reqBtn.click();
 
-    showToast('Заявка отправлена!', 'success');
+    showMobileEventNotification('Заявка отправлена!', 'success', 'Новая заявка');
 }
 
 export function deleteHistoryItem(id) {
@@ -432,7 +432,7 @@ export function approveRequest(reqId) {
 
         scheduleSave();
         renderAll();
-        showToast(`Покупка подтверждена: -${req.coins} 🪙`, 'success');
+        showMobileEventNotification(`Покупка подтверждена: -${req.coins} 🪙`, 'success', 'Заявка подтверждена');
         return;
     }
 
@@ -468,7 +468,7 @@ export function approveRequest(reqId) {
 
     scheduleSave();
     renderAll();
-    showToast(`Заявка подтверждена: +${req.coins} 🪙`, 'success');
+    showMobileEventNotification(`Заявка подтверждена: +${req.coins} 🪙`, 'success', 'Заявка подтверждена');
 }
 
 export function rejectRequest(reqId) {
@@ -518,5 +518,5 @@ export function adminAwardCoins() {
     addHistoryEntry(amount > 0 ? 'earn' : 'spend', Math.abs(amount), description.trim() || 'Начисление вне заданий');
     scheduleSave();
     renderAll();
-    showToast(`${amount > 0 ? 'Начислено' : 'Списано'}: ${Math.abs(amount)} 🪙`, 'success');
+    showMobileEventNotification(`${amount > 0 ? 'Начислено' : 'Списано'}: ${Math.abs(amount)} 🪙`, 'success', 'Баланс изменён');
 }

@@ -6,6 +6,7 @@ export function escapeHtml(text) {
 
 export function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
     // Using global CONFIG if available, or fallbacks
     const icons = {
         success: '✅',
@@ -26,6 +27,87 @@ export function showToast(message, type = 'info') {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+let mobilePermissionChecked = false;
+let webNotificationPermissionChecked = false;
+
+function isMobileViewport() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(max-width: 900px)').matches;
+}
+
+function getLocalNotificationsPlugin() {
+    if (typeof window === 'undefined' || !window.Capacitor) return null;
+
+    const isNative = typeof window.Capacitor.isNativePlatform === 'function'
+        && window.Capacitor.isNativePlatform();
+    if (!isNative) return null;
+
+    return window.Capacitor.Plugins?.LocalNotifications || null;
+}
+
+async function tryShowNativeMobileNotification(title, message) {
+    const localNotifications = getLocalNotificationsPlugin();
+    if (!localNotifications) return;
+
+    try {
+        if (!mobilePermissionChecked) {
+            const permissions = await localNotifications.checkPermissions();
+            if (permissions.display !== 'granted') {
+                await localNotifications.requestPermissions();
+            }
+            mobilePermissionChecked = true;
+        }
+
+        const id = Date.now() % 2147483647;
+        await localNotifications.schedule({
+            notifications: [{
+                id,
+                title,
+                body: message,
+                schedule: { at: new Date(Date.now() + 150) }
+            }]
+        });
+    } catch (err) {
+        console.warn('Mobile notification failed:', err);
+    }
+}
+
+async function tryShowWebNotification(title, message) {
+    if (typeof window === 'undefined' || typeof window.Notification === 'undefined') return;
+
+    try {
+        if (!webNotificationPermissionChecked) {
+            if (window.Notification.permission !== 'granted') {
+                await window.Notification.requestPermission();
+            }
+            webNotificationPermissionChecked = true;
+        }
+
+        if (window.Notification.permission === 'granted') {
+            new window.Notification(title, { body: message });
+        }
+    } catch (err) {
+        console.warn('Web notification failed:', err);
+    }
+}
+
+export function showMobileEventNotification(message, type = 'info', title = 'Coins Kids Shop') {
+    showToast(message, type);
+
+    const localNotifications = getLocalNotificationsPlugin();
+    if (!isMobileViewport() && !localNotifications) {
+        return;
+    }
+
+    if (localNotifications) {
+        void tryShowNativeMobileNotification(title, message);
+        return;
+    }
+
+    void tryShowWebNotification(title, message);
 }
 
 export function openModal(modalId) {
