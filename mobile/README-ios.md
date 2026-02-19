@@ -49,4 +49,17 @@ npx cap copy ios     # optional: copy assets without syncing
 npx cap open ios     # open Xcode project
 ```
 
+## 8. Local iOS run with Docker backend (`http://localhost:3001`)
+From repository root:
+```bash
+docker compose up -d --build
+```
+
+Then in mobile folder:
+```bash
+cd mobile
+npm run sync:local
+npm run open:ios
+```
+
 Keep this guide handy while adjusting signing/capabilities or repeating builds. Once you see “Ready for Submission” in App Store Connect you’re ready to push the public release.

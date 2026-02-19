@@ -4,7 +4,9 @@
   "private": true,
   "description": "Capacitor shell for the Coins Kids Shop web app",
   "scripts": {
-    "sync": "npx cap sync",
+    "sync": "npm run sync:prod",
+    "sync:prod": "cp capacitor.config.prod.json capacitor.config.json && npx cap sync",
+    "sync:local": "cp capacitor.config.local.json capacitor.config.json && npx cap sync",
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android",
     "update": "npx cap update"

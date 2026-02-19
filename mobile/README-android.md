@@ -65,3 +65,16 @@ cd android
 If you prefer the full Android Studio workflow, skip the last two commands and run the bundle build from the IDE (Build → Build Bundle(s) / APK(s)).
 
 When you’re ready for stores, follow the dedicated checklist above. For quick testing or demos, rely on local APK installs so you don’t need a Play Console account.
+
+## 8. Local Android run with Docker backend (`http://localhost:3001`)
+From repository root:
+```bash
+docker compose up -d --build
+```
+
+Then in mobile folder:
+```bash
+cd mobile
+npm run sync:local
+npm run open:android
+```

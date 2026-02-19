@@ -5,16 +5,40 @@ This folder holds the Capacitor wrapper that hosts the existing web UI (`../publ
 ## Getting started
 0. Recommended runtime: Node.js 20.x or 22.x (LTS).
 1. `cd mobile && npm install`
-2. Optionally, customize `capacitor.config.json`:
-   - `server.url` should point to your production web origin (default `https://coins-kids-shop.onrender.com`). Change to `http://localhost:3000` for local dev, and set `server.cleartext` to `true` if you rely on HTTP.
-   - `appId`/`appName` — replace with your bundle identifiers (e.g., `com.example.coinskids`).
+2. Config selection:
+   - `npm run sync:prod` uses `https://coins-kids-shop.onrender.com`.
+   - `npm run sync:local` uses `http://localhost:3001` (Docker Compose backend).
+   - `appId`/`appName` can be adjusted in config files if you need custom bundle identifiers.
 3. Add platforms:
    - `npx cap add ios`
    - `npx cap add android`
-4. Sync/refresh assets whenever `public/` changes: `npm run sync` or `npx cap sync`
+4. Sync/refresh assets whenever `public/` changes:
+   - production: `npm run sync` (alias of `npm run sync:prod`)
+   - local: `npm run sync:local`
 5. Open platform projects:
    - `npm run open:ios`
    - `npm run open:android`
+
+## Local run (Docker Compose backend at `http://localhost:3001`)
+Run these commands from the repository root:
+```bash
+docker compose up -d --build
+```
+
+Then run mobile commands:
+```bash
+cd mobile
+npm run sync:local
+npm run open:ios
+# or
+npm run open:android
+```
+
+If your simulator/emulator does not pick up recent web changes, re-run:
+```bash
+cd mobile
+npm run sync:local
+```
 
 ## Free local testing
 - Android Emulator testing is free (no Google Play Console account required).
