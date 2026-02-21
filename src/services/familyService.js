@@ -247,6 +247,17 @@ async function getFriendsData(familyId, childId) {
     return await familyDataRepository.getFriendsData(familyId, childId);
 }
 
+/**
+ * Get analytics data for a family/child
+ * @param {string} familyId
+ * @param {number|null} childId
+ * @param {string} timeframe
+ * @returns {Promise<Object>}
+ */
+async function getAnalyticsData(familyId, childId, timeframe) {
+    return await familyDataRepository.getAnalyticsData(familyId, childId, timeframe);
+}
+
 module.exports = {
     loadFamilies,
     saveFamilies,
@@ -261,8 +272,10 @@ module.exports = {
     searchByNickname,
     addFriend,
     getFriendsData,
-    updateChildSettings, // New
-    addChild, // New
-    deleteChild, // New
+    getAnalyticsData,
+    updateChildSettings,
+    addChild,
+    deleteChild,
     DEFAULT_FAMILY_DATA
 };
+

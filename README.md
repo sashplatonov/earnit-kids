@@ -13,23 +13,25 @@ The project is deployed and available at: [https://coins-kids-shop.onrender.com/
 -   **Super Admin Panel** — Manage multiple families, block/unblock accounts, and manage base catalog.
 -   **Daily Coin Limits** — Set individual daily earning limits for each child to keep the economy balanced.
 -   **Task Management** — Create, edit, and delete tasks with reward values and usage limits.
--   **Virtual Shop** — Manage a catalog of items kids can "buy" with their earned coins.
+-   **Virtual Shop** — Manage a catalog of items kids can "buy" with their earned coins. Items can have physical money equivalents and frequency limits.
+-   **Analytics Dashboards** — Visual charts showing top earning tasks and spending habits, with filtering by timeframe and child.
 -   **Earning & Spending** — Simple UI for awarding coins and processing purchases across all children.
--   **Coin Requests** — Children can send requests for custom coin amounts for approval (Admin).
+-   **Coin Requests** — Children can send requests for custom coin amounts or specific items for approval (Admin).
 -   **Transaction History** — Detailed log of all earnings, spendings, and approvals.
 -   **Database Management** — Integrated backup and restore functionality (PostgreSQL).
 -   **Session Security** — Secure `HttpOnly` cookies with session management.
 -   **Mobile First** — Fully responsive design optimized for phones and tablets.
 
-## 🛒 Shop Flow
+## 🛒 Shop & Analytics Flow
 
-The shop is scoped per child and supports both direct parent purchases and child purchase requests.
+The shop is scoped per child and supports both direct parent purchases and child purchase requests. In combination with the new Analytics Dashboards, parents get full visibility into the family's micro-economy.
 
--   **Family Catalog + Personal Shop**: Parents can add products from the global catalog to a selected child's shop.
+-   **Family Catalog + Personal Shop**: Parents can add products from the global catalog to a selected child's shop or create personalized items.
 -   **Child Purchase Requests**: Children can submit shop purchase requests (`requestType: shop_purchase`) instead of spending coins directly.
 -   **Parent Approval**: Parents approve or reject requests; approved purchases are written to history as `spend` operations and deduct child balance.
 -   **Money-Aware Purchases**: Items can include a `money_limit`; when set, purchase flow asks for real-money amount and validates limits.
 -   **Frequency Limits**: Shop items may define `frequency` (`limit` + `period`) and are validated against purchase history.
+-   **Analytics & Insights**: Parents have access to visual Dashboards tracking all activities over time (Week/Month/Year). It visually splits earnings from jobs and spending in the shop to help track financial behavioral patterns.
 -   **Per-Child Data Isolation**: Tasks, shop items, requests, and history are stored with `child_id` and loaded by active child context.
 
 ## 🛠 Tech Stack
@@ -129,7 +131,7 @@ The application will be available at `http://localhost:3000`.
 - [ ] **Security**: Add second-factor authentication (2FA) for Admin accounts.
 - [ ] **Testing**: Implement unit and integration tests for core services and API routes.
 - [ ] **Notifications**: Add email or push notifications for parents when a child submits a request.
-- [ ] **Analytics**: Create a dashboard for parents to track coin earning/spending trends over time.
+- [x] **Analytics**: Create a dashboard for parents to track coin earning/spending trends over time.
 - [ ] **UI Refinement**: Continue improving the responsiveness of the Super Admin tables.
 - [ ] **Backup Automation**: Implement scheduled database backups.
 - [ ] **Language Support**: Add multi-language support (i18n).

@@ -397,6 +397,12 @@ export function switchChild(childId) {
     }
     renderAll();
 
+    // Refresh analytics if on that tab
+    const analyticsSection = document.getElementById('analytics-section');
+    if (analyticsSection && !analyticsSection.classList.contains('hidden')) {
+        import('./analytics-ui.js').then(m => m.loadAnalytics());
+    }
+
     // Update settings fields if they exist
     if (child) {
         const nameInp = document.getElementById('settings-child-name-inline');

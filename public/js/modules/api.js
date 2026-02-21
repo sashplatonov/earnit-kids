@@ -213,3 +213,17 @@ export async function loadFriendsList() {
     }
     return [];
 }
+
+export async function fetchAnalyticsData(timeframe = 'month', childId = null) {
+    try {
+        let url = `/api/analytics?timeframe=${timeframe}`;
+        if (childId) url += `&childId=${childId}`;
+        const response = await fetch(url);
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (err) {
+        console.error('Failed to fetch analytics:', err);
+    }
+    return null;
+}

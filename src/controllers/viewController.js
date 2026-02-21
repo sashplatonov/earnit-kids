@@ -151,7 +151,7 @@ async function serveIndex(req, res) {
     const componentOrder = [
         'head.html', 'header.html', 'nav.html', 'main_start.html',
         'section_tasks.html', 'section_requests.html', 'section_shop.html',
-        'section_catalog.html', 'section_about.html', 'section_history.html',
+        'section_catalog.html', 'section_analytics.html', 'section_about.html', 'section_history.html',
         'section_rules.html', 'section_friends.html', 'section_settings.html', 'main_end.html',
         'modals.html', 'scripts.html'
     ];

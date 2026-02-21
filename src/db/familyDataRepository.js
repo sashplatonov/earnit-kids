@@ -473,6 +473,70 @@ async function getFriendsData(familyId, childId) {
     }));
 }
 
+/**
+ * Get analytics data for a family
+ * @param {string} familyId
+ * @param {number|null} childId
+ * @param {string} timeframe - 'week', 'month', or 'year'
+ * @returns {Promise<Object>}
+ */
+async function getAnalyticsData(familyId, childId, timeframe = 'month') {
+    const dbId = await familyRepository.getDbId(familyId);
+    if (!dbId) return { summary: {}, topTasks: [], topItems: [] };
+
+    let interval = '1 month';
+    if (timeframe === 'week') interval = '7 days';
+    else if (timeframe === 'year') interval = '1 year';
+
+    const params = [dbId, interval];
+    let childFilter = '';
+    if (childId) {
+        childFilter = ' AND child_id = $3';
+        params.push(childId);
+    }
+
+    const summaryQuery = `
+        SELECT
+            SUM(CASE WHEN type = 'earn' THEN amount ELSE 0 END) as total_earned,
+            SUM(CASE WHEN type = 'spend' THEN amount ELSE 0 END) as total_spent
+        FROM history
+        WHERE family_id = $1 AND created_at >= NOW() - $2::interval ${childFilter}
+    `;
+
+    const topTasksQuery = `
+        SELECT MAX(description) as name, SUM(amount) as coins, COUNT(*) as count
+        FROM history
+        WHERE family_id = $1 AND type = 'earn' AND created_at >= NOW() - $2::interval ${childFilter}
+        GROUP BY LOWER(TRIM(description))
+        ORDER BY coins DESC
+    `;
+
+    const topItemsQuery = `
+        SELECT MAX(description) as name, SUM(amount) as coins, COUNT(*) as count
+        FROM history
+        WHERE family_id = $1 AND type = 'spend' AND created_at >= NOW() - $2::interval ${childFilter}
+        GROUP BY LOWER(TRIM(description))
+        ORDER BY coins DESC
+    `;
+
+    const [summaryRes, tasksRes, itemsRes] = await Promise.all([
+        query(summaryQuery, params),
+        query(topTasksQuery, params),
+        query(topItemsQuery, params)
+    ]);
+
+    const summary = summaryRes.rows[0] || { total_earned: 0, total_spent: 0 };
+    return {
+        summary: {
+            totalEarned: parseInt(summary.total_earned || 0),
+            totalSpent: parseInt(summary.total_spent || 0),
+            netChange: parseInt((summary.total_earned || 0) - (summary.total_spent || 0))
+        },
+        topTasks: tasksRes.rows.map(r => ({ name: r.name, coins: parseInt(r.coins), count: parseInt(r.count) })),
+        topItems: itemsRes.rows.map(r => ({ name: r.name, coins: parseInt(r.coins), count: parseInt(r.count) }))
+    };
+}
+
 module.exports = {
     DEFAULT_FAMILY_DATA,
     getFamilyData,
@@ -482,5 +546,7 @@ module.exports = {
     addRequest,
     updateRequestStatus,
     addFriend,
-    getFriendsData
+    getFriendsData,
+    getAnalyticsData
 };
+

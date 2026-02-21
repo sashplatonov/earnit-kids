@@ -6,6 +6,7 @@ import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, appr
 import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings, saveFamilySettingsInline, saveNewPinInline, copyChildLinkInline, refreshChildLinkInline, regenerateChildLinkInline, switchChild, openAddChildModal, saveNewChild } from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
 import { handleSearch, addNewFriend, refreshFriends, saveNickname } from './friends.js';
+import { loadAnalytics } from './analytics-ui.js';
 
 // Catalog Logic
 function renderCatalog() {
@@ -208,7 +209,9 @@ window.app = {
     addNewFriend,
     handleSearch,
     saveNickname,
-    adminAwardCoins
+    saveNickname,
+    adminAwardCoins,
+    loadAnalytics
 };
 
 // Helper to get cookie value
@@ -396,6 +399,11 @@ function setupTabControls() {
         document.querySelectorAll('.section').forEach((section) => section.classList.add('hidden'));
         const targetSection = document.getElementById(`${tabName}-section`);
         if (targetSection) targetSection.classList.remove('hidden');
+
+        if (tabName === 'analytics') {
+            loadAnalytics();
+        }
+
         closeChildMenus();
         closeMoreDropdown();
     };
@@ -438,7 +446,23 @@ function setupTabControls() {
         });
     }
 
+    setupAnalyticsControls();
     activateTab('tasks');
+}
+
+function setupAnalyticsControls() {
+    const timeframeGroup = document.getElementById('analytics-timeframe-group');
+    if (timeframeGroup) {
+        timeframeGroup.addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+
+            timeframeGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            loadAnalytics(btn.dataset.timeframe);
+        });
+    }
 }
 
 function setupModalBackdropClose() {

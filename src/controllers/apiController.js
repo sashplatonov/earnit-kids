@@ -3,6 +3,7 @@ const {
     loadFamilies, saveFamilies, getChildLoginLink,
     regenerateChildToken, updateFamilySettings,
     updateNickname, searchByNickname, addFriend, getFriendsData,
+    getAnalyticsData,
     addChild, deleteChild, updateChildSettings
 } = require('../services/familyService');
 const {
@@ -283,6 +284,17 @@ async function handleChildrenDynamicRoute(ctx, req, res) {
     return false;
 }
 
+async function handleAnalytics(ctx, req, res) {
+    if (ctx.role !== 'admin') {
+        return sendJSON(res, { error: 'Forbidden' }, 403);
+    }
+    const timeframe = ctx.urlObj.searchParams.get('timeframe') || 'month';
+    const childId = ctx.urlObj.searchParams.get('childId') ? parseInt(ctx.urlObj.searchParams.get('childId')) : null;
+
+    const data = await getAnalyticsData(ctx.familyId, childId, timeframe);
+    sendJSON(res, data);
+}
+
 async function handleAPI(req, res) {
     const ctx = createRouteContext(req);
     if (!ctx.familyId) return sendJSON(res, { error: 'Unauthorized' }, 401);
@@ -298,7 +310,8 @@ async function handleAPI(req, res) {
         'POST /api/update-nickname': () => handleUpdateNickname(ctx, req, res),
         'GET /api/search-user': () => handleSearchUser(ctx, res),
         'POST /api/add-friend': () => handleAddFriend(ctx, req, res),
-        'GET /api/friends-list': () => handleFriendsList(ctx, res)
+        'GET /api/friends-list': () => handleFriendsList(ctx, res),
+        'GET /api/analytics': () => handleAnalytics(ctx, req, res)
     };
 
     const staticHandler = staticRoutes[`${ctx.method} ${ctx.pathname}`];
