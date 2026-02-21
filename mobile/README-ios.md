@@ -2,6 +2,16 @@
 
 This document walks through every step needed to publish (or test without paying) the App Store build based on the Capacitor shell.
 
+## Table of Contents
+- [1. Setup / requirements](#1-setup--requirements)
+- [2. Prepare the Capacitor iOS project](#2-prepare-the-capacitor-ios-project)
+- [3. Signing & capabilities](#3-signing--capabilities)
+- [4. Test without paying (free Apple ID)](#4-test-without-paying-free-apple-id)
+- [5. Archive & upload (paid account)](#5-archive--upload-paid-account)
+- [6. Deep links & associated domains](#6-deep-links--associated-domains)
+- [7. Useful commands](#7-useful-commands)
+- [8. Local iOS run with Docker backend (`http://localhost:3001`)](#8-local-ios-run-with-docker-backend-httplocalhost3001)
+
 ## 1. Setup / requirements
 - Apple Developer Program: required only for App Store publishing, not for simulator testing.  
 - Apple ID: any Apple ID works for local builds and simulator usage; for App Store uploads you need an account tied to the Developer Program.  

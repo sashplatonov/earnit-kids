@@ -61,6 +61,59 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* ===== Pull To Refresh ===== */
+.pull-refresh-indicator {
+    position: fixed;
+    top: 0.55rem;
+    left: 50%;
+    transform: translate(-50%, -140%);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-sm);
+    z-index: 2100;
+    pointer-events: none;
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.pull-refresh-indicator.active {
+    opacity: 1;
+}
+
+.pull-refresh-indicator.ready .pull-refresh-indicator__icon {
+    color: #86efac;
+}
+
+.pull-refresh-indicator.loading .pull-refresh-indicator__icon {
+    animation: pullRefreshSpin 0.8s linear infinite;
+}
+
+.pull-refresh-indicator__icon {
+    font-size: 0.95rem;
+    color: #e2e8f0;
+}
+
+.pull-refresh-indicator__text {
+    font-size: 0.75rem;
+    color: #e2e8f0;
+    white-space: nowrap;
+}
+
+@keyframes pullRefreshSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* ===== Header ===== */
 .header {
     display: flex;

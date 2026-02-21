@@ -2,6 +2,16 @@
 
 Follow this guide to publish the Capacitor shell on Google Play and to test without spending $25.
 
+## Table of Contents
+- [1. Requirements](#1-requirements)
+- [2. Prepare Capacitor Android project](#2-prepare-capacitor-android-project)
+- [3. Configure manifest & deep links](#3-configure-manifest--deep-links)
+- [4. Signing & build flavor](#4-signing--build-flavor)
+- [5. Test without Google Play account](#5-test-without-google-play-account)
+- [6. Publish to Google Play](#6-publish-to-google-play)
+- [7. Commands summary](#7-commands-summary)
+- [8. Local Android run with Docker backend (`http://localhost:3001`)](#8-local-android-run-with-docker-backend-httplocalhost3001)
+
 ## 1. Requirements
 - Google Play Console account: required only for publishing to Google Play ($25 one-time). For emulator/device testing without publishing you can skip it entirely and install APKs directly.  
 - Android Studio + Java SDK installed.  
