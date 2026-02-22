@@ -7,6 +7,11 @@ const { sendErrorAlertEmail } = require('../services/emailService');
  * @param {string} message - The message to send
  * @returns {Promise<boolean>} - Success or failure
  */
+/**
+ * Send an alert message to Telegram
+ * @param {string} message - The message to send
+ * @returns {Promise<boolean>} - Success or failure
+ */
 async function sendTelegramMessage(message) {
     if (!config.TELEGRAM.ENABLED || !config.TELEGRAM.TOKEN || !config.TELEGRAM.CHAT_ID) {
         return false;
@@ -36,6 +41,45 @@ async function sendTelegramMessage(message) {
         return true;
     } catch (err) {
         logger.warn({ err: err.message }, 'Error sending Telegram message');
+        return false;
+    }
+}
+
+/**
+ * Send a document/file to Telegram
+ * @param {string} filePath - Path to the file
+ * @param {string} caption - Optional caption
+ * @returns {Promise<boolean>} - Success or failure
+ */
+async function sendTelegramDocument(filePath, caption = '') {
+    if (!config.TELEGRAM.ENABLED || !config.TELEGRAM.TOKEN || !config.TELEGRAM.CHAT_ID) {
+        return false;
+    }
+
+    try {
+        const fs = require('fs');
+        const formData = new FormData();
+        formData.append('chat_id', config.TELEGRAM.CHAT_ID);
+        // Using Buffer or stream for large files if needed, but for now this works for small backups
+        const fileContent = fs.readFileSync(filePath);
+        formData.append('document', new Blob([fileContent]), require('path').basename(filePath));
+        if (caption) formData.append('caption', caption);
+
+        const url = `https://api.telegram.org/bot${config.TELEGRAM.TOKEN}/sendDocument`;
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            logger.warn({ error }, 'Failed to send Telegram document');
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        logger.warn({ err: err.message }, 'Error sending Telegram document');
         return false;
     }
 }
@@ -79,5 +123,6 @@ async function sendAlert(err, context = '') {
 
 module.exports = {
     sendTelegramMessage,
+    sendTelegramDocument,
     sendAlert
 };

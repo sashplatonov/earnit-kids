@@ -35,7 +35,8 @@ const config = {
     TELEGRAM: {
         TOKEN: process.env.TELEGRAM_BOT_TOKEN,
         CHAT_ID: process.env.TELEGRAM_CHAT_ID,
-        ENABLED: process.env.ENABLE_TELEGRAM_ALERTS === 'true'
+        ENABLED: process.env.ENABLE_TELEGRAM_ALERTS === 'true',
+        BACKUP_INTERVAL_HOURS: parseInt(process.env.BACKUP_INTERVAL_HOURS, 10) || 24
     },
     ENABLE_EMAIL_ALERTS: process.env.ENABLE_EMAIL_ALERTS === 'true'
 };

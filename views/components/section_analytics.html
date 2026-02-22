@@ -66,6 +66,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Trends Section -->
+            <div class="analytics-group">
+                <h3 class="analytics-group-title">📈 Динамика достижений</h3>
+                <div class="card analytics-chart-card">
+                    <div class="chart-container">
+                        <canvas id="achievements-trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations Section -->
+            <div class="analytics-group">
+                <h3 class="analytics-group-title">💡 Идеи для роста</h3>
+                <div id="analytics-recommendations" class="recommendations-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -271,5 +289,38 @@
         color: rgba(255, 255, 255, 0.95);
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         /* enhance contrast when inside the bar */
+    }
+
+    /* Recommendations Styles */
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .recommendation-card {
+        background: rgba(255, 215, 0, 0.05);
+        border: 1px dashed rgba(255, 215, 0, 0.3);
+        padding: 1rem;
+        border-radius: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .recommendation-card__title {
+        font-weight: 700;
+        color: #ffd700;
+        font-size: 1rem;
+    }
+
+    .recommendation-card__reason {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .recommendation-card__coins {
+        font-weight: 800;
+        color: #4ade80;
     }
 </style>

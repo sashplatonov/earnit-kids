@@ -20,6 +20,7 @@ const logger = require('./utils/logger');
 const metrics = require('./utils/metrics');
 const { sendAlert } = require('./utils/alerts');
 const websocket = require('./utils/websocket');
+const { initBackupService } = require('./services/backupService');
 
 /**
  * Log request completion and metrics
@@ -117,6 +118,7 @@ async function startServer() {
     server.listen(config.PORT, async () => {
         console.log(`🪙 Coin Shop Server running at http://localhost:${config.PORT}`);
         websocket.init(server);
+        initBackupService();
         await logStartupStats();
     });
 }

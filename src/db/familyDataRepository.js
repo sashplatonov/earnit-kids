@@ -191,6 +191,73 @@ function getInterval(tf) {
     return '1 month';
 }
 
+async function fetchTrends(dbId, timeframe, childId) {
+    const interval = getInterval(timeframe);
+    const f = childId ? ' AND child_id = $3' : '';
+    const p = childId ? [dbId, interval, childId] : [dbId, interval];
+
+    // Daily totals for the timeframe
+    const sql = `
+        SELECT DATE_TRUNC('day', created_at) as date, 
+               SUM(CASE WHEN type='earn' THEN amount ELSE 0 END) as earned,
+               SUM(CASE WHEN type='spend' THEN amount ELSE 0 END) as spent
+        FROM history
+        WHERE family_id = $1 AND created_at >= NOW() - $2::interval${f}
+        GROUP BY 1 ORDER BY 1 ASC
+    `;
+    const res = await query(sql, p);
+    return res.rows.map(r => ({
+        date: r.date,
+        earned: parseInt(r.earned || 0),
+        spent: parseInt(r.spent || 0)
+    }));
+}
+
+async function fetchComparison(dbId, timeframe, childId) {
+    const interval = getInterval(timeframe);
+    const f = childId ? ' AND child_id = $3' : '';
+    const p = childId ? [dbId, interval, childId] : [dbId, interval];
+
+    // Summary for PREVIOUS period of same duration
+    const sql = `
+        SELECT SUM(CASE WHEN type='earn' THEN amount ELSE 0 END) as e, 
+               SUM(CASE WHEN type='spend' THEN amount ELSE 0 END) as s 
+        FROM history 
+        WHERE family_id=$1 
+          AND created_at < NOW() - $2::interval 
+          AND created_at >= NOW() - ($2::interval * 2)${f}`;
+    const res = await query(sql, p);
+    const s = res.rows[0];
+    return {
+        totalEarned: parseInt(s.e || 0),
+        totalSpent: parseInt(s.s || 0),
+        netChange: parseInt((s.e || 0) - (s.s || 0))
+    };
+}
+
+async function fetchRecommendations(dbId, childId) {
+    // Find tasks that are in the system but haven't been completed much lately
+    const p = childId ? [dbId, childId] : [dbId];
+    const childFilter = childId ? ' AND t.child_id = $2' : '';
+    const historyFilter = childId ? ' AND h.child_id = $2' : '';
+
+    const sql = `
+        SELECT t.name, t.coins, COUNT(h.id) as completion_count
+        FROM tasks t
+        LEFT JOIN history h ON t.task_id = h.related_id AND h.type = 'earn' AND h.created_at >= NOW() - interval '30 days'${historyFilter}
+        WHERE t.family_id = $1 AND t.is_deleted = false${childFilter}
+        GROUP BY t.task_id, t.name, t.coins
+        ORDER BY completion_count ASC, t.coins DESC
+        LIMIT 3
+    `;
+    const res = await query(sql, p);
+    return res.rows.map(r => ({
+        name: r.name,
+        coins: r.coins,
+        reason: r.completion_count === 0 ? 'Ни разу не выполнено за 30 дней' : 'Редко выполняется'
+    }));
+}
+
 async function fetchAnalyticsRaw(dbId, timeframe, childId) {
     const int = getInterval(timeframe);
     const p = childId ? [dbId, int, childId] : [dbId, int];
@@ -220,15 +287,29 @@ async function getAnalyticsData(familyId, childId, timeframe = 'month') {
     if (cached) return cached;
 
     const dbId = await familyRepository.getDbId(familyId);
-    if (!dbId) return { summary: {}, topTasks: [], topItems: [] };
+    if (!dbId) return { summary: {}, topTasks: [], topItems: [], trends: [], comparison: {}, recommendations: [] };
 
-    const [sr, tr, ir] = await fetchAnalyticsRaw(dbId, timeframe, childId);
+    const [[sr, tr, ir], trends, comparison, recommendations] = await Promise.all([
+        fetchAnalyticsRaw(dbId, timeframe, childId),
+        fetchTrends(dbId, timeframe, childId),
+        fetchComparison(dbId, timeframe, childId),
+        fetchRecommendations(dbId, childId)
+    ]);
+
     const s = sr.rows[0];
     const mapR = r => ({ name: r.n, coins: parseInt(r.c), count: parseInt(r.ct) });
+
     const result = {
-        summary: { totalEarned: parseInt(s.e || 0), totalSpent: parseInt(s.s || 0), netChange: parseInt((s.e || 0) - (s.s || 0)) },
+        summary: {
+            totalEarned: parseInt(s.e || 0),
+            totalSpent: parseInt(s.s || 0),
+            netChange: parseInt((s.e || 0) - (s.s || 0))
+        },
         topTasks: tr.rows.map(mapR),
-        topItems: ir.rows.map(mapR)
+        topItems: ir.rows.map(mapR),
+        trends,
+        comparison,
+        recommendations
     };
 
     cache.set(cacheKey, result, 60000);

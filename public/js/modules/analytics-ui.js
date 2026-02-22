@@ -6,17 +6,31 @@ export async function loadAnalytics(timeframe = 'month') {
     const data = await fetchAnalyticsData(timeframe, state.currentChildId);
     if (!data) return showToast('Не удалось загрузить данные о достижениях', 'error');
 
-    updateSummaryUI(data.summary);
+    updateSummaryUI(data.summary, data.comparison);
     renderAllCharts(data.topTasks, data.topItems);
+    renderTrendChart(data.trends);
+    renderRecommendations(data.recommendations);
 }
 
-function updateSummaryUI(summary) {
+function updateSummaryUI(summary, comparison) {
     const earnedEl = document.getElementById('stats-earned');
     const spentEl = document.getElementById('stats-spent');
     const netEl = document.getElementById('stats-net');
 
-    if (earnedEl) earnedEl.textContent = `${summary.totalEarned} 🪙`;
-    if (spentEl) spentEl.textContent = `${summary.totalSpent} 🪙`;
+    if (earnedEl) {
+        earnedEl.innerHTML = `${summary.totalEarned} 🪙`;
+        if (comparison) {
+            addComparisonLabel(earnedEl, summary.totalEarned, comparison.totalEarned);
+        }
+    }
+
+    if (spentEl) {
+        spentEl.innerHTML = `${summary.totalSpent} 🪙`;
+        if (comparison) {
+            addComparisonLabel(spentEl, summary.totalSpent, comparison.totalSpent, true);
+        }
+    }
+
     if (netEl) {
         netEl.textContent = `${summary.netChange} 🪙`;
         netEl.className = 'stat-card__value ' + (summary.netChange >= 0 ? 'earn' : 'spend');
@@ -26,6 +40,26 @@ function updateSummaryUI(summary) {
     const iTotal = document.getElementById('items-total-coins');
     if (tTotal) tTotal.textContent = `Всего: ${summary.totalEarned} 🪙`;
     if (iTotal) iTotal.textContent = `Всего: ${summary.totalSpent} 🪙`;
+}
+
+function addComparisonLabel(parent, current, previous, reverse = false) {
+    if (previous === 0) return;
+    const diff = current - previous;
+    const pct = Math.round((diff / previous) * 100);
+    if (pct === 0) return;
+
+    const info = document.createElement('div');
+    info.className = 'stat-card__comparison';
+
+    const isGood = reverse ? pct < 0 : pct > 0;
+    const color = isGood ? '#4ade80' : '#f87171';
+    const arrow = pct > 0 ? '↑' : '↓';
+
+    info.style.color = color;
+    info.style.fontSize = '0.75rem';
+    info.style.fontWeight = '600';
+    info.textContent = `${arrow} ${Math.abs(pct)}% к прошл. периоду`;
+    parent.appendChild(info);
 }
 
 function renderAllCharts(tasks, items) {
@@ -112,4 +146,82 @@ function renderGenericChart(containerId, options) {
         chartHtml.appendChild(createChartRow(item, { ...options, maxVal }));
     });
     wrapper.appendChild(chartHtml);
+}
+
+function renderTrendChart(trends) {
+    const canvas = document.getElementById('achievements-trend-chart');
+    if (!canvas) return;
+
+    if (window.myTrendChart) window.myTrendChart.destroy();
+
+    // Use Chart.js since it's loaded in head.html
+    window.myTrendChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: trends.map(t => new Date(t.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })),
+            datasets: [
+                {
+                    label: 'Заработано',
+                    data: trends.map(t => t.earned),
+                    borderColor: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3
+                },
+                {
+                    label: 'Потрачено',
+                    data: trends.map(t => t.spent),
+                    borderColor: '#f87171',
+                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: { color: 'rgba(255,255,255,0.7)', font: { size: 10 } }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }
+                }
+            }
+        }
+    });
+}
+
+function renderRecommendations(recommendations) {
+    const container = document.getElementById('analytics-recommendations');
+    if (!container) return;
+
+    if (recommendations.length === 0) {
+        container.innerHTML = '<div style="color: rgba(255,255,255,0.5); text-align: center; width: 100%;">Пока нет рекомендаций</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    recommendations.forEach(rec => {
+        const card = document.createElement('div');
+        card.className = 'recommendation-card';
+        card.innerHTML = `
+            <div class="recommendation-card__title">${rec.name}</div>
+            <div class="recommendation-card__coins">+${rec.coins} 🪙</div>
+            <div class="recommendation-card__reason">${rec.reason}</div>
+        `;
+        container.appendChild(card);
+    });
 }
