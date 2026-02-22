@@ -7,11 +7,18 @@ function getRequestIcon(req) {
 function renderMyRequest(req) {
     const isPurchase = req.requestType === 'shop_purchase';
     const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
+    const groupTag = req.group ? `<span class="tag" style="margin-left: 5px; opacity: 0.8;">${escapeHtml(req.group)}</span>` : '';
+    const commentHtml = req.comment ? `<div class="history-item__comment" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 2px;">${escapeHtml(req.comment)}</div>` : '';
+
     return `
         <div class="history-item">
             <div class="history-item__icon">${getRequestIcon(req)}</div>
             <div class="history-item__content">
-                <div class="history-item__desc">${escapeHtml(req.taskName)}</div>
+                <div class="history-item__desc">
+                    ${escapeHtml(req.taskName)}
+                    ${groupTag}
+                </div>
+                ${commentHtml}
                 <div class="history-item__date">Ожидает подтверждения</div>
             </div>
             <div class="history-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
@@ -28,6 +35,9 @@ function renderIncomingRequest(req, state) {
     const isPurchase = req.requestType === 'shop_purchase';
     const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
 
+    const groupTag = req.group ? `<span class="tag tag--secondary" style="margin-left: 5px; opacity: 0.8; font-size: 0.75rem;">${escapeHtml(req.group)}</span>` : '';
+    const commentHtml = req.comment ? `<div class="history-item__comment" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 2px;">${escapeHtml(req.comment)}</div>` : '';
+
     return `
         <div class="history-item">
             <div class="history-item__icon">📩</div>
@@ -35,7 +45,9 @@ function renderIncomingRequest(req, state) {
                 <div class="history-item__desc">
                     <span class="tag" style="margin-right: 5px;">${escapeHtml(childName)}</span> 
                     ${isPurchase ? 'Покупка: ' : 'Задание: '} ${escapeHtml(req.taskName)}
+                    ${groupTag}
                 </div>
+                ${commentHtml}
                 <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
             </div>
             <div class="history-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
