@@ -8,22 +8,26 @@ const { sendJSON, createRouteContext } = require('../utils/controllerUtils');
 async function handleChildrenDynamicRoute(ctx, req, res) {
     const linkMatch = ctx.pathname.match(/^\/api\/children\/(\d+)\/link$/);
     if (linkMatch && ctx.method === 'GET') {
-        return await childController.handleLinkGet({ ctx, req, res, targetChildId: parseInt(linkMatch[1]) });
+        await childController.handleLinkGet({ ctx, req, res, targetChildId: parseInt(linkMatch[1]) });
+        return true;
     }
 
     const regenMatch = ctx.pathname.match(/^\/api\/children\/(\d+)\/regenerate-token$/);
     if (regenMatch && ctx.method === 'POST') {
-        return await childController.handleTokenRegen({ ctx, req, res, targetChildId: parseInt(regenMatch[1]) });
+        await childController.handleTokenRegen({ ctx, req, res, targetChildId: parseInt(regenMatch[1]) });
+        return true;
     }
 
     const deleteMatch = ctx.pathname.match(/^\/api\/children\/(\d+)$/);
     if (deleteMatch && ctx.method === 'DELETE') {
-        return await childController.handleDeleteChild({ ctx, req, res, targetChildId: parseInt(deleteMatch[1]) });
+        await childController.handleDeleteChild({ ctx, req, res, targetChildId: parseInt(deleteMatch[1]) });
+        return true;
     }
 
     const settingsMatch = ctx.pathname.match(/^\/api\/children\/(\d+)\/settings$/);
     if (settingsMatch && ctx.method === 'POST') {
-        return await childController.handleUpdateSettings({ ctx, req, res, targetChildId: parseInt(settingsMatch[1]) });
+        await childController.handleUpdateSettings({ ctx, req, res, targetChildId: parseInt(settingsMatch[1]) });
+        return true;
     }
 
     return false;

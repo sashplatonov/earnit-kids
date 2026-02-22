@@ -1,19 +1,52 @@
 import { escapeHtml } from './utils.js';
 
-function renderHistoryItem(entry) {
+function getEntryDetails(entry, state) {
+    const details = {
+        name: entry.description || 'Действие',
+        group: entry.group,
+        comment: entry.comment
+    };
+
+    if (entry.type === 'earn' && entry.taskId) {
+        const t = state.tasks.find(t => String(t.id) === String(entry.taskId));
+        if (t) {
+            details.name = t.name;
+            details.group = t.group;
+            details.comment = t.comment;
+        }
+    } else if (entry.type === 'spend' && entry.itemId) {
+        const i = state.shopItems.find(i => String(i.id) === String(entry.itemId));
+        if (i) {
+            details.name = i.name;
+            details.group = i.group;
+            details.comment = i.comment;
+        }
+    }
+    return details;
+}
+
+function renderHistoryItem(entry, state) {
     const isEarn = entry.type === 'earn';
+    const details = getEntryDetails(entry, state);
     const formattedDate = new Date(entry.date).toLocaleDateString('ru-RU', {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
     });
     const moneyVal = entry.moneyAmount || entry.rsdAmount;
     const moneyTag = moneyVal ? `<span class="tag tag--money" style="font-size:0.75em;margin-left:0.5em;">${moneyVal}</span>` : '';
+    const groupTag = details.group ? ` <span class="tag tag--info" style="font-size:0.75em;margin-left:0.5em;white-space:nowrap;">[${escapeHtml(details.group)}]</span>` : '';
+    const commentDiv = details.comment ? `<div style="font-size:0.85em;opacity:0.8;margin-top:0.3em;">${escapeHtml(details.comment)}</div>` : '';
+
+
 
     return `
         <div class="history-item history-item--${entry.type}">
             <div class="history-item__icon">${isEarn ? '💰' : '🛍️'}</div>
             <div class="history-item__content">
-                <div class="history-item__desc">${escapeHtml(entry.description)}${moneyTag}</div>
-                <div class="history-item__date">${formattedDate}</div>
+                <div class="history-item__desc" style="display:flex;flex-wrap:wrap;align-items:center;">
+                    ${escapeHtml(details.name)}${groupTag}${moneyTag}
+                </div>
+                ${commentDiv}
+                <div class="history-item__date" style="margin-top:0.3em;">${formattedDate}</div>
             </div>
             <div class="history-item__amount">${isEarn ? '+' : '-'}${entry.amount} 🪙</div>
             <div class="card__actions" style="margin-left: 10px;">
@@ -68,7 +101,7 @@ export function renderHistoryUI(state) {
     container.innerHTML = Object.keys(grouped).sort().reverse().map(monthKey => {
         const [year, month] = monthKey.split('-');
         const name = new Date(year, month - 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
-        const items = grouped[monthKey].items.sort((a, b) => new Date(b.date) - new Date(a.date)).map(renderHistoryItem).join('');
+        const items = grouped[monthKey].items.sort((a, b) => new Date(b.date) - new Date(a.date)).map(item => renderHistoryItem(item, state)).join('');
         return renderMonthHeader(name, grouped[monthKey]) + items;
     }).join('');
 }

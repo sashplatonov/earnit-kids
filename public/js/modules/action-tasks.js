@@ -25,8 +25,15 @@ export function earnCoins(taskId) {
 
     const apply = () => {
         updateBalanceLocally(actingId, task.coins);
-        const desc = [task.name, task.group ? `Группа: ${task.group}` : '', task.comment ? `Описание: ${task.comment}` : ''].filter(Boolean).join(' | ');
-        addHistoryEntry({ type: 'earn', amount: task.coins, description: desc, relatedId: task.id, childIdOverride: actingId });
+        addHistoryEntry({
+            type: 'earn',
+            amount: task.coins,
+            description: task.name,
+            group: task.group,
+            comment: task.comment,
+            relatedId: task.id,
+            childIdOverride: actingId
+        });
         renderShop();
         showMobileEventNotification(`+${task.coins} 🪙 начислено!`, 'success', 'Balance updated');
     };

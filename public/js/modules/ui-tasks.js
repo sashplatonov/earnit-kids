@@ -44,9 +44,9 @@ export function renderTasksUI(state) {
     }
     if (emptyState) emptyState.classList.add('hidden');
 
-    let tasks = state.tasks;
+    let tasks = state.tasks.filter(t => !t.isDeleted);
     if (state.isAdmin && state.currentChildId) {
-        tasks = state.tasks.filter(t => !t.childId || t.childId == state.currentChildId);
+        tasks = tasks.filter(t => !t.childId || t.childId == state.currentChildId);
     }
 
     const grouped = tasks.reduce((acc, t) => {
