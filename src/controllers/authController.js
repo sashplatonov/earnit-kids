@@ -3,16 +3,31 @@ const {
     registerFamily, changePassword, recoverPassword, resetPasswordWithToken, verifyEmailToken
 } = require('../services/authService');
 const parseBody = require('../middleware/body-parser');
+const { signToken, generateCsrfToken } = require('../utils/authUtils');
 
 const { sendJSON } = require('../utils/controllerUtils');
 
-function buildAuthCookies({ email, role, familyId, maxAge }) {
+function buildAuthCookies({ email, role, familyId, childId, maxAge }) {
+    const csrfToken = generateCsrfToken();
+    const payload = { email, role, familyId, csrfToken };
+    if (childId) {
+        payload.childId = childId;
+    }
+
+    const token = signToken(payload, maxAge);
+    const secureFlag = process.env.NODE_ENV === 'production' ? 'Secure;' : '';
+
     const cookies = [
-        `app_auth=${email}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`,
-        `app_role=${role}; Max-Age=${maxAge}; Path=/; SameSite=Lax`
+        `app_auth=${token}; Max-Age=${maxAge}; Path=/; HttpOnly; ${secureFlag} SameSite=Strict`,
+        `app_role=${role}; Max-Age=${maxAge}; Path=/; ${secureFlag} SameSite=Strict`,
+        `csrf_token=${csrfToken}; Max-Age=${maxAge}; Path=/; ${secureFlag} SameSite=Strict`
     ];
+
     if (familyId) {
-        cookies.push(`family_id=${familyId}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`);
+        cookies.push(`family_id=${familyId}; Max-Age=${maxAge}; Path=/; HttpOnly; ${secureFlag} SameSite=Strict`);
+    }
+    if (childId) {
+        cookies.push(`child_id=${childId}; Max-Age=${maxAge}; Path=/; HttpOnly; ${secureFlag} SameSite=Strict`);
     }
     return cookies;
 }
@@ -43,10 +58,11 @@ function handleLogout(res) {
     res.writeHead(200, {
         'Content-Type': 'application/json',
         'Set-Cookie': [
-            'app_auth=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax',
-            'app_role=; Max-Age=0; Path=/; SameSite=Lax',
-            'family_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax',
-            'child_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax'
+            'app_auth=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict',
+            'app_role=; Max-Age=0; Path=/; SameSite=Strict',
+            'family_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict',
+            'child_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict',
+            'csrf_token=; Max-Age=0; Path=/; SameSite=Strict'
         ]
     });
     res.end(JSON.stringify({ success: true }));
@@ -104,14 +120,14 @@ async function handleMagicLink(req, res) {
     const authResult = await authenticateChildByToken(token);
 
     if (authResult.success) {
-        const maxAge = 365 * 24 * 60 * 60;
+        const maxAge = parseInt(process.env.MAGIC_LINK_EXPIRES_IN) || 7 * 24 * 60 * 60; // default 7 days instead of indefinite
         const cookies = buildAuthCookies({
             email: authResult.email,
             role: 'child',
             familyId: authResult.familyId,
+            childId: authResult.childId,
             maxAge
         });
-        cookies.push(`child_id=${authResult.childId}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`);
         res.writeHead(302, { Location: '/', 'Set-Cookie': cookies });
         return res.end();
     }

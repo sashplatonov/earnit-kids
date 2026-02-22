@@ -13,24 +13,24 @@
 ## 🔴 Безопасность и стабильность
 
 ### 1. Улучшить аутентификацию
-- [ ] Заменить cookie `app_auth` (plain email) на подписанный JWT или secure session token
-- [ ] Добавить `HttpOnly`, `Secure`, `SameSite=Strict` флаги для cookies
-- [ ] Добавить CSRF-защиту для POST-запросов
-- [ ] Срок действия magic-link токенов (сейчас бессрочные)
+- [x] Заменить cookie `app_auth` (plain email) на подписанный JWT или secure session token
+- [x] Добавить `HttpOnly`, `Secure`, `SameSite=Strict` флаги для cookies
+- [x] Добавить CSRF-защиту для POST-запросов
+- [x] Срок действия magic-link токенов (сейчас бессрочные)
 
 ### 2. Input Validation & Sanitization
-- [ ] Централизованная валидация входных данных (длина, тип, формат)
+- [ ] Централизованная валидация входных данных (длина, тип, формат) // Частично
 - [ ] Sanitize HTML в пользовательском вводе (названия задач, описания)
-- [ ] Rate limiting на уровне API (не только для логина)
+- [x] Rate limiting на уровне API (не только для логина)
 
 ### 3. Error Handling
-- [ ] Централизованный error handler вместо try/catch в каждом контроллере
+- [x] Централизованный error handler вместо try/catch в каждом контроллере
 - [ ] Структурированные ошибки с кодами (`INVALID_PARAM`, `NOT_FOUND`, `UNAUTHORIZED`)
-- [ ] Не отправлять stack trace клиенту в production
+- [x] Не отправлять stack trace клиенту в production
 
 ### 4. Логирование
-- [ ] Заменить `console.log` на структурированный логгер (pino / winston)
-- [ ] Уровни логирования (debug, info, warn, error)
+- [x] Заменить `console.log` на структурированный логгер (pino / winston)
+- [x] Уровни логирования (debug, info, warn, error)
 - [ ] Correlation ID для трассировки запросов
 
 ---

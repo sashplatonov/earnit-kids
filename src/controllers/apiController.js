@@ -37,6 +37,13 @@ async function handleAPI(req, res) {
     const ctx = createRouteContext(req);
     if (!ctx.familyId) return sendJSON(res, { error: 'Unauthorized' }, 401);
 
+    if (['POST', 'DELETE', 'PUT'].includes(ctx.method)) {
+        const { validateCsrf } = require('../utils/authUtils');
+        if (!validateCsrf(req, ctx.csrfToken)) {
+            return sendJSON(res, { error: 'Invalid CSRF token' }, 403);
+        }
+    }
+
     const routes = {
         'GET /api/data': familyController.handleDataGet,
         'POST /api/data': familyController.handleDataPost,
@@ -57,6 +64,7 @@ async function handleAPI(req, res) {
 
     sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
 }
+
 
 module.exports = {
     handleAPI,

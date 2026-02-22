@@ -21,6 +21,12 @@ const server = http.createServer(async (req, res) => {
     if (staticRouter.handleCors(req, res)) return;
 
     try {
+        const { rateLimit } = require('./utils/rateLimiter');
+        if (req.url.startsWith('/api/') && rateLimit(req)) {
+            res.writeHead(429, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: 'Too Many Requests' }));
+        }
+
         const [pathOnly] = req.url.split('?');
 
         if (pathOnly.startsWith('/login-child/')) {
