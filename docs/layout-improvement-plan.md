@@ -15,28 +15,28 @@
 ## 🎨 Web-вёрстка
 
 ### 1. Современная типографика
-- [ ] Использовать `font-display: swap` для Google Fonts
-- [ ] Fluid typography через `clamp()`: `font-size: clamp(1rem, 2.5vw, 1.25rem)`
-- [ ] Вариативные шрифты (Variable Fonts) — один файл вместо нескольких начертаний
-- [ ] Увеличить line-height для мобильных (1.6–1.8 для body copy)
+- [x] Использовать `font-display: swap` для Google Fonts
+- [x] Fluid typography через `clamp()`: `font-size: clamp(1rem, 2.5vw, 1.25rem)`
+- [x] Вариативные шрифты (Variable Fonts) — один файл вместо нескольких начертаний
+- [x] Увеличить line-height для мобильных (1.6–1.8 для body copy)
 
 ### 2. CSS Container Queries
-- [ ] Заменить медиа-запросы на container queries для компонентов-карточек:
+- [x] Заменить медиа-запросы на container queries для компонентов-карточек:
   ```css
   .card-container { container-type: inline-size; }
   @container (max-width: 400px) { .card { flex-direction: column; } }
   ```
-- [ ] Карточки задач, товаров магазина, истории — адаптировать по ширине контейнера, не viewport
+- [x] Карточки задач, товаров магазина, истории — адаптировать по ширине контейнера, не viewport
 
 ### 3. CSS Subgrid
-- [ ] Использовать `subgrid` для выравнивания вложенных элементов в карточках:
+- [x] Использовать `subgrid` для выравнивания вложенных элементов в карточках:
   ```css
   .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
   .card { display: grid; grid-row: span 3; grid-template-rows: subgrid; }
   ```
 
 ### 4. Scroll-driven Animations
-- [ ] Анимации при скролле через CSS `animation-timeline: scroll()`:
+- [x] Анимации при скролле через CSS `animation-timeline: scroll()`:
   - Fade-in карточек секций при появлении
   - Progress bar в header при скролле вниз
   ```css
@@ -45,19 +45,19 @@
   ```
 
 ### 5. View Transitions API
-- [ ] Плавные переходы между табами/секциями:
+- [x] Плавные переходы между табами/секциями:
   ```javascript
   document.startViewTransition(() => { switchTab(newTab); });
   ```
-- [ ] CSS-правила для transitions:
+- [x] CSS-правила для transitions:
   ```css
   ::view-transition-old(section) { animation: fade-out 0.2s ease; }
   ::view-transition-new(section) { animation: fade-in 0.2s ease; }
   ```
 
 ### 6. Color Scheme & Palette
-- [ ] Добавить `color-scheme: dark` на `<html>` и `:root`
-- [ ] Использовать `oklch()` / `oklab()` для более перцептуально-ровных градиентов:
+- [x] Добавить `color-scheme: dark` на `<html>` и `:root`
+- [x] Использовать `oklch()` / `oklab()` для более перцептуально-ровных градиентов:
   ```css
   --color-primary: oklch(0.55 0.25 264);
   --gradient-primary: linear-gradient(135deg, oklch(0.55 0.25 264), oklch(0.6 0.2 290));
@@ -68,21 +68,21 @@
   ```
 
 ### 7. Микроанимации
-- [ ] `@starting-style` для анимации появления модальных окон:
+- [x] `@starting-style` для анимации появления модальных окон:
   ```css
   dialog[open] { opacity: 1; transform: scale(1); }
   @starting-style { dialog[open] { opacity: 0; transform: scale(0.95); } }
   ```
 - [ ] Анимация числа баланса при изменении (counter animation)
-- [ ] Haptic-like feedback при нажатии кнопок (subtle scale + shadow change)
+- [x] Haptic-like feedback при нажатии кнопок (subtle scale + shadow change)
 - [ ] Skeleton loading вместо спиннеров при загрузке данных
 
 ### 8. Производительность CSS
-- [ ] `content-visibility: auto` для скрытых секций (экономия рендеринга):
+- [x] `content-visibility: auto` для скрытых секций (экономия рендеринга):
   ```css
   .section[hidden] { content-visibility: auto; contain-intrinsic-size: auto 500px; }
   ```
-- [ ] `will-change` только на анимируемых элементах
+- [x] `will-change` только на анимируемых элементах
 - [ ] Минификация CSS для production
 
 ---

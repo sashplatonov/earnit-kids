@@ -51,7 +51,7 @@ async function performBackup() {
         const caption = `📦 <b>Database Backup</b>\n\n<b>Env:</b> ${config.env}\n<b>Date:</b> ${new Date().toLocaleString()}\n<b>File:</b> <code>${filename}</code>`;
 
         try {
-            const success = await sendTelegramDocument(filepath, caption);
+            const success = await sendTelegramDocument(filepath, caption, { silent: true });
 
             if (success) {
                 logger.info('Backup successfully sent to Telegram');

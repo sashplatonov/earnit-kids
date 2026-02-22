@@ -1,32 +1,51 @@
 /* ===== CSS Variables ===== */
 :root {
-    --color-primary: #6366f1;
-    --color-primary-dark: #4f46e5;
-    --color-secondary: #8b5cf6;
-    --color-success: #10b981;
-    --color-success-dark: #059669;
-    --color-danger: #ef4444;
-    --color-danger-dark: #dc2626;
-    --color-warning: #f59e0b;
+    color-scheme: dark;
 
-    --color-bg: #0f172a;
-    --color-bg-light: #1e293b;
-    --color-bg-card: #334155;
-    --color-bg-hover: #475569;
+    /* Modern Palette using OKLCH (Best Practices 2026) */
+    --color-primary: oklch(0.61 0.21 259);
+    --color-primary-dark: oklch(0.55 0.22 261);
+    --color-secondary: oklch(0.65 0.23 285);
+    --color-success: oklch(0.72 0.17 155);
+    --color-success-dark: oklch(0.64 0.18 160);
+    --color-danger: oklch(0.63 0.22 25);
+    --color-danger-dark: oklch(0.55 0.22 28);
+    --color-warning: oklch(0.79 0.18 85);
 
-    --color-text: #f8fafc;
-    --color-text-muted: #94a3b8;
-    --color-text-dim: #64748b;
+    --color-bg: oklch(0.18 0.03 260);
+    --color-bg-light: oklch(0.24 0.04 260);
+    --color-bg-card: oklch(0.31 0.05 260);
+    --color-bg-hover: oklch(0.38 0.06 260);
 
-    --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    --gradient-gold: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    --gradient-card: linear-gradient(145deg, #334155 0%, #1e293b 100%);
+    --color-text: oklch(0.97 0.01 260);
+    --color-text-muted: oklch(0.75 0.03 260);
+    --color-text-dim: oklch(0.55 0.04 260);
+
+    /* Fluid Typography (Step 1) */
+    --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
+    --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.9rem);
+    --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --text-lg: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+    --text-xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+    --text-2xl: clamp(2rem, 1.7rem + 1.5vw, 3rem);
+
+    /* Spacing Tokens (Step 16) */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+
+    --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    --gradient-gold: linear-gradient(135deg, oklch(0.85 0.18 85) 0%, oklch(0.75 0.19 75) 100%);
+    --gradient-success: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+    --gradient-card: linear-gradient(145deg, var(--color-bg-card) 0%, var(--color-bg-light) 100%);
 
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+    --shadow-glow: 0 0 20px oklch(0.61 0.21 259 / 0.3);
 
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -70,6 +89,7 @@ body {
     -webkit-font-smoothing: antialiased;
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
+    font-size: var(--text-base);
 }
 
 /* Global touch-target optimization */
@@ -176,7 +196,7 @@ button,
 }
 
 .header h1 {
-    font-size: 1.75rem;
+    font-size: var(--text-lg);
     font-weight: 800;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -296,14 +316,62 @@ button,
     }
 }
 
-.header__balance:focus-visible {
-    outline: none;
+/* ===== View Transitions API (Step 5) ===== */
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root) {
+        animation: 0.3s ease both fade-out;
+    }
+
+    ::view-transition-new(root) {
+        animation: 0.3s ease both fade-in;
+    }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .balance__coin {
-        animation: none;
+@keyframes fade-out {
+    from {
+        opacity: 1;
     }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===== Accessibility & Focus (Step 15) ===== */
+.header__balance:focus-visible,
+.btn:focus-visible,
+.nav__btn:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+}
+
+/* Base styles for scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-bg-card);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-bg-hover);
 }
 
 /* ===== Navigation ===== */
@@ -537,19 +605,27 @@ button,
     opacity: 0.55;
 }
 
-.section {
-    animation: fadeIn 0.3s ease;
+.section.hidden {
+    display: none;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
 }
 
-@keyframes fadeIn {
+.section {
+    animation: sectionFadeIn linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 25%;
+}
+
+@keyframes sectionFadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(30px) scale(0.98);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -576,6 +652,8 @@ button,
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1rem;
+    container-type: inline-size;
+    /* Step 2: Container Queries */
 }
 
 .card {
@@ -587,6 +665,21 @@ button,
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
+
+    /* Step 3: Subgrid for alignment */
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 0.5rem;
+}
+
+@container (max-width: 350px) {
+    .card {
+        padding: 1rem;
+    }
+
+    .card__title {
+        font-size: 1rem;
+    }
 }
 
 .card::before {
@@ -602,12 +695,35 @@ button,
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.card:active {
+    transform: translateY(-2px) scale(1.01);
 }
 
 .card:hover::before {
     opacity: 1;
+}
+
+/* Step 4: Scroll-driven Animation for Cards */
+.card {
+    animation: cardAppear linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 80%;
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .card__header {
@@ -779,10 +895,15 @@ button,
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
-    /* Increased blur for premium feel */
-    -webkit-backdrop-filter: blur(8px);
-    animation: fadeIn 0.2s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: opacity 0.3s ease;
+}
+
+@starting-style {
+    .modal.active .modal__backdrop {
+        opacity: 0;
+    }
 }
 
 .modal__content {
@@ -793,10 +914,17 @@ button,
     max-width: 400px;
     width: 100%;
     box-shadow: var(--shadow-lg);
-    animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    /* Bouncy animation */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
     margin-top: var(--safe-top);
     margin-bottom: var(--safe-bottom);
+}
+
+@starting-style {
+    .modal.active .modal__content {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+    }
 }
 
 @keyframes modalSlide {

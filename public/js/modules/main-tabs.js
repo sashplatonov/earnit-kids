@@ -1,12 +1,21 @@
 async function toggleTab(tabButtons, tabName) {
     if (!tabName) return;
-    tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-    const target = document.getElementById(`${tabName}-section`);
-    if (target) target.classList.remove('hidden');
-    if (tabName === 'analytics') {
-        const { loadAnalytics } = await import('./analytics-ui.js');
-        loadAnalytics();
+
+    const performSwitch = async () => {
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        const target = document.getElementById(`${tabName}-section`);
+        if (target) target.classList.remove('hidden');
+        if (tabName === 'analytics') {
+            const { loadAnalytics } = await import('./analytics-ui.js');
+            loadAnalytics();
+        }
+    };
+
+    if (document.startViewTransition) {
+        document.startViewTransition(performSwitch);
+    } else {
+        await performSwitch();
     }
 }
 

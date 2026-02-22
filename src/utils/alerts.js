@@ -12,7 +12,7 @@ const { sendErrorAlertEmail } = require('../services/emailService');
  * @param {string} message - The message to send
  * @returns {Promise<boolean>} - Success or failure
  */
-async function sendTelegramMessage(message) {
+async function sendTelegramMessage(message, options = {}) {
     if (!config.TELEGRAM.ENABLED || !config.TELEGRAM.TOKEN || !config.TELEGRAM.CHAT_ID) {
         return false;
     }
@@ -28,7 +28,8 @@ async function sendTelegramMessage(message) {
                 chat_id: config.TELEGRAM.CHAT_ID,
                 text: message,
                 parse_mode: 'HTML',
-                disable_web_page_preview: true
+                disable_web_page_preview: true,
+                disable_notification: options.silent || false
             }),
         });
 
@@ -51,7 +52,7 @@ async function sendTelegramMessage(message) {
  * @param {string} caption - Optional caption
  * @returns {Promise<boolean>} - Success or failure
  */
-async function sendTelegramDocument(filePath, caption = '') {
+async function sendTelegramDocument(filePath, caption = '', options = {}) {
     if (!config.TELEGRAM.ENABLED || !config.TELEGRAM.TOKEN || !config.TELEGRAM.CHAT_ID) {
         return false;
     }
@@ -64,6 +65,7 @@ async function sendTelegramDocument(filePath, caption = '') {
         const fileContent = fs.readFileSync(filePath);
         formData.append('document', new Blob([fileContent]), require('path').basename(filePath));
         if (caption) formData.append('caption', caption);
+        if (options.silent) formData.append('disable_notification', 'true');
 
         const url = `https://api.telegram.org/bot${config.TELEGRAM.TOKEN}/sendDocument`;
         const response = await fetch(url, {
