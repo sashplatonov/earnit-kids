@@ -117,7 +117,7 @@ async function regenerateChildToken(familyId, childId) {
  */
 async function addChild(familyId, name) {
     const token = crypto.randomBytes(32).toString('hex');
-    const child = await familyRepository.createChild(familyId, name, token);
+    const child = await familyRepository.createChild({ familyId, name, token });
     return { success: !!child, child };
 }
 
@@ -182,7 +182,7 @@ async function updateNickname(familyId, childId, nickname) {
     const child = family.children.find(c => c.id === parseInt(childId));
     if (!child) return { success: false, error: 'Child not found' };
 
-    if (await familyRepository.updateChild(childId, updateData)) {
+    if (await familyRepository.updateChild(childId, { name: nickname })) {
         return { success: true };
     }
     return { success: false, error: 'Failed to save child settings' };

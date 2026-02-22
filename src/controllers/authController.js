@@ -4,12 +4,9 @@ const {
 } = require('../services/authService');
 const parseBody = require('../middleware/body-parser');
 
-function sendJSON(res, data, status = 200) {
-    res.writeHead(status, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(data));
-}
+const { sendJSON } = require('../utils/controllerUtils');
 
-function buildAuthCookies(email, role, familyId, maxAge) {
+function buildAuthCookies({ email, role, familyId, maxAge }) {
     const cookies = [
         `app_auth=${email}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`,
         `app_role=${role}; Max-Age=${maxAge}; Path=/; SameSite=Lax`
@@ -24,7 +21,7 @@ function sendLoginSuccess(res, email, result) {
     const maxAge = result.role === 'admin' ? 30 * 24 * 60 * 60 : 24 * 60 * 60;
     res.writeHead(200, {
         'Content-Type': 'application/json',
-        'Set-Cookie': buildAuthCookies(email, result.role, result.familyId, maxAge)
+        'Set-Cookie': buildAuthCookies({ email, role: result.role, familyId: result.familyId, maxAge })
     });
     res.end(JSON.stringify(result));
 }
@@ -108,7 +105,12 @@ async function handleMagicLink(req, res) {
 
     if (authResult.success) {
         const maxAge = 365 * 24 * 60 * 60;
-        const cookies = buildAuthCookies(authResult.email, 'child', authResult.familyId, maxAge);
+        const cookies = buildAuthCookies({
+            email: authResult.email,
+            role: 'child',
+            familyId: authResult.familyId,
+            maxAge
+        });
         cookies.push(`child_id=${authResult.childId}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax`);
         res.writeHead(302, { Location: '/', 'Set-Cookie': cookies });
         return res.end();

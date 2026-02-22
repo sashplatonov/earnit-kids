@@ -2,9 +2,13 @@ function getMonthlyStats(state, monthKey, childId = null) {
     let moneySpent = 0;
     let largePurchase = null;
 
-    state.history.forEach((entry) => {
+    (state.history || []).forEach((entry) => {
         if (childId && entry.childId != childId) return;
-        if (entry.type !== 'spend' || !entry.date.startsWith(monthKey)) return;
+        if (entry.type !== 'spend' || !entry.date) return;
+
+        // Ensure date is string before calling startsWith
+        const dateStr = typeof entry.date === 'string' ? entry.date : new Date(entry.date).toISOString();
+        if (!dateStr.startsWith(monthKey)) return;
 
         const amount = entry.moneyAmount || entry.rsdAmount || 0;
         moneySpent += amount;
@@ -23,9 +27,12 @@ function getDailyStats(state, childId = null) {
     const today = new Date().toISOString().slice(0, 10);
     let earnedToday = 0;
 
-    state.history.forEach((entry) => {
+    (state.history || []).forEach((entry) => {
         if (childId && entry.childId != childId) return;
-        if (entry.type === 'earn' && entry.date.startsWith(today)) {
+        if (entry.type !== 'earn' || !entry.date) return;
+
+        const dateStr = typeof entry.date === 'string' ? entry.date : new Date(entry.date).toISOString();
+        if (dateStr.startsWith(today)) {
             earnedToday += (entry.amount || 0);
         }
     });
@@ -144,6 +151,10 @@ function updateLargePurchaseUI(stats) {
 export function updateBudgetStatsUI(state, config, activeChildId) {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const scopedChildId = state.isAdmin ? activeChildId : null;
+
+    // Safety check for history
+    if (!state.history) state.history = [];
+
     const stats = getMonthlyStats(state, currentMonth, scopedChildId);
 
     const monthlyLimit = (state.monthlyLimit !== undefined && state.monthlyLimit !== null)
