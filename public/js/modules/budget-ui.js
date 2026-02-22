@@ -1,23 +1,33 @@
+function isEntryValid(entry, childId, monthKey) {
+    if (childId && String(entry.childId) !== String(childId)) return false;
+    if (entry.type !== 'spend' || !entry.date) return false;
+    const dateStr = typeof entry.date === 'string' ? entry.date : new Date(entry.date).toISOString();
+    return dateStr.startsWith(monthKey);
+}
+
+function processMonthlyEntry(entry, filters) {
+    const { childId, monthKey, state } = filters;
+    if (!isEntryValid(entry, childId, monthKey)) return null;
+
+    let largePurchase = null;
+    if (entry.itemId) {
+        const item = state.shopItems.find(i => String(i.id) === String(entry.itemId));
+        if (item && item.type === 'large') largePurchase = item.name;
+    }
+
+    const amount = Number(entry.moneyAmount || entry.rsdAmount || 0);
+    return { amount, largePurchase };
+}
+
 function getMonthlyStats(state, monthKey, childId = null) {
     let moneySpent = 0;
     let largePurchase = null;
 
-    (state.history || []).forEach((entry) => {
-        if (childId && entry.childId != childId) return;
-        if (entry.type !== 'spend' || !entry.date) return;
-
-        // Ensure date is string before calling startsWith
-        const dateStr = typeof entry.date === 'string' ? entry.date : new Date(entry.date).toISOString();
-        if (!dateStr.startsWith(monthKey)) return;
-
-        const amount = entry.moneyAmount || entry.rsdAmount || 0;
-        moneySpent += amount;
-
-        if (!entry.itemId) return;
-        const item = state.shopItems.find((shopItem) => shopItem.id == entry.itemId);
-        if (item && item.type === 'large') {
-            largePurchase = item.name;
-        }
+    (state.history || []).forEach(entry => {
+        const result = processMonthlyEntry(entry, { childId, monthKey, state });
+        if (!result) return;
+        moneySpent += result.amount;
+        if (result.largePurchase) largePurchase = result.largePurchase;
     });
 
     return { moneySpent, largePurchase };
@@ -64,11 +74,9 @@ function updateHeaderEarnedDisplay(earnedToday, dailyLimit) {
         : 'linear-gradient(90deg, #a3f7bf, #22c55e)';
 }
 
-function updateMonthlyBudgetUI(stats, monthlyLimit) {
+function updateMonthlyTexts(stats, monthlyLimit) {
     const spentEl = document.getElementById('money-spent') || document.getElementById('rsd-spent');
-    if (!spentEl) return;
-
-    spentEl.textContent = stats.moneySpent.toLocaleString();
+    if (spentEl) spentEl.textContent = stats.moneySpent.toLocaleString();
 
     const limitEl = document.getElementById('money-limit') || document.getElementById('rsd-limit');
     if (limitEl) limitEl.textContent = monthlyLimit.toLocaleString();
@@ -79,6 +87,10 @@ function updateMonthlyBudgetUI(stats, monthlyLimit) {
         remainingMoneyEl.textContent = `(осталось ${remaining.toLocaleString()})`;
         remainingMoneyEl.style.color = remaining === 0 ? '#ff4757' : 'rgba(255,255,255,0.6)';
     }
+}
+
+function updateMonthlyBudgetUI(stats, monthlyLimit) {
+    updateMonthlyTexts(stats, monthlyLimit);
 
     const progress = Math.min((stats.moneySpent / monthlyLimit) * 100, 100);
     const bar = document.getElementById('money-progress') || document.getElementById('rsd-progress');
@@ -90,44 +102,48 @@ function updateMonthlyBudgetUI(stats, monthlyLimit) {
     else if (progress > 70) bar.classList.add('warning');
 }
 
-function updateDailyLimitUI(dailyStats, dailyLimit) {
+function updateDailyTexts(dailyStats, dailyLimit) {
     const earnedTodayEl = document.getElementById('coins-earned-today');
     if (earnedTodayEl) earnedTodayEl.textContent = dailyStats.earnedToday;
 
     const dailyLimitEl = document.getElementById('coins-daily-limit');
-    if (dailyLimitEl) {
-        dailyLimitEl.textContent = dailyLimit > 0 ? `Лимит: ${dailyLimit}` : 'Лимит: ∞';
-    }
+    if (dailyLimitEl) dailyLimitEl.textContent = dailyLimit > 0 ? `Лимит: ${dailyLimit}` : 'Лимит: ∞';
 
     const remainingEl = document.getElementById('coins-daily-remaining');
-    if (remainingEl) {
-        if (dailyLimit > 0) {
-            const remaining = Math.max(0, dailyLimit - dailyStats.earnedToday);
-            remainingEl.textContent = `Осталось: ${remaining} 🪙`;
-            remainingEl.style.color = remaining === 0 ? '#ff6b6b' : 'rgba(255,255,255,0.7)';
-        } else {
-            remainingEl.textContent = 'Лимит не установлен';
-            remainingEl.style.color = 'rgba(255,255,255,0.55)';
-        }
-    }
+    if (!remainingEl) return;
 
-    const dailyBar = document.getElementById('coins-daily-progress');
-    if (!dailyBar) return;
-
-    dailyBar.className = 'progress-bar';
-    if (dailyLimit > 0) {
-        const progress = Math.min((dailyStats.earnedToday / dailyLimit) * 100, 100);
-        dailyBar.style.width = `${progress}%`;
-        dailyBar.classList.remove('warning', 'danger');
-        if (progress >= 100) dailyBar.classList.add('danger');
-        else if (progress > 80) dailyBar.classList.add('warning');
-        if (dailyBar.parentElement) dailyBar.parentElement.style.opacity = 1;
+    if (dailyLimit <= 0) {
+        remainingEl.textContent = 'Лимит не установлен';
+        remainingEl.style.color = 'rgba(255,255,255,0.55)';
         return;
     }
+    const remaining = Math.max(0, dailyLimit - dailyStats.earnedToday);
+    remainingEl.textContent = `Осталось: ${remaining} 🪙`;
+    remainingEl.style.color = remaining === 0 ? '#ff6b6b' : 'rgba(255,255,255,0.7)';
+}
 
-    dailyBar.style.width = '0%';
+function applyDailyBarProgress(dailyBar, dailyStats, dailyLimit) {
+    if (dailyLimit <= 0) {
+        dailyBar.style.width = '0%';
+        dailyBar.classList.remove('warning', 'danger');
+        if (dailyBar.parentElement) dailyBar.parentElement.style.opacity = 0.45;
+        return;
+    }
+    const progress = Math.min((dailyStats.earnedToday / dailyLimit) * 100, 100);
+    dailyBar.style.width = `${progress}%`;
     dailyBar.classList.remove('warning', 'danger');
-    if (dailyBar.parentElement) dailyBar.parentElement.style.opacity = 0.45;
+    if (progress >= 100) dailyBar.classList.add('danger');
+    else if (progress > 80) dailyBar.classList.add('warning');
+    if (dailyBar.parentElement) dailyBar.parentElement.style.opacity = 1;
+}
+
+function updateDailyLimitUI(dailyStats, dailyLimit) {
+    updateDailyTexts(dailyStats, dailyLimit);
+    const dailyBar = document.getElementById('coins-daily-progress');
+    if (dailyBar) {
+        dailyBar.className = 'progress-bar';
+        applyDailyBarProgress(dailyBar, dailyStats, dailyLimit);
+    }
 }
 
 function updateLargePurchaseUI(stats) {

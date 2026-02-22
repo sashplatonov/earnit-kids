@@ -63,7 +63,8 @@ export function saveTask() {
 export function deleteTask() {
     if (!editingTaskId) return;
     showConfirm('Удалить задание?', 'Это действие нельзя отменить.', () => {
-        state.tasks = state.tasks.filter(t => t.id != editingTaskId);
+        const t = state.tasks.find(t => t.id == editingTaskId);
+        if (t) t.isDeleted = true;
         scheduleSave(); renderTasks(); closeModal('task-modal');
         showToast('Задание удалено', 'info');
     });

@@ -49,9 +49,10 @@ export function renderShopUI(state) {
     const emptyState = document.getElementById('shop-empty');
     if (!container) return;
 
-    const items = state.isAdmin && state.currentChildId
-        ? state.shopItems.filter(i => !i.childId || i.childId == state.currentChildId)
-        : state.shopItems;
+    let items = state.shopItems.filter(i => !i.isDeleted);
+    if (state.isAdmin && state.currentChildId) {
+        items = items.filter(i => !i.childId || i.childId == state.currentChildId);
+    }
 
     if (items.length === 0) {
         container.innerHTML = '';

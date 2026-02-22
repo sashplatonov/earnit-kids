@@ -29,23 +29,32 @@ export function getActingChildId() {
         findId(state.history, 'childId') || findId(state.requests, 'childId') || null;
 }
 
-export function addHistoryEntry({ type, amount, description, relatedId, moneyAmount, childIdOverride }) {
+function setEntryReferences(entry, type, relatedId) {
+    if (!relatedId) return;
+    if (type === 'spend') entry.itemId = relatedId;
+    else if (type === 'earn') entry.taskId = relatedId;
+    entry.relatedId = relatedId;
+}
+
+function buildEntryObject(params) {
+    const { type, amount, description, relatedId, moneyAmount, childIdOverride, actingChildId, group, comment } = params;
+    const hasRef = !!relatedId;
     const entry = {
         id: Date.now(),
-        type,
-        amount,
-        description,
+        type, amount,
+        description: hasRef ? null : description,
+        group: hasRef ? null : (group || undefined),
+        comment: hasRef ? null : (comment || undefined),
         date: new Date().toISOString(),
         moneyAmount: moneyAmount || undefined,
-        childId: childIdOverride || getActingChildId()
+        childId: childIdOverride || actingChildId
     };
+    setEntryReferences(entry, type, relatedId);
+    return entry;
+}
 
-    if (relatedId) {
-        if (type === 'spend') entry.itemId = relatedId;
-        else if (type === 'earn') entry.taskId = relatedId;
-        entry.relatedId = relatedId;
-    }
-
+export function addHistoryEntry(params) {
+    const entry = buildEntryObject({ ...params, actingChildId: getActingChildId() });
     state.history.unshift(entry);
     scheduleSave();
     renderHistory();

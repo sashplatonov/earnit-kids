@@ -25,24 +25,24 @@ function getPlatform() {
     return window.Capacitor.getPlatform() || 'unknown';
 }
 
+function getPushChildId(role) {
+    if (role !== 'child') return null;
+    if (state.children && state.children.length > 0) return state.children[0].id;
+    return state.currentChildId || null;
+}
+
 async function syncTokenToServer(tokenValue) {
     if (!tokenValue) return;
 
     const role = state.isAdmin ? 'admin' : 'child';
-    const childId = role === 'child'
-        ? (state.children?.[0]?.id || state.currentChildId || null)
-        : null;
+    const childId = getPushChildId(role);
 
-    const payload = {
-        token: tokenValue,
-        platform: getPlatform(),
-        role,
-        childId
-    };
-
+    const payload = { token: tokenValue, platform: getPlatform(), role, childId };
     const result = await registerPushTokenOnServer(payload);
-    if (!result?.success) {
-        console.warn('[push] token register failed:', result?.error || 'unknown');
+
+    if (!result || !result.success) {
+        const err = result ? result.error : 'unknown';
+        console.warn('[push] token register failed:', err || 'unknown');
     }
 }
 

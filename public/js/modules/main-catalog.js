@@ -66,7 +66,7 @@ export function renderCatalog() {
 
 function checkDuplicateInCatalog(type, name) {
     const list = type === 'task' ? state.tasks : state.shopItems;
-    return list.some(i => i.name === name && i.childId == state.currentChildId);
+    return list.some(i => !i.isDeleted && i.name === name && i.childId == state.currentChildId);
 }
 
 function buildNewCatalogItem(item) {

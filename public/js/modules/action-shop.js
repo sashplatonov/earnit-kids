@@ -5,7 +5,16 @@ import { scheduleSave, addHistoryEntry, checkLimits, getActingChildId, updateBal
 
 function applyPurchase(item, actingId, moneyPrice) {
     updateBalanceLocally(actingId, -item.price);
-    addHistoryEntry({ type: 'spend', amount: item.price, description: item.name, relatedId: item.id, moneyAmount: moneyPrice, childIdOverride: actingId });
+    addHistoryEntry({
+        type: 'spend',
+        amount: item.price,
+        description: item.name,
+        group: item.group,
+        comment: item.comment,
+        relatedId: item.id,
+        moneyAmount: moneyPrice,
+        childIdOverride: actingId
+    });
     scheduleSave();
     renderAll();
     showMobileEventNotification(`Вы купили: ${item.name}!`, 'success', 'Balance updated');

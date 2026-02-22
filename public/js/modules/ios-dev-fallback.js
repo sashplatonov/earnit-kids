@@ -78,25 +78,35 @@ function detectRequestCreated(previous, current) {
         .map((item) => `${item.taskName}: ${item.coins} 🪙`);
 }
 
-function detectRequestApproved(previous, current) {
-    const beforePending = (previous?.requests || []).filter((item) => item.status === 'pending');
-    const afterPendingIds = pendingIds(current?.requests || []);
-    const removedPending = beforePending.filter((item) => !afterPendingIds.has(item.id));
-    if (removedPending.length === 0) return [];
+function findMatchingHistory(request, newHistory) {
+    return newHistory.some((entry) => {
+        const sameChild = String(entry.childId || '') === String(request.childId || '');
+        const sameAmount = Number(entry.amount || 0) === Number(request.coins || 0);
+        return sameChild && sameAmount;
+    });
+}
 
-    const prevHistoryIds = new Set((previous?.history || []).map((entry) => entry.id));
-    const newHistory = (current?.history || []).filter((entry) => !prevHistoryIds.has(entry.id));
-    if (newHistory.length === 0) return [];
+function getAddedHistory(previous, current) {
+    const prevHistoryIds = new Set((previous?.history || []).map(e => e.id));
+    return (current?.history || []).filter(e => !prevHistoryIds.has(e.id));
+}
+
+function getRemovedPendingRequests(previous, current) {
+    const beforePending = (previous?.requests || []).filter(i => i.status === 'pending');
+    const afterPendingIds = pendingIds(current?.requests || []);
+    return beforePending.filter(i => !afterPendingIds.has(i.id));
+}
+
+function detectRequestApproved(previous, current) {
+    const removedPending = getRemovedPendingRequests(previous, current);
+    if (!removedPending.length) return [];
+
+    const newHistory = getAddedHistory(previous, current);
+    if (!newHistory.length) return [];
 
     return removedPending
-        .filter((request) => {
-            return newHistory.some((entry) => {
-                const sameChild = String(entry.childId || '') === String(request.childId || '');
-                const sameAmount = Number(entry.amount || 0) === Number(request.coins || 0);
-                return sameChild && sameAmount;
-            });
-        })
-        .map((item) => `${item.taskName}: ${item.coins} 🪙`);
+        .filter(request => findMatchingHistory(request, newHistory))
+        .map(item => `${item.taskName}: ${item.coins} 🪙`);
 }
 
 function emitNotifications(previous, current) {

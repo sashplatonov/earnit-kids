@@ -27,7 +27,8 @@ function mapTask(row) {
         group: row.group_name,
         frequency: row.frequency,
         comment: row.comment,
-        money_limit: row.money_limit
+        money_limit: row.money_limit,
+        isDeleted: !!row.is_deleted
     };
 }
 
@@ -39,7 +40,8 @@ function mapShopItem(row) {
         price: row.price,
         group: row.group_name,
         frequency: row.frequency,
-        money_limit: row.money_limit
+        money_limit: row.money_limit,
+        isDeleted: !!row.is_deleted
     };
 }
 
@@ -50,14 +52,17 @@ function mapHistoryEntry(row) {
         type: row.type,
         amount: row.amount,
         description: row.description,
+        group: row.group_name,
+        comment: row.comment,
         date: row.created_at,
         moneyAmount: row.money_amount
     };
-    if (row.related_id) {
-        if (row.type === 'spend') entry.itemId = parseInt(row.related_id);
-        else if (row.type === 'earn') entry.taskId = parseInt(row.related_id);
-        entry.relatedId = parseInt(row.related_id);
-    }
+
+    if (row.type === 'spend' && row.related_id) entry.itemId = parseInt(row.related_id);
+    else if (row.type === 'earn' && row.related_id) entry.taskId = parseInt(row.related_id);
+
+    if (row.related_id) entry.relatedId = parseInt(row.related_id);
+
     return entry;
 }
 
@@ -168,11 +173,22 @@ async function getAnalyticsData(familyId, childId, timeframe = 'month') {
     if (!dbId) return { summary: {}, topTasks: [], topItems: [] };
     const int = getInterval(timeframe);
     const p = childId ? [dbId, int, childId] : [dbId, int];
-    const f = childId ? ' AND child_id = $3' : '';
+    const f = childId ? ' AND h.child_id = $3' : '';
 
-    const qs = `SELECT SUM(CASE WHEN type='earn' THEN amount ELSE 0 END) as e, SUM(CASE WHEN type='spend' THEN amount ELSE 0 END) as s FROM history WHERE family_id=$1 AND created_at >= NOW() - $2::interval${f}`;
-    const qt = `SELECT MAX(description) as n, SUM(amount) as c, COUNT(*) as ct FROM history WHERE family_id=$1 AND type='earn' AND created_at >= NOW() - $2::interval${f} GROUP BY LOWER(TRIM(description)) ORDER BY c DESC`;
-    const qi = `SELECT MAX(description) as n, SUM(amount) as c, COUNT(*) as ct FROM history WHERE family_id=$1 AND type='spend' AND created_at >= NOW() - $2::interval${f} GROUP BY LOWER(TRIM(description)) ORDER BY c DESC`;
+    const qs = `SELECT SUM(CASE WHEN type='earn' THEN amount ELSE 0 END) as e, SUM(CASE WHEN type='spend' THEN amount ELSE 0 END) as s FROM history h WHERE h.family_id=$1 AND h.created_at >= NOW() - $2::interval${f}`;
+    const qt = `
+        SELECT COALESCE(t.name, h.description, 'Задание') as n, SUM(h.amount) as c, COUNT(*) as ct 
+        FROM history h 
+        LEFT JOIN tasks t ON h.related_id = t.task_id AND h.family_id = t.family_id
+        WHERE h.family_id=$1 AND h.type='earn' AND h.created_at >= NOW() - $2::interval${f} 
+        GROUP BY n ORDER BY c DESC`;
+    const qi = `
+        SELECT COALESCE(i.name, h.description, 'Товар') as n, SUM(h.amount) as c, COUNT(*) as ct 
+        FROM history h 
+        LEFT JOIN shop_items i ON h.related_id = i.item_id AND h.family_id = i.family_id
+        WHERE h.family_id=$1 AND h.type='spend' AND h.created_at >= NOW() - $2::interval${f} 
+        GROUP BY n ORDER BY c DESC
+    `;
 
     const [sr, tr, ir] = await Promise.all([query(qs, p), query(qt, p), query(qi, p)]);
     const s = sr.rows[0];

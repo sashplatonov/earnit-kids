@@ -53,63 +53,46 @@ function renderRecentHistory(history) {
     `;
 }
 
+function renderFamilyGrid(familyData) {
+    const { name, created_at, email, monthly_limit, children } = familyData.familyInfo;
+    const { balance } = familyData.data;
+
+    return `
+        <div class="detail-grid">
+            <div class="detail-item"><strong>ID семьи</strong><div>#${familyData.familyId}</div></div>
+            <div class="detail-item"><strong>Дата создания</strong><div>${new Date(created_at).toLocaleString('ru-RU')}</div></div>
+            <div class="detail-item"><strong>Email</strong><div>${email || '-'}</div></div>
+            <div class="detail-item"><strong>Баланс</strong><div>${balance} 🪙</div></div>
+            <div class="detail-item"><strong>Лимит (мес)</strong><div>${monthly_limit || 10000}</div></div>
+            <div class="detail-item" style="grid-column: span 2">
+                <strong>Дети (${children.length})</strong>
+                <div style="margin-top:0.5rem; display:flex; flex-direction:column; gap:0.5rem;">
+                    ${renderChildren(children)}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderDetailsSection(title, dataArray, renderFn) {
+    return `
+        <h3>${title} (${dataArray.length})</h3>
+        <table>
+            <thead><tr><th>Название</th><th>${title.includes('Задания') ? 'Награда' : 'Цена'}</th></tr></thead>
+            <tbody>${renderFn(dataArray)}</tbody>
+        </table>
+    `;
+}
+
 export function renderFamilyDetails(familyData) {
     const modalTitle = document.getElementById('modal-title');
     const modalBody = document.getElementById('modal-body');
 
     modalTitle.textContent = familyData.familyInfo.name;
     modalBody.innerHTML = `
-        <div class="detail-grid">
-            <div class="detail-item">
-                <strong>ID семьи</strong>
-                <div>#${familyData.familyId}</div>
-            </div>
-            <div class="detail-item">
-                <strong>Дата создания</strong>
-                <div>${new Date(familyData.familyInfo.created_at).toLocaleString('ru-RU')}</div>
-            </div>
-            <div class="detail-item">
-                <strong>Email</strong>
-                <div>${familyData.familyInfo.email || '-'}</div>
-            </div>
-            <div class="detail-item">
-                <strong>Баланс</strong>
-                <div>${familyData.data.balance} 🪙</div>
-            </div>
-            <div class="detail-item">
-                <strong>Лимит (мес)</strong>
-                <div>${familyData.familyInfo.monthly_limit || 10000}</div>
-            </div>
-            <div class="detail-item" style="grid-column: span 2">
-                <strong>Дети (${familyData.familyInfo.children.length})</strong>
-                <div style="margin-top:0.5rem; display:flex; flex-direction:column; gap:0.5rem;">
-                    ${renderChildren(familyData.familyInfo.children)}
-                </div>
-            </div>
-        </div>
-
-        <h3>📋 Задания (${familyData.data.tasks.length})</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Название</th>
-                    <th>Награда</th>
-                </tr>
-            </thead>
-            <tbody>${renderTasks(familyData.data.tasks)}</tbody>
-        </table>
-
-        <h3>🏪 Магазин (${familyData.data.shop.length})</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Название</th>
-                    <th>Цена</th>
-                </tr>
-            </thead>
-            <tbody>${renderShopItems(familyData.data.shop)}</tbody>
-        </table>
-
+        ${renderFamilyGrid(familyData)}
+        ${renderDetailsSection('📋 Задания', familyData.data.tasks, renderTasks)}
+        ${renderDetailsSection('🏪 Магазин', familyData.data.shop, renderShopItems)}
         <h3>📜 История (${familyData.data.history.length})</h3>
         ${renderRecentHistory(familyData.data.history)}
     `;

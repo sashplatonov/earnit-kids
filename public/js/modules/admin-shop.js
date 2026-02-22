@@ -66,7 +66,8 @@ export function saveShopItem() {
 export function deleteShopItem() {
     if (!editingShopId) return;
     showConfirm('Удалить товар?', 'Это действие нельзя отменить.', () => {
-        state.shopItems = state.shopItems.filter(i => i.id != editingShopId);
+        const i = state.shopItems.find(i => i.id == editingShopId);
+        if (i) i.isDeleted = true;
         scheduleSave(); renderShop(); closeModal('shop-modal');
         showToast('Товар удалён', 'info');
     });
