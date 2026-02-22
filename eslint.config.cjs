@@ -1,10 +1,10 @@
 const STRICT_RULES = {
-    complexity: ['error', 20],
-    'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
-    'max-lines-per-function': ['error', { max: 120, skipBlankLines: true, skipComments: true, IIFEs: true }],
-    'max-depth': ['error', 4],
-    'max-params': ['error', 5],
-    'max-statements': ['error', 60],
+    complexity: ['error', 10],
+    'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+    'max-lines-per-function': ['error', { max: 50, skipBlankLines: true, skipComments: true, IIFEs: true }],
+    'max-depth': ['error', 3],
+    'max-params': ['error', 3],
+    'max-statements': ['error', 20],
 };
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
