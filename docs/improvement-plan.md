@@ -38,9 +38,9 @@
 ## 🟡 Качество кода и Developer Experience
 
 ### 5. Рефакторинг роутинга
-- [ ] Вынести body parsing в отдельный middleware (сейчас в каждом контроллере)
-- [ ] Создать Router-абстракцию вместо цепочки `if (url.startsWith(...))`
-- [ ] Разбить `familyController.js` (4753 байт) и `apiController.js` на более мелкие файлы
+- [x] Вынести body parsing в отдельный middleware (сейчас в каждом контроллере)
+- [x] Создать Router-абстракцию вместо цепочки `if (url.startsWith(...))`
+- [x] Разбить `familyController.js` (4753 байт) и `apiController.js` на более мелкие файлы
 
 ### 6. Тестирование
 - [ ] Покрыть unit-тестами сервисы (familyService, authService)

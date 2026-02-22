@@ -2,11 +2,8 @@ const {
     loadFamilyData, saveFamilyData, updateLastActivity,
     loadFamilies, updateFamilySettings,
     updateNickname, searchByNickname, addFriend, getFriendsData,
-    getAnalyticsData,
     addChild, deleteChild, updateChildSettings
 } = require('../services/familyService');
-const { loadBaseData } = require('../services/baseDataService');
-const { changePassword } = require('../services/authService');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');
 
@@ -53,21 +50,6 @@ async function handleDataPost(ctx, req, res) {
     sendJSON(res, { success: true });
 }
 
-async function handleAnalytics(ctx, req, res) {
-    if (ctx.role !== 'admin' && ctx.role !== 'child') {
-        return sendJSON(res, { error: 'Forbidden' }, 403);
-    }
-    const timeframe = ctx.urlObj.searchParams.get('timeframe') || 'month';
-    let childId = ctx.urlObj.searchParams.get('childId') ? parseInt(ctx.urlObj.searchParams.get('childId')) : null;
-
-    if (ctx.role === 'child') {
-        childId = ctx.childId;
-    }
-
-    const data = await getAnalyticsData(ctx.familyId, childId, timeframe);
-    sendJSON(res, data);
-}
-
 async function handleChildrenCreate(ctx, req, res) {
     if (ctx.role !== 'admin') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
     const body = await parseBody(req);
@@ -90,34 +72,10 @@ async function handleUpdateNickname(ctx, req, res) {
     sendJSON(res, result, result.success ? 200 : 400);
 }
 
-async function handleFriendsList(ctx, req, res) {
-    if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const friends = await getFriendsData(ctx.familyId, ctx.childId);
-    sendJSON(res, friends);
-}
-
-async function handleSearchUser(ctx, req, res) {
-    if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const nickname = ctx.urlObj.searchParams.get('nickname');
-    const results = await searchByNickname(nickname);
-    sendJSON(res, results);
-}
-
-async function handleAddFriend(ctx, req, res) {
-    if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const body = await parseBody(req);
-    const result = await addFriend(ctx.childId, body.friendId);
-    sendJSON(res, result, result.success ? 200 : 400);
-}
-
 module.exports = {
     handleDataGet,
     handleDataPost,
-    handleAnalytics,
     handleChildrenCreate,
     handleUpdateFamilySettings,
-    handleUpdateNickname,
-    handleFriendsList,
-    handleSearchUser,
-    handleAddFriend
+    handleUpdateNickname
 };
