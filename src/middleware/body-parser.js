@@ -1,12 +1,15 @@
 function parseBody(req) {
+    const { sanitizePayload } = require('../utils/validation');
     return new Promise((resolve, reject) => {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
             try {
-                resolve(body ? JSON.parse(body) : {});
+                const parsed = body ? JSON.parse(body) : {};
+                resolve(sanitizePayload(parsed));
             } catch (e) {
-                reject(new Error('Invalid JSON'));
+                const { ValidationError } = require('../utils/errors');
+                reject(new ValidationError('Invalid JSON'));
             }
         });
         req.on('error', reject);

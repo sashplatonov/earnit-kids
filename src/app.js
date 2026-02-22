@@ -15,8 +15,14 @@ const { logStartupStats } = require('./utils/stats-logger');
 
 
 const server = http.createServer(async (req, res) => {
+    // Correlation ID for tracing
+    req.id = req.headers['x-correlation-id'] || require('crypto').randomUUID();
+    res.setHeader('X-Correlation-ID', req.id);
+
     setSecurityHeaders(res);
-    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+
+    const logger = require('./utils/logger');
+    logger.info({ reqId: req.id, method: req.method, url: req.url }, 'Incoming request');
 
     if (staticRouter.handleCors(req, res)) return;
 
@@ -39,9 +45,20 @@ const server = http.createServer(async (req, res) => {
 
         await apiRoutes(req, res);
     } catch (err) {
-        console.error('Server Catch Error:', err);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Internal Server Error' }));
+        const logger = require('./utils/logger');
+        logger.error({ reqId: req.id, err: err.message, stack: err.stack }, 'Request failed');
+
+        const status = err.status || 500;
+        const code = err.code || 'INTERNAL_ERROR';
+        const message = err.message || 'Internal Server Error';
+
+        res.writeHead(status, { 'Content-Type': 'application/json' });
+
+        const responseData = { error: message, code };
+        if (process.env.NODE_ENV !== 'production' && status >= 500) {
+            responseData.stack = err.stack;
+        }
+        res.end(JSON.stringify(responseData));
     }
 });
 

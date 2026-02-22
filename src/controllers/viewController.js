@@ -44,6 +44,8 @@ function getCookies(req) {
     return list;
 }
 
+const { verifyToken } = require('../utils/authUtils');
+
 async function isAuthenticated(req) {
     const cookies = getCookies(req);
     const { family_id, app_auth, app_role } = cookies;
@@ -54,9 +56,16 @@ async function isAuthenticated(req) {
         return false;
     }
 
-    const user = await findFamilyByEmail(app_auth);
+    const decoded = verifyToken(app_auth);
+    if (!decoded || !decoded.email) {
+        console.log('🔍 Authenticating: Invalid or expired JWT');
+        return false;
+    }
+
+    const email = decoded.email;
+    const user = await findFamilyByEmail(email);
     if (!user) {
-        console.log(`🔍 Authenticating: User not found in DB for email: ${app_auth}`);
+        console.log(`🔍 Authenticating: User not found in DB for email: ${email}`);
         return false;
     }
 
@@ -68,7 +77,7 @@ async function isAuthenticated(req) {
         return app_role === 'admin' || app_role === 'child';
     }
 
-    console.log(`🔍 Authenticating: Failed for email: ${app_auth}, role: ${app_role}, familyId: ${family_id}`);
+    console.log(`🔍 Authenticating: Failed for email: ${email}, role: ${app_role}, familyId: ${family_id}`);
     return false;
 }
 
