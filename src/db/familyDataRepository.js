@@ -112,7 +112,13 @@ async function getFamilyData(familyId, childId = null) {
         query(`SELECT * FROM tasks ${w} ORDER BY created_at`, p),
         query(`SELECT * FROM shop_items ${w} ORDER BY created_at`, p),
         query(`SELECT * FROM history ${w} ORDER BY created_at DESC LIMIT 200`, p),
-        query(`SELECT * FROM requests ${w} ORDER BY created_at DESC`, p),
+        query(`
+            SELECT r.*, t.group_name as task_group, t.comment as task_comment, s.group_name as item_group
+            FROM requests r
+            LEFT JOIN tasks t ON r.task_id = t.task_id AND r.family_id = t.family_id
+            LEFT JOIN shop_items s ON r.item_id = s.item_id AND r.family_id = s.family_id
+            ${childId ? 'WHERE r.family_id = $1 AND r.child_id = $2' : 'WHERE r.family_id = $1'}
+            ORDER BY r.created_at DESC`, p),
         childId ? query('SELECT balance FROM children WHERE id = $1', [childId]) : { rows: [] }
     ]);
 
@@ -131,7 +137,9 @@ async function getFamilyData(familyId, childId = null) {
             coins: row.coins,
             moneyAmount: val(row.money_amount, 0),
             status: row.status,
-            date: row.created_at
+            date: row.created_at,
+            group: row.task_group || row.item_group,
+            comment: row.task_comment
         })),
         friends: await fetchFriends(dbId, childId)
     };

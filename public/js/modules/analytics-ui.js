@@ -3,9 +3,8 @@ import { fetchAnalyticsData } from './api.js';
 import { showToast } from './utils.js';
 
 export async function loadAnalytics(timeframe = 'month') {
-    if (!state.isAdmin) return;
     const data = await fetchAnalyticsData(timeframe, state.currentChildId);
-    if (!data) return showToast('Не удалось загрузить данные аналитики', 'error');
+    if (!data) return showToast('Не удалось загрузить данные о достижениях', 'error');
 
     updateSummaryUI(data.summary);
     renderAllCharts(data.topTasks, data.topItems);

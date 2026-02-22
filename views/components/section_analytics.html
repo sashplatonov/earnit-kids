@@ -1,7 +1,7 @@
-<section id="analytics-section" class="section hidden admin-only">
+<section id="analytics-section" class="section hidden">
     <div class="container">
         <header class="section-header">
-            <h2 class="section-title">📊 Аналитика</h2>
+            <h2 class="section-title">📊 Мои достижения</h2>
             <div class="analytics-filters">
                 <div class="tab-group" id="analytics-timeframe-group">
                     <button class="tab-btn" data-timeframe="week">Неделя</button>
@@ -189,6 +189,24 @@
     @media (max-width: 480px) {
         .analytics-grid {
             grid-template-columns: 1fr;
+        }
+
+        .analytics-summary {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 0.5rem;
+        }
+
+        .stat-card {
+            padding: 0.75rem 0.25rem;
+        }
+
+        .stat-card__label {
+            font-size: 0.65rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card__value {
+            font-size: 0.9rem;
         }
     }
 
