@@ -39,6 +39,7 @@ Then run mobile commands:
 ```bash
 cd mobile
 npm run sync:local
+npm run reverse      # (Android only) forward localhost:3001 via USB
 npm run open:ios
 # or
 npm run open:android

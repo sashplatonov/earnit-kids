@@ -17,6 +17,10 @@ Follow this guide to publish the Capacitor shell on Google Play and to test with
 - Google Play Console account: required only for publishing to Google Play ($25 one-time). For emulator/device testing without publishing you can skip it entirely and install APKs directly.  
 - Android Studio + Java SDK installed.  
 - `mobile/capacitor.config.json` should contain `appId = com.yourcompany.coinskids`.
+- **Note on Local Testing (Android):** 
+  - **Option A (USB + Real Device):** Run `npm run reverse` inside the `mobile` folder. This forwards `localhost:3001` from your phone to your computer via USB.
+  - **Option B (Emulator):** Use `http://10.0.2.2:3001` in `capacitor.config.local.json`.
+  - **Option C (Wi-Fi):** Use your LAN IP (e.g., `http://192.168.1.10:3001`) in `capacitor.config.local.json`.
 
 ## 2. Prepare Capacitor Android project
 1. `cd mobile && npm run sync` (keep `public/` assets in sync).  
@@ -87,11 +91,12 @@ Then in mobile folder:
 ```bash
 cd mobile
 npm run sync:local
+npm run reverse  # forward localhost:3001 via USB
 npm run open:android
 ```
 
 ## 9. Quick Start One-liner
 Run this command from the repository root to initialize everything and open the project in Android Studio:
 ```bash
-cd mobile && npm install && (npx cap add android || echo "Ok") && npm run sync:local && npm run open:android
+cd mobile && npm install && (npx cap add android || echo "Ok") && npm run sync:local && npm run reverse && npm run open:android
 ```

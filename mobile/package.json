@@ -9,6 +9,7 @@
     "sync:local": "cp capacitor.config.local.json capacitor.config.json && npx cap sync",
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android",
+    "reverse": "adb reverse tcp:3001 tcp:3001",
     "update": "npx cap update"
   },
   "dependencies": {

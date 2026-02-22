@@ -4,7 +4,7 @@
   "webDir": "../public",
   "npmClient": "npm",
   "server": {
-    "url": "http://127.0.0.1:3001",
-    "cleartext": true
+    "url": "https://coins-kids-shop.onrender.com",
+    "cleartext": false
   }
 }
