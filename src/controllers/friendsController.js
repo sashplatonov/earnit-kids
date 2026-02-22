@@ -18,7 +18,7 @@ async function handleSearchUser(ctx, req, res) {
 async function handleAddFriend(ctx, req, res) {
     if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
     const body = await parseBody(req);
-    const result = await addFriend(ctx.childId, body.friendId);
+    const result = await addFriend(ctx.familyId, ctx.childId, body.friendId);
     sendJSON(res, result, result.success ? 200 : 400);
 }
 

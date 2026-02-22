@@ -221,7 +221,7 @@ async function searchByNickname(nickname) {
  * @param {number} friendChildId 
  * @returns {Promise<Object>}
  */
-async function addFriend(childId, friendChildId) {
+async function addFriend(familyId, childId, friendChildId) {
     if (childId === friendChildId) {
         return { success: false, error: 'Cannot add yourself' };
     }
@@ -231,7 +231,7 @@ async function addFriend(childId, friendChildId) {
         return { success: false, error: 'User not found' };
     }
 
-    if (await familyDataRepository.addFriend(childId, friendChildId)) {
+    if (await familyDataRepository.addFriend(familyId, childId, friendChildId)) {
         return { success: true };
     }
     return { success: false, error: 'Already friends or failed to add' };

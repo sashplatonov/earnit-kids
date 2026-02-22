@@ -101,7 +101,13 @@ async function fetchFriends(dbId, childId) {
     }
 }
 
+const cache = require('../utils/Cache');
+
 async function getFamilyData(familyId, childId = null) {
+    const cacheKey = `familyData:${familyId}:${childId || 'all'}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return cached;
+
     const dbId = await familyRepository.getDbId(familyId);
     if (!dbId) return { ...DEFAULT_FAMILY_DATA };
 
@@ -122,7 +128,7 @@ async function getFamilyData(familyId, childId = null) {
         childId ? query('SELECT balance FROM children WHERE id = $1', [childId]) : { rows: [] }
     ]);
 
-    return {
+    const result = {
         balance: bRes.rows[0]?.balance || 0,
         tasks: tRes.rows.map(mapTask),
         shop: sRes.rows.map(mapShopItem),
@@ -143,6 +149,9 @@ async function getFamilyData(familyId, childId = null) {
         })),
         friends: await fetchFriends(dbId, childId)
     };
+
+    cache.set(cacheKey, result, 30000); // 30 sec cache
+    return result;
 }
 
 async function saveFamilyData(familyId, data, actingChildId = null) {
@@ -162,6 +171,11 @@ async function saveFamilyData(familyId, data, actingChildId = null) {
         await syncRepository.syncRequests(c);
         await syncRepository.syncFriends(c);
         await client.query('COMMIT');
+
+        // Invalidate cache for this family
+        cache.invalidatePrefix(`familyData:${familyId}`);
+        cache.invalidatePrefix(`analytics:${familyId}`);
+
         return true;
     } catch (err) {
         await client.query('ROLLBACK');
@@ -177,6 +191,10 @@ function getInterval(tf) {
 }
 
 async function getAnalyticsData(familyId, childId, timeframe = 'month') {
+    const cacheKey = `analytics:${familyId}:${childId || 'all'}:${timeframe}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return cached;
+
     const dbId = await familyRepository.getDbId(familyId);
     if (!dbId) return { summary: {}, topTasks: [], topItems: [] };
     const int = getInterval(timeframe);
@@ -201,11 +219,14 @@ async function getAnalyticsData(familyId, childId, timeframe = 'month') {
     const [sr, tr, ir] = await Promise.all([query(qs, p), query(qt, p), query(qi, p)]);
     const s = sr.rows[0];
     const mapR = r => ({ name: r.n, coins: parseInt(r.c), count: parseInt(r.ct) });
-    return {
+    const result = {
         summary: { totalEarned: parseInt(s.e || 0), totalSpent: parseInt(s.s || 0), netChange: parseInt((s.e || 0) - (s.s || 0)) },
         topTasks: tr.rows.map(mapR),
         topItems: ir.rows.map(mapR)
     };
+
+    cache.set(cacheKey, result, 60000); // 1 min cache for analytics
+    return result;
 }
 
 function getHistoryParams(dbId, e) {
@@ -219,7 +240,12 @@ async function addHistoryEntry(familyId, e) {
     if (!dbId || !e.childId) return false;
     const p = getHistoryParams(dbId, e);
     const res = await query(`INSERT INTO history (family_id, child_id, external_id, type, amount, description, money_amount, related_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, p);
-    return res.rowCount > 0;
+    if (res.rowCount > 0) {
+        cache.invalidatePrefix(`familyData:${familyId}`);
+        cache.invalidatePrefix(`analytics:${familyId}`);
+        return true;
+    }
+    return false;
 }
 
 async function addRequest(familyId, r) {
@@ -228,13 +254,27 @@ async function addRequest(familyId, r) {
     const d = val(r.date, val(r.created_at, new Date()));
     const p = [dbId, r.childId, val(r.id, null), val(r.requestType, 'earn'), val(r.taskId, null), val(r.itemId, null), val(r.taskName, ''), val(r.coins, 0), val(r.moneyAmount, 0), val(r.status, 'pending'), d];
     const res = await query(`INSERT INTO requests (family_id, child_id, external_id, request_type, task_id, item_id, task_name, coins, money_amount, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`, p);
-    return res.rows[0]?.id || null;
+
+    const id = res.rows[0]?.id || null;
+    if (id) {
+        cache.invalidatePrefix(`familyData:${familyId}`);
+    }
+    return id;
 }
 
 module.exports = {
     DEFAULT_FAMILY_DATA, getFamilyData, saveFamilyData, getAnalyticsData, addHistoryEntry, addRequest,
-    updateBalance: (fid, b, cid) => query('UPDATE children SET balance=$1 WHERE id=$2', [b, cid]).then(r => r.rowCount > 0),
-    updateRequestStatus: (id, s) => query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2', [s, id]).then(r => r.rowCount > 0),
-    addFriend: (cid, fcid) => query('INSERT INTO friends (child_id, friend_child_id) VALUES ($1, $2)', [cid, fcid]).then(() => true).catch(err => err.code === '23505' ? false : Promise.reject(err)),
+    updateBalance: (fid, b, cid) => {
+        cache.invalidatePrefix(`familyData:${fid}`);
+        return query('UPDATE children SET balance=$1 WHERE id=$2', [b, cid]).then(r => r.rowCount > 0);
+    },
+    updateRequestStatus: (fid, id, s) => { // Added fid to invalidate
+        cache.invalidatePrefix(`familyData:${fid}`);
+        return query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2', [s, id]).then(r => r.rowCount > 0);
+    },
+    addFriend: (fid, cid, fcid) => { // Added fid to invalidate
+        cache.invalidatePrefix(`familyData:${fid}`);
+        return query('INSERT INTO friends (child_id, friend_child_id) VALUES ($1, $2)', [cid, fcid]).then(() => true).catch(err => err.code === '23505' ? false : Promise.reject(err));
+    },
     getFriendsData: (fid, cid) => query('SELECT fr.friend_child_id, c.name, c.balance FROM friends fr JOIN children c ON fr.friend_child_id = c.id WHERE fr.child_id = $1', [cid]).then(r => r.rows.map(row => ({ id: row.friend_child_id, nickname: row.name, balance: row.balance })))
 };

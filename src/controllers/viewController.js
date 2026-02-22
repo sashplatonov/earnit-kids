@@ -81,7 +81,9 @@ async function isAuthenticated(req) {
     return false;
 }
 
-function serveStatic(req, res) {
+const crypto = require('crypto');
+
+async function serveStatic(req, res) {
     let urlPath = req.url.split('?')[0];
     // Map root style.css etc to public/css/
     if (urlPath === '/style.css') urlPath = '/css/style.css';
@@ -102,14 +104,36 @@ function serveStatic(req, res) {
     const ext = path.extname(resolvedPath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
-    fs.readFile(resolvedPath, (err, content) => {
+    fs.stat(resolvedPath, (err, stats) => {
         if (err) {
             res.writeHead(err.code === 'ENOENT' ? 404 : 500);
             res.end(err.code === 'ENOENT' ? 'Not Found' : 'Server Error');
-        } else {
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(content);
+            return;
         }
+
+        const etag = `W/"${stats.size}-${stats.mtime.getTime()}"`;
+        if (req.headers['if-none-match'] === etag) {
+            res.writeHead(304);
+            return res.end();
+        }
+
+        fs.readFile(resolvedPath, (err, content) => {
+            if (err) {
+                res.writeHead(500);
+                res.end('Server Error');
+                return;
+            }
+
+            const isProd = process.env.NODE_ENV === 'production';
+            const cacheControl = isProd ? 'public, max-age=31536000' : 'no-cache';
+
+            res.writeHead(200, {
+                'Content-Type': contentType,
+                'Cache-Control': cacheControl,
+                'ETag': etag
+            });
+            res.end(content);
+        });
     });
 }
 
@@ -147,6 +171,8 @@ function serveSuperAdmin(req, res) {
     });
 }
 
+let cachedIndexHtml = null;
+
 async function serveIndex(req, res) {
     if (!(await isAuthenticated(req))) {
         return serveLogin(req, res);
@@ -155,6 +181,11 @@ async function serveIndex(req, res) {
     const cookies = getCookies(req);
     if (cookies.app_role === 'super_admin') {
         return serveSuperAdmin(req, res);
+    }
+
+    if (cachedIndexHtml && process.env.NODE_ENV === 'production') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(cachedIndexHtml);
     }
 
     const componentOrder = [
@@ -174,6 +205,10 @@ async function serveIndex(req, res) {
         });
 
         fullHtml = applyCommonTemplateData(fullHtml);
+
+        if (process.env.NODE_ENV === 'production') {
+            cachedIndexHtml = fullHtml;
+        }
 
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(fullHtml);

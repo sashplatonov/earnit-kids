@@ -44,6 +44,20 @@ apiRouter.post('/api/reset-password', authController.handleResetPassword);
 apiRouter.post('/api/verify', authController.handleVerify);
 apiRouter.get('/api/auth-config', (ctx, req, res) => authController.handleAuthConfig(res));
 
+// Health check
+apiRouter.get('/api/health', async (ctx, req, res) => {
+    const { testConnection } = require('../db/connection');
+    const dbOk = await testConnection().catch(() => false);
+
+    const status = dbOk ? 200 : 503;
+    sendJSON(res, {
+        status: dbOk ? 'ok' : 'error',
+        database: dbOk ? 'connected' : 'disconnected',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    }, status);
+});
+
 
 // --- SUPER ADMIN ROUTES ---
 const superAdminMiddleware = async (ctx, req, res) => {
