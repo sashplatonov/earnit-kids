@@ -31,7 +31,13 @@ const config = {
         '.png': 'image/png',
         '.jpg': 'image/jpeg',
         '.ico': 'image/x-icon'
-    }
+    },
+    TELEGRAM: {
+        TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+        CHAT_ID: process.env.TELEGRAM_CHAT_ID,
+        ENABLED: process.env.ENABLE_TELEGRAM_ALERTS === 'true'
+    },
+    ENABLE_EMAIL_ALERTS: process.env.ENABLE_EMAIL_ALERTS === 'true'
 };
 
 module.exports = config;

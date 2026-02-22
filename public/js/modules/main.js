@@ -11,6 +11,7 @@ import { handleSearch, addNewFriend, saveNickname } from './friends.js';
 import { renderCatalog, addCatalogItem } from './main-catalog.js';
 import { setupTabControls } from './main-tabs.js';
 import { initializeFromServer, refreshFromServerAndRender, setupCommonControls } from './main-init.js';
+import { initializeWebSocket } from './websocket.js';
 
 async function loadAbout() {
     const container = document.getElementById('about-content');
@@ -71,6 +72,7 @@ async function initializeApp() {
     try {
         const data = await initializeFromServer();
         await initializePushNotifications();
+        initializeWebSocket();
         setPushRefreshHandler(() => refreshFromServerAndRender(false));
         startIosDevFallback(data, () => refreshFromServerAndRender(false));
 

@@ -132,22 +132,32 @@ async function sendPasswordResetEmail(to, link) {
     });
 }
 
-async function sendSuperAdminRecoveryEmail(to, password, loginLink) {
-    const key = 'superAdminRecovery';
-    const html = getTemplate(key, { password, loginLink });
-    const { subject, text } = getContent(key, { password, loginLink });
+async function sendErrorAlertEmail(err, context = '') {
+    const to = process.env.SUPER_ADMIN_EMAIL;
+    if (!to) return { success: false, error: 'SUPER_ADMIN_EMAIL not set' };
 
-    return sendEmail({
-        to,
-        subject,
-        html,
-        text
-    });
+    const subject = `🚨 SERVER ERROR: ${err.message}`;
+    const text = `
+Context: ${context}
+Error: ${err.message}
+Stack:
+${err.stack}
+`;
+    const html = `
+        <h2 style="color: red;">🚨 Server Error</h2>
+        <p><b>Context:</b> ${context}</p>
+        <p><b>Error:</b> ${err.message}</p>
+        <p><b>Stack:</b></p>
+        <pre style="background: #f4f4f4; padding: 10px; border-radius: 5px;">${err.stack}</pre>
+    `;
+
+    return sendEmail({ to, subject, html, text });
 }
 
 module.exports = {
     sendEmail,
     sendVerificationEmail,
     sendPasswordResetEmail,
-    sendSuperAdminRecoveryEmail
+    sendSuperAdminRecoveryEmail,
+    sendErrorAlertEmail
 };

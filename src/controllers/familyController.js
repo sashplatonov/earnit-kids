@@ -6,6 +6,7 @@ const {
 } = require('../services/familyService');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');
+const websocket = require('../utils/websocket');
 
 function enrichWithFamilyInfo({ data, familyInfo, ctx }) {
     data.isAdmin = ctx.role === 'admin';
@@ -47,6 +48,13 @@ async function handleDataPost(ctx, req, res) {
     if (!saved) return sendJSON(res, { error: 'Save failed' }, 500);
 
     await updateLastActivity(ctx.familyId);
+
+    // Notify family members about the update via WebSocket
+    websocket.notifyFamily(ctx.familyId, 'DATA_UPDATED', {
+        by: ctx.role,
+        childId: actingChildId
+    });
+
     sendJSON(res, { success: true });
 }
 

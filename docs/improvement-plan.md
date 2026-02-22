@@ -77,7 +77,7 @@
 - [x] Версионирование API (`/api/v1/...`)
 - [x] OpenAPI/Swagger документация (доступна по `/api/docs`)
 - [x] Пагинация для history и requests (добавлены `/api/v1/history` и `/api/v1/requests`)
-- [ ] WebSocket для уведомлений в реальном времени (новые задачи, одобрение запросов)
+- [x] WebSocket для уведомлений в реальном времени (новые задачи, одобрение запросов)
 
 ### 12. База данных
 - [x] Connection pooling tuning (min/max/idle timeout)
@@ -89,30 +89,15 @@
 - [x] Health endpoint (`/api/health`) с проверкой БД и services
 - [x] Логирование времени ответа и медленных запросов (>500ms)
 - [x] Метрики (количество запросов, ошибки в Prometheus формате по `/api/metrics`)
-- [ ] Алерты при сбоях (email/push/telegram)
+- [x] Алерты при сбоях (email/telegram)
 
 ---
 
 ## 🔵 Nice-to-have
 
-### 14. Интернационализация (i18n)
-- [ ] Вынести все тексты в JSON-файлы переводов
-- [ ] Поддержка EN/RU (сейчас UI на русском)
-- [ ] Language switcher в настройках
-
-### 15. Улучшения UX
-- [ ] Звуковые эффекты при получении монет
-- [ ] Достижения/бейджи за серии выполнений
-- [ ] Streak-трекер (дни подряд)
-- [ ] Уведомления в app (bell icon) вместо только push
-- [ ] Dark/light theme toggle
-
 ### 16. Инфраструктура
-- [ ] GitHub Actions CI/CD pipeline
-- [ ] Staging-окружение
-- [ ] Database backups в облако (S3 / R2)
+- [ ] Database backups в телеграм бота файлы БД интервал настриваемый
 - [ ] Docker multi-stage build для оптимизации образа
-- [ ] SSL/TLS через Let's Encrypt в docker-compose
 
 ### 17. Аналитика для родителей
 - [ ] Расширенные дашборды (тренды, сравнение с предыдущими периодами)

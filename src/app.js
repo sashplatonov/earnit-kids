@@ -18,6 +18,8 @@ const { logStartupStats } = require('./utils/stats-logger');
 const compression = require('./middleware/compression');
 const logger = require('./utils/logger');
 const metrics = require('./utils/metrics');
+const { sendAlert } = require('./utils/alerts');
+const websocket = require('./utils/websocket');
 
 /**
  * Log request completion and metrics
@@ -40,10 +42,7 @@ function setupLogging(req, res, start) {
     };
 }
 
-/**
- * Global error handler
- */
-function handleError(err, req, res) {
+function logAndAlertError(err, req) {
     const reqId = req ? req.id : 'unknown';
     logger.error({
         reqId,
@@ -54,14 +53,25 @@ function handleError(err, req, res) {
     }, 'Internal Server Error');
 
     const status = err.status || 500;
+    if (status >= 500) {
+        sendAlert(err, `ID: ${reqId} | ${req ? req.method : '??'} ${req ? req.url : '??'}`);
+    }
+}
+
+/**
+ * Global error handler
+ */
+function handleError(err, req, res) {
+    logAndAlertError(err, req);
+
+    const status = err.status || 500;
+    const isProd = process.env.NODE_ENV === 'production';
+
     const responseData = {
         error: err.message || 'Internal Server Error',
-        code: err.code || 'INTERNAL_ERROR'
+        code: err.code || 'INTERNAL_ERROR',
+        ...(!isProd && status >= 500 ? { stack: err.stack } : {})
     };
-
-    if (process.env.NODE_ENV !== 'production' && status >= 500) {
-        responseData.stack = err.stack;
-    }
 
     if (!res.headersSent) {
         res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -106,11 +116,13 @@ async function startServer() {
 
     server.listen(config.PORT, async () => {
         console.log(`🪙 Coin Shop Server running at http://localhost:${config.PORT}`);
+        websocket.init(server);
         await logStartupStats();
     });
 }
 
 startServer().catch(err => {
     console.error('Failed to start server:', err.message);
+    sendAlert(err, 'Startup Failure');
     process.exit(1);
 });
