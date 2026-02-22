@@ -21,6 +21,42 @@ function isValidPassword(password) {
 }
 
 /**
+ * Authenticate super admin
+ */
+async function authenticateSuperAdmin(email, password) {
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+    if (superAdminEmail !== email) return null;
+
+    const expectedPassword = process.env.SUPER_ADMIN_PASSWORD;
+    if (expectedPassword === password) {
+        return { success: true, role: 'super_admin', familyName: 'Super Admin', familyId: null };
+    }
+    return { success: false, error: 'Неверный пароль администратора' };
+}
+
+/**
+ * Authenticate family admin
+ */
+async function authenticateFamily(email, password) {
+    const family = await familyRepository.findByEmail(email);
+    if (!family || family.isSuperAdmin) return null;
+
+    if (family.isBlocked) {
+        return { success: false, error: 'Аккаунт заблокирован' };
+    }
+
+    const emailVarEnabled = process.env.ENABLE_EMAIL_VERIFICATION !== 'false';
+    if (emailVarEnabled && family.isVerified === false) {
+        return { success: false, error: 'Email не подтвержден. Проверьте почту.' };
+    }
+
+    if (family.admin_password === password) {
+        return { success: true, role: 'admin', familyName: family.name, familyId: family.id };
+    }
+    return { success: false, error: 'Неверный пароль' };
+}
+
+/**
  * Authenticate user (parent or super admin)
  * @param {string} email 
  * @param {string} password 
@@ -28,48 +64,26 @@ function isValidPassword(password) {
  */
 async function authenticateUser(email, password) {
     console.log(`🔐 Authentication attempt for email: ${email}`);
-    const familiesData = await familyRepository.findAll();
 
-    // Super Admin check (from env or database)
-    const superAdmin = familiesData.super_admin;
-    if (superAdmin && superAdmin.email === email) {
-        console.log('  - Email matches super admin');
-        const expectedPassword = process.env.SUPER_ADMIN_PASSWORD || superAdmin.password;
-        if (expectedPassword === password) {
+    const superRes = await authenticateSuperAdmin(email, password);
+    if (superRes) {
+        if (superRes.success) {
             console.log('  - Super admin login SUCCESS');
-            return { success: true, role: 'super_admin', familyName: 'Super Admin', familyId: null };
         } else {
             console.log('  - Super admin login FAILED: Incorrect password');
         }
+        return superRes;
     }
 
-    // Family check
-    const family = await familyRepository.findByEmail(email);
-    if (family && !family.isSuperAdmin) {
-        console.log(`  - Found family: ${family.name}`);
-        if (family.isBlocked) {
-            console.log('  - Login FAILED: Account is blocked');
-            return { success: false, error: 'Аккаунт заблокирован' };
-        }
-
-        // Check verification (only if enabled)
-        const emailVerificationEnabled = process.env.ENABLE_EMAIL_VERIFICATION !== 'false';
-        if (emailVerificationEnabled && family.isVerified === false) {
-            console.log('  - Login FAILED: Email not verified');
-            return { success: false, error: 'Email не подтвержден. Проверьте почту.' };
-        }
-
-        if (family.admin_password === password) {
+    const familyRes = await authenticateFamily(email, password);
+    if (familyRes) {
+        if (familyRes.success) {
+            console.log(`  - Found family: ${familyRes.familyName}`);
             console.log('  - Family admin login SUCCESS');
-            return {
-                success: true,
-                role: 'admin',
-                familyName: family.name,
-                familyId: family.id
-            };
         } else {
-            console.log('  - Family admin login FAILED: Incorrect password');
+            console.log(`  - Family admin login FAILED: ${familyRes.error}`);
         }
+        return familyRes;
     }
 
     console.log('  - Authentication FAILED: User not found or incorrect credentials');
@@ -105,98 +119,67 @@ async function authenticateChildByToken(token) {
     return { success: false, error: 'Неверная ссылка' };
 }
 
-/**
- * Register a new family
- * @param {string} familyName 
- * @param {string} email 
- * @param {string} adminPassword 
- * @returns {Promise<Object>}
- */
+async function prepareVerification(email) {
+    const enabled = process.env.ENABLE_EMAIL_VERIFICATION !== 'false';
+    const token = enabled ? crypto.randomBytes(32).toString('hex') : null;
+    return { enabled, token };
+}
+
+function buildFamilyPayload({ familyName, email, adminPassword, token, enabled }) {
+    return {
+        family_id: `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`,
+        name: familyName || `Шоп ${email}`,
+        email, admin_password: adminPassword,
+        child_token: crypto.randomBytes(32).toString('hex'),
+        monthly_limit: 10000,
+        child_nickname: '',
+        isVerified: !enabled,
+        verification_token: token
+    };
+}
+
+async function handleVerificationEmail(email, token) {
+    const { sendVerificationEmail } = require('./emailService');
+    const baseUrl = process.env.APP_URL || 'http://localhost:3001';
+    const link = `${baseUrl}/verify?token=${token}&email=${encodeURIComponent(email)}`;
+    await sendVerificationEmail(email, link).catch(err => console.error('Email error:', err));
+}
+
 async function registerFamily(familyName, email, adminPassword) {
-    // Check if email exists
     const existing = await familyRepository.findByEmail(email);
-    if (existing && !existing.isSuperAdmin) {
-        return { success: false, error: 'Email уже зарегистрирован' };
-    }
+    if (existing && !existing.isSuperAdmin) return { success: false, error: 'Email уже зарегистрирован' };
+    if (!isValidPassword(adminPassword)) return { success: false, error: 'Слабый пароль родителя' };
 
-    if (!isValidPassword(adminPassword)) {
-        return { success: false, error: 'Слабый пароль родителя' };
-    }
-
-    const familyId = `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
-
-    // Feature Flag: Email Verification
-    const emailVerificationEnabled = process.env.ENABLE_EMAIL_VERIFICATION !== 'false';
-    const isVerified = !emailVerificationEnabled;
-
-    // Generate verification token only if needed
-    const verificationToken = emailVerificationEnabled ? crypto.randomBytes(32).toString('hex') : null;
-
+    const { enabled, token } = await prepareVerification(email);
     try {
-        const result = await familyRepository.create({
-            family_id: familyId,
-            name: familyName || `Шоп ${familyId}`,
-            email: email,
-            admin_password: adminPassword,
-            child_token: crypto.randomBytes(32).toString('hex'),
-            monthly_limit: 10000,
-            child_nickname: '',
-            isVerified: isVerified,
-            verification_token: verificationToken
-        });
+        const payload = buildFamilyPayload({ familyName, email, adminPassword, token, enabled });
+        const result = await familyRepository.create(payload);
 
-        if (result.success) {
-            // Send verification email only if enabled
-            if (emailVerificationEnabled) {
-                const { sendVerificationEmail } = require('./emailService');
-                // Use token based verification link
-                const verificationLink = `${process.env.APP_URL || 'http://localhost:3000'}/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
-
-                sendVerificationEmail(email, verificationLink).catch(err => console.error('Failed to send verification email:', err));
-            }
-
-            return { success: true, familyId };
+        if (result.success && enabled) {
+            await handleVerificationEmail(email, token);
         }
-        return { success: false, error: 'Ошибка сохранения' };
+
+        return result.success ? { success: true, familyId: result.familyId } : { success: false, error: 'Ошибка сохранения' };
     } catch (err) {
-        console.error('Registration error:', err.message);
-        if (err.code === '23505') { // unique violation
-            return { success: false, error: 'Email уже зарегистрирован' };
-        }
-        return { success: false, error: 'Ошибка сохранения' };
+        const isDupe = err.code === '23505';
+        return { success: false, error: isDupe ? 'Email уже зарегистрирован' : 'Ошибка сохранения' };
     }
 }
 
 /**
  * Change password
- * @param {string} familyId 
- * @param {string} role 
- * @param {string} oldPassword 
- * @param {string} newPassword 
- * @returns {Promise<Object>}
  */
-async function changePassword(familyId, role, oldPassword, newPassword) {
+async function changePassword({ familyId, role, oldPassword, newPassword }) {
+    if (role !== 'admin') return { success: false, error: 'Forbidden' };
+
     const family = await familyRepository.findById(familyId);
-    if (!family) {
-        return { success: false, error: 'Family not found' };
-    }
+    if (!family) return { success: false, error: 'Family not found' };
 
-    if (role !== 'admin') {
-        return { success: false, error: 'Forbidden' };
-    }
+    if (family.admin_password !== oldPassword) return { success: false, error: 'Incorrect old password' };
+    if (!isValidPassword(newPassword)) return { success: false, error: 'Weak password' };
 
-    if (family.admin_password !== oldPassword) {
-        return { success: false, error: 'Incorrect old password' };
-    }
-
-    if (!isValidPassword(newPassword)) {
-        return { success: false, error: 'Weak password' };
-    }
-
-    if (await familyRepository.update(familyId, { admin_password: newPassword })) {
-        return { success: true };
-    }
-    return { success: false, error: 'Save failed' };
+    const success = await familyRepository.update(familyId, { admin_password: newPassword });
+    return success ? { success: true } : { success: false, error: 'Save failed' };
 }
 
 /**

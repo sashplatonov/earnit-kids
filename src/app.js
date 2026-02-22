@@ -1,5 +1,6 @@
 const http = require('http');
 const path = require('path');
+const crypto = require('crypto');
 
 // Load environment variables
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -15,39 +16,68 @@ const { logStartupStats } = require('./utils/stats-logger');
 
 
 const compression = require('./middleware/compression');
+const logger = require('./utils/logger');
+const metrics = require('./utils/metrics');
+
+/**
+ * Log request completion and metrics
+ */
+function setupLogging(req, res, start) {
+    const originalEnd = res.end;
+    res.end = function (...args) {
+        const duration = Date.now() - start;
+        const { method, url } = req;
+        const { statusCode } = res;
+
+        logger.info({ reqId: req.id, method, url, status: statusCode, duration: `${duration}ms` }, 'Request completed');
+        metrics.recordRequest({ method, path: url, status: statusCode, duration });
+
+        if (duration > 500) {
+            logger.warn({ reqId: req.id, duration: `${duration}ms`, url }, 'Slow request detected');
+        }
+
+        return originalEnd.apply(this, args);
+    };
+}
+
+/**
+ * Global error handler
+ */
+function handleError(err, req, res) {
+    const reqId = req ? req.id : 'unknown';
+    logger.error({
+        reqId,
+        err: err.message,
+        stack: err.stack,
+        url: req ? req.url : 'unknown',
+        method: req ? req.method : 'unknown'
+    }, 'Internal Server Error');
+
+    const status = err.status || 500;
+    const responseData = {
+        error: err.message || 'Internal Server Error',
+        code: err.code || 'INTERNAL_ERROR'
+    };
+
+    if (process.env.NODE_ENV !== 'production' && status >= 500) {
+        responseData.stack = err.stack;
+    }
+
+    if (!res.headersSent) {
+        res.writeHead(status, { 'Content-Type': 'application/json' });
+    }
+    res.end(JSON.stringify(responseData));
+}
 
 const server = http.createServer(async (req, res) => {
-    // Apply compression
     compression(req, res, async () => {
         try {
-            // Correlation ID for tracing
-            req.id = req.headers['x-correlation-id'] || require('crypto').randomUUID();
+            req.id = req.headers['x-correlation-id'] || crypto.randomUUID();
             res.setHeader('X-Correlation-ID', req.id);
-
             setSecurityHeaders(res);
 
             const start = Date.now();
-            const logger = require('./utils/logger');
-            logger.info({ reqId: req.id, method: req.method, url: req.url }, 'Incoming request');
-
-            // Capture the original end method to log timing
-            const originalEnd = res.end;
-            res.end = function (chunk, encoding) {
-                const duration = Date.now() - start;
-                logger.info({
-                    reqId: req.id,
-                    method: req.method,
-                    url: req.url,
-                    status: res.statusCode,
-                    duration: `${duration}ms`
-                }, 'Request completed');
-
-                if (duration > 500) {
-                    logger.warn({ reqId: req.id, duration: `${duration}ms`, url: req.url }, 'Slow request detected');
-                }
-
-                return originalEnd.call(this, chunk, encoding);
-            };
+            setupLogging(req, res, start);
 
             if (staticRouter.handleCors(req, res)) return;
 
@@ -58,31 +88,12 @@ const server = http.createServer(async (req, res) => {
             }
 
             const [pathOnly] = req.url.split('?');
-
-            if (pathOnly.startsWith('/login-child/')) {
-                return await handleMagicLink(req, res);
-            }
-
-            if (!pathOnly.startsWith('/api/')) {
-                return await staticRouter.routeStatic(pathOnly, req, res, viewController);
-            }
+            if (pathOnly.startsWith('/login-child/')) return handleMagicLink(req, res);
+            if (!pathOnly.startsWith('/api/')) return staticRouter.routeStatic({ pathOnly, req, res, viewController });
 
             await apiRoutes(req, res);
         } catch (err) {
-            const logger = require('./utils/logger');
-            logger.error({ reqId: req.id, err: err.message, stack: err.stack }, 'Request failed');
-
-            const status = err.status || 500;
-            const code = err.code || 'INTERNAL_ERROR';
-            const message = err.message || 'Internal Server Error';
-
-            res.writeHead(status, { 'Content-Type': 'application/json' });
-
-            const responseData = { error: message, code };
-            if (process.env.NODE_ENV !== 'production' && status >= 500) {
-                responseData.stack = err.stack;
-            }
-            res.end(JSON.stringify(responseData));
+            handleError(err, req, res);
         }
     });
 });

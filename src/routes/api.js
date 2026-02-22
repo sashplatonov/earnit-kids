@@ -58,6 +58,28 @@ apiRouter.get('/api/health', async (ctx, req, res) => {
     }, status);
 });
 
+apiRouter.get('/api/metrics', async (ctx, req, res) => {
+    const { generateMetrics } = require('../utils/metrics');
+    res.writeHead(200, { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8' });
+    res.end(generateMetrics());
+});
+
+apiRouter.get('/api/docs', async (ctx, req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+    const content = fs.readFileSync(path.join(__dirname, '../../views/api-docs.html'), 'utf8');
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(content);
+});
+
+apiRouter.get('/api/openapi.yaml', async (ctx, req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+    const content = fs.readFileSync(path.join(__dirname, '../../docs/openapi.yaml'), 'utf8');
+    res.writeHead(200, { 'Content-Type': 'text/yaml' });
+    res.end(content);
+});
+
 
 // --- SUPER ADMIN ROUTES ---
 const superAdminMiddleware = async (ctx, req, res) => {
@@ -82,57 +104,69 @@ apiRouter.add('ALL', '/api/super/:path', async (ctx, req, res) => {
 });
 
 // --- MAIN API ROUTES ---
-const mainApiHandler = async (ctx, req, res, fn) => {
+const mainApiHandler = async ({ ctx, req, res, fn }) => {
     if (!await apiAuthMiddleware(ctx, req, res)) return;
     return await fn(ctx, req, res);
 };
 
-apiRouter.get('/api/data', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleDataGet));
-apiRouter.post('/api/data', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleDataPost));
-apiRouter.post('/api/children', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleChildrenCreate));
-apiRouter.get('/api/base-data', (ctx, req, res) => mainApiHandler(ctx, req, res, async () => sendJSON(res, loadBaseData())));
-apiRouter.post('/api/update-family-settings', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleUpdateFamilySettings));
-apiRouter.post('/api/update-nickname', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleUpdateNickname));
+apiRouter.get('/api/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleDataGet }));
+apiRouter.post('/api/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleDataPost }));
+apiRouter.post('/api/children', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleChildrenCreate }));
+apiRouter.get('/api/base-data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: async () => sendJSON(res, loadBaseData()) }));
+apiRouter.post('/api/update-family-settings', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleUpdateFamilySettings }));
+apiRouter.post('/api/update-nickname', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleUpdateNickname }));
 
 // Friends & Social
-apiRouter.get('/api/search-user', (ctx, req, res) => mainApiHandler(ctx, req, res, friendsController.handleSearchUser));
-apiRouter.post('/api/add-friend', (ctx, req, res) => mainApiHandler(ctx, req, res, friendsController.handleAddFriend));
-apiRouter.get('/api/friends-list', (ctx, req, res) => mainApiHandler(ctx, req, res, friendsController.handleFriendsList));
+apiRouter.get('/api/search-user', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: friendsController.handleSearchUser }));
+apiRouter.post('/api/add-friend', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: friendsController.handleAddFriend }));
+apiRouter.get('/api/friends-list', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: friendsController.handleFriendsList }));
 
 // Analytics
-apiRouter.get('/api/analytics', (ctx, req, res) => mainApiHandler(ctx, req, res, analyticsController.handleAnalytics));
+apiRouter.get('/api/analytics', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: analyticsController.handleAnalytics }));
 
 // Paginated History & Requests (New)
-apiRouter.get('/api/history', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleHistoryGet));
-apiRouter.get('/api/requests', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleRequestsGet));
+apiRouter.get('/api/history', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleHistoryGet }));
+apiRouter.get('/api/requests', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleRequestsGet }));
 
 // --- API V1 (Versioning) ---
 // We map /api/v1/ to the same handlers for now
-apiRouter.get('/api/v1/data', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleDataGet));
-apiRouter.post('/api/v1/data', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleDataPost));
-apiRouter.get('/api/v1/history', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleHistoryGet));
-apiRouter.get('/api/v1/requests', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleRequestsGet));
-apiRouter.get('/api/v1/analytics', (ctx, req, res) => mainApiHandler(ctx, req, res, analyticsController.handleAnalytics));
+apiRouter.get('/api/v1/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleDataGet }));
+apiRouter.post('/api/v1/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleDataPost }));
+apiRouter.get('/api/v1/history', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleHistoryGet }));
+apiRouter.get('/api/v1/requests', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleRequestsGet }));
+apiRouter.get('/api/v1/analytics', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: analyticsController.handleAnalytics }));
 
 // Children dynamic routes
-apiRouter.get('/api/children/:id/link', (ctx, req, res) => mainApiHandler(ctx, req, res, async (ctx, req, res) => {
-    ctx.targetChildId = parseInt(ctx.params.id);
-    await childController.handleLinkGet({ ctx, req, res, targetChildId: ctx.targetChildId });
+apiRouter.get('/api/children/:id/link', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        c.targetChildId = parseInt(c.params.id);
+        await childController.handleLinkGet({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
+    }
 }));
 
-apiRouter.post('/api/children/:id/regenerate-token', (ctx, req, res) => mainApiHandler(ctx, req, res, async (ctx, req, res) => {
-    ctx.targetChildId = parseInt(ctx.params.id);
-    await childController.handleTokenRegen({ ctx, req, res, targetChildId: ctx.targetChildId });
+apiRouter.post('/api/children/:id/regenerate-token', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        c.targetChildId = parseInt(c.params.id);
+        await childController.handleTokenRegen({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
+    }
 }));
 
-apiRouter.delete('/api/children/:id', (ctx, req, res) => mainApiHandler(ctx, req, res, async (ctx, req, res) => {
-    ctx.targetChildId = parseInt(ctx.params.id);
-    await childController.handleDeleteChild({ ctx, req, res, targetChildId: ctx.targetChildId });
+apiRouter.delete('/api/children/:id', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        c.targetChildId = parseInt(c.params.id);
+        await childController.handleDeleteChild({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
+    }
 }));
 
-apiRouter.post('/api/children/:id/settings', (ctx, req, res) => mainApiHandler(ctx, req, res, async (ctx, req, res) => {
-    ctx.targetChildId = parseInt(ctx.params.id);
-    await childController.handleUpdateSettings({ ctx, req, res, targetChildId: ctx.targetChildId });
+apiRouter.post('/api/children/:id/settings', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        c.targetChildId = parseInt(c.params.id);
+        await childController.handleUpdateSettings({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
+    }
 }));
 
 async function apiRoutes(req, res) {

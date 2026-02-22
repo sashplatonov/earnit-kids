@@ -36,6 +36,29 @@ function isValidId(id) {
     return false;
 }
 
+function checkType({ field, value, rules, errors }) {
+    if (rules.type === 'number' && typeof value !== 'number') {
+        errors.push(`Поле ${field} должно быть числом`);
+    } else if (rules.type === 'string' && typeof value !== 'string') {
+        errors.push(`Поле ${field} должно быть строкой`);
+    } else if (rules.type === 'email' && !isValidEmail(value)) {
+        errors.push(`Некорректный email в поле ${field}`);
+    }
+}
+
+function checkRange({ field, value, rules, errors }) {
+    if (rules.min !== undefined && value < rules.min) {
+        errors.push(`Значение поля ${field} меньше минимального (${rules.min})`);
+    }
+    if (rules.max !== undefined && value > rules.max) {
+        errors.push(`Значение поля ${field} больше максимального (${rules.max})`);
+    }
+    const len = value?.length;
+    if (rules.minLength !== undefined && len < rules.minLength) {
+        errors.push(`Длина поля ${field} меньше минимальной (${rules.minLength})`);
+    }
+}
+
 function validateSchema(data, schema) {
     const errors = [];
     for (const [field, rules] of Object.entries(schema)) {
@@ -47,23 +70,8 @@ function validateSchema(data, schema) {
         }
 
         if (value !== undefined && value !== null) {
-            if (rules.type === 'number' && typeof value !== 'number') {
-                errors.push(`Поле ${field} должно быть числом`);
-            } else if (rules.type === 'string' && typeof value !== 'string') {
-                errors.push(`Поле ${field} должно быть строкой`);
-            } else if (rules.type === 'email' && !isValidEmail(value)) {
-                errors.push(`Некорректный email в поле ${field}`);
-            }
-
-            if (rules.min !== undefined && value < rules.min) {
-                errors.push(`Значение поля ${field} меньше минимального (${rules.min})`);
-            }
-            if (rules.max !== undefined && value > rules.max) {
-                errors.push(`Значение поля ${field} больше максимального (${rules.max})`);
-            }
-            if (rules.minLength !== undefined && value.length < rules.minLength) {
-                errors.push(`Длина поля ${field} меньше минимальной (${rules.minLength})`);
-            }
+            checkType({ field, value, rules, errors });
+            checkRange({ field, value, rules, errors });
         }
     }
     return errors.length > 0 ? errors : null;

@@ -20,6 +20,10 @@ const mockFamilyDB = {
     }
 };
 
+// Set test environment variables
+process.env.SUPER_ADMIN_EMAIL = 'admin@system.local';
+process.env.SUPER_ADMIN_PASSWORD = 'AdminSuperPassword';
+
 const authService = proxyquire('../../src/services/authService', {
     '../db/familyRepository': {
         findAll: async () => {
@@ -53,13 +57,11 @@ test('authenticateUser: Success as admin', async () => {
 test('authenticateUser: Incorrect password', async () => {
     const result = await authService.authenticateUser('test@example.com', 'wrongpassword');
     assert.strictEqual(result.success, false);
-    assert.strictEqual(result.error, 'Неверные учетные данные');
+    assert.strictEqual(result.error, 'Неверный пароль');
 });
 
 test('authenticateUser: Success as super admin', async () => {
-    // Note: SUPER_ADMIN_PASSWORD might override the password in the mock, but if undefined it falls back
-    const expectedPassword = process.env.SUPER_ADMIN_PASSWORD || 'AdminSuperPassword';
-    const result = await authService.authenticateUser('admin@system.local', expectedPassword);
+    const result = await authService.authenticateUser('admin@system.local', 'AdminSuperPassword');
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.role, 'super_admin');
 });

@@ -1,12 +1,13 @@
-import { loadAnalytics } from './analytics-ui.js';
-
-function toggleTab(tabButtons, tabName) {
+async function toggleTab(tabButtons, tabName) {
     if (!tabName) return;
     tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
     const target = document.getElementById(`${tabName}-section`);
     if (target) target.classList.remove('hidden');
-    if (tabName === 'analytics') loadAnalytics();
+    if (tabName === 'analytics') {
+        const { loadAnalytics } = await import('./analytics-ui.js');
+        loadAnalytics();
+    }
 }
 
 function closeDropdowns(moreBtn, moreDropdown) {
@@ -48,7 +49,9 @@ export function setupTabControls() {
             if (btn) {
                 timeframeGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                loadAnalytics(btn.dataset.timeframe);
+                import('./analytics-ui.js').then(({ loadAnalytics }) => {
+                    loadAnalytics(btn.dataset.timeframe);
+                });
             }
         });
     }

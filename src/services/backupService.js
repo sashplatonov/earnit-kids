@@ -8,25 +8,9 @@ const { Pool } = require('pg');
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res 
  */
-function createBackup(req, res) {
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'DATABASE_URL is not configured' }));
-    }
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `backup-pg-${timestamp}.dump`;
-
-    // pg_dump -F c -d [url] (Custom format, compressed)
-    const args = ['-F', 'c', dbUrl];
-
-    console.log(`Starting DB backup...`);
-
+function setupBackupHandlers(proc, res, filename) {
     let headersSent = false;
     let finished = false;
-
-    const proc = spawn('pg_dump', args);
 
     proc.stdout.on('data', (chunk) => {
         if (!headersSent && !finished) {
@@ -40,49 +24,38 @@ function createBackup(req, res) {
         if (!finished) res.write(chunk);
     });
 
-    proc.stderr.on('data', (data) => {
-        console.error(`pg_dump stderr: ${data}`);
-    });
+    proc.stderr.on('data', (data) => console.error(`pg_dump stderr: ${data}`));
 
     proc.on('error', (err) => {
         if (finished) return;
         finished = true;
-        console.error(`Failed to start pg_dump:`, err);
-
-        const isEnoent = err.code === 'ENOENT';
-        const msg = isEnoent
-            ? 'Инструмент pg_dump не установлен на сервере. Пожалуйста, установите postgresql-client.'
-            : `Ошибка запуска процесса бэкапа: ${err.message}`;
-
-        if (!headersSent) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: msg, code: err.code }));
-        } else {
-            res.end();
-        }
+        const msg = err.code === 'ENOENT' ? 'pg_dump not found' : `Spawn error: ${err.message}`;
+        if (!headersSent) res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg, code: err.code }));
     });
 
     proc.on('close', (code) => {
         if (finished) return;
         finished = true;
-        console.log(`pg_dump exited with code ${code}`);
-
-        if (code !== 0) {
-            if (!headersSent) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: `Бэкап завершился с ошибкой (код ${code})` }));
-            } else {
-                res.end();
-            }
-        } else {
-            if (!headersSent) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Бэкап не произвел данных' }));
-            } else {
-                res.end();
-            }
-        }
+        if (code !== 0 && !headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `pg_dump failed with code ${code}` }));
+        } else res.end();
     });
+}
+
+function createBackup(req, res) {
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'DATABASE_URL not configured' }));
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `backup-pg-${timestamp}.dump`;
+    const proc = spawn('pg_dump', ['-F', 'c', dbUrl]);
+
+    setupBackupHandlers(proc, res, filename);
 }
 
 /**
@@ -90,58 +63,49 @@ function createBackup(req, res) {
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res 
  */
+function setupRestoreHandlers({ proc, res, tempPath, cleanup }) {
+    let finished = false;
+    proc.stderr.on('data', (data) => console.error(`pg_restore stderr: ${data}`));
+
+    proc.on('error', (err) => {
+        if (finished) return;
+        finished = true;
+        cleanup();
+        const msg = err.code === 'ENOENT' ? 'pg_restore not found' : 'Restore launch error';
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg, code: err.code }));
+    });
+
+    proc.on('close', (code) => {
+        if (finished) return;
+        finished = true;
+        cleanup();
+        if (code === 0 || code === 1) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true }));
+        } else {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Restore failed (code ${code})` }));
+        }
+    });
+}
+
 function restoreBackup(req, res) {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'DATABASE_URL is not configured' }));
+        return res.end(JSON.stringify({ error: 'DATABASE_URL not configured' }));
     }
 
     const tempPath = path.join(process.cwd(), `temp_restore_${Date.now()}.dump`);
     const writeStream = fs.createWriteStream(tempPath);
+    const cleanup = () => fs.existsSync(tempPath) && fs.unlinkSync(tempPath);
 
     req.pipe(writeStream);
 
     writeStream.on('finish', () => {
-        console.log('Backup file uploaded, starting restore...');
-
-        const args = ['-d', dbUrl, '--clean', '--if-exists', '--no-owner', tempPath];
-        const proc = spawn('pg_restore', args);
-        let finished = false;
-
-        proc.stderr.on('data', (data) => {
-            console.error(`pg_restore stderr: ${data}`);
-        });
-
-        proc.on('error', (err) => {
-            if (finished) return;
-            finished = true;
-            console.error('Failed to start pg_restore:', err);
-            cleanup();
-
-            const isEnoent = err.code === 'ENOENT';
-            const msg = isEnoent
-                ? 'Инструмент pg_restore не установлен на сервере. Пожалуйста, установите postgresql-client.'
-                : 'Ошибка запуска процесса восстановления';
-
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: msg, code: err.code }));
-        });
-
-        proc.on('close', (code) => {
-            if (finished) return;
-            finished = true;
-            console.log(`pg_restore exited with code ${code}`);
-            cleanup();
-
-            if (code === 0 || code === 1) {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true }));
-            } else {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: `Restore failed with exit code ${code}` }));
-            }
-        });
+        const proc = spawn('pg_restore', ['-d', dbUrl, '--clean', '--if-exists', '--no-owner', tempPath]);
+        setupRestoreHandlers({ proc, res, tempPath, cleanup });
     });
 
     writeStream.on('error', (err) => {
@@ -150,12 +114,6 @@ function restoreBackup(req, res) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to upload backup file' }));
     });
-
-    function cleanup() {
-        if (fs.existsSync(tempPath)) {
-            fs.unlinkSync(tempPath);
-        }
-    }
 }
 
 /**
@@ -163,76 +121,53 @@ function restoreBackup(req, res) {
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res 
  */
-function copyToReserve(req, res) {
-    const dbUrl = process.env.DATABASE_URL;
-    const reserveDbUrl = process.env.RESERVE_DATABASE_URL;
-
-    if (!dbUrl || !reserveDbUrl) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-            error: 'DATABASE_URL or RESERVE_DATABASE_URL is not configured'
-        }));
-    }
-
-    console.log('Starting DB copy to reserve...');
-
+function setupCopyHandlers({ dump, restore, res }) {
     let finished = false;
-    const dump = spawn('pg_dump', ['-F', 'c', dbUrl]);
-    const restore = spawn('pg_restore', ['-d', reserveDbUrl, '--clean', '--if-exists', '--no-owner']);
-
-    dump.stdout.pipe(restore.stdin);
-
     let dumpError = '';
     let restoreError = '';
 
     dump.stderr.on('data', (d) => dumpError += d.toString());
     restore.stderr.on('data', (d) => restoreError += d.toString());
 
-    dump.on('error', (err) => {
+    const handleError = (proc, other, type) => (err) => {
         if (finished) return;
         finished = true;
-        console.error('Dump error:', err);
-
-        const isEnoent = err.code === 'ENOENT';
-        const msg = isEnoent
-            ? 'Инструмент pg_dump не установлен на сервере.'
-            : 'Ошибка процесса дампа';
-
+        const msg = err.code === 'ENOENT' ? `${type} tool not found` : `${type} error`;
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: msg, code: err.code }));
-        restore.kill();
-    });
+        other.kill();
+    };
 
-    restore.on('error', (err) => {
-        if (finished) return;
-        finished = true;
-        console.error('Restore error:', err);
-
-        const isEnoent = err.code === 'ENOENT';
-        const msg = isEnoent
-            ? 'Инструмент pg_restore не установлен на сервере.'
-            : 'Ошибка процесса восстановления';
-
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: msg, code: err.code }));
-        dump.kill();
-    });
+    dump.on('error', handleError(dump, restore, 'Dump'));
+    restore.on('error', handleError(restore, dump, 'Restore'));
 
     restore.on('close', (code) => {
         if (finished) return;
         finished = true;
-        console.log(`Copy process finished. Restore exit code: ${code}`);
         if (code === 0 || code === 1) {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: true }));
         } else {
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-                error: `Копирование не удалось (код ${code})`,
-                details: { dumpError, restoreError }
-            }));
+            res.end(JSON.stringify({ error: `Copy failed (code ${code})`, details: { dumpError, restoreError } }));
         }
     });
+}
+
+function copyToReserve(req, res) {
+    const dbUrl = process.env.DATABASE_URL;
+    const reserveDbUrl = process.env.RESERVE_DATABASE_URL;
+
+    if (!dbUrl || !reserveDbUrl) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'DB URLs not configured' }));
+    }
+
+    const dump = spawn('pg_dump', ['-F', 'c', dbUrl]);
+    const restore = spawn('pg_restore', ['-d', reserveDbUrl, '--clean', '--if-exists', '--no-owner']);
+    dump.stdout.pipe(restore.stdin);
+
+    setupCopyHandlers({ dump, restore, res });
 }
 
 /**

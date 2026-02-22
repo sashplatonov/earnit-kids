@@ -65,7 +65,7 @@ async function resolveFcmProjectId() {
     }
 }
 
-function buildFcmV1Payload(token, title, body, data) {
+function buildFcmV1Payload({ token, title, body, data }) {
     return {
         message: {
             token,
@@ -88,13 +88,21 @@ function safeJsonParse(raw) {
     }
 }
 
-function parseFcmError(response, parsedBody) {
+function getErrorCode(response, parsedBody) {
     const details = Array.isArray(parsedBody?.error?.details) ? parsedBody.error.details : [];
     const fcmError = details.find((item) => item['@type']?.includes('google.firebase.fcm.v1.FcmError'));
-    const errorCode = fcmError?.errorCode || parsedBody?.error?.status || `HTTP_${response.statusCode}`;
-    const reason = `${errorCode} ${parsedBody?.error?.message || response.body || ''}`.trim();
-    const invalidToken = reason.includes('UNREGISTERED') || reason.includes('INVALID_ARGUMENT');
-    return { reason, invalidToken };
+    if (fcmError?.errorCode) return fcmError.errorCode;
+    if (parsedBody?.error?.status) return parsedBody.error.status;
+    return `HTTP_${response.statusCode}`;
+}
+
+function parseFcmError(response, parsedBody) {
+    const errorCode = getErrorCode(response, parsedBody);
+    const msg = parsedBody?.error?.message || response.body || '';
+    const reason = `${errorCode} ${msg}`.trim();
+
+    const bad = reason.includes('UNREGISTERED') || reason.includes('INVALID_ARGUMENT');
+    return { reason, invalidToken: bad };
 }
 
 function postJson(url, headers, payload) {
@@ -126,32 +134,27 @@ function postJson(url, headers, payload) {
     });
 }
 
-async function sendFcmNotification(token, title, body, data = {}) {
+async function sendFcmNotification({ token, title, body, data = {} }) {
     const projectId = await resolveFcmProjectId();
-    if (!projectId) {
-        return { success: false, invalidToken: false, reason: 'FCM_PROJECT_ID not resolved' };
-    }
+    if (!projectId) return { success: false, invalidToken: false, reason: 'FCM_PROJECT_ID not resolved' };
 
     try {
         const accessToken = await getAccessToken();
-        if (!accessToken) {
-            return { success: false, invalidToken: false, reason: 'Unable to get OAuth access token' };
-        }
+        if (!accessToken) return { success: false, invalidToken: false, reason: 'Unable to get OAuth access token' };
 
         const response = await postJson(
             `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
             { Authorization: `Bearer ${accessToken}` },
-            buildFcmV1Payload(token, title, body, data)
+            buildFcmV1Payload({ token, title, body, data })
         );
 
         const parsed = safeJsonParse(response.body);
-
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-            const parsedError = parseFcmError(response, parsed);
-            return { success: false, invalidToken: parsedError.invalidToken, reason: parsedError.reason };
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+            return { success: true, invalidToken: false, reason: null };
         }
 
-        return { success: true, invalidToken: false, reason: null };
+        const parsedError = parseFcmError(response, parsed);
+        return { success: false, invalidToken: parsedError.invalidToken, reason: parsedError.reason };
     } catch (err) {
         return { success: false, invalidToken: false, reason: err.message };
     }
@@ -224,14 +227,12 @@ function dedupeTokens(tokens) {
     return [...new Set(tokens.map((item) => item.token))];
 }
 
-async function sendToTokens(tokens, title, body, data = {}) {
-    if (!isPushEnabled()) return;
-    if (!Array.isArray(tokens) || tokens.length === 0) return;
+async function sendToTokens({ tokens, title, body, data = {} }) {
+    if (!isPushEnabled() || !Array.isArray(tokens) || tokens.length === 0) return;
 
     const invalidTokens = [];
-
     for (const token of tokens) {
-        const result = await sendFcmNotification(token, title, body, data);
+        const result = await sendFcmNotification({ token, title, body, data });
         if (!result.success) {
             console.warn('[push] send failed:', result.reason);
             if (result.invalidToken) invalidTokens.push(token);
@@ -253,60 +254,56 @@ async function unregisterPushToken({ familyId, token }) {
     return await pushTokenRepository.deactivateToken(familyId, token);
 }
 
-async function notifyFamilyChanges({ familyId, beforeData, afterData, beforeChildren, afterChildren }) {
-    if (!isPushEnabled()) return;
-    if (!familyId) return;
-
-    const createdRequests = detectCreatedRequests(beforeData, afterData);
-    const approvedRequests = detectApprovedRequests(beforeData, afterData);
-    const balanceChanges = detectBalanceChanges(beforeChildren, afterChildren);
-
-    for (const request of createdRequests) {
+async function handleCreatedRequests(familyId, requests) {
+    for (const r of requests) {
         const adminTokens = await pushTokenRepository.getActiveTokens(familyId, { roles: ['admin'] });
-        await sendToTokens(
-            dedupeTokens(adminTokens),
-            'Новая заявка',
-            `${request.taskName || 'Заявка'}: ${request.coins || 0} 🪙`,
-            {
-                eventType: 'request_created',
-                requestId: String(request.id || ''),
-                childId: String(request.childId || '')
-            }
-        );
+        await sendToTokens({
+            tokens: dedupeTokens(adminTokens),
+            title: 'Новая заявка',
+            body: `${r.taskName || 'Заявка'}: ${r.coins || 0} 🪙`,
+            data: { eventType: 'request_created', requestId: String(r.id || ''), childId: String(r.childId || '') }
+        });
     }
+}
 
-    for (const request of approvedRequests) {
-        const childTokens = await pushTokenRepository.getActiveTokens(familyId, { roles: ['child'], childId: request.childId });
-        await sendToTokens(
-            dedupeTokens(childTokens),
-            'Заявка подтверждена',
-            `${request.taskName || 'Заявка'}: ${request.coins || 0} 🪙`,
-            {
-                eventType: 'request_approved',
-                requestId: String(request.id || ''),
-                childId: String(request.childId || '')
-            }
-        );
+async function handleApprovedRequests(familyId, requests) {
+    for (const r of requests) {
+        const childTokens = await pushTokenRepository.getActiveTokens(familyId, { roles: ['child'], childId: r.childId });
+        await sendToTokens({
+            tokens: dedupeTokens(childTokens),
+            title: 'Заявка подтверждена',
+            body: `${r.taskName || 'Заявка'}: ${r.coins || 0} 🪙`,
+            data: { eventType: 'request_approved', requestId: String(r.id || ''), childId: String(r.childId || '') }
+        });
     }
+}
 
-    for (const change of balanceChanges) {
-        const tokens = await Promise.all([
+async function handleBalanceChanges(familyId, changes) {
+    for (const change of changes) {
+        const [admT, chT] = await Promise.all([
             pushTokenRepository.getActiveTokens(familyId, { roles: ['admin'] }),
             pushTokenRepository.getActiveTokens(familyId, { roles: ['child'], childId: change.childId })
         ]);
-        const allTokens = dedupeTokens([...(tokens[0] || []), ...(tokens[1] || [])]);
-        await sendToTokens(
-            allTokens,
-            'Баланс изменен',
-            `${change.childName}: ${change.delta > 0 ? '+' : ''}${change.delta} 🪙 (итого ${change.balance})`,
-            {
-                eventType: 'balance_changed',
-                childId: String(change.childId || ''),
-                delta: String(change.delta),
-                balance: String(change.balance)
-            }
-        );
+        const allTokens = dedupeTokens([...(admT || []), ...(chT || [])]);
+        await sendToTokens({
+            tokens: allTokens,
+            title: 'Баланс изменен',
+            body: `${change.childName}: ${change.delta > 0 ? '+' : ''}${change.delta} 🪙 (итого ${change.balance})`,
+            data: { eventType: 'balance_changed', childId: String(change.childId || ''), delta: String(change.delta), balance: String(change.balance) }
+        });
     }
+}
+
+async function notifyFamilyChanges({ familyId, beforeData, afterData, beforeChildren, afterChildren }) {
+    if (!isPushEnabled() || !familyId) return;
+
+    const createdReqs = detectCreatedRequests(beforeData, afterData);
+    const approvedReqs = detectApprovedRequests(beforeData, afterData);
+    const balanceChanges = detectBalanceChanges(beforeChildren, afterChildren);
+
+    await handleCreatedRequests(familyId, createdReqs);
+    await handleApprovedRequests(familyId, approvedReqs);
+    await handleBalanceChanges(familyId, balanceChanges);
 }
 
 module.exports = {

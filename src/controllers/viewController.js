@@ -46,39 +46,36 @@ function getCookies(req) {
 
 const { verifyToken } = require('../utils/authUtils');
 
-async function isAuthenticated(req) {
-    const cookies = getCookies(req);
-    const { family_id, app_auth, app_role } = cookies;
-    if (!app_auth) {
-        if (req.url === '/' || req.url === '/index.html') {
-            console.log('🔍 Authenticating: No app_auth cookie found');
-        }
-        return false;
-    }
+/**
+ * Verify if user session is valid
+ */
+async function verifyUserSession(cookies) {
+    const { app_auth, app_role, family_id } = cookies;
+    if (!app_auth) return false;
 
     const decoded = verifyToken(app_auth);
-    if (!decoded || !decoded.email) {
-        console.log('🔍 Authenticating: Invalid or expired JWT');
-        return false;
-    }
+    if (!decoded || !decoded.email) return false;
 
-    const email = decoded.email;
-    const user = await findFamilyByEmail(email);
-    if (!user) {
-        console.log(`🔍 Authenticating: User not found in DB for email: ${email}`);
-        return false;
-    }
+    const user = await findFamilyByEmail(decoded.email);
+    if (!user) return false;
 
-    if (user.isSuperAdmin && app_role === 'super_admin') {
-        return true;
-    }
-
+    if (user.isSuperAdmin && app_role === 'super_admin') return true;
     if (family_id && user.id === family_id) {
         return app_role === 'admin' || app_role === 'child';
     }
-
-    console.log(`🔍 Authenticating: Failed for email: ${email}, role: ${app_role}, familyId: ${family_id}`);
     return false;
+}
+
+/**
+ * Check if request is authenticated
+ */
+async function isAuthenticated(req) {
+    const cookies = getCookies(req);
+    const authenticated = await verifyUserSession(cookies);
+    if (!authenticated && (req.url === '/' || req.url === '/index.html')) {
+        console.log('🔍 Authentication failed for index request');
+    }
+    return authenticated;
 }
 
 const crypto = require('crypto');
@@ -90,7 +87,18 @@ async function serveStatic(req, res) {
     if (urlPath === '/super-admin.css') urlPath = '/css/super-admin.css';
 
     // All static assets are in public/
-    let filePath = path.join(__dirname, '../../public', urlPath);
+    let baseDir = '../../public';
+    const isProd = process.env.NODE_ENV === 'production';
+
+    // If in production, try to serve from dist first
+    if (isProd) {
+        const distPath = path.join(__dirname, '../../public/dist', urlPath);
+        if (fs.existsSync(distPath)) {
+            baseDir = '../../public/dist';
+        }
+    }
+
+    let filePath = path.join(__dirname, baseDir, urlPath);
 
     // Prevent directory traversal
     const publicDir = path.resolve(__dirname, '../../public');
@@ -173,21 +181,10 @@ function serveSuperAdmin(req, res) {
 
 let cachedIndexHtml = null;
 
-async function serveIndex(req, res) {
-    if (!(await isAuthenticated(req))) {
-        return serveLogin(req, res);
-    }
-
-    const cookies = getCookies(req);
-    if (cookies.app_role === 'super_admin') {
-        return serveSuperAdmin(req, res);
-    }
-
-    if (cachedIndexHtml && process.env.NODE_ENV === 'production') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end(cachedIndexHtml);
-    }
-
+/**
+ * Assemble full HTML from components
+ */
+function assembleIndexHtml() {
     const componentOrder = [
         'head.html', 'header.html', 'nav.html', 'main_start.html',
         'section_tasks.html', 'section_requests.html', 'section_shop.html',
@@ -199,23 +196,37 @@ async function serveIndex(req, res) {
     const componentsDir = path.join(__dirname, '../../views/components');
     let fullHtml = '';
 
+    componentOrder.forEach(file => {
+        fullHtml += fs.readFileSync(path.join(componentsDir, file), 'utf8') + '\n';
+    });
+
+    return applyCommonTemplateData(fullHtml);
+}
+
+/**
+ * Serve the main application index
+ */
+async function serveIndex(req, res) {
+    if (!(await isAuthenticated(req))) return serveLogin(req, res);
+
+    const cookies = getCookies(req);
+    if (cookies.app_role === 'super_admin') return serveSuperAdmin(req, res);
+
+    if (cachedIndexHtml && process.env.NODE_ENV === 'production') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(cachedIndexHtml);
+    }
+
     try {
-        componentOrder.forEach(file => {
-            fullHtml += fs.readFileSync(path.join(componentsDir, file), 'utf8') + '\n';
-        });
-
-        fullHtml = applyCommonTemplateData(fullHtml);
-
-        if (process.env.NODE_ENV === 'production') {
-            cachedIndexHtml = fullHtml;
-        }
+        const fullHtml = assembleIndexHtml();
+        if (process.env.NODE_ENV === 'production') cachedIndexHtml = fullHtml;
 
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(fullHtml);
     } catch (err) {
         console.error('Error assembling index:', err.message);
         res.writeHead(500);
-        res.end('Server Error: Could not assemble index.html');
+        res.end('Server Error: Index assembly failed');
     }
 }
 

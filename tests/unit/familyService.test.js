@@ -18,7 +18,9 @@ const familyService = proxyquire('../../src/services/familyService', {
     '../db/familyRepository': {
         findAll: async () => ({ families: mockData }),
         findById: async (id) => mockData[id] || null,
-        update: async (id, data) => true
+        update: async (id, data) => true,
+        createChild: async () => ({ id: 2, name: 'Bob' }),
+        updateChild: async () => true
     },
     '../db/familyDataRepository': {
         getData: async (id) => mockData[id] || null,

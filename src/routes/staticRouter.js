@@ -20,12 +20,9 @@ function handleCors(req, res) {
 
 /**
  * Route request to static views or files
- * @param {string} pathOnly 
- * @param {import('http').IncomingMessage} req 
- * @param {import('http').ServerResponse} res 
- * @param {object} viewController 
+ * @param {object} params
  */
-async function routeStatic(pathOnly, req, res, viewController) {
+async function routeStatic({ pathOnly, req, res, viewController }) {
     const { serveIndex, serveLogin, serveResetPassword, serveVerify, serveStatic } = viewController;
 
     if (pathOnly === '/' || pathOnly === '/index.html') {

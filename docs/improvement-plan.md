@@ -68,27 +68,27 @@
 - [x] Кеширование DB-запросов для частых операций (список задач, баланс)
 
 ### 10. Производительность фронтенда
-- [ ] Минификация CSS/JS для production
-- [ ] Lazy loading для секций (не загружать analytics-ui.js до открытия вкладки)
-- [ ] Service Worker для offline-поддержки (PWA)
+- [x] Минификация CSS/JS для production (через `npm run build`)
+- [x] Lazy loading для секций (динамическая загрузка `analytics-ui.js`)
+- [x] Service Worker для offline-поддержки (PWA)
 - [x] Gzip/Brotli сжатие ответов сервера
 
 ### 11. API Improvements
 - [x] Версионирование API (`/api/v1/...`)
-- [ ] OpenAPI/Swagger документация
+- [x] OpenAPI/Swagger документация (доступна по `/api/docs`)
 - [x] Пагинация для history и requests (добавлены `/api/v1/history` и `/api/v1/requests`)
 - [ ] WebSocket для уведомлений в реальном времени (новые задачи, одобрение запросов)
 
 ### 12. База данных
 - [x] Connection pooling tuning (min/max/idle timeout)
 - [x] Добавить `updated_at` on all основные таблицы
-- [ ] Миграция: автоматический rollback при ошибке
-- [ ] Добавить `EXPLAIN ANALYZE` для медленных запросов
+- [x] Миграция: автоматический rollback при ошибке (реализовано через транзакции в Postgres)
+- [x] Добавить `EXPLAIN ANALYZE` для медленных запросов (логируется при `AUTO_EXPLAIN=true`)
 
 ### 13. Мониторинг
 - [x] Health endpoint (`/api/health`) с проверкой БД и services
 - [x] Логирование времени ответа и медленных запросов (>500ms)
-- [ ] Метрики (количество запросов, ошибки в Prometheus формате)
+- [x] Метрики (количество запросов, ошибки в Prometheus формате по `/api/metrics`)
 - [ ] Алерты при сбоях (email/push/telegram)
 
 ---

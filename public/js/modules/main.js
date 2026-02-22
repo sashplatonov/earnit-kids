@@ -8,7 +8,6 @@ import { setupPullToRefresh } from './pull-to-refresh.js';
 import * as admin from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
 import { handleSearch, addNewFriend, saveNickname } from './friends.js';
-import { loadAnalytics } from './analytics-ui.js';
 import { renderCatalog, addCatalogItem } from './main-catalog.js';
 import { setupTabControls } from './main-tabs.js';
 import { initializeFromServer, refreshFromServerAndRender, setupCommonControls } from './main-init.js';
@@ -64,7 +63,8 @@ window.app = {
     saveFamilySettingsInline: admin.saveFamilySettingsInline, saveNewPinInline: admin.saveNewPinInline,
     copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
     switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal, addNewFriend, handleSearch,
-    saveNickname, adminAwardCoins, loadAnalytics
+    saveNickname, adminAwardCoins,
+    loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
 };
 
 async function initializeApp() {
@@ -82,6 +82,10 @@ async function initializeApp() {
         setupPullToRefresh(() => refreshFromServerAndRender(true));
         setupTabControls();
         document.querySelectorAll('.modal__backdrop').forEach(b => b.addEventListener('click', () => b.closest('.modal')?.classList.remove('active')));
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        }
     } catch (err) {
         console.error('App init error:', err);
     } finally {

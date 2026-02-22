@@ -5,3 +5,7 @@
 /playwright-report
 /test-results
 /coverage
+/public/dist
+.DS_Store
+.idea
+.vscode
