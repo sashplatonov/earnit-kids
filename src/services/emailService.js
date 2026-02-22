@@ -132,7 +132,40 @@ async function sendPasswordResetEmail(to, link) {
     });
 }
 
-async function sendErrorAlertEmail(err, context = '') {
+async function sendSuperAdminRecoveryEmail(to, password, link) {
+    const subject = 'Super Admin Recovery - Coins Kids Shop';
+    const text = `You requested a password recovery for your Super Admin account.
+Your password is: ${password}
+Login here: ${link}
+If you did not request this, please ignore this email.`;
+    const html = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto;">
+            <div style="background: #2563eb; color: #fff; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h2>Super Admin Recovery</h2>
+            </div>
+            <div style="padding: 20px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px;">
+                <p>Hello,</p>
+                <p>You requested a password recovery for your Super Admin account.</p>
+                <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p style="margin: 0; font-size: 16px;"><strong>Password:</strong> <code>${password}</code></p>
+                </div>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${link}" style="background: #2563eb; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-weight: bold; display: inline-block;">Login to Dashboard</a>
+                </div>
+                <p style="color: #666; font-size: 14px;">If you did not request this recovery, please check your environment settings.</p>
+            </div>
+        </div>
+    `;
+
+    return sendEmail({
+        to,
+        subject,
+        html,
+        text
+    });
+}
+
+function sendErrorAlertEmail(err, context = '') {
     const to = process.env.SUPER_ADMIN_EMAIL;
     if (!to) return { success: false, error: 'SUPER_ADMIN_EMAIL not set' };
 

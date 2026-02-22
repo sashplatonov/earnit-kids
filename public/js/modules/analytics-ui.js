@@ -20,14 +20,14 @@ function updateSummaryUI(summary, comparison) {
     if (earnedEl) {
         earnedEl.innerHTML = `${summary.totalEarned} 🪙`;
         if (comparison) {
-            addComparisonLabel(earnedEl, summary.totalEarned, comparison.totalEarned);
+            addComparisonLabel(earnedEl, { current: summary.totalEarned, previous: comparison.totalEarned });
         }
     }
 
     if (spentEl) {
         spentEl.innerHTML = `${summary.totalSpent} 🪙`;
         if (comparison) {
-            addComparisonLabel(spentEl, summary.totalSpent, comparison.totalSpent, true);
+            addComparisonLabel(spentEl, { current: summary.totalSpent, previous: comparison.totalSpent, reverse: true });
         }
     }
 
@@ -42,7 +42,7 @@ function updateSummaryUI(summary, comparison) {
     if (iTotal) iTotal.textContent = `Всего: ${summary.totalSpent} 🪙`;
 }
 
-function addComparisonLabel(parent, current, previous, reverse = false) {
+function addComparisonLabel(parent, { current, previous, reverse = false }) {
     if (previous === 0) return;
     const diff = current - previous;
     const pct = Math.round((diff / previous) * 100);
@@ -150,12 +150,14 @@ function renderGenericChart(containerId, options) {
 
 function renderTrendChart(trends) {
     const canvas = document.getElementById('achievements-trend-chart');
-    if (!canvas) return;
+    if (!canvas || !window.Chart) return;
 
     if (window.myTrendChart) window.myTrendChart.destroy();
+    window.myTrendChart = new Chart(canvas, getTrendChartConfig(trends));
+}
 
-    // Use Chart.js since it's loaded in head.html
-    window.myTrendChart = new Chart(canvas, {
+function getTrendChartConfig(trends) {
+    return {
         type: 'line',
         data: {
             labels: trends.map(t => new Date(t.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })),
@@ -165,18 +167,14 @@ function renderTrendChart(trends) {
                     data: trends.map(t => t.earned),
                     borderColor: '#4ade80',
                     backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 3
+                    fill: true, tension: 0.4, pointRadius: 3
                 },
                 {
                     label: 'Потрачено',
                     data: trends.map(t => t.spent),
                     borderColor: '#f87171',
                     backgroundColor: 'rgba(248, 113, 113, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 3
+                    fill: true, tension: 0.4, pointRadius: 3
                 }
             ]
         },
@@ -201,7 +199,7 @@ function renderTrendChart(trends) {
                 }
             }
         }
-    });
+    };
 }
 
 function renderRecommendations(recommendations) {
