@@ -11,6 +11,7 @@ This document walks through every step needed to publish (or test without paying
 - [6. Deep links & associated domains](#6-deep-links--associated-domains)
 - [7. Useful commands](#7-useful-commands)
 - [8. Local iOS run with Docker backend (`http://localhost:3001`)](#8-local-ios-run-with-docker-backend-httplocalhost3001)
+- [9. Quick Start One-liner](#9-quick-start-one-liner)
 
 ## 1. Setup / requirements
 - Apple Developer Program: required only for App Store publishing, not for simulator testing.  
@@ -72,4 +73,8 @@ npm run sync:local
 npm run open:ios
 ```
 
-Keep this guide handy while adjusting signing/capabilities or repeating builds. Once you see “Ready for Submission” in App Store Connect you’re ready to push the public release.
+## 9. Quick Start One-liner
+Run this command from the repository root to initialize everything and open the project in Xcode:
+```bash
+cd mobile && npm install && (npx cap add ios || echo "Ok") && npm run sync:local && npm run open:ios
+```

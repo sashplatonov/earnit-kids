@@ -3,6 +3,7 @@
 This folder holds the Capacitor wrapper that hosts the existing web UI (`../public`). It keeps the current business logic untouched while exposing the app through native iOS/Android shells.
 
 ## Table of Contents
+## Table of Contents
 - [Getting started](#getting-started)
 - [Local run (Docker Compose backend at `http://localhost:3001`)](#local-run-docker-compose-backend-at-httplocalhost3001)
 - [Free local testing](#free-local-testing)

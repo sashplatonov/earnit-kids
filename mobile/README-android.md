@@ -11,6 +11,7 @@ Follow this guide to publish the Capacitor shell on Google Play and to test with
 - [6. Publish to Google Play](#6-publish-to-google-play)
 - [7. Commands summary](#7-commands-summary)
 - [8. Local Android run with Docker backend (`http://localhost:3001`)](#8-local-android-run-with-docker-backend-httplocalhost3001)
+- [9. Quick Start One-liner](#9-quick-start-one-liner)
 
 ## 1. Requirements
 - Google Play Console account: required only for publishing to Google Play ($25 one-time). For emulator/device testing without publishing you can skip it entirely and install APKs directly.  
@@ -87,4 +88,10 @@ Then in mobile folder:
 cd mobile
 npm run sync:local
 npm run open:android
+```
+
+## 9. Quick Start One-liner
+Run this command from the repository root to initialize everything and open the project in Android Studio:
+```bash
+cd mobile && npm install && (npx cap add android || echo "Ok") && npm run sync:local && npm run open:android
 ```
