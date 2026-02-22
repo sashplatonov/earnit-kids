@@ -1,8 +1,9 @@
+const config = require('../config');
 const limits = new Map();
 
-// 100 requests per IP per minute
-const RATE_LIMIT_MS = 60000;
-const MAX_REQUESTS = process.env.RATE_LIMIT_MAX || 100;
+// config.RATE_LIMIT_MS requests per IP
+const RATE_LIMIT_MS = config.RATE_LIMIT_MS;
+const MAX_REQUESTS = config.RATE_LIMIT_MAX;
 
 function rateLimit(req) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;

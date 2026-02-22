@@ -3,8 +3,11 @@ const { runDataMigration } = require('../../scripts/migrate-data');
 const { testConnection } = require('../db/connection');
 
 function validateEnv() {
-    if (!process.env.SUPER_ADMIN_EMAIL || !process.env.SUPER_ADMIN_PASSWORD) {
-        console.error('❌ CRITICAL ERROR: SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD not set in environment variables');
+    const required = ['SUPER_ADMIN_EMAIL', 'SUPER_ADMIN_PASSWORD'];
+    const missing = required.filter(key => !process.env[key]);
+
+    if (missing.length > 0) {
+        console.error(`❌ CRITICAL ERROR: Missing required environment variables: ${missing.join(', ')}`);
         process.exit(1);
     }
 }
