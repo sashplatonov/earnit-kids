@@ -1,0 +1,89 @@
+import { escapeHtml } from './utils.js';
+
+function getRequestIcon(req) {
+    return req.status === 'pending' ? '⏳' : (req.status === 'approved' ? '✅' : '❌');
+}
+
+function renderMyRequest(req) {
+    const isPurchase = req.requestType === 'shop_purchase';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
+    return `
+        <div class="history-item">
+            <div class="history-item__icon">${getRequestIcon(req)}</div>
+            <div class="history-item__content">
+                <div class="history-item__desc">${escapeHtml(req.taskName)}</div>
+                <div class="history-item__date">Ожидает подтверждения</div>
+            </div>
+            <div class="history-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
+            <div class="card__actions" style="margin-left: 10px;">
+                 <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">🗑️</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderIncomingRequest(req, state) {
+    const child = state.children.find(c => c.id == req.childId);
+    const childName = child ? child.name : 'Unknown';
+    const isPurchase = req.requestType === 'shop_purchase';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
+
+    return `
+        <div class="history-item">
+            <div class="history-item__icon">📩</div>
+            <div class="history-item__content">
+                <div class="history-item__desc">
+                    <span class="tag" style="margin-right: 5px;">${escapeHtml(childName)}</span> 
+                    ${isPurchase ? 'Покупка: ' : 'Задание: '} ${escapeHtml(req.taskName)}
+                </div>
+                <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
+            </div>
+            <div class="history-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
+            <div class="card__actions" style="margin-left: 10px;">
+                 <button class="btn btn--success btn--small" onclick="window.app.approveRequest(${req.id})">✅</button>
+                 <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest(${req.id})">❌</button>
+            </div>
+        </div>
+    `;
+}
+
+function updateBadge(count) {
+    const navBadge = document.getElementById('requests-counter');
+    if (navBadge) {
+        navBadge.textContent = count;
+        navBadge.classList.toggle('hidden', count === 0);
+    }
+}
+
+function renderAdminRequests({ pending, state, list, empty }) {
+    list.innerHTML = pending.length ? pending.map(r => renderIncomingRequest(r, state)).join('') : '';
+    if (empty) empty.classList.toggle('hidden', pending.length > 0);
+    document.getElementById('requests-section')?.querySelector('.admin-only')?.classList.remove('hidden');
+}
+
+function renderChildRequests({ pending, list, empty }) {
+    list.innerHTML = pending.length ? pending.sort((a, b) => b.id - a.id).map(renderMyRequest).join('') : '';
+    if (empty) empty.classList.toggle('hidden', pending.length > 0);
+    document.getElementById('requests-section')?.querySelector('.admin-only')?.classList.add('hidden');
+}
+
+export function renderRequestsUI(state) {
+    const incomingList = document.getElementById('incoming-requests-list');
+    const incomingEmpty = document.getElementById('incoming-requests-empty');
+    const myList = document.getElementById('my-requests-list');
+    const myEmpty = document.getElementById('my-requests-empty');
+
+    const pending = state.requests.filter(r => r.status === 'pending');
+    updateBadge(pending.length);
+
+    if (!incomingList || !myList) return;
+
+    if (state.isAdmin) {
+        myList.innerHTML = '';
+        if (myEmpty) myEmpty.classList.add('hidden');
+        renderAdminRequests({ pending, state, list: incomingList, empty: incomingEmpty });
+    } else {
+        if (incomingEmpty) incomingEmpty.classList.add('hidden');
+        renderChildRequests({ pending, list: myList, empty: myEmpty });
+    }
+}
