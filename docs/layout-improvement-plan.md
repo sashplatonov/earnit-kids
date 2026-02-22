@@ -90,16 +90,16 @@
 ## 📱 Мобильная вёрстка
 
 ### 9. Safe Area & Notch
-- [ ] Корректная поддержка `env(safe-area-inset-*)` для всех элементов:
+- [x] Корректная поддержка `env(safe-area-inset-*)` для всех элементов:
   ```css
   .header { padding-top: calc(0.5rem + env(safe-area-inset-top)); }
   .nav { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
   ```
-- [ ] `viewport-fit=cover` в `<meta viewport>` для полноэкранного режима
+- [x] `viewport-fit=cover` в `<meta viewport>` для полноэкранного режима
 
 ### 10. Touch-оптимизация
-- [ ] Минимальный tap target — **48×48px** (Google Material 3 рекомендация 2026)
-- [ ] `touch-action: manipulation` на интерактивных элементах (убирает 300ms задержку)
+- [x] Минимальный tap target — **48×48px** (Google Material 3 рекомендация 2026)
+- [x] `touch-action: manipulation` на интерактивных элементах (убирает 300ms задержку)
 - [ ] Убрать `user-select: none` с текстового контента (только на кнопках)
 - [ ] Swipe-жесты для навигации между табами:
   ```javascript
@@ -108,14 +108,14 @@
 
 ### 11. Мобильные модалки
 - [ ] Использовать нативный `<dialog>` element вместо кастомных модалок
-- [ ] Bottom sheet pattern для мобильных вместо центрированных модалок:
+- [x] Bottom sheet pattern для мобильных вместо центрированных модалок:
   ```css
   @media (max-width: 768px) {
     dialog { position: fixed; bottom: 0; left: 0; right: 0;
              border-radius: 16px 16px 0 0; max-height: 85vh; }
   }
   ```
-- [ ] Backdrop blur для overlay: `backdrop-filter: blur(8px)`
+- [x] Backdrop blur для overlay: `backdrop-filter: blur(8px)`
 
 ### 12. Мобильные формы
 - [ ] `inputmode="numeric"` для полей с монетами (показывает цифровую клавиатуру)
@@ -190,7 +190,7 @@
 
 | Фаза | Задачи | Сложность |
 |------|--------|-----------|
-| **1** | Safe Area (#9), Touch (#10), Tap targets, `<dialog>` (#11) | Лёгкая |
+| **1** | Safe Area (#9), Touch (#10), Tap targets, `<dialog>` (#11) | [x] Лёгкая |
 | **2** | Design Tokens (#16), Font optimization (#1), Color scheme (#6) | Средняя |
 | **3** | Accessibility (#15), Mobile forms (#12), Responsive components (#13) | Средняя |
 | **4** | Container Queries (#2), View Transitions (#5), Microanimations (#7) | Средняя |
