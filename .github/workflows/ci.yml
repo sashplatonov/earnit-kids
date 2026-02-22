@@ -1,0 +1,47 @@
+name: Native Node.js CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Setup PostgreSQL test database
+      run: |
+        sudo systemctl start postgresql.service
+        pg_isready
+        sudo -u postgres psql -c "CREATE USER testuser WITH PASSWORD 'testpass';"
+        sudo -u postgres psql -c "CREATE DATABASE testdb OWNER testuser;"
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE testdb TO testuser;"
+
+    - name: Set Environment Variables
+      run: |
+        echo "NODE_ENV=test" >> $GITHUB_ENV
+        echo "TEST_DATABASE_URL=postgres://testuser:testpass@localhost:5432/testdb" >> $GITHUB_ENV
+        echo "SUPER_ADMIN_EMAIL=admin@example.com" >> $GITHUB_ENV
+        echo "SUPER_ADMIN_PASSWORD=securepassword" >> $GITHUB_ENV
+
+    - name: Run database migration
+      run: npm run migrate
+
+    - name: Run linter and tests with coverage
+      run: npm run check

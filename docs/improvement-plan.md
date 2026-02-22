@@ -43,11 +43,11 @@
 - [x] Разбить `familyController.js` (4753 байт) и `apiController.js` на более мелкие файлы
 
 ### 6. Тестирование
-- [ ] Покрыть unit-тестами сервисы (familyService, authService)
-- [ ] Добавить integration-тесты для API-эндпоинтов
-- [ ] Настроить test database для изолированных тестов
-- [ ] CI pipeline — запуск `npm run check` на push/PR
-- [ ] Добавить coverage report
+- [x] Покрыть unit-тестами сервисы (familyService, authService)
+- [x] Добавить integration-тесты для API-эндпоинтов
+- [x] Настроить test database для изолированных тестов
+- [x] CI pipeline — запуск `npm run check` на push/PR
+- [x] Добавить coverage report
 
 ### 7. TypeScript (опционально)
 - [ ] Добавить JSDoc-типизацию для основных функций и объектов
