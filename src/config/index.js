@@ -11,6 +11,7 @@ module.exports = {
     MAX_ATTEMPTS: 5,
     BLOCK_WINDOW_MS: 15 * 60 * 1000,
     MIME_TYPES: {
+        '': 'application/json; charset=utf-8',
         '.html': 'text/html; charset=utf-8',
         '.css': 'text/css; charset=utf-8',
         '.js': 'application/javascript; charset=utf-8',

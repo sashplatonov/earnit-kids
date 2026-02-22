@@ -3,6 +3,9 @@ import { state, setState } from './state.js';
 import { renderAll, renderTasks, renderShop } from './ui.js';
 import { showToast, closeModal, openModal, handleConfirm } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, adminAwardCoins } from './actions.js';
+import { initializePushNotifications, setPushRefreshHandler, unregisterPushNotifications } from './push.js';
+import { startIosDevFallback, stopIosDevFallback } from './ios-dev-fallback.js';
+import { setupPullToRefresh } from './pull-to-refresh.js';
 import { openTaskModal, saveTask, deleteTask, editTask, openShopModal, saveShopItem, deleteShopItem, editShopItem, openChangePinModal, saveNewPin, openFamilySettingsModal, saveFamilySettings, saveFamilySettingsInline, saveNewPinInline, copyChildLinkInline, refreshChildLinkInline, regenerateChildLinkInline, switchChild, openAddChildModal, saveNewChild } from './admin.js';
 import { renderRules, openEditRules, saveRules } from './rules.js';
 import { handleSearch, addNewFriend, refreshFriends, saveNickname } from './friends.js';
@@ -342,7 +345,13 @@ function setupCatalogFilters() {
 }
 
 function setupGeneralControls() {
+    bindClick('refresh-data-btn', async () => {
+        await refreshFromServerAndRender(true);
+    });
+
     bindClick('logout-btn', async () => {
+        stopIosDevFallback();
+        await unregisterPushNotifications();
         if (await logout()) window.location.reload();
         else showToast('Ошибка при выходе', 'error');
     });
@@ -478,7 +487,7 @@ async function initializeFromServer() {
     const data = await loadDataFromServer();
     if (!data) {
         showToast('Не удалось загрузить данные с сервера', 'error');
-        return;
+        return null;
     }
 
     let baseData = { tasks: [], products: [] };
@@ -490,12 +499,30 @@ async function initializeFromServer() {
 
     if (!data.isAdmin) {
         await refreshFriends();
-        return;
+        return data;
     }
 
     if (state.children && state.children.length > 0 && !state.currentChildId) {
         switchChild(state.children[0].id);
     }
+
+    return data;
+}
+
+async function refreshFromServerAndRender(showSuccessToast = false) {
+    const data = await initializeFromServer();
+    if (!data) {
+        if (showSuccessToast) {
+            const origin = window.location.origin || 'unknown-origin';
+            showToast(`Не удалось обновить данные (${origin})`, 'error');
+        }
+        return false;
+    }
+
+    renderAll();
+    if (state.isAdmin) renderCatalog();
+    if (showSuccessToast) showToast('Данные обновлены', 'success');
+    return true;
 }
 
 function buildInitialState(data, baseData) {
@@ -519,7 +546,14 @@ function buildInitialState(data, baseData) {
 
 async function initializeApp() {
     const role = getCookie('app_role') || 'child';
-    await initializeFromServer();
+    const initialData = await initializeFromServer();
+    await initializePushNotifications();
+    setPushRefreshHandler(async () => {
+        await refreshFromServerAndRender(false);
+    });
+    startIosDevFallback(initialData, async () => {
+        await refreshFromServerAndRender(false);
+    });
 
     renderAll();
     renderRules();
@@ -536,6 +570,9 @@ async function initializeApp() {
     setupChildLinkControls();
     setupTaskAndShopControls();
     setupGeneralControls();
+    setupPullToRefresh(async () => {
+        await refreshFromServerAndRender(true);
+    });
     setupTabControls();
     setupModalBackdropClose();
     revealTopNav();

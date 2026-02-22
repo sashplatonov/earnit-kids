@@ -2,6 +2,8 @@ export const API_URL = '/api/data';
 export const LOGIN_URL = '/api/login';
 export const LOGOUT_URL = '/api/logout';
 export const CHANGE_PIN_URL = '/api/change-pin';
+export const PUSH_REGISTER_URL = '/api/push/register';
+export const PUSH_UNREGISTER_URL = '/api/push/unregister';
 
 // ...existing code...
 export async function loadDataFromServer() {
@@ -50,6 +52,34 @@ export async function logout() {
     } catch (err) {
         console.error('Logout failed:', err);
         return false;
+    }
+}
+
+export async function registerPushTokenOnServer(payload) {
+    try {
+        const response = await fetch(PUSH_REGISTER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) return { success: true };
+        return await response.json();
+    } catch (err) {
+        return { success: false, error: 'Network error' };
+    }
+}
+
+export async function unregisterPushTokenOnServer(token) {
+    try {
+        const response = await fetch(PUSH_UNREGISTER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        });
+        if (response.ok) return { success: true };
+        return await response.json();
+    } catch (err) {
+        return { success: false, error: 'Network error' };
     }
 }
 
