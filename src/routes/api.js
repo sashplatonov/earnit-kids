@@ -102,6 +102,18 @@ apiRouter.get('/api/friends-list', (ctx, req, res) => mainApiHandler(ctx, req, r
 // Analytics
 apiRouter.get('/api/analytics', (ctx, req, res) => mainApiHandler(ctx, req, res, analyticsController.handleAnalytics));
 
+// Paginated History & Requests (New)
+apiRouter.get('/api/history', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleHistoryGet));
+apiRouter.get('/api/requests', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleRequestsGet));
+
+// --- API V1 (Versioning) ---
+// We map /api/v1/ to the same handlers for now
+apiRouter.get('/api/v1/data', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleDataGet));
+apiRouter.post('/api/v1/data', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleDataPost));
+apiRouter.get('/api/v1/history', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleHistoryGet));
+apiRouter.get('/api/v1/requests', (ctx, req, res) => mainApiHandler(ctx, req, res, familyController.handleRequestsGet));
+apiRouter.get('/api/v1/analytics', (ctx, req, res) => mainApiHandler(ctx, req, res, analyticsController.handleAnalytics));
+
 // Children dynamic routes
 apiRouter.get('/api/children/:id/link', (ctx, req, res) => mainApiHandler(ctx, req, res, async (ctx, req, res) => {
     ctx.targetChildId = parseInt(ctx.params.id);

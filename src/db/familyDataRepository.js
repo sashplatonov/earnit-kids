@@ -262,8 +262,70 @@ async function addRequest(familyId, r) {
     return id;
 }
 
+async function getPaginatedHistory(familyId, childId = null, { page = 1, limit = 50 } = {}) {
+    const dbId = await familyRepository.getDbId(familyId);
+    if (!dbId) return { data: [], total: 0, page, limit };
+
+    const offset = (page - 1) * limit;
+    const p = childId ? [dbId, childId, limit, offset] : [dbId, limit, offset];
+    const w = childId ? 'WHERE family_id = $1 AND child_id = $2' : 'WHERE family_id = $1';
+
+    const [hRes, countRes] = await Promise.all([
+        query(`SELECT * FROM history ${w} ORDER BY created_at DESC LIMIT $${p.length - 1} OFFSET $${p.length}`, p),
+        query(`SELECT COUNT(*) as total FROM history ${w}`, childId ? [dbId, childId] : [dbId])
+    ]);
+
+    return {
+        data: hRes.rows.map(mapHistoryEntry),
+        total: parseInt(countRes.rows[0].total),
+        page: parseInt(page),
+        limit: parseInt(limit)
+    };
+}
+
+async function getPaginatedRequests(familyId, childId = null, { page = 1, limit = 50 } = {}) {
+    const dbId = await familyRepository.getDbId(familyId);
+    if (!dbId) return { data: [], total: 0, page, limit };
+
+    const offset = (page - 1) * limit;
+    const p = childId ? [dbId, childId, limit, offset] : [dbId, limit, offset];
+    const w = childId ? 'WHERE family_id = $1 AND child_id = $2' : 'WHERE family_id = $1';
+
+    const [qRes, countRes] = await Promise.all([
+        query(`
+            SELECT r.*, t.group_name as task_group, t.comment as task_comment, s.group_name as item_group
+            FROM requests r
+            LEFT JOIN tasks t ON r.task_id = t.task_id AND r.family_id = t.family_id
+            LEFT JOIN shop_items s ON r.item_id = s.item_id AND r.family_id = s.family_id
+            ${w}
+            ORDER BY r.created_at DESC LIMIT $${p.length - 1} OFFSET $${p.length}`, p),
+        query(`SELECT COUNT(*) as total FROM requests ${w}`, childId ? [dbId, childId] : [dbId])
+    ]);
+
+    return {
+        data: qRes.rows.map(row => ({
+            id: row.external_id ? parseInt(row.external_id) : row.id,
+            childId: row.child_id,
+            requestType: val(row.request_type, 'earn'),
+            taskId: row.task_id ? parseInt(row.task_id) : null,
+            itemId: row.item_id ? parseInt(row.item_id) : null,
+            taskName: row.task_name,
+            coins: row.coins,
+            moneyAmount: val(row.money_amount, 0),
+            status: row.status,
+            date: row.created_at,
+            group: row.task_group || row.item_group,
+            comment: row.task_comment
+        })),
+        total: parseInt(countRes.rows[0].total),
+        page: parseInt(page),
+        limit: parseInt(limit)
+    };
+}
+
 module.exports = {
     DEFAULT_FAMILY_DATA, getFamilyData, saveFamilyData, getAnalyticsData, addHistoryEntry, addRequest,
+    getPaginatedHistory, getPaginatedRequests,
     updateBalance: (fid, b, cid) => {
         cache.invalidatePrefix(`familyData:${fid}`);
         return query('UPDATE children SET balance=$1 WHERE id=$2', [b, cid]).then(r => r.rowCount > 0);

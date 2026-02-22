@@ -2,7 +2,7 @@ const {
     loadFamilyData, saveFamilyData, updateLastActivity,
     loadFamilies, updateFamilySettings,
     updateNickname, searchByNickname, addFriend, getFriendsData,
-    addChild, deleteChild, updateChildSettings
+    addChild, deleteChild, updateChildSettings, getPaginatedHistory, getPaginatedRequests
 } = require('../services/familyService');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');
@@ -72,10 +72,32 @@ async function handleUpdateNickname(ctx, req, res) {
     sendJSON(res, result, result.success ? 200 : 400);
 }
 
+async function handleHistoryGet(ctx, req, res) {
+    const page = parseInt(ctx.urlObj.searchParams.get('page')) || 1;
+    const limit = parseInt(ctx.urlObj.searchParams.get('limit')) || 50;
+    const queryChildId = ctx.urlObj.searchParams.get('childId');
+    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
+
+    const historyData = await getPaginatedHistory(ctx.familyId, targetChildId, { page, limit });
+    sendJSON(res, historyData);
+}
+
+async function handleRequestsGet(ctx, req, res) {
+    const page = parseInt(ctx.urlObj.searchParams.get('page')) || 1;
+    const limit = parseInt(ctx.urlObj.searchParams.get('limit')) || 50;
+    const queryChildId = ctx.urlObj.searchParams.get('childId');
+    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
+
+    const requestsData = await getPaginatedRequests(ctx.familyId, targetChildId, { page, limit });
+    sendJSON(res, requestsData);
+}
+
 module.exports = {
     handleDataGet,
     handleDataPost,
     handleChildrenCreate,
     handleUpdateFamilySettings,
-    handleUpdateNickname
+    handleUpdateNickname,
+    handleHistoryGet,
+    handleRequestsGet
 };

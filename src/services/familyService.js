@@ -258,6 +258,14 @@ async function getAnalyticsData(familyId, childId, timeframe) {
     return await familyDataRepository.getAnalyticsData(familyId, childId, timeframe);
 }
 
+async function getPaginatedHistory(familyId, childId, pagination) {
+    return await familyDataRepository.getPaginatedHistory(familyId, childId, pagination);
+}
+
+async function getPaginatedRequests(familyId, childId, pagination) {
+    return await familyDataRepository.getPaginatedRequests(familyId, childId, pagination);
+}
+
 module.exports = {
     loadFamilies,
     saveFamilies,
@@ -273,6 +281,8 @@ module.exports = {
     addFriend,
     getFriendsData,
     getAnalyticsData,
+    getPaginatedHistory,
+    getPaginatedRequests,
     updateChildSettings,
     addChild,
     deleteChild,

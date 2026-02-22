@@ -26,8 +26,28 @@ const server = http.createServer(async (req, res) => {
 
             setSecurityHeaders(res);
 
+            const start = Date.now();
             const logger = require('./utils/logger');
             logger.info({ reqId: req.id, method: req.method, url: req.url }, 'Incoming request');
+
+            // Capture the original end method to log timing
+            const originalEnd = res.end;
+            res.end = function (chunk, encoding) {
+                const duration = Date.now() - start;
+                logger.info({
+                    reqId: req.id,
+                    method: req.method,
+                    url: req.url,
+                    status: res.statusCode,
+                    duration: `${duration}ms`
+                }, 'Request completed');
+
+                if (duration > 500) {
+                    logger.warn({ reqId: req.id, duration: `${duration}ms`, url: req.url }, 'Slow request detected');
+                }
+
+                return originalEnd.call(this, chunk, encoding);
+            };
 
             if (staticRouter.handleCors(req, res)) return;
 
