@@ -34,11 +34,13 @@ function mapShopItem(row) {
 }
 
 function mapHistoryEntry(row) {
+    const amount = row.amount ?? row.coins ?? 0;
     const entry = {
         id: row.id,
         childId: row.child_id,
         type: row.type,
-        coins: row.coins,
+        amount,
+        coins: amount,
         description: row.description,
         group: row.group_name,
         comment: row.comment,

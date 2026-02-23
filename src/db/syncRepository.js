@@ -89,9 +89,10 @@ function getRelatedId(e) {
 function getHistoryParams(dbId, targetId, e) {
     const relId = getRelatedId(e);
     const date = val(e.date, val(e.timestamp, new Date()));
+    const amount = val(e.amount ?? e.coins, 0);
     return [
         dbId, targetId, val(e.id, null), val(e.type, 'unknown'),
-        val(e.amount, 0), val(e.description, ''), val(e.moneyAmount, 0),
+        amount, val(e.description, ''), val(e.moneyAmount, 0),
         relId, date, val(e.group, null), val(e.comment, null)
     ];
 }

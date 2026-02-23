@@ -70,6 +70,7 @@ async function getFamilyData(familyId, childId = null) {
 
 async function execSync(c) {
     return await Promise.all([
+        syncRepository.syncBalances(c),
         syncRepository.syncTasks(c),
         syncRepository.syncShop(c),
         syncRepository.syncHistory(c),
