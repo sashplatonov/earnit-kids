@@ -73,9 +73,9 @@
   dialog[open] { opacity: 1; transform: scale(1); }
   @starting-style { dialog[open] { opacity: 0; transform: scale(0.95); } }
   ```
-- [ ] Анимация числа баланса при изменении (counter animation)
+- [x] Анимация числа баланса при изменении (counter animation)
 - [x] Haptic-like feedback при нажатии кнопок (subtle scale + shadow change)
-- [ ] Skeleton loading вместо спиннеров при загрузке данных
+- [x] Skeleton loading вместо спиннеров при загрузке данных
 
 ### 8. Производительность CSS
 - [x] `content-visibility: auto` для скрытых секций (экономия рендеринга):
@@ -140,8 +140,8 @@
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
   ```
-- [ ] Минимизировать reflows при динамическом обновлении списков
-- [ ] Virtual scrolling для длинных списков (history, requests)
+- [x] Минимизировать reflows при динамическом обновлении списков
+- [x] Virtual scrolling для длинных списков (history, requests) (content-visibility)
 
 ---
 
@@ -193,6 +193,6 @@
 | **1** | Safe Area (#9), Touch (#10), Tap targets, `<dialog>` (#11) | [x] Лёгкая |
 | **2** | Design Tokens (#16), Font optimization (#1), Color scheme (#6) | Средняя |
 | **3** | Accessibility (#15), Mobile forms (#12), Responsive components (#13) | [x] Средняя |
-| **4** | Container Queries (#2), View Transitions (#5), Microanimations (#7) | Средняя |
-| **5** | Scroll animations (#4), CSS Subgrid (#3), Virtual scrolling (#14) | Сложная |
+| **4** | Container Queries (#2), View Transitions (#5), Microanimations (#7) | [x] Средняя |
+| **5** | Scroll animations (#4), CSS Subgrid (#3), Virtual scrolling (#14) | [x] Сложная |
 | **6** | CSS splitting (#17), PWA (#18), Performance (#8, #14) | Сложная |

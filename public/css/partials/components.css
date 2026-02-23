@@ -138,9 +138,11 @@
 .cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
     container-type: inline-size;
-    /* Step 2: Container Queries */
+
+    /* Subgrid support: Define rows for cards to span */
+    grid-auto-rows: auto;
 }
 
 .card {
@@ -153,10 +155,12 @@
     position: relative;
     overflow: hidden;
 
-    /* Step 3: Subgrid for alignment */
+    /* Use subgrid for internal row alignment across cards */
     display: grid;
-    grid-template-rows: auto auto 1fr auto;
-    gap: 0.5rem;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    gap: 0;
+    /* Gap is handled by subgrid rows or individual margins */
 }
 
 @container (max-width: 350px) {
@@ -296,6 +300,9 @@
     border-radius: var(--radius-md);
     border-left: 4px solid;
     transition: all var(--transition-fast);
+    /* Simple Virtual Scrolling hint */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 70px;
 }
 
 .history-item:hover {

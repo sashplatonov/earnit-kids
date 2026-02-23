@@ -43,6 +43,14 @@ export async function initializeFromServer() {
 }
 
 export async function refreshFromServerAndRender(showSuccess = false) {
+    const lists = ['tasks-list', 'shop-list', 'history-list', 'requests-list'];
+    lists.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.innerHTML === '') { // Only if empty, to avoid flickering if already rendered
+            el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;">Загрузка</div>').join('');
+        }
+    });
+
     const data = await initializeFromServer();
     if (!data) return false;
     renderAll();

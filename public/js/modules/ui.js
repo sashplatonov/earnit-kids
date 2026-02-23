@@ -28,8 +28,31 @@ export function updateBalanceUI() {
         if (child) displayBalance = child.balance;
     }
     const balanceEl = document.getElementById('balance');
-    if (balanceEl) balanceEl.textContent = displayBalance;
+    if (balanceEl) {
+        const currentVal = parseInt(balanceEl.textContent || '0', 10);
+        if (currentVal !== displayBalance) {
+            animateValue(balanceEl, currentVal, displayBalance, 800);
+        } else {
+            balanceEl.textContent = displayBalance;
+        }
+    }
     updateBudgetStatsUI(state, CONFIG, getActiveChildId());
+}
+
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 4);
+        obj.textContent = Math.floor(easeOut * (end - start) + start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            obj.textContent = end;
+        }
+    };
+    window.requestAnimationFrame(step);
 }
 
 export function renderAll() {

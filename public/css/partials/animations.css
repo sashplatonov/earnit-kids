@@ -28,3 +28,23 @@
         opacity: 1;
     }
 }
+/* ===== Skeleton Loading (Microanimations) ===== */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--radius-sm);
+    color: transparent !important;
+    pointer-events: none;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.skeleton * {
+    visibility: hidden !important;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
