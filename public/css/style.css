@@ -1,8 +1,6 @@
-@layer tokens, reset, layout, components, animations, responsive;
-
-@import 'partials/tokens.css' layer(tokens);
-@import 'partials/reset.css' layer(reset);
-@import 'partials/layout.css' layer(layout);
-@import 'partials/components.css' layer(components);
-@import 'partials/animations.css' layer(animations);
-@import 'partials/responsive.css' layer(responsive);
+@import 'partials/tokens.css';
+@import 'partials/reset.css';
+@import 'partials/layout.css';
+@import 'partials/components.css';
+@import 'partials/animations.css';
+@import 'partials/responsive.css';

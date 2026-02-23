@@ -304,8 +304,12 @@
     opacity: 0.55;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .section.hidden {
-    display: none;
+    display: none !important;
     content-visibility: auto;
     contain-intrinsic-size: auto 500px;
 }

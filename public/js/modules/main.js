@@ -79,12 +79,17 @@ function showSkeletons() {
 async function initializeApp() {
     showSkeletons();
 
+    setupTabControls(); // Always bind tabs first to prevent long scroll on error
+
     try {
         const data = await initializeFromServer();
-        await initializePushNotifications();
-        initializeWebSocket();
+
+        try { await initializePushNotifications(); } catch (e) { console.error('Push init failed:', e); }
+        try { initializeWebSocket(); } catch (e) { console.error('WS init failed:', e); }
+
         setPushRefreshHandler(() => refreshFromServerAndRender(false));
-        startIosDevFallback(data, () => refreshFromServerAndRender(false));
+
+        try { startIosDevFallback(data, () => refreshFromServerAndRender(false)); } catch (e) { console.error('Fallback init failed:', e); }
 
         renderAll(); renderRules(); loadAbout();
         if (state.isAdmin) setupAdminUI();
@@ -92,7 +97,6 @@ async function initializeApp() {
 
         setupCommonControls(); setupSpecificControls();
         setupPullToRefresh(() => refreshFromServerAndRender(true));
-        setupTabControls();
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));

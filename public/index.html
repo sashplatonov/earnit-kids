@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Монетки - Детский магазин</title>
+    <meta name="description" content="Система управления монетками для детей. Зарабатывай и трать!">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CoinShop">
+    <link rel="icon" href="/img/favicon.png">
+    <link rel="apple-touch-icon" href="/img/favicon.png">
+    <!-- IOS Startup Screens -->
+    <link rel="apple-touch-startup-image" href="/img/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200..1000&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+</head>
+
+<body>
+    <a href="#main-content" class="skip-link">Перейти к контенту</a>
+<header class="header">
+    <div class="header__logo">
+        <span class="header__icon">🪙</span>
+        <div class="header__titles">
+            <h1>Монетки</h1>
+            <div class="header__shop-container"
+                style="display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;">
+                <div id="shop-name-display" class="header__shop-name"
+                    style="font-size: 1.2rem; font-weight: 800; letter-spacing: 0.5px;"></div>
+                <div id="child-nickname-display" class="header__child-nickname"
+                    style="font-size: 1rem; color: var(--primary-color); font-weight: 600; opacity: 0.9;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="header__balance" tabindex="0" role="button" aria-label="Открыть историю">
+        <div class="header__balance-main">
+            <span class="balance__label">Баланс:</span>
+            <span class="balance__value" id="balance">0</span>
+            <span class="balance__coin">🪙</span>
+        </div>
+        <div class="header__balance-hint">📊</div>
+        <div class="header__earned" aria-live="polite">
+            <span class="header__earned-label">Сегодня</span>
+            <div class="header__earned-track" title="Ежедневный лимит">
+                <div class="progress-bar header__earned-progress" id="header-earned-progress"></div>
+            </div>
+            <div class="header__earned-meta">
+                <span class="header__earned-number" id="header-earned-count">0</span>
+                <span class="header__earned-unit">🪙</span>
+                <span class="header__earned-limit" id="header-earned-limit-note">Лимит: ∞</span>
+            </div>
+        </div>
+        <button class="btn btn--success btn--small admin-only hidden" onclick="window.app.adminAwardCoins()" title="Начислить монеты">+</button>
+    </div>
+</header>
+
+<nav class="nav nav--pending" aria-label="Основная навигация">
+    <div class="nav__primary" role="tablist">
+        <div id="child-switcher-container" class="nav__child-switcher parent-only hidden"></div>
+        <button class="nav__btn active" role="tab" aria-selected="true" aria-controls="section-tasks"
+            data-tab="tasks">📋 Задания</button>
+        <button class="nav__btn" role="tab" aria-selected="false" aria-controls="section-requests"
+            data-tab="requests">📩 Заявки <span id="requests-counter" class="nav__counter hidden">0</span></button>
+        <button class="nav__btn" role="tab" aria-selected="false" aria-controls="section-shop" data-tab="shop">🛒
+            Магазин</button>
+        <button class="nav__btn" role="tab" aria-selected="false" aria-controls="section-history" data-tab="history">📜
+            История</button>
+        <button class="nav__btn parent-only hidden" role="tab" aria-selected="false" aria-controls="section-catalog"
+            id="nav-catalog" data-tab="catalog">📚 Каталог</button>
+        <button class="nav__btn" id="nav-analytics" role="tab" aria-selected="false" aria-controls="section-analytics"
+            data-tab="analytics">📊 Мои достижения</button>
+        <div class="nav__more-wrapper">
+            <button class="nav__more" id="nav-more-btn" aria-haspopup="menu" aria-expanded="false"
+                aria-controls="nav-more-dropdown" aria-label="Дополнительные разделы"
+                title="Дополнительные разделы">⋯</button>
+            <div class="nav__dropdown hidden" id="nav-more-dropdown" role="menu">
+                <button class="nav__dropdown-item" role="menuitem" data-tab="rules">📖 Правила</button>
+                <button class="nav__dropdown-item" role="menuitem" data-tab="about">ℹ️ О магазине</button>
+                <button class="nav__dropdown-item" role="menuitem" data-tab="friends">👥 Друзья</button>
+                <button class="nav__dropdown-item parent-only hidden" role="menuitem" id="nav-child-link"
+                    data-tab="child-link">🔗
+                    Ссылка ребенку</button>
+                <button class="nav__dropdown-item" role="menuitem" id="nav-settings" data-tab="settings">⚙️
+                    Настройки</button>
+                <button class="nav__dropdown-item nav__dropdown-action" role="menuitem" id="logout-btn">🚪
+                    Выйти</button>
+            </div>
+        </div>
+    </div>
+</nav>
+<main class="main" id="main-content">
+    <div class="pull-refresh-indicator" id="pull-refresh-indicator" aria-hidden="true">
+        <span class="pull-refresh-indicator__icon">↻</span>
+        <span class="pull-refresh-indicator__text" id="pull-refresh-indicator-text">Потяните для обновления</span>
+    </div>
+<!-- Секция заданий -->
+<section class="section" id="tasks-section">
+    <div class="section__header">
+        <h2>За что можно заработать</h2>
+        <div class="section__buttons admin-only hidden">
+            <button class="btn btn--add" id="add-task-btn">+ Добавить</button>
+        </div>
+    </div>
+    <div class="cards" id="tasks-list">
+        <!-- Карточки заданий -->
+    </div>
+    <div class="empty-state" id="tasks-empty">
+        <span class="empty-state__icon">📋</span>
+        <p>Пока нет заданий</p>
+    </div>
+</section>
+<!-- Секция заявок -->
+<section class="section hidden" id="requests-section">
+    <!-- Секция для админа: Входящие заявки -->
+    <div class="admin-only hidden">
+        <h2>📬 Входящие заявки</h2>
+        <div class="history-list" id="incoming-requests-list"></div>
+        <div class="empty-state" id="incoming-requests-empty">
+            <span class="empty-state__icon">📭</span>
+            <p>Нет новых заявок</p>
+        </div>
+    </div>
+
+    <!-- Секция только для ребенка: Мои активные заявки -->
+    <div class="child-only" style="margin-top: 2rem;">
+        <h2>⏳ Мои отправленные заявки</h2>
+        <div class="history-list" id="my-requests-list"></div>
+        <div class="empty-state" id="my-requests-empty">
+            <span class="empty-state__icon">📨</span>
+            <p>Нет активных заявок</p>
+        </div>
+    </div>
+</section>
+
+<!-- Секция магазина -->
+<section class="section hidden" id="shop-section">
+    <div class="section__header">
+        <h2>Магазин наград</h2>
+        <div class="section__buttons admin-only hidden">
+            <button class="btn btn--add" id="add-shop-btn">+ Добавить</button>
+        </div>
+    </div>
+    <div class="cards" id="shop-list">
+        <!-- Карточки товаров -->
+    </div>
+    <div class="empty-state" id="shop-empty">
+        <span class="empty-state__icon">🛒</span>
+        <p>Магазин пока пуст</p>
+    </div>
+</section>
+<section id="catalog-section" class="section hidden">
+    <div class="container">
+        <h2 class="section-title">📚 Общий Каталог</h2>
+        <p class="section-subtitle">Выберите задания и товары для вашего магазина</p>
+
+        <div class="filter-card">
+            <div class="filter-group">
+                <label>Возраст: от <span id="age-min-val">7</span> до <span id="age-max-val">18</span> лет</label>
+                <div class="slider-container dual-slider" style="position: relative; height: 30px; margin-top: 10px;">
+                    <input type="range" id="catalog-age-min-filter" value="7" min="7" max="18" class="age-slider"
+                        style="position: absolute; pointer-events: none; z-index: 2; width: 100%; -webkit-appearance: none; appearance: none; background: transparent;">
+                    <input type="range" id="catalog-age-max-filter" value="18" min="7" max="18" class="age-slider"
+                        style="position: absolute; pointer-events: none; z-index: 1; width: 100%; -webkit-appearance: none; appearance: none; background: transparent;">
+                    <div class="slider-track"
+                        style="position: absolute; top: 13px; height: 6px; background: rgba(255,255,255,0.1); width: 100%; border-radius: 3px;">
+                    </div>
+                    <div id="slider-range-highlight"
+                        style="position: absolute; top: 13px; height: 6px; background: var(--color-primary); border-radius: 3px; z-index: 0;">
+                    </div>
+                </div>
+            </div>
+            <p class="hint">Показываем задания для этого возраста</p>
+        </div>
+
+        <div class="catalog-grid">
+            <div class="catalog-column">
+                <h3>Задания</h3>
+                <div id="catalog-tasks-list" class="items-list"></div>
+            </div>
+            <div class="catalog-column">
+                <h3>Товары</h3>
+                <div id="catalog-products-list" class="items-list"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="analytics-section" class="section hidden">
+    <div class="container">
+        <header class="section-header">
+            <h2 class="section-title">📊 Мои достижения</h2>
+            <div class="analytics-filters">
+                <div class="tab-group" id="analytics-timeframe-group">
+                    <button class="tab-btn" data-timeframe="week">Неделя</button>
+                    <button class="tab-btn active" data-timeframe="month">Месяц</button>
+                    <button class="tab-btn" data-timeframe="year">Год</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="analytics-summary">
+            <div class="stat-card">
+                <div class="stat-card__label">Заработано</div>
+                <div class="stat-card__value earn" id="stats-earned">0 🪙</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__label">Потрачено</div>
+                <div class="stat-card__value spend" id="stats-spent">0 🪙</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__label">Платежный баланс</div>
+                <div class="stat-card__value" id="stats-net">0 🪙</div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="analytics-sections">
+            <div class="analytics-group">
+                <h3 class="analytics-group-title">📋 Задания <span id="tasks-total-coins"
+                        class="group-total-badge"></span></h3>
+                <div class="analytics-grid">
+                    <div class="card analytics-chart-card">
+                        <h4 class="card__subtitle">По сумме монет</h4>
+                        <div class="chart-container">
+                            <canvas id="tasks-coins-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card analytics-chart-card">
+                        <h4 class="card__subtitle">По количеству раз</h4>
+                        <div class="chart-container">
+                            <canvas id="tasks-count-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-group">
+                <h3 class="analytics-group-title">🛒 Магазин и траты <span id="items-total-coins"
+                        class="group-total-badge"></span></h3>
+                <div class="analytics-grid">
+                    <div class="card analytics-chart-card">
+                        <h4 class="card__subtitle">По сумме монет</h4>
+                        <div class="chart-container">
+                            <canvas id="items-coins-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card analytics-chart-card">
+                        <h4 class="card__subtitle">По количеству раз</h4>
+                        <div class="chart-container">
+                            <canvas id="items-count-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trends Section -->
+            <div class="analytics-group">
+                <h3 class="analytics-group-title">📈 Динамика достижений</h3>
+                <div class="card analytics-chart-card">
+                    <div class="chart-container">
+                        <canvas id="achievements-trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations Section -->
+            <div class="analytics-group">
+                <h3 class="analytics-group-title">💡 Идеи для роста</h3>
+                <div id="analytics-recommendations" class="recommendations-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="about-section" class="section hidden">
+    <div class="container">
+        <div class="card about-card">
+            <div id="about-content" class="markdown-content">
+                <p>Загрузка...</p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Секция истории -->
+<section class="section hidden" id="history-section">
+    <h2>История операций</h2>
+    <div class="section__buttons admin-only hidden" style="margin-bottom: 1rem;">
+        <button class="btn btn--danger btn--small" id="clear-history-btn">🗑️ Очистить всё</button>
+    </div>
+
+    <!-- Статистика бюджета -->
+    <div class="budget-stats" id="budget-stats">
+        <div class="stat-card">
+            <div class="stat-card__icon">💵</div>
+            <div class="stat-card__content">
+                <div class="stat-card__value">
+                    <span id="money-spent">0</span> / <span id="money-limit">10,000</span>
+                    <span id="money-remaining" style="font-size: 0.8em; font-weight: 400; margin-left: 4px;"></span>
+                </div>
+                <div class="stat-card__label">Потрачено в этом месяце</div>
+            </div>
+            <div class="stat-card__progress">
+                <div class="progress-bar" id="money-progress"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card__icon">🪙</div>
+            <div class="stat-card__content">
+                <div class="stat-card__value">
+                    <div class="stat-card__value-head">
+                        <span class="stat-card__value-number" id="coins-earned-today">0</span>
+                        <span class="stat-card__value-unit">🪙</span>
+                    </div>
+                    <div class="stat-card__value-note" id="coins-daily-limit">Лимит: ∞</div>
+                </div>
+                <div class="stat-card__label">Заработано сегодня</div>
+                <div class="stat-card__progress stat-card__progress--coins">
+                    <div class="progress-bar" id="coins-daily-progress"></div>
+                </div>
+                <div class="stat-card__meta" id="coins-daily-remaining"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card__icon" id="large-icon">⬜</div>
+            <div class="stat-card__content">
+                <div class="stat-card__value" id="large-purchase">Нет</div>
+                <div class="stat-card__label">Крупная покупка месяца</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-list" id="history-list">
+        <!-- Записи истории -->
+    </div>
+    <div class="empty-state" id="history-empty">
+        <span class="empty-state__icon">📊</span>
+        <p>История пока пуста</p>
+    </div>
+</section>
+
+<!-- Секция правил -->
+<section class="section hidden" id="rules-section">
+    <div class="section__header">
+        <h2>📜 Правила и цели</h2>
+        <div class="section__buttons admin-only hidden">
+            <button class="btn btn--secondary" id="edit-rules-btn">✏️ Редактировать</button>
+        </div>
+    </div>
+    <div class="rules-content" id="rules-display"></div>
+</section>
+<!-- Секция друзей -->
+<section class="section hidden" id="friends-section">
+    <div class="section__header">
+        <h2>👥 Друзья</h2>
+    </div>
+
+    <div class="cards" style="align-items: stretch;">
+        <!-- Поиск друзей -->
+        <div class="card" style="max-width: 600px; width: 100%; display: flex; flex-direction: column;">
+            <div class="card__header">
+                <h3 class="card__title">Найти друга</h3>
+                <div class="card__icon">🔍</div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="friend-search-input">Ник друга</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" class="input" id="friend-search-input"
+                        placeholder="Введите ник (мин. 3 символа)...">
+                    <button class="btn btn--primary" id="friend-search-btn">Найти</button>
+                </div>
+            </div>
+
+            <div id="search-results" class="search-results" style="margin-top: 1rem; flex: 1;">
+                <!-- Результаты поиска будут здесь -->
+            </div>
+        </div>
+
+        <!-- Список друзей -->
+        <div class="card" style="max-width: 600px; width: 100%; display: flex; flex-direction: column;">
+            <div class="card__header">
+                <h3 class="card__title">Мои друзья</h3>
+                <div class="card__icon">⭐</div>
+            </div>
+
+            <div id="friends-list" class="friends-list" style="margin-top: 1rem; flex: 1;">
+                <!-- Список друзей будет здесь -->
+                <div class="empty-state" id="friends-empty">
+                    <p>У тебя пока нет друзей. Добавь кого-нибудь по нику!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Секция настроек -->
+<section class="section hidden" id="settings-section">
+    <div class="section__header">
+        <h2>⚙️ Настройки магазина</h2>
+    </div>
+
+    <div class="cards" id="settings-cards" style="grid-template-columns: 1fr;">
+        <!-- Название магазина и Лимит -->
+        <div class="card admin-only" style="max-width: 600px; margin: 0 auto;">
+            <div class="card__header">
+                <h3 class="card__title">Основные настройки</h3>
+                <div class="card__icon">🏠</div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="settings-family-name-inline">Название магазина</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" class="input" id="settings-family-name-inline" placeholder="Название магазина">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="settings-money-limit-inline">Лимит трат в месяц (ребенка)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" class="input" id="settings-money-limit-inline" min="0" placeholder="10000">
+                </div>
+            </div>
+
+            <!-- New fields for child specific settings -->
+            <div class="form-group" id="settings-child-fields">
+                <div class="form-group">
+                    <label for="settings-child-name-inline">Имя ребенка</label>
+                    <input type="text" class="input" id="settings-child-name-inline" placeholder="Имя">
+                </div>
+                <div class="form-group">
+                    <label for="settings-day-coin-limit-inline">Лимит заработка монет в день</label>
+                    <input type="number" class="input" id="settings-day-coin-limit-inline" min="0"
+                        placeholder="0 (Без лимита)">
+                </div>
+            </div>
+
+            <div class="card__actions">
+                <button class="btn btn--primary" id="settings-save-main-btn" style="width: 100%;">
+                    ✅ Сохранить основные настройки
+                </button>
+            </div>
+        </div>
+
+        <!-- Профиль ребенка (Ник) -->
+        <div class="card child-only" style="max-width: 600px; margin: 0 auto;">
+            <div class="card__header">
+                <h3 class="card__title">Мой профиль</h3>
+                <div class="card__icon">👤</div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="settings-nickname">Твой ник (уникальный, от 3 символов)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" class="input" id="settings-nickname" placeholder="Придумай крутой ник">
+                </div>
+            </div>
+
+            <div class="card__actions">
+                <button class="btn btn--primary" id="settings-save-nickname-btn" style="width: 100%;">
+                    ✅ Сохранить ник
+                </button>
+            </div>
+        </div>
+
+        <!-- Смена пароля -->
+        <div class="card admin-only" style="max-width: 600px; margin: 0 auto; margin-top: 1.5rem;">
+            <div class="card__header">
+                <h3 class="card__title">Безопасность (Смена пароля)</h3>
+                <div class="card__icon">🔑</div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="settings-old-pin-inline">Старый пароль</label>
+                <input type="password" class="input" id="settings-old-pin-inline" placeholder="••••••">
+            </div>
+
+            <div class="form-group">
+                <label for="settings-new-pin-inline">Новый пароль (мин. 6 символов)</label>
+                <input type="password" class="input" id="settings-new-pin-inline" placeholder="••••••">
+                <p class="hint" style="text-align: left; margin-top: 0.25rem;">Минимум 6 символов, не все одинаковые</p>
+            </div>
+
+            <div class="card__actions">
+                <button class="btn btn--secondary" id="settings-save-pin-btn" style="width: 100%;">
+                    🔑 Обновить пароль
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Секция ссылки для ребенка (вынесена на верхний уровень) -->
+<section class="section hidden" id="child-link-section">
+    <div class="section__header">
+        <h2>🔗 Доступ для ребенка</h2>
+    </div>
+
+    <div class="card admin-only" style="max-width: 600px; margin: 0 auto;">
+        <div class="card__header">
+            <h3 class="card__title">Прямая ссылка для входа</h3>
+            <div class="card__icon">🔗</div>
+        </div>
+        <p class="card__comment" style="margin-bottom: 1.5rem;">
+            Отправьте эту ссылку ребенку (например, в Telegram или WhatsApp).
+            По этой ссылке ребенок сможет войти в магазин сразу, без ввода пароля.
+        </p>
+
+        <div class="form-group">
+            <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+                <input type="text" class="input" id="settings-child-link-input-inline" readonly
+                    style="background: rgba(0,0,0,0.2); font-family: monospace; font-size: 0.9rem;">
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <button class="btn btn--primary" id="settings-copy-link-btn" style="flex: 2;">
+                        📋 Скопировать ссылку
+                    </button>
+                    <button class="btn btn--danger btn--small" id="settings-regenerate-link-btn" title="Обновить ссылку"
+                        style="flex: 1;">
+                        🔄 Обновить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="child-link-status"
+            style="margin-top: 1rem; text-align: center; font-size: 0.9rem; color: var(--color-success);"
+            class="hidden">
+            ✅ Ссылка скопирована!
+        </div>
+    </div>
+</section>
+    <footer class="app-footer" aria-label="Информация о версии">
+        <span class="app-footer__meta">v1.0.0</span>
+        <span class="app-footer__dot">•</span>
+        <span class="app-footer__meta">build 1771845986735</span>
+    </footer>
+</main>
+
+<!-- Модальное окно: Смена ПИН-кода -->
+<dialog class="modal" role="dialog" aria-modal="true" id="change-pin-modal">
+    <div class="modal__content">
+        <h3>🔑 Сменить Пароль</h3>
+        <p>Для смены введите старый и новый пароль</p>
+        <div class="form-group">
+            <label for="old-pin">Старый пароль</label>
+            <input type="password" class="input" id="old-pin" placeholder="••••••">
+        </div>
+        <div class="form-group">
+            <label for="new-pin">Новый пароль (мин. 6 символов)</label>
+            <input type="password" class="input" id="new-pin" placeholder="••••••">
+        </div>
+        <p class="hint">Минимум 6 символов, не все одинаковые</p>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="change-pin-cancel">Отмена</button>
+            <button class="btn btn--primary" id="change-pin-submit">Сохранить</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Модальное окно: Редактирование задания -->
+<dialog class="modal" role="dialog" aria-modal="true" id="task-modal">
+    <div class="modal__content">
+        <h3 id="task-modal-title">Добавить задание</h3>
+        <div class="form-group">
+            <label for="task-name">Название</label>
+            <input type="text" class="input" id="task-name" placeholder="Помыть посуду">
+        </div>
+        <div class="form-group">
+            <label for="task-group">Группа</label>
+            <input type="text" class="input" id="task-group" placeholder="Напр: Дом, Учеба...">
+        </div>
+        <div class="form-group">
+            <label for="task-coins">Монеты</label>
+            <input type="number" inputmode="numeric" class="input" id="task-coins" placeholder="10" min="1">
+        </div>
+        <div class="form-group">
+            <label for="task-comment">Комментарий</label>
+            <textarea class="input textarea" id="task-comment" placeholder="Дополнительная информация..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="task-freq-limit">Частота (раз в период)</label>
+            <div class="input-group">
+                <input type="number" inputmode="numeric" class="input" id="task-freq-limit" placeholder="Без лимита"
+                    min="0">
+                <select class="input" id="task-freq-period">
+                    <option value="day">в день</option>
+                    <option value="week">в неделю</option>
+                    <option value="month">в месяц</option>
+                    <option value="year">в год</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="task-cancel">Отмена</button>
+            <button class="btn btn--danger hidden" id="task-delete">Удалить</button>
+            <button class="btn btn--primary" id="task-save">Сохранить</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Модальное окно: Редактирование товара -->
+<dialog class="modal" role="dialog" aria-modal="true" id="shop-modal">
+    <div class="modal__content">
+        <h3 id="shop-modal-title">Добавить товар</h3>
+        <div class="form-group">
+            <label for="shop-name">Название</label>
+            <input type="text" class="input" id="shop-name" placeholder="Час игры на планшете">
+        </div>
+        <div class="form-group">
+            <label for="shop-group">Группа</label>
+            <input type="text" class="input" id="shop-group" placeholder="Напр: Развлечения, Мелочи...">
+        </div>
+        <div class="form-group">
+            <label for="shop-price">Цена (монеты)</label>
+            <input type="number" inputmode="numeric" class="input" id="shop-price" placeholder="50" min="0">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="shop-money-limit">Лимит в деньгах</label>
+                <input type="number" inputmode="numeric" class="input" id="shop-money-limit" placeholder="Без лимита"
+                    min="0">
+            </div>
+            <div class="form-group">
+                <label for="shop-type">Тип</label>
+                <select class="input" id="shop-type">
+                    <option value="micro">🧁 Микро</option>
+                    <option value="small">📚 Малая</option>
+                    <option value="large">💅 Крупная (1/мес)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="shop-freq-limit">Частота (раз в период)</label>
+            <div class="input-group">
+                <input type="number" inputmode="numeric" class="input" id="shop-freq-limit" placeholder="1" min="1"
+                    value="1">
+                <select class="input" id="shop-freq-period">
+                    <option value="day">в день</option>
+                    <option value="week">в неделю</option>
+                    <option value="month">в месяц</option>
+                    <option value="year">в год</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="shop-comment">Комментарий</label>
+            <textarea class="input textarea" id="shop-comment" placeholder="Дополнительная информация..."></textarea>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="shop-cancel">Отмена</button>
+            <button class="btn btn--danger hidden" id="shop-delete">Удалить</button>
+            <button class="btn btn--primary" id="shop-save">Сохранить</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Модальное окно: Подтверждение действия -->
+<dialog class="modal" role="dialog" aria-modal="true" id="confirm-modal">
+    <div class="modal__content">
+        <h3 id="confirm-title">Подтвердите действие</h3>
+        <p id="confirm-message">Вы уверены?</p>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="confirm-cancel">Отмена</button>
+            <button class="btn btn--primary" id="confirm-ok">Подтвердить</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Модальное окно: Редактирование правил -->
+<dialog class="modal" role="dialog" aria-modal="true" id="rules-modal">
+    <div class="modal__content modal__content--wide">
+        <h3>✏️ Редактировать Правила</h3>
+        <p class="hint">Используйте Markdown для форматирования.</p>
+        <div class="form-group">
+            <textarea class="input textarea textarea--large" id="rules-text"
+                style="height: 400px; font-family: monospace;"></textarea>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="rules-cancel">Отмена</button>
+            <button class="btn btn--primary" id="rules-save">Сохранить</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Модальное окно: Ссылка для ребенка -->
+<dialog class="modal" role="dialog" aria-modal="true" id="child-link-modal">
+    <div class="modal__content">
+        <h3>🔗 Ссылка для входа ребенка</h3>
+        <p>Отправьте эту ссылку ребенку, чтобы он мог войти без пароля.</p>
+        <div class="form-group">
+            <input type="text" class="input" id="child-link-input" readonly>
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="child-link-close">Закрыть</button>
+            <button class="btn btn--danger" id="regenerate-child-link-btn"
+                style="padding: 0.5rem 0.8rem; font-size: 0.8rem;">Обновить ссылку</button>
+            <button class="btn btn--primary" id="copy-child-link-btn">Копировать</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Модальное окно: Настройки магазина -->
+<dialog class="modal" role="dialog" aria-modal="true" id="family-settings-modal">
+    <div class="modal__content">
+        <h3>⚙️ Настройки магазина</h3>
+        <div class="form-group">
+            <label for="settings-family-name">Название магазина</label>
+            <input type="text" class="input" id="settings-family-name">
+        </div>
+        <div class="form-group">
+            <label for="settings-money-limit">Лимит трат в месяц</label>
+            <input type="number" inputmode="numeric" class="input" id="settings-money-limit" min="0">
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="family-settings-cancel">Отмена</button>
+            <button class="btn btn--primary" id="family-settings-save">Сохранить</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Модальное окно: Добавить ребенка -->
+<dialog class="modal" role="dialog" aria-modal="true" id="add-child-modal">
+    <div class="modal__content">
+        <h3>👶 Добавить ребенка</h3>
+        <div class="form-group">
+            <label for="new-child-name">Имя ребенка</label>
+            <input type="text" class="input" id="new-child-name" placeholder="Например: Саша">
+        </div>
+        <div class="modal__actions">
+            <button class="btn btn--secondary" id="add-child-cancel">Отмена</button>
+            <button class="btn btn--primary" id="add-child-save">Добавить</button>
+        </div>
+    </div>
+</dialog>
+<!-- Toast уведомления -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/config.js"></script>
+<script type="module" src="js/modules/main.js"></script>
+</body>
+
+</html>
