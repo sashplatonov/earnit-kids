@@ -113,7 +113,24 @@ export function showMobileEventNotification(message, type = 'info', title = 'Coi
 export function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
-    modal.classList.add('active');
+
+    if (modal.tagName === 'DIALOG') {
+        modal.showModal();
+        // Close on backdrop click (click outside modal__content)
+        if (!modal._backdropListener) {
+            modal._backdropListener = (e) => {
+                const rect = modal.querySelector('.modal__content')?.getBoundingClientRect();
+                if (rect && (e.clientX < rect.left || e.clientX > rect.right ||
+                    e.clientY < rect.top || e.clientY > rect.bottom)) {
+                    modal.close();
+                }
+            };
+            modal.addEventListener('click', modal._backdropListener);
+        }
+    } else {
+        modal.classList.add('active');
+    }
+
     const firstInput = modal.querySelector('input:not([type="hidden"]), textarea');
     if (firstInput) {
         setTimeout(() => firstInput.focus(), 100);
@@ -121,7 +138,14 @@ export function openModal(modalId) {
 }
 
 export function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    if (modal.tagName === 'DIALOG') {
+        modal.close();
+    } else {
+        modal.classList.remove('active');
+    }
 }
 
 let confirmCallback = null;

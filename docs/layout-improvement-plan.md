@@ -83,7 +83,7 @@
   .section[hidden] { content-visibility: auto; contain-intrinsic-size: auto 500px; }
   ```
 - [x] `will-change` только на анимируемых элементах
-- [ ] Минификация CSS для production
+- [x] Минификация CSS для production
 
 ---
 
@@ -100,14 +100,14 @@
 ### 10. Touch-оптимизация
 - [x] Минимальный tap target — **48×48px** (Google Material 3 рекомендация 2026)
 - [x] `touch-action: manipulation` на интерактивных элементах (убирает 300ms задержку)
-- [ ] Убрать `user-select: none` с текстового контента (только на кнопках)
-- [ ] Swipe-жесты для навигации между табами:
+- [x] Убрать `user-select: none` с текстового контента (только на кнопках)
+- [x] Swipe-жесты для навигации между табами:
   ```javascript
   // Swipe left → следующий таб, swipe right → предыдущий
   ```
 
 ### 11. Мобильные модалки
-- [ ] Использовать нативный `<dialog>` element вместо кастомных модалок
+- [x] Использовать нативный `<dialog>` element вместо кастомных модалок
 - [x] Bottom sheet pattern для мобильных вместо центрированных модалок:
   ```css
   @media (max-width: 768px) {
@@ -133,8 +133,8 @@
 - [x] Таблицы (history) — горизонтальный скролл или card-layout на мобильных
 
 ### 14. Производительность на мобильных
-- [ ] Ленивая загрузка изображений: `<img loading="lazy">`
-- [ ] `prefers-reduced-motion` — отключить анимации для пользователей с motion sensitivity:
+- [x] Ленивая загрузка изображений: `<img loading="lazy">`
+- [x] `prefers-reduced-motion` — отключить анимации для пользователей с motion sensitivity:
   ```css
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -177,12 +177,12 @@
   - `layout.css` — grid, header, nav, sections
   - `animations.css` — все keyframes и transitions
   - `responsive.css` — все медиа-запросы
-- [ ] Объединять в один файл при production build
+- [x] Объединять в один файл при production build
 
 ### 18. PWA-манифест
-- [ ] Добавить `manifest.json` с иконками, цветами, ориентацией
-- [ ] Theme color и background color в `<meta>` тегах
-- [ ] Splash screen для iOS: `apple-touch-startup-image`
+- [x] Добавить `manifest.json` с иконками, цветами, ориентацией
+- [x] Theme color и background color в `<meta>` тегах
+- [x] Splash screen для iOS: `apple-touch-startup-image`
 
 ---
 

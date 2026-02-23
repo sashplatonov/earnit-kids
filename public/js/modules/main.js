@@ -68,12 +68,16 @@ window.app = {
     loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
 };
 
-async function initializeApp() {
+function showSkeletons() {
     const lists = ['tasks-list', 'shop-list', 'history-list', 'requests-list'];
     lists.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;">Загрузка</div>').join('');
     });
+}
+
+async function initializeApp() {
+    showSkeletons();
 
     try {
         const data = await initializeFromServer();
@@ -89,7 +93,6 @@ async function initializeApp() {
         setupCommonControls(); setupSpecificControls();
         setupPullToRefresh(() => refreshFromServerAndRender(true));
         setupTabControls();
-        document.querySelectorAll('.modal__backdrop').forEach(b => b.addEventListener('click', () => b.closest('.modal')?.classList.remove('active')));
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));

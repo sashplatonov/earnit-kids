@@ -294,7 +294,6 @@
     gap: 0.45rem;
     font-size: 0.72rem;
     color: rgba(148, 163, 184, 0.6);
-    user-select: none;
 }
 
 .app-footer__meta {

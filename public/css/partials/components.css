@@ -385,6 +385,23 @@
     display: flex;
 }
 
+/* Native Dialog support (Step 11) */
+dialog.modal {
+    border: none;
+    background: transparent;
+    padding: 0;
+    max-width: none;
+    max-height: none;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+dialog.modal[open] {
+    display: flex;
+}
+
 .modal__backdrop {
     position: absolute;
     inset: 0;
@@ -394,10 +411,17 @@
     transition: opacity 0.3s ease;
 }
 
-@starting-style {
-    .modal.active .modal__backdrop {
-        opacity: 0;
-    }
+dialog.modal::backdrop {
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    transition: all 0.3s ease;
+}
+
+dialog.modal[open]::backdrop {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .modal__content {
@@ -415,9 +439,21 @@
 }
 
 @starting-style {
-    .modal.active .modal__content {
+
+    .modal.active .modal__content,
+    dialog.modal[open] .modal__content {
         opacity: 0;
         transform: translateY(30px) scale(0.9);
+    }
+
+    .modal.active .modal__backdrop {
+        opacity: 0;
+    }
+
+    dialog.modal[open]::backdrop {
+        background: rgba(0, 0, 0, 0);
+        backdrop-filter: blur(0px);
+        -webkit-backdrop-filter: blur(0px);
     }
 }
 

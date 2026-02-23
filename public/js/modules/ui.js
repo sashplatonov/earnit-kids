@@ -31,7 +31,7 @@ export function updateBalanceUI() {
     if (balanceEl) {
         const currentVal = parseInt(balanceEl.textContent || '0', 10);
         if (currentVal !== displayBalance) {
-            animateValue(balanceEl, currentVal, displayBalance, 800);
+            animateValue(balanceEl, { start: currentVal, end: displayBalance }, 800);
         } else {
             balanceEl.textContent = displayBalance;
         }
@@ -39,17 +39,17 @@ export function updateBalanceUI() {
     updateBudgetStatsUI(state, CONFIG, getActiveChildId());
 }
 
-function animateValue(obj, start, end, duration) {
+function animateValue(obj, range, duration) {
     let startTimestamp = null;
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
         const easeOut = 1 - Math.pow(1 - progress, 4);
-        obj.textContent = Math.floor(easeOut * (end - start) + start);
+        obj.textContent = Math.floor(easeOut * (range.end - range.start) + range.start);
         if (progress < 1) {
             window.requestAnimationFrame(step);
         } else {
-            obj.textContent = end;
+            obj.textContent = range.end;
         }
     };
     window.requestAnimationFrame(step);
