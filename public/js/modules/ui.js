@@ -63,7 +63,7 @@ export function renderAll() {
     renderHistoryUI(state);
     renderFriendsUI(state);
     updateAdminUI();
-    updateShopNameUI();
+    updateChildNicknameUI();
     renderChildSwitcherUI(state, escapeHtml);
 }
 
@@ -87,9 +87,7 @@ function updateElementValue(id, value) {
     if (el) el.value = value;
 }
 
-export function updateShopNameUI() {
-    updateElementText('shop-name-display', state.familyName || '');
+export function updateChildNicknameUI() {
     updateElementText('child-nickname-display', state.childNickname ? `(${state.childNickname})` : '');
-    updateElementValue('settings-family-name-inline', state.familyName || '');
     updateElementValue('settings-nickname', state.childNickname || '');
 }

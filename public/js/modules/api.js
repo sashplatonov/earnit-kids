@@ -172,21 +172,6 @@ export async function getChildLink(childId) {
     }
 }
 
-export async function updateFamilySettingsOnServer(settings) {
-    try {
-        const response = await fetchWithCsrf('/api/update-family-settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(settings)
-        });
-        if (response.ok) {
-            return await response.json();
-        }
-    } catch (err) {
-        console.error('Failed to update family settings:', err);
-    }
-    return null;
-}
 export async function updateChildSettings(familyId, childId, settings) {
     try {
         const response = await fetchWithCsrf(`/api/children/${childId}/settings`, {

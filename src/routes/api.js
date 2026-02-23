@@ -116,7 +116,6 @@ apiRouter.get('/api/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn
 apiRouter.post('/api/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleDataPost }));
 apiRouter.post('/api/children', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleChildrenCreate }));
 apiRouter.get('/api/base-data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: async () => sendJSON(res, loadBaseData()) }));
-apiRouter.post('/api/update-family-settings', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleUpdateFamilySettings }));
 apiRouter.post('/api/update-nickname', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleUpdateNickname }));
 
 // Friends & Social

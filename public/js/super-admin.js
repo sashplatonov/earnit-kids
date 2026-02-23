@@ -49,10 +49,54 @@ async function loadFamilies() {
     } catch (err) { console.error('Error:', err); }
 }
 
+function findLatestFamily(families) {
+    let latest = null;
+    for (const family of families) {
+        if (!latest || new Date(family.created_at) > new Date(latest.created_at)) {
+            latest = family;
+        }
+    }
+    return latest;
+}
+
 function updateStats(families) {
     document.getElementById('total-families').textContent = families.length;
-    const latest = families.length > 0 ? families.reduce((l, f) => new Date(f.created_at) > new Date(l.created_at) ? f : l) : null;
-    document.getElementById('latest-family').textContent = latest ? `${latest.name} (${new Date(latest.created_at).toLocaleString('ru-RU')})` : '-';
+    const latest = findLatestFamily(families);
+    document.getElementById('latest-family').textContent = latest ? `${latest.email || latest.id} (${new Date(latest.created_at).toLocaleString('ru-RU')})` : '-';
+}
+
+function getFamilyStatusBadge(isBlocked) {
+    return isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>';
+}
+
+function getFamilyBlockButtonLabel(isBlocked) {
+    return isBlocked ? '🔓' : '🔒';
+}
+
+function getFamilyBlockButtonClass(isBlocked) {
+    return isBlocked ? 'unblock' : '';
+}
+
+function buildFamilyRowHtml(f) {
+    return `
+            <td style="opacity:0.5" class="hide-mobile">#${f.id}</td>
+            <td><strong>${f.email || f.id}</strong></td>
+            <td class="hide-mobile">${f.email || '-'}</td>
+            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
+            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
+            <td class="hide-mobile" style="text-align: center;"><span class="badge">${f.children.length}</span></td>
+            <td class="hide-mobile">${f.tasksCount || 0}</td>
+            <td class="hide-mobile">${f.shopCount || 0}</td>
+            <td class="hide-mobile">-</td>
+            <td>${getFamilyStatusBadge(f.isBlocked)}</td>
+            <td class="hide-mobile">${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
+            <td class="hide-mobile" style="font-size:0.9rem">${f.last_activity ? new Date(f.last_activity).toLocaleString('ru-RU') : '-'}</td>
+            <td>
+                <div style="display:flex; gap:4px">
+                    <button class="view-btn" onclick="viewFamily('${f.id}')">👁️</button>
+                    <button class="block-btn ${getFamilyBlockButtonClass(f.isBlocked)}" onclick="toggleBlock('${f.id}', ${!f.isBlocked})">${getFamilyBlockButtonLabel(f.isBlocked)}</button>
+                </div>
+            </td>`;
 }
 
 function renderFamilies() {
@@ -66,29 +110,11 @@ function renderFamilies() {
     document.getElementById('families-table').style.display = 'table';
     updateStats(familiesData);
 
-    familiesData.forEach(f => {
+    for (const f of familiesData) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td style="opacity:0.5" class="hide-mobile">#${f.id}</td>
-            <td><strong>${f.name}</strong></td>
-            <td class="hide-mobile">${f.email || '-'}</td>
-            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile" style="text-align: center;"><span class="badge">${f.children.length}</span></td>
-            <td class="hide-mobile">${f.tasksCount || 0}</td>
-            <td class="hide-mobile">${f.shopCount || 0}</td>
-            <td class="hide-mobile">-</td>
-            <td>${f.isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>'}</td>
-            <td class="hide-mobile">${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
-            <td class="hide-mobile" style="font-size:0.9rem">${f.last_activity ? new Date(f.last_activity).toLocaleString('ru-RU') : '-'}</td>
-            <td>
-                <div style="display:flex; gap:4px">
-                    <button class="view-btn" onclick="viewFamily('${f.id}')">👁️</button>
-                    <button class="block-btn ${f.isBlocked ? 'unblock' : ''}" onclick="toggleBlock('${f.id}', ${!f.isBlocked})">${f.isBlocked ? '🔓' : '🔒'}</button>
-                </div>
-            </td>`;
+        tr.innerHTML = buildFamilyRowHtml(f);
         tbody.appendChild(tr);
-    });
+    }
 }
 
 // Base Data

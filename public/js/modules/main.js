@@ -38,7 +38,6 @@ function setupAdminUI() {
 function setupSpecificControls() {
     const bind = (id, fn, evt = 'click') => document.getElementById(id)?.addEventListener(evt, fn);
     bind('settings-change-pin-btn', admin.openChangePinModal);
-    bind('settings-save-main-btn', admin.saveFamilySettingsInline);
     bind('settings-save-child-btn', admin.saveChildSettingsInline);
     bind('settings-save-pin-btn', admin.saveNewPinInline);
     bind('settings-copy-link-btn', admin.copyChildLinkInline);
@@ -61,8 +60,7 @@ function setupSpecificControls() {
 window.app = {
     buyItem, earnCoins, requestCoins, editTask: admin.editTask, editShopItem: admin.editShopItem,
     deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,
-    openFamilySettingsModal: admin.openFamilySettingsModal, saveFamilySettings: admin.saveFamilySettings,
-    saveFamilySettingsInline: admin.saveFamilySettingsInline, saveNewPinInline: admin.saveNewPinInline,
+    saveNewPinInline: admin.saveNewPinInline,
     copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
     switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal, addNewFriend, handleSearch,
     saveNickname, adminAwardCoins,

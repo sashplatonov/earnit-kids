@@ -50,12 +50,11 @@ async function migrateFamily(client, familyId, familyData) {
 
     // Insert family
     const result = await client.query(
-        `INSERT INTO families (family_id, name, email, admin_password, child_token, monthly_limit, child_nickname, is_blocked, created_at, last_activity)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `INSERT INTO families (family_id, email, admin_password, child_token, monthly_limit, child_nickname, is_blocked, created_at, last_activity)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id`,
         [
             familyId,
-            familyData.name || 'Shop',
             familyData.email,
             familyData.admin_password,
             familyData.child_token || null,
@@ -68,7 +67,7 @@ async function migrateFamily(client, familyId, familyData) {
     );
 
     const dbId = result.rows[0].id;
-    console.log(`  ✅ Migrated family: ${familyData.name} (${familyId})`);
+    console.log(`  ✅ Migrated family: ${familyId} (${familyData.email || 'no email'})`);
     return dbId;
 }
 

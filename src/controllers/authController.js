@@ -49,8 +49,8 @@ async function handleLogin(req, res) {
 }
 
 async function handleRegister(req, res) {
-    const { familyName, email, adminPin } = await parseBody(req);
-    const result = await registerFamily(familyName, email, adminPin);
+    const { email, adminPin } = await parseBody(req);
+    const result = await registerFamily(email, adminPin);
     sendJSON(res, result, result.success ? 200 : 400);
 }
 

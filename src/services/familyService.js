@@ -132,30 +132,6 @@ async function deleteChild(familyId, childId) {
 }
 
 /**
- * Update family settings
- * @param {string} familyId 
- * @param {Object} settings 
- * @returns {Promise<Object>}
- */
-async function updateFamilySettings(familyId, settings) {
-    const family = await familyRepository.findById(familyId);
-    if (!family) return { success: false, error: 'Not found' };
-
-    const updateData = {};
-    if (settings.name) updateData.name = settings.name;
-
-    // monthly_limit is now per child. If settings has it, do we update ALL children?
-    // Or this is legacy?
-    // Let's assume this updates only Family Name/Admin Password.
-    // Child updates should go through updateChild.
-
-    if (await familyRepository.update(familyId, updateData)) {
-        return { success: true };
-    }
-    return { success: false, error: 'Save failed' };
-}
-
-/**
  * Find family by email
  * @param {string} email 
  * @returns {Promise<Object|null>}
@@ -274,7 +250,6 @@ module.exports = {
     updateLastActivity,
     getChildLoginLink,
     regenerateChildToken,
-    updateFamilySettings,
     findFamilyByEmail,
     updateNickname,
     searchByNickname,
@@ -288,4 +263,3 @@ module.exports = {
     deleteChild,
     DEFAULT_FAMILY_DATA
 };
-

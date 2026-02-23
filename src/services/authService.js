@@ -29,7 +29,7 @@ async function authenticateSuperAdmin(email, password) {
 
     const expectedPassword = process.env.SUPER_ADMIN_PASSWORD;
     if (expectedPassword === password) {
-        return { success: true, role: 'super_admin', familyName: 'Super Admin', familyId: null };
+        return { success: true, role: 'super_admin', familyId: null };
     }
     return { success: false, error: 'Неверный пароль администратора' };
 }
@@ -51,7 +51,7 @@ async function authenticateFamily(email, password) {
     }
 
     if (family.admin_password === password) {
-        return { success: true, role: 'admin', familyName: family.name, familyId: family.id };
+        return { success: true, role: 'admin', familyId: family.id };
     }
     return { success: false, error: 'Неверный пароль' };
 }
@@ -78,7 +78,7 @@ async function authenticateUser(email, password) {
     const familyRes = await authenticateFamily(email, password);
     if (familyRes) {
         if (familyRes.success) {
-            console.log(`  - Found family: ${familyRes.familyName}`);
+        console.log(`  - Found family: ${familyRes.familyId}`);
             console.log('  - Family admin login SUCCESS');
         } else {
             console.log(`  - Family admin login FAILED: ${familyRes.error}`);
@@ -108,7 +108,6 @@ async function authenticateChildByToken(token) {
         return {
             success: true,
             role: 'child',
-            familyName: data.name,
             familyId: data.id,
             email: data.email,
             childId: data.currentChild ? data.currentChild.id : null,
@@ -125,10 +124,9 @@ async function prepareVerification(email) {
     return { enabled, token };
 }
 
-function buildFamilyPayload({ familyName, email, adminPassword, token, enabled }) {
+function buildFamilyPayload({ email, adminPassword, token, enabled }) {
     return {
         family_id: `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`,
-        name: familyName || `Шоп ${email}`,
         email, admin_password: adminPassword,
         child_token: crypto.randomBytes(32).toString('hex'),
         monthly_limit: 10000,
@@ -145,14 +143,14 @@ async function handleVerificationEmail(email, token) {
     await sendVerificationEmail(email, link).catch(err => console.error('Email error:', err));
 }
 
-async function registerFamily(familyName, email, adminPassword) {
+async function registerFamily(email, adminPassword) {
     const existing = await familyRepository.findByEmail(email);
     if (existing && !existing.isSuperAdmin) return { success: false, error: 'Email уже зарегистрирован' };
     if (!isValidPassword(adminPassword)) return { success: false, error: 'Слабый пароль родителя' };
 
     const { enabled, token } = await prepareVerification(email);
     try {
-        const payload = buildFamilyPayload({ familyName, email, adminPassword, token, enabled });
+        const payload = buildFamilyPayload({ email, adminPassword, token, enabled });
         const result = await familyRepository.create(payload);
 
         if (result.success && enabled) {

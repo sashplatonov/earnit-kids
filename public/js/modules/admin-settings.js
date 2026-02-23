@@ -1,26 +1,7 @@
 import { state, setState } from './state.js';
-import { updateFamilySettingsOnServer, updateChildSettings, getChildLink, regenerateChildToken } from './api.js';
+import { updateChildSettings, getChildLink, regenerateChildToken } from './api.js';
 import { renderAll } from './ui.js';
-import { showToast, closeModal, openModal } from './utils.js';
-
-export function openFamilySettingsModal() {
-    document.getElementById('settings-family-name').value = state.familyName || '';
-    document.getElementById('settings-money-limit').value = state.monthlyLimit || 10000;
-    openModal('family-settings-modal');
-}
-
-export async function saveFamilySettings() {
-    const name = document.getElementById('settings-family-name').value.trim();
-    const monthlyLimit = parseInt(document.getElementById('settings-money-limit').value);
-    if (!name) return showToast('Название не может быть пустым', 'error');
-
-    const res = await updateFamilySettingsOnServer({ name, monthly_limit: monthlyLimit });
-    if (res?.success) {
-        setState({ familyName: name });
-        showToast('Настройки обновлены!', 'success');
-        closeModal('family-settings-modal');
-    } else showToast('Ошибка при обновлении настроек', 'error');
-}
+import { showToast } from './utils.js';
 
 async function updateCurrentChildSettings() {
     const childName = document.getElementById('settings-child-name-inline')?.value.trim();
@@ -51,27 +32,6 @@ async function updateCurrentChildSettings() {
     return res;
 }
 
-export async function saveFamilySettingsInline() {
-    const name = document.getElementById('settings-family-name-inline').value.trim();
-    if (!name) return showToast('Название не может быть пустым', 'error');
-
-    try {
-        const familyRes = await updateFamilySettingsOnServer({ name });
-        if (!familyRes?.success) throw new Error('Ошибка обновления семьи');
-        setState({ familyName: name });
-
-        if (state.currentChildId) {
-            const childRes = await updateCurrentChildSettings();
-            if (!childRes?.success) throw new Error(childRes?.error || 'Ошибка обновления ребенка');
-        }
-
-        showToast('Настройки обновлены!', 'success');
-        renderAll();
-    } catch (err) {
-        showToast(err.message, 'error');
-    }
-}
-
 export async function saveChildSettingsInline() {
     if (!state.currentChildId) {
         return showToast('Сначала выберите ребенка', 'error');
@@ -96,7 +56,9 @@ export async function refreshChildLinkInline() {
     try {
         const data = await getChildLink(targetId);
         if (data.link) input.value = data.link;
-    } catch (err) { console.error(err); }
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 export async function copyChildLinkInline() {
@@ -111,7 +73,9 @@ export async function copyChildLinkInline() {
                 status.classList.remove('hidden');
                 setTimeout(() => status.classList.add('hidden'), 3000);
             }
-        } catch (err) { showToast('Не удалось скопировать', 'error'); }
+        } catch (err) {
+            showToast('Не удалось скопировать', 'error');
+        }
     }
 }
 
@@ -126,6 +90,10 @@ export async function regenerateChildLinkInline() {
             const input = document.getElementById('settings-child-link-input-inline');
             if (input) input.value = data.link;
             showToast('Ссылка обновлена', 'success');
-        } else showToast('Ошибка при обновлении ссылки', 'error');
-    } catch (err) { showToast('Ошибка сети', 'error'); }
+        } else {
+            showToast('Ошибка при обновлении ссылки', 'error');
+        }
+    } catch (err) {
+        showToast('Ошибка сети', 'error');
+    }
 }

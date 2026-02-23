@@ -54,7 +54,7 @@ function renderRecentHistory(history) {
 }
 
 function renderFamilyGrid(familyData) {
-    const { name, created_at, email, monthly_limit, children } = familyData.familyInfo;
+    const { created_at, email, monthly_limit, children } = familyData.familyInfo;
     const { balance } = familyData.data;
 
     return `
@@ -88,7 +88,7 @@ export function renderFamilyDetails(familyData) {
     const modalTitle = document.getElementById('modal-title');
     const modalBody = document.getElementById('modal-body');
 
-    modalTitle.textContent = familyData.familyInfo.name;
+    modalTitle.textContent = familyData.familyInfo.email || `Family ${familyData.familyId}`;
     modalBody.innerHTML = `
         ${renderFamilyGrid(familyData)}
         ${renderDetailsSection('📋 Задания', familyData.data.tasks, renderTasks)}

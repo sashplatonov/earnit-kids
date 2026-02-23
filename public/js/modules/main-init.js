@@ -14,7 +14,7 @@ import { scheduleSave } from './actions.js';
 export function buildInitialState(data, baseData) {
     const defaults = {
         familyId: null, balance: 0, tasks: [], shopItems: [], history: [],
-        requests: [], familyName: '', childNickname: null, monthlyLimit: 10000,
+        requests: [], childNickname: null, monthlyLimit: 10000,
         dailyCoinLimit: 0, children: []
     };
 

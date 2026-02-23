@@ -24,11 +24,12 @@ async function findAll() {
     for (const row of familiesResult.rows) {
         const children = await childRepository.getChildren(row.id);
         families[row.family_id] = {
-            name: row.name,
+            familyId: row.family_id,
             email: row.email,
             admin_password: row.admin_password,
             isBlocked: row.is_blocked,
             isVerified: row.is_verified,
+            monthly_limit: row.monthly_limit,
             created_at: row.created_at,
             last_activity: row.last_activity,
             children
@@ -52,7 +53,6 @@ async function findById(familyId) {
     const family = {
         id: row.family_id,
         dbId: row.id,
-        name: row.name,
         email: row.email,
         admin_password: row.admin_password,
         isBlocked: row.is_blocked,
@@ -76,7 +76,6 @@ async function findByEmail(email) {
     const family = {
         id: row.family_id,
         dbId: row.id,
-        name: row.name,
         email: row.email,
         admin_password: row.admin_password,
         isBlocked: row.is_blocked,
@@ -100,8 +99,8 @@ async function create(data) {
     try {
         await client.query('BEGIN');
         const familyResult = await client.query(
-            'INSERT INTO families (family_id, name, email, admin_password, is_verified, verification_token) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [data.family_id, data.name, data.email, data.admin_password, data.isVerified || false, data.verification_token]
+        'INSERT INTO families (family_id, email, admin_password, is_verified, verification_token) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [data.family_id, data.email, data.admin_password, data.isVerified || false, data.verification_token]
         );
         const family = familyResult.rows[0];
 
@@ -123,7 +122,6 @@ async function create(data) {
 async function update(familyId, data) {
     const setClauses = [];
     const values = [];
-    if (data.name !== undefined) { setClauses.push(`name = $${values.length + 1}`); values.push(data.name); }
     if (data.admin_password !== undefined) { setClauses.push(`admin_password = $${values.length + 1}`); values.push(data.admin_password); }
     if (data.is_blocked !== undefined) { setClauses.push(`is_blocked = $${values.length + 1}`); values.push(data.is_blocked); }
 

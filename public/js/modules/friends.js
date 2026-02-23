@@ -1,7 +1,7 @@
 import { state, setState } from './state.js';
 import { searchUsers, addFriend, loadFriendsList, updateNickname } from './api.js';
 import { showToast } from './utils.js';
-import { renderFriends, updateShopNameUI } from './ui.js';
+import { renderFriends, updateChildNicknameUI } from './ui.js';
 
 export async function handleSearch() {
     const input = document.getElementById('friend-search-input');
@@ -59,7 +59,7 @@ export async function saveNickname() {
     if (result.success) {
         showToast('Ник сохранен!', 'success');
         setState({ childNickname: nickname });
-        updateShopNameUI();
+        updateChildNicknameUI();
     } else {
         showToast(result.error || 'Ошибка при сохранении', 'error');
     }

@@ -24,22 +24,24 @@ const mockFamilyDB = {
 process.env.SUPER_ADMIN_EMAIL = 'admin@system.local';
 process.env.SUPER_ADMIN_PASSWORD = 'AdminSuperPassword';
 
-const authService = proxyquire('../../src/services/authService', {
-    '../db/familyRepository': {
-        findAll: async () => {
-            return {
-                super_admin: mockFamilyDB.superAdminFamily
-            };
-        },
+function createAuthServiceWithRepo(overrides = {}) {
+    const baseRepo = {
+        findAll: async () => ({ super_admin: mockFamilyDB.superAdminFamily }),
         findByEmail: async (email) => {
             const family = Object.values(mockFamilyDB).find(f => f.email === email);
             return family || null;
         },
         findById: async (id) => mockFamilyDB[id] || null,
-        create: async (data) => ({ success: true, id: data.family_id }),
-        update: async (id, data) => true
-    }
-});
+        create: async (data) => ({ success: true, familyId: data.family_id }),
+        update: async () => true
+    };
+    delete require.cache[require.resolve('../../src/services/authService')];
+    return proxyquire('../../src/services/authService', {
+        '../db/familyRepository': { ...baseRepo, ...overrides }
+    });
+}
+
+const authService = createAuthServiceWithRepo();
 
 test('isValidPassword', () => {
     assert.strictEqual(authService.isValidPassword('12345'), false, 'Should be false for short password');
@@ -64,4 +66,18 @@ test('authenticateUser: Success as super admin', async () => {
     const result = await authService.authenticateUser('admin@system.local', 'AdminSuperPassword');
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.role, 'super_admin');
+});
+
+test('registerFamily does not rely on store name input', async () => {
+    let capturedPayload;
+    const service = createAuthServiceWithRepo({
+        create: async (data) => {
+            capturedPayload = data;
+            return { success: true, familyId: data.family_id };
+        }
+    });
+    const response = await service.registerFamily('register@example.com', 'Password456!');
+    assert.strictEqual(response.success, true);
+    assert.strictEqual(capturedPayload.name, undefined);
+    assert.ok(capturedPayload.family_id);
 });

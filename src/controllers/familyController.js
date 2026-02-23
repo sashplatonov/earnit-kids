@@ -1,6 +1,6 @@
 const {
     loadFamilyData, saveFamilyData, updateLastActivity,
-    loadFamilies, updateFamilySettings,
+    loadFamilies,
     updateNickname, searchByNickname, addFriend, getFriendsData,
     addChild, deleteChild, updateChildSettings, getPaginatedHistory, getPaginatedRequests
 } = require('../services/familyService');
@@ -10,7 +10,6 @@ const websocket = require('../utils/websocket');
 
 function enrichWithFamilyInfo({ data, familyInfo, ctx }) {
     data.isAdmin = ctx.role === 'admin';
-    data.familyName = familyInfo ? familyInfo.name : 'Shop';
 
     if (ctx.role === 'admin' && familyInfo) {
         data.children = familyInfo.children || [];
@@ -66,13 +65,6 @@ async function handleChildrenCreate(ctx, req, res) {
     sendJSON(res, result, result.success ? 200 : 400);
 }
 
-async function handleUpdateFamilySettings(ctx, req, res) {
-    if (ctx.role !== 'admin') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const body = await parseBody(req);
-    const result = await updateFamilySettings(ctx.familyId, body);
-    sendJSON(res, result, result.success ? 200 : 400);
-}
-
 async function handleUpdateNickname(ctx, req, res) {
     if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
     const body = await parseBody(req);
@@ -104,7 +96,6 @@ module.exports = {
     handleDataGet,
     handleDataPost,
     handleChildrenCreate,
-    handleUpdateFamilySettings,
     handleUpdateNickname,
     handleHistoryGet,
     handleRequestsGet
