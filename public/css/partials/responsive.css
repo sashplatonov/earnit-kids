@@ -13,7 +13,7 @@
         background: var(--color-bg-light);
         border-top: 1px solid var(--color-bg-card);
         border-bottom: none;
-        z-index: 2000;
+        z-index: 2200;
     }
 
     .nav__primary {
@@ -51,7 +51,7 @@
         right: 0;
         left: auto;
         max-width: calc(100% - 1rem);
-        z-index: 2200;
+        z-index: 2400;
     }
 
     .nav__dropdown::before {
