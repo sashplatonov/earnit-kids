@@ -10,6 +10,7 @@
 html {
     font-size: 16px;
     scroll-behavior: smooth;
+    overflow-x: clip;
 }
 
 body {
@@ -25,6 +26,7 @@ body {
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
     font-size: var(--text-base);
+    overflow-x: clip;
 }
 
 /* Global touch-target optimization */

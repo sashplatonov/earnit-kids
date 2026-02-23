@@ -1,17 +1,25 @@
 import { escapeHtml } from './utils.js';
 
+function isPurchaseRequest(req) {
+    return req.requestType === 'shop_purchase';
+}
+
 function getRequestIcon(req) {
-    return req.status === 'pending' ? '⏳' : (req.status === 'approved' ? '✅' : '❌');
+    return isPurchaseRequest(req) ? '🛒' : '📝';
+}
+
+function getRequestRowClass(req) {
+    return isPurchaseRequest(req) ? 'history-item--request-purchase' : 'history-item--request-task';
 }
 
 function renderMyRequest(req) {
-    const isPurchase = req.requestType === 'shop_purchase';
+    const isPurchase = isPurchaseRequest(req);
     const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
     const groupTag = req.group ? `<span class="tag" style="margin-left: 5px; opacity: 0.8;">${escapeHtml(req.group)}</span>` : '';
     const commentHtml = req.comment ? `<div class="history-item__comment" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 2px;">${escapeHtml(req.comment)}</div>` : '';
 
     return `
-        <div class="history-item">
+        <div class="history-item ${getRequestRowClass(req)}">
             <div class="history-item__icon">${getRequestIcon(req)}</div>
             <div class="history-item__content">
                 <div class="history-item__desc">
@@ -32,15 +40,15 @@ function renderMyRequest(req) {
 function renderIncomingRequest(req, state) {
     const child = state.children.find(c => c.id == req.childId);
     const childName = child ? child.name : 'Unknown';
-    const isPurchase = req.requestType === 'shop_purchase';
+    const isPurchase = isPurchaseRequest(req);
     const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
 
     const groupTag = req.group ? `<span class="tag tag--secondary" style="margin-left: 5px; opacity: 0.8; font-size: 0.75rem;">${escapeHtml(req.group)}</span>` : '';
     const commentHtml = req.comment ? `<div class="history-item__comment" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 2px;">${escapeHtml(req.comment)}</div>` : '';
 
     return `
-        <div class="history-item">
-            <div class="history-item__icon">📩</div>
+        <div class="history-item ${getRequestRowClass(req)}">
+            <div class="history-item__icon">${getRequestIcon(req)}</div>
             <div class="history-item__content">
                 <div class="history-item__desc">
                     <span class="tag" style="margin-right: 5px;">${escapeHtml(childName)}</span> 

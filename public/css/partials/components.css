@@ -383,6 +383,32 @@
     color: var(--color-danger);
 }
 
+.history-item--request-task {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.history-item--request-purchase {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.history-item--request-task:hover {
+    background: rgba(59, 130, 246, 0.14);
+}
+
+.history-item--request-purchase:hover {
+    background: rgba(245, 158, 11, 0.16);
+}
+
+.history-item--request-task .history-item__icon {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.history-item--request-purchase .history-item__icon {
+    background: rgba(245, 158, 11, 0.22);
+}
+
 /* ===== Modal ===== */
 .modal {
     display: none;
@@ -995,22 +1021,27 @@ dialog.modal[open]::backdrop {
     }
 
     .nav {
-        overflow: visible;
-        padding: 0.35rem 0.4rem;
-        gap: 0.25rem;
-        justify-content: flex-start;
-        position: sticky;
-        top: 3.1rem;
-        border-radius: 12px;
-        margin: 0 0.35rem 0.45rem;
-        box-shadow: var(--shadow-sm);
+        position: fixed;
+        inset: auto 0 0 0;
+        overflow: hidden;
+        padding: 0.5rem;
+        padding-bottom: calc(0.5rem + var(--safe-bottom));
+        gap: 0.35rem;
+        justify-content: stretch;
+        border-radius: 0;
+        margin: 0;
+        background: var(--color-bg-light);
+        border-top: 1px solid var(--color-bg-card);
+        border-bottom: none;
+        box-shadow: var(--shadow-md);
     }
 
     .nav__primary {
-        gap: 0.25rem;
+        gap: 0.35rem;
         flex-wrap: wrap;
         overflow: visible;
         padding-bottom: 0;
+        justify-content: stretch;
     }
 
     .nav__child-switcher,
@@ -1020,13 +1051,29 @@ dialog.modal[open]::backdrop {
     }
 
     .nav__btn {
-        padding: 0.35rem 0.55rem;
-        font-size: 0.78rem;
-        white-space: nowrap;
+        padding: 0.5rem 0.45rem;
+        font-size: 0.82rem;
+        line-height: 1.2;
+        white-space: normal;
+        min-height: 54px;
+        flex: 1 1 calc(25% - 0.35rem);
+    }
+
+    #nav-analytics {
+        display: none;
+    }
+
+    .nav__more {
+        height: 54px;
+        min-height: 54px;
+        padding: 0 0.7rem;
+        line-height: 1;
     }
 
     .main {
         padding: 0.55rem;
+        padding-bottom: calc(132px + var(--safe-bottom));
+        overflow-x: clip;
     }
 
     .section__header {
@@ -1042,7 +1089,7 @@ dialog.modal[open]::backdrop {
 
     .section>h2,
     .section__header>h2 {
-        display: none;
+        display: block;
     }
 
     .section__buttons {
@@ -1294,24 +1341,28 @@ dialog.modal[open]::backdrop {
     }
 
     .nav {
-        padding: 0.2rem 0.32rem;
-        top: 2.55rem;
-        margin: 0 0.2rem 0.35rem;
+        padding: 0.45rem 0.35rem;
+        inset: auto 0 0 0;
+        margin: 0;
     }
 
     .nav__btn {
-        padding: 0.28rem 0.42rem;
-        font-size: 0.72rem;
+        padding: 0.42rem 0.38rem;
+        font-size: 0.78rem;
+        min-height: 52px;
     }
 
     .nav__more {
-        padding: 0.24rem 0.35rem;
-        font-size: 0.74rem;
+        height: 52px;
+        min-height: 52px;
+        padding: 0 0.55rem;
+        font-size: 1.2rem;
+        line-height: 1;
     }
 
     .main {
         padding: 0.4rem;
-        padding-bottom: 3rem;
+        padding-bottom: calc(126px + var(--safe-bottom));
     }
 
     .section__header {

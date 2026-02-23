@@ -1,12 +1,36 @@
-async function toggleTab(tabButtons, tabName) {
+const MOBILE_LAYOUT_QUERY = '(max-width: 900px)';
+
+function syncActiveNavigationState(tabButtons, moreBtn) {
+    const hasPrimaryActive = Array.from(tabButtons)
+        .some(btn => btn.classList.contains('nav__btn') && btn.classList.contains('active'));
+    const hasDropdownActive = Array.from(tabButtons)
+        .some(btn => btn.classList.contains('nav__dropdown-item') && btn.classList.contains('active'));
+
+    if (moreBtn) {
+        moreBtn.classList.toggle('active', !hasPrimaryActive && hasDropdownActive);
+    }
+}
+
+async function toggleTab(tabButtons, tabName, moreBtn) {
     if (!tabName) return;
 
     const performSwitch = async () => {
-        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+        const targetId = `${tabName}-section`;
+        const hasTargetSection = Boolean(document.getElementById(targetId));
+        const resolvedTab = hasTargetSection ? tabName : 'tasks';
+
+        tabButtons.forEach(btn => {
+            const isActive = btn.dataset.tab === resolvedTab;
+            btn.classList.toggle('active', isActive);
+            if (btn.classList.contains('nav__btn')) {
+                btn.setAttribute('aria-selected', String(isActive));
+            }
+        });
+        syncActiveNavigationState(tabButtons, moreBtn);
         document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-        const target = document.getElementById(`${tabName}-section`);
+        const target = document.getElementById(`${resolvedTab}-section`);
         if (target) target.classList.remove('hidden');
-        if (tabName === 'analytics') {
+        if (resolvedTab === 'analytics') {
             const { loadAnalytics } = await import('./analytics-ui.js');
             loadAnalytics();
         }
@@ -16,6 +40,14 @@ async function toggleTab(tabButtons, tabName) {
         document.startViewTransition(performSwitch);
     } else {
         await performSwitch();
+    }
+
+    const mainContent = document.getElementById('main-content');
+    if (window.matchMedia(MOBILE_LAYOUT_QUERY).matches) {
+        if (mainContent?.scrollTo) {
+            mainContent.scrollTo({ top: 0, behavior: 'auto' });
+        }
+        window.scrollTo({ top: 0, behavior: 'auto' });
     }
 }
 
@@ -70,7 +102,7 @@ function positionMoreDropdown(moreBtn, moreDropdown) {
     const rect = moreBtn.getBoundingClientRect();
     const gap = 8;
     const screenPadding = 8;
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const isMobile = window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
 
     moreDropdown.classList.add('is-floating');
 
@@ -81,7 +113,7 @@ function positionMoreDropdown(moreBtn, moreDropdown) {
 
     if (isMobile) {
         const bottom = (window.innerHeight - rect.top) + gap;
-        moreDropdown.style.top = '';
+        moreDropdown.style.top = 'auto';
         moreDropdown.style.right = '';
         moreDropdown.style.bottom = `${Math.round(bottom)}px`;
     } else {
@@ -132,7 +164,7 @@ export function setupTabControls() {
     const moreDropdown = document.getElementById('nav-more-dropdown');
 
     const activate = (name) => {
-        toggleTab(tabButtons, name);
+        toggleTab(tabButtons, name, moreBtn);
         closeDropdowns(moreBtn, moreDropdown);
     };
 
