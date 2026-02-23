@@ -83,6 +83,11 @@ async function initializeApp() {
 
     try {
         const data = await initializeFromServer();
+        if (!data) {
+            document.querySelector('.nav')?.classList.remove('nav--pending');
+            showToast('Не удалось получить данные магазина. Повторите попытку позже.', 'error');
+            return;
+        }
 
         try { await initializePushNotifications(); } catch (e) { console.error('Push init failed:', e); }
         try { initializeWebSocket(); } catch (e) { console.error('WS init failed:', e); }

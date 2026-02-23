@@ -36,12 +36,12 @@ const apiAuthMiddleware = async (ctx, req, res) => {
 };
 
 // --- AUTH ROUTES ---
-apiRouter.post('/api/login', authController.handleLogin);
-apiRouter.post('/api/register', authController.handleRegister);
+apiRouter.post('/api/login', (ctx, req, res) => authController.handleLogin(req, res));
+apiRouter.post('/api/register', (ctx, req, res) => authController.handleRegister(req, res));
 apiRouter.post('/api/logout', (ctx, req, res) => authController.handleLogout(res));
-apiRouter.post('/api/forgot-password', authController.handleForgotPassword);
-apiRouter.post('/api/reset-password', authController.handleResetPassword);
-apiRouter.post('/api/verify', authController.handleVerify);
+apiRouter.post('/api/forgot-password', (ctx, req, res) => authController.handleForgotPassword(req, res));
+apiRouter.post('/api/reset-password', (ctx, req, res) => authController.handleResetPassword(req, res));
+apiRouter.post('/api/verify', (ctx, req, res) => authController.handleVerify(req, res));
 apiRouter.get('/api/auth-config', (ctx, req, res) => authController.handleAuthConfig(res));
 
 // Health check

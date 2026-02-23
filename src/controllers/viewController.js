@@ -80,11 +80,81 @@ async function isAuthenticated(req) {
 
 const crypto = require('crypto');
 
+const STYLE_PARTIALS = [
+    'tokens.css',
+    'reset.css',
+    'layout.css',
+    'components.css',
+    'animations.css',
+    'responsive.css'
+];
+
+function getDistOverride(urlPath) {
+    const overrides = {
+        '/style.css': '/css/style.css',
+        '/css/style.css': '/css/style.css',
+        '/super-admin.css': '/css/super-admin.css',
+        '/css/super-admin.css': '/css/super-admin.css'
+    };
+    return overrides[urlPath];
+}
+
+function assembleStyleCss() {
+    const partialsDir = path.join(__dirname, '../../public/css/partials');
+    return STYLE_PARTIALS.map(file => fs.readFileSync(path.join(partialsDir, file), 'utf8')).join('\n\n');
+}
+
+function sendStaticFile(filePath, req, res, opts = {}) {
+    const ext = path.extname(filePath);
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+    fs.stat(filePath, (err, stats) => {
+        if (err) {
+            res.writeHead(err.code === 'ENOENT' ? 404 : 500);
+            res.end(err.code === 'ENOENT' ? 'Not Found' : 'Server Error');
+            return;
+        }
+
+        fs.readFile(filePath, (err, content) => {
+            if (err) {
+                res.writeHead(500);
+                res.end('Server Error');
+                return;
+            }
+            const finalContent = opts.inlineStyle ? Buffer.from(assembleStyleCss(), 'utf8') : content;
+            const isProd = process.env.NODE_ENV === 'production';
+            const cacheControl = isProd ? 'public, max-age=31536000' : 'no-cache';
+            const etag = `W/"${finalContent.length}-${stats.mtime.getTime()}"`;
+
+            if (req.headers['if-none-match'] === etag) {
+                res.writeHead(304);
+                return res.end();
+            }
+
+            res.writeHead(200, {
+                'Content-Type': contentType,
+                'Cache-Control': cacheControl,
+                'ETag': etag
+            });
+            res.end(finalContent);
+        });
+    });
+}
+
 async function serveStatic(req, res) {
     let urlPath = req.url.split('?')[0];
     // Map root style.css etc to public/css/
     if (urlPath === '/style.css') urlPath = '/css/style.css';
     if (urlPath === '/super-admin.css') urlPath = '/css/super-admin.css';
+
+    const distOverride = getDistOverride(req.url.split('?')[0]);
+    if (distOverride) {
+        const distPath = path.join(__dirname, '../../public/dist', distOverride);
+        if (fs.existsSync(distPath)) {
+            const inline = distOverride === '/css/style.css';
+            return sendStaticFile(distPath, req, res, { inlineStyle: inline });
+        }
+    }
 
     // All static assets are in public/
     let baseDir = '../../public';
@@ -109,40 +179,7 @@ async function serveStatic(req, res) {
         return;
     }
 
-    const ext = path.extname(resolvedPath);
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
-    fs.stat(resolvedPath, (err, stats) => {
-        if (err) {
-            res.writeHead(err.code === 'ENOENT' ? 404 : 500);
-            res.end(err.code === 'ENOENT' ? 'Not Found' : 'Server Error');
-            return;
-        }
-
-        const etag = `W/"${stats.size}-${stats.mtime.getTime()}"`;
-        if (req.headers['if-none-match'] === etag) {
-            res.writeHead(304);
-            return res.end();
-        }
-
-        fs.readFile(resolvedPath, (err, content) => {
-            if (err) {
-                res.writeHead(500);
-                res.end('Server Error');
-                return;
-            }
-
-            const isProd = process.env.NODE_ENV === 'production';
-            const cacheControl = isProd ? 'public, max-age=31536000' : 'no-cache';
-
-            res.writeHead(200, {
-                'Content-Type': contentType,
-                'Cache-Control': cacheControl,
-                'ETag': etag
-            });
-            res.end(content);
-        });
-    });
+    return sendStaticFile(resolvedPath, req, res);
 }
 
 async function serveLogin(req, res) {
