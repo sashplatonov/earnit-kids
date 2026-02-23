@@ -28,7 +28,7 @@ async function findChildById(childId) {
 
 async function findByChildToken(token) {
     const result = await query(
-        `SELECT c.*, f.family_id as external_family_id, f.name as family_name, f.email, f.admin_password, f.is_blocked, f.created_at as family_created_at
+        `SELECT c.*, f.family_id as external_family_id, f.email, f.admin_password, f.is_blocked, f.created_at as family_created_at
          FROM children c
          JOIN families f ON c.family_id = f.id
          WHERE c.token = $1`,
@@ -41,7 +41,6 @@ async function findByChildToken(token) {
         family: {
             id: row.external_family_id,
             dbId: row.family_id,
-            name: row.family_name,
             email: row.email,
             admin_password: row.admin_password,
             isBlocked: row.is_blocked,
