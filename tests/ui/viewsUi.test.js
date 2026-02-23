@@ -92,6 +92,16 @@ test('serveStatic maps /style.css to public css file', async () => {
     assert.match(state.body.toString(), /:root\s*\{/);
 });
 
+test('serveStatic keeps mobile nav compact and scrollable', async () => {
+    const state = await render(serveStatic, createMockRequest('/style.css'));
+    const css = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(css, /@media\s*\(max-width:\s*768px\)[\s\S]*?\.nav__primary\s*\{[\s\S]*?overflow-x:\s*auto;/);
+    assert.match(css, /@media\s*\(max-width:\s*768px\)[\s\S]*?\.nav__btn\s*\{[\s\S]*?min-width:\s*0;/);
+    assert.match(css, /@media\s*\(max-width:\s*768px\)[\s\S]*?\.nav__btn\s*\{[\s\S]*?white-space:\s*normal;/);
+});
+
 test('serveStatic blocks directory traversal attempts', async () => {
     const state = await render(serveStatic, createMockRequest('/../src/app.js'));
 

@@ -16,6 +16,9 @@ const apiRouter = new Router();
 apiRouter.use(async (ctx, req, res) => {
     // Already populated by initial context if passed, but let's use ctx
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+        if (ctx.pathname === '/api/super/db-restore') {
+            return;
+        }
         await parseBody.middleware(ctx, req, res);
     }
 });

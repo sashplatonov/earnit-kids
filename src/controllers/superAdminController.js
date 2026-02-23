@@ -124,5 +124,6 @@ async function handleSuperAdminAPI(req, res, ctx) {
 }
 
 module.exports = {
+    getSuperFamiliesList,
     handleSuperAdminAPI
 };

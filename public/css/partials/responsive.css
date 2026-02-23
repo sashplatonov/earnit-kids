@@ -17,13 +17,29 @@
     }
 
     .nav__primary {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
         gap: 0.25rem;
         width: 100%;
         max-width: 100%;
-        justify-content: space-around;
-        align-items: end;
+        justify-content: flex-start;
+        align-items: stretch;
+    }
+
+    .nav__primary::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav__child-switcher,
+    .nav__more-wrapper {
+        flex: 0 0 auto;
+    }
+
+    .nav__child-switcher {
+        max-width: min(64vw, 240px);
     }
 
     .nav__btn {
@@ -36,6 +52,10 @@
         gap: 0.25rem;
         border-radius: var(--radius-sm);
         text-align: center;
+        flex: 0 0 clamp(74px, 18vw, 96px);
+        min-width: 0;
+        white-space: normal;
+        line-height: 1.15;
     }
 
     /* Remove emojis visually taking too much space or adjust them */
