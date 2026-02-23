@@ -178,22 +178,13 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
     justify-content: flex-start;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
     padding-inline: 0.5rem;
-}
-
-.nav__primary::-webkit-scrollbar {
-    display: none;
 }
 
 .nav__child-switcher {
