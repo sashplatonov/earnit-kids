@@ -104,7 +104,7 @@ function assembleStyleCss() {
     return STYLE_PARTIALS.map(file => fs.readFileSync(path.join(partialsDir, file), 'utf8')).join('\n\n');
 }
 
-function sendStaticFile(filePath, req, res, opts = {}) {
+function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
     const ext = path.extname(filePath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
@@ -121,7 +121,7 @@ function sendStaticFile(filePath, req, res, opts = {}) {
                 res.end('Server Error');
                 return;
             }
-            const finalContent = opts.inlineStyle ? Buffer.from(assembleStyleCss(), 'utf8') : content;
+            const finalContent = inlineStyle ? Buffer.from(assembleStyleCss(), 'utf8') : content;
             const isProd = process.env.NODE_ENV === 'production';
             const cacheControl = isProd ? 'public, max-age=31536000' : 'no-cache';
             const etag = `W/"${finalContent.length}-${stats.mtime.getTime()}"`;
@@ -141,45 +141,50 @@ function sendStaticFile(filePath, req, res, opts = {}) {
     });
 }
 
-async function serveStatic(req, res) {
-    let urlPath = req.url.split('?')[0];
-    // Map root style.css etc to public/css/
-    if (urlPath === '/style.css') urlPath = '/css/style.css';
-    if (urlPath === '/super-admin.css') urlPath = '/css/super-admin.css';
+function normalizeStaticPath(rawUrl) {
+    if (rawUrl === '/style.css') return '/css/style.css';
+    if (rawUrl === '/super-admin.css') return '/css/super-admin.css';
+    return rawUrl.split('?')[0];
+}
 
-    const distOverride = getDistOverride(req.url.split('?')[0]);
-    if (distOverride) {
-        const distPath = path.join(__dirname, '../../public/dist', distOverride);
-        if (fs.existsSync(distPath)) {
-            const inline = distOverride === '/css/style.css';
-            return sendStaticFile(distPath, req, res, { inlineStyle: inline });
-        }
-    }
-
-    // All static assets are in public/
+function resolvePublicFilePath(urlPath) {
     let baseDir = '../../public';
-    const isProd = process.env.NODE_ENV === 'production';
-
-    // If in production, try to serve from dist first
-    if (isProd) {
+    if (process.env.NODE_ENV === 'production') {
         const distPath = path.join(__dirname, '../../public/dist', urlPath);
         if (fs.existsSync(distPath)) {
             baseDir = '../../public/dist';
         }
     }
 
-    let filePath = path.join(__dirname, baseDir, urlPath);
-
-    // Prevent directory traversal
+    const filePath = path.join(__dirname, baseDir, urlPath);
     const publicDir = path.resolve(__dirname, '../../public');
     const resolvedPath = path.resolve(filePath);
-    if (!resolvedPath.startsWith(publicDir)) {
+    return resolvedPath.startsWith(publicDir) ? resolvedPath : null;
+}
+
+function tryServeDistOverride(rawUrl, req, res) {
+    const distOverride = getDistOverride(rawUrl);
+    if (!distOverride) return false;
+    const distPath = path.join(__dirname, '../../public/dist', distOverride);
+    if (!fs.existsSync(distPath)) return false;
+    const inline = distOverride === '/css/style.css';
+    sendStaticFile({ filePath: distPath, req, res, inlineStyle: inline });
+    return true;
+}
+
+async function serveStatic(req, res) {
+    const rawUrl = req.url.split('?')[0];
+    const urlPath = normalizeStaticPath(rawUrl);
+    if (tryServeDistOverride(rawUrl, req, res)) return;
+
+    const resolvedPath = resolvePublicFilePath(urlPath);
+    if (!resolvedPath) {
         res.writeHead(403);
         res.end('Forbidden');
         return;
     }
 
-    return sendStaticFile(resolvedPath, req, res);
+    sendStaticFile({ filePath: resolvedPath, req, res });
 }
 
 async function serveLogin(req, res) {

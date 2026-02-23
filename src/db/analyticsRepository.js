@@ -79,21 +79,22 @@ async function fetchRecommendations(dbId, childId) {
 
 async function fetchAnalyticsRaw(dbId, timeframe, childId) {
     const interval = getInterval(timeframe);
-    const f = childId ? ' AND h.child_id = $3' : '';
+    const summaryFilter = childId ? ' AND child_id = $3' : '';
+    const detailFilter = childId ? ' AND h.child_id = $3' : '';
     const p = childId ? [dbId, interval, childId] : [dbId, interval];
 
-    const qs = `SELECT SUM(CASE WHEN type='earn' THEN amount ELSE 0 END) as e, SUM(CASE WHEN type='spend' THEN amount ELSE 0 END) as s FROM history WHERE family_id=$1 AND created_at >= NOW() - $2::interval${f}`;
+    const qs = `SELECT SUM(CASE WHEN type='earn' THEN amount ELSE 0 END) as e, SUM(CASE WHEN type='spend' THEN amount ELSE 0 END) as s FROM history WHERE family_id=$1 AND created_at >= NOW() - $2::interval${summaryFilter}`;
     const qt = `
         SELECT COALESCE(t.name, h.description, 'Задание') as n, SUM(h.amount) as c, COUNT(*) as ct 
         FROM history h 
         LEFT JOIN tasks t ON h.related_id = t.task_id AND h.family_id = t.family_id
-        WHERE h.family_id=$1 AND h.type='earn' AND h.created_at >= NOW() - $2::interval${f} 
+        WHERE h.family_id=$1 AND h.type='earn' AND h.created_at >= NOW() - $2::interval${detailFilter} 
         GROUP BY n ORDER BY c DESC`;
     const qi = `
         SELECT COALESCE(i.name, h.description, 'Товар') as n, SUM(h.amount) as c, COUNT(*) as ct 
         FROM history h 
         LEFT JOIN shop_items i ON h.related_id = i.item_id AND h.family_id = i.family_id
-        WHERE h.family_id=$1 AND h.type='spend' AND h.created_at >= NOW() - $2::interval${f} 
+        WHERE h.family_id=$1 AND h.type='spend' AND h.created_at >= NOW() - $2::interval${detailFilter} 
         GROUP BY n ORDER BY c DESC
     `;
 

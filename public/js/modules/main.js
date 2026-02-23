@@ -84,33 +84,59 @@ async function initializeApp() {
     try {
         const data = await initializeFromServer();
         if (!data) {
-            document.querySelector('.nav')?.classList.remove('nav--pending');
-            showToast('Не удалось получить данные магазина. Повторите попытку позже.', 'error');
+            handleMissingData();
             return;
         }
 
-        try { await initializePushNotifications(); } catch (e) { console.error('Push init failed:', e); }
-        try { initializeWebSocket(); } catch (e) { console.error('WS init failed:', e); }
-
-        setPushRefreshHandler(() => refreshFromServerAndRender(false));
-
-        try { startIosDevFallback(data, () => refreshFromServerAndRender(false)); } catch (e) { console.error('Fallback init failed:', e); }
-
-        renderAll(); renderRules(); loadAbout();
-        if (state.isAdmin) setupAdminUI();
-        document.getElementById('nav-settings')?.classList.remove('hidden');
-
-        setupCommonControls(); setupSpecificControls();
-        setupPullToRefresh(() => refreshFromServerAndRender(true));
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
-        }
+        await startBackgroundServices(data);
+        renderInitialViews();
+        setupControlsAndRefresh();
+        registerServiceWorker();
     } catch (err) {
         console.error('App init error:', err);
     } finally {
         document.querySelector('.nav')?.classList.remove('nav--pending');
     }
+}
+
+async function startBackgroundServices(data) {
+    await safeRun(initializePushNotifications, 'Push init failed:');
+    await safeRun(initializeWebSocket, 'WS init failed:');
+    setPushRefreshHandler(() => refreshFromServerAndRender(false));
+    await safeRun(() => startIosDevFallback(data, () => refreshFromServerAndRender(false)), 'Fallback init failed:');
+}
+
+async function safeRun(fn, message) {
+    try {
+        await fn();
+    } catch (err) {
+        console.error(message, err);
+    }
+}
+
+function renderInitialViews() {
+    renderAll();
+    renderRules();
+    loadAbout();
+    if (state.isAdmin) setupAdminUI();
+    document.getElementById('nav-settings')?.classList.remove('hidden');
+}
+
+function setupControlsAndRefresh() {
+    setupCommonControls();
+    setupSpecificControls();
+    setupPullToRefresh(() => refreshFromServerAndRender(true));
+}
+
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+    }
+}
+
+function handleMissingData() {
+    document.querySelector('.nav')?.classList.remove('nav--pending');
+    showToast('Не удалось получить данные магазина. Повторите попытку позже.', 'error');
 }
 
 document.addEventListener('DOMContentLoaded', () => initializeApp().catch(err => {
