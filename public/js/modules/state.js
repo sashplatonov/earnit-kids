@@ -10,7 +10,6 @@ export const state = {
     childNickname: null,
     isPinSet: false,
     familyId: null,
-    familyName: '',
     monthlyLimit: 10000,
     dailyCoinLimit: 0,
     baseData: { tasks: [], products: [] },

@@ -1,3 +1,12 @@
+function getCsrfToken() { return document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''; }
+async function fetchWithCsrf(url, options = {}) {
+  if (['POST', 'PUT', 'DELETE'].includes((options.method || 'GET').toUpperCase())) {
+    options.headers = options.headers || {};
+    const csrfToken = getCsrfToken();
+    if (csrfToken) options.headers['X-CSRF-Token'] = csrfToken;
+  }
+  return fetch(url, options);
+}
 export const API_URL = '/api/data';
 export const LOGIN_URL = '/api/login';
 export const LOGOUT_URL = '/api/logout';
@@ -8,7 +17,7 @@ export const PUSH_UNREGISTER_URL = '/api/push/unregister';
 // ...existing code...
 export async function loadDataFromServer() {
     try {
-        const response = await fetch('/api/data');
+        const response = await fetchWithCsrf('/api/data');
         if (response.ok) {
             return await response.json();
         }
@@ -20,7 +29,7 @@ export async function loadDataFromServer() {
 
 export async function loadBaseData() {
     try {
-        const response = await fetch('/api/base-data');
+        const response = await fetchWithCsrf('/api/base-data');
         if (response.ok) {
             return await response.json();
         }
@@ -33,7 +42,7 @@ export async function loadBaseData() {
 
 export async function saveDataToServer(data) {
     try {
-        const response = await fetch(API_URL, {
+        const response = await fetchWithCsrf(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -47,7 +56,7 @@ export async function saveDataToServer(data) {
 
 export async function logout() {
     try {
-        const response = await fetch(LOGOUT_URL, { method: 'POST' });
+        const response = await fetchWithCsrf(LOGOUT_URL, { method: 'POST' });
         return response.ok;
     } catch (err) {
         console.error('Logout failed:', err);
@@ -57,7 +66,7 @@ export async function logout() {
 
 export async function registerPushTokenOnServer(payload) {
     try {
-        const response = await fetch(PUSH_REGISTER_URL, {
+        const response = await fetchWithCsrf(PUSH_REGISTER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -71,7 +80,7 @@ export async function registerPushTokenOnServer(payload) {
 
 export async function unregisterPushTokenOnServer(token) {
     try {
-        const response = await fetch(PUSH_UNREGISTER_URL, {
+        const response = await fetchWithCsrf(PUSH_UNREGISTER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token })
@@ -85,7 +94,7 @@ export async function unregisterPushTokenOnServer(token) {
 
 export async function changePin(oldPin, newPin, role) {
     try {
-        const response = await fetch(CHANGE_PIN_URL, {
+        const response = await fetchWithCsrf(CHANGE_PIN_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ oldPin, newPin, role })
@@ -103,7 +112,7 @@ export async function changePin(oldPin, newPin, role) {
 
 export async function login(pin) {
     try {
-        const response = await fetch(LOGIN_URL, {
+        const response = await fetchWithCsrf(LOGIN_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pin })
@@ -122,7 +131,7 @@ export async function login(pin) {
 
 export async function regenerateChildToken(childId) {
     try {
-        const response = await fetch(`/api/children/${childId}/regenerate-token`, { method: 'POST' });
+        const response = await fetchWithCsrf(`/api/children/${childId}/regenerate-token`, { method: 'POST' });
         if (response.ok) {
             return await response.json();
         }
@@ -134,7 +143,7 @@ export async function regenerateChildToken(childId) {
 
 export async function addChild(name) {
     try {
-        const response = await fetch('/api/children', {
+        const response = await fetchWithCsrf('/api/children', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name })
@@ -147,7 +156,7 @@ export async function addChild(name) {
 
 export async function deleteChild(childId) {
     try {
-        const response = await fetch(`/api/children/${childId}`, { method: 'DELETE' });
+        const response = await fetchWithCsrf(`/api/children/${childId}`, { method: 'DELETE' });
         return await response.json();
     } catch (err) {
         return { success: false, error: 'Network error' };
@@ -156,31 +165,16 @@ export async function deleteChild(childId) {
 
 export async function getChildLink(childId) {
     try {
-        const response = await fetch(`/api/children/${childId}/link`);
+        const response = await fetchWithCsrf(`/api/children/${childId}/link`);
         return await response.json();
     } catch (err) {
         return { success: false, error: 'Network error' };
     }
 }
 
-export async function updateFamilySettingsOnServer(settings) {
-    try {
-        const response = await fetch('/api/update-family-settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(settings)
-        });
-        if (response.ok) {
-            return await response.json();
-        }
-    } catch (err) {
-        console.error('Failed to update family settings:', err);
-    }
-    return null;
-}
 export async function updateChildSettings(familyId, childId, settings) {
     try {
-        const response = await fetch(`/api/children/${childId}/settings`, {
+        const response = await fetchWithCsrf(`/api/children/${childId}/settings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(settings)
@@ -194,7 +188,7 @@ export async function updateChildSettings(familyId, childId, settings) {
 
 export async function updateNickname(nickname) {
     try {
-        const response = await fetch('/api/update-nickname', {
+        const response = await fetchWithCsrf('/api/update-nickname', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nickname })
@@ -208,7 +202,7 @@ export async function updateNickname(nickname) {
 
 export async function searchUsers(nickname) {
     try {
-        const response = await fetch(`/api/search-user?nickname=${encodeURIComponent(nickname)}`);
+        const response = await fetchWithCsrf(`/api/search-user?nickname=${encodeURIComponent(nickname)}`);
         if (response.ok) {
             return await response.json();
         }
@@ -220,7 +214,7 @@ export async function searchUsers(nickname) {
 
 export async function addFriend(friendId) {
     try {
-        const response = await fetch('/api/add-friend', {
+        const response = await fetchWithCsrf('/api/add-friend', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ friendId })
@@ -234,7 +228,7 @@ export async function addFriend(friendId) {
 
 export async function loadFriendsList() {
     try {
-        const response = await fetch('/api/friends-list');
+        const response = await fetchWithCsrf('/api/friends-list');
         if (response.ok) {
             return await response.json();
         }
@@ -248,7 +242,7 @@ export async function fetchAnalyticsData(timeframe = 'month', childId = null) {
     try {
         let url = `/api/analytics?timeframe=${timeframe}`;
         if (childId) url += `&childId=${childId}`;
-        const response = await fetch(url);
+        const response = await fetchWithCsrf(url);
         if (response.ok) {
             return await response.json();
         }

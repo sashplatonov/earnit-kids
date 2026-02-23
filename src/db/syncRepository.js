@@ -31,7 +31,7 @@ async function syncTasks({ client, dbId, data, actingChildId, defaultChildId, de
         await client.query(
             `INSERT INTO tasks (family_id, child_id, task_id, name, coins, group_name, frequency, comment, money_limit, is_deleted)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-             ON CONFLICT (family_id, task_id) DO UPDATE SET 
+             ON CONFLICT (child_id, task_id) DO UPDATE SET 
                 name = EXCLUDED.name, coins = EXCLUDED.coins, group_name = EXCLUDED.group_name, 
                 frequency = EXCLUDED.frequency, comment = EXCLUDED.comment, 
                 money_limit = EXCLUDED.money_limit, is_deleted = EXCLUDED.is_deleted`,
@@ -57,7 +57,7 @@ async function syncShop({ client, dbId, data, actingChildId, defaultChildId, del
         await client.query(
             `INSERT INTO shop_items (family_id, child_id, item_id, name, price, group_name, frequency, money_limit, is_deleted)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-             ON CONFLICT (family_id, item_id) DO UPDATE SET
+             ON CONFLICT (child_id, item_id) DO UPDATE SET
                 name = EXCLUDED.name, price = EXCLUDED.price, group_name = EXCLUDED.group_name,
                 frequency = EXCLUDED.frequency, money_limit = EXCLUDED.money_limit, is_deleted = EXCLUDED.is_deleted`,
             [
@@ -89,9 +89,10 @@ function getRelatedId(e) {
 function getHistoryParams(dbId, targetId, e) {
     const relId = getRelatedId(e);
     const date = val(e.date, val(e.timestamp, new Date()));
+    const amount = val(e.amount ?? e.coins, 0);
     return [
         dbId, targetId, val(e.id, null), val(e.type, 'unknown'),
-        val(e.amount, 0), val(e.description, ''), val(e.moneyAmount, 0),
+        amount, val(e.description, ''), val(e.moneyAmount, 0),
         relId, date, val(e.group, null), val(e.comment, null)
     ];
 }

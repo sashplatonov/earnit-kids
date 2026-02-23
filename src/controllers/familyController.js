@@ -1,18 +1,15 @@
 const {
     loadFamilyData, saveFamilyData, updateLastActivity,
-    loadFamilies, updateFamilySettings,
+    loadFamilies,
     updateNickname, searchByNickname, addFriend, getFriendsData,
-    getAnalyticsData,
-    addChild, deleteChild, updateChildSettings
+    addChild, deleteChild, updateChildSettings, getPaginatedHistory, getPaginatedRequests
 } = require('../services/familyService');
-const { loadBaseData } = require('../services/baseDataService');
-const { changePassword } = require('../services/authService');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');
+const websocket = require('../utils/websocket');
 
 function enrichWithFamilyInfo({ data, familyInfo, ctx }) {
     data.isAdmin = ctx.role === 'admin';
-    data.familyName = familyInfo ? familyInfo.name : 'Shop';
 
     if (ctx.role === 'admin' && familyInfo) {
         data.children = familyInfo.children || [];
@@ -50,22 +47,14 @@ async function handleDataPost(ctx, req, res) {
     if (!saved) return sendJSON(res, { error: 'Save failed' }, 500);
 
     await updateLastActivity(ctx.familyId);
+
+    // Notify family members about the update via WebSocket
+    websocket.notifyFamily(ctx.familyId, 'DATA_UPDATED', {
+        by: ctx.role,
+        childId: actingChildId
+    });
+
     sendJSON(res, { success: true });
-}
-
-async function handleAnalytics(ctx, req, res) {
-    if (ctx.role !== 'admin' && ctx.role !== 'child') {
-        return sendJSON(res, { error: 'Forbidden' }, 403);
-    }
-    const timeframe = ctx.urlObj.searchParams.get('timeframe') || 'month';
-    let childId = ctx.urlObj.searchParams.get('childId') ? parseInt(ctx.urlObj.searchParams.get('childId')) : null;
-
-    if (ctx.role === 'child') {
-        childId = ctx.childId;
-    }
-
-    const data = await getAnalyticsData(ctx.familyId, childId, timeframe);
-    sendJSON(res, data);
 }
 
 async function handleChildrenCreate(ctx, req, res) {
@@ -76,13 +65,6 @@ async function handleChildrenCreate(ctx, req, res) {
     sendJSON(res, result, result.success ? 200 : 400);
 }
 
-async function handleUpdateFamilySettings(ctx, req, res) {
-    if (ctx.role !== 'admin') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const body = await parseBody(req);
-    const result = await updateFamilySettings(ctx.familyId, body);
-    sendJSON(res, result, result.success ? 200 : 400);
-}
-
 async function handleUpdateNickname(ctx, req, res) {
     if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
     const body = await parseBody(req);
@@ -90,34 +72,31 @@ async function handleUpdateNickname(ctx, req, res) {
     sendJSON(res, result, result.success ? 200 : 400);
 }
 
-async function handleFriendsList(ctx, req, res) {
-    if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const friends = await getFriendsData(ctx.familyId, ctx.childId);
-    sendJSON(res, friends);
+async function handleHistoryGet(ctx, req, res) {
+    const page = parseInt(ctx.urlObj.searchParams.get('page')) || 1;
+    const limit = parseInt(ctx.urlObj.searchParams.get('limit')) || 50;
+    const queryChildId = ctx.urlObj.searchParams.get('childId');
+    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
+
+    const historyData = await getPaginatedHistory(ctx.familyId, targetChildId, { page, limit });
+    sendJSON(res, historyData);
 }
 
-async function handleSearchUser(ctx, req, res) {
-    if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const nickname = ctx.urlObj.searchParams.get('nickname');
-    const results = await searchByNickname(nickname);
-    sendJSON(res, results);
-}
+async function handleRequestsGet(ctx, req, res) {
+    const page = parseInt(ctx.urlObj.searchParams.get('page')) || 1;
+    const limit = parseInt(ctx.urlObj.searchParams.get('limit')) || 50;
+    const queryChildId = ctx.urlObj.searchParams.get('childId');
+    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
 
-async function handleAddFriend(ctx, req, res) {
-    if (ctx.role !== 'child') return sendJSON(res, { error: 'Not Found or Forbidden' }, 404);
-    const body = await parseBody(req);
-    const result = await addFriend(ctx.childId, body.friendId);
-    sendJSON(res, result, result.success ? 200 : 400);
+    const requestsData = await getPaginatedRequests(ctx.familyId, targetChildId, { page, limit });
+    sendJSON(res, requestsData);
 }
 
 module.exports = {
     handleDataGet,
     handleDataPost,
-    handleAnalytics,
     handleChildrenCreate,
-    handleUpdateFamilySettings,
     handleUpdateNickname,
-    handleFriendsList,
-    handleSearchUser,
-    handleAddFriend
+    handleHistoryGet,
+    handleRequestsGet
 };

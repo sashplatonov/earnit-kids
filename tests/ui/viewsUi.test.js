@@ -92,6 +92,34 @@ test('serveStatic maps /style.css to public css file', async () => {
     assert.match(state.body.toString(), /:root\s*\{/);
 });
 
+test('serveStatic keeps mobile nav compact without viewport overflow', async () => {
+    const state = await render(serveStatic, createMockRequest('/style.css'));
+    const css = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(css, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.nav\s*\{[\s\S]*?overflow:\s*hidden;/);
+    assert.match(css, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.nav__primary\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
+    assert.match(css, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.nav__btn\s*\{[\s\S]*?min-height:\s*54px;/);
+});
+
+test('serveStatic keeps skip link hidden until keyboard focus', async () => {
+    const state = await render(serveStatic, createMockRequest('/style.css'));
+    const css = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(css, /\.skip-link\s*\{[\s\S]*?left:\s*-9999px;/);
+    assert.match(css, /\.skip-link:focus-visible\s*\{/);
+});
+
+test('serveStatic keeps floating nav dropdown compact on mobile', async () => {
+    const state = await render(serveStatic, createMockRequest('/style.css'));
+    const css = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(css, /\.nav__dropdown\.is-floating\s*\{[\s\S]*?top:\s*auto;/);
+    assert.match(css, /\.nav__dropdown\.is-floating\s*\{[\s\S]*?max-height:\s*min\(60vh,\s*calc\(100dvh - 120px\)\);/);
+});
+
 test('serveStatic blocks directory traversal attempts', async () => {
     const state = await render(serveStatic, createMockRequest('/../src/app.js'));
 

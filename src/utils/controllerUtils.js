@@ -5,13 +5,29 @@ function sendJSON(res, data, status = 200) {
     res.end(JSON.stringify(data));
 }
 
+const { verifyToken } = require('./authUtils');
+
 function getFamilyContext(req) {
     const cookies = getCookies(req);
+    const token = cookies.app_auth;
+    if (token) {
+        const decoded = verifyToken(token);
+        if (decoded) {
+            return {
+                familyId: decoded.familyId || null,
+                childId: decoded.childId || null,
+                role: decoded.role || null,
+                email: decoded.email || null,
+                csrfToken: decoded.csrfToken || null
+            };
+        }
+    }
     return {
-        familyId: cookies.family_id || null,
-        childId: cookies.child_id ? parseInt(cookies.child_id) : null,
-        role: cookies.app_role || null,
-        email: cookies.app_auth || null
+        familyId: null,
+        childId: null,
+        role: null,
+        email: null,
+        csrfToken: null
     };
 }
 

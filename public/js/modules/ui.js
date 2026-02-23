@@ -28,8 +28,31 @@ export function updateBalanceUI() {
         if (child) displayBalance = child.balance;
     }
     const balanceEl = document.getElementById('balance');
-    if (balanceEl) balanceEl.textContent = displayBalance;
+    if (balanceEl) {
+        const currentVal = parseInt(balanceEl.textContent || '0', 10);
+        if (currentVal !== displayBalance) {
+            animateValue(balanceEl, { start: currentVal, end: displayBalance }, 800);
+        } else {
+            balanceEl.textContent = displayBalance;
+        }
+    }
     updateBudgetStatsUI(state, CONFIG, getActiveChildId());
+}
+
+function animateValue(obj, range, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 4);
+        obj.textContent = Math.floor(easeOut * (range.end - range.start) + range.start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            obj.textContent = range.end;
+        }
+    };
+    window.requestAnimationFrame(step);
 }
 
 export function renderAll() {
@@ -40,7 +63,7 @@ export function renderAll() {
     renderHistoryUI(state);
     renderFriendsUI(state);
     updateAdminUI();
-    updateShopNameUI();
+    updateChildNicknameUI();
     renderChildSwitcherUI(state, escapeHtml);
 }
 
@@ -64,9 +87,7 @@ function updateElementValue(id, value) {
     if (el) el.value = value;
 }
 
-export function updateShopNameUI() {
-    updateElementText('shop-name-display', state.familyName || '');
+export function updateChildNicknameUI() {
     updateElementText('child-nickname-display', state.childNickname ? `(${state.childNickname})` : '');
-    updateElementValue('settings-family-name-inline', state.familyName || '');
     updateElementValue('settings-nickname', state.childNickname || '');
 }

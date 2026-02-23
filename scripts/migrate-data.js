@@ -50,12 +50,11 @@ async function migrateFamily(client, familyId, familyData) {
 
     // Insert family
     const result = await client.query(
-        `INSERT INTO families (family_id, name, email, admin_password, child_token, monthly_limit, child_nickname, is_blocked, created_at, last_activity)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `INSERT INTO families (family_id, email, admin_password, child_token, monthly_limit, child_nickname, is_blocked, created_at, last_activity)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id`,
         [
             familyId,
-            familyData.name || 'Shop',
             familyData.email,
             familyData.admin_password,
             familyData.child_token || null,
@@ -68,7 +67,7 @@ async function migrateFamily(client, familyId, familyData) {
     );
 
     const dbId = result.rows[0].id;
-    console.log(`  ✅ Migrated family: ${familyData.name} (${familyId})`);
+    console.log(`  ✅ Migrated family: ${familyId} (${familyData.email || 'no email'})`);
     return dbId;
 }
 
@@ -124,26 +123,34 @@ async function migrateShopItems(client, dbId, shopItems) {
     console.log(`    🛍️  Migrated ${shopItems.length} shop items`);
 }
 
+function resolveRelatedId(entry) {
+    return entry.itemId || entry.taskId || entry.relatedId || null;
+}
+
+async function insertHistoryEntry(client, dbId, entry) {
+    const { type, timestamp, id, amount, description, moneyAmount } = entry;
+    const finalRelatedId = resolveRelatedId(entry);
+    await client.query(
+        `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+            dbId,
+            id || null,
+            type || 'unknown',
+            amount || 0,
+            description || '',
+            moneyAmount || 0,
+            finalRelatedId,
+            timestamp || entry.date || new Date()
+        ]
+    );
+}
+
 async function migrateHistory(client, dbId, history) {
     if (!Array.isArray(history)) return;
 
     for (const entry of history) {
-        const { type, timestamp, id, amount, description, moneyAmount, itemId, taskId, relatedId } = entry;
-        const finalRelatedId = itemId || taskId || relatedId || null;
-        await client.query(
-            `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [
-                dbId,
-                id || null,
-                type || 'unknown',
-                amount || 0,
-                description || '',
-                moneyAmount || 0,
-                finalRelatedId,
-                timestamp || entry.date || new Date()
-            ]
-        );
+        await insertHistoryEntry(client, dbId, entry);
     }
     console.log(`    📜 Migrated ${history.length} history entries`);
 }
@@ -227,70 +234,70 @@ async function migrateFriends(client, familyIdMap) {
     console.log('  ✅ Friend relationships migrated');
 }
 
-async function runDataMigration() {
+async function shouldSkipMigration() {
     process.stdout.write('📊 Checking if data migration from JSON is needed...');
 
-    // Check if families.json exists
     if (!fs.existsSync(FAMILIES_FILE)) {
         console.log(' ✅ (no JSON data to migrate)');
-        return;
+        return true;
     }
 
-    // Check if we already have data in DB. If we have families, we probably already migrated.
     try {
-        const familiesResult = await query('SELECT COUNT(*) FROM families');
-        if (parseInt(familiesResult.rows[0].count) > 0) {
+        const familiesRes = await query('SELECT COUNT(*) FROM families');
+        if (parseInt(familiesRes.rows[0].count) > 0) {
             console.log(' ✅ (data already exists in DB)');
-            return;
+            return true;
         }
     } catch (err) {
         console.log(' ❌ (error checking DB status)');
         throw err;
     }
+    return false;
+}
+
+async function loadMigrationData() {
+    const familiesData = JSON.parse(fs.readFileSync(FAMILIES_FILE, 'utf8'));
+    const families = familiesData.families || {};
+    return {
+        superAdmin: familiesData.super_admin,
+        families,
+        familyIds: Object.keys(families)
+    };
+}
+
+async function migrateAllFamilies(client, familyIds, families) {
+    const familyIdMap = {};
+    for (const familyId of familyIds) {
+        const dbId = await migrateFamily(client, familyId, families[familyId]);
+        if (dbId) {
+            const friends = await migrateFamilyData(client, dbId, familyId);
+            familyIdMap[familyId] = { dbId, friends };
+        }
+    }
+    return familyIdMap;
+}
+
+async function runDataMigration() {
+    if (await shouldSkipMigration()) return;
 
     console.log('\n🚀 Starting data migration from JSON to PostgreSQL...');
-
     const client = await getClient();
-
     try {
         await client.query('BEGIN');
-
-        // Load JSON data
-        const familiesData = JSON.parse(fs.readFileSync(FAMILIES_FILE, 'utf8'));
-        const families = familiesData.families || {};
-        const familyIds = Object.keys(families);
-
+        const { superAdmin, families, familyIds } = await loadMigrationData();
         console.log(`📋 Found ${familyIds.length} families to migrate`);
 
-        // Migrate super admin
-        await migrateSuperAdmin(client, familiesData.super_admin);
+        await migrateSuperAdmin(client, superAdmin);
+        const familyIdMap = await migrateAllFamilies(client, familyIds, families);
 
-        // Track family ID mapping for friends
-        const familyIdMap = {};
-
-        // Migrate families
-        for (const familyId of familyIds) {
-            const dbId = await migrateFamily(client, familyId, families[familyId]);
-            if (dbId) {
-                const friends = await migrateFamilyData(client, dbId, familyId);
-                familyIdMap[familyId] = { dbId, friends };
-            }
-        }
-
-        // Migrate friends
         await migrateFriends(client, familyIdMap);
-
         await client.query('COMMIT');
-
         console.log('\n✅ Data migration completed successfully!');
-
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('\n❌ Data migration failed:', err.message);
         throw err;
-    } finally {
-        client.release();
-    }
+    } finally { client.release(); }
 }
 
 if (require.main === module) {

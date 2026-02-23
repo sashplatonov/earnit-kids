@@ -15,79 +15,48 @@ function normalizeTemplate(html) {
         .replace(/\{\{CLARITY_SCRIPT\}\}/g, '');
 }
 
+function getInlineScript() {
+    return `<script>
+    (() => {
+        const moreBtn = document.getElementById('nav-more-btn');
+        const moreDropdown = document.getElementById('nav-more-dropdown');
+        if (moreBtn && moreDropdown) {
+            moreBtn.addEventListener('click', () => moreDropdown.classList.toggle('hidden'));
+        }
+        function activateTab(tab) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            const sId = tab === 'child-link' ? 'child-link-section' : tab + '-section';
+            const target = document.getElementById(sId);
+            if (target) target.classList.remove('hidden');
+            document.querySelectorAll('.nav__btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        }
+        document.querySelectorAll('[data-tab]').forEach(b => {
+            b.addEventListener('click', e => { e.preventDefault(); activateTab(b.dataset.tab); });
+        });
+        activateTab('tasks');
+    })();
+    </script>`;
+}
+
 function buildDashboardHtml() {
     const css = read('public/css/style.css');
     const header = read('views/components/header.html');
     const nav = read('views/components/nav.html');
-    const mainStart = read('views/components/main_start.html');
-    const mainEnd = normalizeTemplate(read('views/components/main_end.html'));
-
-    const sectionFiles = [
-        'views/components/section_tasks.html',
-        'views/components/section_requests.html',
-        'views/components/section_shop.html',
-        'views/components/section_history.html',
-        'views/components/section_catalog.html',
-        'views/components/section_rules.html',
-        'views/components/section_about.html',
-        'views/components/section_friends.html',
-        'views/components/section_settings.html',
+    const mStart = read('views/components/main_start.html');
+    const mEnd = normalizeTemplate(read('views/components/main_end.html'));
+    const sFiles = [
+        'views/components/section_tasks.html', 'views/components/section_requests.html',
+        'views/components/section_shop.html', 'views/components/section_history.html',
+        'views/components/section_catalog.html', 'views/components/section_rules.html',
+        'views/components/section_about.html', 'views/components/section_friends.html',
+        'views/components/section_settings.html'
     ];
+    const ss = sFiles.map(read).join('\n');
 
-    const sections = sectionFiles.map(read).join('\n');
-
-    return `<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UI Layout Fixture</title>
-  <style>${css}</style>
-</head>
-<body>
-${header}
-${nav}
-${mainStart}
-${sections}
-${mainEnd}
-<script>
-(() => {
-    const moreBtn = document.getElementById('nav-more-btn');
-    const moreDropdown = document.getElementById('nav-more-dropdown');
-
-    if (moreBtn && moreDropdown) {
-        moreBtn.addEventListener('click', () => {
-            moreDropdown.classList.toggle('hidden');
-        });
-    }
-
-    function activateTab(tab) {
-        document.querySelectorAll('.section').forEach((section) => {
-            section.classList.add('hidden');
-        });
-
-        const sectionId = tab === 'child-link' ? 'child-link-section' : tab + '-section';
-        const target = document.getElementById(sectionId);
-        if (target) target.classList.remove('hidden');
-
-        document.querySelectorAll('.nav__btn').forEach((btn) => {
-            btn.classList.toggle('active', btn.dataset.tab === tab);
-        });
-    }
-
-    document.querySelectorAll('[data-tab]').forEach((button) => {
-        button.addEventListener('click', (event) => {
-            event.preventDefault();
-            const tab = button.dataset.tab;
-            activateTab(tab);
-        });
-    });
-
-    activateTab('tasks');
-})();
-</script>
-</body>
-</html>`;
+    return `<!doctype html><html lang="ru"><head><meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UI Fixture</title><style>${css}</style></head>
+<body>${header}${nav}${mStart}${ss}${mEnd}${getInlineScript()}</body></html>`;
 }
 
 async function loadFixture(page) {

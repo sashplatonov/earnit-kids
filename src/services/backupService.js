@@ -1,285 +1,277 @@
-const { spawn } = require('child_process');
+const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { Pool } = require('pg');
+const os = require('os');
+const { Client } = require('pg');
+const config = require('../config');
+const logger = require('../utils/logger');
+const { sendTelegramDocument } = require('../utils/alerts');
+const { sendJSON } = require('../utils/controllerUtils');
+
+function ensureBackupDir() {
+    const backupDir = path.join(config.DATA_DIR, 'backups');
+    if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+    }
+    return backupDir;
+}
+
+function readRawRequestBody(req) {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        req.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+        req.on('end', () => resolve(Buffer.concat(chunks)));
+        req.on('error', reject);
+    });
+}
 
 /**
- * Creates a PostgreSQL backup using pg_dump and streams it to the response
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse} res 
+ * Perform a database backup and send it to Telegram
  */
+async function performBackup() {
+    if (!config.TELEGRAM.ENABLED) {
+        logger.debug('Backup skipped: Telegram alerts not enabled');
+        return;
+    }
+
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+        logger.warn('Backup skipped: DATABASE_URL not set');
+        return;
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    let backupDir;
+
+    try {
+        backupDir = ensureBackupDir();
+    } catch (err) {
+        logger.error({ err: err.message }, 'Failed to create backup directory');
+        return;
+    }
+
+    const filename = `backup-${timestamp}.sql`;
+    const filepath = path.join(backupDir, filename);
+
+    // Command to create a backup using pg_dump
+    // We use the full connection string
+    const command = `pg_dump "${dbUrl}" -F c -f "${filepath}"`;
+
+    logger.info({ filename }, 'Starting database backup...');
+
+    exec(command, async (error, stdout, stderr) => {
+        if (error) {
+            logger.error({ error: error.message, stderr }, 'Backup process failed');
+            return;
+        }
+
+        logger.info('Backup file created successfully, sending to Telegram...');
+        const caption = `📦 <b>Database Backup</b>\n\n<b>Env:</b> ${config.env}\n<b>Date:</b> ${new Date().toLocaleString()}\n<b>File:</b> <code>${filename}</code>`;
+
+        try {
+            const success = await sendTelegramDocument(filepath, caption, { silent: true });
+
+            if (success) {
+                logger.info('Backup successfully sent to Telegram');
+                // We keep the local file for now as a double backup, 
+                // but we could delete it if storage is an issue.
+            } else {
+                logger.warn('Failed to send backup to Telegram');
+            }
+        } catch (sendErr) {
+            logger.error({ err: sendErr.message }, 'Error during backup sending');
+        }
+
+        // Cleanup old local backups (keep only last 5)
+        cleanupOldBackups(backupDir);
+    });
+}
+
+/**
+ * Remove old backup files to save space
+ * @param {string} backupDir 
+ */
+function cleanupOldBackups(backupDir) {
+    try {
+        const files = fs.readdirSync(backupDir)
+            .filter(f => f.startsWith('backup-'))
+            .map(f => ({
+                name: f,
+                path: path.join(backupDir, f),
+                time: fs.statSync(path.join(backupDir, f)).mtime.getTime()
+            }))
+            .sort((a, b) => b.time - a.time); // Newest first
+
+        if (files.length > 5) {
+            const extraFiles = files.slice(5);
+            for (const file of extraFiles) {
+                fs.unlinkSync(file.path);
+                logger.debug({ file: file.name }, 'Old backup file removed');
+            }
+        }
+    } catch (err) {
+        logger.warn({ err: err.message }, 'Failed to cleanup old backups');
+    }
+}
+
+let backupInterval = null;
+
+/**
+ * Initialize the backup scheduler
+ */
+function initBackupService() {
+    // If backups are disabled, don't start the service
+    if (!config.TELEGRAM.ENABLED) {
+        return;
+    }
+
+    const intervalHours = parseInt(process.env.BACKUP_INTERVAL_HOURS, 10) || 24;
+    const intervalMs = intervalHours * 60 * 60 * 1000;
+
+    if (backupInterval) {
+        clearInterval(backupInterval);
+    }
+
+    // Schedule periodic backups
+    backupInterval = setInterval(performBackup, intervalMs);
+
+    // Optional: run a backup shortly after startup if it's the first time
+    // setTimeout(performBackup, 5 * 60 * 1000); // 5 minutes after startup
+
+    logger.info({ intervalHours }, 'Database backup service initialized');
+}
+
 function createBackup(req, res) {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'DATABASE_URL is not configured' }));
+        return sendJSON(res, { success: false, error: 'DATABASE_URL not set' }, 500);
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `backup-pg-${timestamp}.dump`;
+    let backupDir;
+    try {
+        backupDir = ensureBackupDir();
+    } catch (err) {
+        logger.error({ err: err.message }, 'Failed to create backup directory');
+        return sendJSON(res, { success: false, error: 'Failed to create backup directory' }, 500);
+    }
 
-    // pg_dump -F c -d [url] (Custom format, compressed)
-    const args = ['-F', 'c', dbUrl];
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `backup-${timestamp}.dump`;
+    const filepath = path.join(backupDir, filename);
+    const command = `pg_dump "${dbUrl}" -F c -f "${filepath}"`;
 
-    console.log(`Starting DB backup...`);
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            logger.error({ error: error.message, stderr }, 'Backup creation failed');
+            return sendJSON(res, { success: false, error: 'Backup failed' }, 500);
+        }
 
-    let headersSent = false;
-    let finished = false;
-
-    const proc = spawn('pg_dump', args);
-
-    proc.stdout.on('data', (chunk) => {
-        if (!headersSent && !finished) {
+        try {
+            const stat = fs.statSync(filepath);
             res.writeHead(200, {
                 'Content-Type': 'application/octet-stream',
                 'Content-Disposition': `attachment; filename="${filename}"`,
-                'Cache-Control': 'no-cache'
+                'Content-Length': stat.size
             });
-            headersSent = true;
-        }
-        if (!finished) res.write(chunk);
-    });
-
-    proc.stderr.on('data', (data) => {
-        console.error(`pg_dump stderr: ${data}`);
-    });
-
-    proc.on('error', (err) => {
-        if (finished) return;
-        finished = true;
-        console.error(`Failed to start pg_dump:`, err);
-
-        const isEnoent = err.code === 'ENOENT';
-        const msg = isEnoent
-            ? 'Инструмент pg_dump не установлен на сервере. Пожалуйста, установите postgresql-client.'
-            : `Ошибка запуска процесса бэкапа: ${err.message}`;
-
-        if (!headersSent) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: msg, code: err.code }));
-        } else {
-            res.end();
-        }
-    });
-
-    proc.on('close', (code) => {
-        if (finished) return;
-        finished = true;
-        console.log(`pg_dump exited with code ${code}`);
-
-        if (code !== 0) {
-            if (!headersSent) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: `Бэкап завершился с ошибкой (код ${code})` }));
-            } else {
-                res.end();
-            }
-        } else {
-            if (!headersSent) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Бэкап не произвел данных' }));
-            } else {
-                res.end();
-            }
+            const stream = fs.createReadStream(filepath);
+            stream.on('error', (streamErr) => {
+                logger.error({ err: streamErr.message }, 'Backup stream failed');
+                if (!res.headersSent) {
+                    sendJSON(res, { success: false, error: 'Failed to stream backup' }, 500);
+                } else {
+                    res.end();
+                }
+            });
+            stream.on('close', () => {
+                fs.unlink(filepath, () => {});
+            });
+            stream.pipe(res);
+        } catch (err) {
+            logger.error({ err: err.message }, 'Failed to send backup file');
+            sendJSON(res, { success: false, error: 'Failed to send backup file' }, 500);
         }
     });
 }
 
-/**
- * Restores the PostgreSQL database from a uploaded dump file using pg_restore
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse} res 
- */
-function restoreBackup(req, res) {
+async function restoreBackup(req, res) {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'DATABASE_URL is not configured' }));
+        return sendJSON(res, { success: false, error: 'DATABASE_URL not set' }, 500);
     }
 
-    const tempPath = path.join(process.cwd(), `temp_restore_${Date.now()}.dump`);
-    const writeStream = fs.createWriteStream(tempPath);
+    let rawDump;
+    try {
+        rawDump = await readRawRequestBody(req);
+    } catch (err) {
+        logger.error({ err: err.message }, 'Failed to read restore payload');
+        return sendJSON(res, { success: false, error: 'Invalid request body' }, 400);
+    }
 
-    req.pipe(writeStream);
+    if (!rawDump || rawDump.length === 0) {
+        return sendJSON(res, { success: false, error: 'Backup file is empty' }, 400);
+    }
 
-    writeStream.on('finish', () => {
-        console.log('Backup file uploaded, starting restore...');
+    const dumpFile = path.join(os.tmpdir(), `restore-${Date.now()}.dump`);
+    try {
+        fs.writeFileSync(dumpFile, rawDump);
+    } catch (err) {
+        logger.error({ err: err.message }, 'Failed to write temporary restore file');
+        return sendJSON(res, { success: false, error: 'Failed to process file' }, 500);
+    }
 
-        const args = ['-d', dbUrl, '--clean', '--if-exists', '--no-owner', tempPath];
-        const proc = spawn('pg_restore', args);
-        let finished = false;
-
-        proc.stderr.on('data', (data) => {
-            console.error(`pg_restore stderr: ${data}`);
-        });
-
-        proc.on('error', (err) => {
-            if (finished) return;
-            finished = true;
-            console.error('Failed to start pg_restore:', err);
-            cleanup();
-
-            const isEnoent = err.code === 'ENOENT';
-            const msg = isEnoent
-                ? 'Инструмент pg_restore не установлен на сервере. Пожалуйста, установите postgresql-client.'
-                : 'Ошибка запуска процесса восстановления';
-
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: msg, code: err.code }));
-        });
-
-        proc.on('close', (code) => {
-            if (finished) return;
-            finished = true;
-            console.log(`pg_restore exited with code ${code}`);
-            cleanup();
-
-            if (code === 0 || code === 1) {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true }));
-            } else {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: `Restore failed with exit code ${code}` }));
-            }
-        });
-    });
-
-    writeStream.on('error', (err) => {
-        console.error('File write error:', err);
-        cleanup();
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to upload backup file' }));
-    });
-
-    function cleanup() {
-        if (fs.existsSync(tempPath)) {
-            fs.unlinkSync(tempPath);
+    const command = `pg_restore --clean --if-exists --no-owner --no-privileges -d "${dbUrl}" "${dumpFile}"`;
+    exec(command, (error, stdout, stderr) => {
+        fs.unlink(dumpFile, () => {});
+        if (error) {
+            logger.error({ error: error.message, stderr }, 'Restore failed');
+            return sendJSON(res, { success: false, error: 'Restore failed' }, 500);
         }
-    }
+        return sendJSON(res, { success: true });
+    });
 }
 
-/**
- * Copies the current database to the reserve database
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse} res 
- */
 function copyToReserve(req, res) {
-    const dbUrl = process.env.DATABASE_URL;
+    const sourceDbUrl = process.env.DATABASE_URL;
     const reserveDbUrl = process.env.RESERVE_DATABASE_URL;
 
-    if (!dbUrl || !reserveDbUrl) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-            error: 'DATABASE_URL or RESERVE_DATABASE_URL is not configured'
-        }));
+    if (!sourceDbUrl || !reserveDbUrl) {
+        return sendJSON(res, { success: false, error: 'DATABASE_URL or RESERVE_DATABASE_URL not set' }, 500);
     }
 
-    console.log('Starting DB copy to reserve...');
-
-    let finished = false;
-    const dump = spawn('pg_dump', ['-F', 'c', dbUrl]);
-    const restore = spawn('pg_restore', ['-d', reserveDbUrl, '--clean', '--if-exists', '--no-owner']);
-
-    dump.stdout.pipe(restore.stdin);
-
-    let dumpError = '';
-    let restoreError = '';
-
-    dump.stderr.on('data', (d) => dumpError += d.toString());
-    restore.stderr.on('data', (d) => restoreError += d.toString());
-
-    dump.on('error', (err) => {
-        if (finished) return;
-        finished = true;
-        console.error('Dump error:', err);
-
-        const isEnoent = err.code === 'ENOENT';
-        const msg = isEnoent
-            ? 'Инструмент pg_dump не установлен на сервере.'
-            : 'Ошибка процесса дампа';
-
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: msg, code: err.code }));
-        restore.kill();
-    });
-
-    restore.on('error', (err) => {
-        if (finished) return;
-        finished = true;
-        console.error('Restore error:', err);
-
-        const isEnoent = err.code === 'ENOENT';
-        const msg = isEnoent
-            ? 'Инструмент pg_restore не установлен на сервере.'
-            : 'Ошибка процесса восстановления';
-
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: msg, code: err.code }));
-        dump.kill();
-    });
-
-    restore.on('close', (code) => {
-        if (finished) return;
-        finished = true;
-        console.log(`Copy process finished. Restore exit code: ${code}`);
-        if (code === 0 || code === 1) {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: true }));
-        } else {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-                error: `Копирование не удалось (код ${code})`,
-                details: { dumpError, restoreError }
-            }));
+    const command = `pg_dump "${sourceDbUrl}" -F c | pg_restore --clean --if-exists --no-owner --no-privileges -d "${reserveDbUrl}"`;
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            logger.error({ error: error.message, stderr }, 'Copy to reserve failed');
+            return sendJSON(res, { success: false, error: 'Copy to reserve failed' }, 500);
         }
+        return sendJSON(res, { success: true });
     });
 }
 
-/**
- * Checks if the reserve database is configured and accessible
- */
 async function checkReserveDbConnection() {
-    const url = process.env.RESERVE_DATABASE_URL;
-    if (!url) {
-        return { success: false, error: 'RESERVE_DATABASE_URL is not set in .env' };
+    const reserveDbUrl = process.env.RESERVE_DATABASE_URL;
+    if (!reserveDbUrl) {
+        return { success: false, error: 'RESERVE_DATABASE_URL not set' };
     }
 
-    // Try to connect directly
-    const testPool = new Pool({
-        connectionString: url,
-        connectionTimeoutMillis: 5000,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
-    });
-
+    const client = new Client({ connectionString: reserveDbUrl });
     try {
-        await testPool.query('SELECT 1');
-        await testPool.end();
+        await client.connect();
+        await client.query('SELECT 1');
         return { success: true };
     } catch (err) {
-        await testPool.end().catch(() => { });
-
-        // If "database does not exist", it means the host/credentials are correct but the name is wrong
-        // Let's try to verify if the server itself is reachable by connecting to 'postgres' DB
-        try {
-            const baseUrl = url.substring(0, url.lastIndexOf('/') + 1) + 'postgres';
-            const basePool = new Pool({
-                connectionString: baseUrl,
-                connectionTimeoutMillis: 3000,
-                ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
-            });
-            await basePool.query('SELECT 1');
-            await basePool.end();
-            return {
-                success: false,
-                error: `БД не найдена, но сервер доступен. Ошибка: ${err.message}. Проверьте название БД в URL.`
-            };
-        } catch (baseErr) {
-            return {
-                success: false,
-                error: `Не удалось подключиться к серверу БД: ${err.message}. Проверьте хост, порт и Docker-окружение.`
-            };
-        }
+        logger.warn({ err: err.message }, 'Reserve DB connection check failed');
+        return { success: false, error: 'Reserve DB unavailable' };
+    } finally {
+        await client.end().catch(() => {});
     }
 }
 
-module.exports = { createBackup, restoreBackup, copyToReserve, checkReserveDbConnection };
+module.exports = {
+    createBackup,
+    restoreBackup,
+    copyToReserve,
+    checkReserveDbConnection,
+    performBackup,
+    initBackupService
+};

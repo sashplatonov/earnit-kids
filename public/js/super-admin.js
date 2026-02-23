@@ -1,7 +1,8 @@
 import { renderFamilyDetails } from './modules/super-admin-family-details.js';
+import { checkReserveStatus, handleRestore, handleCopyToReserve } from './modules/super-admin-db.js';
+import { setBaseData, getBaseData, renderList, deleteItem, saveItem } from './modules/super-admin-base.js';
 
 let familiesData = [];
-let baseData = { tasks: [], products: [] };
 
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -10,145 +11,33 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-        if (btn.dataset.tab === 'database') {
-            checkReserveStatus();
-        }
+        if (btn.dataset.tab === 'database') checkReserveStatus();
     });
 });
 
-// Backup Postgres
+// DB Actions
 document.getElementById('pg-backup-btn').addEventListener('click', () => {
     window.location.href = '/api/super/db-backup';
 });
-
-// Restore Postgres
 document.getElementById('pg-restore-btn').addEventListener('click', () => {
     document.getElementById('pg-restore-input').click();
 });
-
-document.getElementById('pg-restore-input').addEventListener('change', async (e) => {
+document.getElementById('pg-restore-input').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    if (!confirm('ВНИМАНИЕ!\n\nЭто действие ПОЛНОСТЬЮ ЗАМЕНИТ текущую базу данных данными из бэкапа.\nВсе текущие изменения будут потеряны.\n\nВы уверены, что хотите продолжить?')) {
-        e.target.value = '';
-        return;
+    if (file && confirm('ВНИМАНИЕ! Это действие ЗАМЕНИТ базу данных. Продолжить?')) {
+        handleRestore(file);
     }
-
-    setDbStatus('Загрузка бэкапа и восстановление...', 'info');
-
-    try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // Note: Using fetch with body: file automatically sets Content-Type?
-        // Actually, previous code piped file directly. Let's do that to match backend expectation.
-
-        const res = await fetch('/api/super/db-restore', {
-            method: 'POST',
-            body: file,
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            }
-        });
-
-        const result = await res.json();
-        if (res.ok && result.success) {
-            setDbStatus('Данные успешно восстановлены! Страница будет перезагружена.', 'success');
-            setTimeout(() => window.location.reload(), 2000);
-        } else {
-            setDbStatus('Ошибка при восстановлении: ' + (result.error || 'Неизвестная ошибка'), 'error');
-        }
-    } catch (err) {
-        console.error('Restore error:', err);
-        setDbStatus('Ошибка связи с сервером', 'error');
-    } finally {
-        e.target.value = '';
-    }
+    e.target.value = '';
 });
-
-// Copy to Reserve
-document.getElementById('pg-copy-reserve-btn').addEventListener('click', async () => {
-    if (!confirm('Вы уверены, что хотите скопировать текущую БД в резервную? Старая резервная БД будет очищена.')) {
-        return;
-    }
-
-    setDbStatus('Копирование базы данных...', 'info');
-    const btn = document.getElementById('pg-copy-reserve-btn');
-    btn.disabled = true;
-
-    try {
-        const res = await fetch('/api/super/db-copy-reserve', { method: 'POST' });
-        const result = await res.json();
-
-        if (res.ok && result.success) {
-            setDbStatus('База данных успешно скопирована в резерв!', 'success');
-        } else {
-            console.error('Copy error:', result);
-            setDbStatus('Ошибка копирования: ' + (result.error || 'См. консоль'), 'error');
-            if (result.details) console.log(result.details);
-        }
-    } catch (err) {
-        console.error('Copy request error:', err);
-        setDbStatus('Ошибка связи с сервером', 'error');
-    } finally {
-        btn.disabled = false;
-    }
-});
-
-async function checkReserveStatus() {
-    const statusEl = document.getElementById('reserve-db-status');
-    const copyBtn = document.getElementById('pg-copy-reserve-btn');
-
-    try {
-        const res = await fetch('/api/super/db-reserve-status');
-        const data = await res.json();
-
-        if (data.success) {
-            statusEl.innerHTML = '<span style="color: #10b981;">✅ Резервная БД доступна</span>';
-            copyBtn.disabled = false;
-        } else {
-            statusEl.innerHTML = `<span style="color: #ef4444;">❌ ${data.error || 'Ошибка подключения'}</span>`;
-            copyBtn.disabled = true;
-            statusEl.title = data.error || '';
-        }
-    } catch (err) {
-        statusEl.innerHTML = '<span style="color: #ef4444;">❌ Ошибка проверки статуса</span>';
-        copyBtn.disabled = true;
-    }
-}
-
-function setDbStatus(msg, type) {
-    const el = document.getElementById('db-status-msg');
-    el.style.display = 'block';
-    el.textContent = msg;
-
-    if (type === 'error') {
-        el.style.background = '#fee2e2';
-        el.style.color = '#ef4444';
-        el.style.border = '1px solid #fca5a5';
-    } else if (type === 'success') {
-        el.style.background = '#dcfce7';
-        el.style.color = '#10b981';
-        el.style.border = '1px solid #86efac';
-    } else {
-        el.style.background = '#eff6ff';
-        el.style.color = '#3b82f6';
-        el.style.border = '1px solid #93c5fd';
-    }
-}
+document.getElementById('pg-copy-reserve-btn').addEventListener('click', handleCopyToReserve);
 
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
-    try {
-        await fetch('/api/logout', { method: 'POST' });
-        window.location.reload();
-    } catch (err) {
-        console.error('Logout error:', err);
-    }
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.reload();
 });
 
-// Load families
+// Families
 async function loadFamilies() {
     try {
         const res = await fetch('/api/super/families');
@@ -156,371 +45,210 @@ async function loadFamilies() {
             const data = await res.json();
             familiesData = data.families || [];
             renderFamilies();
-        } else {
-            console.error('Failed to load families');
-            document.getElementById('loading').textContent = 'Ошибка загрузки';
         }
-    } catch (err) {
-        console.error('Error loading families:', err);
-        document.getElementById('loading').textContent = 'Ошибка связи с сервером';
-    }
+    } catch (err) { console.error('Error:', err); }
 }
 
-// Load Base Data
-async function loadBaseData() {
-    try {
-        const res = await fetch('/api/super/base-data');
-        if (res.ok) {
-            baseData = await res.json();
-            renderBaseData();
+function findLatestFamily(families) {
+    let latest = null;
+    for (const family of families) {
+        if (!latest || new Date(family.created_at) > new Date(latest.created_at)) {
+            latest = family;
         }
-    } catch (err) {
-        console.error('Error loading base data:', err);
     }
+    return latest;
 }
 
-// Render families table
+function updateStats(families) {
+    document.getElementById('total-families').textContent = families.length;
+    const latest = findLatestFamily(families);
+    document.getElementById('latest-family').textContent = latest ? `${latest.email || latest.id} (${new Date(latest.created_at).toLocaleString('ru-RU')})` : '-';
+}
+
+function getFamilyStatusBadge(isBlocked) {
+    return isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>';
+}
+
+function getFamilyBlockButtonLabel(isBlocked) {
+    return isBlocked ? '🔓' : '🔒';
+}
+
+function getFamilyBlockButtonClass(isBlocked) {
+    return isBlocked ? 'unblock' : '';
+}
+
+function buildFamilyRowHtml(f) {
+    return `
+            <td style="opacity:0.5" class="hide-mobile">#${f.id}</td>
+            <td><strong>${f.email || f.id}</strong></td>
+            <td class="hide-mobile">${f.email || '-'}</td>
+            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
+            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
+            <td class="hide-mobile" style="text-align: center;"><span class="badge">${f.children.length}</span></td>
+            <td class="hide-mobile">${f.tasksCount || 0}</td>
+            <td class="hide-mobile">${f.shopCount || 0}</td>
+            <td class="hide-mobile">-</td>
+            <td>${getFamilyStatusBadge(f.isBlocked)}</td>
+            <td class="hide-mobile">${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
+            <td class="hide-mobile" style="font-size:0.9rem">${f.last_activity ? new Date(f.last_activity).toLocaleString('ru-RU') : '-'}</td>
+            <td>
+                <div style="display:flex; gap:4px">
+                    <button class="view-btn" onclick="viewFamily('${f.id}')">👁️</button>
+                    <button class="block-btn ${getFamilyBlockButtonClass(f.isBlocked)}" onclick="toggleBlock('${f.id}', ${!f.isBlocked})">${getFamilyBlockButtonLabel(f.isBlocked)}</button>
+                </div>
+            </td>`;
+}
+
 function renderFamilies() {
     const tbody = document.getElementById('families-tbody');
     tbody.innerHTML = '';
-
     if (familiesData.length === 0) {
         document.getElementById('loading').textContent = 'Нет магазинов';
         return;
     }
-
     document.getElementById('loading').style.display = 'none';
     document.getElementById('families-table').style.display = 'table';
+    updateStats(familiesData);
 
-    // Update stats
-    document.getElementById('total-families').textContent = familiesData.length;
-    const latest = familiesData.length > 0 ? familiesData.reduce((latest, f) => {
-        return new Date(f.created_at) > new Date(latest.created_at) ? f : latest;
-    }, familiesData[0]) : null;
-
-    if (latest) {
-        const date = new Date(latest.created_at).toLocaleString('ru-RU');
-        document.getElementById('latest-family').textContent = `${latest.name} (${date})`;
-    } else {
-        document.getElementById('latest-family').textContent = '-';
-    }
-
-    // Render table rows
-    familiesData.forEach(family => {
+    for (const f of familiesData) {
         const tr = document.createElement('tr');
-        const createdDate = new Date(family.created_at).toLocaleDateString('ru-RU');
-        const lastActivityDate = family.last_activity ? new Date(family.last_activity).toLocaleString('ru-RU') : '-';
-
-        tr.innerHTML = `
-            <td style="opacity:0.5" class="hide-mobile">#${family.id}</td>
-            <td><strong>${family.name}</strong></td>
-            <td class="hide-mobile">${family.email || '-'}</td>
-            <td class="hide-mobile"><code>${family.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile"><code>${family.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile" style="text-align: center;">
-                <span title="${family.children.length} детей" class="badge">${family.children.length}</span>
-            </td>
-            <td class="hide-mobile">${family.tasksCount || 0}</td>
-            <td class="hide-mobile">${family.shopCount || 0}</td>
-            <td class="hide-mobile">-</td>
-            <td>${family.isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>'}</td>
-            <td class="hide-mobile">${createdDate}</td>
-            <td class="hide-mobile" style="font-size:0.9rem">${lastActivityDate}</td>
-            <td>
-                <div style="display:flex; gap:4px">
-                    <button class="view-btn" onclick="viewFamily('${family.id}')">👁️</button>
-                    <button class="block-btn ${family.isBlocked ? 'unblock' : ''}" 
-                            onclick="toggleBlock('${family.id}', ${!family.isBlocked})">
-                        ${family.isBlocked ? '🔓' : '🔒'}
-                    </button>
-                </div>
-            </td>
-        `;
+        tr.innerHTML = buildFamilyRowHtml(f);
         tbody.appendChild(tr);
-    });
+    }
 }
 
-// Render Base Data
-function renderBaseData() {
-    renderList('tasks', baseData.tasks, document.getElementById('base-tasks-list'));
-    renderList('products', baseData.products, document.getElementById('base-products-list'));
+// Base Data
+async function loadBaseData() {
+    try {
+        const res = await fetch('/api/super/base-data');
+        if (res.ok) {
+            const data = await res.json();
+            setBaseData(data);
+            renderBase();
+        }
+    } catch (err) { console.error('Error:', err); }
 }
 
-
-function renderList(type, items, container) {
-    container.innerHTML = '';
-
-    // Group by group
-    const grouped = items.reduce((acc, item) => {
-        const cat = item.group || item.category || 'Без категории';
-        if (!acc[cat]) acc[cat] = [];
-        acc[cat].push(item);
-        return acc;
-    }, {});
-
-    Object.keys(grouped).sort().forEach(cat => {
-        const catHeader = document.createElement('h3');
-        catHeader.className = 'grid-category-header';
-        catHeader.textContent = cat;
-        container.appendChild(catHeader);
-
-        grouped[cat].forEach(item => {
-            // Find original index in baseData[type]
-            const originalIndex = baseData[type].findIndex(i => i.id === item.id);
-            const card = document.createElement('div');
-            const freqText = item.frequency ? ` (${item.frequency.limit}/${item.frequency.period})` : '';
-            const moneyLimitText = item.money_limit ? ` | Limit: ${item.money_limit} 🪙` : '';
-            card.className = 'item-card';
-            card.innerHTML = `
-                <div class="item-header">
-                    <span>${item.name}</span>
-                </div>
-                <div class="item-meta" style="color: #6366f1; font-weight: 600;">
-                    ${item.coins || item.price} 🪙 ${freqText}${moneyLimitText}
-                </div>
-                <div class="item-meta">
-                    Возраст: ${item.age_min}-${item.age_max} лет
-                </div>
-                <div class="item-actions">
-                    <button class="btn-sm btn-edit" onclick="editItem('${type}', ${originalIndex})">✏️</button>
-                    <button class="btn-sm btn-del" onclick="deleteItem('${type}', ${originalIndex})">🗑️</button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    });
+function renderBase() {
+    const data = getBaseData();
+    renderList('tasks', data.tasks, document.getElementById('base-tasks-list'));
+    renderList('products', data.products, document.getElementById('base-products-list'));
 }
 
-// Edit Item
-window.editItem = (type, index) => {
-    const item = index === -1 ? { name: '', age_min: 7, age_max: 18 } : (type === 'tasks' ? baseData.tasks[index] : baseData.products[index]);
-    const isTask = type === 'tasks';
+function getPeriodOptions(freq) {
+    const p = freq.period;
+    return `
+        <option value="day" ${p === 'day' ? 'selected' : ''}>В день</option>
+        <option value="week" ${p === 'week' ? 'selected' : ''}>В неделю</option>
+        <option value="month" ${p === 'month' ? 'selected' : ''}>В месяц</option>
+        <option value="year" ${p === 'year' ? 'selected' : ''}>В год</option>`;
+}
 
-    const html = `
-        <div class="input-group">
-            <label>Название</label>
-            <input type="text" id="edit-name" value="${item.name}">
-        </div>
-        <div class="input-group">
-            <label>Группа</label>
-            <input type="text" id="edit-group" value="${item.group || item.category || ''}" placeholder="Напр: Дом, Учеба...">
-        </div>
-        <div class="input-group">
-            <label>${isTask ? 'Награда (монеты)' : 'Цена (монеты)'}</label>
-            <input type="number" id="edit-cost" value="${item.coins || item.price || 0}">
-        </div>
-        <div class="input-group">
-            <label>Возраст (мин)</label>
-            <input type="number" id="edit-min" value="${item.age_min}">
-        </div>
-        <div class="input-group">
-            <label>Возраст (макс)</label>
-            <input type="number" id="edit-max" value="${item.age_max}">
-        </div>
+function getEditFormHtml(type, item) {
+    const isT = type === 'tasks';
+    const f = item.frequency || { limit: '', period: 'day' };
+    const cost = item.coins || item.price || 0;
+    const mL = !isT ? `<div class="input-group"><label>Денежный лимит</label><input type="number" id="edit-money-limit" value="${item.money_limit || ''}"></div>` : '';
+
+    return `
+        <div class="input-group"><label>Название</label><input type="text" id="edit-name" value="${item.name}"></div>
+        <div class="input-group"><label>Группа</label><input type="text" id="edit-group" value="${item.group || item.category || ''}"></div>
+        <div class="input-group"><label>${isT ? 'Награда' : 'Цена'}</label><input type="number" id="edit-cost" value="${cost}"></div>
+        <div class="input-group"><label>Возраст (мин)</label><input type="number" id="edit-min" value="${item.age_min}"></div>
+        <div class="input-group"><label>Возраст (макс)</label><input type="number" id="edit-max" value="${item.age_max}"></div>
         <div style="display: flex; gap: 1rem; border-top: 1px solid #eee; padding-top: 1rem; margin-top: 1rem;">
-            <div class="input-group" style="flex: 1">
-                <label>Лимит (раз)</label>
-                <input type="number" id="edit-limit" value="${item.frequency ? item.frequency.limit : ''}" placeholder="Без лимита">
-            </div>
-            <div class="input-group" style="flex: 1">
-                <label>Период</label>
-                <select id="edit-period">
-                    <option value="day" ${(item.frequency && item.frequency.period === 'day') ? 'selected' : ''}>В день</option>
-                    <option value="week" ${(item.frequency && item.frequency.period === 'week') ? 'selected' : ''}>В неделю</option>
-                    <option value="month" ${(item.frequency && item.frequency.period === 'month') ? 'selected' : ''}>В месяц</option>
-                    <option value="year" ${(item.frequency && item.frequency.period === 'year') ? 'selected' : ''}>В год</option>
-                </select>
+            <div class="input-group" style="flex: 1"><label>Лимит</label><input type="number" id="edit-limit" value="${f.limit}"></div>
+            <div class="input-group" style="flex: 1"><label>Период</label>
+                <select id="edit-period">${getPeriodOptions(f)}</select>
             </div>
         </div>
-        ${!isTask ? `
-        <div class="input-group">
-            <label>Денежный лимит (монеты)</label>
-            <input type="number" id="edit-money-limit" value="${item.money_limit || ''}" placeholder="Без лимита">
-        </div>
-        ` : ''}
-        <button class="save-btn" onclick="saveItem('${type}', ${index})">Сохранить</button>
-    `;
+        ${mL}
+        <button class="save-btn" onclick="saveBtnHandler('${type}', ${item.id ? 0 : -1})">Сохранить</button>`;
+}
 
-    document.getElementById('edit-form-container').innerHTML = html;
+window.editItem = (type, index) => {
+    const data = getBaseData();
+    const item = index === -1 ? { name: '', age_min: 7, age_max: 18 } : (type === 'tasks' ? data.tasks[index] : data.products[index]);
+
+    document.getElementById('edit-form-container').innerHTML = getEditFormHtml(type, item);
+    // Since we extracted the template, saveBtnHandler needs the real index.
+    // Patching the button's onclick directly for convenience or updating template to take index.
+    const btn = document.querySelector('#edit-form-container .save-btn');
+    if (btn) btn.setAttribute('onclick', `saveBtnHandler('${type}', ${index})`);
+
     document.getElementById('edit-modal-title').textContent = index === -1 ? 'Добавить' : 'Редактировать';
     document.getElementById('edit-modal').classList.add('active');
 };
 
-window.addItem = (type) => editItem(type, -1);
-
-window.saveItem = async (type, index) => {
+window.saveBtnHandler = async (type, index) => {
     const isTask = type === 'tasks';
+    const data = getBaseData();
     const newItem = {
-        id: index === -1 ? Date.now().toString() : (type === 'tasks' ? baseData.tasks[index].id : baseData.products[index].id),
+        id: index === -1 ? Date.now().toString() : (type === 'tasks' ? data.tasks[index].id : data.products[index].id),
         name: document.getElementById('edit-name').value,
         group: document.getElementById('edit-group').value,
         age_min: parseInt(document.getElementById('edit-min').value),
         age_max: parseInt(document.getElementById('edit-max').value),
     };
-
     const limit = parseInt(document.getElementById('edit-limit').value);
-    const period = document.getElementById('edit-period').value;
-    if (limit > 0) {
-        newItem.frequency = { limit, period };
-    } else {
-        newItem.frequency = null;
-    }
-
+    newItem.frequency = limit > 0 ? { limit, period: document.getElementById('edit-period').value } : null;
     if (!isTask) {
-        const moneyLimit = parseInt(document.getElementById('edit-money-limit').value);
-        if (moneyLimit > 0) newItem.money_limit = moneyLimit;
-        else newItem.money_limit = null;
+        const ml = parseInt(document.getElementById('edit-money-limit').value);
+        newItem.money_limit = ml > 0 ? ml : null;
     }
-
     const cost = parseInt(document.getElementById('edit-cost').value);
-    if (isTask) newItem.coins = cost;
-    else newItem.price = cost;
+    if (isTask) newItem.coins = cost; else newItem.price = cost;
 
-    if (index === -1) {
-        baseData[type].push(newItem);
-    } else {
-        baseData[type][index] = { ...baseData[type][index], ...newItem };
-    }
-
-    await saveBaseDataToServer();
-    closeEditModal();
-    renderBaseData();
-};
-
-window.deleteItem = async (type, index) => {
-    if (confirm('Удалить?')) {
-        baseData[type].splice(index, 1);
-        await saveBaseDataToServer();
-        renderBaseData();
+    if (await saveItem(type, index, newItem)) {
+        document.getElementById('edit-modal').classList.remove('active');
+        renderBase();
     }
 };
 
-async function saveBaseDataToServer() {
-    try {
-        await fetch('/api/super/base-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(baseData)
-        });
-    } catch (err) {
-        alert('Ошибка сохранения');
-    }
-}
+window.addItem = (t) => editItem(t, -1);
+window.deleteItem = async (t, i) => { if (await deleteItem(t, i)) renderBase(); };
+window.closeEditModal = () => document.getElementById('edit-modal').classList.remove('active');
 
-window.closeEditModal = () => {
-    document.getElementById('edit-modal').classList.remove('active');
-};
-
-// View family details
+// Family View
 window.viewFamily = async (familyId) => {
     const modal = document.getElementById('family-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalBody = document.getElementById('modal-body');
-
     modal.classList.add('active');
-    modalTitle.textContent = 'Загрузка...';
-    modalBody.innerHTML = '<div class="loading">Загрузка данных...</div>';
-
+    document.getElementById('modal-title').textContent = 'Загрузка...';
+    document.getElementById('modal-body').innerHTML = '<div class="loading">Загрузка данных...</div>';
     try {
         const res = await fetch(`/api/super/family/${familyId}/data`);
-        if (res.ok) {
-            const data = await res.json();
-            renderFamilyDetails(data);
-        } else {
-            modalBody.innerHTML = '<p style="color: red;">Ошибка загрузки данных</p>';
-        }
-    } catch (err) {
-        console.error('Error loading family data:', err);
-        modalBody.innerHTML = '<p style="color: red;">Ошибка связи с сервером</p>';
-    }
+        if (res.ok) renderFamilyDetails(await res.json());
+        else document.getElementById('modal-body').innerHTML = '<p style="color: red;">Ошибка загрузки</p>';
+    } catch (err) { document.getElementById('modal-body').innerHTML = '<p style="color: red;">Ошибка связи</p>'; }
 };
 
-// Close modal
-document.getElementById('modal-close').addEventListener('click', () => {
-    document.getElementById('family-modal').classList.remove('active');
-});
+document.getElementById('modal-close').addEventListener('click', () => document.getElementById('family-modal').classList.remove('active'));
+document.getElementById('family-modal').addEventListener('click', (e) => { if (e.target.id === 'family-modal') document.getElementById('family-modal').classList.remove('active'); });
 
-// Close modal on outside click
-document.getElementById('family-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'family-modal') {
-        document.getElementById('family-modal').classList.remove('active');
-    }
-});
-
-// Initialize
-loadFamilies();
-loadBaseData();
-
-async function toggleBlock(familyId, shouldBlock) {
-    if (!confirm(shouldBlock ? 'Заблокировать магазин?' : 'Разблокировать магазин?')) return;
-
+window.toggleBlock = async (familyId, shouldBlock) => {
+    if (!confirm(shouldBlock ? 'Заблокировать?' : 'Разблокировать?')) return;
     try {
         const res = await fetch(`/api/super/family/${familyId}/block`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isBlocked: shouldBlock })
         });
-        if (res.ok) {
-            // Reload list
-            loadFamilies();
-        } else {
-            alert('Ошибка при обновлении статуса');
-        }
-    } catch (err) {
-        console.error('Error:', err);
-        alert('Ошибка связи с сервером');
-    }
-}
+        if (res.ok) loadFamilies(); else alert('Ошибка');
+    } catch (err) { alert('Ошибка связи'); }
+};
 
 window.copyMagicLink = (token) => {
     if (!token) return alert('Token missing');
-    const link = `${window.location.origin}/login-child/${token}`;
-    navigator.clipboard.writeText(link).then(() => {
-        alert('Link copied to clipboard');
-    }).catch(err => {
-        console.error('Failed to copy link:', err);
-        alert('Failed to copy. See console.');
-    });
+    navigator.clipboard.writeText(`${window.location.origin}/login-child/${token}`).then(() => alert('Link copied')).catch(() => alert('Failed to copy'));
 };
 
 window.regenerateToken = async (familyId, childId) => {
-    if (!confirm('Regenerate child link? Old link will stop working.')) return;
+    if (!confirm('Regenerate link?')) return;
     try {
-        let url = '';
-        if (childId) {
-            url = `/api/super/child/${childId}/regenerate-token`;
-        } else {
-            // Legacy
-            url = `/api/super/family/${familyId}/regenerate-token`;
-        }
-
+        const url = childId ? `/api/super/child/${childId}/regenerate-token` : `/api/super/family/${familyId}/regenerate-token`;
         const res = await fetch(url, { method: 'POST' });
-        if (res.ok) {
-            alert('Token regenerated');
-            // Re-view to update modal if we know familyId, or just reload logic
-            // If we have familyId, confirm view. If only childId, we need finding familyId to view?
-            // viewFamily logic uses global ID.
-            // If called from list, we might not know familyId easily if just childId passed.
-            // But we render the list inside a modal which KNOWS the familyId (from renderFamilyDetails scope?)
-            // No, renderFamilyDetails is called with familyData. 
-            // Better to reload list. And if modal is open, reload modal data?
-            // viewFamily uses familyId.
-            // Let's rely on reloadFamilies for now or try to refresh modal if open.
-            const modal = document.getElementById('family-modal');
-            if (modal.classList.contains('active')) {
-                // Try to grab family Id from modal content or stored variable?
-                // Let's just reload table for now.
-            }
-            loadFamilies();
-
-            // If we are in modal view, we want to refresh it.
-            // We can check the ID from the modal if we stored it.
-            // For now simplest is alert and user re-opens if needed.
-        } else {
-            alert('Failed to regenerate');
-        }
-    } catch (err) {
-        console.error('Error:', err);
-        alert('Server error');
-    }
+        if (res.ok) { alert('Token regenerated'); loadFamilies(); } else alert('Failed');
+    } catch (err) { alert('Error'); }
 };
+
+loadFamilies(); loadBaseData();

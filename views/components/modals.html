@@ -1,6 +1,5 @@
 <!-- Модальное окно: Смена ПИН-кода -->
-<div class="modal" id="change-pin-modal">
-    <div class="modal__backdrop"></div>
+<dialog class="modal" role="dialog" aria-modal="true" id="change-pin-modal">
     <div class="modal__content">
         <h3>🔑 Сменить Пароль</h3>
         <p>Для смены введите старый и новый пароль</p>
@@ -18,11 +17,10 @@
             <button class="btn btn--primary" id="change-pin-submit">Сохранить</button>
         </div>
     </div>
-</div>
+</dialog>
 
 <!-- Модальное окно: Редактирование задания -->
-<div class="modal" id="task-modal">
-    <div class="modal__backdrop"></div>
+<dialog class="modal" role="dialog" aria-modal="true" id="task-modal">
     <div class="modal__content">
         <h3 id="task-modal-title">Добавить задание</h3>
         <div class="form-group">
@@ -35,7 +33,7 @@
         </div>
         <div class="form-group">
             <label for="task-coins">Монеты</label>
-            <input type="number" class="input" id="task-coins" placeholder="10" min="1">
+            <input type="number" inputmode="numeric" class="input" id="task-coins" placeholder="10" min="1">
         </div>
         <div class="form-group">
             <label for="task-comment">Комментарий</label>
@@ -45,7 +43,8 @@
         <div class="form-group">
             <label for="task-freq-limit">Частота (раз в период)</label>
             <div class="input-group">
-                <input type="number" class="input" id="task-freq-limit" placeholder="Без лимита" min="0">
+                <input type="number" inputmode="numeric" class="input" id="task-freq-limit" placeholder="Без лимита"
+                    min="0">
                 <select class="input" id="task-freq-period">
                     <option value="day">в день</option>
                     <option value="week">в неделю</option>
@@ -60,11 +59,10 @@
             <button class="btn btn--primary" id="task-save">Сохранить</button>
         </div>
     </div>
-</div>
+</dialog>
 
 <!-- Модальное окно: Редактирование товара -->
-<div class="modal" id="shop-modal">
-    <div class="modal__backdrop"></div>
+<dialog class="modal" role="dialog" aria-modal="true" id="shop-modal">
     <div class="modal__content">
         <h3 id="shop-modal-title">Добавить товар</h3>
         <div class="form-group">
@@ -77,13 +75,14 @@
         </div>
         <div class="form-group">
             <label for="shop-price">Цена (монеты)</label>
-            <input type="number" class="input" id="shop-price" placeholder="50" min="0">
+            <input type="number" inputmode="numeric" class="input" id="shop-price" placeholder="50" min="0">
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label for="shop-money-limit">Лимит в деньгах</label>
-                <input type="number" class="input" id="shop-money-limit" placeholder="Без лимита" min="0">
+                <input type="number" inputmode="numeric" class="input" id="shop-money-limit" placeholder="Без лимита"
+                    min="0">
             </div>
             <div class="form-group">
                 <label for="shop-type">Тип</label>
@@ -98,7 +97,8 @@
         <div class="form-group">
             <label for="shop-freq-limit">Частота (раз в период)</label>
             <div class="input-group">
-                <input type="number" class="input" id="shop-freq-limit" placeholder="1" min="1" value="1">
+                <input type="number" inputmode="numeric" class="input" id="shop-freq-limit" placeholder="1" min="1"
+                    value="1">
                 <select class="input" id="shop-freq-period">
                     <option value="day">в день</option>
                     <option value="week">в неделю</option>
@@ -118,11 +118,10 @@
             <button class="btn btn--primary" id="shop-save">Сохранить</button>
         </div>
     </div>
-</div>
+</dialog>
 
 <!-- Модальное окно: Подтверждение действия -->
-<div class="modal" id="confirm-modal">
-    <div class="modal__backdrop"></div>
+<dialog class="modal" role="dialog" aria-modal="true" id="confirm-modal">
     <div class="modal__content">
         <h3 id="confirm-title">Подтвердите действие</h3>
         <p id="confirm-message">Вы уверены?</p>
@@ -131,11 +130,10 @@
             <button class="btn btn--primary" id="confirm-ok">Подтвердить</button>
         </div>
     </div>
-</div>
+</dialog>
 
 <!-- Модальное окно: Редактирование правил -->
-<div class="modal" id="rules-modal">
-    <div class="modal__backdrop"></div>
+<dialog class="modal" role="dialog" aria-modal="true" id="rules-modal">
     <div class="modal__content modal__content--wide">
         <h3>✏️ Редактировать Правила</h3>
         <p class="hint">Используйте Markdown для форматирования.</p>
@@ -148,11 +146,10 @@
             <button class="btn btn--primary" id="rules-save">Сохранить</button>
         </div>
     </div>
-</div>
+</dialog>
 
 <!-- Модальное окно: Ссылка для ребенка -->
-<div class="modal" id="child-link-modal">
-    <div class="modal__backdrop"></div>
+<dialog class="modal" role="dialog" aria-modal="true" id="child-link-modal">
     <div class="modal__content">
         <h3>🔗 Ссылка для входа ребенка</h3>
         <p>Отправьте эту ссылку ребенку, чтобы он мог войти без пароля.</p>
@@ -166,31 +163,10 @@
             <button class="btn btn--primary" id="copy-child-link-btn">Копировать</button>
         </div>
     </div>
-</div>
-
-<!-- Модальное окно: Настройки магазина -->
-<div class="modal" id="family-settings-modal">
-    <div class="modal__backdrop"></div>
-    <div class="modal__content">
-        <h3>⚙️ Настройки магазина</h3>
-        <div class="form-group">
-            <label for="settings-family-name">Название магазина</label>
-            <input type="text" class="input" id="settings-family-name">
-        </div>
-        <div class="form-group">
-            <label for="settings-money-limit">Лимит трат в месяц</label>
-            <input type="number" class="input" id="settings-money-limit" min="0">
-        </div>
-        <div class="modal__actions">
-            <button class="btn btn--secondary" id="family-settings-cancel">Отмена</button>
-            <button class="btn btn--primary" id="family-settings-save">Сохранить</button>
-        </div>
-    </div>
-</div>
+</dialog>
 
 <!-- Модальное окно: Добавить ребенка -->
-<div class="modal" id="add-child-modal">
-    <div class="modal__backdrop"></div>
+<dialog class="modal" role="dialog" aria-modal="true" id="add-child-modal">
     <div class="modal__content">
         <h3>👶 Добавить ребенка</h3>
         <div class="form-group">
@@ -202,4 +178,4 @@
             <button class="btn btn--primary" id="add-child-save">Добавить</button>
         </div>
     </div>
-</div>
+</dialog>

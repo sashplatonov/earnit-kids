@@ -18,7 +18,8 @@ The project is deployed and available at: [https://coins-kids-shop.onrender.com/
 -   **Earning & Spending** — Simple UI for awarding coins and processing purchases across all children.
 -   **Coin Requests** — Children can send requests for custom coin amounts or specific items for approval (Admin).
 -   **Transaction History** — Detailed log of all earnings, spendings, and approvals.
--   **Database Management** — Integrated backup and restore functionality (PostgreSQL).
+-   **Database Management** — Integrated backup and restore functionality (PostgreSQL, including automatic Telegram backups).
+-   **Telegram Notifications** — Real-time alerts for server errors and scheduled database backups (see [Setup Guide](docs/telegram-setup.md)).
 -   **Session Security** — Secure `HttpOnly` cookies with session management.
 -   **Mobile First** — Fully responsive design optimized for phones and tablets.
 
@@ -214,7 +215,7 @@ For detailed store workflows and signing steps, see:
 - [ ] **Notifications**: Add email or push notifications for parents when a child submits a request.
 - [x] **Analytics**: Create a dashboard for parents to track coin earning/spending trends over time.
 - [ ] **UI Refinement**: Continue improving the responsiveness of the Super Admin tables.
-- [ ] **Backup Automation**: Implement scheduled database backups.
+- [x] **Backup Automation**: Implement scheduled database backups.
 - [ ] **Language Support**: Add multi-language support (i18n).
 
 ## 🔐 Security

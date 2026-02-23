@@ -75,23 +75,27 @@ async function runMigration(filename) {
     }
 }
 
-async function migrate() {
-    process.stdout.write('🚀 Checking database migrations...');
-
+async function testConnection() {
     try {
-        // Test connection
         await pool.query('SELECT NOW()');
     } catch (err) {
         console.error(' ❌\n❌ Database connection failed:', err.message);
         throw new Error('Database connection failed');
     }
+}
 
+async function getPendingMigrations() {
     await ensureMigrationsTable();
-
     const executed = await getExecutedMigrations();
     const files = getMigrationFiles();
-    const pending = files.filter(f => !executed.includes(f));
+    return files.filter(f => !executed.includes(f));
+}
 
+async function migrate() {
+    process.stdout.write('🚀 Checking database migrations...');
+    await testConnection();
+
+    const pending = await getPendingMigrations();
     if (pending.length === 0) {
         console.log(' ✅ (up to date)');
         return;

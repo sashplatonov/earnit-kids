@@ -132,30 +132,6 @@ async function deleteChild(familyId, childId) {
 }
 
 /**
- * Update family settings
- * @param {string} familyId 
- * @param {Object} settings 
- * @returns {Promise<Object>}
- */
-async function updateFamilySettings(familyId, settings) {
-    const family = await familyRepository.findById(familyId);
-    if (!family) return { success: false, error: 'Not found' };
-
-    const updateData = {};
-    if (settings.name) updateData.name = settings.name;
-
-    // monthly_limit is now per child. If settings has it, do we update ALL children?
-    // Or this is legacy?
-    // Let's assume this updates only Family Name/Admin Password.
-    // Child updates should go through updateChild.
-
-    if (await familyRepository.update(familyId, updateData)) {
-        return { success: true };
-    }
-    return { success: false, error: 'Save failed' };
-}
-
-/**
  * Find family by email
  * @param {string} email 
  * @returns {Promise<Object|null>}
@@ -221,7 +197,7 @@ async function searchByNickname(nickname) {
  * @param {number} friendChildId 
  * @returns {Promise<Object>}
  */
-async function addFriend(childId, friendChildId) {
+async function addFriend(familyId, childId, friendChildId) {
     if (childId === friendChildId) {
         return { success: false, error: 'Cannot add yourself' };
     }
@@ -231,7 +207,7 @@ async function addFriend(childId, friendChildId) {
         return { success: false, error: 'User not found' };
     }
 
-    if (await familyDataRepository.addFriend(childId, friendChildId)) {
+    if (await familyDataRepository.addFriend(familyId, childId, friendChildId)) {
         return { success: true };
     }
     return { success: false, error: 'Already friends or failed to add' };
@@ -258,6 +234,14 @@ async function getAnalyticsData(familyId, childId, timeframe) {
     return await familyDataRepository.getAnalyticsData(familyId, childId, timeframe);
 }
 
+async function getPaginatedHistory(familyId, childId, pagination) {
+    return await familyDataRepository.getPaginatedHistory(familyId, childId, pagination);
+}
+
+async function getPaginatedRequests(familyId, childId, pagination) {
+    return await familyDataRepository.getPaginatedRequests(familyId, childId, pagination);
+}
+
 module.exports = {
     loadFamilies,
     saveFamilies,
@@ -266,16 +250,16 @@ module.exports = {
     updateLastActivity,
     getChildLoginLink,
     regenerateChildToken,
-    updateFamilySettings,
     findFamilyByEmail,
     updateNickname,
     searchByNickname,
     addFriend,
     getFriendsData,
     getAnalyticsData,
+    getPaginatedHistory,
+    getPaginatedRequests,
     updateChildSettings,
     addChild,
     deleteChild,
     DEFAULT_FAMILY_DATA
 };
-
