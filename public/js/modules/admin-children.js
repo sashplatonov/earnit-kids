@@ -4,11 +4,24 @@ import { renderAll } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
 import { refreshChildLinkInline } from './admin-settings.js';
 
+function getNumericLimit(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function getMonthlyLimit(child) {
+    return getNumericLimit(child?.monthlyLimit ?? child?.monthly_limit, 10000);
+}
+
+function getDailyLimit(child) {
+    return getNumericLimit(child?.dailyCoinLimit ?? child?.daily_coin_limit, 0);
+}
+
 function updateSettingsFields(child) {
     const fields = {
         'settings-child-name-inline': child.name,
-        'settings-money-limit-inline': child.monthlyLimit ?? 10000,
-        'settings-day-coin-limit-inline': child.dailyCoinLimit ?? 0
+        'settings-money-limit-inline': getMonthlyLimit(child),
+        'settings-day-coin-limit-inline': getDailyLimit(child)
     };
     Object.keys(fields).forEach(id => {
         const el = document.getElementById(id);
@@ -21,8 +34,8 @@ export function switchChild(childId) {
     setState({
         currentChildId: childId,
         balance: child?.balance || 0,
-        monthlyLimit: child?.monthlyLimit ?? 10000,
-        dailyCoinLimit: child?.dailyCoinLimit ?? 0
+        monthlyLimit: getMonthlyLimit(child),
+        dailyCoinLimit: getDailyLimit(child)
     });
 
     renderAll();

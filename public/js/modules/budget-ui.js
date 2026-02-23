@@ -92,14 +92,22 @@ function updateMonthlyTexts(stats, monthlyLimit) {
 function updateMonthlyBudgetUI(stats, monthlyLimit) {
     updateMonthlyTexts(stats, monthlyLimit);
 
-    const progress = Math.min((stats.moneySpent / monthlyLimit) * 100, 100);
     const bar = document.getElementById('money-progress') || document.getElementById('rsd-progress');
     if (!bar) return;
 
+    if (monthlyLimit <= 0) {
+        bar.style.width = '0%';
+        bar.className = 'progress-bar';
+        if (bar.parentElement) bar.parentElement.style.opacity = 0.45;
+        return;
+    }
+
+    const progress = Math.min((stats.moneySpent / monthlyLimit) * 100, 100);
     bar.style.width = `${progress}%`;
     bar.className = 'progress-bar';
     if (progress > 90) bar.classList.add('danger');
     else if (progress > 70) bar.classList.add('warning');
+    if (bar.parentElement) bar.parentElement.style.opacity = 1;
 }
 
 function updateDailyTexts(dailyStats, dailyLimit) {
@@ -146,6 +154,34 @@ function updateDailyLimitUI(dailyStats, dailyLimit) {
     }
 }
 
+function toSafeLimit(value, fallback = 0) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return fallback;
+    return numeric;
+}
+
+function getChildDailyLimit(child, fallback) {
+    if (!child) return toSafeLimit(fallback, 0);
+    if (child.dailyCoinLimit !== undefined && child.dailyCoinLimit !== null) {
+        return toSafeLimit(child.dailyCoinLimit, 0);
+    }
+    if (child.daily_coin_limit !== undefined && child.daily_coin_limit !== null) {
+        return toSafeLimit(child.daily_coin_limit, 0);
+    }
+    return toSafeLimit(fallback, 0);
+}
+
+function resolveDailyLimit(state, activeChildId) {
+    if (state.isAdmin) {
+        const child = (state.children || []).find((item) => String(item.id) === String(activeChildId));
+        return getChildDailyLimit(child, state.dailyCoinLimit);
+    }
+    if (state.children && state.children.length > 0) {
+        return getChildDailyLimit(state.children[0], state.dailyCoinLimit);
+    }
+    return toSafeLimit(state.dailyCoinLimit, 0);
+}
+
 function updateLargePurchaseUI(stats) {
     const largeEl = document.getElementById('large-purchase');
     const largeIcon = document.getElementById('large-icon');
@@ -173,14 +209,15 @@ export function updateBudgetStatsUI(state, config, activeChildId) {
 
     const stats = getMonthlyStats(state, currentMonth, scopedChildId);
 
-    const monthlyLimit = (state.monthlyLimit !== undefined && state.monthlyLimit !== null)
+    const monthlyLimitRaw = (state.monthlyLimit !== undefined && state.monthlyLimit !== null)
         ? state.monthlyLimit
         : config.MONTHLY_LIMIT;
+    const monthlyLimit = toSafeLimit(monthlyLimitRaw, config.MONTHLY_LIMIT);
 
     updateMonthlyBudgetUI(stats, monthlyLimit);
 
     const dailyStats = getDailyStats(state, scopedChildId);
-    const dailyLimit = state.dailyCoinLimit || 0;
+    const dailyLimit = resolveDailyLimit(state, scopedChildId);
     updateDailyLimitUI(dailyStats, dailyLimit);
     updateHeaderEarnedDisplay(dailyStats.earnedToday, dailyLimit);
     updateLargePurchaseUI(stats);

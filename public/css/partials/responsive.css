@@ -45,6 +45,21 @@
         margin-bottom: 2px;
     }
 
+    .nav__dropdown {
+        top: auto;
+        bottom: calc(100% + 0.5rem);
+        right: 0;
+        left: auto;
+        max-width: calc(100% - 1rem);
+        z-index: 2200;
+    }
+
+    .nav__dropdown::before {
+        top: auto;
+        bottom: -6px;
+        border-bottom-color: transparent;
+        border-top-color: var(--color-bg-card);
+    }
     /* Main padding adjustment for Mobile */
     .main {
         padding-bottom: calc(80px + var(--safe-bottom));
