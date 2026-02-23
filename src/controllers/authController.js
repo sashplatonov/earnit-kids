@@ -140,5 +140,12 @@ module.exports = {
     handleAuthAPI,
     handleMagicLink,
     sendJSON,
-    buildAuthCookies // Exported for use in magic link and other places
+    buildAuthCookies, // Exported for use in magic link and other places
+    handleLogin,
+    handleRegister,
+    handleLogout,
+    handleForgotPassword,
+    handleResetPassword,
+    handleVerify,
+    handleAuthConfig
 };
