@@ -24,23 +24,31 @@ export async function saveFamilySettings() {
 
 async function updateCurrentChildSettings() {
     const childName = document.getElementById('settings-child-name-inline')?.value.trim();
-    const mLimit = parseInt(document.getElementById('settings-money-limit-inline')?.value);
-    const dayLimit = parseInt(document.getElementById('settings-day-coin-limit-inline')?.value);
+    const monthlyLimitValue = parseInt(document.getElementById('settings-child-monthly-limit-inline')?.value);
+    const dayLimitValue = parseInt(document.getElementById('settings-child-day-coin-limit-inline')?.value);
 
-    const res = await updateChildSettings(state.familyId, state.currentChildId, {
+    const payload = {
         name: childName,
-        monthly_limit: isNaN(mLimit) ? 0 : mLimit,
-        daily_coin_limit: isNaN(dayLimit) ? 0 : dayLimit
-    });
+        monthly_limit: isNaN(monthlyLimitValue) ? 0 : monthlyLimitValue,
+        daily_coin_limit: isNaN(dayLimitValue) ? 0 : dayLimitValue
+    };
+
+    const res = await updateChildSettings(state.familyId, state.currentChildId, payload);
 
     if (res.success) {
         const child = state.children.find(c => c.id == state.currentChildId);
         if (child) {
             child.name = childName;
-            child.monthlyLimit = isNaN(mLimit) ? 0 : mLimit;
-            child.dailyCoinLimit = isNaN(dayLimit) ? 0 : dayLimit;
+            child.monthlyLimit = payload.monthly_limit;
+            child.dailyCoinLimit = payload.daily_coin_limit;
         }
-    } else throw new Error('Ошибка обновления ребенка');
+        setState({
+            monthlyLimit: payload.monthly_limit,
+            dailyCoinLimit: payload.daily_coin_limit
+        });
+    }
+
+    return res;
 }
 
 export async function saveFamilySettingsInline() {
@@ -52,9 +60,27 @@ export async function saveFamilySettingsInline() {
         if (!familyRes?.success) throw new Error('Ошибка обновления семьи');
         setState({ familyName: name });
 
-        if (state.currentChildId) await updateCurrentChildSettings();
+        if (state.currentChildId) {
+            const childRes = await updateCurrentChildSettings();
+            if (!childRes?.success) throw new Error(childRes?.error || 'Ошибка обновления ребенка');
+        }
 
         showToast('Настройки обновлены!', 'success');
+        renderAll();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+export async function saveChildSettingsInline() {
+    if (!state.currentChildId) {
+        return showToast('Сначала выберите ребенка', 'error');
+    }
+
+    try {
+        const childRes = await updateCurrentChildSettings();
+        if (!childRes?.success) throw new Error(childRes?.error || 'Ошибка обновления ребенка');
+        showToast('Настройки ребенка обновлены!', 'success');
         renderAll();
     } catch (err) {
         showToast(err.message, 'error');

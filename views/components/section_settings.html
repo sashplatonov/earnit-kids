@@ -19,29 +19,37 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="settings-money-limit-inline">Лимит трат в месяц (ребенка)</label>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="number" class="input" id="settings-money-limit-inline" min="0" placeholder="10000">
-                </div>
+            <div class="card__actions card__actions--spaced">
+                <button class="btn btn--primary btn--small" id="settings-save-main-btn">
+                    ✅ Сохранить основные настройки
+                </button>
+            </div>
+        </div>
+
+        <div class="card admin-only" style="max-width: 600px; margin: 0 auto; margin-top: 1.5rem;">
+            <div class="card__header">
+                <h3 class="card__title">Настройки ребенка</h3>
+                <div class="card__icon">🧒</div>
             </div>
 
-            <!-- New fields for child specific settings -->
-            <div class="form-group" id="settings-child-fields">
-                <div class="form-group">
-                    <label for="settings-child-name-inline">Имя ребенка</label>
-                    <input type="text" class="input" id="settings-child-name-inline" placeholder="Имя">
-                </div>
-                <div class="form-group">
-                    <label for="settings-day-coin-limit-inline">Лимит заработка монет в день</label>
-                    <input type="number" class="input" id="settings-day-coin-limit-inline" min="0"
-                        placeholder="0 (Без лимита)">
-                </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="settings-child-name-inline">Имя ребенка</label>
+                <input type="text" class="input" id="settings-child-name-inline" placeholder="Имя">
+            </div>
+
+            <div class="form-group">
+                <label for="settings-child-monthly-limit-inline">Лимит трат в месяц (ребенка)</label>
+                <input type="number" class="input" id="settings-child-monthly-limit-inline" min="0" placeholder="10000">
+            </div>
+
+            <div class="form-group">
+                <label for="settings-child-day-coin-limit-inline">Лимит заработка монет в день</label>
+                <input type="number" class="input" id="settings-child-day-coin-limit-inline" min="0" placeholder="0 (Без лимита)">
             </div>
 
             <div class="card__actions">
-                <button class="btn btn--primary" id="settings-save-main-btn" style="width: 100%;">
-                    ✅ Сохранить основные настройки
+                <button class="btn btn--primary btn--small" id="settings-save-child-btn">
+                    ✅ Сохранить настройки ребенка
                 </button>
             </div>
         </div>

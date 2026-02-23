@@ -39,6 +39,7 @@ function setupSpecificControls() {
     const bind = (id, fn, evt = 'click') => document.getElementById(id)?.addEventListener(evt, fn);
     bind('settings-change-pin-btn', admin.openChangePinModal);
     bind('settings-save-main-btn', admin.saveFamilySettingsInline);
+    bind('settings-save-child-btn', admin.saveChildSettingsInline);
     bind('settings-save-pin-btn', admin.saveNewPinInline);
     bind('settings-copy-link-btn', admin.copyChildLinkInline);
     bind('settings-regenerate-link-btn', admin.regenerateChildLinkInline);
@@ -91,7 +92,7 @@ async function initializeApp() {
         await startBackgroundServices(data);
         renderInitialViews();
         setupControlsAndRefresh();
-        registerServiceWorker();
+        await registerServiceWorker();
     } catch (err) {
         console.error('App init error:', err);
     } finally {
@@ -128,10 +129,35 @@ function setupControlsAndRefresh() {
     setupPullToRefresh(() => refreshFromServerAndRender(true));
 }
 
-function registerServiceWorker() {
+function isLocalhost() {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
+async function disableLocalhostCaching() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((registration) => registration.unregister()));
+        } catch (err) {
+            console.log('SW unregister failed:', err);
+        }
     }
+
+    if ('caches' in window) {
+        try {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((key) => caches.delete(key)));
+        } catch (err) {
+            console.log('Cache cleanup failed:', err);
+        }
+    }
+}
+
+async function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (isLocalhost()) return disableLocalhostCaching();
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
 }
 
 function handleMissingData() {

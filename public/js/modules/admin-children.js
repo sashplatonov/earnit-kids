@@ -20,8 +20,8 @@ function getDailyLimit(child) {
 function updateSettingsFields(child) {
     const fields = {
         'settings-child-name-inline': child.name,
-        'settings-money-limit-inline': getMonthlyLimit(child),
-        'settings-day-coin-limit-inline': getDailyLimit(child)
+        'settings-child-monthly-limit-inline': getMonthlyLimit(child),
+        'settings-child-day-coin-limit-inline': getDailyLimit(child)
     };
     Object.keys(fields).forEach(id => {
         const el = document.getElementById(id);

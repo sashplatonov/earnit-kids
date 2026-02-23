@@ -104,6 +104,26 @@ function assembleStyleCss() {
     return STYLE_PARTIALS.map(file => fs.readFileSync(path.join(partialsDir, file), 'utf8')).join('\n\n');
 }
 
+function isLocalRequest(req) {
+    const hostHeader = (req.headers.host || '').split(':')[0];
+    return hostHeader === 'localhost' || hostHeader === '127.0.0.1' || hostHeader === '::1';
+}
+
+function getNoStoreHeaders(contentType) {
+    return {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    };
+}
+
+function getHtmlHeaders(req) {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (!isProd || isLocalRequest(req)) return getNoStoreHeaders('text/html; charset=utf-8');
+    return { 'Content-Type': 'text/html; charset=utf-8' };
+}
+
 function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
     const ext = path.extname(filePath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
@@ -123,19 +143,28 @@ function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
             }
             const finalContent = inlineStyle ? Buffer.from(assembleStyleCss(), 'utf8') : content;
             const isProd = process.env.NODE_ENV === 'production';
-            const cacheControl = isProd ? 'public, max-age=31536000' : 'no-cache';
+            const disableBrowserCache = !isProd || isLocalRequest(req);
+            const cacheControl = disableBrowserCache
+                ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
+                : 'public, max-age=31536000';
             const etag = `W/"${finalContent.length}-${stats.mtime.getTime()}"`;
 
-            if (req.headers['if-none-match'] === etag) {
+            if (!disableBrowserCache && req.headers['if-none-match'] === etag) {
                 res.writeHead(304);
                 return res.end();
             }
 
-            res.writeHead(200, {
+            const headers = {
                 'Content-Type': contentType,
                 'Cache-Control': cacheControl,
                 'ETag': etag
-            });
+            };
+            if (disableBrowserCache) {
+                headers.Pragma = 'no-cache';
+                headers.Expires = '0';
+            }
+
+            res.writeHead(200, headers);
             res.end(finalContent);
         });
     });
@@ -202,7 +231,7 @@ async function serveLogin(req, res) {
             return;
         }
         content = applyCommonTemplateData(content);
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
 }
@@ -216,7 +245,7 @@ function serveSuperAdmin(req, res) {
             return;
         }
         content = applyCommonTemplateData(content);
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
 }
@@ -255,7 +284,7 @@ async function serveIndex(req, res) {
     if (cookies.app_role === 'super_admin') return serveSuperAdmin(req, res);
 
     if (cachedIndexHtml && process.env.NODE_ENV === 'production') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, getHtmlHeaders(req));
         return res.end(cachedIndexHtml);
     }
 
@@ -263,7 +292,7 @@ async function serveIndex(req, res) {
         const fullHtml = assembleIndexHtml();
         if (process.env.NODE_ENV === 'production') cachedIndexHtml = fullHtml;
 
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, getHtmlHeaders(req));
         res.end(fullHtml);
     } catch (err) {
         console.error('Error assembling index:', err.message);
@@ -281,7 +310,7 @@ function serveResetPassword(req, res) {
             return;
         }
         content = applyCommonTemplateData(content);
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
 }
@@ -295,7 +324,7 @@ function serveVerify(req, res) {
             return;
         }
         content = applyCommonTemplateData(content);
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
 }

@@ -163,6 +163,15 @@
     /* Gap is handled by subgrid rows or individual margins */
 }
 
+#settings-cards .card {
+    display: block;
+    grid-row: auto;
+}
+
+#settings-cards .card__actions {
+    margin-top: 0.75rem;
+}
+
 @container (max-width: 350px) {
     .card {
         padding: 1rem;
@@ -254,6 +263,10 @@
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+}
+
+.card__actions--spaced {
+    margin-top: 0.5rem;
 }
 
 .card--disabled {
