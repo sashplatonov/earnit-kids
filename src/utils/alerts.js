@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const config = require('../config');
 const logger = require('./logger');
 const { sendErrorAlertEmail } = require('../services/emailService');
@@ -52,21 +54,25 @@ async function sendTelegramMessage(message, options = {}) {
  * @param {string} caption - Optional caption
  * @returns {Promise<boolean>} - Success or failure
  */
+function buildTelegramDocumentFormData(filePath, caption, options = {}) {
+    const formData = new FormData();
+    formData.append('chat_id', config.TELEGRAM.CHAT_ID);
+    const fileContent = fs.readFileSync(filePath);
+    formData.append('document', new Blob([fileContent]), path.basename(filePath));
+    if (caption) formData.append('caption', caption);
+    const parseMode = options.parseMode ?? 'HTML';
+    if (parseMode) formData.append('parse_mode', parseMode);
+    if (options.silent) formData.append('disable_notification', 'true');
+    return formData;
+}
+
 async function sendTelegramDocument(filePath, caption = '', options = {}) {
     if (!config.TELEGRAM.ENABLED || !config.TELEGRAM.TOKEN || !config.TELEGRAM.CHAT_ID) {
         return false;
     }
 
     try {
-        const fs = require('fs');
-        const formData = new FormData();
-        formData.append('chat_id', config.TELEGRAM.CHAT_ID);
-        // Using Buffer or stream for large files if needed, but for now this works for small backups
-        const fileContent = fs.readFileSync(filePath);
-        formData.append('document', new Blob([fileContent]), require('path').basename(filePath));
-        if (caption) formData.append('caption', caption);
-        if (options.silent) formData.append('disable_notification', 'true');
-
+        const formData = buildTelegramDocumentFormData(filePath, caption, options);
         const url = `https://api.telegram.org/bot${config.TELEGRAM.TOKEN}/sendDocument`;
         const response = await fetch(url, {
             method: 'POST',
