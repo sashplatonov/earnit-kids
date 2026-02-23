@@ -124,17 +124,17 @@
         padding: 1.5rem;
         margin: 0;
         max-width: 100%;
+    }
 
-        /* Drag handle indicator */
-        &::before {
-            content: '';
-            display: block;
-            width: 40px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            margin: -0.5rem auto 1rem;
-        }
+    /* Drag handle indicator */
+    .modal__content::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        margin: -0.5rem auto 1rem;
     }
 
     /* Sticky submit button inside mobile modals */

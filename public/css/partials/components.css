@@ -451,25 +451,6 @@ dialog.modal[open]::backdrop {
     margin-bottom: var(--safe-bottom);
 }
 
-@starting-style {
-
-    .modal.active .modal__content,
-    dialog.modal[open] .modal__content {
-        opacity: 0;
-        transform: translateY(30px) scale(0.9);
-    }
-
-    .modal.active .modal__backdrop {
-        opacity: 0;
-    }
-
-    dialog.modal[open]::backdrop {
-        background: rgba(0, 0, 0, 0);
-        backdrop-filter: blur(0px);
-        -webkit-backdrop-filter: blur(0px);
-    }
-}
-
 @keyframes modalSlide {
     from {
         opacity: 0;
