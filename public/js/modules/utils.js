@@ -111,7 +111,13 @@ export function showMobileEventNotification(message, type = 'info', title = 'Coi
 }
 
 export function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.add('active');
+    const firstInput = modal.querySelector('input:not([type="hidden"]), textarea');
+    if (firstInput) {
+        setTimeout(() => firstInput.focus(), 100);
+    }
 }
 
 export function closeModal(modalId) {

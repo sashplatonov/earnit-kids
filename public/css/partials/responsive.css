@@ -1,0 +1,150 @@
+/* ===== Responsive Styles (Mobile & Tablet) ===== */
+
+@media (max-width: 768px) {
+
+    /* Mobile Navigation (Bottom Tab Bar) */
+    .nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.5rem;
+        padding-bottom: calc(0.5rem + var(--safe-bottom));
+        background: var(--color-bg-light);
+        border-top: 1px solid var(--color-bg-card);
+        border-bottom: none;
+        z-index: 2000;
+    }
+
+    .nav__primary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 0.25rem;
+        width: 100%;
+        max-width: 100%;
+        justify-content: space-around;
+        align-items: end;
+    }
+
+    .nav__btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        padding: 0.5rem 0.25rem;
+        gap: 0.25rem;
+        border-radius: var(--radius-sm);
+        text-align: center;
+    }
+
+    /* Remove emojis visually taking too much space or adjust them */
+    .nav__btn::first-letter {
+        font-size: 1.25rem;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    /* Main padding adjustment for Mobile */
+    .main {
+        padding-bottom: calc(80px + var(--safe-bottom));
+    }
+
+    /* Mobile Header Compact */
+    .header {
+        padding: calc(0.5rem + var(--safe-top)) 1rem 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .header__titles h1 {
+        font-size: var(--text-base);
+    }
+
+    .header__shop-name {
+        font-size: 1rem !important;
+    }
+
+    .header__child-nickname {
+        font-size: 0.85rem !important;
+    }
+
+    .header__balance {
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .balance__value {
+        font-size: 1.2rem;
+    }
+
+    .header__balance-hint {
+        display: none;
+    }
+
+    .header__earned {
+        min-width: 120px;
+    }
+
+    /* Modals - Bottom Sheet on Mobile */
+    .modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal__content {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 16px 16px 0 0;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: 1.5rem;
+        margin: 0;
+        max-width: 100%;
+    }
+
+    /* Sticky submit button inside mobile modals */
+    .modal__actions {
+        position: sticky;
+        bottom: -1.5rem;
+        background: var(--color-bg-light);
+        padding: 1rem 0 1.5rem;
+        margin: 1rem -1.5rem -1.5rem -1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        z-index: 10;
+        padding-inline: 1.5rem;
+    }
+
+    /* History & Tables */
+    .history-item {
+        padding: 0.75rem 1rem;
+        gap: 0.75rem;
+    }
+
+    .history-item__amount {
+        font-size: 1rem;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: more) {
+    :root {
+        --color-text: #ffffff;
+        --color-text-muted: #e0e0e0;
+        --color-bg: #000000;
+        --color-bg-light: #111111;
+        --color-bg-card: #000000;
+        --gradient-primary: #6366f1;
+        /* fallback solid for gradient */
+    }
+
+    .card {
+        border: 2px solid #ffffff;
+    }
+
+    .btn,
+    .input {
+        border: 2px solid #ffffff;
+    }
+}

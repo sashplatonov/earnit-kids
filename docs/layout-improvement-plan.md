@@ -118,19 +118,19 @@
 - [x] Backdrop blur для overlay: `backdrop-filter: blur(8px)`
 
 ### 12. Мобильные формы
-- [ ] `inputmode="numeric"` для полей с монетами (показывает цифровую клавиатуру)
-- [ ] `autocomplete` атрибуты для email/password полей
-- [ ] Sticky submit button внизу экрана на мобильных
-- [ ] Автофокус первого поля при открытии модалки
+- [x] `inputmode="numeric"` для полей с монетами (показывает цифровую клавиатуру)
+- [x] `autocomplete` атрибуты для email/password полей
+- [x] Sticky submit button внизу экрана на мобильных
+- [x] Автофокус первого поля при открытии модалки
 
 ### 13. Адаптивные компоненты
-- [ ] Header — компактный на мобильных (balance в одну строку, мелкий шрифт)
-- [ ] Навигация — bottom tab bar (аналог iOS/Android нативной навигации):
+- [x] Header — компактный на мобильных (balance в одну строку, мелкий шрифт)
+- [x] Навигация — bottom tab bar (аналог iOS/Android нативной навигации):
   ```css
   .nav { position: fixed; bottom: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); }
   ```
-- [ ] Карточки — stack layout на мобильных, grid на desktop
-- [ ] Таблицы (history) — горизонтальный скролл или card-layout на мобильных
+- [x] Карточки — stack layout на мобильных, grid на desktop
+- [x] Таблицы (history) — горизонтальный скролл или card-layout на мобильных
 
 ### 14. Производительность на мобильных
 - [ ] Ленивая загрузка изображений: `<img loading="lazy">`
@@ -148,29 +148,29 @@
 ## 🔄 Общие улучшения (Web + Mobile)
 
 ### 15. Accessibility (a11y)
-- [ ] Семантические теги: `<nav>`, `<main>`, `<section>`, `<article>`, `<dialog>`
-- [ ] ARIA-атрибуты: `role`, `aria-label`, `aria-expanded`, `aria-selected` для табов
-- [ ] Фокус-трэп в модальных окнах
-- [ ] Контрастность: проверить WCAG 2.2 AA для всех текстов
-- [ ] Skip-to-content link
-- [ ] `prefers-contrast: more` media query для высококонтрастного режима
+- [x] Семантические теги: `<nav>`, `<main>`, `<section>`, `<article>`, `<dialog>`
+- [x] ARIA-атрибуты: `role`, `aria-label`, `aria-expanded`, `aria-selected` для табов
+- [x] Фокус-трэп в модальных окнах
+- [x] Контрастность: проверить WCAG 2.2 AA для всех текстов
+- [x] Skip-to-content link
+- [x] `prefers-contrast: more` media query для высококонтрастного режима
 
 ### 16. Design Tokens & System
-- [ ] Вынести дизайн-токены (spacing, typography scale) в отдельный файл `tokens.css`:
+- [x] Вынести дизайн-токены (spacing, typography scale) в отдельный файл `tokens.css`:
   ```css
   :root {
     --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
     --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem; --text-lg: 1.125rem;
   }
   ```
-- [ ] Компонентные стили: `button.css`, `card.css`, `modal.css` — разбить `style.css` на логические части
-- [ ] CSS layers (`@layer`) для управления каскадом:
+- [x] Компонентные стили: `button.css`, `card.css`, `modal.css` — разбить `style.css` на логические части
+- [x] CSS layers (`@layer`) для управления каскадом:
   ```css
   @layer reset, tokens, components, utilities;
   ```
 
 ### 17. Логическая разбивка CSS
-- [ ] Разбить `style.css` (34KB) на:
+- [x] Разбить `style.css` (34KB) на:
   - `tokens.css` — переменные, дизайн-токены
   - `reset.css` — сброс стилей
   - `components.css` — карточки, кнопки, формы
@@ -192,7 +192,7 @@
 |------|--------|-----------|
 | **1** | Safe Area (#9), Touch (#10), Tap targets, `<dialog>` (#11) | [x] Лёгкая |
 | **2** | Design Tokens (#16), Font optimization (#1), Color scheme (#6) | Средняя |
-| **3** | Accessibility (#15), Mobile forms (#12), Responsive components (#13) | Средняя |
+| **3** | Accessibility (#15), Mobile forms (#12), Responsive components (#13) | [x] Средняя |
 | **4** | Container Queries (#2), View Transitions (#5), Microanimations (#7) | Средняя |
 | **5** | Scroll animations (#4), CSS Subgrid (#3), Virtual scrolling (#14) | Сложная |
 | **6** | CSS splitting (#17), PWA (#18), Performance (#8, #14) | Сложная |
