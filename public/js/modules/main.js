@@ -1,3 +1,4 @@
+/** @file Main frontend UI module */
 import { state } from './state.js';
 import { renderAll } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
@@ -12,6 +13,7 @@ import { renderCatalog, addCatalogItem } from './main-catalog.js';
 import { setupTabControls } from './main-tabs.js';
 import { initializeFromServer, refreshFromServerAndRender, setupCommonControls } from './main-init.js';
 import { initializeWebSocket } from './websocket.js';
+import { setupPwaInstall } from './pwa-install.js';
 
 async function loadAbout() {
     const container = document.getElementById('about-content');
@@ -77,6 +79,7 @@ function showSkeletons() {
 
 async function initializeApp() {
     showSkeletons();
+    setupPwaInstall();
 
     setupTabControls(); // Always bind tabs first to prevent long scroll on error
 

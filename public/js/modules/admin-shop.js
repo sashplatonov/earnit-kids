@@ -1,3 +1,4 @@
+/** @file Admin Shop frontend UI module */
 import { state } from './state.js';
 import { renderShop } from './ui.js';
 import { showToast, closeModal, openModal, showConfirm } from './utils.js';

@@ -1,3 +1,4 @@
+/** @file Stats Logger utility helpers */
 const { loadFamilies, loadFamilyData } = require('../services/familyService');
 const { loadBaseData } = require('../services/baseDataService');
 const { createLogger } = require('./logger');

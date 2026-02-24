@@ -1,3 +1,4 @@
+/** @file Action Shop frontend UI module */
 import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
 import { showToast, showConfirm, showMobileEventNotification } from './utils.js';

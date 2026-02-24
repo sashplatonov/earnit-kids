@@ -1,3 +1,4 @@
+/** @file Controller Utils utility helpers */
 const { getCookies } = require('../controllers/viewController');
 
 function sendJSON(res, data, status = 200) {

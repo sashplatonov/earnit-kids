@@ -1,3 +1,4 @@
+/** @file Connection PostgreSQL data access */
 const { Pool } = require('pg');
 
 // Load environment variables

@@ -1,3 +1,4 @@
+/** @file Super Admin frontend helper script */
 import { renderFamilyDetails } from './modules/super-admin-family-details.js';
 import { checkReserveStatus, handleRestore, handleCopyToReserve } from './modules/super-admin-db.js';
 import { setBaseData, getBaseData, renderList, deleteItem, saveItem } from './modules/super-admin-base.js';

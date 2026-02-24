@@ -1,3 +1,4 @@
+/** @file Static Utils REST controller helpers */
 const fs = require('fs');
 const path = require('path');
 const { MIME_TYPES } = require('../config');
@@ -108,7 +109,7 @@ function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
 
             let responseContent = inlineStyle ? Buffer.from(assembleStyleCss(), 'utf8') : content;
             if (!inlineStyle && isTemplatableType(contentType)) {
-                const processed = applyCommonTemplateData(responseContent.toString('utf8'), buildSeoReplacements(req));
+                const processed = applyCommonTemplateData(responseContent.toString('utf8'), buildSeoReplacements(req), req);
                 responseContent = Buffer.from(processed, 'utf8');
             }
 

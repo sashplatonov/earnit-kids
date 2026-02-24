@@ -1,3 +1,4 @@
+/** @file Api frontend UI module */
 function getCsrfToken() { return document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''; }
 async function fetchWithCsrf(url, options = {}) {
   if (['POST', 'PUT', 'DELETE'].includes((options.method || 'GET').toUpperCase())) {

@@ -53,7 +53,7 @@ test('serveLogin renders login UI', async () => {
 
     assert.equal(state.statusCode, 200);
     assert.match(state.headers['Content-Type'], /text\/html/);
-    assert.match(state.body, /<title>Вход - Монетки<\/title>/);
+    assert.match(state.body, /<title>Вход \| EarnIt Kids<\/title>/);
     assert.match(state.body, /class="login-page"/);
     assert.doesNotMatch(state.body, /\{\{CLARITY_SCRIPT\}\}/);
 });
@@ -80,7 +80,7 @@ test('serveIndex returns login page for unauthenticated user', async () => {
     const state = await render(serveIndex, createMockRequest('/'));
 
     assert.equal(state.statusCode, 200);
-    assert.match(state.body, /<title>Вход - Монетки<\/title>/);
+    assert.match(state.body, /<title>Вход \| EarnIt Kids<\/title>/);
     assert.match(state.body, /class="login-page"/);
 });
 
@@ -109,6 +109,27 @@ test('serveStatic keeps skip link hidden until keyboard focus', async () => {
     assert.equal(state.statusCode, 200);
     assert.match(css, /\.skip-link\s*\{[\s\S]*?left:\s*-9999px;/);
     assert.match(css, /\.skip-link:focus-visible\s*\{/);
+});
+
+test('serveStatic includes mobile PWA install styles', async () => {
+    const state = await render(serveStatic, createMockRequest('/style.css'));
+    const css = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(css, /\.header__actions\s*\{/);
+    assert.match(css, /\.header__install\s*\{/);
+    assert.match(css, /\.header__install-hint\s*\{/);
+});
+
+test('serveStatic serves PWA install module with install prompt handlers', async () => {
+    const state = await render(serveStatic, createMockRequest('/js/modules/pwa-install.js'));
+    const js = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(state.headers['Content-Type'], /application\/javascript/);
+    assert.match(js, /beforeinstallprompt/);
+    assert.match(js, /appinstalled/);
+    assert.match(js, /Установить приложение/);
 });
 
 test('serveStatic keeps floating nav dropdown compact on mobile', async () => {

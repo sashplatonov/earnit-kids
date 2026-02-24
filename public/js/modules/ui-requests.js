@@ -1,3 +1,4 @@
+/** @file Ui Requests frontend UI module */
 import { escapeHtml } from './utils.js';
 
 function isPurchaseRequest(req) {

@@ -1,3 +1,4 @@
+/** @file Child Controller REST controller helpers */
 const {
     getChildLoginLink, regenerateChildToken, deleteChild, updateChildSettings
 } = require('../services/familyService');

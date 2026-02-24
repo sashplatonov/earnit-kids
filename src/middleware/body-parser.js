@@ -1,3 +1,4 @@
+/** @file Body Parser Express middleware */
 const { createLogger } = require('../utils/logger');
 const logger = createLogger('bodyParser');
 

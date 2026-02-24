@@ -1,3 +1,4 @@
+/** @file Main Tabs frontend UI module */
 const MOBILE_LAYOUT_QUERY = '(max-width: 900px)';
 
 function syncActiveNavigationState(tabButtons, moreBtn) {

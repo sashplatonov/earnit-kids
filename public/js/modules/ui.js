@@ -1,3 +1,4 @@
+/** @file Ui frontend UI module */
 import { state } from './state.js';
 import { escapeHtml } from './utils.js';
 import { updateBudgetStatsUI } from './budget-ui.js';

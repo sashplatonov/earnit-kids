@@ -1,3 +1,4 @@
+/** @file Logger utility helpers */
 const pino = require('pino');
 
 const logger = pino({

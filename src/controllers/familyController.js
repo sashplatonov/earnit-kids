@@ -1,3 +1,4 @@
+/** @file Family Controller REST controller helpers */
 const {
     loadFamilyData, saveFamilyData, updateLastActivity,
     loadFamilies,

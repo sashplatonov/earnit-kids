@@ -1,3 +1,4 @@
+/** @file Main Catalog frontend UI module */
 import { state } from './state.js';
 import { renderTasks, renderShop } from './ui.js';
 import { showToast } from './utils.js';

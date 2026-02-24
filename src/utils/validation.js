@@ -1,3 +1,4 @@
+/** @file Validation utility helpers */
 const sanitizeHtml = require('sanitize-html');
 
 function sanitizeString(str) {

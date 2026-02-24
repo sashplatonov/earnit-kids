@@ -1,3 +1,4 @@
+/** @file Action Requests frontend UI module */
 import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
 import { showToast, showMobileEventNotification } from './utils.js';

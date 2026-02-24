@@ -1,3 +1,4 @@
+/** @file Friends frontend UI module */
 import { state, setState } from './state.js';
 import { searchUsers, addFriend, loadFriendsList, updateNickname } from './api.js';
 import { showToast } from './utils.js';

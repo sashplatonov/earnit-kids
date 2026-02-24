@@ -1,3 +1,4 @@
+/** @file Sync Repository PostgreSQL data access */
 const { query } = require('./connection');
 
 function val(v, def) { return (v === undefined || v === null) ? def : v; }

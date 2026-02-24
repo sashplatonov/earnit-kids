@@ -1,3 +1,4 @@
+/** @file Auth Utils utility helpers */
 const crypto = require('crypto');
 
 // fallback to default secret if env var is missing

@@ -1,3 +1,4 @@
+/** @file Startup Init utility helpers */
 const { migrate } = require('../../scripts/migrate');
 const { runDataMigration } = require('../../scripts/migrate-data');
 const { testConnection } = require('../db/connection');

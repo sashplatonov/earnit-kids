@@ -1,3 +1,4 @@
+/** @file Family Data Mappers PostgreSQL data access */
 /**
  * Family Data Mappers - Data mapping and utility functions for family data
  */

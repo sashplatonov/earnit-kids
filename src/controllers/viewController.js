@@ -1,3 +1,4 @@
+/** @file View Controller REST controller helpers */
 const fs = require('fs');
 const path = require('path');
 const { applyCommonTemplateData, buildSeoReplacements } = require('./seoTemplates');
@@ -84,7 +85,7 @@ async function serveLogin(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req));
+        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
@@ -98,7 +99,7 @@ function serveSuperAdmin(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req));
+        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
@@ -143,7 +144,7 @@ async function serveIndex(req, res) {
             template = assembleIndexHtml();
             if (process.env.NODE_ENV === 'production') cachedIndexHtml = template;
         }
-        const finalHtml = applyCommonTemplateData(template, buildSeoReplacements(req));
+        const finalHtml = applyCommonTemplateData(template, buildSeoReplacements(req), req);
 
         res.writeHead(200, getHtmlHeaders(req));
         res.end(finalHtml);
@@ -162,7 +163,7 @@ function serveResetPassword(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req));
+        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
@@ -176,7 +177,7 @@ function serveVerify(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req));
+        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
@@ -190,7 +191,7 @@ function serveNotFound(req, res) {
             res.end('Page not found');
             return;
         }
-        const finalContent = applyCommonTemplateData(content, buildSeoReplacements(req));
+        const finalContent = applyCommonTemplateData(content, buildSeoReplacements(req), req);
         res.writeHead(404, getHtmlHeaders(req));
         res.end(finalContent);
     });

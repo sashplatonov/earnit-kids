@@ -1,3 +1,4 @@
+/** @file Child Repository PostgreSQL data access */
 const { query } = require('./connection');
 
 /**

@@ -1,3 +1,4 @@
+/** @file Admin Settings frontend UI module */
 import { state, setState } from './state.js';
 import { updateChildSettings, getChildLink, regenerateChildToken } from './api.js';
 import { renderAll } from './ui.js';

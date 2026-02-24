@@ -1,3 +1,4 @@
+/** @file Config frontend helper script */
 const CONFIG = {
     // Currency & Budget
     MONTHLY_LIMIT: 10000,

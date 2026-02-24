@@ -1,3 +1,4 @@
+/** @file Analytics Ui frontend UI module */
 import { state } from './state.js';
 import { fetchAnalyticsData } from './api.js';
 import { showToast } from './utils.js';

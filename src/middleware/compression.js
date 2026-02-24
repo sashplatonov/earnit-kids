@@ -1,3 +1,4 @@
+/** @file Compression Express middleware */
 const zlib = require('zlib');
 
 /**

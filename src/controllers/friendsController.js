@@ -1,3 +1,4 @@
+/** @file Friends Controller REST controller helpers */
 const { getFriendsData, searchByNickname, addFriend } = require('../services/familyService');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');

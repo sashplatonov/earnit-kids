@@ -1,3 +1,4 @@
+/** @file Email Service business services */
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
@@ -31,7 +32,7 @@ try {
 }
 
 function getContent(key, data) {
-    const config = emailContentConfig[key] || { subject: 'Notification', text: 'Message from Coins Kids Shop' };
+    const config = emailContentConfig[key] || { subject: 'Notification', text: 'Message from EarnIt Kids' };
     let text = config.text;
 
     // Replace placeholders in text
@@ -66,7 +67,7 @@ function getTemplate(templateName, data) {
 
 async function sendEmail({ to, subject, html, text }) {
     const domain = process.env.MAILGUN_DOMAIN;
-    const from = process.env.MAILGUN_FROM || `Coins Kids Shop <postmaster@${domain}>`;
+    const from = process.env.MAILGUN_FROM || `EarnIt Kids <postmaster@${domain}>`;
 
     logger.debug({ to, subject }, 'Sending email');
 
@@ -135,7 +136,7 @@ async function sendPasswordResetEmail(to, link) {
 }
 
 async function sendSuperAdminRecoveryEmail(to, password, link) {
-    const subject = 'Super Admin Recovery - Coins Kids Shop';
+    const subject = 'Super Admin Recovery - EarnIt Kids';
     const text = `You requested a password recovery for your Super Admin account.
 Your password is: ${password}
 Login here: ${link}

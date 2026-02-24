@@ -2,7 +2,7 @@
     <div class="header__logo">
         <span class="header__icon">🪙</span>
         <div class="header__titles">
-            <h1>Монетки</h1>
+            <h1>EarnIt Kids</h1>
             <div class="header__shop-container"
                 style="display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;">
                 <div id="child-nickname-display" class="header__child-nickname"
@@ -10,24 +10,35 @@
             </div>
         </div>
     </div>
-    <div class="header__balance" tabindex="0" role="button" aria-label="Открыть историю">
-        <div class="header__balance-main">
-            <span class="balance__label">Баланс:</span>
-            <span class="balance__value" id="balance">0</span>
-            <span class="balance__coin">🪙</span>
-        </div>
-        <div class="header__balance-hint">📊</div>
-        <div class="header__earned" aria-live="polite">
-            <span class="header__earned-label">Сегодня</span>
-            <div class="header__earned-track" title="Ежедневный лимит">
-                <div class="progress-bar header__earned-progress" id="header-earned-progress"></div>
+    <div class="header__actions">
+        <button
+            id="pwa-install-btn"
+            class="btn btn--admin btn--small header__install hidden"
+            type="button"
+            aria-label="Установить приложение на устройство"
+        >
+            Установить приложение
+        </button>
+        <div id="pwa-install-ios-hint" class="header__install-hint hidden" role="status" aria-live="polite"></div>
+        <div class="header__balance" tabindex="0" role="button" aria-label="Открыть историю">
+            <div class="header__balance-main">
+                <span class="balance__label">Баланс:</span>
+                <span class="balance__value" id="balance">0</span>
+                <span class="balance__coin">🪙</span>
             </div>
-            <div class="header__earned-meta">
-                <span class="header__earned-number" id="header-earned-count">0</span>
-                <span class="header__earned-unit">🪙</span>
-                <span class="header__earned-limit" id="header-earned-limit-note">Лимит: ∞</span>
+            <div class="header__balance-hint">📊</div>
+            <div class="header__earned" aria-live="polite">
+                <span class="header__earned-label">Сегодня</span>
+                <div class="header__earned-track" title="Ежедневный лимит">
+                    <div class="progress-bar header__earned-progress" id="header-earned-progress"></div>
+                </div>
+                <div class="header__earned-meta">
+                    <span class="header__earned-number" id="header-earned-count">0</span>
+                    <span class="header__earned-unit">🪙</span>
+                    <span class="header__earned-limit" id="header-earned-limit-note">Лимит: ∞</span>
+                </div>
             </div>
+            <button class="btn btn--success btn--small admin-only hidden" onclick="window.app.adminAwardCoins()" title="Начислить монеты">+</button>
         </div>
-        <button class="btn btn--success btn--small admin-only hidden" onclick="window.app.adminAwardCoins()" title="Начислить монеты">+</button>
     </div>
 </header>

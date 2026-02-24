@@ -1,3 +1,4 @@
+/** @file Push Token Repository PostgreSQL data access */
 const { query } = require('./connection');
 
 async function resolveFamilyDbId(familyId) {

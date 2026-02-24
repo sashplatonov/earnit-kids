@@ -1,3 +1,4 @@
+/** @file Budget Ui frontend UI module */
 function isEntryValid(entry, childId, monthKey) {
     if (childId && String(entry.childId) !== String(childId)) return false;
     if (entry.type !== 'spend' || !entry.date) return false;

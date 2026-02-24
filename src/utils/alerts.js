@@ -1,3 +1,4 @@
+/** @file Alerts utility helpers */
 const fs = require('fs');
 const path = require('path');
 const config = require('../config');
@@ -106,7 +107,7 @@ async function sendAlert(err, context = '') {
     // 1. Prepare and send Telegram message
     if (config.TELEGRAM.ENABLED) {
         let message = `🚨 <b>[${env}] SERVER ERROR</b>\n\n`;
-        message += `<b>App:</b> Coins Kids Shop\n`;
+        message += `<b>App:</b> EarnIt Kids\n`;
         message += `<b>URL:</b> ${appUrl}\n`;
         if (context) message += `<b>Context:</b> ${context}\n`;
         message += `<b>Message:</b> <code>${err.message}</code>\n\n`;

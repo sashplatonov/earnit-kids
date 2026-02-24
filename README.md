@@ -1,4 +1,4 @@
-# 🪙 Kids Coin Shop
+# EarnIt Kids
 
 A modern, minimal web application for managing kids' reward coins. Parents can award coins for completed tasks, and kids can spend them in a virtual shop. Featuring a zero-dependency Node.js backend and a modular, component-based frontend.
 

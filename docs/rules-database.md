@@ -1,4 +1,4 @@
-# Правила работы с базой данных — Coins Kids Shop
+# Правила работы с базой данных — EarnIt Kids
 
 > [!NOTE]
 > AI agents: core rules live in root `AGENTS.md`. This file provides extended detail for humans.

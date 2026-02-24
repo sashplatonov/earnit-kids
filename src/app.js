@@ -1,3 +1,4 @@
+/** @file Entry point — HTTP server setup, routing, error handling, startup init. */
 const http = require('http');
 const path = require('path');
 const crypto = require('crypto');

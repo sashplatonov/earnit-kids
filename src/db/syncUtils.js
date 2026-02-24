@@ -1,3 +1,4 @@
+/** @file Sync Utils PostgreSQL data access */
 const {
     syncBalances,
     syncTasks,

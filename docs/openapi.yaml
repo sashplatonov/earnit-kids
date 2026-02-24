@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Coins Kids Shop API
-  description: API for managing tasks, rewards, and history for children in Coins Kids Shop.
+  title: EarnIt Kids API
+  description: API for managing tasks, rewards, and history for children in EarnIt Kids.
   version: 1.0.0
 servers:
   - url: /api

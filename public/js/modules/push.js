@@ -1,3 +1,4 @@
+/** @file Push frontend UI module */
 import { state } from './state.js';
 import { registerPushTokenOnServer, unregisterPushTokenOnServer } from './api.js';
 import { showMobileEventNotification } from './utils.js';
@@ -60,7 +61,7 @@ function bindPushListeners(push) {
     });
 
     push.addListener('pushNotificationReceived', (notification) => {
-        const title = notification?.title || 'Coins Kids Shop';
+        const title = notification?.title || 'EarnIt Kids';
         const message = notification?.body || 'Новое уведомление';
         showMobileEventNotification(message, 'info', title);
         if (typeof refreshHandler === 'function') {

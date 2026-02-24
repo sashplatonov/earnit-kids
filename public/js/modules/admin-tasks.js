@@ -1,3 +1,4 @@
+/** @file Admin Tasks frontend UI module */
 import { state } from './state.js';
 import { renderTasks } from './ui.js';
 import { showToast, closeModal, openModal, showConfirm } from './utils.js';

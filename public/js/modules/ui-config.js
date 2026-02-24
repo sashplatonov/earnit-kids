@@ -1,3 +1,4 @@
+/** @file Ui Config frontend UI module */
 export const CONFIG = window.CONFIG || {
     MONTHLY_LIMIT: 10000,
     PERIODS: {
