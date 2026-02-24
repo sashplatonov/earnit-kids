@@ -5,16 +5,16 @@ function val(v, def) { return (v === undefined || v === null) ? def : v; }
 /**
  * Handle balance synchronization for children
  */
-async function syncBalances({ client, data, actingChildId }) {
+async function syncBalances({ client, data, actingChildId, dbId }) {
     if (data.balance !== undefined && actingChildId) {
-        await client.query('UPDATE children SET balance = $1 WHERE id = $2', [data.balance, actingChildId]);
+        await client.query('UPDATE children SET balance = $1 WHERE id = $2 AND family_id = $3', [data.balance, actingChildId, dbId]);
     }
 
     if (!Array.isArray(data.children) || actingChildId) return;
 
     for (const child of data.children) {
         if (!child.id || child.balance === undefined) continue;
-        await client.query('UPDATE children SET balance = $1 WHERE id = $2', [child.balance, child.id]);
+        await client.query('UPDATE children SET balance = $1 WHERE id = $2 AND family_id = $3', [child.balance, child.id, dbId]);
     }
 }
 

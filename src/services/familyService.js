@@ -106,7 +106,7 @@ async function regenerateChildToken(familyId, childId) {
     if (!child) return false;
 
     const newToken = crypto.randomBytes(32).toString('hex');
-    return await familyRepository.updateChild(childId, { token: newToken });
+    return await familyRepository.updateChild(childId, { token: newToken }, family.dbId);
 }
 
 /**
@@ -158,7 +158,7 @@ async function updateNickname(familyId, childId, nickname) {
     const child = family.children.find(c => c.id === parseInt(childId));
     if (!child) return { success: false, error: 'Child not found' };
 
-    if (await familyRepository.updateChild(childId, { name: nickname })) {
+    if (await familyRepository.updateChild(childId, { name: nickname }, family.dbId)) {
         return { success: true };
     }
     return { success: false, error: 'Failed to save child settings' };
@@ -175,7 +175,7 @@ async function updateChildSettings(familyId, childId, settings) {
     if (settings.daily_coin_limit !== undefined) updateData.daily_coin_limit = settings.daily_coin_limit;
     if (settings.name) updateData.name = settings.name;
 
-    if (await familyRepository.updateChild(childId, updateData)) {
+    if (await familyRepository.updateChild(childId, updateData, family.dbId)) {
         return { success: true };
     }
     return { success: false, error: 'Failed to update' };

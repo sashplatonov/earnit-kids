@@ -27,9 +27,13 @@ async function fetchFriends(dbId, childId) {
 }
 
 async function fetchFamilyDataRaw({ dbId, childId, p, hw, rw }) {
+    const tasksFilter = childId ? ' AND t.child_id = $2' : '';
+    const shopFilter = childId ? ' AND s.child_id = $2' : '';
+    const taskParams = childId ? [dbId, childId] : [dbId];
+    const shopParams = childId ? [dbId, childId] : [dbId];
     return await Promise.all([
-        query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false`, [dbId]),
-        query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false`, [dbId]),
+        query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false${tasksFilter}`, taskParams),
+        query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false${shopFilter}`, shopParams),
         query(`SELECT h.* FROM history h ${hw} ORDER BY h.created_at DESC LIMIT 50`, p),
         query(`SELECT r.*, t.name as task_name, i.name as item_name, t.group_name as task_group, i.group_name as item_group, t.comment as task_comment 
             FROM requests r 
@@ -175,11 +179,11 @@ module.exports = {
     getPaginatedHistory, getPaginatedRequests,
     updateBalance: (fid, b, cid) => {
         cache.invalidatePrefix(`familyData:${fid}`);
-        return query('UPDATE children SET balance=$1 WHERE id=$2', [b, cid]).then(r => r.rowCount > 0);
+        return query('UPDATE children SET balance=$1 WHERE id=$2 AND family_id=(SELECT id FROM families WHERE family_id=$3)', [b, cid, fid]).then(r => r.rowCount > 0);
     },
     updateRequestStatus: (fid, id, s) => {
         cache.invalidatePrefix(`familyData:${fid}`);
-        return query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2', [s, id]).then(r => r.rowCount > 0);
+        return query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2 AND family_id=(SELECT id FROM families WHERE family_id=$3)', [s, id, fid]).then(r => r.rowCount > 0);
     },
     addFriend: (fid, cid, fcid) => {
         cache.invalidatePrefix(`familyData:${fid}`);

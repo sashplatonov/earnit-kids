@@ -1,38 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const { MIME_TYPES } = require('../config');
+const { applyCommonTemplateData, buildSeoReplacements } = require('./seoTemplates');
+const {
+    getHtmlHeaders,
+    normalizeStaticPath,
+    resolvePublicFilePath,
+    sendStaticFile,
+    tryServeDistOverride,
+    setServeNotFoundHandler
+} = require('./staticUtils');
 const { findFamilyByEmail } = require('../services/familyService');
-const { getBuildVersion } = require('../utils/buildVersion');
-
-// Read package.json to get app version
-const packageJsonPath = path.join(__dirname, '../../package.json');
-const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-const APP_VERSION = packageJson.version;
-const BUILD_VERSION = getBuildVersion();
-const CLARITY_PROJECT_ID = (process.env.CLARITY_PROJECT_ID || '').trim();
-
-function getClarityScript() {
-    if (!CLARITY_PROJECT_ID || !/^[a-zA-Z0-9]+$/.test(CLARITY_PROJECT_ID)) {
-        return '';
-    }
-
-    return `<script type="text/javascript">
-(function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");
-</script>`;
-}
-
-const CLARITY_SCRIPT = getClarityScript();
-
-function applyCommonTemplateData(html) {
-    return html
-        .replace(/\{\{APP_VERSION\}\}/g, APP_VERSION)
-        .replace(/\{\{BUILD_VERSION\}\}/g, BUILD_VERSION)
-        .replace(/\{\{CLARITY_SCRIPT\}\}/g, CLARITY_SCRIPT);
-}
 
 function getCookies(req) {
     const list = {};
@@ -80,127 +57,6 @@ async function isAuthenticated(req) {
 
 const crypto = require('crypto');
 
-const STYLE_PARTIALS = [
-    'tokens.css',
-    'reset.css',
-    'layout.css',
-    'components.css',
-    'animations.css',
-    'responsive.css'
-];
-
-function getDistOverride(urlPath) {
-    const overrides = {
-        '/style.css': '/css/style.css',
-        '/css/style.css': '/css/style.css',
-        '/super-admin.css': '/css/super-admin.css',
-        '/css/super-admin.css': '/css/super-admin.css'
-    };
-    return overrides[urlPath];
-}
-
-function assembleStyleCss() {
-    const partialsDir = path.join(__dirname, '../../public/css/partials');
-    return STYLE_PARTIALS.map(file => fs.readFileSync(path.join(partialsDir, file), 'utf8')).join('\n\n');
-}
-
-function isLocalRequest(req) {
-    const hostHeader = (req.headers.host || '').split(':')[0];
-    return hostHeader === 'localhost' || hostHeader === '127.0.0.1' || hostHeader === '::1';
-}
-
-function getNoStoreHeaders(contentType) {
-    return {
-        'Content-Type': contentType,
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-    };
-}
-
-function getHtmlHeaders(req) {
-    const isProd = process.env.NODE_ENV === 'production';
-    if (!isProd || isLocalRequest(req)) return getNoStoreHeaders('text/html; charset=utf-8');
-    return { 'Content-Type': 'text/html; charset=utf-8' };
-}
-
-function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
-    const ext = path.extname(filePath);
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
-    fs.stat(filePath, (err, stats) => {
-        if (err) {
-            res.writeHead(err.code === 'ENOENT' ? 404 : 500);
-            res.end(err.code === 'ENOENT' ? 'Not Found' : 'Server Error');
-            return;
-        }
-
-        fs.readFile(filePath, (err, content) => {
-            if (err) {
-                res.writeHead(500);
-                res.end('Server Error');
-                return;
-            }
-            const finalContent = inlineStyle ? Buffer.from(assembleStyleCss(), 'utf8') : content;
-            const isProd = process.env.NODE_ENV === 'production';
-            const disableBrowserCache = !isProd || isLocalRequest(req);
-            const cacheControl = disableBrowserCache
-                ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
-                : 'public, max-age=31536000';
-            const etag = `W/"${finalContent.length}-${stats.mtime.getTime()}"`;
-
-            if (!disableBrowserCache && req.headers['if-none-match'] === etag) {
-                res.writeHead(304);
-                return res.end();
-            }
-
-            const headers = {
-                'Content-Type': contentType,
-                'Cache-Control': cacheControl,
-                'ETag': etag
-            };
-            if (disableBrowserCache) {
-                headers.Pragma = 'no-cache';
-                headers.Expires = '0';
-            }
-
-            res.writeHead(200, headers);
-            res.end(finalContent);
-        });
-    });
-}
-
-function normalizeStaticPath(rawUrl) {
-    if (rawUrl === '/style.css') return '/css/style.css';
-    if (rawUrl === '/super-admin.css') return '/css/super-admin.css';
-    return rawUrl.split('?')[0];
-}
-
-function resolvePublicFilePath(urlPath) {
-    let baseDir = '../../public';
-    if (process.env.NODE_ENV === 'production') {
-        const distPath = path.join(__dirname, '../../public/dist', urlPath);
-        if (fs.existsSync(distPath)) {
-            baseDir = '../../public/dist';
-        }
-    }
-
-    const filePath = path.join(__dirname, baseDir, urlPath);
-    const publicDir = path.resolve(__dirname, '../../public');
-    const resolvedPath = path.resolve(filePath);
-    return resolvedPath.startsWith(publicDir) ? resolvedPath : null;
-}
-
-function tryServeDistOverride(rawUrl, req, res) {
-    const distOverride = getDistOverride(rawUrl);
-    if (!distOverride) return false;
-    const distPath = path.join(__dirname, '../../public/dist', distOverride);
-    if (!fs.existsSync(distPath)) return false;
-    const inline = distOverride === '/css/style.css';
-    sendStaticFile({ filePath: distPath, req, res, inlineStyle: inline });
-    return true;
-}
-
 async function serveStatic(req, res) {
     const rawUrl = req.url.split('?')[0];
     const urlPath = normalizeStaticPath(rawUrl);
@@ -230,7 +86,7 @@ async function serveLogin(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content);
+        content = applyCommonTemplateData(content, buildSeoReplacements(req));
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
@@ -244,7 +100,7 @@ function serveSuperAdmin(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content);
+        content = applyCommonTemplateData(content, buildSeoReplacements(req));
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
@@ -271,7 +127,7 @@ function assembleIndexHtml() {
         fullHtml += fs.readFileSync(path.join(componentsDir, file), 'utf8') + '\n';
     });
 
-    return applyCommonTemplateData(fullHtml);
+    return fullHtml;
 }
 
 /**
@@ -283,17 +139,16 @@ async function serveIndex(req, res) {
     const cookies = getCookies(req);
     if (cookies.app_role === 'super_admin') return serveSuperAdmin(req, res);
 
-    if (cachedIndexHtml && process.env.NODE_ENV === 'production') {
-        res.writeHead(200, getHtmlHeaders(req));
-        return res.end(cachedIndexHtml);
-    }
-
     try {
-        const fullHtml = assembleIndexHtml();
-        if (process.env.NODE_ENV === 'production') cachedIndexHtml = fullHtml;
+        let template = cachedIndexHtml;
+        if (!template || process.env.NODE_ENV !== 'production') {
+            template = assembleIndexHtml();
+            if (process.env.NODE_ENV === 'production') cachedIndexHtml = template;
+        }
+        const finalHtml = applyCommonTemplateData(template, buildSeoReplacements(req));
 
         res.writeHead(200, getHtmlHeaders(req));
-        res.end(fullHtml);
+        res.end(finalHtml);
     } catch (err) {
         console.error('Error assembling index:', err.message);
         res.writeHead(500);
@@ -309,7 +164,7 @@ function serveResetPassword(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content);
+        content = applyCommonTemplateData(content, buildSeoReplacements(req));
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
@@ -323,10 +178,26 @@ function serveVerify(req, res) {
             res.end('Server Error');
             return;
         }
-        content = applyCommonTemplateData(content);
+        content = applyCommonTemplateData(content, buildSeoReplacements(req));
         res.writeHead(200, getHtmlHeaders(req));
         res.end(content);
     });
 }
+
+function serveNotFound(req, res) {
+    const notFoundPath = path.join(__dirname, '../../views', '404.html');
+    fs.readFile(notFoundPath, 'utf8', (err, content) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+            res.end('Page not found');
+            return;
+        }
+        const finalContent = applyCommonTemplateData(content, buildSeoReplacements(req));
+        res.writeHead(404, getHtmlHeaders(req));
+        res.end(finalContent);
+    });
+}
+
+setServeNotFoundHandler(serveNotFound);
 
 module.exports = { serveStatic, serveIndex, serveLogin, serveSuperAdmin, serveResetPassword, serveVerify, getCookies };
