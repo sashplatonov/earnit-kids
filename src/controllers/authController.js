@@ -18,19 +18,23 @@ function buildAuthCookies({ email, role, familyId, childId, maxAge }) {
     }
 
     const token = signToken(payload, maxAge);
-    const secureFlag = process.env.NODE_ENV === 'production' ? 'Secure;' : '';
+    const secureSegment = process.env.NODE_ENV === 'production' ? 'Secure; ' : '';
+    const authFlags = `Max-Age=${maxAge}; Path=/; HttpOnly; ${secureSegment}`;
+    const roleFlags = `Max-Age=${maxAge}; Path=/; ${secureSegment}`;
+    const sameSiteLax = 'SameSite=Lax';
+    const sameSiteStrict = 'SameSite=Strict';
 
     const cookies = [
-        `app_auth=${token}; Max-Age=${maxAge}; Path=/; HttpOnly; ${secureFlag} SameSite=Strict`,
-        `app_role=${role}; Max-Age=${maxAge}; Path=/; ${secureFlag} SameSite=Strict`,
-        `csrf_token=${csrfToken}; Max-Age=${maxAge}; Path=/; ${secureFlag} SameSite=Strict`
+        `app_auth=${token}; ${authFlags}${sameSiteLax}`,
+        `app_role=${role}; ${roleFlags}${sameSiteLax}`,
+        `csrf_token=${csrfToken}; ${authFlags}${sameSiteStrict}`
     ];
 
     if (familyId) {
-        cookies.push(`family_id=${familyId}; Max-Age=${maxAge}; Path=/; HttpOnly; ${secureFlag} SameSite=Strict`);
+        cookies.push(`family_id=${familyId}; ${authFlags}${sameSiteLax}`);
     }
     if (childId) {
-        cookies.push(`child_id=${childId}; Max-Age=${maxAge}; Path=/; HttpOnly; ${secureFlag} SameSite=Strict`);
+        cookies.push(`child_id=${childId}; ${authFlags}${sameSiteLax}`);
     }
     return cookies;
 }
