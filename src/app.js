@@ -85,7 +85,7 @@ const server = http.createServer(async (req, res) => {
         try {
             req.id = req.headers['x-correlation-id'] || crypto.randomUUID();
             res.setHeader('X-Correlation-ID', req.id);
-            setSecurityHeaders(res);
+            setSecurityHeaders(req, res);
 
             const start = Date.now();
             setupLogging(req, res, start);

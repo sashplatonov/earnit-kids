@@ -5,14 +5,17 @@ const isDev = env === 'development';
 const isTest = env === 'test';
 const isProd = env === 'production';
 
+const DEFAULT_PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../../data');
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${DEFAULT_PORT}`;
 
 const config = {
     env,
     isDev,
     isTest,
     isProd,
-    PORT: process.env.PORT || 3000,
+    PORT: DEFAULT_PORT,
+    PUBLIC_BASE_URL,
     DATA_DIR,
     FAMILIES_FILE: path.join(DATA_DIR, 'families.json'),
     FAMILIES_DATA_DIR: path.join(DATA_DIR, 'families'),
@@ -28,6 +31,7 @@ const config = {
         '.js': 'application/javascript; charset=utf-8',
         '.json': 'application/json; charset=utf-8',
         '.md': 'text/markdown; charset=utf-8',
+        '.xml': 'application/xml; charset=utf-8',
         '.png': 'image/png',
         '.jpg': 'image/jpeg',
         '.ico': 'image/x-icon'
