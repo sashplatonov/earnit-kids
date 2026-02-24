@@ -39,11 +39,17 @@ async function verifyUserSession(cookies) {
     const user = await findFamilyByEmail(decoded.email);
     if (!user) return false;
 
-    if (user.isSuperAdmin && app_role === 'super_admin') return true;
-    if (family_id && user.id === family_id) {
-        return app_role === 'admin' || app_role === 'child';
-    }
-    return false;
+    return isValidSessionScope({
+        user,
+        sessionRole: decoded.role || app_role,
+        sessionFamilyId: decoded.familyId || family_id
+    });
+}
+
+function isValidSessionScope({ user, sessionRole, sessionFamilyId }) {
+    if (user.isSuperAdmin && sessionRole === 'super_admin') return true;
+    if (!sessionFamilyId || user.id !== sessionFamilyId) return false;
+    return sessionRole === 'admin' || sessionRole === 'child';
 }
 
 /**
@@ -136,7 +142,9 @@ async function serveIndex(req, res) {
     if (!(await isAuthenticated(req))) return serveLogin(req, res);
 
     const cookies = getCookies(req);
-    if (cookies.app_role === 'super_admin') return serveSuperAdmin(req, res);
+    const decoded = cookies.app_auth ? verifyToken(cookies.app_auth) : null;
+    const role = decoded?.role || cookies.app_role;
+    if (role === 'super_admin') return serveSuperAdmin(req, res);
 
     try {
         let template = cachedIndexHtml;
