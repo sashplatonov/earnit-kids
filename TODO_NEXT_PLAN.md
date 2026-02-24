@@ -1,285 +1,309 @@
-# 🔍 SEO-план: задачи для ИИ-агента
+# Проверка и исправление изоляции данных
 
-Проект: **Coins Kids Shop** (`coins-kids-shop-web`)
+## Описание проблемы
 
----
-
-## Текущее состояние (аудит)
-
-| Элемент | Статус |
-|---|---|
-| `robots.txt` | ❌ Отсутствует |
-| `sitemap.xml` | ❌ Отсутствует |
-| Canonical ссылки | ❌ Нигде не используются |
-| Open Graph мета-теги | ❌ Отсутствуют |
-| Twitter Card мета-теги | ❌ Отсутствуют |
-| Schema.org (structured data) | ❌ Отсутствует |
-| Meta description | ⚠️ Только в [head.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/components/head.html) (общий), отсутствует на [login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html), [about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html) |
-| Security headers (Helmet) | ❌ Не подключен |
-| [manifest.json](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/manifest.json) | ✅ Есть, но описание только на английском |
-| Семантическая разметка HTML | ⚠️ Частично (есть `<main>`, `<article>`, но не везде) |
-| Атрибуты `alt` у изображений | ⚠️ Есть, но не оптимизированы под SEO |
-| `lang="ru"` | ✅ Установлен |
-| PWA мета-теги | ✅ Есть |
+Ребёнок одной семьи может видеть задания другого ребёнка по magic-ссылке. Необходимо гарантировать:
+- **Все** API вызовы проверяют JWT-токен
+- Данные выбираются/обновляются **только** в пределах `familyId` + `childId` из токена
+- Роль (`admin`/`child`) определяет, к каким данным есть доступ
 
 ---
 
-## Задачи с приоритетами
+## Полная матрица API endpoints
 
-### 🔴 Приоритет 1 — Критичные (без них поисковики не индексируют правильно)
+### Легенда
+- ✅ = Корректно защищено
+- ⚠️ = Частично защищено (требует исправления)
+- 🔴 = Уязвимо (отсутствует проверка)
+
+### Auth endpoints (без токена — OK)
+
+| Endpoint | Метод | Токен | Статус | Комментарий |
+|----------|-------|-------|--------|-------------|
+| `/api/login` | POST | Нет | ✅ | Public — это login |
+| `/api/register` | POST | Нет | ✅ | Public — регистрация |
+| `/api/logout` | POST | Нет | ✅ | Очищает cookies |
+| `/api/forgot-password` | POST | Нет | ✅ | Public — восстановление |
+| `/api/reset-password` | POST | Нет | ✅ | Public — сброс пароля |
+| `/api/verify` | POST | Нет | ✅ | Public — верификация email |
+| `/api/auth-config` | GET | Нет | ✅ | Public — конфиг |
+| `/login-child/:token` | GET | Нет | ✅ | Magic link → JWT |
+
+### Infrastructure (без токена)
+
+| Endpoint | Метод | Токен | Статус | Комментарий |
+|----------|-------|-------|--------|-------------|
+| `/api/health` | GET | Нет | ✅ | Health check — OK без авторизации |
+| `/api/metrics` | GET | Нет | ⚠️ | **Должен быть защищён** — метрики приложения |
+| `/api/docs` | GET | Нет | ✅ | Документация — допустимо |
+| `/api/openapi.yaml` | GET | Нет | ✅ | OpenAPI spec — допустимо |
+
+### Main API (требуют [apiAuthMiddleware](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js#26-40) — проверка `ctx.familyId`)
+
+| Endpoint | Метод | Auth | Role check | Data scoping | Статус |
+|----------|-------|------|------------|--------------|--------|
+| `/api/data` | GET | ✅ familyId | ⚠️ | 🔴 tasks/shop по `family_id` без `childId` | **Дети видят данные друг друга!** |
+| `/api/data` | POST | ✅ familyId | ✅ role check | ⚠️ [syncBalances](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js#5-20) без ownership | Частично |
+| `/api/children` | POST | ✅ familyId | ✅ admin only | ✅ | OK |
+| `/api/base-data` | GET | ✅ familyId | — | ✅ | Общие данные |
+| `/api/update-nickname` | POST | ✅ familyId | ✅ child only | ✅ `ctx.childId` | OK |
+| `/api/search-user` | GET | ✅ familyId | ✅ child only | 🔴 Возвращает `family_id` | Утечка |
+| `/api/add-friend` | POST | ✅ familyId | ✅ child only | ⚠️ `friendId` не валидируется | — |
+| `/api/friends-list` | GET | ✅ familyId | ✅ child only | ✅ `ctx.childId` | OK |
+| `/api/analytics` | GET | ✅ familyId | ✅ admin/child | ✅ child→`ctx.childId` | OK |
+| `/api/history` | GET | ✅ familyId | — | ✅ child→`ctx.childId` | OK |
+| `/api/requests` | GET | ✅ familyId | — | ✅ child→`ctx.childId` | OK |
+
+### Children dynamic routes (admin only)
+
+| Endpoint | Метод | Auth | Role | Ownership check | Статус |
+|----------|-------|------|------|-----------------|--------|
+| `/api/children/:id/link` | GET | ✅ | ✅ admin | 🔴 `targetChildId` из URL, не проверяется что ребёнок принадлежит семье | **Опасно** |
+| `/api/children/:id/regenerate-token` | POST | ✅ | ✅ admin | ⚠️ Проверка в service, но не в controller | Частично |
+| `/api/children/:id` | DELETE | ✅ | ✅ admin | ⚠️ Проверка в service, но не в controller | Частично |
+| `/api/children/:id/settings` | POST | ✅ | ✅ admin | ⚠️ Проверка в service, но не в controller | Частично |
+
+### WebSocket
+
+| Endpoint | Auth | Статус |
+|----------|------|--------|
+| `/ws` | ✅ JWT из cookie | ✅ — `familyId` scoped |
+
+### Super Admin (все требуют `role === 'super_admin'`)
+
+| Endpoint | Статус |
+|----------|--------|
+| `/api/super/*` | ✅ Двойная проверка: в middleware + [handleSuperAdminAPI](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/superAdminController.js#97-125) |
 
 ---
 
-#### Задача 1.1: Создать `robots.txt`
-**Файл:** `public/robots.txt` [NEW]
+## Выявленные уязвимости (11 штук)
 
-**Что сделать:**
-- Создать файл `robots.txt` в директории `public/`
-- Разрешить индексацию публичных страниц ([/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html), [/login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html))
-- Запретить индексацию API-эндпоинтов (`/api/`)
-- Запретить индексацию приватных страниц (основное приложение после авторизации)
-- Указать путь к `sitemap.xml`
+### 🔴 CRITICAL
 
-**Пример содержимого:**
+| # | Уязвимость | Файл | Строка |
+|---|-----------|------|--------|
+| 1 | **Tasks загружаются по `family_id` без фильтра `childId`** — все дети видят задания друг друга | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L31) | 31 |
+| 2 | **Shop items загружаются по `family_id` без фильтра `childId`** | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L32) | 32 |
+| 3 | **Admin может запросить link/settings/delete ребёнка чужой семьи** — `targetChildId` берётся из URL без ownership-проверки в роутере | [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js#L142-L171) | 142-171 |
+
+### 🟠 HIGH
+
+| # | Уязвимость | Файл |
+|---|-----------|------|
+| 4 | [updateBalance](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#176-180) — `WHERE id=$2` без `family_id`, можно изменить баланс ребёнка чужой семьи | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L178) |
+| 5 | [updateRequestStatus](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#180-184) — `WHERE id=$2` без `family_id`, запрос чужой семьи | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L182) |
+| 6 | [syncBalances](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js#5-20) — обновляет `children.balance` по [id](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/utils/authUtils.js#67-76) без проверки `family_id` | [syncRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js#L8-L18) |
+| 7 | Admin `GET /api/data?childId=X` — нет проверки что `X` принадлежит `ctx.familyId` | [familyController.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js#L27-L28) |
+
+### 🟡 MEDIUM
+
+| # | Уязвимость | Файл |
+|---|-----------|------|
+| 8 | [searchByNickname](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js#112-126) возвращает `family_id` вместо `child_id` | [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js#L112-L124) |
+| 9 | `/api/metrics` доступен без авторизации — утечка внутренних метрик | [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js#L64-L68) |
+| 10 | [updateChild](file:///Users/sash/Dev/Projects/coins-kids-shop-web/tests/unit/familyService.test.js#23-24) не проверяет `family_id` — можно обновить ребёнка другой семьи | [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js#L66-L91) |
+| 11 | [addFriend](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/services/familyService.js#194-215) не проверяет что `friendId` — реальный ребёнок другой семьи (не свой) | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L184-L186) |
+
+---
+
+## Предлагаемые изменения
+
+### Компонент 1: Фильтрация GET /api/data по childId
+
+#### [MODIFY] [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js)
+
+**Изменение 1:** Фильтрация tasks и shop по `childId` (фикс #1, #2):
+
+```diff
+-query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false`, [dbId])
++query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false${childId ? ' AND t.child_id = $2' : ''}`, childId ? [dbId, childId] : [dbId])
+
+-query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false`, [dbId])
++query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false${childId ? ' AND s.child_id = $2' : ''}`, childId ? [dbId, childId] : [dbId])
 ```
-User-agent: *
-Allow: /about.html
-Allow: /login.html
-Disallow: /api/
-Disallow: /super-admin
-Sitemap: https://YOUR_DOMAIN/sitemap.xml
+
+**Изменение 2:** Добавить `family_id` в [updateBalance](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#176-180) (фикс #4):
+
+```diff
+-query('UPDATE children SET balance=$1 WHERE id=$2', [b, cid])
++query('UPDATE children SET balance=$1 WHERE id=$2 AND family_id=(SELECT id FROM families WHERE family_id=$3)', [b, cid, fid])
+```
+
+**Изменение 3:** Добавить `family_id` в [updateRequestStatus](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#180-184) (фикс #5):
+
+```diff
+-query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2', [s, id])
++query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2 AND family_id=(SELECT id FROM families WHERE family_id=$3)', [s, id, fid])
 ```
 
 ---
 
-#### Задача 1.2: Создать `sitemap.xml`
-**Файл:** `public/sitemap.xml` [NEW]
+### Компонент 2: Ownership middleware для children routes
 
-**Что сделать:**
-- Создать XML sitemap со списком публичных страниц
-- Включить: [/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html), [/login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html)
-- Указать `<lastmod>`, `<changefreq>`, `<priority>` для каждой страницы
-- Обновить `robots.txt` ссылкой на sitemap
+#### [MODIFY] [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js)
 
----
+Добавить helper-функцию `validateChildOwnership` и применить ко всем `/api/children/:id/*` (фикс #3):
 
-#### Задача 1.3: Добавить мета-теги description на все публичные страницы
-**Файлы:** [views/login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html), [public/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html), [views/verify.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/verify.html), [views/reset-password.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/reset-password.html)
-
-**Что сделать:**
-- Добавить уникальный `<meta name="description">` на каждую страницу:
-    - **login.html**: «Войдите в семейный магазин монет — систему мотивации для детей. Зарабатывайте и тратьте монеты за задания.»
-    - **about.html**: «Магазин Монеток — семейная система мотивации, где дети зарабатывают монеты за задания и обменивают их на награды.»
-    - **verify.html**: «Подтверждение email для входа в Магазин Монеток.»
-    - **reset-password.html**: «Сброс пароля для аккаунта в Магазине Монеток.»
-
----
-
-#### Задача 1.4: Добавить canonical-ссылки
-**Файлы:** [views/components/head.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/components/head.html), [views/login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html), [public/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html)
-
-**Что сделать:**
-- Добавить `<link rel="canonical" href="...">` на каждую публичную страницу
-- Canonical URL должен совпадать с фактическим адресом страницы
-- Для серверно-собираемых страниц — использовать шаблонную переменную `{{CANONICAL_URL}}`
-
----
-
-### 🟠 Приоритет 2 — Важные (влияют на отображение в поиске и соцсетях)
-
----
-
-#### Задача 2.1: Добавить Open Graph мета-теги
-**Файлы:** [views/components/head.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/components/head.html), [views/login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html), [public/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html)
-
-**Что сделать:**
-- Добавить набор OG-тегов на каждую публичную страницу:
-  ```html
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Магазин Монеток — мотивация для детей">
-  <meta property="og:description" content="Семейная система, где дети зарабатывают и тратят монеты">
-  <meta property="og:image" content="https://YOUR_DOMAIN/img/og-image.png">
-  <meta property="og:url" content="https://YOUR_DOMAIN/">
-  <meta property="og:locale" content="ru_RU">
-  <meta property="og:site_name" content="Магазин Монеток">
-  ```
-- Создать OG-изображение 1200×630 px (использовать `generate_image`)
-
----
-
-#### Задача 2.2: Добавить Twitter Card мета-теги
-**Файлы:** те же, что и в 2.1
-
-**Что сделать:**
-- Добавить Twitter Card мета-теги:
-  ```html
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Магазин Монеток">
-  <meta name="twitter:description" content="Мотивация для детей через систему монет">
-  <meta name="twitter:image" content="https://YOUR_DOMAIN/img/og-image.png">
-  ```
-
----
-
-#### Задача 2.3: Добавить structured data (JSON-LD / Schema.org)
-**Файлы:** [public/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html), [views/components/head.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/components/head.html)
-
-**Что сделать:**
-- Добавить JSON-LD разметку для [about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html) (тип `WebApplication` или `SoftwareApplication`):
-  ```html
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "Магазин Монеток",
-    "description": "Семейная система мотивации для детей",
-    "applicationCategory": "EducationalApplication",
-    "operatingSystem": "Web",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "RUB"
+```javascript
+// Новый helper — проверяет, что ребёнок принадлежит семье
+async function validateChildOwnership(ctx, targetChildId, res) {
+    const families = await loadFamilies();
+    const familyInfo = families.families[ctx.familyId];
+    if (!familyInfo || !familyInfo.children.some(c => c.id === targetChildId)) {
+        sendJSON(res, { error: 'Child not found in family' }, 404);
+        return false;
     }
-  }
-  </script>
-  ```
-- Для [head.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/components/head.html) добавить `Organization` schema
+    return true;
+}
+```
 
----
-
-#### Задача 2.4: Оптимизировать `<title>` теги
-**Файлы:** [views/components/head.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/components/head.html), [views/login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html), [public/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html)
-
-**Что сделать:**
-- Убедиться, что каждая страница имеет уникальный, описательный `<title>`:
-    - **head.html** (главная): `Магазин Монеток — Семейная система мотивации для детей`
-    - **login.html**: `Вход | Магазин Монеток`
-    - **about.html**: `О проекте | Магазин Монеток — Как работает система мотивации`
-- Формат: `Ключевое слово | Бренд` (до 60 символов)
-
----
-
-### 🟡 Приоритет 3 — Средние (повышают качество индексации)
-
----
-
-#### Задача 3.1: Улучшить семантическую HTML-разметку
-**Файлы:** [views/login.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/login.html), [public/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html), `views/components/*.html`
-
-**Что сделать:**
-- Проверить иерархию заголовков: ровно один `<h1>` на страницу, далее `<h2>`, `<h3>` и т.д.
-- Обернуть секции в `<section>`, `<article>`, `<nav>`, `<aside>` где уместно
-- Добавить `<nav>` для навигационных элементов
-- Использовать `<footer>` для подвала
-
----
-
-#### Задача 3.2: Оптимизировать атрибуты `alt` у изображений
-**Файл:** [public/about.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/about.html)
-
-**Что сделать:**
-- Обновить `alt`-тексты на ключевые описания с SEO-словами:
-    - Текущее: `"Родитель и ребёнок обсуждают цели"` → «Семья обсуждает цели мотивации через Магазин Монеток»
-    - Текущее: `"Семья обсуждает цели"` → «Родители и дети выбирают задания для заработка монет»
-    - Текущее: `"Ребёнок планирует задания"` → «Ребёнок планирует задания в системе мотивации»
-    - Текущее: `"Монеты и прогресс"` → «Прогресс выполнения заданий и баланс монет»
-
----
-
-#### Задача 3.3: Обновить [manifest.json](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/manifest.json)
-**Файл:** [public/manifest.json](file:///Users/sash/Dev/Projects/coins-kids-shop-web/public/manifest.json)
-
-**Что сделать:**
-- Изменить `description` на русский: `"Семейная система мотивации для детей. Зарабатывай и трать монеты за задания!"`
-- Добавить поле `lang: "ru"`
-- Добавить отдельные иконки правильных размеров (192×192 и 512×512) если их нет
-
----
-
-#### Задача 3.4: Добавить Helmet (security headers)
-**Файлы:** [src/app.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/app.js) или основной Express файл
-
-**Что сделать:**
-- Установить пакет `helmet`
-- Подключить middleware для HTTP security headers
-- Это косвенно влияет на SEO: Google учитывает HTTPS, CSP, и другие заголовки
-
----
-
-### 🟢 Приоритет 4 — Хорошо бы сделать (polish)
-
----
-
-#### Задача 4.1: Добавить favicon в нескольких форматах
-**Файлы:** [views/components/head.html](file:///Users/sash/Dev/Projects/coins-kids-shop-web/views/components/head.html), `public/img/`
-
-**Что сделать:**
-- Создать favicon в форматах: `.ico` (16×16, 32×32), `.png` (192×192, 512×512), `.svg`
-- Добавить все `<link>` теги
-- Сейчас используется один `favicon.png` для всех размеров
-
----
-
-#### Задача 4.2: Оптимизировать производительность загрузки
-**Файлы:** `views/components/head.html`
-
-**Что сделать:**
-- Добавить `preload` для критических ресурсов (основной CSS)
-- Перенести скрипты `marked.min.js` и `chart.js` в конец `<body>` или загружать с `defer`
-- Рассмотреть self-hosting шрифтов вместо Google Fonts для ускорения
-- Добавить `<meta http-equiv="X-DNS-Prefetch-Control" content="on">`
-
----
-
-#### Задача 4.3: Добавить страницу 404
-**Файлы:** `views/404.html` [NEW], маршруты Express
-
-**Что сделать:**
-- Создать красивую 404-страницу с навигацией обратно
-- Добавить `<meta name="robots" content="noindex">` чтобы не индексировалась
-- Подключить к Express catch-all маршруту
-
----
-
-#### Задача 4.4: Добавить `noindex` на приватные страницы
-**Файлы:** `views/verify.html`, `views/reset-password.html`, `views/super-admin.html`
-
-**Что сделать:**
-- Добавить `<meta name="robots" content="noindex, nofollow">` на страницы, которые не должны индексироваться
-
----
-
-## Порядок выполнения (рекомендуемый)
-
-```mermaid
-graph TD
-    A["1.1 robots.txt"] --> B["1.2 sitemap.xml"]
-    A --> C["1.3 meta description"]
-    C --> D["1.4 canonical"]
-    D --> E["2.1 Open Graph"]
-    E --> F["2.2 Twitter Cards"]
-    E --> G["2.3 Structured Data"]
-    C --> H["2.4 Оптимизация title"]
-    G --> I["3.1 Семантика HTML"]
-    I --> J["3.2 alt-тексты"]
-    J --> K["3.3 manifest.json"]
-    K --> L["3.4 Helmet"]
-    L --> M["4.1 Множественные favicon"]
-    M --> N["4.2 Перформанс"]
-    N --> O["4.3 Страница 404"]
-    O --> P["4.4 noindex приватных"]
+Применить в каждом обработчике children routes:
+```javascript
+fn: async (c, rq, rs) => {
+    c.targetChildId = parseInt(c.params.id);
+    if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
+    await childController.handleLinkGet({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
+}
 ```
 
 ---
 
-## Проверка результатов
+### Компонент 3: Валидация childId в контроллере
 
-| Инструмент | Что проверяет |
-|---|---|
-| [Google Search Console](https://search.google.com/search-console) | Индексация, ошибки покрытия |
-| [PageSpeed Insights](https://pagespeed.web.dev/) | Core Web Vitals, SEO-скор |
-| [Schema Markup Validator](https://validator.schema.org/) | Корректность structured data |
-| [Open Graph Debugger (Facebook)](https://developers.facebook.com/tools/debug/) | Превью OG-тегов |
-| [Twitter Card Validator](https://cards-dev.twitter.com/validator) | Превью карточек |
-| `curl -I https://domain.com` | Security headers |
-| Lighthouse в Chrome DevTools | Общий SEO audit |
+#### [MODIFY] [familyController.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js)
+
+Добавить проверку ownership для admin `GET /api/data?childId=X` (фикс #7):
+
+```diff
+ async function handleDataGet(ctx, req, res) {
+     const queryChildId = ctx.urlObj.searchParams.get('childId');
+-    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
++    let targetChildId;
++    if (ctx.role === 'child') {
++        targetChildId = ctx.childId;
++    } else if (queryChildId) {
++        targetChildId = parseInt(queryChildId);
++        // Проверить, что ребёнок принадлежит этой семье
++        const families = await loadFamilies();
++        const familyInfo = families.families[ctx.familyId];
++        if (!familyInfo?.children?.some(c => c.id === targetChildId)) {
++            return sendJSON(res, { error: 'Child not found' }, 404);
++        }
++    } else {
++        targetChildId = null;
++    }
+```
+
+Аналогично для [handleHistoryGet](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js#75-84) и [handleRequestsGet](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js#85-94).
+
+---
+
+### Компонент 4: Защита syncBalances
+
+#### [MODIFY] [syncRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js)
+
+Добавить `AND family_id = $3` (фикс #6):
+
+```diff
+-await client.query('UPDATE children SET balance = $1 WHERE id = $2', [data.balance, actingChildId]);
++await client.query('UPDATE children SET balance = $1 WHERE id = $2 AND family_id = $3', [data.balance, actingChildId, dbId]);
+
+-await client.query('UPDATE children SET balance = $1 WHERE id = $2', [child.balance, child.id]);
++await client.query('UPDATE children SET balance = $1 WHERE id = $2 AND family_id = $3', [child.balance, child.id, dbId]);
+```
+
+---
+
+### Компонент 5: Скрытие family_id и защита updateChild
+
+#### [MODIFY] [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js)
+
+**Изменение 1:** Не возвращать `family_id` в searchByNickname (фикс #8):
+
+```diff
+-return result.rows.map(row => ({
+-    id: row.family_id,
+-    nickname: row.name
+-}));
++return result.rows.map(row => ({
++    id: row.id,
++    nickname: row.name
++}));
+```
+
+**Изменение 2:** Добавить `familyDbId` в updateChild (фикс #10):
+
+```diff
+-async function updateChild(childId, data) {
++async function updateChild(childId, data, familyDbId = null) {
+     // ...
+-    const result = await query(`UPDATE children SET ${clauses.join(', ')} WHERE id = $${vals.length}`, vals);
++    let whereClause = `WHERE id = $${vals.length}`;
++    if (familyDbId) {
++        vals.push(familyDbId);
++        whereClause += ` AND family_id = $${vals.length}`;
++    }
++    const result = await query(`UPDATE children SET ${clauses.join(', ')} ${whereClause}`, vals);
+```
+
+---
+
+### Компонент 6: Защита /api/metrics
+
+#### [MODIFY] [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js)
+
+Добавить проверку роли super_admin (фикс #9):
+
+```diff
+ apiRouter.get('/api/metrics', async (ctx, req, res) => {
++    if (ctx.role !== 'super_admin') {
++        return sendJSON(res, { error: 'Forbidden' }, 403);
++    }
+     const { generateMetrics } = require('../utils/metrics');
+```
+
+---
+
+## Файлы для изменения — сводка
+
+| Файл | Изменения |
+|------|-----------|
+| [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js) | Фильтр tasks/shop по `childId`, ownership в [updateBalance](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#176-180)/[updateRequestStatus](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#180-184) |
+| [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js) | `validateChildOwnership` middleware, защита `/api/metrics` |
+| [familyController.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js) | Ownership check для `queryChildId` в handleDataGet/History/Requests |
+| [syncRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js) | `AND family_id` в syncBalances |
+| [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js) | Скрыть `family_id`, ownership в [updateChild](file:///Users/sash/Dev/Projects/coins-kids-shop-web/tests/unit/familyService.test.js#23-24) |
+
+---
+
+## План верификации
+
+### Unit-тесты
+
+#### [NEW] [dataIsolation.test.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/tests/unit/dataIsolation.test.js)
+
+| Тест | Что проверяет |
+|------|--------------|
+| `child sees only own tasks` | tasks фильтруются по `childId` |
+| `child sees only own shop` | shop items фильтруются по `childId` |
+| `admin cannot access child of another family` | ownership validation |
+| `updateBalance rejects foreign child` | `family_id` в WHERE |
+| `updateRequestStatus rejects foreign request` | `family_id` в WHERE |
+| `searchByNickname does not expose family_id` | формат ответа |
+| `syncBalances scoped by family` | `family_id` в UPDATE |
+
+### Автоматические тесты
+
+```bash
+cd /Users/sash/Dev/Projects/coins-kids-shop-web
+npm test          # Все unit-тесты
+npm run lint      # Линтер
+```
+
+### Ручная верификация
+
+1. **Тест между детьми одной семьи:** Magic link ребёнка A1 → видны только задания A1, не A2
+2. **Тест между семьями:** Magic link ребёнка B1 → не видны данные семьи A
+3. **API injection:** `GET /api/data?childId=<чужой id>` → 404
+4. **Children API:** `GET /api/children/<чужой id>/link` → 404

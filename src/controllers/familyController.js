@@ -23,13 +23,33 @@ function enrichWithFamilyInfo({ data, familyInfo, ctx }) {
     }
 }
 
+async function resolveTargetChildId({ ctx, res, queryChildId, familiesCache = null }) {
+    if (ctx.role === 'child') return ctx.childId;
+    if (!queryChildId) return null;
+
+    const targetChildId = parseInt(queryChildId);
+    if (!Number.isInteger(targetChildId)) {
+        sendJSON(res, { error: 'Child not found' }, 404);
+        return false;
+    }
+
+    const families = familiesCache || await loadFamilies();
+    const familyInfo = families.families[ctx.familyId];
+    if (!familyInfo?.children?.some((c) => c.id === targetChildId)) {
+        sendJSON(res, { error: 'Child not found' }, 404);
+        return false;
+    }
+
+    return targetChildId;
+}
+
 async function handleDataGet(ctx, req, res) {
     const queryChildId = ctx.urlObj.searchParams.get('childId');
-    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
-    const data = await loadFamilyData(ctx.familyId, targetChildId);
-
     const families = await loadFamilies();
     const familyInfo = families.families[ctx.familyId];
+    const targetChildId = await resolveTargetChildId({ ctx, res, queryChildId, familiesCache: families });
+    if (targetChildId === false) return;
+    const data = await loadFamilyData(ctx.familyId, targetChildId);
 
     enrichWithFamilyInfo({ data, familyInfo, ctx });
 
@@ -76,8 +96,8 @@ async function handleHistoryGet(ctx, req, res) {
     const page = parseInt(ctx.urlObj.searchParams.get('page')) || 1;
     const limit = parseInt(ctx.urlObj.searchParams.get('limit')) || 50;
     const queryChildId = ctx.urlObj.searchParams.get('childId');
-    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
-
+    const targetChildId = await resolveTargetChildId({ ctx, res, queryChildId });
+    if (targetChildId === false) return;
     const historyData = await getPaginatedHistory(ctx.familyId, targetChildId, { page, limit });
     sendJSON(res, historyData);
 }
@@ -86,8 +106,8 @@ async function handleRequestsGet(ctx, req, res) {
     const page = parseInt(ctx.urlObj.searchParams.get('page')) || 1;
     const limit = parseInt(ctx.urlObj.searchParams.get('limit')) || 50;
     const queryChildId = ctx.urlObj.searchParams.get('childId');
-    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
-
+    const targetChildId = await resolveTargetChildId({ ctx, res, queryChildId });
+    if (targetChildId === false) return;
     const requestsData = await getPaginatedRequests(ctx.familyId, targetChildId, { page, limit });
     sendJSON(res, requestsData);
 }

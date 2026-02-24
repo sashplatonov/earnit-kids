@@ -63,7 +63,7 @@ async function createChild({ familyDbId, name, token, monthlyLimit = 10000 }) {
     return mapChild(result.rows[0]);
 }
 
-async function updateChild(childId, data) {
+async function updateChild(childId, data, familyDbId = null) {
     const fields = {
         name: data.name,
         token: data.token,
@@ -84,8 +84,13 @@ async function updateChild(childId, data) {
     if (clauses.length === 0) return true;
 
     vals.push(childId);
+    let whereClause = `WHERE id = $${vals.length}`;
+    if (familyDbId !== null && familyDbId !== undefined) {
+        vals.push(familyDbId);
+        whereClause += ` AND family_id = $${vals.length}`;
+    }
     const result = await query(
-        `UPDATE children SET ${clauses.join(', ')} WHERE id = $${vals.length}`,
+        `UPDATE children SET ${clauses.join(', ')} ${whereClause}`,
         vals
     );
     return result.rowCount > 0;
@@ -111,7 +116,7 @@ async function isNicknameTaken(nickname, excludeFamilyDbId = null) {
 
 async function searchByNickname(nickname) {
     const result = await query(
-        `SELECT c.name, f.family_id
+        `SELECT c.id, c.name
          FROM children c
          JOIN families f ON c.family_id = f.id
          WHERE LOWER(c.name) LIKE LOWER($1)`,
@@ -119,7 +124,7 @@ async function searchByNickname(nickname) {
     );
 
     return result.rows.map(row => ({
-        id: row.family_id,
+        id: row.id,
         nickname: row.name
     }));
 }

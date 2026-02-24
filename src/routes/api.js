@@ -7,10 +7,26 @@ const friendsController = require('../controllers/friendsController');
 const { loadBaseData } = require('../services/baseDataService');
 const authController = require('../controllers/authController');
 const superAdminController = require('../controllers/superAdminController');
+const { loadFamilies } = require('../services/familyService');
 const { validateCsrf } = require('../utils/authUtils');
 const parseBody = require('../middleware/body-parser');
 
 const apiRouter = new Router();
+
+async function validateChildOwnership(ctx, targetChildId, res) {
+    if (!Number.isInteger(targetChildId)) {
+        sendJSON(res, { error: 'Child not found in family' }, 404);
+        return false;
+    }
+
+    const families = await loadFamilies();
+    const familyInfo = families.families[ctx.familyId];
+    if (!familyInfo || !familyInfo.children.some(c => c.id === targetChildId)) {
+        sendJSON(res, { error: 'Child not found in family' }, 404);
+        return false;
+    }
+    return true;
+}
 
 // Middleware to setup ctx and body parsing
 apiRouter.use(async (ctx, req, res) => {
@@ -62,6 +78,9 @@ apiRouter.get('/api/health', async (ctx, req, res) => {
 });
 
 apiRouter.get('/api/metrics', async (ctx, req, res) => {
+    if (ctx.role !== 'super_admin') {
+        return sendJSON(res, { error: 'Forbidden' }, 403);
+    }
     const { generateMetrics } = require('../utils/metrics');
     res.writeHead(200, { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8' });
     res.end(generateMetrics());
@@ -143,6 +162,7 @@ apiRouter.get('/api/children/:id/link', (ctx, req, res) => mainApiHandler({
     ctx, req, res,
     fn: async (c, rq, rs) => {
         c.targetChildId = parseInt(c.params.id);
+        if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
         await childController.handleLinkGet({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
     }
 }));
@@ -151,6 +171,7 @@ apiRouter.post('/api/children/:id/regenerate-token', (ctx, req, res) => mainApiH
     ctx, req, res,
     fn: async (c, rq, rs) => {
         c.targetChildId = parseInt(c.params.id);
+        if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
         await childController.handleTokenRegen({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
     }
 }));
@@ -159,6 +180,7 @@ apiRouter.delete('/api/children/:id', (ctx, req, res) => mainApiHandler({
     ctx, req, res,
     fn: async (c, rq, rs) => {
         c.targetChildId = parseInt(c.params.id);
+        if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
         await childController.handleDeleteChild({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
     }
 }));
@@ -167,6 +189,7 @@ apiRouter.post('/api/children/:id/settings', (ctx, req, res) => mainApiHandler({
     ctx, req, res,
     fn: async (c, rq, rs) => {
         c.targetChildId = parseInt(c.params.id);
+        if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
         await childController.handleUpdateSettings({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
     }
 }));
