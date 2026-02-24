@@ -52,6 +52,50 @@ function isValidSessionScope({ user, sessionRole, sessionFamilyId }) {
     return sessionRole === 'admin' || sessionRole === 'child';
 }
 
+function resolveSessionRole(decoded, cookies) {
+    if (decoded && decoded.role) return decoded.role;
+    if (cookies.app_role) return cookies.app_role;
+    return null;
+}
+
+function resolveSessionFamilyId(decoded, cookies) {
+    if (decoded && decoded.familyId) return decoded.familyId;
+    if (cookies.family_id) return cookies.family_id;
+    return null;
+}
+
+function resolveSessionChildId(decoded, cookies) {
+    if (decoded && decoded.childId) return decoded.childId;
+    if (cookies.child_id) return cookies.child_id;
+    return null;
+}
+
+function getSessionSnapshot(req) {
+    const headers = req.headers || {};
+    const cookies = getCookies(req);
+    const decoded = cookies.app_auth ? verifyToken(cookies.app_auth) : null;
+    return {
+        role: resolveSessionRole(decoded, cookies),
+        familyId: resolveSessionFamilyId(decoded, cookies),
+        childId: resolveSessionChildId(decoded, cookies),
+        hasAuthCookie: Boolean(cookies.app_auth),
+        hasRoleCookie: Boolean(cookies.app_role),
+        hasFamilyCookie: Boolean(cookies.family_id),
+        hasChildCookie: Boolean(cookies.child_id),
+        userAgent: headers['user-agent'] || 'unknown',
+        cookies
+    };
+}
+
+function getNoStoreHtmlHeaders(req) {
+    return {
+        ...getHtmlHeaders(req),
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0'
+    };
+}
+
 /**
  * Check if request is authenticated
  */
@@ -79,7 +123,15 @@ async function serveStatic(req, res) {
 
 async function serveLogin(req, res) {
     if (await isAuthenticated(req)) {
-        res.writeHead(302, { Location: '/' });
+        const snapshot = getSessionSnapshot(req);
+        logger.info({
+            role: snapshot.role,
+            familyId: snapshot.familyId,
+            childId: snapshot.childId,
+            hasAuthCookie: snapshot.hasAuthCookie,
+            userAgent: snapshot.userAgent
+        }, 'Login page requested by authenticated user, redirecting to index');
+        res.writeHead(302, { Location: '/', ...getNoStoreHtmlHeaders(req) });
         res.end();
         return;
     }
@@ -92,7 +144,7 @@ async function serveLogin(req, res) {
             return;
         }
         content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
-        res.writeHead(200, getHtmlHeaders(req));
+        res.writeHead(200, getNoStoreHtmlHeaders(req));
         res.end(content);
     });
 }
@@ -139,11 +191,26 @@ function assembleIndexHtml() {
  * Serve the main application index
  */
 async function serveIndex(req, res) {
-    if (!(await isAuthenticated(req))) return serveLogin(req, res);
+    if (!(await isAuthenticated(req))) {
+        const snapshot = getSessionSnapshot(req);
+        logger.warn({
+            hasAuthCookie: snapshot.hasAuthCookie,
+            hasRoleCookie: snapshot.hasRoleCookie,
+            hasFamilyCookie: snapshot.hasFamilyCookie,
+            hasChildCookie: snapshot.hasChildCookie,
+            userAgent: snapshot.userAgent
+        }, 'Index requested without valid session, serving login page');
+        return serveLogin(req, res);
+    }
 
-    const cookies = getCookies(req);
-    const decoded = cookies.app_auth ? verifyToken(cookies.app_auth) : null;
-    const role = decoded?.role || cookies.app_role;
+    const snapshot = getSessionSnapshot(req);
+    const role = snapshot.role;
+    logger.info({
+        role: role || null,
+        familyId: snapshot.familyId,
+        childId: snapshot.childId,
+        userAgent: snapshot.userAgent
+    }, 'Index requested with valid session');
     if (role === 'super_admin') return serveSuperAdmin(req, res);
 
     try {
@@ -154,7 +221,7 @@ async function serveIndex(req, res) {
         }
         const finalHtml = applyCommonTemplateData(template, buildSeoReplacements(req), req);
 
-        res.writeHead(200, getHtmlHeaders(req));
+        res.writeHead(200, getNoStoreHtmlHeaders(req));
         res.end(finalHtml);
     } catch (err) {
         logger.error({ err: err.message }, 'Index assembly failed');
