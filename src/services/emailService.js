@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 const Mailgun = require('mailgun.js');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('emailService');
 
 const mailgun = new Mailgun(FormData);
 let mg;
@@ -14,10 +16,10 @@ try {
             url: process.env.MAILGUN_Endpoint || "https://api.mailgun.net" // Defaults to US
         });
     } else {
-        console.warn('MAILGUN_API_KEY not found in env. Email sending will be mocked.');
+        logger.warn('Mailgun not configured, emails will be mocked');
     }
 } catch (e) {
-    console.warn('Failed to initialize Mailgun client:', e.message);
+    logger.error({ err: e.message }, 'Mailgun initialization failed');
 }
 
 // Load email content configuration
@@ -25,7 +27,7 @@ let emailContentConfig = {};
 try {
     emailContentConfig = require('../config/emailContent.json');
 } catch (e) {
-    console.warn('Failed to load emailContent.json:', e.message);
+    logger.warn({ err: e.message }, 'emailContent.json not loaded');
 }
 
 function getContent(key, data) {
@@ -57,7 +59,7 @@ function getTemplate(templateName, data) {
 
         return content;
     } catch (error) {
-        console.error(`Error loading template ${templateName}:`, error);
+        logger.error({ template: templateName, err: error.message }, 'Template load failed');
         return null;
     }
 }
@@ -66,7 +68,7 @@ async function sendEmail({ to, subject, html, text }) {
     const domain = process.env.MAILGUN_DOMAIN;
     const from = process.env.MAILGUN_FROM || `Coins Kids Shop <postmaster@${domain}>`;
 
-    console.log(`[EMAIL SENDING] To: ${to}, Subject: ${subject}`);
+    logger.debug({ to, subject }, 'Sending email');
 
     if (mg && domain) {
         try {
@@ -80,10 +82,10 @@ async function sendEmail({ to, subject, html, text }) {
 
             const response = await mg.messages.create(domain, msgData);
 
-            console.log(`[EMAIL SENT] ID: ${response.id}, Status: ${response.status}`);
+            logger.info({ id: response.id, status: response.status }, 'Email sent');
             return { success: true, id: response.id };
         } catch (error) {
-            console.error('[EMAIL ERROR]', error);
+            logger.error({ err: error.message }, 'Email send failed');
             return { success: false, error: error.message };
         }
     } else {
@@ -101,7 +103,7 @@ ${text || '(HTML Content)'}
         if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
         fs.appendFileSync(logFile, logEntry);
 
-        console.log('[EMAIL MOCK] Saved to emails.log (Mailgun not configured)');
+        logger.debug('Email mocked to emails.log (Mailgun not configured)');
         return { success: true, mock: true };
     }
 }

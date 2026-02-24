@@ -1,3 +1,6 @@
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('bodyParser');
+
 function parseBody(req) {
     if (req.body !== undefined) {
         return Promise.resolve(req.body);
@@ -18,6 +21,7 @@ function parseBody(req) {
                 req.body = sanitized;
                 resolve(sanitized);
             } catch (e) {
+                logger.warn({ err: e.message }, 'Malformed JSON payload');
                 const { ValidationError } = require('../utils/errors');
                 reject(new ValidationError('Invalid JSON'));
             }

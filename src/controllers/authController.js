@@ -6,6 +6,8 @@ const parseBody = require('../middleware/body-parser');
 const { signToken, generateCsrfToken } = require('../utils/authUtils');
 
 const { sendJSON } = require('../utils/controllerUtils');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('authController');
 
 function buildAuthCookies({ email, role, familyId, childId, maxAge }) {
     const csrfToken = generateCsrfToken();
@@ -44,13 +46,19 @@ function sendLoginSuccess(res, email, result) {
 async function handleLogin(req, res) {
     const { email, pin } = await parseBody(req);
     const result = await authenticateUser(email, pin);
-    if (!result.success) return sendJSON(res, { error: result.error }, 401);
+    if (!result.success) {
+        logger.warn({ email, error: result.error }, 'Login failed');
+        return sendJSON(res, { error: result.error }, 401);
+    }
     sendLoginSuccess(res, email, result);
 }
 
 async function handleRegister(req, res) {
     const { email, adminPin } = await parseBody(req);
     const result = await registerFamily(email, adminPin);
+    if (result.success) {
+        logger.info({ email, familyId: result.familyId }, 'Family registered');
+    }
     sendJSON(res, result, result.success ? 200 : 400);
 }
 
@@ -132,6 +140,7 @@ async function handleMagicLink(req, res) {
         return res.end();
     }
 
+    logger.warn({ tokenProvided: !!token }, 'Magic link authentication failed');
     res.writeHead(302, { Location: '/login.html?error=invalid_token' });
     res.end();
 }

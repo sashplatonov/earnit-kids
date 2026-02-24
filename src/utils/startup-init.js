@@ -1,29 +1,31 @@
 const { migrate } = require('../../scripts/migrate');
 const { runDataMigration } = require('../../scripts/migrate-data');
 const { testConnection } = require('../db/connection');
+const { createLogger } = require('./logger');
+const logger = createLogger('startupInit');
 
 function validateEnv() {
     const required = ['SUPER_ADMIN_EMAIL', 'SUPER_ADMIN_PASSWORD'];
     const missing = required.filter(key => !process.env[key]);
 
     if (missing.length > 0) {
-        console.error(`❌ CRITICAL ERROR: Missing required environment variables: ${missing.join(', ')}`);
+        logger.fatal({ missing }, 'Missing required environment variables');
         process.exit(1);
     }
 }
 
 async function initDatabase() {
-    console.log('🔌 Testing database connection...');
+    logger.info('Testing database connection');
     try {
         await testConnection();
-        console.log('✅ Database connection successful');
+        logger.info('Database connection successful');
 
         await migrate();
         await runDataMigration();
 
-        console.log(`🔑 Super Admin credentials loaded: ${process.env.SUPER_ADMIN_EMAIL}`);
+        logger.info('Super admin credentials loaded');
     } catch (err) {
-        console.error('❌ Database or Migration error:', err.message);
+        logger.fatal({ err: err.message }, 'Database initialization failed');
         process.exit(1);
     }
 }

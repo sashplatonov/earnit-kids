@@ -1,5 +1,7 @@
 const { loadFamilies, loadFamilyData } = require('../services/familyService');
 const { loadBaseData } = require('../services/baseDataService');
+const { createLogger } = require('./logger');
+const logger = createLogger('statsLogger');
 
 async function logStartupStats() {
     try {
@@ -16,16 +18,15 @@ async function logStartupStats() {
         }
 
         const catalog = loadBaseData();
-
-        console.log('-------------------------------------------');
-        console.log('📊 APP STARTUP STATISTICS:');
-        console.log(`🏠 Total Shops (Families): ${familyIds.length}`);
-        console.log(`✅ Total tasks in all shops: ${tasksCount}`);
-        console.log(`🎁 Total products in all shops: ${productsCount}`);
-        console.log(`📚 Global Catalog: ${catalog.tasks.length} tasks, ${catalog.products.length} products`);
-        console.log('-------------------------------------------');
+        logger.info({
+            families: familyIds.length,
+            tasks: tasksCount,
+            products: productsCount,
+            catalogTasks: catalog.tasks.length,
+            catalogProducts: catalog.products.length
+        }, 'App startup statistics');
     } catch (err) {
-        console.error('Error generating startup stats:', err.message);
+        logger.error({ err: err.message }, 'Failed to generate startup statistics');
     }
 }
 

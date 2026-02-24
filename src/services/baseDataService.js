@@ -1,5 +1,7 @@
 const fs = require('fs');
 const { BASE_DATA_FILE, DATA_DIR } = require('../config');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('baseDataService');
 
 function ensureDataDir() {
     if (!fs.existsSync(DATA_DIR)) {
@@ -15,7 +17,7 @@ function loadBaseData() {
             return JSON.parse(content);
         }
     } catch (err) {
-        console.error('Error loading base data:', err.message);
+        logger.error({ err: err.message }, 'Base data load failed');
     }
     return { tasks: [], products: [] };
 }
@@ -26,7 +28,7 @@ function saveBaseData(data) {
         fs.writeFileSync(BASE_DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
         return true;
     } catch (err) {
-        console.error('Error saving base data:', err.message);
+        logger.error({ err: err.message }, 'Base data save failed');
         return false;
     }
 }

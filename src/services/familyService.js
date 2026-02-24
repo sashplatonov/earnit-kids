@@ -6,6 +6,8 @@
 const crypto = require('crypto');
 const familyRepository = require('../db/familyRepository');
 const familyDataRepository = require('../db/familyDataRepository');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('familyService');
 
 const DEFAULT_FAMILY_DATA = familyDataRepository.DEFAULT_FAMILY_DATA;
 
@@ -38,7 +40,7 @@ async function saveFamilies(familiesData) {
         }
         return true;
     } catch (err) {
-        console.error('Error saving families:', err.message);
+        logger.error({ err: err.message }, 'Bulk family save failed');
         return false;
     }
 }
