@@ -1,5 +1,8 @@
 # Правила фронтенда — Coins Kids Shop
 
+> [!NOTE]
+> AI agents: core rules live in root `AGENTS.md`. This file provides extended detail for humans.
+
 ## Общие принципы
 
 - **Без фреймворков** — чистый HTML + Vanilla JS + Vanilla CSS
