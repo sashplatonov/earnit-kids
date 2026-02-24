@@ -3,6 +3,7 @@
     "short_name": "EarnIt Kids",
     "description": "Семейная система мотивации для детей. Зарабатывай и трать монеты за задания!",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#1e293b",
     "theme_color": "#f7931a",
