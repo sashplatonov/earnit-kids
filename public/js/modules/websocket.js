@@ -6,11 +6,27 @@ import { showToast } from './utils.js';
 let socket = null;
 let reconnectTimer = null;
 
-export function initializeWebSocket() {
+async function fetchWebSocketToken() {
+    try {
+        const response = await fetch('/api/ws-token', { credentials: 'same-origin' });
+        if (!response.ok) {
+            throw new Error(`Token fetch failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        return data.token;
+    } catch (err) {
+        console.warn('WS token fetch failed:', err);
+        return null;
+    }
+}
+
+export async function initializeWebSocket() {
     if (socket) return;
 
+    const token = await fetchWebSocketToken();
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    const wsUrl = `${protocol}//${window.location.host}/ws${query}`;
 
     try {
         socket = new WebSocket(wsUrl);

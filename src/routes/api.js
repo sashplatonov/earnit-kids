@@ -9,7 +9,7 @@ const { loadBaseData } = require('../services/baseDataService');
 const authController = require('../controllers/authController');
 const superAdminController = require('../controllers/superAdminController');
 const { loadFamilies } = require('../services/familyService');
-const { validateCsrf } = require('../utils/authUtils');
+const { validateCsrf, signToken } = require('../utils/authUtils');
 const parseBody = require('../middleware/body-parser');
 
 const apiRouter = new Router();
@@ -134,6 +134,21 @@ const mainApiHandler = async ({ ctx, req, res, fn }) => {
 
 apiRouter.get('/api/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleDataGet }));
 apiRouter.post('/api/data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleDataPost }));
+apiRouter.get('/api/ws-token', (ctx, req, res) => mainApiHandler({
+    ctx,
+    req,
+    res,
+    fn: async (c) => {
+        const payload = {
+            familyId: c.familyId,
+            childId: c.childId,
+            role: c.role,
+            email: c.email
+        };
+        const token = signToken(payload, 60);
+        sendJSON(res, { token });
+    }
+}));
 apiRouter.post('/api/children', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleChildrenCreate }));
 apiRouter.get('/api/base-data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: async () => sendJSON(res, loadBaseData()) }));
 apiRouter.post('/api/update-nickname', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleUpdateNickname }));
