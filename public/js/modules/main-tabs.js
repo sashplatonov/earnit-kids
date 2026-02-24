@@ -163,16 +163,20 @@ export function setupTabControls() {
     const tabButtons = document.querySelectorAll('.nav__btn, .nav__dropdown-item');
     const moreBtn = document.getElementById('nav-more-btn');
     const moreDropdown = document.getElementById('nav-more-dropdown');
+    const resetMoreMenuState = () => closeDropdowns(moreBtn, moreDropdown);
 
     const activate = (name) => {
         toggleTab(tabButtons, name, moreBtn);
-        closeDropdowns(moreBtn, moreDropdown);
+        resetMoreMenuState();
     };
 
     tabButtons.forEach(btn => btn.addEventListener('click', () => activate(btn.dataset.tab)));
     setupSwipeGestures(activate);
 
     if (moreBtn && moreDropdown) {
+        resetMoreMenuState();
+        window.addEventListener('pageshow', resetMoreMenuState);
+
         moreBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const hide = !moreDropdown.classList.contains('hidden');
@@ -192,7 +196,7 @@ export function setupTabControls() {
         document.addEventListener('click', (e) => {
             if (e.target.closest('.nav__more-wrapper')) return;
             if (moreDropdown.contains(e.target)) return;
-            closeDropdowns(moreBtn, moreDropdown);
+            resetMoreMenuState();
             restoreDropdownFromBody(moreDropdown);
         });
         window.addEventListener('resize', () => positionMoreDropdown(moreBtn, moreDropdown), { passive: true });
