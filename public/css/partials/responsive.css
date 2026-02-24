@@ -122,6 +122,21 @@
         gap: 0.5rem;
     }
 
+    .header__actions {
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .header__install {
+        width: 100%;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .header__install-hint {
+        max-width: 100%;
+    }
+
     .balance__value {
         font-size: 1.2rem;
     }

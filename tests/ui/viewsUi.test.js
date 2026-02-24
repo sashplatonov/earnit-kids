@@ -111,6 +111,27 @@ test('serveStatic keeps skip link hidden until keyboard focus', async () => {
     assert.match(css, /\.skip-link:focus-visible\s*\{/);
 });
 
+test('serveStatic includes mobile PWA install styles', async () => {
+    const state = await render(serveStatic, createMockRequest('/style.css'));
+    const css = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(css, /\.header__actions\s*\{/);
+    assert.match(css, /\.header__install\s*\{/);
+    assert.match(css, /\.header__install-hint\s*\{/);
+});
+
+test('serveStatic serves PWA install module with install prompt handlers', async () => {
+    const state = await render(serveStatic, createMockRequest('/js/modules/pwa-install.js'));
+    const js = state.body.toString();
+
+    assert.equal(state.statusCode, 200);
+    assert.match(state.headers['Content-Type'], /application\/javascript/);
+    assert.match(js, /beforeinstallprompt/);
+    assert.match(js, /appinstalled/);
+    assert.match(js, /Установить приложение/);
+});
+
 test('serveStatic keeps floating nav dropdown compact on mobile', async () => {
     const state = await render(serveStatic, createMockRequest('/style.css'));
     const css = state.body.toString();
