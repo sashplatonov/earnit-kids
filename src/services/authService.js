@@ -6,6 +6,8 @@
 const crypto = require('crypto');
 const familyRepository = require('../db/familyRepository');
 const familyDataRepository = require('../db/familyDataRepository');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('authService');
 
 /**
  * Validate password strength
@@ -63,14 +65,14 @@ async function authenticateFamily(email, password) {
  * @returns {Promise<Object>}
  */
 async function authenticateUser(email, password) {
-    console.log(`🔐 Authentication attempt for email: ${email}`);
+    logger.debug({ email }, 'Authentication attempt');
 
     const superRes = await authenticateSuperAdmin(email, password);
     if (superRes) {
         if (superRes.success) {
-            console.log('  - Super admin login SUCCESS');
+            // intentional silence on success
         } else {
-            console.log('  - Super admin login FAILED: Incorrect password');
+            logger.warn({ email }, 'Super admin login failed');
         }
         return superRes;
     }
@@ -78,15 +80,14 @@ async function authenticateUser(email, password) {
     const familyRes = await authenticateFamily(email, password);
     if (familyRes) {
         if (familyRes.success) {
-        console.log(`  - Found family: ${familyRes.familyId}`);
-            console.log('  - Family admin login SUCCESS');
+            // success state already tracked
         } else {
-            console.log(`  - Family admin login FAILED: ${familyRes.error}`);
+            logger.warn({ email, error: familyRes.error }, 'Family login failed');
         }
         return familyRes;
     }
 
-    console.log('  - Authentication FAILED: User not found or incorrect credentials');
+    logger.warn({ email }, 'Authentication failed: unknown user');
     return { success: false, error: 'Неверные учетные данные' };
 }
 
@@ -140,7 +141,7 @@ async function handleVerificationEmail(email, token) {
     const { sendVerificationEmail } = require('./emailService');
     const baseUrl = process.env.APP_URL || 'http://localhost:3001';
     const link = `${baseUrl}/verify?token=${token}&email=${encodeURIComponent(email)}`;
-    await sendVerificationEmail(email, link).catch(err => console.error('Email error:', err));
+    await sendVerificationEmail(email, link).catch(err => logger.error({ err: err.message }, 'Verification email failed'));
 }
 
 async function registerFamily(email, adminPassword) {

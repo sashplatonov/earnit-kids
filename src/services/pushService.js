@@ -1,6 +1,8 @@
 const https = require('https');
 const { GoogleAuth } = require('google-auth-library');
 const pushTokenRepository = require('../db/pushTokenRepository');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('pushService');
 
 const FCM_SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 let authClientPromise = null;
@@ -16,7 +18,7 @@ function parseServiceAccountJson() {
     try {
         return JSON.parse(raw);
     } catch (err) {
-        console.error('[push] FCM_SERVICE_ACCOUNT_JSON is not valid JSON:', err.message);
+        logger.error({ err: err.message }, 'Invalid FCM service account JSON');
         return null;
     }
 }
@@ -231,13 +233,13 @@ async function sendToTokens({ tokens, title, body, data = {} }) {
     if (!isPushEnabled() || !Array.isArray(tokens) || tokens.length === 0) return;
 
     const invalidTokens = [];
-    for (const token of tokens) {
-        const result = await sendFcmNotification({ token, title, body, data });
-        if (!result.success) {
-            console.warn('[push] send failed:', result.reason);
-            if (result.invalidToken) invalidTokens.push(token);
+        for (const token of tokens) {
+            const result = await sendFcmNotification({ token, title, body, data });
+            if (!result.success) {
+                logger.warn({ reason: result.reason }, 'Push notification failed');
+                if (result.invalidToken) invalidTokens.push(token);
+            }
         }
-    }
 
     if (invalidTokens.length > 0) {
         await pushTokenRepository.deactivateTokens(invalidTokens);

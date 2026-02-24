@@ -16,7 +16,8 @@ const { logStartupStats } = require('./utils/stats-logger');
 
 
 const compression = require('./middleware/compression');
-const logger = require('./utils/logger');
+const { createLogger } = require('./utils/logger');
+const logger = createLogger('app');
 const metrics = require('./utils/metrics');
 const { sendAlert } = require('./utils/alerts');
 const websocket = require('./utils/websocket');
@@ -116,7 +117,7 @@ async function startServer() {
     await initDatabase();
 
     server.listen(config.PORT, async () => {
-        console.log(`🪙 Coin Shop Server running at http://localhost:${config.PORT}`);
+        logger.info({ port: config.PORT }, 'Server started');
         websocket.init(server);
         initBackupService();
         await logStartupStats();
@@ -124,7 +125,7 @@ async function startServer() {
 }
 
 startServer().catch(err => {
-    console.error('Failed to start server:', err.message);
+    logger.fatal({ err: err.message }, 'Server startup failed');
     sendAlert(err, 'Startup Failure');
     process.exit(1);
 });

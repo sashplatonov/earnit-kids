@@ -4,6 +4,8 @@ const {
     updateNickname, searchByNickname, addFriend, getFriendsData,
     addChild, deleteChild, updateChildSettings, getPaginatedHistory, getPaginatedRequests
 } = require('../services/familyService');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('familyController');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');
 const websocket = require('../utils/websocket');
@@ -63,8 +65,28 @@ async function handleDataPost(ctx, req, res) {
 
     const body = await parseBody(req);
     const actingChildId = ctx.role === 'child' ? ctx.childId : null;
+    const payloadKeys = Array.isArray(body) ? ['array'] : Object.keys(body || {});
+    logger.debug({ familyId: ctx.familyId, actingChildId, keys: payloadKeys }, 'Family data mutation received');
+    const balanceChanges = Array.isArray(body?.children)
+        ? body.children
+            .filter((child) => child?.balance !== undefined)
+            .map((child) => ({
+                childId: child.id,
+                childName: child.name || 'Child',
+                balance: child.balance
+            }))
+        : [];
     const saved = await saveFamilyData(ctx.familyId, body, actingChildId);
     if (!saved) return sendJSON(res, { error: 'Save failed' }, 500);
+
+    balanceChanges.forEach((change) => {
+        logger.info({
+            familyId: ctx.familyId,
+            childId: change.childId,
+            childName: change.childName,
+            balance: change.balance
+        }, 'Child balance changed');
+    });
 
     await updateLastActivity(ctx.familyId);
 

@@ -22,6 +22,8 @@ function getCookies(req) {
 }
 
 const { verifyToken } = require('../utils/authUtils');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('viewController');
 
 /**
  * Verify if user session is valid
@@ -48,11 +50,7 @@ async function verifyUserSession(cookies) {
  */
 async function isAuthenticated(req) {
     const cookies = getCookies(req);
-    const authenticated = await verifyUserSession(cookies);
-    if (!authenticated && (req.url === '/' || req.url === '/index.html')) {
-        console.log('🔍 Authentication failed for index request');
-    }
-    return authenticated;
+    return await verifyUserSession(cookies);
 }
 
 const crypto = require('crypto');
@@ -150,7 +148,7 @@ async function serveIndex(req, res) {
         res.writeHead(200, getHtmlHeaders(req));
         res.end(finalHtml);
     } catch (err) {
-        console.error('Error assembling index:', err.message);
+        logger.error({ err: err.message }, 'Index assembly failed');
         res.writeHead(500);
         res.end('Server Error: Index assembly failed');
     }

@@ -7,6 +7,7 @@ const connectionString = process.env.NODE_ENV === 'test' && process.env.TEST_DAT
     ? process.env.TEST_DATABASE_URL
     : process.env.DATABASE_URL;
 
+const { createLogger } = require('../utils/logger');
 const pool = new Pool({
     connectionString,
     ssl: process.env.DB_SSL === 'false' ? false : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined),
@@ -17,16 +18,16 @@ const pool = new Pool({
     maxUses: 7500 // Close and replace a connection after it has been used this many times
 });
 
+const logger = createLogger('dbConnection');
+
 // Test connection on startup
 pool.on('connect', () => {
-    console.log('📦 Connected to PostgreSQL database');
+    logger.debug('New PostgreSQL pool connection');
 });
 
 pool.on('error', (err) => {
-    console.error('❌ PostgreSQL pool error:', err.message);
+    logger.error({ err: err.message }, 'PostgreSQL pool error');
 });
-
-const logger = require('../utils/logger');
 
 /**
  * Execute a query with parameters
