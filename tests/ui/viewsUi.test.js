@@ -53,7 +53,7 @@ test('serveLogin renders login UI', async () => {
 
     assert.equal(state.statusCode, 200);
     assert.match(state.headers['Content-Type'], /text\/html/);
-    assert.match(state.body, /<title>Вход - Монетки<\/title>/);
+    assert.match(state.body, /<title>Вход \| EarnIt Kids<\/title>/);
     assert.match(state.body, /class="login-page"/);
     assert.doesNotMatch(state.body, /\{\{CLARITY_SCRIPT\}\}/);
 });
@@ -80,7 +80,7 @@ test('serveIndex returns login page for unauthenticated user', async () => {
     const state = await render(serveIndex, createMockRequest('/'));
 
     assert.equal(state.statusCode, 200);
-    assert.match(state.body, /<title>Вход - Монетки<\/title>/);
+    assert.match(state.body, /<title>Вход \| EarnIt Kids<\/title>/);
     assert.match(state.body, /class="login-page"/);
 });
 

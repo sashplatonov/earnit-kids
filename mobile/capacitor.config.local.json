@@ -1,6 +1,6 @@
 {
   "appId": "com.coins.kids",
-  "appName": "Coins Kids Shop",
+  "appName": "EarnIt Kids",
   "webDir": "../public",
   "npmClient": "npm",
   "server": {

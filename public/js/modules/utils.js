@@ -95,7 +95,7 @@ async function tryShowWebNotification(title, message) {
     }
 }
 
-export function showMobileEventNotification(message, type = 'info', title = 'Coins Kids Shop') {
+export function showMobileEventNotification(message, type = 'info', title = 'EarnIt Kids') {
     showToast(message, type);
 
     const localNotifications = getLocalNotificationsPlugin();

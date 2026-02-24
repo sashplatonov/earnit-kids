@@ -1,4 +1,4 @@
-# Правила бэкенда — Coins Kids Shop
+# Правила бэкенда — EarnIt Kids
 
 > [!NOTE]
 > AI agents: core rules live in root `AGENTS.md`. This file provides extended detail for humans.

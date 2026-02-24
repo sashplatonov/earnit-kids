@@ -1,7 +1,7 @@
 {
   "name": "coins-kids-shop",
   "version": "1.0.0",
-  "description": "Kids Coin Shop - minimal coin management system",
+  "description": "EarnIt Kids - minimal coin management system",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",

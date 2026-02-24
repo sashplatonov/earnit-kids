@@ -61,7 +61,7 @@ function bindPushListeners(push) {
     });
 
     push.addListener('pushNotificationReceived', (notification) => {
-        const title = notification?.title || 'Coins Kids Shop';
+        const title = notification?.title || 'EarnIt Kids';
         const message = notification?.body || 'Новое уведомление';
         showMobileEventNotification(message, 'info', title);
         if (typeof refreshHandler === 'function') {

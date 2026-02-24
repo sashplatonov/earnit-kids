@@ -1,4 +1,4 @@
-# Правила фронтенда — Coins Kids Shop
+# Правила фронтенда — EarnIt Kids
 
 > [!NOTE]
 > AI agents: core rules live in root `AGENTS.md`. This file provides extended detail for humans.
