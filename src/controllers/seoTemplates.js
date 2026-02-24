@@ -1,7 +1,7 @@
 /** @file Seo Templates REST controller helpers */
 const fs = require('fs');
 const path = require('path');
-const { PUBLIC_BASE_URL } = require('../config');
+const { PUBLIC_BASE_URL, isProd } = require('../config');
 const { getBuildVersion } = require('../utils/buildVersion');
 
 const packageJsonPath = path.join(__dirname, '../../package.json');
@@ -10,8 +10,35 @@ const APP_VERSION = packageJson.version;
 const BUILD_VERSION = getBuildVersion();
 const CLARITY_PROJECT_ID = (process.env.CLARITY_PROJECT_ID || '').trim();
 
-function getClarityScript() {
+function getRequestHost(req) {
+    if (req) {
+        const forwardedHost = req.headers['x-forwarded-host'];
+        if (forwardedHost) {
+            return forwardedHost.split(',')[0].trim().toLowerCase();
+        }
+        if (req.headers.host) {
+            return req.headers.host.split(':')[0].toLowerCase();
+        }
+    }
+    return PUBLIC_BASE_URL.replace(/^https?:\/\//i, '').split('/')[0].toLowerCase();
+}
+
+function isLocalHost(host) {
+    return host === 'localhost' || host === '::1' || host.startsWith('127.');
+}
+
+function shouldIncludeClarityScript(req) {
+    if (!isProd) return false;
     if (!CLARITY_PROJECT_ID || !/^[a-zA-Z0-9]+$/.test(CLARITY_PROJECT_ID)) {
+        return false;
+    }
+    const host = getRequestHost(req);
+    if (isLocalHost(host)) return false;
+    return true;
+}
+
+function getClarityScript(req) {
+    if (!shouldIncludeClarityScript(req)) {
         return '';
     }
 
@@ -70,11 +97,11 @@ function buildSeoReplacements(req) {
     };
 }
 
-function applyCommonTemplateData(html, extraReplacements = {}) {
+function applyCommonTemplateData(html, extraReplacements = {}, req = null) {
     let result = html
         .replace(/\{\{APP_VERSION\}\}/g, APP_VERSION)
         .replace(/\{\{BUILD_VERSION\}\}/g, BUILD_VERSION)
-        .replace(/\{\{CLARITY_SCRIPT\}\}/g, CLARITY_SCRIPT);
+        .replace(/\{\{CLARITY_SCRIPT\}\}/g, getClarityScript(req));
 
     Object.entries(extraReplacements).forEach(([key, value]) => {
         if (typeof value !== 'string') return;
