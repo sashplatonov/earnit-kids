@@ -1,3 +1,4 @@
+/** @file Super Admin Db frontend UI module */
 /**
  * Super Admin Database Management Module
  */

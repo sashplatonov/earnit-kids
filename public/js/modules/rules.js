@@ -1,3 +1,4 @@
+/** @file Rules frontend UI module */
 import { state } from './state.js';
 import { scheduleSave } from './actions.js';
 import { openModal, closeModal, showToast } from './utils.js';

@@ -1,3 +1,4 @@
+/** @file Analytics Repository PostgreSQL data access */
 /**
  * Analytics Repository - Database access for analytics and reporting
  */

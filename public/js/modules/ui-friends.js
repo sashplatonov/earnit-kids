@@ -1,3 +1,4 @@
+/** @file Ui Friends frontend UI module */
 import { escapeHtml } from './utils.js';
 
 export function renderFriendsUI(state) {

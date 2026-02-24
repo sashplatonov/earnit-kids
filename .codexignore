@@ -1,0 +1,9 @@
+node_modules/
+coverage/
+.playwright-browsers/
+data/
+data.json
+test-results/
+.git/
+.idea/
+*.sql

@@ -1,3 +1,4 @@
+/** @file Analytics Controller REST controller helpers */
 const { getAnalyticsData } = require('../services/familyService');
 const { sendJSON } = require('../utils/controllerUtils');
 

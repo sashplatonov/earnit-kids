@@ -1,3 +1,4 @@
+/** @file Cache utility helpers */
 /**
  * Simple in-memory cache with TTL and prefix-based invalidation
  */

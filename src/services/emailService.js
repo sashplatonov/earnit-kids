@@ -1,3 +1,4 @@
+/** @file Email Service business services */
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');

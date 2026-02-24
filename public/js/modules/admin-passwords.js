@@ -1,3 +1,4 @@
+/** @file Admin Passwords frontend UI module */
 import { state } from './state.js';
 import { changePin } from './api.js';
 import { showToast, closeModal, openModal } from './utils.js';

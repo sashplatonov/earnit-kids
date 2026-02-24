@@ -1,3 +1,4 @@
+/** @file API router — all REST endpoints: auth, family data, analytics, super-admin, children. */
 const Router = require('../utils/Router');
 const { createRouteContext, sendJSON } = require('../utils/controllerUtils');
 const familyController = require('../controllers/familyController');

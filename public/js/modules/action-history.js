@@ -1,3 +1,4 @@
+/** @file Action History frontend UI module */
 import { state, setState } from './state.js';
 import { renderAll } from './ui.js';
 import { showToast } from './utils.js';

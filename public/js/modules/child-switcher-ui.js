@@ -1,3 +1,4 @@
+/** @file Child Switcher Ui frontend UI module */
 const CHILD_SWITCHER_STYLE = `
     <style>
         .child-menu { position: relative; z-index: 2100; }

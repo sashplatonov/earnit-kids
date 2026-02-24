@@ -1,3 +1,4 @@
+/** @file State frontend UI module */
 export const state = {
     isAdmin: false,
     role: 'child',

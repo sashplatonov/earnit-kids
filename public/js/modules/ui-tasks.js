@@ -1,3 +1,4 @@
+/** @file Ui Tasks frontend UI module */
 import { escapeHtml } from './utils.js';
 import { CONFIG } from './ui-config.js';
 

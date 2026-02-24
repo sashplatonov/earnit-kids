@@ -1,3 +1,4 @@
+/** @file Action Tasks frontend UI module */
 import { state } from './state.js';
 import { renderShop, renderRequests } from './ui.js';
 import { showToast, showConfirm, showMobileEventNotification } from './utils.js';

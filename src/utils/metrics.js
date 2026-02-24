@@ -1,3 +1,4 @@
+/** @file Metrics utility helpers */
 /**
  * Simple metrics collector for Prometheus format
  */

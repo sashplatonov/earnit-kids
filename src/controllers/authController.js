@@ -1,3 +1,4 @@
+/** @file Auth Controller REST controller helpers */
 const {
     authenticateUser, authenticateChildByToken,
     registerFamily, changePassword, recoverPassword, resetPasswordWithToken, verifyEmailToken

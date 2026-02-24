@@ -1,3 +1,4 @@
+/** @file Pull To Refresh frontend UI module */
 const ptrState = {
     indicator: null, indicatorText: null, refreshCallback: null,
     startY: null, pullDistance: 0, pulling: false, refreshing: false

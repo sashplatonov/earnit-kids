@@ -1,3 +1,4 @@
+/** @file Websocket frontend UI module */
 import { state } from './state.js';
 import { refreshFromServerAndRender } from './main-init.js';
 import { showToast } from './utils.js';

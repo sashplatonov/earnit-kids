@@ -1,3 +1,4 @@
+/** @file Static Router Express route definitions */
 /**
  * Handle CORS preflight requests
  * @param {import('http').IncomingMessage} req 

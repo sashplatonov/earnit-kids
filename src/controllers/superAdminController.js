@@ -1,3 +1,4 @@
+/** @file Super Admin Controller REST controller helpers */
 const {
     loadFamilies, loadFamilyData, saveFamilies, regenerateChildToken,
     saveFamilyData

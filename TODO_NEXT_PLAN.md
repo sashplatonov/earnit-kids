@@ -1,262 +1,188 @@
-# Optimize Coins-Kids-Shop for AI Agent (Codex) — Token Efficiency Plan
+# Optimization Plan v2 — MCP Self-Setup + Smart Rule Linking
 
-## Problem
+## Goal
 
-The project uses an AI agent (Codex) for development. Current configuration wastes tokens because:
-
-1. **[AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md) in repo** references a global rules folder with **57 rule directories** — most irrelevant (Next.js, React, TypeScript, Supabase, etc.) for this vanilla Node.js/HTML/CSS project
-2. **Global [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md)** forces the agent to scan all 57 directories to pick relevant rules — expensive context loading
-3. **`Fix Rule.md`** is 78 lines (~900 tokens) but [AI_FIX_LOG.md](file:///Users/sash/AI%20Rules/AI_FIX_LOG.md) is **empty** — no learning happening
-4. **[default.rules](file:///Users/sash/AI%20Rules/rules/default.rules)** contains auto-approve rules for a different project (`bara-web`) and Java (`./mvnw`) — noise
-5. **Documentation is scattered** across [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md), [docs/architecture.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/docs/architecture.md), `docs/rules-*.md`, [improvement-plan.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/docs/improvement-plan.md), [TODO_NEXT_PLAN.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/TODO_NEXT_PLAN.md) — agent must read 6+ files to understand the project
-6. **No Codex-native configuration** — no `codex.md` or `.codex/` directory with optimized instructions
+Further reduce Codex agent token usage by ~3,700–6,200 tokens/session through smart rule selection, MCP self-configuration, and context filtering.
 
 ---
 
-## Summary of Findings
+## Component 1: Smart Rule Linking (instead of deleting rule dirs)
 
-### Current State of Agent Rules
+### Problem
+`/Users/sash/AI Rules/rules/` has 57 rule directories for different tech stacks. Agent shouldn't scan all of them, but some may be relevant to specific projects.
 
-| File | Location | Size | Status |
-|------|----------|------|--------|
-| [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md) | repo root | 76 lines | ✅ Good, but mixed languages (EN + RU), could be concise |
-| Global [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md) | `/Users/sash/AI Rules/` | 16 lines | ⚠️ Makes agent scan 57 folders |
-| `Fix Rule.md` | `/Users/sash/AI Rules/` | 78 lines | ⚠️ Good idea, but log is empty |
-| `default.rules` | `/Users/sash/AI Rules/rules/` | 27 lines | ⚠️ Contains rules for other projects |
-| `docs/architecture.md` | repo docs | ~200 lines | ✅ Excellent documentation |
-| `docs/rules-backend.md` | repo docs | ~150 lines | ⚠️ Redundant with AGENTS.md |
-| `docs/rules-frontend.md` | repo docs | ~160 lines | ⚠️ Redundant with AGENTS.md |
-| `docs/rules-database.md` | repo docs | ~120 lines | ⚠️ Redundant with AGENTS.md |
-
-### Token Cost Estimates (per agent session)
-
-| Action | Tokens (approx.) | Status |
-|--------|-------------------|--------|
-| Reading `AGENTS.md` | ~1,200 | OK |
-| Agent scanning 57 rule dirs | ~3,000–5,000 | ❌ Wasteful |
-| Reading irrelevant rules | ~2,000–4,000 | ❌ Wasteful |
-| Reading redundant `docs/rules-*.md` | ~2,500 | ⚠️ Context not always needed |
-| Reading empty `AI_FIX_LOG.md` | ~200 | Minor waste |
-| **Total waste per session** | **~8,000–12,000** | **Fixable** |
-
----
-
-## Proposed Changes
-
-### Component 1: Optimized `AGENTS.md` for the repo
+### Solution
+Add an instruction to `AGENTS.md` that tells the agent to **auto-select relevant rules** during project initialization and link only those in the project's `AGENTS.md`.
 
 #### [MODIFY] [AGENTS.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/AGENTS.md)
 
-Rewrite to be a **single source of truth** for AI agents. Consolidate all critical info into one file, eliminating the need for agents to read `docs/rules-*.md` separately.
+Add a new section:
 
-Key changes:
-- Move the essential backend/frontend/DB rules inline (concisely)
-- Remove the global rules indirection
-- Add a structured "What to know" section with file map
-- Add concise verification commands
-- Keep under 120 lines total
-- All content in English (per project rules), agent output instructions in Russian
+```markdown
+## Rule Selection (on first session or when asked to update rules)
+When initializing or updating this file, scan `/Users/sash/AI Rules/rules/` and:
+1. Read each rule directory name — match against the project's tech stack (Node.js, vanilla JS, PostgreSQL, CommonJS)
+2. For relevant rule sets, read and extract useful rules
+3. Add links to only those relevant rule files in the "Extended Rules" section below
+4. Ignore rule sets for frameworks/stacks not used in this project
 
----
-
-### Component 2: Clean up global rules
-
-#### [MODIFY] [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md)
-
-Replace the generic "scan all rules/" approach with explicit per-project pointers:
-
-```diff
--When executing tasks via Codex agents, always apply additional local rules from:
--`/Users/sash/AI Rules/rules`
--
--Select which local rules to apply based on:
--- The task context
--- The rule filename/name in the rules folder
-+When executing tasks via Codex agents, use only the project's own `AGENTS.md`.
-+Additional rules are only needed if the project AGENTS.md explicitly references them.
+### Extended Rules
+<!-- Agent: add links to relevant rule files here during init -->
+- [git-conventional-commit-messages](file:///Users/sash/AI%20Rules/rules/git-conventional-commit-messages) — commit message format
 ```
 
-> [!IMPORTANT]
-> This change affects ALL projects. If you have other projects that rely on the global scanning, we should make this project-specific instead.
+**Impact:** Agent reads ~2-3 relevant rule files instead of scanning 57. New projects also benefit — agent picks their stack-specific rules automatically.
 
 ---
 
-### Component 3: Project-specific `default.rules` cleanup
+## Component 2: MCP Self-Configuration
+
+### Problem
+Agent needs MCP servers for efficient file access, docs lookup, and DB schema queries — but shouldn't require manual setup.
+
+### Solution
+Add an instruction to `AGENTS.md` telling the agent to **configure MCP servers itself** on first session.
+
+#### [MODIFY] [AGENTS.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/AGENTS.md)
+
+Add section:
+
+```markdown
+## MCP Server Setup (auto-configure on first session)
+If `.codex/config.toml` does not exist or is missing MCP entries, create/update it with:
+
+### Required MCP servers
+1. **filesystem** — targeted file reads instead of full files
+   `codex mcp add filesystem -- npx -y @anthropic/mcp-filesystem /Users/sash/Dev/Projects/coins-kids-shop-web`
+2. **context7** — library documentation without web search
+   `codex mcp add context7 -- npx -y @anthropic/context7-mcp`
+3. **postgres** — direct DB schema/data queries (read-only)
+   `codex mcp add postgres -- npx -y @anthropic/mcp-postgres`
+   Set `DATABASE_URL` from the project's docker-compose.yml or .env.example (never read .env directly)
+
+After setup, verify with `codex mcp list`.
+```
+
+#### [NEW] [.codex/config.toml](file:///Users/sash/Dev/Projects/coins-kids-shop-web/.codex/config.toml)
+
+Create as a starter template that agent will extend:
+
+```toml
+# Codex CLI project configuration
+# Agent auto-manages MCP entries — do not remove this file
+```
+
+**Impact:** Agent sets up its own tools on first run. No manual config needed. Saves ~2,000–4,000 tokens/session after MCP is active.
+
+---
+
+## Component 3: Auto-Generate `.codexignore`
+
+### Problem
+Codex may scan irrelevant directories: `node_modules`, `coverage`, `.playwright-browsers`, `data/`.
+
+### Solution
+Add a **global instruction** so the agent auto-creates/updates `.codexignore` during project initialization.
+
+#### [MODIFY] [Global AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md)
+
+Add to global rules:
+
+```markdown
+## Context Filtering (on first session per project)
+If `.codexignore` does not exist in the project root, create it. If it exists, review and update.
+Always exclude: `node_modules/`, `coverage/`, `.git/`, `.idea/`, `test-results/`.
+Scan the project for other non-source directories (build artifacts, data dumps, browser caches) and add them.
+```
+
+**Savings:** ~500–1,000 tokens/session. Works across ALL projects, not just this one.
+
+---
+
+## Component 4: Auto-Generate JSDoc `@file` Headers
+
+### Problem
+Agent reads full files (200–400 lines) just to understand their purpose.
+
+### Solution
+Add a **global instruction** so the agent auto-adds/updates `@file` JSDoc headers during project initialization.
+
+#### [MODIFY] [Global AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md)
+
+Add to global rules:
+
+```markdown
+## File Headers (on first session per project)
+For every source file in `src/` and `public/js/` that lacks a `/** @file ... */` header:
+- Add a 1-line JSDoc `@file` comment as the first line
+- Describe the file's purpose, main exports, and tech (e.g., "SQL queries", "REST routes")
+- Keep it under 100 characters
+- Do NOT modify existing headers unless they are inaccurate
+```
+
+**Savings:** ~500 tokens/session. Agent reads the 1-line header and decides whether to read the full file.
+
+---
+
+## Component 5: Expand `default.rules`
 
 #### [MODIFY] [default.rules](file:///Users/sash/AI%20Rules/rules/default.rules)
 
-Remove rules for other projects and Java. Add project-specific auto-approve rules:
+Append safe commands for auto-approval:
 
-**Remove:**
-- All `bara-web` specific rules (lines 8, 10, 11)
-- All `./mvnw` rules (lines 20-23)
-- Port 8080 curl rules (lines 4, 12-16)
-- Process management rules (lines 17-18)
+```
+prefix_rule(pattern=["npm", "run", "check"], decision="allow")
+prefix_rule(pattern=["npm", "run", "build"], decision="allow")
+prefix_rule(pattern=["npm", "run", "test:coverage"], decision="allow")
+prefix_rule(pattern=["npm", "run", "test:integration"], decision="allow")
+prefix_rule(pattern=["npx", "-y"], decision="allow")
+prefix_rule(pattern=["ls"], decision="allow")
+prefix_rule(pattern=["wc"], decision="allow")
+prefix_rule(pattern=["grep"], decision="allow")
+prefix_rule(pattern=["find"], decision="allow")
+prefix_rule(pattern=["echo"], decision="allow")
+prefix_rule(pattern=["mkdir"], decision="allow")
+prefix_rule(pattern=["codex", "mcp"], decision="allow")
+```
 
-**Keep/Add for coins-kids-shop:**
-```
-prefix_rule(pattern=["npm", "install"], decision="allow")
-prefix_rule(pattern=["npm", "run", "lint"], decision="allow")
-prefix_rule(pattern=["npm", "run", "typecheck"], decision="allow")
-prefix_rule(pattern=["npm", "test"], decision="allow")
-prefix_rule(pattern=["npm", "run", "test"], decision="allow")
-prefix_rule(pattern=["npm", "start"], decision="allow")
-prefix_rule(pattern=["npm", "run", "migrate"], decision="allow")
-prefix_rule(pattern=["docker", "compose", "up", "-d"], decision="allow")
-prefix_rule(pattern=["docker", "compose", "logs"], decision="allow")
-prefix_rule(pattern=["docker", "compose", "ps"], decision="allow")
-prefix_rule(pattern=["docker", "compose", "down"], decision="allow")
-prefix_rule(pattern=["node", "--test"], decision="allow")
-prefix_rule(pattern=["sort"], decision="allow")
-prefix_rule(pattern=["cat"], decision="allow")
-prefix_rule(pattern=["head"], decision="allow")
-prefix_rule(pattern=["tail"], decision="allow")
-```
+**Impact:** Fewer approval pauses → faster sessions
 
 ---
 
-### Component 4: AI_FIX_LOG.md — Agent Learning from Mistakes
+## Summary
 
-> [!IMPORTANT]
-> This is a **real learning mechanism**: when the user points out an error, the agent records it and **never repeats it**.
+| Component | Savings/Session |
+|-----------|----------------|
+| Smart rule linking (2-3 vs 57 dirs) | ~500 |
+| MCP filesystem (targeted reads) | ~1,000–2,000 |
+| MCP context7 (docs without web search) | ~500–1,000 |
+| MCP postgres (direct DB schema) | ~500–1,000 |
+| Auto `.codexignore` (global) | ~500–1,000 |
+| Auto JSDoc headers (global) | ~500 |
+| Expanded `default.rules` | ~200 (speed) |
+| **Total v2 savings** | **~3,700–6,200 tokens/session** |
 
-#### [MODIFY] [AI_FIX_LOG.md](file:///Users/sash/AI%20Rules/AI_FIX_LOG.md)
+### Combined with v1
 
-Initialize as the agent's persistent memory. Agent reads this **at the start of every session**:
-
-```markdown
-# AI Fix Log — Agent Learning Memory
-
-This file is the agent's persistent memory of past mistakes.
-**Every session MUST start by reading this file.**
-
-## How this works
-1. User points out an error → agent records it here
-2. Next session → agent reads this file FIRST
-3. Agent applies prevention rules BEFORE writing any code
-
-## Active Prevention Rules
-<!-- Agent: add compact 1-line rules here as you learn -->
-
-(no rules yet)
-
-## Error History
-<!-- Use format: ## [YYYY-MM-DD] <title> / Symptom / Root cause / Fix / Prevention rule / Tags -->
-
-(no entries yet)
-```
-
-#### [MODIFY] [AGENTS.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/AGENTS.md)
-
-Add a mandatory section for error learning:
-
-```markdown
-## Error Learning (mandatory)
-- At session start: read `/Users/sash/AI Rules/AI_FIX_LOG.md`
-- Apply ALL prevention rules listed there before writing any code
-- When user points out a mistake → record it in the log + add a prevention rule
-- Never repeat a logged mistake
-```
-
-#### [MODIFY] [Fix Rule.md](file:///Users/sash/AI%20Rules/Fix%20Rule.md)
-
-Simplify from 78 lines (~900 tokens) to ~10 lines (~100 tokens). The detailed format is now in `AI_FIX_LOG.md` itself:
-
-```markdown
-# Fix Rule
-
-You maintain a persistent error log at `/Users/sash/AI Rules/AI_FIX_LOG.md`.
-
-1. **Read it** at the start of every task
-2. **Apply** all prevention rules before writing code
-3. **Record** any new error the user points out (use the format in the log file)
-4. **Never repeat** a logged mistake
-5. Make the **smallest fix** possible, add a test if logic changed
-```
+| Phase | Savings/Session |
+|-------|----------------|
+| v1 (completed) | ~9,000–12,000 |
+| v2 (this plan) | ~3,700–6,200 |
+| **Total** | **~12,700–18,200 tokens/session** |
+| **~20 sessions/week** | **~255k–365k tokens/week** |
 
 ---
 
-### Component 5: Create Codex-native instructions
-
-#### [NEW] [codex.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/codex.md)
-
-Some versions of Codex look for `codex.md` or `CODEX.md` at the root. Create a concise pointer:
-
-```markdown
-# Codex Instructions
-
-Refer to `AGENTS.md` for all project rules and conventions.
-```
-
-This avoids duplication while ensuring Codex picks up instructions automatically.
-
----
-
-### Component 6: Consolidate docs for agent-readability
-
-#### [MODIFY] [architecture.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/docs/architecture.md)
-
-No changes needed — already excellent documentation.
-
-#### `docs/rules-backend.md`, `docs/rules-frontend.md`, `docs/rules-database.md`
-
-**No deletion** — keep for human reference. But add a header note:
-
-```markdown
-> [!NOTE]  
-> AI agents: core rules are in root `AGENTS.md`. This file provides extended detail for humans.
-```
-
-This prevents agents from spending tokens on redundant reading.
-
----
-
-## Summary of Expected Savings
-
-| Optimization | Tokens Saved Per Session |
-|--------------|--------------------------|
-| Remove global rules scanning (57 dirs) | ~3,000–5,000 |
-| Consolidate rules into `AGENTS.md` | ~2,000–3,000 |
-| Clean up `default.rules` | ~500 (less noise) |
-| Add "skip" headers to `docs/rules-*.md` | ~2,500 |
-| Simplify `Fix Rule.md` (78→10 lines) | ~800 |
-| Initialize `AI_FIX_LOG.md` as learning memory | ~200 |
-| **Total savings** | **~9,000–12,000 tokens/session** |
-
-With ~20 agent sessions/week, that's **~180k–240k tokens/week** saved.
-
----
-
-## Files to Change — Summary
-
-| File | Action | Impact |
-|------|--------|--------|
-| `AGENTS.md` (repo) | Rewrite & consolidate | High — single source of truth |
-| `AGENTS.md` (global) | Simplify | High — stops scanning 57 dirs |
-| `default.rules` | Clean up | Medium — reduces noise |
-| `AI_FIX_LOG.md` | Initialize as learning memory | High — prevents repeated mistakes |
-| `Fix Rule.md` | Simplify 78→10 lines | Medium — saves ~800 tokens/session |
-| `codex.md` (new) | Create | Low — Codex compatibility |
-| `docs/rules-*.md` | Add skip header | Low — prevents agent reading |
-
----
-
-## Verification Plan
-
-### Automated Tests
-
-No code changes — these are documentation/config files only. Verify with:
+## Verification
 
 ```bash
-cd /Users/sash/Dev/Projects/coins-kids-shop-web
-npm run lint     # Ensure no lint regressions
-npm test         # Ensure no test regressions
+npm run lint && npm test   # No regressions from JSDoc changes
+codex mcp list             # MCP servers registered after first session
 ```
 
-### Manual Verification
-
-1. Run a Codex session on a simple task and observe:
-    - Does the agent read fewer files at startup?
-    - Does it correctly understand project conventions from `AGENTS.md` alone?
-    - Does it auto-approve common commands via `default.rules`?
-2. Verify `AGENTS.md` content is complete enough for agent autonomy
+## Progress
+- [x] Component 1 (Rule Selection) и Component 2 (MCP Server Setup) реализованы в проектных правилах и `.codex/config.toml` (24 февраля 2026). Пока не требовались глобальные изменения.
+- [x] Component 3 (Context Filtering) добавлена секция в глобальный `AGENTS.md` и создан `.codexignore` (24 февраля 2026).
+- [x] Component 4 (File Headers) описана процедура в глобальном `AGENTS.md` (24 февраля 2026).
+- [x] Component 5 (Expanded `default.rules`) выполнена — добавлены все безопасные `prefix_rule` (24 февраля 2026).
+- План v2 завершён; текущие инструкции охватывают все указанные компоненты.

@@ -1,3 +1,4 @@
+/** @file Action Helpers frontend UI module */
 import { state } from './state.js';
 import { saveDataToServer } from './api.js';
 import { renderHistory, updateBalanceUI } from './ui.js';

@@ -1,3 +1,4 @@
+/** @file Family Service business services */
 /**
  * Family Service - Business logic layer for family operations
  * Uses PostgreSQL database via repositories

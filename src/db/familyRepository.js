@@ -1,3 +1,4 @@
+/** @file Family Repository PostgreSQL data access */
 /**
  * Family Repository - Database access layer for families
  */

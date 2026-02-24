@@ -1,3 +1,4 @@
+/** @file Main frontend UI module */
 import { state } from './state.js';
 import { renderAll } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';

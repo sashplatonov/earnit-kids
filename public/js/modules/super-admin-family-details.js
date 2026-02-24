@@ -1,3 +1,4 @@
+/** @file Super Admin Family Details frontend UI module */
 function renderChildren(children) {
     return children.map((child) => `
         <div style="display:flex; gap:0.5rem; align-items:center; background: #f9fafb; padding: 0.5rem; border-radius: 6px;">

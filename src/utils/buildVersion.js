@@ -1,3 +1,4 @@
+/** @file Build Version utility helpers */
 const BUILD_ENV_KEYS = [
     'BUILD_TIMESTAMP',
     'RENDER_BUILD_TIMESTAMP',

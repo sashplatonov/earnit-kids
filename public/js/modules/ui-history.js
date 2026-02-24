@@ -1,3 +1,4 @@
+/** @file Ui History frontend UI module */
 import { escapeHtml } from './utils.js';
 
 function getEntryDetails(entry, state) {

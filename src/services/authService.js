@@ -1,3 +1,4 @@
+/** @file Auth Service business services */
 /**
  * Auth Service - Authentication business logic
  * Uses PostgreSQL database via repositories

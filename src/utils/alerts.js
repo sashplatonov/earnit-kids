@@ -1,3 +1,4 @@
+/** @file Alerts utility helpers */
 const fs = require('fs');
 const path = require('path');
 const config = require('../config');

@@ -1,3 +1,4 @@
+/** @file Ios Dev Fallback frontend UI module */
 import { loadDataFromServer } from './api.js';
 import { showMobileEventNotification } from './utils.js';
 

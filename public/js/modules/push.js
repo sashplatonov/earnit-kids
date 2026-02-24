@@ -1,3 +1,4 @@
+/** @file Push frontend UI module */
 import { state } from './state.js';
 import { registerPushTokenOnServer, unregisterPushTokenOnServer } from './api.js';
 import { showMobileEventNotification } from './utils.js';

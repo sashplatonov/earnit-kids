@@ -1,3 +1,4 @@
+/** @file Action Admin frontend UI module */
 import { state } from './state.js';
 import { renderAll } from './ui.js';
 import { showToast, showMobileEventNotification } from './utils.js';

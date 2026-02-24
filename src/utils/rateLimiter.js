@@ -1,3 +1,4 @@
+/** @file Rate Limiter utility helpers */
 const config = require('../config');
 const limits = new Map();
 

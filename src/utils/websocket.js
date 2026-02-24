@@ -1,3 +1,4 @@
+/** @file Websocket utility helpers */
 const WebSocket = require('ws');
 const { verifyToken } = require('./authUtils');
 const { getCookies } = require('../controllers/viewController');

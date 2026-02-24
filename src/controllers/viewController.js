@@ -1,3 +1,4 @@
+/** @file View Controller REST controller helpers */
 const fs = require('fs');
 const path = require('path');
 const { applyCommonTemplateData, buildSeoReplacements } = require('./seoTemplates');

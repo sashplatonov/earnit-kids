@@ -1,3 +1,4 @@
+/** @file Static Utils REST controller helpers */
 const fs = require('fs');
 const path = require('path');
 const { MIME_TYPES } = require('../config');
