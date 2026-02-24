@@ -135,6 +135,56 @@ function isLocalhost() {
     return host === 'localhost' || host === '127.0.0.1' || host === '::1';
 }
 
+function getBuildVersion() {
+    return document.querySelector('meta[name="app-build-version"]')?.content?.trim() || '';
+}
+
+function getServiceWorkerUrl() {
+    const buildVersion = getBuildVersion();
+    if (!buildVersion) return '/sw.js';
+    return `/sw.js?v=${encodeURIComponent(buildVersion)}`;
+}
+
+function requestImmediateActivation(registration) {
+    if (!registration || !registration.waiting) return;
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+}
+
+function setupServiceWorkerAutoReload() {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+    });
+}
+
+function setupServiceWorkerUpdateChecks(registration) {
+    const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
+    const safeUpdate = () => registration.update().catch(err => console.log('SW update check failed:', err));
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') safeUpdate();
+    });
+
+    window.addEventListener('focus', safeUpdate);
+    window.setInterval(safeUpdate, UPDATE_INTERVAL_MS);
+}
+
+function setupServiceWorkerLifecycle(registration) {
+    requestImmediateActivation(registration);
+
+    registration.addEventListener('updatefound', () => {
+        const installing = registration.installing;
+        if (!installing) return;
+        installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                requestImmediateActivation(registration);
+            }
+        });
+    });
+}
+
 async function disableLocalhostCaching() {
     if ('serviceWorker' in navigator) {
         try {
@@ -158,7 +208,15 @@ async function disableLocalhostCaching() {
 async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     if (isLocalhost()) return disableLocalhostCaching();
-    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+    setupServiceWorkerAutoReload();
+
+    try {
+        const registration = await navigator.serviceWorker.register(getServiceWorkerUrl());
+        setupServiceWorkerLifecycle(registration);
+        setupServiceWorkerUpdateChecks(registration);
+    } catch (err) {
+        console.log('SW registration failed:', err);
+    }
 }
 
 function handleMissingData() {

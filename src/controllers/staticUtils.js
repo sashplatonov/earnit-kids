@@ -60,27 +60,30 @@ function getHtmlHeaders(req) {
     return { 'Content-Type': 'text/html; charset=utf-8' };
 }
 
-function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
-    const ext = path.extname(filePath);
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+function shouldDisableLongCache(reqPath) {
+    return reqPath === '/sw.js' || reqPath === '/manifest.json';
+}
 
+function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
+    const contentType = MIME_TYPES[path.extname(filePath)] || 'application/octet-stream';
+    const requestPath = normalizeStaticPath(req.url.split('?')[0]);
     fs.stat(filePath, (err, stats) => {
         if (err) {
             if (err.code === 'ENOENT') return handleNotFound(req, res);
             res.writeHead(500);
-            res.end('Server Error');
-            return;
+            return res.end('Server Error');
         }
-
         function finalizeResponse(responseContent) {
             const isProd = process.env.NODE_ENV === 'production';
             const disableBrowserCache = !isProd || isLocalRequest(req);
+            const isShortLivedStatic = shouldDisableLongCache(requestPath);
+            const disableLongCache = disableBrowserCache || isShortLivedStatic;
             const cacheControl = disableBrowserCache
                 ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
-                : 'public, max-age=31536000';
+                : (isShortLivedStatic ? 'no-cache, max-age=0, must-revalidate' : 'public, max-age=31536000');
             const etag = `W/"${responseContent.length}-${stats.mtime.getTime()}"`;
 
-            if (!disableBrowserCache && req.headers['if-none-match'] === etag) {
+            if (!disableLongCache && req.headers['if-none-match'] === etag) {
                 res.writeHead(304);
                 return res.end();
             }
@@ -90,32 +93,26 @@ function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
                 'Cache-Control': cacheControl,
                 'ETag': etag
             };
-            if (disableBrowserCache) {
+            if (disableLongCache) {
                 headers.Pragma = 'no-cache';
                 headers.Expires = '0';
             }
-
             res.writeHead(200, headers);
             res.end(responseContent);
         }
-
         function handleFileRead(err, content) {
             if (err) {
                 if (err.code === 'ENOENT') return handleNotFound(req, res);
                 res.writeHead(500);
-                res.end('Server Error');
-                return;
+                return res.end('Server Error');
             }
-
             let responseContent = inlineStyle ? Buffer.from(assembleStyleCss(), 'utf8') : content;
             if (!inlineStyle && isTemplatableType(contentType)) {
                 const processed = applyCommonTemplateData(responseContent.toString('utf8'), buildSeoReplacements(req), req);
                 responseContent = Buffer.from(processed, 'utf8');
             }
-
             finalizeResponse(responseContent);
         }
-
         fs.readFile(filePath, handleFileRead);
     });
 }

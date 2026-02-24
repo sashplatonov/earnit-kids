@@ -1,4 +1,5 @@
-const CACHE_NAME = 'coin-shop-v3';
+const SW_VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
+const CACHE_NAME = `coin-shop-${SW_VERSION}`;
 const ASSETS_TO_CACHE = [
     '/css/style.css',
     '/js/modules/main.js',
@@ -19,8 +20,19 @@ self.addEventListener('install', (event) => {
     event.waitUntil(cacheInstall());
 });
 
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
+    const requestUrl = new URL(event.request.url);
+
+    if (requestUrl.pathname === '/sw.js' || requestUrl.pathname === '/manifest.json') {
+        return;
+    }
 
     if (event.request.url.includes('/api/')) {
         event.respondWith(
@@ -28,6 +40,19 @@ self.addEventListener('fetch', (event) => {
                 status: 503,
                 headers: { 'Content-Type': 'application/json' }
             }))
+        );
+        return;
+    }
+
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request).then((response) => {
+                if (response.status === 200) {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                }
+                return response;
+            }).catch(() => caches.match(event.request))
         );
         return;
     }

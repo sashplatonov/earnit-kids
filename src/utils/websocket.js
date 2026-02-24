@@ -6,13 +6,43 @@ const logger = require('./logger');
 
 let wss;
 
+function parseQueryToken(req) {
+    if (!req || !req.url) return null;
+    try {
+        const host = req.headers?.host || 'localhost';
+        const url = new URL(req.url, `http://${host}`);
+        return url.searchParams.get('token');
+    } catch (err) {
+        logger.debug({ err: err.message, url: req.url }, 'Failed to parse WS token from URL');
+        return null;
+    }
+}
+
+function resolveTokenFromRequest(req) {
+    const cookies = getCookies(req);
+    if (cookies.app_auth) {
+        const decoded = verifyToken(cookies.app_auth);
+        if (decoded) {
+            return { decoded, source: 'cookie' };
+        }
+    }
+
+    const queryToken = parseQueryToken(req);
+    if (queryToken) {
+        const decoded = verifyToken(queryToken);
+        if (decoded) {
+            return { decoded, source: 'query' };
+        }
+    }
+
+    return { decoded: null, source: null };
+}
+
 function init(server) {
     wss = new WebSocket.Server({ server, path: '/ws' });
 
     wss.on('connection', (ws, req) => {
-        const cookies = getCookies(req);
-        const token = cookies.app_auth;
-        const decoded = token ? verifyToken(token) : null;
+        const { decoded, source } = resolveTokenFromRequest(req);
 
         if (!decoded) {
             logger.debug('WS connection attempt without valid token');
