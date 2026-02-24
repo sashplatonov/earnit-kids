@@ -43,7 +43,7 @@ apiRouter.use(async (ctx, req, res) => {
 // Middleware for CSRF and Auth checks for main API
 const apiAuthMiddleware = async (ctx, req, res) => {
     if (!ctx.familyId) {
-        sendJSON(res, { error: 'Unauthorized' }, 401);
+        sendJSON(res, { error: 'Unauthorized' }, 403);
         return false;
     }
     if (['POST', 'DELETE', 'PUT'].includes(ctx.method)) {

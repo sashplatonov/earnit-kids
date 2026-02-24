@@ -10,6 +10,12 @@ const { sendJSON } = require('../utils/controllerUtils');
 const { createLogger } = require('../utils/logger');
 const logger = createLogger('authController');
 
+function maskToken(token) {
+    if (!token) return 'empty';
+    if (token.length <= 10) return `${token[0] || ''}***(${token.length})`;
+    return `${token.slice(0, 6)}...${token.slice(-4)}(${token.length})`;
+}
+
 function buildAuthCookies({ email, role, familyId, childId, maxAge }) {
     const csrfToken = generateCsrfToken();
     const payload = { email, role, familyId, csrfToken };
@@ -53,7 +59,7 @@ async function handleLogin(req, res) {
     const result = await authenticateUser(email, pin);
     if (!result.success) {
         logger.warn({ email, error: result.error }, 'Login failed');
-        return sendJSON(res, { error: result.error }, 401);
+        return sendJSON(res, { error: result.error }, 400);
     }
     sendLoginSuccess(res, email, result);
 }
@@ -129,10 +135,24 @@ async function handleAuthAPI(req, res) {
 }
 
 async function handleMagicLink(req, res) {
-    const token = req.url.split('?')[0].split('/login-child/')[1];
+    const pathname = new URL(req.url, 'http://localhost').pathname;
+    const token = decodeURIComponent(pathname.replace(/^\/login-child\//, '')).replace(/\/+$/, '');
+    const headers = req.headers || {};
+    logger.info({
+        path: pathname,
+        token: maskToken(token),
+        hasCookie: Boolean(headers.cookie),
+        userAgent: headers['user-agent'] || 'unknown',
+        referer: headers.referer || null
+    }, 'Magic link request received');
     const authResult = await authenticateChildByToken(token);
 
     if (authResult.success) {
+        logger.info({
+            token: maskToken(token),
+            childId: authResult.childId,
+            familyId: authResult.familyId
+        }, 'Magic link authentication succeeded');
         const maxAge = parseInt(process.env.MAGIC_LINK_EXPIRES_IN) || 7 * 24 * 60 * 60; // default 7 days instead of indefinite
         const cookies = buildAuthCookies({
             email: authResult.email,
@@ -141,11 +161,21 @@ async function handleMagicLink(req, res) {
             childId: authResult.childId,
             maxAge
         });
-        res.writeHead(302, { Location: '/', 'Set-Cookie': cookies });
+        res.writeHead(302, {
+            Location: '/',
+            'Set-Cookie': cookies,
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0'
+        });
         return res.end();
     }
 
-    logger.warn({ tokenProvided: !!token }, 'Magic link authentication failed');
+    logger.warn({
+        token: maskToken(token),
+        tokenProvided: !!token,
+        userAgent: headers['user-agent'] || 'unknown'
+    }, 'Magic link authentication failed');
     res.writeHead(302, { Location: '/login.html?error=invalid_token' });
     res.end();
 }
