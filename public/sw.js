@@ -1,4 +1,4 @@
-const CACHE_NAME = 'coin-shop-v2';
+const CACHE_NAME = 'coin-shop-v3';
 const ASSETS_TO_CACHE = [
     '/css/style.css',
     '/js/modules/main.js',
