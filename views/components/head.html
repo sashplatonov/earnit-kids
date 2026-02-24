@@ -4,24 +4,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Монетки - Детский магазин</title>
-    <meta name="description" content="Система управления монетками для детей. Зарабатывай и трать!">
+    <meta http-equiv="X-DNS-Prefetch-Control" content="on">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="css/style.css?v={{BUILD_VERSION}}">
+    <title>Магазин Монеток — Семейная система мотивации для детей</title>
+    <meta name="description" content="Магазин Монеток — семейная система мотивации, где дети зарабатывают монеты за задания и обменивают их на награды.">
+    <link rel="canonical" href="{{CANONICAL_URL}}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Магазин Монеток — мотивация для детей">
+    <meta property="og:description" content="Семейная система, где дети зарабатывают и тратят монеты">
+    <meta property="og:image" content="{{OG_IMAGE_URL}}">
+    <meta property="og:url" content="{{CANONICAL_URL}}">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="Магазин Монеток">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Магазин Монеток">
+    <meta name="twitter:description" content="Мотивация для детей через систему монет">
+    <meta name="twitter:image" content="{{OG_IMAGE_URL}}">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Магазин Монеток",
+        "url": "{{BASE_URL}}",
+        "logo": "{{OG_IMAGE_URL}}",
+        "sameAs": ["https://www.instagram.com/", "https://www.facebook.com/"],
+        "description": "Семейная система мотивации для детей"
+    }
+    </script>
+
     <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1e293b">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CoinShop">
-    <link rel="icon" href="/img/favicon.png">
-    <link rel="apple-touch-icon" href="/img/favicon.png">
-    <!-- IOS Startup Screens -->
-    <link rel="apple-touch-startup-image" href="/img/favicon.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta name="apple-mobile-web-app-title" content="Магазин Монеток">
+    <link rel="icon" href="/img/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/img/icon-192.png">
+    <link rel="mask-icon" href="/img/favicon.svg" color="#fbbf24">
+    <link rel="preload" as="image" href="{{OG_IMAGE_URL}}">
+    <meta name="robots" content="index, follow">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200..1000&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     {{CLARITY_SCRIPT}}
 </head>
 

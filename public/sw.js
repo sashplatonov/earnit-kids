@@ -2,7 +2,7 @@ const CACHE_NAME = 'coin-shop-v2';
 const ASSETS_TO_CACHE = [
     '/css/style.css',
     '/js/modules/main.js',
-    '/img/favicon.png'
+    '/img/favicon-32x32.png'
 ];
 
 const cacheInstall = async () => {
