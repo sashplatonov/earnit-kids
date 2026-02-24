@@ -1,309 +1,262 @@
-# Проверка и исправление изоляции данных
+# Optimize Coins-Kids-Shop for AI Agent (Codex) — Token Efficiency Plan
 
-## Описание проблемы
+## Problem
 
-Ребёнок одной семьи может видеть задания другого ребёнка по magic-ссылке. Необходимо гарантировать:
-- **Все** API вызовы проверяют JWT-токен
-- Данные выбираются/обновляются **только** в пределах `familyId` + `childId` из токена
-- Роль (`admin`/`child`) определяет, к каким данным есть доступ
+The project uses an AI agent (Codex) for development. Current configuration wastes tokens because:
 
----
-
-## Полная матрица API endpoints
-
-### Легенда
-- ✅ = Корректно защищено
-- ⚠️ = Частично защищено (требует исправления)
-- 🔴 = Уязвимо (отсутствует проверка)
-
-### Auth endpoints (без токена — OK)
-
-| Endpoint | Метод | Токен | Статус | Комментарий |
-|----------|-------|-------|--------|-------------|
-| `/api/login` | POST | Нет | ✅ | Public — это login |
-| `/api/register` | POST | Нет | ✅ | Public — регистрация |
-| `/api/logout` | POST | Нет | ✅ | Очищает cookies |
-| `/api/forgot-password` | POST | Нет | ✅ | Public — восстановление |
-| `/api/reset-password` | POST | Нет | ✅ | Public — сброс пароля |
-| `/api/verify` | POST | Нет | ✅ | Public — верификация email |
-| `/api/auth-config` | GET | Нет | ✅ | Public — конфиг |
-| `/login-child/:token` | GET | Нет | ✅ | Magic link → JWT |
-
-### Infrastructure (без токена)
-
-| Endpoint | Метод | Токен | Статус | Комментарий |
-|----------|-------|-------|--------|-------------|
-| `/api/health` | GET | Нет | ✅ | Health check — OK без авторизации |
-| `/api/metrics` | GET | Нет | ⚠️ | **Должен быть защищён** — метрики приложения |
-| `/api/docs` | GET | Нет | ✅ | Документация — допустимо |
-| `/api/openapi.yaml` | GET | Нет | ✅ | OpenAPI spec — допустимо |
-
-### Main API (требуют [apiAuthMiddleware](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js#26-40) — проверка `ctx.familyId`)
-
-| Endpoint | Метод | Auth | Role check | Data scoping | Статус |
-|----------|-------|------|------------|--------------|--------|
-| `/api/data` | GET | ✅ familyId | ⚠️ | 🔴 tasks/shop по `family_id` без `childId` | **Дети видят данные друг друга!** |
-| `/api/data` | POST | ✅ familyId | ✅ role check | ⚠️ [syncBalances](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js#5-20) без ownership | Частично |
-| `/api/children` | POST | ✅ familyId | ✅ admin only | ✅ | OK |
-| `/api/base-data` | GET | ✅ familyId | — | ✅ | Общие данные |
-| `/api/update-nickname` | POST | ✅ familyId | ✅ child only | ✅ `ctx.childId` | OK |
-| `/api/search-user` | GET | ✅ familyId | ✅ child only | 🔴 Возвращает `family_id` | Утечка |
-| `/api/add-friend` | POST | ✅ familyId | ✅ child only | ⚠️ `friendId` не валидируется | — |
-| `/api/friends-list` | GET | ✅ familyId | ✅ child only | ✅ `ctx.childId` | OK |
-| `/api/analytics` | GET | ✅ familyId | ✅ admin/child | ✅ child→`ctx.childId` | OK |
-| `/api/history` | GET | ✅ familyId | — | ✅ child→`ctx.childId` | OK |
-| `/api/requests` | GET | ✅ familyId | — | ✅ child→`ctx.childId` | OK |
-
-### Children dynamic routes (admin only)
-
-| Endpoint | Метод | Auth | Role | Ownership check | Статус |
-|----------|-------|------|------|-----------------|--------|
-| `/api/children/:id/link` | GET | ✅ | ✅ admin | 🔴 `targetChildId` из URL, не проверяется что ребёнок принадлежит семье | **Опасно** |
-| `/api/children/:id/regenerate-token` | POST | ✅ | ✅ admin | ⚠️ Проверка в service, но не в controller | Частично |
-| `/api/children/:id` | DELETE | ✅ | ✅ admin | ⚠️ Проверка в service, но не в controller | Частично |
-| `/api/children/:id/settings` | POST | ✅ | ✅ admin | ⚠️ Проверка в service, но не в controller | Частично |
-
-### WebSocket
-
-| Endpoint | Auth | Статус |
-|----------|------|--------|
-| `/ws` | ✅ JWT из cookie | ✅ — `familyId` scoped |
-
-### Super Admin (все требуют `role === 'super_admin'`)
-
-| Endpoint | Статус |
-|----------|--------|
-| `/api/super/*` | ✅ Двойная проверка: в middleware + [handleSuperAdminAPI](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/superAdminController.js#97-125) |
+1. **[AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md) in repo** references a global rules folder with **57 rule directories** — most irrelevant (Next.js, React, TypeScript, Supabase, etc.) for this vanilla Node.js/HTML/CSS project
+2. **Global [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md)** forces the agent to scan all 57 directories to pick relevant rules — expensive context loading
+3. **`Fix Rule.md`** is 78 lines (~900 tokens) but [AI_FIX_LOG.md](file:///Users/sash/AI%20Rules/AI_FIX_LOG.md) is **empty** — no learning happening
+4. **[default.rules](file:///Users/sash/AI%20Rules/rules/default.rules)** contains auto-approve rules for a different project (`bara-web`) and Java (`./mvnw`) — noise
+5. **Documentation is scattered** across [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md), [docs/architecture.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/docs/architecture.md), `docs/rules-*.md`, [improvement-plan.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/docs/improvement-plan.md), [TODO_NEXT_PLAN.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/TODO_NEXT_PLAN.md) — agent must read 6+ files to understand the project
+6. **No Codex-native configuration** — no `codex.md` or `.codex/` directory with optimized instructions
 
 ---
 
-## Выявленные уязвимости (11 штук)
+## Summary of Findings
 
-### 🔴 CRITICAL
+### Current State of Agent Rules
 
-| # | Уязвимость | Файл | Строка |
-|---|-----------|------|--------|
-| 1 | **Tasks загружаются по `family_id` без фильтра `childId`** — все дети видят задания друг друга | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L31) | 31 |
-| 2 | **Shop items загружаются по `family_id` без фильтра `childId`** | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L32) | 32 |
-| 3 | **Admin может запросить link/settings/delete ребёнка чужой семьи** — `targetChildId` берётся из URL без ownership-проверки в роутере | [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js#L142-L171) | 142-171 |
+| File | Location | Size | Status |
+|------|----------|------|--------|
+| [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md) | repo root | 76 lines | ✅ Good, but mixed languages (EN + RU), could be concise |
+| Global [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md) | `/Users/sash/AI Rules/` | 16 lines | ⚠️ Makes agent scan 57 folders |
+| `Fix Rule.md` | `/Users/sash/AI Rules/` | 78 lines | ⚠️ Good idea, but log is empty |
+| `default.rules` | `/Users/sash/AI Rules/rules/` | 27 lines | ⚠️ Contains rules for other projects |
+| `docs/architecture.md` | repo docs | ~200 lines | ✅ Excellent documentation |
+| `docs/rules-backend.md` | repo docs | ~150 lines | ⚠️ Redundant with AGENTS.md |
+| `docs/rules-frontend.md` | repo docs | ~160 lines | ⚠️ Redundant with AGENTS.md |
+| `docs/rules-database.md` | repo docs | ~120 lines | ⚠️ Redundant with AGENTS.md |
 
-### 🟠 HIGH
+### Token Cost Estimates (per agent session)
 
-| # | Уязвимость | Файл |
-|---|-----------|------|
-| 4 | [updateBalance](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#176-180) — `WHERE id=$2` без `family_id`, можно изменить баланс ребёнка чужой семьи | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L178) |
-| 5 | [updateRequestStatus](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#180-184) — `WHERE id=$2` без `family_id`, запрос чужой семьи | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L182) |
-| 6 | [syncBalances](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js#5-20) — обновляет `children.balance` по [id](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/utils/authUtils.js#67-76) без проверки `family_id` | [syncRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js#L8-L18) |
-| 7 | Admin `GET /api/data?childId=X` — нет проверки что `X` принадлежит `ctx.familyId` | [familyController.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js#L27-L28) |
-
-### 🟡 MEDIUM
-
-| # | Уязвимость | Файл |
-|---|-----------|------|
-| 8 | [searchByNickname](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js#112-126) возвращает `family_id` вместо `child_id` | [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js#L112-L124) |
-| 9 | `/api/metrics` доступен без авторизации — утечка внутренних метрик | [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js#L64-L68) |
-| 10 | [updateChild](file:///Users/sash/Dev/Projects/coins-kids-shop-web/tests/unit/familyService.test.js#23-24) не проверяет `family_id` — можно обновить ребёнка другой семьи | [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js#L66-L91) |
-| 11 | [addFriend](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/services/familyService.js#194-215) не проверяет что `friendId` — реальный ребёнок другой семьи (не свой) | [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#L184-L186) |
+| Action | Tokens (approx.) | Status |
+|--------|-------------------|--------|
+| Reading `AGENTS.md` | ~1,200 | OK |
+| Agent scanning 57 rule dirs | ~3,000–5,000 | ❌ Wasteful |
+| Reading irrelevant rules | ~2,000–4,000 | ❌ Wasteful |
+| Reading redundant `docs/rules-*.md` | ~2,500 | ⚠️ Context not always needed |
+| Reading empty `AI_FIX_LOG.md` | ~200 | Minor waste |
+| **Total waste per session** | **~8,000–12,000** | **Fixable** |
 
 ---
 
-## Предлагаемые изменения
+## Proposed Changes
 
-### Компонент 1: Фильтрация GET /api/data по childId
+### Component 1: Optimized `AGENTS.md` for the repo
 
-#### [MODIFY] [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js)
+#### [MODIFY] [AGENTS.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/AGENTS.md)
 
-**Изменение 1:** Фильтрация tasks и shop по `childId` (фикс #1, #2):
+Rewrite to be a **single source of truth** for AI agents. Consolidate all critical info into one file, eliminating the need for agents to read `docs/rules-*.md` separately.
+
+Key changes:
+- Move the essential backend/frontend/DB rules inline (concisely)
+- Remove the global rules indirection
+- Add a structured "What to know" section with file map
+- Add concise verification commands
+- Keep under 120 lines total
+- All content in English (per project rules), agent output instructions in Russian
+
+---
+
+### Component 2: Clean up global rules
+
+#### [MODIFY] [AGENTS.md](file:///Users/sash/AI%20Rules/AGENTS.md)
+
+Replace the generic "scan all rules/" approach with explicit per-project pointers:
 
 ```diff
--query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false`, [dbId])
-+query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false${childId ? ' AND t.child_id = $2' : ''}`, childId ? [dbId, childId] : [dbId])
-
--query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false`, [dbId])
-+query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false${childId ? ' AND s.child_id = $2' : ''}`, childId ? [dbId, childId] : [dbId])
+-When executing tasks via Codex agents, always apply additional local rules from:
+-`/Users/sash/AI Rules/rules`
+-
+-Select which local rules to apply based on:
+-- The task context
+-- The rule filename/name in the rules folder
++When executing tasks via Codex agents, use only the project's own `AGENTS.md`.
++Additional rules are only needed if the project AGENTS.md explicitly references them.
 ```
 
-**Изменение 2:** Добавить `family_id` в [updateBalance](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#176-180) (фикс #4):
+> [!IMPORTANT]
+> This change affects ALL projects. If you have other projects that rely on the global scanning, we should make this project-specific instead.
 
-```diff
--query('UPDATE children SET balance=$1 WHERE id=$2', [b, cid])
-+query('UPDATE children SET balance=$1 WHERE id=$2 AND family_id=(SELECT id FROM families WHERE family_id=$3)', [b, cid, fid])
+---
+
+### Component 3: Project-specific `default.rules` cleanup
+
+#### [MODIFY] [default.rules](file:///Users/sash/AI%20Rules/rules/default.rules)
+
+Remove rules for other projects and Java. Add project-specific auto-approve rules:
+
+**Remove:**
+- All `bara-web` specific rules (lines 8, 10, 11)
+- All `./mvnw` rules (lines 20-23)
+- Port 8080 curl rules (lines 4, 12-16)
+- Process management rules (lines 17-18)
+
+**Keep/Add for coins-kids-shop:**
 ```
-
-**Изменение 3:** Добавить `family_id` в [updateRequestStatus](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#180-184) (фикс #5):
-
-```diff
--query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2', [s, id])
-+query('UPDATE requests SET status=$1, updated_at=NOW() WHERE id=$2 AND family_id=(SELECT id FROM families WHERE family_id=$3)', [s, id, fid])
+prefix_rule(pattern=["npm", "install"], decision="allow")
+prefix_rule(pattern=["npm", "run", "lint"], decision="allow")
+prefix_rule(pattern=["npm", "run", "typecheck"], decision="allow")
+prefix_rule(pattern=["npm", "test"], decision="allow")
+prefix_rule(pattern=["npm", "run", "test"], decision="allow")
+prefix_rule(pattern=["npm", "start"], decision="allow")
+prefix_rule(pattern=["npm", "run", "migrate"], decision="allow")
+prefix_rule(pattern=["docker", "compose", "up", "-d"], decision="allow")
+prefix_rule(pattern=["docker", "compose", "logs"], decision="allow")
+prefix_rule(pattern=["docker", "compose", "ps"], decision="allow")
+prefix_rule(pattern=["docker", "compose", "down"], decision="allow")
+prefix_rule(pattern=["node", "--test"], decision="allow")
+prefix_rule(pattern=["sort"], decision="allow")
+prefix_rule(pattern=["cat"], decision="allow")
+prefix_rule(pattern=["head"], decision="allow")
+prefix_rule(pattern=["tail"], decision="allow")
 ```
 
 ---
 
-### Компонент 2: Ownership middleware для children routes
+### Component 4: AI_FIX_LOG.md — Agent Learning from Mistakes
 
-#### [MODIFY] [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js)
+> [!IMPORTANT]
+> This is a **real learning mechanism**: when the user points out an error, the agent records it and **never repeats it**.
 
-Добавить helper-функцию `validateChildOwnership` и применить ко всем `/api/children/:id/*` (фикс #3):
+#### [MODIFY] [AI_FIX_LOG.md](file:///Users/sash/AI%20Rules/AI_FIX_LOG.md)
 
-```javascript
-// Новый helper — проверяет, что ребёнок принадлежит семье
-async function validateChildOwnership(ctx, targetChildId, res) {
-    const families = await loadFamilies();
-    const familyInfo = families.families[ctx.familyId];
-    if (!familyInfo || !familyInfo.children.some(c => c.id === targetChildId)) {
-        sendJSON(res, { error: 'Child not found in family' }, 404);
-        return false;
-    }
-    return true;
-}
+Initialize as the agent's persistent memory. Agent reads this **at the start of every session**:
+
+```markdown
+# AI Fix Log — Agent Learning Memory
+
+This file is the agent's persistent memory of past mistakes.
+**Every session MUST start by reading this file.**
+
+## How this works
+1. User points out an error → agent records it here
+2. Next session → agent reads this file FIRST
+3. Agent applies prevention rules BEFORE writing any code
+
+## Active Prevention Rules
+<!-- Agent: add compact 1-line rules here as you learn -->
+
+(no rules yet)
+
+## Error History
+<!-- Use format: ## [YYYY-MM-DD] <title> / Symptom / Root cause / Fix / Prevention rule / Tags -->
+
+(no entries yet)
 ```
 
-Применить в каждом обработчике children routes:
-```javascript
-fn: async (c, rq, rs) => {
-    c.targetChildId = parseInt(c.params.id);
-    if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
-    await childController.handleLinkGet({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
-}
+#### [MODIFY] [AGENTS.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/AGENTS.md)
+
+Add a mandatory section for error learning:
+
+```markdown
+## Error Learning (mandatory)
+- At session start: read `/Users/sash/AI Rules/AI_FIX_LOG.md`
+- Apply ALL prevention rules listed there before writing any code
+- When user points out a mistake → record it in the log + add a prevention rule
+- Never repeat a logged mistake
 ```
 
----
+#### [MODIFY] [Fix Rule.md](file:///Users/sash/AI%20Rules/Fix%20Rule.md)
 
-### Компонент 3: Валидация childId в контроллере
+Simplify from 78 lines (~900 tokens) to ~10 lines (~100 tokens). The detailed format is now in `AI_FIX_LOG.md` itself:
 
-#### [MODIFY] [familyController.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js)
+```markdown
+# Fix Rule
 
-Добавить проверку ownership для admin `GET /api/data?childId=X` (фикс #7):
+You maintain a persistent error log at `/Users/sash/AI Rules/AI_FIX_LOG.md`.
 
-```diff
- async function handleDataGet(ctx, req, res) {
-     const queryChildId = ctx.urlObj.searchParams.get('childId');
--    const targetChildId = ctx.role === 'child' ? ctx.childId : (queryChildId ? parseInt(queryChildId) : null);
-+    let targetChildId;
-+    if (ctx.role === 'child') {
-+        targetChildId = ctx.childId;
-+    } else if (queryChildId) {
-+        targetChildId = parseInt(queryChildId);
-+        // Проверить, что ребёнок принадлежит этой семье
-+        const families = await loadFamilies();
-+        const familyInfo = families.families[ctx.familyId];
-+        if (!familyInfo?.children?.some(c => c.id === targetChildId)) {
-+            return sendJSON(res, { error: 'Child not found' }, 404);
-+        }
-+    } else {
-+        targetChildId = null;
-+    }
-```
-
-Аналогично для [handleHistoryGet](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js#75-84) и [handleRequestsGet](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js#85-94).
-
----
-
-### Компонент 4: Защита syncBalances
-
-#### [MODIFY] [syncRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js)
-
-Добавить `AND family_id = $3` (фикс #6):
-
-```diff
--await client.query('UPDATE children SET balance = $1 WHERE id = $2', [data.balance, actingChildId]);
-+await client.query('UPDATE children SET balance = $1 WHERE id = $2 AND family_id = $3', [data.balance, actingChildId, dbId]);
-
--await client.query('UPDATE children SET balance = $1 WHERE id = $2', [child.balance, child.id]);
-+await client.query('UPDATE children SET balance = $1 WHERE id = $2 AND family_id = $3', [child.balance, child.id, dbId]);
+1. **Read it** at the start of every task
+2. **Apply** all prevention rules before writing code
+3. **Record** any new error the user points out (use the format in the log file)
+4. **Never repeat** a logged mistake
+5. Make the **smallest fix** possible, add a test if logic changed
 ```
 
 ---
 
-### Компонент 5: Скрытие family_id и защита updateChild
+### Component 5: Create Codex-native instructions
 
-#### [MODIFY] [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js)
+#### [NEW] [codex.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/codex.md)
 
-**Изменение 1:** Не возвращать `family_id` в searchByNickname (фикс #8):
+Some versions of Codex look for `codex.md` or `CODEX.md` at the root. Create a concise pointer:
 
-```diff
--return result.rows.map(row => ({
--    id: row.family_id,
--    nickname: row.name
--}));
-+return result.rows.map(row => ({
-+    id: row.id,
-+    nickname: row.name
-+}));
+```markdown
+# Codex Instructions
+
+Refer to `AGENTS.md` for all project rules and conventions.
 ```
 
-**Изменение 2:** Добавить `familyDbId` в updateChild (фикс #10):
-
-```diff
--async function updateChild(childId, data) {
-+async function updateChild(childId, data, familyDbId = null) {
-     // ...
--    const result = await query(`UPDATE children SET ${clauses.join(', ')} WHERE id = $${vals.length}`, vals);
-+    let whereClause = `WHERE id = $${vals.length}`;
-+    if (familyDbId) {
-+        vals.push(familyDbId);
-+        whereClause += ` AND family_id = $${vals.length}`;
-+    }
-+    const result = await query(`UPDATE children SET ${clauses.join(', ')} ${whereClause}`, vals);
-```
+This avoids duplication while ensuring Codex picks up instructions automatically.
 
 ---
 
-### Компонент 6: Защита /api/metrics
+### Component 6: Consolidate docs for agent-readability
 
-#### [MODIFY] [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js)
+#### [MODIFY] [architecture.md](file:///Users/sash/Dev/Projects/coins-kids-shop-web/docs/architecture.md)
 
-Добавить проверку роли super_admin (фикс #9):
+No changes needed — already excellent documentation.
 
-```diff
- apiRouter.get('/api/metrics', async (ctx, req, res) => {
-+    if (ctx.role !== 'super_admin') {
-+        return sendJSON(res, { error: 'Forbidden' }, 403);
-+    }
-     const { generateMetrics } = require('../utils/metrics');
+#### `docs/rules-backend.md`, `docs/rules-frontend.md`, `docs/rules-database.md`
+
+**No deletion** — keep for human reference. But add a header note:
+
+```markdown
+> [!NOTE]  
+> AI agents: core rules are in root `AGENTS.md`. This file provides extended detail for humans.
 ```
 
----
-
-## Файлы для изменения — сводка
-
-| Файл | Изменения |
-|------|-----------|
-| [familyDataRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js) | Фильтр tasks/shop по `childId`, ownership в [updateBalance](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#176-180)/[updateRequestStatus](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/familyDataRepository.js#180-184) |
-| [api.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/routes/api.js) | `validateChildOwnership` middleware, защита `/api/metrics` |
-| [familyController.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/controllers/familyController.js) | Ownership check для `queryChildId` в handleDataGet/History/Requests |
-| [syncRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/syncRepository.js) | `AND family_id` в syncBalances |
-| [childRepository.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/src/db/childRepository.js) | Скрыть `family_id`, ownership в [updateChild](file:///Users/sash/Dev/Projects/coins-kids-shop-web/tests/unit/familyService.test.js#23-24) |
+This prevents agents from spending tokens on redundant reading.
 
 ---
 
-## План верификации
+## Summary of Expected Savings
 
-### Unit-тесты
+| Optimization | Tokens Saved Per Session |
+|--------------|--------------------------|
+| Remove global rules scanning (57 dirs) | ~3,000–5,000 |
+| Consolidate rules into `AGENTS.md` | ~2,000–3,000 |
+| Clean up `default.rules` | ~500 (less noise) |
+| Add "skip" headers to `docs/rules-*.md` | ~2,500 |
+| Simplify `Fix Rule.md` (78→10 lines) | ~800 |
+| Initialize `AI_FIX_LOG.md` as learning memory | ~200 |
+| **Total savings** | **~9,000–12,000 tokens/session** |
 
-#### [NEW] [dataIsolation.test.js](file:///Users/sash/Dev/Projects/coins-kids-shop-web/tests/unit/dataIsolation.test.js)
+With ~20 agent sessions/week, that's **~180k–240k tokens/week** saved.
 
-| Тест | Что проверяет |
-|------|--------------|
-| `child sees only own tasks` | tasks фильтруются по `childId` |
-| `child sees only own shop` | shop items фильтруются по `childId` |
-| `admin cannot access child of another family` | ownership validation |
-| `updateBalance rejects foreign child` | `family_id` в WHERE |
-| `updateRequestStatus rejects foreign request` | `family_id` в WHERE |
-| `searchByNickname does not expose family_id` | формат ответа |
-| `syncBalances scoped by family` | `family_id` в UPDATE |
+---
 
-### Автоматические тесты
+## Files to Change — Summary
+
+| File | Action | Impact |
+|------|--------|--------|
+| `AGENTS.md` (repo) | Rewrite & consolidate | High — single source of truth |
+| `AGENTS.md` (global) | Simplify | High — stops scanning 57 dirs |
+| `default.rules` | Clean up | Medium — reduces noise |
+| `AI_FIX_LOG.md` | Initialize as learning memory | High — prevents repeated mistakes |
+| `Fix Rule.md` | Simplify 78→10 lines | Medium — saves ~800 tokens/session |
+| `codex.md` (new) | Create | Low — Codex compatibility |
+| `docs/rules-*.md` | Add skip header | Low — prevents agent reading |
+
+---
+
+## Verification Plan
+
+### Automated Tests
+
+No code changes — these are documentation/config files only. Verify with:
 
 ```bash
 cd /Users/sash/Dev/Projects/coins-kids-shop-web
-npm test          # Все unit-тесты
-npm run lint      # Линтер
+npm run lint     # Ensure no lint regressions
+npm test         # Ensure no test regressions
 ```
 
-### Ручная верификация
+### Manual Verification
 
-1. **Тест между детьми одной семьи:** Magic link ребёнка A1 → видны только задания A1, не A2
-2. **Тест между семьями:** Magic link ребёнка B1 → не видны данные семьи A
-3. **API injection:** `GET /api/data?childId=<чужой id>` → 404
-4. **Children API:** `GET /api/children/<чужой id>/link` → 404
+1. Run a Codex session on a simple task and observe:
+    - Does the agent read fewer files at startup?
+    - Does it correctly understand project conventions from `AGENTS.md` alone?
+    - Does it auto-approve common commands via `default.rules`?
+2. Verify `AGENTS.md` content is complete enough for agent autonomy

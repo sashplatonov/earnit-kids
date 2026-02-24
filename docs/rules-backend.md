@@ -1,5 +1,8 @@
 # Правила бэкенда — Coins Kids Shop
 
+> [!NOTE]
+> AI agents: core rules live in root `AGENTS.md`. This file provides extended detail for humans.
+
 ## Архитектура
 
 - **Чистый Node.js** — `http.createServer()` без фреймворков (Express, Fastify, Koa)

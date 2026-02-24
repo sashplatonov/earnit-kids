@@ -1,5 +1,8 @@
 # Правила работы с базой данных — Coins Kids Shop
 
+> [!NOTE]
+> AI agents: core rules live in root `AGENTS.md`. This file provides extended detail for humans.
+
 ## СУБД
 
 - **PostgreSQL** — единственная БД проекта
