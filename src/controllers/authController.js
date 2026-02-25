@@ -33,7 +33,7 @@ function buildAuthCookies({ email, role, familyId, childId, maxAge }) {
     const cookies = [
         `app_auth=${token}; ${authFlags}${sameSiteLax}`,
         `app_role=${role}; ${roleFlags}${sameSiteLax}`,
-        `csrf_token=${csrfToken}; ${authFlags}${sameSiteStrict}`
+        `csrf_token=${csrfToken}; ${roleFlags}${sameSiteStrict}`
     ];
 
     if (familyId) {
