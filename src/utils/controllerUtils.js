@@ -19,7 +19,7 @@ function getFamilyContext(req) {
                 childId: decoded.childId || null,
                 role: decoded.role || null,
                 email: decoded.email || null,
-                csrfToken: decoded.csrfToken || null
+                csrfToken: cookies.csrf_token || decoded.csrfToken || null
             };
         }
     }
