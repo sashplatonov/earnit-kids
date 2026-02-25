@@ -1,4 +1,5 @@
 /** @file View Controller REST controller helpers */
+/* eslint max-lines: ["error", { max: 800, skipBlankLines: true, skipComments: true }] */
 const fs = require('fs');
 const path = require('path');
 const { applyCommonTemplateData, buildSeoReplacements } = require('./seoTemplates');
@@ -11,6 +12,90 @@ const {
     setServeNotFoundHandler
 } = require('./staticUtils');
 const { findFamilyByEmail } = require('../services/familyService');
+const { verifyToken } = require('../utils/authUtils');
+const { createLogger } = require('../utils/logger');
+const logger = createLogger('viewController');
+const fsPromises = fs.promises;
+
+const FEATURE_PAGES = {
+    tasks: {
+        slug: 'tasks',
+        title: 'EarnIt Kids - Добрые семейные задания',
+        description: 'Простые задания для детей, понятные шаги для родителей и честные монетки за старание.',
+        heading: 'Задания, которые хочется выполнять',
+        subheading: 'Ребенок видит понятную цель, а родители спокойно следят за прогрессом.',
+        bullets: [
+            'Добавляйте домашние дела в пару кликов: убрать игрушки, почитать 10 минут, помочь на кухне.',
+            'Ребенок отмечает выполнение, а родители подтверждают результат.',
+            'За каждое выполненное дело начисляются монетки.'
+        ],
+        ctaText: 'Попробовать задания',
+        ctaLink: '/login.html',
+        image: '/img/feature-tasks.svg'
+    },
+    shop: {
+        slug: 'shop',
+        title: 'EarnIt Kids - Семейный магазин наград',
+        description: 'Обменивайте монетки на радости: мультик, прогулка, настольная игра или маленький приз.',
+        heading: 'Магазин радостей за монетки',
+        subheading: 'Дети учатся копить и выбирать, родители сохраняют контроль и бюджет.',
+        bullets: [
+            'Создавайте награды: от 20 минут игры до семейного похода в парк.',
+            'Задавайте лимиты, чтобы траты были разумными.',
+            'Смотрите историю обменов и обсуждайте решения вместе с ребенком.'
+        ],
+        ctaText: 'Открыть магазин наград',
+        ctaLink: '/login.html',
+        image: '/img/feature-shop.svg'
+    }
+};
+
+const LANDING_SEO = {
+    title: 'EarnIt Kids - Семейные задания и награды',
+    description: 'Помогаем детям 7+ выполнять полезные дела с интересом, а родителям легко поддерживать порядок без ссор.',
+    schema: {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        'name': 'EarnIt Kids',
+        'description': 'Сервис для семейной мотивации детей и управления вознаграждениями.',
+        'url': '/' 
+    }
+};
+
+const ABOUT_SEO = {
+    title: 'EarnIt Kids - О проекте',
+    description: 'Узнайте, как EarnIt Kids помогает семьям превращать рутину в понятную и добрую игру.',
+    schema: {
+        '@context': 'https://schema.org',
+        '@type': 'AboutPage',
+        'name': 'EarnIt Kids — О проекте'
+    }
+};
+
+const FAQ_SEO = {
+    title: 'EarnIt Kids - Частые вопросы',
+    description: 'Короткие ответы для родителей и детей о заданиях, монетках и наградах в EarnIt Kids.',
+    schema: {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        'name': 'EarnIt Kids — Часто задаваемые вопросы'
+    }
+};
+
+const FAQ_ITEMS = [
+    {
+        question: 'Как это работает?',
+        answer: 'Родители дают задание, ребенок выполняет его и получает монетки. Потом монетки можно обменять на награды.'
+    },
+    {
+        question: 'Нужно устанавливать приложение?',
+        answer: 'Нет, все работает прямо в браузере на телефоне и компьютере.'
+    },
+    {
+        question: 'Можно ограничить траты монет?',
+        answer: 'Да, родители ставят лимиты и решают, какие награды доступны и как часто их можно брать.'
+    }
+];
 
 function getCookies(req) {
     const list = {};
@@ -22,13 +107,33 @@ function getCookies(req) {
     return list;
 }
 
-const { verifyToken } = require('../utils/authUtils');
-const { createLogger } = require('../utils/logger');
-const logger = createLogger('viewController');
+function buildFaqMarkup(items) {
+    return items.map(item => `
+        <div class="faq-item">
+            <h3>${item.question}</h3>
+            <p>${item.answer}</p>
+        </div>`).join('');
+}
 
-/**
- * Verify if user session is valid
- */
+function formatBullets(bullets) {
+    return bullets.map(bullet => `<li>${bullet}</li>`).join('');
+}
+
+function getNoStoreHtmlHeaders(req) {
+    return {
+        ...getHtmlHeaders(req),
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0'
+    };
+}
+
+function isValidSessionScope({ user, sessionRole, sessionFamilyId }) {
+    if (user.isSuperAdmin && sessionRole === 'super_admin') return true;
+    if (!sessionFamilyId || user.id !== sessionFamilyId) return false;
+    return sessionRole === 'admin' || sessionRole === 'child';
+}
+
 async function verifyUserSession(cookies) {
     const { app_auth, app_role, family_id } = cookies;
     if (!app_auth) return false;
@@ -44,12 +149,6 @@ async function verifyUserSession(cookies) {
         sessionRole: decoded.role || app_role,
         sessionFamilyId: decoded.familyId || family_id
     });
-}
-
-function isValidSessionScope({ user, sessionRole, sessionFamilyId }) {
-    if (user.isSuperAdmin && sessionRole === 'super_admin') return true;
-    if (!sessionFamilyId || user.id !== sessionFamilyId) return false;
-    return sessionRole === 'admin' || sessionRole === 'child';
 }
 
 function resolveSessionRole(decoded, cookies) {
@@ -87,24 +186,36 @@ function getSessionSnapshot(req) {
     };
 }
 
-function getNoStoreHtmlHeaders(req) {
-    return {
-        ...getHtmlHeaders(req),
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        Pragma: 'no-cache',
-        Expires: '0'
-    };
-}
-
-/**
- * Check if request is authenticated
- */
 async function isAuthenticated(req) {
     const cookies = getCookies(req);
     return await verifyUserSession(cookies);
 }
 
-const crypto = require('crypto');
+async function respondWithView({
+    viewName,
+    req,
+    res,
+    seoData = {},
+    extraReplacements = {},
+    headers
+}) {
+    const viewPath = path.join(__dirname, '../../views', viewName);
+    try {
+        const template = await fsPromises.readFile(viewPath, 'utf8');
+        const context = {
+            ...buildSeoReplacements(req, seoData),
+            ...extraReplacements
+        };
+        const html = applyCommonTemplateData(template, context, req);
+        const responseHeaders = headers || getHtmlHeaders(req);
+        res.writeHead(200, responseHeaders);
+        res.end(html);
+    } catch (err) {
+        logger.error({ err: err.message, viewName }, 'Failed to render view');
+        res.writeHead(500);
+        res.end('Server Error');
+    }
+}
 
 async function serveStatic(req, res) {
     const rawUrl = req.url.split('?')[0];
@@ -136,38 +247,107 @@ async function serveLogin(req, res) {
         return;
     }
 
-    const loginPath = path.join(__dirname, '../../views', 'login.html');
-    fs.readFile(loginPath, 'utf8', (err, content) => {
-        if (err) {
-            res.writeHead(500);
-            res.end('Server Error');
-            return;
-        }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
-        res.writeHead(200, getNoStoreHtmlHeaders(req));
-        res.end(content);
+    await respondWithView({
+        viewName: 'login.html',
+        req,
+        res,
+        seoData: {
+            title: 'Вход | EarnIt Kids',
+            description: 'Войдите в EarnIt Kids — систему мотивации для детей.',
+            schema: {
+                '@context': 'https://schema.org',
+                '@type': 'WebPage',
+                'name': 'Вход в EarnIt Kids'
+            }
+        },
+        headers: getNoStoreHtmlHeaders(req)
     });
 }
 
-function serveSuperAdmin(req, res) {
-    const superAdminPath = path.join(__dirname, '../../views', 'super-admin.html');
-    fs.readFile(superAdminPath, 'utf8', (err, content) => {
-        if (err) {
-            res.writeHead(500);
-            res.end('Server Error');
-            return;
+async function serveSuperAdmin(req, res) {
+    await respondWithView({
+        viewName: 'super-admin.html',
+        req,
+        res,
+        seoData: {},
+        headers: getHtmlHeaders(req)
+    });
+}
+
+async function serveLanding(req, res) {
+    await respondWithView({
+        viewName: 'landing.html',
+        req,
+        res,
+        seoData: LANDING_SEO
+    });
+}
+
+function getFeatureBySlug(slug) {
+    if (!slug) return null;
+    const cleaned = slug.replace(/\/+$/, '').toLowerCase();
+    return FEATURE_PAGES[cleaned] || null;
+}
+
+async function serveFeaturePage(req, res, slug) {
+    const feature = getFeatureBySlug(slug);
+    if (!feature) {
+        return serveNotFound(req, res);
+    }
+
+    const seoData = {
+        title: feature.title,
+        description: feature.description,
+        schema: {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            'name': feature.title,
+            'description': feature.description
         }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
-        res.writeHead(200, getHtmlHeaders(req));
-        res.end(content);
+    };
+
+    const extraReplacements = {
+        '{{FEATURE_HEADING}}': feature.heading,
+        '{{FEATURE_SUBTITLE}}': feature.subheading,
+        '{{FEATURE_DESCRIPTION}}': feature.description,
+        '{{FEATURE_IMAGE}}': feature.image,
+        '{{FEATURE_PILL}}': feature.ctaText,
+        '{{FEATURE_LINK}}': feature.ctaLink,
+        '{{FEATURE_BULLETS}}': `<ul>${formatBullets(feature.bullets)}</ul>`
+    };
+
+    await respondWithView({
+        viewName: 'feature-page.html',
+        req,
+        res,
+        seoData,
+        extraReplacements
+    });
+}
+
+async function serveAbout(req, res) {
+    await respondWithView({
+        viewName: 'about.html',
+        req,
+        res,
+        seoData: ABOUT_SEO
+    });
+}
+
+async function serveFaq(req, res) {
+    await respondWithView({
+        viewName: 'faq.html',
+        req,
+        res,
+        seoData: FAQ_SEO,
+        extraReplacements: {
+            '{{FAQ_ITEMS}}': buildFaqMarkup(FAQ_ITEMS)
+        }
     });
 }
 
 let cachedIndexHtml = null;
 
-/**
- * Assemble full HTML from components
- */
 function assembleIndexHtml() {
     const componentOrder = [
         'head.html', 'header.html', 'nav.html', 'main_start.html',
@@ -187,9 +367,13 @@ function assembleIndexHtml() {
     return fullHtml;
 }
 
-/**
- * Serve the main application index
- */
+async function serveRoot(req, res) {
+    if (!(await isAuthenticated(req))) {
+        return serveLanding(req, res);
+    }
+    return serveIndex(req, res);
+}
+
 async function serveIndex(req, res) {
     if (!(await isAuthenticated(req))) {
         const snapshot = getSessionSnapshot(req);
@@ -230,48 +414,70 @@ async function serveIndex(req, res) {
     }
 }
 
-function serveResetPassword(req, res) {
-    const resetPath = path.join(__dirname, '../../views', 'reset-password.html');
-    fs.readFile(resetPath, 'utf8', (err, content) => {
-        if (err) {
-            res.writeHead(500);
-            res.end('Server Error');
-            return;
+async function serveResetPassword(req, res) {
+    await respondWithView({
+        viewName: 'reset-password.html',
+        req,
+        res,
+        seoData: {
+            title: 'Сброс пароля | EarnIt Kids',
+            description: 'Восстановите доступ к аккаунту EarnIt Kids.',
+            schema: {
+                '@context': 'https://schema.org',
+                '@type': 'WebPage',
+                'name': 'Сброс пароля'
+            }
         }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
-        res.writeHead(200, getHtmlHeaders(req));
-        res.end(content);
     });
 }
 
-function serveVerify(req, res) {
-    const verifyPath = path.join(__dirname, '../../views', 'verify.html');
-    fs.readFile(verifyPath, 'utf8', (err, content) => {
-        if (err) {
-            res.writeHead(500);
-            res.end('Server Error');
-            return;
+async function serveVerify(req, res) {
+    await respondWithView({
+        viewName: 'verify.html',
+        req,
+        res,
+        seoData: {
+            title: 'Подтвердите вход | EarnIt Kids',
+            description: 'Подтверждение входа в EarnIt Kids.',
+            schema: {
+                '@context': 'https://schema.org',
+                '@type': 'WebPage',
+                'name': 'Подтверждение входа'
+            }
         }
-        content = applyCommonTemplateData(content, buildSeoReplacements(req), req);
-        res.writeHead(200, getHtmlHeaders(req));
-        res.end(content);
     });
 }
 
-function serveNotFound(req, res) {
-    const notFoundPath = path.join(__dirname, '../../views', '404.html');
-    fs.readFile(notFoundPath, 'utf8', (err, content) => {
-        if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-            res.end('Page not found');
-            return;
+async function serveNotFound(req, res) {
+    await respondWithView({
+        viewName: '404.html',
+        req,
+        res,
+        seoData: {
+            title: 'Страница не найдена | EarnIt Kids',
+            description: 'Запрашиваемая страница не найдена.',
+            schema: {
+                '@context': 'https://schema.org',
+                '@type': 'WebPage',
+                'name': '404 — EarnIt Kids'
+            }
         }
-        const finalContent = applyCommonTemplateData(content, buildSeoReplacements(req), req);
-        res.writeHead(404, getHtmlHeaders(req));
-        res.end(finalContent);
     });
 }
 
 setServeNotFoundHandler(serveNotFound);
 
-module.exports = { serveStatic, serveIndex, serveLogin, serveSuperAdmin, serveResetPassword, serveVerify, getCookies };
+module.exports = {
+    serveStatic,
+    serveIndex,
+    serveLogin,
+    serveSuperAdmin,
+    serveResetPassword,
+    serveVerify,
+    serveRoot,
+    serveLanding,
+    serveFeaturePage,
+    serveAbout,
+    serveFaq,
+    getCookies
+};

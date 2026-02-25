@@ -34,6 +34,7 @@ const config = {
         '.md': 'text/markdown; charset=utf-8',
         '.xml': 'application/xml; charset=utf-8',
         '.png': 'image/png',
+        '.svg': 'image/svg+xml; charset=utf-8',
         '.jpg': 'image/jpeg',
         '.ico': 'image/x-icon'
     },

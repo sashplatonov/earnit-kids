@@ -124,15 +124,19 @@ function normalizeStaticPath(rawUrl) {
 }
 
 function resolvePublicFilePath(urlPath) {
+    const safeUrlPath = (urlPath || '')
+        .split('?')[0]
+        .replace(/^\/+/, '');
+
     let baseDir = '../../public';
     if (process.env.NODE_ENV === 'production') {
-        const distPath = path.join(__dirname, '../../public/dist', urlPath);
+        const distPath = path.join(__dirname, '../../public/dist', safeUrlPath);
         if (fs.existsSync(distPath)) {
             baseDir = '../../public/dist';
         }
     }
 
-    const filePath = path.join(__dirname, baseDir, urlPath);
+    const filePath = path.join(__dirname, baseDir, safeUrlPath);
     const publicDir = path.resolve(__dirname, '../../public');
     const resolvedPath = path.resolve(filePath);
     return resolvedPath.startsWith(publicDir) ? resolvedPath : null;

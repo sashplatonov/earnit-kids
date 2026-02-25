@@ -1,0 +1,82 @@
+.public-site-header {
+    position: fixed;
+    top: 0.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    width: min(1080px, calc(100% - 1.6rem));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.9rem;
+    padding: 0.7rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(7, 11, 23, 0.86);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
+}
+
+.public-site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #f8fafc;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.96rem;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.public-site-brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fb7185, #22d3ee);
+    box-shadow: 0 0 18px rgba(34, 211, 238, 0.7);
+}
+
+.public-top-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.public-top-nav a {
+    color: rgba(226, 232, 240, 0.88);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.91rem;
+    line-height: 1.2;
+}
+
+.public-top-nav a:hover {
+    color: #ffffff;
+}
+
+body {
+    padding-top: 5.4rem;
+}
+
+@media (max-width: 920px) {
+    .public-site-header {
+        border-radius: 1rem;
+        align-items: flex-start;
+        flex-direction: column;
+        width: calc(100% - 1rem);
+        top: 0.5rem;
+        padding: 0.65rem 0.75rem;
+    }
+
+    .public-top-nav {
+        width: 100%;
+        gap: 0.65rem;
+    }
+
+    body {
+        padding-top: 8.7rem;
+    }
+}

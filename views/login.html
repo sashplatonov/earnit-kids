@@ -22,6 +22,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
     <link rel="icon" href="/img/favicon-32x32.png" sizes="32x32">
     <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/img/icon-192.png">
@@ -37,7 +38,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            min-height: calc(100vh - 5.4rem);
             padding: 1.5rem;
             background: var(--login-bg);
             font-family: 'Nunito', sans-serif;
@@ -250,6 +251,10 @@
         }
 
         @media (max-width: 480px) {
+            .login-page {
+                min-height: calc(100vh - 8.7rem);
+            }
+
             .login-card {
                 padding: 2rem 1.5rem;
                 border-radius: 1.5rem;
@@ -277,6 +282,8 @@
 </head>
 
 <body>
+    {{PUBLIC_TOP_NAV}}
+
     <div class="login-page">
         <div class="login-card">
             <div class="login-logo">🪙</div>
@@ -300,7 +307,7 @@
                         пароль?</a>
                 </div>
                 <div style="margin-bottom: 1rem;">
-                    <a href="/about.html"
+                    <a href="/about"
                         style="color: rgba(255, 215, 0, 0.9); text-decoration: none; font-size: 0.95rem; font-weight: 700;">О
                         EarnIt Kids</a>
                 </div>

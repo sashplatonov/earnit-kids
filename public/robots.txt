@@ -1,8 +1,3 @@
 User-agent: *
-Allow: /about.html
-Allow: /login.html
-Disallow: /api/
-Disallow: /super-admin
-Disallow: /reset-password
-Disallow: /verify
-Sitemap: {{PUBLIC_BASE_URL}}/sitemap.xml
+Allow: /
+Sitemap: https://domain/sitemap.xml
