@@ -3,12 +3,21 @@ import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
 import { showToast, showMobileEventNotification } from './utils.js';
 import { scheduleSave, addHistoryEntry, checkLimits, checkDailyCoinLimit, updateBalanceLocally } from './action-helpers.js';
+import { triggerCoinBurst } from './motion-feedback.js';
 
 function verifyPurchaseLimits(req, item) {
     if (!item) return true;
     const err = checkLimits(item, req.moneyAmount || 0, req.childId);
     if (err && !confirm(`${err}. Все равно подтвердить?`)) return false;
     return true;
+}
+
+function finalizeRequest(req, status) {
+    if (!req) return null;
+    const updated = { ...req, status, resolvedAt: new Date().toISOString() };
+    state.requests = state.requests.map(r => (r.id === req.id ? updated : r));
+    scheduleSave();
+    return updated;
 }
 
 function handleApprovePurchase(req) {
@@ -29,9 +38,9 @@ function handleApprovePurchase(req) {
         moneyAmount: req.moneyAmount || 0,
         childIdOverride: req.childId
     });
-    state.requests = state.requests.filter(r => r.id != req.id);
-    scheduleSave();
+    finalizeRequest(req, 'approved');
     renderAll();
+    triggerCoinBurst();
 }
 
 export function approveRequest(reqId) {
@@ -59,16 +68,17 @@ export function approveRequest(reqId) {
         relatedId: req.taskId,
         childIdOverride: req.childId
     });
-    state.requests = state.requests.filter(r => r.id != reqId);
-    scheduleSave();
+    finalizeRequest(req, 'approved');
     renderAll();
     showMobileEventNotification(`Заявка подтверждена: +${req.coins} 🪙`, 'success', 'Заявка подтверждена');
+    triggerCoinBurst();
 }
 
 export function rejectRequest(reqId) {
     if (!confirm('Отклонить заявку?')) return;
-    state.requests = state.requests.filter(r => r.id != reqId);
-    scheduleSave();
+    const req = state.requests.find(r => r.id == reqId);
+    if (!req) return;
+    finalizeRequest(req, 'rejected');
     renderRequests();
     showToast('Заявка отклонена', 'info');
 }

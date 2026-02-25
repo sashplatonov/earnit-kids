@@ -16,12 +16,13 @@ html {
 body {
     font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--color-bg);
-    color: var(--color-text);
+    color: var(--color-text-strong);
     min-height: 100vh;
     min-height: 100dvh;
     /* Dynamic viewport height */
-    line-height: 1.6;
+    line-height: var(--line-height-base);
     /* Increased for better readability on mobile */
+    font-weight: var(--font-body-weight);
     -webkit-font-smoothing: antialiased;
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
@@ -35,9 +36,13 @@ button,
 .nav__btn,
 .nav__more,
 .nav__dropdown-item,
+.section__buttons button,
+.card__actions button,
+.history-item button,
+.modal button,
 .input-field,
 .header__balance {
-    min-height: 48px;
+    min-height: var(--touch-target-height);
     touch-action: manipulation;
 }
 

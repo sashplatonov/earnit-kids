@@ -2,11 +2,19 @@
 <section class="section hidden" id="requests-section">
     <!-- Секция для админа: Входящие заявки -->
     <div class="admin-only hidden">
-        <h2>📬 Входящие заявки</h2>
+        <div class="section__header">
+            <h2>📬 Входящие заявки</h2>
+            <p class="section__subtitle">Inbox-first: сначала принимаются ожидающие подтверждения заявки.</p>
+        </div>
+        <div class="requests-summary hidden" id="requests-summary" aria-live="polite"></div>
         <div class="history-list" id="incoming-requests-list"></div>
         <div class="empty-state" id="incoming-requests-empty">
             <span class="empty-state__icon">📭</span>
-            <p>Нет новых заявок</p>
+            <p class="empty-state__title">Нет новых заявок</p>
+            <p class="empty-state__hint">Ребенок может отправить заявку после завершения задачи — она появится тут автоматически.</p>
+            <div class="empty-state__actions">
+                <span class="empty-state__tip">Проверьте “Сегодня”: там легко заметить, что ребенок готов отправить.</span>
+            </div>
         </div>
     </div>
 
@@ -16,7 +24,11 @@
         <div class="history-list" id="my-requests-list"></div>
         <div class="empty-state" id="my-requests-empty">
             <span class="empty-state__icon">📨</span>
-            <p>Нет активных заявок</p>
+            <p class="empty-state__title">Нет активных заявок</p>
+            <p class="empty-state__hint">Отмечайте выполнение задач — заявки сразу переходят в статус “отправлена”.</p>
+            <div class="empty-state__actions">
+                <span class="empty-state__tip">Список внизу обновляется автоматически после каждого “Сегодня”.</span>
+            </div>
         </div>
     </div>
 </section>

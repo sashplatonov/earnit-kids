@@ -118,9 +118,17 @@ function sendStaticFile({ filePath, req, res, inlineStyle = false }) {
 }
 
 function normalizeStaticPath(rawUrl) {
-    if (rawUrl === '/style.css') return '/css/style.css';
-    if (rawUrl === '/super-admin.css') return '/css/super-admin.css';
-    return rawUrl.split('?')[0];
+    const cleaned = rawUrl.split('?')[0];
+    if (cleaned === '/style.css' || cleaned === '/features/css/style.css') return '/css/style.css';
+    if (cleaned === '/super-admin.css') return '/css/super-admin.css';
+    if (
+        cleaned === '/css/public-pages.css' ||
+        cleaned === 'css/public-pages.css' ||
+        cleaned === '/features/css/public-pages.css'
+    ) {
+        return '/css/partials/public-pages.css';
+    }
+    return cleaned;
 }
 
 function resolvePublicFilePath(urlPath) {

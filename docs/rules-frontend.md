@@ -46,15 +46,16 @@ views/components/              # Серверные HTML-компоненты (1
 ├── head.html                  # <head>, мета, стили
 ├── header.html                # Верхняя панель (баланс, монетки)
 ├── nav.html                   # Нижняя навигация (табы)
+├── section_today.html         # Сегодня / главный экран
 ├── section_tasks.html         # Секция задач
 ├── section_shop.html / section_catalog.html  # Магазин
+├── section_progress.html      # Прогресс и достижения
 ├── section_requests.html      # Запросы
 ├── section_analytics.html     # Аналитика / Достижения
 ├── section_history.html       # История
 ├── section_friends.html       # Друзья
 ├── section_rules.html         # Правила
 ├── section_settings.html      # Настройки
-├── section_about.html         # О приложении
 ├── modals.html                # Все модальные окна
 └── scripts.html               # Подключение JS-скриптов
 ```
