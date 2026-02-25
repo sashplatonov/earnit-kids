@@ -10,6 +10,7 @@ const config = require('./config');
 const { setSecurityHeaders } = require('./middleware/security');
 const apiRoutes = require('./routes/api');
 const staticRouter = require('./routes/staticRouter');
+const seoRouter = require('./routes/seoRouter');
 const { handleMagicLink } = require('./controllers/authController');
 const viewController = require('./controllers/viewController');
 const { testConnection } = require('./db/connection');
@@ -102,9 +103,12 @@ const server = http.createServer(async (req, res) => {
 
             const [pathOnly] = req.url.split('?');
             if (pathOnly.startsWith('/login-child/')) return handleMagicLink(req, res);
-            if (!pathOnly.startsWith('/api/')) return staticRouter.routeStatic({ pathOnly, req, res, viewController });
-
-            await apiRoutes(req, res);
+            if (pathOnly.startsWith('/api/')) {
+                await apiRoutes(req, res);
+                return;
+            }
+            if (await seoRouter.routeSeo(pathOnly, req, res)) return;
+            return staticRouter.routeStatic({ pathOnly, req, res, viewController });
         } catch (err) {
             handleError(err, req, res);
         }

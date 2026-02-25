@@ -1,9 +1,32 @@
+# Dependencies and build artifacts
 node_modules/
+dist/
 coverage/
+
+# Test artifacts
+test-results/
+playwright-report/
 .playwright-browsers/
+
+# Runtime/temp outputs
+tmp/
+.tmp/
+*.log
+
+# Local data dumps
 data/
 data.json
-test-results/
+
+# Secrets and local env overrides
+.env
+.env.*
+!.env.example
+
+# VCS and editor/system noise
 .git/
 .idea/
-*.sql
+.vscode/
+.DS_Store
+
+# Local Docker helper files
+.docker/

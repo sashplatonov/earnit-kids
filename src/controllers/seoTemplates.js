@@ -9,6 +9,14 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const APP_VERSION = packageJson.version;
 const BUILD_VERSION = getBuildVersion();
 const CLARITY_PROJECT_ID = (process.env.CLARITY_PROJECT_ID || '').trim();
+const PUBLIC_TOP_NAV_PATH = path.join(__dirname, '../../views/components/public-top-nav.html');
+let PUBLIC_TOP_NAV = '';
+
+try {
+    PUBLIC_TOP_NAV = fs.readFileSync(PUBLIC_TOP_NAV_PATH, 'utf8');
+} catch (_) {
+    PUBLIC_TOP_NAV = '';
+}
 
 function getRequestHost(req) {
     if (req) {
@@ -83,17 +91,44 @@ function getBaseUrl(req) {
     return PUBLIC_BASE_URL;
 }
 
-function buildSeoReplacements(req) {
+const DEFAULT_PAGE_TITLE = 'EarnIt Kids — Семейная система мотивации';
+const DEFAULT_PAGE_DESCRIPTION = 'EarnIt Kids помогает семьям внедрять привычки и обучать детей ответственности через виртуальные монеты.';
+
+function buildCanonicalUrl(req, baseUrl, pathOnly) {
+    const cleanPath = pathOnly === '' ? '/' : pathOnly;
+    return `${baseUrl}${cleanPath}`;
+}
+
+function buildSeoReplacements(req, seoData = {}) {
     const baseUrl = getBaseUrl(req);
     let canonicalPath = getCanonicalPath(req);
     if (!canonicalPath.startsWith('/')) canonicalPath = `/${canonicalPath}`;
-    const canonicalUrl = `${baseUrl}${canonicalPath}`;
+    const canonicalUrl = buildCanonicalUrl(req, baseUrl, canonicalPath);
+    const pageTitle = seoData.title || DEFAULT_PAGE_TITLE;
+    const pageDescription = seoData.description || DEFAULT_PAGE_DESCRIPTION;
+    const schemaData = {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        'name': pageTitle,
+        'description': pageDescription,
+        'url': canonicalUrl,
+        ...(seoData.schema || {})
+    };
+
+    if (!schemaData.url) {
+        schemaData.url = canonicalUrl;
+    }
+
+    const schemaJson = JSON.stringify(schemaData, null, 4);
 
     return {
         '{{BASE_URL}}': baseUrl,
         '{{PUBLIC_BASE_URL}}': PUBLIC_BASE_URL,
         '{{CANONICAL_URL}}': canonicalUrl,
-        '{{OG_IMAGE_URL}}': `${baseUrl}/img/og-image.png`
+        '{{OG_IMAGE_URL}}': `${baseUrl}/img/og-image.png`,
+        '{{PAGE_TITLE}}': pageTitle,
+        '{{PAGE_DESCRIPTION}}': pageDescription,
+        '{{SCHEMA_JSON}}': schemaJson
     };
 }
 
@@ -101,6 +136,7 @@ function applyCommonTemplateData(html, extraReplacements = {}, req = null) {
     let result = html
         .replace(/\{\{APP_VERSION\}\}/g, APP_VERSION)
         .replace(/\{\{BUILD_VERSION\}\}/g, BUILD_VERSION)
+        .replace(/\{\{PUBLIC_TOP_NAV\}\}/g, PUBLIC_TOP_NAV)
         .replace(/\{\{CLARITY_SCRIPT\}\}/g, getClarityScript(req));
 
     Object.entries(extraReplacements).forEach(([key, value]) => {

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{PAGE_TITLE}}</title>
+    <meta name="description" content="{{PAGE_DESCRIPTION}}">
+    <link rel="canonical" href="{{CANONICAL_URL}}">
+    <meta property="og:title" content="{{PAGE_TITLE}}">
+    <meta property="og:description" content="{{PAGE_DESCRIPTION}}">
+    <script type="application/ld+json">
+{{SCHEMA_JSON}}
+    </script>
+    <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
+    <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #030712;
+            color: #e2e8f0;
+            margin: 0;
+        }
+        .faq-shell {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 2rem 1.3rem 3rem;
+        }
+        .hero-image {
+            width: 100%;
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: block;
+            margin-bottom: 1rem;
+        }
+        .faq-shell h1 { margin: 0 0 0.5rem; }
+        .faq-lead { color: rgba(226, 232, 240, 0.8); margin-bottom: 1.1rem; }
+        .faq-item {
+            padding: 1.15rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 0.8rem;
+        }
+        .faq-item h3 { margin-top: 0; margin-bottom: 0.35rem; }
+        .help-note { color: rgba(226, 232, 240, 0.75); margin-top: 1rem; }
+    </style>
+    {{CLARITY_SCRIPT}}
+</head>
+<body>
+    <main class="faq-shell">
+        {{PUBLIC_TOP_NAV}}
+        <img class="hero-image" src="/img/faq-help.svg" alt="Иллюстрация с вопросами и ответами для семьи">
+        <h1>Вопросы и ответы</h1>
+        <p class="faq-lead">Собрали самые частые вопросы от родителей и детей. Все объясняем простыми словами.</p>
+        <section>
+            {{FAQ_ITEMS}}
+        </section>
+        <p class="help-note">Если нужен совет по настройке заданий, напишите нам: support@earnit-kids.com.</p>
+    </main>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{PAGE_TITLE}}</title>
+    <meta name="description" content="{{PAGE_DESCRIPTION}}">
+    <link rel="canonical" href="{{CANONICAL_URL}}">
+    <meta property="og:title" content="{{PAGE_TITLE}}">
+    <meta property="og:description" content="{{PAGE_DESCRIPTION}}">
+    <meta property="og:image" content="{{OG_IMAGE_URL}}">
+    <meta property="og:url" content="{{CANONICAL_URL}}">
+    <script type="application/ld+json">
+{{SCHEMA_JSON}}
+    </script>
+    <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
+    <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
+    <style>
+        body {
+            background: #030712;
+            color: #f8fafc;
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+        }
+        .article-shell { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+        .article-image {
+            width: 100%;
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: block;
+            margin-bottom: 1.1rem;
+        }
+        .article-shell h1 { margin-bottom: 0.2rem; }
+        .article-shell .meta { color: rgba(226, 232, 240, 0.65); font-size: 0.9rem; margin-bottom: 1.2rem; }
+        .article-body { line-height: 1.68; color: rgba(226, 232, 240, 0.92); }
+        .article-body img { max-width: 100%; border-radius: 0.8rem; }
+        .cta-link {
+            display: inline-flex;
+            margin-top: 1.6rem;
+            padding: 0.85rem 1.4rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #facc15, #fb923c);
+            color: #0f172a;
+            font-weight: 700;
+            text-decoration: none;
+        }
+    </style>
+    {{CLARITY_SCRIPT}}
+</head>
+<body>
+    <main class="article-shell">
+        {{PUBLIC_TOP_NAV}}
+        <article>
+            <img class="article-image" src="/img/blog-reading.svg" alt="Иллюстрация к статье блога">
+            <header>
+                <h1>{{ARTICLE_TITLE}}</h1>
+                <p class="meta">{{ARTICLE_DATE}}</p>
+            </header>
+            <div class="article-body">
+                {{ARTICLE_BODY}}
+            </div>
+            <a class="cta-link" href="/login.html">Попробовать в своей семье</a>
+        </article>
+    </main>
+</body>
+</html>

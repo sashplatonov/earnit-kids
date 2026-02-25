@@ -1,0 +1,16 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="44" fill="#111827"/>
+  <rect x="90" y="90" width="1020" height="580" rx="30" fill="#0F172A"/>
+  <text x="150" y="180" fill="#F8FAFC" font-family="Nunito, sans-serif" font-size="56" font-weight="800">Магазин наград</text>
+  <rect x="150" y="230" width="280" height="190" rx="22" fill="#334155"/>
+  <circle cx="290" cy="300" r="45" fill="#FACC15"/>
+  <text x="205" y="388" fill="#E2E8F0" font-family="Nunito, sans-serif" font-size="30">30 монет</text>
+  <rect x="460" y="230" width="280" height="190" rx="22" fill="#334155"/>
+  <rect x="530" y="270" width="140" height="70" rx="18" fill="#22D3EE"/>
+  <text x="515" y="388" fill="#E2E8F0" font-family="Nunito, sans-serif" font-size="30">50 монет</text>
+  <rect x="770" y="230" width="280" height="190" rx="22" fill="#334155"/>
+  <rect x="835" y="270" width="150" height="70" rx="18" fill="#34D399"/>
+  <text x="825" y="388" fill="#E2E8F0" font-family="Nunito, sans-serif" font-size="30">80 монет</text>
+  <rect x="150" y="460" width="900" height="120" rx="24" fill="#1E293B"/>
+  <text x="190" y="534" fill="#CBD5E1" font-family="Nunito, sans-serif" font-size="36">Ребенок копит монетки и сам выбирает награду</text>
+</svg>

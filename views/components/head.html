@@ -8,13 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="css/style.css?v={{BUILD_VERSION}}">
-    <title>EarnIt Kids — Семейная система мотивации для детей</title>
-    <meta name="description" content="EarnIt Kids — семейная система мотивации, где дети зарабатывают монеты за задания и обменивают их на награды.">
+    <title>{{PAGE_TITLE}}</title>
+    <meta name="description" content="{{PAGE_DESCRIPTION}}">
     <link rel="canonical" href="{{CANONICAL_URL}}">
 
     <meta property="og:type" content="website">
-    <meta property="og:title" content="EarnIt Kids — мотивация для детей">
-    <meta property="og:description" content="Семейная система, где дети зарабатывают и тратят монеты">
+    <meta property="og:title" content="{{PAGE_TITLE}}">
+    <meta property="og:description" content="{{PAGE_DESCRIPTION}}">
     <meta property="og:image" content="{{OG_IMAGE_URL}}">
     <meta property="og:url" content="{{CANONICAL_URL}}">
     <meta property="og:locale" content="ru_RU">
@@ -22,20 +22,12 @@
     <meta name="app-build-version" content="{{BUILD_VERSION}}">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="EarnIt Kids">
-    <meta name="twitter:description" content="Мотивация для детей через систему монет">
+    <meta name="twitter:title" content="{{PAGE_TITLE}}">
+    <meta name="twitter:description" content="{{PAGE_DESCRIPTION}}">
     <meta name="twitter:image" content="{{OG_IMAGE_URL}}">
 
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "EarnIt Kids",
-        "url": "{{BASE_URL}}",
-        "logo": "{{OG_IMAGE_URL}}",
-        "sameAs": ["https://www.instagram.com/", "https://www.facebook.com/"],
-        "description": "Семейная система мотивации для детей"
-    }
+{{SCHEMA_JSON}}
     </script>
 
     <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
