@@ -68,11 +68,31 @@ function verifyToken(token) {
 /**
  * Validates CSRF token header
  */
+function hasSameHostUrl(urlValue, host) {
+    if (!urlValue) return false;
+    try {
+        return new URL(urlValue).host === host;
+    } catch (_) {
+        return false;
+    }
+}
+
+function hasTrustedFetchMetadata(req) {
+    const secFetchSite = req.headers['sec-fetch-site'];
+    return secFetchSite === 'same-origin' || secFetchSite === 'same-site' || secFetchSite === 'none';
+}
+
 function validateCsrf(req, csrfCookie) {
-    // If there is no csrfCookie but there's an auth token, it might be the first request or auth changed
     if (!csrfCookie) return false;
     const headerToken = req.headers['x-csrf-token'];
-    return headerToken === csrfCookie;
+    if (headerToken) return headerToken === csrfCookie;
+
+    const host = req.headers.host;
+    if (!host) return false;
+
+    if (hasSameHostUrl(req.headers.origin, host)) return true;
+    if (hasSameHostUrl(req.headers.referer, host)) return true;
+    return hasTrustedFetchMetadata(req);
 }
 
 /**

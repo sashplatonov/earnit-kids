@@ -15,7 +15,7 @@ async function fetchWebSocketToken() {
         const data = await response.json();
         return data.token;
     } catch (err) {
-        console.warn('WS token fetch failed:', err);
+        console.error('WS token fetch failed:', err);
         return null;
     }
 }
@@ -32,7 +32,6 @@ export async function initializeWebSocket() {
         socket = new WebSocket(wsUrl);
 
         socket.onopen = () => {
-            console.log('✅ WebSocket connected');
             if (reconnectTimer) {
                 clearTimeout(reconnectTimer);
                 reconnectTimer = null;
@@ -48,8 +47,7 @@ export async function initializeWebSocket() {
             }
         };
 
-        socket.onclose = (event) => {
-            console.log('WS connection closed', event.reason);
+        socket.onclose = () => {
             socket = null;
             // Reconnect after 5 seconds
             if (!reconnectTimer) {
@@ -89,6 +87,6 @@ function handleWSMessage(message) {
             }
             break;
         default:
-            console.log('Unknown WS message type:', type);
+            break;
     }
 }

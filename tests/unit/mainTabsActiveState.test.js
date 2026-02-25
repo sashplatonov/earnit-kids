@@ -11,3 +11,12 @@ test('main tabs keep visible active state for dropdown sections', () => {
     assert.match(source, /moreBtn\.classList\.toggle\('active',\s*!hasPrimaryActive && hasDropdownActive\)/);
     assert.match(source, /toggleTab\(tabButtons,\s*name,\s*moreBtn\)/);
 });
+
+test('main tabs reset three-dots dropdown state on init and pageshow', () => {
+    const filePath = path.join(__dirname, '../../public/js/modules/main-tabs.js');
+    const source = fs.readFileSync(filePath, 'utf8');
+
+    assert.match(source, /const resetMoreMenuState = \(\) => closeDropdowns\(moreBtn,\s*moreDropdown\)/);
+    assert.match(source, /resetMoreMenuState\(\);/);
+    assert.match(source, /window\.addEventListener\('pageshow',\s*resetMoreMenuState\)/);
+});

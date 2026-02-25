@@ -89,7 +89,6 @@ export async function initializePushNotifications() {
     try {
         const permissionStatus = await push.requestPermissions();
         if (permissionStatus.receive !== 'granted') {
-            console.warn('[push] permission not granted');
             return;
         }
 

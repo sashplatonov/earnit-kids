@@ -5,6 +5,7 @@ const familyController = require('../controllers/familyController');
 const childController = require('../controllers/childController');
 const analyticsController = require('../controllers/analyticsController');
 const friendsController = require('../controllers/friendsController');
+const clientErrorController = require('../controllers/clientErrorController');
 const { loadBaseData } = require('../services/baseDataService');
 const authController = require('../controllers/authController');
 const superAdminController = require('../controllers/superAdminController');
@@ -63,6 +64,7 @@ apiRouter.post('/api/forgot-password', (ctx, req, res) => authController.handleF
 apiRouter.post('/api/reset-password', (ctx, req, res) => authController.handleResetPassword(req, res));
 apiRouter.post('/api/verify', (ctx, req, res) => authController.handleVerify(req, res));
 apiRouter.get('/api/auth-config', (ctx, req, res) => authController.handleAuthConfig(res));
+apiRouter.post('/api/client-errors', (ctx, req, res) => clientErrorController.handleClientError(ctx, req, res));
 
 // Health check
 apiRouter.get('/api/health', async (ctx, req, res) => {

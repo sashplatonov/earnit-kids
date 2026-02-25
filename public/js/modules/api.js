@@ -1,12 +1,24 @@
 /** @file Api frontend UI module */
-function getCsrfToken() { return document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || ''; }
+function getCsrfToken() {
+    const cookieRow = document.cookie
+        .split(';')
+        .map(row => row.trim())
+        .find(row => row.startsWith('csrf_token='));
+
+    if (!cookieRow) return '';
+    return decodeURIComponent(cookieRow.slice('csrf_token='.length));
+}
+
 async function fetchWithCsrf(url, options = {}) {
-  if (['POST', 'PUT', 'DELETE'].includes((options.method || 'GET').toUpperCase())) {
-    options.headers = options.headers || {};
-    const csrfToken = getCsrfToken();
-    if (csrfToken) options.headers['X-CSRF-Token'] = csrfToken;
-  }
-  return fetch(url, options);
+    if (['POST', 'PUT', 'DELETE'].includes((options.method || 'GET').toUpperCase())) {
+        options.headers = options.headers || {};
+        const csrfToken = getCsrfToken();
+        if (csrfToken) options.headers['X-CSRF-Token'] = csrfToken;
+    }
+    return fetch(url, {
+        credentials: 'same-origin',
+        ...options
+    });
 }
 export const API_URL = '/api/data';
 export const LOGIN_URL = '/api/login';
@@ -48,6 +60,16 @@ export async function saveDataToServer(data) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
+        if (!response.ok) {
+            let errorDetails = '';
+            try {
+                const payload = await response.clone().json();
+                errorDetails = payload?.error ? `: ${payload.error}` : '';
+            } catch (_) {
+                // Ignore parse errors for non-JSON responses.
+            }
+            console.error(`Failed to save data (${response.status})${errorDetails}`);
+        }
         return response.ok;
     } catch (err) {
         console.error('Failed to save to server:', err);
