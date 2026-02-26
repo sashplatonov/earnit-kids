@@ -42,7 +42,7 @@ html {
     .nav__primary {
         display: flex;
         flex-wrap: nowrap;
-        overflow-x: auto;
+        overflow: hidden;
         gap: var(--touch-inline-gap);
         width: 100%;
         max-width: 100%;
@@ -51,27 +51,54 @@ html {
     }
 
     .nav__group {
-        width: 100%;
-        justify-content: center;
+        width: auto;
+        min-width: 0;
+        flex: 1 1 0;
+        justify-content: stretch;
     }
 
     .nav__group--child {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
     .nav__group--parent {
-        flex-wrap: wrap;
-        justify-content: space-between;
+        flex-wrap: nowrap;
+        justify-content: stretch;
     }
 
     .nav__child-switcher {
-        flex: 1 0 100%;
-        max-width: 100%;
-        margin-bottom: 0.1rem;
+        flex: 0 1 36%;
+        max-width: 36%;
+        min-width: 120px;
+        margin-bottom: 0;
     }
 
     .nav__more-wrapper {
-        flex: 0 0 auto;
+        flex: 0 0 var(--touch-target-height);
+    }
+
+    /* Parent mobile layout: keep all controls in a single row */
+    #child-switcher-container:not(.hidden) {
+        order: 0;
+    }
+
+    #child-switcher-container:not(.hidden) ~ .nav__group--parent {
+        order: 1;
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        justify-content: stretch;
+    }
+
+    #child-switcher-container:not(.hidden) ~ .nav__group--parent .nav__btn {
+        flex: 1 1 0;
+    }
+
+    #child-switcher-container:not(.hidden) ~ .nav__group--parent ~ .nav__more-wrapper {
+        order: 2;
+        flex: 0 0 var(--touch-target-height);
+        margin-left: 0;
     }
 
     .nav__btn {
