@@ -42,7 +42,7 @@ html {
     .nav__primary {
         display: flex;
         flex-wrap: nowrap;
-        overflow: hidden;
+        overflow: visible;
         gap: var(--touch-inline-gap);
         width: 100%;
         max-width: 100%;
@@ -99,6 +99,12 @@ html {
         order: 2;
         flex: 0 0 var(--touch-target-height);
         margin-left: 0;
+    }
+
+    #child-switcher-container,
+    #child-switcher-container .child-menu,
+    #child-switcher-container .child-menu-dropdown {
+        overflow: visible;
     }
 
     .nav__btn {
