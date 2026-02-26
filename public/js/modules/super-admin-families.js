@@ -1,15 +1,39 @@
+/** @file Super-admin families list rendering and actions */
 import { renderFamilyDetails } from './super-admin-family-details.js';
 import { applyFamiliesFilters, getFamilyChildrenCount } from './super-admin-filters.js';
+import { showSuperAlert, showSuperConfirm } from './super-admin-dialogs.js';
 
 let familiesData = [];
+const familiesById = new Map();
 const familiesViewState = {
     status: 'all',
     sort: 'created',
     search: ''
 };
 const familiesTable = document.getElementById('families-table');
+const familiesTbody = document.getElementById('families-tbody');
 const familiesLoadingState = document.getElementById('loading');
 const familiesErrorState = document.getElementById('families-error');
+
+function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = String(value ?? '');
+    return div.innerHTML;
+}
+
+function formatDate(value, withTime = false) {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return withTime ? date.toLocaleString('ru-RU') : date.toLocaleDateString('ru-RU');
+}
+
+function refreshFamilyLookup(rows) {
+    familiesById.clear();
+    rows.forEach((family) => {
+        familiesById.set(String(family.id), family);
+    });
+}
 
 async function loadFamilies() {
     if (familiesLoadingState) {
@@ -26,6 +50,7 @@ async function loadFamilies() {
         }
         const data = await res.json();
         familiesData = data.families || [];
+        refreshFamilyLookup(familiesData);
         renderFamilies();
     } catch (err) {
         console.error('Error:', err);
@@ -48,13 +73,18 @@ function findLatestFamily(families) {
 }
 
 function updateStats(families) {
-    document.getElementById('total-families').textContent = families.length;
+    const totalEl = document.getElementById('total-families');
+    const latestEl = document.getElementById('latest-family');
+    if (totalEl) totalEl.textContent = String(families.length);
+    if (!latestEl) return;
     const latest = findLatestFamily(families);
-    document.getElementById('latest-family').textContent = latest ? `${latest.email || latest.id} (${new Date(latest.created_at).toLocaleString('ru-RU')})` : '-';
+    latestEl.textContent = latest ? `${latest.email || latest.id} (${formatDate(latest.created_at, true)})` : '-';
 }
 
 function getFamilyStatusBadge(isBlocked) {
-    return isBlocked ? '<span style="color:#ef4444; font-weight:700;">ЗАБЛОКИРОВАНА</span>' : '<span style="color:#16a34a; font-weight:700;">АКТИВНА</span>';
+    return isBlocked
+        ? '<span style="color:#ef4444; font-weight:700;">ЗАБЛОКИРОВАНА</span>'
+        : '<span style="color:#16a34a; font-weight:700;">АКТИВНА</span>';
 }
 
 function getFamilyBlockButtonLabel(isBlocked) {
@@ -65,25 +95,28 @@ function getFamilyBlockButtonClass(isBlocked) {
     return isBlocked ? 'unblock' : '';
 }
 
-function buildFamilyRowHtml(f) {
+function buildFamilyRowHtml(family) {
+    const id = escapeHtml(family.id);
+    const email = escapeHtml(family.email || '-');
+    const childrenCount = getFamilyChildrenCount(family);
     return `
-            <td style="opacity:0.5" class="hide-mobile">#${f.id}</td>
-            <td><strong>${f.email || f.id}</strong></td>
-            <td class="hide-mobile">${f.email || '-'}</td>
-            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile">${f.tasksCount || 0} <span style="opacity:0.7;">(👧 ${getFamilyChildrenCount(f)})</span></td>
-            <td class="hide-mobile">${f.shopCount || 0}</td>
-            <td class="hide-mobile">${f.monthly_limit || 10000} 🪙</td>
-            <td>${getFamilyStatusBadge(f.isBlocked)}</td>
-            <td class="hide-mobile">${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
-            <td class="hide-mobile" style="font-size:0.9rem">${f.last_activity ? new Date(f.last_activity).toLocaleString('ru-RU') : '-'}</td>
-            <td>
-                <div style="display:flex; gap:4px">
-                    <button class="view-btn" onclick="viewFamily('${f.id}')">👁️</button>
-                    <button class="block-btn ${getFamilyBlockButtonClass(f.isBlocked)}" onclick="toggleBlock('${f.id}', ${!f.isBlocked})">${getFamilyBlockButtonLabel(f.isBlocked)}</button>
-                </div>
-            </td>`;
+        <td style="opacity:0.5" class="hide-mobile">#${id}</td>
+        <td class="hide-mobile">${email}</td>
+        <td class="hide-mobile">${childrenCount}</td>
+        <td class="hide-mobile">${family.tasksCount || 0}</td>
+        <td class="hide-mobile">${family.shopCount || 0}</td>
+        <td>${getFamilyStatusBadge(family.isBlocked)}</td>
+        <td class="hide-mobile">${formatDate(family.created_at)}</td>
+        <td class="hide-mobile" style="font-size:0.9rem">${formatDate(family.last_activity, true)}</td>
+        <td>
+            <div style="display:flex; gap:4px">
+                <button class="view-btn" type="button" data-action="view-family" data-family-id="${id}" title="Открыть карточку семьи">👁️</button>
+                <button class="block-btn ${getFamilyBlockButtonClass(family.isBlocked)}" type="button" data-action="toggle-family-block" data-family-id="${id}">
+                    ${getFamilyBlockButtonLabel(family.isBlocked)}
+                </button>
+            </div>
+        </td>
+    `;
 }
 
 function showFamilyState(message) {
@@ -100,19 +133,17 @@ function hideFamilyState() {
 }
 
 function appendFamilyRows(rows) {
-    const tbody = document.getElementById('families-tbody');
-    if (!tbody) return;
+    if (!familiesTbody) return;
     rows.forEach((family) => {
         const tr = document.createElement('tr');
         tr.innerHTML = buildFamilyRowHtml(family);
-        tbody.appendChild(tr);
+        familiesTbody.appendChild(tr);
     });
 }
 
 function renderFamilies() {
-    if (!familiesLoadingState || !familiesTable) return;
-    const tbody = document.getElementById('families-tbody');
-    if (tbody) tbody.innerHTML = '';
+    if (!familiesLoadingState || !familiesTable || !familiesTbody) return;
+    familiesTbody.innerHTML = '';
     if (familiesErrorState) familiesErrorState.hidden = true;
 
     if (familiesData.length === 0) {
@@ -141,7 +172,7 @@ function setupFamiliesControls() {
     statusChips.forEach((chip) => {
         chip.addEventListener('click', () => {
             familiesViewState.status = chip.dataset.filterStatus || 'all';
-            statusChips.forEach(node => node.classList.toggle('active', node === chip));
+            statusChips.forEach((node) => node.classList.toggle('active', node === chip));
             renderFamilies();
         });
     });
@@ -149,7 +180,7 @@ function setupFamiliesControls() {
     sortChips.forEach((chip) => {
         chip.addEventListener('click', () => {
             familiesViewState.sort = chip.dataset.sort || 'created';
-            sortChips.forEach(node => node.classList.toggle('active', node === chip));
+            sortChips.forEach((node) => node.classList.toggle('active', node === chip));
             renderFamilies();
         });
     });
@@ -162,59 +193,118 @@ function setupFamiliesControls() {
     }
 }
 
-async function viewFamily(familyId) {
-    const modal = document.getElementById('family-modal');
-    if (!modal) return;
-    modal.classList.add('active');
-    document.getElementById('modal-title').textContent = 'Загрузка...';
-    document.getElementById('modal-body').innerHTML = '<div class="loading">Загрузка данных...</div>';
+async function toggleBlock(familyId, shouldBlock) {
+    const family = familiesById.get(String(familyId));
+    const familyLabel = family?.email || familyId;
+    const confirmed = await showSuperConfirm({
+        title: shouldBlock ? 'Заблокировать семью?' : 'Разблокировать семью?',
+        message: `${familyLabel}: ${shouldBlock ? 'доступ к кабинету будет закрыт.' : 'доступ к кабинету будет восстановлен.'}`,
+        confirmText: shouldBlock ? 'Заблокировать' : 'Разблокировать'
+    });
+    if (!confirmed) return;
+
     try {
-        const res = await fetch(`/api/super/family/${familyId}/data`);
-        if (res.ok) renderFamilyDetails(await res.json());
-        else document.getElementById('modal-body').innerHTML = '<p style="color: red;">Ошибка загрузки</p>';
+        const res = await fetch(`/api/super/family/${encodeURIComponent(familyId)}/block`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isBlocked: shouldBlock })
+        });
+        if (res.ok) {
+            await loadFamilies();
+            return;
+        }
+        await showSuperAlert({ title: 'Ошибка', message: 'Не удалось изменить статус семьи.' });
     } catch (err) {
-        document.getElementById('modal-body').innerHTML = '<p style="color: red;">Ошибка связи</p>';
+        await showSuperAlert({ title: 'Ошибка сети', message: 'Проверьте подключение и повторите действие.' });
     }
 }
 
-function toggleBlock(familyId, shouldBlock) {
-    if (!confirm(shouldBlock ? 'Заблокировать?' : 'Разблокировать?')) return;
-    fetch(`/api/super/family/${familyId}/block`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isBlocked: shouldBlock })
-    })
-        .then((res) => {
-            if (res.ok) loadFamilies();
-            else alert('Ошибка');
-        })
-        .catch(() => alert('Ошибка связи'));
+async function viewFamily(familyId) {
+    const modal = document.getElementById('family-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    if (!modal || !modalTitle || !modalBody) return;
+    modal.classList.add('active');
+    modalTitle.textContent = 'Загрузка...';
+    modalBody.innerHTML = '<div class="loading">Загрузка данных...</div>';
+    try {
+        const res = await fetch(`/api/super/family/${encodeURIComponent(familyId)}/data`);
+        if (res.ok) {
+            renderFamilyDetails(await res.json());
+            return;
+        }
+        modalBody.innerHTML = '<p style="color: #ef4444;">Ошибка загрузки</p>';
+    } catch (err) {
+        modalBody.innerHTML = '<p style="color: #ef4444;">Ошибка связи</p>';
+    }
 }
 
 function copyMagicLink(token) {
-    if (!token) return alert('Token missing');
-    navigator.clipboard.writeText(`${window.location.origin}/login-child/${token}`).then(() => alert('Link copied')).catch(() => alert('Failed to copy'));
+    if (!token) {
+        showSuperAlert({ title: 'Ссылка недоступна', message: 'У ребенка не найден токен входа.' });
+        return;
+    }
+    navigator.clipboard.writeText(`${window.location.origin}/login-child/${token}`)
+        .then(() => showSuperAlert({ title: 'Готово', message: 'Ссылка скопирована в буфер обмена.' }))
+        .catch(() => showSuperAlert({ title: 'Ошибка', message: 'Не удалось скопировать ссылку.' }));
 }
 
-function regenerateToken(familyId, childId) {
-    if (!confirm('Regenerate link?')) return;
-    const url = childId ? `/api/super/child/${childId}/regenerate-token` : `/api/super/family/${familyId}/regenerate-token`;
-    fetch(url, { method: 'POST' })
-        .then((res) => {
-            if (res.ok) { alert('Token regenerated'); loadFamilies(); } else alert('Failed');
-        })
-        .catch(() => alert('Error'));
+async function regenerateToken(familyId, childId) {
+    const confirmed = await showSuperConfirm({
+        title: 'Обновить magic-link?',
+        message: 'Старая ссылка перестанет работать.',
+        confirmText: 'Обновить'
+    });
+    if (!confirmed) return;
+
+    const url = childId
+        ? `/api/super/child/${encodeURIComponent(childId)}/regenerate-token`
+        : `/api/super/family/${encodeURIComponent(familyId)}/regenerate-token`;
+    try {
+        const res = await fetch(url, { method: 'POST' });
+        if (res.ok) {
+            await showSuperAlert({ title: 'Готово', message: 'Новый токен создан.' });
+            await loadFamilies();
+            return;
+        }
+        await showSuperAlert({ title: 'Ошибка', message: 'Не удалось обновить токен.' });
+    } catch (err) {
+        await showSuperAlert({ title: 'Ошибка сети', message: 'Проверьте подключение и повторите действие.' });
+    }
 }
 
-document.getElementById('modal-close')?.addEventListener('click', () => document.getElementById('family-modal')?.classList.remove('active'));
-document.getElementById('family-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'family-modal') document.getElementById('family-modal')?.classList.remove('active');
+function bindFamiliesActions() {
+    if (!familiesTbody || familiesTbody.dataset.bound === 'true') return;
+    familiesTbody.dataset.bound = 'true';
+    familiesTbody.addEventListener('click', (event) => {
+        const actionButton = event.target.closest('button[data-action]');
+        if (!actionButton) return;
+        const familyId = actionButton.dataset.familyId;
+        if (!familyId) return;
+        const action = actionButton.dataset.action;
+        if (action === 'view-family') {
+            viewFamily(familyId);
+            return;
+        }
+        if (action === 'toggle-family-block') {
+            const family = familiesById.get(String(familyId));
+            toggleBlock(familyId, !Boolean(family?.isBlocked));
+        }
+    });
+}
+
+document.getElementById('modal-close')?.addEventListener('click', () => {
+    document.getElementById('family-modal')?.classList.remove('active');
+});
+document.getElementById('family-modal')?.addEventListener('click', (event) => {
+    if (event.target.id === 'family-modal') {
+        document.getElementById('family-modal')?.classList.remove('active');
+    }
 });
 
 export function initFamiliesPanel() {
     setupFamiliesControls();
-    window.viewFamily = viewFamily;
-    window.toggleBlock = toggleBlock;
+    bindFamiliesActions();
     window.copyMagicLink = copyMagicLink;
     window.regenerateToken = regenerateToken;
     loadFamilies();

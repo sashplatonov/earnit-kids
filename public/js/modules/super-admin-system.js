@@ -1,3 +1,4 @@
+/** @file System dashboard module for super-admin tabs */
 const systemHint = document.getElementById('system-hint');
 const systemCards = {
     cpu: document.getElementById('system-cpu-value'),
@@ -8,6 +9,8 @@ const systemCards = {
 const httpStateEl = document.getElementById('http-state');
 const httpBody = document.getElementById('http-metrics-body');
 const systemHttpBadge = document.getElementById('system-http-badge');
+const httpFilterContainer = document.getElementById('http-filter-levels');
+const httpFilterButtons = httpFilterContainer ? httpFilterContainer.querySelectorAll('[data-http-filter]') : [];
 const logsStateEl = document.getElementById('logs-state');
 const logsListEl = document.getElementById('logs-list');
 const logsLevelContainer = document.getElementById('logs-levels');
@@ -16,11 +19,16 @@ const logsLimitInput = document.getElementById('logs-limit');
 const logsRefreshBtn = document.getElementById('logs-refresh');
 
 const systemState = {
-    pollId: null,
-    level: 'error',
+    overviewPollId: null,
+    httpPollId: null,
+    logsPollId: null,
+    level: 'all',
+    httpFilter: 'all',
     limit: clampNumber(Number(logsLimitInput?.value), 1, 500)
 };
-const SYSTEM_POLL_INTERVAL = 15000;
+const OVERVIEW_DB_POLL_INTERVAL = 10000;
+const HTTP_POLL_INTERVAL = 15000;
+const LOGS_POLL_INTERVAL = 15000;
 
 function clampNumber(value, min, max) {
     if (Number.isNaN(value)) return min;
@@ -65,49 +73,65 @@ function cpuCardText(os) {
     return `${os.loadAvg1 ?? '—'} / ${os.loadAvg5 ?? '—'} / ${os.loadAvg15 ?? '—'}`;
 }
 
-function memoryCardText(process) {
-    return `${formatBytes(process.rssBytes)} / ${formatBytes(process.heapUsedBytes)}`;
+function memoryCardText(processStats) {
+    return `${formatBytes(processStats.rssBytes)} / ${formatBytes(processStats.heapUsedBytes)}`;
 }
 
-function uptimeCardText(process) {
-    return formatDuration(process.uptimeSec ?? process.uptime ?? 0);
+function uptimeCardText(processStats) {
+    return formatDuration(processStats.uptimeSec ?? processStats.uptime ?? 0);
 }
 
 function dbCardText(db) {
     if (db.connected) {
-        const ping = db.pingMs ? `${db.pingMs}ms` : '—';
-        const replicaStatus = db.reserveConnected ? 'реплика OK' : 'реплика недоступна';
-        return `${ping} · ${replicaStatus}`;
+        return db.pingMs ? `${db.pingMs}ms` : '—';
     }
-    return '—';
+    return db.lastError ? 'недоступна' : '—';
 }
 
-function updateSystemCards(data) {
-    const process = data?.process || {};
+function updateOverviewCards(data) {
+    const processStats = data?.process || {};
     const os = data?.os || {};
-    const db = data?.db || {};
     setCardText('cpu', cpuCardText(os));
-    setCardText('memory', memoryCardText(process));
-    setCardText('uptime', uptimeCardText(process));
+    setCardText('memory', memoryCardText(processStats));
+    setCardText('uptime', uptimeCardText(processStats));
+}
+
+function updateDbCard(data) {
+    const db = data?.db || {};
     setCardText('db', dbCardText(db));
 }
 
 async function fetchJson(url) {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    return res.json();
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const message = payload?.error || payload?.message || `status ${res.status}`;
+        throw new Error(message);
+    }
+    return payload;
 }
 
 async function loadSystemOverview() {
     setSystemHint('Загрузка метрик...', true);
     try {
         const data = await fetchJson('/api/super/system/overview');
-        updateSystemCards(data);
+        updateOverviewCards(data);
         setSystemHint('', false);
     } catch (err) {
         console.error('System overview error', err);
-        updateSystemCards(null);
+        updateOverviewCards(null);
         setSystemHint('Метрики недоступны', true);
+    }
+}
+
+async function loadDbHealth() {
+    try {
+        const data = await fetchJson('/api/super/system/db');
+        updateDbCard(data);
+    } catch (err) {
+        console.error('DB health error', err);
+        updateDbCard(null);
+        setSystemHint('Часть системных метрик недоступна', true);
     }
 }
 
@@ -127,6 +151,25 @@ function renderHttpMetrics(endpoints) {
     });
 }
 
+function setHttpBadge(summary) {
+    if (!systemHttpBadge) return;
+    const errorRate = summary?.errorRatePct;
+    const errorRateText = typeof errorRate === 'number' ? `${errorRate}%` : '—';
+    systemHttpBadge.textContent = `ошибки ${summary?.errorsTotal ?? '—'} (${errorRateText})`;
+}
+
+function updateHttpSection(endpoints) {
+    const visibleEndpoints = systemState.httpFilter === 'errors'
+        ? endpoints.filter((item) => (item.errors || 0) > 0)
+        : endpoints;
+    if (visibleEndpoints.length > 0) {
+        renderHttpMetrics(visibleEndpoints);
+        updateSystemSectionState(httpStateEl, 'loaded', '');
+        return;
+    }
+    updateSystemSectionState(httpStateEl, 'empty', 'Данных нет');
+}
+
 async function loadHttpMetrics() {
     updateSystemSectionState(httpStateEl, 'loading', 'Загрузка HTTP-метрик...');
     if (httpBody) httpBody.innerHTML = '';
@@ -134,13 +177,8 @@ async function loadHttpMetrics() {
     try {
         const data = await fetchJson('/api/super/system/http-metrics');
         const endpoints = data.topEndpoints || [];
-        if (endpoints.length) {
-            renderHttpMetrics(endpoints);
-            updateSystemSectionState(httpStateEl, 'loaded', '');
-        } else {
-            updateSystemSectionState(httpStateEl, 'empty', 'Данных нет');
-        }
-        if (systemHttpBadge) systemHttpBadge.textContent = `ошибки ${data?.summary?.errorsTotal ?? '—'}`;
+        updateHttpSection(endpoints);
+        setHttpBadge(data.summary);
     } catch (err) {
         console.error('HTTP metrics error', err);
         updateSystemSectionState(httpStateEl, 'error', 'Не удалось загрузить HTTP-метрики');
@@ -187,29 +225,47 @@ async function loadSystemLogs() {
     }
 }
 
-function loadSystemPanels() {
+function loadOverviewAndDbPanels() {
     loadSystemOverview();
-    loadHttpMetrics();
-    loadSystemLogs();
+    loadDbHealth();
 }
 
 function stopSystemPolling() {
-    if (systemState.pollId) {
-        clearInterval(systemState.pollId);
-        systemState.pollId = null;
+    if (systemState.overviewPollId) {
+        clearInterval(systemState.overviewPollId);
+        systemState.overviewPollId = null;
+    }
+    if (systemState.httpPollId) {
+        clearInterval(systemState.httpPollId);
+        systemState.httpPollId = null;
+    }
+    if (systemState.logsPollId) {
+        clearInterval(systemState.logsPollId);
+        systemState.logsPollId = null;
     }
 }
 
 function activateSystemTab() {
     stopSystemPolling();
-    loadSystemPanels();
-    systemState.pollId = setInterval(loadSystemPanels, SYSTEM_POLL_INTERVAL);
+    loadOverviewAndDbPanels();
+    loadHttpMetrics();
+    loadSystemLogs();
+    systemState.overviewPollId = setInterval(loadOverviewAndDbPanels, OVERVIEW_DB_POLL_INTERVAL);
+    systemState.httpPollId = setInterval(loadHttpMetrics, HTTP_POLL_INTERVAL);
+    systemState.logsPollId = setInterval(loadSystemLogs, LOGS_POLL_INTERVAL);
 }
 
 function initializeSystemControls() {
+    httpFilterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            systemState.httpFilter = btn.dataset.httpFilter || 'all';
+            httpFilterButtons.forEach((node) => node.classList.toggle('active', node === btn));
+            loadHttpMetrics();
+        });
+    });
     logsLevelButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
-            systemState.level = btn.dataset.logsLevel || 'error';
+            systemState.level = btn.dataset.logsLevel || 'all';
             logsLevelButtons.forEach((node) => node.classList.toggle('active', node === btn));
             loadSystemLogs();
         });
@@ -224,6 +280,7 @@ function initializeSystemControls() {
     }
     if (logsRefreshBtn) {
         logsRefreshBtn.addEventListener('click', () => {
+            loadOverviewAndDbPanels();
             loadHttpMetrics();
             loadSystemLogs();
         });
@@ -232,6 +289,10 @@ function initializeSystemControls() {
 
 export function initSystemPanel() {
     initializeSystemControls();
+    const activeSystemTab = document.getElementById('tab-system');
+    if (activeSystemTab?.classList.contains('active')) {
+        activateSystemTab();
+    }
 }
 
 export function deactivateSystemTab() {

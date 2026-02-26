@@ -3,10 +3,26 @@
  * Super Admin Database Management Module
  */
 
+const PANEL_STATE_CLASSES = ['panel-state--loading', 'panel-state--error'];
+
+function setDbPanelState(message, variant) {
+    const panelState = document.getElementById('db-panel-state');
+    if (!panelState) return;
+    panelState.textContent = message;
+    panelState.hidden = variant === 'hidden';
+    panelState.classList.remove(...PANEL_STATE_CLASSES);
+    if (variant === 'loading') panelState.classList.add('panel-state--loading');
+    if (variant === 'error') panelState.classList.add('panel-state--error');
+}
+
 export function setDbStatus(msg, type) {
     const el = document.getElementById('db-status-msg');
     if (!el) return;
-    el.style.display = 'block';
+    if (!msg) {
+        el.hidden = true;
+        return;
+    }
+    el.hidden = false;
     el.textContent = msg;
 
     const styles = {
@@ -21,47 +37,37 @@ export function setDbStatus(msg, type) {
     el.style.border = s.border;
 }
 
-function setDbPanelState(message, variant) {
-    const panelState = document.getElementById('db-panel-state');
-    if (!panelState) return;
-    panelState.textContent = message;
-    if (variant === 'hidden') {
-        panelState.hidden = true;
-        return;
-    }
-    panelState.hidden = false;
-    panelState.classList.remove('panel-state--loading', 'panel-state--error', 'panel-state--empty');
-    if (variant === 'error') {
-        panelState.classList.add('panel-state--error');
-    } else {
-        panelState.classList.add('panel-state--loading');
-    }
+function handleDbSuccess(pingMs) {
+    const ping = pingMs ? `${pingMs}ms` : '—';
+    setDbStatus(`Ping ${ping}`, 'success');
+    setDbPanelState('', 'hidden');
 }
 
-export async function checkReserveStatus() {
-    const statusEl = document.getElementById('reserve-db-status');
-    const copyBtn = document.getElementById('pg-copy-reserve-btn');
-    if (!statusEl || !copyBtn) return;
+function handleDbError(reason) {
+    const message = reason || 'Невозможно проверить базу';
+    setDbStatus(`Ошибка: ${message}`, 'error');
+    setDbPanelState('Невозможно получить статус базы данных', 'error');
+}
 
-    setDbPanelState('Проверяем доступность резервной БД...', 'loading');
+async function fetchDbPayload() {
+    const res = await fetch('/api/super/system/db');
+    if (!res.ok) {
+        throw new Error('Не удалось получить статус');
+    }
+    return res.json();
+}
+
+export async function refreshDbPanelStatus() {
+    setDbPanelState('Проверяем доступность базы данных...', 'loading');
+    setDbStatus('', 'info');
     try {
-        const res = await fetch('/api/super/db-reserve-status');
-        const data = await res.json();
-
-        if (data.success) {
-            statusEl.innerHTML = '<span style="color: #10b981;">✅ Резервная БД доступна</span>';
-            copyBtn.disabled = false;
-            setDbPanelState('', 'hidden');
-        } else {
-            statusEl.innerHTML = `<span style="color: #ef4444;">❌ ${data.error || 'Ошибка'}</span>`;
-            copyBtn.disabled = true;
-            statusEl.title = data.error || '';
-            setDbPanelState('Резервная БД недоступна', 'error');
-        }
+        const payload = await fetchDbPayload();
+        const db = payload?.db;
+        return db?.connected
+            ? handleDbSuccess(db.pingMs)
+            : handleDbError(payload?.error || db?.lastError);
     } catch (err) {
-        statusEl.innerHTML = '<span style="color: #ef4444;">❌ Ошибка проверки</span>';
-        copyBtn.disabled = true;
-        setDbPanelState('Ошибка связи', 'error');
+        handleDbError(err.message);
     }
 }
 
@@ -85,26 +91,5 @@ export async function handleRestore(file) {
         }
     } catch (err) {
         setDbStatus('Ошибка связи', 'error');
-    }
-}
-
-export async function handleCopyToReserve() {
-    if (!confirm('Скопировать в резерв?')) return;
-    setDbStatus('Копирование...', 'info');
-    const btn = document.getElementById('pg-copy-reserve-btn');
-    if (btn) btn.disabled = true;
-
-    try {
-        const res = await fetch('/api/super/db-copy-reserve', { method: 'POST' });
-        const result = await res.json();
-        if (res.ok && result.success) {
-            setDbStatus('Успешно скопировано!', 'success');
-        } else {
-            setDbStatus('Ошибка: ' + (result.error || 'Unknown'), 'error');
-        }
-    } catch (err) {
-        setDbStatus('Ошибка связи', 'error');
-    } finally {
-        if (btn) btn.disabled = false;
     }
 }

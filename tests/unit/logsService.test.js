@@ -11,7 +11,7 @@ test('readLogs filters by level, clamps limit, and masks secrets', async () => {
     const entries = [
         JSON.stringify({
             level: 'error',
-            msg: 'Critical token=supersecrettoken12345',
+            msg: 'Critical token=supersecrettoken12345 user=user@example.com',
             module: 'app',
             reqId: 'req-secret-abcdef',
             ts: now
@@ -31,6 +31,7 @@ test('readLogs filters by level, clamps limit, and masks secrets', async () => {
     assert.strictEqual(errorLogs.length, 1);
     assert.strictEqual(errorLogs[0].level, 'error');
     assert.strictEqual(errorLogs[0].msg.includes('***'), true);
+    assert.strictEqual(errorLogs[0].msg.includes('user@example.com'), false);
 
     const infoLogs = await readLogs({ level: 'info', limit: 10 });
     assert.strictEqual(infoLogs.length, 1);

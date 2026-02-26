@@ -319,6 +319,8 @@ body {
 
 .system-panel__table-wrapper {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 320px;
     border-radius: var(--radius-md, 12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.02);
@@ -368,6 +370,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-height: 320px;
+    overflow-y: auto;
 }
 
 .system-logs-item {
@@ -389,14 +393,15 @@ body {
 }
 
 .table-responsive {
-    overflow-x: auto;
+    overflow-x: hidden;
     width: 100%;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 640px;
+    table-layout: fixed;
+    min-width: 0;
 }
 
 thead {
@@ -404,10 +409,11 @@ thead {
 }
 
 th, td {
-    padding: 0.9rem 0.5rem;
+    padding: 0.75rem 0.45rem;
     text-align: left;
-    font-size: var(--text-sm, 0.9rem);
+    font-size: 0.84rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    overflow-wrap: anywhere;
 }
 
 .hide-mobile {
@@ -516,6 +522,18 @@ tbody tr:hover {
 }
 
 .items-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.catalog-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.catalog-group__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
@@ -652,6 +670,17 @@ tbody tr:hover {
 
 .modal-close:hover {
     background: rgba(255, 255, 255, 0.18);
+}
+
+#super-confirm-message {
+    margin: 0.5rem 0 1rem;
+    color: var(--color-text-soft, rgba(255, 255, 255, 0.78));
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
 }
 
 .family-detail .loading {

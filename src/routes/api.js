@@ -123,8 +123,56 @@ apiRouter.get('/api/super/base-data', async (ctx, req, res) => {
     if (!await superAdminMiddleware(ctx, req, res)) return;
     sendJSON(res, loadBaseData());
 });
-// The rest of super limits can be handled by just mapping `handleSuperAdminAPI`. Wait, `handleSuperAdminAPI` has its own logic internally. Let's just delegate for now.
+apiRouter.post('/api/super/base-data', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.get('/api/super/db-backup', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.post('/api/super/db-restore', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.get('/api/super/system/overview', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.get('/api/super/system/http-metrics', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.get('/api/super/system/db', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.get('/api/super/system/logs', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.get('/api/super/family/:id/data', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.post('/api/super/family/:id/data', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.post('/api/super/family/:id/block', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.post('/api/super/family/:id/regenerate-token', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
+apiRouter.post('/api/super/child/:id/regenerate-token', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
+    await superAdminController.handleSuperAdminAPI(req, res, ctx);
+});
 apiRouter.add('ALL', '/api/super/:path', async (ctx, req, res) => {
+    if (!await superAdminMiddleware(ctx, req, res)) return;
     await superAdminController.handleSuperAdminAPI(req, res, ctx);
 });
 

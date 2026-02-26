@@ -4,7 +4,8 @@ const {
     saveFamilyData
 } = require('../services/familyService');
 const { loadBaseData, saveBaseData } = require('../services/baseDataService');
-const { createBackup, restoreBackup, copyToReserve, checkReserveDbConnection } = require('../services/backupService');
+const { createBackup, restoreBackup } = require('../services/backupService');
+const logger = require('../utils/logger');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');
 const { URL } = require('url');
@@ -13,8 +14,8 @@ const { getHttpMetrics } = require('../services/httpMetricsService');
 const { getDbHealth } = require('../services/dbHealthService');
 const { readLogs } = require('../services/logsService');
 
-const VALID_LOG_LEVELS = new Set(['info', 'warn', 'error']);
-const DEFAULT_LOG_LEVEL = 'error';
+const VALID_LOG_LEVELS = new Set(['all', 'info', 'warn', 'error']);
+const DEFAULT_LOG_LEVEL = 'all';
 const DEFAULT_LOG_LIMIT = 20;
 const MIN_LOG_LIMIT = 1;
 const MAX_LOG_LIMIT = 500;
@@ -24,11 +25,14 @@ function createTimestamp() {
 }
 
 function clampLogLimit(value) {
-    const parsed = Number.parseInt(value, 10);
-    if (Number.isNaN(parsed)) {
-        return DEFAULT_LOG_LIMIT;
+    if (value === null || value === undefined || value === '') {
+        return { value: DEFAULT_LOG_LIMIT, error: null };
     }
-    return Math.min(Math.max(parsed, MIN_LOG_LIMIT), MAX_LOG_LIMIT);
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isNaN(parsed) || parsed < MIN_LOG_LIMIT || parsed > MAX_LOG_LIMIT) {
+        return { value: null, error: `Limit must be between ${MIN_LOG_LIMIT} and ${MAX_LOG_LIMIT}` };
+    }
+    return { value: parsed, error: null };
 }
 
 function respondSuccess(res, payload) {
@@ -61,10 +65,16 @@ async function handleSuperFamilyData({ url, method, req, res }) {
 
     const familyId = match[1];
     if (method === 'GET') {
-        const families = await loadFamilies();
-        const familyInfo = families.families[familyId];
-        if (!familyInfo) return sendJSON(res, { error: 'Not found' }, 404);
-        return sendJSON(res, { familyId, familyInfo, data: await loadFamilyData(familyId) });
+        try {
+            const families = await loadFamilies();
+            const familyInfo = families.families[familyId];
+            if (!familyInfo) return sendJSON(res, { error: 'Not found' }, 404);
+            const data = await loadFamilyData(familyId);
+            return sendJSON(res, { familyId, familyInfo, data });
+        } catch (err) {
+            logger.error({ err: err.message, familyId }, 'Failed to load family data for super admin');
+            return respondError(res, 'Family data temporarily unavailable', 503);
+        }
     }
 
     if (method === 'POST') {
@@ -136,8 +146,6 @@ async function handleSuperAdminAPI(req, res, ctx) {
         'GET /api/super/base-data': () => sendJSON(res, loadBaseData()),
         'GET /api/super/db-backup': () => createBackup(req, res),
         'POST /api/super/db-restore': () => restoreBackup(req, res),
-        'POST /api/super/db-copy-reserve': () => copyToReserve(req, res),
-        'GET /api/super/db-reserve-status': async () => sendJSON(res, await checkReserveDbConnection()),
         'POST /api/super/base-data': async () => {
             const body = await parseBody(req);
             const success = saveBaseData(body);
@@ -193,7 +201,10 @@ async function handleSystemLogs(req, res) {
     if (!VALID_LOG_LEVELS.has(levelParam)) {
         return respondError(res, 'Invalid log level', 400);
     }
-    const limit = clampLogLimit(urlObj.searchParams.get('limit'));
+    const { value: limit, error } = clampLogLimit(urlObj.searchParams.get('limit'));
+    if (error) {
+        return respondError(res, error, 400);
+    }
     try {
         const logs = await readLogs({ level: levelParam, limit });
         respondSuccess(res, { query: { level: levelParam, limit }, logs });

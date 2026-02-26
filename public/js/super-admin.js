@@ -1,10 +1,9 @@
 /** @file Super Admin frontend helper script */
-import { renderFamilyDetails } from './modules/super-admin-family-details.js';
-import { checkReserveStatus, handleRestore, handleCopyToReserve } from './modules/super-admin-db.js';
+import { handleRestore, refreshDbPanelStatus } from './modules/super-admin-db.js';
 import { setBaseData, getBaseData, renderList, deleteItem, saveItem } from './modules/super-admin-base.js';
-import { applyFamiliesFilters, getFamilyChildrenCount } from './modules/super-admin-filters.js';
 import { initSystemPanel, activateSystemTab, deactivateSystemTab } from './modules/super-admin-system.js';
 import { initFamiliesPanel } from './modules/super-admin-families.js';
+import { showSuperConfirm } from './modules/super-admin-dialogs.js';
 
 const catalogStateEls = {
     tasks: document.getElementById('tasks-state'),
@@ -17,7 +16,7 @@ const catalogListEls = {
 
 // Tab switching
 function handleTabActivation(tabName) {
-    if (tabName === 'database') checkReserveStatus();
+    if (tabName === 'database') refreshDbPanelStatus();
     if (tabName === 'system') activateSystemTab();
     else deactivateSystemTab();
 }
@@ -43,13 +42,19 @@ document.getElementById('pg-restore-btn').addEventListener('click', () => {
 });
 document.getElementById('pg-restore-input').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file && confirm('ВНИМАНИЕ! Это действие ЗАМЕНИТ базу данных. Продолжить?')) {
-        handleRestore(file);
+    if (!file) {
+        e.target.value = '';
+        return;
     }
+    showSuperConfirm({
+        title: 'Восстановить базу из файла?',
+        message: 'Текущие данные будут заменены.',
+        confirmText: 'Восстановить'
+    }).then((confirmed) => {
+        if (confirmed) handleRestore(file);
+    });
     e.target.value = '';
 });
-document.getElementById('pg-copy-reserve-btn').addEventListener('click', handleCopyToReserve);
-
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
     await fetch('/api/logout', { method: 'POST' });

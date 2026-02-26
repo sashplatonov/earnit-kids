@@ -36,3 +36,26 @@ test('getHttpMetrics aggregates counters and durations', async () => {
     assert.strictEqual(metrics.latency.p95Ms, null);
     assert.strictEqual(metrics.latency.p99Ms, null);
 });
+
+test('getHttpMetrics returns safe empty payload for empty snapshot', async () => {
+    const snapshot = {
+        http_requests_total: new Map(),
+        http_request_duration_ms_bucket: new Map(),
+        http_requests_errors_total: new Map()
+    };
+
+    const { getHttpMetrics } = proxyquire('../../src/services/httpMetricsService', {
+        '../utils/metrics': {
+            getMetricSnapshot: () => snapshot
+        }
+    });
+
+    const metrics = await getHttpMetrics();
+    assert.deepStrictEqual(metrics.summary, {
+        requestsTotal: 0,
+        errorsTotal: 0,
+        errorRatePct: 0
+    });
+    assert.deepStrictEqual(metrics.topEndpoints, []);
+    assert.deepStrictEqual(metrics.latency, { p95Ms: null, p99Ms: null });
+});

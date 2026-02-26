@@ -85,13 +85,10 @@
                                 <thead>
                                     <tr>
                                         <th class="hide-mobile">ID</th>
-                                        <th>Название</th>
                                         <th class="hide-mobile">Email</th>
-                                        <th class="hide-mobile">Admin Pass</th>
-                                        <th class="hide-mobile">Magic Link</th>
+                                        <th class="hide-mobile">Детей</th>
                                         <th class="hide-mobile">Заданий</th>
                                         <th class="hide-mobile">Товаров</th>
-                                        <th class="hide-mobile">Лимит (мес)</th>
                                         <th>Статус</th>
                                         <th class="hide-mobile">Дата создания</th>
                                         <th class="hide-mobile">Последняя активность</th>
@@ -141,7 +138,7 @@
                             <h2>🗄️ Управление базой данных</h2>
                         </div>
                     </header>
-                    <div id="db-panel-state" class="panel-state panel-state--loading">Проверяем доступность базы данных...</div>
+                    <div id="db-panel-state" class="panel-state panel-state--loading" hidden>Проверяем доступность базы данных...</div>
                     <div class="db-grid">
                         <article class="db-card">
                             <h3>📦 Резервное копирование</h3>
@@ -153,12 +150,6 @@
                             <p>Восстановить базу данных из файла резервной копии.</p>
                             <button id="pg-restore-btn" class="btn btn--success" type="button">Восстановить из файла</button>
                             <input type="file" id="pg-restore-input" class="visually-hidden" accept=".dump">
-                        </article>
-                        <article class="db-card">
-                            <h3>🚀 Репликация</h3>
-                            <p>Скопировать текущую базу в резервную (настройки в .env).</p>
-                            <p id="reserve-db-status" class="db-card__status">⌛ Проверка доступности...</p>
-                            <button id="pg-copy-reserve-btn" class="btn btn--warning" type="button" disabled>Копировать в резерв</button>
                         </article>
                     </div>
                     <div id="db-status-msg" class="status-callout" role="status" hidden></div>
@@ -193,7 +184,7 @@
                         <article class="system-card">
                             <p class="system-card__label">База данных</p>
                             <p class="system-card__value" id="system-db-value">—</p>
-                            <p class="system-card__helper" id="system-db-helper">latency / replica</p>
+                            <p class="system-card__helper" id="system-db-helper">latency</p>
                         </article>
                     </div>
 
@@ -203,7 +194,13 @@
                                 <p class="system-panel__section-eyebrow">HTTP-метрики</p>
                                 <h3>Запросы и ошибки</h3>
                             </div>
-                            <span class="system-panel__badge" id="system-http-badge">ошибки —</span>
+                            <div class="system-panel__controls">
+                                <div class="chip-row" id="http-filter-levels">
+                                    <button type="button" class="filter-chip active" data-http-filter="all">Все</button>
+                                    <button type="button" class="filter-chip" data-http-filter="errors">Ошибки</button>
+                                </div>
+                                <span class="system-panel__badge" id="system-http-badge">ошибки —</span>
+                            </div>
                         </div>
                         <div id="http-state" class="panel-state panel-state--loading">Загрузка HTTP-метрик...</div>
                         <div class="system-panel__table-wrapper">
@@ -230,7 +227,8 @@
                             </div>
                             <div class="system-panel__controls">
                                 <div class="chip-row" id="logs-levels">
-                                    <button type="button" class="filter-chip active" data-logs-level="error">Ошибка</button>
+                                    <button type="button" class="filter-chip active" data-logs-level="all">Все</button>
+                                    <button type="button" class="filter-chip" data-logs-level="error">Ошибка</button>
                                     <button type="button" class="filter-chip" data-logs-level="warn">Предупреждение</button>
                                     <button type="button" class="filter-chip" data-logs-level="info">Инфо</button>
                                 </div>
@@ -264,6 +262,19 @@
             <button class="modal-close" onclick="closeEditModal()" type="button">&times;</button>
             <h2 id="edit-modal-title">Редактирование</h2>
             <div id="edit-form-container"></div>
+        </div>
+    </div>
+
+    <!-- Modal for confirmations and alerts -->
+    <div id="super-confirm-modal" class="modal" aria-hidden="true">
+        <div class="modal-content modal-content--narrow">
+            <button class="modal-close" id="super-confirm-close" type="button">&times;</button>
+            <h2 id="super-confirm-title">Подтверждение</h2>
+            <p id="super-confirm-message"></p>
+            <div class="modal-actions">
+                <button id="super-confirm-cancel" class="btn btn--ghost" type="button">Отмена</button>
+                <button id="super-confirm-ok" class="btn btn--primary" type="button">Подтвердить</button>
+            </div>
         </div>
     </div>
 
