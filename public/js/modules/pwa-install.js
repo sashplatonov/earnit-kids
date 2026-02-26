@@ -70,9 +70,30 @@ function bindInstallEvents(button, iosHint, isIos) {
     });
 }
 
+function setupOfflineStatusBanner() {
+    const banner = document.getElementById('offline-status-banner');
+    if (!banner) return;
+
+    const update = () => {
+        const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+        banner.classList.toggle('hidden', !isOffline);
+        if (isOffline) {
+            showToast('Вы оффлайн. Часть действий временно недоступна.', 'info');
+        }
+    };
+
+    update();
+    window.addEventListener('offline', update);
+    window.addEventListener('online', () => {
+        banner.classList.add('hidden');
+        showToast('Сеть восстановлена', 'success');
+    });
+}
+
 export function setupPwaInstall() {
     const button = document.getElementById('pwa-install-btn');
     const iosHint = document.getElementById('pwa-install-ios-hint');
+    setupOfflineStatusBanner();
     if (!button || !iosHint) return;
 
     const isMobile = isMobileViewport();

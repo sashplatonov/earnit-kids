@@ -1,0 +1,54 @@
+<!-- Секция Сегодня / Обзор -->
+<section class="section hidden" id="today-section">
+    <div class="section__header">
+        <h2>
+            <span class="section__title child-only">Сегодня</span>
+            <span class="section__title admin-only hidden">Обзор семьи</span>
+        </h2>
+        <p class="section__subtitle">
+            <span class="child-only">Баланс, следующий шаг и статус заявок в одном месте.</span>
+            <span class="admin-only hidden">Быстрый доступ к детям, заявкам и лимитам.</span>
+        </p>
+    </div>
+    <div class="today-grid">
+        <article class="today-card today-card--balance child-only">
+            <div class="today-card__label">Баланс</div>
+            <div class="today-card__value" id="today-balance-value">0 🪙</div>
+            <div class="today-card__note" id="today-balance-note">Держите баланс в балансе</div>
+            <div class="today-card__note today-card__note--child" id="today-child-label">Данные для всех детей</div>
+            <div class="today-card__actions">
+                <button class="btn btn--primary btn--small"
+                    onclick="window.activateMainTab?.('tasks')">Задания</button>
+                <button class="btn btn--primary btn--small"
+                    onclick="window.activateMainTab?.('shop')">Магазин</button>
+            </div>
+        </article>
+        <article class="today-card today-card--tasks child-only">
+            <div class="today-card__label">Что сделать сейчас</div>
+            <div id="today-task-list" class="today-card__list">
+                <p>Задачи загружаются...</p>
+            </div>
+        </article>
+        <article class="today-card today-card--requests child-only">
+            <div class="today-card__label">Статус заявок</div>
+            <div id="today-request-summary" class="today-card__summary"></div>
+        </article>
+        <article class="today-card today-card--parent admin-only hidden">
+            <div class="today-card__label">Дети в семье</div>
+            <div class="today-card__value" id="parent-overview-children">0 детей</div>
+            <div class="today-card__note" id="parent-overview-children-note">Пока нет активных профилей.</div>
+            <div class="today-card__label">Заявки в ожидании</div>
+            <div class="today-card__value" id="parent-overview-requests-count">0 заявок</div>
+            <div class="today-card__note" id="parent-overview-requests-note">Новых заявок нет.</div>
+            <div id="parent-request-summary" class="today-card__summary"></div>
+            <div class="today-card__actions" style="flex-direction: column; gap: 0.5rem;">
+                <button class="btn btn--primary btn--small" onclick="window.activateMainTab?.('requests')">
+                    Просмотреть заявки
+                </button>
+                <button class="btn btn--secondary btn--small" onclick="window.activateMainTab?.('catalog')">
+                    Перейти к контенту
+                </button>
+            </div>
+        </article>
+    </div>
+</section>

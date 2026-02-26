@@ -1,6 +1,8 @@
 @import 'partials/tokens.css';
+@import 'partials/design-system.css';
 @import 'partials/reset.css';
 @import 'partials/layout.css';
 @import 'partials/components.css';
+@import 'partials/public-pages.css';
 @import 'partials/animations.css';
 @import 'partials/responsive.css';

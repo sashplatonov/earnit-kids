@@ -2,6 +2,7 @@
 /**
  * Super Admin Base Data Management Module
  */
+import { showSuperAlert, showSuperConfirm } from './super-admin-dialogs.js';
 
 let baseData = { tasks: [], products: [] };
 
@@ -18,11 +19,16 @@ export function renderList(type, items, container) {
     }, {});
 
     Object.keys(grouped).sort().forEach(cat => {
+        const groupSection = document.createElement('section');
+        groupSection.className = 'catalog-group';
+
         const h = document.createElement('h3');
         h.className = 'grid-category-header';
         h.textContent = cat;
-        container.appendChild(h);
+        groupSection.appendChild(h);
 
+        const groupGrid = document.createElement('div');
+        groupGrid.className = 'catalog-group__grid';
         grouped[cat].forEach(item => {
             const idx = baseData[type].findIndex(i => i.id === item.id);
             const card = document.createElement('div');
@@ -38,8 +44,10 @@ export function renderList(type, items, container) {
                     <button class="btn-sm btn-del" onclick="deleteItem('${type}', ${idx})">🗑️</button>
                 </div>
             `;
-            container.appendChild(card);
+            groupGrid.appendChild(card);
         });
+        groupSection.appendChild(groupGrid);
+        container.appendChild(groupSection);
     });
 }
 
@@ -51,17 +59,20 @@ async function saveToServer() {
             body: JSON.stringify(baseData)
         });
     } catch (err) {
-        alert('Ошибка сохранения');
+        await showSuperAlert({ title: 'Ошибка сохранения', message: 'Не удалось сохранить изменения каталога.' });
     }
 }
 
 export async function deleteItem(type, index) {
-    if (confirm('Удалить?')) {
-        baseData[type].splice(index, 1);
-        await saveToServer();
-        return true;
-    }
-    return false;
+    const confirmed = await showSuperConfirm({
+        title: 'Удалить карточку?',
+        message: 'Элемент будет удален из базового каталога.',
+        confirmText: 'Удалить'
+    });
+    if (!confirmed) return false;
+    baseData[type].splice(index, 1);
+    await saveToServer();
+    return true;
 }
 
 export async function saveItem(type, index, newItem) {

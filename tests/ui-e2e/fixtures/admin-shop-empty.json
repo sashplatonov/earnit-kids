@@ -1,0 +1,28 @@
+{
+    "isAdmin": true,
+    "familyId": "fam-e2e",
+    "balance": 180,
+    "tasks": [],
+    "shop": [],
+    "history": [],
+    "requests": [],
+    "monthlyLimit": 10000,
+    "dailyCoinLimit": 0,
+    "childNickname": "Старший",
+    "children": [
+        {
+            "id": 101,
+            "name": "Аня",
+            "balance": 180,
+            "monthlyLimit": 900,
+            "dailyCoinLimit": 40
+        },
+        {
+            "id": 102,
+            "name": "Илья",
+            "balance": 90,
+            "monthlyLimit": 500,
+            "dailyCoinLimit": 25
+        }
+    ]
+}

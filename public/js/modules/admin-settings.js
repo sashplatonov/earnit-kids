@@ -4,44 +4,78 @@ import { updateChildSettings, getChildLink, regenerateChildToken } from './api.j
 import { renderAll } from './ui.js';
 import { showToast } from './utils.js';
 
-async function updateCurrentChildSettings() {
-    const childName = document.getElementById('settings-child-name-inline')?.value.trim();
-    const monthlyLimitValue = parseInt(document.getElementById('settings-child-monthly-limit-inline')?.value);
-    const dayLimitValue = parseInt(document.getElementById('settings-child-day-coin-limit-inline')?.value);
+function getTargetChildId() {
+    return state.currentChildId || state.children[0]?.id || null;
+}
 
-    const payload = {
-        name: childName,
-        monthly_limit: isNaN(monthlyLimitValue) ? 0 : monthlyLimitValue,
-        daily_coin_limit: isNaN(dayLimitValue) ? 0 : dayLimitValue
-    };
-
-    const res = await updateChildSettings(state.familyId, state.currentChildId, payload);
-
-    if (res.success) {
-        const child = state.children.find(c => c.id == state.currentChildId);
-        if (child) {
-            child.name = childName;
-            child.monthlyLimit = payload.monthly_limit;
-            child.dailyCoinLimit = payload.daily_coin_limit;
-        }
-        setState({
-            monthlyLimit: payload.monthly_limit,
-            dailyCoinLimit: payload.daily_coin_limit
-        });
+function applyPayloadToState(payload, childId) {
+    const child = state.children.find(c => c.id == childId);
+    if (child) {
+        if (payload.name) child.name = payload.name;
+        if (payload.monthly_limit !== undefined) child.monthlyLimit = payload.monthly_limit;
+        if (payload.daily_coin_limit !== undefined) child.dailyCoinLimit = payload.daily_coin_limit;
     }
+    const stateUpdates = {};
+    if (payload.monthly_limit !== undefined) stateUpdates.monthlyLimit = payload.monthly_limit;
+    if (payload.daily_coin_limit !== undefined) stateUpdates.dailyCoinLimit = payload.daily_coin_limit;
+    if (Object.keys(stateUpdates).length) setState(stateUpdates);
+}
 
+async function persistChildSettings(payload) {
+    const childId = getTargetChildId();
+    if (!childId) return showToast('Сначала добавьте ребенка', 'error');
+    const res = await updateChildSettings(state.familyId, childId, payload);
+    if (res?.success) {
+        applyPayloadToState(payload, childId);
+    }
     return res;
 }
 
-export async function saveChildSettingsInline() {
-    if (!state.currentChildId) {
-        return showToast('Сначала выберите ребенка', 'error');
+export async function saveChildProfileInline() {
+    const childName = document.getElementById('settings-child-name-inline')?.value.trim();
+    if (!childName) {
+        return showToast('Введите имя ребенка', 'error');
     }
 
     try {
-        const childRes = await updateCurrentChildSettings();
-        if (!childRes?.success) throw new Error(childRes?.error || 'Ошибка обновления ребенка');
-        showToast('Настройки ребенка обновлены!', 'success');
+        const res = await persistChildSettings({ name: childName });
+        if (!res?.success) throw new Error(res?.error || 'Ошибка обновления');
+        showToast('Информация обновлена', 'success');
+        renderAll();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function parseLimitValue(element, label) {
+    if (!element) return null;
+    const raw = element.value?.trim();
+    if (!raw) return null;
+    const parsed = parseInt(raw, 10);
+    if (Number.isNaN(parsed) || parsed < 0) {
+        throw new Error(`Некорректный лимит ${label}`);
+    }
+    return parsed;
+}
+
+export async function saveChildLimitsInline() {
+    const monthlyEl = document.getElementById('settings-child-monthly-limit-inline');
+    const dayEl = document.getElementById('settings-child-day-coin-limit-inline');
+    const payload = {};
+
+    try {
+        const monthlyValue = parseLimitValue(monthlyEl, 'денег');
+        if (monthlyValue !== null) payload.monthly_limit = monthlyValue;
+        const dayValue = parseLimitValue(dayEl, 'монет');
+        if (dayValue !== null) payload.daily_coin_limit = dayValue;
+
+        if (!Object.keys(payload).length) {
+            return showToast('Укажите хотя бы один лимит', 'error');
+        }
+
+        const res = await persistChildSettings(payload);
+        if (!res?.success) throw new Error(res?.error || 'Ошибка сохранения лимитов');
+        showToast('Лимиты сохранены', 'success');
         renderAll();
     } catch (err) {
         showToast(err.message, 'error');
@@ -51,7 +85,7 @@ export async function saveChildSettingsInline() {
 export async function refreshChildLinkInline() {
     const input = document.getElementById('settings-child-link-input-inline');
     if (!input) return;
-    const targetId = state.currentChildId || (state.children[0]?.id || null);
+    const targetId = getTargetChildId();
     if (!targetId) return input.value = 'Сначала добавьте ребенка';
 
     try {
@@ -82,7 +116,7 @@ export async function copyChildLinkInline() {
 
 export async function regenerateChildLinkInline() {
     if (!confirm('Вы уверены? Старая ссылка перестанет работать.')) return;
-    const childId = state.currentChildId || (state.children[0]?.id || null);
+    const childId = getTargetChildId();
     if (!childId) return showToast('Нет выбранного ребенка', 'error');
 
     try {

@@ -53,8 +53,8 @@ test('serveLogin renders login UI', async () => {
 
     assert.equal(state.statusCode, 200);
     assert.match(state.headers['Content-Type'], /text\/html/);
-    assert.match(state.body, /<title>Вход \| EarnIt Kids<\/title>/);
-    assert.match(state.body, /class="login-page"/);
+    assert.match(state.body, /<title>Вход и первые шаги \| EarnIt Kids<\/title>/);
+    assert.match(state.body, /class="login-shell"/);
     assert.doesNotMatch(state.body, /\{\{CLARITY_SCRIPT\}\}/);
 });
 
@@ -80,8 +80,8 @@ test('serveIndex returns login page for unauthenticated user', async () => {
     const state = await render(serveIndex, createMockRequest('/'));
 
     assert.equal(state.statusCode, 200);
-    assert.match(state.body, /<title>Вход \| EarnIt Kids<\/title>/);
-    assert.match(state.body, /class="login-page"/);
+    assert.match(state.body, /<title>Вход и первые шаги \| EarnIt Kids<\/title>/);
+    assert.match(state.body, /class="login-shell"/);
 });
 
 test('serveStatic maps /style.css to public css file', async () => {
@@ -93,13 +93,13 @@ test('serveStatic maps /style.css to public css file', async () => {
 });
 
 test('serveStatic keeps mobile nav compact without viewport overflow', async () => {
-    const state = await render(serveStatic, createMockRequest('/style.css'));
+    const state = await render(serveStatic, createMockRequest('/css/public-top-nav.css'));
     const css = state.body.toString();
 
     assert.equal(state.statusCode, 200);
-    assert.match(css, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.nav\s*\{[\s\S]*?overflow:\s*hidden;/);
-    assert.match(css, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.nav__primary\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
-    assert.match(css, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.nav__btn\s*\{[\s\S]*?min-height:\s*54px;/);
+    assert.match(css, /@media\s*\(max-width:\s*920px\)[\s\S]*?\.public-site-header\s*\{[\s\S]*?width:\s*calc\(100% - 1rem\);/);
+    assert.match(css, /@media\s*\(max-width:\s*920px\)[\s\S]*?\.public-top-nav\s*\{[\s\S]*?width:\s*100%;/);
+    assert.match(css, /@media\s*\(max-width:\s*920px\)[\s\S]*?body\s*\{[\s\S]*?padding-top:\s*8\.7rem;/);
 });
 
 test('serveStatic keeps skip link hidden until keyboard focus', async () => {

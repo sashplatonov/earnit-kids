@@ -45,10 +45,12 @@ function buildDashboardHtml() {
     const mStart = read('views/components/main_start.html');
     const mEnd = normalizeTemplate(read('views/components/main_end.html'));
     const sFiles = [
-        'views/components/section_tasks.html', 'views/components/section_requests.html',
-        'views/components/section_shop.html', 'views/components/section_history.html',
+        'views/components/section_today.html', 'views/components/section_tasks.html',
+        'views/components/section_shop.html', 'views/components/section_progress.html',
+        'views/components/section_requests.html', 'views/components/section_analytics.html',
+        'views/components/section_history.html',
         'views/components/section_catalog.html', 'views/components/section_rules.html',
-        'views/components/section_about.html', 'views/components/section_friends.html',
+        'views/components/section_friends.html',
         'views/components/section_settings.html'
     ];
     const ss = sFiles.map(read).join('\n');
@@ -73,14 +75,14 @@ async function assertNoHorizontalOverflow(page) {
 }
 
 async function assertMainMenuTabs(page) {
-    const primaryTabs = ['tasks', 'requests', 'shop', 'history'];
+    const primaryTabs = ['today', 'tasks', 'shop', 'progress'];
     for (const tab of primaryTabs) {
         await page.click(`.nav__btn[data-tab="${tab}"]`);
         await expect(page.locator(`#${tab}-section`)).toBeVisible();
         await assertNoHorizontalOverflow(page);
     }
 
-    const moreTabs = ['rules', 'about', 'friends', 'settings'];
+    const moreTabs = ['requests', 'history', 'analytics', 'rules', 'friends', 'settings'];
     for (const tab of moreTabs) {
         await page.click('#nav-more-btn');
         await page.click(`.nav__dropdown-item[data-tab="${tab}"]`);

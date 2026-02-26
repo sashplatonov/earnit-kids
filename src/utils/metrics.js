@@ -55,7 +55,16 @@ function generateMetrics() {
     return output;
 }
 
+function getMetricSnapshot() {
+    return {
+        http_requests_total: new Map(metrics.http_requests_total),
+        http_request_duration_ms_bucket: new Map(metrics.http_request_duration_ms_bucket),
+        http_requests_errors_total: new Map(metrics.http_requests_errors_total)
+    };
+}
+
 module.exports = {
     recordRequest,
-    generateMetrics
+    generateMetrics,
+    getMetricSnapshot
 };

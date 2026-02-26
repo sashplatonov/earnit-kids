@@ -1,0 +1,47 @@
+{
+    "isAdmin": true,
+    "familyId": "fam-e2e",
+    "balance": 160,
+    "tasks": [],
+    "shop": [
+        {
+            "id": 2001,
+            "name": "Поход в парк",
+            "group": "Семья",
+            "price": 80,
+            "comment": "Вместе с родителями",
+            "money_limit": 700,
+            "type": "activity",
+            "frequency": { "limit": 2, "period": "month" },
+            "childId": 201,
+            "isDeleted": false
+        }
+    ],
+    "history": [],
+    "requests": [
+        {
+            "id": 9001,
+            "childId": 201,
+            "requestType": "shop_purchase",
+            "itemId": 2001,
+            "taskId": 2001,
+            "taskName": "Поход в парк",
+            "coins": 80,
+            "moneyAmount": 700,
+            "status": "pending",
+            "date": "2026-02-20T08:00:00.000Z"
+        }
+    ],
+    "monthlyLimit": 1000,
+    "dailyCoinLimit": 50,
+    "childNickname": "Кира",
+    "children": [
+        {
+            "id": 201,
+            "name": "Кира",
+            "balance": 160,
+            "monthlyLimit": 1000,
+            "dailyCoinLimit": 50
+        }
+    ]
+}

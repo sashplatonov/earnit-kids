@@ -4,6 +4,7 @@ import { saveDataToServer } from './api.js';
 import { renderHistory, updateBalanceUI } from './ui.js';
 
 const CONFIG = window.CONFIG;
+const REQUEST_HISTORY_LIMIT = 60;
 let saveTimeout = null;
 
 export function scheduleSave() {
@@ -18,6 +19,18 @@ export function scheduleSave() {
             children: state.children
         });
     }, 500);
+}
+
+export function addRequestEntry(entry) {
+    const normalized = {
+        ...entry,
+        status: entry.status || 'pending',
+        date: entry.date || new Date().toISOString()
+    };
+    state.requests = [normalized, ...state.requests.filter(r => r.id !== normalized.id)];
+    if (state.requests.length > REQUEST_HISTORY_LIMIT) {
+        state.requests = state.requests.slice(0, REQUEST_HISTORY_LIMIT);
+    }
 }
 
 export function getActingChildId() {

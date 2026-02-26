@@ -1,6 +1,6 @@
 # EarnIt Kids
 
-A modern, minimal web application for managing kids' reward coins. Parents can award coins for completed tasks, and kids can spend them in a virtual shop. Featuring a zero-dependency Node.js backend and a modular, component-based frontend.
+A modern, minimal web application for managing kids' reward coins. Parents can award coins for completed tasks, and kids can spend them in a virtual shop. The app uses a custom Node.js HTTP backend and a modular vanilla frontend.
 
 ## 🌐 Live Demo
 
@@ -64,6 +64,15 @@ The shop is scoped per child and supports both direct parent purchases and child
 └── Dockerfile           # Web app containerization
 ```
 
+## 📚 Documentation
+
+- [Architecture](docs/architecture.md)
+- [Backend Rules](docs/rules-backend.md)
+- [Frontend Rules](docs/rules-frontend.md)
+- [Database Rules](docs/rules-database.md)
+- [Design Concept](docs/design-concept.md)
+- [Telegram Setup](docs/telegram-setup.md)
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -89,7 +98,17 @@ The shop is scoped per child and supports both direct parent purchases and child
 6.  Open `http://localhost:3000` in your browser.
 
 ### Automated Testing
--   Run lint + unit/smoke tests:
+-   Required verification:
+    ```bash
+    npm run lint
+    npm test
+    npm run build
+    ```
+-   Manual browser E2E run:
+    ```bash
+    npm run test:ui:e2e
+    ```
+-   Optional combined lint + coverage:
     ```bash
     npm run check
     ```
@@ -97,18 +116,14 @@ The shop is scoped per child and supports both direct parent purchases and child
     ```bash
     npm run playwright:install
     ```
--   Run browser UI E2E tests:
-    ```bash
-    npm run test:ui:e2e
-    ```
--   Full build validation (includes UI E2E):
-    ```bash
-    npm run build
-    ```
 
 ### Docker Deployment
 
 To build and run the application in a Docker container:
+
+```bash
+export DOCKER_HOST=unix:///Users/sash/.colima/default/docker.sock
+```
 
 **Rebuild and Start:**
 ```bash

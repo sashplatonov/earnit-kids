@@ -1,18 +1,35 @@
 /** @file Super Admin frontend helper script */
-import { renderFamilyDetails } from './modules/super-admin-family-details.js';
-import { checkReserveStatus, handleRestore, handleCopyToReserve } from './modules/super-admin-db.js';
+import { handleRestore, refreshDbPanelStatus } from './modules/super-admin-db.js';
 import { setBaseData, getBaseData, renderList, deleteItem, saveItem } from './modules/super-admin-base.js';
+import { initSystemPanel, activateSystemTab, deactivateSystemTab } from './modules/super-admin-system.js';
+import { initFamiliesPanel } from './modules/super-admin-families.js';
+import { showSuperConfirm } from './modules/super-admin-dialogs.js';
 
-let familiesData = [];
+const catalogStateEls = {
+    tasks: document.getElementById('tasks-state'),
+    products: document.getElementById('products-state')
+};
+const catalogListEls = {
+    tasks: document.getElementById('base-tasks-list'),
+    products: document.getElementById('base-products-list')
+};
 
 // Tab switching
+function handleTabActivation(tabName) {
+    if (tabName === 'database') refreshDbPanelStatus();
+    if (tabName === 'system') activateSystemTab();
+    else deactivateSystemTab();
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-        if (btn.dataset.tab === 'database') checkReserveStatus();
+        const targetTab = btn.dataset.tab;
+        const content = document.getElementById('tab-' + targetTab);
+        if (content) content.classList.add('active');
+        handleTabActivation(targetTab);
     });
 });
 
@@ -25,101 +42,46 @@ document.getElementById('pg-restore-btn').addEventListener('click', () => {
 });
 document.getElementById('pg-restore-input').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file && confirm('ВНИМАНИЕ! Это действие ЗАМЕНИТ базу данных. Продолжить?')) {
-        handleRestore(file);
+    if (!file) {
+        e.target.value = '';
+        return;
     }
+    showSuperConfirm({
+        title: 'Восстановить базу из файла?',
+        message: 'Текущие данные будут заменены.',
+        confirmText: 'Восстановить'
+    }).then((confirmed) => {
+        if (confirmed) handleRestore(file);
+    });
     e.target.value = '';
 });
-document.getElementById('pg-copy-reserve-btn').addEventListener('click', handleCopyToReserve);
-
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
     await fetch('/api/logout', { method: 'POST' });
     window.location.reload();
 });
 
-// Families
-async function loadFamilies() {
-    try {
-        const res = await fetch('/api/super/families');
-        if (res.ok) {
-            const data = await res.json();
-            familiesData = data.families || [];
-            renderFamilies();
-        }
-    } catch (err) { console.error('Error:', err); }
+function updateCatalogState(type, { status, message }) {
+    const stateEl = catalogStateEls[type];
+    const listEl = catalogListEls[type];
+    if (!stateEl || !listEl) return;
+    stateEl.textContent = message || '';
+    stateEl.hidden = status === 'loaded';
+    listEl.hidden = status !== 'loaded';
+    stateEl.classList.remove('panel-state--loading', 'panel-state--error', 'panel-state--empty');
+    if (status === 'loading') stateEl.classList.add('panel-state--loading');
+    if (status === 'empty') stateEl.classList.add('panel-state--empty');
+    if (status === 'error') stateEl.classList.add('panel-state--error');
 }
 
-function findLatestFamily(families) {
-    let latest = null;
-    for (const family of families) {
-        if (!latest || new Date(family.created_at) > new Date(latest.created_at)) {
-            latest = family;
-        }
-    }
-    return latest;
-}
-
-function updateStats(families) {
-    document.getElementById('total-families').textContent = families.length;
-    const latest = findLatestFamily(families);
-    document.getElementById('latest-family').textContent = latest ? `${latest.email || latest.id} (${new Date(latest.created_at).toLocaleString('ru-RU')})` : '-';
-}
-
-function getFamilyStatusBadge(isBlocked) {
-    return isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>';
-}
-
-function getFamilyBlockButtonLabel(isBlocked) {
-    return isBlocked ? '🔓' : '🔒';
-}
-
-function getFamilyBlockButtonClass(isBlocked) {
-    return isBlocked ? 'unblock' : '';
-}
-
-function buildFamilyRowHtml(f) {
-    return `
-            <td style="opacity:0.5" class="hide-mobile">#${f.id}</td>
-            <td><strong>${f.email || f.id}</strong></td>
-            <td class="hide-mobile">${f.email || '-'}</td>
-            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile" style="text-align: center;"><span class="badge">${f.children.length}</span></td>
-            <td class="hide-mobile">${f.tasksCount || 0}</td>
-            <td class="hide-mobile">${f.shopCount || 0}</td>
-            <td class="hide-mobile">-</td>
-            <td>${getFamilyStatusBadge(f.isBlocked)}</td>
-            <td class="hide-mobile">${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
-            <td class="hide-mobile" style="font-size:0.9rem">${f.last_activity ? new Date(f.last_activity).toLocaleString('ru-RU') : '-'}</td>
-            <td>
-                <div style="display:flex; gap:4px">
-                    <button class="view-btn" onclick="viewFamily('${f.id}')">👁️</button>
-                    <button class="block-btn ${getFamilyBlockButtonClass(f.isBlocked)}" onclick="toggleBlock('${f.id}', ${!f.isBlocked})">${getFamilyBlockButtonLabel(f.isBlocked)}</button>
-                </div>
-            </td>`;
-}
-
-function renderFamilies() {
-    const tbody = document.getElementById('families-tbody');
-    tbody.innerHTML = '';
-    if (familiesData.length === 0) {
-        document.getElementById('loading').textContent = 'Нет магазинов';
-        return;
-    }
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('families-table').style.display = 'table';
-    updateStats(familiesData);
-
-    for (const f of familiesData) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = buildFamilyRowHtml(f);
-        tbody.appendChild(tr);
-    }
+function setCatalogLoadingStates() {
+    updateCatalogState('tasks', { status: 'loading', message: 'Загрузка заданий...' });
+    updateCatalogState('products', { status: 'loading', message: 'Загрузка товаров...' });
 }
 
 // Base Data
 async function loadBaseData() {
+    setCatalogLoadingStates();
     try {
         const res = await fetch('/api/super/base-data');
         if (res.ok) {
@@ -127,13 +89,21 @@ async function loadBaseData() {
             setBaseData(data);
             renderBase();
         }
-    } catch (err) { console.error('Error:', err); }
+    } catch (err) {
+        console.error('Error:', err);
+        updateCatalogState('tasks', { status: 'error', message: 'Ошибка загрузки заданий' });
+        updateCatalogState('products', { status: 'error', message: 'Ошибка загрузки товаров' });
+    }
 }
 
 function renderBase() {
     const data = getBaseData();
-    renderList('tasks', data.tasks, document.getElementById('base-tasks-list'));
-    renderList('products', data.products, document.getElementById('base-products-list'));
+    const tasks = data.tasks || [];
+    const products = data.products || [];
+    renderList('tasks', tasks, catalogListEls.tasks);
+    renderList('products', products, catalogListEls.products);
+    updateCatalogState('tasks', { status: tasks.length ? 'loaded' : 'empty', message: tasks.length ? '' : 'Заданий пока нет' });
+    updateCatalogState('products', { status: products.length ? 'loaded' : 'empty', message: products.length ? '' : 'Товаров пока нет' });
 }
 
 function getPeriodOptions(freq) {
@@ -211,45 +181,6 @@ window.deleteItem = async (t, i) => { if (await deleteItem(t, i)) renderBase(); 
 window.closeEditModal = () => document.getElementById('edit-modal').classList.remove('active');
 
 // Family View
-window.viewFamily = async (familyId) => {
-    const modal = document.getElementById('family-modal');
-    modal.classList.add('active');
-    document.getElementById('modal-title').textContent = 'Загрузка...';
-    document.getElementById('modal-body').innerHTML = '<div class="loading">Загрузка данных...</div>';
-    try {
-        const res = await fetch(`/api/super/family/${familyId}/data`);
-        if (res.ok) renderFamilyDetails(await res.json());
-        else document.getElementById('modal-body').innerHTML = '<p style="color: red;">Ошибка загрузки</p>';
-    } catch (err) { document.getElementById('modal-body').innerHTML = '<p style="color: red;">Ошибка связи</p>'; }
-};
-
-document.getElementById('modal-close').addEventListener('click', () => document.getElementById('family-modal').classList.remove('active'));
-document.getElementById('family-modal').addEventListener('click', (e) => { if (e.target.id === 'family-modal') document.getElementById('family-modal').classList.remove('active'); });
-
-window.toggleBlock = async (familyId, shouldBlock) => {
-    if (!confirm(shouldBlock ? 'Заблокировать?' : 'Разблокировать?')) return;
-    try {
-        const res = await fetch(`/api/super/family/${familyId}/block`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isBlocked: shouldBlock })
-        });
-        if (res.ok) loadFamilies(); else alert('Ошибка');
-    } catch (err) { alert('Ошибка связи'); }
-};
-
-window.copyMagicLink = (token) => {
-    if (!token) return alert('Token missing');
-    navigator.clipboard.writeText(`${window.location.origin}/login-child/${token}`).then(() => alert('Link copied')).catch(() => alert('Failed to copy'));
-};
-
-window.regenerateToken = async (familyId, childId) => {
-    if (!confirm('Regenerate link?')) return;
-    try {
-        const url = childId ? `/api/super/child/${childId}/regenerate-token` : `/api/super/family/${familyId}/regenerate-token`;
-        const res = await fetch(url, { method: 'POST' });
-        if (res.ok) { alert('Token regenerated'); loadFamilies(); } else alert('Failed');
-    } catch (err) { alert('Error'); }
-};
-
-loadFamilies(); loadBaseData();
+initFamiliesPanel();
+initSystemPanel();
+loadBaseData();

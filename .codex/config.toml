@@ -5,7 +5,12 @@
 
 [mcp_servers.filesystem]
 command = "npx"
-args = ["-y", "@modelcontextprotocol/server-filesystem", "/Users/sash/Dev/Projects/coins-kids-shop-web"]
+args = [
+    "-y",
+    "@modelcontextprotocol/server-filesystem",
+    "/Users/sash/Dev/Projects/coins-kids-shop-web",
+    "/Users/sash/AI Rules"
+]
 
 [mcp_servers.context7]
 command = "npx"
@@ -14,3 +19,15 @@ args = ["-y", "@upstash/context7-mcp@latest"]
 [mcp_servers.postgres]
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/coins_kids_shop"]
+
+[mcp_servers.eslint]
+command = "npx"
+args = ["-y", "@eslint/mcp"]
+
+[mcp_servers.git]
+command = "npx"
+args = ["-y", "@mseep/git-mcp-server"]
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp"]

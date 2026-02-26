@@ -85,7 +85,7 @@ const CHILD_SWITCHER_STYLE = `
             color: white;
             background: rgba(16, 185, 129, 0.1);
         }
-        @media (max-width: 480px) {
+        @media (max-width: 900px) {
             .child-menu-btn {
                 padding: 6px 10px;
                 gap: 6px;
@@ -93,13 +93,16 @@ const CHILD_SWITCHER_STYLE = `
             }
 
             .child-menu-dropdown {
+                top: auto;
+                bottom: calc(100% + 8px);
                 left: 0;
                 right: auto;
                 width: calc(100vw - 1rem);
-                max-width: 300px;
+                max-width: 420px;
+                margin-top: 0;
                 margin-left: -0.25rem;
                 border-radius: 12px;
-                z-index: 2100;
+                z-index: 2600;
             }
 
             .child-menu-item {

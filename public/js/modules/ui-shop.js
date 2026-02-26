@@ -1,46 +1,166 @@
 /** @file Ui Shop frontend UI module */
-import { escapeHtml } from './utils.js';
+import { escapeHtml, chunkedRender, isMobileViewport } from './utils.js';
 import { CONFIG } from './ui-config.js';
+import { applyStaggerReveal } from './motion-feedback.js';
 
-function getTypeTag(type) {
-    if (!type) return '';
-    const label = CONFIG.SHOP_ITEM_TYPES[type]?.label || type;
-    return `<span class="tag tag--${type}">${label}</span>`;
+const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
+
+function hasShortcut(set, id) {
+    const numericId = Number(id);
+    return set?.has(numericId) || set?.has(String(id));
 }
 
-function getLimitTag(item) {
-    const mLimit = item.moneyLimit || item.money_limit;
-    return mLimit ? `<span class="tag tag--money">Lim: ${mLimit} 🪙</span>` : '';
+function getShopShortcutSet() {
+    if (typeof window === 'undefined') return new Set();
+    const shortcuts = window[CARD_SHORTCUTS_KEY];
+    if (!shortcuts?.shop) return new Set();
+    if (shortcuts.shop instanceof Set) return shortcuts.shop;
+    return shortcuts.shop.quick || new Set();
 }
 
-function getFrequencyTag(item) {
-    if (!item.frequency?.period) return '';
-    const periodInfo = CONFIG.PERIODS[item.frequency.period];
-    const display = periodInfo?.display || item.frequency.period;
-    return `<span class="tag">${item.frequency.limit}/${display}</span>`;
+function isShortcutActive(type, id) {
+    if (typeof window === 'undefined') return false;
+    if (type !== 'shop') {
+        const shortcuts = window[CARD_SHORTCUTS_KEY];
+        return hasShortcut(shortcuts?.[type], id);
+    }
+    const shortcuts = getShopShortcutSet();
+    return hasShortcut(shortcuts, id);
 }
 
-function getShopItemTags(item) {
-    const tags = [getTypeTag(item.type), getLimitTag(item), getFrequencyTag(item)].filter(Boolean);
-    return tags.length ? `<div style="margin-bottom:0.5rem;">${tags.join('')}</div>` : '';
+function formatPeriodLabel(period) {
+    if (!period) return '';
+    const info = CONFIG.PERIODS[period];
+    return info?.display || period;
+}
+
+function renderBadge(label, variant = '') {
+    if (!label) return '';
+    const classes = ['card__badge'];
+    if (variant) classes.push(`card__badge--${variant}`);
+    return `<span class="${classes.join(' ')}">${escapeHtml(label)}</span>`;
+}
+
+function renderShopBadges(item) {
+    const badges = [];
+    if (item.group) {
+        badges.push(renderBadge(item.group, 'group'));
+    }
+
+    if (item.type) {
+        const typeLabel = CONFIG.SHOP_ITEM_TYPES[item.type]?.label || item.type;
+        badges.push(renderBadge(typeLabel, 'type'));
+    }
+
+    if (item.money_limit) {
+        badges.push(renderBadge(`Lim ${item.money_limit} 🪙`, 'money'));
+    }
+
+    if (!badges.length) return '';
+    return `<div class="card__badge-row">${badges.join('')}</div>`;
+}
+
+function getAgeLabel(item) {
+    const min = item.age_min ?? item.ageMin ?? item.minAge;
+    const max = item.age_max ?? item.ageMax ?? item.maxAge;
+    if (min && max) {
+        return `Возраст ${min}–${max}`;
+    }
+    if (min) {
+        return `Возраст от ${min}`;
+    }
+    if (max) {
+        return `Возраст до ${max}`;
+    }
+    return '';
+}
+
+function renderMetaRow(parts) {
+    if (!parts.length) return '';
+    const escaped = parts.map(part => `<span class="card__meta-item">${escapeHtml(part)}</span>`);
+    return `<div class="card__meta">${escaped.join('<span class="card__meta-sep" aria-hidden="true">•</span>')}</div>`;
+}
+
+function renderShopMeta(item) {
+    const meta = [];
+    const ageLabel = getAgeLabel(item);
+    if (ageLabel) meta.push(ageLabel);
+
+    if (item.frequency?.period) {
+        const limit = item.frequency.limit ?? 1;
+        const periodLabel = formatPeriodLabel(item.frequency.period);
+        if (periodLabel) {
+            meta.push(`Повтор ${limit}/${periodLabel}`);
+        }
+    }
+
+    return renderMetaRow(meta);
+}
+
+function renderShopStatus(canAfford) {
+    const label = canAfford ? 'Готово к покупке' : 'Требуются монеты';
+    const variant = canAfford ? 'available' : 'locked';
+    return `<span class="card__status card__status--${variant}">${label}</span>`;
+}
+
+function getShopActions(item, canAfford, state) {
+    const disabledAttrs = canAfford ? '' : 'disabled aria-disabled="true"';
+    return `
+        <button type="button" class="btn btn--primary btn--small" onclick="window.app.buyItem(${item.id})" ${disabledAttrs}>🛒 ${canAfford ? 'Купить' : 'Не хватает'}</button>
+        ${state.isAdmin ? `<button type="button" class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">✏️ Изменить</button>` : ''}
+    `;
+}
+
+function splitShopItemsByPins(items) {
+    const quickItems = items.filter(item => isShortcutActive('shop', item.id));
+    const pinnedIds = new Set(quickItems.map(item => String(item.id)));
+    const regularItems = items.filter(item => !pinnedIds.has(String(item.id)));
+    return { quickItems, regularItems };
+}
+
+function renderPinnedShopSections({ renderQueue, quickItems, state }) {
+    if (quickItems.length) {
+        renderQueue.push('<div class="group-header">⚡ Быстрый</div>');
+        quickItems.sort((a, b) => a.price - b.price)
+            .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
+    }
+}
+
+function renderGroupedShopSections({ renderQueue, grouped, groupNames, state }) {
+    groupNames.forEach(groupName => {
+        renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
+        grouped[groupName].sort((a, b) => a.price - b.price)
+            .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
+    });
 }
 
 function renderShopItemCard(item, state) {
     const canAfford = state.balance >= item.price;
+    const badges = renderShopBadges(item);
+    const meta = renderShopMeta(item);
+    const isQuick = isShortcutActive('shop', item.id);
+    const highlightClass = isQuick ? ' card--highlight' : '';
+    const quickActions = `
+        <div class="card__quick-actions">
+            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isQuick ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('shop', ${item.id}, this)">${isQuick ? '⚡ В быстром' : '⚡ В быстрый'}</button>
+        </div>
+    `;
     return `
-        <div class="card ${canAfford ? 'card--affordable' : ''}" data-id="${item.id}">
+        <div class="card card--shop${highlightClass}" data-id="${item.id}">
+            ${badges}
             <div class="card__header">
-                <h3 class="card__title">${escapeHtml(item.name)}</h3>
+                <div>
+                    <h3 class="card__title">${escapeHtml(item.name)}</h3>
+                    ${renderShopStatus(canAfford)}
+                </div>
                 <div class="card__coins"><span>${item.price}</span><span>🪙</span></div>
             </div>
-            ${getShopItemTags(item)}
             ${item.comment ? `<p class="card__comment">${escapeHtml(item.comment)}</p>` : ''}
+            ${meta}
             <div class="card__actions">
-                <button class="btn btn--primary btn--small" onclick="window.app.buyItem(${item.id})" ${!canAfford ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
-                    🛒 ${canAfford ? 'Купить' : 'Не хватает'}
-                </button>
-                ${state.isAdmin ? `<button class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">✏️ Изменить</button>` : ''}
+                ${getShopActions(item, canAfford, state)}
             </div>
+            ${quickActions}
         </div>
     `;
 }
@@ -62,19 +182,25 @@ export function renderShopUI(state) {
     }
     if (emptyState) emptyState.classList.add('hidden');
 
-    const grouped = items.reduce((acc, item) => {
+    const { quickItems, regularItems } = splitShopItemsByPins(items);
+
+    const grouped = regularItems.reduce((acc, item) => {
         const g = item.group || 'Без категории';
         if (!acc[g]) acc[g] = [];
         acc[g].push(item);
         return acc;
     }, {});
 
-    container.innerHTML = Object.keys(grouped).sort((a, b) => {
+    const groupNames = Object.keys(grouped).sort((a, b) => {
         if (a === 'Без категории') return 1;
         if (b === 'Без категории') return -1;
         return a.localeCompare(b);
-    }).map(groupName => {
-        const html = grouped[groupName].sort((a, b) => a.price - b.price).map(item => renderShopItemCard(item, state)).join('');
-        return `<div class="group-header">${escapeHtml(groupName)}</div>${html}`;
-    }).join('');
+    });
+
+    const renderQueue = [];
+    renderPinnedShopSections({ renderQueue, quickItems, state });
+    renderGroupedShopSections({ renderQueue, grouped, groupNames, state });
+
+    chunkedRender(container, renderQueue, { chunkSize: isMobileViewport() ? 5 : 10 });
+    window.setTimeout(() => applyStaggerReveal(container), 40);
 }

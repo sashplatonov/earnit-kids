@@ -1,5 +1,31 @@
 <!-- Секция магазина -->
 <section class="section hidden" id="shop-section">
+    <div class="creation-wizard admin-only hidden" aria-label="Мастер магазина наград">
+        <div class="creation-wizard__header">
+            <div>
+                <p class="creation-wizard__tag">Shop Master</p>
+                <h3>Настрой магазин за пару шагов</h3>
+            </div>
+            <button class="btn btn--secondary" id="wizard-add-shop">Добавить награду</button>
+        </div>
+        <div class="creation-wizard__steps">
+            <article class="wizard-step">
+                <h4>1. Выберите тип</h4>
+                <p>Микро, малая, крупная — задайте частоту, чтобы держать баланс.</p>
+            </article>
+            <article class="wizard-step">
+                <h4>2. Укажите цену</h4>
+                <p>Сколько монет или денег нужно потратить. Укажите лимиты и комментарий.</p>
+            </article>
+            <article class="wizard-step">
+                <h4>3. Опубликуйте</h4>
+                <p>Сохраните, чтобы ребенок видел статус “доступно” или “нужно запросить”.</p>
+            </article>
+        </div>
+        <div class="creation-wizard__cta">
+            <span class="creation-wizard__hint">Воспользуйтесь тем же модальным окном, чтобы не терять существующую логику.</span>
+        </div>
+    </div>
     <div class="section__header">
         <h2>Магазин наград</h2>
         <div class="section__buttons admin-only hidden">
@@ -11,6 +37,10 @@
     </div>
     <div class="empty-state" id="shop-empty">
         <span class="empty-state__icon">🛒</span>
-        <p>Магазин пока пуст</p>
+        <p class="empty-state__title">Магазин пока пуст</p>
+        <p class="empty-state__hint">Добавьте первую награду — сразу появится статус “доступно” или “нужно запросить”.</p>
+        <div class="empty-state__actions">
+            <span class="empty-state__tip">Нажмите «+ Добавить» в верхнем правом углу секции.</span>
+        </div>
     </div>
 </section>
