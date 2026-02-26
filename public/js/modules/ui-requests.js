@@ -51,9 +51,9 @@ function getRequestRowClass(req) {
 
 function renderMyRequest(req) {
     const isPurchase = isPurchaseRequest(req);
-    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
-    const groupTag = req.group ? `<span class="tag" style="margin-left: 5px; opacity: 0.8;">${escapeHtml(req.group)}</span>` : '';
-    const commentHtml = req.comment ? `<div class="history-item__comment" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 2px;">${escapeHtml(req.comment)}</div>` : '';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money request-item__money">${req.moneyAmount}</span>` : '';
+    const groupTag = req.group ? `<span class="tag request-item__group">${escapeHtml(req.group)}</span>` : '';
+    const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
     const status = req.status || 'pending';
     const statusBadge = buildStatusBadge(req);
     const dateText = status === 'pending'
@@ -61,7 +61,7 @@ function renderMyRequest(req) {
         : `Обновлено ${new Date(req.resolvedAt || req.date).toLocaleString()}`;
 
     return `
-        <div class="history-item ${getRequestRowClass(req)}">
+        <div class="history-item ${getRequestRowClass(req)} request-item">
             <div class="history-item__icon">${getRequestIcon(req)}</div>
             <div class="history-item__content">
                 <div class="history-item__desc">
@@ -71,8 +71,8 @@ function renderMyRequest(req) {
                 ${commentHtml}
                 <div class="history-item__date">${dateText} ${statusBadge}</div>
             </div>
-            <div class="history-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
-            <div class="card__actions" style="margin-left: 10px;">
+            <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
+            <div class="card__actions request-item__actions">
                  <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">🗑️</button>
             </div>
         </div>
@@ -83,25 +83,24 @@ function renderIncomingRequest(req, state) {
     const child = state.children.find(c => c.id == req.childId);
     const childName = child ? child.name : 'Unknown';
     const isPurchase = isPurchaseRequest(req);
-    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money" style="margin-left: 5px;">${req.moneyAmount}</span>` : '';
-
-    const groupTag = req.group ? `<span class="tag tag--secondary" style="margin-left: 5px; opacity: 0.8; font-size: 0.75rem;">${escapeHtml(req.group)}</span>` : '';
-    const commentHtml = req.comment ? `<div class="history-item__comment" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 2px;">${escapeHtml(req.comment)}</div>` : '';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money request-item__money">${req.moneyAmount}</span>` : '';
+    const groupTag = req.group ? `<span class="tag tag--secondary request-item__group">${escapeHtml(req.group)}</span>` : '';
+    const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
 
     return `
-        <div class="history-item ${getRequestRowClass(req)}">
+        <div class="history-item ${getRequestRowClass(req)} request-item">
             <div class="history-item__icon">${getRequestIcon(req)}</div>
             <div class="history-item__content">
                 <div class="history-item__desc">
-                    <span class="tag" style="margin-right: 5px;">${escapeHtml(childName)}</span> 
+                    <span class="tag request-item__child">${escapeHtml(childName)}</span>
                     ${isPurchase ? 'Покупка: ' : 'Задание: '} ${escapeHtml(req.taskName)}
                     ${groupTag}
                 </div>
                 ${commentHtml}
                 <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
             </div>
-            <div class="history-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
-            <div class="card__actions" style="margin-left: 10px;">
+            <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
+            <div class="card__actions request-item__actions">
                  <button class="btn btn--success btn--small" onclick="window.app.approveRequest(${req.id})">✅</button>
                  <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest(${req.id})">❌</button>
             </div>
