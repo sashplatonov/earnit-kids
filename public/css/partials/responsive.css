@@ -140,6 +140,7 @@ html {
         left: auto;
         max-width: calc(100% - 1rem);
         z-index: 2400;
+        flex-direction: column-reverse;
     }
 
     .nav__dropdown::before {
