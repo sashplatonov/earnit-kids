@@ -21,11 +21,29 @@ export function setDbStatus(msg, type) {
     el.style.border = s.border;
 }
 
+function setDbPanelState(message, variant) {
+    const panelState = document.getElementById('db-panel-state');
+    if (!panelState) return;
+    panelState.textContent = message;
+    if (variant === 'hidden') {
+        panelState.hidden = true;
+        return;
+    }
+    panelState.hidden = false;
+    panelState.classList.remove('panel-state--loading', 'panel-state--error', 'panel-state--empty');
+    if (variant === 'error') {
+        panelState.classList.add('panel-state--error');
+    } else {
+        panelState.classList.add('panel-state--loading');
+    }
+}
+
 export async function checkReserveStatus() {
     const statusEl = document.getElementById('reserve-db-status');
     const copyBtn = document.getElementById('pg-copy-reserve-btn');
     if (!statusEl || !copyBtn) return;
 
+    setDbPanelState('Проверяем доступность резервной БД...', 'loading');
     try {
         const res = await fetch('/api/super/db-reserve-status');
         const data = await res.json();
@@ -33,14 +51,17 @@ export async function checkReserveStatus() {
         if (data.success) {
             statusEl.innerHTML = '<span style="color: #10b981;">✅ Резервная БД доступна</span>';
             copyBtn.disabled = false;
+            setDbPanelState('', 'hidden');
         } else {
             statusEl.innerHTML = `<span style="color: #ef4444;">❌ ${data.error || 'Ошибка'}</span>`;
             copyBtn.disabled = true;
             statusEl.title = data.error || '';
+            setDbPanelState('Резервная БД недоступна', 'error');
         }
     } catch (err) {
         statusEl.innerHTML = '<span style="color: #ef4444;">❌ Ошибка проверки</span>';
         copyBtn.disabled = true;
+        setDbPanelState('Ошибка связи', 'error');
     }
 }
 
