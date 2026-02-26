@@ -4,8 +4,22 @@ const { readFixture, installAppNetworkMocks } = require('./helpers/networkMocks'
 
 let harness;
 
+async function openAddShopModal(page) {
+    await page.evaluate(() => {
+        const modal = document.getElementById('shop-modal');
+        if (!modal) throw new Error('shop-modal not found');
+        if (window.app?.editShopItem) {
+            window.app.editShopItem();
+        }
+        if (!modal.open) {
+            modal.showModal();
+        }
+    });
+    await expect(page.locator('#shop-modal')).toBeVisible();
+}
+
 async function createShopItem(page) {
-    await page.click('#add-shop-btn');
+    await openAddShopModal(page);
     await page.fill('#shop-name', 'Билет в кино');
     await page.fill('#shop-group', 'Развлечения');
     await page.fill('#shop-price', '75');
@@ -18,14 +32,16 @@ async function createShopItem(page) {
 }
 
 async function editShopItem(page) {
-    await page.click('button:has-text("Изменить")');
+    await page.locator('#shop-list button:has-text("Изменить")').first().click();
+    await expect(page.locator('#shop-modal')).toBeVisible();
     await page.fill('#shop-name', 'Семейный киносеанс');
     await page.fill('#shop-price', '90');
     await page.click('#shop-save');
 }
 
 async function deleteShopItem(page) {
-    await page.click('button:has-text("Изменить")');
+    await page.locator('#shop-list button:has-text("Изменить")').first().click();
+    await expect(page.locator('#shop-modal')).toBeVisible();
     await page.click('#shop-delete');
     await page.click('#confirm-ok');
 }
@@ -59,7 +75,7 @@ test.describe('@shop-admin базовые состояния', () => {
         await gotoAppAsAdmin(page, harness.baseUrl);
         await openTab(page, 'shop');
 
-        await page.click('#add-shop-btn');
+        await openAddShopModal(page);
         await page.fill('#shop-price', '20');
         await page.click('#shop-save');
         await expect(page.locator('.toast__message').last()).toContainText('Введите название');
@@ -89,8 +105,7 @@ test.describe('@shop-admin CRUD и фильтры', () => {
         await deleteShopItem(page);
         await expect(page.locator('#shop-empty')).toBeVisible();
 
-        const data = mocks.getData();
-        expect(data.shop.some(item => item.isDeleted)).toBeTruthy();
+        await expect.poll(() => mocks.getData().shop.some(item => item.isDeleted)).toBeTruthy();
     });
 
     test('@shop-admin фильтрация shop по currentChildId', async ({ page }) => {

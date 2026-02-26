@@ -31,6 +31,7 @@ test.describe('@shop-child отправка заявки', () => {
         await expect(page.locator('#my-requests-list')).toContainText('Поход в парк');
         await expect(page.locator('#my-requests-list')).toContainText('В обработке');
 
+        await expect.poll(() => mocks.getData().requests.length).toBe(1);
         const data = mocks.getData();
         expect(data.requests).toHaveLength(1);
         expect(data.requests[0].requestType).toBe('shop_purchase');
@@ -51,13 +52,14 @@ test.describe('@shop-child решение админа', () => {
         await openTab(page, 'history');
         await expect(page.locator('#history-list')).toContainText('Поход в парк');
 
+        await expect.poll(() => mocks.getData().requests[0]?.status).toBe('approved');
+        await expect.poll(() => mocks.getData().history.length).toBe(1);
+        await expect.poll(() => mocks.getData().children[0]?.balance).toBe(80);
+
         const data = mocks.getData();
-        expect(data.requests[0].status).toBe('approved');
-        expect(data.history).toHaveLength(1);
         expect(data.history[0].type).toBe('spend');
         expect(data.history[0].itemId).toBe(2001);
         expect(data.history[0].moneyAmount).toBe(700);
-        expect(data.children[0].balance).toBe(80);
     });
 
     test('@shop-child admin reject: pending -> rejected без списания', async ({ page }) => {
@@ -68,9 +70,8 @@ test.describe('@shop-child решение админа', () => {
         await page.click('#incoming-requests-list button:has-text("❌")');
         await expect(page.locator('#incoming-requests-empty')).toBeVisible();
 
-        const data = mocks.getData();
-        expect(data.requests[0].status).toBe('rejected');
-        expect(data.history).toHaveLength(0);
-        expect(data.children[0].balance).toBe(160);
+        await expect.poll(() => mocks.getData().requests[0]?.status).toBe('rejected');
+        await expect.poll(() => mocks.getData().history.length).toBe(0);
+        await expect.poll(() => mocks.getData().children[0]?.balance).toBe(160);
     });
 });

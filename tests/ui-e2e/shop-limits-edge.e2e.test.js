@@ -90,8 +90,9 @@ test.describe('@limits базовые ограничения', () => {
         data.children[0].balance = 20;
 
         await openShop(page, { data });
-        await buyFirstItem(page);
-        await expect(page.locator('.toast__message').last()).toContainText('Недостаточно монет');
+        const blockedButton = page.locator('#shop-list button:has-text("Не хватает")').first();
+        await expect(blockedButton).toBeVisible();
+        await expect(blockedButton).toBeDisabled();
     });
 
     test('@limits monthlyLimit отклоняет покупку', async ({ page }) => {
@@ -116,6 +117,8 @@ test.describe('@limits базовые ограничения', () => {
 test.describe('@limits расширенные ограничения', () => {
     test('@limits second large purchase блокируется', async ({ page }) => {
         const data = createLimitsBaseData();
+        data.monthlyLimit = 2000;
+        data.children[0].monthlyLimit = 2000;
         data.history = [{
             id: 2,
             type: 'spend',
@@ -127,7 +130,7 @@ test.describe('@limits расширенные ограничения', () => {
         }];
 
         await openShop(page, { data });
-        await buyFirstItem(page);
+        await buyItemById(page, 3001);
         await expect(page.locator('.toast__message').last()).toContainText('Уже была крупная покупка');
     });
 
@@ -168,10 +171,11 @@ test.describe('@limits moneyAmount и API ошибки', () => {
         });
 
         const data = readFixture('child-shop-flow.json');
-        await openShop(page, { data, postStatus: 403, postError: 'Forbidden by test' });
+        const mocks = await openShop(page, { data, postStatus: 403, postError: 'Forbidden by test' });
 
         await buyFirstItem(page);
         await page.click('#confirm-ok');
+        await expect.poll(() => mocks.getCalls().dataPost).toBeGreaterThan(0);
         await openTab(page, 'requests');
         await expect(page.locator('#my-requests-list')).toContainText('Поход в парк');
 
@@ -185,10 +189,11 @@ test.describe('@limits moneyAmount и API ошибки', () => {
         });
 
         const data = readFixture('child-shop-flow.json');
-        await openShop(page, { data, postStatus: 500, postError: 'Server crashed in test' });
+        const mocks = await openShop(page, { data, postStatus: 500, postError: 'Server crashed in test' });
 
         await buyFirstItem(page);
         await page.click('#confirm-ok');
+        await expect.poll(() => mocks.getCalls().dataPost).toBeGreaterThan(0);
         await openTab(page, 'requests');
         await expect(page.locator('#my-requests-list')).toContainText('Поход в парк');
 

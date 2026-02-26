@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
+const { expect } = require('@playwright/test');
 
 const repoRoot = path.resolve(__dirname, '../../..');
 const viewsDir = path.join(repoRoot, 'views');
@@ -223,14 +224,21 @@ async function gotoAppAsChild(page, baseUrl) {
 }
 
 async function openTab(page, tabName) {
-    const topButton = page.locator(`.nav__btn[data-tab="${tabName}"]`).first();
-    if (await topButton.isVisible().catch(() => false)) {
-        await topButton.click();
+    const section = page.locator(`#${tabName}-section`).first();
+    if (await section.isVisible().catch(() => false)) return;
+
+    const visibleTopButton = page.locator(`.nav__btn[data-tab="${tabName}"]:visible`).first();
+    if (await visibleTopButton.count() > 0) {
+        await visibleTopButton.click();
+        await expect(section).toBeVisible();
         return;
     }
 
     await page.click('#nav-more-btn');
-    await page.click(`.nav__dropdown-item[data-tab="${tabName}"]`);
+    const dropdownItem = page.locator(`.nav__dropdown-item[data-tab="${tabName}"]`).first();
+    await expect(dropdownItem).toBeVisible();
+    await dropdownItem.click();
+    await expect(section).toBeVisible();
 }
 
 module.exports = {
