@@ -156,12 +156,11 @@ function renderChildRequests({ requests, list, empty }) {
     document.getElementById('requests-section')?.querySelector('.admin-only')?.classList.add('hidden');
 }
 
-function handleAdminQueue({ state, pending, incomingList, incomingEmpty, myList, myEmpty, activeChildId }) {
+function handleAdminQueue({ state, pending, incomingList, incomingEmpty, myList, myEmpty }) {
     if (!incomingList) return;
     if (myList) myList.innerHTML = '';
     if (myEmpty) myEmpty.classList.add('hidden');
-    const relevantPending = activeChildId ? pending.filter(r => r.childId == activeChildId) : pending;
-    renderAdminRequests({ pending: relevantPending, state, list: incomingList, empty: incomingEmpty });
+    renderAdminRequests({ pending, state, list: incomingList, empty: incomingEmpty });
 }
 
 function handleChildQueue({ state, activeChildId, incomingEmpty, myList, myEmpty, requests }) {
@@ -182,17 +181,17 @@ export function renderRequestsUI(state) {
     const summaryEl = document.getElementById('requests-summary');
     const requests = state.requests || [];
 
-    const activeChildId = state.isAdmin ? (state.currentChildId || null) : (state.children[0]?.id || null);
+    const activeChildId = state.isAdmin ? null : (state.children[0]?.id || null);
     const statusCounts = getRequestCounts(requests, activeChildId);
     renderRequestsSummary(statusCounts, summaryEl);
     const pending = requests.filter(r => r.status === 'pending');
-    const badgeCount = activeChildId ? pending.filter(r => r.childId == activeChildId).length : pending.length;
+    const badgeCount = pending.length;
     updateBadge(badgeCount);
 
     if (!incomingList || !myList) return;
 
     if (state.isAdmin) {
-        handleAdminQueue({ state, pending, incomingList, incomingEmpty, myList, myEmpty, activeChildId });
+        handleAdminQueue({ state, pending, incomingList, incomingEmpty, myList, myEmpty });
     } else {
         handleChildQueue({ state, activeChildId, incomingEmpty, myList, myEmpty, requests });
     }

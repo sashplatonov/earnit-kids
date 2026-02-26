@@ -264,6 +264,9 @@
 .nav__child-switcher {
     margin-right: 0.25rem;
     flex-shrink: 0;
+    position: sticky;
+    left: 0;
+    z-index: 2300;
 }
 
 .nav__more-wrapper {

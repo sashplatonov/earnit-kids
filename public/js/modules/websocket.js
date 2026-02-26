@@ -41,7 +41,7 @@ export async function initializeWebSocket() {
         socket.onmessage = (event) => {
             try {
                 const message = JSON.parse(event.data);
-                handleWSMessage(message);
+                void handleWSMessage(message);
             } catch (err) {
                 console.error('Failed to parse WS message:', err);
             }
@@ -64,26 +64,49 @@ export async function initializeWebSocket() {
     }
 }
 
-function handleWSMessage(message) {
+function getPendingRequestsCount() {
+    return (state.requests || []).filter((item) => item.status === 'pending').length;
+}
+
+function showChildUpdateForAdmin(pendingDelta) {
+    if (pendingDelta > 0) {
+        showToast(`Новая заявка: +${pendingDelta}`, 'success');
+        return;
+    }
+    showToast('Данные обновлены ребенком 🔄', 'info');
+}
+
+async function handleDataUpdatedMessage(data) {
+    const beforePending = getPendingRequestsCount();
+    await refreshFromServerAndRender(false);
+    const afterPending = getPendingRequestsCount();
+    const pendingDelta = afterPending - beforePending;
+
+    if (data.by === 'admin' && state.role === 'child') {
+        showToast('Данные обновлены родителем 🔄', 'info');
+        return;
+    }
+
+    if (data.by === 'child' && state.role === 'admin') {
+        showChildUpdateForAdmin(pendingDelta);
+    }
+}
+
+async function handleWSMessage(message) {
     const { type, data } = message;
 
     switch (type) {
         case 'DATA_UPDATED':
-            refreshFromServerAndRender(false);
-            if (data.by === 'admin' && state.role === 'child') {
-                showToast('Данные обновлены родителем 🔄', 'info');
-            } else if (data.by === 'child' && state.role === 'admin') {
-                showToast('Данные обновлены ребенком 🔄', 'info');
-            }
+            await handleDataUpdatedMessage(data);
             break;
         case 'CHILD_UPDATED':
-            refreshFromServerAndRender(false);
+            await refreshFromServerAndRender(false);
             break;
         case 'CHILD_DELETED':
             if (state.role === 'child' && state.childId === data.childId) {
                 window.location.reload();
             } else {
-                refreshFromServerAndRender(false);
+                await refreshFromServerAndRender(false);
             }
             break;
         default:
