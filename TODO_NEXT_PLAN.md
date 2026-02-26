@@ -76,21 +76,21 @@
 
 Создать сервисы:
 
-1. src/services/systemStatsService.js
+1. ✅ src/services/systemStatsService.js
     - process uptime.
     - process.memoryUsage() (rss/heapUsed/heapTotal).
     - os.loadavg(), os.totalmem(), os.freemem(), os.cpus().length.
-2. src/services/httpMetricsService.js
+2. ✅ src/services/httpMetricsService.js
     - преобразование текущих счетчиков в агрегаты:
         - total requests
         - total errors
         - error rate %
         - top endpoints (count/errors/avg duration)
     - если p95/p99 пока нет в исходных метриках — явно вернуть null, без фейковых расчетов.
-3. src/services/dbHealthService.js
+3. ✅ src/services/dbHealthService.js
     - ping БД (SELECT 1) + latency ms.
     - статус reserve БД (переиспользовать существующую проверку).
-4. src/services/logsService.js
+4. ✅ src/services/logsService.js
     - чтение последних N строк логов (tail-подход).
     - фильтрация по level.
     - санитизация:
@@ -105,10 +105,10 @@
 
 Добавить endpoint’ы:
 
-1. GET /api/super/system/overview
-2. GET /api/super/system/http-metrics
-3. GET /api/super/system/db
-4. GET /api/super/system/logs?level=info|warn|error&limit=1..500
+1. ✅ GET /api/super/system/overview
+2. ✅ GET /api/super/system/http-metrics
+3. ✅ GET /api/super/system/db
+4. ✅ GET /api/super/system/logs?level=info|warn|error&limit=1..500
 
 Требования:
 
@@ -132,17 +132,17 @@
 
 Создать модуль public/js/modules/super-admin-system.js:
 
-1. Загрузка и рендер карточек KPI:
+1. ✅ Загрузка и рендер карточек KPI:
     - CPU/load, RAM, uptime, DB ping, error rate.
-2. Блок HTTP:
+2. ✅ Блок HTTP:
     - таблица top endpoints (метод, path, count, errors, avg ms).
-3. Блок логов:
+3. ✅ Блок логов:
     - фильтр уровня + limit.
     - автообновление.
     - кнопка manual refresh.
-4. Fault-tolerant UI:
+4. ✅ Fault-tolerant UI:
     - если API недоступен — показать non-blocking warning.
-5. Интеграция в public/js/super-admin.js:
+5. ✅ Интеграция в public/js/super-admin.js:
     - запуск polling только при активной вкладке “Система”.
     - останов polling при переключении вкладки/выходе.
 
