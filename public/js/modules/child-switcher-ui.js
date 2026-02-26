@@ -93,16 +93,19 @@ const CHILD_SWITCHER_STYLE = `
             }
 
             .child-menu-dropdown {
+                position: fixed;
                 top: auto;
-                bottom: calc(100% + 8px);
-                left: 0;
-                right: auto;
-                width: calc(100vw - 1rem);
-                max-width: 420px;
-                margin-top: 0;
-                margin-left: -0.25rem;
-                border-radius: 12px;
-                z-index: 2600;
+                bottom: calc(var(--safe-bottom, 0px) + 72px);
+                left: 0.5rem;
+                right: 0.5rem;
+                width: auto;
+                max-width: 480px;
+                margin: 0 auto;
+                max-height: min(65vh, calc(100dvh - 120px));
+                overflow-y: auto;
+                border-radius: 16px;
+                z-index: 2800;
+                box-shadow: var(--shadow-lg);
             }
 
             .child-menu-item {
