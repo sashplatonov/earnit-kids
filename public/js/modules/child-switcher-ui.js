@@ -32,6 +32,7 @@ const CHILD_SWITCHER_STYLE = `
             display: none;
             position: absolute;
             top: 100%;
+            bottom: auto;
             right: 0;
             margin-top: 10px;
             background: #1e1e30;
@@ -43,11 +44,28 @@ const CHILD_SWITCHER_STYLE = `
             overflow: hidden;
             animation: dropdownFade 0.2s ease-out;
         }
+        .child-menu-dropdown.child-menu-dropdown--flipped {
+            top: auto;
+            bottom: calc(100% + 8px);
+        }
         @keyframes dropdownFade {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .child-menu.active .child-menu-dropdown { display: block; }
+        .child-menu-dropdown::before {
+            position: absolute;
+            top: -6px;
+            right: 1rem;
+            border: 6px solid transparent;
+            border-bottom-color: var(--color-bg-card);
+        }
+        .child-menu-dropdown.child-menu-dropdown--flipped::before {
+            top: auto;
+            bottom: -6px;
+            border-bottom-color: transparent;
+            border-top-color: var(--color-bg-card);
+        }
         .child-menu-item {
             padding: 12px 18px;
             display: flex;
@@ -93,19 +111,26 @@ const CHILD_SWITCHER_STYLE = `
             }
 
             .child-menu-dropdown {
-                position: fixed;
-                top: auto;
-                bottom: calc(var(--safe-bottom, 0px) + 72px);
-                left: 0.5rem;
-                right: 0.5rem;
-                width: auto;
-                max-width: 480px;
-                margin: 0 auto;
+                position: absolute;
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                width: min(calc(100vw - 1rem), 480px);
                 max-height: min(65vh, calc(100dvh - 120px));
+                margin-top: 8px;
                 overflow-y: auto;
                 border-radius: 16px;
-                z-index: 2800;
                 box-shadow: var(--shadow-lg);
+            }
+
+            .child-menu-dropdown.child-menu-dropdown--flipped {
+                bottom: calc(100% + 8px);
+                top: auto;
+            }
+
+            .child-menu-dropdown:not(.child-menu-dropdown--flipped) {
+                top: calc(100% + 8px);
+                bottom: auto;
             }
 
             .child-menu-item {
@@ -134,9 +159,48 @@ function ensureChildMenuOutsideClickListener() {
         if (event.target.closest('.child-menu')) return;
         const activeMenus = document.querySelectorAll('.child-menu.active');
         if (!activeMenus.length) return;
-        activeMenus.forEach((el) => el.classList.remove('active'));
+        activeMenus.forEach((el) => {
+            el.classList.remove('active');
+            const dropdown = el.querySelector('.child-menu-dropdown');
+            dropdown?.classList.remove('child-menu-dropdown--flipped');
+        });
         document.dispatchEvent(new CustomEvent('child-menu-visibility', { detail: { isActive: false } }));
     });
+}
+
+function parseSafeInset(varName) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    return value ? parseFloat(value) || 0 : 0;
+}
+
+function positionChildMenuDropdown(childMenu) {
+    const dropdown = childMenu.querySelector('.child-menu-dropdown');
+    const toggleButton = childMenu.querySelector('[data-child-toggle]');
+    if (!dropdown || !toggleButton) return;
+
+    if (!childMenu.classList.contains('active')) {
+        dropdown.classList.remove('child-menu-dropdown--flipped');
+        return;
+    }
+
+    const rect = toggleButton.getBoundingClientRect();
+    const dropdownHeight = dropdown.getBoundingClientRect().height || dropdown.scrollHeight;
+    const safeTop = parseSafeInset('--safe-top');
+    const safeBottom = parseSafeInset('--safe-bottom');
+    const spaceAbove = rect.top - safeTop - 12;
+    const spaceBelow = window.innerHeight - rect.bottom - safeBottom - 12;
+    const shouldFlip = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+    dropdown.classList.toggle('child-menu-dropdown--flipped', shouldFlip);
+}
+
+function refreshActiveChildDropdowns() {
+    const menus = document.querySelectorAll('.child-menu.active');
+    menus.forEach(positionChildMenuDropdown);
+    if (!window._childMenuResizeListener) {
+        window._childMenuResizeListener = true;
+        window.addEventListener('resize', refreshActiveChildDropdowns);
+        window.addEventListener('orientationchange', refreshActiveChildDropdowns);
+    }
 }
 
 export function renderChildSwitcherUI(state, escapeHtml) {
@@ -183,6 +247,12 @@ export function renderChildSwitcherUI(state, escapeHtml) {
         toggleButton.addEventListener('click', (event) => {
             event.stopPropagation();
             const isActive = childMenu.classList.toggle('active');
+            if (isActive) {
+                requestAnimationFrame(() => positionChildMenuDropdown(childMenu));
+            } else {
+                positionChildMenuDropdown(childMenu);
+            }
+            refreshActiveChildDropdowns();
             document.dispatchEvent(new CustomEvent('child-menu-visibility', { detail: { isActive } }));
         });
     }
