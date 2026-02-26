@@ -2,7 +2,8 @@
 import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
 import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
-import { scheduleSave, addHistoryEntry, checkLimits, getActingChildId, updateBalanceLocally } from './action-helpers.js';
+import { scheduleSave, addHistoryEntry, checkLimits, getActingChildId, updateBalanceLocally, addRequestEntry } from './action-helpers.js';
+import { triggerCoinBurst } from './motion-feedback.js';
 
 function applyPurchase(item, actingId, moneyPrice) {
     updateBalanceLocally(actingId, -item.price);
@@ -19,14 +20,18 @@ function applyPurchase(item, actingId, moneyPrice) {
     scheduleSave();
     renderAll();
     showMobileEventNotification(`Вы купили: ${item.name}!`, 'success', 'Balance updated');
+    triggerCoinBurst();
 }
 
 function sendPurchaseRequest(item, actingId, moneyPrice) {
-    state.requests.push({
-        id: Date.now(), childId: actingId, requestType: 'shop_purchase',
-        itemId: item.id, taskId: item.id, taskName: item.name,
-        coins: item.price, moneyAmount: moneyPrice,
-        status: 'pending', date: new Date().toISOString()
+    addRequestEntry({
+        childId: actingId,
+        requestType: 'shop_purchase',
+        itemId: item.id,
+        taskId: item.id,
+        taskName: item.name,
+        coins: item.price,
+        moneyAmount: moneyPrice
     });
     scheduleSave();
     renderRequests();

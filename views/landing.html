@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -18,199 +19,108 @@
     </script>
     <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
     <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
-    <style>
-        :root {
-            --bg-main: #070b17;
-            --bg-panel: rgba(11, 18, 34, 0.72);
-            --line: rgba(148, 163, 184, 0.28);
-            --text: #f8fafc;
-            --muted: rgba(226, 232, 240, 0.82);
-            --accent-1: #fb7185;
-            --accent-2: #22d3ee;
-            --accent-3: #facc15;
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            color: var(--text);
-            font-family: 'Nunito', sans-serif;
-            background:
-                radial-gradient(1000px 600px at 0% -10%, rgba(34, 211, 238, 0.2), transparent 55%),
-                radial-gradient(850px 560px at 100% 0%, rgba(251, 113, 133, 0.18), transparent 58%),
-                linear-gradient(180deg, #0b1022 0%, var(--bg-main) 72%);
-            min-height: 100vh;
-        }
-        .shell { max-width: 1180px; margin: 0 auto; padding: 1.2rem 1.2rem 3rem; }
-        .hero {
-            margin-top: 2rem;
-            display: grid;
-            grid-template-columns: 1.08fr 0.92fr;
-            gap: 1rem;
-        }
-        .hero-main, .hero-side {
-            border-radius: 1.3rem;
-            border: 1px solid var(--line);
-            background: var(--bg-panel);
-            padding: 1.2rem;
-            box-shadow: 0 18px 45px rgba(2, 6, 23, 0.45);
-        }
-        .eyebrow {
-            display: inline-flex;
-            margin: 0 0 0.9rem;
-            padding: 0.33rem 0.7rem;
-            border-radius: 999px;
-            font-size: 0.74rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #e2e8f0;
-            background: rgba(34, 211, 238, 0.16);
-            border: 1px solid rgba(34, 211, 238, 0.35);
-        }
-        h1 { margin: 0; line-height: 1.08; font-size: clamp(2.1rem, 5vw, 3.6rem); }
-        .subtitle { margin-top: 0.9rem; color: var(--muted); line-height: 1.5; max-width: 42ch; }
-        .actions { margin-top: 1.2rem; display: flex; gap: 0.7rem; flex-wrap: wrap; }
-        .btn-cta, .btn-ghost {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 42px;
-            padding: 0.64rem 1.05rem;
-            border-radius: 999px;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 0.95rem;
-        }
-        .btn-cta {
-            color: #0b1022;
-            background: linear-gradient(135deg, var(--accent-3), #fb923c);
-            box-shadow: 0 10px 25px rgba(251, 146, 60, 0.35);
-        }
-        .btn-ghost {
-            color: var(--text);
-            border: 1px solid var(--line);
-            background: rgba(15, 23, 42, 0.44);
-        }
-        .stat-grid {
-            margin-top: 1rem;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.65rem;
-        }
-        .stat {
-            background: rgba(148, 163, 184, 0.08);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 0.9rem;
-            padding: 0.7rem;
-        }
-        .stat strong { display: block; font-size: 1.05rem; }
-        .stat span { color: var(--muted); font-size: 0.85rem; }
-        .hero-image {
-            width: 100%;
-            border-radius: 1rem;
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            display: block;
-            margin-bottom: 0.9rem;
-        }
-        .stack { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.65rem; }
-        .stack li {
-            padding: 0.85rem;
-            border-radius: 0.9rem;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            background: rgba(12, 18, 35, 0.5);
-        }
-        .stack h3 { margin: 0; font-size: 0.96rem; }
-        .stack p { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.89rem; line-height: 1.4; }
-        .sections {
-            margin-top: 1rem;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.75rem;
-        }
-        .panel {
-            border-radius: 1.1rem;
-            border: 1px solid var(--line);
-            padding: 1rem;
-            background: rgba(7, 11, 23, 0.56);
-        }
-        .panel h2 { margin: 0; font-size: 1.05rem; }
-        .panel p { margin: 0.55rem 0 0; color: var(--muted); line-height: 1.45; font-size: 0.9rem; }
-        .footer {
-            margin-top: 1.3rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.8rem;
-            padding: 1rem;
-            border-radius: 1rem;
-            border: 1px solid var(--line);
-            background: rgba(7, 11, 23, 0.66);
-        }
-        .footer small { color: var(--muted); }
-        @media (max-width: 980px) {
-            .hero, .sections, .stat-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/public-pages.css?v={{BUILD_VERSION}}">
     <script src="/js/client-error-reporter.js"></script>
     {{CLARITY_SCRIPT}}
 </head>
+
 <body>
-    <div class="shell">
+    <div class="public-shell">
         {{PUBLIC_TOP_NAV}}
-
-        <section class="hero" aria-labelledby="landing-main-title">
-            <article class="hero-main">
-                <p class="eyebrow">Для детей 7+ и родителей</p>
-                <h1 id="landing-main-title">Полезные дела без споров и напоминаний</h1>
-                <p class="subtitle">Ребенок выполняет задания, получает монетки и выбирает награды. Родители видят прогресс и поддерживают хорошие привычки спокойно и доброжелательно.</p>
-                <div class="actions">
-                    <a class="btn-cta" href="/login.html">Начать вместе</a>
-                    <a class="btn-ghost" href="/blog">Читать блог</a>
-                    <a class="btn-ghost" href="/about">Как это работает</a>
+        <main class="public-inner" aria-label="Страница earnit kids">
+            <section class="landing-hero" aria-labelledby="landing-hero-title">
+                <div class="landing-hero__copy">
+                    <p class="public-panel__badge">EarnIt Kids</p>
+                    <h1 id="landing-hero-title">Делаем полезные привычки понятными и веселыми</h1>
+                    <p>Ребенок получает понятный экран “Сегодня” со следующим шагом, а родители видят заявки и мастер задач. Всего 3 шага до новой семейной привычки.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn--primary" href="/login.html">Начать вместе</a>
+                        <a class="btn btn--ghost" href="/about">Узнать как</a>
+                    </div>
+                    <div class="hero-impact" aria-label="Ключевые показатели">
+                        <div class="hero-impact__item">
+                            <strong>7+</strong>
+                            <span>возраст, для которого понятно</span>
+                        </div>
+                        <div class="hero-impact__item">
+                            <strong>3 шага</strong>
+                            <span>от цели до награды</span>
+                        </div>
+                        <div class="hero-impact__item">
+                            <strong>0 ссор</strong>
+                            <span>когда правила прозрачны</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-grid">
-                    <div class="stat"><strong>7+</strong><span>понятно детям с младшей школы</span></div>
-                    <div class="stat"><strong>1 минута</strong><span>чтобы добавить новое задание</span></div>
-                    <div class="stat"><strong>0 ссор</strong><span>когда правила ясны заранее</span></div>
+                <div class="landing-hero__panel">
+                    <p class="value-card__hint">Сегодня ребенок видит, что нужно сделать и за что получит монетки. Родители подтверждают заявки, а магазин вдохновляет на копление.</p>
+                    <div class="value-grid" style="margin-top: 1.5rem;">
+                        <article class="value-card">
+                            <h3>Задачи по шаблонам</h3>
+                            <p>Подберите дом, учебу и эмпатичные дела. Есть шаблоны, которые сразу можно скопировать.</p>
+                        </article>
+                        <article class="value-card">
+                            <h3>Магазин семьи</h3>
+                            <p>Сделайте товары понятными: тип, лимит и состояние “можно купить/нужно запросить”.</p>
+                        </article>
+                        <article class="value-card">
+                            <h3>Прогресс и мотивация</h3>
+                            <p>Уровни, награды и короткие истории по каждому действию — чтобы ребенок видел результат.</p>
+                        </article>
+                    </div>
                 </div>
-            </article>
-            <aside class="hero-side" aria-label="Преимущества">
-                <img class="hero-image" src="/img/landing-family.svg" alt="Семья выполняет задания и получает награды">
-                <ul class="stack">
-                    <li>
-                        <h3>Просто для ребенка</h3>
-                        <p>Короткие задачи, понятные монетки и наглядный результат.</p>
-                    </li>
-                    <li>
-                        <h3>Удобно для родителей</h3>
-                        <p>Все важное в одном месте: задания, одобрения и история наград.</p>
-                    </li>
-                    <li>
-                        <h3>Полезные привычки</h3>
-                        <p>Регулярные маленькие дела превращаются в уверенность и самостоятельность.</p>
-                    </li>
-                </ul>
-            </aside>
-        </section>
+            </section>
 
-        <section class="sections" aria-label="Ключевые блоки">
-            <article class="panel">
-                <h2>Список заданий</h2>
-                <p>Добавляйте домашние дела, учебные шаги и полезные привычки. Ребенок отмечает выполнение, родители подтверждают.</p>
-            </article>
-            <article class="panel">
-                <h2>Монетки за старание</h2>
-                <p>Каждое выполненное дело дает монетки. Так ребенок видит связь между усилием и результатом.</p>
-            </article>
-            <article class="panel">
-                <h2>Семейный магазин</h2>
-                <p>Обменивайте монетки на радости: любимый десерт, время игры, прогулка или семейный приз.</p>
-            </article>
-        </section>
+            <section class="value-grid">
+                <article class="value-card">
+                    <h3>Для детей</h3>
+                    <p>4 фиксированные вкладки, экран “Сегодня” с прогрессом и крупные зоны нажатия — детский интерфейс без лишнего.</p>
+                </article>
+                <article class="value-card">
+                    <h3>Для родителей</h3>
+                    <p>Раздел заявок, быстрые действия в карточках и мастер задач и наград помогают решать все в пару кликов.</p>
+                </article>
+                <article class="value-card">
+                    <h3>Для семьи</h3>
+                    <p>Родители и дети работают в одном приложении, где каждый видит только нужные действия и статусы.</p>
+                </article>
+            </section>
 
-        <footer class="footer">
-            <small>EarnIt Kids помогает семье расти вместе через добрые правила и маленькие победы каждый день.</small>
-            <a class="btn-cta" href="/blog">Открыть блог</a>
-        </footer>
+            <section class="public-panel">
+                <div>
+                    <p class="public-panel__badge">Современный стиль</p>
+                    <h3>Структурированный дизайн по ролям</h3>
+                    <p>На экранах есть только нужные действия и понятные подсказки, чтобы дети и родители не терялись.</p>
+                </div>
+                <div class="feature-points">
+                    <div class="feature-point">
+                        <h3>Мобильный фокус</h3>
+                        <p>Нижняя навигация на 4 вкладки, крупные карточки и плавный отклик на действия.</p>
+                    </div>
+                    <div class="feature-point">
+                        <h3>Разделы по ролям</h3>
+                        <p>“Сегодня” для ребенка и раздел заявок для родителя сбалансированы по целям.</p>
+                    </div>
+                    <div class="feature-point">
+                        <h3>Единый стиль</h3>
+                        <p>Все экраны выглядят одинаково понятно, поэтому пользоваться сайтом проще и быстрее.</p>
+                    </div>
+                </div>
+                <div class="feature-layout__actions">
+                    <a class="btn btn--primary" href="/features/tasks">Смотреть сценарии задач</a>
+                    <a class="btn btn--ghost" href="/features/shop">Посмотреть магазин</a>
+                </div>
+            </section>
+
+            <section class="public-cta">
+                <div>
+                    <h3>Готовы собрать семью в одной игре?</h3>
+                    <p>Сегодня ребенок видит все задачи в одном месте, а родитель быстро обрабатывает заявки и управляет правилами семьи.</p>
+                </div>
+                <a class="btn btn--primary" href="/login.html">Присоединиться</a>
+            </section>
+        </main>
     </div>
 </body>
+
 </html>

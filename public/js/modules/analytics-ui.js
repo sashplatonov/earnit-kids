@@ -8,9 +8,78 @@ export async function loadAnalytics(timeframe = 'month') {
     if (!data) return showToast('Не удалось загрузить данные о достижениях', 'error');
 
     updateSummaryUI(data.summary, data.comparison);
+    updateMiniAnalyticsUI(data);
     renderAllCharts(data.topTasks, data.topItems);
     renderTrendChart(data.trends);
     renderRecommendations(data.recommendations);
+}
+
+function clampProgress(value) {
+    if (!Number.isFinite(value)) return 0;
+    return Math.max(0, Math.min(1, value));
+}
+
+function normalizeMiniInput(data) {
+    return {
+        summary: data?.summary || {},
+        recommendations: Array.isArray(data?.recommendations) ? data.recommendations : [],
+        topItems: Array.isArray(data?.topItems) ? data.topItems : [],
+        trends: Array.isArray(data?.trends) ? data.trends : []
+    };
+}
+
+function getDayProgress(totalEarned) {
+    return clampProgress((totalEarned || 0) / 200);
+}
+
+function getShopReadiness(topItems, netChange) {
+    if (!topItems.length) return 0;
+    const availableItems = topItems.filter(item => Number(item.coins) <= Number(netChange || 0)).length;
+    return clampProgress(availableItems / topItems.length);
+}
+
+function getRecentActivity(trends) {
+    return trends.slice(-7).filter(day => Number(day.earned || 0) > 0).length;
+}
+
+export function computeMiniAnalytics(data) {
+    const { summary, recommendations, topItems, trends } = normalizeMiniInput(data);
+    const dayProgress = getDayProgress(summary.totalEarned);
+    const shopReadiness = getShopReadiness(topItems, summary.netChange);
+    const recentActivity = getRecentActivity(trends);
+    const streakProgress = clampProgress(recentActivity / 7);
+
+    return {
+        dayProgress,
+        shopReadiness,
+        streakProgress,
+        dayLabel: `${Math.round(dayProgress * 100)}%`,
+        shopLabel: `${Math.round(shopReadiness * 100)}%`,
+        streakLabel: `${recentActivity} дн.`,
+        dayHint: dayProgress < 1
+            ? 'Завершите ещё одно задание, чтобы закрыть цель дня.'
+            : 'Цель дня закрыта. Отличная работа!',
+        shopHint: recommendations.length ? `Добавьте награду «${recommendations[0].name}», чтобы расширить магазин.` : 'Магазин выглядит сбалансированным.',
+        streakHint: recentActivity
+            ? `Активных дней за неделю: ${recentActivity} из 7.`
+            : 'Начните с одного задания сегодня, чтобы запустить серию.'
+    };
+}
+
+function setMiniProgress({ key, value, label, hint }) {
+    const progress = document.querySelector(`[data-progress-${key}]`);
+    if (progress) progress.style.setProperty('--progress', value.toFixed(2));
+    const valueEl = document.querySelector(`[data-mini-value-${key}]`);
+    if (valueEl) valueEl.textContent = label;
+    const hintEl = document.querySelector(`[data-mini-hint-${key}]`);
+    if (hintEl) hintEl.textContent = hint;
+}
+
+function updateMiniAnalyticsUI(data) {
+    const mini = computeMiniAnalytics(data);
+    setMiniProgress({ key: 'day', value: mini.dayProgress, label: mini.dayLabel, hint: mini.dayHint });
+    setMiniProgress({ key: 'shop', value: mini.shopReadiness, label: mini.shopLabel, hint: mini.shopHint });
+    setMiniProgress({ key: 'streak', value: mini.streakProgress, label: mini.streakLabel, hint: mini.streakHint });
 }
 
 function updateSummaryUI(summary, comparison) {

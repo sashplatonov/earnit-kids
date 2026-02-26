@@ -4,6 +4,7 @@ import { addChild } from './api.js';
 import { renderAll } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
 import { refreshChildLinkInline } from './admin-settings.js';
+import { useChildTheme } from './age-theme.js';
 
 function getNumericLimit(value, fallback) {
     const n = Number(value);
@@ -50,6 +51,7 @@ export function switchChild(childId) {
         updateSettingsFields(child);
         refreshChildLinkInline();
     }
+    useChildTheme(childId);
 }
 
 export function openAddChildModal() {

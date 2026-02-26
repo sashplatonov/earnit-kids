@@ -1,5 +1,31 @@
 <!-- Секция заданий -->
 <section class="section" id="tasks-section">
+    <div class="creation-wizard admin-only hidden" aria-label="Мастер создания задачи">
+        <div class="creation-wizard__header">
+            <div>
+                <p class="creation-wizard__tag">Parent Master</p>
+                <h3>Создайте задачу за 3 шага</h3>
+            </div>
+            <button class="btn btn--secondary" id="wizard-add-task">Создать задачу</button>
+        </div>
+        <div class="creation-wizard__steps">
+            <article class="wizard-step">
+                <h4>1. Выберите категорию</h4>
+                <p>Дом, учеба или творчество — система подскажет подходящие описания.</p>
+            </article>
+            <article class="wizard-step">
+                <h4>2. Назначьте монеты</h4>
+                <p>Укажите стоимость, частоту и комментарий — всё в одном модуле.</p>
+            </article>
+            <article class="wizard-step">
+                <h4>3. Отправьте ребенку</h4>
+                <p>Подтвердите задачу и ребенок сразу увидит «Сегодня» с новым action.</p>
+            </article>
+        </div>
+        <div class="creation-wizard__cta">
+            <span class="creation-wizard__hint">Мастер использует те же модалки — без дополнительной логики.</span>
+        </div>
+    </div>
     <div class="section__header">
         <h2>За что можно заработать</h2>
         <div class="section__buttons admin-only hidden">
@@ -11,6 +37,10 @@
     </div>
     <div class="empty-state" id="tasks-empty">
         <span class="empty-state__icon">📋</span>
-        <p>Пока нет заданий</p>
+        <p class="empty-state__title">Пока нет заданий</p>
+        <p class="empty-state__hint">Создайте первую задачу — она появится в следующем “Сегодня” ребенка.</p>
+        <div class="empty-state__actions">
+            <span class="empty-state__tip">Кнопка «+ Добавить» в правом верхнем углу раздела.</span>
+        </div>
     </div>
 </section>

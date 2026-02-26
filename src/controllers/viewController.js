@@ -109,10 +109,15 @@ function getCookies(req) {
 
 function buildFaqMarkup(items) {
     return items.map(item => `
-        <div class="faq-item">
-            <h3>${item.question}</h3>
-            <p>${item.answer}</p>
-        </div>`).join('');
+        <article class="faq-card">
+            <details>
+                <summary>
+                    <span>${item.question}</span>
+                    <span class="faq-card__icon">❓</span>
+                </summary>
+                <p>${item.answer}</p>
+            </details>
+        </article>`).join('');
 }
 
 function formatBullets(bullets) {
@@ -351,9 +356,9 @@ let cachedIndexHtml = null;
 function assembleIndexHtml() {
     const componentOrder = [
         'head.html', 'header.html', 'nav.html', 'main_start.html',
-        'section_tasks.html', 'section_requests.html', 'section_shop.html',
-        'section_catalog.html', 'section_analytics.html', 'section_about.html', 'section_history.html',
-        'section_rules.html', 'section_friends.html', 'section_settings.html', 'main_end.html',
+        'section_today.html', 'section_tasks.html', 'section_shop.html', 'section_progress.html',
+        'section_requests.html', 'section_catalog.html', 'section_analytics.html', 'section_history.html',
+        'section_rules.html', 'section_friends.html', 'section_settings.html', 'section_limits.html', 'main_end.html',
         'modals.html', 'scripts.html'
     ];
 

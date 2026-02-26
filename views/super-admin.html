@@ -46,6 +46,28 @@
                 </div>
             </div>
 
+            <div class="families-table-controls" id="families-table-controls">
+                <div class="filter-group">
+                    <p class="filter-label">Статус</p>
+                    <div class="chip-row">
+                        <button class="filter-chip active" data-filter-status="all" type="button">Все</button>
+                        <button class="filter-chip" data-filter-status="active" type="button">Активные</button>
+                        <button class="filter-chip" data-filter-status="blocked" type="button">Заблокированные</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <p class="filter-label">Сортировка</p>
+                    <div class="chip-row">
+                        <button class="filter-chip" data-sort="active" type="button">По активности</button>
+                        <button class="filter-chip" data-sort="created" type="button">По созданию</button>
+                    </div>
+                </div>
+                <div class="filter-group filter-group--grow">
+                    <label class="filter-label" for="families-search">Поиск</label>
+                    <input id="families-search" type="search" placeholder="Найти семью, email или ID">
+                </div>
+            </div>
+
             <div class="families-table">
                 <h2>📊 Все семьи EarnIt Kids</h2>
                 <div id="loading" class="loading">Загрузка...</div>

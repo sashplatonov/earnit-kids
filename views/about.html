@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,109 +9,61 @@
     <link rel="canonical" href="{{CANONICAL_URL}}">
     <meta property="og:title" content="{{PAGE_TITLE}}">
     <meta property="og:description" content="{{PAGE_DESCRIPTION}}">
+    <meta property="og:image" content="{{OG_IMAGE_URL}}">
+    <meta property="og:url" content="{{CANONICAL_URL}}">
     <script type="application/ld+json">
 {{SCHEMA_JSON}}
     </script>
-    <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
+    <link rel="stylesheet" href="/css/style.css?v={{BUILD_VERSION}}">
     <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
-    <style>
-        :root {
-            --bg: #060b16;
-            --line: rgba(148, 163, 184, 0.24);
-            --card: rgba(15, 23, 42, 0.62);
-            --text: #f8fafc;
-            --muted: rgba(226, 232, 240, 0.8);
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: 'Nunito', sans-serif;
-            color: var(--text);
-            background:
-                radial-gradient(900px 600px at 0% 0%, rgba(34, 211, 238, 0.18), transparent 60%),
-                linear-gradient(180deg, #0a1124 0%, var(--bg) 72%);
-            min-height: 100vh;
-        }
-        .wrap { max-width: 980px; margin: 0 auto; padding: 1.1rem 1.2rem 3rem; }
-        .hero {
-            margin-top: 1.2rem;
-            border: 1px solid var(--line);
-            border-radius: 1.2rem;
-            background: rgba(15, 23, 42, 0.5);
-            padding: 1.1rem;
-        }
-        .hero-image {
-            width: 100%;
-            border-radius: 0.95rem;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            display: block;
-            margin-bottom: 1rem;
-        }
-        h1 { margin: 0; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; }
-        .hero p { color: var(--muted); line-height: 1.55; margin-top: 0.75rem; max-width: 68ch; }
-        .grid {
-            margin-top: 1rem;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.75rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: 0.95rem;
-            padding: 0.95rem;
-        }
-        .card h2 { font-size: 1rem; margin: 0; }
-        .card p { color: var(--muted); line-height: 1.45; margin-top: 0.45rem; font-size: 0.9rem; }
-        .cta { margin-top: 1rem; display: flex; gap: 0.7rem; flex-wrap: wrap; }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.6rem 1rem;
-            border-radius: 999px;
-            font-weight: 800;
-            text-decoration: none;
-            font-size: 0.93rem;
-            min-height: 40px;
-        }
-        .btn-main { color: #0f172a; background: linear-gradient(135deg, #facc15, #fb923c); }
-        .btn-ghost { color: var(--text); border: 1px solid var(--line); background: rgba(15, 23, 42, 0.42); }
-        @media (max-width: 900px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/public-pages.css?v={{BUILD_VERSION}}">
     <script src="/js/client-error-reporter.js"></script>
     {{CLARITY_SCRIPT}}
 </head>
-<body>
-    <div class="wrap">
-        {{PUBLIC_TOP_NAV}}
 
-        <section class="hero">
-            <img class="hero-image" src="/img/about-family.svg" alt="Семья вместе обсуждает правила и награды">
-            <h1>О проекте EarnIt Kids</h1>
-            <p>Мы сделали сервис для семей, где ребенок учится быть самостоятельным, а родителям легче поддерживать порядок дома. Без сложных слов и лишних настроек: понятные задания, честные монетки и добрые награды.</p>
-            <div class="grid">
-                <article class="card">
-                    <h2>Для детей 7+</h2>
-                    <p>Короткие и ясные шаги. Ребенок видит, что нужно сделать сейчас и сколько монет можно получить.</p>
+<body>
+    <div class="public-shell">
+        {{PUBLIC_TOP_NAV}}
+        <main class="public-inner" aria-label="О проекте EarnIt Kids">
+            <section class="landing-hero" aria-labelledby="about-hero-title">
+                <div>
+                    <p class="public-panel__badge">EarnIt Kids</p>
+                    <h1 id="about-hero-title">Мы делаем повседневные задачи позитивным маршрутом</h1>
+                    <p>Создаем систему, где ребенок видит экран “Сегодня” с понятными действиями, а родитель управляет заявками и правилами семьи.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn--primary" href="/login.html">Войти</a>
+                        <a class="btn btn--ghost" href="/faq">FAQ</a>
+                    </div>
+                </div>
+                <div>
+                    <img src="/img/about-family.svg" alt="Семья работает над задачами вместе" loading="lazy">
+                </div>
+            </section>
+
+            <section class="value-grid" aria-label="Основные принципы">
+                <article class="value-card">
+                    <h3>Сегодня</h3>
+                    <p>Ребенок получает прозрачный экран “Сегодня”, понятные статусы заявок и заметные акценты на наградах.</p>
                 </article>
-                <article class="card">
-                    <h2>Для родителей</h2>
-                    <p>Удобно создавать задания, проверять выполнение и обсуждать результат без спешки и конфликтов.</p>
+                <article class="value-card">
+                    <h3>Контроль родителей</h3>
+                    <p>Раздел заявок, мастер задач и лимиты помогают спокойно управлять семейными правилами без споров.</p>
                 </article>
-                <article class="card">
-                    <h2>Для всей семьи</h2>
-                    <p>Общие правила и прозрачная история наград помогают договариваться и радоваться прогрессу вместе.</p>
+                <article class="value-card">
+                    <h3>Семейный контроль</h3>
+                    <p>Родитель видит заявки, настраивает задания и награды, а ребенок сразу понимает, что делать дальше.</p>
                 </article>
-            </div>
-            <div class="cta">
-                <a class="btn btn-main" href="/">Вернуться на главную</a>
-                <a class="btn btn-ghost" href="/blog">Открыть блог</a>
-                <a class="btn btn-ghost" href="/login.html">Войти</a>
-            </div>
-        </section>
+            </section>
+
+            <section class="public-cta">
+                <div>
+                    <h3>Готовы перевести задачи в игру?</h3>
+                    <p>Ребенок и родитель получают ясный маршрут: “Сегодня”, раздел заявок и прозрачные статусы.</p>
+                </div>
+                <a class="btn btn--primary" href="/login.html">Попробовать</a>
+            </section>
+        </main>
     </div>
 </body>
+
 </html>

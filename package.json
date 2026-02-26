@@ -13,6 +13,7 @@
     "test:ui:smoke": "node --test tests/ui/*.test.js",
     "test:ui:e2e": "env -u NO_COLOR PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright test",
     "test:ui": "npm run test:ui:smoke && npm run test:ui:e2e",
+    "verify:css-assets": "NODE_ENV=production node --test tests/ui/cssLinks.test.js",
     "playwright:install": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright install chromium",
     "lint": "npm run lint:syntax && npm run lint:commonjs && npm run lint:eslint",
     "lint:syntax": "node scripts/lint-syntax.js",
@@ -21,7 +22,7 @@
     "check": "npm run lint && npm run test:coverage",
     "build": "node scripts/build.js",
     "generate:file-headers": "node scripts/generate-file-headers.js",
-    "postbuild": "npm run check && npm run test:ui:e2e"
+    "postbuild": "npm run verify:css-assets && npm run check && npm run test:ui:e2e"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

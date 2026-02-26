@@ -2,7 +2,8 @@
 import { state } from './state.js';
 import { renderShop, renderRequests } from './ui.js';
 import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
-import { scheduleSave, addHistoryEntry, checkDailyCoinLimit, getActingChildId, updateBalanceLocally } from './action-helpers.js';
+import { scheduleSave, addHistoryEntry, checkDailyCoinLimit, getActingChildId, updateBalanceLocally, addRequestEntry } from './action-helpers.js';
+import { triggerCoinBurst } from './motion-feedback.js';
 
 function checkTaskFrequency(task, childId) {
     if (!task.frequency) return null;
@@ -37,6 +38,7 @@ export function earnCoins(taskId) {
         });
         renderShop();
         showMobileEventNotification(`+${task.coins} 🪙 начислено!`, 'success', 'Balance updated');
+        triggerCoinBurst();
     };
 
     if (warnings.length > 0) return showConfirm('Превышен лимит', `${warnings.join('. ')}. Все равно начислить?`, apply);
@@ -46,10 +48,12 @@ export function earnCoins(taskId) {
 export function requestCoins(taskId) {
     const task = state.tasks.find(t => t.id == taskId);
     if (!task) return;
-    state.requests.push({
-        id: Date.now(), childId: getActingChildId(), requestType: 'earn',
-        taskId: task.id, taskName: task.name, coins: task.coins,
-        date: new Date().toISOString(), status: 'pending'
+    addRequestEntry({
+        childId: getActingChildId(),
+        requestType: 'earn',
+        taskId: task.id,
+        taskName: task.name,
+        coins: task.coins
     });
     scheduleSave();
     renderRequests();

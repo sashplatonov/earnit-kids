@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -13,83 +14,52 @@
     <script type="application/ld+json">
 {{SCHEMA_JSON}}
     </script>
-    <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
+    <link rel="stylesheet" href="/css/style.css?v={{BUILD_VERSION}}">
     <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
-    <style>
-        body {
-            font-family: 'Nunito', sans-serif;
-            margin: 0;
-            background: #05070c;
-            color: #eef2ff;
-            min-height: 100vh;
-        }
-        .feature-shell { padding: 2rem 1.25rem 3rem; max-width: 960px; margin: 0 auto; }
-        .feature-header { margin-bottom: 1rem; }
-        .feature-header h1 { font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 0.35rem; }
-        .feature-header p { color: rgba(226, 232, 240, 0.82); }
-        .feature-card {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 1.1rem;
-            border-radius: 1.2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
-        }
-        .feature-card img {
-            width: 100%;
-            border-radius: 0.9rem;
-            margin-bottom: 0.9rem;
-            display: block;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-        .feature-card h2 { margin-top: 0; }
-        .feature-card ul { padding-left: 1.2rem; color: rgba(226, 232, 240, 0.9); }
-        .feature-pills {
-            display: flex;
-            gap: 0.7rem;
-            flex-wrap: wrap;
-            margin-top: 0.85rem;
-        }
-        .feature-pill {
-            padding: 0.55rem 0.95rem;
-            border-radius: 999px;
-            background: rgba(59, 130, 246, 0.18);
-            color: #bfdbfe;
-            font-size: 0.88rem;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-        }
-        .cta-link {
-            display: inline-flex;
-            margin-top: 1.2rem;
-            padding: 0.82rem 1.4rem;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #f59e0b, #f97316);
-            color: #0f172a;
-            font-weight: 800;
-            text-decoration: none;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/public-pages.css?v={{BUILD_VERSION}}">
+    <script src="/js/client-error-reporter.js"></script>
     {{CLARITY_SCRIPT}}
 </head>
+
 <body>
-    <main class="feature-shell">
+    <div class="public-shell">
         {{PUBLIC_TOP_NAV}}
-        <header class="feature-header">
-            <p class="section-label">Возможности EarnIt Kids</p>
-            <h1>{{FEATURE_HEADING}}</h1>
-            <p class="subtitle">{{FEATURE_SUBTITLE}}</p>
-        </header>
-        <article class="feature-card">
-            <img src="{{FEATURE_IMAGE}}" alt="{{FEATURE_HEADING}}">
-            <h2>Почему это помогает семье</h2>
-            <p>{{FEATURE_DESCRIPTION}}</p>
-            {{FEATURE_BULLETS}}
-            <div class="feature-pills">
-                <span class="feature-pill">Для детей 7+</span>
-                <span class="feature-pill">Для родителей</span>
-                <span class="feature-pill">Понятные правила</span>
-            </div>
-            <a class="cta-link" href="{{FEATURE_LINK}}">{{FEATURE_PILL}}</a>
-        </article>
-    </main>
+        <main class="public-inner" aria-label="Сторонняя страница">
+            <section class="feature-layout" aria-labelledby="feature-title">
+                <div class="feature-layout__content">
+                    <p class="public-panel__badge">{{FEATURE_PILL}}</p>
+                    <h1 id="feature-title">{{FEATURE_HEADING}}</h1>
+                    <p>{{FEATURE_SUBTITLE}}</p>
+                    <p>Ребенок и родитель получают понятные шаги и не тратят время на лишние действия.</p>
+                    <div class="feature-layout__actions">
+                        <a class="btn btn--primary" href="{{FEATURE_LINK}}">{{FEATURE_PILL}}</a>
+                        <a class="btn btn--ghost" href="/login.html">Войти</a>
+                    </div>
+                </div>
+                <div class="feature-layout__panel">
+                    <img src="{{FEATURE_IMAGE}}" alt="{{FEATURE_HEADING}}">
+                    <p>{{FEATURE_DESCRIPTION}}</p>
+                    <div class="feature-bullets">
+                        {{FEATURE_BULLETS}}
+                    </div>
+                </div>
+            </section>
+            <section class="value-grid" aria-label="Сценарии для семьи">
+                <article class="value-card">
+                    <h3>Ребенок: Сегодня</h3>
+                    <p>4 вкладки, прогресс, крупные карточки задач и анимации наград без перегрузки.</p>
+                </article>
+                <article class="value-card">
+                    <h3>Родитель: Заявки</h3>
+                    <p>Заявки, быстрые действия и мастер задач/награды — всё ровно в два клика.</p>
+                </article>
+                <article class="value-card">
+                    <h3>Семья</h3>
+                    <p>Родитель быстро управляет правилами, а ребенок видит понятные цели и шаги.</p>
+                </article>
+            </section>
+        </main>
+    </div>
 </body>
+
 </html>

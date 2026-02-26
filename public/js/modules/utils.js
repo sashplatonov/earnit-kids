@@ -5,6 +5,58 @@ export function escapeHtml(text) {
     return div.innerHTML;
 }
 
+const FRAME_SCHEDULER = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+    ? window.requestAnimationFrame.bind(window)
+    : (cb) => setTimeout(cb, 16);
+
+const chunkRenderJobs = new WeakMap();
+const DEFAULT_CHUNK_SIZE = 6;
+
+export function isMobileViewport() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(max-width: 900px)').matches;
+}
+
+export function chunkedRender(container, fragments, options = {}) {
+    if (!container) return;
+
+    const parts = Array.isArray(fragments)
+        ? fragments.filter(Boolean)
+        : (fragments ? [fragments] : []);
+
+    if (!parts.length) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const chunkSize = Math.max(1, options.chunkSize ?? DEFAULT_CHUNK_SIZE);
+    const job = { id: Symbol('chunked'), index: 0 };
+    chunkRenderJobs.set(container, job);
+    container.innerHTML = '';
+
+    if (parts.length <= chunkSize) {
+        container.innerHTML = parts.join('');
+        chunkRenderJobs.delete(container);
+        return;
+    }
+
+    function renderNext() {
+        if (chunkRenderJobs.get(container) !== job) return;
+        const start = job.index;
+        const end = Math.min(parts.length, start + chunkSize);
+        container.insertAdjacentHTML('beforeend', parts.slice(start, end).join(''));
+        job.index = end;
+        if (job.index < parts.length) {
+            FRAME_SCHEDULER(renderNext);
+        } else {
+            chunkRenderJobs.delete(container);
+        }
+    }
+
+    FRAME_SCHEDULER(renderNext);
+}
+
 export function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -32,12 +84,6 @@ export function showToast(message, type = 'info') {
 
 let mobilePermissionChecked = false;
 let webNotificationPermissionChecked = false;
-
-function isMobileViewport() {
-    return typeof window !== 'undefined'
-        && typeof window.matchMedia === 'function'
-        && window.matchMedia('(max-width: 900px)').matches;
-}
 
 function getLocalNotificationsPlugin() {
     if (typeof window === 'undefined' || !window.Capacitor) return null;

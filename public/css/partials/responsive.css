@@ -1,5 +1,26 @@
 /* ===== Responsive Styles (Mobile & Tablet) ===== */
 
+html {
+    font-size: clamp(15px, 1rem + 0.3vw, 18px);
+}
+
+@media (max-width: 640px) {
+    body {
+        font-size: clamp(1rem, 1rem + 0.1vw, 1.08rem);
+        line-height: var(--line-height-relaxed);
+    }
+}
+
+@media (min-width: 1200px) {
+    body {
+        font-size: clamp(1.05rem, 1.1rem + 0.2vw, 1.25rem);
+    }
+
+    :root {
+        --touch-target-height: clamp(48px, 3vw, 56px);
+    }
+}
+
 @media (max-width: 900px) {
 
     /* Mobile Navigation (Bottom Tab Bar) */
@@ -15,17 +36,32 @@
         border-bottom: none;
         z-index: 2200;
         overflow: hidden;
+        gap: var(--touch-inline-gap);
     }
 
     .nav__primary {
         display: flex;
-        flex-wrap: wrap;
-        overflow: visible;
-        gap: 0.35rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: var(--touch-inline-gap);
         width: 100%;
         max-width: 100%;
         justify-content: stretch;
         align-items: stretch;
+    }
+
+    .nav__group {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .nav__group--child {
+        flex-wrap: wrap;
+    }
+
+    .nav__group--parent {
+        flex-wrap: wrap;
+        justify-content: space-between;
     }
 
     .nav__child-switcher {
@@ -52,7 +88,7 @@
         min-width: 0;
         white-space: normal;
         line-height: 1.2;
-        min-height: 54px;
+        min-height: var(--touch-target-height);
     }
 
     #nav-analytics {
@@ -63,9 +99,9 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        height: 54px;
-        min-height: 54px;
-        min-width: 52px;
+        min-height: var(--touch-target-height);
+        min-width: var(--touch-target-height);
+        height: var(--touch-target-height);
         padding: 0 0.7rem;
         border-radius: var(--radius-sm);
         font-size: 1.35rem;
@@ -239,10 +275,13 @@
 @media (prefers-contrast: more) {
     :root {
         --color-text: #ffffff;
-        --color-text-muted: #e0e0e0;
+        --color-text-high-contrast: #ffffff;
+        --color-text-strong: #f8fafc;
+        --color-text-soft: #e5e7eb;
+        --color-text-muted: #d1d5db;
         --color-bg: #000000;
-        --color-bg-light: #111111;
-        --color-bg-card: #000000;
+        --color-bg-light: #070b1a;
+        --color-bg-card: #02050f;
         --gradient-primary: #6366f1;
         /* fallback solid for gradient */
     }

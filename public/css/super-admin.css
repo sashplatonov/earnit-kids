@@ -82,6 +82,66 @@
     margin-top: 1rem;
 }
 
+.families-table-controls {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    padding: 1.25rem;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    align-items: end;
+    border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.filter-group--grow input {
+    width: 100%;
+}
+
+.filter-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #4f46e5;
+}
+
+.chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-chip {
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.15);
+    color: #3730a3;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-chip.active {
+    background: #4f46e5;
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+}
+
+.filter-chip:hover {
+    transform: translateY(-2px);
+    border-color: rgba(79, 70, 229, 0.4);
+}
+
 .table-responsive {
     width: 100%;
     overflow-x: auto;

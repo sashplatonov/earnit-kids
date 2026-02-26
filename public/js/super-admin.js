@@ -2,8 +2,14 @@
 import { renderFamilyDetails } from './modules/super-admin-family-details.js';
 import { checkReserveStatus, handleRestore, handleCopyToReserve } from './modules/super-admin-db.js';
 import { setBaseData, getBaseData, renderList, deleteItem, saveItem } from './modules/super-admin-base.js';
+import { applyFamiliesFilters, getFamilyChildrenCount } from './modules/super-admin-filters.js';
 
 let familiesData = [];
+const familiesViewState = {
+    status: 'all',
+    sort: 'created',
+    search: ''
+};
 
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -67,7 +73,7 @@ function updateStats(families) {
 }
 
 function getFamilyStatusBadge(isBlocked) {
-    return isBlocked ? '<span style="color:red">BLOCKED</span>' : '<span style="color:green">ACTIVE</span>';
+    return isBlocked ? '<span style="color:#ef4444; font-weight:700;">ЗАБЛОКИРОВАНА</span>' : '<span style="color:#16a34a; font-weight:700;">АКТИВНА</span>';
 }
 
 function getFamilyBlockButtonLabel(isBlocked) {
@@ -85,10 +91,9 @@ function buildFamilyRowHtml(f) {
             <td class="hide-mobile">${f.email || '-'}</td>
             <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
             <td class="hide-mobile"><code>${f.admin_password || 'N/A'}</code></td>
-            <td class="hide-mobile" style="text-align: center;"><span class="badge">${f.children.length}</span></td>
-            <td class="hide-mobile">${f.tasksCount || 0}</td>
+            <td class="hide-mobile">${f.tasksCount || 0} <span style="opacity:0.7;">(👧 ${getFamilyChildrenCount(f)})</span></td>
             <td class="hide-mobile">${f.shopCount || 0}</td>
-            <td class="hide-mobile">-</td>
+            <td class="hide-mobile">${f.monthly_limit || 10000} 🪙</td>
             <td>${getFamilyStatusBadge(f.isBlocked)}</td>
             <td class="hide-mobile">${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
             <td class="hide-mobile" style="font-size:0.9rem">${f.last_activity ? new Date(f.last_activity).toLocaleString('ru-RU') : '-'}</td>
@@ -102,19 +107,54 @@ function buildFamilyRowHtml(f) {
 
 function renderFamilies() {
     const tbody = document.getElementById('families-tbody');
+    const loading = document.getElementById('loading');
+    const table = document.getElementById('families-table');
     tbody.innerHTML = '';
     if (familiesData.length === 0) {
-        document.getElementById('loading').textContent = 'Нет магазинов';
+        loading.textContent = 'Нет семей';
+        loading.style.display = 'block';
+        table.style.display = 'none';
         return;
     }
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('families-table').style.display = 'table';
-    updateStats(familiesData);
+    const visibleFamilies = applyFamiliesFilters([...familiesData], familiesViewState);
+    loading.style.display = visibleFamilies.length ? 'none' : 'block';
+    loading.textContent = visibleFamilies.length ? '' : 'По текущим фильтрам семьи не найдены';
+    table.style.display = visibleFamilies.length ? 'table' : 'none';
+    updateStats(visibleFamilies);
 
-    for (const f of familiesData) {
+    for (const f of visibleFamilies) {
         const tr = document.createElement('tr');
         tr.innerHTML = buildFamilyRowHtml(f);
         tbody.appendChild(tr);
+    }
+}
+
+function setupFamiliesControls() {
+    const statusChips = document.querySelectorAll('[data-filter-status]');
+    const sortChips = document.querySelectorAll('[data-sort]');
+    const searchInput = document.getElementById('families-search');
+
+    statusChips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+            familiesViewState.status = chip.dataset.filterStatus || 'all';
+            statusChips.forEach(node => node.classList.toggle('active', node === chip));
+            renderFamilies();
+        });
+    });
+
+    sortChips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+            familiesViewState.sort = chip.dataset.sort || 'created';
+            sortChips.forEach(node => node.classList.toggle('active', node === chip));
+            renderFamilies();
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            familiesViewState.search = searchInput.value.trim();
+            renderFamilies();
+        });
     }
 }
 
@@ -252,4 +292,5 @@ window.regenerateToken = async (familyId, childId) => {
     } catch (err) { alert('Error'); }
 };
 
+setupFamiliesControls();
 loadFamilies(); loadBaseData();

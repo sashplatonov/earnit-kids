@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -13,49 +14,44 @@
     </script>
     <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
     <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
-    <style>
-        body {
-            font-family: 'Nunito', sans-serif;
-            background: #030712;
-            color: #e2e8f0;
-            margin: 0;
-        }
-        .faq-shell {
-            max-width: 920px;
-            margin: 0 auto;
-            padding: 2rem 1.3rem 3rem;
-        }
-        .hero-image {
-            width: 100%;
-            border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            display: block;
-            margin-bottom: 1rem;
-        }
-        .faq-shell h1 { margin: 0 0 0.5rem; }
-        .faq-lead { color: rgba(226, 232, 240, 0.8); margin-bottom: 1.1rem; }
-        .faq-item {
-            padding: 1.15rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 0.8rem;
-        }
-        .faq-item h3 { margin-top: 0; margin-bottom: 0.35rem; }
-        .help-note { color: rgba(226, 232, 240, 0.75); margin-top: 1rem; }
-    </style>
+    <link rel="stylesheet" href="/css/public-pages.css?v={{BUILD_VERSION}}">
     {{CLARITY_SCRIPT}}
 </head>
+
 <body>
-    <main class="faq-shell">
+    <div class="public-shell">
         {{PUBLIC_TOP_NAV}}
-        <img class="hero-image" src="/img/faq-help.svg" alt="Иллюстрация с вопросами и ответами для семьи">
-        <h1>Вопросы и ответы</h1>
-        <p class="faq-lead">Собрали самые частые вопросы от родителей и детей. Все объясняем простыми словами.</p>
-        <section>
-            {{FAQ_ITEMS}}
+        <main class="public-inner" aria-label="Частые вопросы">
+        <section class="faq-shell" aria-labelledby="faq-title">
+            <h1 id="faq-title">Вопросы и ответы</h1>
+            <p class="value-card__hint">Собрали ответы на самые частые ситуации по задачам, заявкам и магазину.</p>
+            <div class="faq-grid">
+                {{FAQ_ITEMS}}
+            </div>
         </section>
-        <p class="help-note">Если нужен совет по настройке заданий, напишите нам: support@earnit-kids.com.</p>
-    </main>
+        <section class="value-grid" aria-label="Что нового">
+            <article class="value-card">
+                <h3>Ясные статусы заявок</h3>
+                <p>Статусы “ожидает”, “одобрено” и “отклонено” легко читаются по цвету и понятным подсказкам.</p>
+            </article>
+            <article class="value-card">
+                <h3>Заявки для родителей</h3>
+                <p>Заявки по всем детям видны сразу, а одобрение или отклонение происходит в одном разделе, без поиска по меню.</p>
+            </article>
+            <article class="value-card">
+                <h3>Мобильная навигация</h3>
+                <p>4 вкладки в нижнем меню и крупные кнопки помогают детям не промахиваться и быстрее находить нужный раздел.</p>
+            </article>
+        </section>
+        <section class="public-cta">
+            <div>
+                <h3>Нужна поддержка?</h3>
+                <p>Пишите support@earnit-kids.com, когда нужна помощь с настройкой семьи.</p>
+                </div>
+                <a class="btn btn--ghost" href="/login.html">Войти и спросить</a>
+            </section>
+        </main>
+    </div>
 </body>
+
 </html>

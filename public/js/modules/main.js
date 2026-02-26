@@ -1,6 +1,6 @@
 /** @file Main frontend UI module */
 import { state } from './state.js';
-import { renderAll } from './ui.js';
+import { renderAll, renderShop, renderTasks } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
 import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, adminAwardCoins } from './actions.js';
 import { initializePushNotifications, setPushRefreshHandler } from './push.js';
@@ -14,6 +14,7 @@ import { setupTabControls } from './main-tabs.js';
 import { initializeFromServer, refreshFromServerAndRender, setupCommonControls } from './main-init.js';
 import { initializeWebSocket } from './websocket.js';
 import { setupPwaInstall } from './pwa-install.js';
+import { setupAgeThemeControls, useChildTheme } from './age-theme.js';
 
 async function loadAbout() {
     const container = document.getElementById('about-content');
@@ -39,24 +40,97 @@ function setupAdminUI() {
 
 function setupSpecificControls() {
     const bind = (id, fn, evt = 'click') => document.getElementById(id)?.addEventListener(evt, fn);
-    bind('settings-change-pin-btn', admin.openChangePinModal);
-    bind('settings-save-child-btn', admin.saveChildSettingsInline);
-    bind('settings-save-pin-btn', admin.saveNewPinInline);
-    bind('settings-copy-link-btn', admin.copyChildLinkInline);
-    bind('settings-regenerate-link-btn', admin.regenerateChildLinkInline);
-    bind('settings-save-nickname-btn', saveNickname);
-    bind('add-task-btn', admin.openTaskModal);
-    bind('task-save', admin.saveTask);
-    bind('task-cancel', () => closeModal('task-modal'));
-    bind('task-delete', admin.deleteTask);
-    bind('add-shop-btn', admin.openShopModal);
-    bind('shop-save', admin.saveShopItem);
-    bind('shop-cancel', () => closeModal('shop-modal'));
-    bind('shop-delete', admin.deleteShopItem);
-    bind('rules-save', saveRules);
-    bind('rules-cancel', () => closeModal('rules-modal'));
-    bind('catalog-age-min-filter', renderCatalog, 'input');
-    bind('catalog-age-max-filter', renderCatalog, 'input');
+    const controls = [
+        { id: 'settings-change-pin-btn', fn: admin.openChangePinModal },
+        { id: 'settings-save-profile-btn', fn: admin.saveChildProfileInline },
+        { id: 'settings-save-limits-btn', fn: admin.saveChildLimitsInline },
+        { id: 'settings-save-pin-btn', fn: admin.saveNewPinInline },
+        { id: 'settings-copy-link-btn', fn: admin.copyChildLinkInline },
+        { id: 'settings-regenerate-link-btn', fn: admin.regenerateChildLinkInline },
+        { id: 'settings-save-nickname-btn', fn: saveNickname },
+        { id: 'add-task-btn', fn: admin.openTaskModal },
+        { id: 'task-save', fn: admin.saveTask },
+        { id: 'task-cancel', fn: () => closeModal('task-modal') },
+        { id: 'task-delete', fn: admin.deleteTask },
+        { id: 'add-shop-btn', fn: admin.openShopModal },
+        { id: 'wizard-add-task', fn: admin.openTaskModal },
+        { id: 'shop-save', fn: admin.saveShopItem },
+        { id: 'shop-cancel', fn: () => closeModal('shop-modal') },
+        { id: 'shop-delete', fn: admin.deleteShopItem },
+        { id: 'wizard-add-shop', fn: admin.openShopModal },
+        { id: 'rules-save', fn: saveRules },
+        { id: 'rules-cancel', fn: () => closeModal('rules-modal') },
+        { id: 'catalog-age-min-filter', fn: renderCatalog, evt: 'input' },
+        { id: 'catalog-age-max-filter', fn: renderCatalog, evt: 'input' }
+    ];
+    controls.forEach(({ id, fn, evt }) => bind(id, fn, evt));
+}
+
+const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
+
+function ensureCardShortcuts() {
+    if (typeof window === 'undefined') {
+        return { task: new Set(), shop: new Set() };
+    }
+    if (!window[CARD_SHORTCUTS_KEY]) {
+        window[CARD_SHORTCUTS_KEY] = {
+            task: new Set(),
+            shop: new Set()
+        };
+    }
+    if (!(window[CARD_SHORTCUTS_KEY].shop instanceof Set)) {
+        const legacy = window[CARD_SHORTCUTS_KEY].shop;
+        window[CARD_SHORTCUTS_KEY].shop = new Set([
+            ...(legacy?.quick ? Array.from(legacy.quick) : []),
+            ...(legacy?.bookmark ? Array.from(legacy.bookmark) : [])
+        ]);
+    }
+    return window[CARD_SHORTCUTS_KEY];
+}
+
+function parseShortcutKind(type) {
+    if (type === 'shop' || type === 'shop_quick') return { normalized: 'shop' };
+    return { normalized: 'task', mode: 'quick' };
+}
+
+function getShortcutBucket(shortcuts, kind) {
+    return kind.normalized === 'shop' ? shortcuts.shop : shortcuts.task;
+}
+
+function updateShortcutButton(trigger, kind, isActive) {
+    if (!trigger) return;
+    trigger.setAttribute('aria-pressed', String(isActive));
+    trigger.classList.toggle('card__quick-bookmark--active', isActive);
+    if (kind.normalized === 'shop') {
+        trigger.textContent = isActive ? '⚡ В быстром' : '⚡ В быстрый';
+        return;
+    }
+    trigger.textContent = isActive ? '⭐ В быстрых' : '☆ В быстрые';
+}
+
+function getShortcutToast(kind, wasActive) {
+    const bucketLabel = kind.normalized === 'shop' ? 'быстрый' : 'быстрые действия';
+    return wasActive ? `Убрано: ${bucketLabel}` : `Добавлено: ${bucketLabel}`;
+}
+
+function toggleCardBookmark(type, id, trigger) {
+    const kind = parseShortcutKind(type);
+    const shortcuts = ensureCardShortcuts();
+    const bucket = getShortcutBucket(shortcuts, kind);
+    const numericId = Number(id);
+    const wasActive = bucket.has(numericId);
+    if (wasActive) {
+        bucket.delete(numericId);
+    } else {
+        bucket.add(numericId);
+    }
+    const isActive = !wasActive;
+    const card = document.querySelector(`.card--${kind.normalized}[data-id=\"${numericId}\"]`);
+    card?.classList.toggle('card--highlight', isActive);
+    updateShortcutButton(trigger, kind, isActive);
+    if (kind.normalized === 'shop') renderShop();
+    else renderTasks();
+    showToast(getShortcutToast(kind, wasActive), wasActive ? 'info' : 'success');
 }
 
 window.app = {
@@ -66,6 +140,7 @@ window.app = {
     copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
     switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal, addNewFriend, handleSearch,
     saveNickname, adminAwardCoins,
+    toggleCardBookmark,
     loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
 };
 
@@ -117,6 +192,7 @@ async function safeRun(fn, message) {
 }
 
 function renderInitialViews() {
+    setupAgeThemeControls(() => state.currentChildId || state.children[0]?.id || null);
     renderAll();
     renderRules();
     loadAbout();

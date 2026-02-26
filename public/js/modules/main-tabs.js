@@ -159,6 +159,14 @@ function setupSwipeGestures(activate) {
     }, { passive: true });
 }
 
+let mainTabActivator = null;
+
+export function activateMainTab(tabName) {
+    if (mainTabActivator) {
+        mainTabActivator(tabName);
+    }
+}
+
 export function setupTabControls() {
     const tabButtons = document.querySelectorAll('.nav__btn, .nav__dropdown-item');
     const moreBtn = document.getElementById('nav-more-btn');
@@ -169,39 +177,13 @@ export function setupTabControls() {
         toggleTab(tabButtons, name, moreBtn);
         resetMoreMenuState();
     };
+    mainTabActivator = activate;
+    window.activateMainTab = activate;
 
     tabButtons.forEach(btn => btn.addEventListener('click', () => activate(btn.dataset.tab)));
     setupSwipeGestures(activate);
 
-    if (moreBtn && moreDropdown) {
-        resetMoreMenuState();
-        window.addEventListener('pageshow', resetMoreMenuState);
-
-        moreBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const hide = !moreDropdown.classList.contains('hidden');
-            if (hide) {
-                moreDropdown.classList.add('hidden');
-                restoreDropdownFromBody(moreDropdown);
-            } else {
-                moveDropdownToBody(moreDropdown);
-                moreDropdown.classList.remove('hidden');
-            }
-            moreBtn.setAttribute('aria-expanded', String(!hide));
-            if (!hide) {
-                document.querySelectorAll('.child-menu.active').forEach(el => el.classList.remove('active'));
-                requestAnimationFrame(() => positionMoreDropdown(moreBtn, moreDropdown));
-            }
-        });
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.nav__more-wrapper')) return;
-            if (moreDropdown.contains(e.target)) return;
-            resetMoreMenuState();
-            restoreDropdownFromBody(moreDropdown);
-        });
-        window.addEventListener('resize', () => positionMoreDropdown(moreBtn, moreDropdown), { passive: true });
-        document.addEventListener('scroll', () => positionMoreDropdown(moreBtn, moreDropdown), true);
-    }
+    attachMoreDropdownHandlers({ moreBtn, moreDropdown, resetMoreMenuState, activate });
 
     document.querySelector('.header__balance')?.addEventListener('click', () => activate('history'));
     document.getElementById('analytics-timeframe-group')?.addEventListener('click', (e) => {
@@ -212,5 +194,36 @@ export function setupTabControls() {
             import('./analytics-ui.js').then(({ loadAnalytics }) => loadAnalytics(btn.dataset.timeframe));
         }
     });
-    activate('tasks');
+    activate('today');
+}
+
+function attachMoreDropdownHandlers({ moreBtn, moreDropdown, resetMoreMenuState, activate }) {
+    if (!moreBtn || !moreDropdown) return;
+    resetMoreMenuState();
+    window.addEventListener('pageshow', resetMoreMenuState);
+
+    moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const hide = !moreDropdown.classList.contains('hidden');
+        if (hide) {
+            moreDropdown.classList.add('hidden');
+            restoreDropdownFromBody(moreDropdown);
+        } else {
+            moveDropdownToBody(moreDropdown);
+            moreDropdown.classList.remove('hidden');
+        }
+        moreBtn.setAttribute('aria-expanded', String(!hide));
+        if (!hide) {
+            document.querySelectorAll('.child-menu.active').forEach(el => el.classList.remove('active'));
+            requestAnimationFrame(() => positionMoreDropdown(moreBtn, moreDropdown));
+        }
+    });
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.nav__more-wrapper')) return;
+        if (moreDropdown.contains(e.target)) return;
+        resetMoreMenuState();
+        restoreDropdownFromBody(moreDropdown);
+    });
+    window.addEventListener('resize', () => positionMoreDropdown(moreBtn, moreDropdown), { passive: true });
+    document.addEventListener('scroll', () => positionMoreDropdown(moreBtn, moreDropdown), true);
 }
