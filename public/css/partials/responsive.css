@@ -35,7 +35,7 @@ html {
         border-top: 1px solid var(--color-bg-card);
         border-bottom: none;
         z-index: 2200;
-        overflow: hidden;
+        overflow: visible;
         gap: var(--touch-inline-gap);
     }
 

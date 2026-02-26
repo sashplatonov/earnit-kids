@@ -1168,7 +1168,7 @@ dialog.modal[open]::backdrop {
     .nav {
         position: fixed;
         inset: auto 0 0 0;
-        overflow: hidden;
+        overflow: visible;
         padding: 0.5rem;
         padding-bottom: calc(0.5rem + var(--safe-bottom));
         gap: 0.35rem;
