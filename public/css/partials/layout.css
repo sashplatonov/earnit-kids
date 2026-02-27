@@ -24,8 +24,10 @@
 
 .header {
     display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.9rem;
     padding: calc(0.7rem + var(--safe-top)) 1rem 0.55rem;
     background: var(--gradient-primary);
     box-shadow: var(--shadow-md);
@@ -39,13 +41,18 @@
 .header__status-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
     gap: 0.6rem;
 }
 
+.header__system-row {
+    flex: 1 1 auto;
+    justify-content: space-between;
+    min-width: 0;
+}
+
 .header__status-row {
-    align-items: flex-start;
+    flex: 0 0 auto;
+    justify-content: flex-end;
 }
 
 .header__logo {
