@@ -148,6 +148,9 @@ const CHILD_SWITCHER_STYLE = `
     </style>
 `;
 
+const MOBILE_LAYOUT_QUERY = '(max-width: 900px)';
+const DROPDOWN_GAP = 8;
+
 function buildChildRow(child, isActive, escapeHtml) {
     return `
         <div class="child-menu-item ${isActive ? 'active' : ''}" 
@@ -180,6 +183,30 @@ function parseSafeInset(varName) {
     return value ? parseFloat(value) || 0 : 0;
 }
 
+function getViewportMetrics() {
+    const visualViewport = window.visualViewport;
+    return {
+        height: Math.max(visualViewport?.height || 0, window.innerHeight || 0),
+        offsetTop: visualViewport?.offsetTop || 0
+    };
+}
+
+function shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight }) {
+    if (isMobileLayout) return true;
+    return spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+}
+
+function applyDropdownPosition({ dropdown, rect, isMobileLayout, viewportHeight, adjustedRectTop }) {
+    if (isMobileLayout) {
+        dropdown.style.top = 'auto';
+        const bottomOffset = Math.max(Math.round(viewportHeight - adjustedRectTop + DROPDOWN_GAP), DROPDOWN_GAP);
+        dropdown.style.bottom = `${bottomOffset}px`;
+        return;
+    }
+    dropdown.style.bottom = '';
+    dropdown.style.top = `${Math.round(rect.bottom + DROPDOWN_GAP)}px`;
+}
+
 function positionChildMenuDropdown(childMenu) {
     const dropdown = childMenu.querySelector('.child-menu-dropdown');
     const toggleButton = childMenu.querySelector('[data-child-toggle]');
@@ -187,17 +214,23 @@ function positionChildMenuDropdown(childMenu) {
 
     if (!childMenu.classList.contains('active')) {
         dropdown.classList.remove('child-menu-dropdown--flipped');
+        dropdown.style.top = '';
+        dropdown.style.bottom = '';
         return;
     }
 
+    const { height: viewportHeight, offsetTop: viewportOffsetTop } = getViewportMetrics();
     const rect = toggleButton.getBoundingClientRect();
+    const adjustedRectTop = rect.top - viewportOffsetTop;
+    const adjustedRectBottom = rect.bottom - viewportOffsetTop;
     const dropdownHeight = dropdown.getBoundingClientRect().height || dropdown.scrollHeight;
-    const safeTop = parseSafeInset('--safe-top');
-    const safeBottom = parseSafeInset('--safe-bottom');
-    const spaceAbove = rect.top - safeTop - 12;
-    const spaceBelow = window.innerHeight - rect.bottom - safeBottom - 12;
-    const shouldFlip = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+    const [safeTop, safeBottom] = [parseSafeInset('--safe-top'), parseSafeInset('--safe-bottom')];
+    const spaceAbove = adjustedRectTop - safeTop - 12;
+    const spaceBelow = viewportHeight - adjustedRectBottom - safeBottom - 12;
+    const isMobileLayout = window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
+    const shouldFlip = shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight });
     dropdown.classList.toggle('child-menu-dropdown--flipped', shouldFlip);
+    applyDropdownPosition({ dropdown, rect, isMobileLayout, viewportHeight, adjustedRectTop });
 }
 
 function refreshActiveChildDropdowns() {
