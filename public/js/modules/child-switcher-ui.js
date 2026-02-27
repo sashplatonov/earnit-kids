@@ -112,7 +112,7 @@ const CHILD_SWITCHER_STYLE = `
             color: white;
             background: rgba(16, 185, 129, 0.1);
         }
-        @media (max-width: 900px) {
+        @media (max-width: 900px), (hover: none) and (pointer: coarse) {
             .child-menu-btn {
                 padding: 6px 10px;
                 gap: 6px;
@@ -150,6 +150,11 @@ const CHILD_SWITCHER_STYLE = `
 
 const MOBILE_LAYOUT_QUERY = '(max-width: 900px)';
 const DROPDOWN_GAP = 8;
+const TOUCH_LAYOUT_QUERY = '(hover: none) and (pointer: coarse)';
+
+function isMobileChildMenuLayout() {
+    return window.matchMedia(MOBILE_LAYOUT_QUERY).matches || window.matchMedia(TOUCH_LAYOUT_QUERY).matches;
+}
 
 function buildChildRow(child, isActive, escapeHtml) {
     return `
@@ -196,11 +201,11 @@ function shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHe
     return spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 }
 
-function applyDropdownPosition({ dropdown, rect, isMobileLayout, viewportHeight, adjustedRectTop }) {
+function applyDropdownPosition({ dropdown, rect, isMobileLayout }) {
     if (isMobileLayout) {
         dropdown.style.top = 'auto';
-        const bottomOffset = Math.max(Math.round(viewportHeight - adjustedRectTop + DROPDOWN_GAP), DROPDOWN_GAP);
-        dropdown.style.bottom = `${bottomOffset}px`;
+        // Let CSS keep the dropdown anchored above bottom nav for iOS/Safari stability.
+        dropdown.style.bottom = '';
         return;
     }
     dropdown.style.bottom = '';
@@ -227,10 +232,10 @@ function positionChildMenuDropdown(childMenu) {
     const [safeTop, safeBottom] = [parseSafeInset('--safe-top'), parseSafeInset('--safe-bottom')];
     const spaceAbove = adjustedRectTop - safeTop - 12;
     const spaceBelow = viewportHeight - adjustedRectBottom - safeBottom - 12;
-    const isMobileLayout = window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
+    const isMobileLayout = isMobileChildMenuLayout();
     const shouldFlip = shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight });
     dropdown.classList.toggle('child-menu-dropdown--flipped', shouldFlip);
-    applyDropdownPosition({ dropdown, rect, isMobileLayout, viewportHeight, adjustedRectTop });
+    applyDropdownPosition({ dropdown, rect, isMobileLayout });
 }
 
 function refreshActiveChildDropdowns() {

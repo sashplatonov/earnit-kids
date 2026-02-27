@@ -229,6 +229,19 @@ html {
         transform: translateY(-1px);
     }
 
+    #settings-cards {
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+    }
+
+    #settings-cards .settings-card,
+    #child-link-section .card {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        min-height: 0;
+    }
+
     /* Mobile Header Compact */
     .header {
         display: flex;
@@ -495,6 +508,21 @@ html {
 
     .toast-container {
         bottom: calc(var(--bottom-nav-height, 0px) + 0.75rem);
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    #settings-cards {
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+    }
+
+    #settings-cards .settings-card,
+    #child-link-section .card {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        min-height: 0;
     }
 }
 
