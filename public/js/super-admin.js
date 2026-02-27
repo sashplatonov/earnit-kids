@@ -19,7 +19,7 @@ function handleTabActivation(tabName) {
     if (tabName === 'database') refreshDbPanelStatus();
     if (tabName === 'system') activateSystemTab();
     else deactivateSystemTab();
-}
+ }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -34,29 +34,37 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // DB Actions
-document.getElementById('pg-backup-btn').addEventListener('click', () => {
-    window.location.href = '/api/super/db-backup';
-});
-document.getElementById('pg-restore-btn').addEventListener('click', () => {
-    document.getElementById('pg-restore-input').click();
-});
-document.getElementById('pg-restore-input').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-        e.target.value = '';
-        return;
-    }
-    showSuperConfirm({
-        title: 'Восстановить базу из файла?',
-        message: 'Текущие данные будут заменены.',
-        confirmText: 'Восстановить'
-    }).then((confirmed) => {
-        if (confirmed) handleRestore(file);
+const pgBackupBtn = document.getElementById('pg-backup-btn');
+if (pgBackupBtn) {
+    pgBackupBtn.addEventListener('click', () => {
+        window.location.href = '/api/super/db-backup';
     });
-    e.target.value = '';
-});
+}
+const pgRestoreBtn = document.getElementById('pg-restore-btn');
+const pgRestoreInput = document.getElementById('pg-restore-input');
+if (pgRestoreBtn && pgRestoreInput) {
+    pgRestoreBtn.addEventListener('click', () => {
+        pgRestoreInput.click();
+    });
+    pgRestoreInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+            e.target.value = '';
+            return;
+        }
+        showSuperConfirm({
+            title: 'Восстановить базу из файла?',
+            message: 'Текущие данные будут заменены.',
+            confirmText: 'Восстановить'
+        }).then((confirmed) => {
+            if (confirmed) handleRestore(file);
+        });
+        e.target.value = '';
+    });
+}
+ 
 // Logout
-document.getElementById('logout-btn').addEventListener('click', async () => {
+document.getElementById('logout-btn')?.addEventListener('click', async () => {
     await fetch('/api/logout', { method: 'POST' });
     window.location.reload();
 });
