@@ -138,8 +138,9 @@ window.app = {
     deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,
     saveNewPinInline: admin.saveNewPinInline,
     copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
-    switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal, addNewFriend, handleSearch,
-    saveNickname, adminAwardCoins,
+    switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal,
+    openTaskModal: admin.openTaskModal, openShopModal: admin.openShopModal,
+    addNewFriend, handleSearch, saveNickname, adminAwardCoins,
     toggleCardBookmark,
     loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
 };

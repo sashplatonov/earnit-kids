@@ -255,10 +255,12 @@
 
 .nav__group--child {
     justify-content: flex-start;
+    order: 0;
 }
 
 .nav__group--parent {
     justify-content: flex-start;
+    order: 1;
 }
 
 .nav__child-switcher {
@@ -267,12 +269,16 @@
     position: sticky;
     left: 0;
     z-index: 2300;
+    order: 2;
+    flex: 0 0 auto;
 }
 
 .nav__more-wrapper {
     position: relative;
     flex-shrink: 0;
     z-index: 2300;
+    order: 3;
+    margin-left: auto;
 }
 
 .nav__more {
