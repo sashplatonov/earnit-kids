@@ -182,6 +182,19 @@ p,
     min-height: 100%;
 }
 
+.card__icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card__icon .gamified-icon {
+    width: 2rem;
+    height: 2rem;
+}
+
 #settings-cards .card {
     display: flex;
     flex-direction: column;
@@ -190,6 +203,22 @@ p,
 
 #settings-cards .card__actions {
     margin-top: 0.75rem;
+}
+
+#settings-cards {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+#settings-cards .settings-card {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 360px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 @container (max-width: 350px) {
@@ -266,6 +295,66 @@ p,
     white-space: nowrap;
 }
 
+.gamified-icon {
+    width: 1.9rem;
+    height: 1.9rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gamified-icon.icon-calendar { background-image: url('/img/gamified/icon-calendar.svg'); }
+.gamified-icon.icon-tasks { background-image: url('/img/gamified/icon-tasks.svg'); }
+.gamified-icon.icon-shop { background-image: url('/img/gamified/icon-shop.svg'); }
+.gamified-icon.icon-trophy { background-image: url('/img/gamified/icon-trophy.svg'); }
+.gamified-icon.icon-eye { background-image: url('/img/gamified/icon-eye.svg'); }
+.gamified-icon.icon-envelope { background-image: url('/img/gamified/icon-envelope.svg'); }
+.gamified-icon.icon-dots { background-image: url('/img/gamified/icon-dots.svg'); }
+.gamified-icon.icon-coin-stack { background-image: url('/img/gamified/icon-coin-stack.svg'); }
+.gamified-icon.icon-chart { background-image: url('/img/gamified/icon-chart.svg'); }
+.gamified-icon.icon-wallet { background-image: url('/img/gamified/icon-wallet.svg'); }
+.gamified-icon.icon-magnifier { background-image: url('/img/gamified/icon-magnifier.svg'); }
+.gamified-icon.icon-star { background-image: url('/img/gamified/icon-star.svg'); }
+.gamified-icon.icon-palette { background-image: url('/img/gamified/icon-palette.svg'); }
+.gamified-icon.icon-key { background-image: url('/img/gamified/icon-key.svg'); }
+.gamified-icon.icon-link { background-image: url('/img/gamified/icon-link.svg'); }
+.gamified-icon.icon-child { background-image: url('/img/gamified/icon-child.svg'); }
+.gamified-icon.icon-empty { background-image: url('/img/gamified/icon-empty.svg'); }
+.gamified-icon.icon-profile { background-image: url('/img/gamified/icon-profile.svg'); }
+.gamified-icon.icon-logout { background-image: url('/img/gamified/icon-logout.svg'); }
+.gamified-icon.icon-settings-menu { background-image: url('/img/gamified/icon-settings-menu.svg'); }
+.gamified-icon.icon-child-link-menu { background-image: url('/img/gamified/icon-child-link-menu.svg'); }
+.gamified-icon.icon-history-menu { background-image: url('/img/gamified/icon-history-menu.svg'); }
+.gamified-icon.icon-rules-menu { background-image: url('/img/gamified/icon-rules-menu.svg'); }
+
+.icon-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.icon-label .gamified-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 8px;
+}
+
+.coin-unit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.coin-unit .gamified-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 8px;
+}
+
 .card__badge--group {
     border-color: rgba(59, 130, 246, 0.35);
     color: var(--color-primary);
@@ -336,6 +425,12 @@ p,
     font-size: var(--text-lg);
     min-width: 70px;
     flex-shrink: 0;
+}
+
+.card__coins .gamified-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 8px;
 }
 
 .card__comment {
@@ -414,6 +509,12 @@ p,
     opacity: 0.6;
 }
 
+.empty-state__icon .gamified-icon {
+    font-size: 0;
+    width: 2.8rem;
+    height: 2.8rem;
+}
+
 .empty-state__title {
     font-size: 1.25rem;
     font-weight: 600;
@@ -476,7 +577,6 @@ p,
 }
 
 .history-item__icon {
-    font-size: 1.5rem;
     width: 40px;
     height: 40px;
     display: flex;
@@ -484,6 +584,12 @@ p,
     justify-content: center;
     border-radius: 50%;
     flex-shrink: 0;
+}
+
+.history-item__icon .gamified-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 10px;
 }
 
 .history-item--earn .history-item__icon {
@@ -559,7 +665,7 @@ p,
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    z-index: var(--layer-modal);
     align-items: center;
     justify-content: center;
     padding: 1rem;
@@ -719,7 +825,7 @@ dialog.modal[open]::backdrop {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    z-index: 2000;
+    z-index: var(--layer-toast);
 }
 
 .toast {
@@ -808,6 +914,12 @@ dialog.modal[open]::backdrop {
     border-radius: 50%;
 }
 
+.stat-card__icon .gamified-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    font-size: 0;
+}
+
 .stat-card__content {
     flex: 1;
 }
@@ -855,7 +967,8 @@ dialog.modal[open]::backdrop {
 }
 
 .stat-card__value-unit {
-    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
 }
 
 .stat-card__value-note {
@@ -1960,6 +2073,9 @@ dialog.modal[open]::backdrop {
 .recommendation-card__coins {
     font-weight: 800;
     color: var(--color-success);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 /* Pull-to-refresh safe inset */
@@ -2015,6 +2131,9 @@ dialog.modal[open]::backdrop {
 .friend-balance {
     font-size: 0.85rem;
     color: var(--color-warning);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
 }
 
 .friends-challenge {

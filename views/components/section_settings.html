@@ -1,14 +1,16 @@
 <!-- Секция настроек -->
 <section class="section hidden" id="settings-section">
     <div class="section__header">
-        <h2>⚙️ Настройки магазина</h2>
+        <h2>Настройки магазина</h2>
     </div>
 
-    <div class="cards" id="settings-cards" style="grid-template-columns: 1fr;">
-        <div class="card admin-only" style="max-width: 600px; margin: 0 auto; margin-top: 1.5rem;">
+    <div class="cards" id="settings-cards">
+        <div class="card settings-card admin-only">
             <div class="card__header">
                 <h3 class="card__title">Настройки ребенка</h3>
-                <div class="card__icon">🧒</div>
+                <div class="card__icon">
+                    <span class="gamified-icon icon-child" aria-hidden="true"></span>
+                </div>
             </div>
 
             <div class="form-group" style="margin-top: 1rem;">
@@ -20,16 +22,18 @@
 
             <div class="card__actions" style="margin-top: 1rem;">
                 <button class="btn btn--primary btn--small" id="settings-save-profile-btn">
-                    ✅ Сохранить информацию
+                    Сохранить информацию
                 </button>
             </div>
         </div>
 
         <!-- Профиль ребенка (Ник) -->
-        <div class="card child-only" style="max-width: 600px; margin: 0 auto;">
+        <div class="card settings-card child-only">
             <div class="card__header">
                 <h3 class="card__title">Мой профиль</h3>
-                <div class="card__icon">👤</div>
+                <div class="card__icon">
+                    <span class="gamified-icon icon-profile" aria-hidden="true"></span>
+                </div>
             </div>
 
             <div class="form-group" style="margin-top: 1rem;">
@@ -41,15 +45,17 @@
 
             <div class="card__actions">
                 <button class="btn btn--primary" id="settings-save-nickname-btn" style="width: 100%;">
-                    ✅ Сохранить ник
+                    Сохранить ник
                 </button>
             </div>
         </div>
 
-        <div class="card child-only" style="max-width: 600px; margin: 0 auto;">
+        <div class="card settings-card child-only">
             <div class="card__header">
                 <h3 class="card__title">Тема интерфейса</h3>
-                <div class="card__icon">🎨</div>
+                <div class="card__icon">
+                    <span class="gamified-icon icon-palette" aria-hidden="true"></span>
+                </div>
             </div>
             <p class="hint" style="margin-top: 0.5rem;">Выбери цветовую тему: можно менять в любой момент.</p>
             <div class="age-theme-current" id="age-theme-current" aria-live="polite">
@@ -81,10 +87,12 @@
         </div>
 
         <!-- Смена пароля -->
-        <div class="card admin-only" style="max-width: 600px; margin: 0 auto; margin-top: 1.5rem;">
+        <div class="card settings-card admin-only">
             <div class="card__header">
                 <h3 class="card__title">Безопасность (Смена пароля)</h3>
-                <div class="card__icon">🔑</div>
+                <div class="card__icon">
+                    <span class="gamified-icon icon-key" aria-hidden="true"></span>
+                </div>
             </div>
 
             <div class="form-group" style="margin-top: 1rem;">
@@ -100,7 +108,7 @@
 
             <div class="card__actions">
                 <button class="btn btn--secondary" id="settings-save-pin-btn" style="width: 100%;">
-                    🔑 Обновить пароль
+                    Обновить пароль
                 </button>
             </div>
         </div>
@@ -110,13 +118,15 @@
 <!-- Секция ссылки для ребенка (вынесена на верхний уровень) -->
 <section class="section hidden" id="child-link-section">
     <div class="section__header">
-        <h2>🔗 Доступ для ребенка</h2>
+        <h2>Доступ для ребенка</h2>
     </div>
 
-    <div class="card admin-only" style="max-width: 600px; margin: 0 auto;">
+    <div class="card admin-only">
         <div class="card__header">
             <h3 class="card__title">Прямая ссылка для входа</h3>
-            <div class="card__icon">🔗</div>
+            <div class="card__icon">
+                <span class="gamified-icon icon-link" aria-hidden="true"></span>
+            </div>
         </div>
         <p class="card__comment" style="margin-bottom: 1.5rem;">
             Отправьте эту ссылку ребенку (например, в Telegram или WhatsApp).
@@ -129,11 +139,11 @@
                     style="background: rgba(0,0,0,0.2); font-family: monospace; font-size: 0.9rem;">
                 <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                     <button class="btn btn--primary" id="settings-copy-link-btn" style="flex: 2;">
-                        📋 Скопировать ссылку
+                        Скопировать ссылку
                     </button>
                     <button class="btn btn--danger btn--small" id="settings-regenerate-link-btn" title="Обновить ссылку"
                         style="flex: 1;">
-                        🔄 Обновить
+                        Обновить
                     </button>
                 </div>
             </div>
@@ -142,7 +152,7 @@
         <div id="child-link-status"
             style="margin-top: 1rem; text-align: center; font-size: 0.9rem; color: var(--color-success);"
             class="hidden">
-            ✅ Ссылка скопирована!
+            Ссылка скопирована
         </div>
     </div>
 </section>

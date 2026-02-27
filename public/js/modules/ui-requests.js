@@ -42,7 +42,9 @@ function isPurchaseRequest(req) {
 }
 
 function getRequestIcon(req) {
-    return isPurchaseRequest(req) ? '🛒' : '📝';
+    return isPurchaseRequest(req)
+        ? '<span class="gamified-icon icon-shop" aria-hidden="true"></span>'
+        : '<span class="gamified-icon icon-tasks" aria-hidden="true"></span>';
 }
 
 function getRequestRowClass(req) {
@@ -71,9 +73,9 @@ function renderMyRequest(req) {
                 ${commentHtml}
                 <div class="history-item__date">${dateText} ${statusBadge}</div>
             </div>
-            <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
+            <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}</div>
             <div class="card__actions request-item__actions">
-                 <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">🗑️</button>
+                 <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">Удалить</button>
             </div>
         </div>
     `;
@@ -99,10 +101,10 @@ function renderIncomingRequest(req, state) {
                 ${commentHtml}
                 <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
             </div>
-            <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} 🪙 ${moneyTag}</div>
+            <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}</div>
             <div class="card__actions request-item__actions">
-                 <button class="btn btn--success btn--small" onclick="window.app.approveRequest(${req.id})">✅</button>
-                 <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest(${req.id})">❌</button>
+                 <button class="btn btn--success btn--small" onclick="window.app.approveRequest(${req.id})">Подтвердить</button>
+                 <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest(${req.id})">Отклонить</button>
             </div>
         </div>
     `;

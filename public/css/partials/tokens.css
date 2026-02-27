@@ -83,6 +83,18 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
+
+    /* App shell metrics (synced in main.js) */
+    --header-height: 96px;
+    --bottom-nav-height: 0px;
+    --fab-safe-offset: 76px;
+
+    /* Layer map */
+    --layer-toast: 2000;
+    --layer-header: 2600;
+    --layer-nav: 2200;
+    --layer-dropdown: 2400;
+    --layer-modal: 3000;
 }
 
 :root[data-age-theme='6-9'] {

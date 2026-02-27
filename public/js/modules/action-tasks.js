@@ -37,7 +37,7 @@ export function earnCoins(taskId) {
             childIdOverride: actingId
         });
         renderShop();
-        showMobileEventNotification(`+${task.coins} 🪙 начислено!`, 'success', 'Balance updated');
+        showMobileEventNotification(`+${task.coins} мон. начислено!`, 'success', 'Balance updated');
         triggerCoinBurst();
     };
 

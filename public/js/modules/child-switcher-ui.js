@@ -1,7 +1,7 @@
 /** @file Child Switcher Ui frontend UI module */
 const CHILD_SWITCHER_STYLE = `
     <style>
-        .child-menu { position: relative; z-index: 2100; }
+        .child-menu { position: relative; z-index: var(--layer-dropdown); }
         .child-menu-btn {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -40,7 +40,7 @@ const CHILD_SWITCHER_STYLE = `
             border-radius: 16px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             min-width: 220px;
-            z-index: 2100;
+            z-index: var(--layer-dropdown);
             overflow: hidden;
             animation: dropdownFade 0.2s ease-out;
         }
@@ -87,6 +87,15 @@ const CHILD_SWITCHER_STYLE = `
             background: rgba(0,0,0,0.2);
             padding: 2px 8px;
             border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        .child-menu-item__balance .gamified-icon,
+        .child-menu-btn__icon .gamified-icon {
+            width: 0.9rem;
+            height: 0.9rem;
+            border-radius: 8px;
         }
         .child-menu-divider {
             height: 1px;
@@ -111,26 +120,24 @@ const CHILD_SWITCHER_STYLE = `
             }
 
             .child-menu-dropdown {
-                position: absolute;
+                position: fixed;
                 left: 50%;
                 right: auto;
                 transform: translateX(-50%);
                 width: min(calc(100vw - 1rem), 480px);
-                max-height: min(65vh, calc(100dvh - 120px));
-                margin-top: 8px;
+                max-height: min(65vh, calc(100dvh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px));
+                bottom: calc(var(--bottom-nav-height, 92px) + 8px);
+                margin: 0;
                 overflow-y: auto;
                 border-radius: 16px;
                 box-shadow: var(--shadow-lg);
+                z-index: calc(var(--layer-nav) + 200);
             }
 
-            .child-menu-dropdown.child-menu-dropdown--flipped {
-                bottom: calc(100% + 8px);
-                top: auto;
-            }
-
+            .child-menu-dropdown.child-menu-dropdown--flipped,
             .child-menu-dropdown:not(.child-menu-dropdown--flipped) {
-                top: calc(100% + 8px);
-                bottom: auto;
+                top: auto;
+                bottom: calc(var(--bottom-nav-height, 92px) + 8px);
             }
 
             .child-menu-item {
@@ -146,7 +153,7 @@ function buildChildRow(child, isActive, escapeHtml) {
         <div class="child-menu-item ${isActive ? 'active' : ''}" 
              onclick="window.app.switchChild(${child.id}); this.closest('.child-menu').classList.remove('active')">
             <span class="child-menu-item__name">${escapeHtml(child.name)}</span>
-            <span class="child-menu-item__balance">${child.balance} 🪙</span>
+            <span class="child-menu-item__balance">${child.balance}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></span>
         </div>
     `;
 }
@@ -223,7 +230,7 @@ export function renderChildSwitcherUI(state, escapeHtml) {
     container.innerHTML = `
         <div class="child-menu">
             <button type="button" class="child-menu-btn" data-child-toggle>
-                <span class="child-menu-btn__icon">👶</span>
+                <span class="child-menu-btn__icon"><span class="gamified-icon icon-child" aria-hidden="true"></span></span>
                 <span class="child-menu-btn__name">${escapeHtml(childName)}</span>
                 <span class="child-menu-btn__arrow">▼</span>
             </button>

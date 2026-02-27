@@ -36,7 +36,6 @@ export function triggerCoinBurst(anchor = '.header__balance') {
         coin.className = 'coin-burst__coin';
         coin.style.setProperty('--burst-x', `${vector.x}px`);
         coin.style.setProperty('--burst-y', `${vector.y}px`);
-        coin.textContent = '🪙';
         burst.appendChild(coin);
     });
 

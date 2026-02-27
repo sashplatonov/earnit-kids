@@ -41,7 +41,7 @@ function filterHistoryByChild(history, childId) {
 }
 
 function formatCoins(value) {
-    return `${value.toLocaleString('ru-RU')} 🪙`;
+    return `${value.toLocaleString('ru-RU')} мон.`;
 }
 
 function getActiveBalance(state) {
@@ -67,7 +67,7 @@ function renderTodayTask(task) {
         <div class="today-task">
             <div class="today-task__title">${escapeHtml(task.name)}</div>
             <div class="today-task__meta">
-                <span>${task.coins || 0} 🪙</span>
+                <span>${task.coins || 0} мон.</span>
                 ${periodMarkup}
             </div>
         </div>
@@ -271,8 +271,8 @@ export function renderProgressUI(state) {
     const weekStats = getWeeklyStats(filteredHistory);
     animateNumberText('progress-week-earned-value', weekStats.earned, value => formatCoins(Math.round(value)));
     animateNumberText('progress-week-spent-value', weekStats.spent, value => formatCoins(Math.round(value)));
-    updateElementText('progress-week-earned-goal', `Цель: ${WEEKLY_EARN_GOAL} 🪙`);
-    updateElementText('progress-week-spent-note', `Не больше ${WEEKLY_SPEND_GOAL} 🪙`);
+    updateElementText('progress-week-earned-goal', `Цель: ${WEEKLY_EARN_GOAL} мон.`);
+    updateElementText('progress-week-spent-note', `Не больше ${WEEKLY_SPEND_GOAL} мон.`);
     updateBar('progress-week-earned-bar', (weekStats.earned / WEEKLY_EARN_GOAL) * 100);
     updateBar('progress-week-spent-bar', (weekStats.spent / WEEKLY_SPEND_GOAL) * 100);
 

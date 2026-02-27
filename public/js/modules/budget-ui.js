@@ -58,7 +58,7 @@ function updateHeaderEarnedDisplay(earnedToday, dailyLimit) {
 
     if (countEl) countEl.textContent = earnedToday;
     if (limitNoteEl) {
-        limitNoteEl.textContent = dailyLimit > 0 ? `Лимит: ${dailyLimit}` : 'Лимит: ∞';
+        limitNoteEl.textContent = dailyLimit > 0 ? `из ${dailyLimit}` : 'без лимита';
     }
 
     if (!track) return;
@@ -127,7 +127,7 @@ function updateDailyTexts(dailyStats, dailyLimit) {
         return;
     }
     const remaining = Math.max(0, dailyLimit - dailyStats.earnedToday);
-    remainingEl.textContent = `Осталось: ${remaining} 🪙`;
+    remainingEl.textContent = `Осталось: ${remaining} мон.`;
     remainingEl.style.color = remaining === 0 ? '#ff6b6b' : 'rgba(255,255,255,0.7)';
 }
 

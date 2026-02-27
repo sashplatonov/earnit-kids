@@ -15,6 +15,7 @@ import { initializeFromServer, refreshFromServerAndRender, setupCommonControls }
 import { initializeWebSocket } from './websocket.js';
 import { setupPwaInstall } from './pwa-install.js';
 import { setupAgeThemeControls, useChildTheme } from './age-theme.js';
+import { setupMobileViewportBudgets, syncMobileShellMetrics } from './mobile-layout.js';
 
 async function loadAbout() {
     const container = document.getElementById('about-content');
@@ -154,6 +155,7 @@ function showSkeletons() {
 }
 
 async function initializeApp() {
+    setupMobileViewportBudgets();
     showSkeletons();
     setupPwaInstall();
 
@@ -174,6 +176,7 @@ async function initializeApp() {
         console.error('App init error:', err);
     } finally {
         document.querySelector('.nav')?.classList.remove('nav--pending');
+        requestAnimationFrame(syncMobileShellMetrics);
     }
 }
 

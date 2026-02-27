@@ -28,6 +28,7 @@ function getEntryDetails(entry, state) {
 
 function renderHistoryItem(entry, state) {
     const isEarn = entry.type === 'earn';
+    const entryIcon = isEarn ? 'icon-coin-stack' : 'icon-shop';
     const details = getEntryDetails(entry, state);
     const formattedDate = new Date(entry.date).toLocaleDateString('ru-RU', {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -41,7 +42,7 @@ function renderHistoryItem(entry, state) {
 
     return `
         <div class="history-item history-item--${entry.type}">
-            <div class="history-item__icon">${isEarn ? '💰' : '🛍️'}</div>
+            <div class="history-item__icon"><span class="gamified-icon ${entryIcon}" aria-hidden="true"></span></div>
             <div class="history-item__content">
                 <div class="history-item__desc" style="display:flex;flex-wrap:wrap;align-items:center;">
                     ${escapeHtml(details.name)}${groupTag}${moneyTag}
@@ -49,21 +50,21 @@ function renderHistoryItem(entry, state) {
                 ${commentDiv}
                 <div class="history-item__date" style="margin-top:0.3em;">${formattedDate}</div>
             </div>
-            <div class="history-item__amount">${isEarn ? '+' : '-'}${entry.amount} 🪙</div>
+            <div class="history-item__amount">${isEarn ? '+' : '-'}${entry.amount}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             <div class="card__actions" style="margin-left: 10px;">
-                 <button class="btn btn--danger btn--small" onclick="window.app.deleteHistoryItem(${entry.id})">🗑️</button>
+                 <button class="btn btn--danger btn--small" onclick="window.app.deleteHistoryItem(${entry.id})">Удалить</button>
             </div>
         </div>
     `;
 }
 
 function renderMonthHeader(monthName, stats) {
-    const moneySpent = stats.moneySpent > 0 ? ` | <span class="money">-${stats.moneySpent.toLocaleString()} 💸</span>` : '';
+    const moneySpent = stats.moneySpent > 0 ? ` | <span class="money">-${stats.moneySpent.toLocaleString()} руб.</span>` : '';
     return `
         <div class="history-month-header">
             <div class="month-title">${monthName}</div>
             <div class="month-stats">
-                <span class="earn">+${stats.earned} 🪙</span> | <span class="spend">-${stats.spent} 🪙</span>${moneySpent}
+                <span class="earn">+${stats.earned} мон.</span> | <span class="spend">-${stats.spent} мон.</span>${moneySpent}
             </div>
         </div>
     `;

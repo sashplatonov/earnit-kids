@@ -53,7 +53,7 @@ function renderShopBadges(item) {
     }
 
     if (item.money_limit) {
-        badges.push(renderBadge(`Lim ${item.money_limit} 🪙`, 'money'));
+        badges.push(renderBadge(`Лимит ${item.money_limit} мон.`, 'money'));
     }
 
     if (!badges.length) return '';
@@ -106,8 +106,8 @@ function renderShopStatus(canAfford) {
 function getShopActions(item, canAfford, state) {
     const disabledAttrs = canAfford ? '' : 'disabled aria-disabled="true"';
     return `
-        <button type="button" class="btn btn--primary btn--small" onclick="window.app.buyItem(${item.id})" ${disabledAttrs}>🛒 ${canAfford ? 'Купить' : 'Не хватает'}</button>
-        ${state.isAdmin ? `<button type="button" class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">✏️ Изменить</button>` : ''}
+        <button type="button" class="btn btn--primary btn--small" onclick="window.app.buyItem(${item.id})" ${disabledAttrs}>${canAfford ? 'Купить' : 'Не хватает'}</button>
+        ${state.isAdmin ? `<button type="button" class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">Изменить</button>` : ''}
     `;
 }
 
@@ -120,7 +120,7 @@ function splitShopItemsByPins(items) {
 
 function renderPinnedShopSections({ renderQueue, quickItems, state }) {
     if (quickItems.length) {
-        renderQueue.push('<div class="group-header">⚡ Быстрый</div>');
+        renderQueue.push('<div class="group-header">Быстрый</div>');
         quickItems.sort((a, b) => a.price - b.price)
             .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
     }
@@ -142,7 +142,7 @@ function renderShopItemCard(item, state) {
     const highlightClass = isQuick ? ' card--highlight' : '';
     const quickActions = `
         <div class="card__quick-actions">
-            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isQuick ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('shop', ${item.id}, this)">${isQuick ? '⚡ В быстром' : '⚡ В быстрый'}</button>
+            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isQuick ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('shop', ${item.id}, this)">${isQuick ? 'В быстром' : 'В быстрый'}</button>
         </div>
     `;
     return `
@@ -153,7 +153,7 @@ function renderShopItemCard(item, state) {
                     <h3 class="card__title">${escapeHtml(item.name)}</h3>
                     ${renderShopStatus(canAfford)}
                 </div>
-                <div class="card__coins"><span>${item.price}</span><span>🪙</span></div>
+                <div class="card__coins"><span>${item.price}</span><span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             </div>
             ${item.comment ? `<p class="card__comment">${escapeHtml(item.comment)}</p>` : ''}
             ${meta}

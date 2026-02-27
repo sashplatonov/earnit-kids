@@ -29,5 +29,5 @@ export function adminAwardCoins() {
     });
     scheduleSave();
     renderAll();
-    showMobileEventNotification(`${amount > 0 ? 'Начислено' : 'Списано'}: ${Math.abs(amount)} 🪙`, 'success', 'Balance updated');
+    showMobileEventNotification(`${amount > 0 ? 'Начислено' : 'Списано'}: ${Math.abs(amount)} мон.`, 'success', 'Balance updated');
 }

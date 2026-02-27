@@ -62,21 +62,21 @@ function detectBalanceMessages(previous, current) {
             const delta = Number(child.balance || 0) - Number(prev.balance || 0);
             if (delta === 0) return acc;
 
-            acc.push(`${child.name}: ${delta > 0 ? '+' : ''}${delta} 🪙`);
+            acc.push(`${child.name}: ${delta > 0 ? '+' : ''}${delta} мон.`);
             return acc;
         }, []);
     }
 
     const delta = Number(current.balance || 0) - Number(previous.balance || 0);
     if (delta === 0) return [];
-    return [`${delta > 0 ? '+' : ''}${delta} 🪙`];
+    return [`${delta > 0 ? '+' : ''}${delta} мон.`];
 }
 
 function detectRequestCreated(previous, current) {
     const beforePending = pendingIds(previous?.requests || []);
     return (current?.requests || [])
         .filter((item) => item.status === 'pending' && !beforePending.has(item.id))
-        .map((item) => `${item.taskName}: ${item.coins} 🪙`);
+        .map((item) => `${item.taskName}: ${item.coins} мон.`);
 }
 
 function findMatchingHistory(request, newHistory) {
@@ -107,7 +107,7 @@ function detectRequestApproved(previous, current) {
 
     return removedPending
         .filter(request => findMatchingHistory(request, newHistory))
-        .map(item => `${item.taskName}: ${item.coins} 🪙`);
+        .map(item => `${item.taskName}: ${item.coins} мон.`);
 }
 
 function emitNotifications(previous, current) {
