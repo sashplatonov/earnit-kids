@@ -55,7 +55,11 @@
 }
 
 .header__icon {
-    font-size: 2rem;
+    width: 2.4rem;
+    height: 2.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     animation: coin-bounce 2s ease-in-out infinite;
 }
 
@@ -418,6 +422,11 @@
 .nav__btn-icon {
     font-size: 1rem;
     line-height: 1;
+    min-width: 1.9rem;
+    min-height: 1.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav__btn-label {
@@ -462,6 +471,13 @@
 .nav__fab-icon {
     font-size: 1.15rem;
     line-height: 1;
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
+.nav__fab .gamified-icon {
+    width: 1.4rem;
+    height: 1.4rem;
 }
 
 .nav__fab-label {

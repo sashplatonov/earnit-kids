@@ -8,7 +8,9 @@
     <!-- Статистика бюджета -->
     <div class="budget-stats" id="budget-stats">
         <div class="stat-card">
-            <div class="stat-card__icon">💵</div>
+            <div class="stat-card__icon">
+                <span class="gamified-icon icon-wallet" aria-hidden="true"></span>
+            </div>
             <div class="stat-card__content">
                 <div class="stat-card__value">
                     <span id="money-spent">0</span> / <span id="money-limit">10,000</span>
@@ -22,7 +24,9 @@
         </div>
 
         <div class="stat-card">
-            <div class="stat-card__icon">🪙</div>
+            <div class="stat-card__icon">
+                <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>
+            </div>
             <div class="stat-card__content">
                 <div class="stat-card__value">
                     <div class="stat-card__value-head">
@@ -40,7 +44,9 @@
         </div>
 
         <div class="stat-card">
-            <div class="stat-card__icon" id="large-icon">⬜</div>
+            <div class="stat-card__icon" id="large-icon">
+                <span class="gamified-icon icon-empty" aria-hidden="true"></span>
+            </div>
             <div class="stat-card__content">
                 <div class="stat-card__value" id="large-purchase">Нет</div>
                 <div class="stat-card__label">Крупная покупка месяца</div>
@@ -52,7 +58,9 @@
         <!-- Записи истории -->
     </div>
     <div class="empty-state" id="history-empty">
-        <span class="empty-state__icon">📊</span>
+        <span class="empty-state__icon">
+            <span class="gamified-icon icon-empty" aria-hidden="true"></span>
+        </span>
         <p class="empty-state__title">История пока пуста</p>
         <p class="empty-state__hint">Выполните или подтвердите первое действие — и запись появится тут.</p>
         <div class="empty-state__actions">

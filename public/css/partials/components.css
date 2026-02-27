@@ -182,6 +182,19 @@ p,
     min-height: 100%;
 }
 
+.card__icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card__icon .gamified-icon {
+    width: 2rem;
+    height: 2rem;
+}
+
 #settings-cards .card {
     display: flex;
     flex-direction: column;
@@ -265,6 +278,37 @@ p,
     color: var(--color-text);
     white-space: nowrap;
 }
+
+.gamified-icon {
+    width: 1.9rem;
+    height: 1.9rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gamified-icon.icon-calendar { background-image: url('/img/gamified/icon-calendar.svg'); }
+.gamified-icon.icon-tasks { background-image: url('/img/gamified/icon-tasks.svg'); }
+.gamified-icon.icon-shop { background-image: url('/img/gamified/icon-shop.svg'); }
+.gamified-icon.icon-trophy { background-image: url('/img/gamified/icon-trophy.svg'); }
+.gamified-icon.icon-eye { background-image: url('/img/gamified/icon-eye.svg'); }
+.gamified-icon.icon-envelope { background-image: url('/img/gamified/icon-envelope.svg'); }
+.gamified-icon.icon-dots { background-image: url('/img/gamified/icon-dots.svg'); }
+.gamified-icon.icon-coin-stack { background-image: url('/img/gamified/icon-coin-stack.svg'); }
+.gamified-icon.icon-chart { background-image: url('/img/gamified/icon-chart.svg'); }
+.gamified-icon.icon-wallet { background-image: url('/img/gamified/icon-wallet.svg'); }
+.gamified-icon.icon-magnifier { background-image: url('/img/gamified/icon-magnifier.svg'); }
+.gamified-icon.icon-star { background-image: url('/img/gamified/icon-star.svg'); }
+.gamified-icon.icon-palette { background-image: url('/img/gamified/icon-palette.svg'); }
+.gamified-icon.icon-key { background-image: url('/img/gamified/icon-key.svg'); }
+.gamified-icon.icon-link { background-image: url('/img/gamified/icon-link.svg'); }
+.gamified-icon.icon-child { background-image: url('/img/gamified/icon-child.svg'); }
+.gamified-icon.icon-empty { background-image: url('/img/gamified/icon-empty.svg'); }
+.gamified-icon.icon-profile { background-image: url('/img/gamified/icon-profile.svg'); }
 
 .card__badge--group {
     border-color: rgba(59, 130, 246, 0.35);
@@ -412,6 +456,12 @@ p,
 .empty-state__icon {
     font-size: 3rem;
     opacity: 0.6;
+}
+
+.empty-state__icon .gamified-icon {
+    font-size: 0;
+    width: 2.8rem;
+    height: 2.8rem;
 }
 
 .empty-state__title {
@@ -806,6 +856,12 @@ dialog.modal[open]::backdrop {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+}
+
+.stat-card__icon .gamified-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    font-size: 0;
 }
 
 .stat-card__content {
