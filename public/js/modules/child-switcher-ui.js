@@ -87,6 +87,15 @@ const CHILD_SWITCHER_STYLE = `
             background: rgba(0,0,0,0.2);
             padding: 2px 8px;
             border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        .child-menu-item__balance .gamified-icon,
+        .child-menu-btn__icon .gamified-icon {
+            width: 0.9rem;
+            height: 0.9rem;
+            border-radius: 8px;
         }
         .child-menu-divider {
             height: 1px;
@@ -146,7 +155,7 @@ function buildChildRow(child, isActive, escapeHtml) {
         <div class="child-menu-item ${isActive ? 'active' : ''}" 
              onclick="window.app.switchChild(${child.id}); this.closest('.child-menu').classList.remove('active')">
             <span class="child-menu-item__name">${escapeHtml(child.name)}</span>
-            <span class="child-menu-item__balance">${child.balance} 🪙</span>
+            <span class="child-menu-item__balance">${child.balance}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></span>
         </div>
     `;
 }
@@ -223,7 +232,7 @@ export function renderChildSwitcherUI(state, escapeHtml) {
     container.innerHTML = `
         <div class="child-menu">
             <button type="button" class="child-menu-btn" data-child-toggle>
-                <span class="child-menu-btn__icon">👶</span>
+                <span class="child-menu-btn__icon"><span class="gamified-icon icon-child" aria-hidden="true"></span></span>
                 <span class="child-menu-btn__name">${escapeHtml(childName)}</span>
                 <span class="child-menu-btn__arrow">▼</span>
             </button>

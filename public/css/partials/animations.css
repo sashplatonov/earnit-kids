@@ -79,6 +79,9 @@
     display: inline-block;
     transform: translate(-50%, -50%);
     animation: coin-burst-pop 500ms ease-out forwards;
+    width: 0.95rem;
+    height: 0.95rem;
+    background: url('/img/gamified/icon-coin-stack.svg') center / contain no-repeat;
 }
 
 @keyframes coin-burst-pop {

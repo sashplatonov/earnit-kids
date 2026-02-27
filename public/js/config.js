@@ -2,17 +2,17 @@
 const CONFIG = {
     // Currency & Budget
     MONTHLY_LIMIT: 10000,
-    CURRENCY_SYMBOL: '🪙',
+    CURRENCY_SYMBOL: 'мон.',
 
     // Limits
     MAX_DAILY_COINS: 10,
 
     // Shop
     SHOP_ITEM_TYPES: {
-        micro: { label: '🧁 Микро', value: 'micro' },
-        small: { label: '📚 Малая', value: 'small' },
-        large: { label: '💅 Крупная (1/мес)', value: 'large', limit: 1 }, // limit per month for this type
-        activity: { label: '🤝 С родителями', value: 'activity' }
+        micro: { label: 'Микро', value: 'micro' },
+        small: { label: 'Малая', value: 'small' },
+        large: { label: 'Крупная (1/мес)', value: 'large', limit: 1 }, // limit per month for this type
+        activity: { label: 'С родителями', value: 'activity' }
     },
 
     // Task Frequency Periods
@@ -29,14 +29,14 @@ const CONFIG = {
 
     // Icons
     ICONS: {
-        EARN: '💰',
-        SPEND: '🛍️',
-        REQUEST: '⏳',
-        INCOMING: '📩',
-        EMPTY_TASKS: '📋',
-        EMPTY_REQUESTS: '📭',
-        EMPTY_SHOP: '🛒',
-        EMPTY_HISTORY: '📊',
+        EARN: 'Заработано',
+        SPEND: 'Потрачено',
+        REQUEST: 'Ожидает',
+        INCOMING: 'Входящие',
+        EMPTY_TASKS: 'Нет задач',
+        EMPTY_REQUESTS: 'Нет заявок',
+        EMPTY_SHOP: 'Нет товаров',
+        EMPTY_HISTORY: 'Нет истории',
         SUCCESS: '✓',
         ERROR: '✕',
         INFO: 'ℹ'

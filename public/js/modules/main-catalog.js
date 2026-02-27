@@ -17,12 +17,12 @@ function getCatalogHtml(items, type) {
         const list = grouped[cat].sort((a, b) => (a.coins || a.price) - (b.coins || b.price)).map(t => {
             const freq = t.frequency ? ` | ${t.frequency.limit}/${t.frequency.period}` : '';
             const val = t.coins || t.price;
-            const lim = t.money_limit ? ` | Lim: ${t.money_limit}🪙` : '';
+            const lim = t.money_limit ? ` | Lim: ${t.money_limit} мон.` : '';
             return `
                 <div class="catalog-item">
                     <div class="catalog-info">
                         <span class="catalog-name">${t.name}</span>
-                        <span class="catalog-meta">${val} 🪙 | ${t.age_min}-${t.age_max} л.${freq}${lim}</span>
+                        <span class="catalog-meta">${val} мон. | ${t.age_min}-${t.age_max} л.${freq}${lim}</span>
                     </div>
                     <button class="btn-add" onclick="window.app.addCatalogItem('${type}', '${t.id}')">+</button>
                 </div>

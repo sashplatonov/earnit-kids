@@ -9,10 +9,12 @@
         </div>
         <div class="header__actions">
             <button class="btn btn--secondary btn--small header__install hidden" id="pwa-install-btn" type="button">
-                📲 Установить
+                <span class="gamified-icon icon-link" aria-hidden="true"></span>
+                <span>Установить</span>
             </button>
             <button class="btn btn--secondary btn--small header__profile" id="header-profile-btn" type="button">
-                👤 Профиль
+                <span class="gamified-icon icon-profile" aria-hidden="true"></span>
+                <span class="header__profile-label">Профиль</span>
             </button>
         </div>
     </div>
@@ -20,11 +22,14 @@
         <div class="header__install-hint hidden" id="pwa-install-ios-hint" aria-live="polite"></div>
         <div class="header__balance" tabindex="0" role="button" aria-label="Открыть историю">
             <div class="header__balance-main">
-                <span class="balance__coin">🪙</span>
+                <span class="balance__coin gamified-icon icon-coin-stack" aria-hidden="true"></span>
                 <span class="balance__value" id="balance">0</span>
             </div>
             <div class="header__earned" aria-live="polite">
-                <span class="header__earned-main">🎯 <span id="header-earned-count">0</span></span>
+                <span class="header__earned-main">
+                    <span class="gamified-icon icon-trophy" aria-hidden="true"></span>
+                    <span id="header-earned-count">0</span>
+                </span>
                 <span class="header__earned-limit" id="header-earned-limit-note">Лимит: ∞</span>
             </div>
             <span class="header__balance-delta hidden" id="header-balance-delta" aria-live="polite"></span>

@@ -104,6 +104,10 @@
 }
 
 .header__profile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
     white-space: nowrap;
 }
 
@@ -175,6 +179,9 @@
 }
 
 .header__earned-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.92);
     font-weight: 700;
@@ -229,7 +236,8 @@
 }
 
 .balance__coin {
-    font-size: 1.1rem;
+    width: 1.15rem;
+    height: 1.15rem;
     animation: coin-rotate 5s linear infinite;
     transform-origin: center;
     will-change: transform;
@@ -387,6 +395,16 @@
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav__dropdown-item .gamified-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 10px;
+    flex: 0 0 auto;
 }
 
 .nav__dropdown-item:hover {

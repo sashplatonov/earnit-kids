@@ -19,14 +19,14 @@ function buildSoftChallenge(state, friends) {
     const rival = sorted[0];
     const delta = rival.balance - ownBalance;
     const actionText = delta > 0
-        ? `Сделай 2 задания и сократи разрыв на ${Math.min(delta, 20)} 🪙.`
+        ? `Сделай 2 задания и сократи разрыв на ${Math.min(delta, 20)} мон.`
         : `Удержи темп: сделай 1 задание сегодня и останься впереди.`;
     const statusText = delta > 0
-        ? `До ${escapeHtml(rival.nickname)} осталось ${delta} 🪙.`
-        : `Ты впереди ${escapeHtml(rival.nickname)} на ${Math.abs(delta)} 🪙.`;
+        ? `До ${escapeHtml(rival.nickname)} осталось ${delta} мон.`
+        : `Ты впереди ${escapeHtml(rival.nickname)} на ${Math.abs(delta)} мон.`;
 
     challenge.innerHTML = `
-        <div class="friends-challenge__title">🏁 Дружеский челлендж недели</div>
+        <div class="friends-challenge__title">Дружеский челлендж недели</div>
         <div class="friends-challenge__status">${statusText}</div>
         <div class="friends-challenge__hint">${actionText}</div>
     `;
@@ -56,7 +56,7 @@ export function renderFriendsUI(state) {
         <div class="friend-item">
             <div class="friend-info">
                 <span class="friend-nickname">${escapeHtml(friend.nickname)}</span>
-                <span class="friend-balance">💰 ${friend.balance} 🪙</span>
+                <span class="friend-balance">${friend.balance} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></span>
             </div>
             <div class="friend-actions"></div>
         </div>

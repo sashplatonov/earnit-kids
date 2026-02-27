@@ -147,14 +147,19 @@ html {
         display: none;
     }
 
+    .nav__more .nav__btn-label {
+        display: none;
+    }
+
     .nav__more {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-height: 52px;
-        min-width: 64px;
+        min-width: 52px;
         height: 52px;
-        padding: 0 0.5rem;
+        padding: 0;
+        width: 52px;
         border-radius: var(--radius-sm);
         font-size: 0.8rem;
         line-height: 1;
@@ -292,14 +297,17 @@ html {
         min-height: 36px;
         height: 36px;
         padding: 0;
-        font-size: 0;
+        font-size: 0.85rem;
         border-radius: 10px;
     }
 
-    .header__profile::before {
-        content: '👤';
-        font-size: 0.95rem;
-        line-height: 1;
+    .header__profile .header__profile-label {
+        display: none;
+    }
+
+    .header__profile .gamified-icon {
+        width: 1rem;
+        height: 1rem;
     }
 
     .balance__value {

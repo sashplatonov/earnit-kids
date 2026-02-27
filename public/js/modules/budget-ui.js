@@ -127,7 +127,7 @@ function updateDailyTexts(dailyStats, dailyLimit) {
         return;
     }
     const remaining = Math.max(0, dailyLimit - dailyStats.earnedToday);
-    remainingEl.textContent = `Осталось: ${remaining} 🪙`;
+    remainingEl.textContent = `Осталось: ${remaining} мон.`;
     remainingEl.style.color = remaining === 0 ? '#ff6b6b' : 'rgba(255,255,255,0.7)';
 }
 

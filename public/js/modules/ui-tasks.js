@@ -79,7 +79,7 @@ function getTaskActions(task, isAdmin) {
     if (isAdmin) {
         return `
             <button type="button" class="btn btn--success btn--small" onclick="window.app.earnCoins(${task.id})">✓ Начислить</button>
-            <button type="button" class="btn btn--secondary btn--small" onclick="window.app.editTask(${task.id})">✏️ Изменить</button>
+            <button type="button" class="btn btn--secondary btn--small" onclick="window.app.editTask(${task.id})">Изменить</button>
         `;
     }
     return `<button type="button" class="btn btn--primary btn--small" onclick="window.app.requestCoins(${task.id})">✋ Выполнено</button>`;
@@ -92,7 +92,7 @@ function renderTaskCard(task, isAdmin) {
     const highlightClass = isBookmarked ? ' card--highlight' : '';
     const quickActions = `
         <div class="card__quick-actions">
-            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isBookmarked ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('task', ${task.id}, this)">${isBookmarked ? '⭐ В быстрых' : '☆ В быстрые'}</button>
+            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isBookmarked ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('task', ${task.id}, this)">${isBookmarked ? 'В быстрых' : 'В быстрые'}</button>
         </div>
     `;
     return `
@@ -100,7 +100,7 @@ function renderTaskCard(task, isAdmin) {
             ${badgeRow}
             <div class="card__header">
                 <h3 class="card__title">${escapeHtml(task.name)}</h3>
-                <div class="card__coins"><span>${task.coins}</span><span>🪙</span></div>
+                <div class="card__coins"><span>${task.coins}</span><span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             </div>
             ${task.comment ? `<p class="card__comment">${escapeHtml(task.comment)}</p>` : ''}
             ${metaRow}
@@ -120,7 +120,7 @@ function splitTasksByQuick(tasks) {
 function buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin }) {
     const renderQueue = [];
     if (quickTasks.length) {
-        renderQueue.push('<div class="group-header">⚡ Быстрые</div>');
+        renderQueue.push('<div class="group-header">Быстрые</div>');
         quickTasks.sort((a, b) => a.coins - b.coins)
             .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
     }

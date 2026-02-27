@@ -309,6 +309,35 @@ p,
 .gamified-icon.icon-child { background-image: url('/img/gamified/icon-child.svg'); }
 .gamified-icon.icon-empty { background-image: url('/img/gamified/icon-empty.svg'); }
 .gamified-icon.icon-profile { background-image: url('/img/gamified/icon-profile.svg'); }
+.gamified-icon.icon-logout { background-image: url('/img/gamified/icon-logout.svg'); }
+.gamified-icon.icon-settings-menu { background-image: url('/img/gamified/icon-settings-menu.svg'); }
+.gamified-icon.icon-child-link-menu { background-image: url('/img/gamified/icon-child-link-menu.svg'); }
+.gamified-icon.icon-history-menu { background-image: url('/img/gamified/icon-history-menu.svg'); }
+.gamified-icon.icon-rules-menu { background-image: url('/img/gamified/icon-rules-menu.svg'); }
+
+.icon-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.icon-label .gamified-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 8px;
+}
+
+.coin-unit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.coin-unit .gamified-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 8px;
+}
 
 .card__badge--group {
     border-color: rgba(59, 130, 246, 0.35);
@@ -380,6 +409,12 @@ p,
     font-size: var(--text-lg);
     min-width: 70px;
     flex-shrink: 0;
+}
+
+.card__coins .gamified-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 8px;
 }
 
 .card__comment {
@@ -526,7 +561,6 @@ p,
 }
 
 .history-item__icon {
-    font-size: 1.5rem;
     width: 40px;
     height: 40px;
     display: flex;
@@ -534,6 +568,12 @@ p,
     justify-content: center;
     border-radius: 50%;
     flex-shrink: 0;
+}
+
+.history-item__icon .gamified-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 10px;
 }
 
 .history-item--earn .history-item__icon {
@@ -911,7 +951,8 @@ dialog.modal[open]::backdrop {
 }
 
 .stat-card__value-unit {
-    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
 }
 
 .stat-card__value-note {
@@ -2016,6 +2057,9 @@ dialog.modal[open]::backdrop {
 .recommendation-card__coins {
     font-weight: 800;
     color: var(--color-success);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 /* Pull-to-refresh safe inset */
@@ -2071,6 +2115,9 @@ dialog.modal[open]::backdrop {
 .friend-balance {
     font-size: 0.85rem;
     color: var(--color-warning);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
 }
 
 .friends-challenge {

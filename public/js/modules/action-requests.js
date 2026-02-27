@@ -70,7 +70,7 @@ export function approveRequest(reqId) {
     });
     finalizeRequest(req, 'approved');
     renderAll();
-    showMobileEventNotification(`Заявка подтверждена: +${req.coins} 🪙`, 'success', 'Заявка подтверждена');
+    showMobileEventNotification(`Заявка подтверждена: +${req.coins} мон.`, 'success', 'Заявка подтверждена');
     triggerCoinBurst();
 }
 

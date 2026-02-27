@@ -73,7 +73,7 @@ function showChildUpdateForAdmin(pendingDelta) {
         showToast(`Новая заявка: +${pendingDelta}`, 'success');
         return;
     }
-    showToast('Данные обновлены ребенком 🔄', 'info');
+    showToast('Данные обновлены ребенком', 'info');
 }
 
 async function handleDataUpdatedMessage(data) {
@@ -83,7 +83,7 @@ async function handleDataUpdatedMessage(data) {
     const pendingDelta = afterPending - beforePending;
 
     if (data.by === 'admin' && state.role === 'child') {
-        showToast('Данные обновлены родителем 🔄', 'info');
+        showToast('Данные обновлены родителем', 'info');
         return;
     }
 

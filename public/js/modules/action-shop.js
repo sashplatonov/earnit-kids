@@ -51,8 +51,8 @@ export function buyItem(itemId) {
     if (err) return showToast(err, 'error');
 
     if (state.isAdmin) {
-        showConfirm('Подтвердите покупку', `Купить "${item.name}" за ${item.price} 🪙?`, () => applyPurchase(item, actingId, mLimit));
+        showConfirm('Подтвердите покупку', `Купить "${item.name}" за ${item.price} мон.?`, () => applyPurchase(item, actingId, mLimit));
     } else {
-        showConfirm('Отправить заявку?', `"${item.name}" за ${item.price} 🪙`, () => sendPurchaseRequest(item, actingId, mLimit));
+        showConfirm('Отправить заявку?', `"${item.name}" за ${item.price} мон.`, () => sendPurchaseRequest(item, actingId, mLimit));
     }
 }

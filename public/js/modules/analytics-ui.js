@@ -88,28 +88,28 @@ function updateSummaryUI(summary, comparison) {
     const netEl = document.getElementById('stats-net');
 
     if (earnedEl) {
-        earnedEl.innerHTML = `${summary.totalEarned} 🪙`;
+        earnedEl.textContent = `${summary.totalEarned} мон.`;
         if (comparison) {
             addComparisonLabel(earnedEl, { current: summary.totalEarned, previous: comparison.totalEarned });
         }
     }
 
     if (spentEl) {
-        spentEl.innerHTML = `${summary.totalSpent} 🪙`;
+        spentEl.textContent = `${summary.totalSpent} мон.`;
         if (comparison) {
             addComparisonLabel(spentEl, { current: summary.totalSpent, previous: comparison.totalSpent, reverse: true });
         }
     }
 
     if (netEl) {
-        netEl.textContent = `${summary.netChange} 🪙`;
+        netEl.textContent = `${summary.netChange} мон.`;
         netEl.className = 'stat-card__value ' + (summary.netChange >= 0 ? 'earn' : 'spend');
     }
 
     const tTotal = document.getElementById('tasks-total-coins');
     const iTotal = document.getElementById('items-total-coins');
-    if (tTotal) tTotal.textContent = `Всего: ${summary.totalEarned} 🪙`;
-    if (iTotal) iTotal.textContent = `Всего: ${summary.totalSpent} 🪙`;
+    if (tTotal) tTotal.textContent = `Всего: ${summary.totalEarned} мон.`;
+    if (iTotal) iTotal.textContent = `Всего: ${summary.totalSpent} мон.`;
 }
 
 function addComparisonLabel(parent, { current, previous, reverse = false }) {
@@ -140,7 +140,7 @@ function renderAllCharts(tasks, items) {
         data: [...tasks].sort((a, b) => b.count - a.count),
         dataKey: 'count', label: 'Количество раз',
         bgColor: 'rgba(56, 189, 248, 0.5)', borderColor: '#38bdf8',
-        tooltip: (i) => `Сумма: ${i.coins} 🪙`
+        tooltip: (i) => `Сумма: ${i.coins} мон.`
     });
 
     renderGenericChart('items-coins-chart', {
@@ -153,7 +153,7 @@ function renderAllCharts(tasks, items) {
         data: [...items].sort((a, b) => b.count - a.count),
         dataKey: 'count', label: 'Количество раз',
         bgColor: 'rgba(251, 146, 60, 0.5)', borderColor: '#fb923c',
-        tooltip: (i) => `Сумма: ${i.coins} 🪙`
+        tooltip: (i) => `Сумма: ${i.coins} мон.`
     });
 }
 
@@ -287,7 +287,7 @@ function renderRecommendations(recommendations) {
         card.className = 'recommendation-card';
         card.innerHTML = `
             <div class="recommendation-card__title">${rec.name}</div>
-            <div class="recommendation-card__coins">+${rec.coins} 🪙</div>
+            <div class="recommendation-card__coins">+${rec.coins}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             <div class="recommendation-card__reason">${rec.reason}</div>
         `;
         container.appendChild(card);

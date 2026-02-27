@@ -60,5 +60,5 @@ test('request UI uses different icons for task and purchase request types', () =
     const sourcePath = path.join(process.cwd(), 'public/js/modules/ui-requests.js');
     const source = fs.readFileSync(sourcePath, 'utf8');
 
-    assert.match(source, /isPurchaseRequest\(req\)\s*\?\s*'🛒'\s*:\s*'📝'/);
+    assert.match(source, /isPurchaseRequest\(req\)[\s\S]*icon-shop[\s\S]*icon-tasks/);
 });
