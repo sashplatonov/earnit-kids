@@ -33,12 +33,32 @@ export function updateBalanceUI() {
     if (balanceEl) {
         const currentVal = parseInt(balanceEl.textContent || '0', 10);
         if (currentVal !== displayBalance) {
-            animateValue(balanceEl, { start: currentVal, end: displayBalance }, 800);
+            animateValue(balanceEl, { start: currentVal, end: displayBalance }, 260);
+            showBalanceDelta(displayBalance - currentVal);
         } else {
             balanceEl.textContent = displayBalance;
         }
     }
     updateBudgetStatsUI(state, CONFIG, getActiveChildId());
+}
+
+function showBalanceDelta(delta) {
+    if (!Number.isFinite(delta) || delta === 0) return;
+    const deltaEl = document.getElementById('header-balance-delta');
+    if (!deltaEl) return;
+
+    deltaEl.classList.remove('hidden', 'is-visible', 'is-negative');
+    deltaEl.textContent = `${delta > 0 ? '+' : ''}${delta}`;
+    if (delta < 0) deltaEl.classList.add('is-negative');
+
+    // Reflow to restart the same animation every update.
+    void deltaEl.offsetWidth;
+    deltaEl.classList.add('is-visible');
+
+    window.setTimeout(() => {
+        deltaEl.classList.remove('is-visible');
+        deltaEl.classList.add('hidden');
+    }, 800);
 }
 
 function animateValue(obj, range, duration) {

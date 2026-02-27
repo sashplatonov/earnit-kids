@@ -186,6 +186,8 @@ export function setupTabControls() {
     attachMoreDropdownHandlers({ moreBtn, moreDropdown, resetMoreMenuState, activate });
 
     document.querySelector('.header__balance')?.addEventListener('click', () => activate('history'));
+    document.getElementById('header-profile-btn')?.addEventListener('click', () => activate('settings'));
+    document.getElementById('nav-fab-child')?.addEventListener('click', () => activate('requests'));
     document.getElementById('analytics-timeframe-group')?.addEventListener('click', (e) => {
         const btn = e.target.closest('.tab-btn');
         if (btn) {

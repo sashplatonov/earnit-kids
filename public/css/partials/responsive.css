@@ -25,25 +25,29 @@ html {
 
     /* Mobile Navigation (Bottom Tab Bar) */
     .nav {
+        --nav-mobile-height: 66px;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        padding: 0.5rem;
-        padding-bottom: calc(0.5rem + var(--safe-bottom));
+        height: calc(var(--mobile-nav-height, var(--nav-mobile-height)) + var(--safe-bottom));
+        min-height: calc(var(--mobile-nav-height, var(--nav-mobile-height)) + var(--safe-bottom));
+        max-height: calc(var(--mobile-nav-height, var(--nav-mobile-height)) + var(--safe-bottom));
+        padding: 0.35rem 0.45rem;
+        padding-bottom: calc(0.35rem + var(--safe-bottom));
         background: var(--color-bg-light);
         border-top: 1px solid var(--color-bg-card);
         border-bottom: none;
         z-index: 2200;
         overflow: visible;
-        gap: var(--touch-inline-gap);
+        gap: 0.35rem;
     }
 
     .nav__primary {
         display: flex;
         flex-wrap: nowrap;
         overflow: visible;
-        gap: var(--touch-inline-gap);
+        gap: 0.35rem;
         width: 100%;
         max-width: 100%;
         justify-content: stretch;
@@ -57,24 +61,26 @@ html {
         justify-content: stretch;
     }
 
-    .nav__group--child {
-        flex-wrap: nowrap;
-    }
-
-    .nav__group--parent {
-        flex-wrap: nowrap;
-        justify-content: stretch;
-    }
-
     .nav__child-switcher {
-        flex: 0 1 36%;
-        max-width: 36%;
-        min-width: 120px;
+        flex: 0 1 34%;
+        max-width: 34%;
+        min-width: 108px;
         margin-bottom: 0;
     }
 
     .nav__more-wrapper {
-        flex: 0 0 var(--touch-target-height);
+        flex: 0 0 64px;
+    }
+
+    .nav__fab {
+        width: 52px;
+        height: 52px;
+        flex: 0 0 52px;
+        margin-left: 0;
+    }
+
+    .nav__fab-label {
+        display: none;
     }
 
     /* Parent mobile layout: keep all controls in a single row */
@@ -97,7 +103,7 @@ html {
 
     #child-switcher-container:not(.hidden) ~ .nav__group--parent ~ .nav__more-wrapper {
         order: 2;
-        flex: 0 0 var(--touch-target-height);
+        flex: 0 0 64px;
         margin-left: 0;
     }
 
@@ -108,18 +114,32 @@ html {
     }
 
     .nav__btn {
-        display: block;
-        font-size: 0.82rem;
-        padding: 0.5rem 0.45rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        font-size: 0.8rem;
+        padding: 0.45rem 0.35rem;
         border-radius: var(--radius-sm);
-        text-align: left;
+        text-align: center;
         flex: 1 1 calc(25% - 0.35rem);
         min-width: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        line-height: 1.1;
-        min-height: var(--touch-target-height);
+        line-height: 1.05;
+        min-height: 52px;
+    }
+
+    .nav__btn.active,
+    .nav__more.active {
+        transform: none;
+    }
+
+    .nav__btn-label {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     #nav-analytics {
@@ -130,12 +150,12 @@ html {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: var(--touch-target-height);
-        min-width: var(--touch-target-height);
-        height: var(--touch-target-height);
-        padding: 0 0.7rem;
+        min-height: 52px;
+        min-width: 64px;
+        height: 52px;
+        padding: 0 0.5rem;
         border-radius: var(--radius-sm);
-        font-size: 1.35rem;
+        font-size: 0.8rem;
         line-height: 1;
     }
 
@@ -164,7 +184,7 @@ html {
     /* Main padding adjustment for Mobile */
     .main {
         overflow-x: clip;
-        padding-bottom: calc(132px + var(--safe-bottom));
+        padding-bottom: calc(var(--mobile-main-bottom-offset, 132px) + var(--safe-bottom));
         background: linear-gradient(180deg, var(--color-bg-light), var(--color-bg));
         border-radius: 24px 24px 0 0;
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -195,12 +215,14 @@ html {
 
     /* Mobile Header Compact */
     .header {
-        padding: calc(0.5rem + var(--safe-top)) 1rem 0.5rem;
-        gap: 0.5rem;
+        padding: calc(0.45rem + var(--safe-top)) 0.8rem 0.45rem;
+        gap: 0.45rem;
+        max-height: var(--mobile-header-max-height, 96px);
+        overflow: hidden;
     }
 
     .header__titles h1 {
-        font-size: var(--text-base);
+        font-size: 0.95rem;
     }
 
     .header__shop-name {
@@ -208,39 +230,50 @@ html {
     }
 
     .header__child-nickname {
-        font-size: 0.85rem !important;
+        font-size: 0.78rem !important;
     }
 
     .header__balance {
-        padding: 0.5rem 0.75rem;
-        gap: 0.5rem;
+        gap: 0.65rem;
     }
 
     .header__actions {
-        align-items: stretch;
-        width: 100%;
+        align-items: center;
+        width: auto;
+        gap: 0.35rem;
+    }
+
+    .header__profile {
+        padding: 0.45rem 0.6rem;
+        font-size: 0.74rem;
     }
 
     .header__install {
-        width: 100%;
-        font-size: 0.85rem;
-        padding: 0.5rem 0.75rem;
+        width: auto;
+        font-size: 0.74rem;
+        padding: 0.45rem 0.6rem;
     }
 
     .header__install-hint {
-        max-width: 100%;
+        max-width: 45%;
+        font-size: 0.65rem;
+        padding: 0.3rem 0.45rem;
     }
 
     .balance__value {
-        font-size: 1.2rem;
+        font-size: 1.45rem;
     }
 
-    .header__balance-hint {
+    .header__earned-main {
+        font-size: 0.9rem;
+    }
+
+    .header__earned-limit {
+        font-size: 0.68rem;
+    }
+
+    .header__balance::after {
         display: none;
-    }
-
-    .header__earned {
-        min-width: 120px;
     }
 
     /* Modals - Bottom Sheet on Mobile (div & native dialog) */
@@ -383,6 +416,42 @@ html {
         margin-top: 0.2rem;
         font-size: 0.78rem !important;
         color: var(--color-text-dim);
+    }
+}
+
+@media (max-width: 360px) {
+    .nav__btn-label,
+    .nav__more .nav__btn-label {
+        display: none;
+    }
+
+    .nav__btn,
+    .nav__more {
+        position: relative;
+    }
+
+    .nav__btn:focus-visible::after,
+    .nav__btn.active::after,
+    .nav__more:focus-visible::after,
+    .nav__more.active::after {
+        content: attr(data-label);
+        position: absolute;
+        bottom: calc(100% + 0.35rem);
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.65rem;
+        line-height: 1;
+        white-space: nowrap;
+        background: rgba(15, 23, 42, 0.96);
+        color: #ffffff;
+        padding: 0.2rem 0.35rem;
+        border-radius: 999px;
+        pointer-events: none;
+    }
+
+    .nav__more {
+        min-width: 52px;
+        width: 52px;
     }
 }
 
