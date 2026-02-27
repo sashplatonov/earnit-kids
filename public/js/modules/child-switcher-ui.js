@@ -1,7 +1,7 @@
 /** @file Child Switcher Ui frontend UI module */
 const CHILD_SWITCHER_STYLE = `
     <style>
-        .child-menu { position: relative; z-index: 2100; }
+        .child-menu { position: relative; z-index: var(--layer-dropdown); }
         .child-menu-btn {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -40,7 +40,7 @@ const CHILD_SWITCHER_STYLE = `
             border-radius: 16px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             min-width: 220px;
-            z-index: 2100;
+            z-index: var(--layer-dropdown);
             overflow: hidden;
             animation: dropdownFade 0.2s ease-out;
         }

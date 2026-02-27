@@ -559,7 +559,7 @@ p,
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    z-index: var(--layer-modal);
     align-items: center;
     justify-content: center;
     padding: 1rem;
@@ -719,7 +719,7 @@ dialog.modal[open]::backdrop {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    z-index: 2000;
+    z-index: var(--layer-toast);
 }
 
 .toast {
