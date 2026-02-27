@@ -120,26 +120,24 @@ const CHILD_SWITCHER_STYLE = `
             }
 
             .child-menu-dropdown {
-                position: absolute;
+                position: fixed;
                 left: 50%;
                 right: auto;
                 transform: translateX(-50%);
                 width: min(calc(100vw - 1rem), 480px);
-                max-height: min(65vh, calc(100dvh - 120px));
-                margin-top: 8px;
+                max-height: min(65vh, calc(100dvh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px));
+                bottom: calc(var(--bottom-nav-height, 92px) + 8px);
+                margin: 0;
                 overflow-y: auto;
                 border-radius: 16px;
                 box-shadow: var(--shadow-lg);
+                z-index: calc(var(--layer-nav) + 200);
             }
 
-            .child-menu-dropdown.child-menu-dropdown--flipped {
-                bottom: calc(100% + 8px);
-                top: auto;
-            }
-
+            .child-menu-dropdown.child-menu-dropdown--flipped,
             .child-menu-dropdown:not(.child-menu-dropdown--flipped) {
-                top: calc(100% + 8px);
-                bottom: auto;
+                top: auto;
+                bottom: calc(var(--bottom-nav-height, 92px) + 8px);
             }
 
             .child-menu-item {
