@@ -130,9 +130,6 @@ function buildFamilyPayload({ email, adminPassword, token, enabled }) {
     return {
         family_id: `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`,
         email, admin_password: adminPassword,
-        child_token: crypto.randomBytes(32).toString('hex'),
-        monthly_limit: 10000,
-        child_nickname: '',
         isVerified: !enabled,
         verification_token: token
     };

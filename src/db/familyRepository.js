@@ -96,28 +96,17 @@ async function findByChildToken(token) {
 }
 
 async function create(data) {
-    const client = await getClient();
     try {
-        await client.query('BEGIN');
-        const familyResult = await client.query(
-        'INSERT INTO families (family_id, email, admin_password, is_verified, verification_token) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [data.family_id, data.email, data.admin_password, data.isVerified || false, data.verification_token]
+        const familyResult = await query(
+            'INSERT INTO families (family_id, email, admin_password, is_verified, verification_token) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [data.family_id, data.email, data.admin_password, data.isVerified || false, data.verification_token]
         );
         const family = familyResult.rows[0];
 
-        await childRepository.createChild({
-            familyDbId: family.id,
-            name: data.child_nickname || 'Child',
-            token: data.child_token,
-            monthlyLimit: data.monthly_limit || 10000
-        });
-
-        await client.query('COMMIT');
         return { success: true, familyId: data.family_id, dbId: family.id };
     } catch (err) {
-        await client.query('ROLLBACK');
         throw err;
-    } finally { client.release(); }
+    }
 }
 
 async function update(familyId, data) {
