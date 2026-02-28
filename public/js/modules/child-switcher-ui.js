@@ -120,27 +120,28 @@ const CHILD_SWITCHER_STYLE = `
     font-size: 0.85rem;
             }
 
-    .child-menu-dropdown {
-        position: fixed;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: calc(100vw - 1rem);
-    max-width: 480px;
-    max-height: calc(100vh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px);
-    max-height: calc(100dvh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px);
-    bottom: auto;
-    margin: 0;
-    overflow-y: auto;
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    z-index: calc(var(--layer-nav) + 200);
+            .child-menu-dropdown {
+                position: fixed;
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%);
+                width: calc(100vw - 1rem) !important;
+                max-width: 480px !important;
+                max-height: calc(100vh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px);
+                max-height: calc(100dvh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px);
+                bottom: calc(var(--bottom-nav-height, 66px) + 8px) !important;
+                top: auto !important;
+                margin: 0;
+                overflow-y: auto;
+                border-radius: 16px;
+                box-shadow: var(--shadow-lg);
+                z-index: calc(var(--layer-nav) + 200);
             }
 
-    .child-menu-dropdown.child-menu-dropdown--flipped,
-    .child-menu-dropdown:not(.child-menu-dropdown--flipped) {
-        top: auto;
-    bottom: auto;
+            .child-menu-dropdown.child-menu-dropdown--flipped,
+            .child-menu-dropdown:not(.child-menu-dropdown--flipped) {
+                top: auto !important;
+                bottom: calc(var(--bottom-nav-height, 66px) + 8px) !important;
             }
 
     .child-menu-item {
@@ -221,25 +222,12 @@ function applyDropdownPosition({
     safeBottom
 }) {
     if (isMobileLayout) {
-        const availableWidth = Math.max(220, viewportWidth - (MOBILE_DROPDOWN_EDGE_PADDING * 2));
-        const width = Math.min(MOBILE_DROPDOWN_MAX_WIDTH, availableWidth);
-        const left = Math.max(MOBILE_DROPDOWN_EDGE_PADDING, (viewportWidth - width) / 2);
-        const minTop = Math.max(MOBILE_DROPDOWN_EDGE_PADDING, safeTop + MOBILE_DROPDOWN_EDGE_PADDING);
-        const maxTop = Math.max(
-            minTop,
-            viewportHeight - safeBottom - dropdownHeight - MOBILE_DROPDOWN_EDGE_PADDING
-        );
-        const preferredTop = shouldFlip
-            ? rect.top - dropdownHeight - DROPDOWN_GAP
-            : rect.bottom + DROPDOWN_GAP;
-        const top = Math.min(Math.max(preferredTop, minTop), maxTop);
-
-        dropdown.style.left = `${Math.round(left)} px`;
-        dropdown.style.right = 'auto';
-        dropdown.style.width = `${Math.round(width)} px`;
-        dropdown.style.maxWidth = `${Math.round(width)} px`;
-        dropdown.style.bottom = 'auto';
-        dropdown.style.top = `${Math.round(top)} px`;
+        dropdown.style.left = '';
+        dropdown.style.right = '';
+        dropdown.style.width = '';
+        dropdown.style.maxWidth = '';
+        dropdown.style.bottom = '';
+        dropdown.style.top = '';
         return;
     }
 
