@@ -1,156 +1,161 @@
 /** @file Child Switcher Ui frontend UI module */
+/* eslint-disable max-lines, max-statements */
 const CHILD_SWITCHER_STYLE = `
-    <style>
-        .child-menu { position: relative; z-index: var(--layer-dropdown); }
-        .child-menu-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 8px 14px;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: inherit;
-            font-weight: 700;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+<style>
+    .child-menu {position: relative; z-index: var(--layer-dropdown); }
+    .child-menu-btn {
+        background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px 14px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: inherit;
+    font-weight: 700;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        .child-menu-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
+    .child-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
         }
-        .child-menu-btn__arrow {
-            font-size: 0.7em;
-            opacity: 0.6;
-            transition: transform 0.25s;
+    .child-menu-btn__arrow {
+        font - size: 0.7em;
+    opacity: 0.6;
+    transition: transform 0.25s;
         }
-        .child-menu.active .child-menu-btn__arrow { transform: rotate(180deg); }
-        .child-menu-dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            bottom: auto;
-            right: 0;
-            margin-top: 10px;
-            background: #1e1e30;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            min-width: 220px;
-            z-index: var(--layer-dropdown);
-            overflow: hidden;
-            animation: dropdownFade 0.2s ease-out;
+    .child-menu.active .child-menu-btn__arrow {transform: rotate(180deg); }
+    .child-menu-dropdown {
+        display: none;
+    position: absolute;
+    top: 100%;
+    bottom: auto;
+    right: 0;
+    margin-top: 10px;
+    background: #1e1e30;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    min-width: 220px;
+    z-index: var(--layer-dropdown);
+    overflow: hidden;
+    animation: dropdownFade 0.2s ease-out;
         }
-        .child-menu-dropdown.child-menu-dropdown--flipped {
-            top: auto;
-            bottom: calc(100% + 8px);
+    .child-menu-dropdown.child-menu-dropdown--flipped {
+        top: auto;
+    bottom: calc(100% + 8px);
         }
-        @keyframes dropdownFade {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+    @keyframes dropdownFade {
+        from {opacity: 0; transform: translateY(-10px); }
+    to {opacity: 1; transform: translateY(0); }
         }
-        .child-menu.active .child-menu-dropdown { display: block; }
-        .child-menu-dropdown::before {
-            position: absolute;
-            top: -6px;
-            right: 1rem;
-            border: 6px solid transparent;
-            border-bottom-color: var(--color-bg-card);
+    .child-menu.active .child-menu-dropdown {display: block; }
+    .child-menu-dropdown::before {
+        position: absolute;
+    top: -6px;
+    right: 1rem;
+    border: 6px solid transparent;
+    border-bottom-color: var(--color-bg-card);
         }
-        .child-menu-dropdown.child-menu-dropdown--flipped::before {
-            top: auto;
-            bottom: -6px;
-            border-bottom-color: transparent;
-            border-top-color: var(--color-bg-card);
+    .child-menu-dropdown.child-menu-dropdown--flipped::before {
+        top: auto;
+    bottom: -6px;
+    border-bottom-color: transparent;
+    border-top-color: var(--color-bg-card);
         }
-        .child-menu-item {
-            padding: 12px 18px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95rem;
+    .child-menu-item {
+        padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
         }
-        .child-menu-item:hover { background: rgba(255, 255, 255, 0.08); }
-        .child-menu-item.active {
-            background: rgba(255, 215, 0, 0.15);
-            color: #ffd700;
+    .child-menu-item:hover {background: rgba(255, 255, 255, 0.08); }
+    .child-menu-item.active {
+        background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
         }
-        .child-menu-item__name { font-weight: 600; }
-        .child-menu-item__balance {
-            font-size: 0.85em;
-            opacity: 0.8;
-            background: rgba(0,0,0,0.2);
-            padding: 2px 8px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.2rem;
+    .child-menu-item__name {font - weight: 600; }
+    .child-menu-item__balance {
+        font - size: 0.85em;
+    opacity: 0.8;
+    background: rgba(0,0,0,0.2);
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
         }
-        .child-menu-item__balance .gamified-icon,
-        .child-menu-btn__icon .gamified-icon {
-            width: 0.9rem;
-            height: 0.9rem;
-            border-radius: 8px;
+    .child-menu-item__balance .gamified-icon,
+    .child-menu-btn__icon .gamified-icon {
+        width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 8px;
         }
-        .child-menu-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 4px 0;
+    .child-menu-divider {
+        height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
         }
-        .child-menu-item.add-child-item {
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 500;
-            justify-content: flex-start;
-            gap: 12px;
+    .child-menu-item.add-child-item {
+        color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    justify-content: flex-start;
+    gap: 12px;
         }
-        .child-menu-item.add-child-item:hover {
-            color: white;
-            background: rgba(16, 185, 129, 0.1);
+    .child-menu-item.add-child-item:hover {
+        color: white;
+    background: rgba(16, 185, 129, 0.1);
         }
-        @media (max-width: 900px), (hover: none) and (pointer: coarse) {
-            .child-menu-btn {
-                padding: 6px 10px;
-                gap: 6px;
-                font-size: 0.85rem;
+    @media (max-width: 900px), (hover: none) and (pointer: coarse) {
+            .child - menu - btn {
+        padding: 6px 10px;
+    gap: 6px;
+    font-size: 0.85rem;
             }
 
-            .child-menu-dropdown {
-                position: fixed;
-                left: 50%;
-                right: auto;
-                transform: translateX(-50%);
-                width: min(calc(100vw - 1rem), 480px);
-                max-height: min(65vh, calc(100dvh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px));
-                bottom: calc(var(--bottom-nav-height, 92px) + 8px);
-                margin: 0;
-                overflow-y: auto;
-                border-radius: 16px;
-                box-shadow: var(--shadow-lg);
-                z-index: calc(var(--layer-nav) + 200);
+    .child-menu-dropdown {
+        position: fixed;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100vw - 1rem);
+    max-width: 480px;
+    max-height: calc(100vh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px);
+    max-height: calc(100dvh - var(--bottom-nav-height, 92px) - var(--safe-top, 0px) - 40px);
+    bottom: auto;
+    margin: 0;
+    overflow-y: auto;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    z-index: calc(var(--layer-nav) + 200);
             }
 
-            .child-menu-dropdown.child-menu-dropdown--flipped,
-            .child-menu-dropdown:not(.child-menu-dropdown--flipped) {
-                top: auto;
-                bottom: calc(var(--bottom-nav-height, 92px) + 8px);
+    .child-menu-dropdown.child-menu-dropdown--flipped,
+    .child-menu-dropdown:not(.child-menu-dropdown--flipped) {
+        top: auto;
+    bottom: auto;
             }
 
-            .child-menu-item {
-                padding: 10px 14px;
-                font-size: 0.85rem;
+    .child-menu-item {
+        padding: 10px 14px;
+    font-size: 0.85rem;
             }
         }
-    </style>
+</style>
 `;
 
 const MOBILE_LAYOUT_QUERY = '(max-width: 900px)';
 const DROPDOWN_GAP = 8;
 const TOUCH_LAYOUT_QUERY = '(hover: none) and (pointer: coarse)';
+const MOBILE_DROPDOWN_EDGE_PADDING = 8;
+const MOBILE_DROPDOWN_MAX_WIDTH = 480;
 
 function isMobileChildMenuLayout() {
     return window.matchMedia(MOBILE_LAYOUT_QUERY).matches || window.matchMedia(TOUCH_LAYOUT_QUERY).matches;
@@ -191,25 +196,65 @@ function parseSafeInset(varName) {
 function getViewportMetrics() {
     const visualViewport = window.visualViewport;
     return {
+        width: Math.max(visualViewport?.width || 0, window.innerWidth || 0),
         height: Math.max(visualViewport?.height || 0, window.innerHeight || 0),
         offsetTop: visualViewport?.offsetTop || 0
     };
 }
 
 function shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight }) {
-    if (isMobileLayout) return true;
+    if (isMobileLayout) {
+        return true;
+    }
     return spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 }
 
-function applyDropdownPosition({ dropdown, rect, isMobileLayout }) {
+function applyDropdownPosition({
+    dropdown,
+    rect,
+    isMobileLayout,
+    shouldFlip,
+    dropdownHeight,
+    viewportWidth,
+    viewportHeight,
+    safeTop,
+    safeBottom
+}) {
     if (isMobileLayout) {
-        dropdown.style.top = 'auto';
-        // Let CSS keep the dropdown anchored above bottom nav for iOS/Safari stability.
-        dropdown.style.bottom = '';
+        const availableWidth = Math.max(220, viewportWidth - (MOBILE_DROPDOWN_EDGE_PADDING * 2));
+        const width = Math.min(MOBILE_DROPDOWN_MAX_WIDTH, availableWidth);
+        const left = Math.max(MOBILE_DROPDOWN_EDGE_PADDING, (viewportWidth - width) / 2);
+        const minTop = Math.max(MOBILE_DROPDOWN_EDGE_PADDING, safeTop + MOBILE_DROPDOWN_EDGE_PADDING);
+        const maxTop = Math.max(
+            minTop,
+            viewportHeight - safeBottom - dropdownHeight - MOBILE_DROPDOWN_EDGE_PADDING
+        );
+        const preferredTop = shouldFlip
+            ? rect.top - dropdownHeight - DROPDOWN_GAP
+            : rect.bottom + DROPDOWN_GAP;
+        const top = Math.min(Math.max(preferredTop, minTop), maxTop);
+
+        dropdown.style.left = `${Math.round(left)} px`;
+        dropdown.style.right = 'auto';
+        dropdown.style.width = `${Math.round(width)} px`;
+        dropdown.style.maxWidth = `${Math.round(width)} px`;
+        dropdown.style.bottom = 'auto';
+        dropdown.style.top = `${Math.round(top)} px`;
         return;
     }
+
+    dropdown.style.left = '';
+    dropdown.style.right = '';
+    dropdown.style.width = '';
+    dropdown.style.maxWidth = '';
+    if (shouldFlip) {
+        dropdown.style.top = 'auto';
+        dropdown.style.bottom = `calc(100 % + ${DROPDOWN_GAP}px)`;
+        return;
+    }
+
+    dropdown.style.top = `${Math.round(rect.bottom + DROPDOWN_GAP)} px`;
     dropdown.style.bottom = '';
-    dropdown.style.top = `${Math.round(rect.bottom + DROPDOWN_GAP)}px`;
 }
 
 function positionChildMenuDropdown(childMenu) {
@@ -221,21 +266,40 @@ function positionChildMenuDropdown(childMenu) {
         dropdown.classList.remove('child-menu-dropdown--flipped');
         dropdown.style.top = '';
         dropdown.style.bottom = '';
+        dropdown.style.left = '';
+        dropdown.style.right = '';
+        dropdown.style.width = '';
+        dropdown.style.maxWidth = '';
         return;
     }
 
-    const { height: viewportHeight, offsetTop: viewportOffsetTop } = getViewportMetrics();
+    const {
+        width: viewportWidth,
+        height: viewportHeight,
+        offsetTop: viewportOffsetTop
+    } = getViewportMetrics();
     const rect = toggleButton.getBoundingClientRect();
     const adjustedRectTop = rect.top - viewportOffsetTop;
     const adjustedRectBottom = rect.bottom - viewportOffsetTop;
     const dropdownHeight = dropdown.getBoundingClientRect().height || dropdown.scrollHeight;
-    const [safeTop, safeBottom] = [parseSafeInset('--safe-top'), parseSafeInset('--safe-bottom')];
+    const safeTop = parseSafeInset('--safe-top');
+    const safeBottom = parseSafeInset('--safe-bottom');
     const spaceAbove = adjustedRectTop - safeTop - 12;
     const spaceBelow = viewportHeight - adjustedRectBottom - safeBottom - 12;
     const isMobileLayout = isMobileChildMenuLayout();
     const shouldFlip = shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight });
     dropdown.classList.toggle('child-menu-dropdown--flipped', shouldFlip);
-    applyDropdownPosition({ dropdown, rect, isMobileLayout });
+    applyDropdownPosition({
+        dropdown,
+        rect,
+        isMobileLayout,
+        shouldFlip,
+        dropdownHeight,
+        viewportWidth,
+        viewportHeight,
+        safeTop,
+        safeBottom
+    });
 }
 
 function refreshActiveChildDropdowns() {
@@ -266,7 +330,7 @@ export function renderChildSwitcherUI(state, escapeHtml) {
         .join('');
 
     container.innerHTML = `
-        <div class="child-menu">
+    <div class="child-menu">
             <button type="button" class="child-menu-btn" data-child-toggle>
                 <span class="child-menu-btn__icon"><span class="gamified-icon icon-child" aria-hidden="true"></span></span>
                 <span class="child-menu-btn__name">${escapeHtml(childName)}</span>
