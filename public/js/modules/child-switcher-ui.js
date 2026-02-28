@@ -203,7 +203,10 @@ function getViewportMetrics() {
     };
 }
 
-function shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight }) {
+function shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight, rectTop, viewportHeight }) {
+    if (rectTop > viewportHeight / 1.5) {
+        return true;
+    }
     if (isMobileLayout) {
         return true;
     }
@@ -237,11 +240,11 @@ function applyDropdownPosition({
     dropdown.style.maxWidth = '';
     if (shouldFlip) {
         dropdown.style.top = 'auto';
-        dropdown.style.bottom = `calc(100 % + ${DROPDOWN_GAP}px)`;
+        dropdown.style.bottom = `calc(100% + ${DROPDOWN_GAP}px)`;
         return;
     }
 
-    dropdown.style.top = `${Math.round(rect.bottom + DROPDOWN_GAP)} px`;
+    dropdown.style.top = `${Math.round(rect.bottom + DROPDOWN_GAP)}px`;
     dropdown.style.bottom = '';
 }
 
@@ -275,7 +278,14 @@ function positionChildMenuDropdown(childMenu) {
     const spaceAbove = adjustedRectTop - safeTop - 12;
     const spaceBelow = viewportHeight - adjustedRectBottom - safeBottom - 12;
     const isMobileLayout = isMobileChildMenuLayout();
-    const shouldFlip = shouldFlipDropdown({ isMobileLayout, spaceAbove, spaceBelow, dropdownHeight });
+    const shouldFlip = shouldFlipDropdown({
+        isMobileLayout,
+        spaceAbove,
+        spaceBelow,
+        dropdownHeight,
+        rectTop: rect.top,
+        viewportHeight
+    });
     dropdown.classList.toggle('child-menu-dropdown--flipped', shouldFlip);
     applyDropdownPosition({
         dropdown,
