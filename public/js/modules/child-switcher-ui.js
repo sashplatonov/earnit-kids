@@ -224,13 +224,18 @@ function applyDropdownPosition({
     safeTop,
     safeBottom
 }) {
-    if (isMobileLayout) {
-        dropdown.style.left = '';
-        dropdown.style.right = '';
-        dropdown.style.width = '';
-        dropdown.style.maxWidth = '';
-        dropdown.style.bottom = '';
-        dropdown.style.top = '';
+    // Force mobile styles via simple inline JS to bypass any WebKit/Orion CSS calc/variable parsing bugs.
+    const isMobile = isMobileLayout || viewportWidth <= 900;
+    if (isMobile) {
+        dropdown.style.position = 'fixed';
+        dropdown.style.left = '50%';
+        dropdown.style.right = 'auto';
+        dropdown.style.transform = 'translateX(-50%)';
+        dropdown.style.width = 'calc(100vw - 16px)';
+        dropdown.style.maxWidth = '480px';
+        dropdown.style.bottom = '78px'; // Hardcoded safe value above bottom nav
+        dropdown.style.top = 'auto';
+        dropdown.style.zIndex = '99999';
         return;
     }
 
@@ -238,6 +243,7 @@ function applyDropdownPosition({
     dropdown.style.right = '';
     dropdown.style.width = '';
     dropdown.style.maxWidth = '';
+    dropdown.style.position = 'absolute';
     if (shouldFlip) {
         dropdown.style.top = 'auto';
         dropdown.style.bottom = `calc(100% + ${DROPDOWN_GAP}px)`;
@@ -245,7 +251,7 @@ function applyDropdownPosition({
     }
 
     dropdown.style.top = `${Math.round(rect.bottom + DROPDOWN_GAP)}px`;
-    dropdown.style.bottom = '';
+    dropdown.style.bottom = 'auto';
 }
 
 function positionChildMenuDropdown(childMenu) {
