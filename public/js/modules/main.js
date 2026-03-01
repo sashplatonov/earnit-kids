@@ -32,10 +32,6 @@ async function loadAbout() {
 function setupAdminUI() {
     if (!state.isAdmin) return;
     document.getElementById('edit-rules-btn')?.addEventListener('click', openEditRules);
-    ['edit-rules-btn', 'nav-catalog', 'nav-child-link'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.classList.remove('hidden'); el.parentElement?.classList.remove('hidden'); }
-    });
     renderCatalog();
 }
 

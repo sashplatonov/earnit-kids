@@ -29,24 +29,47 @@ test.describe('Admin with No Children Flow', () => {
         // 2. Verify Child Switcher shows the "+ Ребенок" button
         const switcherContainer = page.locator('#child-switcher-container');
         await expect(switcherContainer).toContainText('Ребенок');
+    });
 
-        // 3. Verify error messages when trying to perform child-linked actions
-        await openTab(page, 'tasks');
-        // Click first task "Earn" button - selector matches button in ui-tasks.js
-        await page.click('button:has-text("Начислить")');
-        // A toast should appear
-        const toast = page.locator('.toast');
-        await expect(toast).toContainText('Сначала добавьте ребенка');
+    test('Navigation items requiring a child should be hidden', async ({ page }) => {
+        await installAppNetworkMocks(page, {
+            initialData: readFixture('admin-no-children.json')
+        });
+        await gotoAppAsAdmin(page, harness.baseUrl);
 
-        // 4. Verify shop actions
-        await openTab(page, 'shop');
-        // The button has "Купить" text if balance >= price, or "Не хватает" otherwise. 
-        // We select by the card class to be sure.
-        const buyBtn = page.locator('.card--shop .btn:has-text("Купить"), .card--shop .btn:has-text("Не хватает")').first();
-        await expect(buyBtn).toBeVisible();
-        await buyBtn.click({ force: true });
-        // Toast for shop
-        await expect(page.locator('.toast')).toContainText('Сначала добавьте ребенка');
+        // Child-specific tabs in main nav
+        const tasksTab = page.locator('.nav__group--parent button[data-tab="tasks"]');
+        const shopTab = page.locator('.nav__group--parent button[data-tab="shop"]');
+        const requestsTab = page.locator('.nav__group--parent button[data-tab="requests"]');
+
+        await expect(tasksTab).toBeHidden();
+        await expect(shopTab).toBeHidden();
+        await expect(requestsTab).toBeHidden();
+
+        // More items
+        await page.click('#nav-more-btn');
+        const moreDropdown = page.locator('#nav-more-dropdown');
+
+        await expect(moreDropdown.locator('button[data-tab="history"]')).toBeHidden();
+        await expect(moreDropdown.locator('button[data-tab="friends"]')).toBeHidden();
+        await expect(moreDropdown.locator('button[data-tab="analytics"]')).toBeHidden();
+        await expect(moreDropdown.locator('#nav-limits')).toBeHidden();
+        await expect(moreDropdown.locator('button[data-tab="catalog"]')).toBeHidden();
+        await expect(moreDropdown.locator('#nav-child-link')).toBeHidden();
+
+        // Settings, Rules, Logout should be visible
+        await expect(moreDropdown.locator('#nav-settings')).toBeVisible();
+        await expect(moreDropdown.locator('button[data-tab="rules"]')).toBeVisible();
+        await expect(moreDropdown.locator('#logout-btn')).toBeVisible();
+
+        // Settings section
+        await moreDropdown.locator('#nav-settings').click();
+        const settingsSection = page.locator('#settings-section');
+        await expect(settingsSection).toBeVisible();
+
+        // Child settings card should be hidden
+        const childSettingsCard = settingsSection.locator('.card:has-text("Настройки ребенка")');
+        await expect(childSettingsCard).toBeHidden();
     });
 
     test('Clicking CTA should open Add Child modal', async ({ page }) => {

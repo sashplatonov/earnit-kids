@@ -93,8 +93,16 @@ export function renderAll() {
 
 export function updateAdminUI() {
     const isParent = !!state.isAdmin;
+    const hasChild = !!state.currentChildId;
+
     document.querySelectorAll('.admin-only, .parent-only').forEach(el => el.classList.toggle('hidden', !isParent));
     document.querySelectorAll('.child-only').forEach(el => el.classList.toggle('hidden', isParent));
+
+    // Handle elements that require an active child profile
+    document.querySelectorAll('.requires-child').forEach(el => {
+        const shouldHide = !hasChild;
+        el.classList.toggle('hidden', shouldHide);
+    });
 
     // Keep settings button visible for everyone
     const settingsBtn = document.getElementById('settings-btn') || document.getElementById('nav-settings');
