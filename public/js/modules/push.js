@@ -5,6 +5,7 @@ import { showMobileEventNotification } from './utils.js';
 
 let listenersBound = false;
 let currentToken = '';
+let currentWebSubscription = null;
 let refreshHandler = null;
 
 function isNativeCapacitor() {
@@ -21,9 +22,9 @@ function getPushPlugin() {
 
 function getPlatform() {
     if (!window.Capacitor || typeof window.Capacitor.getPlatform !== 'function') {
-        return 'unknown';
+        return 'web';
     }
-    return window.Capacitor.getPlatform() || 'unknown';
+    return window.Capacitor.getPlatform() || 'web';
 }
 
 function getPushChildId(role) {
@@ -80,36 +81,111 @@ export function setPushRefreshHandler(handler) {
     refreshHandler = typeof handler === 'function' ? handler : null;
 }
 
-export async function initializePushNotifications() {
-    const push = getPushPlugin();
-    if (!push) return;
+// --- Web Push (browser PWA) ---
 
-    bindPushListeners(push);
+function getVapidPublicKey() {
+    return document.querySelector('meta[name="vapid-public-key"]')?.content?.trim() || '';
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+async function syncWebSubscriptionToServer(subscription) {
+    const role = state.isAdmin ? 'admin' : 'child';
+    const childId = getPushChildId(role);
+    const json = subscription.toJSON();
+
+    const payload = {
+        pushType: 'web',
+        endpoint: json.endpoint,
+        keyP256dh: json.keys?.p256dh || '',
+        keyAuth: json.keys?.auth || '',
+        platform: 'web',
+        role,
+        childId
+    };
+
+    const result = await registerPushTokenOnServer(payload);
+    if (!result || !result.success) {
+        console.warn('[push] web subscription register failed:', result?.error || 'unknown');
+    }
+}
+
+async function initializeWebPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    const vapidKey = getVapidPublicKey();
+    if (!vapidKey) {
+        console.warn('[push] VAPID public key not found, web push disabled');
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
 
     try {
-        const permissionStatus = await push.requestPermissions();
-        if (permissionStatus.receive !== 'granted') {
-            return;
+        const registration = await navigator.serviceWorker.ready;
+        let subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidKey)
+            });
         }
 
-        await push.register();
+        currentWebSubscription = subscription;
+        await syncWebSubscriptionToServer(subscription);
     } catch (err) {
-        console.error('[push] initialize failed:', err);
+        console.error('[push] web push subscribe failed:', err);
+    }
+}
+
+// --- Init / Unregister ---
+
+export async function initializePushNotifications() {
+    const push = getPushPlugin();
+    if (push) {
+        // Native Capacitor path
+        bindPushListeners(push);
+        try {
+            const permissionStatus = await push.requestPermissions();
+            if (permissionStatus.receive !== 'granted') return;
+            await push.register();
+        } catch (err) {
+            console.error('[push] initialize failed:', err);
+        }
+    } else {
+        // Browser Web Push path
+        await initializeWebPush();
     }
 }
 
 export async function unregisterPushNotifications() {
     const push = getPushPlugin();
-    if (!push) return;
-
-    try {
-        if (currentToken) {
-            await unregisterPushTokenOnServer(currentToken);
-            currentToken = '';
+    if (push) {
+        try {
+            if (currentToken) {
+                await unregisterPushTokenOnServer(currentToken);
+                currentToken = '';
+            }
+            await push.removeAllListeners();
+            listenersBound = false;
+        } catch (err) {
+            console.error('[push] unregister failed:', err);
         }
-        await push.removeAllListeners();
-        listenersBound = false;
-    } catch (err) {
-        console.error('[push] unregister failed:', err);
+    } else if (currentWebSubscription) {
+        try {
+            const endpoint = currentWebSubscription.endpoint;
+            await currentWebSubscription.unsubscribe();
+            currentWebSubscription = null;
+            await unregisterPushTokenOnServer(endpoint);
+        } catch (err) {
+            console.error('[push] web push unregister failed:', err);
+        }
     }
 }

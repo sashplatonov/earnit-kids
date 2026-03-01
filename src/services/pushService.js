@@ -1,5 +1,6 @@
 /** @file Push Service business services */
 const https = require('https');
+const webpush = require('web-push');
 const { GoogleAuth } = require('google-auth-library');
 const pushTokenRepository = require('../db/pushTokenRepository');
 const { createLogger } = require('../utils/logger');
@@ -7,9 +8,21 @@ const logger = createLogger('pushService');
 
 const FCM_SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 let authClientPromise = null;
+let vapidConfigured = false;
 
 function isPushEnabled() {
     return process.env.ENABLE_PUSH_NOTIFICATIONS === 'true';
+}
+
+function configureVapid() {
+    if (vapidConfigured) return;
+    const publicKey = (process.env.VAPID_PUBLIC_KEY || '').trim();
+    const privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim();
+    const contact = (process.env.VAPID_CONTACT || '').trim();
+    if (publicKey && privateKey && contact) {
+        webpush.setVapidDetails(contact, publicKey, privateKey);
+        vapidConfigured = true;
+    }
 }
 
 function parseServiceAccountJson() {
@@ -163,6 +176,28 @@ async function sendFcmNotification({ token, title, body, data = {} }) {
     }
 }
 
+async function sendWebPushNotification({ endpoint, keyP256dh, keyAuth, title, body, data = {} }) {
+    configureVapid();
+    if (!vapidConfigured) {
+        return { success: false, invalidToken: false, reason: 'VAPID not configured' };
+    }
+
+    const subscription = {
+        endpoint,
+        keys: { p256dh: keyP256dh, auth: keyAuth }
+    };
+
+    const payload = JSON.stringify({ title, body, data });
+
+    try {
+        await webpush.sendNotification(subscription, payload);
+        return { success: true, invalidToken: false, reason: null };
+    } catch (err) {
+        const gone = err.statusCode === 410 || err.statusCode === 404;
+        return { success: false, invalidToken: gone, reason: err.message };
+    }
+}
+
 function getPendingRequests(data) {
     return (data?.requests || []).filter((item) => item.status === 'pending');
 }
@@ -227,29 +262,46 @@ function detectBalanceChanges(beforeChildren, afterChildren) {
 }
 
 function dedupeTokens(tokens) {
-    return [...new Set(tokens.map((item) => item.token))];
+    const seen = new Set();
+    return tokens.filter((item) => {
+        const key = item.pushType === 'web' ? item.endpoint : item.token;
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 async function sendToTokens({ tokens, title, body, data = {} }) {
     if (!isPushEnabled() || !Array.isArray(tokens) || tokens.length === 0) return;
 
-    const invalidTokens = [];
-    for (const token of tokens) {
-        const result = await sendFcmNotification({ token, title, body, data });
+    const invalidFcmTokens = [];
+    for (const t of tokens) {
+        let result;
+        if (t.pushType === 'web') {
+            result = await sendWebPushNotification({ endpoint: t.endpoint, keyP256dh: t.keyP256dh, keyAuth: t.keyAuth, title, body, data });
+        } else {
+            result = await sendFcmNotification({ token: t.token, title, body, data });
+        }
+
         if (!result.success) {
-            logger.warn({ reason: result.reason }, 'Push notification failed');
-            if (result.invalidToken) invalidTokens.push(token);
+            logger.warn({ reason: result.reason, pushType: t.pushType }, 'Push notification failed');
+            if (result.invalidToken && t.token) invalidFcmTokens.push(t.token);
         }
     }
 
-    if (invalidTokens.length > 0) {
-        await pushTokenRepository.deactivateTokens(invalidTokens);
+    if (invalidFcmTokens.length > 0) {
+        await pushTokenRepository.deactivateTokens(invalidFcmTokens);
     }
 }
 
 async function registerPushToken({ familyId, childId, role, token, platform }) {
     if (!familyId || !token || !role) return false;
     return await pushTokenRepository.upsertToken({ familyId, childId, role, token, platform });
+}
+
+async function registerWebPushSubscription({ familyId, childId, role, endpoint, keyP256dh, keyAuth, platform }) {
+    if (!familyId || !endpoint || !role) return false;
+    return await pushTokenRepository.upsertWebSubscription({ familyId, childId, role, endpoint, keyP256dh, keyAuth, platform });
 }
 
 async function unregisterPushToken({ familyId, token }) {
@@ -288,8 +340,6 @@ async function handleBalanceChanges(familyId, changes, actingRole = null) {
         ];
 
         // Only fetch admin tokens if the acting party is NOT an admin
-        // OR if the family has multiple admins and they all want notifications (user specifically said "not come for parent")
-        // User request: "уведомления ... родителем не приходили родителю"
         if (actingRole !== 'admin') {
             fetchTasks.push(pushTokenRepository.getActiveTokens(familyId, { roles: ['admin'] }));
         }
@@ -346,6 +396,7 @@ module.exports = {
     sendFcmNotification,
     sendToTokens,
     registerPushToken,
+    registerWebPushSubscription,
     unregisterPushToken,
     notifyFamilyChanges
 };
