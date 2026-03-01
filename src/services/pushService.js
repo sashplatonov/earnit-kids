@@ -234,13 +234,13 @@ async function sendToTokens({ tokens, title, body, data = {} }) {
     if (!isPushEnabled() || !Array.isArray(tokens) || tokens.length === 0) return;
 
     const invalidTokens = [];
-        for (const token of tokens) {
-            const result = await sendFcmNotification({ token, title, body, data });
-            if (!result.success) {
-                logger.warn({ reason: result.reason }, 'Push notification failed');
-                if (result.invalidToken) invalidTokens.push(token);
-            }
+    for (const token of tokens) {
+        const result = await sendFcmNotification({ token, title, body, data });
+        if (!result.success) {
+            logger.warn({ reason: result.reason }, 'Push notification failed');
+            if (result.invalidToken) invalidTokens.push(token);
         }
+    }
 
     if (invalidTokens.length > 0) {
         await pushTokenRepository.deactivateTokens(invalidTokens);
@@ -281,13 +281,24 @@ async function handleApprovedRequests(familyId, requests) {
     }
 }
 
-async function handleBalanceChanges(familyId, changes) {
+async function handleBalanceChanges(familyId, changes, actingRole = null) {
     for (const change of changes) {
-        const [admT, chT] = await Promise.all([
-            pushTokenRepository.getActiveTokens(familyId, { roles: ['admin'] }),
+        const fetchTasks = [
             pushTokenRepository.getActiveTokens(familyId, { roles: ['child'], childId: change.childId })
-        ]);
-        const allTokens = dedupeTokens([...(admT || []), ...(chT || [])]);
+        ];
+
+        // Only fetch admin tokens if the acting party is NOT an admin
+        // OR if the family has multiple admins and they all want notifications (user specifically said "not come for parent")
+        // User request: "уведомления ... родителем не приходили родителю"
+        if (actingRole !== 'admin') {
+            fetchTasks.push(pushTokenRepository.getActiveTokens(familyId, { roles: ['admin'] }));
+        }
+
+        const tokenGroups = await Promise.all(fetchTasks);
+        const allTokens = dedupeTokens(tokenGroups.flat().filter(t => t));
+
+        if (allTokens.length === 0) continue;
+
         await sendToTokens({
             tokens: allTokens,
             title: 'Баланс изменен',
@@ -297,19 +308,43 @@ async function handleBalanceChanges(familyId, changes) {
     }
 }
 
-async function notifyFamilyChanges({ familyId, beforeData, afterData, beforeChildren, afterChildren }) {
+/**
+ * Detect all family changes and send notifications
+ * @param {Object} params
+ * @param {number} params.familyId
+ * @param {Object} params.beforeData
+ * @param {Object} params.afterData
+ * @param {Array} params.beforeChildren
+ * @param {Array} params.afterChildren
+ * @param {string} [params.actingRole] - 'admin' or 'child'
+ * @param {number} [params.actingChildId] - ID of acting child if role='child'
+ */
+async function notifyFamilyChanges({ familyId, beforeData, afterData, beforeChildren, afterChildren, actingRole = null, actingChildId = null }) {
     if (!isPushEnabled() || !familyId) return;
 
     const createdReqs = detectCreatedRequests(beforeData, afterData);
     const approvedReqs = detectApprovedRequests(beforeData, afterData);
     const balanceChanges = detectBalanceChanges(beforeChildren, afterChildren);
 
-    await handleCreatedRequests(familyId, createdReqs);
-    await handleApprovedRequests(familyId, approvedReqs);
-    await handleBalanceChanges(familyId, balanceChanges);
+    // Filter created requests - usually created by child, notify admin
+    if (createdReqs.length > 0 && actingRole !== 'admin') {
+        await handleCreatedRequests(familyId, createdReqs);
+    }
+
+    // Filter approved requests - approved by admin, notify child
+    if (approvedReqs.length > 0) {
+        await handleApprovedRequests(familyId, approvedReqs);
+    }
+
+    // Filter balance changes - notify based on role
+    if (balanceChanges.length > 0) {
+        await handleBalanceChanges(familyId, balanceChanges, actingRole);
+    }
 }
 
 module.exports = {
+    sendFcmNotification,
+    sendToTokens,
     registerPushToken,
     unregisterPushToken,
     notifyFamilyChanges

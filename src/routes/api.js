@@ -9,6 +9,7 @@ const clientErrorController = require('../controllers/clientErrorController');
 const { loadBaseData } = require('../services/baseDataService');
 const authController = require('../controllers/authController');
 const superAdminController = require('../controllers/superAdminController');
+const pushService = require('../services/pushService');
 const { loadFamilies } = require('../services/familyService');
 const { validateCsrf, signToken } = require('../utils/authUtils');
 const parseBody = require('../middleware/body-parser');
@@ -65,6 +66,34 @@ apiRouter.post('/api/reset-password', (ctx, req, res) => authController.handleRe
 apiRouter.post('/api/verify', (ctx, req, res) => authController.handleVerify(req, res));
 apiRouter.get('/api/auth-config', (ctx, req, res) => authController.handleAuthConfig(res));
 apiRouter.post('/api/client-errors', (ctx, req, res) => clientErrorController.handleClientError(ctx, req, res));
+
+// --- PUSH NOTIFICATION ROUTES ---
+apiRouter.post('/api/push/register', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        const body = c.body;
+        const result = await pushService.registerPushToken({
+            familyId: c.familyId,
+            childId: c.childId,
+            role: c.role,
+            token: body.token,
+            platform: body.platform
+        });
+        sendJSON(rs, { success: !!result });
+    }
+}));
+
+apiRouter.post('/api/push/unregister', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        const body = c.body;
+        const result = await pushService.unregisterPushToken({
+            familyId: c.familyId,
+            token: body.token
+        });
+        sendJSON(rs, { success: !!result });
+    }
+}));
 
 // Health check
 apiRouter.get('/api/health', async (ctx, req, res) => {

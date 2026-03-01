@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const familyRepository = require('../db/familyRepository');
 const familyDataRepository = require('../db/familyDataRepository');
+const pushService = require('./pushService');
 const { createLogger } = require('../utils/logger');
 const logger = createLogger('familyService');
 
@@ -60,11 +61,45 @@ async function loadFamilyData(familyId, childId = null) {
  * Save family data
  * @param {string} familyId 
  * @param {Object} data 
- * @param {number|null} childId - The child performing the action (if any)
+ * @param {Object} [options] - Optional settings
+ * @param {number|null} [options.childId] - The child performing the action (if any)
+ * @param {string|null} [options.actingRole] - 'admin' or 'child'
  * @returns {Promise<boolean>}
  */
-async function saveFamilyData(familyId, data, childId = null) {
-    return await familyDataRepository.saveFamilyData(familyId, data, childId);
+async function saveFamilyData(familyId, data, options = {}) {
+    const { childId = null, actingRole = null } = options;
+    if (!pushService.notifyFamilyChanges) {
+        return await familyDataRepository.saveFamilyData(familyId, data, childId);
+    }
+
+    // To detect changes, we need before/after state
+    const [beforeData, beforeChildren] = await Promise.all([
+        familyDataRepository.getFamilyData(familyId, childId),
+        familyRepository.getChildren(familyId)
+    ]);
+
+    const success = await familyDataRepository.saveFamilyData(familyId, data, childId);
+
+    if (success) {
+        // Fetch fresh state after save for comparison
+        const [afterData, afterChildren] = await Promise.all([
+            familyDataRepository.getFamilyData(familyId, childId),
+            familyRepository.getChildren(familyId)
+        ]);
+
+        // Trigger push notifications in background
+        void pushService.notifyFamilyChanges({
+            familyId,
+            beforeData,
+            afterData,
+            beforeChildren,
+            afterChildren,
+            actingRole,
+            actingChildId: childId
+        }).catch(err => logger.error({ err: err.message }, 'Failed to send push notifications'));
+    }
+
+    return success;
 }
 
 /**

@@ -77,7 +77,7 @@ async function handleDataPost(ctx, req, res) {
                 balance: child.balance
             }))
         : [];
-    const saved = await saveFamilyData(ctx.familyId, body, actingChildId);
+    const saved = await saveFamilyData(ctx.familyId, body, { childId: actingChildId, actingRole: ctx.role });
     if (!saved) return sendJSON(res, { error: 'Save failed' }, 500);
 
     balanceChanges.forEach((change) => {
