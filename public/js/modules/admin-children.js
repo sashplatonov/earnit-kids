@@ -32,6 +32,7 @@ function updateSettingsFields(child) {
 }
 
 export function switchChild(childId) {
+    if (!childId) return;
     const child = state.children.find(c => c.id == childId);
     setState({
         currentChildId: childId,

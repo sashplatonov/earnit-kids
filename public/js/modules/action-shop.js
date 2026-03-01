@@ -39,10 +39,18 @@ function sendPurchaseRequest(item, actingId, moneyPrice) {
     showMobileEventNotification('Заявка на покупку отправлена', 'success', 'Новая заявка');
 }
 
+function getBuyItemError(item) {
+    if (!item) return 'Товар не найден';
+    if (state.children.length === 0) return 'Сначала добавьте ребенка';
+    return 'Сначала выберите ребенка';
+}
+
 export function buyItem(itemId) {
     const item = state.shopItems.find(i => i.id == itemId);
     const actingId = getActingChildId();
-    if (!item || !actingId) return showToast(!item ? 'Item not found' : 'Select child', 'error');
+    if (!item || !actingId) {
+        return showToast(getBuyItemError(item), 'error');
+    }
 
     if (state.balance < item.price) return showToast('Недостаточно монет!', 'error');
 
@@ -50,6 +58,10 @@ export function buyItem(itemId) {
     const err = checkLimits(item, mLimit, actingId);
     if (err) return showToast(err, 'error');
 
+    confirmPurchase(item, actingId, mLimit);
+}
+
+function confirmPurchase(item, actingId, mLimit) {
     if (state.isAdmin) {
         showConfirm('Подтвердите покупку', `Купить "${item.name}" за ${item.price} мон.?`, () => applyPurchase(item, actingId, mLimit));
     } else {
