@@ -134,6 +134,7 @@ function toggleCardBookmark(type, id, trigger) {
     showToast(getShortcutToast(kind, wasActive), wasActive ? 'info' : 'success');
 }
 
+// Initialize window.app immediately at top level to avoid "is not a function" errors if DOMContentLoaded hasn't fired but inline onclicks have
 window.app = {
     buyItem, earnCoins, requestCoins, editTask: admin.editTask, editShopItem: admin.editShopItem,
     deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,

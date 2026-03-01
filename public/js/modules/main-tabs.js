@@ -37,7 +37,7 @@ async function toggleTab(tabButtons, tabName, moreBtn) {
         }
     };
 
-    if (document.startViewTransition) {
+    if (document.startViewTransition && document.visibilityState === 'visible') {
         document.startViewTransition(performSwitch);
     } else {
         await performSwitch();

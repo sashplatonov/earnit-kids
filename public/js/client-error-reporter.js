@@ -35,8 +35,19 @@ function buildFingerprint(payload) {
     ].join('|');
 }
 
+const NOISY_ERRORS = [
+    'View transition was skipped because document visibility state is hidden',
+    'Script error.'
+];
+
 function shouldSkip(payload) {
     if (reportsSent >= MAX_REPORTS) return true;
+
+    const message = payload.message || '';
+    if (NOISY_ERRORS.some(noisy => message.includes(noisy))) {
+        return true;
+    }
+
     const fingerprint = buildFingerprint(payload);
     if (sentFingerprints.has(fingerprint)) return true;
     sentFingerprints.add(fingerprint);
@@ -52,7 +63,7 @@ function sendPayload(payload) {
         credentials: 'same-origin',
         keepalive: true,
         body: JSON.stringify(payload)
-    }).catch(function () {});
+    }).catch(function () { });
 }
 
 function createErrorPayload(event) {
