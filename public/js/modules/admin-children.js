@@ -40,6 +40,7 @@ export function switchChild(childId) {
         monthlyLimit: getMonthlyLimit(child),
         dailyCoinLimit: getDailyLimit(child)
     });
+    localStorage.setItem('earnit-last-child-id', childId);
 
     renderAll();
 

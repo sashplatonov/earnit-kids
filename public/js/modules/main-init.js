@@ -39,7 +39,11 @@ export async function initializeFromServer() {
     if (!data) return showToast('Не удалось загрузить данные', 'error') || null;
     const baseData = data.isAdmin ? (await loadBaseData() || { tasks: [], products: [] }) : { tasks: [], products: [] };
     setState(buildInitialState(data, baseData));
-    if (data.isAdmin && state.children?.length > 0 && !state.currentChildId) switchChild(state.children[0].id);
+    if (data.isAdmin && state.children?.length > 0) {
+        const lastChildId = localStorage.getItem('earnit-last-child-id');
+        const childToSelect = state.children.find(c => c.id == lastChildId) || state.children[0];
+        switchChild(childToSelect.id);
+    }
     return data;
 }
 
