@@ -37,7 +37,12 @@ async function toggleTab(tabButtons, tabName, moreBtn) {
     };
 
     if (document.startViewTransition && document.visibilityState === 'visible') {
-        document.startViewTransition(performSwitch);
+        try {
+            const transition = document.startViewTransition(() => performSwitch());
+            await transition.finished;
+        } catch (err) {
+            await performSwitch();
+        }
     } else {
         await performSwitch();
     }
