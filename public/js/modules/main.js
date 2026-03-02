@@ -175,10 +175,10 @@ async function initializeApp() {
             return;
         }
 
+        await registerServiceWorker();
         await startBackgroundServices(data);
         renderInitialViews();
         setupControlsAndRefresh();
-        await registerServiceWorker();
     } catch (err) {
         console.error('App init error:', err);
     } finally {
@@ -272,16 +272,7 @@ function setupServiceWorkerLifecycle(registration) {
     });
 }
 
-async function disableLocalhostCaching() {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map((registration) => registration.unregister()));
-        } catch (err) {
-            console.log('SW unregister failed:', err);
-        }
-    }
-
+async function clearLocalhostCaches() {
     if ('caches' in window) {
         try {
             const keys = await caches.keys();
@@ -294,7 +285,7 @@ async function disableLocalhostCaching() {
 
 async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    if (isLocalhost()) return disableLocalhostCaching();
+    if (isLocalhost()) await clearLocalhostCaches();
     setupServiceWorkerAutoReload();
 
     try {
