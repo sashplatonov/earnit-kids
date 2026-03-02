@@ -1,0 +1,10 @@
+node_modules/
+.playwright-browsers/
+coverage/
+test-results/
+playwright-report/
+public/dist/
+data/
+data.json/
+logs/
+.git/
