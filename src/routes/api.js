@@ -9,6 +9,7 @@ const clientErrorController = require('../controllers/clientErrorController');
 const { loadBaseData } = require('../services/baseDataService');
 const authController = require('../controllers/authController');
 const superAdminController = require('../controllers/superAdminController');
+const pushService = require('../services/pushService');
 const { loadFamilies } = require('../services/familyService');
 const { validateCsrf, signToken } = require('../utils/authUtils');
 const parseBody = require('../middleware/body-parser');
@@ -38,6 +39,7 @@ apiRouter.use(async (ctx, req, res) => {
             return;
         }
         await parseBody.middleware(ctx, req, res);
+        ctx.body = req.body;
     }
 });
 
@@ -65,6 +67,47 @@ apiRouter.post('/api/reset-password', (ctx, req, res) => authController.handleRe
 apiRouter.post('/api/verify', (ctx, req, res) => authController.handleVerify(req, res));
 apiRouter.get('/api/auth-config', (ctx, req, res) => authController.handleAuthConfig(res));
 apiRouter.post('/api/client-errors', (ctx, req, res) => clientErrorController.handleClientError(ctx, req, res));
+
+// --- PUSH NOTIFICATION ROUTES ---
+apiRouter.post('/api/push/register', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        const body = c.body;
+        let result;
+        if (body.pushType === 'web') {
+            result = await pushService.registerWebPushSubscription({
+                familyId: c.familyId,
+                childId: c.childId,
+                role: c.role,
+                endpoint: body.endpoint,
+                keyP256dh: body.keyP256dh,
+                keyAuth: body.keyAuth,
+                platform: body.platform || 'web'
+            });
+        } else {
+            result = await pushService.registerPushToken({
+                familyId: c.familyId,
+                childId: c.childId,
+                role: c.role,
+                token: body.token,
+                platform: body.platform
+            });
+        }
+        sendJSON(rs, { success: !!result });
+    }
+}));
+
+apiRouter.post('/api/push/unregister', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        const body = c.body;
+        const result = await pushService.unregisterPushToken({
+            familyId: c.familyId,
+            token: body.token
+        });
+        sendJSON(rs, { success: !!result });
+    }
+}));
 
 // Health check
 apiRouter.get('/api/health', async (ctx, req, res) => {
@@ -202,6 +245,7 @@ apiRouter.get('/api/ws-token', (ctx, req, res) => mainApiHandler({
 apiRouter.post('/api/children', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleChildrenCreate }));
 apiRouter.get('/api/base-data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: async () => sendJSON(res, loadBaseData()) }));
 apiRouter.post('/api/update-nickname', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleUpdateNickname }));
+apiRouter.post('/api/preferences', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handlePreferenceUpdate }));
 
 // Friends & Social
 apiRouter.get('/api/search-user', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: friendsController.handleSearchUser }));
@@ -257,6 +301,15 @@ apiRouter.post('/api/children/:id/settings', (ctx, req, res) => mainApiHandler({
         c.targetChildId = parseInt(c.params.id);
         if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
         await childController.handleUpdateSettings({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
+    }
+}));
+
+apiRouter.post('/api/children/:id/theme', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        c.targetChildId = parseInt(c.params.id);
+        if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
+        await childController.handleUpdateTheme({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
     }
 }));
 

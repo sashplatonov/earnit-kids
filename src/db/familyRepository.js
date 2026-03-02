@@ -33,6 +33,7 @@ async function findAll() {
             monthly_limit: row.monthly_limit,
             created_at: row.created_at,
             last_activity: row.last_activity,
+            last_selected_child_id: row.last_selected_child_id || null,
             children
         };
     }
@@ -59,7 +60,8 @@ async function findById(familyId) {
         isBlocked: row.is_blocked,
         isVerified: row.is_verified,
         created_at: row.created_at,
-        last_activity: row.last_activity
+        last_activity: row.last_activity,
+        last_selected_child_id: row.last_selected_child_id || null
     };
 
     return await attachChildren(family);
@@ -82,7 +84,8 @@ async function findByEmail(email) {
         isBlocked: row.is_blocked,
         isVerified: row.is_verified,
         created_at: row.created_at,
-        last_activity: row.last_activity
+        last_activity: row.last_activity,
+        last_selected_child_id: row.last_selected_child_id || null
     };
     return await attachChildren(family);
 }
@@ -96,28 +99,17 @@ async function findByChildToken(token) {
 }
 
 async function create(data) {
-    const client = await getClient();
     try {
-        await client.query('BEGIN');
-        const familyResult = await client.query(
-        'INSERT INTO families (family_id, email, admin_password, is_verified, verification_token) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [data.family_id, data.email, data.admin_password, data.isVerified || false, data.verification_token]
+        const familyResult = await query(
+            'INSERT INTO families (family_id, email, admin_password, is_verified, verification_token) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [data.family_id, data.email, data.admin_password, data.isVerified || false, data.verification_token]
         );
         const family = familyResult.rows[0];
 
-        await childRepository.createChild({
-            familyDbId: family.id,
-            name: data.child_nickname || 'Child',
-            token: data.child_token,
-            monthlyLimit: data.monthly_limit || 10000
-        });
-
-        await client.query('COMMIT');
         return { success: true, familyId: data.family_id, dbId: family.id };
     } catch (err) {
-        await client.query('ROLLBACK');
         throw err;
-    } finally { client.release(); }
+    }
 }
 
 async function update(familyId, data) {
@@ -125,6 +117,7 @@ async function update(familyId, data) {
     const values = [];
     if (data.admin_password !== undefined) { setClauses.push(`admin_password = $${values.length + 1}`); values.push(data.admin_password); }
     if (data.is_blocked !== undefined) { setClauses.push(`is_blocked = $${values.length + 1}`); values.push(data.is_blocked); }
+    if (data.last_selected_child_id !== undefined) { setClauses.push(`last_selected_child_id = $${values.length + 1}`); values.push(data.last_selected_child_id); }
 
     if (setClauses.length === 0) return true;
 
@@ -155,6 +148,31 @@ async function findByVerificationToken(token) {
     return { id: row.family_id, dbId: row.id, email: row.email, verification_token: row.verification_token };
 }
 
+async function setResetToken(familyId, token, expiresAt) {
+    const result = await query(
+        'UPDATE families SET reset_token = $1, reset_token_expires_at = $2 WHERE family_id = $3',
+        [token, expiresAt, familyId]
+    );
+    return result.rowCount > 0;
+}
+
+async function findByResetToken(token) {
+    const result = await query(
+        'SELECT * FROM families WHERE reset_token = $1 AND reset_token_expires_at > NOW()',
+        [token]
+    );
+    if (result.rows.length === 0) return null;
+    const row = result.rows[0];
+    return { id: row.family_id, dbId: row.id, email: row.email };
+}
+
+async function clearResetToken(familyId) {
+    return query(
+        'UPDATE families SET reset_token = NULL, reset_token_expires_at = NULL WHERE family_id = $1',
+        [familyId]
+    );
+}
+
 module.exports = {
     findAll,
     findById,
@@ -167,6 +185,9 @@ module.exports = {
     deleteFamily,
     verifyFamily,
     findByVerificationToken,
+    setResetToken,
+    findByResetToken,
+    clearResetToken,
     // Delegated to childRepository
     getChildren: (fid) => getDbId(fid).then(id => id ? childRepository.getChildren(id) : []),
     findChildById: childRepository.findChildById,

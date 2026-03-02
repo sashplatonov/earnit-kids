@@ -136,6 +136,7 @@ function applyCommonTemplateData(html, extraReplacements = {}, req = null) {
     let result = html
         .replace(/\{\{APP_VERSION\}\}/g, APP_VERSION)
         .replace(/\{\{BUILD_VERSION\}\}/g, BUILD_VERSION)
+        .replace(/\{\{VAPID_PUBLIC_KEY\}\}/g, (process.env.VAPID_PUBLIC_KEY || '').trim())
         .replace(/\{\{PUBLIC_TOP_NAV\}\}/g, PUBLIC_TOP_NAV)
         .replace(/\{\{CLARITY_SCRIPT\}\}/g, getClarityScript(req));
 

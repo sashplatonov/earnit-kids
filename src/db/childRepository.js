@@ -13,7 +13,8 @@ function mapChild(row) {
         balance: row.balance,
         monthlyLimit: row.monthly_limit,
         dailyCoinLimit: row.daily_coin_limit,
-        familyId: row.family_id
+        familyId: row.family_id,
+        theme: row.theme || 'ocean'
     };
 }
 
@@ -51,13 +52,15 @@ async function findByChildToken(token) {
     };
 }
 
-async function createChild({ familyDbId, name, token, monthlyLimit = 10000 }) {
+async function createChild({ familyDbId, name, token, monthlyLimit = 10000, client }) {
+    const execQuery = client ? client.query.bind(client) : query;
+
     if (token) {
-        const check = await query('SELECT id FROM children WHERE token = $1', [token]);
+        const check = await execQuery('SELECT id FROM children WHERE token = $1', [token]);
         if (check.rows.length > 0) throw new Error('Token already in use');
     }
 
-    const result = await query(
+    const result = await execQuery(
         'INSERT INTO children (family_id, name, token, monthly_limit) VALUES ($1, $2, $3, $4) RETURNING *',
         [familyDbId, name, token, monthlyLimit]
     );
@@ -70,7 +73,8 @@ async function updateChild(childId, data, familyDbId = null) {
         token: data.token,
         balance: data.balance,
         monthly_limit: data.monthly_limit,
-        daily_coin_limit: data.daily_coin_limit
+        daily_coin_limit: data.daily_coin_limit,
+        theme: data.theme
     };
 
     const clauses = [];

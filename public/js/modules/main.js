@@ -32,10 +32,6 @@ async function loadAbout() {
 function setupAdminUI() {
     if (!state.isAdmin) return;
     document.getElementById('edit-rules-btn')?.addEventListener('click', openEditRules);
-    ['edit-rules-btn', 'nav-catalog', 'nav-child-link'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.classList.remove('hidden'); el.parentElement?.classList.remove('hidden'); }
-    });
     renderCatalog();
 }
 
@@ -134,17 +130,28 @@ function toggleCardBookmark(type, id, trigger) {
     showToast(getShortcutToast(kind, wasActive), wasActive ? 'info' : 'success');
 }
 
-window.app = {
-    buyItem, earnCoins, requestCoins, editTask: admin.editTask, editShopItem: admin.editShopItem,
-    deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,
-    saveNewPinInline: admin.saveNewPinInline,
-    copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
-    switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal,
-    openTaskModal: admin.openTaskModal, openShopModal: admin.openShopModal,
-    addNewFriend, handleSearch, saveNickname, adminAwardCoins,
-    toggleCardBookmark,
-    loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
-};
+// Initialize window.app immediately at top level to avoid "is not a function" errors if DOMContentLoaded hasn't fired but inline onclicks have
+(function () {
+    const appLogic = {
+        buyItem, earnCoins, requestCoins, editTask: admin.editTask, editShopItem: admin.editShopItem,
+        deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,
+        saveNewPinInline: admin.saveNewPinInline,
+        copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
+        switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal,
+        openTaskModal: admin.openTaskModal, openShopModal: admin.openShopModal,
+        addNewFriend, handleSearch, saveNickname, adminAwardCoins,
+        toggleCardBookmark,
+        loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
+    };
+    // Ensure window.app exists (should be handled by head.html, but safe to repeat)
+    window.app = window.app || {};
+    // Only assign defined values to avoid overwriting early stubs with undefined if modules fail to load
+    Object.keys(appLogic).forEach(key => {
+        if (appLogic[key] !== undefined) {
+            window.app[key] = appLogic[key];
+        }
+    });
+})();
 
 function showSkeletons() {
     const lists = ['tasks-list', 'shop-list', 'history-list', 'requests-list'];
@@ -168,10 +175,10 @@ async function initializeApp() {
             return;
         }
 
+        await registerServiceWorker();
         await startBackgroundServices(data);
         renderInitialViews();
         setupControlsAndRefresh();
-        await registerServiceWorker();
     } catch (err) {
         console.error('App init error:', err);
     } finally {
@@ -265,16 +272,7 @@ function setupServiceWorkerLifecycle(registration) {
     });
 }
 
-async function disableLocalhostCaching() {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map((registration) => registration.unregister()));
-        } catch (err) {
-            console.log('SW unregister failed:', err);
-        }
-    }
-
+async function clearLocalhostCaches() {
     if ('caches' in window) {
         try {
             const keys = await caches.keys();
@@ -287,7 +285,7 @@ async function disableLocalhostCaching() {
 
 async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    if (isLocalhost()) return disableLocalhostCaching();
+    if (isLocalhost()) await clearLocalhostCaches();
     setupServiceWorkerAutoReload();
 
     try {

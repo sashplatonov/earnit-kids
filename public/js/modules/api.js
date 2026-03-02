@@ -261,6 +261,34 @@ export async function loadFriendsList() {
     return [];
 }
 
+export async function savePreference(key, value) {
+    try {
+        const response = await fetchWithCsrf('/api/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [key]: value })
+        });
+        return response.ok;
+    } catch (err) {
+        console.error('Failed to save preference:', err);
+        return false;
+    }
+}
+
+export async function saveChildTheme(childId, theme) {
+    try {
+        const response = await fetchWithCsrf(`/api/children/${childId}/theme`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme })
+        });
+        return response.ok;
+    } catch (err) {
+        console.error('Failed to save child theme:', err);
+        return false;
+    }
+}
+
 export async function fetchAnalyticsData(timeframe = 'month', childId = null) {
     try {
         let url = `/api/analytics?timeframe=${timeframe}`;

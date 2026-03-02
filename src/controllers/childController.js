@@ -2,6 +2,7 @@
 const {
     getChildLoginLink, regenerateChildToken, deleteChild, updateChildSettings
 } = require('../services/familyService');
+const childRepository = require('../db/childRepository');
 const parseBody = require('../middleware/body-parser');
 const { sendJSON } = require('../utils/controllerUtils');
 const websocket = require('../utils/websocket');
@@ -39,9 +40,22 @@ async function handleUpdateSettings({ ctx, req, res, targetChildId }) {
     sendJSON(res, result, result.success ? 200 : 400);
 }
 
+const VALID_THEMES = ['mint', 'ocean', 'sun', 'coral', 'cosmos'];
+
+async function handleUpdateTheme({ ctx, req, res, targetChildId }) {
+    if (ctx.role !== 'admin') return sendJSON(res, { error: 'Forbidden' }, 403);
+    const body = ctx.body;
+    if (!VALID_THEMES.includes(body.theme)) {
+        return sendJSON(res, { error: 'Invalid theme' }, 400);
+    }
+    const success = await childRepository.updateChild(targetChildId, { theme: body.theme });
+    sendJSON(res, success ? { success: true } : { error: 'Failed' }, success ? 200 : 400);
+}
+
 module.exports = {
     handleLinkGet,
     handleTokenRegen,
     handleDeleteChild,
-    handleUpdateSettings
+    handleUpdateSettings,
+    handleUpdateTheme
 };

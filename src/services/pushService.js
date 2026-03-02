@@ -1,5 +1,6 @@
 /** @file Push Service business services */
 const https = require('https');
+const webpush = require('web-push');
 const { GoogleAuth } = require('google-auth-library');
 const pushTokenRepository = require('../db/pushTokenRepository');
 const { createLogger } = require('../utils/logger');
@@ -7,9 +8,21 @@ const logger = createLogger('pushService');
 
 const FCM_SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 let authClientPromise = null;
+let vapidConfigured = false;
 
 function isPushEnabled() {
     return process.env.ENABLE_PUSH_NOTIFICATIONS === 'true';
+}
+
+function configureVapid() {
+    if (vapidConfigured) return;
+    const publicKey = (process.env.VAPID_PUBLIC_KEY || '').trim();
+    const privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim();
+    const contact = (process.env.VAPID_CONTACT || '').trim();
+    if (publicKey && privateKey && contact) {
+        webpush.setVapidDetails(contact, publicKey, privateKey);
+        vapidConfigured = true;
+    }
 }
 
 function parseServiceAccountJson() {
@@ -163,6 +176,28 @@ async function sendFcmNotification({ token, title, body, data = {} }) {
     }
 }
 
+async function sendWebPushNotification({ endpoint, keyP256dh, keyAuth, title, body, data = {} }) {
+    configureVapid();
+    if (!vapidConfigured) {
+        return { success: false, invalidToken: false, reason: 'VAPID not configured' };
+    }
+
+    const subscription = {
+        endpoint,
+        keys: { p256dh: keyP256dh, auth: keyAuth }
+    };
+
+    const payload = JSON.stringify({ title, body, data });
+
+    try {
+        await webpush.sendNotification(subscription, payload);
+        return { success: true, invalidToken: false, reason: null };
+    } catch (err) {
+        const gone = err.statusCode === 410 || err.statusCode === 404;
+        return { success: false, invalidToken: gone, reason: err.message };
+    }
+}
+
 function getPendingRequests(data) {
     return (data?.requests || []).filter((item) => item.status === 'pending');
 }
@@ -227,29 +262,46 @@ function detectBalanceChanges(beforeChildren, afterChildren) {
 }
 
 function dedupeTokens(tokens) {
-    return [...new Set(tokens.map((item) => item.token))];
+    const seen = new Set();
+    return tokens.filter((item) => {
+        const key = item.pushType === 'web' ? item.endpoint : item.token;
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 async function sendToTokens({ tokens, title, body, data = {} }) {
     if (!isPushEnabled() || !Array.isArray(tokens) || tokens.length === 0) return;
 
-    const invalidTokens = [];
-        for (const token of tokens) {
-            const result = await sendFcmNotification({ token, title, body, data });
-            if (!result.success) {
-                logger.warn({ reason: result.reason }, 'Push notification failed');
-                if (result.invalidToken) invalidTokens.push(token);
-            }
+    const invalidFcmTokens = [];
+    for (const t of tokens) {
+        let result;
+        if (t.pushType === 'web') {
+            result = await sendWebPushNotification({ endpoint: t.endpoint, keyP256dh: t.keyP256dh, keyAuth: t.keyAuth, title, body, data });
+        } else {
+            result = await sendFcmNotification({ token: t.token, title, body, data });
         }
 
-    if (invalidTokens.length > 0) {
-        await pushTokenRepository.deactivateTokens(invalidTokens);
+        if (!result.success) {
+            logger.warn({ reason: result.reason, pushType: t.pushType }, 'Push notification failed');
+            if (result.invalidToken && t.token) invalidFcmTokens.push(t.token);
+        }
+    }
+
+    if (invalidFcmTokens.length > 0) {
+        await pushTokenRepository.deactivateTokens(invalidFcmTokens);
     }
 }
 
 async function registerPushToken({ familyId, childId, role, token, platform }) {
     if (!familyId || !token || !role) return false;
     return await pushTokenRepository.upsertToken({ familyId, childId, role, token, platform });
+}
+
+async function registerWebPushSubscription({ familyId, childId, role, endpoint, keyP256dh, keyAuth, platform }) {
+    if (!familyId || !endpoint || !role) return false;
+    return await pushTokenRepository.upsertWebSubscription({ familyId, childId, role, endpoint, keyP256dh, keyAuth, platform });
 }
 
 async function unregisterPushToken({ familyId, token }) {
@@ -281,13 +333,22 @@ async function handleApprovedRequests(familyId, requests) {
     }
 }
 
-async function handleBalanceChanges(familyId, changes) {
+async function handleBalanceChanges(familyId, changes, actingRole = null) {
     for (const change of changes) {
-        const [admT, chT] = await Promise.all([
-            pushTokenRepository.getActiveTokens(familyId, { roles: ['admin'] }),
+        const fetchTasks = [
             pushTokenRepository.getActiveTokens(familyId, { roles: ['child'], childId: change.childId })
-        ]);
-        const allTokens = dedupeTokens([...(admT || []), ...(chT || [])]);
+        ];
+
+        // Only fetch admin tokens if the acting party is NOT an admin
+        if (actingRole !== 'admin') {
+            fetchTasks.push(pushTokenRepository.getActiveTokens(familyId, { roles: ['admin'] }));
+        }
+
+        const tokenGroups = await Promise.all(fetchTasks);
+        const allTokens = dedupeTokens(tokenGroups.flat().filter(t => t));
+
+        if (allTokens.length === 0) continue;
+
         await sendToTokens({
             tokens: allTokens,
             title: 'Баланс изменен',
@@ -297,20 +358,45 @@ async function handleBalanceChanges(familyId, changes) {
     }
 }
 
-async function notifyFamilyChanges({ familyId, beforeData, afterData, beforeChildren, afterChildren }) {
+/**
+ * Detect all family changes and send notifications
+ * @param {Object} params
+ * @param {number} params.familyId
+ * @param {Object} params.beforeData
+ * @param {Object} params.afterData
+ * @param {Array} params.beforeChildren
+ * @param {Array} params.afterChildren
+ * @param {string} [params.actingRole] - 'admin' or 'child'
+ * @param {number} [params.actingChildId] - ID of acting child if role='child'
+ */
+async function notifyFamilyChanges({ familyId, beforeData, afterData, beforeChildren, afterChildren, actingRole = null, actingChildId = null }) {
     if (!isPushEnabled() || !familyId) return;
 
     const createdReqs = detectCreatedRequests(beforeData, afterData);
     const approvedReqs = detectApprovedRequests(beforeData, afterData);
     const balanceChanges = detectBalanceChanges(beforeChildren, afterChildren);
 
-    await handleCreatedRequests(familyId, createdReqs);
-    await handleApprovedRequests(familyId, approvedReqs);
-    await handleBalanceChanges(familyId, balanceChanges);
+    // Filter created requests - usually created by child, notify admin
+    if (createdReqs.length > 0 && actingRole !== 'admin') {
+        await handleCreatedRequests(familyId, createdReqs);
+    }
+
+    // Filter approved requests - approved by admin, notify child
+    if (approvedReqs.length > 0) {
+        await handleApprovedRequests(familyId, approvedReqs);
+    }
+
+    // Filter balance changes - notify based on role
+    if (balanceChanges.length > 0) {
+        await handleBalanceChanges(familyId, balanceChanges, actingRole);
+    }
 }
 
 module.exports = {
+    sendFcmNotification,
+    sendToTokens,
     registerPushToken,
+    registerWebPushSubscription,
     unregisterPushToken,
     notifyFamilyChanges
 };

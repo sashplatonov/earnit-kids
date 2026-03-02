@@ -2,12 +2,11 @@
 const MOBILE_LAYOUT_QUERY = '(max-width: 900px)';
 
 function syncActiveNavigationState(tabButtons, moreBtn) {
-    const hasPrimaryActive = Array.from(tabButtons)
-        .some(btn => btn.classList.contains('nav__btn') && btn.classList.contains('active'));
-    const hasDropdownActive = Array.from(tabButtons)
-        .some(btn => btn.classList.contains('nav__dropdown-item') && btn.classList.contains('active'));
-
     if (moreBtn) {
+        const hasPrimaryActive = Array.from(tabButtons)
+            .some(btn => btn.classList.contains('nav__btn') && btn.classList.contains('active'));
+        const hasDropdownActive = Array.from(tabButtons)
+            .some(btn => btn.classList.contains('nav__dropdown-item') && btn.classList.contains('active'));
         moreBtn.classList.toggle('active', !hasPrimaryActive && hasDropdownActive);
     }
 }
@@ -37,8 +36,13 @@ async function toggleTab(tabButtons, tabName, moreBtn) {
         }
     };
 
-    if (document.startViewTransition) {
-        document.startViewTransition(performSwitch);
+    if (document.startViewTransition && document.visibilityState === 'visible') {
+        try {
+            const transition = document.startViewTransition(() => performSwitch());
+            await transition.finished;
+        } catch (err) {
+            await performSwitch();
+        }
     } else {
         await performSwitch();
     }

@@ -68,9 +68,7 @@ self.addEventListener('fetch', (event) => {
                 }
                 return fetchResponse;
             });
-        }).catch(() => {
-            /* Optional offline page */
-        })
+        }).catch(() => new Response('', { status: 503 }))
     );
 });
 
@@ -83,4 +81,37 @@ self.addEventListener('activate', (event) => {
                 .map((cacheName) => caches.delete(cacheName))
         ))
     ]));
+});
+
+self.addEventListener('push', (event) => {
+    let payload = {};
+    try {
+        payload = event.data ? event.data.json() : {};
+    } catch (_) {
+        payload = { title: 'EarnIt Kids', body: event.data ? event.data.text() : 'Новое уведомление' };
+    }
+
+    const title = payload.title || 'EarnIt Kids';
+    const options = {
+        body: payload.body || 'Новое уведомление',
+        icon: '/img/favicon-32x32.png',
+        badge: '/img/favicon-32x32.png',
+        data: payload.data || {},
+        tag: payload.data?.eventType || 'push',
+        renotify: true
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if ('focus' in client) return client.focus();
+            }
+            return self.clients.openWindow('/');
+        })
+    );
 });

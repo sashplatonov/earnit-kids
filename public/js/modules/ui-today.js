@@ -231,18 +231,43 @@ function computeLevel(history) {
     return { level, xpToNext, progress: Number.isFinite(progress) ? progress : 0 };
 }
 
+function renderEmptyChildrenToday(section) {
+    section.innerHTML = `
+        <div class="card empty-state-card" style="text-align: center; padding: 40px 20px;">
+            <div class="empty-state-card__icon" style="font-size: 3rem; margin-bottom: 1rem;">👶</div>
+            <h3>Нет детей в профиле</h3>
+            <p style="color: rgba(255,255,255,0.6); margin-bottom: 1.5rem;">Чтобы начать пользоваться системой, добавьте своего первого ребенка.</p>
+            <button class="btn btn--success" onclick="window.app.openAddChildModal()">+ Добавить ребенка</button>
+        </div>
+    `;
+}
+
 export function renderTodayUI(state) {
     const section = document.getElementById('today-section');
     if (!section) return;
 
+    if (state.isAdmin && (!state.children || state.children.length === 0)) {
+        renderEmptyChildrenToday(section);
+        renderParentOverview(state);
+        return;
+    }
+
     const childId = resolveActiveChildId(state);
     const childName = resolveChildName(state, childId);
     const primaryName = childName || state.children[0]?.name || 'Aliska';
+    updateTodayStats(state, childId, primaryName);
+    renderTodayLists(state, childId);
+    renderParentOverview(state);
+}
+
+function updateTodayStats(state, childId, primaryName) {
     const balance = getActiveBalance(state);
     updateElementText('today-balance-value', formatCoins(balance));
     updateElementText('today-balance-note', 'Следите за балансом и достижениями.');
     updateElementText('today-child-label', `Данные для ${primaryName}`);
+}
 
+function renderTodayLists(state, childId) {
     const tasksList = document.getElementById('today-task-list');
     if (tasksList) {
         const tasks = getPriorityTasks(state, childId);
@@ -255,8 +280,6 @@ export function renderTodayUI(state) {
     if (summary) {
         summary.innerHTML = renderRequestSummary(state, childId);
     }
-
-    renderParentOverview(state);
 }
 
 export function renderProgressUI(state) {

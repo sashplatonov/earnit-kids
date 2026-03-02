@@ -1,4 +1,6 @@
 /** @file Age-based theme manager */
+import { saveChildTheme } from './api.js';
+
 const STORAGE_PREFIX = 'earnit-age-theme';
 const THEMES = {
     mint: {
@@ -69,10 +71,14 @@ function normalize(theme) {
 function persistTheme(childId, theme) {
     const normalized = normalize(theme);
     localStorage.setItem(themeKey(childId), normalized);
+    if (childId) {
+        saveChildTheme(childId, normalized);
+    }
     return normalized;
 }
 
-function loadTheme(childId) {
+function loadTheme(childId, serverTheme) {
+    if (serverTheme && THEMES[serverTheme]) return serverTheme;
     const stored = localStorage.getItem(themeKey(childId));
     return normalize(stored);
 }
@@ -107,8 +113,8 @@ export function applyAgeTheme(theme) {
     return normalized;
 }
 
-export function useChildTheme(childId) {
-    const theme = loadTheme(childId);
+export function useChildTheme(childId, serverTheme) {
+    const theme = loadTheme(childId, serverTheme);
     applyAgeTheme(theme);
     return theme;
 }

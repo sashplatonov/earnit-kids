@@ -7,7 +7,7 @@
 command = "npx"
 args = [
     "-y",
-    "@modelcontextprotocol/server-filesystem",
+    "@modelcontextprotocol/server-filesystem@latest",
     "/Users/sash/Dev/Projects/coins-kids-shop-web",
     "/Users/sash/AI Rules"
 ]
@@ -16,18 +16,22 @@ args = [
 command = "npx"
 args = ["-y", "@upstash/context7-mcp@latest"]
 
-[mcp_servers.postgres]
+[mcp_servers.memory]
 command = "npx"
-args = ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/coins_kids_shop"]
+args = ["-y", "@modelcontextprotocol/server-memory@latest"]
+
+[mcp_servers.sequential_thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking@latest"]
+
+[mcp_servers.ripgrep]
+command = "npx"
+args = ["-y", "mcp-ripgrep@latest"]
 
 [mcp_servers.eslint]
 command = "npx"
-args = ["-y", "@eslint/mcp"]
+args = ["-y", "@eslint/mcp@latest"]
 
 [mcp_servers.git]
-command = "npx"
-args = ["-y", "@mseep/git-mcp-server"]
-
-[mcp_servers.playwright]
-command = "npx"
-args = ["-y", "@playwright/mcp"]
+command = "uvx"
+args = ["mcp-server-git", "--repository", "/Users/sash/Dev/Projects/coins-kids-shop-web"]

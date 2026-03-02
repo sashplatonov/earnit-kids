@@ -1,0 +1,26 @@
+{
+    "isAdmin": true,
+    "familyId": "fam-no-children",
+    "balance": 0,
+    "tasks": [
+        {
+            "id": 1,
+            "name": "Помыть посуду",
+            "coins": 10,
+            "group": "Дом",
+            "isDeleted": false
+        }
+    ],
+    "shop": [
+        {
+            "id": 101,
+            "name": "Мороженое",
+            "price": 50,
+            "type": "small",
+            "isDeleted": false
+        }
+    ],
+    "history": [],
+    "requests": [],
+    "children": []
+}

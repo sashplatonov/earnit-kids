@@ -17,10 +17,8 @@
             <div class="today-card__note" id="today-balance-note">Держите баланс в балансе</div>
             <div class="today-card__note today-card__note--child" id="today-child-label">Данные для всех детей</div>
             <div class="today-card__actions">
-                <button class="btn btn--primary btn--small"
-                    onclick="window.activateMainTab?.('tasks')">Задания</button>
-                <button class="btn btn--primary btn--small"
-                    onclick="window.activateMainTab?.('shop')">Магазин</button>
+                <button class="btn btn--primary btn--small" onclick="window.activateMainTab?.('tasks')">Задания</button>
+                <button class="btn btn--primary btn--small" onclick="window.activateMainTab?.('shop')">Магазин</button>
             </div>
         </article>
         <article class="today-card today-card--tasks child-only">
@@ -42,10 +40,12 @@
             <div class="today-card__note" id="parent-overview-requests-note">Новых заявок нет.</div>
             <div id="parent-request-summary" class="today-card__summary"></div>
             <div class="today-card__actions" style="flex-direction: column; gap: 0.5rem;">
-                <button class="btn btn--primary btn--small" onclick="window.activateMainTab?.('requests')">
+                <button class="btn btn--primary btn--small requires-child"
+                    onclick="window.activateMainTab?.('requests')">
                     Просмотреть заявки
                 </button>
-                <button class="btn btn--secondary btn--small" onclick="window.activateMainTab?.('catalog')">
+                <button class="btn btn--secondary btn--small requires-child"
+                    onclick="window.activateMainTab?.('catalog')">
                     Перейти к контенту
                 </button>
             </div>

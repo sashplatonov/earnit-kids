@@ -46,7 +46,7 @@ test.describe('@shop-child решение админа', () => {
 
         await openTab(page, 'requests');
         await expect(page.locator('#incoming-requests-list')).toContainText('Поход в парк');
-        await page.click('#incoming-requests-list button:has-text("✅")');
+        await page.click('#incoming-requests-list button:has-text("Подтвердить")');
 
         await expect(page.locator('#requests-counter')).toHaveClass(/hidden/);
         await openTab(page, 'history');
@@ -67,7 +67,7 @@ test.describe('@shop-child решение админа', () => {
         await gotoAppAsAdmin(page, harness.baseUrl);
 
         await openTab(page, 'requests');
-        await page.click('#incoming-requests-list button:has-text("❌")');
+        await page.click('#incoming-requests-list button:has-text("Отклонить")');
         await expect(page.locator('#incoming-requests-empty')).toBeVisible();
 
         await expect.poll(() => mocks.getData().requests[0]?.status).toBe('rejected');
