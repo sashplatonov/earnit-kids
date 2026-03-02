@@ -44,7 +44,9 @@ async function syncTokenToServer(tokenValue) {
 
     if (!result || !result.success) {
         const err = result ? result.error : 'unknown';
-        console.warn('[push] token register failed:', err || 'unknown');
+        console.warn('❌ [push] token register failed:', err || 'unknown');
+    } else {
+        console.log(`🔔 [push] ${role === 'admin' ? 'Родитель' : 'Ребенок'} подключен к пуш-уведомлениям (native)`);
     }
 }
 
@@ -111,7 +113,9 @@ async function syncWebSubscriptionToServer(subscription) {
 
     const result = await registerPushTokenOnServer(payload);
     if (!result || !result.success) {
-        console.warn('[push] web subscription register failed:', result?.error || 'unknown');
+        console.warn('❌ [push] web subscription register failed:', result?.error || 'unknown');
+    } else {
+        console.log(`🔔 [push] ${role === 'admin' ? 'Родитель' : 'Ребенок'} подключен к пуш-уведомлениям (web)`);
     }
 }
 
@@ -148,6 +152,7 @@ async function initializeWebPush() {
 // --- Init / Unregister ---
 
 export async function initializePushNotifications() {
+    console.log('🔍 [push] инициализация уведомлений...');
     const push = getPushPlugin();
     if (push) {
         // Native Capacitor path
