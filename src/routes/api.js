@@ -72,13 +72,26 @@ apiRouter.post('/api/push/register', (ctx, req, res) => mainApiHandler({
     ctx, req, res,
     fn: async (c, rq, rs) => {
         const body = c.body;
-        const result = await pushService.registerPushToken({
-            familyId: c.familyId,
-            childId: c.childId,
-            role: c.role,
-            token: body.token,
-            platform: body.platform
-        });
+        let result;
+        if (body.pushType === 'web') {
+            result = await pushService.registerWebPushSubscription({
+                familyId: c.familyId,
+                childId: c.childId,
+                role: c.role,
+                endpoint: body.endpoint,
+                keyP256dh: body.keyP256dh,
+                keyAuth: body.keyAuth,
+                platform: body.platform || 'web'
+            });
+        } else {
+            result = await pushService.registerPushToken({
+                familyId: c.familyId,
+                childId: c.childId,
+                role: c.role,
+                token: body.token,
+                platform: body.platform
+            });
+        }
         sendJSON(rs, { success: !!result });
     }
 }));
