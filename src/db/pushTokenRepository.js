@@ -52,7 +52,7 @@ async function upsertWebSubscription({ familyId, childId = null, role, endpoint,
         `INSERT INTO device_push_tokens
             (family_id, child_id, role, platform, push_type, endpoint, key_p256dh, key_auth, is_active, updated_at, last_seen_at)
          VALUES ($1, $2, $3, $4, 'web', $5, $6, $7, TRUE, NOW(), NOW())
-         ON CONFLICT (endpoint) DO UPDATE SET
+         ON CONFLICT (endpoint) WHERE endpoint IS NOT NULL DO UPDATE SET
             family_id = EXCLUDED.family_id,
             child_id = EXCLUDED.child_id,
             role = EXCLUDED.role,
