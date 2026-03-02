@@ -5,6 +5,7 @@ const {
     updateNickname, searchByNickname, addFriend, getFriendsData,
     addChild, deleteChild, updateChildSettings, getPaginatedHistory, getPaginatedRequests
 } = require('../services/familyService');
+const familyRepository = require('../db/familyRepository');
 const { createLogger } = require('../utils/logger');
 const logger = createLogger('familyController');
 const parseBody = require('../middleware/body-parser');
@@ -16,6 +17,7 @@ function enrichWithFamilyInfo({ data, familyInfo, ctx }) {
 
     if (ctx.role === 'admin' && familyInfo) {
         data.children = familyInfo.children || [];
+        data.lastSelectedChildId = familyInfo.last_selected_child_id || null;
     } else if (ctx.role === 'child' && familyInfo) {
         const child = familyInfo.children.find((childItem) => childItem.id === ctx.childId);
         data.childNickname = child ? child.name : 'Child';
@@ -135,11 +137,22 @@ async function handleRequestsGet(ctx, req, res) {
     sendJSON(res, requestsData);
 }
 
+async function handlePreferenceUpdate(ctx, req, res) {
+    if (ctx.role !== 'admin') return sendJSON(res, { error: 'Forbidden' }, 403);
+    const body = ctx.body;
+    if (body.lastSelectedChildId !== undefined) {
+        const childId = body.lastSelectedChildId ? parseInt(body.lastSelectedChildId) : null;
+        await familyRepository.update(ctx.familyId, { last_selected_child_id: childId });
+    }
+    sendJSON(res, { success: true });
+}
+
 module.exports = {
     handleDataGet,
     handleDataPost,
     handleChildrenCreate,
     handleUpdateNickname,
     handleHistoryGet,
-    handleRequestsGet
+    handleRequestsGet,
+    handlePreferenceUpdate
 };

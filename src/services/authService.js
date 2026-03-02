@@ -208,9 +208,9 @@ async function recoverPassword(email) {
         return { success: false, error: 'User not found' };
     }
 
-    // TODO: Generate a real secure token and store it in the database with expiration
     const resetToken = crypto.randomBytes(32).toString('hex');
-    // For now we simulate a link. The backend route handling /reset-password needs to be implemented.
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await familyRepository.setResetToken(family.id, resetToken, expiresAt);
     const resetLink = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
     return await sendPasswordResetEmail(email, resetLink);
@@ -224,18 +224,16 @@ async function recoverPassword(email) {
  * @returns {Promise<Object>}
  */
 async function resetPasswordWithToken(email, token, newPassword) {
-    // TODO: Verify token against DB
-    // For now, we trust the email + token presence because we haven't implemented token storage yet.
-    // Ideally: const storedToken = await familyRepository.getResetToken(email);
-    // if (!storedToken || storedToken !== token) return { success: false, error: 'Invalid token' };
-
     if (!token) return { success: false, error: 'Token missing' };
     if (!isValidPassword(newPassword)) return { success: false, error: 'Weak password' };
 
-    const family = await familyRepository.findByEmail(email);
-    if (!family) return { success: false, error: 'User not found' };
+    const tokenData = await familyRepository.findByResetToken(token);
+    if (!tokenData || tokenData.email !== email) {
+        return { success: false, error: 'Invalid or expired token' };
+    }
 
-    if (await familyRepository.update(family.id, { admin_password: newPassword })) {
+    if (await familyRepository.update(tokenData.id, { admin_password: newPassword })) {
+        await familyRepository.clearResetToken(tokenData.id);
         return { success: true };
     }
     return { success: false, error: 'Save failed' };

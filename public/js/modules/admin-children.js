@@ -1,6 +1,6 @@
 /** @file Admin Children frontend UI module */
 import { state, setState } from './state.js';
-import { addChild } from './api.js';
+import { addChild, savePreference } from './api.js';
 import { renderAll } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
 import { refreshChildLinkInline } from './admin-settings.js';
@@ -41,6 +41,7 @@ export function switchChild(childId) {
         dailyCoinLimit: getDailyLimit(child)
     });
     localStorage.setItem('earnit-last-child-id', childId);
+    savePreference('lastSelectedChildId', childId);
 
     renderAll();
 
@@ -53,7 +54,7 @@ export function switchChild(childId) {
         updateSettingsFields(child);
         refreshChildLinkInline();
     }
-    useChildTheme(childId);
+    useChildTheme(childId, child?.theme);
 }
 
 export function openAddChildModal() {

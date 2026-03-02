@@ -13,7 +13,8 @@ function mapChild(row) {
         balance: row.balance,
         monthlyLimit: row.monthly_limit,
         dailyCoinLimit: row.daily_coin_limit,
-        familyId: row.family_id
+        familyId: row.family_id,
+        theme: row.theme || 'ocean'
     };
 }
 
@@ -72,7 +73,8 @@ async function updateChild(childId, data, familyDbId = null) {
         token: data.token,
         balance: data.balance,
         monthly_limit: data.monthly_limit,
-        daily_coin_limit: data.daily_coin_limit
+        daily_coin_limit: data.daily_coin_limit,
+        theme: data.theme
     };
 
     const clauses = [];

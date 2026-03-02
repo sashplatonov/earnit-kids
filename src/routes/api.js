@@ -244,6 +244,7 @@ apiRouter.get('/api/ws-token', (ctx, req, res) => mainApiHandler({
 apiRouter.post('/api/children', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleChildrenCreate }));
 apiRouter.get('/api/base-data', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: async () => sendJSON(res, loadBaseData()) }));
 apiRouter.post('/api/update-nickname', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handleUpdateNickname }));
+apiRouter.post('/api/preferences', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: familyController.handlePreferenceUpdate }));
 
 // Friends & Social
 apiRouter.get('/api/search-user', (ctx, req, res) => mainApiHandler({ ctx, req, res, fn: friendsController.handleSearchUser }));
@@ -299,6 +300,15 @@ apiRouter.post('/api/children/:id/settings', (ctx, req, res) => mainApiHandler({
         c.targetChildId = parseInt(c.params.id);
         if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
         await childController.handleUpdateSettings({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
+    }
+}));
+
+apiRouter.post('/api/children/:id/theme', (ctx, req, res) => mainApiHandler({
+    ctx, req, res,
+    fn: async (c, rq, rs) => {
+        c.targetChildId = parseInt(c.params.id);
+        if (!await validateChildOwnership(c, c.targetChildId, rs)) return;
+        await childController.handleUpdateTheme({ ctx: c, req: rq, res: rs, targetChildId: c.targetChildId });
     }
 }));
 

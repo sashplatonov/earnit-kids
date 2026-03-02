@@ -3,7 +3,8 @@
     "allow": [
       "mcp__memory__read_graph",
       "mcp__filesystem__list_directory",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm test:*)"
     ]
   },
   "enabledMcpjsonServers": [

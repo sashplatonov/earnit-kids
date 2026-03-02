@@ -40,8 +40,10 @@ export async function initializeFromServer() {
     const baseData = data.isAdmin ? (await loadBaseData() || { tasks: [], products: [] }) : { tasks: [], products: [] };
     setState(buildInitialState(data, baseData));
     if (data.isAdmin && state.children?.length > 0) {
-        const lastChildId = localStorage.getItem('earnit-last-child-id');
-        const childToSelect = state.children.find(c => c.id == lastChildId) || state.children[0];
+        const serverChildId = data.lastSelectedChildId;
+        const localChildId = localStorage.getItem('earnit-last-child-id');
+        const preferredId = serverChildId || localChildId;
+        const childToSelect = state.children.find(c => c.id == preferredId) || state.children[0];
         switchChild(childToSelect.id);
     }
     return data;
