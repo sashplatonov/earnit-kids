@@ -68,9 +68,7 @@ self.addEventListener('fetch', (event) => {
                 }
                 return fetchResponse;
             });
-        }).catch(() => {
-            /* Optional offline page */
-        })
+        }).catch(() => new Response('', { status: 503 }))
     );
 });
 

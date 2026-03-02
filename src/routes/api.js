@@ -39,6 +39,7 @@ apiRouter.use(async (ctx, req, res) => {
             return;
         }
         await parseBody.middleware(ctx, req, res);
+        ctx.body = req.body;
     }
 });
 
