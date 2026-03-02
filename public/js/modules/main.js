@@ -131,17 +131,27 @@ function toggleCardBookmark(type, id, trigger) {
 }
 
 // Initialize window.app immediately at top level to avoid "is not a function" errors if DOMContentLoaded hasn't fired but inline onclicks have
-window.app = {
-    buyItem, earnCoins, requestCoins, editTask: admin.editTask, editShopItem: admin.editShopItem,
-    deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,
-    saveNewPinInline: admin.saveNewPinInline,
-    copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
-    switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal,
-    openTaskModal: admin.openTaskModal, openShopModal: admin.openShopModal,
-    addNewFriend, handleSearch, saveNickname, adminAwardCoins,
-    toggleCardBookmark,
-    loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
-};
+(function () {
+    const appLogic = {
+        buyItem, earnCoins, requestCoins, editTask: admin.editTask, editShopItem: admin.editShopItem,
+        deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,
+        saveNewPinInline: admin.saveNewPinInline,
+        copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
+        switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal,
+        openTaskModal: admin.openTaskModal, openShopModal: admin.openShopModal,
+        addNewFriend, handleSearch, saveNickname, adminAwardCoins,
+        toggleCardBookmark,
+        loadAnalytics: (...args) => import('./analytics-ui.js').then(m => m.loadAnalytics(...args))
+    };
+    // Ensure window.app exists (should be handled by head.html, but safe to repeat)
+    window.app = window.app || {};
+    // Only assign defined values to avoid overwriting early stubs with undefined if modules fail to load
+    Object.keys(appLogic).forEach(key => {
+        if (appLogic[key] !== undefined) {
+            window.app[key] = appLogic[key];
+        }
+    });
+})();
 
 function showSkeletons() {
     const lists = ['tasks-list', 'shop-list', 'history-list', 'requests-list'];
