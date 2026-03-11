@@ -29,7 +29,8 @@
     justify-content: space-between;
     gap: 0.9rem;
     padding: calc(0.7rem + var(--safe-top)) 1rem 0.55rem;
-    background: var(--gradient-primary);
+    background:
+        linear-gradient(135deg, #ffb65c 0%, #ff8f70 100%);
     box-shadow: var(--shadow-md);
     position: sticky;
     top: 0;
@@ -118,9 +119,9 @@
     line-height: 1.25;
     padding: 0.4rem 0.6rem;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    background: rgba(15, 23, 42, 0.3);
-    color: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.96);
 }
 
 .header__balance {
@@ -628,6 +629,22 @@
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+}
+
+#today-section .today-card--parent .btn--primary {
+    background: linear-gradient(135deg, #ffb65c 0%, #ff8f70 100%);
+    color: #ffffff;
+    box-shadow: 0 16px 28px -18px rgba(255, 143, 112, 0.5);
+}
+
+#today-section .today-card--parent .btn--primary:hover {
+    box-shadow: 0 20px 30px -18px rgba(255, 143, 112, 0.58);
+}
+
+#today-section .today-card--parent .btn--secondary {
+    background: rgba(255, 255, 255, 0.92);
+    color: #425a7d;
+    border: 1px solid rgba(125, 149, 187, 0.18);
 }
 
 .today-card__summary {

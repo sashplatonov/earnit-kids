@@ -1,7 +1,9 @@
 # Dependencies and build artifacts
 node_modules/
+mobile/node_modules/
 dist/
 coverage/
+public/dist/
 
 # Test artifacts
 test-results/
@@ -12,6 +14,7 @@ playwright-report/
 tmp/
 .tmp/
 *.log
+logs/
 
 # Local data dumps
 data/
@@ -22,13 +25,10 @@ data.json
 .env.*
 !.env.example
 
-# VCS and editor/system noise
+# Tooling, VCS and editor/system noise
 .git/
+.claude/
+.codex/
 .idea/
 .vscode/
 .DS_Store
-
-# Local Docker helper files
-.docker/
-
-TODO.md

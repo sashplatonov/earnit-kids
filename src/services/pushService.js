@@ -3,6 +3,12 @@ const https = require('https');
 const webpush = require('web-push');
 const { GoogleAuth } = require('google-auth-library');
 const pushTokenRepository = require('../db/pushTokenRepository');
+const {
+    detectBalanceChanges,
+    detectApprovedRequests,
+    detectCreatedRequests,
+    dedupeTokens
+} = require('./pushServiceHelpers');
 const { createLogger } = require('../utils/logger');
 const logger = createLogger('pushService');
 
@@ -198,95 +204,35 @@ async function sendWebPushNotification({ endpoint, keyP256dh, keyAuth, title, bo
     }
 }
 
-function getPendingRequests(data) {
-    return (data?.requests || []).filter((item) => item.status === 'pending');
-}
-
-function indexById(items) {
-    const map = new Map();
-    items.forEach((item) => {
-        map.set(String(item.id), item);
-    });
-    return map;
-}
-
-function getNewHistoryEntries(beforeData, afterData) {
-    const beforeIds = new Set((beforeData?.history || []).map((entry) => String(entry.id)));
-    return (afterData?.history || []).filter((entry) => !beforeIds.has(String(entry.id)));
-}
-
-function detectCreatedRequests(beforeData, afterData) {
-    const beforeMap = indexById(getPendingRequests(beforeData));
-    return getPendingRequests(afterData).filter((req) => !beforeMap.has(String(req.id)));
-}
-
-function detectApprovedRequests(beforeData, afterData) {
-    const beforePending = getPendingRequests(beforeData);
-    const afterPendingMap = indexById(getPendingRequests(afterData));
-    const removedPending = beforePending.filter((req) => !afterPendingMap.has(String(req.id)));
-    if (removedPending.length === 0) return [];
-
-    const newHistory = getNewHistoryEntries(beforeData, afterData);
-    if (newHistory.length === 0) return [];
-
-    return removedPending.filter((req) => {
-        return newHistory.some((entry) => {
-            const sameChild = String(entry.childId || '') === String(req.childId || '');
-            const sameAmount = Number(entry.amount || 0) === Number(req.coins || 0);
-            return sameChild && sameAmount;
+async function sendToSingleToken({ tokenEntry, title, body, data }) {
+    if (tokenEntry.pushType === 'web') {
+        return await sendWebPushNotification({
+            endpoint: tokenEntry.endpoint,
+            keyP256dh: tokenEntry.keyP256dh,
+            keyAuth: tokenEntry.keyAuth,
+            title,
+            body,
+            data
         });
-    });
+    }
+
+    return await sendFcmNotification({ token: tokenEntry.token, title, body, data });
 }
 
-function detectBalanceChanges(beforeChildren, afterChildren) {
-    const beforeMap = new Map((beforeChildren || []).map((child) => [String(child.id), child]));
-    const changes = [];
+function trackFailedToken(result, tokenEntry, invalidFcmTokens) {
+    if (result.success) return;
 
-    (afterChildren || []).forEach((child) => {
-        const prev = beforeMap.get(String(child.id));
-        if (!prev) return;
-
-        const previousBalance = Number(prev.balance || 0);
-        const currentBalance = Number(child.balance || 0);
-        if (previousBalance === currentBalance) return;
-
-        changes.push({
-            childId: child.id,
-            childName: child.name || 'Ребенок',
-            delta: currentBalance - previousBalance,
-            balance: currentBalance
-        });
-    });
-
-    return changes;
-}
-
-function dedupeTokens(tokens) {
-    const seen = new Set();
-    return tokens.filter((item) => {
-        const key = item.pushType === 'web' ? item.endpoint : item.token;
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
+    logger.warn({ reason: result.reason, pushType: tokenEntry.pushType }, 'Push notification failed');
+    if (result.invalidToken && tokenEntry.token) invalidFcmTokens.push(tokenEntry.token);
 }
 
 async function sendToTokens({ tokens, title, body, data = {} }) {
     if (!isPushEnabled() || !Array.isArray(tokens) || tokens.length === 0) return;
 
     const invalidFcmTokens = [];
-    for (const t of tokens) {
-        let result;
-        if (t.pushType === 'web') {
-            result = await sendWebPushNotification({ endpoint: t.endpoint, keyP256dh: t.keyP256dh, keyAuth: t.keyAuth, title, body, data });
-        } else {
-            result = await sendFcmNotification({ token: t.token, title, body, data });
-        }
-
-        if (!result.success) {
-            logger.warn({ reason: result.reason, pushType: t.pushType }, 'Push notification failed');
-            if (result.invalidToken && t.token) invalidFcmTokens.push(t.token);
-        }
+    for (const tokenEntry of tokens) {
+        const result = await sendToSingleToken({ tokenEntry, title, body, data });
+        trackFailedToken(result, tokenEntry, invalidFcmTokens);
     }
 
     if (invalidFcmTokens.length > 0) {

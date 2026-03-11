@@ -17,27 +17,32 @@
     <meta name="twitter:title" content="Вход и первые шаги | EarnIt Kids">
     <meta name="twitter:description" content="Войдите в EarnIt Kids — систему мотивации для детей. Настройте роли, задания и магазин без долгого обучения.">
     <meta name="twitter:image" content="{{OG_IMAGE_URL}}">
+    <meta name="theme-color" content="#fff3e0">
     <title>Вход и первые шаги | EarnIt Kids</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
     <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
-    <link rel="icon" href="/img/favicon-32x32.png" sizes="32x32">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
     <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/img/icon-192.png">
     {{CLARITY_SCRIPT}}
     <style>
         :root {
-            --page-bg: #030712;
-            --page-surface: rgba(10, 15, 32, 0.85);
-            --panel-bg: rgba(15, 23, 42, 0.92);
-            --panel-border: rgba(148, 163, 184, 0.24);
-            --highlight: #f59e0b;
-            --accent: #22d3ee;
-            --accent-soft: #34d399;
-            --text-main: #f8fafc;
-            --muted: rgba(226, 232, 240, 0.7);
+            --page-bg: #fffaf1;
+            --page-surface: rgba(255, 255, 255, 0.82);
+            --panel-bg: #ffffff;
+            --panel-border: rgba(125, 149, 187, 0.16);
+            --highlight: #ffb65c;
+            --highlight-strong: #ff8f70;
+            --accent: #5cc7f3;
+            --accent-soft: #8ddfb7;
+            --berry: #ff9cbc;
+            --text-main: #26344f;
+            --muted: #667892;
         }
 
         * {
@@ -48,9 +53,10 @@
             margin: 0;
             min-height: 100vh;
             background:
-                radial-gradient(900px 500px at 20% -10%, rgba(34, 211, 238, 0.18), transparent 60%),
-                radial-gradient(900px 700px at 120% -5%, rgba(245, 158, 11, 0.2), transparent 55%),
-                linear-gradient(180deg, #050b16 0%, #020410 40%, #030712 100%);
+                radial-gradient(780px 460px at 8% 0%, rgba(92, 199, 243, 0.24), transparent 58%),
+                radial-gradient(760px 520px at 92% 4%, rgba(255, 214, 107, 0.28), transparent 52%),
+                radial-gradient(720px 480px at 80% 82%, rgba(255, 156, 188, 0.18), transparent 48%),
+                linear-gradient(180deg, #fffdf8 0%, #f4fbff 50%, #fff4e8 100%);
             font-family: 'Nunito', system-ui, sans-serif;
             color: var(--text-main);
         }
@@ -67,10 +73,10 @@
         .login-panel,
         .onboarding-steps {
             border-radius: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--panel-border);
             background: var(--page-surface);
             padding: 2rem;
-            box-shadow: 0 30px 60px -25px rgba(2, 7, 23, 0.9);
+            box-shadow: 0 28px 60px -34px rgba(99, 128, 177, 0.35);
         }
 
         .login-hero {
@@ -86,9 +92,9 @@
             text-transform: uppercase;
             padding: 0.4rem 0.9rem;
             border-radius: 999px;
-            border: 1px solid rgba(34, 211, 238, 0.4);
-            background: rgba(34, 211, 238, 0.1);
-            color: #cbd5f5;
+            border: 1px solid rgba(92, 199, 243, 0.3);
+            background: linear-gradient(135deg, rgba(92, 199, 243, 0.14), rgba(255, 214, 107, 0.18));
+            color: #547198;
             margin-bottom: 1rem;
         }
 
@@ -126,15 +132,15 @@
         }
 
         .btn-hero {
-            background: linear-gradient(135deg, var(--highlight), #fb923c);
-            color: #0b1220;
-            box-shadow: 0 12px 28px rgba(245, 158, 11, 0.35);
+            background: linear-gradient(135deg, var(--highlight), var(--highlight-strong));
+            color: #ffffff;
+            box-shadow: 0 16px 28px rgba(255, 143, 112, 0.28);
         }
 
         .btn-ghost {
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(125, 149, 187, 0.22);
             color: var(--text-main);
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.82);
         }
 
         .hero-stats {
@@ -146,9 +152,9 @@
 
         .hero-stat {
             border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(125, 149, 187, 0.16);
             padding: 0.85rem;
-            background: rgba(15, 23, 42, 0.5);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 249, 255, 0.92));
         }
 
         .hero-stat strong {
@@ -171,8 +177,8 @@
         .role-card {
             border-radius: 1.1rem;
             padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(125, 149, 187, 0.16);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(247, 250, 255, 0.92));
             min-height: 155px;
         }
 
@@ -197,7 +203,9 @@
             font-size: 0.78rem;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(92, 199, 243, 0.28);
+            background: rgba(255, 255, 255, 0.82);
+            color: #547198;
             margin-bottom: 0.8rem;
         }
 
@@ -211,8 +219,8 @@
         .scenario-card {
             padding: 1rem;
             border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid rgba(125, 149, 187, 0.16);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(246, 249, 255, 0.93));
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
@@ -240,12 +248,14 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            border: 1px solid rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(125, 149, 187, 0.24);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-main);
         }
 
-        .role-chip--parent { border-color: rgba(14, 165, 233, 0.6); }
-        .role-chip--child { border-color: rgba(34, 197, 94, 0.6); }
-        .role-chip--admin { border-color: rgba(249, 115, 22, 0.6); }
+        .role-chip--parent { border-color: rgba(92, 199, 243, 0.48); }
+        .role-chip--child { border-color: rgba(141, 223, 183, 0.58); }
+        .role-chip--admin { border-color: rgba(255, 182, 92, 0.55); }
 
         .scenario-card__list {
             margin: 0;
@@ -260,7 +270,7 @@
 
         .scenario-card__hint {
             font-size: 0.85rem;
-            color: rgba(226, 232, 240, 0.7);
+            color: #72839a;
         }
 
         .login-panel {
@@ -281,9 +291,9 @@
 
         .form-switch {
             display: inline-flex;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.78);
             border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(125, 149, 187, 0.18);
             padding: 0.2rem;
         }
 
@@ -300,7 +310,7 @@
 
         .form-tab-btn.active {
             color: var(--text-main);
-            background: rgba(255, 255, 255, 0.12);
+            background: linear-gradient(135deg, rgba(92, 199, 243, 0.15), rgba(255, 214, 107, 0.22));
         }
 
         .auth-forms {
@@ -309,9 +319,9 @@
         }
 
         .form-frame {
-            background: rgba(15, 23, 42, 0.65);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.94));
             border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(125, 149, 187, 0.14);
             padding: 1.4rem;
             min-height: 320px;
         }
@@ -343,16 +353,16 @@
             padding: 0.85rem 1rem;
             font-size: 1rem;
             border-radius: 0.9rem;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid rgba(125, 149, 187, 0.22);
+            background: rgba(255, 255, 255, 0.98);
             color: var(--text-main);
-            transition: border 0.2s ease;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
         }
 
         .input-field:focus {
             outline: none;
             border-color: var(--highlight);
-            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+            box-shadow: 0 0 0 3px rgba(255, 182, 92, 0.18);
         }
 
         .btn-login,
@@ -368,15 +378,15 @@
         }
 
         .btn-login {
-            background: linear-gradient(135deg, var(--highlight), #fb923c);
-            color: #0c1221;
+            background: linear-gradient(135deg, var(--highlight), var(--highlight-strong));
+            color: #ffffff;
             margin-top: 0.8rem;
-            box-shadow: 0 12px 32px rgba(245, 158, 11, 0.35);
+            box-shadow: 0 16px 32px rgba(255, 143, 112, 0.28);
         }
 
         .btn-secondary {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(125, 149, 187, 0.18);
             color: var(--text-main);
             margin-top: 0.9rem;
         }
@@ -431,8 +441,8 @@
         .step-card {
             border-radius: 1rem;
             padding: 1.2rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(125, 149, 187, 0.14);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 249, 255, 0.9));
             min-height: 170px;
         }
 
@@ -443,8 +453,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: rgba(225, 29, 72, 0.12);
-            color: #fee2e2;
+            background: linear-gradient(135deg, rgba(92, 199, 243, 0.18), rgba(255, 214, 107, 0.26));
+            color: #40628d;
             font-weight: 700;
             margin-bottom: 0.7rem;
         }

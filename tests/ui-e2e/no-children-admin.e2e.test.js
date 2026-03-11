@@ -4,6 +4,21 @@ const { readFixture, installAppNetworkMocks } = require('./helpers/networkMocks'
 
 let harness;
 
+async function expectChildNavItemsHidden(moreDropdown) {
+    await expect(moreDropdown.locator('button[data-tab="history"]')).toBeHidden();
+    await expect(moreDropdown.locator('button[data-tab="friends"]')).toBeHidden();
+    await expect(moreDropdown.locator('button[data-tab="analytics"]')).toBeHidden();
+    await expect(moreDropdown.locator('#nav-limits')).toBeHidden();
+    await expect(moreDropdown.locator('button[data-tab="catalog"]')).toBeHidden();
+    await expect(moreDropdown.locator('#nav-child-link')).toBeHidden();
+}
+
+async function expectAdminNavItemsVisible(moreDropdown) {
+    await expect(moreDropdown.locator('#nav-settings')).toBeVisible();
+    await expect(moreDropdown.locator('button[data-tab="rules"]')).toBeVisible();
+    await expect(moreDropdown.locator('#logout-btn')).toBeVisible();
+}
+
 test.beforeAll(async () => {
     harness = await startAppHarness();
 });
@@ -50,17 +65,10 @@ test.describe('Admin with No Children Flow', () => {
         await page.click('#nav-more-btn');
         const moreDropdown = page.locator('#nav-more-dropdown');
 
-        await expect(moreDropdown.locator('button[data-tab="history"]')).toBeHidden();
-        await expect(moreDropdown.locator('button[data-tab="friends"]')).toBeHidden();
-        await expect(moreDropdown.locator('button[data-tab="analytics"]')).toBeHidden();
-        await expect(moreDropdown.locator('#nav-limits')).toBeHidden();
-        await expect(moreDropdown.locator('button[data-tab="catalog"]')).toBeHidden();
-        await expect(moreDropdown.locator('#nav-child-link')).toBeHidden();
+        await expectChildNavItemsHidden(moreDropdown);
 
         // Settings, Rules, Logout should be visible
-        await expect(moreDropdown.locator('#nav-settings')).toBeVisible();
-        await expect(moreDropdown.locator('button[data-tab="rules"]')).toBeVisible();
-        await expect(moreDropdown.locator('#logout-btn')).toBeVisible();
+        await expectAdminNavItemsVisible(moreDropdown);
 
         // Settings section
         await moreDropdown.locator('#nav-settings').click();

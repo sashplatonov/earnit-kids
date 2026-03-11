@@ -5,8 +5,8 @@
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#1e293b",
-    "theme_color": "#f7931a",
+    "background_color": "#fff8ee",
+    "theme_color": "#fff3e0",
     "orientation": "portrait",
     "lang": "ru",
     "icons": [
@@ -31,7 +31,7 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
-        }
+        },
     ],
     "categories": [
         "finance",

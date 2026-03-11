@@ -1773,6 +1773,237 @@ dialog.modal[open]::backdrop {
     letter-spacing: 1px;
 }
 
+#shop-section {
+    position: relative;
+    padding: 1.2rem;
+    border-radius: 1.6rem;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(247, 250, 255, 0.34));
+    border: 1px solid rgba(125, 149, 187, 0.12);
+}
+
+#shop-section::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem 0 auto;
+    height: 18rem;
+    pointer-events: none;
+    background:
+        radial-gradient(34rem 18rem at 8% 8%, rgba(92, 199, 243, 0.18), transparent 58%),
+        radial-gradient(30rem 18rem at 92% 10%, rgba(255, 214, 107, 0.2), transparent 56%),
+        radial-gradient(22rem 14rem at 72% 88%, rgba(255, 156, 188, 0.14), transparent 58%);
+    opacity: 0.95;
+}
+
+#shop-section .creation-wizard,
+#shop-section .empty-state,
+#shop-section .card.card--shop,
+#shop-section .group-header {
+    position: relative;
+    z-index: 1;
+}
+
+#shop-section .section__header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1rem;
+}
+
+#shop-section .section__header > h2,
+#shop-section.section > h2 {
+    color: #26344f;
+}
+
+#shop-section .section__buttons .btn,
+#shop-section .creation-wizard .btn {
+    border: 1px solid rgba(125, 149, 187, 0.16);
+}
+
+#shop-section .btn--secondary {
+    background: rgba(255, 255, 255, 0.92);
+    color: #425a7d;
+    border-color: rgba(125, 149, 187, 0.18);
+    box-shadow: none;
+}
+
+#shop-section .btn--secondary:hover {
+    background: rgba(247, 250, 255, 1);
+}
+
+#shop-section .btn--add {
+    background: linear-gradient(135deg, #5cc7f3 0%, #8ddfb7 100%);
+    color: #ffffff;
+    box-shadow: 0 18px 28px -18px rgba(92, 199, 243, 0.5);
+}
+
+#shop-section .btn--primary {
+    background: linear-gradient(135deg, #ffb65c 0%, #ff8f70 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 16px 28px -18px rgba(255, 143, 112, 0.5);
+}
+
+#shop-section .btn--primary:hover {
+    background: linear-gradient(135deg, #ffb65c 0%, #ff8f70 100%);
+    box-shadow: 0 20px 30px -18px rgba(255, 143, 112, 0.58);
+}
+
+#shop-section .btn--primary:disabled,
+#shop-section .btn--primary[aria-disabled='true'] {
+    background: linear-gradient(135deg, rgba(255, 182, 92, 0.55) 0%, rgba(255, 143, 112, 0.5) 100%);
+    color: rgba(255, 255, 255, 0.92);
+    box-shadow: none;
+}
+
+#shop-section .creation-wizard {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 255, 0.9)),
+        linear-gradient(135deg, rgba(92, 199, 243, 0.1), rgba(255, 214, 107, 0.12));
+    border: 1px solid rgba(125, 149, 187, 0.18);
+    box-shadow: 0 24px 52px -34px rgba(104, 133, 176, 0.28);
+}
+
+#shop-section .creation-wizard__tag {
+    color: #56749a;
+    background: linear-gradient(135deg, rgba(92, 199, 243, 0.14), rgba(255, 214, 107, 0.22));
+    border-color: rgba(92, 199, 243, 0.28);
+}
+
+#shop-section .creation-wizard__hint {
+    color: #61738c;
+}
+
+#shop-section .creation-wizard__header h3 {
+    color: #26344f;
+}
+
+#shop-section .wizard-step {
+    border-color: rgba(125, 149, 187, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+#shop-section .wizard-step h4 {
+    color: #26344f;
+}
+
+#shop-section .wizard-step p {
+    color: #647792;
+}
+
+#shop-section .group-header {
+    border-bottom: 1px solid rgba(125, 149, 187, 0.16);
+    color: #547198;
+}
+
+#shop-section .cards {
+    position: relative;
+    z-index: 1;
+}
+
+#shop-section .card.card--shop {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(246, 249, 255, 0.93));
+    border: 1px solid rgba(125, 149, 187, 0.17);
+    box-shadow: 0 22px 46px -34px rgba(104, 133, 176, 0.25);
+}
+
+#shop-section .card.card--shop::before {
+    background: linear-gradient(90deg, #5cc7f3 0%, #ffd86b 55%, #ff9cbc 100%);
+    opacity: 0.92;
+}
+
+#shop-section .card.card--shop .card__title {
+    color: #26344f;
+}
+
+#shop-section .card.card--shop .card__comment,
+#shop-section .card.card--shop .card__meta {
+    color: #647792;
+}
+
+#shop-section .card.card--shop .card__meta-sep {
+    color: rgba(100, 119, 146, 0.45);
+}
+
+#shop-section .card.card--shop .card__badge {
+    border-color: rgba(125, 149, 187, 0.14);
+    background: rgba(255, 255, 255, 0.82);
+    color: #4e6485;
+}
+
+#shop-section .card.card--shop .card__badge--group {
+    border-color: rgba(92, 199, 243, 0.26);
+    background: rgba(92, 199, 243, 0.12);
+    color: #3d82aa;
+}
+
+#shop-section .card.card--shop .card__badge--type {
+    border-color: rgba(255, 156, 188, 0.26);
+    background: rgba(255, 156, 188, 0.12);
+    color: #bf5f84;
+}
+
+#shop-section .card.card--shop .card__badge--money {
+    border-color: rgba(255, 182, 92, 0.28);
+    background: rgba(255, 214, 107, 0.18);
+    color: #a16f1a;
+}
+
+#shop-section .card.card--shop .card__coins {
+    background: linear-gradient(135deg, #ffe385 0%, #ffbf69 100%);
+    color: #6c4d15;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+#shop-section .card.card--shop.card--affordable .card__coins {
+    background: linear-gradient(135deg, #8ddfb7 0%, #5cc7f3 100%);
+    color: #ffffff;
+}
+
+#shop-section .card.card--shop .card__status--available {
+    color: #318a61;
+    border-color: rgba(120, 197, 138, 0.36);
+    background: rgba(141, 223, 183, 0.18);
+}
+
+#shop-section .card.card--shop .card__status--locked {
+    color: #b35e17;
+    border-color: rgba(255, 182, 92, 0.36);
+    background: rgba(255, 214, 107, 0.18);
+}
+
+#shop-section .card.card--shop .card__quick-bookmark {
+    border-color: rgba(125, 149, 187, 0.16);
+    background: rgba(255, 255, 255, 0.88);
+    color: #506783;
+}
+
+#shop-section .card.card--shop .card__quick-bookmark--active {
+    background: linear-gradient(135deg, rgba(92, 199, 243, 0.18), rgba(255, 214, 107, 0.22));
+    color: #2d577b;
+    border-color: rgba(92, 199, 243, 0.24);
+}
+
+#shop-section .empty-state {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.9));
+    border: 1px dashed rgba(125, 149, 187, 0.28);
+    color: #647792;
+    box-shadow: 0 20px 42px -34px rgba(104, 133, 176, 0.22);
+}
+
+#shop-section .empty-state__title {
+    color: #26344f;
+}
+
+#shop-section .empty-state__hint,
+#shop-section .empty-state__actions {
+    color: #647792;
+}
+
+#shop-section .empty-state__tip {
+    background: linear-gradient(135deg, rgba(92, 199, 243, 0.14), rgba(255, 214, 107, 0.2));
+    color: #8c6517;
+}
+
 .history-month-header {
     display: flex;
     justify-content: space-between;
