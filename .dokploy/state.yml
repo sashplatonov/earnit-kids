@@ -2,8 +2,8 @@
 
 project:
   name: "earnit-kids"
-  id: "6JWU_5fyiYMycXI7GFpn9"
-  environment_id: "oX6GgB6x7M_smEJTa-2iZ"
+  id: "roy_K40cOycdSwcgsWTgg"
+  environment_id: "oFEbLoDypd5VekZPYkAJN"
 
 git:
   repository: "git@github.com:sashplatonov/coins-kids-shop.git"
@@ -12,13 +12,5 @@ git:
 
 compose:
   name: "earnit-kids"
-  id: "i3FexsrEXPqz9ZYMURhJR"
+  id: "4WJi8phbjf2dRsw0Dbk7p"
   app_name: "earnit-kids"
-
-databases:
-  - name: "db"
-    id: "TmY78zoITfxfP12YbFsR3"
-    type: "postgres"
-    database_name: "postgres"
-    database_user: "postgres"
-    database_password_env: "POSTGRES_PASSWORD"
