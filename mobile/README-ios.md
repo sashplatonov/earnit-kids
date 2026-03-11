@@ -29,7 +29,7 @@ This document walks through every step needed to publish (or test without paying
 1. In Xcode → select the `App` target → `Signing & Capabilities`.  
 2. Choose your Team (use your Apple ID for free testing; switching to a paid account later is easy).  
 3. Confirm the Bundle Identifier matches `appId` in `capacitor.config.json`.  
-4. Add the **Associated Domains** capability and enter `applinks:coins-kids-shop.onrender.com` (or your production domain).  
+4. Add the **Associated Domains** capability and enter `applinks:earnit-kids.igo.mywire.org` (or your production domain).  
 5. Set the deployment target to iOS 16+ (or the version you support).
 
 ## 4. Test without paying (free Apple ID)

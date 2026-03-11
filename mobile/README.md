@@ -16,7 +16,7 @@ This folder holds the Capacitor wrapper that hosts the existing web UI (`../publ
 0. Recommended runtime: Node.js 20.x or 22.x (LTS).
 1. `cd mobile && npm install`
 2. Config selection:
-   - `npm run sync:prod` uses `https://coins-kids-shop.onrender.com`.
+- `npm run sync:prod` uses `https://earnit-kids.igo.mywire.org`.
    - `npm run sync:local` uses `http://localhost:3001` (Docker Compose backend).
    - `appId`/`appName` can be adjusted in config files if you need custom bundle identifiers.
 3. Add platforms:

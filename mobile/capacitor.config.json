@@ -1,10 +1,10 @@
 {
-  "appId": "com.coins.kids",
+  "appId": "com.earnit.kids",
   "appName": "EarnIt Kids",
   "webDir": "../public",
   "npmClient": "npm",
   "server": {
-    "url": "https://coins-kids-shop.onrender.com",
+    "url": "https://earnit-kids.igo.mywire.org",
     "cleartext": false
   }
 }

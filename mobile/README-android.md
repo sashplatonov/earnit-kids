@@ -36,7 +36,7 @@ Follow this guide to publish the Capacitor shell on Google Play and to test with
     <category android:name="android.intent.category.DEFAULT" />
     <category android:name="android.intent.category.BROWSABLE" />
     <data android:scheme="https"
-          android:host="coins-kids-shop.onrender.com"
+          android:host="earnit-kids.igo.mywire.org"
           android:pathPrefix="/login-child" />
 </intent-filter>
 ```
@@ -55,7 +55,7 @@ Follow this guide to publish the Capacitor shell on Google Play and to test with
 3. Install locally: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.  
 4. Alternatively, build a release APK signed with your debug keystore and install it the same way.  
 5. There’s no cost: this bypasses Play Console entirely.  
-6. For deep link tests, open Safari/Chrome and navigate to `https://coins-kids-shop.onrender.com/login-child/<token>`; Android should offer to open via the installed app.
+6. For deep link tests, open Safari/Chrome and navigate to `https://earnit-kids.igo.mywire.org/login-child/<token>`; Android should offer to open via the installed app.
 
 ## 6. Publish to Google Play
 1. Build a release AAB: `./gradlew bundleRelease` (run this from the `mobile/android/` directory; the Gradle wrapper lives there).  

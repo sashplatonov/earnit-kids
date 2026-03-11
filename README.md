@@ -4,7 +4,7 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 
 ## 🌐 Live Demo
 
-The project is deployed and available at: [https://coins-kids-shop.onrender.com/](https://coins-kids-shop.onrender.com/)
+The project is deployed and available at: [https://earnit-kids.igo.mywire.org/](https://earnit-kids.igo.mywire.org/)
 
 ## ✨ Features
 
@@ -144,7 +144,7 @@ The application will be available at `http://localhost:3000`.
 
 ## 📱 Mobile Shell
 
-The static UI can be embedded inside a Capacitor wrapper for iOS/Android. The `mobile/` folder already contains `capacitor.config.json` and instructions for syncing with the web assets. The wrapper points at `https://coins-kids-shop.onrender.com` by default, so no API changes are required.
+The static UI can be embedded inside a Capacitor wrapper for iOS/Android. The `mobile/` folder already contains `capacitor.config.json` and instructions for syncing with the web assets. The wrapper points at `https://earnit-kids.igo.mywire.org` by default, so no API changes are required.
 
 ### Prerequisites
 - Node.js 20.x or 22.x (LTS recommended).
