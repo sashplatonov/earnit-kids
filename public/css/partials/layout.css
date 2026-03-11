@@ -110,6 +110,30 @@
     justify-content: center;
     gap: 0.3rem;
     white-space: nowrap;
+    color: var(--color-text-high-contrast);
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(125, 149, 187, 0.28);
+    box-shadow: 0 10px 22px rgba(108, 133, 176, 0.18);
+}
+
+.header__profile:hover {
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--color-text-high-contrast);
+}
+
+.header__profile .gamified-icon {
+    flex-shrink: 0;
+}
+
+.header__profile-label,
+.header__child-nickname {
+    color: var(--color-text-high-contrast);
+}
+
+.header__child-nickname {
+    font-size: 0.82rem;
+    line-height: 1.2;
+    color: rgba(44, 63, 92, 0.88);
 }
 
 .header__install-hint {

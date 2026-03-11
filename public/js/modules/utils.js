@@ -163,12 +163,11 @@ export function openModal(modalId) {
 
     if (modal.tagName === 'DIALOG') {
         modal.showModal();
-        // Close on backdrop click (click outside modal__content)
+        // Close only when the native dialog backdrop itself is clicked.
+        // Coordinate-based checks misfire on mobile/select pickers and close the modal mid-edit.
         if (!modal._backdropListener) {
             modal._backdropListener = (e) => {
-                const rect = modal.querySelector('.modal__content')?.getBoundingClientRect();
-                if (rect && (e.clientX < rect.left || e.clientX > rect.right ||
-                    e.clientY < rect.top || e.clientY > rect.bottom)) {
+                if (e.target === modal) {
                     modal.close();
                 }
             };

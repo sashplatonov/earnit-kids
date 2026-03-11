@@ -4,11 +4,11 @@ const CHILD_SWITCHER_STYLE = `
 <style>
     .child-menu {position: relative; z-index: var(--layer-dropdown); }
     .child-menu-btn {
-        background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(125, 149, 187, 0.28);
     border-radius: 12px;
     padding: 8px 14px;
-    color: white;
+    color: var(--color-text-high-contrast);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -16,16 +16,16 @@ const CHILD_SWITCHER_STYLE = `
     font-family: inherit;
     font-weight: 700;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 22px rgba(108, 133, 176, 0.18);
         }
     .child-menu-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(125, 149, 187, 0.42);
     transform: translateY(-1px);
         }
     .child-menu-btn__arrow {
         font - size: 0.7em;
-    opacity: 0.6;
+    opacity: 0.75;
     transition: transform 0.25s;
         }
     .child-menu.active .child-menu-btn__arrow {transform: rotate(180deg); }
@@ -36,10 +36,10 @@ const CHILD_SWITCHER_STYLE = `
     bottom: auto;
     right: 0;
     margin-top: 10px;
-    background: #1e1e30;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-bg-card);
+    border: 1px solid rgba(125, 149, 187, 0.24);
     border-radius: 16px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 22px 42px rgba(108, 133, 176, 0.22);
     min-width: 220px;
     z-index: var(--layer-dropdown);
     overflow: hidden;
@@ -75,17 +75,19 @@ const CHILD_SWITCHER_STYLE = `
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.95rem;
+    color: var(--color-text-high-contrast);
         }
-    .child-menu-item:hover {background: rgba(255, 255, 255, 0.08); }
+    .child-menu-item:hover {background: rgba(125, 149, 187, 0.12); }
     .child-menu-item.active {
-        background: rgba(255, 215, 0, 0.15);
-    color: #ffd700;
+        background: rgba(99, 102, 241, 0.14);
+    color: var(--color-primary-dark);
         }
     .child-menu-item__name {font - weight: 600; }
     .child-menu-item__balance {
         font - size: 0.85em;
-    opacity: 0.8;
-    background: rgba(0,0,0,0.2);
+    opacity: 1;
+    color: var(--color-text-soft);
+    background: rgba(125, 149, 187, 0.14);
     padding: 2px 8px;
     border-radius: 8px;
     display: inline-flex;
@@ -100,17 +102,17 @@ const CHILD_SWITCHER_STYLE = `
         }
     .child-menu-divider {
         height: 1px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(125, 149, 187, 0.24);
     margin: 4px 0;
         }
     .child-menu-item.add-child-item {
-        color: rgba(255, 255, 255, 0.5);
+        color: var(--color-text-muted);
     font-weight: 500;
     justify-content: flex-start;
     gap: 12px;
         }
     .child-menu-item.add-child-item:hover {
-        color: white;
+        color: var(--color-success-dark);
     background: rgba(16, 185, 129, 0.1);
         }
     @media (max-width: 900px), (hover: none) and (pointer: coarse) {
