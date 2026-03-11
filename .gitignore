@@ -1,5 +1,6 @@
 *.log
 .env
+.env.production
 /node_modules
 /.playwright-browsers
 /playwright-report

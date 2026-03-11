@@ -1,7 +1,6 @@
 services:
-  coins-kids-shop:
+  web:
     build: .
-    container_name: coins-kids-shop
     env_file:
       - .env
     environment:
@@ -16,3 +15,25 @@ services:
       retries: 3
       start_period: 20s
     restart: unless-stopped
+
+  db:
+    image: postgres:18-alpine
+    profiles:
+      - db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - earnit_kids_postgres_data:/var/lib/postgresql
+    expose:
+      - "5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  earnit_kids_postgres_data:
