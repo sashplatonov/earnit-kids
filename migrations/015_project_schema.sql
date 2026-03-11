@@ -20,18 +20,8 @@ DECLARE
 BEGIN
     FOREACH app_table_name IN ARRAY tables_to_move
     LOOP
-        IF EXISTS (
-            SELECT 1
-            FROM information_schema.tables
-            WHERE table_schema = 'public'
-              AND information_schema.tables.table_name = app_table_name
-        ) THEN
-            IF EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = '__DB_SCHEMA__'
-                  AND information_schema.tables.table_name = app_table_name
-            ) THEN
+        IF to_regclass(format('public.%I', app_table_name)) IS NOT NULL THEN
+            IF to_regclass(format('__DB_SCHEMA__.%I', app_table_name)) IS NOT NULL THEN
                 EXECUTE format('DROP TABLE __DB_SCHEMA__.%I CASCADE', app_table_name);
             END IF;
 
@@ -47,7 +37,7 @@ BEGIN
         FROM pg_proc p
         JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE p.proname = 'update_updated_at_column'
-          AND n.nspname = '__DB_SCHEMA__'
+          AND n.oid = '__DB_SCHEMA__'::regnamespace
     ) THEN
         EXECUTE 'DROP FUNCTION __DB_SCHEMA__.update_updated_at_column() CASCADE';
     END IF;
