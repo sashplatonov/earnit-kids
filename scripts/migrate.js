@@ -13,25 +13,30 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { pool, query } = require('../src/db/connection');
+const { getDatabaseSchema, quoteIdentifier } = require('../src/db/schema');
 
 const MIGRATIONS_DIR = path.join(__dirname, '../migrations');
+const PROJECT_SCHEMA = getDatabaseSchema();
+const PROJECT_SCHEMA_SQL = quoteIdentifier(PROJECT_SCHEMA);
 
 async function ensureMigrationsTable() {
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS ${PROJECT_SCHEMA_SQL}`);
+
     // Create migrations table if it doesn't exist
     const sql = `
-        CREATE TABLE IF NOT EXISTS migrations (
+        CREATE TABLE IF NOT EXISTS public.migrations (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
             executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
-        CREATE INDEX IF NOT EXISTS idx_migrations_name ON migrations(name);
+        CREATE INDEX IF NOT EXISTS idx_migrations_name ON public.migrations(name);
     `;
     await pool.query(sql);
 }
 
 async function getExecutedMigrations() {
     try {
-        const result = await query('SELECT name FROM migrations ORDER BY name');
+        const result = await query('SELECT name FROM public.migrations ORDER BY name');
         return result.rows.map(row => row.name);
     } catch (err) {
         return [];
@@ -50,7 +55,7 @@ function getMigrationFiles() {
 
 async function runMigration(filename) {
     const filePath = path.join(MIGRATIONS_DIR, filename);
-    const sql = fs.readFileSync(filePath, 'utf8');
+    const sql = fs.readFileSync(filePath, 'utf8').replaceAll('__DB_SCHEMA__', PROJECT_SCHEMA_SQL);
 
     const client = await pool.connect();
     try {
@@ -61,7 +66,7 @@ async function runMigration(filename) {
 
         // Record migration as executed
         await client.query(
-            'INSERT INTO migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
+            'INSERT INTO public.migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
             [filename]
         );
 

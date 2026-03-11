@@ -1,5 +1,6 @@
 /** @file Connection PostgreSQL data access */
 const { Pool } = require('pg');
+const { getSearchPath } = require('./schema');
 
 // Load environment variables
 require('dotenv').config();
@@ -11,6 +12,7 @@ const connectionString = process.env.NODE_ENV === 'test' && process.env.TEST_DAT
 const { createLogger } = require('../utils/logger');
 const pool = new Pool({
     connectionString,
+    options: `-c search_path=${getSearchPath()}`,
     ssl: process.env.DB_SSL === 'false' ? false : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined),
     // Database connection pool tuning
     max: 20, // Maximum number of clients in the pool

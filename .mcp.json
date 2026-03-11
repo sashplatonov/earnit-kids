@@ -5,7 +5,7 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem@latest",
         "/Users/sash/Dev/Projects/earnit-kids",
-        "/Users/sash/AI Rules"]
+        "/Users/sash/.ai-rules"]
     },
     "git": {
       "type": "stdio",
