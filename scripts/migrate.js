@@ -18,25 +18,46 @@ const { getDatabaseSchema, quoteIdentifier } = require('../src/db/schema');
 const MIGRATIONS_DIR = path.join(__dirname, '../migrations');
 const PROJECT_SCHEMA = getDatabaseSchema();
 const PROJECT_SCHEMA_SQL = quoteIdentifier(PROJECT_SCHEMA);
+const MIGRATIONS_TABLE = 'migrations';
+const MIGRATIONS_TABLE_SQL = `${PROJECT_SCHEMA_SQL}.${quoteIdentifier(MIGRATIONS_TABLE)}`;
+const schemaQualifiedMigrations = `${PROJECT_SCHEMA}.${MIGRATIONS_TABLE}`;
+const publicQualifiedMigrations = `public.${MIGRATIONS_TABLE}`;
 
 async function ensureMigrationsTable() {
     await pool.query(`CREATE SCHEMA IF NOT EXISTS ${PROJECT_SCHEMA_SQL}`);
 
-    // Create migrations table if it doesn't exist
+    const publicLookup = await pool.query(
+        'SELECT to_regclass($1) IS NOT NULL AS exists',
+        [publicQualifiedMigrations]
+    );
+    const schemaLookup = await pool.query(
+        'SELECT to_regclass($1) IS NOT NULL AS exists',
+        [schemaQualifiedMigrations]
+    );
+
+    const migrationsInPublic = publicLookup.rows[0]?.exists ?? false;
+    const migrationsInSchema = schemaLookup.rows[0]?.exists ?? false;
+
+    if (migrationsInPublic && !migrationsInSchema) {
+        await pool.query(
+            `ALTER TABLE public.${quoteIdentifier(MIGRATIONS_TABLE)} SET SCHEMA ${PROJECT_SCHEMA_SQL}`
+        );
+    }
+
     const sql = `
-        CREATE TABLE IF NOT EXISTS public.migrations (
+        CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE_SQL} (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
             executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
-        CREATE INDEX IF NOT EXISTS idx_migrations_name ON public.migrations(name);
+        CREATE INDEX IF NOT EXISTS idx_migrations_name ON ${MIGRATIONS_TABLE_SQL}(name);
     `;
     await pool.query(sql);
 }
 
 async function getExecutedMigrations() {
     try {
-        const result = await query('SELECT name FROM public.migrations ORDER BY name');
+        const result = await query(`SELECT name FROM ${MIGRATIONS_TABLE_SQL} ORDER BY name`);
         return result.rows.map(row => row.name);
     } catch (err) {
         return [];
@@ -66,7 +87,7 @@ async function runMigration(filename) {
 
         // Record migration as executed
         await client.query(
-            'INSERT INTO public.migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
+            `INSERT INTO ${MIGRATIONS_TABLE_SQL} (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
             [filename]
         );
 
