@@ -23,26 +23,19 @@ const MIGRATIONS_TABLE_SQL = `${PROJECT_SCHEMA_SQL}.${quoteIdentifier(MIGRATIONS
 const schemaQualifiedMigrations = `${PROJECT_SCHEMA}.${MIGRATIONS_TABLE}`;
 const publicQualifiedMigrations = `public.${MIGRATIONS_TABLE}`;
 
+async function tableExists(qualifiedName) {
+    const result = await pool.query(
+        'SELECT to_regclass($1) IS NOT NULL AS exists',
+        [qualifiedName]
+    );
+    return result.rows[0]?.exists ?? false;
+}
+
 async function ensureMigrationsTable() {
     await pool.query(`CREATE SCHEMA IF NOT EXISTS ${PROJECT_SCHEMA_SQL}`);
 
-    const publicLookup = await pool.query(
-        'SELECT to_regclass($1) IS NOT NULL AS exists',
-        [publicQualifiedMigrations]
-    );
-    const schemaLookup = await pool.query(
-        'SELECT to_regclass($1) IS NOT NULL AS exists',
-        [schemaQualifiedMigrations]
-    );
-
-    const migrationsInPublic = publicLookup.rows[0]?.exists ?? false;
-    const migrationsInSchema = schemaLookup.rows[0]?.exists ?? false;
-
-    if (migrationsInPublic && !migrationsInSchema) {
-        await pool.query(
-            `ALTER TABLE public.${quoteIdentifier(MIGRATIONS_TABLE)} SET SCHEMA ${PROJECT_SCHEMA_SQL}`
-        );
-    }
+    const publicTableExists = await tableExists(publicQualifiedMigrations);
+    const schemaTableExists = await tableExists(schemaQualifiedMigrations);
 
     const sql = `
         CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE_SQL} (
@@ -53,6 +46,20 @@ async function ensureMigrationsTable() {
         CREATE INDEX IF NOT EXISTS idx_migrations_name ON ${MIGRATIONS_TABLE_SQL}(name);
     `;
     await pool.query(sql);
+
+    if (publicTableExists) {
+        await pool.query(`
+            INSERT INTO ${MIGRATIONS_TABLE_SQL} (id, name, executed_at)
+            SELECT id, name, executed_at FROM public.${quoteIdentifier(MIGRATIONS_TABLE)}
+            ON CONFLICT (name) DO NOTHING
+        `);
+
+        if (!schemaTableExists) {
+            await pool.query(
+                `DROP TABLE IF EXISTS public.${quoteIdentifier(MIGRATIONS_TABLE)}`
+            );
+        }
+    }
 }
 
 async function getExecutedMigrations() {
