@@ -72,6 +72,7 @@ The shop is scoped per child and supports both direct parent purchases and child
 - [Database Rules](docs/rules-database.md)
 - [Design Concept](docs/design-concept.md)
 - [Telegram Setup](docs/telegram-setup.md)
+- [Operational Playbook](docs/operational-playbook.md)
 
 ## 🚀 Getting Started
 
