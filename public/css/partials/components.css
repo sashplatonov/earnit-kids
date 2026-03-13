@@ -59,7 +59,7 @@
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: 999px;
     font-family: inherit;
     font-size: 0.95rem;
     font-weight: 600;
@@ -2567,7 +2567,7 @@ dialog.modal[open]::backdrop {
     color: white;
     border: none;
     padding: 0.5rem 0.8rem;
-    border-radius: 0.5rem;
+    border-radius: 999px;
     cursor: pointer;
     font-weight: 700;
     margin-left: 0.5rem;
