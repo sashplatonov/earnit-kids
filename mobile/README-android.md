@@ -84,7 +84,7 @@ When you’re ready for stores, follow the dedicated checklist above. For quick 
 ## 8. Local Android run with Docker backend (`http://localhost:3001`)
 From repository root:
 ```bash
-docker compose up -d --build
+docker compose --profile db up -d --build
 ```
 
 Then in mobile folder:

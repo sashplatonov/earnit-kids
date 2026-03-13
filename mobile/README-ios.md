@@ -63,7 +63,7 @@ npx cap open ios     # open Xcode project
 ## 8. Local iOS run with Docker backend (`http://localhost:3001`)
 From repository root:
 ```bash
-docker compose up -d --build
+docker compose --profile db up -d --build
 ```
 
 Then in mobile folder:

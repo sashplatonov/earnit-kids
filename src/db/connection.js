@@ -116,11 +116,11 @@ module.exports = {
  * This lets local `npm start` runs target localhost without requiring an explicit DATABASE_URL.
  */
 function buildConnectionStringFromEnv() {
-    const host = process.env.DATABASE_HOST || process.env.POSTGRES_HOST || 'localhost';
-    const port = process.env.DATABASE_PORT || process.env.POSTGRES_PORT || '5432';
-    const database = process.env.DATABASE_NAME || process.env.POSTGRES_DB || 'earnit_kids';
-    const user = process.env.DATABASE_USER || process.env.POSTGRES_USER || 'postgres';
-    const password = process.env.DATABASE_PASSWORD || process.env.POSTGRES_PASSWORD || '';
+    const host = readEnvValue(['DATABASE_HOST', 'POSTGRES_HOST'], 'localhost');
+    const port = readEnvValue(['DATABASE_PORT', 'POSTGRES_PORT'], '5432');
+    const database = readEnvValue(['DATABASE_NAME', 'POSTGRES_DB'], 'earnit_kids');
+    const user = readEnvValue(['DATABASE_USER', 'POSTGRES_USER'], 'postgres');
+    const password = readEnvValue(['DATABASE_PASSWORD', 'POSTGRES_PASSWORD'], '');
 
     const encodedUser = encodeURIComponent(user);
     const auth = password
@@ -128,4 +128,13 @@ function buildConnectionStringFromEnv() {
         : encodedUser;
 
     return `postgresql://${auth}@${host}:${port}/${database}`;
+}
+
+function readEnvValue(keys, fallback) {
+    for (const key of keys) {
+        if (process.env[key]) {
+            return process.env[key];
+        }
+    }
+    return fallback;
 }

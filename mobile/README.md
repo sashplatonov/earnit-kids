@@ -32,7 +32,7 @@ This folder holds the Capacitor wrapper that hosts the existing web UI (`../publ
 ## Local run (Docker Compose backend at `http://localhost:3001`)
 Run these commands from the repository root:
 ```bash
-docker compose up -d --build
+docker compose --profile db up -d --build
 ```
 
 Then run mobile commands:

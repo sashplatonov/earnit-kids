@@ -126,9 +126,19 @@ To build and run the application in a Docker container:
 export DOCKER_HOST=unix:///Users/sash/.colima/default/docker.sock
 ```
 
-**Rebuild and Start:**
+**Rebuild and Start with the bundled Postgres profile:**
+```bash
+docker compose --profile db up -d --build
+```
+
+**Rebuild and Start with an external Postgres:**
 ```bash
 docker compose up -d --build
+```
+
+**Local dev with secondary host port:** use the override file so both `3000` and `3001` map to the container.
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml --profile db up -d --build
 ```
 
 **Stop:**

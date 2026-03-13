@@ -3,13 +3,15 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
 
-test('super-admin families table uses current operational columns and confirm modal', () => {
+test('super-admin families view uses current card layout and confirm modal', () => {
     const htmlPath = path.join(process.cwd(), 'views', 'super-admin.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
 
-    assert.ok(html.includes('<th class="hide-mobile">Email</th>'));
-    assert.ok(html.includes('<th class="hide-mobile">Детей</th>'));
-    assert.doesNotMatch(html, />Семья</);
+    assert.match(html, /id="families-list"/);
+    assert.match(html, /id="families-search"/);
+    assert.match(html, /id="families-status-select"/);
+    assert.match(html, /data-sort="active"/);
+    assert.match(html, /data-sort="created"/);
     assert.doesNotMatch(html, /Лимит \(мес\)/);
     assert.doesNotMatch(html, /Admin Pass/);
     assert.match(html, /id="super-confirm-modal"/);

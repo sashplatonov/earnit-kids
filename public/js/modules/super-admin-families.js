@@ -133,7 +133,6 @@ function appendFamilyRows(rows) {
     rows.forEach((family) => {
         const card = document.createElement('div');
         card.className = 'family-card';
-        // eslint-disable-next-line no-unsanitized/property
         card.innerHTML = buildFamilyCardHtml(family);
         familiesList.appendChild(card);
     });

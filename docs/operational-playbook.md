@@ -35,7 +35,7 @@
   2. If you need schema isolation, add `DEFAULT_DB_SCHEMA` and let the helpers in `src/db/schema.js` set `search_path=<schema>,public`.
   3. `npm install`, then `npm run migrate` to apply SQL migrations.
   4. Run `npm start` for production-mode rendering or `npm run dev` when iterating on frontend/back behavior.
-- **Docker:** after `npm install`, use `docker compose up -d --build` and `docker compose logs -f`; stop with `docker compose down`.
+- **Docker:** after `npm install`, use `docker compose --profile db up -d --build` when `.env` points at the bundled compose Postgres service `db`; use plain `docker compose up -d --build` only when `.env` targets an external database. For local dev where you need both `3000` and `3001` on the host, run `docker compose -f docker-compose.yml -f docker-compose.local.yml --profile db up -d --build`. Follow with `docker compose logs -f`, then stop with `docker compose down`.
 - **Mobile shell:** `mobile/` holds the Capacitor project that points at `https://earnit-kids.igo.mywire.org`. Use `cd mobile && npm install`, `npx cap add android|ios`, and `npm run sync` before `npm run open:android` or `npm run open:ios`.
 
 [↩ Back to toc](#table-of-contents) | [↑ Back to top](#top)
