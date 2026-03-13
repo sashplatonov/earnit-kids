@@ -54,53 +54,22 @@
                         </article>
                     </div>
 
-                    <div class="panel-filters" id="families-table-controls">
-                        <div class="filter-group">
-                            <p class="filter-label">Статус</p>
-                            <div class="chip-row">
-                                <button class="filter-chip active" data-filter-status="all" type="button">Все</button>
-                                <button class="filter-chip" data-filter-status="active" type="button">Активные</button>
-                                <button class="filter-chip" data-filter-status="blocked" type="button">Заблокированные</button>
-                            </div>
-                        </div>
-                        <div class="filter-group">
-                            <p class="filter-label">Сортировка</p>
-                            <div class="chip-row">
-                                <button class="filter-chip" data-sort="active" type="button">По активности</button>
-                                <button class="filter-chip" data-sort="created" type="button">По созданию</button>
-                            </div>
-                        </div>
-                        <div class="filter-group filter-group--grow">
-                            <label class="filter-label" for="families-search">Поиск</label>
-                            <input id="families-search" type="search" placeholder="Найти семью, email или ID">
+                    <div class="families-filters" id="families-table-controls">
+                        <input id="families-search" class="families-search-input" type="search" placeholder="🔍 Поиск по email или ID...">
+                        <select id="families-status-select" class="families-status-select">
+                            <option value="all">Все статусы</option>
+                            <option value="active">Активные</option>
+                            <option value="blocked">Заблокированные</option>
+                        </select>
+                        <div class="chip-row">
+                            <button class="filter-chip" data-sort="active" type="button">По активности</button>
+                            <button class="filter-chip active" data-sort="created" type="button">По созданию</button>
                         </div>
                     </div>
 
-                    <div class="panel-table">
-                        <header class="panel-table__header">
-                            <h2>Все семьи EarnIt Kids</h2>
-                        </header>
-                        <div id="loading" class="panel-state panel-state--loading">Загрузка...</div>
-                        <div class="panel-state panel-state--error" id="families-error" aria-live="polite" hidden></div>
-                        <div class="table-responsive">
-                            <table id="families-table">
-                                <thead>
-                                    <tr>
-                                        <th class="hide-mobile">ID</th>
-                                        <th class="hide-mobile">Email</th>
-                                        <th class="hide-mobile">Детей</th>
-                                        <th class="hide-mobile">Заданий</th>
-                                        <th class="hide-mobile">Товаров</th>
-                                        <th>Статус</th>
-                                        <th class="hide-mobile">Дата создания</th>
-                                        <th class="hide-mobile">Последняя активность</th>
-                                        <th>Действия</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="families-tbody"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <div id="loading" class="panel-state panel-state--loading">Загрузка...</div>
+                    <div class="panel-state panel-state--error" id="families-error" aria-live="polite" hidden></div>
+                    <div id="families-list" class="families-list" aria-live="polite"></div>
                 </article>
             </section>
 
@@ -143,15 +112,16 @@
                     <div id="db-panel-state" class="panel-state panel-state--loading" hidden>Проверяем доступность базы данных...</div>
                     <div class="db-grid">
                         <article class="db-card">
-                            <h3>📦 Резервное копирование</h3>
-                            
-                            <p>Создать полную копию базы данных PostgreSQL и скачать файл.</p>
+                            <p class="db-card__label">Резервное копирование</p>
+                            <p class="db-card__value">📦 Бэкап</p>
+                            <p class="db-card__status">Создать полную копию PostgreSQL и скачать файл.</p>
                             <button id="pg-backup-btn" class="btn btn--primary" type="button">Сделать бэкап</button>
                         </article>
                         <article class="db-card">
-                            <h3>Восстановление</h3>
-                            <p>Восстановить базу данных из файла резервной копии.</p>
-                            <button id="pg-restore-btn" class="btn btn--success" type="button">Восстановить из файла</button>
+                            <p class="db-card__label">Восстановление</p>
+                            <p class="db-card__value">🔄 Восстановить</p>
+                            <p class="db-card__status">Загрузить файл резервной копии (.dump).</p>
+                            <button id="pg-restore-btn" class="btn btn--success" type="button">Загрузить файл</button>
                             <input type="file" id="pg-restore-input" class="visually-hidden" accept=".dump">
                         </article>
                     </div>

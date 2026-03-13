@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const connectionString = process.env.NODE_ENV === 'test' && process.env.TEST_DATABASE_URL
     ? process.env.TEST_DATABASE_URL
-    : process.env.DATABASE_URL;
+    : process.env.DATABASE_URL || buildConnectionStringFromEnv();
 
 const { createLogger } = require('../utils/logger');
 const pool = new Pool({
@@ -110,3 +110,22 @@ module.exports = {
     getClient,
     testConnection
 };
+
+/**
+ * Build a fallback PostgreSQL connection string from explicit env vars.
+ * This lets local `npm start` runs target localhost without requiring an explicit DATABASE_URL.
+ */
+function buildConnectionStringFromEnv() {
+    const host = process.env.DATABASE_HOST || process.env.POSTGRES_HOST || 'localhost';
+    const port = process.env.DATABASE_PORT || process.env.POSTGRES_PORT || '5432';
+    const database = process.env.DATABASE_NAME || process.env.POSTGRES_DB || 'earnit_kids';
+    const user = process.env.DATABASE_USER || process.env.POSTGRES_USER || 'postgres';
+    const password = process.env.DATABASE_PASSWORD || process.env.POSTGRES_PASSWORD || '';
+
+    const encodedUser = encodeURIComponent(user);
+    const auth = password
+        ? `${encodedUser}:${encodeURIComponent(password)}`
+        : encodedUser;
+
+    return `postgresql://${auth}@${host}:${port}/${database}`;
+}

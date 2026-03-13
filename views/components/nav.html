@@ -58,6 +58,24 @@
                 <span class="nav__btn-label">Еще</span>
             </button>
             <div class="nav__dropdown hidden" id="nav-more-dropdown" role="menu">
+                <!-- Управление — только родитель -->
+                <div class="nav__dropdown-group-label parent-only hidden" role="presentation">Управление</div>
+                <button class="nav__dropdown-item parent-only requires-child hidden" role="menuitem" id="nav-limits" data-tab="limits">
+                    <span class="gamified-icon icon-chart" aria-hidden="true"></span>
+                    <span>Лимиты</span>
+                </button>
+                <button class="nav__dropdown-item parent-only requires-child hidden" role="menuitem" data-tab="catalog">
+                    <span class="gamified-icon icon-tasks" aria-hidden="true"></span>
+                    <span>Каталог</span>
+                </button>
+                <button class="nav__dropdown-item parent-only requires-child hidden" role="menuitem" id="nav-child-link"
+                    data-tab="child-link">
+                    <span class="gamified-icon icon-child-link-menu" aria-hidden="true"></span>
+                    <span>Ссылка ребенку</span>
+                </button>
+                <div class="nav__dropdown-divider parent-only hidden" role="presentation"></div>
+                <!-- Общие разделы -->
+                <div class="nav__dropdown-group-label" role="presentation">Разделы</div>
                 <button class="nav__dropdown-item requires-child" role="menuitem" data-tab="history">
                     <span class="gamified-icon icon-history-menu" aria-hidden="true"></span>
                     <span>История</span>
@@ -70,31 +88,22 @@
                     <span class="gamified-icon icon-star" aria-hidden="true"></span>
                     <span>Друзья</span>
                 </button>
-                <button class="nav__dropdown-item" role="menuitem" id="nav-settings" data-tab="settings">
-                    <span class="gamified-icon icon-settings-menu" aria-hidden="true"></span>
-                    <span>Настройки</span>
-                </button>
                 <button class="nav__dropdown-item requires-child" role="menuitem" data-tab="analytics">
                     <span class="gamified-icon icon-chart" aria-hidden="true"></span>
                     <span>Достижения</span>
                 </button>
-                <button class="nav__dropdown-item parent-only requires-child hidden" role="menuitem" id="nav-limits" data-tab="limits">
-                    <span class="gamified-icon icon-chart" aria-hidden="true"></span>
-                    <span>Лимиты</span>
-                </button>
-                <button class="nav__dropdown-item parent-only requires-child hidden" role="menuitem" data-tab="catalog">
-                    <span class="gamified-icon icon-tasks" aria-hidden="true"></span>
-                    <span>Каталог</span>
-                </button>
+                <div class="nav__dropdown-divider" role="presentation"></div>
+                <!-- Настройки -->
+                <div class="nav__dropdown-group-label" role="presentation">Настройки</div>
                 <button class="nav__dropdown-item" role="menuitem" data-tab="rules">
                     <span class="gamified-icon icon-rules-menu" aria-hidden="true"></span>
                     <span>Правила</span>
                 </button>
-                <button class="nav__dropdown-item parent-only requires-child hidden" role="menuitem" id="nav-child-link"
-                    data-tab="child-link">
-                    <span class="gamified-icon icon-child-link-menu" aria-hidden="true"></span>
-                    <span>Ссылка ребенку</span>
+                <button class="nav__dropdown-item" role="menuitem" id="nav-settings" data-tab="settings">
+                    <span class="gamified-icon icon-settings-menu" aria-hidden="true"></span>
+                    <span>Настройки</span>
                 </button>
+                <div class="nav__dropdown-divider" role="presentation"></div>
                 <button class="nav__dropdown-item nav__dropdown-action" role="menuitem" id="logout-btn">
                     <span class="gamified-icon icon-logout" aria-hidden="true"></span>
                     <span>Выйти</span>

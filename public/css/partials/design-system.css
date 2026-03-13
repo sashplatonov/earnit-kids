@@ -2,28 +2,29 @@
 :root {
     --ds-font-heading: 'Manrope', 'Nunito Sans', system-ui, sans-serif;
     --ds-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
-    --ds-border-muted: rgba(255, 255, 255, 0.12);
-    --ds-surface-card-muted: rgba(15, 23, 42, 0.92);
-    --ds-shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.35);
+    --ds-border-muted: var(--color-warm-border);
+    --ds-surface-card-muted: var(--color-warm-surface);
+    --ds-shadow-soft: var(--shadow-warm);
     --ds-gap-inline: 0.65rem;
     --ds-gap-stack: 0.8rem;
     --ds-radius-pill: 999px;
 
-    --state-pending-bg: rgba(59, 130, 246, 0.18);
-    --state-pending-text: #93c5fd;
-    --state-pending-border: rgba(59, 130, 246, 0.45);
+    /* State badges — readable on light warm background */
+    --state-pending-bg: rgba(59, 130, 246, 0.1);
+    --state-pending-text: #1d4ed8;
+    --state-pending-border: rgba(59, 130, 246, 0.25);
 
-    --state-approved-bg: rgba(34, 197, 94, 0.18);
-    --state-approved-text: #bbf7d0;
-    --state-approved-border: rgba(16, 185, 129, 0.45);
+    --state-approved-bg: rgba(34, 197, 94, 0.1);
+    --state-approved-text: #166534;
+    --state-approved-border: rgba(16, 185, 129, 0.25);
 
-    --state-rejected-bg: rgba(239, 68, 68, 0.15);
-    --state-rejected-text: #fecaca;
-    --state-rejected-border: rgba(239, 68, 68, 0.45);
+    --state-rejected-bg: rgba(239, 68, 68, 0.1);
+    --state-rejected-text: #991b1b;
+    --state-rejected-border: rgba(239, 68, 68, 0.25);
 
-    --state-expired-bg: rgba(248, 113, 113, 0.14);
-    --state-expired-text: #fecaca;
-    --state-expired-border: rgba(248, 113, 113, 0.35);
+    --state-expired-bg: rgba(248, 113, 113, 0.1);
+    --state-expired-text: #991b1b;
+    --state-expired-border: rgba(248, 113, 113, 0.25);
 }
 
 .ds-stack {
@@ -51,7 +52,7 @@
 
 .ds-card:hover,
 .ds-card:focus-within {
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.45);
+    box-shadow: 0 8px 20px rgba(180, 130, 80, 0.14);
     transform: translateY(-2px);
 }
 
