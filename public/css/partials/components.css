@@ -128,8 +128,14 @@
 }
 
 .btn--add {
-    background: var(--gradient-success);
+    background: var(--gradient-warm-cta);
     color: white;
+    box-shadow: 0 6px 16px rgba(255, 160, 133, 0.24);
+}
+
+.btn--add:hover {
+    box-shadow: 0 10px 24px rgba(255, 160, 133, 0.32);
+    transform: translateY(-1px);
 }
 
 .btn--small {
@@ -1843,11 +1849,6 @@ dialog.modal[open]::backdrop {
     background: rgba(247, 250, 255, 1);
 }
 
-#shop-section .btn--add {
-    background: linear-gradient(135deg, #5cc7f3 0%, #8ddfb7 100%);
-    color: #ffffff;
-    box-shadow: 0 18px 28px -18px rgba(92, 199, 243, 0.5);
-}
 
 #shop-section .btn--primary {
     background: linear-gradient(135deg, #ffb65c 0%, #ff8f70 100%);

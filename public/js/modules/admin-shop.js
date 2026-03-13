@@ -58,6 +58,7 @@ function setShopFields(item) {
 }
 
 export function openShopModal(itemId = null) {
+    if (itemId && typeof itemId === 'object') itemId = null;
     editingShopId = itemId;
     const item = getEditingShopItem();
     if (itemId && !item) return;

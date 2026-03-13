@@ -54,6 +54,7 @@ function setTaskFields(task = null) {
 }
 
 export function openTaskModal(taskId = null) {
+    if (taskId && typeof taskId === 'object') taskId = null;
     editingTaskId = taskId;
     const task = getEditingTask();
     if (taskId && !task) return;
