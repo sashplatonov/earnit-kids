@@ -176,7 +176,7 @@ async function initializeApp() {
         }
 
         await registerServiceWorker();
-        await startBackgroundServices(data);
+        startBackgroundServices(data);
         renderInitialViews();
         setupControlsAndRefresh();
     } catch (err) {
@@ -187,11 +187,11 @@ async function initializeApp() {
     }
 }
 
-async function startBackgroundServices(data) {
-    await safeRun(initializePushNotifications, 'Push init failed:');
-    await safeRun(initializeWebSocket, 'WS init failed:');
+function startBackgroundServices(data) {
+    safeRun(initializePushNotifications, 'Push init failed:');
+    safeRun(initializeWebSocket, 'WS init failed:');
     setPushRefreshHandler(() => refreshFromServerAndRender(false));
-    await safeRun(() => startIosDevFallback(data, () => refreshFromServerAndRender(false)), 'Fallback init failed:');
+    safeRun(() => startIosDevFallback(data, () => refreshFromServerAndRender(false)), 'Fallback init failed:');
 }
 
 async function safeRun(fn, message) {
