@@ -432,8 +432,8 @@ p,
     border-radius: var(--radius-xl);
     font-weight: 700;
     font-size: var(--text-lg);
-    min-width: 70px;
     flex-shrink: 0;
+    max-width: fit-content;
 }
 
 .card__coins .gamified-icon {
@@ -1417,6 +1417,8 @@ dialog.modal[open]::backdrop {
         padding: 0.35rem 0.65rem;
         font-size: var(--text-base);
         align-self: flex-start;
+        max-width: 100%;
+        overflow-wrap: anywhere;
     }
 
     .card__comment {
@@ -1697,6 +1699,9 @@ dialog.modal[open]::backdrop {
         margin-bottom: 0.38rem;
     }
 
+    .group-header {
+        top: 82px; /* Header + group-nav on mobile */
+    }
     .card__actions {
         gap: 0.25rem;
     }
@@ -1782,10 +1787,10 @@ dialog.modal[open]::backdrop {
 
 .group-nav {
     position: sticky;
-    top: 52px; /* Header approx height */
-    z-index: 10;
+    top: var(--header-height, 56px); /* Dynamic header height */
+    z-index: 100;
     margin: 0.5rem -0.5rem 0.5rem 0.25rem;
-    padding-bottom: 0.2rem;
+    padding-bottom: 0.25rem;
     background: var(--color-bg-base); /* Blend with bg to look sticky */
 }
 
@@ -1846,7 +1851,7 @@ dialog.modal[open]::backdrop {
 
 @media (max-width: 480px) {
     .group-nav {
-        top: 48px;
+        top: var(--header-height, 44px);
     }
     .group-nav__tab {
         font-size: 0.75rem;
@@ -1857,13 +1862,17 @@ dialog.modal[open]::backdrop {
 .group-header {
     grid-column: 1 / -1;
     margin: 1.5rem 0 0.75rem 0.25rem;
-    padding-bottom: 0.5rem;
+    padding: 0.5rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--color-primary);
     font-size: 0.95rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
+    position: sticky;
+    top: calc(var(--header-height, 56px) + 36px); /* Below group-nav tabs (~36-44px) */
+    z-index: 90;
+    background: var(--color-bg);
 }
 
 #shop-section {
@@ -1981,6 +1990,8 @@ dialog.modal[open]::backdrop {
 #shop-section .group-header {
     border-bottom: 1px solid rgba(125, 149, 187, 0.16);
     color: #547198;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
 }
 
 #shop-section .cards {

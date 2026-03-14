@@ -44,9 +44,7 @@ function renderBadge(label, variant = '') {
 
 function renderShopBadges(item) {
     const badges = [];
-    if (item.group) {
-        badges.push(renderBadge(item.group, 'group'));
-    }
+
 
     if (item.type) {
         const typeLabel = CONFIG.SHOP_ITEM_TYPES[item.type]?.label || item.type;

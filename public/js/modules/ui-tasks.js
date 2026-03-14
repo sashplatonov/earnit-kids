@@ -32,9 +32,7 @@ function renderBadge(label, variant = '') {
 
 function renderTaskBadges(task) {
     const badges = [];
-    if (task.group) {
-        badges.push(renderBadge(task.group, 'group'));
-    }
+
     if (!badges.length) return '';
     return `<div class="card__badge-row">${badges.join('')}</div>`;
 }
