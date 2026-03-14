@@ -133,11 +133,11 @@ function setupSwipeGestures(activate) {
     let touchStartX = 0;
     let touchEndX = 0;
 
-    const handleGesture = () => {
+    const handleGesture = (e) => {
         const diff = touchStartX - touchEndX;
         if (Math.abs(diff) < 80) return;
 
-        if (document.activeElement?.closest('.about-gallery, .chart-container')) return;
+        if (e && e.target && e.target.closest('.group-nav, .group-nav__scroll, .about-gallery, .chart-container')) return;
 
         const currentActiveBtn = document.querySelector('.nav__btn.active');
         if (!currentActiveBtn) return;
@@ -159,7 +159,7 @@ function setupSwipeGestures(activate) {
     document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
     document.addEventListener('touchend', e => {
         touchEndX = e.changedTouches[0].screenX;
-        handleGesture();
+        handleGesture(e);
     }, { passive: true });
 }
 
