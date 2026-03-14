@@ -2,6 +2,7 @@
 import { escapeHtml, chunkedRender, isMobileViewport } from './utils.js';
 import { CONFIG } from './ui-config.js';
 import { applyStaggerReveal } from './motion-feedback.js';
+import { renderGroupNav } from './group-nav.js';
 
 const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
 
@@ -118,19 +119,21 @@ function splitShopItemsByPins(items) {
     return { quickItems, regularItems };
 }
 
-function renderPinnedShopSections({ renderQueue, quickItems, state }) {
-    if (quickItems.length) {
+function renderPinnedShopSections({ renderQueue, quickItems, state, activeGroup }) {
+    if (quickItems.length && (activeGroup === 'Все' || activeGroup === 'Быстрый')) {
         renderQueue.push('<div class="group-header">Быстрый</div>');
         quickItems.sort((a, b) => a.price - b.price)
             .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
     }
 }
 
-function renderGroupedShopSections({ renderQueue, grouped, groupNames, state }) {
+function renderGroupedShopSections({ renderQueue, grouped, groupNames, state, activeGroup }) {
     groupNames.forEach(groupName => {
-        renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
-        grouped[groupName].sort((a, b) => a.price - b.price)
-            .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
+        if (activeGroup === 'Все' || activeGroup === groupName) {
+            renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
+            grouped[groupName].sort((a, b) => a.price - b.price)
+                .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
+        }
     });
 }
 
@@ -163,6 +166,28 @@ function renderShopItemCard(item, state) {
             ${quickActions}
         </div>
     `;
+}
+
+let currentActiveGroup = 'Все';
+
+function renderShopGroupNav(groupNames, quickItems) {
+    const allGroupNames = [];
+    if (quickItems.length) allGroupNames.push('Быстрый');
+    allGroupNames.push(...groupNames);
+    
+    // Fallback if active group was deleted
+    if (currentActiveGroup !== 'Все' && !allGroupNames.includes(currentActiveGroup)) {
+        currentActiveGroup = 'Все';
+    }
+
+    renderGroupNav('shop-group-nav', {
+        groups: allGroupNames, 
+        activeGroup: currentActiveGroup, 
+        onChange: (newGroup) => {
+            currentActiveGroup = newGroup;
+            import('./ui.js').then(module => module.renderShop());
+        }
+    });
 }
 
 export function renderShopUI(state) {
@@ -198,9 +223,12 @@ export function renderShopUI(state) {
     });
 
     const renderQueue = [];
-    renderPinnedShopSections({ renderQueue, quickItems, state });
-    renderGroupedShopSections({ renderQueue, grouped, groupNames, state });
+    renderPinnedShopSections({ renderQueue, quickItems, state, activeGroup: currentActiveGroup });
+    renderGroupedShopSections({ renderQueue, grouped, groupNames, state, activeGroup: currentActiveGroup });
 
     chunkedRender(container, renderQueue, { chunkSize: isMobileViewport() ? 5 : 10 });
+
+    renderShopGroupNav(groupNames, quickItems);
+
     window.setTimeout(() => applyStaggerReveal(container), 40);
 }

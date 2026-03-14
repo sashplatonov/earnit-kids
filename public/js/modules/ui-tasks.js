@@ -2,6 +2,7 @@
 import { escapeHtml, chunkedRender, isMobileViewport } from './utils.js';
 import { CONFIG } from './ui-config.js';
 import { applyStaggerReveal } from './motion-feedback.js';
+import { renderGroupNav } from './group-nav.js';
 
 const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
 
@@ -117,19 +118,43 @@ function splitTasksByQuick(tasks) {
     return { quickTasks, regularTasks };
 }
 
-function buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin }) {
+function buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin, activeGroup }) {
     const renderQueue = [];
-    if (quickTasks.length) {
+    if (quickTasks.length && (activeGroup === 'Все' || activeGroup === 'Быстрые')) {
         renderQueue.push('<div class="group-header">Быстрые</div>');
         quickTasks.sort((a, b) => a.coins - b.coins)
             .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
     }
     sortedGroups.forEach(groupName => {
-        renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
-        grouped[groupName].sort((a, b) => a.coins - b.coins)
-            .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
+        if (activeGroup === 'Все' || activeGroup === groupName) {
+            renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
+            grouped[groupName].sort((a, b) => a.coins - b.coins)
+                .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
+        }
     });
     return renderQueue;
+}
+
+let currentActiveGroup = 'Все';
+
+function renderTaskGroupNav(sortedGroups, quickTasks) {
+    const allGroupNames = [];
+    if (quickTasks.length) allGroupNames.push('Быстрые');
+    allGroupNames.push(...sortedGroups);
+    
+    // Fallback if active group was deleted
+    if (currentActiveGroup !== 'Все' && !allGroupNames.includes(currentActiveGroup)) {
+        currentActiveGroup = 'Все';
+    }
+
+    renderGroupNav('tasks-group-nav', {
+        groups: allGroupNames, 
+        activeGroup: currentActiveGroup, 
+        onChange: (newGroup) => {
+            currentActiveGroup = newGroup;
+            import('./ui.js').then(module => module.renderTasks());
+        }
+    });
 }
 
 export function renderTasksUI(state) {
@@ -164,8 +189,17 @@ export function renderTasksUI(state) {
         return a.localeCompare(b);
     });
 
-    const renderQueue = buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin: state.isAdmin });
+    const renderQueue = buildTaskRenderQueue({ 
+        grouped, 
+        sortedGroups, 
+        quickTasks, 
+        isAdmin: state.isAdmin,
+        activeGroup: currentActiveGroup 
+    });
 
     chunkedRender(container, renderQueue, { chunkSize: isMobileViewport() ? 5 : 10 });
+    
+    renderTaskGroupNav(sortedGroups, quickTasks);
+
     window.setTimeout(() => applyStaggerReveal(container), 40);
 }

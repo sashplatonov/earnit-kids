@@ -1780,6 +1780,80 @@ dialog.modal[open]::backdrop {
     border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
+.group-nav {
+    position: sticky;
+    top: 52px; /* Header approx height */
+    z-index: 10;
+    margin: 0.5rem -0.5rem 0.5rem 0.25rem;
+    padding-bottom: 0.2rem;
+    background: var(--color-bg-base); /* Blend with bg to look sticky */
+}
+
+.group-nav__scroll {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-bottom: 0.25rem;
+}
+
+.group-nav__tab {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.group-nav__tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-base);
+}
+
+.group-nav__tab--active {
+    background: var(--color-primary);
+    color: var(--color-bg-base);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    border-color: transparent;
+}
+
+#shop-section .group-nav {
+    background: transparent; /* Handled by shop section styling */
+}
+
+#shop-section .group-nav__tab {
+    background: rgba(125, 149, 187, 0.1);
+    border-color: rgba(125, 149, 187, 0.2);
+    color: #425a7d;
+}
+
+#shop-section .group-nav__tab:hover {
+    background: rgba(125, 149, 187, 0.15);
+    color: #26344f;
+}
+
+#shop-section .group-nav__tab--active {
+    background: linear-gradient(135deg, #ffb65c 0%, #ff8f70 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 16px -6px rgba(255, 143, 112, 0.4);
+    border-color: transparent;
+}
+
+@media (max-width: 480px) {
+    .group-nav {
+        top: 48px;
+    }
+    .group-nav__tab {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.8rem;
+    }
+}
+
 .group-header {
     grid-column: 1 / -1;
     margin: 1.5rem 0 0.75rem 0.25rem;
