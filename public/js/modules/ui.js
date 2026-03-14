@@ -96,18 +96,21 @@ export function updateAdminUI() {
     const hasChild = !isParent || !!state.currentChildId;
 
     document.querySelector('.header')?.classList.toggle('header--admin', isParent);
-    document.querySelectorAll('.admin-only, .parent-only').forEach(el => el.classList.toggle('hidden', !isParent));
-    document.querySelectorAll('.child-only').forEach(el => el.classList.toggle('hidden', isParent));
 
-    // Handle elements that require an active child profile
-    document.querySelectorAll('.requires-child').forEach(el => {
-        const shouldHide = !hasChild;
+    // Single pass to determine visibility for all role-restricted elements
+    document.querySelectorAll('.admin-only, .parent-only, .child-only, .requires-child').forEach(el => {
+        let shouldHide = false;
+
+        if (el.classList.contains('admin-only') && !isParent) shouldHide = true;
+        if (el.classList.contains('parent-only') && !isParent) shouldHide = true;
+        if (el.classList.contains('child-only') && isParent) shouldHide = true;
+        if (el.classList.contains('requires-child') && !hasChild) shouldHide = true;
+
         el.classList.toggle('hidden', shouldHide);
     });
 
     // Keep settings button visible for everyone
-    const settingsBtn = document.getElementById('settings-btn') || document.getElementById('nav-settings');
-    if (settingsBtn) settingsBtn.classList.remove('hidden');
+    document.getElementById('nav-settings')?.classList.remove('hidden');
 }
 
 function updateElementText(id, text) {

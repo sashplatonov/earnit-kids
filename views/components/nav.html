@@ -2,10 +2,10 @@
     <div class="nav__primary" role="tablist">
         <div id="child-switcher-container" class="nav__child-switcher parent-only hidden"></div>
         <div class="nav__group nav__group--child child-only">
-            <button class="nav__btn active" role="tab" aria-selected="true" aria-controls="section-today"
-                data-tab="today" data-label="Сегодня">
-                <span class="nav__btn-icon gamified-icon icon-calendar" aria-hidden="true"></span>
-                <span class="nav__btn-label">Сегодня</span>
+            <button class="nav__btn active" role="tab" aria-selected="true" aria-controls="analytics-section"
+                data-tab="analytics" data-label="Достижения">
+                <span class="nav__btn-icon gamified-icon icon-chart" aria-hidden="true"></span>
+                <span class="nav__btn-label">Достижения</span>
             </button>
             <button class="nav__btn" role="tab" aria-selected="false" aria-controls="section-tasks"
                 data-tab="tasks" data-label="Задания">
@@ -29,10 +29,10 @@
             </button>
         </div>
         <div class="nav__group nav__group--parent admin-only hidden">
-            <button class="nav__btn" role="tab" aria-selected="false" aria-controls="section-today" data-tab="today"
-                data-label="Обзор">
-                <span class="nav__btn-icon gamified-icon icon-eye" aria-hidden="true"></span>
-                <span class="nav__btn-label">Обзор</span>
+            <button class="nav__btn" role="tab" aria-selected="false" aria-controls="analytics-section" data-tab="analytics"
+                data-label="Достижения">
+                <span class="nav__btn-icon gamified-icon icon-chart" aria-hidden="true"></span>
+                <span class="nav__btn-label">Достижения</span>
             </button>
             <button class="nav__btn requires-child" role="tab" aria-selected="false" aria-controls="section-tasks" data-tab="tasks"
                 data-label="Задания">
@@ -80,17 +80,9 @@
                     <span class="gamified-icon icon-history-menu" aria-hidden="true"></span>
                     <span>История</span>
                 </button>
-                <button class="nav__dropdown-item child-only" role="menuitem" data-tab="requests">
-                    <span class="gamified-icon icon-envelope" aria-hidden="true"></span>
-                    <span>Заявки</span>
-                </button>
                 <button class="nav__dropdown-item requires-child" role="menuitem" data-tab="friends">
                     <span class="gamified-icon icon-star" aria-hidden="true"></span>
                     <span>Друзья</span>
-                </button>
-                <button class="nav__dropdown-item requires-child" role="menuitem" data-tab="analytics">
-                    <span class="gamified-icon icon-chart" aria-hidden="true"></span>
-                    <span>Достижения</span>
                 </button>
                 <div class="nav__dropdown-divider" role="presentation"></div>
                 <!-- Настройки -->

@@ -129,15 +129,27 @@ function positionMoreDropdown(moreBtn, moreDropdown) {
     }
 }
 
+function isGestureIgnored(e, diff) {
+    if (Math.abs(diff) < 80) return true;
+    if (e && e.target && e.target.closest('.group-nav, .group-nav__scroll, .about-gallery, .chart-container')) return true;
+    return false;
+}
+
+function processGestureActivation({ diff, visibleTabs, currentIndex }, activate) {
+    if (diff > 0 && currentIndex < visibleTabs.length - 1) {
+        activate(visibleTabs[currentIndex + 1].dataset.tab);
+    } else if (diff < 0 && currentIndex > 0) {
+        activate(visibleTabs[currentIndex - 1].dataset.tab);
+    }
+}
+
 function setupSwipeGestures(activate) {
     let touchStartX = 0;
     let touchEndX = 0;
 
     const handleGesture = (e) => {
         const diff = touchStartX - touchEndX;
-        if (Math.abs(diff) < 80) return;
-
-        if (e && e.target && e.target.closest('.group-nav, .group-nav__scroll, .about-gallery, .chart-container')) return;
+        if (isGestureIgnored(e, diff)) return;
 
         const currentActiveBtn = document.querySelector('.nav__btn.active');
         if (!currentActiveBtn) return;
@@ -149,11 +161,7 @@ function setupSwipeGestures(activate) {
         const currentIndex = visibleTabs.indexOf(currentActiveBtn);
         if (currentIndex === -1) return;
 
-        if (diff > 0 && currentIndex < visibleTabs.length - 1) {
-            activate(visibleTabs[currentIndex + 1].dataset.tab);
-        } else if (diff < 0 && currentIndex > 0) {
-            activate(visibleTabs[currentIndex - 1].dataset.tab);
-        }
+        processGestureActivation({ diff, visibleTabs, currentIndex }, activate);
     };
 
     document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
@@ -200,7 +208,7 @@ export function setupTabControls() {
             import('./analytics-ui.js').then(({ loadAnalytics }) => loadAnalytics(btn.dataset.timeframe));
         }
     });
-    activate('today');
+    activate('analytics');
 }
 
 function attachMoreDropdownHandlers({ moreBtn, moreDropdown, resetMoreMenuState, activate }) {
