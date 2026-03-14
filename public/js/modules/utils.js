@@ -196,17 +196,42 @@ export function closeModal(modalId) {
 
 let confirmCallback = null;
 
-export function showConfirm(title, message, callback) {
+export function showConfirm(title, message, options = {}) {
     document.getElementById('confirm-title').textContent = title;
     document.getElementById('confirm-message').textContent = message;
-    confirmCallback = callback;
+    
+    const okBtn = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    
+    if (okBtn) {
+        okBtn.textContent = options.confirmLabel || 'Подтвердить';
+        okBtn.classList.toggle('hidden', !!options.hideConfirm);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.textContent = options.cancelLabel || 'Отмена';
+    }
+    
+    confirmCallback = options.onConfirm || null;
     openModal('confirm-modal');
 }
 
 export function handleConfirm() {
     if (confirmCallback) {
-        confirmCallback();
+        const cb = confirmCallback;
         confirmCallback = null;
+        cb();
     }
     closeModal('confirm-modal');
+    
+    // Reset buttons after closing
+    setTimeout(() => {
+        const okBtn = document.getElementById('confirm-ok');
+        const cancelBtn = document.getElementById('confirm-cancel');
+        if (okBtn) {
+            okBtn.textContent = 'Подтвердить';
+            okBtn.classList.remove('hidden');
+        }
+        if (cancelBtn) cancelBtn.textContent = 'Отмена';
+    }, 300);
 }

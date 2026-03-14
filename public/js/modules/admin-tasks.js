@@ -83,11 +83,13 @@ export function saveTask() {
 
 export function deleteTask() {
     if (!editingTaskId) return;
-    showConfirm('Удалить задание?', 'Это действие нельзя отменить.', () => {
-        const t = state.tasks.find(t => t.id == editingTaskId);
-        if (t) t.isDeleted = true;
-        scheduleSave(); renderTasks(); closeModal('task-modal');
-        showToast('Задание удалено', 'info');
+    showConfirm('Удалить задание?', 'Это действие нельзя отменить.', {
+        onConfirm: () => {
+            const task = state.tasks.find(t => t.id == editingTaskId);
+            if (task) task.isDeleted = true;
+            scheduleSave(); renderTasks(); closeModal('task-modal');
+            showToast('Задание удалено', 'info');
+        }
     });
 }
 

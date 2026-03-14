@@ -87,11 +87,13 @@ export function saveShopItem() {
 
 export function deleteShopItem() {
     if (!editingShopId) return;
-    showConfirm('Удалить товар?', 'Это действие нельзя отменить.', () => {
-        const i = state.shopItems.find(i => i.id == editingShopId);
-        if (i) i.isDeleted = true;
-        scheduleSave(); renderShop(); closeModal('shop-modal');
-        showToast('Товар удалён', 'info');
+    showConfirm('Удалить товар?', 'Это действие нельзя отменить.', {
+        onConfirm: () => {
+            const i = state.shopItems.find(item => item.id == editingShopId);
+            if (i) i.isDeleted = true;
+            scheduleSave(); renderShop(); closeModal('shop-modal');
+            showToast('Товар удалён', 'info');
+        }
     });
 }
 

@@ -56,15 +56,31 @@ export function buyItem(itemId) {
 
     const mLimit = item.moneyLimit || item.money_limit || 0;
     const err = checkLimits(item, mLimit, actingId);
-    if (err) return showToast(err, 'error');
+    
+    if (err) {
+        if (state.isAdmin) {
+            // Parent can bypass
+            const msg = `${err}. Все равно ${state.isAdmin ? 'купить' : 'отправить заявку'}?`;
+            return showConfirm('Лимит превышен', msg, { 
+                onConfirm: () => confirmPurchase(item, actingId, { mLimit, limitWarned: true }) 
+            });
+        } else {
+            // Child is blocked
+            return showConfirm('Лимит исчерпан', err, { cancelLabel: 'Понятно', hideConfirm: true });
+        }
+    }
 
-    confirmPurchase(item, actingId, mLimit);
+    confirmPurchase(item, actingId, { mLimit });
 }
 
-function confirmPurchase(item, actingId, mLimit) {
+function confirmPurchase(item, actingId, options = {}) {
+    const { mLimit, limitWarned } = options;
+    const title = limitWarned ? 'Подтвердите (лимит превышен)' : (state.isAdmin ? 'Подтвердите покупку' : 'Отправить заявку?');
+    const msg = state.isAdmin ? `Купить "${item.name}" за ${item.price} мон.?` : `"${item.name}" за ${item.price} мон.`;
+    
     if (state.isAdmin) {
-        showConfirm('Подтвердите покупку', `Купить "${item.name}" за ${item.price} мон.?`, () => applyPurchase(item, actingId, mLimit));
+        showConfirm(title, msg, { onConfirm: () => applyPurchase(item, actingId, mLimit) });
     } else {
-        showConfirm('Отправить заявку?', `"${item.name}" за ${item.price} мон.`, () => sendPurchaseRequest(item, actingId, mLimit));
+        showConfirm(title, msg, { onConfirm: () => sendPurchaseRequest(item, actingId, mLimit) });
     }
 }

@@ -2,14 +2,17 @@
 import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
 import { showToast, showMobileEventNotification } from './utils.js';
-import { scheduleSave, addHistoryEntry, checkLimits, checkDailyCoinLimit, updateBalanceLocally } from './action-helpers.js';
+import { scheduleSave, addHistoryEntry, checkLimits, checkFrequency, checkDailyCoinLimit, updateBalanceLocally } from './action-helpers.js';
 import { triggerCoinBurst } from './motion-feedback.js';
 
-function verifyPurchaseLimits(req, item) {
-    if (!item) return true;
+function verifyPurchaseLimits(req, item, callback) {
+    if (!item) return callback();
     const err = checkLimits(item, req.moneyAmount || 0, req.childId);
-    if (err && !confirm(`${err}. Все равно подтвердить?`)) return false;
-    return true;
+    if (err) {
+        showConfirm('Лимит превышен', `${err}. Все равно подтвердить?`, { onConfirm: callback });
+    } else {
+        callback();
+    }
 }
 
 function finalizeRequest(req, status) {
@@ -25,22 +28,61 @@ function handleApprovePurchase(req) {
     if (child && child.balance < req.coins) return showToast(`Недостаточно монет у ребенка (${child.name})`, 'error');
 
     const item = state.shopItems.find(i => i.id == (req.itemId || req.taskId));
-    if (!verifyPurchaseLimits(req, item)) return;
-
-    updateBalanceLocally(req.childId, -req.coins);
-    addHistoryEntry({
-        type: 'spend',
-        amount: req.coins,
-        description: req.taskName || 'Покупка',
-        group: item ? item.group : undefined,
-        comment: item ? item.comment : undefined,
-        relatedId: req.itemId || req.taskId,
-        moneyAmount: req.moneyAmount || 0,
-        childIdOverride: req.childId
+    
+    verifyPurchaseLimits(req, item, () => {
+        updateBalanceLocally(req.childId, -req.coins);
+        addHistoryEntry({
+            type: 'spend',
+            amount: req.coins,
+            description: req.taskName || 'Покупка',
+            group: item ? item.group : undefined,
+            comment: item ? item.comment : undefined,
+            relatedId: req.itemId || req.taskId,
+            moneyAmount: req.moneyAmount || 0,
+            childIdOverride: req.childId
+        });
+        finalizeRequest(req, 'approved');
+        renderAll();
+        triggerCoinBurst();
     });
-    finalizeRequest(req, 'approved');
-    renderAll();
-    triggerCoinBurst();
+}
+
+function handleApproveTask(req) {
+    const task = state.tasks.find(t => t.id == req.taskId && (!req.childId || t.childId == req.childId));
+    const warnings = [];
+    
+    if (task) {
+        const freqErr = checkFrequency(task, req.childId);
+        if (freqErr) warnings.push(freqErr);
+    }
+    
+    const dailyErr = checkDailyCoinLimit(req.childId, req.coins);
+    if (dailyErr) warnings.push(dailyErr);
+
+    const apply = () => {
+        updateBalanceLocally(req.childId, req.coins);
+        const desc = task ? task.name : req.taskName;
+
+        addHistoryEntry({
+            type: 'earn',
+            amount: req.coins,
+            description: desc,
+            group: task ? task.group : undefined,
+            comment: task ? task.comment : undefined,
+            relatedId: req.taskId,
+            childIdOverride: req.childId
+        });
+        finalizeRequest(req, 'approved');
+        renderAll();
+        showMobileEventNotification(`Заявка подтверждена: +${req.coins} мон.`, 'success', 'Заявка подтверждена');
+        triggerCoinBurst();
+    };
+
+    if (warnings.length > 0) {
+        showConfirm('Лимиты превышены', `${warnings.join('. ')}. Все равно начислить?`, { onConfirm: apply });
+    } else {
+        apply();
+    }
 }
 
 export function approveRequest(reqId) {
@@ -49,43 +91,30 @@ export function approveRequest(reqId) {
 
     if (req.requestType === 'shop_purchase') {
         handleApprovePurchase(req);
-        return;
+    } else {
+        handleApproveTask(req);
     }
-
-    const err = checkDailyCoinLimit(req.childId, req.coins);
-    if (err && !confirm(`${err}. Все равно начислить?`)) return;
-
-    updateBalanceLocally(req.childId, req.coins);
-    const src = state.tasks.find(t => t.id == req.taskId && (!req.childId || t.childId == req.childId));
-    const desc = src ? src.name : req.taskName;
-
-    addHistoryEntry({
-        type: 'earn',
-        amount: req.coins,
-        description: desc,
-        group: src ? src.group : undefined,
-        comment: src ? src.comment : undefined,
-        relatedId: req.taskId,
-        childIdOverride: req.childId
-    });
-    finalizeRequest(req, 'approved');
-    renderAll();
-    showMobileEventNotification(`Заявка подтверждена: +${req.coins} мон.`, 'success', 'Заявка подтверждена');
-    triggerCoinBurst();
 }
 
 export function rejectRequest(reqId) {
-    if (!confirm('Отклонить заявку?')) return;
     const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
-    finalizeRequest(req, 'rejected');
-    renderRequests();
-    showToast('Заявка отклонена', 'info');
+
+    showConfirm('Отклонить заявку?', `Вы уверены, что хотите отклонить заявку "${req.taskName || 'Заявка'}"?`, {
+        onConfirm: () => {
+            finalizeRequest(req, 'rejected');
+            renderRequests();
+            showToast('Заявка отклонена', 'info');
+        }
+    });
 }
 
 export function deleteRequest(reqId) {
-    if (!confirm('Удалить заявку?')) return;
-    state.requests = state.requests.filter(r => r.id != reqId);
-    scheduleSave();
-    renderRequests();
+    showConfirm('Удалить заявку?', 'Вы уверены, что хотите безвозвратно удалить заявку?', {
+        onConfirm: () => {
+            state.requests = state.requests.filter(r => r.id != reqId);
+            scheduleSave();
+            renderRequests();
+        }
+    });
 }
