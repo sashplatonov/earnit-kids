@@ -50,9 +50,11 @@ function renderHistoryItem(entry, state) {
                 ${commentDiv}
                 <div class="history-item__date" style="margin-top:0.3em;">${formattedDate}</div>
             </div>
-            <div class="history-item__amount">${isEarn ? '+' : '-'}${entry.amount}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
-            <div class="card__actions" style="margin-left: 10px;">
-                 <button class="btn btn--danger btn--small" onclick="window.app.deleteHistoryItem(${entry.id})">Удалить</button>
+            <div class="history-item__actions">
+                <div class="history-item__amount">${isEarn ? '+' : '-'}${entry.amount}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
+                <button class="history-item__delete-btn" onclick="window.app.deleteHistoryItem(${entry.id})" title="Удалить" aria-label="Удалить">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                </button>
             </div>
         </div>
     `;

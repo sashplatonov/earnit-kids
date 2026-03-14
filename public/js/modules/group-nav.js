@@ -46,5 +46,14 @@ export function renderGroupNav(containerId, options = {}) {
                 }
             });
         });
+
+        // Scroll active tab into view (important for mobile horizontal swipe nav)
+        const activeTab = scrollContainer.querySelector('.group-nav__tab--active');
+        if (activeTab) {
+            // Use requestAnimationFrame to ensure DOM is painted before scrolling
+            requestAnimationFrame(() => {
+                activeTab.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+            });
+        }
     }
 }
