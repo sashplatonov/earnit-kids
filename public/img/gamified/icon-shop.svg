@@ -1,7 +1,18 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="12" y="18" width="40" height="30" rx="10" fill="#0f172a" stroke="#f97316" stroke-width="2"/>
-  <path d="M18 18V12H46V18" stroke="#f97316" stroke-width="3" stroke-linecap="round"/>
-  <rect x="22" y="26" width="4" height="8" rx="2" fill="#f97316"/>
-  <rect x="34" y="26" width="4" height="8" rx="2" fill="#f97316"/>
-  <path d="M10 38C10 30 12 26 18 26H46C52 26 54 30 54 38" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="shop-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <linearGradient id="shop-bag" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fdba74"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <!-- Bag body -->
+  <rect x="12" y="26" width="40" height="30" rx="8" fill="url(#shop-bg)"/>
+  <!-- Bag handle -->
+  <path d="M22 26v-7a10 10 0 0 1 20 0v7" stroke="#fed7aa" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <!-- Star reward -->
+  <path d="M32 34l2 5h5l-4 3 1.5 5L32 44l-4.5 3 1.5-5-4-3h5z" fill="#fde68a" stroke="#fbbf24" stroke-width="0.5"/>
 </svg>

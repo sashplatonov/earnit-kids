@@ -93,7 +93,7 @@ export function renderAll() {
 
 export function updateAdminUI() {
     const isParent = !!state.isAdmin;
-    const hasChild = !!state.currentChildId;
+    const hasChild = !isParent || !!state.currentChildId;
 
     document.querySelector('.header')?.classList.toggle('header--admin', isParent);
     document.querySelectorAll('.admin-only, .parent-only').forEach(el => el.classList.toggle('hidden', !isParent));

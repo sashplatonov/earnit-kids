@@ -508,11 +508,18 @@
 .nav__btn-icon {
     font-size: 1rem;
     line-height: 1;
-    min-width: 1.9rem;
-    min-height: 1.9rem;
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    min-height: 2rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.nav__btn-icon.gamified-icon {
+    width: 2rem;
+    height: 2rem;
 }
 
 .nav__btn-label {
