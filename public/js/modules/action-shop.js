@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
 import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
 import { scheduleSave, addHistoryEntry, checkLimits, getActingChildId, updateBalanceLocally, addRequestEntry } from './action-helpers.js';
-import { triggerCoinBurst } from './motion-feedback.js';
+import { triggerPurchaseAnimation } from './motion-feedback.js';
 
 function applyPurchase(item, actingId, moneyPrice) {
     updateBalanceLocally(actingId, -item.price);
@@ -20,7 +20,7 @@ function applyPurchase(item, actingId, moneyPrice) {
     scheduleSave();
     renderAll();
     showMobileEventNotification(`Вы купили: ${item.name}!`, 'success', 'Balance updated');
-    triggerCoinBurst();
+    triggerPurchaseAnimation();
 }
 
 function sendPurchaseRequest(item, actingId, moneyPrice) {
@@ -37,6 +37,7 @@ function sendPurchaseRequest(item, actingId, moneyPrice) {
     renderRequests();
     document.querySelector('.nav__btn[data-tab="requests"]')?.click();
     showMobileEventNotification('Заявка на покупку отправлена', 'success', 'Новая заявка');
+    triggerPurchaseAnimation();
 }
 
 function getBuyItemError(item) {

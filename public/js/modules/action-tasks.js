@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { renderShop, renderRequests } from './ui.js';
 import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
 import { scheduleSave, addHistoryEntry, checkDailyCoinLimit, getActingChildId, updateBalanceLocally, addRequestEntry, checkFrequency } from './action-helpers.js';
-import { triggerCoinBurst } from './motion-feedback.js';
+import { triggerTaskAnimation } from './motion-feedback.js';
 
 export function earnCoins(taskId) {
     const task = state.tasks.find(t => t.id == taskId);
@@ -29,7 +29,7 @@ export function earnCoins(taskId) {
         });
         renderShop();
         showMobileEventNotification(`+${task.coins} мон. начислено!`, 'success', 'Balance updated');
-        triggerCoinBurst();
+        triggerTaskAnimation();
     };
 
     if (warnings.length > 0) return showConfirm('Превышен лимит', `${warnings.join('. ')}. Все равно начислить?`, { onConfirm: apply });
@@ -60,6 +60,7 @@ export function requestCoins(taskId) {
         renderRequests();
         document.querySelector('.nav__btn[data-tab="requests"]')?.click();
         showMobileEventNotification('Заявка отправлена!', 'success', 'Новая заявка');
+        triggerTaskAnimation();
     };
 
     showConfirm('Отправить заявку?', `"${task.name}" за ${task.coins} мон.`, { onConfirm: apply });

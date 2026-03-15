@@ -58,7 +58,7 @@ function getRequestDateText(req) {
 
 function renderMyRequest(req, state) {
     const isPurchase = isPurchaseRequest(req);
-    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money request-item__money">${req.moneyAmount}</span>` : '';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money-solid request-item__money">💶 ${req.moneyAmount}</span>` : '';
     const groupTag = req.group ? `<span class="tag request-item__group">${escapeHtml(req.group)}</span>` : '';
     const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
     const dateText = getRequestDateText(req);
@@ -88,7 +88,7 @@ function renderIncomingRequest(req, state) {
     const child = state.children.find(c => c.id == req.childId);
     const childName = child ? child.name : 'Unknown';
     const isPurchase = isPurchaseRequest(req);
-    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money request-item__money">${req.moneyAmount}</span>` : '';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money-solid request-item__money">💶 ${req.moneyAmount}</span>` : '';
     const groupTag = req.group ? `<span class="tag tag--secondary request-item__group">${escapeHtml(req.group)}</span>` : '';
     const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
 
