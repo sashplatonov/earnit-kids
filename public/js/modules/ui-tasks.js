@@ -89,11 +89,7 @@ function renderTaskCard(task, isAdmin) {
     const metaRow = renderTaskMeta(task);
     const isBookmarked = isShortcutActive('task', task.id);
     const highlightClass = isBookmarked ? ' card--highlight' : '';
-    const quickActions = `
-        <div class="card__quick-actions">
-            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isBookmarked ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('task', ${task.id}, this)">${isBookmarked ? 'В быстрых' : 'В быстрые'}</button>
-        </div>
-    `;
+    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isBookmarked ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" title="${isBookmarked ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('task', ${task.id}, this)">${isBookmarked ? '★' : '☆'}</button>`;
     return `
         <div class="card card--task${highlightClass}" data-id="${task.id}">
             ${badgeRow}
@@ -102,9 +98,11 @@ function renderTaskCard(task, isAdmin) {
                 <div class="card__coins"><span>${task.coins}</span><span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             </div>
             ${task.comment ? `<p class="card__comment">${escapeHtml(task.comment)}</p>` : ''}
-            ${metaRow}
+            <div class="card__footer-row">
+                ${metaRow}
+                ${bookmarkBtn}
+            </div>
             <div class="card__actions">${getTaskActions(task, isAdmin)}</div>
-            ${quickActions}
         </div>
     `;
 }
@@ -118,8 +116,8 @@ function splitTasksByQuick(tasks) {
 
 function buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin, activeGroup }) {
     const renderQueue = [];
-    if (quickTasks.length && (activeGroup === 'Все' || activeGroup === 'Быстрые')) {
-        renderQueue.push('<div class="group-header">Быстрые</div>');
+    if (quickTasks.length && (activeGroup === 'Все' || activeGroup === '⭐ Избранное')) {
+        renderQueue.push('<div class="group-header">⭐ Избранное</div>');
         quickTasks.sort((a, b) => a.coins - b.coins)
             .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
     }
@@ -137,7 +135,7 @@ let currentActiveGroup = 'Все';
 
 function renderTaskGroupNav(sortedGroups, quickTasks) {
     const allGroupNames = [];
-    if (quickTasks.length) allGroupNames.push('Быстрые');
+    if (quickTasks.length) allGroupNames.push('⭐ Избранное');
     allGroupNames.push(...sortedGroups);
     
     // Fallback if active group was deleted

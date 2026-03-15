@@ -118,8 +118,8 @@ function splitShopItemsByPins(items) {
 }
 
 function renderPinnedShopSections({ renderQueue, quickItems, state, activeGroup }) {
-    if (quickItems.length && (activeGroup === 'Все' || activeGroup === 'Быстрый')) {
-        renderQueue.push('<div class="group-header">Быстрый</div>');
+    if (quickItems.length && (activeGroup === 'Все' || activeGroup === '⭐ Избранное')) {
+        renderQueue.push('<div class="group-header">⭐ Избранное</div>');
         quickItems.sort((a, b) => a.price - b.price)
             .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
     }
@@ -141,11 +141,7 @@ function renderShopItemCard(item, state) {
     const meta = renderShopMeta(item);
     const isQuick = isShortcutActive('shop', item.id);
     const highlightClass = isQuick ? ' card--highlight' : '';
-    const quickActions = `
-        <div class="card__quick-actions">
-            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isQuick ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('shop', ${item.id}, this)">${isQuick ? 'В быстром' : 'В быстрый'}</button>
-        </div>
-    `;
+    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isQuick ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" title="${isQuick ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('shop', ${item.id}, this)">${isQuick ? '★' : '☆'}</button>`;
     return `
         <div class="card card--shop${highlightClass}" data-id="${item.id}">
             ${badges}
@@ -157,11 +153,13 @@ function renderShopItemCard(item, state) {
                 <div class="card__coins"><span>${item.price}</span><span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             </div>
             ${item.comment ? `<p class="card__comment">${escapeHtml(item.comment)}</p>` : ''}
-            ${meta}
+            <div class="card__footer-row">
+                ${meta}
+                ${bookmarkBtn}
+            </div>
             <div class="card__actions">
                 ${getShopActions(item, canAfford, state)}
             </div>
-            ${quickActions}
         </div>
     `;
 }
@@ -170,7 +168,7 @@ let currentActiveGroup = 'Все';
 
 function renderShopGroupNav(groupNames, quickItems) {
     const allGroupNames = [];
-    if (quickItems.length) allGroupNames.push('Быстрый');
+    if (quickItems.length) allGroupNames.push('⭐ Избранное');
     allGroupNames.push(...groupNames);
     
     // Fallback if active group was deleted

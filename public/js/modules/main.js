@@ -95,17 +95,20 @@ function getShortcutBucket(shortcuts, kind) {
 function updateShortcutButton(trigger, kind, isActive) {
     if (!trigger) return;
     trigger.setAttribute('aria-pressed', String(isActive));
-    trigger.classList.toggle('card__quick-bookmark--active', isActive);
-    if (kind.normalized === 'shop') {
-        trigger.textContent = isActive ? '⚡ В быстром' : '⚡ В быстрый';
+    // Support both old text button (.card__quick-bookmark) and new star button (.card__bookmark-btn)
+    if (trigger.classList.contains('card__bookmark-btn')) {
+        trigger.classList.toggle('card__bookmark-btn--active', isActive);
+        trigger.textContent = isActive ? '★' : '☆';
+        trigger.title = isActive ? 'Убрать из избранного' : 'В избранное';
         return;
     }
-    trigger.textContent = isActive ? '⭐ В быстрых' : '☆ В быстрые';
+    // Legacy text button fallback
+    trigger.classList.toggle('card__quick-bookmark--active', isActive);
+    trigger.textContent = isActive ? '⭐ Избранное' : '☆ Избранное';
 }
 
 function getShortcutToast(kind, wasActive) {
-    const bucketLabel = kind.normalized === 'shop' ? 'быстрый' : 'быстрые действия';
-    return wasActive ? `Убрано: ${bucketLabel}` : `Добавлено: ${bucketLabel}`;
+    return wasActive ? 'Удалено из избранного' : 'Добавлено в избранное';
 }
 
 function toggleCardBookmark(type, id, trigger) {
