@@ -22,7 +22,8 @@ export function buildInitialState(data, baseData) {
     const s = {
         isAdmin: Boolean(data.isAdmin),
         role: data.isAdmin ? 'admin' : 'child',
-        baseData
+        baseData,
+        isLoading: false
     };
 
     // Use loop or assign to avoid complexity from many ??
@@ -54,7 +55,7 @@ export async function refreshFromServerAndRender(showSuccess = false) {
     lists.forEach(id => {
         const el = document.getElementById(id);
         if (el && el.innerHTML === '') { // Only if empty, to avoid flickering if already rendered
-            el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;">Загрузка</div>').join('');
+            el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;"></div>').join('');
         }
     });
 

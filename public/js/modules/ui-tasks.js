@@ -160,7 +160,7 @@ export function renderTasksUI(state) {
 
     if (state.tasks.length === 0) {
         container.innerHTML = '';
-        if (emptyState) emptyState.classList.remove('hidden');
+        if (emptyState && !state.isLoading) emptyState.classList.remove('hidden');
         return;
     }
     if (emptyState) emptyState.classList.add('hidden');

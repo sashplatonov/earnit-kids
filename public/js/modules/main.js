@@ -158,7 +158,7 @@ function showSkeletons() {
     const lists = ['tasks-list', 'shop-list', 'history-list', 'requests-list'];
     lists.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;">Загрузка</div>').join('');
+        if (el) el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;"></div>').join('');
     });
 }
 

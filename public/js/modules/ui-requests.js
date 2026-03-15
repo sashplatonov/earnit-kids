@@ -150,13 +150,13 @@ function updateBadge(count) {
 
 function renderAdminRequests({ pending, state, list, empty }) {
     list.innerHTML = pending.length ? pending.map(r => renderIncomingRequest(r, state)).join('') : '';
-    if (empty) empty.classList.toggle('hidden', pending.length > 0);
+    if (empty) empty.classList.toggle('hidden', pending.length > 0 || state.isLoading);
     document.getElementById('requests-section')?.querySelector('.admin-only')?.classList.remove('hidden');
 }
 
 function renderChildRequests({ requests, list, empty, state }) {
     list.innerHTML = requests.length ? requests.map(r => renderMyRequest(r, state)).join('') : '';
-    if (empty) empty.classList.toggle('hidden', requests.length > 0);
+    if (empty) empty.classList.toggle('hidden', requests.length > 0 || state.isLoading);
     document.getElementById('requests-section')?.querySelector('.admin-only')?.classList.add('hidden');
 }
 
