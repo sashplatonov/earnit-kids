@@ -116,7 +116,11 @@ function updateMiniAnalyticsUI() {
     // Week stats
     const weekStats = getWeeklyStats(history);
     animateNumberText('progress-week-earned-value', weekStats.earned);
-    updateElementText('progress-week-earned-goal', `Цель: ${WEEKLY_EARN_GOAL} мон.`);
+    updateElementText('progress-week-earned-goal', `Цель: ${WEEKLY_EARN_GOAL} `);
+    const goalEl = document.getElementById('progress-week-earned-goal');
+    if (goalEl) {
+        goalEl.innerHTML += `<span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span>`;
+    }
     updateBar('progress-week-earned-bar', (weekStats.earned / WEEKLY_EARN_GOAL) * 100);
 
     // Streak
@@ -146,21 +150,23 @@ function updateSummaryUI(summary, comparison) {
 
     const effectiveTotalEarned = currentBalance + summary.totalSpent;
 
+    const iconHtml = ` <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.2rem; height: 1.2rem; vertical-align: middle;"></span>`;
+
     if (earnedEl) {
-        earnedEl.textContent = `${effectiveTotalEarned} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
+        earnedEl.innerHTML = `${effectiveTotalEarned}${iconHtml}`;
     }
 
     if (spentEl) {
-        spentEl.textContent = `${summary.totalSpent} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
+        spentEl.innerHTML = `${summary.totalSpent}${iconHtml}`;
     }
 
     if (netEl) {
-        netEl.textContent = `${currentBalance} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
+        netEl.innerHTML = `${currentBalance}${iconHtml}`;
         netEl.className = 'stat-card__value ' + (currentBalance >= 0 ? 'earn' : 'spend');
     }
 
-    if (tTotal) tTotal.textContent = `Всего: ${effectiveTotalEarned} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
-    if (iTotal) iTotal.textContent = `Всего: ${summary.totalSpent} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
+    if (tTotal) tTotal.innerHTML = `Всего: ${effectiveTotalEarned}${iconHtml}`;
+    if (iTotal) iTotal.innerHTML = `Всего: ${summary.totalSpent}${iconHtml}`;
 }
 
 function addComparisonLabel(parent, { current, previous, reverse = false }) {

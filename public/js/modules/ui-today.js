@@ -41,7 +41,7 @@ function filterHistoryByChild(history, childId) {
 }
 
 function formatCoins(value) {
-    return `${value.toLocaleString('ru-RU')} мон.`;
+    return `${value.toLocaleString('ru-RU')} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.2rem; height: 1.2rem; vertical-align: middle;"></span>`;
 }
 
 function getActiveBalance(state) {
@@ -216,7 +216,8 @@ export function renderTodayUI(state) {
 
 function updateTodayStats(state, childId, primaryName) {
     const balance = getActiveBalance(state);
-    updateElementText('today-balance-value', formatCoins(balance));
+    const balanceEl = document.getElementById('today-balance-value');
+    if (balanceEl) balanceEl.innerHTML = formatCoins(balance);
     updateElementText('today-balance-note', 'Следите за балансом и достижениями.');
     updateElementText('today-child-label', `Данные для ${primaryName}`);
 }
