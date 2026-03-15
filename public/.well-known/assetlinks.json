@@ -5,9 +5,9 @@
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.coins.kids",
+      "package_name": "com.earnit.kids",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_SHA256"
+        "20:A9:1F:AA:1E:59:97:27:55:B7:AA:22:D1:DB:C9:8D:8E:F6:A5:EB:B1:2A:80:87:E5:76:EA:76:75:56:55:2C"
       ]
     }
   }

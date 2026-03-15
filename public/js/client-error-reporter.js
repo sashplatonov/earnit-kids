@@ -37,6 +37,7 @@ function buildFingerprint(payload) {
 
 const NOISY_ERRORS = [
     'View transition was skipped because document visibility state is hidden',
+    'Skipping view transition because document visibility state has become hidden.',
     'Script error.'
 ];
 

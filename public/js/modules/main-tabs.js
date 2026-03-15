@@ -39,8 +39,11 @@ async function toggleTab(tabButtons, tabName, moreBtn) {
     if (document.startViewTransition && document.visibilityState === 'visible') {
         try {
             const transition = document.startViewTransition(() => performSwitch());
-            await transition.finished;
+            // We await finished but ignore errors because performSwitch is already called by the browser
+            // even if the transition is skipped.
+            await transition.finished.catch(() => {});
         } catch (err) {
+            // Only fall back if startViewTransition itself failed synchronously
             await performSwitch();
         }
     } else {
