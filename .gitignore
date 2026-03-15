@@ -10,6 +10,7 @@ logs/
 # Dependencies
 node_modules/
 mobile/node_modules/
+mobile/.npm-cache/
 
 # Build and test artifacts
 .playwright-browsers/

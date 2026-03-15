@@ -1965,9 +1965,7 @@ dialog.modal[open]::backdrop {
     content: '';
     position: absolute;
     inset: -0.25rem -1rem;
-    background: rgba(255, 255, 255, 0.76);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.96);
     z-index: -1;
 }
 
@@ -1981,20 +1979,6 @@ dialog.modal[open]::backdrop {
 @media (max-width: 900px) {
     .group-nav {
         margin: 0.5rem -0.75rem 0.5rem;
-        -webkit-mask-image: linear-gradient(
-            to right,
-            transparent 0%,
-            black 2.5rem,
-            black calc(100% - 2.5rem),
-            transparent 100%
-        );
-        mask-image: linear-gradient(
-            to right,
-            transparent 0%,
-            black 2.5rem,
-            black calc(100% - 2.5rem),
-            transparent 100%
-        );
     }
 
     .group-nav__scroll {
@@ -2194,8 +2178,7 @@ dialog.modal[open]::backdrop {
 #shop-section .group-header {
     border-bottom: 1px solid rgba(125, 149, 187, 0.16);
     color: #547198;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.98);
 }
 
 #shop-section .cards {
