@@ -1,7 +1,7 @@
 /** @file Action Tasks frontend UI module */
 import { state } from './state.js';
 import { renderShop, renderRequests } from './ui.js';
-import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
+import { showToast, showConfirm, showMobileEventNotification, escapeHtml } from './utils.js';
 import { scheduleSave, addHistoryEntry, checkDailyCoinLimit, getActingChildId, updateBalanceLocally, addRequestEntry, checkFrequency } from './action-helpers.js';
 import { triggerTaskAnimation } from './motion-feedback.js';
 

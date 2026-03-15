@@ -1,7 +1,7 @@
 /** @file Action Shop frontend UI module */
 import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
-import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
+import { showToast, showConfirm, showMobileEventNotification, escapeHtml } from './utils.js';
 import { scheduleSave, addHistoryEntry, checkLimits, getActingChildId, updateBalanceLocally, addRequestEntry } from './action-helpers.js';
 import { triggerPurchaseAnimation } from './motion-feedback.js';
 

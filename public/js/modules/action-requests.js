@@ -1,7 +1,7 @@
 /** @file Action Requests frontend UI module */
 import { state } from './state.js';
 import { renderAll, renderRequests } from './ui.js';
-import { showToast, showMobileEventNotification } from './utils.js';
+import { showToast, showConfirm, showMobileEventNotification, escapeHtml } from './utils.js';
 import { scheduleSave, addHistoryEntry, checkLimits, checkFrequency, checkDailyCoinLimit, updateBalanceLocally } from './action-helpers.js';
 import { triggerCoinBurst } from './motion-feedback.js';
 
@@ -9,7 +9,8 @@ function verifyPurchaseLimits(req, item, callback) {
     if (!item) return callback();
     const err = checkLimits(item, req.moneyAmount || 0, req.childId);
     if (err) {
-        showConfirm('Лимит превышен', `${err}. Все равно подтвердить?`, { onConfirm: callback });
+        const warningMsg = `${err}<br><br>Списать ${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.1rem; height: 1.1rem; vertical-align: middle;"></span>?`;
+        showConfirm('Лимит превышен', warningMsg, { onConfirm: callback });
     } else {
         callback();
     }
@@ -79,7 +80,8 @@ function handleApproveTask(req) {
     };
 
     if (warnings.length > 0) {
-        showConfirm('Лимиты превышены', `${warnings.join('. ')}. Все равно начислить?`, { onConfirm: apply });
+        const warningMsg = `${warnings.join('. ')}<br><br>Начислить ${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.1rem; height: 1.1rem; vertical-align: middle;"></span>?`;
+        showConfirm('Лимиты превышены', warningMsg, { onConfirm: apply });
     } else {
         apply();
     }
@@ -89,18 +91,27 @@ export function approveRequest(reqId) {
     const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
 
-    if (req.requestType === 'shop_purchase') {
-        handleApprovePurchase(req);
-    } else {
-        handleApproveTask(req);
-    }
+    const isPurchase = req.requestType === 'shop_purchase';
+    const title = isPurchase ? 'Подтвердить покупку?' : 'Подтвердить выполнение?';
+    const msg = `Подтвердить "${escapeHtml(req.taskName || 'Заявка')}" за ${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.1rem; height: 1.1rem; vertical-align: middle;"></span>?`;
+
+    showConfirm(title, msg, {
+        onConfirm: () => {
+            if (isPurchase) {
+                handleApprovePurchase(req);
+            } else {
+                handleApproveTask(req);
+            }
+        }
+    });
 }
 
 export function rejectRequest(reqId) {
     const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
 
-    showConfirm('Отклонить заявку?', `Вы уверены, что хотите отклонить заявку "${req.taskName || 'Заявка'}"?`, {
+    const msg = `Вы уверены, что хотите отклонить заявку "${escapeHtml(req.taskName || 'Заявка')}" за ${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.1rem; height: 1.1rem; vertical-align: middle;"></span>?`;
+    showConfirm('Отклонить заявку?', msg, {
         onConfirm: () => {
             finalizeRequest(req, 'rejected');
             renderRequests();

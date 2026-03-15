@@ -34,7 +34,7 @@ function renderHistoryItem(entry, state) {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
     });
     const moneyVal = entry.moneyAmount || entry.rsdAmount;
-    const moneyTag = moneyVal ? `<span class="tag tag--money" style="font-size:0.75em;margin-left:0.5em;">${moneyVal}</span>` : '';
+    const moneyTag = moneyVal ? `<span class="tag tag--money-solid" style="font-size:0.75em;margin-left:0.5em;">Сумма: 💶 ${moneyVal}</span>` : '';
     const groupTag = details.group ? ` <span class="tag tag--info" style="font-size:0.75em;margin-left:0.5em;white-space:nowrap;">[${escapeHtml(details.group)}]</span>` : '';
     const commentDiv = details.comment ? `<div style="font-size:0.85em;opacity:0.8;margin-top:0.3em;">${escapeHtml(details.comment)}</div>` : '';
 
@@ -63,12 +63,12 @@ function renderHistoryItem(entry, state) {
 }
 
 function renderMonthHeader(monthName, stats) {
-    const moneySpent = stats.moneySpent > 0 ? ` | <span class="money">-${stats.moneySpent.toLocaleString()} руб.</span>` : '';
+    const moneySpent = stats.moneySpent > 0 ? `<span class="money">-${stats.moneySpent.toLocaleString()} 💶</span>` : '';
     return `
         <div class="history-month-header">
             <div class="month-title">${monthName}</div>
             <div class="month-stats">
-                <span class="earn">+${stats.earned} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span> | <span class="spend">-${stats.spent} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span>${moneySpent}
+                <span class="earn">+${stats.earned} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span> | <span class="spend">-${stats.spent} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span>${moneySpent ? ' | Сумма: ' + moneySpent : ''}
             </div>
         </div>
     `;
