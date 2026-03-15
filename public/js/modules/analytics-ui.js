@@ -87,29 +87,39 @@ function updateSummaryUI(summary, comparison) {
     const spentEl = document.getElementById('stats-spent');
     const netEl = document.getElementById('stats-net');
 
+    const tTotal = document.getElementById('tasks-total-coins');
+    const iTotal = document.getElementById('items-total-coins');
+
+    // Net change calculation fix:
+    // Total Earned = Current Balance + Total Spent (this period)
+    // This ensures consistency even if some history is missing.
+    const currentBalance = (state.isAdmin && state.currentChildId)
+        ? (state.children.find(c => c.id == state.currentChildId)?.balance || 0)
+        : state.balance;
+
+    const effectiveTotalEarned = currentBalance + summary.totalSpent;
+
     if (earnedEl) {
-        earnedEl.textContent = `${summary.totalEarned} мон.`;
+        earnedEl.textContent = `${effectiveTotalEarned} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
         if (comparison) {
-            addComparisonLabel(earnedEl, { current: summary.totalEarned, previous: comparison.totalEarned });
+            addComparisonLabel(earnedEl, { current: effectiveTotalEarned, previous: comparison.totalEarned });
         }
     }
 
     if (spentEl) {
-        spentEl.textContent = `${summary.totalSpent} мон.`;
+        spentEl.textContent = `${summary.totalSpent} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
         if (comparison) {
             addComparisonLabel(spentEl, { current: summary.totalSpent, previous: comparison.totalSpent, reverse: true });
         }
     }
 
     if (netEl) {
-        netEl.textContent = `${summary.netChange} мон.`;
-        netEl.className = 'stat-card__value ' + (summary.netChange >= 0 ? 'earn' : 'spend');
+        netEl.textContent = `${currentBalance} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
+        netEl.className = 'stat-card__value ' + (currentBalance >= 0 ? 'earn' : 'spend');
     }
 
-    const tTotal = document.getElementById('tasks-total-coins');
-    const iTotal = document.getElementById('items-total-coins');
-    if (tTotal) tTotal.textContent = `Всего: ${summary.totalEarned} мон.`;
-    if (iTotal) iTotal.textContent = `Всего: ${summary.totalSpent} мон.`;
+    if (tTotal) tTotal.textContent = `Всего: ${effectiveTotalEarned} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
+    if (iTotal) iTotal.textContent = `Всего: ${summary.totalSpent} ${CONFIG.CURRENCY_SYMBOL || 'мон.'}`;
 }
 
 function addComparisonLabel(parent, { current, previous, reverse = false }) {

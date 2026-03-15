@@ -175,7 +175,7 @@ p,
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.25rem;
     container-type: inline-size;
-    align-items: start;
+    align-items: stretch;
 }
 
 .card {
@@ -296,9 +296,9 @@ p,
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    padding: 0.2rem 0.75rem;
+    padding: 0.15rem 0.5rem;
     border-radius: 999px;
-    font-size: var(--text-xs);
+    font-size: 0.7rem;
     font-weight: 600;
     border: 1px solid rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.05);
@@ -387,12 +387,12 @@ p,
 .card__status {
     display: inline-flex;
     align-items: center;
-    padding: 0.15rem 0.75rem;
+    padding: 0.1rem 0.5rem;
     border-radius: 999px;
-    font-size: var(--text-xs);
+    font-size: 0.7rem;
     font-weight: 600;
-    margin-top: 0.35rem;
     border: 1px solid transparent;
+    white-space: nowrap;
 }
 
 .card__status--available {
@@ -410,17 +410,25 @@ p,
 .card__header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.card--task,
+.card--shop {
+    height: 274px;
 }
 
 .card__title {
-    font-size: var(--text-xl);
+    font-size: clamp(0.75rem, 4cqi, 1.05rem);
     font-weight: var(--font-heading-weight);
     color: var(--color-text-high-contrast);
-    line-height: var(--text-heading-tight);
+    line-height: 1.25;
     flex: 1;
     min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .card__coins {
@@ -430,12 +438,12 @@ p,
     gap: 0.25rem;
     background: var(--gradient-gold);
     color: #1e293b;
-    padding: 0.4rem 0.85rem;
+    padding: 0.35rem 0.75rem;
     border-radius: var(--radius-xl);
     font-weight: 700;
-    font-size: var(--text-lg);
+    font-size: var(--text-base);
     flex-shrink: 0;
-    max-width: fit-content;
+    white-space: nowrap;
 }
 
 .card__coins .gamified-icon {
@@ -448,7 +456,13 @@ p,
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    min-height: 2.8em; /* Reserve space for exactly 2 lines */
 }
 
 .card__meta {
@@ -1492,28 +1506,20 @@ dialog.modal[open]::backdrop {
         gap: 0.4rem;
     }
 
-    .card__header {
-        margin-bottom: 0;
-        flex-direction: row;
-        align-items: center;
-        gap: 0.5rem;
+    .card--task,
+    .card--shop {
+        height: 250px;
     }
 
-    .card__title {
-        font-size: 1rem;
-        line-height: 1.25;
+    .card__header {
+        margin-bottom: 0;
+        gap: 0.45rem;
     }
 
     .card__coins {
-        padding: 0.3rem 0.55rem;
-        font-size: var(--text-sm);
+        padding: 0.28rem 0.5rem;
+        font-size: var(--text-xs);
         flex-shrink: 0;
-    }
-
-    .card__comment {
-        font-size: var(--text-sm);
-        margin: 0;
-        line-height: 1.4;
     }
 
     .card__actions {

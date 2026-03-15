@@ -18,6 +18,36 @@ export function isMobileViewport() {
         && window.matchMedia('(max-width: 900px)').matches;
 }
 
+export function autoShrinkCardTitles(container) {
+    if (!container) return;
+    // Request animation frame allows layout to be painted first
+    // so we can read real scrollHeight/clientHeight reliably.
+    FRAME_SCHEDULER(() => {
+        const titles = container.querySelectorAll('.card__title:not([data-fitted="true"])');
+        titles.forEach(el => {
+            el.dataset.fitted = 'true'; // Mark to prevent redundant processing
+            
+            // Revert any previously applied custom inline scaling logic
+            el.style.fontSize = '';
+            el.style.lineHeight = '';
+
+            let currentSize = 16;
+            
+            // For card titles, we now strictly fit them into one line without truncation
+            // We detect horizontal overflow using scrollWidth vs clientWidth
+            while (el.scrollWidth > el.clientWidth && currentSize > 9) {
+                currentSize -= 0.5;
+                el.style.fontSize = `${currentSize}px`;
+                el.style.lineHeight = '1.1';
+            }
+            // After fitting as much as possible, allow wrapping if it's still slightly over
+            // but the detection worked on the 'nowrap' state from CSS.
+            el.style.whiteSpace = 'normal';
+            el.style.wordBreak = 'break-word';
+        });
+    });
+}
+
 export function chunkedRender(container, fragments, options = {}) {
     if (!container) return;
 
@@ -38,6 +68,7 @@ export function chunkedRender(container, fragments, options = {}) {
     if (parts.length <= chunkSize) {
         container.innerHTML = parts.join('');
         chunkRenderJobs.delete(container);
+        autoShrinkCardTitles(container);
         return;
     }
 
@@ -47,6 +78,8 @@ export function chunkedRender(container, fragments, options = {}) {
         const end = Math.min(parts.length, start + chunkSize);
         container.insertAdjacentHTML('beforeend', parts.slice(start, end).join(''));
         job.index = end;
+        autoShrinkCardTitles(container);
+        
         if (job.index < parts.length) {
             FRAME_SCHEDULER(renderNext);
         } else {
