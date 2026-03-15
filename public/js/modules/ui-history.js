@@ -68,7 +68,7 @@ function renderMonthHeader(monthName, stats) {
         <div class="history-month-header">
             <div class="month-title">${monthName}</div>
             <div class="month-stats">
-                <span class="earn">+${stats.earned} мон.</span> | <span class="spend">-${stats.spent} мон.</span>${moneySpent}
+                <span class="earn">+${stats.earned} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span> | <span class="spend">-${stats.spent} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span>${moneySpent}
             </div>
         </div>
     `;

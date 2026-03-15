@@ -67,7 +67,7 @@ function renderTodayTask(task) {
         <div class="today-task">
             <div class="today-task__title">${escapeHtml(task.name)}</div>
             <div class="today-task__meta">
-                <span>${task.coins || 0} мон.</span>
+                <span>${task.coins || 0} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span>
                 ${periodMarkup}
             </div>
         </div>
@@ -185,52 +185,6 @@ function animateNumberText(id, target, options = {}) {
     requestAnimationFrame(animate);
 }
 
-function getWeeklyStats(history) {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setHours(0, 0, 0, 0);
-    startOfWeek.setDate(startOfWeek.getDate() - 6);
-
-    const rangeStart = startOfWeek.getTime();
-    const rangeEnd = now.getTime();
-
-    return (history || []).reduce((acc, entry) => {
-        const entryDate = entry.date ? new Date(entry.date).getTime() : 0;
-        if (!entryDate || entryDate < rangeStart || entryDate > rangeEnd) return acc;
-        if (entry.type === 'earn') acc.earned += entry.amount || 0;
-        if (entry.type === 'spend') acc.spent += entry.amount || 0;
-        return acc;
-    }, { earned: 0, spent: 0 });
-}
-
-function computeStreak(history) {
-    let streak = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let pointer = new Date(today);
-
-    const hasEarnOn = (dateStr) => (history || []).some((entry) => {
-        return entry.type === 'earn' && entry.date && entry.date.startsWith(dateStr);
-    });
-
-    while (true) {
-        const key = pointer.toISOString().slice(0, 10);
-        if (!hasEarnOn(key)) break;
-        streak += 1;
-        pointer.setDate(pointer.getDate() - 1);
-    }
-    return streak;
-}
-
-function computeLevel(history) {
-    const totalXp = (history || []).reduce((sum, entry) => entry.type === 'earn' ? sum + (entry.amount || 0) : sum, 0);
-    const level = Math.max(1, Math.floor(totalXp / XP_PER_LEVEL) + 1);
-    const xpInLevel = totalXp % XP_PER_LEVEL;
-    const xpToNext = XP_PER_LEVEL - xpInLevel;
-    const progress = xpInLevel / XP_PER_LEVEL * 100;
-    return { level, xpToNext, progress: Number.isFinite(progress) ? progress : 0 };
-}
-
 function renderEmptyChildrenToday(section) {
     section.innerHTML = `
         <div class="card empty-state-card" style="text-align: center; padding: 40px 20px;">
@@ -282,30 +236,3 @@ function renderTodayLists(state, childId) {
     }
 }
 
-export function renderProgressUI(state) {
-    const section = document.getElementById('progress-section');
-    if (!section) return;
-
-    const childId = resolveActiveChildId(state);
-    const childName = resolveChildName(state, childId);
-    updateElementText('progress-child-name', childName ? `Ребенок: ${childName}` : 'Статистика для всех детей');
-    const filteredHistory = filterHistoryByChild(state.history, childId);
-
-    const weekStats = getWeeklyStats(filteredHistory);
-    animateNumberText('progress-week-earned-value', weekStats.earned, value => formatCoins(Math.round(value)));
-    animateNumberText('progress-week-spent-value', weekStats.spent, value => formatCoins(Math.round(value)));
-    updateElementText('progress-week-earned-goal', `Цель: ${WEEKLY_EARN_GOAL} мон.`);
-    updateElementText('progress-week-spent-note', `Не больше ${WEEKLY_SPEND_GOAL} мон.`);
-    updateBar('progress-week-earned-bar', (weekStats.earned / WEEKLY_EARN_GOAL) * 100);
-    updateBar('progress-week-spent-bar', (weekStats.spent / WEEKLY_SPEND_GOAL) * 100);
-
-    const streak = computeStreak(filteredHistory);
-    animateNumberText('progress-streak-value', streak, value => Math.round(value).toString());
-    updateElementText('progress-streak-note', streak > 0 ? 'дней подряд с задачей' : 'Начните сегодня!');
-
-    const levelInfo = computeLevel(filteredHistory);
-    animateNumberText('progress-level-value', levelInfo.level, value => `Lv ${Math.max(1, Math.floor(value))}`);
-    updateElementText('progress-level-note', `до следующего уровня ${levelInfo.xpToNext} XP`);
-    updateBar('progress-level-bar', levelInfo.progress);
-
-}

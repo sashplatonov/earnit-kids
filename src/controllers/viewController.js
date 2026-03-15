@@ -356,7 +356,7 @@ let cachedIndexHtml = null;
 function assembleIndexHtml() {
     const componentOrder = [
         'head.html', 'header.html', 'nav.html', 'main_start.html',
-        'section_analytics.html', 'section_tasks.html', 'section_shop.html', 'section_progress.html',
+        'section_analytics.html', 'section_tasks.html', 'section_shop.html',
         'section_requests.html', 'section_catalog.html', 'section_history.html',
         'section_rules.html', 'section_friends.html', 'section_settings.html', 'section_limits.html', 'main_end.html',
         'modals.html', 'scripts.html'

@@ -230,8 +230,8 @@ export function closeModal(modalId) {
 let confirmCallback = null;
 
 export function showConfirm(title, message, options = {}) {
-    document.getElementById('confirm-title').textContent = title;
-    document.getElementById('confirm-message').textContent = message;
+    document.getElementById('confirm-title').innerHTML = title;
+    document.getElementById('confirm-message').innerHTML = message;
     
     const okBtn = document.getElementById('confirm-ok');
     const cancelBtn = document.getElementById('confirm-cancel');

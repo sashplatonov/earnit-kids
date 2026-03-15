@@ -33,7 +33,8 @@ export function earnCoins(taskId) {
     };
 
     if (warnings.length > 0) return showConfirm('Превышен лимит', `${warnings.join('. ')}. Все равно начислить?`, { onConfirm: apply });
-    showConfirm('Выполнить задание?', `Подтвердить выполнение задания "${task.name}"?`, { onConfirm: apply });
+    const msg = `Подтвердить выполнение задания "${escapeHtml(task.name)}" за ${task.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.2rem; height: 1.2rem; vertical-align: middle;"></span>?`;
+    showConfirm('Выполнить задание?', msg, { onConfirm: apply });
 }
 
 export function requestCoins(taskId) {
@@ -63,5 +64,6 @@ export function requestCoins(taskId) {
         triggerTaskAnimation();
     };
 
-    showConfirm('Отправить заявку?', `"${task.name}" за ${task.coins} мон.`, { onConfirm: apply });
+    const msg = `"${escapeHtml(task.name)}" за ${task.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.2rem; height: 1.2rem; vertical-align: middle;"></span>`;
+    showConfirm('Отправить заявку?', msg, { onConfirm: apply });
 }

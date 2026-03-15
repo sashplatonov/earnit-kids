@@ -77,7 +77,14 @@ export function buyItem(itemId) {
 function confirmPurchase(item, actingId, options = {}) {
     const { mLimit, limitWarned } = options;
     const title = limitWarned ? 'Подтвердите (лимит превышен)' : (state.isAdmin ? 'Подтвердите покупку' : 'Отправить заявку?');
-    const msg = state.isAdmin ? `Купить "${item.name}" за ${item.price} мон.?` : `"${item.name}" за ${item.price} мон.`;
+    let msg = state.isAdmin ? `Купить "${escapeHtml(item.name)}" за ${item.price}` : `"${escapeHtml(item.name)}" за ${item.price}`;
+    msg += ` <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.2rem; height: 1.2rem; vertical-align: middle;"></span>`;
+    
+    if (mLimit > 0) {
+        msg += `<br><span style="font-size: 0.9em; color: var(--color-text-muted);">Лимит: 💶 ${mLimit}</span>`;
+    }
+    
+    if (state.isAdmin) msg += '?';
     
     if (state.isAdmin) {
         showConfirm(title, msg, { onConfirm: () => applyPurchase(item, actingId, mLimit) });
