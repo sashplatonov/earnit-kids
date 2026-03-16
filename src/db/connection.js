@@ -12,6 +12,7 @@ const connectionString = process.env.NODE_ENV === 'test' && process.env.TEST_DAT
 const { createLogger } = require('../utils/logger');
 const pool = new Pool({
     connectionString,
+    options: `-c search_path=${getSearchPath()} -c client_encoding=UTF8`,
     ssl: process.env.DB_SSL === 'false' ? false : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined),
     // Database connection pool tuning
     max: 20, // Maximum number of clients in the pool
@@ -22,16 +23,9 @@ const pool = new Pool({
 
 const logger = createLogger('dbConnection');
 
-// Initialize connection settings
-pool.on('connect', async (client) => {
-    try {
-        // Explicitly set UTF8 encoding and search path for every new connection
-        await client.query(`SET client_encoding TO 'UTF8'`);
-        await client.query(`SET search_path TO ${getSearchPath()}, public`);
-        logger.debug('New PostgreSQL pool connection initialized with UTF8 and search_path');
-    } catch (err) {
-        logger.error({ err: err.message }, 'Failed to initialize database connection settings');
-    }
+// Log new connections for debugging
+pool.on('connect', () => {
+    logger.debug('New PostgreSQL pool connection established');
 });
 
 pool.on('error', (err) => {
