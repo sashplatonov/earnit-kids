@@ -2,7 +2,7 @@
 const { getCookies } = require('../controllers/viewController');
 
 function sendJSON(res, data, status = 200) {
-    res.writeHead(status, { 'Content-Type': 'application/json' });
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(data));
 }
 

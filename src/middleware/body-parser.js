@@ -13,10 +13,11 @@ function parseBody(req) {
 
     const { sanitizePayload } = require('../utils/validation');
     req._bodyParsing = new Promise((resolve, reject) => {
-        let body = '';
-        req.on('data', chunk => body += chunk);
+        const chunks = [];
+        req.on('data', chunk => chunks.push(chunk));
         req.on('end', () => {
             try {
+                const body = Buffer.concat(chunks).toString('utf8');
                 const parsed = body ? JSON.parse(body) : {};
                 const sanitized = sanitizePayload(parsed);
                 req.body = sanitized;

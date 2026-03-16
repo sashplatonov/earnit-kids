@@ -138,11 +138,12 @@ function postJson(url, headers, payload) {
                 ...headers
             }
         }, (response) => {
-            let body = '';
+            const chunks = [];
             response.on('data', (chunk) => {
-                body += chunk.toString();
+                chunks.push(chunk);
             });
             response.on('end', () => {
+                const body = Buffer.concat(chunks).toString('utf8');
                 resolve({
                     statusCode: response.statusCode,
                     body
