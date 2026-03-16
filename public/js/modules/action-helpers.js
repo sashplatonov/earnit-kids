@@ -133,7 +133,7 @@ function getTimeUntilReset(period) {
     return `${diffHours} час.`;
 }
 
-export function checkFrequency(itemOrTask, childId) {
+export function checkFrequency(itemOrTask, childId, excludeRequestId = null) {
     if (!itemOrTask.frequency) return null;
     const { limit, period } = itemOrTask.frequency;
     const periodName = PERIOD_NAMES[period] || period;
@@ -152,6 +152,7 @@ export function checkFrequency(itemOrTask, childId) {
 
     const reqCount = state.requests.filter(r => 
         r.status === 'pending' && 
+        r.id != excludeRequestId &&
         (actingChildId ? r.childId == actingChildId : true) && 
         (r.itemId == itemOrTask.id || r.taskId == itemOrTask.id || r.taskName === itemOrTask.name) && 
         new Date(r.date || r.created_at) >= start
@@ -165,7 +166,7 @@ export function checkFrequency(itemOrTask, childId) {
     return null;
 }
 
-export function checkLimits(item, moneyPrice, childIdOverride = null) {
+export function checkLimits(item, moneyPrice, childIdOverride = null, excludeRequestId = null) {
     const actingChildId = childIdOverride || getActingChildId();
     const stats = getMonthlyStats(actingChildId, new Date().toISOString().slice(0, 7));
 
@@ -180,7 +181,7 @@ export function checkLimits(item, moneyPrice, childIdOverride = null) {
         return `Лимит на крупные покупки исчерпан. Нужно подождать ${wait}`;
     }
 
-    return checkFrequency(item, actingChildId);
+    return checkFrequency(item, actingChildId, excludeRequestId);
 }
 
 export function checkDailyCoinLimit(childId, amount) {

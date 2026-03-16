@@ -7,7 +7,7 @@ import { triggerCoinBurst } from './motion-feedback.js';
 
 function verifyPurchaseLimits(req, item, callback) {
     if (!item) return callback();
-    const err = checkLimits(item, req.moneyAmount || 0, req.childId);
+    const err = checkLimits(item, req.moneyAmount || 0, req.childId, req.id);
     if (err) {
         const warningMsg = `${err}<br><br>Списать ${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1.1rem; height: 1.1rem; vertical-align: middle;"></span>?`;
         showConfirm('Лимит превышен', warningMsg, { onConfirm: callback });
@@ -53,7 +53,7 @@ function handleApproveTask(req) {
     const warnings = [];
     
     if (task) {
-        const freqErr = checkFrequency(task, req.childId);
+        const freqErr = checkFrequency(task, req.childId, req.id);
         if (freqErr) warnings.push(freqErr);
     }
     
