@@ -646,7 +646,7 @@
     }
 }
 
-.today-grid,
+
 .progress-grid {
     display: grid;
     gap: 1rem;
@@ -654,7 +654,6 @@
     margin-top: 1rem;
 }
 
-.today-card,
 .progress-card {
     background: var(--color-warm-surface);
     border-radius: var(--radius-lg);
@@ -665,7 +664,6 @@
     overflow: hidden;
 }
 
-.today-card::before,
 .progress-card::before {
     content: '';
     position: absolute;
@@ -677,98 +675,18 @@
     border-radius: 3px 3px 0 0;
 }
 
-.today-card:nth-child(2)::before { background: linear-gradient(90deg, #5fb8e8, #4ea8d0); }
-.today-card:nth-child(3)::before { background: linear-gradient(90deg, #86efac, #4ade80); }
-.today-card:nth-child(4)::before { background: linear-gradient(90deg, #c4b5fd, #8b73c4); }
-
-.today-card__label,
 .progress-card__label {
     font-size: 0.9rem;
     color: var(--color-text-dim);
     margin-bottom: 0.35rem;
 }
 
-.today-card__value,
 .progress-card__value {
     font-size: 1.5rem;
     font-weight: 700;
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
-}
-
-.today-card__list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-}
-
-.today-card__list p {
-    margin: 0;
-    color: var(--color-text-dim);
-}
-
-.today-card__actions {
-    margin-top: 0.75rem;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-#today-section .today-card--parent .btn--primary {
-    background: linear-gradient(135deg, #ffb65c 0%, #ff8f70 100%);
-    color: #ffffff;
-    box-shadow: 0 16px 28px -18px rgba(255, 143, 112, 0.5);
-}
-
-#today-section .today-card--parent .btn--primary:hover {
-    box-shadow: 0 20px 30px -18px rgba(255, 143, 112, 0.58);
-}
-
-#today-section .today-card--parent .btn--secondary {
-    background: rgba(255, 255, 255, 0.92);
-    color: #425a7d;
-    border: 1px solid rgba(125, 149, 187, 0.18);
-}
-
-.today-card__summary {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    min-height: 80px;
-}
-
-.today-task {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.35rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.today-task:last-child {
-    border-bottom: none;
-}
-
-.today-task__title {
-    font-weight: 600;
-    color: var(--color-text);
-}
-
-.today-task__meta {
-    font-size: 0.85rem;
-    color: var(--color-text-dim);
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.today-request-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.85rem;
 }
 
 .progress-card__meter {
@@ -789,8 +707,7 @@
 }
 
 .progress-card__footnote,
-.progress-card__note,
-.today-card__note {
+.progress-card__note {
     font-size: 0.75rem;
     color: var(--color-text-dim);
 }
@@ -801,11 +718,6 @@
 
 .progress-card--level .progress-card__fill {
     background: linear-gradient(90deg, #a78bfa, #6366f1);
-}
-
-.today-card__note--child {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.7);
 }
 
 .progress-card__child {

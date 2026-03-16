@@ -9,7 +9,6 @@ import { renderShopUI } from './ui-shop.js';
 import { renderRequestsUI } from './ui-requests.js';
 import { renderHistoryUI } from './ui-history.js';
 import { renderFriendsUI } from './ui-friends.js';
-import { renderTodayUI } from './ui-today.js';
 
 export const renderTasks = () => renderTasksUI(state);
 export const renderShop = () => renderShopUI(state);
@@ -84,7 +83,6 @@ export function renderAll() {
     renderShopUI(state);
     renderHistoryUI(state);
     renderFriendsUI(state);
-    renderTodayUI(state);
 
     updateAdminUI();
     updateChildNicknameUI();

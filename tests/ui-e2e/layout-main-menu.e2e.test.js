@@ -45,7 +45,7 @@ function buildDashboardHtml() {
     const mStart = read('views/components/main_start.html');
     const mEnd = normalizeTemplate(read('views/components/main_end.html'));
     const sFiles = [
-        'views/components/section_today.html', 'views/components/section_tasks.html',
+        'views/components/section_tasks.html',
         'views/components/section_shop.html',
         'views/components/section_requests.html', 'views/components/section_analytics.html',
         'views/components/section_history.html',
@@ -75,7 +75,7 @@ async function assertNoHorizontalOverflow(page) {
 }
 
 async function assertMainMenuTabs(page) {
-    const primaryTabs = ['today', 'tasks', 'shop'];
+    const primaryTabs = ['tasks', 'shop'];
     for (const tab of primaryTabs) {
         await page.click(`.nav__btn[data-tab="${tab}"]`);
         await expect(page.locator(`#${tab}-section`)).toBeVisible();

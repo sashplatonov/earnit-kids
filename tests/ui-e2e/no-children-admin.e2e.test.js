@@ -37,9 +37,9 @@ test.describe('Admin with No Children Flow', () => {
         await gotoAppAsAdmin(page, harness.baseUrl);
 
         // 1. Verify Today screen has the "Add Child" CTA
-        const todaySection = page.locator('#today-section');
-        await expect(todaySection).toContainText('Нет детей в профиле');
-        await expect(todaySection).toContainText('Добавить ребенка');
+        const analyticsSection = page.locator('#analytics-section');
+        await expect(analyticsSection).toContainText('Нет детей в профиле');
+        await expect(analyticsSection).toContainText('Добавить ребенка');
 
         // 2. Verify Child Switcher shows the "+ Ребенок" button
         const switcherContainer = page.locator('#child-switcher-container');
@@ -86,8 +86,8 @@ test.describe('Admin with No Children Flow', () => {
         });
         await gotoAppAsAdmin(page, harness.baseUrl);
 
-        // Click Add Child in Today section
-        await page.click('#today-section button:has-text("Добавить ребенка")');
+        // Click Add Child in Analytics section
+        await page.click('#analytics-add-child');
 
         // Verify Modal is visible
         const modal = page.locator('#add-child-modal');

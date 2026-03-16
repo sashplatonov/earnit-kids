@@ -10,7 +10,7 @@ const publicDir = path.join(repoRoot, 'public');
 
 const COMPONENT_ORDER = [
     'head.html', 'header.html', 'nav.html', 'main_start.html',
-    'section_today.html', 'section_tasks.html', 'section_shop.html',
+    'section_tasks.html', 'section_shop.html',
     'section_requests.html', 'section_catalog.html', 'section_analytics.html', 'section_history.html',
     'section_rules.html', 'section_friends.html', 'section_settings.html', 'section_limits.html',
     'main_end.html', 'modals.html', 'scripts.html'
