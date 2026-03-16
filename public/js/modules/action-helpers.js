@@ -24,10 +24,11 @@ export function scheduleSave() {
 export function addRequestEntry(entry) {
     const normalized = {
         ...entry,
+        id: entry.id || Date.now(),
         status: entry.status || 'pending',
         date: entry.date || new Date().toISOString()
     };
-    state.requests = [normalized, ...state.requests.filter(r => r.id !== normalized.id)];
+    state.requests = [normalized, ...state.requests.filter(r => r.id != normalized.id)];
     if (state.requests.length > REQUEST_HISTORY_LIMIT) {
         state.requests = state.requests.slice(0, REQUEST_HISTORY_LIMIT);
     }

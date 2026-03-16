@@ -106,8 +106,8 @@ function renderShopStatus(canAfford) {
 function getShopActions(item, canAfford, state) {
     const disabledAttrs = canAfford ? '' : 'disabled aria-disabled="true"';
     return `
-        <button type="button" class="btn btn--primary btn--small" onclick="window.app.buyItem(${item.id})" ${disabledAttrs}>${canAfford ? 'Купить' : 'Не хватает'}</button>
-        ${state.isAdmin ? `<button type="button" class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">Изменить</button>` : ''}
+        <button type="button" class="btn btn--primary btn--small" onclick="window.app.buyItem('${item.id}')" ${disabledAttrs}>${canAfford ? 'Купить' : 'Не хватает'}</button>
+        ${state.isAdmin ? `<button type="button" class="btn btn--secondary btn--small" onclick="window.app.editShopItem('${item.id}')">Изменить</button>` : ''}
     `;
 }
 
@@ -144,7 +144,7 @@ function renderShopItemCard(item, state) {
     const highlightClass = isQuick ? ' card--highlight' : '';
     const affordableClass = canAfford ? ' card--affordable' : '';
     
-    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isQuick ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" title="${isQuick ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('shop', ${item.id}, this)">${isQuick ? '★' : '☆'}</button>`;
+    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isQuick ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" title="${isQuick ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('shop', '${item.id}', this)">${isQuick ? '★' : '☆'}</button>`;
     
     return `
         <div class="card card--shop${highlightClass}${affordableClass}" data-id="${item.id}">

@@ -78,7 +78,7 @@ function renderMyRequest(req, state) {
                 ${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}
             </div>
             <div class="card__actions request-item__actions">
-                 ${state && state.isAdmin ? `<button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">Удалить</button>` : ''}
+                 ${state && state.isAdmin ? `<button class="btn btn--danger btn--small" onclick="window.app.deleteRequest('${req.id}')">Удалить</button>` : ''}
             </div>
         </div>
     `;
@@ -106,8 +106,8 @@ function renderIncomingRequest(req, state) {
             </div>
             <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}</div>
             <div class="card__actions request-item__actions">
-                 <button class="btn btn--success btn--small" onclick="window.app.approveRequest(${req.id})">Подтвердить</button>
-                 <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest(${req.id})">Отклонить</button>
+                 <button class="btn btn--success btn--small" onclick="window.app.approveRequest('${req.id}')">Подтвердить</button>
+                 <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest('${req.id}')">Отклонить</button>
             </div>
         </div>
     `;

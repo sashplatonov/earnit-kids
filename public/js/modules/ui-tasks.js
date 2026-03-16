@@ -77,11 +77,11 @@ function renderTaskMeta(task) {
 function getTaskActions(task, isAdmin) {
     if (isAdmin) {
         return `
-            <button type="button" class="btn btn--success btn--small" onclick="window.app.earnCoins(${task.id})">✓ Начислить</button>
-            <button type="button" class="btn btn--secondary btn--small" onclick="window.app.editTask(${task.id})">Изменить</button>
+            <button type="button" class="btn btn--success btn--small" onclick="window.app.earnCoins('${task.id}')">✓ Начислить</button>
+            <button type="button" class="btn btn--secondary btn--small" onclick="window.app.editTask('${task.id}')">Изменить</button>
         `;
     }
-    return `<button type="button" class="btn btn--primary btn--small" onclick="window.app.requestCoins(${task.id})">✋ Выполнено</button>`;
+    return `<button type="button" class="btn btn--primary btn--small" onclick="window.app.requestCoins('${task.id}')">✋ Выполнено</button>`;
 }
 
 function renderTaskCard(task, isAdmin) {
@@ -89,7 +89,7 @@ function renderTaskCard(task, isAdmin) {
     const metaRow = renderTaskMeta(task);
     const isBookmarked = isShortcutActive('task', task.id);
     const highlightClass = isBookmarked ? ' card--highlight' : '';
-    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isBookmarked ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" title="${isBookmarked ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('task', ${task.id}, this)">${isBookmarked ? '★' : '☆'}</button>`;
+    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isBookmarked ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" title="${isBookmarked ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('task', '${task.id}', this)">${isBookmarked ? '★' : '☆'}</button>`;
     return `
         <div class="card card--task${highlightClass}" data-id="${task.id}">
             ${badgeRow}

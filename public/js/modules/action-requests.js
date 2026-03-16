@@ -19,7 +19,7 @@ function verifyPurchaseLimits(req, item, callback) {
 function finalizeRequest(req, status) {
     if (!req) return null;
     const updated = { ...req, status, resolvedAt: new Date().toISOString() };
-    state.requests = state.requests.map(r => (r.id === req.id ? updated : r));
+    state.requests = state.requests.map(r => (r.id == req.id ? updated : r));
     scheduleSave();
     return updated;
 }

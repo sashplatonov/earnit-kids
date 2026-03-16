@@ -250,12 +250,10 @@ export function showConfirm(title, message, options = {}) {
 }
 
 export function handleConfirm() {
-    if (confirmCallback) {
-        const cb = confirmCallback;
-        confirmCallback = null;
-        cb();
-    }
+    const cb = confirmCallback;
+    confirmCallback = null;
     closeModal('confirm-modal');
+    if (cb) cb();
     
     // Reset buttons after closing
     setTimeout(() => {
