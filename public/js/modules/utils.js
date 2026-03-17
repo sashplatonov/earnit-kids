@@ -228,6 +228,7 @@ export function closeModal(modalId) {
 }
 
 let confirmCallback = null;
+let confirmPromiseResolve = null;
 
 export function showConfirm(title, message, options = {}) {
     document.getElementById('confirm-title').innerHTML = title;
@@ -246,23 +247,52 @@ export function showConfirm(title, message, options = {}) {
     }
     
     confirmCallback = options.onConfirm || null;
-    openModal('confirm-modal');
+    
+    if (!confirmCallback) {
+        return new Promise(resolve => {
+            confirmPromiseResolve = resolve;
+            openModal('confirm-modal');
+        });
+    } else {
+        openModal('confirm-modal');
+    }
 }
 
 export function handleConfirm() {
     const cb = confirmCallback;
+    const resolve = confirmPromiseResolve;
     confirmCallback = null;
+    confirmPromiseResolve = null;
+
     closeModal('confirm-modal');
     if (cb) cb();
+    if (resolve) resolve(true);
     
     // Reset buttons after closing
-    setTimeout(() => {
-        const okBtn = document.getElementById('confirm-ok');
-        const cancelBtn = document.getElementById('confirm-cancel');
-        if (okBtn) {
-            okBtn.textContent = 'Подтвердить';
-            okBtn.classList.remove('hidden');
-        }
-        if (cancelBtn) cancelBtn.textContent = 'Отмена';
-    }, 300);
+    setTimeout(resetConfirmButtons, 300);
+}
+
+export function handleCancel() {
+    const resolve = confirmPromiseResolve;
+    confirmCallback = null;
+    confirmPromiseResolve = null;
+    
+    closeModal('confirm-modal');
+    if (resolve) resolve(false);
+    
+    setTimeout(resetConfirmButtons, 300);
+}
+
+function resetConfirmButtons() {
+    const okBtn = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    if (okBtn) {
+        okBtn.textContent = 'Подтвердить';
+        okBtn.classList.remove('hidden');
+    }
+    if (cancelBtn) cancelBtn.textContent = 'Отмена';
+}
+
+export function showAlert(title, message) {
+    return showConfirm(title, message, { cancelLabel: 'OK', hideConfirm: true });
 }

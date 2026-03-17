@@ -2,7 +2,7 @@
 import { state, setState } from './state.js';
 import { updateChildSettings, getChildLink, regenerateChildToken } from './api.js';
 import { renderAll } from './ui.js';
-import { showToast } from './utils.js';
+import { showToast, showConfirm } from './utils.js';
 
 function getTargetChildId() {
     return state.currentChildId || state.children[0]?.id || null;
@@ -115,7 +115,7 @@ export async function copyChildLinkInline() {
 }
 
 export async function regenerateChildLinkInline() {
-    if (!confirm('Вы уверены? Старая ссылка перестанет работать.')) return;
+    if (!(await showConfirm('Обновление ссылки', 'Вы уверены? Старая ссылка перестанет работать.'))) return;
     const childId = getTargetChildId();
     if (!childId) return showToast('Нет выбранного ребенка', 'error');
 
