@@ -85,7 +85,7 @@ function updateMonthlyTexts(stats, monthlyLimit) {
     const remainingMoneyEl = document.getElementById('money-remaining');
     if (remainingMoneyEl) {
         const remaining = Math.max(0, monthlyLimit - stats.moneySpent);
-        remainingMoneyEl.textContent = `(осталось ${remaining.toLocaleString()})`;
+        remainingMoneyEl.innerHTML = `(осталось ${remaining.toLocaleString()} 💶)`;
         remainingMoneyEl.style.color = remaining === 0 ? '#ff4757' : 'rgba(255,255,255,0.6)';
     }
 }
@@ -127,7 +127,7 @@ function updateDailyTexts(dailyStats, dailyLimit) {
         return;
     }
     const remaining = Math.max(0, dailyLimit - dailyStats.earnedToday);
-    remainingEl.textContent = `Осталось: ${remaining} мон.`;
+    remainingEl.innerHTML = `Осталось: ${remaining} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span>`;
     remainingEl.style.color = remaining === 0 ? '#ff6b6b' : 'rgba(255,255,255,0.7)';
 }
 

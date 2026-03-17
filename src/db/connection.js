@@ -1,16 +1,18 @@
 /** @file Connection PostgreSQL data access */
 const { Pool } = require('pg');
+const { getSearchPath } = require('./schema');
 
 // Load environment variables
 require('dotenv').config();
 
 const connectionString = process.env.NODE_ENV === 'test' && process.env.TEST_DATABASE_URL
     ? process.env.TEST_DATABASE_URL
-    : process.env.DATABASE_URL;
+    : process.env.DATABASE_URL || buildConnectionStringFromEnv();
 
 const { createLogger } = require('../utils/logger');
 const pool = new Pool({
     connectionString,
+    options: `-c search_path=${getSearchPath()} -c client_encoding=UTF8`,
     ssl: process.env.DB_SSL === 'false' ? false : (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined),
     // Database connection pool tuning
     max: 20, // Maximum number of clients in the pool
@@ -21,9 +23,9 @@ const pool = new Pool({
 
 const logger = createLogger('dbConnection');
 
-// Test connection on startup
+// Log new connections for debugging
 pool.on('connect', () => {
-    logger.debug('New PostgreSQL pool connection');
+    logger.debug('New PostgreSQL pool connection established');
 });
 
 pool.on('error', (err) => {
@@ -108,3 +110,31 @@ module.exports = {
     getClient,
     testConnection
 };
+
+/**
+ * Build a fallback PostgreSQL connection string from explicit env vars.
+ * This lets local `npm start` runs target localhost without requiring an explicit DATABASE_URL.
+ */
+function buildConnectionStringFromEnv() {
+    const host = readEnvValue(['DATABASE_HOST', 'POSTGRES_HOST'], 'localhost');
+    const port = readEnvValue(['DATABASE_PORT', 'POSTGRES_PORT'], '5432');
+    const database = readEnvValue(['DATABASE_NAME', 'POSTGRES_DB'], 'earnit_kids');
+    const user = readEnvValue(['DATABASE_USER', 'POSTGRES_USER'], 'postgres');
+    const password = readEnvValue(['DATABASE_PASSWORD', 'POSTGRES_PASSWORD'], '');
+
+    const encodedUser = encodeURIComponent(user);
+    const auth = password
+        ? `${encodedUser}:${encodeURIComponent(password)}`
+        : encodedUser;
+
+    return `postgresql://${auth}@${host}:${port}/${database}`;
+}
+
+function readEnvValue(keys, fallback) {
+    for (const key of keys) {
+        if (process.env[key]) {
+            return process.env[key];
+        }
+    }
+    return fallback;
+}

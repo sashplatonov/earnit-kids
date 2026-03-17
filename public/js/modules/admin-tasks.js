@@ -6,6 +6,40 @@ import { scheduleSave } from './actions.js';
 
 let editingTaskId = null;
 
+function getEditingTask() {
+    return editingTaskId ? state.tasks.find(t => t.id == editingTaskId) : null;
+}
+
+function getTaskValidationError(name, coins) {
+    if (!name) return 'Введите название задания';
+    if (!coins || coins < 1) return 'Введите количество монет';
+    return null;
+}
+
+function buildTaskPayload() {
+    const fl = parseInt(document.getElementById('task-freq-limit').value) || 0;
+    const existingTask = getEditingTask();
+
+    return {
+        name: document.getElementById('task-name').value.trim(),
+        childId: existingTask?.childId ?? state.currentChildId,
+        group: document.getElementById('task-group').value.trim(),
+        coins: parseInt(document.getElementById('task-coins').value),
+        comment: document.getElementById('task-comment').value.trim(),
+        frequency: fl > 0 ? { limit: fl, period: document.getElementById('task-freq-period').value } : null
+    };
+}
+
+function persistTask(data) {
+    if (editingTaskId) {
+        const idx = state.tasks.findIndex(t => t.id == editingTaskId);
+        if (idx !== -1) state.tasks[idx] = { ...state.tasks[idx], ...data };
+        return;
+    }
+
+    state.tasks.push({ id: Date.now(), ...data });
+}
+
 function setTaskFields(task = null) {
     const fields = ['name', 'group', 'coins', 'comment', 'freq-limit', 'freq-period'];
     const vals = task ? [
@@ -20,8 +54,9 @@ function setTaskFields(task = null) {
 }
 
 export function openTaskModal(taskId = null) {
+    if (taskId && typeof taskId === 'object') taskId = null;
     editingTaskId = taskId;
-    const task = taskId ? state.tasks.find(t => t.id == taskId) : null;
+    const task = getEditingTask();
     if (taskId && !task) return;
 
     const title = document.getElementById('task-modal-title');
@@ -36,26 +71,11 @@ export function openTaskModal(taskId = null) {
 }
 
 export function saveTask() {
-    const name = document.getElementById('task-name').value.trim();
-    const coins = parseInt(document.getElementById('task-coins').value);
-    const fl = parseInt(document.getElementById('task-freq-limit').value) || 0;
+    const data = buildTaskPayload();
+    const error = getTaskValidationError(data.name, data.coins);
+    if (error) return showToast(error, 'error');
 
-    if (!name) return showToast('Введите название задания', 'error');
-    if (!coins || coins < 1) return showToast('Введите количество монет', 'error');
-
-    const data = {
-        name, childId: state.currentChildId,
-        group: document.getElementById('task-group').value.trim(),
-        coins, comment: document.getElementById('task-comment').value.trim(),
-        frequency: fl > 0 ? { limit: fl, period: document.getElementById('task-freq-period').value } : null
-    };
-
-    if (editingTaskId) {
-        const idx = state.tasks.findIndex(t => t.id == editingTaskId);
-        if (idx !== -1) state.tasks[idx] = { ...state.tasks[idx], ...data };
-    } else {
-        state.tasks.push({ id: Date.now(), ...data });
-    }
+    persistTask(data);
 
     scheduleSave(); renderTasks(); closeModal('task-modal');
     showToast(editingTaskId ? 'Задание обновлено!' : 'Задание добавлено!', 'success');
@@ -63,11 +83,13 @@ export function saveTask() {
 
 export function deleteTask() {
     if (!editingTaskId) return;
-    showConfirm('Удалить задание?', 'Это действие нельзя отменить.', () => {
-        const t = state.tasks.find(t => t.id == editingTaskId);
-        if (t) t.isDeleted = true;
-        scheduleSave(); renderTasks(); closeModal('task-modal');
-        showToast('Задание удалено', 'info');
+    showConfirm('Удалить задание?', 'Это действие нельзя отменить.', {
+        onConfirm: () => {
+            const task = state.tasks.find(t => t.id == editingTaskId);
+            if (task) task.isDeleted = true;
+            scheduleSave(); renderTasks(); closeModal('task-modal');
+            showToast('Задание удалено', 'info');
+        }
     });
 }
 

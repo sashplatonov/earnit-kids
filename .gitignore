@@ -1,11 +1,31 @@
 *.log
+logs/
+
+# Environment and secrets
 .env
-/node_modules
-/.playwright-browsers
-/playwright-report
-/test-results
-/coverage
-/public/dist
+.env.production
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+mobile/node_modules/
+mobile/.npm-cache/
+
+# Build and test artifacts
+.playwright-browsers/
+playwright-report/
+test-results/
+coverage/
+public/dist/
+
+# Local runtime/temp files
+tmp/
+.tmp/
+
+# Tooling and editor state
 .DS_Store
-.idea
-.vscode
+.idea/
+.vscode/
+.claude/
+.codex/

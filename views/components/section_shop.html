@@ -1,48 +1,26 @@
 <!-- Секция магазина -->
 <section class="section hidden" id="shop-section">
-    <div class="creation-wizard admin-only hidden" aria-label="Мастер магазина наград">
-        <div class="creation-wizard__header">
-            <div>
-                <p class="creation-wizard__tag">Shop Master</p>
-                <h3>Настрой магазин за пару шагов</h3>
-            </div>
-            <button class="btn btn--secondary" id="wizard-add-shop" type="button">Добавить награду</button>
-        </div>
-        <div class="creation-wizard__steps">
-            <article class="wizard-step">
-                <h4>1. Выберите тип</h4>
-                <p>Микро, малая, крупная — задайте частоту, чтобы держать баланс.</p>
-            </article>
-            <article class="wizard-step">
-                <h4>2. Укажите цену</h4>
-                <p>Сколько монет или денег нужно потратить. Укажите лимиты и комментарий.</p>
-            </article>
-            <article class="wizard-step">
-                <h4>3. Опубликуйте</h4>
-                <p>Сохраните, чтобы ребенок видел статус “доступно” или “нужно запросить”.</p>
-            </article>
-        </div>
-        <div class="creation-wizard__cta">
-            <span class="creation-wizard__hint">Воспользуйтесь тем же модальным окном, чтобы не терять существующую логику.</span>
-        </div>
-    </div>
     <div class="section__header">
-        <h2>Магазин наград</h2>
+        <div class="section__header-titles">
+            <h2><span class="gamified-icon icon-shop" aria-hidden="true" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></span> Магазин наград</h2>
+            <p class="section__subtitle">Обменивайте честно заработанные монетки на призы</p>
+        </div>
         <div class="section__buttons admin-only hidden">
             <button class="btn btn--add" id="add-shop-btn">+ Добавить</button>
         </div>
     </div>
+    <div class="group-nav hidden" id="shop-group-nav"></div>
     <div class="cards" id="shop-list">
         <!-- Карточки товаров -->
     </div>
-    <div class="empty-state" id="shop-empty">
+    <div class="empty-state hidden" id="shop-empty">
         <span class="empty-state__icon">
             <span class="gamified-icon icon-shop" aria-hidden="true"></span>
         </span>
         <p class="empty-state__title">Магазин пока пуст</p>
-        <p class="empty-state__hint">Добавьте первую награду — сразу появится статус “доступно” или “нужно запросить”.</p>
+        <p class="empty-state__hint">Добавьте первую награду, и магазин сразу станет понятной целью для ребенка.</p>
         <div class="empty-state__actions">
-            <span class="empty-state__tip">Нажмите «+ Добавить» в верхнем правом углу секции.</span>
+            <span class="empty-state__tip">Нажмите «+ Добавить», чтобы наполнить магазин монет первыми призами.</span>
         </div>
     </div>
 </section>

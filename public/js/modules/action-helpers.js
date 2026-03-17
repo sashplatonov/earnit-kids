@@ -24,10 +24,11 @@ export function scheduleSave() {
 export function addRequestEntry(entry) {
     const normalized = {
         ...entry,
+        id: entry.id || Date.now(),
         status: entry.status || 'pending',
         date: entry.date || new Date().toISOString()
     };
-    state.requests = [normalized, ...state.requests.filter(r => r.id !== normalized.id)];
+    state.requests = [normalized, ...state.requests.filter(r => r.id != normalized.id)];
     if (state.requests.length > REQUEST_HISTORY_LIMIT) {
         state.requests = state.requests.slice(0, REQUEST_HISTORY_LIMIT);
     }
@@ -78,6 +79,8 @@ export function addHistoryEntry(params) {
 function getMonthlyStats(actingChildId, currentMonth) {
     let moneySpent = 0;
     let largePurchase = null;
+    
+    // Check history
     state.history.forEach(entry => {
         if ((actingChildId && entry.childId != actingChildId) || entry.type !== 'spend' || !entry.date.startsWith(currentMonth)) return;
         moneySpent += (entry.moneyAmount || entry.rsdAmount || 0);
@@ -86,30 +89,99 @@ function getMonthlyStats(actingChildId, currentMonth) {
             if (histItem?.type === 'large') largePurchase = histItem.name;
         }
     });
+
+    // Check pending requests
+    state.requests.forEach(req => {
+        if (req.status !== 'pending' || req.requestType !== 'shop_purchase' || (actingChildId && req.childId != actingChildId)) return;
+        moneySpent += (req.moneyAmount || 0);
+        const item = state.shopItems.find(i => i.id == (req.itemId || req.taskId));
+        if (item?.type === 'large') largePurchase = item.name;
+    });
+
     return { moneySpent, largePurchase };
 }
 
-function checkFreq(item, actingChildId) {
-    if (!item.frequency) return null;
-    const { limit, period } = item.frequency;
-    let start = new Date();
-    if (period === 'day') start.setHours(0, 0, 0, 0);
-    else if (period === 'week') start.setDate(start.getDate() - start.getDay() + 1);
-    else if (period === 'month') start.setDate(1);
+const PERIOD_NAMES = {
+    day: 'день',
+    week: 'неделю',
+    month: 'месяц',
+    year: 'год'
+};
 
-    const count = state.history.filter(h => (actingChildId ? h.childId == actingChildId : true) && h.itemId == item.id && new Date(h.date) >= start).length;
-    return count >= limit ? `Лимит частоты: ${limit} раз(а) в ${period}` : null;
+function getTimeUntilReset(period) {
+    const now = new Date();
+    const next = new Date();
+    if (period === 'day') {
+        next.setDate(now.getDate() + 1);
+        next.setHours(0, 0, 0, 0);
+    } else if (period === 'week') {
+        next.setDate(now.getDate() + (7 - (now.getDay() || 7) + 1));
+        next.setHours(0, 0, 0, 0);
+    } else if (period === 'month') {
+        next.setMonth(now.getMonth() + 1, 1);
+        next.setHours(0, 0, 0, 0);
+    } else {
+        return '';
+    }
+
+    const diffMs = next - now;
+    const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+    if (diffHours >= 24) {
+        const days = Math.floor(diffHours / 24);
+        return days === 1 ? '1 день' : `${days} дн.`;
+    }
+    return `${diffHours} час.`;
 }
 
-export function checkLimits(item, moneyPrice, childIdOverride = null) {
+export function checkFrequency(itemOrTask, childId, excludeRequestId = null) {
+    if (!itemOrTask.frequency) return null;
+    const { limit, period } = itemOrTask.frequency;
+    const periodName = PERIOD_NAMES[period] || period;
+    let start = new Date();
+    if (period === 'day') start.setHours(0, 0, 0, 0);
+    else if (period === 'week') start.setDate(start.getDate() - (start.getDay() || 7) + 1);
+    else if (period === 'month') start.setDate(1);
+
+    const actingChildId = childId || getActingChildId();
+
+    const histCount = state.history.filter(h => 
+        (actingChildId ? h.childId == actingChildId : true) && 
+        (h.itemId == itemOrTask.id || h.taskId == itemOrTask.id || (h.type === 'earn' && h.description === itemOrTask.name)) && 
+        new Date(h.date) >= start
+    ).length;
+
+    const reqCount = state.requests.filter(r => 
+        r.status === 'pending' && 
+        r.id != excludeRequestId &&
+        (actingChildId ? r.childId == actingChildId : true) && 
+        (r.itemId == itemOrTask.id || r.taskId == itemOrTask.id || r.taskName === itemOrTask.name) && 
+        new Date(r.date || r.created_at) >= start
+    ).length;
+
+    const totalCount = histCount + reqCount;
+    if (totalCount >= limit) {
+        const wait = getTimeUntilReset(period);
+        return `Лимит (${limit} раз в ${periodName}) исчерпан. Нужно подождать ${wait}`;
+    }
+    return null;
+}
+
+export function checkLimits(item, moneyPrice, childIdOverride = null, excludeRequestId = null) {
     const actingChildId = childIdOverride || getActingChildId();
     const stats = getMonthlyStats(actingChildId, new Date().toISOString().slice(0, 7));
 
     const monthlyLimit = state.monthlyLimit || (CONFIG?.MONTHLY_LIMIT || 10000);
-    if (stats.moneySpent + moneyPrice > monthlyLimit) return `Превышен месячный лимит (осталось ${monthlyLimit - stats.moneySpent})`;
-    if (item.type === 'large' && stats.largePurchase) return `Уже была крупная покупка в этом месяце (${stats.largePurchase})`;
+    if (stats.moneySpent + moneyPrice > monthlyLimit) {
+        const wait = getTimeUntilReset('month');
+        return `Месячный лимит (${monthlyLimit}) исчерпан. Нужно подождать ${wait}`;
+    }
+    
+    if (item.type === 'large' && stats.largePurchase) {
+        const wait = getTimeUntilReset('month');
+        return `Лимит на крупные покупки исчерпан. Нужно подождать ${wait}`;
+    }
 
-    return checkFreq(item, actingChildId);
+    return checkFrequency(item, actingChildId, excludeRequestId);
 }
 
 export function checkDailyCoinLimit(childId, amount) {
@@ -120,7 +192,15 @@ export function checkDailyCoinLimit(childId, amount) {
     const earnedToday = state.history.reduce((sum, h) =>
         (h.type === 'earn' && h.date.startsWith(today) && h.childId == childId) ? sum + h.amount : sum, 0);
 
-    return earnedToday + amount > child.dailyCoinLimit ? `Превышен дневной лимит монет (${earnedToday}/${child.dailyCoinLimit})` : null;
+    const pendingEarn = state.requests.reduce((sum, r) =>
+        (r.status === 'pending' && r.requestType === 'earn' && (r.date || r.created_at || '').startsWith(today) && r.childId == childId) ? sum + (r.coins || 0) : sum, 0);
+
+    const totalEarn = earnedToday + pendingEarn;
+    if (totalEarn + amount > child.dailyCoinLimit) {
+        const wait = getTimeUntilReset('day');
+        return `Дневной лимит (${child.dailyCoinLimit} монет) исчерпан. Нужно подождать ${wait}`;
+    }
+    return null;
 }
 
 export function updateBalanceLocally(childId, delta) {

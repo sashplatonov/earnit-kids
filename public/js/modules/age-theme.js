@@ -4,48 +4,48 @@ import { saveChildTheme } from './api.js';
 const STORAGE_PREFIX = 'earnit-age-theme';
 const THEMES = {
     mint: {
-        '--color-primary': 'oklch(0.73 0.18 165)',
-        '--color-secondary': 'oklch(0.78 0.19 205)',
-        '--color-bg': 'oklch(0.2 0.03 180)',
-        '--color-bg-light': 'oklch(0.27 0.04 185)',
-        '--color-bg-card': 'oklch(0.32 0.05 190)',
-        '--color-bg-hover': 'oklch(0.38 0.05 195)',
+        '--color-primary': 'oklch(0.76 0.13 160)',
+        '--color-secondary': 'oklch(0.81 0.11 204)',
+        '--color-bg': 'oklch(0.985 0.01 160)',
+        '--color-bg-light': 'oklch(0.965 0.02 180)',
+        '--color-bg-card': 'oklch(0.995 0.006 170)',
+        '--color-bg-hover': 'oklch(0.95 0.02 185)',
         '--gradient-primary': 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))'
     },
     ocean: {
-        '--color-primary': 'oklch(0.66 0.2 245)',
-        '--color-secondary': 'oklch(0.71 0.18 275)',
-        '--color-bg': 'oklch(0.18 0.03 250)',
-        '--color-bg-light': 'oklch(0.25 0.04 255)',
-        '--color-bg-card': 'oklch(0.3 0.05 260)',
-        '--color-bg-hover': 'oklch(0.35 0.05 265)',
+        '--color-primary': 'oklch(0.74 0.13 228)',
+        '--color-secondary': 'oklch(0.8 0.11 258)',
+        '--color-bg': 'oklch(0.985 0.01 230)',
+        '--color-bg-light': 'oklch(0.965 0.02 240)',
+        '--color-bg-card': 'oklch(0.995 0.006 220)',
+        '--color-bg-hover': 'oklch(0.95 0.02 245)',
         '--gradient-primary': 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))'
     },
     sun: {
-        '--color-primary': 'oklch(0.8 0.18 85)',
-        '--color-secondary': 'oklch(0.72 0.19 45)',
-        '--color-bg': 'oklch(0.24 0.03 85)',
-        '--color-bg-light': 'oklch(0.32 0.04 80)',
-        '--color-bg-card': 'oklch(0.37 0.05 75)',
-        '--color-bg-hover': 'oklch(0.42 0.06 70)',
+        '--color-primary': 'oklch(0.83 0.13 90)',
+        '--color-secondary': 'oklch(0.76 0.13 48)',
+        '--color-bg': 'oklch(0.988 0.012 88)',
+        '--color-bg-light': 'oklch(0.972 0.02 82)',
+        '--color-bg-card': 'oklch(0.998 0.006 90)',
+        '--color-bg-hover': 'oklch(0.955 0.022 80)',
         '--gradient-primary': 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))'
     },
     coral: {
-        '--color-primary': 'oklch(0.69 0.2 28)',
-        '--color-secondary': 'oklch(0.72 0.17 350)',
-        '--color-bg': 'oklch(0.2 0.03 5)',
-        '--color-bg-light': 'oklch(0.28 0.04 8)',
-        '--color-bg-card': 'oklch(0.33 0.05 12)',
-        '--color-bg-hover': 'oklch(0.38 0.06 14)',
+        '--color-primary': 'oklch(0.74 0.14 28)',
+        '--color-secondary': 'oklch(0.8 0.1 356)',
+        '--color-bg': 'oklch(0.987 0.012 18)',
+        '--color-bg-light': 'oklch(0.97 0.02 12)',
+        '--color-bg-card': 'oklch(0.997 0.006 18)',
+        '--color-bg-hover': 'oklch(0.954 0.022 16)',
         '--gradient-primary': 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))'
     },
     cosmos: {
-        '--color-primary': 'oklch(0.64 0.2 295)',
-        '--color-secondary': 'oklch(0.67 0.2 335)',
-        '--color-bg': 'oklch(0.16 0.03 300)',
-        '--color-bg-light': 'oklch(0.23 0.04 300)',
-        '--color-bg-card': 'oklch(0.29 0.05 305)',
-        '--color-bg-hover': 'oklch(0.34 0.06 310)',
+        '--color-primary': 'oklch(0.73 0.12 300)',
+        '--color-secondary': 'oklch(0.78 0.11 338)',
+        '--color-bg': 'oklch(0.985 0.01 305)',
+        '--color-bg-light': 'oklch(0.965 0.02 300)',
+        '--color-bg-card': 'oklch(0.995 0.006 304)',
+        '--color-bg-hover': 'oklch(0.95 0.02 308)',
         '--gradient-primary': 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))'
     }
 };

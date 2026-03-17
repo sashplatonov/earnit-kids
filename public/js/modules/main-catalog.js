@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { renderTasks, renderShop } from './ui.js';
 import { showToast } from './utils.js';
 import { scheduleSave } from './actions.js';
+import { renderGroupNav } from './group-nav.js';
 
 function getCatalogHtml(items, type) {
     const grouped = items.reduce((acc, t) => {
@@ -41,11 +42,42 @@ function updateSliderHighlight(minAge, maxAge) {
     }
 }
 
-export function renderCatalog() {
-    const minInput = document.getElementById('catalog-age-min-filter');
-    const maxInput = document.getElementById('catalog-age-max-filter');
-    if (!minInput || !maxInput) return;
+let activeTasksGroup = 'Все';
+let activeProductsGroup = 'Все';
 
+function renderCatalogGroupNavs(tasks, products) {
+    const getGroups = (items) => [...new Set(items.map(t => t.group || t.category || 'Без категории'))].sort();
+    
+    const tasksGroups = getGroups(tasks);
+    if (activeTasksGroup !== 'Все' && !tasksGroups.includes(activeTasksGroup)) {
+        activeTasksGroup = 'Все';
+    }
+
+    renderGroupNav('catalog-tasks-group-nav', {
+        groups: tasksGroups, 
+        activeGroup: activeTasksGroup, 
+        onChange: (newGroup) => {
+            activeTasksGroup = newGroup;
+            renderCatalog();
+        }
+    });
+    
+    const productsGroups = getGroups(products);
+    if (activeProductsGroup !== 'Все' && !productsGroups.includes(activeProductsGroup)) {
+        activeProductsGroup = 'Все';
+    }
+
+    renderGroupNav('catalog-products-group-nav', {
+        groups: productsGroups, 
+        activeGroup: activeProductsGroup, 
+        onChange: (newGroup) => {
+            activeProductsGroup = newGroup;
+            renderCatalog();
+        }
+    });
+}
+
+function getAgeFilterRange(minInput, maxInput) {
     let minAge = parseInt(minInput.value);
     let maxAge = parseInt(maxInput.value);
 
@@ -53,16 +85,37 @@ export function renderCatalog() {
         if (document.activeElement === minInput) minAge = maxAge; else maxAge = minAge;
         minInput.value = minAge; maxInput.value = maxAge;
     }
+    return { minAge, maxAge };
+}
 
+function updateCatalogUI(minAge, maxAge) {
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setVal('age-min-val', minAge); setVal('age-max-val', maxAge);
     updateSliderHighlight(minAge, maxAge);
 
     const filterAge = (arr) => (arr || []).filter(i => i.age_min <= maxAge && i.age_max >= minAge);
+    const tasks = filterAge(state.baseData.tasks);
+    const products = filterAge(state.baseData.products);
+    
+    const renderTasksItems = activeTasksGroup === 'Все' ? tasks : tasks.filter(t => (t.group || t.category || 'Без категории') === activeTasksGroup);
+    const renderProductsItems = activeProductsGroup === 'Все' ? products : products.filter(t => (t.group || t.category || 'Без категории') === activeProductsGroup);
+    
     const tList = document.getElementById('catalog-tasks-list');
     const pList = document.getElementById('catalog-products-list');
-    if (tList) tList.innerHTML = getCatalogHtml(filterAge(state.baseData.tasks), 'task');
-    if (pList) pList.innerHTML = getCatalogHtml(filterAge(state.baseData.products), 'product');
+    
+    if (tList) tList.innerHTML = getCatalogHtml(renderTasksItems, 'task');
+    if (pList) pList.innerHTML = getCatalogHtml(renderProductsItems, 'product');
+    
+    renderCatalogGroupNavs(tasks, products);
+}
+
+export function renderCatalog() {
+    const minInput = document.getElementById('catalog-age-min-filter');
+    const maxInput = document.getElementById('catalog-age-max-filter');
+    if (!minInput || !maxInput) return;
+
+    const { minAge, maxAge } = getAgeFilterRange(minInput, maxInput);
+    updateCatalogUI(minAge, maxAge);
 }
 
 function checkDuplicateInCatalog(type, name) {

@@ -1,12 +1,15 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#A78BFA"/>
-      <stop offset="1" stop-color="#3B82F6"/>
+    <linearGradient id="link-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#0d9488"/>
     </linearGradient>
   </defs>
-  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bg)"/>
-  <path d="M27.5 36.5L22.5 41.5C19.7 44.3 19.7 48.8 22.5 51.6C25.3 54.4 29.8 54.4 32.6 51.6L37.6 46.6" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <path d="M36.5 27.5L41.5 22.5C44.3 19.7 48.8 19.7 51.6 22.5C54.4 25.3 54.4 29.8 51.6 32.6L46.6 37.6" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <path d="M25 39L39 25" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Child icon (person) -->
+  <circle cx="24" cy="18" r="8" fill="url(#link-bg)"/>
+  <path d="M10 48c0-8 6-14 14-14s14 6 14 0" fill="url(#link-bg)" opacity="0.7"/>
+  <!-- Chain link -->
+  <path d="M36 32h6a8 8 0 0 1 0 16h-6" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <path d="M44 32h6a8 8 0 0 1 0 16h-6" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <line x1="38" y1="40" x2="46" y2="40" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round"/>
 </svg>

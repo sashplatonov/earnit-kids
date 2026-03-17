@@ -2,6 +2,7 @@
 import { escapeHtml, chunkedRender, isMobileViewport } from './utils.js';
 import { CONFIG } from './ui-config.js';
 import { applyStaggerReveal } from './motion-feedback.js';
+import { renderGroupNav } from './group-nav.js';
 
 const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
 
@@ -31,9 +32,7 @@ function renderBadge(label, variant = '') {
 
 function renderTaskBadges(task) {
     const badges = [];
-    if (task.group) {
-        badges.push(renderBadge(task.group, 'group'));
-    }
+
     if (!badges.length) return '';
     return `<div class="card__badge-row">${badges.join('')}</div>`;
 }
@@ -78,11 +77,11 @@ function renderTaskMeta(task) {
 function getTaskActions(task, isAdmin) {
     if (isAdmin) {
         return `
-            <button type="button" class="btn btn--success btn--small" onclick="window.app.earnCoins(${task.id})">✓ Начислить</button>
-            <button type="button" class="btn btn--secondary btn--small" onclick="window.app.editTask(${task.id})">Изменить</button>
+            <button type="button" class="btn btn--success btn--small" onclick="window.app.earnCoins('${task.id}')">✓ Начислить</button>
+            <button type="button" class="btn btn--secondary btn--small" onclick="window.app.editTask('${task.id}')">Изменить</button>
         `;
     }
-    return `<button type="button" class="btn btn--primary btn--small" onclick="window.app.requestCoins(${task.id})">✋ Выполнено</button>`;
+    return `<button type="button" class="btn btn--primary btn--small" onclick="window.app.requestCoins('${task.id}')">✋ Выполнено</button>`;
 }
 
 function renderTaskCard(task, isAdmin) {
@@ -90,11 +89,7 @@ function renderTaskCard(task, isAdmin) {
     const metaRow = renderTaskMeta(task);
     const isBookmarked = isShortcutActive('task', task.id);
     const highlightClass = isBookmarked ? ' card--highlight' : '';
-    const quickActions = `
-        <div class="card__quick-actions">
-            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isBookmarked ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('task', ${task.id}, this)">${isBookmarked ? 'В быстрых' : 'В быстрые'}</button>
-        </div>
-    `;
+    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isBookmarked ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isBookmarked ? 'true' : 'false'}" title="${isBookmarked ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('task', '${task.id}', this)">${isBookmarked ? '★' : '☆'}</button>`;
     return `
         <div class="card card--task${highlightClass}" data-id="${task.id}">
             ${badgeRow}
@@ -103,9 +98,11 @@ function renderTaskCard(task, isAdmin) {
                 <div class="card__coins"><span>${task.coins}</span><span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             </div>
             ${task.comment ? `<p class="card__comment">${escapeHtml(task.comment)}</p>` : ''}
-            ${metaRow}
+            <div class="card__footer-row">
+                ${metaRow}
+                ${bookmarkBtn}
+            </div>
             <div class="card__actions">${getTaskActions(task, isAdmin)}</div>
-            ${quickActions}
         </div>
     `;
 }
@@ -117,19 +114,43 @@ function splitTasksByQuick(tasks) {
     return { quickTasks, regularTasks };
 }
 
-function buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin }) {
+function buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin, activeGroup }) {
     const renderQueue = [];
-    if (quickTasks.length) {
-        renderQueue.push('<div class="group-header">Быстрые</div>');
+    if (quickTasks.length && (activeGroup === 'Все' || activeGroup === '⭐ Избранное')) {
+        renderQueue.push('<div class="group-header">⭐ Избранное</div>');
         quickTasks.sort((a, b) => a.coins - b.coins)
             .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
     }
     sortedGroups.forEach(groupName => {
-        renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
-        grouped[groupName].sort((a, b) => a.coins - b.coins)
-            .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
+        if (activeGroup === 'Все' || activeGroup === groupName) {
+            renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
+            grouped[groupName].sort((a, b) => a.coins - b.coins)
+                .forEach(task => renderQueue.push(renderTaskCard(task, isAdmin)));
+        }
     });
     return renderQueue;
+}
+
+let currentActiveGroup = 'Все';
+
+function renderTaskGroupNav(sortedGroups, quickTasks) {
+    const allGroupNames = [];
+    if (quickTasks.length) allGroupNames.push('⭐ Избранное');
+    allGroupNames.push(...sortedGroups);
+    
+    // Fallback if active group was deleted
+    if (currentActiveGroup !== 'Все' && !allGroupNames.includes(currentActiveGroup)) {
+        currentActiveGroup = 'Все';
+    }
+
+    renderGroupNav('tasks-group-nav', {
+        groups: allGroupNames, 
+        activeGroup: currentActiveGroup, 
+        onChange: (newGroup) => {
+            currentActiveGroup = newGroup;
+            import('./ui.js').then(module => module.renderTasks());
+        }
+    });
 }
 
 export function renderTasksUI(state) {
@@ -139,7 +160,7 @@ export function renderTasksUI(state) {
 
     if (state.tasks.length === 0) {
         container.innerHTML = '';
-        if (emptyState) emptyState.classList.remove('hidden');
+        if (emptyState && !state.isLoading) emptyState.classList.remove('hidden');
         return;
     }
     if (emptyState) emptyState.classList.add('hidden');
@@ -164,8 +185,17 @@ export function renderTasksUI(state) {
         return a.localeCompare(b);
     });
 
-    const renderQueue = buildTaskRenderQueue({ grouped, sortedGroups, quickTasks, isAdmin: state.isAdmin });
+    const renderQueue = buildTaskRenderQueue({ 
+        grouped, 
+        sortedGroups, 
+        quickTasks, 
+        isAdmin: state.isAdmin,
+        activeGroup: currentActiveGroup 
+    });
 
     chunkedRender(container, renderQueue, { chunkSize: isMobileViewport() ? 5 : 10 });
+    
+    renderTaskGroupNav(sortedGroups, quickTasks);
+
     window.setTimeout(() => applyStaggerReveal(container), 40);
 }

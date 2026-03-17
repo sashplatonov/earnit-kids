@@ -34,7 +34,7 @@ function renderHistoryItem(entry, state) {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
     });
     const moneyVal = entry.moneyAmount || entry.rsdAmount;
-    const moneyTag = moneyVal ? `<span class="tag tag--money" style="font-size:0.75em;margin-left:0.5em;">${moneyVal}</span>` : '';
+    const moneyTag = moneyVal ? `<span class="tag tag--money-solid" style="font-size:0.75em;margin-left:0.5em;">Сумма: 💶 ${moneyVal}</span>` : '';
     const groupTag = details.group ? ` <span class="tag tag--info" style="font-size:0.75em;margin-left:0.5em;white-space:nowrap;">[${escapeHtml(details.group)}]</span>` : '';
     const commentDiv = details.comment ? `<div style="font-size:0.85em;opacity:0.8;margin-top:0.3em;">${escapeHtml(details.comment)}</div>` : '';
 
@@ -50,21 +50,25 @@ function renderHistoryItem(entry, state) {
                 ${commentDiv}
                 <div class="history-item__date" style="margin-top:0.3em;">${formattedDate}</div>
             </div>
-            <div class="history-item__amount">${isEarn ? '+' : '-'}${entry.amount}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
-            <div class="card__actions" style="margin-left: 10px;">
-                 <button class="btn btn--danger btn--small" onclick="window.app.deleteHistoryItem(${entry.id})">Удалить</button>
+            <div class="history-item__actions">
+                <div class="history-item__amount">${isEarn ? '+' : '-'}${entry.amount}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
+                ${state.isAdmin ? `
+                <button class="history-item__delete-btn" onclick="window.app.deleteHistoryItem('${entry.id}')" title="Удалить" aria-label="Удалить">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                </button>
+                ` : ''}
             </div>
         </div>
     `;
 }
 
 function renderMonthHeader(monthName, stats) {
-    const moneySpent = stats.moneySpent > 0 ? ` | <span class="money">-${stats.moneySpent.toLocaleString()} руб.</span>` : '';
+    const moneySpent = stats.moneySpent > 0 ? `<span class="money">-${stats.moneySpent.toLocaleString()} 💶</span>` : '';
     return `
         <div class="history-month-header">
             <div class="month-title">${monthName}</div>
             <div class="month-stats">
-                <span class="earn">+${stats.earned} мон.</span> | <span class="spend">-${stats.spent} мон.</span>${moneySpent}
+                <span class="earn">+${stats.earned} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span> | <span class="spend">-${stats.spent} <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width: 1rem; height: 1rem; vertical-align: middle;"></span></span>${moneySpent ? ' | Сумма: ' + moneySpent : ''}
             </div>
         </div>
     `;
@@ -81,7 +85,7 @@ export function renderHistoryUI(state) {
     }
     if (history.length === 0) {
         container.innerHTML = '';
-        if (emptyState) emptyState.classList.remove('hidden');
+        if (emptyState && !state.isLoading) emptyState.classList.remove('hidden');
         return;
     }
     if (emptyState) emptyState.classList.add('hidden');

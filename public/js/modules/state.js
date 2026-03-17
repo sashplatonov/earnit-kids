@@ -15,7 +15,8 @@ export const state = {
     dailyCoinLimit: 0,
     baseData: { tasks: [], products: [] },
     children: [],
-    currentChildId: null
+    currentChildId: null,
+    isLoading: true
 };
 
 // Simple event bus for state changes

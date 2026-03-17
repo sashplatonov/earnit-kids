@@ -50,11 +50,9 @@ function setupSpecificControls() {
         { id: 'task-cancel', fn: () => closeModal('task-modal') },
         { id: 'task-delete', fn: admin.deleteTask },
         { id: 'add-shop-btn', fn: admin.openShopModal },
-        { id: 'wizard-add-task', fn: admin.openTaskModal },
         { id: 'shop-save', fn: admin.saveShopItem },
         { id: 'shop-cancel', fn: () => closeModal('shop-modal') },
         { id: 'shop-delete', fn: admin.deleteShopItem },
-        { id: 'wizard-add-shop', fn: admin.openShopModal },
         { id: 'rules-save', fn: saveRules },
         { id: 'rules-cancel', fn: () => closeModal('rules-modal') },
         { id: 'catalog-age-min-filter', fn: renderCatalog, evt: 'input' },
@@ -97,17 +95,20 @@ function getShortcutBucket(shortcuts, kind) {
 function updateShortcutButton(trigger, kind, isActive) {
     if (!trigger) return;
     trigger.setAttribute('aria-pressed', String(isActive));
-    trigger.classList.toggle('card__quick-bookmark--active', isActive);
-    if (kind.normalized === 'shop') {
-        trigger.textContent = isActive ? '⚡ В быстром' : '⚡ В быстрый';
+    // Support both old text button (.card__quick-bookmark) and new star button (.card__bookmark-btn)
+    if (trigger.classList.contains('card__bookmark-btn')) {
+        trigger.classList.toggle('card__bookmark-btn--active', isActive);
+        trigger.textContent = isActive ? '★' : '☆';
+        trigger.title = isActive ? 'Убрать из избранного' : 'В избранное';
         return;
     }
-    trigger.textContent = isActive ? '⭐ В быстрых' : '☆ В быстрые';
+    // Legacy text button fallback
+    trigger.classList.toggle('card__quick-bookmark--active', isActive);
+    trigger.textContent = isActive ? '⭐ Избранное' : '☆ Избранное';
 }
 
 function getShortcutToast(kind, wasActive) {
-    const bucketLabel = kind.normalized === 'shop' ? 'быстрый' : 'быстрые действия';
-    return wasActive ? `Убрано: ${bucketLabel}` : `Добавлено: ${bucketLabel}`;
+    return wasActive ? 'Удалено из избранного' : 'Добавлено в избранное';
 }
 
 function toggleCardBookmark(type, id, trigger) {
@@ -157,7 +158,7 @@ function showSkeletons() {
     const lists = ['tasks-list', 'shop-list', 'history-list', 'requests-list'];
     lists.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;">Загрузка</div>').join('');
+        if (el) el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;"></div>').join('');
     });
 }
 
@@ -176,7 +177,7 @@ async function initializeApp() {
         }
 
         await registerServiceWorker();
-        await startBackgroundServices(data);
+        startBackgroundServices(data);
         renderInitialViews();
         setupControlsAndRefresh();
     } catch (err) {
@@ -187,11 +188,11 @@ async function initializeApp() {
     }
 }
 
-async function startBackgroundServices(data) {
-    await safeRun(initializePushNotifications, 'Push init failed:');
-    await safeRun(initializeWebSocket, 'WS init failed:');
+function startBackgroundServices(data) {
+    safeRun(initializePushNotifications, 'Push init failed:');
+    safeRun(initializeWebSocket, 'WS init failed:');
     setPushRefreshHandler(() => refreshFromServerAndRender(false));
-    await safeRun(() => startIosDevFallback(data, () => refreshFromServerAndRender(false)), 'Fallback init failed:');
+    safeRun(() => startIosDevFallback(data, () => refreshFromServerAndRender(false)), 'Fallback init failed:');
 }
 
 async function safeRun(fn, message) {

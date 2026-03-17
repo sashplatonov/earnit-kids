@@ -24,7 +24,7 @@ This guide configures push notifications for the Capacitor mobile shell and the 
 ## 2. Android app setup
 1. In Firebase project settings, add an Android app.
 2. Use your Android package ID (must match Capacitor app ID), for example:
-   - `com.coins.kids`
+  - `com.earnit.kids`
 3. Download `google-services.json`.
 4. Place it here:
    - `mobile/android/app/google-services.json`
@@ -32,7 +32,7 @@ This guide configures push notifications for the Capacitor mobile shell and the 
 ## 3. iOS app setup
 1. In Firebase project settings, add an iOS app.
 2. Use your iOS bundle ID (must match Capacitor app ID), for example:
-   - `com.coins.kids`
+  - `com.earnit.kids`
 3. Download `GoogleService-Info.plist`.
 4. In Xcode, add it to the `App` target:
    - `mobile/ios/App/App/GoogleService-Info.plist`

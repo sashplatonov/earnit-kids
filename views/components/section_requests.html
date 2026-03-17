@@ -8,31 +8,25 @@
         </div>
         <div class="requests-summary hidden" id="requests-summary" aria-live="polite"></div>
         <div class="history-list" id="incoming-requests-list"></div>
-        <div class="empty-state" id="incoming-requests-empty">
+        <article class="empty-state hidden" id="incoming-requests-empty">
         <span class="empty-state__icon">
             <span class="gamified-icon icon-envelope" aria-hidden="true"></span>
         </span>
             <p class="empty-state__title">Нет новых заявок</p>
             <p class="empty-state__hint">Ребенок может отправить заявку после завершения задачи — она появится тут автоматически.</p>
-            <div class="empty-state__actions">
-                <span class="empty-state__tip">Проверьте “Сегодня”: там легко заметить, что ребенок готов отправить.</span>
-            </div>
-        </div>
+        </article>
     </div>
 
     <!-- Секция только для ребенка: Мои активные заявки -->
     <div class="child-only" style="margin-top: 2rem;">
         <h2>Мои отправленные заявки</h2>
         <div class="history-list" id="my-requests-list"></div>
-        <div class="empty-state" id="my-requests-empty">
+        <article class="empty-state hidden" id="my-requests-empty">
             <span class="empty-state__icon">
                 <span class="gamified-icon icon-envelope" aria-hidden="true"></span>
             </span>
             <p class="empty-state__title">Нет активных заявок</p>
             <p class="empty-state__hint">Отмечайте выполнение задач — заявки сразу переходят в статус “отправлена”.</p>
-            <div class="empty-state__actions">
-                <span class="empty-state__tip">Список внизу обновляется автоматически после каждого “Сегодня”.</span>
-            </div>
-        </div>
+        </article>
     </div>
 </section>

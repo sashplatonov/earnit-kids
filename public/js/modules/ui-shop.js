@@ -2,6 +2,7 @@
 import { escapeHtml, chunkedRender, isMobileViewport } from './utils.js';
 import { CONFIG } from './ui-config.js';
 import { applyStaggerReveal } from './motion-feedback.js';
+import { renderGroupNav } from './group-nav.js';
 
 const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
 
@@ -41,11 +42,11 @@ function renderBadge(label, variant = '') {
     return `<span class="${classes.join(' ')}">${escapeHtml(label)}</span>`;
 }
 
-function renderShopBadges(item) {
+function renderShopBadges(item, canAfford) {
     const badges = [];
-    if (item.group) {
-        badges.push(renderBadge(item.group, 'group'));
-    }
+
+    // Add status as the first badge
+    badges.push(renderShopStatus(canAfford));
 
     if (item.type) {
         const typeLabel = CONFIG.SHOP_ITEM_TYPES[item.type]?.label || item.type;
@@ -53,10 +54,9 @@ function renderShopBadges(item) {
     }
 
     if (item.money_limit) {
-        badges.push(renderBadge(`Лимит ${item.money_limit} мон.`, 'money'));
+        badges.push(renderBadge(`Не более ${item.money_limit} 💶`, 'money'));
     }
 
-    if (!badges.length) return '';
     return `<div class="card__badge-row">${badges.join('')}</div>`;
 }
 
@@ -106,8 +106,8 @@ function renderShopStatus(canAfford) {
 function getShopActions(item, canAfford, state) {
     const disabledAttrs = canAfford ? '' : 'disabled aria-disabled="true"';
     return `
-        <button type="button" class="btn btn--primary btn--small" onclick="window.app.buyItem(${item.id})" ${disabledAttrs}>${canAfford ? 'Купить' : 'Не хватает'}</button>
-        ${state.isAdmin ? `<button type="button" class="btn btn--secondary btn--small" onclick="window.app.editShopItem(${item.id})">Изменить</button>` : ''}
+        <button type="button" class="btn btn--primary btn--small" onclick="window.app.buyItem('${item.id}')" ${disabledAttrs}>${canAfford ? 'Купить' : 'Не хватает'}</button>
+        ${state.isAdmin ? `<button type="button" class="btn btn--secondary btn--small" onclick="window.app.editShopItem('${item.id}')">Изменить</button>` : ''}
     `;
 }
 
@@ -118,51 +118,78 @@ function splitShopItemsByPins(items) {
     return { quickItems, regularItems };
 }
 
-function renderPinnedShopSections({ renderQueue, quickItems, state }) {
-    if (quickItems.length) {
-        renderQueue.push('<div class="group-header">Быстрый</div>');
+function renderPinnedShopSections({ renderQueue, quickItems, state, activeGroup }) {
+    if (quickItems.length && (activeGroup === 'Все' || activeGroup === '⭐ Избранное')) {
+        renderQueue.push('<div class="group-header">⭐ Избранное</div>');
         quickItems.sort((a, b) => a.price - b.price)
             .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
     }
 }
 
-function renderGroupedShopSections({ renderQueue, grouped, groupNames, state }) {
+function renderGroupedShopSections({ renderQueue, grouped, groupNames, state, activeGroup }) {
     groupNames.forEach(groupName => {
-        renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
-        grouped[groupName].sort((a, b) => a.price - b.price)
-            .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
+        if (activeGroup === 'Все' || activeGroup === groupName) {
+            renderQueue.push(`<div class="group-header">${escapeHtml(groupName)}</div>`);
+            grouped[groupName].sort((a, b) => a.price - b.price)
+                .forEach(item => renderQueue.push(renderShopItemCard(item, state)));
+        }
     });
 }
 
 function renderShopItemCard(item, state) {
     const canAfford = state.balance >= item.price;
-    const badges = renderShopBadges(item);
+    const badges = renderShopBadges(item, canAfford);
     const meta = renderShopMeta(item);
     const isQuick = isShortcutActive('shop', item.id);
     const highlightClass = isQuick ? ' card--highlight' : '';
-    const quickActions = `
-        <div class="card__quick-actions">
-            <button type="button" class="btn btn--secondary btn--small card__quick-bookmark${isQuick ? ' card__quick-bookmark--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" onclick="window.app.toggleCardBookmark('shop', ${item.id}, this)">${isQuick ? 'В быстром' : 'В быстрый'}</button>
-        </div>
-    `;
+    const affordableClass = canAfford ? ' card--affordable' : '';
+    
+    const bookmarkBtn = `<button type="button" class="card__bookmark-btn${isQuick ? ' card__bookmark-btn--active' : ''}" aria-pressed="${isQuick ? 'true' : 'false'}" title="${isQuick ? 'Убрать из избранного' : 'В избранное'}" onclick="window.app.toggleCardBookmark('shop', '${item.id}', this)">${isQuick ? '★' : '☆'}</button>`;
+    
     return `
-        <div class="card card--shop${highlightClass}" data-id="${item.id}">
+        <div class="card card--shop${highlightClass}${affordableClass}" data-id="${item.id}">
             ${badges}
             <div class="card__header">
-                <div>
-                    <h3 class="card__title">${escapeHtml(item.name)}</h3>
-                    ${renderShopStatus(canAfford)}
-                </div>
+                <h3 class="card__title">${escapeHtml(item.name)}</h3>
                 <div class="card__coins"><span>${item.price}</span><span class="gamified-icon icon-coin-stack" aria-hidden="true"></span></div>
             </div>
             ${item.comment ? `<p class="card__comment">${escapeHtml(item.comment)}</p>` : ''}
-            ${meta}
+            <div class="card__footer-row">
+                ${metaRow(item)}
+                ${bookmarkBtn}
+            </div>
             <div class="card__actions">
                 ${getShopActions(item, canAfford, state)}
             </div>
-            ${quickActions}
         </div>
     `;
+}
+
+/** Helper to render shop meta inside the card - using existing renderShopMeta logic but checking if actually needed */
+function metaRow(item) {
+    return renderShopMeta(item);
+}
+
+let currentActiveGroup = 'Все';
+
+function renderShopGroupNav(groupNames, quickItems) {
+    const allGroupNames = [];
+    if (quickItems.length) allGroupNames.push('⭐ Избранное');
+    allGroupNames.push(...groupNames);
+    
+    // Fallback if active group was deleted
+    if (currentActiveGroup !== 'Все' && !allGroupNames.includes(currentActiveGroup)) {
+        currentActiveGroup = 'Все';
+    }
+
+    renderGroupNav('shop-group-nav', {
+        groups: allGroupNames, 
+        activeGroup: currentActiveGroup, 
+        onChange: (newGroup) => {
+            currentActiveGroup = newGroup;
+            import('./ui.js').then(module => module.renderShop());
+        }
+    });
 }
 
 export function renderShopUI(state) {
@@ -177,7 +204,7 @@ export function renderShopUI(state) {
 
     if (items.length === 0) {
         container.innerHTML = '';
-        if (emptyState) emptyState.classList.remove('hidden');
+        if (emptyState && !state.isLoading) emptyState.classList.remove('hidden');
         return;
     }
     if (emptyState) emptyState.classList.add('hidden');
@@ -198,9 +225,12 @@ export function renderShopUI(state) {
     });
 
     const renderQueue = [];
-    renderPinnedShopSections({ renderQueue, quickItems, state });
-    renderGroupedShopSections({ renderQueue, grouped, groupNames, state });
+    renderPinnedShopSections({ renderQueue, quickItems, state, activeGroup: currentActiveGroup });
+    renderGroupedShopSections({ renderQueue, grouped, groupNames, state, activeGroup: currentActiveGroup });
 
     chunkedRender(container, renderQueue, { chunkSize: isMobileViewport() ? 5 : 10 });
+
+    renderShopGroupNav(groupNames, quickItems);
+
     window.setTimeout(() => applyStaggerReveal(container), 40);
 }

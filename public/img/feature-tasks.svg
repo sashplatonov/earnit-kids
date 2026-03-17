@@ -1,15 +1,38 @@
 <svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1200" height="760" rx="44" fill="#111827"/>
-  <rect x="80" y="80" width="1040" height="600" rx="32" fill="#1E293B"/>
-  <text x="140" y="180" fill="#F8FAFC" font-family="Nunito, sans-serif" font-size="56" font-weight="800">Список добрых дел</text>
-  <rect x="140" y="230" width="920" height="92" rx="20" fill="#0EA5E9" fill-opacity="0.25"/>
-  <rect x="170" y="266" width="36" height="36" rx="10" fill="#22D3EE"/>
-  <rect x="228" y="272" width="500" height="24" rx="12" fill="#E2E8F0"/>
-  <rect x="140" y="346" width="920" height="92" rx="20" fill="#FACC15" fill-opacity="0.22"/>
-  <rect x="170" y="382" width="36" height="36" rx="10" fill="#FACC15"/>
-  <rect x="228" y="388" width="440" height="24" rx="12" fill="#E2E8F0"/>
-  <rect x="140" y="462" width="920" height="92" rx="20" fill="#34D399" fill-opacity="0.22"/>
-  <rect x="170" y="498" width="36" height="36" rx="10" fill="#34D399"/>
-  <rect x="228" y="504" width="560" height="24" rx="12" fill="#E2E8F0"/>
-  <text x="140" y="640" fill="#CBD5E1" font-family="Nunito, sans-serif" font-size="32">За каждое выполненное дело ребенок получает монетки</text>
+  <defs>
+    <linearGradient id="tasksBg" x1="100" y1="70" x2="1090" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF9FF"/>
+      <stop offset="0.5" stop-color="#FFF7E8"/>
+      <stop offset="1" stop-color="#F7FFF7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="760" rx="44" fill="#FFFDF8"/>
+  <rect x="60" y="60" width="1080" height="640" rx="38" fill="url(#tasksBg)" stroke="#DCEAFE" stroke-width="2"/>
+  <text x="122" y="138" fill="#253550" font-family="Nunito, sans-serif" font-size="56" font-weight="800">
+    <tspan x="122" dy="0">Список</tspan>
+    <tspan x="122" dy="58">добрых дел</tspan>
+  </text>
+  <text x="122" y="222" fill="#627290" font-family="Nunito, sans-serif" font-size="28">
+    <tspan x="122" dy="0">Пастельные блоки и явные чекпоинты помогают</tspan>
+    <tspan x="122" dy="32">детям удерживать внимание и видеть следующий шаг.</tspan>
+  </text>
+  <rect x="122" y="244" width="956" height="108" rx="28" fill="#E8F7FF"/>
+  <rect x="154" y="278" width="42" height="42" rx="14" fill="#72D4FF"/>
+  <rect x="220" y="288" width="336" height="18" rx="9" fill="#415474" fill-opacity="0.84"/>
+  <rect x="578" y="278" width="118" height="42" rx="21" fill="#FFFFFF"/>
+  <rect x="722" y="278" width="134" height="42" rx="21" fill="#DDF3FF"/>
+  <rect x="122" y="376" width="956" height="108" rx="28" fill="#FFF3E0"/>
+  <rect x="154" y="410" width="42" height="42" rx="14" fill="#FFB173"/>
+  <rect x="220" y="420" width="296" height="18" rx="9" fill="#415474" fill-opacity="0.84"/>
+  <rect x="542" y="410" width="118" height="42" rx="21" fill="#FFFFFF"/>
+  <rect x="686" y="410" width="180" height="42" rx="21" fill="#FFE1C8"/>
+  <rect x="122" y="508" width="956" height="108" rx="28" fill="#EFFFF5"/>
+  <rect x="154" y="542" width="42" height="42" rx="14" fill="#75DFC5"/>
+  <rect x="220" y="552" width="386" height="18" rx="9" fill="#415474" fill-opacity="0.84"/>
+  <rect x="632" y="542" width="118" height="42" rx="21" fill="#FFFFFF"/>
+  <rect x="776" y="542" width="162" height="42" rx="21" fill="#DDF9EC"/>
+  <text x="122" y="668" fill="#627290" font-family="Nunito, sans-serif" font-size="32">
+    <tspan x="122" dy="0">За каждое выполненное дело ребенок получает</tspan>
+    <tspan x="122" dy="36">монетки и видит понятный прогресс</tspan>
+  </text>
 </svg>

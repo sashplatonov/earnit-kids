@@ -13,25 +13,58 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { pool, query } = require('../src/db/connection');
+const { getDatabaseSchema, quoteIdentifier } = require('../src/db/schema');
 
 const MIGRATIONS_DIR = path.join(__dirname, '../migrations');
+const PROJECT_SCHEMA = getDatabaseSchema();
+const PROJECT_SCHEMA_SQL = quoteIdentifier(PROJECT_SCHEMA);
+const MIGRATIONS_TABLE = 'migrations';
+const MIGRATIONS_TABLE_SQL = `${PROJECT_SCHEMA_SQL}.${quoteIdentifier(MIGRATIONS_TABLE)}`;
+const schemaQualifiedMigrations = `${PROJECT_SCHEMA}.${MIGRATIONS_TABLE}`;
+const publicQualifiedMigrations = `public.${MIGRATIONS_TABLE}`;
+
+async function tableExists(qualifiedName) {
+    const result = await pool.query(
+        'SELECT to_regclass($1) IS NOT NULL AS exists',
+        [qualifiedName]
+    );
+    return result.rows[0]?.exists ?? false;
+}
 
 async function ensureMigrationsTable() {
-    // Create migrations table if it doesn't exist
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS ${PROJECT_SCHEMA_SQL}`);
+
+    const publicTableExists = await tableExists(publicQualifiedMigrations);
+    const schemaTableExists = await tableExists(schemaQualifiedMigrations);
+
     const sql = `
-        CREATE TABLE IF NOT EXISTS migrations (
+        CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE_SQL} (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
             executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
-        CREATE INDEX IF NOT EXISTS idx_migrations_name ON migrations(name);
+        CREATE INDEX IF NOT EXISTS idx_migrations_name ON ${MIGRATIONS_TABLE_SQL}(name);
     `;
     await pool.query(sql);
+
+    if (publicTableExists) {
+        await pool.query(`
+            INSERT INTO ${MIGRATIONS_TABLE_SQL} (id, name, executed_at)
+            SELECT id, name, executed_at FROM public.${quoteIdentifier(MIGRATIONS_TABLE)}
+            ON CONFLICT (name) DO NOTHING
+        `);
+
+        if (!schemaTableExists) {
+            await pool.query(
+                `DROP TABLE IF EXISTS public.${quoteIdentifier(MIGRATIONS_TABLE)}`
+            );
+        }
+    }
 }
 
 async function getExecutedMigrations() {
     try {
-        const result = await query('SELECT name FROM migrations ORDER BY name');
+        const result = await query(`SELECT name FROM ${MIGRATIONS_TABLE_SQL} ORDER BY name`);
         return result.rows.map(row => row.name);
     } catch (err) {
         return [];
@@ -50,7 +83,7 @@ function getMigrationFiles() {
 
 async function runMigration(filename) {
     const filePath = path.join(MIGRATIONS_DIR, filename);
-    const sql = fs.readFileSync(filePath, 'utf8');
+    const sql = fs.readFileSync(filePath, 'utf8').replaceAll('__DB_SCHEMA__', PROJECT_SCHEMA_SQL);
 
     const client = await pool.connect();
     try {
@@ -61,7 +94,7 @@ async function runMigration(filename) {
 
         // Record migration as executed
         await client.query(
-            'INSERT INTO migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
+            `INSERT INTO ${MIGRATIONS_TABLE_SQL} (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
             [filename]
         );
 

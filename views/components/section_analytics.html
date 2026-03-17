@@ -22,41 +22,49 @@
                 <div class="stat-card__value spend" id="stats-spent">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-card__label">Платежный баланс</div>
-                <div class="stat-card__value" id="stats-net">0</div>
+                <div class="stat-card__label">Баланс</div>
+                <div class="stat-card__value" id="stats-net">0 мон.</div>
             </div>
         </div>
 
         <div class="analytics-mini" aria-label="Краткий прогресс">
-            <article class="analytics-mini__item">
+            <!-- XP / Level -->
+            <article class="analytics-mini__item progress-card--level">
                 <div class="analytics-mini__header">
-                    <span>Прогресс дня</span>
-                    <span class="analytics-mini__value" data-mini-value-day>35%</span>
+                    <span>⭐ Уровень</span>
+                    <span class="analytics-mini__value" id="progress-level-value">Lv 1</span>
                 </div>
                 <div class="progress-track">
-                    <span class="progress-fill" style="--progress: 0.35;" data-progress-day></span>
+                    <span class="progress-fill" id="progress-level-bar" style="--progress: 0;"></span>
                 </div>
-                <p class="analytics-mini__hint" data-mini-hint-day>Завершите еще одну задачу, чтобы перейти к следующему бейджу «Сегодня сделано».</p>
+                <div class="analytics-mini__footer">
+                    <p class="analytics-mini__hint" id="progress-level-note">до следующего уровня ... XP</p>
+                    <p class="analytics-mini__info">1 монета = 1 XP. Каждый уровень требует 120 XP.</p>
+                </div>
             </article>
+
+            <!-- Week Earned -->
             <article class="analytics-mini__item">
                 <div class="analytics-mini__header">
-                    <span>Готовность магазина</span>
-                    <span class="analytics-mini__value" data-mini-value-shop>60%</span>
+                    <span>📅 За неделю</span>
+                    <span class="analytics-mini__value" id="progress-week-earned-value">0</span>
                 </div>
                 <div class="progress-track">
-                    <span class="progress-fill" style="--progress: 0.6;" data-progress-shop></span>
+                    <span class="progress-fill" id="progress-week-earned-bar" style="--progress: 0;"></span>
                 </div>
-                <p class="analytics-mini__hint" data-mini-hint-shop>Добавьте одну доступную награду, чтобы ребенок видел новые цели.</p>
+                <p class="analytics-mini__hint" id="progress-week-earned-goal">Цель: -- мон.</p>
             </article>
+
+            <!-- Streak -->
             <article class="analytics-mini__item">
                 <div class="analytics-mini__header">
-                    <span>Стрик</span>
-                    <span class="analytics-mini__value" data-mini-value-streak>0 дней</span>
+                    <span>🔥 Серия (Стрик)</span>
+                    <span class="analytics-mini__value" id="progress-streak-value">0</span>
                 </div>
                 <div class="progress-track">
-                    <span class="progress-fill" style="--progress: 0.15;" data-progress-streak></span>
+                    <span class="progress-fill" id="progress-streak-bar" style="--progress: 0;"></span>
                 </div>
-                <p class="analytics-mini__hint" data-mini-hint-streak>Подтвердите хотя бы одно дело в неделю, чтобы собрать серию наград.</p>
+                <p class="analytics-mini__hint" id="progress-streak-note">Начните сегодня!</p>
             </article>
         </div>
 

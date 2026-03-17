@@ -39,8 +39,11 @@ async function toggleTab(tabButtons, tabName, moreBtn) {
     if (document.startViewTransition && document.visibilityState === 'visible') {
         try {
             const transition = document.startViewTransition(() => performSwitch());
-            await transition.finished;
+            // We await finished but ignore errors because performSwitch is already called by the browser
+            // even if the transition is skipped.
+            await transition.finished.catch(() => {});
         } catch (err) {
+            // Only fall back if startViewTransition itself failed synchronously
             await performSwitch();
         }
     } else {
@@ -129,15 +132,27 @@ function positionMoreDropdown(moreBtn, moreDropdown) {
     }
 }
 
+function isGestureIgnored(e, diff) {
+    if (Math.abs(diff) < 80) return true;
+    if (e && e.target && e.target.closest('.group-nav, .group-nav__scroll, .about-gallery, .chart-container')) return true;
+    return false;
+}
+
+function processGestureActivation({ diff, visibleTabs, currentIndex }, activate) {
+    if (diff > 0 && currentIndex < visibleTabs.length - 1) {
+        activate(visibleTabs[currentIndex + 1].dataset.tab);
+    } else if (diff < 0 && currentIndex > 0) {
+        activate(visibleTabs[currentIndex - 1].dataset.tab);
+    }
+}
+
 function setupSwipeGestures(activate) {
     let touchStartX = 0;
     let touchEndX = 0;
 
-    const handleGesture = () => {
+    const handleGesture = (e) => {
         const diff = touchStartX - touchEndX;
-        if (Math.abs(diff) < 80) return;
-
-        if (document.activeElement?.closest('.about-gallery, .chart-container')) return;
+        if (isGestureIgnored(e, diff)) return;
 
         const currentActiveBtn = document.querySelector('.nav__btn.active');
         if (!currentActiveBtn) return;
@@ -149,17 +164,13 @@ function setupSwipeGestures(activate) {
         const currentIndex = visibleTabs.indexOf(currentActiveBtn);
         if (currentIndex === -1) return;
 
-        if (diff > 0 && currentIndex < visibleTabs.length - 1) {
-            activate(visibleTabs[currentIndex + 1].dataset.tab);
-        } else if (diff < 0 && currentIndex > 0) {
-            activate(visibleTabs[currentIndex - 1].dataset.tab);
-        }
+        processGestureActivation({ diff, visibleTabs, currentIndex }, activate);
     };
 
     document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
     document.addEventListener('touchend', e => {
         touchEndX = e.changedTouches[0].screenX;
-        handleGesture();
+        handleGesture(e);
     }, { passive: true });
 }
 
@@ -200,7 +211,7 @@ export function setupTabControls() {
             import('./analytics-ui.js').then(({ loadAnalytics }) => loadAnalytics(btn.dataset.timeframe));
         }
     });
-    activate('today');
+    activate('analytics');
 }
 
 function attachMoreDropdownHandlers({ moreBtn, moreDropdown, resetMoreMenuState, activate }) {

@@ -10,8 +10,7 @@ const familiesViewState = {
     sort: 'created',
     search: ''
 };
-const familiesTable = document.getElementById('families-table');
-const familiesTbody = document.getElementById('families-tbody');
+const familiesList = document.getElementById('families-list');
 const familiesLoadingState = document.getElementById('loading');
 const familiesErrorState = document.getElementById('families-error');
 
@@ -83,8 +82,8 @@ function updateStats(families) {
 
 function getFamilyStatusBadge(isBlocked) {
     return isBlocked
-        ? '<span style="color:#ef4444; font-weight:700;">ЗАБЛОКИРОВАНА</span>'
-        : '<span style="color:#16a34a; font-weight:700;">АКТИВНА</span>';
+        ? '<span class="family-status family-status--blocked">Заблок.</span>'
+        : '<span class="family-status family-status--active">Активна</span>';
 }
 
 function getFamilyBlockButtonLabel(isBlocked) {
@@ -95,55 +94,53 @@ function getFamilyBlockButtonClass(isBlocked) {
     return isBlocked ? 'unblock' : '';
 }
 
-function buildFamilyRowHtml(family) {
+function buildFamilyCardHtml(family) {
     const id = escapeHtml(family.id);
     const email = escapeHtml(family.email || '-');
     const childrenCount = getFamilyChildrenCount(family);
+    const lastActivity = family.last_activity ? formatDate(family.last_activity, true) : 'нет данных';
     return `
-        <td style="opacity:0.5" class="hide-mobile">#${id}</td>
-        <td class="hide-mobile">${email}</td>
-        <td class="hide-mobile">${childrenCount}</td>
-        <td class="hide-mobile">${family.tasksCount || 0}</td>
-        <td class="hide-mobile">${family.shopCount || 0}</td>
-        <td>${getFamilyStatusBadge(family.isBlocked)}</td>
-        <td class="hide-mobile">${formatDate(family.created_at)}</td>
-        <td class="hide-mobile" style="font-size:0.9rem">${formatDate(family.last_activity, true)}</td>
-        <td>
-            <div style="display:flex; gap:4px">
-                <button class="view-btn" type="button" data-action="view-family" data-family-id="${id}" title="Открыть карточку семьи">👁️</button>
-                <button class="block-btn ${getFamilyBlockButtonClass(family.isBlocked)}" type="button" data-action="toggle-family-block" data-family-id="${id}">
-                    ${getFamilyBlockButtonLabel(family.isBlocked)}
-                </button>
-            </div>
-        </td>
+        <div class="family-avatar">👨‍👩‍👧</div>
+        <div class="family-info">
+            <div class="family-name">${email}</div>
+            <div class="family-meta">${childrenCount} детей · последний вход ${lastActivity} · ${family.tasksCount || 0} заданий · ${family.shopCount || 0} товаров</div>
+        </div>
+        <div class="family-actions">
+            ${getFamilyStatusBadge(family.isBlocked)}
+            <button class="view-btn" type="button" data-action="view-family" data-family-id="${id}" title="Детали">Детали</button>
+            <button class="block-btn ${getFamilyBlockButtonClass(family.isBlocked)}" type="button" data-action="toggle-family-block" data-family-id="${id}">
+                ${getFamilyBlockButtonLabel(family.isBlocked)}
+            </button>
+        </div>
     `;
 }
 
 function showFamilyState(message) {
-    if (!familiesLoadingState || !familiesTable) return;
+    if (!familiesLoadingState) return;
     familiesLoadingState.textContent = message;
     familiesLoadingState.hidden = false;
-    familiesTable.hidden = true;
+    if (familiesList) familiesList.hidden = true;
 }
 
 function hideFamilyState() {
-    if (!familiesLoadingState || !familiesTable) return;
+    if (!familiesLoadingState) return;
     familiesLoadingState.hidden = true;
-    familiesTable.hidden = false;
+    if (familiesList) familiesList.hidden = false;
 }
 
 function appendFamilyRows(rows) {
-    if (!familiesTbody) return;
+    if (!familiesList) return;
     rows.forEach((family) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = buildFamilyRowHtml(family);
-        familiesTbody.appendChild(tr);
+        const card = document.createElement('div');
+        card.className = 'family-card';
+        card.innerHTML = buildFamilyCardHtml(family);
+        familiesList.appendChild(card);
     });
 }
 
 function renderFamilies() {
-    if (!familiesLoadingState || !familiesTable || !familiesTbody) return;
-    familiesTbody.innerHTML = '';
+    if (!familiesLoadingState) return;
+    if (familiesList) familiesList.innerHTML = '';
     if (familiesErrorState) familiesErrorState.hidden = true;
 
     if (familiesData.length === 0) {
@@ -188,6 +185,14 @@ function setupFamiliesControls() {
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             familiesViewState.search = searchInput.value.trim();
+            renderFamilies();
+        });
+    }
+
+    const statusSelect = document.getElementById('families-status-select');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', () => {
+            familiesViewState.status = statusSelect.value;
             renderFamilies();
         });
     }
@@ -274,9 +279,9 @@ async function regenerateToken(familyId, childId) {
 }
 
 function bindFamiliesActions() {
-    if (!familiesTbody || familiesTbody.dataset.bound === 'true') return;
-    familiesTbody.dataset.bound = 'true';
-    familiesTbody.addEventListener('click', (event) => {
+    if (!familiesList || familiesList.dataset.bound === 'true') return;
+    familiesList.dataset.bound = 'true';
+    familiesList.addEventListener('click', (event) => {
         const actionButton = event.target.closest('button[data-action]');
         if (!actionButton) return;
         const familyId = actionButton.dataset.familyId;

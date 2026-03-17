@@ -6,6 +6,42 @@ import { scheduleSave } from './actions.js';
 
 let editingShopId = null;
 
+function getEditingShopItem() {
+    return editingShopId ? state.shopItems.find(i => i.id == editingShopId) : null;
+}
+
+function getShopValidationError(name, price) {
+    if (!name) return 'Введите название';
+    if (isNaN(price) || price < 0) return 'Введите корректную цену';
+    return null;
+}
+
+function buildShopPayload() {
+    const fl = parseInt(document.getElementById('shop-freq-limit').value) || 0;
+    const existingItem = getEditingShopItem();
+
+    return {
+        name: document.getElementById('shop-name').value.trim(),
+        childId: existingItem?.childId ?? state.currentChildId,
+        group: document.getElementById('shop-group').value.trim(),
+        price: parseInt(document.getElementById('shop-price').value),
+        comment: document.getElementById('shop-comment').value.trim(),
+        money_limit: parseInt(document.getElementById('shop-money-limit').value) || null,
+        type: document.getElementById('shop-type').value,
+        frequency: fl > 0 ? { limit: fl, period: document.getElementById('shop-freq-period').value } : null
+    };
+}
+
+function persistShopItem(data) {
+    if (editingShopId) {
+        const idx = state.shopItems.findIndex(i => i.id == editingShopId);
+        if (idx !== -1) state.shopItems[idx] = { ...state.shopItems[idx], id: editingShopId, ...data };
+        return;
+    }
+
+    state.shopItems.push({ id: Date.now(), ...data });
+}
+
 function setShopFields(item) {
     const d = { name: '', group: '', price: '', comment: '', 'money-limit': '', type: 'small', 'freq-limit': 1, 'freq-period': 'week' };
     const f = item || {};
@@ -22,8 +58,9 @@ function setShopFields(item) {
 }
 
 export function openShopModal(itemId = null) {
+    if (itemId && typeof itemId === 'object') itemId = null;
     editingShopId = itemId;
-    const item = itemId ? state.shopItems.find(i => i.id == itemId) : null;
+    const item = getEditingShopItem();
     if (itemId && !item) return;
 
     const title = document.getElementById('shop-modal-title');
@@ -38,27 +75,11 @@ export function openShopModal(itemId = null) {
 }
 
 export function saveShopItem() {
-    const name = document.getElementById('shop-name').value.trim();
-    const price = parseInt(document.getElementById('shop-price').value);
-    if (!name) return showToast('Введите название', 'error');
-    if (isNaN(price) || price < 0) return showToast('Введите корректную цену', 'error');
+    const data = buildShopPayload();
+    const error = getShopValidationError(data.name, data.price);
+    if (error) return showToast(error, 'error');
 
-    const fl = parseInt(document.getElementById('shop-freq-limit').value) || 0;
-    const data = {
-        name, childId: state.currentChildId,
-        group: document.getElementById('shop-group').value.trim(),
-        price, comment: document.getElementById('shop-comment').value.trim(),
-        money_limit: parseInt(document.getElementById('shop-money-limit').value) || null,
-        type: document.getElementById('shop-type').value,
-        frequency: fl > 0 ? { limit: fl, period: document.getElementById('shop-freq-period').value } : null
-    };
-
-    if (editingShopId) {
-        const idx = state.shopItems.findIndex(i => i.id == editingShopId);
-        if (idx !== -1) state.shopItems[idx] = { ...state.shopItems[idx], id: editingShopId, ...data };
-    } else {
-        state.shopItems.push({ id: Date.now(), ...data });
-    }
+    persistShopItem(data);
 
     scheduleSave(); renderShop(); closeModal('shop-modal');
     showToast(editingShopId ? 'Товар обновлён!' : 'Товар добавлен!', 'success');
@@ -66,11 +87,13 @@ export function saveShopItem() {
 
 export function deleteShopItem() {
     if (!editingShopId) return;
-    showConfirm('Удалить товар?', 'Это действие нельзя отменить.', () => {
-        const i = state.shopItems.find(i => i.id == editingShopId);
-        if (i) i.isDeleted = true;
-        scheduleSave(); renderShop(); closeModal('shop-modal');
-        showToast('Товар удалён', 'info');
+    showConfirm('Удалить товар?', 'Это действие нельзя отменить.', {
+        onConfirm: () => {
+            const i = state.shopItems.find(item => item.id == editingShopId);
+            if (i) i.isDeleted = true;
+            scheduleSave(); renderShop(); closeModal('shop-modal');
+            showToast('Товар удалён', 'info');
+        }
     });
 }
 

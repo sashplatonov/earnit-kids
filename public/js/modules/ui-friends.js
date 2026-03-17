@@ -45,7 +45,7 @@ export function renderFriendsUI(state) {
 
     if (friends.length === 0) {
         container.innerHTML = '';
-        if (emptyState) emptyState.classList.remove('hidden');
+        if (emptyState && !state.isLoading) emptyState.classList.remove('hidden');
         buildSoftChallenge(state, []);
         return;
     }

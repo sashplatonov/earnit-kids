@@ -4,14 +4,14 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem@latest",
-        "/Users/sash/Dev/Projects/coins-kids-shop-web",
-        "/Users/sash/AI Rules"]
+        "/Users/sash/Dev/Projects/earnit-kids",
+        "/Users/sash/.ai-rules"]
     },
     "git": {
       "type": "stdio",
       "command": "uvx",
       "args": ["mcp-server-git", "--repository",
-        "/Users/sash/Dev/Projects/coins-kids-shop-web"]
+        "/Users/sash/Dev/Projects/earnit-kids"]
     }
   }
 }

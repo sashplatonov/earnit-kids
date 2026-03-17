@@ -8,6 +8,7 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const { sendTelegramDocument } = require('../utils/alerts');
 const { sendJSON } = require('../utils/controllerUtils');
+const { migrate } = require('../../scripts/migrate');
 
 function ensureBackupDir() {
     const backupDir = path.join(config.DATA_DIR, 'backups');
@@ -24,6 +25,67 @@ function readRawRequestBody(req) {
         req.on('end', () => resolve(Buffer.concat(chunks)));
         req.on('error', reject);
     });
+}
+
+async function readRestorePayload(req) {
+    let rawDump;
+    try {
+        rawDump = await readRawRequestBody(req);
+    } catch (err) {
+        logger.error({ err: err.message }, 'Failed to read restore payload');
+        err.statusCode = 400;
+        err.publicMessage = 'Invalid request body';
+        throw err;
+    }
+
+    if (!rawDump || rawDump.length === 0) {
+        const emptyPayloadError = new Error('Backup file is empty');
+        emptyPayloadError.statusCode = 400;
+        emptyPayloadError.publicMessage = 'Backup file is empty';
+        throw emptyPayloadError;
+    }
+
+    return rawDump;
+}
+
+function execCommand(command, failureMessage) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                logger.error({ error: error.message, stderr }, failureMessage);
+                reject(error);
+                return;
+            }
+            resolve({ stdout, stderr });
+        });
+    });
+}
+
+async function restoreDumpAndRunMigrations(dbUrl, dumpFile) {
+    const command = `pg_restore --clean --if-exists --no-owner --no-privileges -d "${dbUrl}" "${dumpFile}"`;
+    await execCommand(command, 'Restore failed');
+    logger.info('Backup restored successfully, applying pending migrations');
+    await migrate();
+}
+
+function createRestoreDumpFile(rawDump) {
+    const dumpFile = path.join(os.tmpdir(), `restore-${Date.now()}.dump`);
+    fs.writeFileSync(dumpFile, rawDump);
+    return dumpFile;
+}
+
+function sendRestoreError(res, err, dumpFileCreated) {
+    if (err.statusCode) {
+        return sendJSON(res, { success: false, error: err.publicMessage }, err.statusCode);
+    }
+
+    if (!dumpFileCreated) {
+        logger.error({ err: err.message }, 'Failed to write temporary restore file');
+        return sendJSON(res, { success: false, error: 'Failed to process file' }, 500);
+    }
+
+    logger.error({ err: err.message }, 'Restore migration flow failed');
+    return sendJSON(res, { success: false, error: 'Restore failed' }, 500);
 }
 
 /**
@@ -200,35 +262,19 @@ async function restoreBackup(req, res) {
         return sendJSON(res, { success: false, error: 'DATABASE_URL not set' }, 500);
     }
 
-    let rawDump;
+    let dumpFile;
     try {
-        rawDump = await readRawRequestBody(req);
-    } catch (err) {
-        logger.error({ err: err.message }, 'Failed to read restore payload');
-        return sendJSON(res, { success: false, error: 'Invalid request body' }, 400);
-    }
-
-    if (!rawDump || rawDump.length === 0) {
-        return sendJSON(res, { success: false, error: 'Backup file is empty' }, 400);
-    }
-
-    const dumpFile = path.join(os.tmpdir(), `restore-${Date.now()}.dump`);
-    try {
-        fs.writeFileSync(dumpFile, rawDump);
-    } catch (err) {
-        logger.error({ err: err.message }, 'Failed to write temporary restore file');
-        return sendJSON(res, { success: false, error: 'Failed to process file' }, 500);
-    }
-
-    const command = `pg_restore --clean --if-exists --no-owner --no-privileges -d "${dbUrl}" "${dumpFile}"`;
-    exec(command, (error, stdout, stderr) => {
-        fs.unlink(dumpFile, () => {});
-        if (error) {
-            logger.error({ error: error.message, stderr }, 'Restore failed');
-            return sendJSON(res, { success: false, error: 'Restore failed' }, 500);
-        }
+        const rawDump = await readRestorePayload(req);
+        dumpFile = createRestoreDumpFile(rawDump);
+        await restoreDumpAndRunMigrations(dbUrl, dumpFile);
         return sendJSON(res, { success: true });
-    });
+    } catch (err) {
+        return sendRestoreError(res, err, Boolean(dumpFile));
+    } finally {
+        if (dumpFile) {
+            fs.unlink(dumpFile, () => {});
+        }
+    }
 }
 
 function copyToReserve(req, res) {

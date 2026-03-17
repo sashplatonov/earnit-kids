@@ -15,65 +15,30 @@
     </script>
     <link rel="stylesheet" href="css/style.css?v={{BUILD_VERSION}}">
     <link rel="stylesheet" href="/css/public-top-nav.css?v={{BUILD_VERSION}}">
-    <style>
-        body {
-            background: #040712;
-            color: #f1f5f9;
-            font-family: 'Nunito', sans-serif;
-            margin: 0;
-        }
-        .blog-shell { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
-        .blog-image {
-            width: 100%;
-            border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            display: block;
-            margin-bottom: 1rem;
-        }
-        .blog-header h1 { margin-bottom: 0.2rem; }
-        .blog-header p { color: rgba(226, 232, 240, 0.82); }
-        .blog-list { margin-top: 1.3rem; display: grid; gap: 0.8rem; }
-        .blog-card {
-            padding: 1.1rem;
-            border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(15, 23, 42, 0.62);
-            transition: transform 0.2s ease;
-        }
-        .blog-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(59, 130, 246, 0.72);
-        }
-        .blog-card a { color: #f8fafc; text-decoration: none; }
-        .blog-card h2 { margin: 0 0 0.35rem; }
-        .blog-card small { color: rgba(226, 232, 240, 0.65); }
-        .blog-card p { margin-bottom: 0; color: rgba(226, 232, 240, 0.85); }
-        .cta-link {
-            display: inline-flex;
-            margin-top: 1.5rem;
-            padding: 0.8rem 1.2rem;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #facc15, #ea580c);
-            color: #0f172a;
-            font-weight: 700;
-            text-decoration: none;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/public-pages.css?v={{BUILD_VERSION}}">
     {{CLARITY_SCRIPT}}
 </head>
 <body>
-    <main class="blog-shell">
+    <div class="public-shell">
         {{PUBLIC_TOP_NAV}}
-        <img class="blog-image" src="/img/blog-reading.svg" alt="Родитель читает советы по семейным заданиям">
-        <header class="blog-header">
-            <p class="section-label">Блог EarnIt Kids</p>
-            <h1>Полезные советы для родителей и детей</h1>
-            <p>Короткие статьи о том, как договориться дома, поддержать ребенка и вырастить хорошие привычки без давления.</p>
-        </header>
-        <section class="blog-list">
-            {{BLOG_LIST}}
-        </section>
-        <a class="cta-link" href="/login.html">Попробовать с семьей</a>
-    </main>
+        <main class="public-inner">
+            <section class="blog-shell">
+                <div class="blog-image-wrap">
+                    <img class="blog-image" src="/img/blog-reading.svg" alt="Родитель и ребенок читают семейные советы" loading="lazy">
+                </div>
+                <header class="blog-header">
+                    <p class="section-label">Блог EarnIt Kids</p>
+                    <h1>Полезные советы для родителей и детей</h1>
+                    <p>Короткие статьи о том, как договориться дома, поддержать ребенка и вырастить хорошие привычки без давления.</p>
+                </header>
+                <section class="blog-list">
+                    {{BLOG_LIST}}
+                </section>
+                <div class="feature-layout__actions">
+                    <a class="btn btn--primary" href="/login.html">Попробовать с семьей</a>
+                </div>
+            </section>
+        </main>
+    </div>
 </body>
 </html>

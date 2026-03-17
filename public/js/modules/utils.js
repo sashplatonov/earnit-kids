@@ -18,6 +18,36 @@ export function isMobileViewport() {
         && window.matchMedia('(max-width: 900px)').matches;
 }
 
+export function autoShrinkCardTitles(container) {
+    if (!container) return;
+    // Request animation frame allows layout to be painted first
+    // so we can read real scrollHeight/clientHeight reliably.
+    FRAME_SCHEDULER(() => {
+        const titles = container.querySelectorAll('.card__title:not([data-fitted="true"])');
+        titles.forEach(el => {
+            el.dataset.fitted = 'true'; // Mark to prevent redundant processing
+            
+            // Revert any previously applied custom inline scaling logic
+            el.style.fontSize = '';
+            el.style.lineHeight = '';
+
+            let currentSize = 16;
+            
+            // For card titles, we now strictly fit them into one line without truncation
+            // We detect horizontal overflow using scrollWidth vs clientWidth
+            while (el.scrollWidth > el.clientWidth && currentSize > 9) {
+                currentSize -= 0.5;
+                el.style.fontSize = `${currentSize}px`;
+                el.style.lineHeight = '1.1';
+            }
+            // After fitting as much as possible, allow wrapping if it's still slightly over
+            // but the detection worked on the 'nowrap' state from CSS.
+            el.style.whiteSpace = 'normal';
+            el.style.wordBreak = 'break-word';
+        });
+    });
+}
+
 export function chunkedRender(container, fragments, options = {}) {
     if (!container) return;
 
@@ -38,6 +68,7 @@ export function chunkedRender(container, fragments, options = {}) {
     if (parts.length <= chunkSize) {
         container.innerHTML = parts.join('');
         chunkRenderJobs.delete(container);
+        autoShrinkCardTitles(container);
         return;
     }
 
@@ -47,6 +78,8 @@ export function chunkedRender(container, fragments, options = {}) {
         const end = Math.min(parts.length, start + chunkSize);
         container.insertAdjacentHTML('beforeend', parts.slice(start, end).join(''));
         job.index = end;
+        autoShrinkCardTitles(container);
+        
         if (job.index < parts.length) {
             FRAME_SCHEDULER(renderNext);
         } else {
@@ -163,12 +196,11 @@ export function openModal(modalId) {
 
     if (modal.tagName === 'DIALOG') {
         modal.showModal();
-        // Close on backdrop click (click outside modal__content)
+        // Close only when the native dialog backdrop itself is clicked.
+        // Coordinate-based checks misfire on mobile/select pickers and close the modal mid-edit.
         if (!modal._backdropListener) {
             modal._backdropListener = (e) => {
-                const rect = modal.querySelector('.modal__content')?.getBoundingClientRect();
-                if (rect && (e.clientX < rect.left || e.clientX > rect.right ||
-                    e.clientY < rect.top || e.clientY > rect.bottom)) {
+                if (e.target === modal) {
                     modal.close();
                 }
             };
@@ -196,18 +228,71 @@ export function closeModal(modalId) {
 }
 
 let confirmCallback = null;
+let confirmPromiseResolve = null;
 
-export function showConfirm(title, message, callback) {
-    document.getElementById('confirm-title').textContent = title;
-    document.getElementById('confirm-message').textContent = message;
-    confirmCallback = callback;
-    openModal('confirm-modal');
+export function showConfirm(title, message, options = {}) {
+    document.getElementById('confirm-title').innerHTML = title;
+    document.getElementById('confirm-message').innerHTML = message;
+    
+    const okBtn = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    
+    if (okBtn) {
+        okBtn.textContent = options.confirmLabel || 'Подтвердить';
+        okBtn.classList.toggle('hidden', !!options.hideConfirm);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.textContent = options.cancelLabel || 'Отмена';
+    }
+    
+    confirmCallback = options.onConfirm || null;
+    
+    if (!confirmCallback) {
+        return new Promise(resolve => {
+            confirmPromiseResolve = resolve;
+            openModal('confirm-modal');
+        });
+    } else {
+        openModal('confirm-modal');
+    }
 }
 
 export function handleConfirm() {
-    if (confirmCallback) {
-        confirmCallback();
-        confirmCallback = null;
-    }
+    const cb = confirmCallback;
+    const resolve = confirmPromiseResolve;
+    confirmCallback = null;
+    confirmPromiseResolve = null;
+
     closeModal('confirm-modal');
+    if (cb) cb();
+    if (resolve) resolve(true);
+    
+    // Reset buttons after closing
+    setTimeout(resetConfirmButtons, 300);
+}
+
+export function handleCancel() {
+    const resolve = confirmPromiseResolve;
+    confirmCallback = null;
+    confirmPromiseResolve = null;
+    
+    closeModal('confirm-modal');
+    if (resolve) resolve(false);
+    
+    setTimeout(resetConfirmButtons, 300);
+}
+
+function resetConfirmButtons() {
+    const okBtn = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    if (okBtn) {
+        okBtn.textContent = 'Подтвердить';
+        okBtn.classList.remove('hidden');
+    }
+    if (cancelBtn) cancelBtn.textContent = 'Отмена';
+}
+
+export function showAlert(title, message) {
+    return showConfirm(title, message, { cancelLabel: 'OK', hideConfirm: true });
 }

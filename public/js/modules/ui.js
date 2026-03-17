@@ -9,7 +9,6 @@ import { renderShopUI } from './ui-shop.js';
 import { renderRequestsUI } from './ui-requests.js';
 import { renderHistoryUI } from './ui-history.js';
 import { renderFriendsUI } from './ui-friends.js';
-import { renderTodayUI, renderProgressUI } from './ui-today.js';
 
 export const renderTasks = () => renderTasksUI(state);
 export const renderShop = () => renderShopUI(state);
@@ -84,8 +83,7 @@ export function renderAll() {
     renderShopUI(state);
     renderHistoryUI(state);
     renderFriendsUI(state);
-    renderTodayUI(state);
-    renderProgressUI(state);
+
     updateAdminUI();
     updateChildNicknameUI();
     renderChildSwitcherUI(state, escapeHtml);
@@ -93,20 +91,24 @@ export function renderAll() {
 
 export function updateAdminUI() {
     const isParent = !!state.isAdmin;
-    const hasChild = !!state.currentChildId;
+    const hasChild = !isParent || !!state.currentChildId;
 
-    document.querySelectorAll('.admin-only, .parent-only').forEach(el => el.classList.toggle('hidden', !isParent));
-    document.querySelectorAll('.child-only').forEach(el => el.classList.toggle('hidden', isParent));
+    document.querySelector('.header')?.classList.toggle('header--admin', isParent);
 
-    // Handle elements that require an active child profile
-    document.querySelectorAll('.requires-child').forEach(el => {
-        const shouldHide = !hasChild;
+    // Single pass to determine visibility for all role-restricted elements
+    document.querySelectorAll('.admin-only, .parent-only, .child-only, .requires-child').forEach(el => {
+        let shouldHide = false;
+
+        if (el.classList.contains('admin-only') && !isParent) shouldHide = true;
+        if (el.classList.contains('parent-only') && !isParent) shouldHide = true;
+        if (el.classList.contains('child-only') && isParent) shouldHide = true;
+        if (el.classList.contains('requires-child') && !hasChild) shouldHide = true;
+
         el.classList.toggle('hidden', shouldHide);
     });
 
     // Keep settings button visible for everyone
-    const settingsBtn = document.getElementById('settings-btn') || document.getElementById('nav-settings');
-    if (settingsBtn) settingsBtn.classList.remove('hidden');
+    document.getElementById('nav-settings')?.classList.remove('hidden');
 }
 
 function updateElementText(id, text) {

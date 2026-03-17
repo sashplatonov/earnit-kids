@@ -1,5 +1,5 @@
 {
-  "name": "coins-kids-shop",
+  "name": "earnit-kids",
   "version": "1.0.0",
   "description": "EarnIt Kids - minimal coin management system",
   "main": "src/app.js",
@@ -9,7 +9,7 @@
     "migrate:data": "node scripts/migrate-data.js",
     "test": "node --test tests/*.test.js tests/unit/*.test.js",
     "test:integration": "NODE_ENV=test node --test tests/integration/*.test.js",
-    "test:coverage": "c8 --reporter=html --reporter=text npm run test",
+    "test:coverage": "node --test --experimental-test-coverage tests/*.test.js tests/unit/*.test.js",
     "test:ui:smoke": "node --test tests/ui/*.test.js",
     "test:ui:e2e": "env -u NO_COLOR PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright test",
     "test:ui:e2e:safe": "node scripts/run-ui-e2e.js --allow-sandbox-fallback",

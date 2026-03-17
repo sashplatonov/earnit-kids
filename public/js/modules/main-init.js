@@ -3,7 +3,7 @@ import { state, setState } from './state.js';
 import { loadDataFromServer, loadBaseData, logout } from './api.js';
 import { renderAll } from './ui.js';
 import { renderCatalog } from './main-catalog.js';
-import { showToast, handleConfirm, closeModal } from './utils.js';
+import { showToast, handleConfirm, handleCancel, closeModal, showConfirm } from './utils.js';
 import { initializePushNotifications, setPushRefreshHandler, unregisterPushNotifications } from './push.js';
 import { startIosDevFallback, stopIosDevFallback } from './ios-dev-fallback.js';
 import { setupPullToRefresh } from './pull-to-refresh.js';
@@ -22,7 +22,8 @@ export function buildInitialState(data, baseData) {
     const s = {
         isAdmin: Boolean(data.isAdmin),
         role: data.isAdmin ? 'admin' : 'child',
-        baseData
+        baseData,
+        isLoading: false
     };
 
     // Use loop or assign to avoid complexity from many ??
@@ -54,7 +55,7 @@ export async function refreshFromServerAndRender(showSuccess = false) {
     lists.forEach(id => {
         const el = document.getElementById(id);
         if (el && el.innerHTML === '') { // Only if empty, to avoid flickering if already rendered
-            el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;">Загрузка</div>').join('');
+            el.innerHTML = Array(3).fill('<div class="card skeleton" style="min-height: 120px; width: 100%;"></div>').join('');
         }
     });
 
@@ -74,11 +75,13 @@ export function setupCommonControls() {
     });
     bind('refresh-data-btn', () => refreshFromServerAndRender(true));
     bind('confirm-ok', handleConfirm);
-    bind('confirm-cancel', () => closeModal('confirm-modal'));
+    bind('confirm-cancel', handleCancel);
     bind('add-child-save', saveNewChild);
     bind('add-child-cancel', () => closeModal('add-child-modal'));
     bind('friend-search-btn', handleSearch);
     bind('clear-history-btn', () => {
-        if (confirm('Очистить ВСЮ историю?')) { setState({ history: [] }); scheduleSave(); renderAll(); }
+        showConfirm('Очистка истории', 'Очистить ВСЮ историю?', {
+            onConfirm: () => { setState({ history: [] }); scheduleSave(); renderAll(); }
+        });
     });
 }

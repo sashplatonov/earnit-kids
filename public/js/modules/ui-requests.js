@@ -51,16 +51,17 @@ function getRequestRowClass(req) {
     return isPurchaseRequest(req) ? 'history-item--request-purchase' : 'history-item--request-task';
 }
 
-function renderMyRequest(req) {
+function getRequestDateText(req) {
+    if ((req.status || 'pending') === 'pending') return 'Ожидает подтверждения';
+    return `Обновлено ${new Date(req.resolvedAt || req.date).toLocaleString()}`;
+}
+
+function renderMyRequest(req, state) {
     const isPurchase = isPurchaseRequest(req);
-    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money request-item__money">${req.moneyAmount}</span>` : '';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money-solid request-item__money">Лимит: 💶 ${req.moneyAmount}</span>` : '';
     const groupTag = req.group ? `<span class="tag request-item__group">${escapeHtml(req.group)}</span>` : '';
     const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
-    const status = req.status || 'pending';
-    const statusBadge = buildStatusBadge(req);
-    const dateText = status === 'pending'
-        ? 'Ожидает подтверждения'
-        : `Обновлено ${new Date(req.resolvedAt || req.date).toLocaleString()}`;
+    const dateText = getRequestDateText(req);
 
     return `
         <div class="history-item ${getRequestRowClass(req)} request-item">
@@ -71,11 +72,13 @@ function renderMyRequest(req) {
                     ${groupTag}
                 </div>
                 ${commentHtml}
-                <div class="history-item__date">${dateText} ${statusBadge}</div>
+                <div class="history-item__date">${dateText} ${buildStatusBadge(req)}</div>
             </div>
-            <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}</div>
+            <div class="history-item__amount request-item__amount">
+                ${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}
+            </div>
             <div class="card__actions request-item__actions">
-                 <button class="btn btn--danger btn--small" onclick="window.app.deleteRequest(${req.id})">Удалить</button>
+                 ${state && state.isAdmin ? `<button class="btn btn--danger btn--small" onclick="window.app.deleteRequest('${req.id}')">Удалить</button>` : ''}
             </div>
         </div>
     `;
@@ -85,7 +88,7 @@ function renderIncomingRequest(req, state) {
     const child = state.children.find(c => c.id == req.childId);
     const childName = child ? child.name : 'Unknown';
     const isPurchase = isPurchaseRequest(req);
-    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money request-item__money">${req.moneyAmount}</span>` : '';
+    const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money-solid request-item__money">Лимит: 💶 ${req.moneyAmount}</span>` : '';
     const groupTag = req.group ? `<span class="tag tag--secondary request-item__group">${escapeHtml(req.group)}</span>` : '';
     const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
 
@@ -103,8 +106,8 @@ function renderIncomingRequest(req, state) {
             </div>
             <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}</div>
             <div class="card__actions request-item__actions">
-                 <button class="btn btn--success btn--small" onclick="window.app.approveRequest(${req.id})">Подтвердить</button>
-                 <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest(${req.id})">Отклонить</button>
+                 <button class="btn btn--success btn--small" onclick="window.app.approveRequest('${req.id}')">Подтвердить</button>
+                 <button class="btn btn--danger btn--small" onclick="window.app.rejectRequest('${req.id}')">Отклонить</button>
             </div>
         </div>
     `;
@@ -147,13 +150,13 @@ function updateBadge(count) {
 
 function renderAdminRequests({ pending, state, list, empty }) {
     list.innerHTML = pending.length ? pending.map(r => renderIncomingRequest(r, state)).join('') : '';
-    if (empty) empty.classList.toggle('hidden', pending.length > 0);
+    if (empty) empty.classList.toggle('hidden', pending.length > 0 || state.isLoading);
     document.getElementById('requests-section')?.querySelector('.admin-only')?.classList.remove('hidden');
 }
 
-function renderChildRequests({ requests, list, empty }) {
-    list.innerHTML = requests.length ? requests.map(renderMyRequest).join('') : '';
-    if (empty) empty.classList.toggle('hidden', requests.length > 0);
+function renderChildRequests({ requests, list, empty, state }) {
+    list.innerHTML = requests.length ? requests.map(r => renderMyRequest(r, state)).join('') : '';
+    if (empty) empty.classList.toggle('hidden', requests.length > 0 || state.isLoading);
     document.getElementById('requests-section')?.querySelector('.admin-only')?.classList.add('hidden');
 }
 
@@ -171,7 +174,7 @@ function handleChildQueue({ state, activeChildId, incomingEmpty, myList, myEmpty
         .filter(r => !activeChildId || r.childId == activeChildId)
         .sort((a, b) => getRequestTimestamp(b) - getRequestTimestamp(a))
         .slice(0, 6);
-    renderChildRequests({ requests: myRequests, list: myList, empty: myEmpty });
+    renderChildRequests({ requests: myRequests, list: myList, empty: myEmpty, state });
 }
 
 export function renderRequestsUI(state) {

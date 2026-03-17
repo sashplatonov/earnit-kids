@@ -4,7 +4,7 @@ A modern, minimal web application for managing kids' reward coins. Parents can a
 
 ## 🌐 Live Demo
 
-The project is deployed and available at: [https://coins-kids-shop.onrender.com/](https://coins-kids-shop.onrender.com/)
+The project is deployed and available at: [https://earnit-kids.igo.mywire.org/](https://earnit-kids.igo.mywire.org/)
 
 ## ✨ Features
 
@@ -72,6 +72,7 @@ The shop is scoped per child and supports both direct parent purchases and child
 - [Database Rules](docs/rules-database.md)
 - [Design Concept](docs/design-concept.md)
 - [Telegram Setup](docs/telegram-setup.md)
+- [Operational Playbook](docs/operational-playbook.md)
 
 ## 🚀 Getting Started
 
@@ -125,9 +126,19 @@ To build and run the application in a Docker container:
 export DOCKER_HOST=unix:///Users/sash/.colima/default/docker.sock
 ```
 
-**Rebuild and Start:**
+**Rebuild and Start with the bundled Postgres profile:**
+```bash
+docker compose --profile db up -d --build
+```
+
+**Rebuild and Start with an external Postgres:**
 ```bash
 docker compose up -d --build
+```
+
+**Local dev with secondary host port:** use the override file so both `3000` and `3001` map to the container.
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml --profile db up -d --build
 ```
 
 **Stop:**
@@ -144,7 +155,7 @@ The application will be available at `http://localhost:3000`.
 
 ## 📱 Mobile Shell
 
-The static UI can be embedded inside a Capacitor wrapper for iOS/Android. The `mobile/` folder already contains `capacitor.config.json` and instructions for syncing with the web assets. The wrapper points at `https://coins-kids-shop.onrender.com` by default, so no API changes are required.
+The static UI can be embedded inside a Capacitor wrapper for iOS/Android. The `mobile/` folder already contains `capacitor.config.json` and instructions for syncing with the web assets. The wrapper points at `https://earnit-kids.igo.mywire.org` by default, so no API changes are required.
 
 ### Prerequisites
 - Node.js 20.x or 22.x (LTS recommended).

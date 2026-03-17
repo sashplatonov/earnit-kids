@@ -96,12 +96,9 @@ function urlBase64ToUint8Array(base64String) {
     return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
-async function syncWebSubscriptionToServer(subscription) {
-    const role = state.isAdmin ? 'admin' : 'child';
-    const childId = getPushChildId(role);
+function buildWebSubscriptionPayload(subscription, role, childId) {
     const json = subscription.toJSON();
-
-    const payload = {
+    return {
         pushType: 'web',
         endpoint: json.endpoint,
         keyP256dh: json.keys?.p256dh || '',
@@ -110,13 +107,23 @@ async function syncWebSubscriptionToServer(subscription) {
         role,
         childId
     };
+}
 
-    const result = await registerPushTokenOnServer(payload);
+function logWebSubscriptionSync(role, result) {
     if (!result || !result.success) {
         console.warn('❌ [push] web subscription register failed:', result?.error || 'unknown');
-    } else {
-        console.log(`🔔 [push] ${role === 'admin' ? 'Родитель' : 'Ребенок'} подключен к пуш-уведомлениям (web)`);
+        return;
     }
+
+    console.log(`🔔 [push] ${role === 'admin' ? 'Родитель' : 'Ребенок'} подключен к пуш-уведомлениям (web)`);
+}
+
+async function syncWebSubscriptionToServer(subscription) {
+    const role = state.isAdmin ? 'admin' : 'child';
+    const childId = getPushChildId(role);
+    const payload = buildWebSubscriptionPayload(subscription, role, childId);
+    const result = await registerPushTokenOnServer(payload);
+    logWebSubscriptionSync(role, result);
 }
 
 async function initializeWebPush() {

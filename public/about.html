@@ -46,12 +46,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style id="about-landing-style">
         :root {
-            --login-bg: radial-gradient(circle at top right, #1a1a2e, #16213e);
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --gold: #ffd700;
-            --gold-dark: #ffae00;
-            --soft-text: #cbd5e1;
+            --login-bg: radial-gradient(circle at top right, rgba(102, 205, 255, 0.24), transparent 32%),
+                radial-gradient(circle at bottom left, rgba(255, 210, 106, 0.24), transparent 28%),
+                linear-gradient(180deg, #fffdf8 0%, #f4fbff 52%, #fff6eb 100%);
+            --card-bg: rgba(255, 255, 255, 0.78);
+            --card-border: rgba(135, 161, 193, 0.18);
+            --gold: #ffbe55;
+            --gold-dark: #ff8f67;
+            --soft-text: #61718e;
+            --text-main: #24324d;
         }
 
         * {
@@ -62,7 +65,7 @@
             margin: 0;
             min-height: 100vh;
             font-family: 'Nunito', sans-serif;
-            color: #fff;
+            color: var(--text-main);
             background: var(--login-bg);
             padding: 1rem;
         }
@@ -73,9 +76,9 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 24px 50px rgba(120, 143, 184, 0.16);
             overflow: hidden;
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(20px);
         }
 
@@ -86,7 +89,7 @@
             gap: 1rem;
             padding: 1rem 1.2rem;
             border-bottom: 1px solid var(--card-border);
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.66);
             position: sticky;
             top: 0;
             z-index: 2;
@@ -95,12 +98,12 @@
         .brand {
             font-weight: 800;
             font-size: 1rem;
-            color: var(--gold);
+            color: #22314d;
         }
 
         .back-link {
             text-decoration: none;
-            color: #1a1a2e;
+            color: #ffffff;
             background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
             border-radius: 10px;
             padding: 0.55rem 0.85rem;
@@ -113,7 +116,7 @@
         }
 
         .about-landing {
-            color: #f8fafc;
+            color: var(--text-main);
         }
 
         .about-landing * {
@@ -121,21 +124,21 @@
         }
 
         .about-hero {
-            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid rgba(148, 163, 184, 0.28);
+            background: linear-gradient(145deg, rgba(255, 249, 233, 0.96) 0%, rgba(240, 248, 255, 0.98) 100%);
+            border: 1px solid rgba(148, 163, 184, 0.16);
             border-radius: 24px;
             padding: 2rem;
             margin-bottom: 1.4rem;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 18px 34px rgba(121, 143, 183, 0.14);
         }
 
         .about-badge {
             display: inline-block;
             padding: 0.35rem 0.8rem;
             border-radius: 999px;
-            background: rgba(248, 250, 252, 0.08);
-            border: 1px solid rgba(251, 191, 36, 0.55);
-            color: #fde68a;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(255, 190, 85, 0.35);
+            color: #d97745;
             font-weight: 700;
             font-size: 0.82rem;
             margin-bottom: 1rem;
@@ -171,8 +174,8 @@
         }
 
         .about-btn-primary {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: #111827;
+            background: linear-gradient(135deg, #58c8f4 0%, #7ba8ff 45%, #ff9bc2 100%);
+            color: #ffffff;
         }
 
         .about-btn-primary:hover {
@@ -180,9 +183,9 @@
         }
 
         .about-btn-ghost {
-            border: 1px solid rgba(251, 191, 36, 0.55);
-            color: #fde68a;
-            background: rgba(251, 191, 36, 0.08);
+            border: 1px solid rgba(135, 161, 193, 0.22);
+            color: #355070;
+            background: rgba(255, 255, 255, 0.72);
         }
 
         .about-grid {
@@ -192,8 +195,8 @@
         }
 
         .about-stat {
-            background: rgba(30, 41, 59, 0.75);
-            border: 1px solid rgba(148, 163, 184, 0.28);
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.16);
             border-radius: 14px;
             padding: 0.9rem;
         }
@@ -201,19 +204,19 @@
         .about-stat strong {
             display: block;
             font-size: 1.35rem;
-            color: #fde68a;
+            color: #f08f63;
         }
 
         .about-showcase {
             width: 100%;
             border-radius: 16px;
-            border: 1px solid rgba(148, 163, 184, 0.33);
+            border: 1px solid rgba(148, 163, 184, 0.22);
             margin-top: 0.25rem;
         }
 
         .about-section {
-            background: #1e293b;
-            border: 1px solid rgba(148, 163, 184, 0.28);
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.18);
             border-radius: 20px;
             padding: 1.5rem;
             margin: 1.1rem 0;
@@ -222,7 +225,7 @@
         .about-section h2 {
             margin-top: 0;
             font-size: 1.45rem;
-            color: #fde68a;
+            color: #22314d;
         }
 
         .about-cards {
@@ -232,10 +235,10 @@
         }
 
         .about-card {
-            border: 1px solid rgba(148, 163, 184, 0.28);
+            border: 1px solid rgba(148, 163, 184, 0.18);
             border-radius: 14px;
             padding: 1rem;
-            background: rgba(15, 23, 42, 0.58);
+            background: linear-gradient(180deg, rgba(239, 249, 255, 0.92), rgba(255, 251, 243, 0.96));
         }
 
         .about-card h3 {
@@ -260,11 +263,11 @@
             aspect-ratio: 4 / 3;
             object-fit: cover;
             border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.28);
+            border: 1px solid rgba(148, 163, 184, 0.18);
         }
 
         .about-footer-note {
-            color: #94a3b8;
+            color: #7a8ba8;
             font-size: 0.9rem;
         }
 
@@ -315,8 +318,7 @@
                         <a class="about-btn about-btn-ghost" href="#how-it-works">Как это работает</a>
                     </div>
 
-                    <img class="about-showcase"
-                        src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=1600&q=80"
+                    <img class="about-showcase" src="/img/about-family.svg"
                         alt="Семья обсуждает цели мотивации через EarnIt Kids" loading="lazy">
 
                     <div class="about-grid" style="margin-top: 1rem;">
@@ -364,11 +366,11 @@
                 <section class="about-section">
                     <h2>Что внутри</h2>
                     <div class="about-gallery">
-                        <img src="https://images.unsplash.com/photo-1573497491208-6b1acb260507?auto=format&fit=crop&w=1000&q=80"
+                        <img src="/img/landing-family.svg"
                             alt="Родители и дети выбирают задания для заработка монет" loading="lazy">
-                        <img src="https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=1000&q=80"
+                        <img src="/img/feature-tasks.svg"
                             alt="Ребёнок планирует задания в системе мотивации" loading="lazy">
-                        <img src="https://images.unsplash.com/photo-1464349153735-7db50ed83c84?auto=format&fit=crop&w=1000&q=80"
+                        <img src="/img/feature-shop.svg"
                             alt="Прогресс выполнения заданий и баланс монет" loading="lazy">
                     </div>
                 </section>

@@ -5,10 +5,27 @@ const path = require('path');
 const PUBLIC_DIR = path.join(__dirname, '../public');
 const DIST_DIR = path.join(__dirname, '../public/dist');
 
-// Ensure dist directory exists
-if (!fs.existsSync(DIST_DIR)) {
-    fs.mkdirSync(DIST_DIR, { recursive: true });
+function ensureDir(dirPath) {
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
 }
+
+function copyRecursive(srcDir, destDir) {
+    ensureDir(destDir);
+    for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+        const srcPath = path.join(srcDir, entry.name);
+        const destPath = path.join(destDir, entry.name);
+        if (entry.isDirectory()) {
+            copyRecursive(srcPath, destPath);
+            continue;
+        }
+        fs.copyFileSync(srcPath, destPath);
+    }
+}
+
+// Ensure dist directory exists
+ensureDir(DIST_DIR);
 
 console.log('🚀 Starting production build...');
 
@@ -68,6 +85,21 @@ if (fs.existsSync(cssPartialsDir)) {
         console.log(`  ⏳ Minifying partials/${file}...`);
         execSync(`npx cleancss -o ${path.join(destCssPartialsDir, file)} ${path.join(cssPartialsDir, file)}`);
     }
+}
+
+// 3. Copy static assets required by HTML/PWA surfaces
+console.log('🖼️ Copying static assets...');
+for (const file of ['manifest.json', 'favicon.ico']) {
+    const srcPath = path.join(PUBLIC_DIR, file);
+    if (!fs.existsSync(srcPath)) continue;
+    console.log(`  ⏳ Copying ${file}...`);
+    fs.copyFileSync(srcPath, path.join(DIST_DIR, file));
+}
+
+const imgSrcDir = path.join(PUBLIC_DIR, 'img');
+if (fs.existsSync(imgSrcDir)) {
+    console.log('  ⏳ Copying img assets...');
+    copyRecursive(imgSrcDir, path.join(DIST_DIR, 'img'));
 }
 
 console.log('✅ Build completed! Files are in public/dist');

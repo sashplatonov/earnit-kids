@@ -1,6 +1,6 @@
 ---
-name: coins-kids-shop-patterns
-description: Паттерны и конвенции проекта Coins Kids Shop — читай это вместо README/architecture.md
+name: earnit-kids-patterns
+description: Паттерны и конвенции проекта EarnIt Kids — читай это вместо README/architecture.md
 ---
 
 ## Module System
