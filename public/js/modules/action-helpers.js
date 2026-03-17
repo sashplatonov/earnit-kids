@@ -184,16 +184,18 @@ export function checkLimits(item, moneyPrice, childIdOverride = null, excludeReq
     return checkFrequency(item, actingChildId, excludeRequestId);
 }
 
-export function checkDailyCoinLimit(childId, amount) {
+export function checkDailyCoinLimit(childId, amount, excludeRequestId = null) {
     const child = state.children.find(c => c.id == childId);
     if (!child || !child.dailyCoinLimit || child.dailyCoinLimit <= 0) return null;
 
-    const today = new Date().toISOString().slice(0, 10);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
     const earnedToday = state.history.reduce((sum, h) =>
-        (h.type === 'earn' && h.date.startsWith(today) && h.childId == childId) ? sum + h.amount : sum, 0);
+        (h.type === 'earn' && h.childId == childId && new Date(h.date) >= start) ? sum + h.amount : sum, 0);
 
     const pendingEarn = state.requests.reduce((sum, r) =>
-        (r.status === 'pending' && r.requestType === 'earn' && (r.date || r.created_at || '').startsWith(today) && r.childId == childId) ? sum + (r.coins || 0) : sum, 0);
+        (r.status === 'pending' && r.id != excludeRequestId && r.requestType === 'earn' && r.childId == childId && new Date(r.date || r.created_at) >= start) ? sum + (r.coins || 0) : sum, 0);
 
     const totalEarn = earnedToday + pendingEarn;
     if (totalEarn + amount > child.dailyCoinLimit) {
