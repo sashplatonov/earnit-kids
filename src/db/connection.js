@@ -17,20 +17,22 @@ const pool = new Pool({
     // Database connection pool tuning
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-    connectionTimeoutMillis: 2000, // How long to wait for a connection
+    connectionTimeoutMillis: 5000, // Increased to 5s to avoid timeouts under sudden load
     maxUses: 7500 // Close and replace a connection after it has been used this many times
 });
 
 const logger = createLogger('dbConnection');
 
-// Log new connections for debugging
-pool.on('connect', () => {
+const poolOnConnect = () => {
     logger.debug('New PostgreSQL pool connection established');
-});
+};
 
-pool.on('error', (err) => {
+const poolOnError = (err) => {
     logger.error({ err: err.message }, 'PostgreSQL pool error');
-});
+};
+
+pool.on('connect', poolOnConnect);
+pool.on('error', poolOnError);
 
 /**
  * Execute a query with parameters

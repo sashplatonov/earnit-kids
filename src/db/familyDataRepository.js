@@ -28,22 +28,28 @@ async function fetchFriends(dbId, childId) {
 }
 
 async function fetchFamilyDataRaw({ dbId, childId, p, hw, rw }) {
-    const tasksFilter = childId ? ' AND t.child_id = $2' : '';
-    const shopFilter = childId ? ' AND s.child_id = $2' : '';
-    const taskParams = childId ? [dbId, childId] : [dbId];
-    const shopParams = childId ? [dbId, childId] : [dbId];
-    return await Promise.all([
-        query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false${tasksFilter}`, taskParams),
-        query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false${shopFilter}`, shopParams),
-        query(`SELECT h.* FROM history h ${hw} ORDER BY h.created_at DESC LIMIT 50`, p),
-        query(`SELECT r.*, t.name as task_name, i.name as item_name, t.group_name as task_group, i.group_name as item_group, t.comment as task_comment 
-            FROM requests r 
-            LEFT JOIN tasks t ON r.task_id = t.task_id 
-            LEFT JOIN shop_items i ON r.item_id = i.item_id 
-            ${rw} 
-            ORDER BY r.created_at DESC`, p),
-        childId ? query('SELECT balance FROM children WHERE id = $1', [childId]) : { rows: [] }
-    ]);
+    const client = await getClient();
+    try {
+        const tasksFilter = childId ? ' AND t.child_id = $2' : '';
+        const shopFilter = childId ? ' AND s.child_id = $2' : '';
+        const taskParams = childId ? [dbId, childId] : [dbId];
+        const shopParams = childId ? [dbId, childId] : [dbId];
+
+        return await Promise.all([
+            client.query(`SELECT t.*, t.group_name FROM tasks t WHERE t.family_id = $1 AND t.is_deleted = false${tasksFilter}`, taskParams),
+            client.query(`SELECT s.*, s.group_name FROM shop_items s WHERE s.family_id = $1 AND s.is_deleted = false${shopFilter}`, shopParams),
+            client.query(`SELECT h.* FROM history h ${hw} ORDER BY h.created_at DESC LIMIT 50`, p),
+            client.query(`SELECT r.*, t.name as task_name, i.name as item_name, t.group_name as task_group, i.group_name as item_group, t.comment as task_comment 
+                FROM requests r 
+                LEFT JOIN tasks t ON r.task_id = t.task_id 
+                LEFT JOIN shop_items i ON r.item_id = i.item_id 
+                ${rw} 
+                ORDER BY r.created_at DESC`, p),
+            childId ? client.query('SELECT balance FROM children WHERE id = $1', [childId]) : { rows: [] }
+        ]);
+    } finally {
+        client.release();
+    }
 }
 
 async function getFamilyData(familyId, childId = null) {
