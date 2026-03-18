@@ -113,7 +113,7 @@ async function performBackup() {
         return;
     }
 
-    const filename = `backup-${timestamp}.sql`;
+    const filename = `backup-${timestamp}.dump`;
     const filepath = path.join(backupDir, filename);
 
     // Command to create a backup using pg_dump
@@ -129,7 +129,8 @@ async function performBackup() {
         }
 
         logger.info('Backup file created successfully, sending to Telegram...');
-        const caption = `📦 <b>Database Backup</b>\n\n<b>Env:</b> ${config.env}\n<b>Date:</b> ${new Date().toLocaleString()}\n<b>File:</b> <code>${filename}</code>`;
+        const appUrl = config.PUBLIC_BASE_URL || 'unknown';
+        const caption = `📦 <b>Database Backup</b>\n\n<b>App:</b> <a href="${appUrl}">EarnIt Kids</a>\n<b>Env:</b> ${config.env}\n<b>Date:</b> ${new Date().toLocaleString()}\n<b>File:</b> <code>${filename}</code>`;
 
         try {
             const success = await sendTelegramDocument(filepath, caption, { silent: true });
