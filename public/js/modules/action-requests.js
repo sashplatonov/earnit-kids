@@ -49,7 +49,7 @@ function handleApprovePurchase(req) {
 }
 
 function handleApproveTask(req) {
-    const task = state.tasks.find(t => t.id == req.taskId && (!req.childId || t.childId == req.childId));
+    const task = state.tasks.find(t => t.id == req.taskId && (!t.childId || t.childId == req.childId));
     const warnings = [];
     
     if (task) {
@@ -57,7 +57,7 @@ function handleApproveTask(req) {
         if (freqErr) warnings.push(freqErr);
     }
     
-    const dailyErr = checkDailyCoinLimit(req.childId, req.coins);
+    const dailyErr = checkDailyCoinLimit(req.childId, req.coins, req.id);
     if (dailyErr) warnings.push(dailyErr);
 
     const apply = () => {
