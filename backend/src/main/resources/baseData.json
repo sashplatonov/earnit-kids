@@ -1,0 +1,873 @@
+{
+    "tasks": [
+        {
+            "id": "t1",
+            "name": "🏫 Полный школьный день без пропусков и опозданий",
+            "coins": 2,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "comment": "Без пропусков и опозданий"
+        },
+        {
+            "id": "t2",
+            "name": "🎒 Собрать рюкзак и одежду на завтра заранее",
+            "coins": 2,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "comment": "Подготовка, не домашка"
+        },
+        {
+            "id": "t3",
+            "name": "⏰ Прийти в школу вовремя 5 дней подряд",
+            "coins": 6,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "comment": "Бонус за серию"
+        },
+        {
+            "id": "t4",
+            "name": "🧹 Малое дело 15–20 минут",
+            "coins": 2,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🏠 Дом и быт",
+            "frequency": {
+                "limit": 2,
+                "period": "day"
+            },
+            "comment": "Посудомойка/стол/мусор/кровать/вещи по местам"
+        },
+        {
+            "id": "t5",
+            "name": "🧺 Среднее дело 30–45 минут",
+            "coins": 4,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🏠 Дом и быт",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "comment": "Уборка зоны/пылесос/смена постели/магазин"
+        },
+        {
+            "id": "t6",
+            "name": "🏠 Большое дело 60+ минут",
+            "coins": 6,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🏠 Дом и быт",
+            "frequency": {
+                "limit": 3,
+                "period": "week"
+            },
+            "comment": "Генеральная зона/полы/разбор шкафа/крупное поручение"
+        },
+        {
+            "id": "t7",
+            "name": "🛒 Сходить в магазин по короткому списку",
+            "coins": 4,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🏠 Дом и быт",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t8",
+            "name": "📜 Важное семейное поручение",
+            "coins": 6,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "🏠 Дом и быт",
+            "frequency": {
+                "limit": 2,
+                "period": "week"
+            },
+            "comment": "Почта/пункт выдачи/документы"
+        },
+        {
+            "id": "t9",
+            "name": "👣 10,000 шагов за день",
+            "coins": 2,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "🏃 Здоровье и привычки",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t10",
+            "name": "🌳 Активная прогулка 30 минут",
+            "coins": 2,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🏃 Здоровье и привычки",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t11",
+            "name": "🧘 Зарядка/растяжка 10 минут",
+            "coins": 1,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🏃 Здоровье и привычки",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t12",
+            "name": "☀️ Почистить зубы утром без напоминаний",
+            "coins": 1,
+            "age_min": 7,
+            "age_max": 12,
+            "group": "🏃 Здоровье и привычки",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t13",
+            "name": "🌙 Почистить зубы вечером без напоминаний",
+            "coins": 1,
+            "age_min": 7,
+            "age_max": 12,
+            "group": "🏃 Здоровье и привычки",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t14",
+            "name": "🛌 Лечь спать вовремя без споров",
+            "coins": 2,
+            "age_min": 7,
+            "age_max": 14,
+            "group": "🏃 Здоровье и привычки",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t15",
+            "name": "💧 Питьевой режим: выпить норму воды",
+            "coins": 2,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🏃 Здоровье и привычки",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t16",
+            "name": "📞 Сложный звонок или разговор",
+            "coins": 5,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "💪 Ответственность и рост",
+            "frequency": {
+                "limit": 3,
+                "period": "week"
+            },
+            "comment": "То, что откладывала/боялась"
+        },
+        {
+            "id": "t17",
+            "name": "📢 Сообщить заранее, если что-то не успевает и предложить план",
+            "coins": 5,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "💪 Ответственность и рост",
+            "frequency": {
+                "limit": 3,
+                "period": "week"
+            }
+        },
+        {
+            "id": "t18",
+            "name": "🚀 Сделать первый шаг в неприятной задаче",
+            "coins": 3,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💪 Ответственность и рост",
+            "frequency": {
+                "limit": 3,
+                "period": "week"
+            },
+            "comment": "10 минут"
+        },
+        {
+            "id": "t19",
+            "name": "📖 15 минут чтения",
+            "coins": 3,
+            "age_min": 7,
+            "age_max": 14,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t20",
+            "name": "🎓 Полезный навык 20 минут",
+            "coins": 3,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "comment": "Язык/музыка/код/рисунок"
+        },
+        {
+            "id": "t21",
+            "name": "🎯 60 минут фокус-работы над личным проектом",
+            "coins": 5,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 3,
+                "period": "week"
+            }
+        },
+        {
+            "id": "t22",
+            "name": "🛠️ Сделать полезную штуку для семьи",
+            "coins": 4,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 2,
+                "period": "week"
+            }
+        },
+        {
+            "id": "t23",
+            "name": "🤝 Применить протокол конфликта целиком",
+            "coins": 2,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🤝 Общение и отношения",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t24",
+            "name": "🕊️ Мирно договориться в итоге",
+            "coins": 1,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🤝 Общение и отношения",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t25",
+            "name": "⏸️ Пауза вместо ссоры и вернуться к разговору",
+            "coins": 2,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🤝 Общение и отношения",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t26",
+            "name": "🧸 Помочь младшему ребенку 15 минут спокойно",
+            "coins": 3,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🤝 Общение и отношения",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            }
+        },
+        {
+            "id": "t27",
+            "name": "✨ Сделать доброе дело дома без просьбы",
+            "coins": 4,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🤝 Общение и отношения",
+            "frequency": {
+                "limit": 3,
+                "period": "week"
+            }
+        },
+        {
+            "id": "t28",
+            "name": "🗣️ Семейный разговор 10 минут спокойно",
+            "coins": 3,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "🤝 Общение и отношения",
+            "frequency": {
+                "limit": 3,
+                "period": "week"
+            }
+        },
+        {
+            "id": "t29",
+            "name": "✅ Предмет прошлого года сдан",
+            "coins": 60,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "📚 Учеба и развитие",
+            "frequency": {
+                "limit": 10,
+                "period": "year"
+            },
+            "comment": "Официальный результат/подтверждение/согласованный пакет"
+        }
+    ],
+    "products": [
+        {
+            "id": "p1",
+            "name": "☕ Кофе/чай/десерт",
+            "price": 8,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "🍦 Кафе и вкусности",
+            "frequency": {
+                "limit": 2,
+                "period": "day"
+            },
+            "money_limit": 450
+        },
+        {
+            "id": "p2",
+            "name": "🍹 Лимонад/сок в кафе",
+            "price": 6,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🍦 Кафе и вкусности",
+            "frequency": {
+                "limit": 2,
+                "period": "day"
+            },
+            "money_limit": 350
+        },
+        {
+            "id": "p3",
+            "name": "🍦 Мороженое",
+            "price": 5,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🍦 Кафе и вкусности",
+            "frequency": {
+                "limit": 2,
+                "period": "day"
+            },
+            "money_limit": 300
+        },
+        {
+            "id": "p4",
+            "name": "💄 Небольшая косметика",
+            "price": 20,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "money_limit": 1200
+        },
+        {
+            "id": "p5",
+            "name": "✏️ Канцелярия для учебы",
+            "price": 20,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🎨 Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "money_limit": 800
+        },
+        {
+            "id": "p6",
+            "name": "🎨 Стикеры/наклейки/декор",
+            "price": 15,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🎨 Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "money_limit": 700
+        },
+        {
+            "id": "p7",
+            "name": "🎨 Материалы для творчества",
+            "price": 25,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🎨 Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 1500
+        },
+        {
+            "id": "p8",
+            "name": "🧩 Набор для хобби",
+            "price": 45,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🎨 Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 3000
+        },
+        {
+            "id": "p9",
+            "name": "📚 Книга/комикс",
+            "price": 25,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🎨 Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 1500
+        },
+        {
+            "id": "p10",
+            "name": "📦 Онлайн-заказ",
+            "price": 45,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🎨 Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 3000
+        },
+        {
+            "id": "p11",
+            "name": "🧼 Уход: шампунь/крем/дезодорант",
+            "price": 25,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 1500
+        },
+        {
+            "id": "p12",
+            "name": "🧢 Аксессуар: кепка/шарф/перчатки",
+            "price": 45,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 2000
+        },
+        {
+            "id": "p13",
+            "name": "👕 Футболка/худи базовые",
+            "price": 70,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 4500
+        },
+        {
+            "id": "p14",
+            "name": "🎮 30 минут игры",
+            "price": 8,
+            "age_min": 7,
+            "age_max": 14,
+            "group": "🎮 Развлечения и время",
+            "frequency": {
+                "limit": 2,
+                "period": "day"
+            },
+            "money_limit": 0
+        },
+        {
+            "id": "p15",
+            "name": "📱 Дополнительный час экранного времени",
+            "price": 20,
+            "age_min": 7,
+            "age_max": 14,
+            "group": "🎮 Развлечения и время",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "money_limit": 0
+        },
+        {
+            "id": "p16",
+            "name": "🌙 Поздний отбой в выходной",
+            "price": 25,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🎮 Развлечения и время",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 0
+        },
+        {
+            "id": "p17",
+            "name": "🧘 Личное время без просьб и вопросов",
+            "coins": 20,
+            "price": 20,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🎮 Развлечения и время",
+            "frequency": {
+                "limit": 1,
+                "period": "day"
+            },
+            "money_limit": 0
+        },
+        {
+            "id": "p18",
+            "name": "🕊️ Освобождение от одного маленького дела",
+            "price": 25,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "🎮 Развлечения и время",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 0
+        },
+        {
+            "id": "p19",
+            "name": "🍕 Выбор ужина дома",
+            "price": 20,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "🎮 Развлечения и время",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 0
+        },
+        {
+            "id": "p20",
+            "name": "☕ Теплый вечер дома: фильм/настолка + чай",
+            "price": 20,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "💖 Время с семьей",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 0
+        },
+        {
+            "id": "p21",
+            "name": "🍕 Выход в кафе вместе",
+            "price": 40,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💖 Время с семьей",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 2500
+        },
+        {
+            "id": "p22",
+            "name": "🎬 Кино/музей/каток вместе",
+            "price": 60,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💖 Время с семьей",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 3500
+        },
+        {
+            "id": "p23",
+            "name": "🗺️ Мой выбор: 2–3 часа она выбирает маршрут/активность",
+            "price": 70,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "💖 Время с семьей",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 4500
+        },
+        {
+            "id": "p24",
+            "name": "🚗 Мини-поездка полдня",
+            "price": 100,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "💖 Время с семьей",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 3000
+        },
+        {
+            "id": "p25",
+            "name": "📡 Мобильный пакет с повышенным трафиком",
+            "price": 40,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "📱 Цифра и гаджеты",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 1500
+        },
+        {
+            "id": "p26",
+            "name": "💳 Платная подписка на 1 месяц",
+            "price": 40,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "📱 Цифра и гаджеты",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 1500
+        },
+        {
+            "id": "p27",
+            "name": "🎧 Аудиокнига/подписка на 1 месяц",
+            "price": 40,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "📱 Цифра и гаджеты",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 1500
+        },
+        {
+            "id": "p28",
+            "name": "💅 Маникюр",
+            "price": 60,
+            "age_min": 14,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 3500
+        },
+        {
+            "id": "p29",
+            "name": "👁️ Ресницы/бьюти-процедура",
+            "price": 70,
+            "age_min": 14,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 4500
+        },
+        {
+            "id": "p30",
+            "name": "💇 Парикмахер/стрижка",
+            "price": 60,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 2500
+        },
+        {
+            "id": "p31",
+            "name": "👗 Базовая одежда",
+            "price": 120,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 8000
+        },
+        {
+            "id": "p32",
+            "name": "👟 Кроссовки/обувь",
+            "price": 120,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 8000
+        },
+        {
+            "id": "p33",
+            "name": "🎧 Наушники/небольшой гаджет",
+            "price": 120,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "📱 Цифра и гаджеты",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 8000
+        },
+        {
+            "id": "p34",
+            "name": "💎 Большая покупка по договоренности",
+            "price": 150,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "🏆 Крупные цели",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 15000
+        },
+        {
+            "id": "p35",
+            "name": "🎲 Настолка/карточная игра",
+            "price": 60,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "� Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 2500
+        },
+        {
+            "id": "p36",
+            "name": "⚽ Мяч/спорт-инвентарь",
+            "price": 60,
+            "age_min": 7,
+            "age_max": 18,
+            "group": "� Хобби и увлечения",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 2500
+        },
+        {
+            "id": "p37",
+            "name": "🎡 Сходить в парк/игровую зону",
+            "price": 40,
+            "age_min": 7,
+            "age_max": 14,
+            "group": "� Развлечения и время",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 1500
+        },
+        {
+            "id": "p38",
+            "name": "🗝️ Квест-комната/развлечение на выходных",
+            "price": 100,
+            "age_min": 12,
+            "age_max": 18,
+            "group": "� Развлечения и время",
+            "frequency": {
+                "limit": 1,
+                "period": "month"
+            },
+            "money_limit": 4500
+        },
+        {
+            "id": "p39",
+            "name": "🛋️ Мини-обновление комнаты: мелочь для уюта",
+            "price": 25,
+            "age_min": 10,
+            "age_max": 18,
+            "group": "💄 Красота и стиль",
+            "frequency": {
+                "limit": 1,
+                "period": "week"
+            },
+            "money_limit": 1500
+        }
+    ]
+}

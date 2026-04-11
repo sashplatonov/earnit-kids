@@ -1,0 +1,30 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hist-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="hist-arrow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs>
+  <!-- Clock circle -->
+  <circle cx="32" cy="32" r="22" fill="url(#hist-bg)" stroke="#94a3b8" stroke-width="2"/>
+  <!-- Clock face -->
+  <circle cx="32" cy="32" r="16" fill="#1e293b"/>
+  <!-- Hour marks -->
+  <line x1="32" y1="18" x2="32" y2="22" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="42" x2="32" y2="46" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+  <line x1="18" y1="32" x2="22" y2="32" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+  <line x1="42" y1="32" x2="46" y2="32" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+  <!-- Hour hand -->
+  <path d="M32 32l-1 -9" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Minute hand -->
+  <path d="M32 32l7 4" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="32" cy="32" r="2.5" fill="#f1f5f9"/>
+  <!-- History arrow -->
+  <path d="M10 32a22 22 0 0 1 4-13" stroke="url(#hist-arrow)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M12 18l2 3-3 1" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

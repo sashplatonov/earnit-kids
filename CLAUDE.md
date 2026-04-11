@@ -1,1 +1,0 @@
-@/Users/sash/AI Rules/AGENTS.md

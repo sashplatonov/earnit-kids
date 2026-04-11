@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- SpotBugs exclusion filter for EarnIt Kids Backend -->
+
+    <!-- Exclude generated code -->
+    <Match>
+        <Source name="~.*_\$.*\.java"/>
+    </Match>
+
+    <!-- Allow field injection in Quarkus CDI beans -->
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+        <Or>
+            <Class name="~.*Resource"/>
+            <Class name="~.*Filter"/>
+        </Or>
+    </Match>
+
+    <!-- Allow returning internal mutable state in records (immutable by design) -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Ignore SQL-related false positives for our parameterized queries -->
+    <Match>
+        <Bug pattern="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE"/>
+    </Match>
+</FindBugsFilter>

@@ -1,0 +1,11 @@
+**/target/**
+**/node_modules/**
+**/.next/**
+**/dist/**
+**/build/**
+**/*.min.js
+**/*.min.css
+**/*.map
+**/*.lock
+.env
+.env.local
