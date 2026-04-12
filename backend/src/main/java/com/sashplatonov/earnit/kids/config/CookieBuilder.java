@@ -2,39 +2,22 @@ package com.sashplatonov.earnit.kids.config;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class CookieBuilder {
     private final JwtService jwtService;
-    private final boolean isProduction;
+    private final AppConfig appConfig;
 
-    @Inject
-    public CookieBuilder(JwtService jwtService,
-            @ConfigProperty(name = "app.production", defaultValue = "false") boolean isProduction) {
-        this.jwtService = jwtService;
-        this.isProduction = isProduction;
-    }
-
-    /**
-     * Builds Set-Cookie header values for a successful authentication.
-     *
-     * @param email    user email
-     * @param role     user role (admin, child, super_admin)
-     * @param familyId family identifier
-     * @param childId  child id (nullable)
-     * @param maxAge   cookie lifetime in seconds
-     * @return list of Set-Cookie header strings
-     */
     public List<String> buildAuthCookies(String email, String role, String familyId,
                                          Integer childId, int maxAge) {
-        String csrfToken = jwtService.generateCsrfToken();
-        Map<String, Object> payload = new LinkedHashMap<>();
+        var csrfToken = jwtService.generateCsrfToken();
+        var payload = new LinkedHashMap<String, Object>();
         payload.put("email", email);
         payload.put("role", role);
         payload.put("familyId", familyId);
@@ -43,12 +26,12 @@ public class CookieBuilder {
             payload.put("childId", childId);
         }
 
-        String token = jwtService.signToken(payload, maxAge);
-        String secureSegment = isProduction ? "Secure; " : "";
-        String authFlags = "Max-Age=" + maxAge + "; Path=/; HttpOnly; " + secureSegment;
-        String roleFlags = "Max-Age=" + maxAge + "; Path=/; " + secureSegment;
+        var token = jwtService.signToken(payload, maxAge);
+        var secureSegment = appConfig.production() ? "Secure; " : "";
+        var authFlags = "Max-Age=" + maxAge + "; Path=/; HttpOnly; " + secureSegment;
+        var roleFlags = "Max-Age=" + maxAge + "; Path=/; " + secureSegment;
 
-        List<String> cookies = new ArrayList<>();
+        var cookies = new ArrayList<String>();
         cookies.add("app_auth=" + token + "; " + authFlags + "SameSite=Lax");
         cookies.add("app_role=" + role + "; " + roleFlags + "SameSite=Lax");
         cookies.add("csrf_token=" + csrfToken + "; " + roleFlags + "SameSite=Strict");
@@ -62,11 +45,6 @@ public class CookieBuilder {
         return cookies;
     }
 
-    /**
-     * Builds Set-Cookie headers that clear all auth cookies.
-     *
-     * @return list of Set-Cookie header strings with Max-Age=0
-     */
     public List<String> buildLogoutCookies() {
         return List.of(
             "app_auth=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict",

@@ -1,11 +1,12 @@
 package com.sashplatonov.earnit.kids.service;
 
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
-import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.support.TestConfigFactory;
+import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,12 +35,14 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthServiceImpl(familyRepository, childRepository,
-            "admin@test.com", "admin123", false, true);
+        authService = new AuthServiceImpl(
+            familyRepository,
+            childRepository,
+            TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true));
     }
 
     @Test
-    void shouldAuthenticateSuperAdmin_whenCredentialsMatch() {
+    void authenticateAdmin_matchingSuperAdminCredentials_returnsSuperAdminPayload() {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "admin123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
@@ -50,7 +53,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailSuperAdmin_whenPasswordIncorrect() {
+    void authenticateAdmin_wrongSuperAdminPassword_returnsFailure() {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "wrong");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
@@ -60,7 +63,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldAuthenticateFamily_whenCredentialsMatch() {
+    void authenticateAdmin_familyCredentialsMatch_returnsAdminPayload() {
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin123", false, true);
         when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
         when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
@@ -75,7 +78,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldRejectBlockedFamily() {
+    void authenticateAdmin_blockedFamily_returnsFailure() {
         FamilyEntity family = mockFamily("fam_1", "blocked@test.com", "pin123", true, true);
         when(familyRepository.findByEmail("blocked@test.com")).thenReturn(Optional.of(family));
 
@@ -88,7 +91,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailAuthentication_whenFamilyNotFound() {
+    void authenticateAdmin_missingFamily_returnsFailure() {
         when(familyRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
 
         OperationResult<AuthPayload> result = authService.authenticateAdmin("unknown@test.com", "pin");
@@ -97,7 +100,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldAuthenticateChild_whenTokenValid() {
+    void authenticateChild_validToken_returnsChildPayload() {
         ChildEntity child = mock(ChildEntity.class);
         when(child.getId()).thenReturn(10);
         when(child.getFamilyDbId()).thenReturn(1);
@@ -117,13 +120,13 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailChildAuth_whenTokenMissing() {
+    void authenticateChild_missingToken_returnsFailure() {
         OperationResult<AuthPayload> result = authService.authenticateChild(null);
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
     }
 
     @Test
-    void shouldFailChildAuth_whenTokenInvalid() {
+    void authenticateChild_invalidToken_returnsFailure() {
         when(childRepository.findByToken("invalid")).thenReturn(Optional.empty());
 
         OperationResult<AuthPayload> result = authService.authenticateChild("invalid");
@@ -131,7 +134,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldRegisterFamily_whenEmailNew() {
+    void registerFamily_newEmail_returnsSuccess() {
         when(familyRepository.findByEmail("new@test.com")).thenReturn(Optional.empty());
         when(familyRepository.create(anyString(), anyString(), anyString(), anyBoolean(), any()))
             .thenAnswer(inv -> Optional.of(mockFamily(
@@ -143,7 +146,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldRejectRegistration_whenEmailExists() {
+    void registerFamily_existingEmail_returnsFailure() {
         FamilyEntity existing = mockFamily("fam_1", "exists@test.com", "pin", false, true);
         when(familyRepository.findByEmail("exists@test.com")).thenReturn(Optional.of(existing));
 
@@ -153,7 +156,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldRejectRegistration_whenPasswordWeak() {
+    void registerFamily_weakPassword_returnsFailure() {
         when(familyRepository.findByEmail("new@test.com")).thenReturn(Optional.empty());
 
         OperationResult<AuthPayload> result = authService.registerFamily("new@test.com", "aaa");
@@ -164,7 +167,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldResetPassword_whenTokenValid() {
+    void resetPassword_validToken_updatesPassword() {
         FamilyEntity family = mock(FamilyEntity.class);
         when(family.getFamilyId()).thenReturn("fam_1");
         when(family.getEmail()).thenReturn("user@test.com");
@@ -178,7 +181,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailResetPassword_whenTokenInvalid() {
+    void resetPassword_invalidToken_returnsFailure() {
         when(familyRepository.findByResetToken("bad")).thenReturn(Optional.empty());
 
         OperationResult<Void> result = authService.resetPassword("user@test.com", "bad", "newpass123");
@@ -187,9 +190,11 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldRejectUnverifiedFamily_whenVerificationEnabled() {
+    void authenticateAdmin_unverifiedFamilyWithVerificationEnabled_returnsFailure() {
         AuthServiceImpl serviceWithVerification = new AuthServiceImpl(
-            familyRepository, childRepository, "", "", true, true);
+            familyRepository,
+            childRepository,
+            TestConfigFactory.appConfig(false, null, null, true, true));
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin123", false, false);
         when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
 
@@ -202,9 +207,11 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailForgotPassword_whenRecoveryDisabled() {
+    void forgotPassword_recoveryDisabled_returnsFailure() {
         AuthServiceImpl noRecoveryService = new AuthServiceImpl(
-            familyRepository, childRepository, "", "", false, false);
+            familyRepository,
+            childRepository,
+            TestConfigFactory.appConfig(false, null, null, false, false));
 
         OperationResult<Void> result = noRecoveryService.forgotPassword("user@test.com");
 
@@ -212,7 +219,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldSucceedForgotPassword_whenFamilyNotFound() {
+    void forgotPassword_missingFamily_returnsSuccessToAvoidDisclosure() {
         when(familyRepository.findByEmail("nobody@test.com")).thenReturn(Optional.empty());
 
         OperationResult<Void> result = authService.forgotPassword("nobody@test.com");
@@ -221,7 +228,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldVerifyEmail_whenTokenValid() {
+    void verifyEmail_validToken_returnsSuccess() {
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin123", false, false);
         when(familyRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(family));
         when(familyRepository.verifyFamily("fam_1")).thenReturn(true);
@@ -232,7 +239,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailVerifyEmail_whenTokenInvalid() {
+    void verifyEmail_invalidToken_returnsFailure() {
         when(familyRepository.findByVerificationToken("bad")).thenReturn(Optional.empty());
 
         assertThat(authService.verifyEmail("user@test.com", "bad"))
@@ -240,7 +247,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailVerifyEmail_whenEmailMismatch() {
+    void verifyEmail_emailMismatch_returnsFailure() {
         FamilyEntity family = mockFamily("fam_1", "other@test.com", "pin123", false, false);
         when(familyRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(family));
 
@@ -249,7 +256,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldChangeAdminPin_whenOldPinCorrect() {
+    void changeAdminPin_validOldPin_updatesPassword() {
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "oldpin", false, true);
         when(familyRepository.findById("fam_1")).thenReturn(Optional.of(family));
         when(familyRepository.updatePassword("fam_1", "newpin1")).thenReturn(true);
@@ -260,7 +267,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailChangePin_whenFamilyBlank() {
+    void changeAdminPin_blankFamilyId_returnsFailure() {
         assertThat(authService.changeAdminPin("", "old", "new123"))
             .isInstanceOf(OperationResult.Failure.class);
         assertThat(authService.changeAdminPin(null, "old", "new123"))
@@ -268,7 +275,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailChangePin_whenOldPinWrong() {
+    void changeAdminPin_wrongOldPin_returnsFailure() {
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "realpin", false, true);
         when(familyRepository.findById("fam_1")).thenReturn(Optional.of(family));
 
@@ -277,7 +284,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailChildAuth_whenFamilyBlocked() {
+    void authenticateChild_blockedFamily_returnsFailure() {
         ChildEntity child = mock(ChildEntity.class);
         when(child.getFamilyDbId()).thenReturn(1);
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin", true, true);
@@ -289,7 +296,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldFailRegistration_whenCreateReturnsMissing() {
+    void registerFamily_repositoryCreateMissing_returnsFailure() {
         when(familyRepository.findByEmail("dup@test.com")).thenReturn(Optional.empty());
         when(familyRepository.create(anyString(), anyString(), anyString(), anyBoolean(), any()))
             .thenReturn(Optional.empty());

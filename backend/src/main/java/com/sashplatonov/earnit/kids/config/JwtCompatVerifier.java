@@ -1,106 +1,106 @@
 package com.sashplatonov.earnit.kids.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.dto.response.SessionPageDataResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import com.sashplatonov.earnit.kids.dto.response.SessionPageDataResponse;
+import lombok.RequiredArgsConstructor;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class JwtCompatVerifier {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
 
-    private final String jwtSecret;
+    private final JwtCompatibilityConfig jwtCompatibilityConfig;
     private final ObjectMapper objectMapper;
 
-    @Inject
-    public JwtCompatVerifier(
-            @ConfigProperty(name = "compat.jwt.secret") String jwtSecret,
-            ObjectMapper objectMapper) {
-        this.jwtSecret = jwtSecret;
-        this.objectMapper = objectMapper;
-    }
-
     public SessionPageDataResponse readSession(String cookieHeader) {
-        String token = readCookie(cookieHeader, "app_auth");
+        var token = readCookie(cookieHeader, "app_auth");
         if (token == null || token.isBlank()) {
             return SessionPageDataResponse.unauthenticated();
         }
 
-        Map<String, Object> payload = verify(token);
-        if (payload == null) {
+        var payload = verify(token);
+        if (payload.isEmpty()) {
             return SessionPageDataResponse.unauthenticated();
         }
 
-        Integer childId = toInteger(payload.get("childId"));
-        String cookieCsrfToken = readCookie(cookieHeader, "csrf_token");
-        String payloadCsrfToken = toStringValue(payload.get("csrfToken"));
+        var resolvedPayload = payload.get();
+        var childId = toInteger(resolvedPayload.get("childId"));
+        var cookieCsrfToken = readCookie(cookieHeader, "csrf_token");
+        var payloadCsrfToken = toStringValue(resolvedPayload.get("csrfToken"));
 
         return new SessionPageDataResponse(
             true,
-            toStringValue(payload.get("role")),
-            toStringValue(payload.get("familyId")),
+            toStringValue(resolvedPayload.get("role")),
+            toStringValue(resolvedPayload.get("familyId")),
             childId,
-            toStringValue(payload.get("email")),
+            toStringValue(resolvedPayload.get("email")),
             cookieCsrfToken != null ? cookieCsrfToken : payloadCsrfToken
         );
     }
 
-    public Map<String, Object> verify(String token) {
+    public Optional<Map<String, Object>> verify(String token) {
         try {
-            String[] parts = token.split("\\.");
+            var parts = token.split("\\.");
             if (parts.length != 3) {
-                return null;
+                return Optional.empty();
             }
 
-            String signatureInput = parts[0] + "." + parts[1];
-            String expectedSignature = signSegment(signatureInput, jwtSecret);
-            if (!expectedSignature.equals(parts[2])) {
-                return null;
+            var signatureInput = parts[0] + "." + parts[1];
+            var expectedSignature = signSegment(signatureInput, jwtCompatibilityConfig.secret());
+            if (!MessageDigest.isEqual(
+                expectedSignature.getBytes(StandardCharsets.UTF_8),
+                parts[2].getBytes(StandardCharsets.UTF_8))) {
+                return Optional.empty();
             }
 
-            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            Map<String, Object> payload = objectMapper.readValue(payloadJson, MAP_TYPE);
+            var payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            var payload = objectMapper.readValue(payloadJson, MAP_TYPE);
 
             Number exp = payload.get("exp") instanceof Number expValue ? expValue : null;
             if (exp != null && exp.longValue() < Instant.now().getEpochSecond()) {
-                return null;
+                return Optional.empty();
             }
 
-            return payload;
-        } catch (Exception ignored) {
-            return null;
+            return Optional.of(payload);
+        } catch (IllegalArgumentException | JsonProcessingException | GeneralSecurityException ignored) {
+            return Optional.empty();
         }
     }
 
     public static String sign(Map<String, Object> payload, String secret, long expiresInSeconds) {
         try {
-            Map<String, Object> effectivePayload = new LinkedHashMap<>(payload);
+            var effectivePayload = new LinkedHashMap<>(payload);
             effectivePayload.put("exp", Instant.now().getEpochSecond() + expiresInSeconds);
 
-            ObjectMapper mapper = new ObjectMapper();
-            String headerJson = mapper.writeValueAsString(Map.of("alg", "HS256", "typ", "JWT"));
-            String payloadJson = mapper.writeValueAsString(effectivePayload);
-            String encodedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
-            String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
-            String signatureInput = encodedHeader + "." + encodedPayload;
+            var mapper = new ObjectMapper();
+            var headerJson = mapper.writeValueAsString(Map.of("alg", "HS256", "typ", "JWT"));
+            var payloadJson = mapper.writeValueAsString(effectivePayload);
+            var encodedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+            var encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+            var signatureInput = encodedHeader + "." + encodedPayload;
             return signatureInput + "." + signSegment(signatureInput, secret);
-        } catch (Exception ex) {
+        } catch (JsonProcessingException | GeneralSecurityException ex) {
             throw new IllegalStateException("Failed to sign compat JWT", ex);
         }
     }
 
-    private static String signSegment(String value, String secret) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
+    private static String signSegment(String value, String secret) throws GeneralSecurityException {
+        var mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         return Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(value.getBytes(StandardCharsets.UTF_8)));
     }

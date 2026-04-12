@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -24,7 +25,7 @@ class AuthFilterTest {
     }
 
     @Test
-    void doesNothingWhenCookieHeaderMissing() {
+    void filter_missingCookieHeader_doesNothing() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Cookie")).thenReturn(null);
 
@@ -35,7 +36,7 @@ class AuthFilterTest {
     }
 
     @Test
-    void doesNothingWhenTokenMissing() {
+    void filter_missingAuthCookie_doesNothing() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Cookie")).thenReturn("session=abc");
 
@@ -46,10 +47,10 @@ class AuthFilterTest {
     }
 
     @Test
-    void doesNothingWhenTokenInvalid() {
+    void filter_invalidToken_doesNotPopulateContext() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Cookie")).thenReturn("app_auth=bad; csrf_token=x");
-        when(jwtService.verifyToken("bad")).thenReturn(null);
+        when(jwtService.verifyToken("bad")).thenReturn(Optional.empty());
 
         filter.filter(context);
 
@@ -57,16 +58,16 @@ class AuthFilterTest {
     }
 
     @Test
-    void storesAuthContextWhenTokenValid() {
+    void filter_validToken_populatesAuthContext() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Cookie")).thenReturn("app_auth=good; csrf_token=cookie-csrf");
-        when(jwtService.verifyToken("good")).thenReturn(Map.of(
+        when(jwtService.verifyToken("good")).thenReturn(Optional.of(Map.of(
             "familyId", "fam-1",
             "childId", 10,
             "role", "child",
             "email", "c@test.com",
             "csrfToken", "payload-csrf"
-        ));
+        )));
 
         filter.filter(context);
 

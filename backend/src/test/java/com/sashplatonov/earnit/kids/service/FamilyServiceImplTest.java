@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
+import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
@@ -62,7 +63,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void loadFamilyDataReturnsFailureWhenFamilyMissing() {
+    void loadFamilyData_missingFamily_returnsFailure() {
         when(familyRepository.getDbId("missing")).thenReturn(Optional.empty());
 
         OperationResult<FamilyDataResponse> result = service.loadFamilyData("missing", null);
@@ -71,7 +72,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void loadFamilyDataReturnsEmptyPayloadWhenNoChildren() {
+    void loadFamilyData_familyWithoutChildren_returnsEmptyPayload() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.getChildren(1)).thenReturn(List.of());
 
@@ -86,7 +87,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void loadFamilyDataMapsChildrenTasksHistoryRequestsAndFriends() {
+    void loadFamilyData_existingChildData_mapsTasksHistoryRequestsAndFriends() {
         ChildEntity child1 = child(10, 1, "Alice", 100);
         ChildEntity child2 = child(11, 1, "Bob", 50);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
@@ -132,7 +133,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void createChildValidatesNameAndDuplicates() {
+    void createChild_invalidOrDuplicateName_returnsFailureOtherwiseSuccess() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.isNicknameTaken(1, "Alice", null)).thenReturn(true);
 
@@ -152,7 +153,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void deleteChildChecksOwnership() {
+    void deleteChild_foreignOrOwnedChild_returnsExpectedResult() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 2, "Other", 0)));
 
@@ -165,7 +166,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void updateNicknameValidatesInput() {
+    void updateNickname_invalidOrDuplicateInput_returnsExpectedResult() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
 
         assertThat(service.updateNickname("fam-1", 10, " "))
@@ -181,7 +182,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void updateChildThemeRejectsUnknownTheme() {
+    void updateChildTheme_unknownOrKnownTheme_returnsExpectedResult() {
         assertThat(service.updateChildTheme(10, "unknown"))
             .isInstanceOf(OperationResult.Failure.class);
         assertThat(service.updateChildTheme(10, "ocean"))
@@ -189,7 +190,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void searchByNicknameReturnsEmptyForShortQueries() {
+    void searchByNickname_shortQuery_returnsEmptyList() {
         OperationResult<List<FriendDto>> result = service.searchByNickname("ab", 10);
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         OperationResult.Success<?> success3 = (OperationResult.Success<?>) result;
@@ -199,7 +200,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void searchByNicknameMapsResults() {
+    void searchByNickname_matchingChildren_mapsFriendDtos() {
         when(childRepository.searchByNickname("alice", 10))
             .thenReturn(List.of(child(11, 2, "Alice 2", 17)));
 
@@ -219,7 +220,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void addFriendValidatesRules() {
+    void addFriend_selfMissingOrValidFriend_returnsExpectedResult() {
         assertThat(service.addFriend("fam-1", 10, 10))
             .isInstanceOf(OperationResult.Failure.class);
 
@@ -235,7 +236,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void getFriendsDataMapsProfiles() {
+    void getFriendsData_existingFriends_mapsProfiles() {
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11, 12));
         when(childRepository.findByIdOptional(11)).thenReturn(Optional.of(child(11, 2, "A", 4)));
         when(childRepository.findByIdOptional(12)).thenReturn(Optional.empty());
@@ -252,16 +253,16 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void getAnalyticsDataReturnsFailureWhenFamilyMissing() {
+    void getAnalyticsData_missingFamily_returnsFailure() {
         when(familyRepository.getDbId("missing")).thenReturn(Optional.empty());
 
-        OperationResult<Map<String, Object>> result = service.getAnalyticsData("missing", null, "month");
+        OperationResult<AnalyticsResponse> result = service.getAnalyticsData("missing", null, "month");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
     }
 
     @Test
-    void getAnalyticsDataBuildsSummaryTrendsAndRecommendations() {
+    void getAnalyticsData_validHistory_buildsTypedAnalyticsResponse() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
 
         Instant now = Instant.now();
@@ -295,34 +296,22 @@ class FamilyServiceImplTest {
         );
         doReturn(items).when(shopItemRepository).list(anyString(), any(Object[].class));
 
-        OperationResult<Map<String, Object>> result = service.getAnalyticsData("fam-1", null, "month");
+        OperationResult<AnalyticsResponse> result = service.getAnalyticsData("fam-1", null, "month");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         OperationResult.Success<?> success6 = (OperationResult.Success<?>) result;
-        Object val6 = success6.value();
-        assertThat(val6).isInstanceOf(Map.class);
-        Map<?, ?> payload = (Map<?, ?>) val6;
+        AnalyticsResponse payload = (AnalyticsResponse) success6.value();
 
-        assertThat(payload.containsKey("summary")).isTrue();
-        assertThat(payload.containsKey("topTasks")).isTrue();
-        assertThat(payload.containsKey("trends")).isTrue();
-        assertThat(payload.containsKey("recommendations")).isTrue();
-
-        Object summaryObj = payload.get("summary");
-        assertThat(summaryObj).isInstanceOf(Map.class);
-        Map<?, ?> summary = (Map<?, ?>) summaryObj;
-        assertThat(summary.containsKey("totalEarned")).isTrue();
-        assertThat(summary.containsKey("totalSpent")).isTrue();
-        assertThat(summary.containsKey("netChange")).isTrue();
-
-        Object recommendationsObj = payload.get("recommendations");
-        assertThat(recommendationsObj).isInstanceOf(List.class);
-        List<?> recommendations = (List<?>) recommendationsObj;
-        assertThat(recommendations).hasSizeLessThanOrEqualTo(3);
+        assertThat(payload.summary()).isNotNull();
+        assertThat(payload.summary().totalEarned()).isGreaterThanOrEqualTo(0);
+        assertThat(payload.summary().totalSpent()).isGreaterThanOrEqualTo(0);
+        assertThat(payload.topTasks()).isNotNull();
+        assertThat(payload.trends()).isNotNull();
+        assertThat(payload.recommendations()).hasSizeLessThanOrEqualTo(3);
     }
 
     @Test
-    void getHistoryReturnsPaginatedResponse() {
+    void getHistory_existingEntries_returnsPaginatedResponse() {
         HistoryEntryEntity history = HistoryEntryEntity.builder()
             .childId(10)
             .externalId(1L)
@@ -344,14 +333,14 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void getRequestsReturnsFailureWhenFamilyNotFound() {
+    void getRequests_missingFamily_returnsFailure() {
         when(familyRepository.getDbId("missing")).thenReturn(Optional.empty());
         assertThat(service.getRequests("missing", 1, 20))
             .isInstanceOf(OperationResult.Failure.class);
     }
 
     @Test
-    void getRequestsReturnsPaginatedData() {
+    void getRequests_existingRows_returnsPaginatedData() {
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
             .id(10L)
             .familyId(1)
@@ -374,7 +363,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void childTokenEndpointsHandleMissingAndSuccess() {
+    void childTokenEndpoints_missingOrValidChild_returnExpectedResults() {
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.empty());
         assertThat(service.getChildLoginLink(10)).isInstanceOf(OperationResult.Failure.class);
 
@@ -389,7 +378,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void updatePreferenceSupportsOnlyKnownKeys() {
+    void updatePreference_knownOrUnknownKey_returnsExpectedResult() {
         assertThat(service.updatePreference("fam-1", "unknown", 1))
             .isInstanceOf(OperationResult.Failure.class);
 
@@ -400,7 +389,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void saveFamilyDataReturnsFailureWhenFamilyMissing() {
+    void saveFamilyData_missingFamily_returnsFailure() {
         when(familyRepository.getDbId("missing")).thenReturn(Optional.empty());
 
         assertThat(service.saveFamilyData("missing", null, Map.of()))
@@ -408,7 +397,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void saveFamilyDataDelegatesToLoadFamilyData() {
+    void saveFamilyData_existingFamily_delegatesToLoadFamilyData() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.getChildren(1)).thenReturn(List.of(child));

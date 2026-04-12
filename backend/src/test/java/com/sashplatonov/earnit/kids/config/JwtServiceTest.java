@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,52 +15,50 @@ class JwtServiceTest {
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService("test-secret-key-for-unit-tests", new ObjectMapper());
+        jwtService = new JwtService(TestConfigFactory.jwtConfig("test-secret-key-for-unit-tests"), new ObjectMapper());
     }
 
     @Test
-    void shouldSignAndVerifyToken() {
+    void signToken_validPayload_verifiesSuccessfully() {
         Map<String, Object> payload = Map.of("email", "test@example.com", "role", "admin");
         String token = jwtService.signToken(payload, 3600);
 
         assertThat(token).isNotNull();
         assertThat(token.split("\\.")).hasSize(3);
 
-        Map<String, Object> verified = jwtService.verifyToken(token);
-        assertThat(verified).isNotNull();
-        assertThat(verified.get("email")).isEqualTo("test@example.com");
-        assertThat(verified.get("role")).isEqualTo("admin");
+        var verified = jwtService.verifyToken(token);
+        assertThat(verified).isPresent();
+        assertThat(verified.orElseThrow()).containsEntry("email", "test@example.com");
+        assertThat(verified.orElseThrow()).containsEntry("role", "admin");
     }
 
     @Test
-    void shouldRejectExpiredToken() {
+    void verifyToken_expiredToken_returnsEmptyOptional() {
         Map<String, Object> payload = Map.of("email", "test@example.com");
         String token = jwtService.signToken(payload, -1); // expired
 
-        Map<String, Object> result = jwtService.verifyToken(token);
-        assertThat(result).isNull();
+        assertThat(jwtService.verifyToken(token)).isEmpty();
     }
 
     @Test
-    void shouldRejectTamperedToken() {
+    void verifyToken_tamperedToken_returnsEmptyOptional() {
         Map<String, Object> payload = Map.of("email", "test@example.com");
         String token = jwtService.signToken(payload, 3600);
 
         // Tamper with the token
         String tampered = token.substring(0, token.length() - 2) + "xx";
-        Map<String, Object> result = jwtService.verifyToken(tampered);
-        assertThat(result).isNull();
+        assertThat(jwtService.verifyToken(tampered)).isEmpty();
     }
 
     @Test
-    void shouldRejectMalformedToken() {
-        assertThat(jwtService.verifyToken("not-a-jwt")).isNull();
-        assertThat(jwtService.verifyToken("")).isNull();
-        assertThat(jwtService.verifyToken("a.b")).isNull();
+    void verifyToken_malformedToken_returnsEmptyOptional() {
+        assertThat(jwtService.verifyToken("not-a-jwt")).isEmpty();
+        assertThat(jwtService.verifyToken("")).isEmpty();
+        assertThat(jwtService.verifyToken("a.b")).isEmpty();
     }
 
     @Test
-    void shouldGenerateCsrfToken() {
+    void generateCsrfToken_multipleCalls_returnsUniqueHexValues() {
         String csrf1 = jwtService.generateCsrfToken();
         String csrf2 = jwtService.generateCsrfToken();
 

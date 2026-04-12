@@ -1,73 +1,52 @@
 package com.sashplatonov.earnit.kids.service;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
-import com.sashplatonov.earnit.kids.util.OperationResult;
-import com.sashplatonov.earnit.kids.service.AuthService;
-import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
+import com.sashplatonov.earnit.kids.util.OperationResult;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
+import java.util.HexFormat;
 
 @ApplicationScoped
+@Slf4j
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public final class AuthServiceImpl implements AuthService {
-    private static final Logger LOG = Logger.getLogger(AuthServiceImpl.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final int MIN_PASSWORD_LENGTH = 6;
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
-    private final String superAdminEmail;
-    private final String superAdminPassword;
-    private final boolean emailVerificationEnabled;
-    private final boolean passwordRecoveryEnabled;
-
-    @Inject
-    public AuthServiceImpl(FamilyRepository familyRepository,
-                           ChildRepository childRepository,
-                           @ConfigProperty(name = "app.super-admin.email", defaultValue = "")
-                           String superAdminEmail,
-                           @ConfigProperty(name = "app.super-admin.password", defaultValue = "")
-                           String superAdminPassword,
-                           @ConfigProperty(name = "app.email-verification.enabled", defaultValue = "true")
-                           boolean emailVerificationEnabled,
-                           @ConfigProperty(name = "app.password-recovery.enabled", defaultValue = "true")
-                           boolean passwordRecoveryEnabled) {
-        this.familyRepository = familyRepository;
-        this.childRepository = childRepository;
-        this.superAdminEmail = superAdminEmail;
-        this.superAdminPassword = superAdminPassword;
-        this.emailVerificationEnabled = emailVerificationEnabled;
-        this.passwordRecoveryEnabled = passwordRecoveryEnabled;
-    }
+    private final AppConfig appConfig;
 
     @Override
     public OperationResult<AuthPayload> authenticateAdmin(String email, String pin) {
-        if (!superAdminEmail.isBlank() && superAdminEmail.equals(email)) {
-            if (superAdminPassword.equals(pin)) {
+        var configuredSuperAdminEmail = appConfig.superAdmin().email().filter(value -> !value.isBlank());
+        if (configuredSuperAdminEmail.isPresent() && configuredSuperAdminEmail.get().equals(email)) {
+            if (appConfig.superAdmin().password().orElse("").equals(pin)) {
                 return OperationResult.success(
                     new AuthPayload(null, email, "super_admin", null, null));
             }
             return OperationResult.failure("Неверный пароль администратора");
         }
 
-        Optional<FamilyEntity> familyOpt = familyRepository.findByEmail(email);
+        var familyOpt = familyRepository.findByEmail(email);
         if (familyOpt.isEmpty()) {
             return OperationResult.failure("Неверные учетные данные");
         }
 
-        FamilyEntity family = familyOpt.get();
+        var family = familyOpt.get();
         if (family.isBlocked()) {
             return OperationResult.failure("Аккаунт заблокирован");
         }
-        if (emailVerificationEnabled && !family.isVerified()) {
+        if (appConfig.emailVerification().enabled() && !family.isVerified()) {
             return OperationResult.failure("Email не подтвержден. Проверьте почту.");
         }
         if (!family.getAdminPassword().equals(pin)) {
@@ -96,7 +75,7 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure("Семья не найдена");
         }
 
-        FamilyEntity family = familyOpt.get();
+        var family = familyOpt.get();
         if (family.isBlocked()) {
             return OperationResult.failure("Аккаунт заблокирован");
         }
@@ -115,11 +94,11 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure("Слабый пароль родителя");
         }
 
-        String familyId = email.replaceAll("[^a-zA-Z0-9]", "_") + "_" + System.currentTimeMillis();
-        String verificationToken = emailVerificationEnabled ? generateHexToken(32) : null;
+        var familyId = email.replaceAll("[^a-zA-Z0-9]", "_") + "_" + System.currentTimeMillis();
+        var verificationToken = appConfig.emailVerification().enabled() ? generateHexToken(32) : null;
 
-        Optional<FamilyEntity> created = familyRepository.create(
-            familyId, email, adminPin, !emailVerificationEnabled, verificationToken);
+        var created = familyRepository.create(
+            familyId, email, adminPin, !appConfig.emailVerification().enabled(), verificationToken);
 
         if (created.isEmpty()) {
             return OperationResult.failure("Email уже зарегистрирован");
@@ -131,16 +110,16 @@ public final class AuthServiceImpl implements AuthService {
 
     @Override
     public OperationResult<Void> forgotPassword(String email) {
-        if (!passwordRecoveryEnabled) {
+        if (!appConfig.passwordRecovery().enabled()) {
             return OperationResult.failure("Функция восстановления пароля отключена");
         }
 
-        Optional<FamilyEntity> familyOpt = familyRepository.findByEmail(email);
+        var familyOpt = familyRepository.findByEmail(email);
         if (familyOpt.isPresent()) {
-            String token = generateHexToken(32);
-            Instant expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
+            var token = generateHexToken(32);
+            var expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
             familyRepository.setResetToken(familyOpt.get().getFamilyId(), token, expiresAt);
-            LOG.infof("Password reset token generated for %s", email);
+            log.debug("Generated password reset token for a matching family account");
         }
 
         return OperationResult.success(null);
@@ -155,12 +134,12 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure("Слабый пароль");
         }
 
-        Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
+        var familyOpt = familyRepository.findById(familyId);
         if (familyOpt.isEmpty()) {
             return OperationResult.failure("Семья не найдена");
         }
 
-        FamilyEntity family = familyOpt.get();
+        var family = familyOpt.get();
         if (!family.getAdminPassword().equals(oldPin)) {
             return OperationResult.failure("Неверный пароль");
         }
@@ -182,12 +161,12 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure("Слабый пароль");
         }
 
-        Optional<FamilyEntity> familyOpt = familyRepository.findByResetToken(token);
+        var familyOpt = familyRepository.findByResetToken(token);
         if (familyOpt.isEmpty()) {
             return OperationResult.failure("Недействительная или просроченная ссылка");
         }
 
-        FamilyEntity family = familyOpt.get();
+        var family = familyOpt.get();
         if (!family.getEmail().equalsIgnoreCase(email)) {
             return OperationResult.failure("Недействительная или просроченная ссылка");
         }
@@ -199,12 +178,12 @@ public final class AuthServiceImpl implements AuthService {
 
     @Override
     public OperationResult<Void> verifyEmail(String email, String token) {
-        Optional<FamilyEntity> familyOpt = familyRepository.findByVerificationToken(token);
+        var familyOpt = familyRepository.findByVerificationToken(token);
         if (familyOpt.isEmpty()) {
             return OperationResult.failure("Недействительный токен верификации");
         }
 
-        FamilyEntity family = familyOpt.get();
+        var family = familyOpt.get();
         if (!family.getEmail().equalsIgnoreCase(email)) {
             return OperationResult.failure("Недействительный токен верификации");
         }
@@ -222,12 +201,8 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     private String generateHexToken(int byteCount) {
-        byte[] bytes = new byte[byteCount];
+        var bytes = new byte[byteCount];
         SECURE_RANDOM.nextBytes(bytes);
-        StringBuilder sb = new StringBuilder(byteCount * 2);
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
+        return HexFormat.of().formatHex(bytes);
     }
 }

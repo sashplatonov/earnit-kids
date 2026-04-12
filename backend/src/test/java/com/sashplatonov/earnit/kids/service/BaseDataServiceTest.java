@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BaseDataServiceTest {
 
     @Test
-    void loadsBundledBaseDataResource() {
+    void getBaseData_bundledResourcePresent_returnsCatalogData() {
         BaseDataService service = new BaseDataService(new ObjectMapper());
 
         Map<String, Object> data = service.getBaseData();

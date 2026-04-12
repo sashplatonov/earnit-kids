@@ -38,3 +38,6 @@ logs/
 
 # Ignore IDE / build outputs
 /out/
+
+# Prevent accidental backup files
+*.bak

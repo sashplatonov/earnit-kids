@@ -1,56 +1,107 @@
 # EarnIt Kids
 
-EarnIt Kids is a split-stack application with a Quarkus backend and a Node.js web edge.
+## Table of Contents
+- [🧭 Overview](#-overview)
+- [📁 Repository Structure](#-repository-structure)
+- [☕ Backend Commands](#-backend-commands)
+- [🌐 Web Commands](#-web-commands)
+- [🐳 Docker Compose](#-docker-compose)
+- [📚 Project Docs](#-project-docs)
 
-## Repository Structure
+## 🧭 Overview
 
-- `backend/` — Quarkus backend (Maven project)
-- `backend/legacy/` — legacy Node.js API code kept for compatibility during migration
-- `web/` — web edge service, static assets, frontend build scripts, and UI tests
-- `.env` / `.env.example` — environment configuration
-- `docker-compose.yml` — local multi-service compose stack
+EarnIt Kids is a split-stack application with:
 
-## Backend (Quarkus)
+- `backend/`: a Quarkus 3 backend targeting Java 25
+- `web/`: a Node.js web edge, static assets, and UI tests
+- `mobile/`: mobile packaging and Capacitor-related assets
 
-Run from `backend/`:
+The backend now expects Java 25. If your shell defaults to another JDK, export `JAVA_HOME` before running Maven commands.
 
 ```bash
-mvn clean compile
-mvn test
-mvn quarkus:dev
+export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
+export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
-When running in dev mode:
+[↩ Back to toc](#table-of-contents)
+
+## 📁 Repository Structure
+
+- `backend/`: Quarkus REST API, persistence layer, Flyway migrations, Maven tests
+- `web/`: Node.js server, frontend assets, Playwright/UI/integration tests
+- `mobile/`: Capacitor configuration, mobile assets, mobile-specific README files
+- `docker-compose.yml`: local multi-service orchestration
+- `ARCHITECTURE.md`: high-level system and backend module design
+
+[↩ Back to toc](#table-of-contents)
+
+## ☕ Backend Commands
+
+Run from `backend/`.
+
+Install and validate:
+
+```bash
+export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
+export PATH="$JAVA_HOME/bin:$PATH"
+./mvnw test
+```
+
+Start local development mode:
+
+```bash
+export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
+export PATH="$JAVA_HOME/bin:$PATH"
+./mvnw quarkus:dev
+```
+
+Useful backend URLs in dev mode:
 
 - Health: `http://localhost:8080/q/health`
 - OpenAPI: `http://localhost:8080/q/openapi`
+- Swagger UI: `http://localhost:8080/q/swagger-ui`
 
-## Frontend/Web
+[↩ Back to toc](#table-of-contents)
 
-Run from `web/`:
+## 🌐 Web Commands
+
+Run from `web/`.
 
 ```bash
 npm install
-npm run build
 npm run lint
+npm run build
 ```
 
-Optional local run:
+Optional local start:
 
 ```bash
 npm start
 ```
 
-## Docker Compose
+[↩ Back to toc](#table-of-contents)
 
-From repository root:
+## 🐳 Docker Compose
+
+Run from the repository root.
+
+Start services:
 
 ```bash
 docker compose up -d --build
 ```
 
-Stop:
+Stop services:
 
 ```bash
 docker compose down
 ```
+
+[↩ Back to toc](#table-of-contents)
+
+## 📚 Project Docs
+
+- See `ARCHITECTURE.md` for backend layering, auth/session flow, and request lifecycle notes.
+- Backend API documentation is generated from Quarkus OpenAPI annotations at runtime.
+
+[↑ Back to top](#earnit-kids)

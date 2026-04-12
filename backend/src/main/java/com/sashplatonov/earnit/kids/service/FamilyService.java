@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
@@ -34,7 +35,7 @@ public interface FamilyService {
 
     OperationResult<List<FriendDto>> getFriendsData(int childId);
 
-    OperationResult<Map<String, Object>> getAnalyticsData(String familyId, Integer childId, String timeframe);
+    OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe);
 
     OperationResult<PaginatedHistory> getHistory(int childId, int page, int limit);
 

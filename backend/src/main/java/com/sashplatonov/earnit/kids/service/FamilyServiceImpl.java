@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
@@ -13,7 +14,6 @@ import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.util.OperationResult;
-import com.sashplatonov.earnit.kids.service.FamilyService;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
@@ -25,7 +25,6 @@ import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
-import org.jboss.logging.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -36,12 +35,12 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 @ApplicationScoped
 public final class FamilyServiceImpl implements FamilyService {
-    private static final Logger LOG = Logger.getLogger(FamilyServiceImpl.class);
     private static final Set<String> VALID_THEMES = Set.of("mint", "ocean", "sun", "coral", "cosmos");
 
     private final FamilyRepository familyRepository;
@@ -82,7 +81,7 @@ public final class FamilyServiceImpl implements FamilyService {
         }
 
         ChildEntity activeChild = childId != null
-            ? children.stream().filter(c -> c.getId() == childId).findFirst().orElse(children.getFirst())
+            ? children.stream().filter(c -> Objects.equals(c.getId(), childId)).findFirst().orElse(children.getFirst())
             : children.getFirst();
 
         List<TaskDto> tasks = familyDataRepository.getTasks(activeChild.getId()).stream()
@@ -96,11 +95,11 @@ public final class FamilyServiceImpl implements FamilyService {
             .toList();
 
         List<HistoryEntryDto> history = familyDataRepository.getHistory(activeChild.getId(), 50, 0).stream()
-            .map(this::toHistoryDto)
+            .map(historyEntry -> toHistoryDto(historyEntry))
             .toList();
 
         List<RequestDto> requests = familyDataRepository.getRequests(familyDbId, 50, 0).stream()
-            .map(this::toRequestDto)
+            .map(request -> toRequestDto(request))
             .toList();
 
         List<FriendDto> friends = familyDataRepository.getFriendChildIds(activeChild.getId()).stream()
@@ -165,7 +164,7 @@ public final class FamilyServiceImpl implements FamilyService {
         }
 
         var childOpt = childRepository.findByIdOptional(childId);
-        if (childOpt.isEmpty() || childOpt.get().getFamilyDbId() != dbIdOpt.get()) {
+        if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), dbIdOpt.get())) {
             return OperationResult.failure("Ребенок не найден");
         }
 
@@ -259,7 +258,7 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
-    public OperationResult<Map<String, Object>> getAnalyticsData(String familyId, Integer childId, String timeframe) {
+    public OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe) {
         Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
         if (familyDbIdOpt.isEmpty()) {
             return OperationResult.failure("Семья не найдена");
@@ -276,21 +275,21 @@ public final class FamilyServiceImpl implements FamilyService {
         List<TaskEntity> tasks = queryTasks(familyDbId, childId);
         List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
 
-        Map<String, Integer> summary = summarize(currentPeriodHistory);
-        Map<String, Integer> comparison = summarize(previousPeriodHistory);
-        List<Map<String, Object>> topTasks = buildTopTaskStats(currentPeriodHistory, tasks);
-        List<Map<String, Object>> topItems = buildTopItemStats(currentPeriodHistory, items);
-        List<Map<String, Object>> trends = buildTrends(currentPeriodHistory);
-        List<Map<String, Object>> recommendations = buildRecommendations(familyDbId, childId);
+        AnalyticsResponse.AnalyticsSummary summary = summarize(currentPeriodHistory);
+        AnalyticsResponse.AnalyticsSummary comparison = summarize(previousPeriodHistory);
+        List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStats(currentPeriodHistory, tasks);
+        List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStats(currentPeriodHistory, items);
+        List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrends(currentPeriodHistory);
+        List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
 
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("summary", summary);
-        payload.put("topTasks", topTasks);
-        payload.put("topItems", topItems);
-        payload.put("trends", trends);
-        payload.put("comparison", comparison);
-        payload.put("recommendations", recommendations);
-        return OperationResult.success(payload);
+        return OperationResult.success(new AnalyticsResponse(
+            summary,
+            topTasks,
+            topItems,
+            trends,
+            comparison,
+            recommendations
+        ));
     }
 
     @Override
@@ -298,7 +297,7 @@ public final class FamilyServiceImpl implements FamilyService {
         int offset = (page - 1) * limit;
         List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, limit, offset);
         int total = familyDataRepository.getHistoryCount(childId);
-        List<HistoryEntryDto> items = rows.stream().map(this::toHistoryDto).toList();
+        List<HistoryEntryDto> items = rows.stream().map(historyEntry -> toHistoryDto(historyEntry)).toList();
         return OperationResult.success(new PaginatedHistory(items, total, page, limit));
     }
 
@@ -312,7 +311,7 @@ public final class FamilyServiceImpl implements FamilyService {
         int offset = (page - 1) * limit;
         List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, limit, offset);
         int total = familyDataRepository.getRequestsCount(familyDbId);
-        List<RequestDto> items = rows.stream().map(this::toRequestDto).toList();
+        List<RequestDto> items = rows.stream().map(request -> toRequestDto(request)).toList();
         return OperationResult.success(new PaginatedRequests(items, total, page, limit));
     }
 
@@ -379,7 +378,7 @@ public final class FamilyServiceImpl implements FamilyService {
         return Duration.ofDays(30);
     }
 
-    private Map<String, Integer> summarize(List<HistoryEntryEntity> historyEntries) {
+    private AnalyticsResponse.AnalyticsSummary summarize(List<HistoryEntryEntity> historyEntries) {
         int totalEarned = historyEntries.stream()
             .filter(entry -> "earn".equals(entry.getType()))
             .mapToInt(HistoryEntryEntity::getAmount)
@@ -389,14 +388,11 @@ public final class FamilyServiceImpl implements FamilyService {
             .mapToInt(HistoryEntryEntity::getAmount)
             .sum();
 
-        Map<String, Integer> summary = new LinkedHashMap<>();
-        summary.put("totalEarned", totalEarned);
-        summary.put("totalSpent", totalSpent);
-        summary.put("netChange", totalEarned - totalSpent);
-        return summary;
+        return new AnalyticsResponse.AnalyticsSummary(totalEarned, totalSpent, totalEarned - totalSpent);
     }
 
-    private List<Map<String, Object>> buildTopTaskStats(List<HistoryEntryEntity> historyEntries, List<TaskEntity> tasks) {
+    private List<AnalyticsResponse.AnalyticsStatItem> buildTopTaskStats(List<HistoryEntryEntity> historyEntries,
+                                                                        List<TaskEntity> tasks) {
         Map<Long, String> namesByTaskId = tasks.stream()
             .collect(java.util.stream.Collectors.toMap(TaskEntity::getTaskId, TaskEntity::getName,
                 (left, right) -> left));
@@ -423,8 +419,8 @@ public final class FamilyServiceImpl implements FamilyService {
         return toTopStats(byName);
     }
 
-    private List<Map<String, Object>> buildTopItemStats(List<HistoryEntryEntity> historyEntries,
-                                                        List<ShopItemEntity> items) {
+    private List<AnalyticsResponse.AnalyticsStatItem> buildTopItemStats(List<HistoryEntryEntity> historyEntries,
+                                                                        List<ShopItemEntity> items) {
         Map<Long, String> namesByItemId = items.stream()
             .collect(java.util.stream.Collectors.toMap(ShopItemEntity::getItemId, ShopItemEntity::getName,
                 (left, right) -> left));
@@ -451,21 +447,19 @@ public final class FamilyServiceImpl implements FamilyService {
         return toTopStats(byName);
     }
 
-    private List<Map<String, Object>> toTopStats(Map<String, Aggregate> byName) {
+    private List<AnalyticsResponse.AnalyticsStatItem> toTopStats(Map<String, Aggregate> byName) {
         return byName.entrySet().stream()
             .sorted(Comparator.comparingInt((Map.Entry<String, Aggregate> entry) -> entry.getValue().coins)
                 .reversed())
-            .map(entry -> {
-                Map<String, Object> item = new LinkedHashMap<>();
-                item.put("name", entry.getKey());
-                item.put("coins", entry.getValue().coins);
-                item.put("count", entry.getValue().count);
-                return item;
-            })
+            .map(entry -> new AnalyticsResponse.AnalyticsStatItem(
+                entry.getKey(),
+                entry.getValue().coins,
+                entry.getValue().count
+            ))
             .toList();
     }
 
-    private List<Map<String, Object>> buildTrends(List<HistoryEntryEntity> historyEntries) {
+    private List<AnalyticsResponse.AnalyticsTrendPoint> buildTrends(List<HistoryEntryEntity> historyEntries) {
         Map<LocalDate, Aggregate> perDay = new LinkedHashMap<>();
         historyEntries.stream()
             .sorted(Comparator.comparing(HistoryEntryEntity::getCreatedAt))
@@ -482,18 +476,18 @@ public final class FamilyServiceImpl implements FamilyService {
                 }
             });
 
-        List<Map<String, Object>> trends = new ArrayList<>();
+        List<AnalyticsResponse.AnalyticsTrendPoint> trends = new ArrayList<>();
         perDay.forEach((day, aggregate) -> {
-            Map<String, Object> trend = new LinkedHashMap<>();
-            trend.put("date", day.toString());
-            trend.put("earned", aggregate.earned);
-            trend.put("spent", aggregate.spent);
-            trends.add(trend);
+            trends.add(new AnalyticsResponse.AnalyticsTrendPoint(
+                day.toString(),
+                aggregate.earned,
+                aggregate.spent
+            ));
         });
         return trends;
     }
 
-    private List<Map<String, Object>> buildRecommendations(int familyDbId, Integer childId) {
+    private List<AnalyticsResponse.AnalyticsRecommendation> buildRecommendations(int familyDbId, Integer childId) {
         Instant lastMonthStart = Instant.now().minus(Duration.ofDays(30));
         List<TaskEntity> tasks = queryTasks(familyDbId, childId);
         if (tasks.isEmpty()) {
@@ -518,14 +512,11 @@ public final class FamilyServiceImpl implements FamilyService {
                 .comparingInt((TaskEntity task) -> completionCounts.getOrDefault(task.getTaskId(), 0))
                 .thenComparing(TaskEntity::getCoins, Comparator.reverseOrder()))
             .limit(3)
-            .map(task -> {
-                int completionCount = completionCounts.getOrDefault(task.getTaskId(), 0);
-                Map<String, Object> recommendation = new LinkedHashMap<>();
-                recommendation.put("name", task.getName());
-                recommendation.put("coins", task.getCoins());
-                recommendation.put("reason", completionCount == 0 ? "Давно не выполнялось" : "Стоит повторить");
-                return recommendation;
-            })
+            .map(task -> new AnalyticsResponse.AnalyticsRecommendation(
+                task.getName(),
+                task.getCoins(),
+                completionCounts.getOrDefault(task.getTaskId(), 0) == 0 ? "Давно не выполнялось" : "Стоит повторить"
+            ))
             .toList();
     }
 

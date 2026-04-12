@@ -5,10 +5,6 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 
-/**
- * Sets security headers on every HTTP response.
- * Mirrors the Node.js helmet configuration.
- */
 @Provider
 public class SecurityHeadersFilter implements ContainerResponseFilter {
     @Override

@@ -1,8 +1,10 @@
 package com.sashplatonov.earnit.kids.resource;
 
+import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.config.CookieBuilder;
+import com.sashplatonov.earnit.kids.dto.request.ChangePinRequest;
 import com.sashplatonov.earnit.kids.dto.request.ForgotPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
@@ -11,6 +13,7 @@ import com.sashplatonov.earnit.kids.dto.request.ResetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.VerifyEmailRequest;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.service.AuthService;
+import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
@@ -21,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -35,14 +37,16 @@ class AuthResourceTest {
     @Mock CookieBuilder cookieBuilder;
 
     private AuthResource resource;
+    private AppConfig appConfig;
 
     @BeforeEach
     void setUp() {
-        resource = new AuthResource(authService, cookieBuilder, true, true);
+        appConfig = TestConfigFactory.appConfig(false, null, null, true, true);
+        resource = new AuthResource(authService, cookieBuilder, appConfig);
     }
 
     @Test
-    void loginReturnsCookiesOnSuccess() {
+    void login_validAdminCredentials_returnsCookies() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
         when(authService.authenticateAdmin("a@test.com", "secret"))
             .thenReturn(OperationResult.success(payload));
@@ -56,7 +60,7 @@ class AuthResourceTest {
     }
 
     @Test
-    void loginReturnsUnauthorizedOnFailure() {
+    void login_invalidAdminCredentials_returnsUnauthorized() {
         when(authService.authenticateAdmin("a@test.com", "bad"))
             .thenReturn(OperationResult.failure("bad creds"));
 
@@ -66,7 +70,7 @@ class AuthResourceTest {
     }
 
     @Test
-    void loginChildReturnsPayloadOnSuccess() {
+    void loginChild_validToken_returnsCookies() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid");
         when(authService.authenticateChild("token")).thenReturn(OperationResult.success(payload));
         when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10, 2592000))
@@ -79,7 +83,7 @@ class AuthResourceTest {
     }
 
     @Test
-    void logoutClearsCookies() {
+    void logout_existingSession_clearsCookies() {
         when(cookieBuilder.buildLogoutCookies()).thenReturn(List.of("cookie-1", "cookie-2", "cookie-3"));
 
         Response response = resource.logout();
@@ -89,7 +93,7 @@ class AuthResourceTest {
     }
 
     @Test
-    void registerReturnsCreatedOnSuccess() {
+    void register_validPayload_returnsCreated() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
         when(authService.registerFamily("a@test.com", "secret123")).thenReturn(OperationResult.success(payload));
         when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, 2592000))
@@ -101,7 +105,7 @@ class AuthResourceTest {
     }
 
     @Test
-    void forgotPasswordAlwaysReturnsOk() {
+    void forgotPassword_anyEmail_returnsOk() {
         Response response = resource.forgotPassword(new ForgotPasswordRequest("a@test.com"));
 
         assertThat(response.getStatus()).isEqualTo(200);
@@ -109,30 +113,31 @@ class AuthResourceTest {
     }
 
     @Test
-    void changePinRequiresAdminAuth() {
-        Response unauthorized = resource.changePin(contextWithAuth(null), Map.of("oldPin", "1", "newPin", "2"));
+    void changePin_missingAdminContext_returnsUnauthorized() {
+        ChangePinRequest request = new ChangePinRequest("1", "2");
+        Response unauthorized = resource.changePin(contextWithAuth(null), request);
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        Response forbidden = resource.changePin(contextWithAuth(childAuth(10)), Map.of("oldPin", "1", "newPin", "2"));
-        assertThat(forbidden.getStatus()).isEqualTo(401);
+        Response childUnauthorized = resource.changePin(contextWithAuth(childAuth(10)), request);
+        assertThat(childUnauthorized.getStatus()).isEqualTo(401);
     }
 
     @Test
-    void changePinUsesAuthService() {
+    void changePin_serviceResultMapped_returnsExpectedStatus() {
         when(authService.changeAdminPin("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.success(null));
 
-        Response ok = resource.changePin(contextWithAuth(adminAuth()), Map.of("oldPin", "old", "newPin", "newpass"));
+        Response ok = resource.changePin(contextWithAuth(adminAuth()), new ChangePinRequest("old", "newpass"));
         assertThat(ok.getStatus()).isEqualTo(200);
 
         when(authService.changeAdminPin("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.failure("bad"));
-        Response bad = resource.changePin(contextWithAuth(adminAuth()), Map.of("oldPin", "old", "newPin", "newpass"));
+        Response bad = resource.changePin(contextWithAuth(adminAuth()), new ChangePinRequest("old", "newpass"));
         assertThat(bad.getStatus()).isEqualTo(400);
     }
 
     @Test
-    void resetPasswordAndVerifyMapServiceResult() {
+    void resetPasswordAndVerifyEmail_successfulServiceResults_returnOk() {
         when(authService.resetPassword("a@test.com", "token", "newpass"))
             .thenReturn(OperationResult.success(null));
         when(authService.verifyEmail("a@test.com", "token"))
@@ -146,7 +151,7 @@ class AuthResourceTest {
     }
 
     @Test
-    void authConfigReflectsFeatureFlags() {
+    void authConfig_featureFlagsConfigured_returnsResponse() {
         Response response = resource.authConfig();
 
         assertThat(response.getStatus()).isEqualTo(200);

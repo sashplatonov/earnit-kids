@@ -21,7 +21,7 @@ class PushResourceTest {
     }
 
     @Test
-    void registerRequiresAuth() {
+    void register_missingOrPresentAuth_returnsExpectedStatus() {
         Response unauthorized = resource.register(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
@@ -30,7 +30,7 @@ class PushResourceTest {
     }
 
     @Test
-    void unregisterRequiresAuth() {
+    void unregister_missingOrPresentAuth_returnsExpectedStatus() {
         Response unauthorized = resource.unregister(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 

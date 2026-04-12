@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.nullValue;
 @QuarkusTest
 class SessionPageDataResourceTest {
     @Test
-    void returnsUnauthenticatedSnapshotWithoutCookies() {
+    void session_missingCookies_returnsUnauthenticatedSnapshot() {
         given()
             .when()
             .get("/api/page-data/session")
@@ -24,7 +24,7 @@ class SessionPageDataResourceTest {
     }
 
     @Test
-    void returnsDecodedSnapshotForCompatJwt() {
+    void session_validCompatJwt_returnsDecodedSnapshot() {
         String token = JwtCompatVerifier.sign(Map.of(
             "familyId", "family-1",
             "role", "admin",

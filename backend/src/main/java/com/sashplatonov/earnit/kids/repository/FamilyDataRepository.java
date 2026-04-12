@@ -8,17 +8,19 @@ import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class FamilyDataRepository {
 
-    @Inject TaskRepository taskRepo;
-    @Inject ShopItemRepository shopRepo;
-    @Inject HistoryRepository historyRepo;
-    @Inject PurchaseRequestRepository requestRepo;
-    @Inject FriendRepository friendRepo;
+    private final TaskRepository taskRepo;
+    private final ShopItemRepository shopRepo;
+    private final HistoryRepository historyRepo;
+    private final PurchaseRequestRepository requestRepo;
+    private final FriendRepository friendRepo;
 
     public List<TaskEntity> getTasks(int childId) {
         return taskRepo.list("childId = ?1 AND deleted = false ORDER BY id ASC", childId);
@@ -31,14 +33,14 @@ public class FamilyDataRepository {
         var existing = taskRepo.find("childId = ?1 AND taskId = ?2", childId, taskId)
             .firstResultOptional();
         if (existing.isPresent()) {
-            TaskEntity t = existing.get();
-            t.setName(name);
-            t.setCoins(coins);
-            t.setGroupName(groupName);
-            t.setFrequency(frequencyJson);
-            t.setComment(comment);
-            t.setMoneyLimit(moneyLimit);
-            t.setDeleted(false);
+            var task = existing.get();
+            task.setName(name);
+            task.setCoins(coins);
+            task.setGroupName(groupName);
+            task.setFrequency(frequencyJson);
+            task.setComment(comment);
+            task.setMoneyLimit(moneyLimit);
+            task.setDeleted(false);
         } else {
             taskRepo.persist(TaskEntity.builder()
                 .familyId(familyDbId)
@@ -74,13 +76,13 @@ public class FamilyDataRepository {
         var existing = shopRepo.find("childId = ?1 AND itemId = ?2", childId, itemId)
             .firstResultOptional();
         if (existing.isPresent()) {
-            ShopItemEntity s = existing.get();
-            s.setName(name);
-            s.setPrice(price);
-            s.setGroupName(groupName);
-            s.setFrequency(frequencyJson);
-            s.setMoneyLimit(moneyLimit);
-            s.setDeleted(false);
+            var shopItem = existing.get();
+            shopItem.setName(name);
+            shopItem.setPrice(price);
+            shopItem.setGroupName(groupName);
+            shopItem.setFrequency(frequencyJson);
+            shopItem.setMoneyLimit(moneyLimit);
+            shopItem.setDeleted(false);
         } else {
             shopRepo.persist(ShopItemEntity.builder()
                 .familyId(familyDbId)

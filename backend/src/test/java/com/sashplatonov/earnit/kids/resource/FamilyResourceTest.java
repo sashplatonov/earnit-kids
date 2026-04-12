@@ -2,6 +2,13 @@ package com.sashplatonov.earnit.kids.resource;
 
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
+import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
+import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdatePreferenceRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateThemeRequest;
+import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
@@ -42,13 +49,13 @@ class FamilyResourceTest {
     }
 
     @Test
-    void getFamilyDataReturnsUnauthorizedWithoutAuthContext() {
+    void getFamilyData_missingAuthContext_returnsUnauthorized() {
         Response response = resource.getFamilyData(contextWithAuth(null), null);
         assertThat(response.getStatus()).isEqualTo(401);
     }
 
     @Test
-    void getFamilyDataReturnsPayloadForAuthenticatedUser() {
+    void getFamilyData_authenticatedUser_returnsPayload() {
         FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), null, null, null, null);
         when(familyService.loadFamilyData("fam-1", 10)).thenReturn(OperationResult.success(payload));
@@ -60,7 +67,7 @@ class FamilyResourceTest {
     }
 
     @Test
-    void saveFamilyDataUsesChildIdFromPayloadOrAuth() {
+    void saveFamilyData_childSessionWithoutBodyChildId_usesAuthChildId() {
         FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), null, null, null, null);
         when(familyService.saveFamilyData(anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap()))
@@ -73,7 +80,7 @@ class FamilyResourceTest {
     }
 
     @Test
-    void getBaseDataRequiresAuthentication() {
+    void getBaseData_missingAuthContext_returnsUnauthorized() {
         Response unauthorized = resource.getBaseData(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
@@ -83,46 +90,48 @@ class FamilyResourceTest {
     }
 
     @Test
-    void createChildRequiresAdminAndValidatesServiceFailure() {
-        Response unauthorized = resource.createChild(contextWithAuth(childAuth(10)), Map.of("name", "Kid"));
+    void createChild_nonAdminOrServiceFailure_returnsExpectedStatus() {
+        Response unauthorized = resource.createChild(contextWithAuth(childAuth(10)), new CreateChildRequest("Kid"));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
         when(familyService.createChild("fam-1", "Kid")).thenReturn(OperationResult.failure("bad"));
-        Response bad = resource.createChild(contextWithAuth(adminAuth()), Map.of("name", "Kid"));
+        Response bad = resource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
         assertThat(bad.getStatus()).isEqualTo(400);
 
         ChildInfo info = new ChildInfo(1, "Kid", "token");
         when(familyService.createChild("fam-1", "Kid")).thenReturn(OperationResult.success(info));
-        Response created = resource.createChild(contextWithAuth(adminAuth()), Map.of("name", "Kid"));
+        Response created = resource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
         assertThat(created.getStatus()).isEqualTo(201);
     }
 
     @Test
-    void deleteChildRequiresAdmin() {
+    void deleteChild_adminUser_returnsOk() {
         when(familyService.deleteChild("fam-1", 10)).thenReturn(OperationResult.success(null));
         Response response = resource.deleteChild(contextWithAuth(adminAuth()), 10);
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test
-    void updateNicknameEndpointUsesChildContext() {
+    void updateOwnNickname_childContext_delegatesToService() {
         when(familyService.updateNickname("fam-1", 10, "Alice")).thenReturn(OperationResult.success(null));
 
-        Response response = resource.updateOwnNickname(contextWithAuth(childAuth(10)), Map.of("nickname", "Alice"));
+        Response response = resource.updateOwnNickname(
+            contextWithAuth(childAuth(10)),
+            new UpdateOwnNicknameRequest("Alice"));
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).updateNickname("fam-1", 10, "Alice");
     }
 
     @Test
-    void childSettingsSupportsPostAliasAndSnakeCaseFields() {
+    void updateChildSettingsPost_validRequest_delegatesToService() {
         when(familyService.updateChildSettings("fam-1", 10, "Nick", 11, 22))
             .thenReturn(OperationResult.success(null));
 
         Response response = resource.updateChildSettingsPost(
             contextWithAuth(adminAuth()),
             10,
-            Map.of("name", "Nick", "daily_coin_limit", 11, "monthly_limit", 22)
+            new UpdateChildSettingsRequest("Nick", 11, 22)
         );
 
         assertThat(response.getStatus()).isEqualTo(200);
@@ -130,16 +139,19 @@ class FamilyResourceTest {
     }
 
     @Test
-    void childThemeSupportsPostAlias() {
+    void updateChildThemePost_validTheme_returnsOk() {
         when(familyService.updateChildTheme(10, "ocean")).thenReturn(OperationResult.success(null));
 
-        Response response = resource.updateChildThemePost(contextWithAuth(adminAuth()), 10, Map.of("theme", "ocean"));
+        Response response = resource.updateChildThemePost(
+            contextWithAuth(adminAuth()),
+            10,
+            new UpdateThemeRequest("ocean"));
 
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test
-    void searchUserRequiresChildRole() {
+    void searchUser_nonChildOrChildSession_returnsExpectedStatus() {
         Response unauthorized = resource.searchUser(contextWithAuth(adminAuth()), "Alice");
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
@@ -150,17 +162,17 @@ class FamilyResourceTest {
     }
 
     @Test
-    void addFriendValidatesFriendId() {
-        Response bad = resource.addFriend(contextWithAuth(childAuth(10)), Map.of());
+    void addFriend_invalidOrValidRequest_returnsExpectedStatus() {
+        Response bad = resource.addFriend(contextWithAuth(childAuth(10)), new AddFriendRequest(0));
         assertThat(bad.getStatus()).isEqualTo(400);
 
         when(familyService.addFriend("fam-1", 10, 11)).thenReturn(OperationResult.success(null));
-        Response ok = resource.addFriend(contextWithAuth(childAuth(10)), Map.of("friendId", 11));
+        Response ok = resource.addFriend(contextWithAuth(childAuth(10)), new AddFriendRequest(11));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
     @Test
-    void friendsListReturnsData() {
+    void getFriendsList_childSession_returnsData() {
         when(familyService.getFriendsData(10)).thenReturn(OperationResult.success(List.of(new FriendDto(11, "A", 2))));
 
         Response response = resource.getFriendsList(contextWithAuth(childAuth(10)));
@@ -169,9 +181,15 @@ class FamilyResourceTest {
     }
 
     @Test
-    void analyticsUsesChildIdFromChildSession() {
+    void getAnalytics_childSession_usesChildIdFromContext() {
         when(familyService.getAnalyticsData("fam-1", 10, "week"))
-            .thenReturn(OperationResult.success(Map.of("summary", Map.of())));
+            .thenReturn(OperationResult.success(new AnalyticsResponse(
+                new AnalyticsResponse.AnalyticsSummary(1, 0, 1),
+                List.of(),
+                List.of(),
+                List.of(),
+                new AnalyticsResponse.AnalyticsSummary(0, 0, 0),
+                List.of())));
 
         Response response = resource.getAnalytics(contextWithAuth(childAuth(10)), "week", 999);
 
@@ -180,7 +198,7 @@ class FamilyResourceTest {
     }
 
     @Test
-    void historyAndRequestsRequireAuthAndForwardPagination() {
+    void getHistoryAndRequests_authenticatedUser_forwardPagination() {
         when(familyService.getHistory(10, 2, 15)).thenReturn(OperationResult.success(new PaginatedHistory(List.of(), 0, 2, 15)));
         when(familyService.getRequests("fam-1", 2, 15)).thenReturn(OperationResult.success(new PaginatedRequests(List.of(), 0, 2, 15)));
 
@@ -192,14 +210,16 @@ class FamilyResourceTest {
     }
 
     @Test
-    void preferenceEndpointHandlesMissingKeyAndSuccess() {
-        Response bad = resource.updatePreference(contextWithAuth(adminAuth()), Map.of("value", 1));
+    void updatePreference_missingKeyOrValidPayload_returnsExpectedStatus() {
+        Response bad = resource.updatePreference(contextWithAuth(adminAuth()), new UpdatePreferenceRequest("", 1));
         assertThat(bad.getStatus()).isEqualTo(400);
 
         when(familyService.updatePreference("fam-1", "lastSelectedChildId", 10))
             .thenReturn(OperationResult.success(null));
 
-        Response ok = resource.updatePreference(contextWithAuth(adminAuth()), Map.of("key", "lastSelectedChildId", "value", 10));
+        Response ok = resource.updatePreference(
+            contextWithAuth(adminAuth()),
+            new UpdatePreferenceRequest("lastSelectedChildId", 10));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 

@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DomainModelSanityTest {
 
     @Test
-    void familyEntityVerificationAndResetTokenLifecycle() {
+    void familyEntity_tokenLifecycle_mutatesAsExpected() {
         FamilyEntity family = FamilyEntity.builder()
             .familyId("fam-1")
             .email("a@test.com")
@@ -33,7 +33,7 @@ class DomainModelSanityTest {
     }
 
     @Test
-    void childEntityBuilderAppliesDefaultsAndSetters() {
+    void childEntity_builderAndSetters_applyExpectedDefaults() {
         ChildEntity child = ChildEntity.builder()
             .familyDbId(1)
             .name("Kid")
@@ -57,7 +57,7 @@ class DomainModelSanityTest {
     }
 
     @Test
-    void taskAndShopEntitiesCanBeMutated() {
+    void taskAndShopEntities_mutatedFields_areRetained() {
         TaskEntity task = TaskEntity.builder()
             .familyId(1)
             .childId(2)
@@ -99,7 +99,7 @@ class DomainModelSanityTest {
     }
 
     @Test
-    void requestAndHistoryEntitiesExposeStoredValues() {
+    void requestAndHistoryEntities_initializedValues_areExposed() {
         HistoryEntryEntity history = HistoryEntryEntity.builder()
             .familyId(1)
             .childId(2)
