@@ -21,7 +21,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <jacoco.version>0.8.14</jacoco.version>
         <checkstyle.version>10.21.4</checkstyle.version>
-        <spotbugs.version>4.8.6</spotbugs.version>
+        <spotbugs.version>4.9.8.3</spotbugs.version>
         <pmd.version>7.10.0</pmd.version>
     </properties>
 
@@ -300,6 +300,14 @@
                     <threshold>Medium</threshold>
                     <failOnError>false</failOnError>
                 </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -317,5 +325,6 @@
                 <skipITs>false</skipITs>
             </properties>
         </profile>
+        <!-- analysis profile removed: SpotBugs runs by default in build plugins -->
     </profiles>
 </project>
