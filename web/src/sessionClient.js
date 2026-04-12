@@ -1,4 +1,4 @@
-const { createLogger } = require('../../backend/legacy/src/utils/logger');
+const { createLogger } = require('./utils/logger');
 
 const logger = createLogger('webSessionClient');
 const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:8080').replace(/\/+$/, '');

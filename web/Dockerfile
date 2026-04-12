@@ -9,7 +9,6 @@ COPY web/views ./views
 COPY web/data ./data
 COPY web/src ./src
 COPY web/scripts ./scripts
-COPY backend/legacy ../backend/legacy
 
 RUN npm run build --ignore-scripts
 
@@ -23,7 +22,6 @@ COPY --from=build /workspace/web/public ./public
 COPY --from=build /workspace/web/views ./views
 COPY --from=build /workspace/web/data ./data
 COPY --from=build /workspace/web/src ./src
-COPY --from=build /workspace/backend/legacy ../backend/legacy
 
 ENV NODE_ENV=production
 ENV PORT=3000

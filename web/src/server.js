@@ -4,9 +4,9 @@ const httpProxy = require('http-proxy');
 
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-const compression = require('../../backend/legacy/src/middleware/compression');
-const { setSecurityHeaders } = require('../../backend/legacy/src/middleware/security');
-const { createLogger } = require('../../backend/legacy/src/utils/logger');
+const compression = require('./middleware/compression');
+const { setSecurityHeaders } = require('./middleware/security');
+const { createLogger } = require('./utils/logger');
 const { BACKEND_URL, fetchSessionSnapshot } = require('./sessionClient');
 const { handlePageRoute, isStaticAssetPath, serveNotFound, viewController } = require('./rendering');
 

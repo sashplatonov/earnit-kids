@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const viewController = require('../../backend/legacy/src/controllers/viewController');
-const blogController = require('../../backend/legacy/src/controllers/blogController');
-const { applyCommonTemplateData, buildSeoReplacements } = require('../../backend/legacy/src/controllers/seoTemplates');
-const { getHtmlHeaders } = require('../../backend/legacy/src/controllers/staticUtils');
+const viewController = require('./controllers/viewController');
+const blogController = require('./controllers/blogController');
+const { applyCommonTemplateData, buildSeoReplacements } = require('./controllers/seoTemplates');
+const { getHtmlHeaders } = require('./controllers/staticUtils');
 
 const VIEWS_DIR = path.join(__dirname, '../views');
 const COMPONENTS_DIR = path.join(VIEWS_DIR, 'components');
