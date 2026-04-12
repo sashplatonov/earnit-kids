@@ -43,7 +43,8 @@
 
         <!-- Inline comments: only allowed when starting with EXPLAIN:/FIXME: etc. Avoid http:// by negative lookbehind for ':' -->
         <module name="RegexpSinglelineJava">
-            <property name="format" value="^(?!.*//\\s*(EXPLAIN:|EXPLAIN|FIXME|BUGFIX|HACK|NOTE)).*(?:^|[^:])//"/>
+            <!-- Allow lines that include an EXPLAIN: marker anywhere; flag other inline comments -->
+            <property name="format" value="^(?!.*EXPLAIN:).*//"/>
             <property name="message" value="Inline comments are forbidden by project policy except explanatory comments starting with 'EXPLAIN:' or markers like 'FIXME'."/>
             <property name="ignoreComments" value="false"/>
             <property name="severity" value="error"/>

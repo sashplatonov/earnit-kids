@@ -1,3 +1,5 @@
 package com.sashplatonov.earnit.kids.dto.response;
 
-public record TokenResponse(String token) { }
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
+public record TokenResponse(@Schema(format = "password") String token) { }

@@ -61,7 +61,10 @@ public class FamilyDataRepository {
     public boolean softDeleteTask(int childId, long taskId) {
         return taskRepo.find("childId = ?1 AND taskId = ?2", childId, taskId)
             .firstResultOptional()
-            .map(t -> { t.setDeleted(true); return true; })
+            .map(t -> {
+                t.setDeleted(true);
+                return true;
+            })
             .orElse(false);
     }
 
@@ -102,7 +105,10 @@ public class FamilyDataRepository {
     public boolean softDeleteShopItem(int childId, long itemId) {
         return shopRepo.find("childId = ?1 AND itemId = ?2", childId, itemId)
             .firstResultOptional()
-            .map(s -> { s.setDeleted(true); return true; })
+            .map(s -> {
+                s.setDeleted(true);
+                return true;
+            })
             .orElse(false);
     }
 
@@ -166,7 +172,10 @@ public class FamilyDataRepository {
     @Transactional
     public boolean updateRequestStatus(int requestId, String status) {
         return requestRepo.findByIdOptional((long) requestId)
-            .map(r -> { r.setStatus(status); return true; })
+            .map(r -> {
+                r.setStatus(status);
+                return true;
+            })
             .orElse(false);
     }
 

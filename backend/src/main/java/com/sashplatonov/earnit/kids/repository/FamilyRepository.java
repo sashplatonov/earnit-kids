@@ -45,7 +45,9 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     @Transactional
     public boolean updatePassword(String familyId, String newPassword) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) {
+            return false;
+        }
         opt.get().setAdminPassword(newPassword);
         return true;
     }
@@ -53,7 +55,9 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     @Transactional
     public boolean updateLastActivity(String familyId) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) {
+            return false;
+        }
         opt.get().setLastActivity(Instant.now());
         return true;
     }
@@ -61,7 +65,9 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     @Transactional
     public boolean updateLastSelectedChild(String familyId, Integer childId) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) {
+            return false;
+        }
         opt.get().setLastSelectedChildId(childId);
         return true;
     }
@@ -69,7 +75,9 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     @Transactional
     public boolean verifyFamily(String familyId) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) {
+            return false;
+        }
         opt.get().verify();
         return true;
     }
@@ -81,7 +89,9 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     @Transactional
     public boolean setResetToken(String familyId, String token, Instant expiresAt) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) {
+            return false;
+        }
         opt.get().setResetToken(token, expiresAt);
         return true;
     }
@@ -94,7 +104,9 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     @Transactional
     public boolean clearResetToken(String familyId) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) {
+            return false;
+        }
         opt.get().clearResetToken();
         return true;
     }
@@ -106,7 +118,9 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     @Transactional
     public boolean setBlocked(String familyId, boolean blocked) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) {
+            return false;
+        }
         opt.get().setBlocked(blocked);
         return true;
     }

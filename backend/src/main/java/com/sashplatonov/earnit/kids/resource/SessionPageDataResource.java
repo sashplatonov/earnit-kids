@@ -14,6 +14,7 @@ import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @Path("/api/page-data")
 @Produces(MediaType.APPLICATION_JSON)
@@ -31,8 +32,9 @@ public class SessionPageDataResource {
     @Operation(summary = "Derive a session snapshot from the compatibility auth cookie")
     @APIResponse(responseCode = "200", description = "Session snapshot returned",
         content = @Content(schema = @Schema(implementation = SessionPageDataResponse.class)))
-    public SessionPageDataResponse session(@Parameter(description = "Incoming Cookie header")
+    public Response session(@Parameter(description = "Incoming Cookie header")
                                            @HeaderParam("Cookie") String cookieHeader) {
-        return jwtCompatVerifier.readSession(cookieHeader);
+        var resp = jwtCompatVerifier.readSession(cookieHeader);
+        return Response.ok(resp).build();
     }
 }

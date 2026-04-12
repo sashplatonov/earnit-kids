@@ -98,7 +98,7 @@ public class AuthResource {
         @APIResponse(responseCode = "401", description = "Token is invalid or expired",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public Response loginChild(@RequestBody(required = true, description = "Child login payload") LoginChildRequest request) {
+    public Response loginChild(@RequestBody(required = true, description = "Child login payload") @Valid LoginChildRequest request) {
         OperationResult<AuthPayload> result = authService.authenticateChild(request.token());
 
         return switch (result) {
@@ -175,7 +175,7 @@ public class AuthResource {
     public Response forgotPassword(@RequestBody(required = true, description = "Email for password recovery")
                                    @Valid ForgotPasswordRequest request) {
         authService.forgotPassword(request.email());
-        // Always return 200 to prevent email enumeration
+
         return Response.ok(SimpleResponse.ok()).build();
     }
 
