@@ -78,7 +78,8 @@ class FamilyServiceImplTest {
         OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", null);
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        FamilyDataResponse payload = ((OperationResult.Success<FamilyDataResponse>) result).value();
+        OperationResult.Success<?> success1 = (OperationResult.Success<?>) result;
+        FamilyDataResponse payload = (FamilyDataResponse) success1.value();
         assertThat(payload.balance()).isZero();
         assertThat(payload.children()).isEmpty();
         assertThat(payload.tasks()).isEmpty();
@@ -119,7 +120,8 @@ class FamilyServiceImplTest {
         OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", 10);
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        FamilyDataResponse payload = ((OperationResult.Success<FamilyDataResponse>) result).value();
+        OperationResult.Success<?> success2 = (OperationResult.Success<?>) result;
+        FamilyDataResponse payload = (FamilyDataResponse) success2.value();
         assertThat(payload.balance()).isEqualTo(100);
         assertThat(payload.tasks()).hasSize(1);
         assertThat(payload.shop()).hasSize(1);
@@ -190,7 +192,10 @@ class FamilyServiceImplTest {
     void searchByNicknameReturnsEmptyForShortQueries() {
         OperationResult<List<FriendDto>> result = service.searchByNickname("ab", 10);
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        assertThat(((OperationResult.Success<List<FriendDto>>) result).value()).isEmpty();
+        OperationResult.Success<?> success3 = (OperationResult.Success<?>) result;
+        Object val3 = success3.value();
+        assertThat(val3).isInstanceOf(List.class);
+        assertThat(((List<?>) val3)).isEmpty();
     }
 
     @Test
@@ -201,8 +206,12 @@ class FamilyServiceImplTest {
         OperationResult<List<FriendDto>> result = service.searchByNickname("alice", 10);
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        List<FriendDto> payload = ((OperationResult.Success<List<FriendDto>>) result).value();
-        assertThat(payload).singleElement().satisfies(friend -> {
+        OperationResult.Success<?> success4 = (OperationResult.Success<?>) result;
+        Object val4 = success4.value();
+        assertThat(val4).isInstanceOf(List.class);
+        List<?> payload = (List<?>) val4;
+        assertThat(payload).singleElement().satisfies(friendObj -> {
+            FriendDto friend = (FriendDto) friendObj;
             assertThat(friend.id()).isEqualTo(11);
             assertThat(friend.nickname()).isEqualTo("Alice 2");
             assertThat(friend.balance()).isEqualTo(17);
@@ -234,9 +243,12 @@ class FamilyServiceImplTest {
         OperationResult<List<FriendDto>> result = service.getFriendsData(10);
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        List<FriendDto> payload = ((OperationResult.Success<List<FriendDto>>) result).value();
+        OperationResult.Success<?> success5 = (OperationResult.Success<?>) result;
+        Object val5 = success5.value();
+        assertThat(val5).isInstanceOf(List.class);
+        List<?> payload = (List<?>) val5;
         assertThat(payload).hasSize(1);
-        assertThat(payload.getFirst().nickname()).isEqualTo("A");
+        assertThat(((FriendDto) payload.get(0)).nickname()).isEqualTo("A");
     }
 
     @Test
@@ -269,36 +281,43 @@ class FamilyServiceImplTest {
         );
 
         doReturn(current).doReturn(previous).doReturn(monthly)
-            .when(historyRepository).list(anyString(), (Object[]) any());
+            .when(historyRepository).list(anyString(), any(Object[].class));
 
         List<TaskEntity> tasks = List.of(
             TaskEntity.builder().familyId(1).childId(10).taskId(1001L).name("Read").coins(5).build(),
             TaskEntity.builder().familyId(1).childId(10).taskId(1002L).name("Clean").coins(7).build()
         );
         doReturn(tasks).doReturn(tasks)
-            .when(taskRepository).list(anyString(), (Object[]) any());
+            .when(taskRepository).list(anyString(), any(Object[].class));
 
         List<ShopItemEntity> items = List.of(
             ShopItemEntity.builder().familyId(1).childId(10).itemId(2001L).name("Toy").price(3).build()
         );
-        doReturn(items).when(shopItemRepository).list(anyString(), (Object[]) any());
+        doReturn(items).when(shopItemRepository).list(anyString(), any(Object[].class));
 
         OperationResult<Map<String, Object>> result = service.getAnalyticsData("fam-1", null, "month");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        Map<String, Object> payload = ((OperationResult.Success<Map<String, Object>>) result).value();
+        OperationResult.Success<?> success6 = (OperationResult.Success<?>) result;
+        Object val6 = success6.value();
+        assertThat(val6).isInstanceOf(Map.class);
+        Map<?, ?> payload = (Map<?, ?>) val6;
 
-        assertThat(payload).containsKey("summary");
-        assertThat(payload).containsKey("topTasks");
-        assertThat(payload).containsKey("trends");
-        assertThat(payload).containsKey("recommendations");
+        assertThat(payload.containsKey("summary")).isTrue();
+        assertThat(payload.containsKey("topTasks")).isTrue();
+        assertThat(payload.containsKey("trends")).isTrue();
+        assertThat(payload.containsKey("recommendations")).isTrue();
 
-        Map<String, Integer> summary = (Map<String, Integer>) payload.get("summary");
-        assertThat(summary).containsKey("totalEarned");
-        assertThat(summary).containsKey("totalSpent");
-        assertThat(summary).containsKey("netChange");
+        Object summaryObj = payload.get("summary");
+        assertThat(summaryObj).isInstanceOf(Map.class);
+        Map<?, ?> summary = (Map<?, ?>) summaryObj;
+        assertThat(summary.containsKey("totalEarned")).isTrue();
+        assertThat(summary.containsKey("totalSpent")).isTrue();
+        assertThat(summary.containsKey("netChange")).isTrue();
 
-        List<?> recommendations = (List<?>) payload.get("recommendations");
+        Object recommendationsObj = payload.get("recommendations");
+        assertThat(recommendationsObj).isInstanceOf(List.class);
+        List<?> recommendations = (List<?>) recommendationsObj;
         assertThat(recommendations).hasSizeLessThanOrEqualTo(3);
     }
 
@@ -318,7 +337,8 @@ class FamilyServiceImplTest {
         OperationResult<PaginatedHistory> result = service.getHistory(10, 1, 20);
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        PaginatedHistory payload = ((OperationResult.Success<PaginatedHistory>) result).value();
+        OperationResult.Success<?> success7 = (OperationResult.Success<?>) result;
+        PaginatedHistory payload = (PaginatedHistory) success7.value();
         assertThat(payload.items()).hasSize(1);
         assertThat(payload.total()).isEqualTo(1);
     }
@@ -347,7 +367,8 @@ class FamilyServiceImplTest {
         OperationResult<PaginatedRequests> result = service.getRequests("fam-1", 1, 20);
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        PaginatedRequests payload = ((OperationResult.Success<PaginatedRequests>) result).value();
+        OperationResult.Success<?> success8 = (OperationResult.Success<?>) result;
+        PaginatedRequests payload = (PaginatedRequests) success8.value();
         assertThat(payload.items()).hasSize(1);
         assertThat(payload.total()).isEqualTo(1);
     }

@@ -18,7 +18,7 @@ class GlobalExceptionMapperTest {
 
     @Test
     void mapsConstraintViolationToBadRequest() {
-        ConstraintViolation<Object> violation = mock(ConstraintViolation.class);
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
         Path propertyPath = mock(Path.class);
         when(propertyPath.toString()).thenReturn("email");
         when(violation.getPropertyPath()).thenReturn(propertyPath);

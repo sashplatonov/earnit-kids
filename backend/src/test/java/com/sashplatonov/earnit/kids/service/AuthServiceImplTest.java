@@ -43,7 +43,8 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "admin123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        OperationResult.Success<?> success1 = (OperationResult.Success<?>) result;
+        AuthPayload payload = (AuthPayload) success1.value();
         assertThat(payload.role()).isEqualTo("super_admin");
         assertThat(payload.email()).isEqualTo("admin@test.com");
     }
@@ -53,7 +54,8 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "wrong");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
-        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+        OperationResult.Failure<?> failure1 = (OperationResult.Failure<?>) result;
+        assertThat(failure1.message())
             .contains("Неверный пароль");
     }
 
@@ -66,7 +68,8 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("user@test.com", "pin123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        OperationResult.Success<?> success2 = (OperationResult.Success<?>) result;
+        AuthPayload payload = (AuthPayload) success2.value();
         assertThat(payload.role()).isEqualTo("admin");
         assertThat(payload.familyId()).isEqualTo("fam_1");
     }
@@ -79,7 +82,8 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("blocked@test.com", "pin123");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
-        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+        OperationResult.Failure<?> failure2 = (OperationResult.Failure<?>) result;
+        assertThat(failure2.message())
             .isEqualTo("Аккаунт заблокирован");
     }
 
@@ -105,7 +109,8 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateChild("abc123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        OperationResult.Success<?> success3 = (OperationResult.Success<?>) result;
+        AuthPayload payload = (AuthPayload) success3.value();
         assertThat(payload.role()).isEqualTo("child");
         assertThat(payload.childId()).isEqualTo(10);
         assertThat(payload.childName()).isEqualTo("Alice");
@@ -191,7 +196,8 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = serviceWithVerification.authenticateAdmin("user@test.com", "pin123");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
-        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+        OperationResult.Failure<?> failure3 = (OperationResult.Failure<?>) result;
+        assertThat(failure3.message())
             .contains("Email не подтвержден");
     }
 
