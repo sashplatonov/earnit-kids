@@ -6,7 +6,7 @@ project:
   environment_id: "oFEbLoDypd5VekZPYkAJN"
 
 git:
-  repository: "git@github.com:sashplatonov/coins-kids-shop.git"
+  repository: "git@github.com:sashplatonov/earnit-kids.git"
   branch: "main"
   provider: "github"
 

@@ -35,3 +35,6 @@ desktop.ini
 # ── Logs ──────────────────────────────────────
 *.log
 logs/
+
+# Ignore IDE / build outputs
+/out/
