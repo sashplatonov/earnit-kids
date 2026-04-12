@@ -65,7 +65,7 @@ public class JwtService {
                 return Optional.empty();
             }
             return Optional.of(payload);
-        } catch (IllegalArgumentException | JsonProcessingException | GeneralSecurityException _) {
+        } catch (IllegalArgumentException | JsonProcessingException | GeneralSecurityException ex) {
             return Optional.empty();
         }
     }

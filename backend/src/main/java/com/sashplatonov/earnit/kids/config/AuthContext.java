@@ -37,7 +37,7 @@ public record AuthContext(
         if (value instanceof String s && !s.isBlank()) {
             try {
                 return Integer.parseInt(s);
-            } catch (NumberFormatException _) {
+            } catch (NumberFormatException ignored) {
                 return null;
             }
         }
