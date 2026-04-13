@@ -108,4 +108,11 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
             .page(0, 20)
             .list();
     }
+
+    public List<ChildEntity> findByChildIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return find("id IN ?1", ids).list();
+    }
 }

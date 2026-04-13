@@ -32,15 +32,15 @@ public class CookieBuilder {
         var roleFlags = "Max-Age=" + maxAge + "; Path=/; " + secureSegment;
 
         var cookies = new ArrayList<String>();
-        cookies.add("app_auth=" + token + "; " + authFlags + "SameSite=Strict");
+        cookies.add("app_auth=" + token + "; " + authFlags + "SameSite=Lax");
         cookies.add("app_role=" + role + "; " + roleFlags + "SameSite=Strict");
         cookies.add("csrf_token=" + csrfToken + "; " + roleFlags + "SameSite=Strict");
 
         if (familyId != null) {
-            cookies.add("family_id=" + familyId + "; " + authFlags + "SameSite=Strict");
+            cookies.add("family_id=" + familyId + "; " + authFlags + "SameSite=Lax");
         }
         if (childId != null) {
-            cookies.add("child_id=" + childId + "; " + authFlags + "SameSite=Strict");
+            cookies.add("child_id=" + childId + "; " + authFlags + "SameSite=Lax");
         }
         return cookies;
     }

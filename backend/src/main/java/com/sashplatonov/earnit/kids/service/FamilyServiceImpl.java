@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
@@ -40,8 +41,10 @@ import java.util.Optional;
 import java.util.Set;
 
 @ApplicationScoped
+@Slf4j
 public final class FamilyServiceImpl implements FamilyService {
     private static final Set<String> VALID_THEMES = Set.of("mint", "ocean", "sun", "coral", "cosmos");
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
@@ -102,9 +105,8 @@ public final class FamilyServiceImpl implements FamilyService {
             .map(request -> toRequestDto(request))
             .toList();
 
-        List<FriendDto> friends = familyDataRepository.getFriendChildIds(activeChild.getId()).stream()
-            .map(fid -> childRepository.findByIdOptional(fid).orElse(null))
-            .filter(java.util.Objects::nonNull)
+        var friendIds = familyDataRepository.getFriendChildIds(activeChild.getId());
+        List<FriendDto> friends = childRepository.findByChildIds(friendIds).stream()
             .map(f -> new FriendDto(f.getId(), f.getName(), f.getBalance()))
             .toList();
 
@@ -133,6 +135,7 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<ChildInfo> createChild(String familyId, String childName) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
+            log.warn("createChild failed: family not found familyId={}", familyId);
             return OperationResult.failure("Семья не найдена");
         }
         int familyDbId = dbIdOpt.get();
@@ -149,10 +152,12 @@ public final class FamilyServiceImpl implements FamilyService {
 
         Optional<ChildEntity> childOpt = childRepository.createChild(familyDbId, childName);
         if (childOpt.isEmpty()) {
+            log.error("createChild failed: repository returned empty familyId={}", familyId);
             return OperationResult.failure("Ошибка создания");
         }
 
         ChildEntity child = childOpt.get();
+        log.info("Child created childId={} familyId={}", child.getId(), familyId);
         return OperationResult.success(new ChildInfo(child.getId(), child.getName(), child.getToken()));
     }
 
@@ -160,15 +165,18 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<Void> deleteChild(String familyId, int childId) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
+            log.warn("deleteChild failed: family not found familyId={} childId={}", familyId, childId);
             return OperationResult.failure("Семья не найдена");
         }
 
         var childOpt = childRepository.findByIdOptional(childId);
         if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), dbIdOpt.get())) {
+            log.warn("deleteChild failed: child not found or family mismatch familyId={} childId={}", familyId, childId);
             return OperationResult.failure("Ребенок не найден");
         }
 
         childRepository.deleteChild(childId);
+        log.info("Child deleted childId={} familyId={}", childId, familyId);
         return OperationResult.success(null);
     }
 
@@ -248,12 +256,10 @@ public final class FamilyServiceImpl implements FamilyService {
 
     @Override
     public OperationResult<List<FriendDto>> getFriendsData(int childId) {
-        List<FriendDto> friends = familyDataRepository.getFriendChildIds(childId).stream()
-            .map(fid -> childRepository.findByIdOptional(fid).orElse(null))
-            .filter(java.util.Objects::nonNull)
+        var friendIds = familyDataRepository.getFriendChildIds(childId);
+        List<FriendDto> friends = childRepository.findByChildIds(friendIds).stream()
             .map(friend -> new FriendDto(friend.getId(), friend.getName(), friend.getBalance()))
             .toList();
-
         return OperationResult.success(friends);
     }
 
@@ -294,11 +300,12 @@ public final class FamilyServiceImpl implements FamilyService {
 
     @Override
     public OperationResult<PaginatedHistory> getHistory(int childId, int page, int limit) {
-        int offset = (page - 1) * limit;
-        List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, limit, offset);
+        int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
+        int offset = (page - 1) * effectiveLimit;
+        List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, effectiveLimit, offset);
         int total = familyDataRepository.getHistoryCount(childId);
         List<HistoryEntryDto> items = rows.stream().map(historyEntry -> toHistoryDto(historyEntry)).toList();
-        return OperationResult.success(new PaginatedHistory(items, total, page, limit));
+        return OperationResult.success(new PaginatedHistory(items, total, page, effectiveLimit));
     }
 
     @Override
@@ -308,11 +315,12 @@ public final class FamilyServiceImpl implements FamilyService {
             return OperationResult.failure("Семья не найдена");
         }
         int familyDbId = dbIdOpt.get();
-        int offset = (page - 1) * limit;
-        List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, limit, offset);
+        int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
+        int offset = (page - 1) * effectiveLimit;
+        List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, effectiveLimit, offset);
         int total = familyDataRepository.getRequestsCount(familyDbId);
         List<RequestDto> items = rows.stream().map(request -> toRequestDto(request)).toList();
-        return OperationResult.success(new PaginatedRequests(items, total, page, limit));
+        return OperationResult.success(new PaginatedRequests(items, total, page, effectiveLimit));
     }
 
     @Override

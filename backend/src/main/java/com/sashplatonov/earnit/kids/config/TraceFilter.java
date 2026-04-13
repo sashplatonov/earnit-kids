@@ -36,7 +36,7 @@ public class TraceFilter implements ContainerRequestFilter, ContainerResponseFil
                 responseContext.getHeaders().add("X-Trace-Id", trace);
             }
         } finally {
-            MDC.remove(TRACE_ID);
+            MDC.clear();
         }
     }
 }

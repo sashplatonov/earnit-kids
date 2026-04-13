@@ -23,6 +23,7 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class JwtCompatVerifier {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
+    private static final ObjectMapper SIGN_MAPPER = new ObjectMapper();
 
     private final JwtCompatibilityConfig jwtCompatibilityConfig;
     private final ObjectMapper objectMapper;
@@ -87,9 +88,8 @@ public class JwtCompatVerifier {
             var effectivePayload = new LinkedHashMap<>(payload);
             effectivePayload.put("exp", Instant.now().getEpochSecond() + expiresInSeconds);
 
-            var mapper = new ObjectMapper();
-            var headerJson = mapper.writeValueAsString(Map.of("alg", "HS256", "typ", "JWT"));
-            var payloadJson = mapper.writeValueAsString(effectivePayload);
+            var headerJson = SIGN_MAPPER.writeValueAsString(Map.of("alg", "HS256", "typ", "JWT"));
+            var payloadJson = SIGN_MAPPER.writeValueAsString(effectivePayload);
             var encodedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
             var encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
             var signatureInput = encodedHeader + "." + encodedPayload;

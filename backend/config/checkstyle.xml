@@ -20,7 +20,7 @@
     <module name="TreeWalker">
         <!-- Project Java rules: forbid Javadoc and nested types -->
         <module name="RegexpSinglelineJava">
-            <property name="format" value="/\\*\\*"/>
+            <property name="format" value="/\*\*"/>
             <property name="message" value="Javadoc comments are forbidden by project policy. Use // comments instead."/>
             <property name="ignoreComments" value="false"/>
             <property name="severity" value="error"/>
@@ -35,7 +35,7 @@
 
         <!-- Block comments (non-Javadoc) are forbidden by project policy -->
         <module name="RegexpSinglelineJava">
-            <property name="format" value="/\\*(?!\\*)"/>
+            <property name="format" value="/\*(?!\*)"/>
             <property name="message" value="Block comments are forbidden by project policy. Use 'EXPLAIN:' single-line comments for complex algorithms or bugfixes."/>
             <property name="ignoreComments" value="false"/>
             <property name="severity" value="error"/>

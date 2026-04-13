@@ -116,7 +116,7 @@ class FamilyServiceImplTest {
         when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of(history));
         when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11));
-        when(childRepository.findByIdOptional(11)).thenReturn(Optional.of(child2));
+        when(childRepository.findByChildIds(List.of(11))).thenReturn(List.of(child2));
 
         OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", 10);
 
@@ -238,8 +238,7 @@ class FamilyServiceImplTest {
     @Test
     void getFriendsData_existingFriends_mapsProfiles() {
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11, 12));
-        when(childRepository.findByIdOptional(11)).thenReturn(Optional.of(child(11, 2, "A", 4)));
-        when(childRepository.findByIdOptional(12)).thenReturn(Optional.empty());
+        when(childRepository.findByChildIds(List.of(11, 12))).thenReturn(List.of(child(11, 2, "A", 4)));
 
         OperationResult<List<FriendDto>> result = service.getFriendsData(10);
 
