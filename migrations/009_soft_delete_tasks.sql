@@ -1,2 +1,0 @@
-ALTER TABLE tasks ADD COLUMN is_deleted BOOLEAN DEFAULT false;
-ALTER TABLE shop_items ADD COLUMN is_deleted BOOLEAN DEFAULT false;

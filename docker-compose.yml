@@ -1,22 +1,49 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: web/Dockerfile
     env_file:
       - .env
     environment:
-      - PORT=3000
-      - DB_SSL=false
-    expose:
-      - "3000"
+      - PORT=${WEB_INTERNAL_PORT:-3000}
+      - BACKEND_URL=http://backend:${BACKEND_INTERNAL_PORT:-8080}
+      - PUBLIC_BASE_URL=${APP_URL:-http://localhost:${WEB_PORT:-3000}}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:${WEB_INTERNAL_PORT:-3000}"
     healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1" ]
+      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:${WEB_INTERNAL_PORT:-3000}/healthz || exit 1" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 20s
     restart: unless-stopped
-    networks:
-      - dokploy-ipv6
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - QUARKUS_HTTP_PORT=${BACKEND_INTERNAL_PORT:-8080}
+      - FRONTEND_URL=${APP_URL:-http://localhost:${WEB_PORT:-3000}}
+      - JWT_SECRET=${JWT_SECRET:-fallback-secret-for-development}
+    ports:
+      - "${BACKEND_PORT:-8080}:${BACKEND_INTERNAL_PORT:-8080}"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:${BACKEND_INTERNAL_PORT:-8080}/q/health/ready || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   db:
     image: postgres:18-alpine
@@ -28,8 +55,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - earnit_kids_postgres_data:/var/lib/postgresql
-    expose:
-      - "5432"
+    ports:
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "postgres" ]
       interval: 10s
@@ -39,7 +66,3 @@ services:
 
 volumes:
   earnit_kids_postgres_data:
-
-networks:
-  dokploy-ipv6:
-    external: true

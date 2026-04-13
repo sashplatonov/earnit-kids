@@ -1,31 +1,43 @@
-*.log
-logs/
-
-# Environment and secrets
+# ── Environment ────────────────────────────────
 .env
-.env.production
 .env.local
 .env.*.local
 
-# Dependencies
-node_modules/
-mobile/node_modules/
-mobile/.npm-cache/
+# ── Backend (Quarkus / Maven) ──────────────────
+backend/target/
+backend/**/*.class
+*.jar
+*.war
+*.ear
 
-# Build and test artifacts
-.playwright-browsers/
-playwright-report/
-test-results/
-coverage/
-public/dist/
+# ── Frontend (Node / Web) ─────────────────────
+web/node_modules/
+web/.next/
+web/dist/
+web/build/
+web/.nuxt/
+web/.output/
+web/coverage/
+web/.turbo/
 
-# Local runtime/temp files
-tmp/
-.tmp/
-
-# Tooling and editor state
-.DS_Store
+# ── IDE ───────────────────────────────────────
 .idea/
+*.iml
 .vscode/
-.claude/
-.codex/
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ──────────────────────────────────────
+*.log
+logs/
+
+# Ignore IDE / build outputs
+/out/
+
+# Prevent accidental backup files
+*.bak

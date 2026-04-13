@@ -1,0 +1,81 @@
+package com.sashplatonov.earnit.kids.config;
+
+import com.sashplatonov.earnit.kids.support.TestConfigFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CookieBuilderTest {
+
+    private JwtService jwtService;
+
+    @BeforeEach
+    void setUp() {
+        jwtService = new JwtService(
+            TestConfigFactory.jwtConfig("test-secret-key-for-unit-tests"),
+            new com.fasterxml.jackson.databind.ObjectMapper());
+    }
+
+    @Test
+    void buildAuthCookies_developmentProfile_includesExpectedCookies() {
+        CookieBuilder builder = new CookieBuilder(
+            jwtService,
+            TestConfigFactory.appConfig(false, null, null, true, true));
+
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10, 3600);
+
+        assertThat(cookies).hasSize(5);
+        assertThat(cookies.get(0)).contains("app_auth=").contains("HttpOnly").contains("SameSite=Lax");
+        assertThat(cookies.get(1)).contains("app_role=admin");
+        assertThat(cookies.get(2)).contains("csrf_token=").contains("SameSite=Strict");
+        assertThat(cookies.get(3)).contains("family_id=fam-1");
+        assertThat(cookies.get(4)).contains("child_id=10");
+    }
+
+    @Test
+    void buildAuthCookies_productionProfile_addsSecureFlag() {
+        CookieBuilder builder = new CookieBuilder(
+            jwtService,
+            TestConfigFactory.appConfig(true, null, null, true, true));
+
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, 3600);
+
+        assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).contains("Secure"));
+    }
+
+    @Test
+    void buildAuthCookies_signedToken_canBeVerified() {
+        CookieBuilder builder = new CookieBuilder(
+            jwtService,
+            TestConfigFactory.appConfig(false, null, null, true, true));
+
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5, 3600);
+        String appAuth = cookies.stream().filter(v -> v.startsWith("app_auth=")).findFirst().orElseThrow();
+        String token = appAuth.substring("app_auth=".length(), appAuth.indexOf(';'));
+
+        var payload = jwtService.verifyToken(token);
+
+        assertThat(payload).isPresent();
+        assertThat(payload.orElseThrow()).containsEntry("email", "a@test.com");
+        assertThat(payload.orElseThrow()).containsEntry("role", "admin");
+        assertThat(payload.orElseThrow()).containsEntry("familyId", "fam-1");
+        assertThat(payload.orElseThrow()).containsEntry("childId", 5);
+        assertThat(payload.orElseThrow()).containsKey("csrfToken");
+    }
+
+    @Test
+    void buildLogoutCookies_anyProfile_clearsAllKnownCookies() {
+        CookieBuilder builder = new CookieBuilder(
+            jwtService,
+            TestConfigFactory.appConfig(false, null, null, true, true));
+
+        List<String> cookies = builder.buildLogoutCookies();
+
+        assertThat(cookies).hasSize(5);
+        assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).contains("Max-Age=0"));
+    }
+}

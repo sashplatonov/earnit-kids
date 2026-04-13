@@ -1,4 +1,5 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "chatgpt.openOnStartup": true
+    "chatgpt.openOnStartup": true,
+    "java.compile.nullAnalysis.mode": "automatic"
 }
