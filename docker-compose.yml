@@ -28,9 +28,10 @@ services:
       dockerfile: backend/Dockerfile
     env_file:
       - .env
-    depends_on:
-      db:
-        condition: service_healthy
+    # When the DB is optional (it's defined under the "db" profile),
+    # avoid a hard depends_on here so composing without the profile works.
+    # To start DB and make the backend wait for it, run with the profile
+    # and/or use a startup/wait-for script inside the backend container.
     environment:
       - QUARKUS_HTTP_PORT=${BACKEND_INTERNAL_PORT:-8080}
       - FRONTEND_URL=${APP_URL:-http://localhost:${WEB_PORT:-3000}}
