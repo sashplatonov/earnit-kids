@@ -22,6 +22,8 @@ services:
       retries: 3
       start_period: 20s
     restart: unless-stopped
+    networks:
+      - edge
 
   backend:
     build:
@@ -49,6 +51,10 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
+    networks:
+      - backend
+      - edge
+      - dokploy-ipv6
 
   db:
     image: postgres:18-alpine
@@ -68,6 +74,16 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
+    networks:
+      - backend
+      
 volumes:
   earnit_kids_postgres_data:
+
+networks:
+  backend:
+    driver: bridge
+  edge:
+    driver: bridge
+  dokploy-ipv6:
+    external: true
