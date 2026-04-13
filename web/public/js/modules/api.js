@@ -20,6 +20,9 @@ async function fetchWithCsrf(url, options = {}) {
         ...options
     });
 }
+async function parseJsonSafe(response) {
+    return response.json();
+}
 export const API_URL = '/api/data';
 export const LOGIN_URL = '/api/login';
 export const LOGOUT_URL = '/api/logout';
@@ -32,7 +35,7 @@ export async function loadDataFromServer() {
     try {
         const response = await fetchWithCsrf('/api/data');
         if (response.ok) {
-            return await response.json();
+            return await parseJsonSafe(response);
         }
     } catch (err) {
         console.error('Failed to load from server:', err);
@@ -44,7 +47,7 @@ export async function loadBaseData() {
     try {
         const response = await fetchWithCsrf('/api/base-data');
         if (response.ok) {
-            return await response.json();
+            return await parseJsonSafe(response);
         }
     } catch (err) {
         console.error('Failed to load base data:', err);
@@ -63,7 +66,7 @@ export async function saveDataToServer(data) {
         if (!response.ok) {
             let errorDetails = '';
             try {
-                const payload = await response.clone().json();
+                const payload = await parseJsonSafe(response.clone());
                 errorDetails = payload?.error ? `: ${payload.error}` : '';
             } catch (_) {
                 // Ignore parse errors for non-JSON responses.
@@ -95,7 +98,7 @@ export async function registerPushTokenOnServer(payload) {
             body: JSON.stringify(payload)
         });
         if (response.ok) return { success: true };
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         return { success: false, error: 'Network error' };
     }
@@ -109,7 +112,7 @@ export async function unregisterPushTokenOnServer(token) {
             body: JSON.stringify({ token })
         });
         if (response.ok) return { success: true };
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         return { success: false, error: 'Network error' };
     }
@@ -125,7 +128,7 @@ export async function changePin(oldPin, newPin, role) {
         if (response.ok) {
             return { success: true };
         } else {
-            const data = await response.json();
+            const data = await parseJsonSafe(response);
             return { success: false, error: data.error };
         }
     } catch (err) {
@@ -141,10 +144,10 @@ export async function login(pin) {
             body: JSON.stringify({ pin })
         });
         if (response.ok) {
-            const data = await response.json();
+            const data = await parseJsonSafe(response);
             return { success: true, role: data.role };
         } else {
-            const data = await response.json();
+            const data = await parseJsonSafe(response);
             return { success: false, error: data.error, status: response.status };
         }
     } catch (err) {
@@ -156,7 +159,7 @@ export async function regenerateChildToken(childId) {
     try {
         const response = await fetchWithCsrf(`/api/children/${childId}/regenerate-token`, { method: 'POST' });
         if (response.ok) {
-            return await response.json();
+            return await parseJsonSafe(response);
         }
     } catch (err) {
         console.error('Failed to regenerate token:', err);
@@ -171,7 +174,7 @@ export async function addChild(name) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name })
         });
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         return { success: false, error: 'Network error' };
     }
@@ -180,7 +183,7 @@ export async function addChild(name) {
 export async function deleteChild(childId) {
     try {
         const response = await fetchWithCsrf(`/api/children/${childId}`, { method: 'DELETE' });
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         return { success: false, error: 'Network error' };
     }
@@ -189,7 +192,7 @@ export async function deleteChild(childId) {
 export async function getChildLink(childId) {
     try {
         const response = await fetchWithCsrf(`/api/children/${childId}/link`);
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         return { success: false, error: 'Network error' };
     }
@@ -202,7 +205,7 @@ export async function updateChildSettings(familyId, childId, settings) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(settings)
         });
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         console.error('Failed to update child settings:', err);
         return { success: false, error: 'Network error' };
@@ -216,7 +219,7 @@ export async function updateNickname(nickname) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nickname })
         });
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         console.error('Failed to update nickname:', err);
         return { success: false, error: 'Ошибка сети' };
@@ -227,7 +230,7 @@ export async function searchUsers(nickname) {
     try {
         const response = await fetchWithCsrf(`/api/search-user?nickname=${encodeURIComponent(nickname)}`);
         if (response.ok) {
-            return await response.json();
+            return await parseJsonSafe(response);
         }
     } catch (err) {
         console.error('Failed to search users:', err);
@@ -242,7 +245,7 @@ export async function addFriend(friendId) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ friendId })
         });
-        return await response.json();
+        return await parseJsonSafe(response);
     } catch (err) {
         console.error('Failed to add friend:', err);
         return { success: false, error: 'Ошибка сети' };
@@ -253,7 +256,7 @@ export async function loadFriendsList() {
     try {
         const response = await fetchWithCsrf('/api/friends-list');
         if (response.ok) {
-            return await response.json();
+            return await parseJsonSafe(response);
         }
     } catch (err) {
         console.error('Failed to load friends list:', err);
@@ -295,7 +298,7 @@ export async function fetchAnalyticsData(timeframe = 'month', childId = null) {
         if (childId) url += `&childId=${childId}`;
         const response = await fetchWithCsrf(url);
         if (response.ok) {
-            return await response.json();
+            return await parseJsonSafe(response);
         }
     } catch (err) {
         console.error('Failed to fetch analytics:', err);

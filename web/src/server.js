@@ -22,6 +22,15 @@ const proxy = httpProxy.createProxyServer({
     secure: false
 });
 
+// The Node.js edge service handles gzip compression for clients via the
+// compressionMiddleware. Ask the backend for uncompressed responses so we
+// never receive an already-compressed body that the middleware would
+// compress a second time, resulting in a double-gzip that browsers cannot
+// decode.
+proxy.on('proxyReq', (proxyReq) => {
+    proxyReq.setHeader('Accept-Encoding', 'identity');
+});
+
 function writeJson(res, payload, status = 200) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(payload));
