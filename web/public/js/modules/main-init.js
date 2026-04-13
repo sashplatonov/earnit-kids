@@ -47,7 +47,7 @@ export async function initializeFromServer() {
         const localChildId = localStorage.getItem('earnit-last-child-id');
         const preferredId = serverChildId || localChildId;
         const childToSelect = state.children.find(c => c.id == preferredId) || state.children[0];
-        switchChild(childToSelect.id);
+        await switchChild(childToSelect.id, { persistPreference: false });
     }
     return data;
 }

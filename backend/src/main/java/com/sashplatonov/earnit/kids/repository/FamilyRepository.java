@@ -42,6 +42,12 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
             .map(FamilyEntity::getId);
     }
 
+    public Optional<Integer> getLastSelectedChildId(String familyId) {
+        return find("familyId = ?1", familyId)
+            .firstResultOptional()
+            .map(FamilyEntity::getLastSelectedChildId);
+    }
+
     @Transactional
     public boolean updatePassword(String familyId, String newPassword) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);

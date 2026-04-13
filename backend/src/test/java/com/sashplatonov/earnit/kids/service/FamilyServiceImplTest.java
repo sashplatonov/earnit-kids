@@ -32,7 +32,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -91,6 +90,7 @@ class FamilyServiceImplTest {
         ChildEntity child1 = child(10, 1, "Alice", 100);
         ChildEntity child2 = child(11, 1, "Bob", 50);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
 
         TaskEntity task = TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5).build();
@@ -130,6 +130,7 @@ class FamilyServiceImplTest {
         assertThat(payload.requests()).hasSize(1);
         assertThat(payload.friends()).hasSize(1);
         assertThat(payload.children()).hasSize(2);
+        assertThat(payload.lastSelectedChildId()).isEqualTo(11);
     }
 
     @Test
@@ -381,10 +382,20 @@ class FamilyServiceImplTest {
         assertThat(service.updatePreference("fam-1", "unknown", 1))
             .isInstanceOf(OperationResult.Failure.class);
 
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(5)).thenReturn(Optional.of(child(5, 1, "Alice", 0)));
+
         assertThat(service.updatePreference("fam-1", "lastSelectedChildId", 5))
+            .isInstanceOf(OperationResult.Success.class);
+        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", "5"))
             .isInstanceOf(OperationResult.Success.class);
         assertThat(service.updatePreference("fam-1", "lastSelectedChildId", null))
             .isInstanceOf(OperationResult.Success.class);
+        when(childRepository.findByIdOptional(12)).thenReturn(Optional.of(child(12, 2, "Other", 0)));
+        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", 12))
+            .isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", "bad"))
+            .isInstanceOf(OperationResult.Failure.class);
     }
 
     @Test

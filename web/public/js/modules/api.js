@@ -31,9 +31,12 @@ export const PUSH_REGISTER_URL = '/api/push/register';
 export const PUSH_UNREGISTER_URL = '/api/push/unregister';
 
 // ...existing code...
-export async function loadDataFromServer() {
+export async function loadDataFromServer(childId = null) {
     try {
-        const response = await fetchWithCsrf('/api/data');
+        const query = childId === null || childId === undefined
+            ? ''
+            : `?childId=${encodeURIComponent(childId)}`;
+        const response = await fetchWithCsrf(`/api/data${query}`);
         if (response.ok) {
             return await parseJsonSafe(response);
         }
@@ -269,7 +272,7 @@ export async function savePreference(key, value) {
         const response = await fetchWithCsrf('/api/preferences', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ [key]: value })
+            body: JSON.stringify({ key, value })
         });
         return response.ok;
     } catch (err) {

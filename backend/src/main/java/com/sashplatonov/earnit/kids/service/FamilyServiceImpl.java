@@ -75,6 +75,7 @@ public final class FamilyServiceImpl implements FamilyService {
             return OperationResult.failure("Семья не найдена");
         }
         int familyDbId = dbIdOpt.get();
+        Integer persistedChildId = familyRepository.getLastSelectedChildId(familyId).orElse(null);
 
         List<ChildEntity> children = childRepository.getChildren(familyDbId);
         if (children.isEmpty()) {
@@ -83,9 +84,15 @@ public final class FamilyServiceImpl implements FamilyService {
                 true, List.of(), null, null, null, null));
         }
 
-        ChildEntity activeChild = childId != null
-            ? children.stream().filter(c -> Objects.equals(c.getId(), childId)).findFirst().orElse(children.getFirst())
+        Integer preferredChildId = childId != null ? childId : persistedChildId;
+        ChildEntity activeChild = preferredChildId != null
+            ? children.stream().filter(c -> Objects.equals(c.getId(), preferredChildId)).findFirst().orElse(children.getFirst())
             : children.getFirst();
+        Integer resolvedLastSelectedChildId = children.stream()
+            .map(ChildEntity::getId)
+            .filter(id -> Objects.equals(id, persistedChildId))
+            .findFirst()
+            .orElse(activeChild.getId());
 
         List<TaskDto> tasks = familyDataRepository.getTasks(activeChild.getId()).stream()
             .map(t -> new TaskDto(t.getTaskId(), t.getName(), t.getCoins(), t.getGroupName(),
@@ -117,7 +124,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         return OperationResult.success(
             new FamilyDataResponse(activeChild.getBalance(), tasks, shopItems, history, requests,
-                friends, true, childDtos, null, activeChild.getName(),
+                friends, true, childDtos, resolvedLastSelectedChildId, activeChild.getName(),
                 activeChild.getMonthlyLimit(), activeChild.getDailyCoinLimit()));
     }
 
@@ -344,11 +351,43 @@ public final class FamilyServiceImpl implements FamilyService {
     @Override
     public OperationResult<Void> updatePreference(String familyId, String key, Object value) {
         if ("lastSelectedChildId".equals(key)) {
-            Integer childId = value instanceof Number n ? n.intValue() : null;
+            Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
+            if (familyDbIdOpt.isEmpty()) {
+                return OperationResult.failure("Семья не найдена");
+            }
+
+            Integer childId = parseChildIdPreference(value);
+            if (value != null && childId == null) {
+                return OperationResult.failure("Некорректный идентификатор ребенка");
+            }
+            if (childId != null) {
+                Optional<ChildEntity> childOpt = childRepository.findByIdOptional(childId);
+                if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), familyDbIdOpt.get())) {
+                    return OperationResult.failure("Ребенок не найден");
+                }
+            }
+
             familyRepository.updateLastSelectedChild(familyId, childId);
             return OperationResult.success(null);
         }
         return OperationResult.failure("Неизвестная настройка: " + key);
+    }
+
+    private Integer parseChildIdPreference(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        if (value instanceof String s && !s.isBlank()) {
+            try {
+                return Integer.parseInt(s);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private List<HistoryEntryEntity> queryHistory(int familyDbId, Integer childId, Instant from, Instant to) {

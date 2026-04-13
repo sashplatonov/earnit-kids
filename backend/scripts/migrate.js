@@ -8,12 +8,9 @@
  *   npm run migrate status   - Show migration status
  */
 
-require('dotenv').config();
-
 const fs = require('fs');
 const path = require('path');
-const { pool, query } = require('../src/db/connection');
-const { getDatabaseSchema, quoteIdentifier } = require('../src/db/schema');
+const { pool, query, getDatabaseSchema, quoteIdentifier } = require('./lib/db');
 
 const MIGRATIONS_DIR = path.join(__dirname, '../migrations');
 const PROJECT_SCHEMA = getDatabaseSchema();

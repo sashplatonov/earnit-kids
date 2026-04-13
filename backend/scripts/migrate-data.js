@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 
-/**
- * Data Migration Script
- * Migrates existing JSON data to PostgreSQL
- * 
- * Usage: npm run migrate:data
- */
-
-require('dotenv').config();
-
 const fs = require('fs');
 const path = require('path');
-const { pool, query, getClient } = require('../src/db/connection');
+const { pool, getClient, getQualifiedTableName } = require('./lib/db');
+const { buildLegacyFamilySnapshot } = require('./lib/legacyFamilyData');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const FAMILIES_FILE = path.join(DATA_DIR, 'families.json');
 const FAMILIES_DATA_DIR = path.join(DATA_DIR, 'families');
+
+const TABLES = {
+    superAdmin: getQualifiedTableName('super_admin'),
+    families: getQualifiedTableName('families'),
+    children: getQualifiedTableName('children'),
+    tasks: getQualifiedTableName('tasks'),
+    shopItems: getQualifiedTableName('shop_items'),
+    history: getQualifiedTableName('history'),
+    requests: getQualifiedTableName('requests'),
+    friends: getQualifiedTableName('friends')
+};
 
 async function migrateSuperAdmin(client, superAdmin) {
     if (!superAdmin) {
@@ -23,235 +26,366 @@ async function migrateSuperAdmin(client, superAdmin) {
         return;
     }
 
-    // Use env vars if available, otherwise use JSON data
     const email = process.env.SUPER_ADMIN_EMAIL || superAdmin.email;
     const password = process.env.SUPER_ADMIN_PASSWORD || superAdmin.password;
+    if (!email || !password) {
+        console.log('  ⏭️  No super_admin credentials to migrate');
+        return;
+    }
 
     await client.query(
-        `INSERT INTO super_admin (email, password)
+        `INSERT INTO ${TABLES.superAdmin} (email, password)
          VALUES ($1, $2)
-         ON CONFLICT (email) DO UPDATE SET password = $2`,
+         ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password`,
         [email, password]
     );
     console.log('  ✅ Migrated super_admin');
 }
 
-async function migrateFamily(client, familyId, familyData) {
-    // Check if family already exists
+async function ensureFamily(client, familyId, familyRecord) {
     const existing = await client.query(
-        'SELECT id FROM families WHERE family_id = $1',
+        `SELECT id FROM ${TABLES.families} WHERE family_id = $1`,
         [familyId]
     );
-
     if (existing.rows.length > 0) {
-        console.log(`  ⏭️  Family ${familyId} already exists, skipping...`);
+        console.log(`  ♻️  Family ${familyId} already exists, syncing child-scoped data...`);
         return existing.rows[0].id;
     }
 
-    // Insert family
+    const email = familyRecord.email;
+    const adminPassword = familyRecord.admin_password || familyRecord.adminPassword;
+    if (!email || !adminPassword) {
+        throw new Error(`Family ${familyId} is missing email or admin_password in families.json`);
+    }
+
     const result = await client.query(
-        `INSERT INTO families (family_id, email, admin_password, child_token, monthly_limit, child_nickname, is_blocked, created_at, last_activity)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO ${TABLES.families}
+            (family_id, email, admin_password, is_blocked, is_verified, verification_token, created_at, last_activity)
+         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, NOW()), COALESCE($8, NOW()))
          RETURNING id`,
         [
             familyId,
-            familyData.email,
-            familyData.admin_password,
-            familyData.child_token || null,
-            familyData.monthly_limit || 10000,
-            familyData.child_nickname || '',
-            familyData.isBlocked || false,
-            familyData.created_at || new Date().toISOString(),
-            familyData.last_activity || new Date().toISOString()
+            email,
+            adminPassword,
+            familyRecord.isBlocked === true || familyRecord.is_blocked === true,
+            familyRecord.isVerified !== false && familyRecord.is_verified !== false,
+            familyRecord.verification_token || familyRecord.verificationToken || null,
+            familyRecord.created_at || null,
+            familyRecord.last_activity || null
         ]
     );
 
-    const dbId = result.rows[0].id;
-    console.log(`  ✅ Migrated family: ${familyId} (${familyData.email || 'no email'})`);
-    return dbId;
+    console.log(`  ✅ Migrated family: ${familyId} (${email})`);
+    return result.rows[0].id;
 }
 
-async function upsertFamilyBalance(client, dbId, balance) {
+async function syncChildren(client, familyDbId, snapshot) {
+    const existing = await client.query(
+        `SELECT id, name, token
+         FROM ${TABLES.children}
+         WHERE family_id = $1
+         ORDER BY id ASC`,
+        [familyDbId]
+    );
+    const unmatchedExisting = [...existing.rows];
+    const childIdByKey = new Map();
+
+    for (let index = 0; index < snapshot.children.length; index += 1) {
+        const child = snapshot.children[index];
+        const remainingSourceChildren = snapshot.children.length - index;
+        let matched = null;
+
+        if (child.token) {
+            matched = takeExistingChild(unmatchedExisting, (row) => row.token === child.token);
+        }
+        if (!matched) {
+            matched = takeExistingChild(unmatchedExisting, (row) => row.name.toLowerCase() === child.name.toLowerCase());
+        }
+        if (!matched && snapshot.children.length === 1 && existing.rows.length === 1) {
+            matched = takeExistingChild(unmatchedExisting, () => true);
+        }
+        if (!matched && unmatchedExisting.length === remainingSourceChildren) {
+            matched = unmatchedExisting.shift() || null;
+        }
+
+        if (matched) {
+            await client.query(
+                `UPDATE ${TABLES.children}
+                 SET name = $2,
+                     token = COALESCE($3, token),
+                     balance = $4,
+                     monthly_limit = $5,
+                     daily_coin_limit = $6,
+                     theme = $7
+                 WHERE id = $1`,
+                [
+                    matched.id,
+                    child.name,
+                    child.token,
+                    child.balance,
+                    child.monthlyLimit,
+                    child.dailyCoinLimit,
+                    child.theme
+                ]
+            );
+            childIdByKey.set(child.legacyKey, matched.id);
+            continue;
+        }
+
+        const inserted = await client.query(
+            `INSERT INTO ${TABLES.children}
+                (family_id, name, token, balance, monthly_limit, daily_coin_limit, theme, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, NOW()))
+             RETURNING id`,
+            [
+                familyDbId,
+                child.name,
+                child.token,
+                child.balance,
+                child.monthlyLimit,
+                child.dailyCoinLimit,
+                child.theme,
+                child.createdAt
+            ]
+        );
+        childIdByKey.set(child.legacyKey, inserted.rows[0].id);
+    }
+
+    return childIdByKey;
+}
+
+function takeExistingChild(unmatchedExisting, predicate) {
+    const index = unmatchedExisting.findIndex(predicate);
+    if (index === -1) {
+        return null;
+    }
+    return unmatchedExisting.splice(index, 1)[0];
+}
+
+async function syncLastSelectedChild(client, familyDbId, childId) {
     await client.query(
-        'INSERT INTO family_data (family_id, balance) VALUES ($1, $2) ON CONFLICT (family_id) DO UPDATE SET balance = $2',
-        [dbId, balance || 0]
+        `UPDATE ${TABLES.families}
+         SET last_selected_child_id = $2
+         WHERE id = $1`,
+        [familyDbId, childId]
     );
 }
 
-async function migrateTasks(client, dbId, tasks) {
-    if (!Array.isArray(tasks)) return;
+async function replaceTasks(client, familyDbId, snapshot, childIdByKey) {
+    await client.query(`DELETE FROM ${TABLES.tasks} WHERE family_id = $1`, [familyDbId]);
 
-    for (const task of tasks) {
+    for (const task of snapshot.tasks) {
+        const childId = childIdByKey.get(task.childKey);
+        if (!childId) {
+            continue;
+        }
         await client.query(
-            `INSERT INTO tasks (family_id, task_id, name, coins, group_name, frequency, comment, money_limit)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             ON CONFLICT (family_id, task_id) DO NOTHING`,
+            `INSERT INTO ${TABLES.tasks}
+                (family_id, child_id, task_id, name, coins, group_name, frequency, comment, money_limit, is_deleted)
+             VALUES ($1, $2, $3, $4, $5, $6, CAST($7 AS JSONB), $8, $9, $10)`,
             [
-                dbId,
-                task.id,
+                familyDbId,
+                childId,
+                task.taskId,
                 task.name,
-                task.coins || 0,
-                task.group || null,
-                task.frequency ? JSON.stringify(task.frequency) : null,
-                task.comment || null,
-                task.money_limit || null
+                task.coins,
+                task.groupName,
+                task.frequency,
+                task.comment,
+                task.moneyLimit,
+                task.deleted
             ]
         );
     }
-    console.log(`    📝 Migrated ${tasks.length} tasks`);
+
+    console.log(`    📝 Synced ${snapshot.tasks.length} tasks`);
 }
 
-async function migrateShopItems(client, dbId, shopItems) {
-    if (!Array.isArray(shopItems)) return;
+async function replaceShopItems(client, familyDbId, snapshot, childIdByKey) {
+    await client.query(`DELETE FROM ${TABLES.shopItems} WHERE family_id = $1`, [familyDbId]);
 
-    for (const item of shopItems) {
+    for (const item of snapshot.shopItems) {
+        const childId = childIdByKey.get(item.childKey);
+        if (!childId) {
+            continue;
+        }
         await client.query(
-            `INSERT INTO shop_items (family_id, item_id, name, price, group_name, frequency, money_limit)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT (family_id, item_id) DO NOTHING`,
+            `INSERT INTO ${TABLES.shopItems}
+                (family_id, child_id, item_id, name, price, group_name, frequency, money_limit, is_deleted)
+             VALUES ($1, $2, $3, $4, $5, $6, CAST($7 AS JSONB), $8, $9)`,
             [
-                dbId,
-                item.id,
+                familyDbId,
+                childId,
+                item.itemId,
                 item.name,
-                item.price || 0,
-                item.group || null,
-                item.frequency ? JSON.stringify(item.frequency) : null,
-                item.money_limit || null
+                item.price,
+                item.groupName,
+                item.frequency,
+                item.moneyLimit,
+                item.deleted
             ]
         );
     }
-    console.log(`    🛍️  Migrated ${shopItems.length} shop items`);
+
+    console.log(`    🛍️  Synced ${snapshot.shopItems.length} shop items`);
 }
 
-function resolveRelatedId(entry) {
-    return entry.itemId || entry.taskId || entry.relatedId || null;
-}
+async function replaceHistory(client, familyDbId, snapshot, childIdByKey) {
+    await client.query(`DELETE FROM ${TABLES.history} WHERE family_id = $1`, [familyDbId]);
 
-async function insertHistoryEntry(client, dbId, entry) {
-    const { type, timestamp, id, amount, description, moneyAmount } = entry;
-    const finalRelatedId = resolveRelatedId(entry);
-    await client.query(
-        `INSERT INTO history (family_id, external_id, type, amount, description, money_amount, related_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-            dbId,
-            id || null,
-            type || 'unknown',
-            amount || 0,
-            description || '',
-            moneyAmount || 0,
-            finalRelatedId,
-            timestamp || entry.date || new Date()
-        ]
-    );
-}
-
-async function migrateHistory(client, dbId, history) {
-    if (!Array.isArray(history)) return;
-
-    for (const entry of history) {
-        await insertHistoryEntry(client, dbId, entry);
-    }
-    console.log(`    📜 Migrated ${history.length} history entries`);
-}
-
-async function migrateRequests(client, dbId, requests) {
-    if (!Array.isArray(requests)) return;
-
-    for (const req of requests) {
-        const { id, status, created_at, taskId, taskName, coins, date } = req;
+    for (const entry of snapshot.historyEntries) {
+        const childId = childIdByKey.get(entry.childKey);
+        if (!childId) {
+            continue;
+        }
         await client.query(
-            `INSERT INTO requests (family_id, external_id, task_id, task_name, coins, status, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            `INSERT INTO ${TABLES.history}
+                (family_id, child_id, external_id, type, amount, description, money_amount, related_id, group_name, comment, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11, NOW()))`,
             [
-                dbId,
-                id || null,
-                taskId || null,
-                taskName || '',
-                coins || 0,
-                status || 'pending',
-                created_at || date || new Date()
+                familyDbId,
+                childId,
+                entry.externalId,
+                entry.type,
+                entry.amount,
+                entry.description,
+                entry.moneyAmount,
+                entry.relatedId,
+                entry.groupName,
+                entry.comment,
+                entry.createdAt
             ]
         );
     }
-    console.log(`    📨 Migrated ${requests.length} requests`);
+
+    console.log(`    📜 Synced ${snapshot.historyEntries.length} history entries`);
 }
 
-async function migrateFamilyData(client, dbId, familyId) {
-    const familyFile = path.join(FAMILIES_DATA_DIR, `${familyId}.json`);
+async function replaceRequests(client, familyDbId, snapshot, childIdByKey) {
+    await client.query(`DELETE FROM ${TABLES.requests} WHERE family_id = $1`, [familyDbId]);
 
-    if (!fs.existsSync(familyFile)) {
-        console.log(`  ⏭️  No data file for ${familyId}`);
-        // Create default family_data record
+    for (const request of snapshot.requests) {
+        const childId = childIdByKey.get(request.childKey);
+        if (!childId) {
+            continue;
+        }
         await client.query(
-            'INSERT INTO family_data (family_id, balance) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-            [dbId, 0]
+            `INSERT INTO ${TABLES.requests}
+                (family_id, child_id, external_id, task_id, task_name, item_id, coins, status, request_type, money_amount, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11, NOW()))`,
+            [
+                familyDbId,
+                childId,
+                request.externalId,
+                request.taskId,
+                request.taskName,
+                request.itemId,
+                request.coins,
+                request.status,
+                request.requestType,
+                request.moneyAmount,
+                request.createdAt
+            ]
         );
-        return;
     }
 
-    try {
-        const data = JSON.parse(fs.readFileSync(familyFile, 'utf8'));
-        await upsertFamilyBalance(client, dbId, data.balance);
-        await migrateTasks(client, dbId, data.tasks);
-        await migrateShopItems(client, dbId, data.shop);
-        await migrateHistory(client, dbId, data.history);
-        await migrateRequests(client, dbId, data.requests);
-
-        // Friends will be migrated in a second pass (need all families first)
-        return data.friends || [];
-
-    } catch (err) {
-        console.error(`  ❌ Error migrating data for ${familyId}:`, err.message);
-        return [];
-    }
+    console.log(`    📨 Synced ${snapshot.requests.length} requests`);
 }
 
-async function migrateFriends(client, familyIdMap) {
-    console.log('\n🔗 Migrating friend relationships...');
+async function syncFamilyData(client, familyDbId, familyId, familyRecord) {
+    const familyPayload = loadFamilyPayload(familyId);
+    const snapshot = buildLegacyFamilySnapshot(familyId, familyRecord, familyPayload.data);
+    const childIdByKey = await syncChildren(client, familyDbId, snapshot);
+    const childIds = Array.from(new Set(childIdByKey.values()));
+    const preferredChildId = childIdByKey.get(snapshot.preferredChildKey) || childIds[0] || null;
+    await syncLastSelectedChild(client, familyDbId, preferredChildId);
 
-    for (const [familyId, { dbId, friends }] of Object.entries(familyIdMap)) {
-        if (!friends || friends.length === 0) continue;
+    if (snapshot.hasScopedData || familyPayload.exists) {
+        await replaceTasks(client, familyDbId, snapshot, childIdByKey);
+        await replaceShopItems(client, familyDbId, snapshot, childIdByKey);
+        await replaceHistory(client, familyDbId, snapshot, childIdByKey);
+        await replaceRequests(client, familyDbId, snapshot, childIdByKey);
+    } else {
+        console.log(`    ⏭️  No scoped JSON data for ${familyId}`);
+    }
 
-        for (const friendFamilyId of friends) {
-            const friendInfo = familyIdMap[friendFamilyId];
-            if (!friendInfo) {
-                console.log(`  ⚠️  Friend ${friendFamilyId} not found for ${familyId}`);
+    return {
+        dbId: familyDbId,
+        childIds,
+        primaryChildId: preferredChildId,
+        friendFamilyIds: snapshot.friendFamilyIds
+    };
+}
+
+function loadFamilyPayload(familyId) {
+    const familyFile = path.join(FAMILIES_DATA_DIR, `${familyId}.json`);
+    if (!fs.existsSync(familyFile)) {
+        return { exists: false, data: {} };
+    }
+
+    return {
+        exists: true,
+        data: JSON.parse(fs.readFileSync(familyFile, 'utf8'))
+    };
+}
+
+async function rebuildFriends(client, familyIdMap) {
+    console.log('\n🔗 Rebuilding friend relationships...');
+
+    const migratedChildIds = Array.from(new Set(
+        Object.values(familyIdMap).flatMap((info) => info.childIds)
+    ));
+
+    if (migratedChildIds.length > 0) {
+        await client.query(
+            `DELETE FROM ${TABLES.friends}
+             WHERE child_id = ANY($1) OR friend_child_id = ANY($1)`,
+            [migratedChildIds]
+        );
+    }
+
+    const insertedPairs = new Set();
+    for (const [familyId, sourceInfo] of Object.entries(familyIdMap)) {
+        for (const friendFamilyId of sourceInfo.friendFamilyIds) {
+            const targetInfo = familyIdMap[String(friendFamilyId)];
+            if (!targetInfo) {
+                console.log(`  ⚠️  Friend family ${friendFamilyId} not found for ${familyId}`);
                 continue;
             }
 
-            try {
-                await client.query(
-                    `INSERT INTO friends (family_id, friend_family_id)
-                     VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-                    [dbId, friendInfo.dbId]
-                );
-            } catch (err) {
-                console.error(`  ❌ Error adding friend ${friendFamilyId} for ${familyId}:`, err.message);
-            }
+            await insertFriendPair(client, insertedPairs, sourceInfo.primaryChildId, targetInfo.primaryChildId);
+            await insertFriendPair(client, insertedPairs, targetInfo.primaryChildId, sourceInfo.primaryChildId);
         }
     }
-    console.log('  ✅ Friend relationships migrated');
+
+    console.log('  ✅ Friend relationships rebuilt');
+}
+
+async function insertFriendPair(client, insertedPairs, childId, friendChildId) {
+    if (!childId || !friendChildId) {
+        return;
+    }
+    const pairKey = `${childId}:${friendChildId}`;
+    if (insertedPairs.has(pairKey)) {
+        return;
+    }
+
+    await client.query(
+        `INSERT INTO ${TABLES.friends} (child_id, friend_child_id)
+         VALUES ($1, $2)
+         ON CONFLICT (child_id, friend_child_id) DO NOTHING`,
+        [childId, friendChildId]
+    );
+    insertedPairs.add(pairKey);
 }
 
 async function shouldSkipMigration() {
     process.stdout.write('📊 Checking if data migration from JSON is needed...');
-
     if (!fs.existsSync(FAMILIES_FILE)) {
         console.log(' ✅ (no JSON data to migrate)');
         return true;
     }
-
-    try {
-        const familiesRes = await query('SELECT COUNT(*) FROM families');
-        if (parseInt(familiesRes.rows[0].count) > 0) {
-            console.log(' ✅ (data already exists in DB)');
-            return true;
-        }
-    } catch (err) {
-        console.log(' ❌ (error checking DB status)');
-        throw err;
-    }
+    console.log(' ✅');
     return false;
 }
 
@@ -268,42 +402,44 @@ async function loadMigrationData() {
 async function migrateAllFamilies(client, familyIds, families) {
     const familyIdMap = {};
     for (const familyId of familyIds) {
-        const dbId = await migrateFamily(client, familyId, families[familyId]);
-        if (dbId) {
-            const friends = await migrateFamilyData(client, dbId, familyId);
-            familyIdMap[familyId] = { dbId, friends };
-        }
+        const familyRecord = families[familyId] || {};
+        const familyDbId = await ensureFamily(client, familyId, familyRecord);
+        familyIdMap[familyId] = await syncFamilyData(client, familyDbId, familyId, familyRecord);
     }
     return familyIdMap;
 }
 
 async function runDataMigration() {
-    if (await shouldSkipMigration()) return;
+    if (await shouldSkipMigration()) {
+        return;
+    }
 
-    console.log('\n🚀 Starting data migration from JSON to PostgreSQL...');
+    console.log('\n🚀 Starting child-aware data migration from JSON to PostgreSQL...');
     const client = await getClient();
     try {
         await client.query('BEGIN');
         const { superAdmin, families, familyIds } = await loadMigrationData();
-        console.log(`📋 Found ${familyIds.length} families to migrate`);
+        console.log(`📋 Found ${familyIds.length} families to sync`);
 
         await migrateSuperAdmin(client, superAdmin);
         const familyIdMap = await migrateAllFamilies(client, familyIds, families);
+        await rebuildFriends(client, familyIdMap);
 
-        await migrateFriends(client, familyIdMap);
         await client.query('COMMIT');
         console.log('\n✅ Data migration completed successfully!');
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('\n❌ Data migration failed:', err.message);
         throw err;
-    } finally { client.release(); }
+    } finally {
+        client.release();
+    }
 }
 
 if (require.main === module) {
     runDataMigration()
         .then(() => pool.end())
-        .catch(err => {
+        .catch((err) => {
             console.error(err);
             process.exit(1);
         });
