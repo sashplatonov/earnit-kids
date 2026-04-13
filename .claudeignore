@@ -17,5 +17,6 @@ tmp/
 .vscode/
 .env
 .env.*
+.env.production
 .DS_Store
 mobile/
