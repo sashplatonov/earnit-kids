@@ -8,6 +8,7 @@ services:
     environment:
       - PORT=${WEB_INTERNAL_PORT:-3000}
       - BACKEND_URL=http://backend:${BACKEND_INTERNAL_PORT:-8080}
+      - DATABASE_URL=jdbc:postgresql://${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-earnit_kids}
       - PUBLIC_BASE_URL=${APP_URL:-http://localhost:${WEB_PORT:-3000}}
     depends_on:
       backend:
@@ -36,6 +37,7 @@ services:
       - QUARKUS_HTTP_PORT=${BACKEND_INTERNAL_PORT:-8080}
       - FRONTEND_URL=${APP_URL:-http://localhost:${WEB_PORT:-3000}}
       - JWT_SECRET=${JWT_SECRET:-fallback-secret-for-development}
+      - DATABASE_URL=jdbc:postgresql://${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-earnit_kids}
     # Do not publish the backend port on the host to avoid port collisions.
     # The backend remains reachable by other services on the docker network.
     expose:
@@ -53,9 +55,9 @@ services:
     profiles:
       - db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-earnit_kids}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - earnit_kids_postgres_data:/var/lib/postgresql
     ports:
