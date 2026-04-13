@@ -14,8 +14,8 @@ test('multi-child payload keeps tasks and shop bound to the correct child', () =
                 { id: 502, name: 'Полить цветы', coins: 10, childId: 102 }
             ],
             shop: [
-                { id: 1001, name: 'Поход в кино', price: 120, childId: 101 },
-                { id: 1002, name: 'Мороженое', price: 40, childId: 102 }
+                { id: 1001, name: 'Поход в кино', price: 120, childId: 101, comment: 'С папой' },
+                { id: 1002, name: 'Мороженое', price: 40, childId: 102, comment: 'Клубничное' }
             ],
             children: [
                 { id: 101, name: 'Аня', balance: 180, monthlyLimit: 900, dailyCoinLimit: 40 },
@@ -27,6 +27,7 @@ test('multi-child payload keeps tasks and shop bound to the correct child', () =
     assert.equal(snapshot.children.length, 2);
     assert.deepEqual(snapshot.tasks.map((task) => task.childKey), ['legacy:101', 'legacy:102']);
     assert.deepEqual(snapshot.shopItems.map((item) => item.childKey), ['legacy:101', 'legacy:102']);
+    assert.deepEqual(snapshot.shopItems.map((item) => item.comment), ['С папой', 'Клубничное']);
     assert.equal(snapshot.preferredChildKey, 'legacy:101');
 });
 

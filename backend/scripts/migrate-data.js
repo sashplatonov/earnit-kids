@@ -211,8 +211,8 @@ async function replaceShopItems(client, familyDbId, snapshot, childIdByKey) {
         }
         await client.query(
             `INSERT INTO ${TABLES.shopItems}
-                (family_id, child_id, item_id, name, price, group_name, frequency, money_limit, is_deleted)
-             VALUES ($1, $2, $3, $4, $5, $6, CAST($7 AS JSONB), $8, $9)`,
+                (family_id, child_id, item_id, name, price, group_name, frequency, comment, money_limit, is_deleted)
+             VALUES ($1, $2, $3, $4, $5, $6, CAST($7 AS JSONB), $8, $9, $10)`,
             [
                 familyDbId,
                 childId,
@@ -221,6 +221,7 @@ async function replaceShopItems(client, familyDbId, snapshot, childIdByKey) {
                 item.price,
                 item.groupName,
                 item.frequency,
+                item.comment,
                 item.moneyLimit,
                 item.deleted
             ]

@@ -89,12 +89,14 @@ class DomainModelSanityTest {
         item.setDeleted(true);
         item.setGroupName("G");
         item.setFrequency("{\"period\":\"week\"}");
+        item.setComment("Prize");
         item.setMoneyLimit(200);
         item.setPrice(11);
 
         assertThat(item.isDeleted()).isTrue();
         assertThat(item.getPrice()).isEqualTo(11);
         assertThat(item.getGroupName()).isEqualTo("G");
+        assertThat(item.getComment()).isEqualTo("Prize");
         assertThat(item.getMoneyLimit()).isEqualTo(200);
     }
 

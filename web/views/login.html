@@ -528,8 +528,8 @@
                     <div id="login-form" class="login-form" aria-label="Форма входа">
                         <p class="hero-subtitle" style="margin-bottom: 1rem;">Войдите в аккаунт или используйте ссылку для ребенка.</p>
                         <div class="form-grid">
-                            <input type="email" id="email-input" class="input-field" placeholder="Email" autocomplete="username">
-                            <input type="password" id="pin-input" class="input-field" placeholder="Пароль" autocomplete="current-password">
+                            <input type="email" id="email-input" class="input-field" placeholder="Email" autocomplete="username" autocapitalize="none" spellcheck="false">
+                            <input type="password" id="password-input" class="input-field" placeholder="Пароль" autocomplete="current-password">
                         </div>
                         <button id="login-btn" class="btn-login">Войти</button>
                         <div class="form-links">
@@ -542,9 +542,9 @@
                         <p class="hero-subtitle" style="margin-bottom: 1rem;">Создайте родительский аккаунт и пригласите ребенка одним нажатием.</p>
                         <div class="form-grid">
                             <label class="form-label" for="reg-email" style="display:none;">Email родителя</label>
-                            <input type="email" id="reg-email" class="input-field" placeholder="Email родителя">
-                            <label class="form-label" for="admin-pin" style="display:none;">Пароль</label>
-                            <input type="password" id="admin-pin" class="input-field" placeholder="Пароль (мин. 6)" minlength="6">
+                            <input type="email" id="reg-email" class="input-field" placeholder="Email родителя" autocomplete="email" autocapitalize="none" spellcheck="false">
+                            <label class="form-label" for="admin-password" style="display:none;">Пароль</label>
+                            <input type="password" id="admin-password" class="input-field" placeholder="Пароль (мин. 6)" minlength="6" autocomplete="new-password">
                         </div>
                         <button id="register-btn" class="btn-login">Зарегистрировать</button>
                         <button type="button" id="show-login-btn" class="btn-secondary">Уже есть аккаунт? Войти</button>
@@ -664,7 +664,7 @@
         const sendRecoveryBtn = document.getElementById('send-recovery-btn');
         const forgotEmailInput = document.getElementById('forgot-email');
 
-        const pinInput = document.getElementById('pin-input');
+        const passwordInput = document.getElementById('password-input');
         const emailInput = document.getElementById('email-input');
         const errorMsg = document.getElementById('error-msg');
         const successMsg = document.getElementById('success-msg');
@@ -742,14 +742,14 @@
         // Login
         async function doLogin() {
             const email = emailInput.value.trim();
-            const pin = pinInput.value;
+            const password = passwordInput.value;
 
-            if (pin !== '000000' && !email) {
+            if (!email) {
                 showError('Введите Email');
                 return;
             }
 
-            if (pin.length < 6) {
+            if (password.length < 6) {
                 showError('Пароль должен быть не менее 6 знаков');
                 return;
             }
@@ -762,7 +762,9 @@
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, pin })
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    body: JSON.stringify({ email, password })
                 });
 
                 const data = await res.json();
@@ -773,7 +775,7 @@
                     showError(data.error || 'Ошибка входа');
                     loginBtn.textContent = 'Войти';
                     loginBtn.disabled = false;
-                    pinInput.value = '';
+                    passwordInput.value = '';
                 }
             } catch (err) {
                 console.error(err);
@@ -786,14 +788,14 @@
         // Register
         async function doRegister() {
             const regEmail = document.getElementById('reg-email').value.trim();
-            const adminPin = document.getElementById('admin-pin').value;
+            const adminPassword = document.getElementById('admin-password').value;
 
             if (!regEmail || !regEmail.includes('@')) {
                 showError('Введите корректный Email');
                 return;
             }
 
-            if (adminPin.length < 6) {
+            if (adminPassword.length < 6) {
                 showError('Пароль должен быть не менее 6 символов');
                 return;
             }
@@ -806,7 +808,9 @@
                 const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: regEmail, adminPin })
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    body: JSON.stringify({ email: regEmail, password: adminPassword })
                 });
 
                 const data = await res.json();
@@ -826,7 +830,7 @@
                     setTimeout(() => {
                         showLoginBtn.click();
                         emailInput.value = regEmail;
-                        pinInput.focus();
+                        passwordInput.focus();
                     }, 3000);
                 } else {
                     showError(data.error || 'Ошибка регистрации');
@@ -885,7 +889,7 @@
         registerBtn.addEventListener('click', doRegister);
         sendRecoveryBtn.addEventListener('click', doRecover);
 
-        pinInput.addEventListener('keypress', (e) => {
+        passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doLogin();
         });
 

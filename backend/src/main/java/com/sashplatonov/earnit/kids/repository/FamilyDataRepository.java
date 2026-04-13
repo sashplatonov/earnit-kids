@@ -75,7 +75,7 @@ public class FamilyDataRepository {
     @Transactional
     public boolean upsertShopItem(int familyDbId, int childId, long itemId, String name,
                                   int price, String groupName, String frequencyJson,
-                                  Integer moneyLimit) {
+                                  String comment, Integer moneyLimit) {
         var existing = shopRepo.find("childId = ?1 AND itemId = ?2", childId, itemId)
             .firstResultOptional();
         if (existing.isPresent()) {
@@ -84,6 +84,7 @@ public class FamilyDataRepository {
             shopItem.setPrice(price);
             shopItem.setGroupName(groupName);
             shopItem.setFrequency(frequencyJson);
+            shopItem.setComment(comment);
             shopItem.setMoneyLimit(moneyLimit);
             shopItem.setDeleted(false);
         } else {
@@ -95,6 +96,7 @@ public class FamilyDataRepository {
                 .price(price)
                 .groupName(groupName)
                 .frequency(frequencyJson)
+                .comment(comment)
                 .moneyLimit(moneyLimit)
                 .build());
         }

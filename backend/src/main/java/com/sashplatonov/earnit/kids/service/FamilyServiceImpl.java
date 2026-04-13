@@ -101,11 +101,11 @@ public final class FamilyServiceImpl implements FamilyService {
 
         List<ShopItemDto> shopItems = familyDataRepository.getShopItems(activeChild.getId()).stream()
             .map(s -> new ShopItemDto(s.getItemId(), s.getName(), s.getPrice(), s.getGroupName(),
-                s.getFrequency(), s.getMoneyLimit(), s.getChildId()))
+                s.getFrequency(), s.getComment(), s.getMoneyLimit(), s.getChildId()))
             .toList();
 
         List<HistoryEntryDto> history = familyDataRepository.getHistory(activeChild.getId(), 50, 0).stream()
-            .map(historyEntry -> toHistoryDto(historyEntry))
+            .map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems))
             .toList();
 
         List<RequestDto> requests = familyDataRepository.getRequests(familyDbId, 50, 0).stream()
@@ -311,7 +311,15 @@ public final class FamilyServiceImpl implements FamilyService {
         int offset = (page - 1) * effectiveLimit;
         List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, effectiveLimit, offset);
         int total = familyDataRepository.getHistoryCount(childId);
-        List<HistoryEntryDto> items = rows.stream().map(historyEntry -> toHistoryDto(historyEntry)).toList();
+        List<TaskDto> tasks = familyDataRepository.getTasks(childId).stream()
+            .map(t -> new TaskDto(t.getTaskId(), t.getName(), t.getCoins(), t.getGroupName(),
+                t.getFrequency(), t.getComment(), t.getMoneyLimit(), t.getChildId()))
+            .toList();
+        List<ShopItemDto> shopItems = familyDataRepository.getShopItems(childId).stream()
+            .map(s -> new ShopItemDto(s.getItemId(), s.getName(), s.getPrice(), s.getGroupName(),
+                s.getFrequency(), s.getComment(), s.getMoneyLimit(), s.getChildId()))
+            .toList();
+        List<HistoryEntryDto> items = rows.stream().map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems)).toList();
         return OperationResult.success(new PaginatedHistory(items, total, page, effectiveLimit));
     }
 
@@ -551,7 +559,8 @@ public final class FamilyServiceImpl implements FamilyService {
             if (entry.getRelatedId() == null) {
                 continue;
             }
-            completionCounts.merge(entry.getRelatedId(), 1, Integer::sum);
+            int nextCount = completionCounts.getOrDefault(entry.getRelatedId(), 0) + 1;
+            completionCounts.put(entry.getRelatedId(), nextCount);
         }
 
         return tasks.stream()
@@ -574,11 +583,60 @@ public final class FamilyServiceImpl implements FamilyService {
         private int spent;
     }
 
-    private HistoryEntryDto toHistoryDto(HistoryEntryEntity h) {
-        return new HistoryEntryDto(h.getExternalId(), h.getType(), h.getAmount(),
-            h.getDescription(), h.getMoneyAmount(), h.getRelatedId(), h.getGroupName(),
-            h.getComment(), h.getCreatedAt() != null ? h.getCreatedAt().toString() : null,
-            h.getChildId());
+    private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
+        HistoryDetails details = enrichHistoryDetails(entry, tasks, shopItems);
+        return new HistoryEntryDto(entry.getExternalId(), entry.getType(), entry.getAmount(),
+            details.description(), entry.getMoneyAmount(), entry.getRelatedId(), details.taskId(),
+            details.itemId(), details.groupName(), details.comment(),
+            entry.getCreatedAt() != null ? entry.getCreatedAt().toString() : null,
+            entry.getChildId());
+    }
+
+    private HistoryDetails enrichHistoryDetails(HistoryEntryEntity entry, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
+        if (entry.getRelatedId() == null) {
+            return new HistoryDetails(entry.getDescription(), null, null, entry.getGroupName(), entry.getComment());
+        }
+
+        if ("earn".equals(entry.getType())) {
+            TaskDto task = tasks.stream()
+                .filter(candidate -> candidate.id() == entry.getRelatedId())
+                .findFirst()
+                .orElse(null);
+            if (task != null) {
+                return new HistoryDetails(
+                    firstNonBlank(entry.getDescription(), task.name()),
+                    task.id(),
+                    null,
+                    firstNonBlank(entry.getGroupName(), task.groupName()),
+                    firstNonBlank(entry.getComment(), task.comment())
+                );
+            }
+        }
+
+        if ("spend".equals(entry.getType())) {
+            ShopItemDto shopItem = shopItems.stream()
+                .filter(candidate -> candidate.id() == entry.getRelatedId())
+                .findFirst()
+                .orElse(null);
+            if (shopItem != null) {
+                return new HistoryDetails(
+                    firstNonBlank(entry.getDescription(), shopItem.name()),
+                    null,
+                    shopItem.id(),
+                    firstNonBlank(entry.getGroupName(), shopItem.groupName()),
+                    firstNonBlank(entry.getComment(), shopItem.comment())
+                );
+            }
+        }
+
+        return new HistoryDetails(entry.getDescription(), null, null, entry.getGroupName(), entry.getComment());
+    }
+
+    private String firstNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.isBlank()) {
+            return primary;
+        }
+        return fallback;
     }
 
     private RequestDto toRequestDto(PurchaseRequestEntity r) {
@@ -587,4 +645,12 @@ public final class FamilyServiceImpl implements FamilyService {
             r.getMoneyAmount(), r.getCreatedAt() != null ? r.getCreatedAt().toString() : null,
             r.getChildId(), null, null, null);
     }
+
+    private record HistoryDetails(
+        String description,
+        Long taskId,
+        Long itemId,
+        String groupName,
+        String comment
+    ) { }
 }

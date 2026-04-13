@@ -26,7 +26,7 @@ async function parseJsonSafe(response) {
 export const API_URL = '/api/data';
 export const LOGIN_URL = '/api/login';
 export const LOGOUT_URL = '/api/logout';
-export const CHANGE_PIN_URL = '/api/change-pin';
+export const CHANGE_PASSWORD_URL = '/api/change-password';
 export const PUSH_REGISTER_URL = '/api/push/register';
 export const PUSH_UNREGISTER_URL = '/api/push/unregister';
 
@@ -121,12 +121,13 @@ export async function unregisterPushTokenOnServer(token) {
     }
 }
 
-export async function changePin(oldPin, newPin, role) {
+export async function changePassword(oldPassword, newPassword) {
     try {
-        const response = await fetchWithCsrf(CHANGE_PIN_URL, {
+        const response = await fetchWithCsrf(CHANGE_PASSWORD_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ oldPin, newPin, role })
+            cache: 'no-store',
+            body: JSON.stringify({ oldPassword, newPassword })
         });
         if (response.ok) {
             return { success: true };
@@ -139,12 +140,13 @@ export async function changePin(oldPin, newPin, role) {
     }
 }
 
-export async function login(pin) {
+export async function login(email, password) {
     try {
         const response = await fetchWithCsrf(LOGIN_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin })
+            cache: 'no-store',
+            body: JSON.stringify({ email, password })
         });
         if (response.ok) {
             const data = await parseJsonSafe(response);
@@ -157,6 +159,8 @@ export async function login(pin) {
         return { success: false, error: 'Network Error' };
     }
 }
+
+// Keep compatibility alias removed — use changePassword instead of changePin
 
 export async function regenerateChildToken(childId) {
     try {

@@ -54,13 +54,12 @@ function setEntryReferences(entry, type, relatedId) {
 
 function buildEntryObject(params) {
     const { type, amount, description, relatedId, moneyAmount, childIdOverride, actingChildId, groupName, comment } = params;
-    const hasRef = !!relatedId;
     const entry = {
         id: Date.now(),
         type, amount,
-        description: hasRef ? null : description,
-        groupName: hasRef ? null : (groupName || undefined),
-        comment: hasRef ? null : (comment || undefined),
+        description: description || undefined,
+        groupName: groupName || undefined,
+        comment: comment || undefined,
         createdAt: new Date().toISOString(),
         moneyAmount: moneyAmount || undefined,
         childId: childIdOverride || actingChildId

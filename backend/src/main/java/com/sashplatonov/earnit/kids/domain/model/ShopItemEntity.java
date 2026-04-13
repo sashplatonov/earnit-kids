@@ -50,6 +50,9 @@ public class ShopItemEntity {
     @Column(name = "frequency")
     private String frequency;
 
+    @Column(name = "comment")
+    private String comment;
+
     @Column(name = "money_limit")
     private Integer moneyLimit;
 

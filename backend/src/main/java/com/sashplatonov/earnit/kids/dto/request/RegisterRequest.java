@@ -13,5 +13,5 @@ public record RegisterRequest(
     @NotBlank(message = "Admin password is required")
     @Size(min = 6, message = "Password must be at least 6 characters")
     @Schema(format = "password")
-    String adminPin
+    String password
 ) { }

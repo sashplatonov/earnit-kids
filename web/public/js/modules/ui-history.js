@@ -4,7 +4,7 @@ import { getCreatedAt, getGroupName } from './server-contract.js';
 
 function getEntryDetails(entry, state) {
     const details = {
-        name: entry.description || 'Действие',
+        name: entry.name || entry.description || 'Действие',
         group: entry.groupName,
         comment: entry.comment
     };

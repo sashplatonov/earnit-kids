@@ -30,10 +30,10 @@ public final class AuthServiceImpl implements AuthService {
     private final PasswordHasher passwordHasher;
 
     @Override
-    public OperationResult<AuthPayload> authenticateAdmin(String email, String pin) {
+    public OperationResult<AuthPayload> authenticateAdmin(String email, String password) {
         log.debug("authenticateAdmin attempt for email={}", email);
 
-        var superAdminResult = authenticateConfiguredSuperAdmin(email, pin);
+        var superAdminResult = authenticateConfiguredSuperAdmin(email, password);
         if (superAdminResult != null) {
             return superAdminResult;
         }
@@ -44,15 +44,15 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure("Неверные учетные данные");
         }
 
-        return authenticateFamily(email, pin, familyOpt.get());
+        return authenticateFamily(email, password, familyOpt.get());
     }
 
-    private OperationResult<AuthPayload> authenticateConfiguredSuperAdmin(String email, String pin) {
+    private OperationResult<AuthPayload> authenticateConfiguredSuperAdmin(String email, String password) {
         var configuredSuperAdminEmail = appConfig.superAdmin().email().filter(value -> !value.isBlank());
         if (configuredSuperAdminEmail.isEmpty() || !configuredSuperAdminEmail.get().equals(email)) {
             return null;
         }
-        if (appConfig.superAdmin().password().orElse("").equals(pin)) {
+        if (appConfig.superAdmin().password().orElse("").equals(password)) {
             log.info("Super-admin login success: {}", email);
             return OperationResult.success(new AuthPayload(null, email, "super_admin", null, null));
         }
@@ -60,7 +60,7 @@ public final class AuthServiceImpl implements AuthService {
         return OperationResult.failure("Неверный пароль администратора");
     }
 
-    private OperationResult<AuthPayload> authenticateFamily(String email, String pin, FamilyEntity family) {
+    private OperationResult<AuthPayload> authenticateFamily(String email, String password, FamilyEntity family) {
         if (family.isBlocked()) {
             log.info("Authentication failed (account blocked): {}", email);
             return OperationResult.failure("Аккаунт заблокирован");
@@ -70,7 +70,7 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure("Email не подтвержден. Проверьте почту.");
         }
         String storedPassword = family.getAdminPassword();
-        if (!isPasswordValid(email, pin, family.getFamilyId(), storedPassword)) {
+        if (!isPasswordValid(email, password, family.getFamilyId(), storedPassword)) {
             log.info("Authentication failed (wrong password): {}", email);
             return OperationResult.failure("Неверный пароль");
         }
@@ -81,29 +81,29 @@ public final class AuthServiceImpl implements AuthService {
             new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null));
     }
 
-    private boolean isPasswordValid(String email, String pin, String familyId, String storedPassword) {
-        if (verifyArgon2Password(email, pin, storedPassword)) {
+    private boolean isPasswordValid(String email, String password, String familyId, String storedPassword) {
+        if (verifyArgon2Password(email, password, storedPassword)) {
             return true;
         }
-        if (!passwordHasher.verifyLegacy(pin, storedPassword)) {
+        if (!passwordHasher.verifyLegacy(password, storedPassword)) {
             return false;
         }
-        rehashLegacyPassword(email, pin, familyId);
+        rehashLegacyPassword(email, password, familyId);
         return true;
     }
 
-    private boolean verifyArgon2Password(String email, String pin, String storedPassword) {
+    private boolean verifyArgon2Password(String email, String password, String storedPassword) {
         try {
-            return passwordHasher.isArgon2Hash(storedPassword) && passwordHasher.verify(storedPassword, pin);
+            return passwordHasher.isArgon2Hash(storedPassword) && passwordHasher.verify(storedPassword, password);
         } catch (Exception ex) {
             log.debug("Argon2 verify error for email={}: {}", email, ex.getMessage());
             return false;
         }
     }
 
-    private void rehashLegacyPassword(String email, String pin, String familyId) {
+    private void rehashLegacyPassword(String email, String password, String familyId) {
         try {
-            String newHash = passwordHasher.hash(pin);
+            String newHash = passwordHasher.hash(password);
             boolean updated = familyRepository.updatePassword(familyId, newHash);
             if (updated) {
                 log.info("Re-hashed legacy password for familyId={}", familyId);
@@ -150,20 +150,20 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public OperationResult<AuthPayload> registerFamily(String email, String adminPin) {
+    public OperationResult<AuthPayload> registerFamily(String email, String adminPassword) {
         if (familyRepository.findByEmail(email).isPresent()) {
             return OperationResult.failure("Email уже зарегистрирован");
         }
-        if (!isValidPassword(adminPin)) {
+        if (!isValidPassword(adminPassword)) {
             return OperationResult.failure("Слабый пароль родителя");
         }
 
         var familyId = email.replaceAll("[^a-zA-Z0-9]", "_") + "_" + System.currentTimeMillis();
         var verificationToken = appConfig.emailVerification().enabled() ? generateHexToken(32) : null;
 
-        String hashedPin = passwordHasher.hash(adminPin);
+        String hashedPassword = passwordHasher.hash(adminPassword);
         var created = familyRepository.create(
-            familyId, email, hashedPin, !appConfig.emailVerification().enabled(), verificationToken);
+            familyId, email, hashedPassword, !appConfig.emailVerification().enabled(), verificationToken);
 
         if (created.isEmpty()) {
             return OperationResult.failure("Email уже зарегистрирован");
@@ -191,11 +191,11 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public OperationResult<Void> changeAdminPin(String familyId, String oldPin, String newPin) {
+    public OperationResult<Void> changeAdminPassword(String familyId, String oldPassword, String newPassword) {
         if (familyId == null || familyId.isBlank()) {
             return OperationResult.failure("Семья не найдена");
         }
-        if (!isValidPassword(newPin)) {
+        if (!isValidPassword(newPassword)) {
             return OperationResult.failure("Слабый пароль");
         }
 
@@ -208,24 +208,24 @@ public final class AuthServiceImpl implements AuthService {
         String stored = family.getAdminPassword();
         boolean oldMatches = false;
         try {
-            if (passwordHasher.isArgon2Hash(stored) && passwordHasher.verify(stored, oldPin)) {
+            if (passwordHasher.isArgon2Hash(stored) && passwordHasher.verify(stored, oldPassword)) {
                 oldMatches = true;
             }
         } catch (Exception ignored) {
         }
 
-        if (!oldMatches && passwordHasher.verifyLegacy(oldPin, stored)) {
+        if (!oldMatches && passwordHasher.verifyLegacy(oldPassword, stored)) {
             oldMatches = true;
         }
 
         if (!oldMatches) {
             return OperationResult.failure("Неверный пароль");
         }
-        if (oldPin != null && oldPin.equals(newPin)) {
+        if (oldPassword != null && oldPassword.equals(newPassword)) {
             return OperationResult.failure("Новый пароль должен отличаться от старого");
         }
 
-        String newHash = passwordHasher.hash(newPin);
+        String newHash = passwordHasher.hash(newPassword);
         boolean updated = familyRepository.updatePassword(familyId, newHash);
         if (!updated) {
             return OperationResult.failure("Не удалось обновить пароль");

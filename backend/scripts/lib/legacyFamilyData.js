@@ -168,6 +168,7 @@ function normalizeShopItems(items, resolveChildKey) {
             price: normalizeInteger(item.price, 0),
             groupName: normalizeString(item.groupName ?? item.group),
             frequency: normalizeFrequency(item.frequency),
+            comment: normalizeString(item.comment),
             moneyLimit: normalizeOptionalInteger(item.moneyLimit ?? item.money_limit),
             deleted: normalizeBoolean(item.isDeleted ?? item.is_deleted)
         };

@@ -69,13 +69,19 @@ export function normalizeShopItem(item = {}) {
     return {
         ...item,
         groupName: item.groupName ?? item.group ?? null,
+        comment: item.comment ?? null,
         moneyLimit: item.moneyLimit ?? item.money_limit ?? null
     };
 }
 
 export function normalizeHistoryEntry(entry = {}) {
+    const relatedId = entry.relatedId ?? null;
+    const taskId = entry.taskId ?? (entry.type === 'earn' ? relatedId : null);
+    const itemId = entry.itemId ?? (entry.type === 'spend' ? relatedId : null);
     return {
         ...entry,
+        taskId,
+        itemId,
         groupName: entry.groupName ?? entry.group ?? null,
         createdAt: getCreatedAt(entry)
     };

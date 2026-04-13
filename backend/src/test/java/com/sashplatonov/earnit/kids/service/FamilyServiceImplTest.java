@@ -93,14 +93,14 @@ class FamilyServiceImplTest {
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
 
-        TaskEntity task = TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5).build();
-        ShopItemEntity item = ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(7).build();
+        TaskEntity task = TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5).comment("Pages").build();
+        ShopItemEntity item = ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(7).comment("Prize").build();
         HistoryEntryEntity history = HistoryEntryEntity.builder()
             .childId(10)
             .externalId(3001L)
             .type("earn")
             .amount(5)
-            .description("Read")
+            .relatedId(1001L)
             .createdAt(Instant.now())
             .build();
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
@@ -131,6 +131,10 @@ class FamilyServiceImplTest {
         assertThat(payload.friends()).hasSize(1);
         assertThat(payload.children()).hasSize(2);
         assertThat(payload.lastSelectedChildId()).isEqualTo(11);
+        assertThat(payload.history().getFirst().description()).isEqualTo("Read");
+        assertThat(payload.history().getFirst().taskId()).isEqualTo(1001L);
+        assertThat(payload.history().getFirst().comment()).isEqualTo("Pages");
+        assertThat(payload.shop().getFirst().comment()).isEqualTo("Prize");
     }
 
     @Test
@@ -317,11 +321,17 @@ class FamilyServiceImplTest {
             .externalId(1L)
             .type("earn")
             .amount(5)
-            .description("Read")
+            .relatedId(1001L)
             .createdAt(Instant.now())
             .build();
         when(familyDataRepository.getHistory(10, 20, 0)).thenReturn(List.of(history));
         when(familyDataRepository.getHistoryCount(10)).thenReturn(1);
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of(
+            TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5).comment("Pages").build()
+        ));
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of(
+            ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(3).comment("Prize").build()
+        ));
 
         OperationResult<PaginatedHistory> result = service.getHistory(10, 1, 20);
 
@@ -330,6 +340,8 @@ class FamilyServiceImplTest {
         PaginatedHistory payload = (PaginatedHistory) success7.value();
         assertThat(payload.items()).hasSize(1);
         assertThat(payload.total()).isEqualTo(1);
+        assertThat(payload.items().getFirst().description()).isEqualTo("Read");
+        assertThat(payload.items().getFirst().taskId()).isEqualTo(1001L);
     }
 
     @Test

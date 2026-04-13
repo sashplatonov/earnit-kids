@@ -83,7 +83,7 @@ class RepositorySmokeTest {
         assertThat(familyDataRepository.upsertTask(familyDbId, child1.getId(), taskExternalId,
             "Read", 5, "Study", "{\"period\":\"day\"}", "comment", 100)).isTrue();
         assertThat(familyDataRepository.upsertShopItem(familyDbId, child1.getId(), itemExternalId,
-            "Toy", 7, "Fun", "{\"period\":\"week\"}", 50)).isTrue();
+            "Toy", 7, "Fun", "{\"period\":\"week\"}", "comment", 50)).isTrue();
 
         assertThat(familyDataRepository.getTasks(child1.getId())).isNotEmpty();
         assertThat(familyDataRepository.getShopItems(child1.getId())).isNotEmpty();
