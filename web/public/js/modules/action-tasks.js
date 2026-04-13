@@ -22,7 +22,7 @@ export function earnCoins(taskId) {
             type: 'earn',
             amount: task.coins,
             description: task.name,
-            group: task.group,
+            groupName: task.groupName,
             comment: task.comment,
             relatedId: task.id,
             childIdOverride: actingId
@@ -55,7 +55,9 @@ export function requestCoins(taskId) {
             requestType: 'earn',
             taskId: task.id,
             taskName: task.name,
-            coins: task.coins
+            coins: task.coins,
+            taskGroup: task.groupName,
+            taskComment: task.comment
         });
         scheduleSave();
         renderRequests();

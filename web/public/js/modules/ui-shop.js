@@ -3,6 +3,7 @@ import { escapeHtml, chunkedRender, isMobileViewport } from './utils.js';
 import { CONFIG } from './ui-config.js';
 import { applyStaggerReveal } from './motion-feedback.js';
 import { renderGroupNav } from './group-nav.js';
+import { getGroupName, getMoneyLimit } from './server-contract.js';
 
 const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
 
@@ -53,8 +54,9 @@ function renderShopBadges(item, canAfford) {
         badges.push(renderBadge(typeLabel, 'type'));
     }
 
-    if (item.money_limit) {
-        badges.push(renderBadge(`Не более ${item.money_limit} 💶`, 'money'));
+    const moneyLimit = getMoneyLimit(item);
+    if (moneyLimit) {
+        badges.push(renderBadge(`Не более ${moneyLimit} 💶`, 'money'));
     }
 
     return `<div class="card__badge-row">${badges.join('')}</div>`;
@@ -212,7 +214,7 @@ export function renderShopUI(state) {
     const { quickItems, regularItems } = splitShopItemsByPins(items);
 
     const grouped = regularItems.reduce((acc, item) => {
-        const g = item.group || 'Без категории';
+        const g = getGroupName(item) || 'Без категории';
         if (!acc[g]) acc[g] = [];
         acc[g].push(item);
         return acc;

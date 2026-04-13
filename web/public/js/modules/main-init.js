@@ -11,8 +11,10 @@ import { switchChild, saveNewChild } from './admin.js';
 import { setupTabControls } from './main-tabs.js';
 import { handleSearch } from './friends.js';
 import { scheduleSave } from './actions.js';
+import { normalizeServerData } from './server-contract.js';
 
 export function buildInitialState(data, baseData) {
+    const normalizedData = normalizeServerData(data);
     const defaults = {
         familyId: null, balance: 0, tasks: [], shopItems: [], history: [],
         requests: [], childNickname: null, monthlyLimit: 10000,
@@ -20,8 +22,8 @@ export function buildInitialState(data, baseData) {
     };
 
     const s = {
-        isAdmin: Boolean(data.isAdmin),
-        role: data.isAdmin ? 'admin' : 'child',
+        isAdmin: Boolean(normalizedData.isAdmin),
+        role: normalizedData.isAdmin ? 'admin' : 'child',
         baseData,
         isLoading: false
     };
@@ -29,7 +31,7 @@ export function buildInitialState(data, baseData) {
     // Use loop or assign to avoid complexity from many ??
     Object.keys(defaults).forEach(key => {
         const dataKey = key === 'shopItems' ? 'shop' : key;
-        s[key] = data[dataKey] ?? defaults[key];
+        s[key] = normalizedData[dataKey] ?? defaults[key];
     });
 
     return s;

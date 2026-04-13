@@ -1,8 +1,11 @@
 /** @file Budget Ui frontend UI module */
+import { getCreatedAt } from './server-contract.js';
+
 function isEntryValid(entry, childId, monthKey) {
     if (childId && String(entry.childId) !== String(childId)) return false;
-    if (entry.type !== 'spend' || !entry.date) return false;
-    const dateStr = typeof entry.date === 'string' ? entry.date : new Date(entry.date).toISOString();
+    const createdAt = getCreatedAt(entry);
+    if (entry.type !== 'spend' || !createdAt) return false;
+    const dateStr = typeof createdAt === 'string' ? createdAt : new Date(createdAt).toISOString();
     return dateStr.startsWith(monthKey);
 }
 
@@ -40,9 +43,10 @@ function getDailyStats(state, childId = null) {
 
     (state.history || []).forEach((entry) => {
         if (childId && entry.childId != childId) return;
-        if (entry.type !== 'earn' || !entry.date) return;
+        const createdAt = getCreatedAt(entry);
+        if (entry.type !== 'earn' || !createdAt) return;
 
-        const dateStr = typeof entry.date === 'string' ? entry.date : new Date(entry.date).toISOString();
+        const dateStr = typeof createdAt === 'string' ? createdAt : new Date(createdAt).toISOString();
         if (dateStr.startsWith(today)) {
             earnedToday += (entry.amount || 0);
         }
@@ -165,9 +169,6 @@ function getChildDailyLimit(child, fallback) {
     if (!child) return toSafeLimit(fallback, 0);
     if (child.dailyCoinLimit !== undefined && child.dailyCoinLimit !== null) {
         return toSafeLimit(child.dailyCoinLimit, 0);
-    }
-    if (child.daily_coin_limit !== undefined && child.daily_coin_limit !== null) {
-        return toSafeLimit(child.daily_coin_limit, 0);
     }
     return toSafeLimit(fallback, 0);
 }

@@ -7,10 +7,10 @@
         {
             "id": 2001,
             "name": "Поход в парк",
-            "group": "Семья",
+            "groupName": "Семья",
             "price": 80,
             "comment": "Вместе с родителями",
-            "money_limit": 700,
+            "moneyLimit": 700,
             "type": "activity",
             "frequency": { "limit": 2, "period": "month" },
             "childId": 201,
@@ -29,7 +29,7 @@
             "coins": 80,
             "moneyAmount": 700,
             "status": "pending",
-            "date": "2026-02-20T08:00:00.000Z"
+            "createdAt": "2026-02-20T08:00:00.000Z"
         }
     ],
     "monthlyLimit": 1000,

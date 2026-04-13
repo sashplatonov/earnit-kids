@@ -4,6 +4,7 @@ import { fetchAnalyticsData } from './api.js';
 import { getTrendChartConfig } from './analytics-chart-config.js';
 import { renderNoChildrenState } from './analytics-empty-state.js';
 import { showToast } from './utils.js';
+import { getCreatedAt } from './server-contract.js';
 
 const analyticsConfig = globalThis.CONFIG || {};
 const DAILY_PROGRESS_GOAL = analyticsConfig.DAILY_GOAL || 200;
@@ -105,7 +106,8 @@ function getWeeklyStats(history) {
     const rangeEnd = now.getTime();
 
     return (history || []).reduce((acc, entry) => {
-        const entryDate = entry.date ? new Date(entry.date).getTime() : 0;
+        const createdAt = getCreatedAt(entry);
+        const entryDate = createdAt ? new Date(createdAt).getTime() : 0;
         if (!entryDate || entryDate < rangeStart || entryDate > rangeEnd) return acc;
         if (entry.type === 'earn') acc.earned += entry.amount || 0;
         if (entry.type === 'spend') acc.spent += entry.amount || 0;
@@ -119,7 +121,8 @@ function computeStreak(history) {
     today.setHours(0, 0, 0, 0);
     let pointer = new Date(today);
     const hasEarnOn = (dateStr) => (history || []).some((entry) => {
-        return entry.type === 'earn' && entry.date && entry.date.startsWith(dateStr);
+        const createdAt = getCreatedAt(entry);
+        return entry.type === 'earn' && createdAt && createdAt.startsWith(dateStr);
     });
     while (true) {
         const key = pointer.toISOString().slice(0, 10);

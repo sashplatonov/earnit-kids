@@ -126,9 +126,9 @@ function checkDuplicateInCatalog(type, name) {
 function buildNewCatalogItem(item) {
     const newItem = {
         ...item, id: Date.now(), childId: state.currentChildId,
-        group: item.group || item.category || '',
+        groupName: item.group || item.category || '',
         frequency: item.frequency || { limit: 1, period: 'day' },
-        money_limit: item.money_limit || null
+        moneyLimit: item.moneyLimit ?? item.money_limit ?? null
     };
     delete newItem.age_min; delete newItem.age_max;
     return newItem;

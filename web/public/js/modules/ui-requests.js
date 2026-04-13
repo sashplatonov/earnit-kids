@@ -1,5 +1,6 @@
 /** @file Ui Requests frontend UI module */
 import { escapeHtml } from './utils.js';
+import { getCreatedAt, getRequestComment, getRequestGroup } from './server-contract.js';
 
 const REQUEST_STATUS_LABELS = {
     pending: 'В обработке',
@@ -16,7 +17,7 @@ const REQUEST_STATUS_HINTS = {
 const REQUEST_STATUS_ORDER = ['pending', 'approved', 'rejected', 'expired'];
 
 function getRequestTimestamp(req) {
-    const dateStr = req.resolvedAt || req.date;
+    const dateStr = req.resolvedAt || getCreatedAt(req);
     return dateStr ? new Date(dateStr).getTime() : 0;
 }
 
@@ -53,14 +54,16 @@ function getRequestRowClass(req) {
 
 function getRequestDateText(req) {
     if ((req.status || 'pending') === 'pending') return 'Ожидает подтверждения';
-    return `Обновлено ${new Date(req.resolvedAt || req.date).toLocaleString()}`;
+    return `Обновлено ${new Date(req.resolvedAt || getCreatedAt(req)).toLocaleString()}`;
 }
 
 function renderMyRequest(req, state) {
     const isPurchase = isPurchaseRequest(req);
     const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money-solid request-item__money">Лимит: 💶 ${req.moneyAmount}</span>` : '';
-    const groupTag = req.group ? `<span class="tag request-item__group">${escapeHtml(req.group)}</span>` : '';
-    const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
+    const group = getRequestGroup(req, state);
+    const comment = getRequestComment(req, state);
+    const groupTag = group ? `<span class="tag request-item__group">${escapeHtml(group)}</span>` : '';
+    const commentHtml = comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(comment)}</div>` : '';
     const dateText = getRequestDateText(req);
 
     return `
@@ -89,8 +92,10 @@ function renderIncomingRequest(req, state) {
     const childName = child ? child.name : 'Unknown';
     const isPurchase = isPurchaseRequest(req);
     const moneyTag = (req.moneyAmount || 0) > 0 ? `<span class="tag tag--money-solid request-item__money">Лимит: 💶 ${req.moneyAmount}</span>` : '';
-    const groupTag = req.group ? `<span class="tag tag--secondary request-item__group">${escapeHtml(req.group)}</span>` : '';
-    const commentHtml = req.comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(req.comment)}</div>` : '';
+    const group = getRequestGroup(req, state);
+    const comment = getRequestComment(req, state);
+    const groupTag = group ? `<span class="tag tag--secondary request-item__group">${escapeHtml(group)}</span>` : '';
+    const commentHtml = comment ? `<div class="history-item__comment request-item__comment">${escapeHtml(comment)}</div>` : '';
 
     return `
         <div class="history-item ${getRequestRowClass(req)} request-item">
@@ -102,7 +107,7 @@ function renderIncomingRequest(req, state) {
                     ${groupTag}
                 </div>
                 ${commentHtml}
-                <div class="history-item__date">${new Date(req.date).toLocaleString()}</div>
+                <div class="history-item__date">${new Date(getCreatedAt(req)).toLocaleString()}</div>
             </div>
             <div class="history-item__amount request-item__amount">${isPurchase ? '-' : '+'}${req.coins} <span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>${moneyTag}</div>
             <div class="card__actions request-item__actions">

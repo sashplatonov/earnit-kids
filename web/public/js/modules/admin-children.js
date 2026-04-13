@@ -12,11 +12,11 @@ function getNumericLimit(value, fallback) {
 }
 
 function getMonthlyLimit(child) {
-    return getNumericLimit(child?.monthlyLimit ?? child?.monthly_limit, 10000);
+    return getNumericLimit(child?.monthlyLimit, 10000);
 }
 
 function getDailyLimit(child) {
-    return getNumericLimit(child?.dailyCoinLimit ?? child?.daily_coin_limit, 0);
+    return getNumericLimit(child?.dailyCoinLimit, 0);
 }
 
 function updateSettingsFields(child) {
