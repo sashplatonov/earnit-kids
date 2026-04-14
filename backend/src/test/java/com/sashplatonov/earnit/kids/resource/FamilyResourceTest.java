@@ -16,6 +16,7 @@ import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
+import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
@@ -31,7 +32,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,12 +43,13 @@ class FamilyResourceTest {
 
     @Mock FamilyService familyService;
     @Mock BaseDataService baseDataService;
+    @Mock WebSocketNotificationService webSocketNotificationService;
 
     private FamilyResource resource;
 
     @BeforeEach
     void setUp() {
-        resource = new FamilyResource(familyService, baseDataService);
+        resource = new FamilyResource(familyService, baseDataService, webSocketNotificationService);
     }
 
     @Test
@@ -77,6 +81,7 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).saveFamilyData("fam-1", 10, Map.of("foo", "bar"));
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
     }
 
     @Test
@@ -109,6 +114,18 @@ class FamilyResourceTest {
         when(familyService.deleteChild("fam-1", 10)).thenReturn(OperationResult.success(null));
         Response response = resource.deleteChild(contextWithAuth(adminAuth()), 10);
         assertThat(response.getStatus()).isEqualTo(200);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_DELETED"), eq(Map.of("childId", 10)));
+    }
+
+    @Test
+    void createChild_success_notifiesFamily() {
+        ChildInfo info = new ChildInfo(77, "Kid", "token");
+        when(familyService.createChild("fam-1", "Kid")).thenReturn(OperationResult.success(info));
+
+        Response response = resource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
+
+        assertThat(response.getStatus()).isEqualTo(201);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 77)));
     }
 
     @Test
@@ -121,6 +138,7 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).updateNickname("fam-1", 10, "Alice");
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
     }
 
     @Test
@@ -136,6 +154,7 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).updateChildSettings("fam-1", 10, "Nick", 11, 22);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
     }
 
     @Test
@@ -148,6 +167,18 @@ class FamilyResourceTest {
             new UpdateThemeRequest("ocean"));
 
         assertThat(response.getStatus()).isEqualTo(200);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
+    }
+
+    @Test
+    void saveFamilyData_failure_doesNotNotifyFamily() {
+        when(familyService.saveFamilyData(anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap()))
+            .thenReturn(OperationResult.failure("boom"));
+
+        Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), Map.of());
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        verify(webSocketNotificationService, never()).notifyFamily(anyString(), anyString(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

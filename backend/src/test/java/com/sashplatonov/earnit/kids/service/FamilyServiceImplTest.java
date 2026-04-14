@@ -479,14 +479,21 @@ class FamilyServiceImplTest {
         verify(childRepository).updateBalance(10, 42);
         verify(familyDataRepository).markAllTasksDeleted(10);
         verify(familyDataRepository).markAllShopItemsDeleted(10);
+        ArgumentCaptor<String> taskFrequencyCaptor = ArgumentCaptor.forClass(String.class);
         verify(familyDataRepository).upsertTask(
             eq(1), eq(10), eq(101L), eq("Read"), eq(5), eq("Home"),
-            eq("{\"limit\":1,\"period\":\"day\"}"), eq("Daily"), eq(12), eq(false)
+            taskFrequencyCaptor.capture(), eq("Daily"), eq(12), eq(false)
         );
+        assertThat(taskFrequencyCaptor.getValue())
+            .isIn("{\"limit\":1,\"period\":\"day\"}", "{\"period\":\"day\",\"limit\":1}");
+
+        ArgumentCaptor<String> shopFrequencyCaptor = ArgumentCaptor.forClass(String.class);
         verify(familyDataRepository).upsertShopItem(
             eq(1), eq(10), eq(201L), eq("Toy"), eq(7), eq("Fun"),
-            eq("{\"limit\":2,\"period\":\"week\"}"), eq("Prize"), eq(30), eq(false)
+            shopFrequencyCaptor.capture(), eq("Prize"), eq(30), eq(false)
         );
+        assertThat(shopFrequencyCaptor.getValue())
+            .isIn("{\"limit\":2,\"period\":\"week\"}", "{\"period\":\"week\",\"limit\":2}");
 
         ArgumentCaptor<List<HistoryEntryEntity>> historyCaptor = ArgumentCaptor.forClass(List.class);
         verify(familyDataRepository).replaceHistory(eq(1), eq(10), historyCaptor.capture());
