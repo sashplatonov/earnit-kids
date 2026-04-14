@@ -12,6 +12,7 @@ export function scheduleSave() {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(async () => {
         await saveDataToServer({
+            childId: state.currentChildId,
             balance: state.balance,
             tasks: state.tasks,
             shop: state.shopItems,

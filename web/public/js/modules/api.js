@@ -9,7 +9,7 @@ function getCsrfToken() {
     return decodeURIComponent(cookieRow.slice('csrf_token='.length));
 }
 
-async function fetchWithCsrf(url, options = {}) {
+export async function fetchWithCsrf(url, options = {}) {
     if (['POST', 'PUT', 'DELETE'].includes((options.method || 'GET').toUpperCase())) {
         options.headers = options.headers || {};
         const csrfToken = getCsrfToken();

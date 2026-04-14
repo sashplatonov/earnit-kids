@@ -2,6 +2,7 @@
 import { renderFamilyDetails } from './super-admin-family-details.js';
 import { applyFamiliesFilters, getFamilyChildrenCount } from './super-admin-filters.js';
 import { showSuperAlert, showSuperConfirm } from './super-admin-dialogs.js';
+import { fetchWithCsrf } from './api.js';
 
 let familiesData = [];
 const familiesById = new Map();
@@ -209,7 +210,7 @@ async function toggleBlock(familyId, shouldBlock) {
     if (!confirmed) return;
 
     try {
-        const res = await fetch(`/api/super/family/${encodeURIComponent(familyId)}/block`, {
+        const res = await fetchWithCsrf(`/api/super/family/${encodeURIComponent(familyId)}/block`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isBlocked: shouldBlock })
@@ -266,7 +267,7 @@ async function regenerateToken(familyId, childId) {
         ? `/api/super/child/${encodeURIComponent(childId)}/regenerate-token`
         : `/api/super/family/${encodeURIComponent(familyId)}/regenerate-token`;
     try {
-        const res = await fetch(url, { method: 'POST' });
+        const res = await fetchWithCsrf(url, { method: 'POST' });
         if (res.ok) {
             await showSuperAlert({ title: 'Готово', message: 'Новый токен создан.' });
             await loadFamilies();

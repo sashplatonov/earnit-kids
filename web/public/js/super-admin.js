@@ -1,4 +1,5 @@
 /** @file Super Admin frontend helper script */
+import { fetchWithCsrf } from './modules/api.js';
 import { handleRestore, refreshDbPanelStatus } from './modules/super-admin-db.js';
 import { setBaseData, getBaseData, renderList, deleteItem, saveItem } from './modules/super-admin-base.js';
 import { initSystemPanel, activateSystemTab, deactivateSystemTab } from './modules/super-admin-system.js';
@@ -65,7 +66,7 @@ if (pgRestoreBtn && pgRestoreInput) {
  
 // Logout
 document.getElementById('logout-btn')?.addEventListener('click', async () => {
-    await fetch('/api/logout', { method: 'POST' });
+    await fetchWithCsrf('/api/logout', { method: 'POST' });
     window.location.reload();
 });
 
@@ -91,7 +92,7 @@ function setCatalogLoadingStates() {
 async function loadBaseData() {
     setCatalogLoadingStates();
     try {
-        const res = await fetch('/api/super/base-data');
+        const res = await fetchWithCsrf('/api/super/base-data');
         if (res.ok) {
             const data = await res.json();
             setBaseData(data);

@@ -1,8 +1,10 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
@@ -32,8 +34,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,6 +57,7 @@ public final class FamilyServiceImpl implements FamilyService {
     private final HistoryRepository historyRepository;
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
+    private final ObjectMapper objectMapper;
 
     @Inject
     public FamilyServiceImpl(FamilyRepository familyRepository,
@@ -59,13 +65,25 @@ public final class FamilyServiceImpl implements FamilyService {
                              FamilyDataRepository familyDataRepository,
                              HistoryRepository historyRepository,
                              TaskRepository taskRepository,
-                             ShopItemRepository shopItemRepository) {
+                             ShopItemRepository shopItemRepository,
+                             ObjectMapper objectMapper) {
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
         this.familyDataRepository = familyDataRepository;
         this.historyRepository = historyRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
+        this.objectMapper = objectMapper;
+    }
+
+    FamilyServiceImpl(FamilyRepository familyRepository,
+                      ChildRepository childRepository,
+                      FamilyDataRepository familyDataRepository,
+                      HistoryRepository historyRepository,
+                      TaskRepository taskRepository,
+                      ShopItemRepository shopItemRepository) {
+        this(familyRepository, childRepository, familyDataRepository, historyRepository,
+            taskRepository, shopItemRepository, new ObjectMapper());
     }
 
     @Override
@@ -96,12 +114,12 @@ public final class FamilyServiceImpl implements FamilyService {
 
         List<TaskDto> tasks = familyDataRepository.getTasks(activeChild.getId()).stream()
             .map(t -> new TaskDto(t.getTaskId(), t.getName(), t.getCoins(), t.getGroupName(),
-                t.getFrequency(), t.getComment(), t.getMoneyLimit(), t.getChildId()))
+                parseFrequency(t.getFrequency()), t.getComment(), t.getMoneyLimit(), t.getChildId()))
             .toList();
 
         List<ShopItemDto> shopItems = familyDataRepository.getShopItems(activeChild.getId()).stream()
             .map(s -> new ShopItemDto(s.getItemId(), s.getName(), s.getPrice(), s.getGroupName(),
-                s.getFrequency(), s.getComment(), s.getMoneyLimit(), s.getChildId()))
+                parseFrequency(s.getFrequency()), s.getComment(), s.getMoneyLimit(), s.getChildId()))
             .toList();
 
         List<HistoryEntryDto> history = familyDataRepository.getHistory(activeChild.getId(), 50, 0).stream()
@@ -129,13 +147,33 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
+    @Transactional
     public OperationResult<FamilyDataResponse> saveFamilyData(String familyId, Integer childId,
                                                                Map<String, Object> payload) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return OperationResult.failure("Семья не найдена");
         }
-        return loadFamilyData(familyId, childId);
+
+        int familyDbId = dbIdOpt.get();
+        List<ChildEntity> children = childRepository.getChildren(familyDbId);
+        if (children.isEmpty()) {
+            return loadFamilyData(familyId, childId);
+        }
+
+        Integer selectedChildId = resolveSelectedChildId(familyId, childId, payload, children);
+        if (selectedChildId != null && children.stream().noneMatch(child -> Objects.equals(child.getId(), selectedChildId))) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
+        syncBalances(familyDbId, selectedChildId, payload, children);
+        syncTasks(familyDbId, selectedChildId, payload);
+        syncShopItems(familyDbId, selectedChildId, payload);
+        syncHistory(familyDbId, selectedChildId, payload);
+        syncRequests(familyDbId, selectedChildId, payload, children);
+        familyRepository.updateLastActivity(familyId);
+
+        return loadFamilyData(familyId, selectedChildId);
     }
 
     @Override
@@ -313,11 +351,11 @@ public final class FamilyServiceImpl implements FamilyService {
         int total = familyDataRepository.getHistoryCount(childId);
         List<TaskDto> tasks = familyDataRepository.getTasks(childId).stream()
             .map(t -> new TaskDto(t.getTaskId(), t.getName(), t.getCoins(), t.getGroupName(),
-                t.getFrequency(), t.getComment(), t.getMoneyLimit(), t.getChildId()))
+                parseFrequency(t.getFrequency()), t.getComment(), t.getMoneyLimit(), t.getChildId()))
             .toList();
         List<ShopItemDto> shopItems = familyDataRepository.getShopItems(childId).stream()
             .map(s -> new ShopItemDto(s.getItemId(), s.getName(), s.getPrice(), s.getGroupName(),
-                s.getFrequency(), s.getComment(), s.getMoneyLimit(), s.getChildId()))
+                parseFrequency(s.getFrequency()), s.getComment(), s.getMoneyLimit(), s.getChildId()))
             .toList();
         List<HistoryEntryDto> items = rows.stream().map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems)).toList();
         return OperationResult.success(new PaginatedHistory(items, total, page, effectiveLimit));
@@ -396,6 +434,307 @@ public final class FamilyServiceImpl implements FamilyService {
             }
         }
         return null;
+    }
+
+    private Integer resolveSelectedChildId(String familyId, Integer explicitChildId,
+                                           Map<String, Object> payload,
+                                           List<ChildEntity> children) {
+        if (explicitChildId != null) {
+            return explicitChildId;
+        }
+
+        Integer inferredChildId = inferSingleChildId(payload);
+        if (inferredChildId != null) {
+            return inferredChildId;
+        }
+
+        Integer persistedChildId = familyRepository.getLastSelectedChildId(familyId).orElse(null);
+        if (persistedChildId != null && children.stream().anyMatch(child -> Objects.equals(child.getId(), persistedChildId))) {
+            return persistedChildId;
+        }
+
+        return children.getFirst().getId();
+    }
+
+    private Integer inferSingleChildId(Map<String, Object> payload) {
+        Set<Integer> childIds = new LinkedHashSet<>();
+        collectChildIds(childIds, payload.get("tasks"));
+        collectChildIds(childIds, payload.get("shop"));
+        collectChildIds(childIds, payload.get("history"));
+        return childIds.size() == 1 ? childIds.iterator().next() : null;
+    }
+
+    private void collectChildIds(Set<Integer> childIds, Object rawEntries) {
+        for (Map<String, Object> entry : asMapList(rawEntries)) {
+            Integer entryChildId = asInteger(entry.get("childId"));
+            if (entryChildId != null) {
+                childIds.add(entryChildId);
+            }
+        }
+    }
+
+    private void syncBalances(int familyDbId, Integer selectedChildId,
+                              Map<String, Object> payload,
+                              List<ChildEntity> children) {
+        if (selectedChildId != null) {
+            Integer currentBalance = asInteger(payload.get("balance"));
+            if (currentBalance != null) {
+                childRepository.updateBalance(selectedChildId, currentBalance);
+            }
+        }
+
+        Set<Integer> allowedChildIds = children.stream()
+            .map(ChildEntity::getId)
+            .collect(java.util.stream.Collectors.toCollection(HashSet::new));
+
+        for (Map<String, Object> childPayload : asMapList(payload.get("children"))) {
+            Integer childId = asInteger(childPayload.get("id"));
+            Integer balance = asInteger(childPayload.get("balance"));
+            if (childId == null
+                || balance == null
+                || !allowedChildIds.contains(childId)
+                || Objects.equals(childId, selectedChildId)) {
+                continue;
+            }
+            childRepository.updateBalance(childId, balance);
+        }
+    }
+
+    private void syncTasks(int familyDbId, Integer selectedChildId, Map<String, Object> payload) {
+        if (selectedChildId == null || !payload.containsKey("tasks")) {
+            return;
+        }
+
+        familyDataRepository.markAllTasksDeleted(selectedChildId);
+        for (Map<String, Object> task : asMapList(payload.get("tasks"))) {
+            Long taskId = asLong(task.get("id"));
+            String name = asString(task.get("name"));
+            if (taskId == null || name == null || name.isBlank()) {
+                continue;
+            }
+
+            familyDataRepository.upsertTask(
+                familyDbId,
+                selectedChildId,
+                taskId,
+                name,
+                defaultInt(task.get("coins"), 0),
+                firstNonBlank(asString(task.get("groupName")), asString(task.get("group"))),
+                serializeFrequency(task.get("frequency")),
+                asString(task.get("comment")),
+                coalesceInt(task.get("moneyLimit"), task.get("money_limit")),
+                defaultBoolean(task.get("isDeleted"), false)
+            );
+        }
+    }
+
+    private void syncShopItems(int familyDbId, Integer selectedChildId, Map<String, Object> payload) {
+        if (selectedChildId == null || !payload.containsKey("shop")) {
+            return;
+        }
+
+        familyDataRepository.markAllShopItemsDeleted(selectedChildId);
+        for (Map<String, Object> item : asMapList(payload.get("shop"))) {
+            Long itemId = asLong(item.get("id"));
+            String name = asString(item.get("name"));
+            if (itemId == null || name == null || name.isBlank()) {
+                continue;
+            }
+
+            familyDataRepository.upsertShopItem(
+                familyDbId,
+                selectedChildId,
+                itemId,
+                name,
+                defaultInt(item.get("price"), 0),
+                firstNonBlank(asString(item.get("groupName")), asString(item.get("group"))),
+                serializeFrequency(item.get("frequency")),
+                asString(item.get("comment")),
+                coalesceInt(item.get("moneyLimit"), item.get("money_limit")),
+                defaultBoolean(item.get("isDeleted"), false)
+            );
+        }
+    }
+
+    private void syncHistory(int familyDbId, Integer selectedChildId, Map<String, Object> payload) {
+        if (selectedChildId == null || !payload.containsKey("history")) {
+            return;
+        }
+
+        List<HistoryEntryEntity> entries = new ArrayList<>();
+        for (Map<String, Object> entry : asMapList(payload.get("history"))) {
+            entries.add(HistoryEntryEntity.builder()
+                .familyId(familyDbId)
+                .childId(selectedChildId)
+                .externalId(asLong(entry.get("id")))
+                .type(firstNonBlank(asString(entry.get("type")), "unknown"))
+                .amount(firstDefinedInt(entry.get("amount"), entry.get("coins"), 0))
+                .description(asString(entry.get("description")))
+                .moneyAmount(firstDefinedInt(entry.get("moneyAmount"), entry.get("money_amount"), 0))
+                .relatedId(firstDefinedLong(entry.get("relatedId"), entry.get("taskId"), entry.get("itemId")))
+                .groupName(firstNonBlank(asString(entry.get("groupName")), asString(entry.get("group"))))
+                .comment(asString(entry.get("comment")))
+                .createdAt(parseInstant(entry.get("createdAt"), entry.get("date"), entry.get("timestamp")))
+                .build());
+        }
+        familyDataRepository.replaceHistory(familyDbId, selectedChildId, entries);
+    }
+
+    private void syncRequests(int familyDbId, Integer selectedChildId, Map<String, Object> payload,
+                              List<ChildEntity> children) {
+        if (!payload.containsKey("requests")) {
+            return;
+        }
+
+        Set<Integer> allowedChildIds = children.stream()
+            .map(ChildEntity::getId)
+            .collect(java.util.stream.Collectors.toCollection(HashSet::new));
+        int fallbackChildId = selectedChildId != null ? selectedChildId : children.getFirst().getId();
+
+        List<PurchaseRequestEntity> entries = new ArrayList<>();
+        for (Map<String, Object> request : asMapList(payload.get("requests"))) {
+            Integer requestChildId = asInteger(request.get("childId"));
+            int targetChildId = requestChildId != null && allowedChildIds.contains(requestChildId)
+                ? requestChildId
+                : fallbackChildId;
+
+            entries.add(PurchaseRequestEntity.builder()
+                .familyId(familyDbId)
+                .childId(targetChildId)
+                .externalId(asLong(request.get("id")))
+                .taskId(asLong(request.get("taskId")))
+                .taskName(asString(request.get("taskName")))
+                .itemId(asLong(request.get("itemId")))
+                .coins(defaultInt(request.get("coins"), 0))
+                .status(firstNonBlank(asString(request.get("status")), "pending"))
+                .requestType(firstNonBlank(asString(request.get("requestType")), "earn"))
+                .moneyAmount(firstDefinedInt(request.get("moneyAmount"), request.get("money_amount"), 0))
+                .createdAt(parseInstant(request.get("createdAt"), request.get("date"), request.get("timestamp")))
+                .build());
+        }
+        familyDataRepository.replaceRequests(familyDbId, entries);
+    }
+
+    private List<Map<String, Object>> asMapList(Object rawValue) {
+        if (!(rawValue instanceof Collection<?> collection)) {
+            return List.of();
+        }
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object item : collection) {
+            if (item instanceof Map<?, ?> map) {
+                result.add(objectMapper.convertValue(map, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { }));
+            }
+        }
+        return result;
+    }
+
+    private Object parseFrequency(String rawFrequency) {
+        if (rawFrequency == null || rawFrequency.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(rawFrequency, Object.class);
+        } catch (Exception ex) {
+            log.debug("Failed to parse stored frequency JSON: {}", rawFrequency, ex);
+            return rawFrequency;
+        }
+    }
+
+    private String serializeFrequency(Object rawFrequency) {
+        if (rawFrequency == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(rawFrequency);
+        } catch (Exception ex) {
+            log.warn("Failed to serialize frequency payload: {}", rawFrequency, ex);
+            return null;
+        }
+    }
+
+    private Instant parseInstant(Object... candidates) {
+        for (Object candidate : candidates) {
+            if (candidate == null) {
+                continue;
+            }
+            if (candidate instanceof Instant instant) {
+                return instant;
+            }
+            if (candidate instanceof String value && !value.isBlank()) {
+                try {
+                    return Instant.parse(value);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return Instant.now();
+    }
+
+    private Integer asInteger(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return Integer.parseInt(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Long asLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return Long.parseLong(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private Integer coalesceInt(Object primary, Object fallback) {
+        Integer primaryValue = asInteger(primary);
+        return primaryValue != null ? primaryValue : asInteger(fallback);
+    }
+
+    private int defaultInt(Object value, int defaultValue) {
+        Integer parsed = asInteger(value);
+        return parsed != null ? parsed : defaultValue;
+    }
+
+    private int firstDefinedInt(Object primary, Object fallback, int defaultValue) {
+        Integer value = coalesceInt(primary, fallback);
+        return value != null ? value : defaultValue;
+    }
+
+    private Long firstDefinedLong(Object... values) {
+        for (Object value : values) {
+            Long parsed = asLong(value);
+            if (parsed != null) {
+                return parsed;
+            }
+        }
+        return null;
+    }
+
+    private boolean defaultBoolean(Object value, boolean defaultValue) {
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            return Boolean.parseBoolean(text);
+        }
+        return defaultValue;
     }
 
     private List<HistoryEntryEntity> queryHistory(int familyDbId, Integer childId, Instant from, Instant to) {

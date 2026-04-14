@@ -26,10 +26,19 @@ public class FamilyDataRepository {
         return taskRepo.list("childId = ?1 AND deleted = false ORDER BY id ASC", childId);
     }
 
+    public List<TaskEntity> getTasksForFamily(int familyDbId) {
+        return taskRepo.list("familyId = ?1 AND deleted = false ORDER BY id ASC", familyDbId);
+    }
+
+    @Transactional
+    public void markAllTasksDeleted(int childId) {
+        taskRepo.update("deleted = true where childId = ?1", childId);
+    }
+
     @Transactional
     public boolean upsertTask(int familyDbId, int childId, long taskId, String name,
                               int coins, String groupName, String frequencyJson,
-                              String comment, Integer moneyLimit) {
+                              String comment, Integer moneyLimit, boolean deleted) {
         var existing = taskRepo.find("childId = ?1 AND taskId = ?2", childId, taskId)
             .firstResultOptional();
         if (existing.isPresent()) {
@@ -40,7 +49,7 @@ public class FamilyDataRepository {
             task.setFrequency(frequencyJson);
             task.setComment(comment);
             task.setMoneyLimit(moneyLimit);
-            task.setDeleted(false);
+            task.setDeleted(deleted);
         } else {
             taskRepo.persist(TaskEntity.builder()
                 .familyId(familyDbId)
@@ -52,6 +61,7 @@ public class FamilyDataRepository {
                 .frequency(frequencyJson)
                 .comment(comment)
                 .moneyLimit(moneyLimit)
+                .deleted(deleted)
                 .build());
         }
         return true;
@@ -72,10 +82,19 @@ public class FamilyDataRepository {
         return shopRepo.list("childId = ?1 AND deleted = false ORDER BY id ASC", childId);
     }
 
+    public List<ShopItemEntity> getShopItemsForFamily(int familyDbId) {
+        return shopRepo.list("familyId = ?1 AND deleted = false ORDER BY id ASC", familyDbId);
+    }
+
+    @Transactional
+    public void markAllShopItemsDeleted(int childId) {
+        shopRepo.update("deleted = true where childId = ?1", childId);
+    }
+
     @Transactional
     public boolean upsertShopItem(int familyDbId, int childId, long itemId, String name,
                                   int price, String groupName, String frequencyJson,
-                                  String comment, Integer moneyLimit) {
+                                  String comment, Integer moneyLimit, boolean deleted) {
         var existing = shopRepo.find("childId = ?1 AND itemId = ?2", childId, itemId)
             .firstResultOptional();
         if (existing.isPresent()) {
@@ -86,7 +105,7 @@ public class FamilyDataRepository {
             shopItem.setFrequency(frequencyJson);
             shopItem.setComment(comment);
             shopItem.setMoneyLimit(moneyLimit);
-            shopItem.setDeleted(false);
+            shopItem.setDeleted(deleted);
         } else {
             shopRepo.persist(ShopItemEntity.builder()
                 .familyId(familyDbId)
@@ -98,6 +117,7 @@ public class FamilyDataRepository {
                 .frequency(frequencyJson)
                 .comment(comment)
                 .moneyLimit(moneyLimit)
+                .deleted(deleted)
                 .build());
         }
         return true;
@@ -116,6 +136,12 @@ public class FamilyDataRepository {
 
     public List<HistoryEntryEntity> getHistory(int childId, int limit, int offset) {
         return historyRepo.find("childId = ?1 ORDER BY createdAt DESC", childId)
+            .range(offset, offset + limit - 1)
+            .list();
+    }
+
+    public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
+        return historyRepo.find("familyId = ?1 ORDER BY createdAt DESC", familyDbId)
             .range(offset, offset + limit - 1)
             .list();
     }
@@ -141,6 +167,12 @@ public class FamilyDataRepository {
             .comment(comment)
             .build());
         return true;
+    }
+
+    @Transactional
+    public void replaceHistory(int familyDbId, int childId, List<HistoryEntryEntity> entries) {
+        historyRepo.delete("familyId = ?1 AND childId = ?2", familyDbId, childId);
+        entries.forEach(historyRepo::persist);
     }
 
     public List<PurchaseRequestEntity> getRequests(int familyDbId, int limit, int offset) {
@@ -169,6 +201,12 @@ public class FamilyDataRepository {
             .moneyAmount(moneyAmount)
             .build());
         return true;
+    }
+
+    @Transactional
+    public void replaceRequests(int familyDbId, List<PurchaseRequestEntity> entries) {
+        requestRepo.delete("familyId = ?1", familyDbId);
+        entries.forEach(requestRepo::persist);
     }
 
     @Transactional
