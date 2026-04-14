@@ -21,6 +21,7 @@ class ChildMagicLinkResourceTest {
 
     @Mock AuthService authService;
     @Mock CookieBuilder cookieBuilder;
+    @Mock jakarta.ws.rs.container.ContainerRequestContext request;
 
     private ChildMagicLinkResource resource;
 
@@ -36,7 +37,7 @@ class ChildMagicLinkResourceTest {
         when(cookieBuilder.buildAuthCookies("c@test.com", "child", "fam-1", 10, 604800))
             .thenReturn(List.of("cookie-1", "cookie-2"));
 
-        Response response = resource.loginByToken("token");
+        Response response = resource.loginByToken(request, "token");
 
         assertThat(response.getStatus()).isEqualTo(303);
         assertThat(response.getLocation().toString()).isEqualTo("/");
@@ -47,7 +48,7 @@ class ChildMagicLinkResourceTest {
     void loginByToken_invalidToken_redirectsToLogin() {
         when(authService.authenticateChild("bad")).thenReturn(OperationResult.failure("bad"));
 
-        Response response = resource.loginByToken("bad");
+        Response response = resource.loginByToken(request, "bad");
 
         assertThat(response.getStatus()).isEqualTo(303);
         assertThat(response.getLocation().toString()).isEqualTo("/login.html?error=invalid_token");
