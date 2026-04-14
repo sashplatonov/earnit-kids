@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
@@ -185,15 +186,22 @@ public class SuperAdminService {
         return payload;
     }
 
-    private Object parseFrequency(String rawFrequency) {
-        if (rawFrequency == null || rawFrequency.isBlank()) {
+    private Object parseFrequency(JsonNode rawFrequency) {
+        if (rawFrequency == null || rawFrequency.isNull()) {
             return null;
         }
-        try {
-            return objectMapper.readValue(rawFrequency, Object.class);
-        } catch (Exception ignored) {
-            return rawFrequency;
+        if (rawFrequency.isTextual()) {
+            String value = rawFrequency.asText();
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            try {
+                return objectMapper.readValue(value, Object.class);
+            } catch (Exception ignored) {
+                return value;
+            }
         }
+        return objectMapper.convertValue(rawFrequency, Object.class);
     }
 
     private String toIso(Instant value) {

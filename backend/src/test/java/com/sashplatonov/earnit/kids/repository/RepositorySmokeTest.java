@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.repository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.FriendEntity;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 class RepositorySmokeTest {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Inject FamilyRepository familyRepository;
     @Inject ChildRepository childRepository;
@@ -31,7 +33,7 @@ class RepositorySmokeTest {
 
     @Test
     @Transactional
-    void repositoriesSupportBasicLifecycle() {
+    void repositoriesSupportBasicLifecycle() throws Exception {
         String familyId = "fam_repo_test";
         String email = "repo@test.com";
         Optional<FamilyEntity> createdFamily = familyRepository.create(familyId, email, "secret123", false, "verify-token");
@@ -81,9 +83,13 @@ class RepositorySmokeTest {
         long itemExternalId = 80001L;
 
         assertThat(familyDataRepository.upsertTask(familyDbId, child1.getId(), taskExternalId,
-            "Read", 5, "Study", "{\"period\":\"day\"}", "comment", 100, false)).isTrue();
+            "Read", 5, "Study", OBJECT_MAPPER.readTree("{\"period\":\"day\"}"), "comment", 100, false)).isTrue();
+        assertThat(familyDataRepository.upsertTask(familyDbId, child1.getId(), taskExternalId,
+            "Read updated", 6, "Study", OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), "comment2", 150, false)).isTrue();
         assertThat(familyDataRepository.upsertShopItem(familyDbId, child1.getId(), itemExternalId,
-            "Toy", 7, "Fun", "{\"period\":\"week\"}", "comment", 50, false)).isTrue();
+            "Toy", 7, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false)).isTrue();
+        assertThat(familyDataRepository.upsertShopItem(familyDbId, child1.getId(), itemExternalId,
+            "Toy updated", 8, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, false)).isTrue();
 
         assertThat(familyDataRepository.getTasks(child1.getId())).isNotEmpty();
         assertThat(familyDataRepository.getShopItems(child1.getId())).isNotEmpty();

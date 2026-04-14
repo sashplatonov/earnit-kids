@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.domain.model;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,6 +13,8 @@ import lombok.Getter;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -47,8 +50,9 @@ public class ShopItemEntity {
     @Column(name = "group_name")
     private String groupName;
 
-    @Column(name = "frequency")
-    private String frequency;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "frequency", columnDefinition = "jsonb")
+    private JsonNode frequency;
 
     @Column(name = "comment")
     private String comment;

@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.repository;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.domain.model.FriendEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
@@ -37,7 +38,7 @@ public class FamilyDataRepository {
 
     @Transactional
     public boolean upsertTask(int familyDbId, int childId, long taskId, String name,
-                              int coins, String groupName, String frequencyJson,
+                              int coins, String groupName, JsonNode frequency,
                               String comment, Integer moneyLimit, boolean deleted) {
         var existing = taskRepo.find("childId = ?1 AND taskId = ?2", childId, taskId)
             .firstResultOptional();
@@ -46,7 +47,7 @@ public class FamilyDataRepository {
             task.setName(name);
             task.setCoins(coins);
             task.setGroupName(groupName);
-            task.setFrequency(frequencyJson);
+            task.setFrequency(frequency);
             task.setComment(comment);
             task.setMoneyLimit(moneyLimit);
             task.setDeleted(deleted);
@@ -58,7 +59,7 @@ public class FamilyDataRepository {
                 .name(name)
                 .coins(coins)
                 .groupName(groupName)
-                .frequency(frequencyJson)
+                .frequency(frequency)
                 .comment(comment)
                 .moneyLimit(moneyLimit)
                 .deleted(deleted)
@@ -93,7 +94,7 @@ public class FamilyDataRepository {
 
     @Transactional
     public boolean upsertShopItem(int familyDbId, int childId, long itemId, String name,
-                                  int price, String groupName, String frequencyJson,
+                                  int price, String groupName, JsonNode frequency,
                                   String comment, Integer moneyLimit, boolean deleted) {
         var existing = shopRepo.find("childId = ?1 AND itemId = ?2", childId, itemId)
             .firstResultOptional();
@@ -102,7 +103,7 @@ public class FamilyDataRepository {
             shopItem.setName(name);
             shopItem.setPrice(price);
             shopItem.setGroupName(groupName);
-            shopItem.setFrequency(frequencyJson);
+            shopItem.setFrequency(frequency);
             shopItem.setComment(comment);
             shopItem.setMoneyLimit(moneyLimit);
             shopItem.setDeleted(deleted);
@@ -114,7 +115,7 @@ public class FamilyDataRepository {
                 .name(name)
                 .price(price)
                 .groupName(groupName)
-                .frequency(frequencyJson)
+                .frequency(frequency)
                 .comment(comment)
                 .moneyLimit(moneyLimit)
                 .deleted(deleted)

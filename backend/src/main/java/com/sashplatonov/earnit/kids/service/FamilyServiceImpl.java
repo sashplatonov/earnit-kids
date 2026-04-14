@@ -1,6 +1,8 @@
 package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -628,26 +630,50 @@ public final class FamilyServiceImpl implements FamilyService {
         return result;
     }
 
-    private Object parseFrequency(String rawFrequency) {
-        if (rawFrequency == null || rawFrequency.isBlank()) {
+    private Object parseFrequency(JsonNode rawFrequency) {
+        if (rawFrequency == null || rawFrequency.isNull()) {
             return null;
         }
-        try {
-            return objectMapper.readValue(rawFrequency, Object.class);
-        } catch (Exception ex) {
-            log.debug("Failed to parse stored frequency JSON: {}", rawFrequency, ex);
-            return rawFrequency;
+
+        if (rawFrequency.isTextual()) {
+            String value = rawFrequency.asText();
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            try {
+                return objectMapper.readValue(value, Object.class);
+            } catch (Exception ex) {
+                log.debug("Failed to parse stored frequency JSON text node: {}", value, ex);
+                return value;
+            }
         }
+
+        return objectMapper.convertValue(rawFrequency, Object.class);
     }
 
-    private String serializeFrequency(Object rawFrequency) {
+    private JsonNode serializeFrequency(Object rawFrequency) {
         if (rawFrequency == null) {
             return null;
         }
+        if (rawFrequency instanceof JsonNode jsonNode) {
+            return jsonNode;
+        }
+        if (rawFrequency instanceof String text) {
+            if (text.isBlank()) {
+                return null;
+            }
+            try {
+                return objectMapper.readTree(text);
+            } catch (Exception ex) {
+                log.warn("Failed to parse frequency payload as JSON string: {}", text, ex);
+                return TextNode.valueOf(text);
+            }
+        }
+
         try {
-            return objectMapper.writeValueAsString(rawFrequency);
+            return objectMapper.valueToTree(rawFrequency);
         } catch (Exception ex) {
-            log.warn("Failed to serialize frequency payload: {}", rawFrequency, ex);
+            log.warn("Failed to convert frequency payload to JSON: {}", rawFrequency, ex);
             return null;
         }
     }

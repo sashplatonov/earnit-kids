@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.domain.model;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -7,6 +8,7 @@ import java.time.Instant;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DomainModelSanityTest {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
     void familyEntity_tokenLifecycle_mutatesAsExpected() {
@@ -57,7 +59,7 @@ class DomainModelSanityTest {
     }
 
     @Test
-    void taskAndShopEntities_mutatedFields_areRetained() {
+    void taskAndShopEntities_mutatedFields_areRetained() throws Exception {
         TaskEntity task = TaskEntity.builder()
             .familyId(1)
             .childId(2)
@@ -69,13 +71,13 @@ class DomainModelSanityTest {
         task.setDeleted(true);
         task.setComment("Comment");
         task.setGroupName("Group");
-        task.setFrequency("{\"period\":\"day\"}");
+        task.setFrequency(OBJECT_MAPPER.readTree("{\"period\":\"day\"}"));
         task.setMoneyLimit(123);
 
         assertThat(task.isDeleted()).isTrue();
         assertThat(task.getComment()).isEqualTo("Comment");
         assertThat(task.getGroupName()).isEqualTo("Group");
-        assertThat(task.getFrequency()).contains("day");
+        assertThat(task.getFrequency().get("period").asText()).isEqualTo("day");
         assertThat(task.getMoneyLimit()).isEqualTo(123);
 
         ShopItemEntity item = ShopItemEntity.builder()
@@ -88,7 +90,7 @@ class DomainModelSanityTest {
 
         item.setDeleted(true);
         item.setGroupName("G");
-        item.setFrequency("{\"period\":\"week\"}");
+        item.setFrequency(OBJECT_MAPPER.readTree("{\"period\":\"week\"}"));
         item.setComment("Prize");
         item.setMoneyLimit(200);
         item.setPrice(11);

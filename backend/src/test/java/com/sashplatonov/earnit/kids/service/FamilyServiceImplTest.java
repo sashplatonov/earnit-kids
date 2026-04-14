@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
@@ -44,6 +46,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class FamilyServiceImplTest {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
@@ -97,10 +100,10 @@ class FamilyServiceImplTest {
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
 
         TaskEntity task = TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5)
-            .frequency("{\"limit\":1,\"period\":\"day\"}")
+            .frequency(readJson("{\"limit\":1,\"period\":\"day\"}"))
             .comment("Pages").build();
         ShopItemEntity item = ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(7)
-            .frequency("{\"limit\":2,\"period\":\"week\"}")
+            .frequency(readJson("{\"limit\":2,\"period\":\"week\"}"))
             .comment("Prize").build();
         HistoryEntryEntity history = HistoryEntryEntity.builder()
             .childId(10)
@@ -142,6 +145,14 @@ class FamilyServiceImplTest {
         assertThat(payload.shop().getFirst().comment()).isEqualTo("Prize");
         assertThat(payload.tasks().getFirst().frequency()).isInstanceOf(Map.class);
         assertThat(payload.shop().getFirst().frequency()).isInstanceOf(Map.class);
+    }
+
+    private static JsonNode readJson(String value) {
+        try {
+            return OBJECT_MAPPER.readTree(value);
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     @Test
@@ -479,21 +490,21 @@ class FamilyServiceImplTest {
         verify(childRepository).updateBalance(10, 42);
         verify(familyDataRepository).markAllTasksDeleted(10);
         verify(familyDataRepository).markAllShopItemsDeleted(10);
-        ArgumentCaptor<String> taskFrequencyCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<JsonNode> taskFrequencyCaptor = ArgumentCaptor.forClass(JsonNode.class);
         verify(familyDataRepository).upsertTask(
             eq(1), eq(10), eq(101L), eq("Read"), eq(5), eq("Home"),
             taskFrequencyCaptor.capture(), eq("Daily"), eq(12), eq(false)
         );
-        assertThat(taskFrequencyCaptor.getValue())
-            .isIn("{\"limit\":1,\"period\":\"day\"}", "{\"period\":\"day\",\"limit\":1}");
+        assertThat(taskFrequencyCaptor.getValue().get("limit").asInt()).isEqualTo(1);
+        assertThat(taskFrequencyCaptor.getValue().get("period").asText()).isEqualTo("day");
 
-        ArgumentCaptor<String> shopFrequencyCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<JsonNode> shopFrequencyCaptor = ArgumentCaptor.forClass(JsonNode.class);
         verify(familyDataRepository).upsertShopItem(
             eq(1), eq(10), eq(201L), eq("Toy"), eq(7), eq("Fun"),
             shopFrequencyCaptor.capture(), eq("Prize"), eq(30), eq(false)
         );
-        assertThat(shopFrequencyCaptor.getValue())
-            .isIn("{\"limit\":2,\"period\":\"week\"}", "{\"period\":\"week\",\"limit\":2}");
+        assertThat(shopFrequencyCaptor.getValue().get("limit").asInt()).isEqualTo(2);
+        assertThat(shopFrequencyCaptor.getValue().get("period").asText()).isEqualTo("week");
 
         ArgumentCaptor<List<HistoryEntryEntity>> historyCaptor = ArgumentCaptor.forClass(List.class);
         verify(familyDataRepository).replaceHistory(eq(1), eq(10), historyCaptor.capture());
