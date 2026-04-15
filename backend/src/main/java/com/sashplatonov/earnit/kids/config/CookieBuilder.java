@@ -33,7 +33,10 @@ public class CookieBuilder {
 
         var cookies = new ArrayList<String>();
         cookies.add("app_auth=" + token + "; " + authFlags + "SameSite=Lax");
-        cookies.add("app_role=" + role + "; " + roleFlags + "SameSite=Strict");
+        // Do not expose child role as a client-readable cookie. Only emit app_role for non-child roles.
+        if (role != null && !"child".equals(role)) {
+            cookies.add("app_role=" + role + "; " + roleFlags + "SameSite=Strict");
+        }
         cookies.add("csrf_token=" + csrfToken + "; " + roleFlags + "SameSite=Strict");
 
         if (familyId != null) {

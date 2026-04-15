@@ -101,11 +101,21 @@ public class SuperAdminService {
         if (children.isEmpty()) {
             return OperationResult.failure("У семьи нет детей");
         }
-        return familyService.regenerateChildToken(children.getFirst().getId());
+        return familyService.regenerateChildToken(familyId, children.getFirst().getId());
     }
 
     public OperationResult<String> regenerateChildToken(int childId) {
-        return familyService.regenerateChildToken(childId);
+        Optional<ChildEntity> child = childRepository.findByIdOptional(childId);
+        if (child.isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
+        Optional<FamilyEntity> family = familyRepository.findByDbId(child.get().getFamilyDbId());
+        if (family.isEmpty()) {
+            return OperationResult.failure("Семья не найдена");
+        }
+
+        return familyService.regenerateChildToken(family.get().getFamilyId(), childId);
     }
 
     private Map<String, Object> toFamilySummary(FamilyEntity family) {

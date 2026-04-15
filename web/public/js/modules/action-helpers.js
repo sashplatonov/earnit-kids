@@ -39,7 +39,7 @@ export function addRequestEntry(entry) {
 export function getActingChildId() {
     if (state.currentChildId) return state.currentChildId;
     if (state.isAdmin) return null;
-    if (state.role === 'child' && state.children.length > 0) return state.children[0].id;
+    if (!state.isAdmin && state.children.length > 0) return state.children[0].id;
 
     const findId = (arr, key) => arr.find(x => x[key])?.[key];
     return findId(state.tasks, 'childId') || findId(state.shopItems, 'childId') ||

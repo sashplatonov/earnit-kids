@@ -80,6 +80,8 @@ class AuthResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaders().get("Set-Cookie")).hasSize(1);
+        var entity = (com.sashplatonov.earnit.kids.dto.response.AuthResponse) response.getEntity();
+        assertThat(entity.role()).isNull();
     }
 
     @Test

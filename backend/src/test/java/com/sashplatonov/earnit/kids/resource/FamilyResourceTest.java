@@ -62,7 +62,7 @@ class FamilyResourceTest {
     void getFamilyData_authenticatedUser_returnsPayload() {
         FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), null, null, null, null);
-        when(familyService.loadFamilyData("fam-1", 10)).thenReturn(OperationResult.success(payload));
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
         Response response = resource.getFamilyData(contextWithAuth(adminAuth()), 10);
 
@@ -71,17 +71,39 @@ class FamilyResourceTest {
     }
 
     @Test
-    void saveFamilyData_childSessionWithoutBodyChildId_usesAuthChildId() {
+    void getFamilyData_childSession_ignoresRequestedChildId() {
         FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
-            List.of(), true, List.of(), null, null, null, null);
-        when(familyService.saveFamilyData(anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap()))
-            .thenReturn(OperationResult.success(payload));
+            List.of(), false, List.of(), 10, null, null, null);
+        when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), Map.of("foo", "bar"));
+        Response response = resource.getFamilyData(contextWithAuth(childAuth(10)), 99);
 
         assertThat(response.getStatus()).isEqualTo(200);
-        verify(familyService).saveFamilyData("fam-1", 10, Map.of("foo", "bar"));
+        verify(familyService).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
+    void saveFamilyData_childSession_ignoresBodyChildIdAndUsesAuthChildId() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+            List.of(), false, List.of(), null, null, null, null);
+        when(familyService.saveFamilyData(
+            anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean()))
+            .thenReturn(OperationResult.success(payload));
+
+        Map<String, Object> body = Map.of("foo", "bar", "childId", 99);
+
+        Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), body);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyService).saveFamilyData("fam-1", 10, body, false);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
+    }
+
+    @Test
+    void getFamilyData_superAdminSession_returnsUnauthorized() {
+        Response response = resource.getFamilyData(contextWithAuth(superAdminAuth()), null);
+
+        assertThat(response.getStatus()).isEqualTo(401);
     }
 
     @Test
@@ -159,7 +181,7 @@ class FamilyResourceTest {
 
     @Test
     void updateChildThemePost_validTheme_returnsOk() {
-        when(familyService.updateChildTheme(10, "ocean")).thenReturn(OperationResult.success(null));
+        when(familyService.updateChildTheme("fam-1", 10, "ocean")).thenReturn(OperationResult.success(null));
 
         Response response = resource.updateChildThemePost(
             contextWithAuth(adminAuth()),
@@ -171,8 +193,20 @@ class FamilyResourceTest {
     }
 
     @Test
+    void updateChildTheme_childCannotUpdateAnotherChild() {
+        Response response = resource.updateChildThemePost(
+            contextWithAuth(childAuth(10)),
+            11,
+            new UpdateThemeRequest("ocean"));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(familyService, never()).updateChildTheme(anyString(), anyInt(), anyString());
+    }
+
+    @Test
     void saveFamilyData_failure_doesNotNotifyFamily() {
-        when(familyService.saveFamilyData(anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap()))
+        when(familyService.saveFamilyData(
+            anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean()))
             .thenReturn(OperationResult.failure("boom"));
 
         Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), Map.of());
@@ -230,14 +264,23 @@ class FamilyResourceTest {
 
     @Test
     void getHistoryAndRequests_authenticatedUser_forwardPagination() {
-        when(familyService.getHistory(10, 2, 15)).thenReturn(OperationResult.success(new PaginatedHistory(List.of(), 0, 2, 15)));
+        when(familyService.getHistory("fam-1", 10, 2, 15))
+            .thenReturn(OperationResult.success(new PaginatedHistory(List.of(), 0, 2, 15)));
         when(familyService.getRequests("fam-1", 2, 15)).thenReturn(OperationResult.success(new PaginatedRequests(List.of(), 0, 2, 15)));
 
-        Response history = resource.getHistory(contextWithAuth(childAuth(10)), null, 2, 15);
+        Response history = resource.getHistory(contextWithAuth(childAuth(10)), 99, 2, 15);
         Response requests = resource.getRequests(contextWithAuth(adminAuth()), 2, 15);
 
         assertThat(history.getStatus()).isEqualTo(200);
         assertThat(requests.getStatus()).isEqualTo(200);
+        verify(familyService).getHistory("fam-1", 10, 2, 15);
+    }
+
+    @Test
+    void getRequests_childSession_returnsUnauthorized() {
+        Response response = resource.getRequests(contextWithAuth(childAuth(10)), 1, 20);
+
+        assertThat(response.getStatus()).isEqualTo(401);
     }
 
     @Test
@@ -254,6 +297,15 @@ class FamilyResourceTest {
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
+    @Test
+    void updatePreference_nonAdmin_returnsUnauthorized() {
+        Response response = resource.updatePreference(
+            contextWithAuth(childAuth(10)),
+            new UpdatePreferenceRequest("lastSelectedChildId", 10));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+    }
+
     private static ContainerRequestContext contextWithAuth(AuthContext auth) {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY)).thenReturn(auth);
@@ -266,5 +318,9 @@ class FamilyResourceTest {
 
     private static AuthContext childAuth(int childId) {
         return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf");
+    }
+
+    private static AuthContext superAdminAuth() {
+        return new AuthContext(null, null, "super_admin", "root@test.com", "csrf");
     }
 }

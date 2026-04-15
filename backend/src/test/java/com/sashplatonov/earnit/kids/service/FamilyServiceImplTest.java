@@ -40,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -73,7 +74,7 @@ class FamilyServiceImplTest {
     void loadFamilyData_missingFamily_returnsFailure() {
         when(familyRepository.getDbId("missing")).thenReturn(Optional.empty());
 
-        OperationResult<FamilyDataResponse> result = service.loadFamilyData("missing", null);
+        OperationResult<FamilyDataResponse> result = service.loadFamilyData("missing", null, true);
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
     }
@@ -83,7 +84,7 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.getChildren(1)).thenReturn(List.of());
 
-        OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", null);
+        OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", null, true);
 
         FamilyDataResponse payload = successValue(result);
         assertThat(payload.balance()).isZero();
@@ -128,7 +129,7 @@ class FamilyServiceImplTest {
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11));
         when(childRepository.findByChildIds(List.of(11))).thenReturn(List.of(child2));
 
-        OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", 10);
+        OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", 10, true);
 
         FamilyDataResponse payload = successValue(result);
         assertThat(payload.balance()).isEqualTo(100);
@@ -145,6 +146,43 @@ class FamilyServiceImplTest {
         assertThat(payload.shop().getFirst().comment()).isEqualTo("Prize");
         assertThat(payload.tasks().getFirst().frequency()).isInstanceOf(Map.class);
         assertThat(payload.shop().getFirst().frequency()).isInstanceOf(Map.class);
+    }
+
+    @Test
+    void loadFamilyData_childSession_limitsVisibleChildrenAndRequests() {
+        ChildEntity child1 = child(10, 1, "Alice", 100);
+        ChildEntity child2 = child(11, 1, "Bob", 50);
+        PurchaseRequestEntity ownRequest = PurchaseRequestEntity.builder()
+            .id(4001L)
+            .childId(10)
+            .familyId(1)
+            .coins(7)
+            .requestType("shop")
+            .build();
+        PurchaseRequestEntity siblingRequest = PurchaseRequestEntity.builder()
+            .id(4002L)
+            .childId(11)
+            .familyId(1)
+            .coins(9)
+            .requestType("earn")
+            .build();
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
+        when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of(ownRequest, siblingRequest));
+        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+
+        OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", 10, false);
+
+        FamilyDataResponse payload = successValue(result);
+        assertThat(payload.isAdmin()).isNull();
+        assertThat(payload.children()).singleElement().satisfies(child -> assertThat(child.id()).isEqualTo(10));
+        assertThat(payload.lastSelectedChildId()).isEqualTo(10);
+        assertThat(payload.requests()).singleElement().satisfies(request -> assertThat(request.childId()).isEqualTo(10));
     }
 
     private static JsonNode readJson(String value) {
@@ -191,6 +229,7 @@ class FamilyServiceImplTest {
     @Test
     void updateNickname_invalidOrDuplicateInput_returnsExpectedResult() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
 
         assertThat(service.updateNickname("fam-1", 10, " "))
             .isInstanceOf(OperationResult.Failure.class);
@@ -206,9 +245,12 @@ class FamilyServiceImplTest {
 
     @Test
     void updateChildTheme_unknownOrKnownTheme_returnsExpectedResult() {
-        assertThat(service.updateChildTheme(10, "unknown"))
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
+
+        assertThat(service.updateChildTheme("fam-1", 10, "unknown"))
             .isInstanceOf(OperationResult.Failure.class);
-        assertThat(service.updateChildTheme(10, "ocean"))
+        assertThat(service.updateChildTheme("fam-1", 10, "ocean"))
             .isInstanceOf(OperationResult.Success.class);
     }
 
@@ -336,7 +378,10 @@ class FamilyServiceImplTest {
             ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(3).comment("Prize").build()
         ));
 
-        OperationResult<PaginatedHistory> result = service.getHistory(10, 1, 20);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
+
+        OperationResult<PaginatedHistory> result = service.getHistory("fam-1", 10, 1, 20);
 
         PaginatedHistory payload = successValue(result);
         assertThat(payload.items()).hasSize(1);
@@ -375,17 +420,37 @@ class FamilyServiceImplTest {
 
     @Test
     void childTokenEndpoints_missingOrValidChild_returnExpectedResults() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.empty());
-        assertThat(service.getChildLoginLink(10)).isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.getChildLoginLink("fam-1", 10)).isInstanceOf(OperationResult.Failure.class);
 
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 10)));
-        assertThat(service.getChildLoginLink(10)).isInstanceOf(OperationResult.Success.class);
+        assertThat(service.getChildLoginLink("fam-1", 10)).isInstanceOf(OperationResult.Success.class);
 
         when(childRepository.regenerateToken(10)).thenReturn(Optional.empty());
-        assertThat(service.regenerateChildToken(10)).isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.regenerateChildToken("fam-1", 10)).isInstanceOf(OperationResult.Failure.class);
 
         when(childRepository.regenerateToken(10)).thenReturn(Optional.of("new-token"));
-        assertThat(service.regenerateChildToken(10)).isInstanceOf(OperationResult.Success.class);
+        assertThat(service.regenerateChildToken("fam-1", 10)).isInstanceOf(OperationResult.Success.class);
+    }
+
+    @Test
+    void familyScopedOperations_foreignChild_returnFailure() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(11)).thenReturn(Optional.of(child(11, 2, "Other", 0)));
+
+        assertThat(service.updateNickname("fam-1", 11, "Alice"))
+            .isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.updateChildSettings("fam-1", 11, "Alice", 5, 10))
+            .isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.updateChildTheme("fam-1", 11, "ocean"))
+            .isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.getHistory("fam-1", 11, 1, 20))
+            .isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.getChildLoginLink("fam-1", 11))
+            .isInstanceOf(OperationResult.Failure.class);
+        assertThat(service.regenerateChildToken("fam-1", 11))
+            .isInstanceOf(OperationResult.Failure.class);
     }
 
     @Test
@@ -413,7 +478,7 @@ class FamilyServiceImplTest {
     void saveFamilyData_missingFamily_returnsFailure() {
         when(familyRepository.getDbId("missing")).thenReturn(Optional.empty());
 
-        assertThat(service.saveFamilyData("missing", null, Map.of()))
+        assertThat(service.saveFamilyData("missing", null, Map.of(), true))
             .isInstanceOf(OperationResult.Failure.class);
     }
 
@@ -428,8 +493,47 @@ class FamilyServiceImplTest {
         when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
 
-        assertThat(service.saveFamilyData("fam-1", 10, Map.of()))
+        assertThat(service.saveFamilyData("fam-1", 10, Map.of(), true))
             .isInstanceOf(OperationResult.Success.class);
+    }
+
+    @Test
+    void saveFamilyData_childSession_ignoresSiblingPayload() {
+        ChildEntity child = child(10, 1, "Alice", 10);
+        ChildEntity sibling = child(11, 1, "Bob", 15);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.getChildren(1)).thenReturn(List.of(child, sibling));
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("balance", 42);
+        payload.put("children", List.of(
+            Map.of("id", 10, "balance", 42),
+            Map.of("id", 11, "balance", 9000)
+        ));
+        payload.put("requests", List.of(Map.of(
+            "id", 401L,
+            "childId", 11,
+            "taskId", 101L,
+            "taskName", "Read",
+            "coins", 5,
+            "status", "pending",
+            "requestType", "earn"
+        )));
+
+        assertThat(service.saveFamilyData("fam-1", 10, payload, false))
+            .isInstanceOf(OperationResult.Success.class);
+
+        verify(childRepository).updateBalance(10, 42);
+        verify(childRepository, never()).updateBalance(11, 9000);
+
+        ArgumentCaptor<List<PurchaseRequestEntity>> requestCaptor = ArgumentCaptor.forClass(List.class);
+        verify(familyDataRepository).replaceRequests(eq(1), requestCaptor.capture());
+        assertThat(requestCaptor.getValue()).singleElement().satisfies(entry -> assertThat(entry.getChildId()).isEqualTo(10));
     }
 
     @Test
@@ -485,7 +589,7 @@ class FamilyServiceImplTest {
             "createdAt", timestamp.toString()
         )));
 
-        assertThat(service.saveFamilyData("fam-1", 10, payload)).isInstanceOf(OperationResult.Success.class);
+        assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
         verify(childRepository).updateBalance(10, 42);
         verify(familyDataRepository).markAllTasksDeleted(10);

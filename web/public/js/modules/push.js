@@ -27,19 +27,16 @@ function getPlatform() {
     return window.Capacitor.getPlatform() || 'web';
 }
 
-function getPushChildId(role) {
-    if (role !== 'child') return null;
-    if (state.children && state.children.length > 0) return state.children[0].id;
-    return state.currentChildId || null;
+function getPushChildId() {
+    // Do not rely on client-provided role; do not send child id in payload to avoid exposing role info.
+    return null;
 }
 
 async function syncTokenToServer(tokenValue) {
     if (!tokenValue) return;
 
-    const role = state.isAdmin ? 'admin' : 'child';
-    const childId = getPushChildId(role);
-
-    const payload = { token: tokenValue, platform: getPlatform(), role, childId };
+    // Do not include role/childId in payload. Server will derive session identity from HttpOnly auth cookie.
+    const payload = { token: tokenValue, platform: getPlatform() };
     const result = await registerPushTokenOnServer(payload);
 
     if (!result || !result.success) {
@@ -96,16 +93,14 @@ function urlBase64ToUint8Array(base64String) {
     return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
-function buildWebSubscriptionPayload(subscription, role, childId) {
+function buildWebSubscriptionPayload(subscription) {
     const json = subscription.toJSON();
     return {
         pushType: 'web',
         endpoint: json.endpoint,
         keyP256dh: json.keys?.p256dh || '',
         keyAuth: json.keys?.auth || '',
-        platform: 'web',
-        role,
-        childId
+        platform: 'web'
     };
 }
 
@@ -119,9 +114,7 @@ function logWebSubscriptionSync(role, result) {
 }
 
 async function syncWebSubscriptionToServer(subscription) {
-    const role = state.isAdmin ? 'admin' : 'child';
-    const childId = getPushChildId(role);
-    const payload = buildWebSubscriptionPayload(subscription, role, childId);
+    const payload = buildWebSubscriptionPayload(subscription);
     const result = await registerPushTokenOnServer(payload);
     logWebSubscriptionSync(role, result);
 }

@@ -13,6 +13,10 @@ import { handleSearch } from './friends.js';
 import { scheduleSave } from './actions.js';
 import { normalizeServerData } from './server-contract.js';
 
+function parseBoolean(value) {
+    return value === true || value === 'true' || value === 1 || value === '1';
+}
+
 export function buildInitialState(data, baseData) {
     const normalizedData = normalizeServerData(data);
     const defaults = {
@@ -21,9 +25,10 @@ export function buildInitialState(data, baseData) {
         dailyCoinLimit: 0, children: []
     };
 
+    const isAdminFlag = parseBoolean(normalizedData.isAdmin);
     const s = {
-        isAdmin: Boolean(normalizedData.isAdmin),
-        role: normalizedData.isAdmin ? 'admin' : 'child',
+        isAdmin: isAdminFlag,
+        role: isAdminFlag ? 'admin' : null,
         baseData,
         isLoading: false
     };
@@ -40,9 +45,10 @@ export function buildInitialState(data, baseData) {
 export async function initializeFromServer() {
     const data = await loadDataFromServer();
     if (!data) return showToast('Не удалось загрузить данные', 'error') || null;
-    const baseData = data.isAdmin ? (await loadBaseData() || { tasks: [], products: [] }) : { tasks: [], products: [] };
+    const isAdminFlag = parseBoolean(data.isAdmin);
+    const baseData = isAdminFlag ? (await loadBaseData() || { tasks: [], products: [] }) : { tasks: [], products: [] };
     setState(buildInitialState(data, baseData));
-    if (data.isAdmin && state.children?.length > 0) {
+    if (isAdminFlag && state.children?.length > 0) {
         const serverChildId = data.lastSelectedChildId;
         const localChildId = localStorage.getItem('earnit-last-child-id');
         const preferredId = serverChildId || localChildId;

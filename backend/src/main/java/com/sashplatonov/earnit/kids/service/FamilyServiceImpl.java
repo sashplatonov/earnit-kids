@@ -89,7 +89,7 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
-    public OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId) {
+    public OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return OperationResult.failure("Семья не найдена");
@@ -99,20 +99,33 @@ public final class FamilyServiceImpl implements FamilyService {
 
         List<ChildEntity> children = childRepository.getChildren(familyDbId);
         if (children.isEmpty()) {
+            Boolean adminFlag = adminSession ? Boolean.TRUE : null;
             return OperationResult.success(new FamilyDataResponse(
                 0, List.of(), List.of(), List.of(), List.of(), List.of(),
-                true, List.of(), null, null, null, null));
+                adminFlag, List.of(), null, null, null, null));
         }
 
-        Integer preferredChildId = childId != null ? childId : persistedChildId;
+        List<ChildEntity> visibleChildren = resolveVisibleChildren(children, adminSession, childId);
+        if (visibleChildren.isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
+        Integer preferredChildId = adminSession
+            ? (childId != null ? childId : persistedChildId)
+            : visibleChildren.getFirst().getId();
         ChildEntity activeChild = preferredChildId != null
-            ? children.stream().filter(c -> Objects.equals(c.getId(), preferredChildId)).findFirst().orElse(children.getFirst())
-            : children.getFirst();
-        Integer resolvedLastSelectedChildId = children.stream()
-            .map(ChildEntity::getId)
-            .filter(id -> Objects.equals(id, persistedChildId))
-            .findFirst()
-            .orElse(activeChild.getId());
+            ? visibleChildren.stream()
+                .filter(c -> Objects.equals(c.getId(), preferredChildId))
+                .findFirst()
+                .orElse(visibleChildren.getFirst())
+            : visibleChildren.getFirst();
+        Integer resolvedLastSelectedChildId = adminSession
+            ? children.stream()
+                .map(ChildEntity::getId)
+                .filter(id -> Objects.equals(id, persistedChildId))
+                .findFirst()
+                .orElse(activeChild.getId())
+            : activeChild.getId();
 
         List<TaskDto> tasks = familyDataRepository.getTasks(activeChild.getId()).stream()
             .map(t -> new TaskDto(t.getTaskId(), t.getName(), t.getCoins(), t.getGroupName(),
@@ -129,6 +142,7 @@ public final class FamilyServiceImpl implements FamilyService {
             .toList();
 
         List<RequestDto> requests = familyDataRepository.getRequests(familyDbId, 50, 0).stream()
+            .filter(request -> adminSession || Objects.equals(request.getChildId(), activeChild.getId()))
             .map(request -> toRequestDto(request))
             .toList();
 
@@ -137,21 +151,23 @@ public final class FamilyServiceImpl implements FamilyService {
             .map(f -> new FriendDto(f.getId(), f.getName(), f.getBalance()))
             .toList();
 
-        List<ChildDto> childDtos = children.stream()
+        List<ChildDto> childDtos = visibleChildren.stream()
             .map(c -> new ChildDto(c.getId(), c.getName(), c.getBalance(),
                 c.getMonthlyLimit(), c.getDailyCoinLimit(), c.getTheme()))
             .toList();
 
+        Boolean adminFlag = adminSession ? Boolean.TRUE : null;
         return OperationResult.success(
             new FamilyDataResponse(activeChild.getBalance(), tasks, shopItems, history, requests,
-                friends, true, childDtos, resolvedLastSelectedChildId, activeChild.getName(),
+                friends, adminFlag, childDtos, resolvedLastSelectedChildId, activeChild.getName(),
                 activeChild.getMonthlyLimit(), activeChild.getDailyCoinLimit()));
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> saveFamilyData(String familyId, Integer childId,
-                                                               Map<String, Object> payload) {
+                                                              Map<String, Object> payload,
+                                                              boolean adminSession) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return OperationResult.failure("Семья не найдена");
@@ -160,22 +176,28 @@ public final class FamilyServiceImpl implements FamilyService {
         int familyDbId = dbIdOpt.get();
         List<ChildEntity> children = childRepository.getChildren(familyDbId);
         if (children.isEmpty()) {
-            return loadFamilyData(familyId, childId);
+            return loadFamilyData(familyId, childId, adminSession);
         }
 
-        Integer selectedChildId = resolveSelectedChildId(familyId, childId, payload, children);
-        if (selectedChildId != null && children.stream().noneMatch(child -> Objects.equals(child.getId(), selectedChildId))) {
+        List<ChildEntity> accessibleChildren = resolveVisibleChildren(children, adminSession, childId);
+        if (accessibleChildren.isEmpty()) {
             return OperationResult.failure("Ребенок не найден");
         }
 
-        syncBalances(familyDbId, selectedChildId, payload, children);
+        Integer selectedChildId = resolveSelectedChildId(familyId, childId, payload, accessibleChildren, adminSession);
+        if (selectedChildId != null
+            && accessibleChildren.stream().noneMatch(child -> Objects.equals(child.getId(), selectedChildId))) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
+        syncBalances(familyDbId, selectedChildId, payload, accessibleChildren);
         syncTasks(familyDbId, selectedChildId, payload);
         syncShopItems(familyDbId, selectedChildId, payload);
         syncHistory(familyDbId, selectedChildId, payload);
-        syncRequests(familyDbId, selectedChildId, payload, children);
+        syncRequests(familyDbId, selectedChildId, payload, accessibleChildren);
         familyRepository.updateLastActivity(familyId);
 
-        return loadFamilyData(familyId, selectedChildId);
+        return loadFamilyData(familyId, selectedChildId, adminSession);
     }
 
     @Override
@@ -234,6 +256,10 @@ public final class FamilyServiceImpl implements FamilyService {
             return OperationResult.failure("Семья не найдена");
         }
 
+        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
         if (newName == null || newName.isBlank()) {
             return OperationResult.failure("Имя обязательно");
         }
@@ -253,14 +279,24 @@ public final class FamilyServiceImpl implements FamilyService {
         if (dbIdOpt.isEmpty()) {
             return OperationResult.failure("Семья не найдена");
         }
+        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
+        }
         childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit);
         return OperationResult.success(null);
     }
 
     @Override
-    public OperationResult<Void> updateChildTheme(int childId, String theme) {
+    public OperationResult<Void> updateChildTheme(String familyId, int childId, String theme) {
+        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        if (dbIdOpt.isEmpty()) {
+            return OperationResult.failure("Семья не найдена");
+        }
         if (!VALID_THEMES.contains(theme)) {
             return OperationResult.failure("Недопустимая тема: " + theme);
+        }
+        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
         }
         childRepository.updateTheme(childId, theme);
         return OperationResult.success(null);
@@ -346,7 +382,15 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
-    public OperationResult<PaginatedHistory> getHistory(int childId, int page, int limit) {
+    public OperationResult<PaginatedHistory> getHistory(String familyId, int childId, int page, int limit) {
+        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        if (dbIdOpt.isEmpty()) {
+            return OperationResult.failure("Семья не найдена");
+        }
+        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
         int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
         int offset = (page - 1) * effectiveLimit;
         List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, effectiveLimit, offset);
@@ -379,8 +423,13 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
-    public OperationResult<String> getChildLoginLink(int childId) {
-        var childOpt = childRepository.findByIdOptional(childId);
+    public OperationResult<String> getChildLoginLink(String familyId, int childId) {
+        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        if (dbIdOpt.isEmpty()) {
+            return OperationResult.failure("Семья не найдена");
+        }
+
+        var childOpt = findFamilyChild(dbIdOpt.get(), childId);
         if (childOpt.isEmpty()) {
             return OperationResult.failure("Ребенок не найден");
         }
@@ -388,7 +437,15 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
-    public OperationResult<String> regenerateChildToken(int childId) {
+    public OperationResult<String> regenerateChildToken(String familyId, int childId) {
+        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        if (dbIdOpt.isEmpty()) {
+            return OperationResult.failure("Семья не найдена");
+        }
+        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
         Optional<String> newToken = childRepository.regenerateToken(childId);
         if (newToken.isEmpty()) {
             return OperationResult.failure("Ошибка генерации токена");
@@ -440,7 +497,12 @@ public final class FamilyServiceImpl implements FamilyService {
 
     private Integer resolveSelectedChildId(String familyId, Integer explicitChildId,
                                            Map<String, Object> payload,
-                                           List<ChildEntity> children) {
+                                           List<ChildEntity> children,
+                                           boolean adminSession) {
+        if (!adminSession) {
+            return explicitChildId != null ? explicitChildId : children.getFirst().getId();
+        }
+
         if (explicitChildId != null) {
             return explicitChildId;
         }
@@ -456,6 +518,25 @@ public final class FamilyServiceImpl implements FamilyService {
         }
 
         return children.getFirst().getId();
+    }
+
+    private List<ChildEntity> resolveVisibleChildren(List<ChildEntity> children,
+                                                     boolean adminSession,
+                                                     Integer childId) {
+        if (adminSession) {
+            return children;
+        }
+        if (childId == null) {
+            return List.of();
+        }
+        return children.stream()
+            .filter(child -> Objects.equals(child.getId(), childId))
+            .toList();
+    }
+
+    private Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
+        return childRepository.findByIdOptional(childId)
+            .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
     }
 
     private Integer inferSingleChildId(Map<String, Object> payload) {

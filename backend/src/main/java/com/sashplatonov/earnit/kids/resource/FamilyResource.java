@@ -47,6 +47,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
@@ -84,9 +85,9 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        Integer effectiveChildId = childId != null ? childId : auth.childId();
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
         OperationResult<FamilyDataResponse> result =
-            familyService.loadFamilyData(auth.familyId(), effectiveChildId);
+            familyService.loadFamilyData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
         return toResponse(result);
     }
@@ -109,9 +110,10 @@ public class FamilyResource {
         }
 
         var effectivePayload = payload == null ? Map.<String, Object>of() : payload;
-        Integer childId = effectivePayload.get("childId") instanceof Number n ? n.intValue() : auth.childId();
+        Integer requestedChildId = effectivePayload.get("childId") instanceof Number n ? n.intValue() : null;
+        Integer childId = auth.isChild() ? auth.childId() : requestedChildId;
         OperationResult<FamilyDataResponse> result =
-            familyService.saveFamilyData(auth.familyId(), childId, effectivePayload);
+            familyService.saveFamilyData(auth.familyId(), childId, effectivePayload, auth.isAdmin());
         notifyDataUpdated(auth, childId, result);
 
         return toResponse(result);
@@ -272,11 +274,11 @@ public class FamilyResource {
                                      @RequestBody(required = true, description = "Theme selection payload")
                                      @Valid UpdateThemeRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || (!auth.isAdmin() && (!auth.isChild() || !Objects.equals(auth.childId(), childId)))) {
             return unauthorized();
         }
 
-        OperationResult<Void> result = familyService.updateChildTheme(childId, request.theme());
+        OperationResult<Void> result = familyService.updateChildTheme(auth.familyId(), childId, request.theme());
         notifyChildUpdated(auth.familyId(), childId, result);
         return toVoidResponse(result);
     }
@@ -424,7 +426,7 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        OperationResult<String> result = familyService.getChildLoginLink(childId);
+        OperationResult<String> result = familyService.getChildLoginLink(auth.familyId(), childId);
         return switch (result) {
             case OperationResult.Success<String> s -> Response.ok(new TokenResponse(s.value())).build();
             case OperationResult.Failure<String> f ->
@@ -452,7 +454,7 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        OperationResult<String> result = familyService.regenerateChildToken(childId);
+        OperationResult<String> result = familyService.regenerateChildToken(auth.familyId(), childId);
         return switch (result) {
             case OperationResult.Success<String> s -> Response.ok(new TokenResponse(s.value())).build();
             case OperationResult.Failure<String> f ->
@@ -482,8 +484,12 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        int effectiveChildId = childId != null ? childId : (auth.childId() != null ? auth.childId() : 0);
-        return toResponse(familyService.getHistory(effectiveChildId, page, limit));
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
+        if (effectiveChildId == null) {
+            return badRequest("childId is required");
+        }
+
+        return toResponse(familyService.getHistory(auth.familyId(), effectiveChildId, page, limit));
     }
 
     @GET
@@ -501,7 +507,7 @@ public class FamilyResource {
                                 @Parameter(description = "Page size", example = "20")
                                 @QueryParam("limit") @DefaultValue("20") int limit) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || !auth.isAdmin()) {
             return unauthorized();
         }
 
@@ -523,7 +529,7 @@ public class FamilyResource {
                                      @RequestBody(required = true, description = "Preference update payload")
                                      @Valid UpdatePreferenceRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || !auth.isAdmin()) {
             return unauthorized();
         }
 
@@ -538,12 +544,18 @@ public class FamilyResource {
 
     private AuthContext getAuthOrFail(ContainerRequestContext ctx) {
         Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return prop instanceof AuthContext auth ? auth : null;
+        return prop instanceof AuthContext auth && !auth.isSuperAdmin() ? auth : null;
     }
 
     private Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)
             .entity(ErrorResponse.unauthorized("Unauthorized"))
+            .build();
+    }
+
+    private Response badRequest(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse.of(message, "BAD_REQUEST", 400))
             .build();
     }
 

@@ -8,7 +8,7 @@ import { triggerTaskAnimation } from './motion-feedback.js';
 export function earnCoins(taskId) {
     const task = state.tasks.find(t => t.id == taskId);
     if (!task) return;
-    const actingId = state.role === 'admin' ? state.currentChildId : (state.children[0]?.id || null);
+    const actingId = state.isAdmin ? state.currentChildId : (state.children[0]?.id || null);
     if (!actingId) {
         const msg = (state.isAdmin && state.children.length === 0) ? 'Сначала добавьте ребенка' : 'Сначала выберите ребенка';
         return showToast(msg, 'error');
