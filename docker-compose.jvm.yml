@@ -40,7 +40,7 @@ services:
       db:
         condition: service_healthy
     expose:
-      - "${BACKEND_PORT:-8080}:${BACKEND_INTERNAL_PORT:-8080}"
+      - "${BACKEND_PORT}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${BACKEND_INTERNAL_PORT:-8080}/q/health/ready || exit 1"]
       interval: 30s
@@ -61,7 +61,7 @@ services:
     volumes:
       - earnit_kids_postgres_data:/var/lib/postgresql/data
     expose:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT}"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${DB_USER:-postgres}"]
       interval: 10s
