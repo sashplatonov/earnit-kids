@@ -24,7 +24,7 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class JwtService {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private final SecureRandom secureRandom = new SecureRandom();
 
     private final JwtCompatibilityConfig jwtCompatibilityConfig;
     private final ObjectMapper objectMapper;
@@ -72,7 +72,7 @@ public class JwtService {
 
     public String generateCsrfToken() {
         var bytes = new byte[16];
-        SECURE_RANDOM.nextBytes(bytes);
+        secureRandom.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes);
     }
 

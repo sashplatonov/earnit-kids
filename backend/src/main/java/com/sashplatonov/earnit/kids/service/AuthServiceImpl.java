@@ -21,8 +21,8 @@ import java.util.HexFormat;
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public final class AuthServiceImpl implements AuthService {
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final int MIN_PASSWORD_LENGTH = 6;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
@@ -282,7 +282,7 @@ public final class AuthServiceImpl implements AuthService {
 
     private String generateHexToken(int byteCount) {
         var bytes = new byte[byteCount];
-        SECURE_RANDOM.nextBytes(bytes);
+        secureRandom.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes);
     }
 }
