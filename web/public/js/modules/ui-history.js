@@ -1,10 +1,11 @@
 /** @file Ui History frontend UI module */
 import { escapeHtml } from './utils.js';
+import { getCreatedAt, getGroupName } from './server-contract.js';
 
 function getEntryDetails(entry, state) {
     const details = {
-        name: entry.description || 'Действие',
-        group: entry.group,
+        name: entry.name || entry.description || 'Действие',
+        group: entry.groupName,
         comment: entry.comment
     };
 
@@ -12,14 +13,14 @@ function getEntryDetails(entry, state) {
         const t = state.tasks.find(t => String(t.id) === String(entry.taskId));
         if (t) {
             details.name = t.name;
-            details.group = t.group;
+            details.group = getGroupName(t);
             details.comment = t.comment;
         }
     } else if (entry.type === 'spend' && entry.itemId) {
         const i = state.shopItems.find(i => String(i.id) === String(entry.itemId));
         if (i) {
             details.name = i.name;
-            details.group = i.group;
+            details.group = getGroupName(i);
             details.comment = i.comment;
         }
     }
@@ -30,7 +31,7 @@ function renderHistoryItem(entry, state) {
     const isEarn = entry.type === 'earn';
     const entryIcon = isEarn ? 'icon-coin-stack' : 'icon-shop';
     const details = getEntryDetails(entry, state);
-    const formattedDate = new Date(entry.date).toLocaleDateString('ru-RU', {
+    const formattedDate = new Date(getCreatedAt(entry)).toLocaleDateString('ru-RU', {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
     });
     const moneyVal = entry.moneyAmount || entry.rsdAmount;
@@ -91,8 +92,9 @@ export function renderHistoryUI(state) {
     if (emptyState) emptyState.classList.add('hidden');
 
     const grouped = history.reduce((acc, entry) => {
-        if (!entry.date) return acc;
-        const dateStr = typeof entry.date === 'string' ? entry.date : new Date(entry.date).toISOString();
+        const createdAt = getCreatedAt(entry);
+        if (!createdAt) return acc;
+        const dateStr = typeof createdAt === 'string' ? createdAt : new Date(createdAt).toISOString();
         const monthKey = dateStr.slice(0, 7);
         if (!acc[monthKey]) acc[monthKey] = { items: [], earned: 0, spent: 0, moneySpent: 0 };
         acc[monthKey].items.push(entry);
@@ -107,7 +109,9 @@ export function renderHistoryUI(state) {
     container.innerHTML = Object.keys(grouped).sort().reverse().map(monthKey => {
         const [year, month] = monthKey.split('-');
         const name = new Date(year, month - 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
-        const items = grouped[monthKey].items.sort((a, b) => new Date(b.date) - new Date(a.date)).map(item => renderHistoryItem(item, state)).join('');
+        const items = grouped[monthKey].items
+            .sort((a, b) => new Date(getCreatedAt(b)) - new Date(getCreatedAt(a)))
+            .map(item => renderHistoryItem(item, state)).join('');
         return renderMonthHeader(name, grouped[monthKey]) + items;
     }).join('');
 }

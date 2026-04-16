@@ -48,6 +48,18 @@ class CookieBuilderTest {
     }
 
     @Test
+    void buildAuthCookies_childRole_doesNotExposeRoleCookie() {
+        CookieBuilder builder = new CookieBuilder(
+            jwtService,
+            TestConfigFactory.appConfig(false, null, null, true, true));
+
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, 3600);
+
+        // app_role must not be present for child role (no client-readable role)
+        assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).doesNotContain("app_role="));
+    }
+
+    @Test
     void buildAuthCookies_signedToken_canBeVerified() {
         CookieBuilder builder = new CookieBuilder(
             jwtService,

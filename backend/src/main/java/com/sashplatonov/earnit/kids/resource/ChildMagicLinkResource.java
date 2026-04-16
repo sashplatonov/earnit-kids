@@ -9,9 +9,11 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
@@ -35,7 +37,8 @@ public class ChildMagicLinkResource {
     @Operation(summary = "Authenticate a child session and redirect to the app")
     @APIResponse(responseCode = "303",
         description = "Redirected to the application root on success or back to login when the token is invalid")
-    public Response loginByToken(@Parameter(required = true, description = "Child magic-link token")
+    public Response loginByToken(@Context ContainerRequestContext request,
+                                 @Parameter(required = true, description = "Child magic-link token")
                                  @PathParam("token") String token) {
         OperationResult<AuthPayload> result = authService.authenticateChild(token);
 
@@ -46,7 +49,18 @@ public class ChildMagicLinkResource {
                     payload.email(), payload.role(), payload.familyId(),
                     payload.childId(), MAGIC_LINK_COOKIE_MAX_AGE);
 
-                Response.ResponseBuilder response = Response.seeOther(URI.create("/"))
+                String forwardedProto = request != null ? request.getHeaderString("X-Forwarded-Proto") : null;
+                String forwardedHost = request != null ? request.getHeaderString("X-Forwarded-Host") : null;
+                java.net.URI locationUri;
+                if (forwardedProto != null && !forwardedProto.isBlank() && forwardedHost != null && !forwardedHost.isBlank()) {
+                    String proto = forwardedProto.split(",")[0].trim();
+                    String host = forwardedHost.split(",")[0].trim();
+                    locationUri = URI.create(proto + ":" + '/' + '/' + host + "/");
+                } else {
+                    locationUri = URI.create("/");
+                }
+
+                Response.ResponseBuilder response = Response.seeOther(locationUri)
                     .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
                     .header("Pragma", "no-cache")
                     .header("Expires", "0");

@@ -11,17 +11,24 @@ import { switchChild, saveNewChild } from './admin.js';
 import { setupTabControls } from './main-tabs.js';
 import { handleSearch } from './friends.js';
 import { scheduleSave } from './actions.js';
+import { normalizeServerData } from './server-contract.js';
+
+function parseBoolean(value) {
+    return value === true || value === 'true' || value === 1 || value === '1';
+}
 
 export function buildInitialState(data, baseData) {
+    const normalizedData = normalizeServerData(data);
     const defaults = {
         familyId: null, balance: 0, tasks: [], shopItems: [], history: [],
         requests: [], childNickname: null, monthlyLimit: 10000,
         dailyCoinLimit: 0, children: []
     };
 
+    const isAdminFlag = parseBoolean(normalizedData.isAdmin);
     const s = {
-        isAdmin: Boolean(data.isAdmin),
-        role: data.isAdmin ? 'admin' : 'child',
+        isAdmin: isAdminFlag,
+        role: isAdminFlag ? 'admin' : null,
         baseData,
         isLoading: false
     };
@@ -29,7 +36,7 @@ export function buildInitialState(data, baseData) {
     // Use loop or assign to avoid complexity from many ??
     Object.keys(defaults).forEach(key => {
         const dataKey = key === 'shopItems' ? 'shop' : key;
-        s[key] = data[dataKey] ?? defaults[key];
+        s[key] = normalizedData[dataKey] ?? defaults[key];
     });
 
     return s;
@@ -38,14 +45,15 @@ export function buildInitialState(data, baseData) {
 export async function initializeFromServer() {
     const data = await loadDataFromServer();
     if (!data) return showToast('Не удалось загрузить данные', 'error') || null;
-    const baseData = data.isAdmin ? (await loadBaseData() || { tasks: [], products: [] }) : { tasks: [], products: [] };
+    const isAdminFlag = parseBoolean(data.isAdmin);
+    const baseData = isAdminFlag ? (await loadBaseData() || { tasks: [], products: [] }) : { tasks: [], products: [] };
     setState(buildInitialState(data, baseData));
-    if (data.isAdmin && state.children?.length > 0) {
+    if (isAdminFlag && state.children?.length > 0) {
         const serverChildId = data.lastSelectedChildId;
         const localChildId = localStorage.getItem('earnit-last-child-id');
         const preferredId = serverChildId || localChildId;
         const childToSelect = state.children.find(c => c.id == preferredId) || state.children[0];
-        switchChild(childToSelect.id);
+        await switchChild(childToSelect.id, { persistPreference: false });
     }
     return data;
 }

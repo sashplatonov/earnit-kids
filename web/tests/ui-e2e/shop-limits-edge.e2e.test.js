@@ -18,9 +18,9 @@ function createLimitsBaseData() {
             {
                 id: 3001,
                 name: 'Крупная награда',
-                group: 'Семья',
+                groupName: 'Семья',
                 price: 80,
-                money_limit: 600,
+                moneyLimit: 600,
                 type: 'large',
                 frequency: { limit: 1, period: 'month' },
                 childId: 301,
@@ -29,9 +29,9 @@ function createLimitsBaseData() {
             {
                 id: 3002,
                 name: 'Повторяемая награда',
-                group: 'Режим',
+                groupName: 'Режим',
                 price: 30,
-                money_limit: 100,
+                moneyLimit: 100,
                 type: 'small',
                 frequency: { limit: 1, period: 'week' },
                 childId: 301,
@@ -104,7 +104,7 @@ test.describe('@limits базовые ограничения', () => {
             amount: 10,
             moneyAmount: 450,
             childId: 301,
-            date: isoNow()
+            createdAt: isoNow()
         }];
 
         await openShop(page, { data });
@@ -126,7 +126,7 @@ test.describe('@limits расширенные ограничения', () => {
             amount: 80,
             moneyAmount: 600,
             childId: 301,
-            date: isoNow()
+            createdAt: isoNow()
         }];
 
         await openShop(page, { data });
@@ -143,7 +143,7 @@ test.describe('@limits расширенные ограничения', () => {
             amount: 30,
             moneyAmount: 100,
             childId: 301,
-            date: isoNow()
+            createdAt: isoNow()
         }];
 
         await openShop(page, { data });

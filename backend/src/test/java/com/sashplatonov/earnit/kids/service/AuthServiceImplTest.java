@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
@@ -16,12 +17,20 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,13 +41,16 @@ class AuthServiceImplTest {
     @Mock ChildRepository childRepository;
 
     AuthServiceImpl authService;
+    PasswordHasher passwordHasher;
 
     @BeforeEach
     void setUp() {
+        passwordHasher = new PasswordHasher();
         authService = new AuthServiceImpl(
             familyRepository,
             childRepository,
-            TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true));
+            TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true),
+            passwordHasher);
     }
 
     @Test
@@ -46,8 +58,9 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "admin123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        OperationResult.Success<?> success1 = (OperationResult.Success<?>) result;
-        AuthPayload payload = (AuthPayload) success1.value();
+        OperationResult.Success<AuthPayload> success1 = (OperationResult.Success<AuthPayload>) result;
+        AuthPayload payload = success1.value();
+        assertThat(payload).isNotNull();
         assertThat(payload.role()).isEqualTo("super_admin");
         assertThat(payload.email()).isEqualTo("admin@test.com");
     }
@@ -64,25 +77,54 @@ class AuthServiceImplTest {
 
     @Test
     void authenticateAdmin_familyCredentialsMatch_returnsAdminPayload() {
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin123", false, true);
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, true);
+        when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
+        when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
+        when(familyRepository.updatePassword(eq("fam_1"), anyString())).thenReturn(true);
+
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("user@test.com", "password123");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        OperationResult.Success<AuthPayload> success2 = (OperationResult.Success<AuthPayload>) result;
+        AuthPayload payload = success2.value();
+        assertThat(payload).isNotNull();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.familyId()).isEqualTo("fam_1");
+        verify(familyRepository).updatePassword(eq("fam_1"), argThat(hash -> hash.startsWith("$argon2")));
+    }
+
+    @Test
+    void authenticateAdmin_argon2Password_returnsAdminPayloadWithoutRehash() {
+        String hashedPassword = passwordHasher.hash("password123");
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", hashedPassword, false, true);
         when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
         when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
 
-        OperationResult<AuthPayload> result = authService.authenticateAdmin("user@test.com", "pin123");
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("user@test.com", "password123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        OperationResult.Success<?> success2 = (OperationResult.Success<?>) result;
-        AuthPayload payload = (AuthPayload) success2.value();
-        assertThat(payload.role()).isEqualTo("admin");
-        assertThat(payload.familyId()).isEqualTo("fam_1");
+        verify(familyRepository, never()).updatePassword(eq("fam_1"), anyString());
+    }
+
+    @Test
+    void authenticateAdmin_sha256Password_returnsAdminPayloadAndRehashes() {
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", sha256Hex("password123"), false, true);
+        when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
+        when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
+        when(familyRepository.updatePassword(eq("fam_1"), anyString())).thenReturn(true);
+
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("user@test.com", "password123");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        verify(familyRepository).updatePassword(eq("fam_1"), argThat(hash -> hash.startsWith("$argon2")));
     }
 
     @Test
     void authenticateAdmin_blockedFamily_returnsFailure() {
-        FamilyEntity family = mockFamily("fam_1", "blocked@test.com", "pin123", true, true);
+        FamilyEntity family = mockFamily("fam_1", "blocked@test.com", "password123", true, true);
         when(familyRepository.findByEmail("blocked@test.com")).thenReturn(Optional.of(family));
 
-        OperationResult<AuthPayload> result = authService.authenticateAdmin("blocked@test.com", "pin123");
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("blocked@test.com", "password123");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure2 = (OperationResult.Failure<?>) result;
@@ -94,7 +136,7 @@ class AuthServiceImplTest {
     void authenticateAdmin_missingFamily_returnsFailure() {
         when(familyRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
 
-        OperationResult<AuthPayload> result = authService.authenticateAdmin("unknown@test.com", "pin");
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("unknown@test.com", "password");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
     }
@@ -105,15 +147,16 @@ class AuthServiceImplTest {
         when(child.getId()).thenReturn(10);
         when(child.getFamilyDbId()).thenReturn(1);
         when(child.getName()).thenReturn("Alice");
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin123", false, true);
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, true);
         when(childRepository.findByToken("abc123")).thenReturn(Optional.of(child));
         when(familyRepository.findByDbId(1)).thenReturn(Optional.of(family));
 
         OperationResult<AuthPayload> result = authService.authenticateChild("abc123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        OperationResult.Success<?> success3 = (OperationResult.Success<?>) result;
-        AuthPayload payload = (AuthPayload) success3.value();
+        OperationResult.Success<AuthPayload> success3 = (OperationResult.Success<AuthPayload>) result;
+        AuthPayload payload = success3.value();
+        assertThat(payload).isNotNull();
         assertThat(payload.role()).isEqualTo("child");
         assertThat(payload.childId()).isEqualTo(10);
         assertThat(payload.childName()).isEqualTo("Alice");
@@ -143,11 +186,17 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.registerFamily("new@test.com", "strong123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
+        verify(familyRepository).create(
+            anyString(),
+            eq("new@test.com"),
+            argThat(hash -> hash.startsWith("$argon2")),
+            anyBoolean(),
+            any());
     }
 
     @Test
     void registerFamily_existingEmail_returnsFailure() {
-        FamilyEntity existing = mockFamily("fam_1", "exists@test.com", "pin", false, true);
+        FamilyEntity existing = mockFamily("fam_1", "exists@test.com", "password", false, true);
         when(familyRepository.findByEmail("exists@test.com")).thenReturn(Optional.of(existing));
 
         OperationResult<AuthPayload> result = authService.registerFamily("exists@test.com", "strong123");
@@ -172,12 +221,13 @@ class AuthServiceImplTest {
         when(family.getFamilyId()).thenReturn("fam_1");
         when(family.getEmail()).thenReturn("user@test.com");
         when(familyRepository.findByResetToken("validtoken")).thenReturn(Optional.of(family));
-        when(familyRepository.updatePassword("fam_1", "newpass123")).thenReturn(true);
+        when(familyRepository.updatePassword(eq("fam_1"), anyString())).thenReturn(true);
         when(familyRepository.clearResetToken("fam_1")).thenReturn(true);
 
         OperationResult<Void> result = authService.resetPassword("user@test.com", "validtoken", "newpass123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
+        verify(familyRepository).updatePassword(eq("fam_1"), argThat(hash -> hash.startsWith("$argon2")));
     }
 
     @Test
@@ -194,11 +244,12 @@ class AuthServiceImplTest {
         AuthServiceImpl serviceWithVerification = new AuthServiceImpl(
             familyRepository,
             childRepository,
-            TestConfigFactory.appConfig(false, null, null, true, true));
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin123", false, false);
+            TestConfigFactory.appConfig(false, null, null, true, true),
+            passwordHasher);
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
         when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
 
-        OperationResult<AuthPayload> result = serviceWithVerification.authenticateAdmin("user@test.com", "pin123");
+        OperationResult<AuthPayload> result = serviceWithVerification.authenticateAdmin("user@test.com", "password123");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure3 = (OperationResult.Failure<?>) result;
@@ -211,7 +262,8 @@ class AuthServiceImplTest {
         AuthServiceImpl noRecoveryService = new AuthServiceImpl(
             familyRepository,
             childRepository,
-            TestConfigFactory.appConfig(false, null, null, false, false));
+            TestConfigFactory.appConfig(false, null, null, false, false),
+            passwordHasher);
 
         OperationResult<Void> result = noRecoveryService.forgotPassword("user@test.com");
 
@@ -229,7 +281,7 @@ class AuthServiceImplTest {
 
     @Test
     void verifyEmail_validToken_returnsSuccess() {
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin123", false, false);
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
         when(familyRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(family));
         when(familyRepository.verifyFamily("fam_1")).thenReturn(true);
 
@@ -248,7 +300,7 @@ class AuthServiceImplTest {
 
     @Test
     void verifyEmail_emailMismatch_returnsFailure() {
-        FamilyEntity family = mockFamily("fam_1", "other@test.com", "pin123", false, false);
+        FamilyEntity family = mockFamily("fam_1", "other@test.com", "password123", false, false);
         when(familyRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(family));
 
         assertThat(authService.verifyEmail("user@test.com", "vtoken"))
@@ -256,30 +308,31 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void changeAdminPin_validOldPin_updatesPassword() {
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "oldpin", false, true);
+    void changeAdminPassword_validOldPassword_updatesPassword() {
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "oldpassword", false, true);
         when(familyRepository.findById("fam_1")).thenReturn(Optional.of(family));
-        when(familyRepository.updatePassword("fam_1", "newpin1")).thenReturn(true);
+        when(familyRepository.updatePassword(eq("fam_1"), anyString())).thenReturn(true);
 
-        OperationResult<Void> result = authService.changeAdminPin("fam_1", "oldpin", "newpin1");
+        OperationResult<Void> result = authService.changeAdminPassword("fam_1", "oldpassword", "newpassword1");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
+        verify(familyRepository).updatePassword(eq("fam_1"), argThat(hash -> hash.startsWith("$argon2")));
     }
 
     @Test
-    void changeAdminPin_blankFamilyId_returnsFailure() {
-        assertThat(authService.changeAdminPin("", "old", "new123"))
+    void changeAdminPassword_blankFamilyId_returnsFailure() {
+        assertThat(authService.changeAdminPassword("", "old", "new123"))
             .isInstanceOf(OperationResult.Failure.class);
-        assertThat(authService.changeAdminPin(null, "old", "new123"))
+        assertThat(authService.changeAdminPassword(null, "old", "new123"))
             .isInstanceOf(OperationResult.Failure.class);
     }
 
     @Test
-    void changeAdminPin_wrongOldPin_returnsFailure() {
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "realpin", false, true);
+    void changeAdminPassword_wrongOldPassword_returnsFailure() {
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "realpassword", false, true);
         when(familyRepository.findById("fam_1")).thenReturn(Optional.of(family));
 
-        assertThat(authService.changeAdminPin("fam_1", "wrongpin", "newpin1"))
+        assertThat(authService.changeAdminPassword("fam_1", "wrongpassword", "newpassword1"))
             .isInstanceOf(OperationResult.Failure.class);
     }
 
@@ -287,7 +340,7 @@ class AuthServiceImplTest {
     void authenticateChild_blockedFamily_returnsFailure() {
         ChildEntity child = mock(ChildEntity.class);
         when(child.getFamilyDbId()).thenReturn(1);
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "pin", true, true);
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password", true, true);
         when(childRepository.findByToken("token")).thenReturn(Optional.of(child));
         when(familyRepository.findByDbId(1)).thenReturn(Optional.of(family));
 
@@ -314,5 +367,14 @@ class AuthServiceImplTest {
         when(entity.isBlocked()).thenReturn(blocked);
         when(entity.isVerified()).thenReturn(verified);
         return entity;
+    }
+
+    private static String sha256Hex(String value) {
+        try {
+            var digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 }

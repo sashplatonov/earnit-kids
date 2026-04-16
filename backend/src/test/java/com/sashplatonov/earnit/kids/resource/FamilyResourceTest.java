@@ -16,6 +16,7 @@ import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
+import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
@@ -31,7 +32,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,12 +43,13 @@ class FamilyResourceTest {
 
     @Mock FamilyService familyService;
     @Mock BaseDataService baseDataService;
+    @Mock WebSocketNotificationService webSocketNotificationService;
 
     private FamilyResource resource;
 
     @BeforeEach
     void setUp() {
-        resource = new FamilyResource(familyService, baseDataService);
+        resource = new FamilyResource(familyService, baseDataService, webSocketNotificationService);
     }
 
     @Test
@@ -58,7 +62,7 @@ class FamilyResourceTest {
     void getFamilyData_authenticatedUser_returnsPayload() {
         FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), null, null, null, null);
-        when(familyService.loadFamilyData("fam-1", 10)).thenReturn(OperationResult.success(payload));
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
         Response response = resource.getFamilyData(contextWithAuth(adminAuth()), 10);
 
@@ -67,16 +71,39 @@ class FamilyResourceTest {
     }
 
     @Test
-    void saveFamilyData_childSessionWithoutBodyChildId_usesAuthChildId() {
+    void getFamilyData_childSession_ignoresRequestedChildId() {
         FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
-            List.of(), true, List.of(), null, null, null, null);
-        when(familyService.saveFamilyData(anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap()))
-            .thenReturn(OperationResult.success(payload));
+            List.of(), false, List.of(), 10, null, null, null);
+        when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), Map.of("foo", "bar"));
+        Response response = resource.getFamilyData(contextWithAuth(childAuth(10)), 99);
 
         assertThat(response.getStatus()).isEqualTo(200);
-        verify(familyService).saveFamilyData("fam-1", 10, Map.of("foo", "bar"));
+        verify(familyService).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
+    void saveFamilyData_childSession_ignoresBodyChildIdAndUsesAuthChildId() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+            List.of(), false, List.of(), null, null, null, null);
+        when(familyService.saveFamilyData(
+            anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean()))
+            .thenReturn(OperationResult.success(payload));
+
+        Map<String, Object> body = Map.of("foo", "bar", "childId", 99);
+
+        Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), body);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyService).saveFamilyData("fam-1", 10, body, false);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
+    }
+
+    @Test
+    void getFamilyData_superAdminSession_returnsUnauthorized() {
+        Response response = resource.getFamilyData(contextWithAuth(superAdminAuth()), null);
+
+        assertThat(response.getStatus()).isEqualTo(401);
     }
 
     @Test
@@ -109,6 +136,18 @@ class FamilyResourceTest {
         when(familyService.deleteChild("fam-1", 10)).thenReturn(OperationResult.success(null));
         Response response = resource.deleteChild(contextWithAuth(adminAuth()), 10);
         assertThat(response.getStatus()).isEqualTo(200);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_DELETED"), eq(Map.of("childId", 10)));
+    }
+
+    @Test
+    void createChild_success_notifiesFamily() {
+        ChildInfo info = new ChildInfo(77, "Kid", "token");
+        when(familyService.createChild("fam-1", "Kid")).thenReturn(OperationResult.success(info));
+
+        Response response = resource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
+
+        assertThat(response.getStatus()).isEqualTo(201);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 77)));
     }
 
     @Test
@@ -121,6 +160,7 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).updateNickname("fam-1", 10, "Alice");
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
     }
 
     @Test
@@ -136,11 +176,12 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).updateChildSettings("fam-1", 10, "Nick", 11, 22);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
     }
 
     @Test
     void updateChildThemePost_validTheme_returnsOk() {
-        when(familyService.updateChildTheme(10, "ocean")).thenReturn(OperationResult.success(null));
+        when(familyService.updateChildTheme("fam-1", 10, "ocean")).thenReturn(OperationResult.success(null));
 
         Response response = resource.updateChildThemePost(
             contextWithAuth(adminAuth()),
@@ -148,6 +189,30 @@ class FamilyResourceTest {
             new UpdateThemeRequest("ocean"));
 
         assertThat(response.getStatus()).isEqualTo(200);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
+    }
+
+    @Test
+    void updateChildTheme_childCannotUpdateAnotherChild() {
+        Response response = resource.updateChildThemePost(
+            contextWithAuth(childAuth(10)),
+            11,
+            new UpdateThemeRequest("ocean"));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(familyService, never()).updateChildTheme(anyString(), anyInt(), anyString());
+    }
+
+    @Test
+    void saveFamilyData_failure_doesNotNotifyFamily() {
+        when(familyService.saveFamilyData(
+            anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean()))
+            .thenReturn(OperationResult.failure("boom"));
+
+        Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), Map.of());
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        verify(webSocketNotificationService, never()).notifyFamily(anyString(), anyString(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -199,14 +264,23 @@ class FamilyResourceTest {
 
     @Test
     void getHistoryAndRequests_authenticatedUser_forwardPagination() {
-        when(familyService.getHistory(10, 2, 15)).thenReturn(OperationResult.success(new PaginatedHistory(List.of(), 0, 2, 15)));
+        when(familyService.getHistory("fam-1", 10, 2, 15))
+            .thenReturn(OperationResult.success(new PaginatedHistory(List.of(), 0, 2, 15)));
         when(familyService.getRequests("fam-1", 2, 15)).thenReturn(OperationResult.success(new PaginatedRequests(List.of(), 0, 2, 15)));
 
-        Response history = resource.getHistory(contextWithAuth(childAuth(10)), null, 2, 15);
+        Response history = resource.getHistory(contextWithAuth(childAuth(10)), 99, 2, 15);
         Response requests = resource.getRequests(contextWithAuth(adminAuth()), 2, 15);
 
         assertThat(history.getStatus()).isEqualTo(200);
         assertThat(requests.getStatus()).isEqualTo(200);
+        verify(familyService).getHistory("fam-1", 10, 2, 15);
+    }
+
+    @Test
+    void getRequests_childSession_returnsUnauthorized() {
+        Response response = resource.getRequests(contextWithAuth(childAuth(10)), 1, 20);
+
+        assertThat(response.getStatus()).isEqualTo(401);
     }
 
     @Test
@@ -223,6 +297,15 @@ class FamilyResourceTest {
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
+    @Test
+    void updatePreference_nonAdmin_returnsUnauthorized() {
+        Response response = resource.updatePreference(
+            contextWithAuth(childAuth(10)),
+            new UpdatePreferenceRequest("lastSelectedChildId", 10));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+    }
+
     private static ContainerRequestContext contextWithAuth(AuthContext auth) {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY)).thenReturn(auth);
@@ -235,5 +318,9 @@ class FamilyResourceTest {
 
     private static AuthContext childAuth(int childId) {
         return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf");
+    }
+
+    private static AuthContext superAdminAuth() {
+        return new AuthContext(null, null, "super_admin", "root@test.com", "csrf");
     }
 }

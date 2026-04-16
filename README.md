@@ -85,10 +85,16 @@ npm start
 
 Run from the repository root.
 
-Start services:
+Start the web and backend services (app-only mode — bring your own external PostgreSQL):
 
 ```bash
 docker compose up -d --build
+```
+
+Start with a bundled local PostgreSQL:
+
+```bash
+docker compose --profile db up -d --build
 ```
 
 Stop services:
@@ -96,6 +102,8 @@ Stop services:
 ```bash
 docker compose down
 ```
+
+> **Note:** The `dokploy-ipv6` network is expected to exist as an external network managed by the hosting platform. The `db` service is only started when the `db` profile is active.
 
 [↩ Back to toc](#table-of-contents)
 

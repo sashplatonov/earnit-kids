@@ -38,10 +38,10 @@ function setupAdminUI() {
 function setupSpecificControls() {
     const bind = (id, fn, evt = 'click') => document.getElementById(id)?.addEventListener(evt, fn);
     const controls = [
-        { id: 'settings-change-pin-btn', fn: admin.openChangePinModal },
+        { id: 'settings-change-password-btn', fn: admin.openChangePasswordModal },
         { id: 'settings-save-profile-btn', fn: admin.saveChildProfileInline },
         { id: 'settings-save-limits-btn', fn: admin.saveChildLimitsInline },
-        { id: 'settings-save-pin-btn', fn: admin.saveNewPinInline },
+        { id: 'settings-save-password-btn', fn: admin.saveNewPasswordInline },
         { id: 'settings-copy-link-btn', fn: admin.copyChildLinkInline },
         { id: 'settings-regenerate-link-btn', fn: admin.regenerateChildLinkInline },
         { id: 'settings-save-nickname-btn', fn: saveNickname },
@@ -136,7 +136,7 @@ function toggleCardBookmark(type, id, trigger) {
     const appLogic = {
         buyItem, earnCoins, requestCoins, editTask: admin.editTask, editShopItem: admin.editShopItem,
         deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, addCatalogItem,
-        saveNewPinInline: admin.saveNewPinInline,
+        saveNewPasswordInline: admin.saveNewPasswordInline,
         copyChildLinkInline: admin.copyChildLinkInline, regenerateChildLinkInline: admin.regenerateChildLinkInline,
         switchChild: admin.switchChild, openAddChildModal: admin.openAddChildModal,
         openTaskModal: admin.openTaskModal, openShopModal: admin.openShopModal,

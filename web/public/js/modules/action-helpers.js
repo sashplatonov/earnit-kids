@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { saveDataToServer } from './api.js';
 import { renderHistory, updateBalanceUI } from './ui.js';
+import { getCreatedAt, normalizeRequest } from './server-contract.js';
 
 const CONFIG = window.CONFIG;
 const REQUEST_HISTORY_LIMIT = 60;
@@ -11,6 +12,7 @@ export function scheduleSave() {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(async () => {
         await saveDataToServer({
+            childId: state.currentChildId,
             balance: state.balance,
             tasks: state.tasks,
             shop: state.shopItems,
@@ -22,12 +24,12 @@ export function scheduleSave() {
 }
 
 export function addRequestEntry(entry) {
-    const normalized = {
+    const normalized = normalizeRequest({
         ...entry,
         id: entry.id || Date.now(),
         status: entry.status || 'pending',
-        date: entry.date || new Date().toISOString()
-    };
+        createdAt: entry.createdAt || new Date().toISOString()
+    });
     state.requests = [normalized, ...state.requests.filter(r => r.id != normalized.id)];
     if (state.requests.length > REQUEST_HISTORY_LIMIT) {
         state.requests = state.requests.slice(0, REQUEST_HISTORY_LIMIT);
@@ -37,7 +39,7 @@ export function addRequestEntry(entry) {
 export function getActingChildId() {
     if (state.currentChildId) return state.currentChildId;
     if (state.isAdmin) return null;
-    if (state.role === 'child' && state.children.length > 0) return state.children[0].id;
+    if (!state.isAdmin && state.children.length > 0) return state.children[0].id;
 
     const findId = (arr, key) => arr.find(x => x[key])?.[key];
     return findId(state.tasks, 'childId') || findId(state.shopItems, 'childId') ||
@@ -52,15 +54,14 @@ function setEntryReferences(entry, type, relatedId) {
 }
 
 function buildEntryObject(params) {
-    const { type, amount, description, relatedId, moneyAmount, childIdOverride, actingChildId, group, comment } = params;
-    const hasRef = !!relatedId;
+    const { type, amount, description, relatedId, moneyAmount, childIdOverride, actingChildId, groupName, comment } = params;
     const entry = {
         id: Date.now(),
         type, amount,
-        description: hasRef ? null : description,
-        group: hasRef ? null : (group || undefined),
-        comment: hasRef ? null : (comment || undefined),
-        date: new Date().toISOString(),
+        description: description || undefined,
+        groupName: groupName || undefined,
+        comment: comment || undefined,
+        createdAt: new Date().toISOString(),
         moneyAmount: moneyAmount || undefined,
         childId: childIdOverride || actingChildId
     };
@@ -76,13 +77,28 @@ export function addHistoryEntry(params) {
     updateBalanceUI();
 }
 
+function isMatchingSpendEntry(entry, actingChildId, currentMonth) {
+    const createdAt = getCreatedAt(entry);
+    if (entry.type !== 'spend' || !createdAt?.startsWith(currentMonth)) return false;
+    if (!actingChildId) return true;
+    return entry.childId == actingChildId;
+}
+
+function isMatchingPendingPurchase(req, actingChildId, excludeRequestId) {
+    if (req.status !== 'pending' || req.id == excludeRequestId || req.requestType !== 'shop_purchase') {
+        return false;
+    }
+    if (!actingChildId) return true;
+    return req.childId == actingChildId;
+}
+
 function getMonthlyStats(actingChildId, currentMonth, excludeRequestId = null) {
     let moneySpent = 0;
     let largePurchase = null;
     
     // Check history
     state.history.forEach(entry => {
-        if ((actingChildId && entry.childId != actingChildId) || entry.type !== 'spend' || !entry.date.startsWith(currentMonth)) return;
+        if (!isMatchingSpendEntry(entry, actingChildId, currentMonth)) return;
         moneySpent += (entry.moneyAmount || entry.rsdAmount || 0);
         if (entry.itemId) {
             const histItem = state.shopItems.find(i => i.id == entry.itemId);
@@ -92,7 +108,7 @@ function getMonthlyStats(actingChildId, currentMonth, excludeRequestId = null) {
 
     // Check pending requests
     state.requests.forEach(req => {
-        if (req.status !== 'pending' || req.id == excludeRequestId || req.requestType !== 'shop_purchase' || (actingChildId && req.childId != actingChildId)) return;
+        if (!isMatchingPendingPurchase(req, actingChildId, excludeRequestId)) return;
         moneySpent += (req.moneyAmount || 0);
         const item = state.shopItems.find(i => i.id == (req.itemId || req.taskId));
         if (item?.type === 'large') largePurchase = item.name;
@@ -147,7 +163,7 @@ export function checkFrequency(itemOrTask, childId, excludeRequestId = null) {
     const histCount = state.history.filter(h => 
         (actingChildId ? h.childId == actingChildId : true) && 
         (h.itemId == itemOrTask.id || h.taskId == itemOrTask.id || (h.type === 'earn' && h.description === itemOrTask.name)) && 
-        new Date(h.date) >= start
+        new Date(getCreatedAt(h)) >= start
     ).length;
 
     const reqCount = state.requests.filter(r => 
@@ -155,7 +171,7 @@ export function checkFrequency(itemOrTask, childId, excludeRequestId = null) {
         r.id != excludeRequestId &&
         (actingChildId ? r.childId == actingChildId : true) && 
         (r.itemId == itemOrTask.id || r.taskId == itemOrTask.id || r.taskName === itemOrTask.name) && 
-        new Date(r.date || r.created_at) >= start
+        new Date(getCreatedAt(r)) >= start
     ).length;
 
     const totalCount = histCount + reqCount;
@@ -203,10 +219,10 @@ export function checkDailyCoinLimit(childId, amount, excludeRequestId = null) {
     start.setHours(0, 0, 0, 0);
 
     const earnedToday = state.history.reduce((sum, h) =>
-        (h.type === 'earn' && h.childId == childId && new Date(h.date) >= start) ? sum + h.amount : sum, 0);
+        (h.type === 'earn' && h.childId == childId && new Date(getCreatedAt(h)) >= start) ? sum + h.amount : sum, 0);
 
     const pendingEarn = state.requests.reduce((sum, r) =>
-        (r.status === 'pending' && r.id != excludeRequestId && r.requestType === 'earn' && r.childId == childId && new Date(r.date || r.created_at) >= start) ? sum + (r.coins || 0) : sum, 0);
+        (r.status === 'pending' && r.id != excludeRequestId && r.requestType === 'earn' && r.childId == childId && new Date(getCreatedAt(r)) >= start) ? sum + (r.coins || 0) : sum, 0);
 
     const totalEarn = earnedToday + pendingEarn;
     if (totalEarn + amount > child.dailyCoinLimit) {

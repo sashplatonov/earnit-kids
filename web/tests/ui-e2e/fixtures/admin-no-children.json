@@ -7,7 +7,7 @@
             "id": 1,
             "name": "Помыть посуду",
             "coins": 10,
-            "group": "Дом",
+            "groupName": "Дом",
             "isDeleted": false
         }
     ],

@@ -9,6 +9,7 @@ public record ShopItemDto(
     int price,
     String groupName,
     Object frequency,
+    String comment,
     Integer moneyLimit,
     int childId
 ) { }

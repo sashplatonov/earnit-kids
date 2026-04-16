@@ -12,12 +12,12 @@ function applyPayloadToState(payload, childId) {
     const child = state.children.find(c => c.id == childId);
     if (child) {
         if (payload.name) child.name = payload.name;
-        if (payload.monthly_limit !== undefined) child.monthlyLimit = payload.monthly_limit;
-        if (payload.daily_coin_limit !== undefined) child.dailyCoinLimit = payload.daily_coin_limit;
+        if (payload.monthlyLimit !== undefined) child.monthlyLimit = payload.monthlyLimit;
+        if (payload.dailyCoinLimit !== undefined) child.dailyCoinLimit = payload.dailyCoinLimit;
     }
     const stateUpdates = {};
-    if (payload.monthly_limit !== undefined) stateUpdates.monthlyLimit = payload.monthly_limit;
-    if (payload.daily_coin_limit !== undefined) stateUpdates.dailyCoinLimit = payload.daily_coin_limit;
+    if (payload.monthlyLimit !== undefined) stateUpdates.monthlyLimit = payload.monthlyLimit;
+    if (payload.dailyCoinLimit !== undefined) stateUpdates.dailyCoinLimit = payload.dailyCoinLimit;
     if (Object.keys(stateUpdates).length) setState(stateUpdates);
 }
 
@@ -65,9 +65,9 @@ export async function saveChildLimitsInline() {
 
     try {
         const monthlyValue = parseLimitValue(monthlyEl, 'денег');
-        if (monthlyValue !== null) payload.monthly_limit = monthlyValue;
+        if (monthlyValue !== null) payload.monthlyLimit = monthlyValue;
         const dayValue = parseLimitValue(dayEl, 'монет');
-        if (dayValue !== null) payload.daily_coin_limit = dayValue;
+        if (dayValue !== null) payload.dailyCoinLimit = dayValue;
 
         if (!Object.keys(payload).length) {
             return showToast('Укажите хотя бы один лимит', 'error');

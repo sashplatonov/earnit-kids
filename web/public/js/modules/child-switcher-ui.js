@@ -324,7 +324,7 @@ function refreshActiveChildDropdowns() {
 }
 
 export function renderChildSwitcherUI(state, escapeHtml) {
-    if (!state.isAdmin) return;
+    if (state.role !== 'admin') return;
 
     const container = document.getElementById('child-switcher-container');
     if (!container) return;

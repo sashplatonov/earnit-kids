@@ -3,6 +3,7 @@ import { escapeHtml, chunkedRender, isMobileViewport } from './utils.js';
 import { CONFIG } from './ui-config.js';
 import { applyStaggerReveal } from './motion-feedback.js';
 import { renderGroupNav } from './group-nav.js';
+import { getGroupName } from './server-contract.js';
 
 const CARD_SHORTCUTS_KEY = '__earnitCardShortcuts';
 
@@ -173,7 +174,7 @@ export function renderTasksUI(state) {
     const { quickTasks, regularTasks } = splitTasksByQuick(tasks);
 
     const grouped = regularTasks.reduce((acc, t) => {
-        const g = t.group || 'Без категории';
+        const g = getGroupName(t) || 'Без категории';
         if (!acc[g]) acc[g] = [];
         acc[g].push(t);
         return acc;

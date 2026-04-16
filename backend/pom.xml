@@ -156,6 +156,13 @@
             <artifactId>quarkus-jdbc-h2</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Testcontainers removed: tests use H2 in-memory DB by default -->
+        <!-- Argon2 password hashing -->
+        <dependency>
+            <groupId>de.mkammerer</groupId>
+            <artifactId>argon2-jvm</artifactId>
+            <version>2.12</version>
+        </dependency>
     </dependencies>
 
     <build>

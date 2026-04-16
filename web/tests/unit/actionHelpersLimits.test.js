@@ -25,7 +25,7 @@ test('checkLimits does not count the currently approved pending purchase twice',
         itemId: 2001,
         moneyAmount: 700,
         status: 'pending',
-        date: new Date().toISOString()
+        createdAt: new Date().toISOString()
     }];
 
     const result = checkLimits(state.shopItems[0], 700, {

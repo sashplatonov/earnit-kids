@@ -23,10 +23,10 @@ function buildShopPayload() {
     return {
         name: document.getElementById('shop-name').value.trim(),
         childId: existingItem?.childId ?? state.currentChildId,
-        group: document.getElementById('shop-group').value.trim(),
+        groupName: document.getElementById('shop-group').value.trim(),
         price: parseInt(document.getElementById('shop-price').value),
         comment: document.getElementById('shop-comment').value.trim(),
-        money_limit: parseInt(document.getElementById('shop-money-limit').value) || null,
+        moneyLimit: parseInt(document.getElementById('shop-money-limit').value) || null,
         type: document.getElementById('shop-type').value,
         frequency: fl > 0 ? { limit: fl, period: document.getElementById('shop-freq-period').value } : null
     };
@@ -46,8 +46,8 @@ function setShopFields(item) {
     const d = { name: '', group: '', price: '', comment: '', 'money-limit': '', type: 'small', 'freq-limit': 1, 'freq-period': 'week' };
     const f = item || {};
     const m = {
-        name: f.name, group: f.group, price: f.price, comment: f.comment,
-        'money-limit': f.money_limit, type: f.type,
+        name: f.name, group: f.groupName, price: f.price, comment: f.comment,
+        'money-limit': f.moneyLimit, type: f.type,
         'freq-limit': f.frequency?.limit, 'freq-period': f.frequency?.period
     };
 

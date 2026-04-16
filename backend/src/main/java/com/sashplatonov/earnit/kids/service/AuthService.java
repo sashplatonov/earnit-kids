@@ -5,15 +5,15 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 
 public interface AuthService {
 
-    OperationResult<AuthPayload> authenticateAdmin(String email, String pin);
+    OperationResult<AuthPayload> authenticateAdmin(String email, String password);
 
     OperationResult<AuthPayload> authenticateChild(String childToken);
 
-    OperationResult<AuthPayload> registerFamily(String email, String adminPin);
+    OperationResult<AuthPayload> registerFamily(String email, String adminPassword);
 
     OperationResult<Void> forgotPassword(String email);
 
-    OperationResult<Void> changeAdminPin(String familyId, String oldPin, String newPin);
+    OperationResult<Void> changeAdminPassword(String familyId, String oldPassword, String newPassword);
 
     OperationResult<Void> resetPassword(String email, String token, String newPassword);
 

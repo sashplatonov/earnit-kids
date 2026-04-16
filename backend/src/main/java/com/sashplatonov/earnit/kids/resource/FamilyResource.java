@@ -19,6 +19,7 @@ import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
+import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -46,6 +47,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
@@ -55,12 +57,15 @@ public class FamilyResource {
 
     private final FamilyService familyService;
     private final BaseDataService baseDataService;
+    private final WebSocketNotificationService webSocketNotificationService;
 
     @Inject
     public FamilyResource(FamilyService familyService,
-                          BaseDataService baseDataService) {
+                          BaseDataService baseDataService,
+                          WebSocketNotificationService webSocketNotificationService) {
         this.familyService = familyService;
         this.baseDataService = baseDataService;
+        this.webSocketNotificationService = webSocketNotificationService;
     }
 
     @GET
@@ -80,9 +85,9 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        Integer effectiveChildId = childId != null ? childId : auth.childId();
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
         OperationResult<FamilyDataResponse> result =
-            familyService.loadFamilyData(auth.familyId(), effectiveChildId);
+            familyService.loadFamilyData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
         return toResponse(result);
     }
@@ -105,9 +110,11 @@ public class FamilyResource {
         }
 
         var effectivePayload = payload == null ? Map.<String, Object>of() : payload;
-        Integer childId = effectivePayload.get("childId") instanceof Number n ? n.intValue() : auth.childId();
+        Integer requestedChildId = effectivePayload.get("childId") instanceof Number n ? n.intValue() : null;
+        Integer childId = auth.isChild() ? auth.childId() : requestedChildId;
         OperationResult<FamilyDataResponse> result =
-            familyService.saveFamilyData(auth.familyId(), childId, effectivePayload);
+            familyService.saveFamilyData(auth.familyId(), childId, effectivePayload, auth.isAdmin());
+        notifyDataUpdated(auth, childId, result);
 
         return toResponse(result);
     }
@@ -149,6 +156,7 @@ public class FamilyResource {
         }
 
         OperationResult<ChildInfo> result = familyService.createChild(auth.familyId(), request.name());
+        notifyChildUpdated(auth.familyId(), result, childInfo -> childInfo.id());
 
         return switch (result) {
             case OperationResult.Success<ChildInfo> s ->
@@ -178,7 +186,9 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        return toVoidResponse(familyService.deleteChild(auth.familyId(), childId));
+        OperationResult<Void> result = familyService.deleteChild(auth.familyId(), childId);
+        notifyChildDeleted(auth.familyId(), childId, result);
+        return toVoidResponse(result);
     }
 
     @PUT
@@ -202,7 +212,9 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        return toVoidResponse(familyService.updateNickname(auth.familyId(), childId, request.name()));
+        OperationResult<Void> result = familyService.updateNickname(auth.familyId(), childId, request.name());
+        notifyChildUpdated(auth.familyId(), childId, result);
+        return toVoidResponse(result);
     }
 
     @PUT
@@ -226,8 +238,10 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        return toVoidResponse(familyService.updateChildSettings(
-            auth.familyId(), childId, request.name(), request.dailyCoinLimit(), request.monthlyLimit()));
+        OperationResult<Void> result = familyService.updateChildSettings(
+            auth.familyId(), childId, request.name(), request.dailyCoinLimit(), request.monthlyLimit());
+        notifyChildUpdated(auth.familyId(), childId, result);
+        return toVoidResponse(result);
     }
 
     @POST
@@ -260,11 +274,13 @@ public class FamilyResource {
                                      @RequestBody(required = true, description = "Theme selection payload")
                                      @Valid UpdateThemeRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || (!auth.isAdmin() && (!auth.isChild() || !Objects.equals(auth.childId(), childId)))) {
             return unauthorized();
         }
 
-        return toVoidResponse(familyService.updateChildTheme(childId, request.theme()));
+        OperationResult<Void> result = familyService.updateChildTheme(auth.familyId(), childId, request.theme());
+        notifyChildUpdated(auth.familyId(), childId, result);
+        return toVoidResponse(result);
     }
 
     @POST
@@ -299,7 +315,9 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        return toVoidResponse(familyService.updateNickname(auth.familyId(), auth.childId(), request.nickname()));
+        OperationResult<Void> result = familyService.updateNickname(auth.familyId(), auth.childId(), request.nickname());
+        notifyChildUpdated(auth.familyId(), auth.childId(), result);
+        return toVoidResponse(result);
     }
 
     @GET
@@ -408,7 +426,7 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        OperationResult<String> result = familyService.getChildLoginLink(childId);
+        OperationResult<String> result = familyService.getChildLoginLink(auth.familyId(), childId);
         return switch (result) {
             case OperationResult.Success<String> s -> Response.ok(new TokenResponse(s.value())).build();
             case OperationResult.Failure<String> f ->
@@ -436,7 +454,7 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        OperationResult<String> result = familyService.regenerateChildToken(childId);
+        OperationResult<String> result = familyService.regenerateChildToken(auth.familyId(), childId);
         return switch (result) {
             case OperationResult.Success<String> s -> Response.ok(new TokenResponse(s.value())).build();
             case OperationResult.Failure<String> f ->
@@ -466,8 +484,12 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        int effectiveChildId = childId != null ? childId : (auth.childId() != null ? auth.childId() : 0);
-        return toResponse(familyService.getHistory(effectiveChildId, page, limit));
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
+        if (effectiveChildId == null) {
+            return badRequest("childId is required");
+        }
+
+        return toResponse(familyService.getHistory(auth.familyId(), effectiveChildId, page, limit));
     }
 
     @GET
@@ -485,7 +507,7 @@ public class FamilyResource {
                                 @Parameter(description = "Page size", example = "20")
                                 @QueryParam("limit") @DefaultValue("20") int limit) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || !auth.isAdmin()) {
             return unauthorized();
         }
 
@@ -507,7 +529,7 @@ public class FamilyResource {
                                      @RequestBody(required = true, description = "Preference update payload")
                                      @Valid UpdatePreferenceRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || !auth.isAdmin()) {
             return unauthorized();
         }
 
@@ -522,12 +544,18 @@ public class FamilyResource {
 
     private AuthContext getAuthOrFail(ContainerRequestContext ctx) {
         Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return prop instanceof AuthContext auth ? auth : null;
+        return prop instanceof AuthContext auth && !auth.isSuperAdmin() ? auth : null;
     }
 
     private Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)
             .entity(ErrorResponse.unauthorized("Unauthorized"))
+            .build();
+    }
+
+    private Response badRequest(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse.of(message, "BAD_REQUEST", 400))
             .build();
     }
 
@@ -547,5 +575,44 @@ public class FamilyResource {
                 Response.status(Response.Status.BAD_REQUEST)
                     .entity(ErrorResponse.of(f.message(), "BAD_REQUEST", 400)).build();
         };
+    }
+
+    private void notifyDataUpdated(AuthContext auth, Integer childId, OperationResult<FamilyDataResponse> result) {
+        if (!(result instanceof OperationResult.Success<FamilyDataResponse>)) {
+            return;
+        }
+
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("by", auth.role());
+        if (childId != null) {
+            payload.put("childId", childId);
+        }
+        webSocketNotificationService.notifyFamily(auth.familyId(), "DATA_UPDATED", payload);
+    }
+
+    private void notifyChildDeleted(String familyId, int childId, OperationResult<Void> result) {
+        if (!(result instanceof OperationResult.Success<Void>)) {
+            return;
+        }
+        webSocketNotificationService.notifyFamily(familyId, "CHILD_DELETED", Map.of("childId", childId));
+    }
+
+    private void notifyChildUpdated(String familyId, int childId, OperationResult<Void> result) {
+        if (!(result instanceof OperationResult.Success<Void>)) {
+            return;
+        }
+        webSocketNotificationService.notifyFamily(familyId, "CHILD_UPDATED", Map.of("childId", childId));
+    }
+
+    private void notifyChildUpdated(String familyId, OperationResult<ChildInfo> result,
+                                    java.util.function.Function<ChildInfo, Integer> childIdExtractor) {
+        if (!(result instanceof OperationResult.Success<ChildInfo> success)) {
+            return;
+        }
+        Integer childId = childIdExtractor.apply(success.value());
+        if (childId == null) {
+            return;
+        }
+        webSocketNotificationService.notifyFamily(familyId, "CHILD_UPDATED", Map.of("childId", childId));
     }
 }

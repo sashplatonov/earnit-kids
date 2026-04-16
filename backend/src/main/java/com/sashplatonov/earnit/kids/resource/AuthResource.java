@@ -4,7 +4,7 @@ import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.config.CookieBuilder;
-import com.sashplatonov.earnit.kids.dto.request.ChangePinRequest;
+import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ForgotPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
@@ -68,7 +68,7 @@ public class AuthResource {
     })
     public Response login(@RequestBody(required = true, description = "Parent login payload") @Valid LoginRequest request) {
         OperationResult<AuthPayload> result = authService.authenticateAdmin(
-            request.email(), request.pin());
+            request.email(), request.password());
 
         return switch (result) {
             case OperationResult.Success<AuthPayload> s -> {
@@ -145,7 +145,7 @@ public class AuthResource {
     public Response register(@RequestBody(required = true, description = "Family registration payload")
                              @Valid RegisterRequest request) {
         OperationResult<AuthPayload> result = authService.registerFamily(
-            request.email(), request.adminPin());
+            request.email(), request.password());
 
         return switch (result) {
             case OperationResult.Success<AuthPayload> s -> {
@@ -180,19 +180,19 @@ public class AuthResource {
     }
 
     @POST
-    @Path("/change-pin")
-    @Operation(summary = "Change the authenticated admin PIN")
+    @Path("/change-password")
+    @Operation(summary = "Change the authenticated admin password")
     @APIResponses({
-        @APIResponse(responseCode = "200", description = "PIN updated",
+        @APIResponse(responseCode = "200", description = "Password updated",
             content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
-        @APIResponse(responseCode = "400", description = "PIN change failed",
+        @APIResponse(responseCode = "400", description = "Password change failed",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @APIResponse(responseCode = "401", description = "Admin authentication required",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public Response changePin(@Context ContainerRequestContext ctx,
-                              @RequestBody(required = true, description = "Current and new parent PIN")
-                              @Valid ChangePinRequest request) {
+    public Response changePassword(@Context ContainerRequestContext ctx,
+                                   @RequestBody(required = true, description = "Current and new parent password")
+                                   @Valid ChangePasswordRequest request) {
         AuthContext auth = getAuth(ctx);
         if (auth == null || !auth.isAdmin()) {
             return Response.status(Response.Status.UNAUTHORIZED)
@@ -200,15 +200,20 @@ public class AuthResource {
                 .build();
         }
 
-        OperationResult<Void> result = authService.changeAdminPin(auth.familyId(), request.oldPin(), request.newPin());
+        OperationResult<Void> result = authService.changeAdminPassword(
+            auth.familyId(), request.oldPassword(), request.newPassword());
 
-        return switch (result) {
-            case OperationResult.Success<Void> ignored -> Response.ok(SimpleResponse.ok()).build();
-            case OperationResult.Failure<Void> f -> Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of(f.message(), "PIN_CHANGE_FAILED", 400))
-                .build();
-        };
+        if (result instanceof OperationResult.Success<?>) {
+            return Response.ok(SimpleResponse.ok()).build();
+        }
+
+        OperationResult.Failure<Void> failure = (OperationResult.Failure<Void>) result;
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse.of(failure.message(), "PASSWORD_CHANGE_FAILED", 400))
+            .build();
     }
+
+    
 
     @POST
     @Path("/reset-password")
@@ -224,13 +229,14 @@ public class AuthResource {
         OperationResult<Void> result = authService.resetPassword(
             request.email(), request.token(), request.password());
 
-        return switch (result) {
-            case OperationResult.Success<Void> ignored -> Response.ok(SimpleResponse.ok()).build();
-            case OperationResult.Failure<Void> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), "PASSWORD_RESET_FAILED", 400))
-                    .build();
-        };
+        if (result instanceof OperationResult.Success<?>) {
+            return Response.ok(SimpleResponse.ok()).build();
+        }
+
+        OperationResult.Failure<Void> failure = (OperationResult.Failure<Void>) result;
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse.of(failure.message(), "PASSWORD_RESET_FAILED", 400))
+            .build();
     }
 
     @POST
@@ -246,13 +252,14 @@ public class AuthResource {
                                 @Valid VerifyEmailRequest request) {
         OperationResult<Void> result = authService.verifyEmail(request.email(), request.token());
 
-        return switch (result) {
-            case OperationResult.Success<Void> ignored -> Response.ok(SimpleResponse.ok()).build();
-            case OperationResult.Failure<Void> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), "EMAIL_VERIFICATION_FAILED", 400))
-                    .build();
-        };
+        if (result instanceof OperationResult.Success<?>) {
+            return Response.ok(SimpleResponse.ok()).build();
+        }
+
+        OperationResult.Failure<Void> failure = (OperationResult.Failure<Void>) result;
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse.of(failure.message(), "EMAIL_VERIFICATION_FAILED", 400))
+            .build();
     }
 
     @GET

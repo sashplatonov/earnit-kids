@@ -10,6 +10,8 @@ public record HistoryEntryDto(
     String description,
     int moneyAmount,
     Long relatedId,
+    Long taskId,
+    Long itemId,
     String groupName,
     String comment,
     String createdAt,

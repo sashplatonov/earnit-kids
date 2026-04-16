@@ -82,12 +82,12 @@ async function handleDataUpdatedMessage(data) {
     const afterPending = getPendingRequestsCount();
     const pendingDelta = afterPending - beforePending;
 
-    if (data.by === 'admin' && state.role === 'child') {
+    if (data.by === 'admin' && !state.isAdmin) {
         showToast('Данные обновлены родителем', 'info');
         return;
     }
 
-    if (data.by === 'child' && state.role === 'admin') {
+    if (data.by === 'child' && state.isAdmin) {
         showChildUpdateForAdmin(pendingDelta);
     }
 }
@@ -103,7 +103,7 @@ async function handleWSMessage(message) {
             await refreshFromServerAndRender(false);
             break;
         case 'CHILD_DELETED':
-            if (state.role === 'child' && state.childId === data.childId) {
+            if (!state.isAdmin && state.currentChildId === data.childId) {
                 window.location.reload();
             } else {
                 await refreshFromServerAndRender(false);

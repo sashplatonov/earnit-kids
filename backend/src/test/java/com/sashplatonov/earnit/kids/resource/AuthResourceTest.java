@@ -4,7 +4,7 @@ import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.config.CookieBuilder;
-import com.sashplatonov.earnit.kids.dto.request.ChangePinRequest;
+import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ForgotPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
@@ -80,6 +80,8 @@ class AuthResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaders().get("Set-Cookie")).hasSize(1);
+        var entity = (com.sashplatonov.earnit.kids.dto.response.AuthResponse) response.getEntity();
+        assertThat(entity.role()).isNull();
     }
 
     @Test
@@ -113,26 +115,26 @@ class AuthResourceTest {
     }
 
     @Test
-    void changePin_missingAdminContext_returnsUnauthorized() {
-        ChangePinRequest request = new ChangePinRequest("1", "2");
-        Response unauthorized = resource.changePin(contextWithAuth(null), request);
+    void changePassword_missingAdminContext_returnsUnauthorized() {
+        ChangePasswordRequest request = new ChangePasswordRequest("1", "2");
+        Response unauthorized = resource.changePassword(contextWithAuth(null), request);
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        Response childUnauthorized = resource.changePin(contextWithAuth(childAuth(10)), request);
+        Response childUnauthorized = resource.changePassword(contextWithAuth(childAuth(10)), request);
         assertThat(childUnauthorized.getStatus()).isEqualTo(401);
     }
 
     @Test
-    void changePin_serviceResultMapped_returnsExpectedStatus() {
-        when(authService.changeAdminPin("fam-1", "old", "newpass"))
+    void changePassword_serviceResultMapped_returnsExpectedStatus() {
+        when(authService.changeAdminPassword("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.success(null));
 
-        Response ok = resource.changePin(contextWithAuth(adminAuth()), new ChangePinRequest("old", "newpass"));
+        Response ok = resource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
         assertThat(ok.getStatus()).isEqualTo(200);
 
-        when(authService.changeAdminPin("fam-1", "old", "newpass"))
+        when(authService.changeAdminPassword("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.failure("bad"));
-        Response bad = resource.changePin(contextWithAuth(adminAuth()), new ChangePinRequest("old", "newpass"));
+        Response bad = resource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
         assertThat(bad.getStatus()).isEqualTo(400);
     }
 

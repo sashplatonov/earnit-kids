@@ -25,8 +25,8 @@ The backend is the source of truth for session cookies, family state, child stat
 
 The Quarkus backend is organized into a conventional service stack.
 
-- `resource/`: JAX-RS endpoints for auth, family dashboard, session bootstrap, push placeholders, and child magic links
-- `service/`: business rules and orchestration (`AuthServiceImpl`, `FamilyServiceImpl`, `BaseDataService`)
+- `resource/`: JAX-RS endpoints for auth, family dashboard, session bootstrap, push, child magic links, super-admin, and WebSocket token
+- `service/`: business rules and orchestration (`AuthServiceImpl`, `FamilyServiceImpl`, `BaseDataService`, `SuperAdminService`, `SystemDashboardService`, `DatabaseBackupService`)
 - `repository/`: persistence and aggregation access over Panache/JPA-style repositories plus custom SQL/data fetches
 - `domain/model/`: database entities and domain objects
 - `dto/request/`: immutable request records validated at the REST boundary
@@ -63,11 +63,59 @@ Child magic links use `ChildMagicLinkResource`, which authenticates a child toke
 
 The main backend entrypoints are:
 
-- `AuthResource`: login, child login, logout, registration, password recovery, email verification, auth feature flags
-- `FamilyResource`: dashboard data, child CRUD-ish operations, nickname/theme/settings updates, friendships, analytics, history, requests, preferences, child token operations
-- `SessionPageDataResource`: session snapshot derived from cookies
-- `PushResource`: placeholder register/unregister endpoints guarded by auth
-- `ChildMagicLinkResource`: browser redirect entrypoint for child magic links
+### AuthResource (`/api`)
+- `POST /api/login` — parent/admin login, sets auth cookies
+- `POST /api/login-child` — child login by magic token
+- `POST /api/logout` — clears session cookies
+- `POST /api/register` — family registration
+- `POST /api/forgot-password` — triggers password reset email
+- `POST /api/reset-password` — applies password reset token
+- `POST /api/verify-email` — confirms email verification token
+- `POST /api/change-password` — changes password for authenticated admin
+- `GET /api/auth-config` — returns auth feature flags (password recovery, email verification enabled)
+
+### FamilyResource (`/api`)
+- `GET /api/data` — dashboard payload for family or child session
+- `POST /api/data` — persist dashboard mutations, returns refreshed payload
+- `GET /api/base-data` — static task and reward catalog
+- `POST /api/children` — create a child profile (admin only)
+- `DELETE /api/children/{childId}` — delete a child profile (admin only)
+- `PUT /api/children/{childId}/nickname` — rename child (admin only)
+- `PUT /api/children/{childId}/settings` — update child limits (admin only)
+- `PUT /api/children/{childId}/theme` — update child theme
+- `GET /api/children/{childId}/link` — get child login token (admin only)
+- `POST /api/children/{childId}/regenerate-token` — rotate child login token (admin only)
+- `POST /api/update-nickname` — rename the authenticated child
+- `GET /api/search-user` — search child profiles by nickname
+- `POST /api/add-friend` — add another child as a friend
+- `GET /api/friends-list` — list friends for authenticated child
+- `GET /api/analytics` — analytics snapshot for family or child
+- `GET /api/history` — paginated history entries
+- `GET /api/requests` — paginated approval requests
+- `POST /api/preferences` — persist family UI preference
+
+### SuperAdminResource (`/api/super`)
+Protected by `super_admin` role.
+- `GET /api/super/families` — list all families
+- `GET /api/super/family/{familyId}/data` — full family detail
+- `POST /api/super/family/{familyId}/block` — toggle family block status
+- `POST /api/super/family/{familyId}/regenerate-token` — rotate all family tokens
+- `POST /api/super/child/{childId}/regenerate-token` — rotate single child token
+- `GET /api/super/base-data` — read task/reward catalog
+- `POST /api/super/base-data` — overwrite task/reward catalog
+- `GET /api/super/system/overview` — JVM/OS metrics snapshot
+- `GET /api/super/system/db` — database ping health check
+- `GET /api/super/system/http-metrics` — per-route HTTP request counters
+- `GET /api/super/system/logs` — tail application log entries
+- `GET /api/super/db-backup` — download a pg_dump archive
+- `POST /api/super/db-restore` — restore from a pg_dump archive
+
+### Other resources
+- `SessionPageDataResource` (`GET /api/session`) — session snapshot for page bootstrap derived from cookies
+- `PushResource` (`POST /api/push/register`, `POST /api/push/unregister`) — push notification subscription
+- `ChildMagicLinkResource` — browser redirect entrypoint for child magic links
+- `WsTokenResource` (`GET /api/ws-token`) — short-lived token for WebSocket authentication
+- `ClientErrorResource` (`POST /api/client-error`) — frontend error reporting
 
 Errors returned by JSON API endpoints should use `ErrorResponse` so the frontend sees a stable shape:
 

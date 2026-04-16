@@ -39,7 +39,7 @@ function handleApprovePurchase(req) {
             type: 'spend',
             amount: req.coins,
             description: req.taskName || 'Покупка',
-            group: item ? item.group : undefined,
+            groupName: item ? item.groupName : undefined,
             comment: item ? item.comment : undefined,
             relatedId: req.itemId || req.taskId,
             moneyAmount: req.moneyAmount || 0,
@@ -71,7 +71,7 @@ function handleApproveTask(req) {
             type: 'earn',
             amount: req.coins,
             description: desc,
-            group: task ? task.group : undefined,
+            groupName: task ? task.groupName : undefined,
             comment: task ? task.comment : undefined,
             relatedId: req.taskId,
             childIdOverride: req.childId

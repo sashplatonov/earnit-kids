@@ -8,7 +8,7 @@ import { triggerTaskAnimation } from './motion-feedback.js';
 export function earnCoins(taskId) {
     const task = state.tasks.find(t => t.id == taskId);
     if (!task) return;
-    const actingId = state.role === 'admin' ? state.currentChildId : (state.children[0]?.id || null);
+    const actingId = state.isAdmin ? state.currentChildId : (state.children[0]?.id || null);
     if (!actingId) {
         const msg = (state.isAdmin && state.children.length === 0) ? 'Сначала добавьте ребенка' : 'Сначала выберите ребенка';
         return showToast(msg, 'error');
@@ -22,7 +22,7 @@ export function earnCoins(taskId) {
             type: 'earn',
             amount: task.coins,
             description: task.name,
-            group: task.group,
+            groupName: task.groupName,
             comment: task.comment,
             relatedId: task.id,
             childIdOverride: actingId
@@ -55,7 +55,9 @@ export function requestCoins(taskId) {
             requestType: 'earn',
             taskId: task.id,
             taskName: task.name,
-            coins: task.coins
+            coins: task.coins,
+            taskGroup: task.groupName,
+            taskComment: task.comment
         });
         scheduleSave();
         renderRequests();

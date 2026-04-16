@@ -13,10 +13,11 @@ import java.util.Map;
 
 public interface FamilyService {
 
-    OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId);
+    OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession);
 
     OperationResult<FamilyDataResponse> saveFamilyData(String familyId, Integer childId,
-                                                        Map<String, Object> payload);
+                                                       Map<String, Object> payload,
+                                                       boolean adminSession);
 
     OperationResult<ChildInfo> createChild(String familyId, String childName);
 
@@ -27,7 +28,7 @@ public interface FamilyService {
     OperationResult<Void> updateChildSettings(String familyId, int childId,
                                                String name, int dailyCoinLimit, int monthlyLimit);
 
-    OperationResult<Void> updateChildTheme(int childId, String theme);
+    OperationResult<Void> updateChildTheme(String familyId, int childId, String theme);
 
     OperationResult<List<FriendDto>> searchByNickname(String nickname, int excludeChildId);
 
@@ -37,13 +38,13 @@ public interface FamilyService {
 
     OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe);
 
-    OperationResult<PaginatedHistory> getHistory(int childId, int page, int limit);
+    OperationResult<PaginatedHistory> getHistory(String familyId, int childId, int page, int limit);
 
     OperationResult<PaginatedRequests> getRequests(String familyId, int page, int limit);
 
-    OperationResult<String> getChildLoginLink(int childId);
+    OperationResult<String> getChildLoginLink(String familyId, int childId);
 
-    OperationResult<String> regenerateChildToken(int childId);
+    OperationResult<String> regenerateChildToken(String familyId, int childId);
 
     OperationResult<Void> updatePreference(String familyId, String key, Object value);
 }

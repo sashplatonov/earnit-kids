@@ -9,3 +9,4 @@
 **/*.lock
 .env
 .env.local
+.env.production

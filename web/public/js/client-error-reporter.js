@@ -35,6 +35,16 @@ function buildFingerprint(payload) {
     ].join('|');
 }
 
+function getCsrfToken() {
+    const cookieRow = document.cookie
+        .split(';')
+        .map((row) => row.trim())
+        .find((row) => row.startsWith('csrf_token='));
+
+    if (!cookieRow) return '';
+    return decodeURIComponent(cookieRow.slice('csrf_token='.length));
+}
+
 const NOISY_ERRORS = [
     'View transition was skipped because document visibility state is hidden',
     'Skipping view transition because document visibility state has become hidden.',
@@ -58,9 +68,14 @@ function shouldSkip(payload) {
 function sendPayload(payload) {
     if (shouldSkip(payload)) return;
     reportsSent += 1;
+    const csrfToken = getCsrfToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+    }
     fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'same-origin',
         keepalive: true,
         body: JSON.stringify(payload)

@@ -135,3 +135,12 @@ CREATE TABLE IF NOT EXISTS device_push_tokens (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_seen_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_device_push_tokens_token
+    ON device_push_tokens(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_device_push_tokens_endpoint
+    ON device_push_tokens(endpoint);
+CREATE INDEX IF NOT EXISTS idx_device_push_tokens_family_id ON device_push_tokens(family_id);
+
+-- Auto-update trigger for updated_at
+-- Triggers for auto-updating `updated_at` omitted for H2 tests

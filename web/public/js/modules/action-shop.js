@@ -4,6 +4,7 @@ import { renderAll, renderRequests } from './ui.js';
 import { showToast, showConfirm, showMobileEventNotification, escapeHtml } from './utils.js';
 import { scheduleSave, addHistoryEntry, checkLimits, getActingChildId, updateBalanceLocally, addRequestEntry } from './action-helpers.js';
 import { triggerPurchaseAnimation } from './motion-feedback.js';
+import { getMoneyLimit } from './server-contract.js';
 
 function getShopLimitToastMessage(errorMessage) {
     if (!errorMessage) return 'Лимит исчерпан';
@@ -19,7 +20,7 @@ function applyPurchase(item, actingId, moneyPrice) {
         type: 'spend',
         amount: item.price,
         description: item.name,
-        group: item.group,
+        groupName: item.groupName,
         comment: item.comment,
         relatedId: item.id,
         moneyAmount: moneyPrice,
@@ -39,7 +40,8 @@ function sendPurchaseRequest(item, actingId, moneyPrice) {
         taskId: item.id,
         taskName: item.name,
         coins: item.price,
-        moneyAmount: moneyPrice
+        moneyAmount: moneyPrice,
+        itemGroup: item.groupName
     });
     scheduleSave();
     renderRequests();
@@ -63,7 +65,7 @@ export function buyItem(itemId) {
 
     if (state.balance < item.price) return showToast('Недостаточно монет!', 'error');
 
-    const mLimit = item.moneyLimit || item.money_limit || 0;
+    const mLimit = getMoneyLimit(item) || 0;
     const err = checkLimits(item, mLimit, { childIdOverride: actingId });
     
     if (err) {

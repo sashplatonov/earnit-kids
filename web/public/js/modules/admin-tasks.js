@@ -23,7 +23,7 @@ function buildTaskPayload() {
     return {
         name: document.getElementById('task-name').value.trim(),
         childId: existingTask?.childId ?? state.currentChildId,
-        group: document.getElementById('task-group').value.trim(),
+        groupName: document.getElementById('task-group').value.trim(),
         coins: parseInt(document.getElementById('task-coins').value),
         comment: document.getElementById('task-comment').value.trim(),
         frequency: fl > 0 ? { limit: fl, period: document.getElementById('task-freq-period').value } : null
@@ -43,7 +43,7 @@ function persistTask(data) {
 function setTaskFields(task = null) {
     const fields = ['name', 'group', 'coins', 'comment', 'freq-limit', 'freq-period'];
     const vals = task ? [
-        task.name, task.group || '', task.coins, task.comment || '',
+        task.name, task.groupName || '', task.coins, task.comment || '',
         task.frequency?.limit || '', task.frequency?.period || 'day'
     ] : ['', '', '', '', '', 'day'];
 

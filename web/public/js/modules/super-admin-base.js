@@ -3,6 +3,7 @@
  * Super Admin Base Data Management Module
  */
 import { showSuperAlert, showSuperConfirm } from './super-admin-dialogs.js';
+import { fetchWithCsrf } from './api.js';
 
 let baseData = { tasks: [], products: [] };
 
@@ -51,15 +52,25 @@ export function renderList(type, items, container) {
     });
 }
 
-async function saveToServer() {
+function cloneBaseData() {
+    return JSON.parse(JSON.stringify(baseData));
+}
+
+async function saveToServer(nextBaseData) {
     try {
-        await fetch('/api/super/base-data', {
+        const response = await fetchWithCsrf('/api/super/base-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(baseData)
+            body: JSON.stringify(nextBaseData)
         });
+        if (!response.ok) {
+            throw new Error(`save failed: ${response.status}`);
+        }
+        baseData = nextBaseData;
+        return true;
     } catch (err) {
         await showSuperAlert({ title: 'Ошибка сохранения', message: 'Не удалось сохранить изменения каталога.' });
+        return false;
     }
 }
 
@@ -70,17 +81,17 @@ export async function deleteItem(type, index) {
         confirmText: 'Удалить'
     });
     if (!confirmed) return false;
-    baseData[type].splice(index, 1);
-    await saveToServer();
-    return true;
+    const nextBaseData = cloneBaseData();
+    nextBaseData[type].splice(index, 1);
+    return saveToServer(nextBaseData);
 }
 
 export async function saveItem(type, index, newItem) {
+    const nextBaseData = cloneBaseData();
     if (index === -1) {
-        baseData[type].push(newItem);
+        nextBaseData[type].push(newItem);
     } else {
-        baseData[type][index] = { ...baseData[type][index], ...newItem };
+        nextBaseData[type][index] = { ...nextBaseData[type][index], ...newItem };
     }
-    await saveToServer();
-    return true;
+    return saveToServer(nextBaseData);
 }

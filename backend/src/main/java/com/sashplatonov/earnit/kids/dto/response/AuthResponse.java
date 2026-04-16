@@ -16,7 +16,7 @@ public record AuthResponse(
     }
 
     public static AuthResponse childSuccess(String familyId, int childId, String childName) {
-        return new AuthResponse(true, "child", familyId, childId, childName, null);
+        return new AuthResponse(true, null, familyId, childId, childName, null);
     }
 
     public static AuthResponse failure(String error) {

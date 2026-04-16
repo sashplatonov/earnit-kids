@@ -11,5 +11,5 @@ public record LoginRequest(
 
     @NotBlank(message = "Password is required")
     @Schema(format = "password")
-    String pin
+    String password
 ) { }

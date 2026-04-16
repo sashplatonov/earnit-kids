@@ -1,6 +1,7 @@
 /** @file Admin Children frontend UI module */
 import { state, setState } from './state.js';
-import { addChild, savePreference } from './api.js';
+import { addChild, loadDataFromServer, savePreference } from './api.js';
+import { normalizeServerData } from './server-contract.js';
 import { renderAll } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
 import { refreshChildLinkInline } from './admin-settings.js';
@@ -12,11 +13,11 @@ function getNumericLimit(value, fallback) {
 }
 
 function getMonthlyLimit(child) {
-    return getNumericLimit(child?.monthlyLimit ?? child?.monthly_limit, 10000);
+    return getNumericLimit(child?.monthlyLimit, 10000);
 }
 
 function getDailyLimit(child) {
-    return getNumericLimit(child?.dailyCoinLimit ?? child?.daily_coin_limit, 0);
+    return getNumericLimit(child?.dailyCoinLimit, 0);
 }
 
 function updateSettingsFields(child) {
@@ -31,17 +32,59 @@ function updateSettingsFields(child) {
     });
 }
 
-export function switchChild(childId) {
-    if (!childId) return;
-    const child = state.children.find(c => c.id == childId);
+function applyServerChildScope(data, fallbackChild) {
+    const normalized = normalizeServerData(data);
+    const children = normalized.children.length > 0 ? normalized.children : state.children;
+    const child = children.find(item => item.id == fallbackChild?.id) || fallbackChild;
+
+    setState({
+        balance: normalized.balance ?? child?.balance ?? 0,
+        tasks: normalized.tasks,
+        shopItems: normalized.shop,
+        history: normalized.history,
+        requests: normalized.requests,
+        friends: Array.isArray(normalized.friends) ? normalized.friends : [],
+        children,
+        childNickname: normalized.childNickname ?? child?.name ?? null,
+        monthlyLimit: getMonthlyLimit(child),
+        dailyCoinLimit: getDailyLimit(child)
+    });
+
+    return child;
+}
+
+export async function switchChild(childId, options = {}) {
+    if (!childId) return false;
+    let child = state.children.find(c => c.id == childId);
+    const previousSelection = {
+        currentChildId: state.currentChildId,
+        balance: state.balance,
+        monthlyLimit: state.monthlyLimit,
+        dailyCoinLimit: state.dailyCoinLimit,
+        childNickname: state.childNickname
+    };
+
     setState({
         currentChildId: childId,
         balance: child?.balance || 0,
         monthlyLimit: getMonthlyLimit(child),
-        dailyCoinLimit: getDailyLimit(child)
+        dailyCoinLimit: getDailyLimit(child),
+        childNickname: child?.name ?? state.childNickname
     });
     localStorage.setItem('earnit-last-child-id', childId);
-    savePreference('lastSelectedChildId', childId);
+    if (options.persistPreference !== false) {
+        void savePreference('lastSelectedChildId', childId);
+    }
+
+    const data = await loadDataFromServer(childId);
+    if (!data) {
+        setState(previousSelection);
+        renderAll();
+        showToast('Не удалось переключить ребенка', 'error');
+        return false;
+    }
+
+    child = applyServerChildScope(data, child);
 
     renderAll();
 
@@ -55,6 +98,8 @@ export function switchChild(childId) {
         refreshChildLinkInline();
     }
     useChildTheme(childId, child?.theme);
+
+    return true;
 }
 
 export function openAddChildModal() {

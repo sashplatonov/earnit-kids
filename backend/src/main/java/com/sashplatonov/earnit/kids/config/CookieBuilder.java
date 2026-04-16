@@ -33,7 +33,9 @@ public class CookieBuilder {
 
         var cookies = new ArrayList<String>();
         cookies.add("app_auth=" + token + "; " + authFlags + "SameSite=Lax");
-        cookies.add("app_role=" + role + "; " + roleFlags + "SameSite=Strict");
+        if (role != null && !"child".equals(role)) {
+            cookies.add("app_role=" + role + "; " + roleFlags + "SameSite=Strict");
+        }
         cookies.add("csrf_token=" + csrfToken + "; " + roleFlags + "SameSite=Strict");
 
         if (familyId != null) {

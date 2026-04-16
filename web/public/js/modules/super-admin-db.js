@@ -3,6 +3,8 @@
  * Super Admin Database Management Module
  */
 
+import { fetchWithCsrf } from './api.js';
+
 const PANEL_STATE_CLASSES = ['panel-state--loading', 'panel-state--error'];
 
 function setDbPanelState(message, variant) {
@@ -76,7 +78,7 @@ export async function handleRestore(file) {
     setDbStatus('Восстановление...', 'info');
 
     try {
-        const res = await fetch('/api/super/db-restore', {
+        const res = await fetchWithCsrf('/api/super/db-restore', {
             method: 'POST',
             body: file,
             headers: { 'Content-Type': 'application/octet-stream' }
