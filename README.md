@@ -30,9 +30,8 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - `backend/`: Quarkus REST API, persistence layer, Flyway migrations, Maven tests
 - `web/`: Node.js server, frontend assets, Playwright/UI/integration tests
 - `mobile/`: Capacitor configuration, mobile assets, mobile-specific README files
-- `docker-compose.yml`: VPS/Dokploy-oriented orchestration
+- `docker-compose.yml`: local Docker Compose for native mode
 - `docker-compose.jvm.yml`: local Docker Compose for JVM mode
-- `docker-compose.native.yml`: local Docker Compose for native mode
 - `ARCHITECTURE.md`: high-level system and backend module design
 
 [↩ Back to toc](#table-of-contents)
@@ -96,7 +95,7 @@ docker compose -f docker-compose.jvm.yml up -d --build
 Local native mode:
 
 ```bash
-docker compose -f docker-compose.native.yml up -d --build
+docker compose up -d --build
 ```
 
 Stop JVM mode:
@@ -108,16 +107,9 @@ docker compose -f docker-compose.jvm.yml down
 Stop native mode:
 
 ```bash
-docker compose -f docker-compose.native.yml down
+docker compose down
 ```
-
-VPS/Dokploy compose:
-
-```bash
-docker compose up -d --build
-```
-
-> **Note:** `docker-compose.yml` still expects the external `dokploy-ipv6` network and remains deployment-oriented. The new `docker-compose.jvm.yml` and `docker-compose.native.yml` are self-contained local stacks with bundled PostgreSQL.
+> **Note:** `docker-compose.yml` uses `backend/Dockerfile` for native mode. `docker-compose.jvm.yml` uses `backend/Dockerfile.jvm` for JVM mode.
 
 [↩ Back to toc](#table-of-contents)
 

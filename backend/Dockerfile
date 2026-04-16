@@ -7,7 +7,7 @@ COPY backend/mvnw ./mvnw
 COPY backend/pom.xml ./pom.xml
 COPY backend/src ./src
 
-RUN chmod +x ./mvnw && ./mvnw -DskipTests -Dnative package
+RUN sh ./mvnw -DskipTests -Dnative package
 
 FROM quay.io/quarkus/quarkus-micro-image:2.0
 WORKDIR /work/
