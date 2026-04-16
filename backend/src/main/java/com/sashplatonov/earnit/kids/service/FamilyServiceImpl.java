@@ -193,7 +193,7 @@ public final class FamilyServiceImpl implements FamilyService {
         syncBalances(familyDbId, selectedChildId, payload, accessibleChildren);
         syncTasks(familyDbId, selectedChildId, payload);
         syncShopItems(familyDbId, selectedChildId, payload);
-        syncHistory(familyDbId, selectedChildId, payload);
+        syncHistory(familyDbId, selectedChildId, payload, accessibleChildren);
         syncRequests(familyDbId, selectedChildId, payload, accessibleChildren);
         familyRepository.updateLastActivity(familyId);
 
@@ -639,16 +639,28 @@ public final class FamilyServiceImpl implements FamilyService {
         }
     }
 
-    private void syncHistory(int familyDbId, Integer selectedChildId, Map<String, Object> payload) {
+    private void syncHistory(int familyDbId, Integer selectedChildId, Map<String, Object> payload,
+                              List<ChildEntity> accessibleChildren) {
         if (selectedChildId == null || !payload.containsKey("history")) {
             return;
         }
 
-        List<HistoryEntryEntity> entries = new ArrayList<>();
+        Set<Integer> allowedChildIds = accessibleChildren.stream()
+            .map(ChildEntity::getId)
+            .collect(java.util.stream.Collectors.toCollection(HashSet::new));
+
+        List<HistoryEntryEntity> selectedChildEntries = new ArrayList<>();
+        List<HistoryEntryEntity> otherChildEntries = new ArrayList<>();
+
         for (Map<String, Object> entry : asMapList(payload.get("history"))) {
-            entries.add(HistoryEntryEntity.builder()
+            Integer entryChildId = asInteger(entry.get("childId"));
+            int targetChildId = (entryChildId != null && allowedChildIds.contains(entryChildId))
+                ? entryChildId
+                : selectedChildId;
+
+            HistoryEntryEntity entity = HistoryEntryEntity.builder()
                 .familyId(familyDbId)
-                .childId(selectedChildId)
+                .childId(targetChildId)
                 .externalId(asLong(entry.get("id")))
                 .type(firstNonBlank(asString(entry.get("type")), "unknown"))
                 .amount(firstDefinedInt(entry.get("amount"), entry.get("coins"), 0))
@@ -658,9 +670,19 @@ public final class FamilyServiceImpl implements FamilyService {
                 .groupName(firstNonBlank(asString(entry.get("groupName")), asString(entry.get("group"))))
                 .comment(asString(entry.get("comment")))
                 .createdAt(parseInstant(entry.get("createdAt"), entry.get("date"), entry.get("timestamp")))
-                .build());
+                .build();
+
+            if (targetChildId == selectedChildId) {
+                selectedChildEntries.add(entity);
+            } else {
+                otherChildEntries.add(entity);
+            }
         }
-        familyDataRepository.replaceHistory(familyDbId, selectedChildId, entries);
+
+        familyDataRepository.replaceHistory(familyDbId, selectedChildId, selectedChildEntries);
+        for (HistoryEntryEntity entry : otherChildEntries) {
+            familyDataRepository.upsertHistoryEntry(entry);
+        }
     }
 
     private void syncRequests(int familyDbId, Integer selectedChildId, Map<String, Object> payload,

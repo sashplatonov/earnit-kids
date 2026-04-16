@@ -176,6 +176,14 @@ public class FamilyDataRepository {
         entries.forEach(historyRepo::persist);
     }
 
+    @Transactional
+    public void upsertHistoryEntry(HistoryEntryEntity entry) {
+        if (entry.getExternalId() != null) {
+            historyRepo.delete("familyId = ?1 AND externalId = ?2", entry.getFamilyId(), entry.getExternalId());
+        }
+        historyRepo.persist(entry);
+    }
+
     public List<PurchaseRequestEntity> getRequests(int familyDbId, int limit, int offset) {
         return requestRepo.find("familyId = ?1 ORDER BY createdAt DESC", familyDbId)
             .range(offset, offset + limit - 1)
