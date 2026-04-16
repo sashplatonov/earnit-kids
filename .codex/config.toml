@@ -28,6 +28,9 @@ args = ["-y", "@modelcontextprotocol/server-sequential-thinking@latest"]
 command = "npx"
 args = ["-y", "mcp-ripgrep@latest"]
 
+[mcp_servers.ripgrep.tools.search]
+approval_mode = "approve"
+
 [mcp_servers.eslint]
 command = "npx"
 args = ["-y", "@eslint/mcp@latest"]
