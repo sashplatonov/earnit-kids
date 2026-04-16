@@ -12,18 +12,16 @@ import lombok.Getter;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.Instant;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "children")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChildEntity {
+public class ChildEntity extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,8 +35,7 @@ public class ChildEntity {
     private String name;
 
     @Column(name = "token", unique = true)
-    @Builder.Default
-    private String token = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    private String token;
 
     @Column(name = "balance")
     @Builder.Default
@@ -55,8 +52,4 @@ public class ChildEntity {
     @Column(name = "theme")
     @Builder.Default
     private String theme = "ocean";
-
-    @Column(name = "created_at", updatable = false)
-    @Builder.Default
-    private Instant createdAt = Instant.now();
 }

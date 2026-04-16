@@ -42,6 +42,9 @@ class RepositorySmokeTest {
         FamilyEntity family = createdFamily.get();
         int familyDbId = family.getId();
 
+        assertThat(family.getCreatedAt()).isNotNull();
+        assertThat(family.getLastActivity()).isNotNull();
+
         assertThat(familyRepository.findById(familyId)).isPresent();
         assertThat(familyRepository.findByEmail(email)).isPresent();
         assertThat(familyRepository.getDbId(familyId)).contains(familyDbId);
@@ -66,6 +69,11 @@ class RepositorySmokeTest {
 
         ChildEntity child1 = child1Opt.get();
         ChildEntity child2 = child2Opt.get();
+
+        assertThat(child1.getToken()).hasSize(16);
+        assertThat(child1.getCreatedAt()).isNotNull();
+        assertThat(child2.getToken()).hasSize(16);
+        assertThat(child2.getCreatedAt()).isNotNull();
 
         assertThat(childRepository.getChildren(familyDbId)).hasSizeGreaterThanOrEqualTo(2);
         assertThat(childRepository.findByToken(child1.getToken())).isPresent();
@@ -129,6 +137,11 @@ class RepositorySmokeTest {
         assertThat(history).isNotNull();
         assertThat(request).isNotNull();
         assertThat(friend).isNotNull();
+        assertThat(task.getCreatedAt()).isNotNull();
+        assertThat(item.getCreatedAt()).isNotNull();
+        assertThat(history.getCreatedAt()).isNotNull();
+        assertThat(request.getCreatedAt()).isNotNull();
+        assertThat(friend.getCreatedAt()).isNotNull();
 
         assertThat(childRepository.deleteChild(child2.getId())).isTrue();
         assertThat(childRepository.deleteChild(child2.getId())).isFalse();

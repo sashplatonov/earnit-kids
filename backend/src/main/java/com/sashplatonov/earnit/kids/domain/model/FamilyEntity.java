@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
@@ -19,10 +21,10 @@ import java.time.Instant;
 @Table(name = "families")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FamilyEntity {
+public class FamilyEntity extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,13 +59,9 @@ public class FamilyEntity {
     @Column(name = "reset_token_expires_at")
     private Instant resetTokenExpiresAt;
 
-    @Column(name = "created_at", updatable = false)
-    @Builder.Default
-    private Instant createdAt = Instant.now();
-
+    @CreationTimestamp
     @Column(name = "last_activity")
-    @Builder.Default
-    private Instant lastActivity = Instant.now();
+    private Instant lastActivity;
 
     public void verify() {
         this.verified = true;

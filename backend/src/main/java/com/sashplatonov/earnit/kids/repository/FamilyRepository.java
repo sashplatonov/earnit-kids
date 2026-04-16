@@ -1,15 +1,21 @@
 package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 import java.util.Optional;
 
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Integer> {
+
+    private final TimeProvider timeProvider;
 
     public Optional<FamilyEntity> findById(String familyId) {
         return find("familyId = ?1", familyId).firstResultOptional();
@@ -32,7 +38,7 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
             .verified(isVerified)
             .verificationToken(verificationToken)
             .build();
-        persist(entity);
+        persistAndFlush(entity);
         return Optional.of(entity);
     }
 
@@ -64,7 +70,7 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
         if (opt.isEmpty()) {
             return false;
         }
-        opt.get().setLastActivity(Instant.now());
+        opt.get().setLastActivity(timeProvider.now());
         return true;
     }
 
@@ -103,7 +109,7 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     public Optional<FamilyEntity> findByResetToken(String token) {
-        return find("resetToken = ?1 AND resetTokenExpiresAt > ?2", token, Instant.now())
+        return find("resetToken = ?1 AND resetTokenExpiresAt > ?2", token, timeProvider.now())
             .firstResultOptional();
     }
 

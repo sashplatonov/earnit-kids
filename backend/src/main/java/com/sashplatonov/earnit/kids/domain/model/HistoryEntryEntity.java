@@ -7,20 +7,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "history")
 @Getter
-@Builder
+@SuperBuilder
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class HistoryEntryEntity {
+public class HistoryEntryEntity extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,8 +54,4 @@ public class HistoryEntryEntity {
 
     @Column(name = "comment")
     private String comment;
-
-    @Column(name = "created_at", updatable = false)
-    @Builder.Default
-    private Instant createdAt = Instant.now();
 }

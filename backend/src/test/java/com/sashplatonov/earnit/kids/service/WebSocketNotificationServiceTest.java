@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.config.AuthContext;
+import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import io.quarkus.websockets.next.OpenConnections;
 import io.quarkus.websockets.next.WebSocketConnection;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class WebSocketNotificationServiceTest {
+    private static final Instant FIXED_NOW = Instant.parse("2026-04-16T12:00:00Z");
 
     @Mock OpenConnections openConnections;
     @Mock WebSocketConnection adminConnection;
@@ -35,7 +38,10 @@ class WebSocketNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new WebSocketNotificationService(openConnections, new ObjectMapper());
+        service = new WebSocketNotificationService(
+            openConnections,
+            new ObjectMapper(),
+            TestConfigFactory.timeProvider(FIXED_NOW));
 
         when(adminConnection.isOpen()).thenReturn(true);
         when(childConnection.isOpen()).thenReturn(true);
@@ -56,6 +62,7 @@ class WebSocketNotificationServiceTest {
         verify(childConnection).sendTextAndAwait(childPayload.capture());
         assertThat(adminPayload.getValue()).contains("\"type\":\"DATA_UPDATED\"");
         assertThat(adminPayload.getValue()).contains("\"by\":\"admin\"");
+        assertThat(adminPayload.getValue()).contains("2026-04-16T12:00:00Z");
         assertThat(childPayload.getValue()).contains("\"type\":\"DATA_UPDATED\"");
     }
 

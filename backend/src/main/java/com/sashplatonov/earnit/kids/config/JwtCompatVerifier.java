@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.dto.response.SessionPageDataResponse;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,9 +24,11 @@ import java.util.Optional;
 public class JwtCompatVerifier {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
     private static final ObjectMapper SIGN_MAPPER = new ObjectMapper();
+    private static final TimeProvider SYSTEM_TIME_PROVIDER = java.time.Instant::now;
 
     private final JwtCompatibilityConfig jwtCompatibilityConfig;
     private final ObjectMapper objectMapper;
+    private final TimeProvider timeProvider;
 
     public SessionPageDataResponse readSession(String cookieHeader) {
         var token = readCookie(cookieHeader, "app_auth");
@@ -73,7 +75,7 @@ public class JwtCompatVerifier {
             var payload = objectMapper.readValue(payloadJson, MAP_TYPE);
 
             Number exp = payload.get("exp") instanceof Number expValue ? expValue : null;
-            if (exp != null && exp.longValue() < Instant.now().getEpochSecond()) {
+            if (exp != null && exp.longValue() < timeProvider.currentEpochSecond()) {
                 return Optional.empty();
             }
 
@@ -84,9 +86,14 @@ public class JwtCompatVerifier {
     }
 
     public static String sign(Map<String, Object> payload, String secret, long expiresInSeconds) {
+        return sign(payload, secret, expiresInSeconds, SYSTEM_TIME_PROVIDER);
+    }
+
+    public static String sign(Map<String, Object> payload, String secret, long expiresInSeconds,
+                              TimeProvider timeProvider) {
         try {
             var effectivePayload = new LinkedHashMap<>(payload);
-            effectivePayload.put("exp", Instant.now().getEpochSecond() + expiresInSeconds);
+            effectivePayload.put("exp", timeProvider.currentEpochSecond() + expiresInSeconds);
 
             var headerJson = SIGN_MAPPER.writeValueAsString(Map.of("alg", "HS256", "typ", "JWT"));
             var payloadJson = SIGN_MAPPER.writeValueAsString(effectivePayload);

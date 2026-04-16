@@ -3,6 +3,8 @@ package com.sashplatonov.earnit.kids.config;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -12,10 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.Base64;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -24,15 +23,16 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class JwtService {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
-    private final SecureRandom secureRandom = new SecureRandom();
 
     private final JwtCompatibilityConfig jwtCompatibilityConfig;
     private final ObjectMapper objectMapper;
+    private final SecureTokenGenerator secureTokenGenerator;
+    private final TimeProvider timeProvider;
 
     public String signToken(Map<String, Object> payload, long expiresInSeconds) {
         try {
             var effectivePayload = new LinkedHashMap<>(payload);
-            effectivePayload.put("exp", Instant.now().getEpochSecond() + expiresInSeconds);
+            effectivePayload.put("exp", timeProvider.currentEpochSecond() + expiresInSeconds);
             var headerJson = objectMapper.writeValueAsString(Map.of("alg", "HS256", "typ", "JWT"));
             var payloadJson = objectMapper.writeValueAsString(effectivePayload);
             var encodedHeader = base64UrlEncode(headerJson);
@@ -61,7 +61,7 @@ public class JwtService {
                 Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
             var payload = objectMapper.readValue(payloadJson, MAP_TYPE);
             if (payload.get("exp") instanceof Number exp
-                && exp.longValue() < Instant.now().getEpochSecond()) {
+                && exp.longValue() < timeProvider.currentEpochSecond()) {
                 return Optional.empty();
             }
             return Optional.of(payload);
@@ -71,9 +71,7 @@ public class JwtService {
     }
 
     public String generateCsrfToken() {
-        var bytes = new byte[16];
-        secureRandom.nextBytes(bytes);
-        return HexFormat.of().formatHex(bytes);
+        return secureTokenGenerator.generateHexToken(16);
     }
 
     private String hmacSign(String value) throws GeneralSecurityException {

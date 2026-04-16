@@ -6,28 +6,28 @@ import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.security.SecureRandom;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HexFormat;
 
 @ApplicationScoped
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public final class AuthServiceImpl implements AuthService {
     private static final int MIN_PASSWORD_LENGTH = 6;
-    private final SecureRandom secureRandom = new SecureRandom();
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
     private final AppConfig appConfig;
     private final PasswordHasher passwordHasher;
+    private final SecureTokenGenerator secureTokenGenerator;
+    private final TimeProvider timeProvider;
 
     @Override
     public OperationResult<AuthPayload> authenticateAdmin(String email, String password) {
@@ -182,7 +182,7 @@ public final class AuthServiceImpl implements AuthService {
         var familyOpt = familyRepository.findByEmail(email);
         if (familyOpt.isPresent()) {
             var token = generateHexToken(32);
-            var expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
+            var expiresAt = timeProvider.now().plus(1, ChronoUnit.HOURS);
             familyRepository.setResetToken(familyOpt.get().getFamilyId(), token, expiresAt);
             log.debug("Generated password reset token for a matching family account");
         }
@@ -281,8 +281,6 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     private String generateHexToken(int byteCount) {
-        var bytes = new byte[byteCount];
-        secureRandom.nextBytes(bytes);
-        return HexFormat.of().formatHex(bytes);
+        return secureTokenGenerator.generateHexToken(byteCount);
     }
 }

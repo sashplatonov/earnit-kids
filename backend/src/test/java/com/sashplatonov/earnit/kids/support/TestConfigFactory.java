@@ -2,7 +2,9 @@ package com.sashplatonov.earnit.kids.support;
 
 import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.JwtCompatibilityConfig;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public final class TestConfigFactory {
@@ -50,5 +52,9 @@ public final class TestConfigFactory {
 
     public static JwtCompatibilityConfig jwtConfig(String secret) {
         return () -> secret;
+    }
+
+    public static TimeProvider timeProvider(Instant instant) {
+        return () -> instant;
     }
 }

@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +36,7 @@ public class SystemDashboardService {
     private final DataSource dataSource;
     private final HttpRequestMetricsRegistry metricsRegistry;
     private final ObjectMapper objectMapper;
+    private final TimeProvider timeProvider;
 
     public Map<String, Object> getOverview() {
         Runtime runtime = Runtime.getRuntime();
@@ -58,7 +59,7 @@ public class SystemDashboardService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("process", process);
         payload.put("os", os);
-        payload.put("timestamp", Instant.now().toString());
+        payload.put("timestamp", timeProvider.now().toString());
         return payload;
     }
 
@@ -151,7 +152,7 @@ public class SystemDashboardService {
             return payload;
         } catch (Exception ignored) {
             Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("ts", Instant.now().toString());
+            payload.put("ts", timeProvider.now().toString());
             payload.put("level", inferLevel(line));
             payload.put("msg", sanitize(line));
             payload.put("module", "app");

@@ -29,6 +29,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        NATIVE_IMAGE_XMX: ${NATIVE_IMAGE_XMX:-2500m}
     env_file:
       - .env
     environment:

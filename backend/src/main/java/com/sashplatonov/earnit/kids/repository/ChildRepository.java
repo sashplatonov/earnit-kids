@@ -1,16 +1,21 @@
 package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
+import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integer> {
+
+    private final SecureTokenGenerator secureTokenGenerator;
 
     public List<ChildEntity> getChildren(int familyDbId) {
         return list("familyDbId = ?1 ORDER BY id ASC", familyDbId);
@@ -25,8 +30,9 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
         ChildEntity entity = ChildEntity.builder()
             .familyDbId(familyDbId)
             .name(name)
+            .token(secureTokenGenerator.generateChildToken())
             .build();
-        persist(entity);
+        persistAndFlush(entity);
         return Optional.of(entity);
     }
 
@@ -89,7 +95,7 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
         if (opt.isEmpty()) {
             return Optional.empty();
         }
-        String newToken = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        String newToken = secureTokenGenerator.generateChildToken();
         opt.get().setToken(newToken);
         return Optional.of(newToken);
     }

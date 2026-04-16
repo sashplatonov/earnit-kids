@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -10,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,16 +23,19 @@ public class DatabaseBackupService {
     private final String jdbcUrl;
     private final String username;
     private final String password;
+    private final TimeProvider timeProvider;
 
     @Inject
     public DatabaseBackupService(
         @ConfigProperty(name = "quarkus.datasource.jdbc.url") String jdbcUrl,
         @ConfigProperty(name = "quarkus.datasource.username") String username,
-        @ConfigProperty(name = "quarkus.datasource.password") Optional<String> password
+        @ConfigProperty(name = "quarkus.datasource.password") Optional<String> password,
+        TimeProvider timeProvider
     ) {
         this.jdbcUrl = jdbcUrl;
         this.username = username;
         this.password = password.orElse("");
+        this.timeProvider = timeProvider;
     }
 
     public OperationResult<BackupArtifact> createBackup() {
@@ -42,7 +45,7 @@ public class DatabaseBackupService {
             Files.createDirectories(backupDir);
             String filename = "earnit-kids-" + DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
                 .withZone(java.time.ZoneOffset.UTC)
-                .format(Instant.now()) + ".dump";
+                .format(timeProvider.now()) + ".dump";
             Path dumpFile = backupDir.resolve(filename);
 
             ProcessBuilder builder = new ProcessBuilder(buildPgDumpCommand(connection, dumpFile));

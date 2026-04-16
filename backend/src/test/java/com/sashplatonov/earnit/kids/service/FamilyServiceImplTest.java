@@ -18,6 +18,7 @@ import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,7 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class FamilyServiceImplTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Instant FIXED_NOW = Instant.parse("2026-04-16T12:00:00Z");
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
@@ -66,7 +68,8 @@ class FamilyServiceImplTest {
             familyDataRepository,
             historyRepository,
             taskRepository,
-            shopItemRepository
+            shopItemRepository,
+            TestConfigFactory.timeProvider(FIXED_NOW)
         );
     }
 
@@ -112,7 +115,7 @@ class FamilyServiceImplTest {
             .type("earn")
             .amount(5)
             .relatedId(1001L)
-            .createdAt(Instant.now())
+            .createdAt(FIXED_NOW)
             .build();
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
             .id(4001L)
@@ -316,7 +319,7 @@ class FamilyServiceImplTest {
     void getAnalyticsData_validHistory_buildsTypedAnalyticsResponse() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
 
-        Instant now = Instant.now();
+        Instant now = FIXED_NOW;
         List<HistoryEntryEntity> current = List.of(
             HistoryEntryEntity.builder().familyId(1).childId(10).type("earn").amount(5).relatedId(1001L)
                 .description("Task 1").createdAt(now.minusSeconds(3600)).build(),
@@ -367,7 +370,7 @@ class FamilyServiceImplTest {
             .type("earn")
             .amount(5)
             .relatedId(1001L)
-            .createdAt(Instant.now())
+            .createdAt(FIXED_NOW)
             .build();
         when(familyDataRepository.getHistory(10, 20, 0)).thenReturn(List.of(history));
         when(familyDataRepository.getHistoryCount(10)).thenReturn(1);
@@ -548,7 +551,7 @@ class FamilyServiceImplTest {
         when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
 
-        Instant timestamp = Instant.now().minus(Duration.ofHours(1));
+        Instant timestamp = FIXED_NOW.minus(Duration.ofHours(1));
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("balance", 42);
         payload.put("children", List.of(Map.of("id", 10, "balance", 42)));

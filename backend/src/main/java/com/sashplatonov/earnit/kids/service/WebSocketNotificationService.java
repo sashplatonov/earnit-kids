@@ -4,12 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.dto.response.WebSocketEventResponse;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import io.quarkus.websockets.next.OpenConnections;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,12 +22,15 @@ public class WebSocketNotificationService {
 
     private final OpenConnections openConnections;
     private final ObjectMapper objectMapper;
+    private final TimeProvider timeProvider;
     private final ConcurrentMap<String, WebSocketSessionInfo> sessions = new ConcurrentHashMap<>();
 
     @Inject
-    public WebSocketNotificationService(OpenConnections openConnections, ObjectMapper objectMapper) {
+    public WebSocketNotificationService(OpenConnections openConnections, ObjectMapper objectMapper,
+                                        TimeProvider timeProvider) {
         this.openConnections = openConnections;
         this.objectMapper = objectMapper;
+        this.timeProvider = timeProvider;
     }
 
     public void register(String connectionId, AuthContext auth) {
@@ -92,7 +95,7 @@ public class WebSocketNotificationService {
 
     private String encodeMessage(String type, Object data) {
         try {
-            return objectMapper.writeValueAsString(new WebSocketEventResponse(type, data, Instant.now().toString()));
+            return objectMapper.writeValueAsString(new WebSocketEventResponse(type, data, timeProvider.now().toString()));
         } catch (JsonProcessingException ex) {
             log.error("Failed to serialize websocket event type={}", type, ex);
             return null;

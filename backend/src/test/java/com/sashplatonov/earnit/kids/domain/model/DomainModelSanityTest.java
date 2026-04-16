@@ -41,7 +41,6 @@ class DomainModelSanityTest {
             .name("Kid")
             .build();
 
-        assertThat(child.getToken()).hasSize(16);
         assertThat(child.getBalance()).isZero();
         assertThat(child.getMonthlyLimit()).isEqualTo(10000);
         assertThat(child.getDailyCoinLimit()).isZero();

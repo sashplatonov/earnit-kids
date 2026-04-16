@@ -12,17 +12,16 @@ import lombok.Getter;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.Instant;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "requests")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PurchaseRequestEntity {
+public class PurchaseRequestEntity extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,8 +58,4 @@ public class PurchaseRequestEntity {
 
     @Column(name = "money_amount")
     private int moneyAmount;
-
-    @Column(name = "created_at", updatable = false)
-    @Builder.Default
-    private Instant createdAt = Instant.now();
 }

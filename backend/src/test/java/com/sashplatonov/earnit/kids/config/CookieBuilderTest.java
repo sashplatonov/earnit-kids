@@ -1,15 +1,18 @@
 package com.sashplatonov.earnit.kids.config;
 
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
+import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CookieBuilderTest {
+    private static final Instant FIXED_NOW = Instant.parse("2026-04-16T12:00:00Z");
 
     private JwtService jwtService;
 
@@ -17,7 +20,9 @@ class CookieBuilderTest {
     void setUp() {
         jwtService = new JwtService(
             TestConfigFactory.jwtConfig("test-secret-key-for-unit-tests"),
-            new com.fasterxml.jackson.databind.ObjectMapper());
+            new com.fasterxml.jackson.databind.ObjectMapper(),
+            new SecureTokenGenerator(),
+            TestConfigFactory.timeProvider(FIXED_NOW));
     }
 
     @Test

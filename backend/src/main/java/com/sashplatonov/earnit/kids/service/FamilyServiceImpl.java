@@ -30,6 +30,7 @@ import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -60,6 +61,7 @@ public final class FamilyServiceImpl implements FamilyService {
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
     private final ObjectMapper objectMapper;
+    private final TimeProvider timeProvider;
 
     @Inject
     public FamilyServiceImpl(FamilyRepository familyRepository,
@@ -68,7 +70,8 @@ public final class FamilyServiceImpl implements FamilyService {
                              HistoryRepository historyRepository,
                              TaskRepository taskRepository,
                              ShopItemRepository shopItemRepository,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             TimeProvider timeProvider) {
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
         this.familyDataRepository = familyDataRepository;
@@ -76,6 +79,7 @@ public final class FamilyServiceImpl implements FamilyService {
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
         this.objectMapper = objectMapper;
+        this.timeProvider = timeProvider;
     }
 
     FamilyServiceImpl(FamilyRepository familyRepository,
@@ -83,9 +87,10 @@ public final class FamilyServiceImpl implements FamilyService {
                       FamilyDataRepository familyDataRepository,
                       HistoryRepository historyRepository,
                       TaskRepository taskRepository,
-                      ShopItemRepository shopItemRepository) {
+                      ShopItemRepository shopItemRepository,
+                      TimeProvider timeProvider) {
         this(familyRepository, childRepository, familyDataRepository, historyRepository,
-            taskRepository, shopItemRepository, new ObjectMapper());
+            taskRepository, shopItemRepository, new ObjectMapper(), timeProvider);
     }
 
     @Override
@@ -355,7 +360,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         int familyDbId = familyDbIdOpt.get();
         Duration periodDuration = resolveTimeframeDuration(timeframe);
-        Instant now = Instant.now();
+        Instant now = timeProvider.now();
         Instant periodStart = now.minus(periodDuration);
         Instant previousStart = periodStart.minus(periodDuration);
 
@@ -796,7 +801,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 }
             }
         }
-        return Instant.now();
+        return timeProvider.now();
     }
 
     private Integer asInteger(Object value) {
@@ -1011,13 +1016,14 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private List<AnalyticsResponse.AnalyticsRecommendation> buildRecommendations(int familyDbId, Integer childId) {
-        Instant lastMonthStart = Instant.now().minus(Duration.ofDays(30));
+        Instant now = timeProvider.now();
+        Instant lastMonthStart = now.minus(Duration.ofDays(30));
         List<TaskEntity> tasks = queryTasks(familyDbId, childId);
         if (tasks.isEmpty()) {
             return List.of();
         }
 
-        List<HistoryEntryEntity> monthlyHistory = queryHistory(familyDbId, childId, lastMonthStart, Instant.now())
+        List<HistoryEntryEntity> monthlyHistory = queryHistory(familyDbId, childId, lastMonthStart, now)
             .stream()
             .filter(entry -> "earn".equals(entry.getType()))
             .toList();

@@ -7,6 +7,7 @@ import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
+import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -36,6 +39,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AuthServiceImplTest {
+    private static final Instant FIXED_NOW = Instant.parse("2026-04-16T12:00:00Z");
+    private static final SecureTokenGenerator TOKEN_GENERATOR = new SecureTokenGenerator();
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
@@ -50,7 +55,9 @@ class AuthServiceImplTest {
             familyRepository,
             childRepository,
             TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true),
-            passwordHasher);
+            passwordHasher,
+            TOKEN_GENERATOR,
+            TestConfigFactory.timeProvider(FIXED_NOW));
     }
 
     @Test
@@ -195,6 +202,32 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void registerFamily_emailVerificationEnabled_generatesHexVerificationToken() {
+        AuthServiceImpl serviceWithVerification = new AuthServiceImpl(
+            familyRepository,
+            childRepository,
+            TestConfigFactory.appConfig(false, null, null, true, true),
+            passwordHasher,
+            TOKEN_GENERATOR,
+            TestConfigFactory.timeProvider(FIXED_NOW));
+        when(familyRepository.findByEmail("verify@test.com")).thenReturn(Optional.empty());
+        when(familyRepository.create(anyString(), anyString(), anyString(), anyBoolean(), any()))
+            .thenAnswer(inv -> Optional.of(mockFamily(
+                inv.getArgument(0), inv.getArgument(1), inv.getArgument(2), false, false)));
+
+        OperationResult<AuthPayload> result = serviceWithVerification.registerFamily("verify@test.com", "strong123");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        verify(familyRepository).create(
+            anyString(),
+            eq("verify@test.com"),
+            argThat(hash -> hash.startsWith("$argon2")),
+            eq(false),
+            argThat(token -> token instanceof String stringToken
+                && stringToken.matches("[0-9a-f]{64}")));
+    }
+
+    @Test
     void registerFamily_existingEmail_returnsFailure() {
         FamilyEntity existing = mockFamily("fam_1", "exists@test.com", "password", false, true);
         when(familyRepository.findByEmail("exists@test.com")).thenReturn(Optional.of(existing));
@@ -245,7 +278,9 @@ class AuthServiceImplTest {
             familyRepository,
             childRepository,
             TestConfigFactory.appConfig(false, null, null, true, true),
-            passwordHasher);
+            passwordHasher,
+            TOKEN_GENERATOR,
+            TestConfigFactory.timeProvider(FIXED_NOW));
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
         when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
 
@@ -263,7 +298,9 @@ class AuthServiceImplTest {
             familyRepository,
             childRepository,
             TestConfigFactory.appConfig(false, null, null, false, false),
-            passwordHasher);
+            passwordHasher,
+            TOKEN_GENERATOR,
+            TestConfigFactory.timeProvider(FIXED_NOW));
 
         OperationResult<Void> result = noRecoveryService.forgotPassword("user@test.com");
 
@@ -277,6 +314,21 @@ class AuthServiceImplTest {
         OperationResult<Void> result = authService.forgotPassword("nobody@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
+    }
+
+    @Test
+    void forgotPassword_matchingFamily_generatesHexResetTokenAndExpiry() {
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, true);
+        when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
+        when(familyRepository.setResetToken(eq("fam_1"), anyString(), any())).thenReturn(true);
+
+        OperationResult<Void> result = authService.forgotPassword("user@test.com");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        verify(familyRepository).setResetToken(
+            eq("fam_1"),
+            argThat(token -> token.matches("[0-9a-f]{64}")),
+            eq(FIXED_NOW.plus(1, ChronoUnit.HOURS)));
     }
 
     @Test

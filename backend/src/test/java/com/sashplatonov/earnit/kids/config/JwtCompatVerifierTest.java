@@ -6,11 +6,13 @@ import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JwtCompatVerifierTest {
+    private static final Instant FIXED_NOW = Instant.parse("2026-04-16T12:00:00Z");
 
     private JwtCompatVerifier verifier;
 
@@ -18,7 +20,8 @@ class JwtCompatVerifierTest {
     void setUp() {
         verifier = new JwtCompatVerifier(
             TestConfigFactory.jwtConfig("test-secret-key-for-unit-tests"),
-            new ObjectMapper());
+            new ObjectMapper(),
+            TestConfigFactory.timeProvider(FIXED_NOW));
     }
 
     @Test
@@ -41,7 +44,7 @@ class JwtCompatVerifierTest {
             "email", "a@test.com",
             "csrfToken", "payload-csrf",
             "childId", 10
-        ), "test-secret-key-for-unit-tests", 120);
+        ), "test-secret-key-for-unit-tests", 120, TestConfigFactory.timeProvider(FIXED_NOW));
 
         SessionPageDataResponse response = verifier.readSession("app_auth=" + token + "; csrf_token=cookie-csrf");
 
@@ -57,20 +60,32 @@ class JwtCompatVerifierTest {
     void verify_malformedOrTamperedToken_returnsEmptyOptional() {
         assertThat(verifier.verify("bad")).isEmpty();
 
-        String valid = JwtCompatVerifier.sign(Map.of("familyId", "fam-1"), "test-secret-key-for-unit-tests", 120);
+        String valid = JwtCompatVerifier.sign(
+            Map.of("familyId", "fam-1"),
+            "test-secret-key-for-unit-tests",
+            120,
+            TestConfigFactory.timeProvider(FIXED_NOW));
         String tampered = valid.substring(0, valid.length() - 1) + "x";
         assertThat(verifier.verify(tampered)).isEmpty();
     }
 
     @Test
     void verify_expiredToken_returnsEmptyOptional() {
-        String expired = JwtCompatVerifier.sign(Map.of("familyId", "fam-1"), "test-secret-key-for-unit-tests", -1);
+        String expired = JwtCompatVerifier.sign(
+            Map.of("familyId", "fam-1"),
+            "test-secret-key-for-unit-tests",
+            -1,
+            TestConfigFactory.timeProvider(FIXED_NOW));
         assertThat(verifier.verify(expired)).isEmpty();
     }
 
     @Test
     void verify_validToken_returnsDecodedPayload() {
-        String valid = JwtCompatVerifier.sign(Map.of("familyId", "fam-1", "childId", "7"), "test-secret-key-for-unit-tests", 120);
+        String valid = JwtCompatVerifier.sign(
+            Map.of("familyId", "fam-1", "childId", "7"),
+            "test-secret-key-for-unit-tests",
+            120,
+            TestConfigFactory.timeProvider(FIXED_NOW));
 
         var payload = verifier.verify(valid);
 

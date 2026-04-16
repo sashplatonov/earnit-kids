@@ -2,20 +2,27 @@ package com.sashplatonov.earnit.kids.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
+import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JwtServiceTest {
+    private static final Instant FIXED_NOW = Instant.parse("2026-04-16T12:00:00Z");
 
     JwtService jwtService;
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService(TestConfigFactory.jwtConfig("test-secret-key-for-unit-tests"), new ObjectMapper());
+        jwtService = new JwtService(
+            TestConfigFactory.jwtConfig("test-secret-key-for-unit-tests"),
+            new ObjectMapper(),
+            new SecureTokenGenerator(),
+            TestConfigFactory.timeProvider(FIXED_NOW));
     }
 
     @Test
