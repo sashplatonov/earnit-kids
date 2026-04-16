@@ -5,6 +5,7 @@ WORKDIR /workspace
 COPY backend/.mvn/ .mvn/
 COPY backend/mvnw ./mvnw
 COPY backend/pom.xml ./pom.xml
+COPY backend/config ./config
 COPY backend/src ./src
 
 RUN sh ./mvnw -DskipTests -Dnative package
