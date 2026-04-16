@@ -8,7 +8,7 @@ COPY backend/pom.xml ./pom.xml
 COPY backend/config ./config
 COPY backend/src ./src
 
-RUN sh ./mvnw -DskipTests -Dnative package
+RUN sh ./mvnw -Dmaven.test.skip=true -Dnative package
 
 FROM quay.io/quarkus/quarkus-micro-image:2.0
 WORKDIR /work/
