@@ -30,7 +30,9 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - `backend/`: Quarkus REST API, persistence layer, Flyway migrations, Maven tests
 - `web/`: Node.js server, frontend assets, Playwright/UI/integration tests
 - `mobile/`: Capacitor configuration, mobile assets, mobile-specific README files
-- `docker-compose.yml`: local multi-service orchestration
+- `docker-compose.yml`: VPS/Dokploy-oriented orchestration
+- `docker-compose.jvm.yml`: local Docker Compose for JVM mode
+- `docker-compose.native.yml`: local Docker Compose for native mode
 - `ARCHITECTURE.md`: high-level system and backend module design
 
 [↩ Back to toc](#table-of-contents)
@@ -85,25 +87,37 @@ npm start
 
 Run from the repository root.
 
-Start the web and backend services (app-only mode — bring your own external PostgreSQL):
+Local JVM mode:
+
+```bash
+docker compose -f docker-compose.jvm.yml up -d --build
+```
+
+Local native mode:
+
+```bash
+docker compose -f docker-compose.native.yml up -d --build
+```
+
+Stop JVM mode:
+
+```bash
+docker compose -f docker-compose.jvm.yml down
+```
+
+Stop native mode:
+
+```bash
+docker compose -f docker-compose.native.yml down
+```
+
+VPS/Dokploy compose:
 
 ```bash
 docker compose up -d --build
 ```
 
-Start with a bundled local PostgreSQL:
-
-```bash
-docker compose --profile db up -d --build
-```
-
-Stop services:
-
-```bash
-docker compose down
-```
-
-> **Note:** The `dokploy-ipv6` network is expected to exist as an external network managed by the hosting platform. The `db` service is only started when the `db` profile is active.
+> **Note:** `docker-compose.yml` still expects the external `dokploy-ipv6` network and remains deployment-oriented. The new `docker-compose.jvm.yml` and `docker-compose.native.yml` are self-contained local stacks with bundled PostgreSQL.
 
 [↩ Back to toc](#table-of-contents)
 
