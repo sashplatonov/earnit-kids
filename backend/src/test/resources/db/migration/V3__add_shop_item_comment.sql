@@ -1,2 +1,2 @@
-ALTER TABLE shop_items
-    ADD COLUMN IF NOT EXISTS comment VARCHAR(2000);
+-- H2-compatible: add comment column to shop_items
+ALTER TABLE shop_items ADD COLUMN comment TEXT;

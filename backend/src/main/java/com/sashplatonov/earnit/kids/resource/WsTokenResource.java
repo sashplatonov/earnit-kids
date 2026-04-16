@@ -44,7 +44,6 @@ public class WsTokenResource {
         }
         payload.put("role", auth.role());
 
-        // EXPLAIN: short-lived token for websocket handshake
         String token = jwtService.signToken(payload, 60);
         return Response.ok(new TokenResponse(token)).build();
     }

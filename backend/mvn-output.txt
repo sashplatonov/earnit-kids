@@ -1,0 +1,138 @@
+/var/folders/9t/m0hnhbf95qd2ws_mx0tpndc00000gn/T/jansi-2.4.2-2ba631913ae6a97a-libjansi.jnilib.lck (Operation not permitted)
+[INFO] Error stacktraces are turned on.
+[INFO] Scanning for projects...
+[WARNING] Quarkus Maven extension: an explicit 'argLine' is defined in maven-surefire-plugin config, but does not contain '@{argLine}': we will not be able to inject JVM parameters automatically. Please add '@{argLine}' to the argLine configuration you have defined.
+[WARNING] Quarkus Maven extension: an explicit 'argLine' is defined in maven-failsafe-plugin config, but does not contain '@{argLine}': we will not be able to inject JVM parameters automatically. Please add '@{argLine}' to the argLine configuration you have defined.
+[INFO] 
+[INFO] ----------< com.sashplatonov.earnit.kids:earnit-kids-backend >----------
+[INFO] Building earnit-kids-backend 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ earnit-kids-backend ---
+[INFO] Deleting /Users/sash/Dev/Projects/earnit-kids/backend/target
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (validate) @ earnit-kids-backend ---
+[INFO] Starting audit...
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/db/migration/V2__MigratePlaintextFamilyPasswordsToArgon2.java:13:14: Name 'V2__MigratePlaintextFamilyPasswordsToArgon2' must match pattern '^[A-Z][a-zA-Z0-9]*$'. [TypeName]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/dto/request/ToggleFamilyBlockRequest.java:1: File does not end with a newline. [NewlineAtEndOfFile]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/config/JwtCompatVerifier.java:93: Line is longer than 120 characters (found 132). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/config/JwtCompatVerifier.java:94: Line is longer than 120 characters (found 134). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/config/JwtCompatVerifier.java:105: Line is longer than 120 characters (found 123). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java:1: File does not end with a newline. [NewlineAtEndOfFile]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java:91:5: Method loadFamilyData length is 73 lines (max allowed is 60). [MethodLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java:243: Line is longer than 120 characters (found 121). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java:406: Line is longer than 120 characters (found 127). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java:516: Line is longer than 120 characters (found 127). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java:730: Line is longer than 120 characters (found 137). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java:1063: Line is longer than 120 characters (found 125). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java:34: Line is longer than 120 characters (found 127). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java:1: File does not end with a newline. [NewlineAtEndOfFile]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/HttpRequestMetricsRegistry.java:1: File does not end with a newline. [NewlineAtEndOfFile]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/SuperAdminService.java:66: Line is longer than 120 characters (found 125). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/SuperAdminService.java:67: Line is longer than 120 characters (found 128). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/SuperAdminService.java:68: Line is longer than 120 characters (found 140). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/service/SuperAdminService.java:69: Line is longer than 120 characters (found 133). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/FamilyResource.java:255: Line is longer than 120 characters (found 121). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/FamilyResource.java:318: Line is longer than 120 characters (found 121). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/ClientErrorResource.java:1: File does not end with a newline. [NewlineAtEndOfFile]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/SuperAdminResource.java:1: File does not end with a newline. [NewlineAtEndOfFile]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/SuperAdminResource.java:206: Line is longer than 120 characters (found 137). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/FamilyWebSocket.java:19:8: Unused import - java.util.Map. [UnusedImports]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/ChildMagicLinkResource.java:55: Line is longer than 120 characters (found 127). [LineLength]
+[ERROR] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/ChildMagicLinkResource.java:58: Inline comments are forbidden by project policy except explanatory comments starting with EXPLAIN: or markers like FIXME. [RegexpSinglelineJava]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/AuthResource.java:69: Line is longer than 120 characters (found 124). [LineLength]
+[WARN] /Users/sash/Dev/Projects/earnit-kids/backend/src/main/java/com/sashplatonov/earnit/kids/resource/AuthResource.java:101: Line is longer than 120 characters (found 133). [LineLength]
+Audit done.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.119 s
+[INFO] Finished at: 2026-04-16T09:07:57+02:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.6.0:check (validate) on project earnit-kids-backend: Failed during checkstyle execution: There is 1 error reported by Checkstyle 10.21.4 with config/checkstyle.xml ruleset. -> [Help 1]
+org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.6.0:check (validate) on project earnit-kids-backend: Failed during checkstyle execution
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:333)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:919)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:285)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:207)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:104)
+    at java.lang.reflect.Method.invoke (Method.java:565)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+Caused by: org.apache.maven.plugin.MojoExecutionException: Failed during checkstyle execution
+    at org.apache.maven.plugins.checkstyle.CheckstyleViolationCheckMojo.execute (CheckstyleViolationCheckMojo.java:562)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:126)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:328)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:919)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:285)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:207)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:104)
+    at java.lang.reflect.Method.invoke (Method.java:565)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+Caused by: org.apache.maven.plugins.checkstyle.exec.CheckstyleExecutorException: There is 1 error reported by Checkstyle 10.21.4 with config/checkstyle.xml ruleset.
+    at org.apache.maven.plugins.checkstyle.exec.DefaultCheckstyleExecutor.executeCheckstyle (DefaultCheckstyleExecutor.java:221)
+    at org.apache.maven.plugins.checkstyle.CheckstyleViolationCheckMojo.execute (CheckstyleViolationCheckMojo.java:557)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:126)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:328)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:919)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:285)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:207)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:104)
+    at java.lang.reflect.Method.invoke (Method.java:565)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+[ERROR] 
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

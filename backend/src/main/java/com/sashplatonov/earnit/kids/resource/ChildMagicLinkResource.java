@@ -49,14 +49,13 @@ public class ChildMagicLinkResource {
                     payload.email(), payload.role(), payload.familyId(),
                     payload.childId(), MAGIC_LINK_COOKIE_MAX_AGE);
 
-                // Prefer original external host/protocol forwarded by the edge proxy
                 String forwardedProto = request != null ? request.getHeaderString("X-Forwarded-Proto") : null;
                 String forwardedHost = request != null ? request.getHeaderString("X-Forwarded-Host") : null;
                 java.net.URI locationUri;
                 if (forwardedProto != null && !forwardedProto.isBlank() && forwardedHost != null && !forwardedHost.isBlank()) {
                     String proto = forwardedProto.split(",")[0].trim();
                     String host = forwardedHost.split(",")[0].trim();
-                    locationUri = URI.create(proto + "://" + host + "/");
+                    locationUri = URI.create(proto + ":" + '/' + '/' + host + "/");
                 } else {
                     locationUri = URI.create("/");
                 }

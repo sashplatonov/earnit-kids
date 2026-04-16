@@ -1,19 +1,4 @@
--- V4: Fix history entries that were incorrectly attributed to the wrong child.
---
--- Root cause: syncHistory() used to force every history entry's child_id to
--- selectedChildId (the admin's currently-viewed child) instead of reading the
--- childId that the client encoded in each entry.  As a result, approving a
--- request for child B while the admin was viewing child A stored the earn/spend
--- entry under child A.
---
--- We can reliably detect and correct these rows: for 'earn' entries the
--- related_id points to a task_id; for 'spend' entries it points to an item_id.
--- If the referenced task/item does NOT belong to history.child_id but DOES
--- belong to exactly one other child in the same family, the row is misassigned
--- and we move it to the correct child.
---
--- Entries without a related_id or where the task/item no longer exists cannot
--- be automatically corrected and are left unchanged.
+-- H2-compatible version of V4 (uses standard SQL compatible with H2)
 
 -- Fix 'earn' entries whose referenced task belongs to a different child.
 UPDATE history
