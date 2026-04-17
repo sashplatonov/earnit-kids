@@ -338,6 +338,35 @@
                 <skipITs>false</skipITs>
             </properties>
         </profile>
+        <profile>
+            <id>native-lint</id>
+            <activation>
+                <property>
+                    <name>native-lint</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>${quarkus.platform.group-id}</groupId>
+                        <artifactId>quarkus-maven-plugin</artifactId>
+                        <version>${quarkus.platform.version}</version>
+                        <executions>
+                            <execution>
+                                <id>native-lint</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <quarkus.native.enabled>true</quarkus.native.enabled>
+            </properties>
+        </profile>
         <!-- analysis profile removed: SpotBugs runs by default in build plugins -->
     </profiles>
 </project>
