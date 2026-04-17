@@ -7,7 +7,7 @@ export function getMoneyLimit(entity) {
 }
 
 export function getCreatedAt(entity) {
-    return entity?.createdAt ?? entity?.date ?? null;
+    return entity?.createdAt ?? entity?.created_at ?? entity?.timestamp ?? entity?.date ?? null;
 }
 
 function findById(entries, id) {
