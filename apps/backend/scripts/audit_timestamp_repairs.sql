@@ -1,3 +1,6 @@
+-- Ensure the script runs against the target schema
+SET search_path TO earnit_kids, public;
+
 SELECT current_database() AS database_name,
        current_schema() AS schema_name,
        now() AS checked_at;
@@ -33,9 +36,9 @@ WITH candidates AS (
            id,
            external_id,
            created_at,
-           type,
+           request_type AS type,
            child_id,
-           related_id,
+           COALESCE(task_id, item_id) AS related_id,
            CASE
                WHEN external_id BETWEEN 946684800000 AND 4102444800000 THEN to_timestamp(external_id / 1000.0)
                WHEN external_id BETWEEN 946684800 AND 4102444800 THEN to_timestamp(external_id)
@@ -79,9 +82,9 @@ WITH candidates AS (
            id,
            external_id,
            created_at,
-           type,
+           request_type AS type,
            child_id,
-           related_id,
+           COALESCE(task_id, item_id) AS related_id,
            CASE
                WHEN external_id BETWEEN 946684800000 AND 4102444800000 THEN to_timestamp(external_id / 1000.0)
                WHEN external_id BETWEEN 946684800 AND 4102444800 THEN to_timestamp(external_id)
@@ -144,9 +147,9 @@ UNION ALL
 SELECT 'requests' AS table_name,
        id,
        external_id,
-       type,
+    request_type AS type,
        child_id,
-       related_id,
+    COALESCE(task_id, item_id) AS related_id,
        created_at
 FROM requests
 WHERE created_at IS NULL
