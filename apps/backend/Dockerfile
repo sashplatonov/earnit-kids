@@ -6,11 +6,11 @@ WORKDIR /workspace
 ARG JAVA_XMX
 ENV JAVA_XMX=${JAVA_XMX}
 
-COPY backend/.mvn/ .mvn/
-COPY backend/mvnw ./mvnw
-COPY backend/pom.xml ./pom.xml
-COPY backend/config ./config
-COPY backend/src ./src
+COPY apps/backend/.mvn/ .mvn/
+COPY apps/backend/mvnw ./mvnw
+COPY apps/backend/pom.xml ./pom.xml
+COPY apps/backend/config ./config
+COPY apps/backend/src ./src
 
 RUN sh ./mvnw -Dmaven.test.skip=true -Dnative -Dquarkus.native.native-image-xmx=${JAVA_XMX} package
 

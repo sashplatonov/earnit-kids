@@ -53,8 +53,45 @@ function applyServerChildScope(data, fallbackChild) {
     return child;
 }
 
+function persistPreferenceIfNeeded(childId, options) {
+    if (options?.persistPreference !== false) {
+        void savePreference('lastSelectedChildId', childId);
+    }
+}
+
+function setPreSwitchState(childId, child) {
+    setState({
+        currentChildId: childId,
+        balance: child?.balance || 0,
+        monthlyLimit: getMonthlyLimit(child),
+        dailyCoinLimit: getDailyLimit(child),
+        childNickname: child?.name ?? state.childNickname
+    });
+    localStorage.setItem('earnit-last-child-id', childId);
+}
+
+async function fetchAndApplyServerData(childId, child) {
+    const data = await loadDataFromServer(childId);
+    if (!data) return null;
+    return applyServerChildScope(data, child);
+}
+
+function handleLoadFailure(previousSelection) {
+    setState(previousSelection);
+    renderAll();
+    showToast('Не удалось переключить ребенка', 'error');
+}
+
+function maybeLoadAnalytics() {
+    const analytics = document.getElementById('analytics-section');
+    if (analytics && !analytics.classList.contains('hidden')) {
+        import('./analytics-ui.js').then(m => m.loadAnalytics());
+    }
+}
+
 export async function switchChild(childId, options = {}) {
     if (!childId) return false;
+
     let child = state.children.find(c => c.id == childId);
     const previousSelection = {
         currentChildId: state.currentChildId,
@@ -64,34 +101,18 @@ export async function switchChild(childId, options = {}) {
         childNickname: state.childNickname
     };
 
-    setState({
-        currentChildId: childId,
-        balance: child?.balance || 0,
-        monthlyLimit: getMonthlyLimit(child),
-        dailyCoinLimit: getDailyLimit(child),
-        childNickname: child?.name ?? state.childNickname
-    });
-    localStorage.setItem('earnit-last-child-id', childId);
-    if (options.persistPreference !== false) {
-        void savePreference('lastSelectedChildId', childId);
-    }
+    setPreSwitchState(childId, child);
+    persistPreferenceIfNeeded(childId, options);
 
-    const data = await loadDataFromServer(childId);
-    if (!data) {
-        setState(previousSelection);
-        renderAll();
-        showToast('Не удалось переключить ребенка', 'error');
+    const applied = await fetchAndApplyServerData(childId, child);
+    if (!applied) {
+        handleLoadFailure(previousSelection);
         return false;
     }
 
-    child = applyServerChildScope(data, child);
-
+    child = applied;
     renderAll();
-
-    const analytics = document.getElementById('analytics-section');
-    if (analytics && !analytics.classList.contains('hidden')) {
-        import('./analytics-ui.js').then(m => m.loadAnalytics());
-    }
+    maybeLoadAnalytics();
 
     if (child) {
         updateSettingsFields(child);

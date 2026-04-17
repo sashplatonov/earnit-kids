@@ -1,21 +1,21 @@
 FROM node:20-alpine AS build
 WORKDIR /workspace/web
 
-COPY web/package*.json ./
+COPY apps/web/package*.json ./
 RUN npm ci
 
-COPY web/public ./public
-COPY web/views ./views
-COPY web/data ./data
-COPY web/src ./src
-COPY web/scripts ./scripts
+COPY apps/web/public ./public
+COPY apps/web/views ./views
+COPY apps/web/data ./data
+COPY apps/web/src ./src
+COPY apps/web/scripts ./scripts
 
 RUN npm run build --ignore-scripts
 
 FROM node:20-alpine
 WORKDIR /workspace/web
 
-COPY web/package*.json ./
+COPY apps/web/package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=build /workspace/web/public ./public

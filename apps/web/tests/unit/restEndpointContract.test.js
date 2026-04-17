@@ -43,45 +43,52 @@ function normalizePath(rawValue) {
         : normalized.replace(/placeholder$/, '');
 }
 
+function findNextRouteStart(source, index) {
+    const candidates = [
+        source.indexOf('/api/', index),
+        source.indexOf('/login-child/', index),
+        source.indexOf('/ws', index)
+    ];
+    let min = -1;
+    for (const c of candidates) {
+        if (c >= 0 && (min === -1 || c < min)) {
+            min = c;
+        }
+    }
+    return min;
+}
+
+function readRouteEnd(source, start) {
+    let end = start;
+    while (end < source.length) {
+        const char = source[end];
+        if (char === '$' && source[end + 1] === '{') {
+            const closingBrace = source.indexOf('}', end + 2);
+            if (closingBrace < 0) {
+                return end;
+            }
+            end = closingBrace + 1;
+            continue;
+        }
+        if (/[\s"'`<>(){},;]/.test(char)) {
+            break;
+        }
+        end += 1;
+    }
+    return end;
+}
+
 function extractFrontendRoutes(filePath) {
     const source = fs.readFileSync(filePath, 'utf8');
     const routes = [];
     let index = 0;
 
     while (index < source.length) {
-        const candidates = [
-            source.indexOf('/api/', index),
-            source.indexOf('/login-child/', index),
-            source.indexOf('/ws', index)
-        ].filter(candidate => candidate >= 0);
-
-        if (candidates.length === 0) {
-            break;
-        }
-
-        const start = Math.min(...candidates);
-        let end = start;
-        while (end < source.length) {
-            const char = source[end];
-            if (char === '$' && source[end + 1] === '{') {
-                const closingBrace = source.indexOf('}', end + 2);
-                if (closingBrace < 0) {
-                    break;
-                }
-                end = closingBrace + 1;
-                continue;
-            }
-            if (/[\s"'`<>(){},;]/.test(char)) {
-                break;
-            }
-            end += 1;
-        }
-
+        const start = findNextRouteStart(source, index);
+        if (start < 0) break;
+        const end = readRouteEnd(source, start);
         const normalized = normalizePath(source.slice(start, end));
-        if (normalized) {
-            routes.push(normalized);
-        }
-
+        if (normalized) routes.push(normalized);
         index = end + 1;
     }
 

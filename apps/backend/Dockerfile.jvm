@@ -3,11 +3,11 @@ WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y wget ca-certificates && rm -rf /var/lib/apt/lists/*
 
-COPY backend/.mvn/ .mvn/
-COPY backend/mvnw ./mvnw
-COPY backend/pom.xml ./pom.xml
-COPY backend/config ./config
-COPY backend/src ./src
+COPY apps/backend/.mvn/ .mvn/
+COPY apps/backend/mvnw ./mvnw
+COPY apps/backend/pom.xml ./pom.xml
+COPY apps/backend/config ./config
+COPY apps/backend/src ./src
 
 RUN sh ./mvnw -DskipTests -Dcheckstyle.skip=true package
 

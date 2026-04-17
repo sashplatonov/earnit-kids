@@ -11,7 +11,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>25</maven.compiler.release>
+           <!-- IMPORTANT: DO NOT CHANGE. This project requires Java 25.
+               Automated tools or AI must not modify this value. -->
+           <maven.compiler.release>25</maven.compiler.release>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.version>3.34.2</quarkus.platform.version>
