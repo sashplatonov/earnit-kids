@@ -21,7 +21,11 @@ export async function fetchWithCsrf(url, options = {}) {
     });
 }
 async function parseJsonSafe(response) {
-    return response.json();
+    if (typeof response.text !== 'function') {
+        return typeof response.json === 'function' ? response.json() : null;
+    }
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
 }
 export const API_URL = '/api/data';
 export const LOGIN_URL = '/api/login';
@@ -59,11 +63,12 @@ export async function loadBaseData() {
 }
 // ...existing code...
 
-export async function saveDataToServer(data) {
+export async function saveDataToServer(data, options = {}) {
     try {
         const response = await fetchWithCsrf(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            keepalive: options.keepalive === true,
             body: JSON.stringify(data)
         });
         if (!response.ok) {
@@ -81,6 +86,82 @@ export async function saveDataToServer(data) {
         console.error('Failed to save to server:', err);
         return false;
     }
+}
+
+function buildChildQuery(childId) {
+    return childId === null || childId === undefined
+        ? ''
+        : `?childId=${encodeURIComponent(childId)}`;
+}
+
+async function callAction(url, options = {}) {
+    try {
+        const response = await fetchWithCsrf(url, options);
+        const payload = await parseJsonSafe(response);
+        if (response.ok) {
+            return { success: true, data: payload };
+        }
+        return { success: false, error: payload?.error || 'Не удалось выполнить действие' };
+    } catch (err) {
+        console.error('Action request failed:', err);
+        return { success: false, error: 'Ошибка сети' };
+    }
+}
+
+export function completeTaskOnServer(taskId, childId) {
+    return callAction(`/api/tasks/${encodeURIComponent(taskId)}/complete${buildChildQuery(childId)}`, {
+        method: 'POST'
+    });
+}
+
+export function requestTaskCompletionOnServer(taskId) {
+    return callAction(`/api/tasks/${encodeURIComponent(taskId)}/request`, {
+        method: 'POST'
+    });
+}
+
+export function purchaseItemOnServer(itemId, childId) {
+    return callAction(`/api/shop/${encodeURIComponent(itemId)}/purchase${buildChildQuery(childId)}`, {
+        method: 'POST'
+    });
+}
+
+export function requestItemPurchaseOnServer(itemId) {
+    return callAction(`/api/shop/${encodeURIComponent(itemId)}/request`, {
+        method: 'POST'
+    });
+}
+
+export function approveRequestOnServer(requestId, childId) {
+    return callAction(`/api/requests/${encodeURIComponent(requestId)}/approve${buildChildQuery(childId)}`, {
+        method: 'POST'
+    });
+}
+
+export function rejectRequestOnServer(requestId, childId) {
+    return callAction(`/api/requests/${encodeURIComponent(requestId)}/reject${buildChildQuery(childId)}`, {
+        method: 'POST'
+    });
+}
+
+export function deleteRequestOnServer(requestId, childId) {
+    return callAction(`/api/requests/${encodeURIComponent(requestId)}${buildChildQuery(childId)}`, {
+        method: 'DELETE'
+    });
+}
+
+export function deleteHistoryEntryOnServer(historyEntryId, childId) {
+    return callAction(`/api/history/${encodeURIComponent(historyEntryId)}${buildChildQuery(childId)}`, {
+        method: 'DELETE'
+    });
+}
+
+export function adjustBalanceOnServer(childId, amount, description) {
+    return callAction('/api/balance/adjust', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ childId, amount, description })
+    });
 }
 
 export async function logout() {

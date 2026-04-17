@@ -1,8 +1,9 @@
 /** @file Action Shop frontend UI module */
 import { state } from './state.js';
-import { renderAll, renderRequests } from './ui.js';
+import { renderAll } from './ui.js';
+import { purchaseItemOnServer, requestItemPurchaseOnServer } from './api.js';
 import { showToast, showConfirm, showMobileEventNotification, escapeHtml } from './utils.js';
-import { scheduleSave, addHistoryEntry, checkLimits, getActingChildId, updateBalanceLocally, addRequestEntry } from './action-helpers.js';
+import { applyServerFamilyData, checkLimits, flushPendingSave, getActingChildId } from './action-helpers.js';
 import { triggerPurchaseAnimation } from './motion-feedback.js';
 import { getMoneyLimit } from './server-contract.js';
 
@@ -14,37 +15,30 @@ function getShopLimitToastMessage(errorMessage) {
     return errorMessage;
 }
 
-function applyPurchase(item, actingId, moneyPrice) {
-    updateBalanceLocally(actingId, -item.price);
-    addHistoryEntry({
-        type: 'spend',
-        amount: item.price,
-        description: item.name,
-        groupName: item.groupName,
-        comment: item.comment,
-        relatedId: item.id,
-        moneyAmount: moneyPrice,
-        childIdOverride: actingId
-    });
-    scheduleSave();
-    renderAll();
+async function applyPurchase(item, actingId) {
+    await flushPendingSave();
+    const result = await purchaseItemOnServer(item.id, actingId);
+    if (!result.success || !result.data) {
+        showToast(result.error || 'Не удалось сохранить покупку', 'error');
+        return;
+    }
+
+    applyServerFamilyData(result.data, { currentChildId: actingId });
+    renderRequests();
     showMobileEventNotification(`Вы купили: ${item.name}!`, 'success', 'Balance updated');
     triggerPurchaseAnimation();
 }
 
-function sendPurchaseRequest(item, actingId, moneyPrice) {
-    addRequestEntry({
-        childId: actingId,
-        requestType: 'shop_purchase',
-        itemId: item.id,
-        taskId: item.id,
-        taskName: item.name,
-        coins: item.price,
-        moneyAmount: moneyPrice,
-        itemGroup: item.groupName
-    });
-    scheduleSave();
-    renderRequests();
+async function sendPurchaseRequest(item, actingId) {
+    await flushPendingSave();
+    const result = await requestItemPurchaseOnServer(item.id);
+    if (!result.success || !result.data) {
+        showToast(result.error || 'Не удалось отправить заявку', 'error');
+        return;
+    }
+
+    applyServerFamilyData(result.data, { currentChildId: actingId });
+    renderAll();
     document.querySelector('.nav__btn[data-tab="requests"]')?.click();
     showMobileEventNotification('Заявка на покупку отправлена', 'success', 'Новая заявка');
     triggerPurchaseAnimation();
@@ -96,8 +90,8 @@ function confirmPurchase(item, actingId, options = {}) {
     if (state.isAdmin) msg += '?';
     
     if (state.isAdmin) {
-        showConfirm(title, msg, { onConfirm: () => applyPurchase(item, actingId, mLimit) });
+        showConfirm(title, msg, { onConfirm: () => { void applyPurchase(item, actingId); } });
     } else {
-        showConfirm(title, msg, { onConfirm: () => sendPurchaseRequest(item, actingId, mLimit) });
+        showConfirm(title, msg, { onConfirm: () => { void sendPurchaseRequest(item, actingId); } });
     }
 }

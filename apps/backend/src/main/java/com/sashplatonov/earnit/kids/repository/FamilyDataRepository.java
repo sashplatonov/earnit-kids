@@ -136,15 +136,19 @@ public class FamilyDataRepository {
     }
 
     public List<HistoryEntryEntity> getHistory(int childId, int limit, int offset) {
-        return historyRepo.find("childId = ?1 ORDER BY createdAt DESC", childId)
+        return historyRepo.find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId)
             .range(offset, offset + limit - 1)
             .list();
     }
 
     public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
-        return historyRepo.find("familyId = ?1 ORDER BY createdAt DESC", familyDbId)
+        return historyRepo.find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
             .range(offset, offset + limit - 1)
             .list();
+    }
+
+    public List<HistoryEntryEntity> getAllHistoryForFamily(int familyDbId) {
+        return historyRepo.list("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId);
     }
 
     public int getHistoryCount(int childId) {
@@ -188,6 +192,10 @@ public class FamilyDataRepository {
         return requestRepo.find("familyId = ?1 ORDER BY createdAt DESC", familyDbId)
             .range(offset, offset + limit - 1)
             .list();
+    }
+
+    public List<PurchaseRequestEntity> getAllRequestsForFamily(int familyDbId) {
+        return requestRepo.list("familyId = ?1", familyDbId);
     }
 
     public int getRequestsCount(int familyDbId) {

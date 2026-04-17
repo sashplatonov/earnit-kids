@@ -43,6 +43,7 @@ class RepositorySmokeTest {
         int familyDbId = family.getId();
 
         assertThat(family.getCreatedAt()).isNotNull();
+        assertThat(family.getUpdatedAt()).isNotNull();
         assertThat(family.getLastActivity()).isNotNull();
 
         assertThat(familyRepository.findById(familyId)).isPresent();
@@ -72,8 +73,10 @@ class RepositorySmokeTest {
 
         assertThat(child1.getToken()).hasSize(16);
         assertThat(child1.getCreatedAt()).isNotNull();
+        assertThat(child1.getUpdatedAt()).isNotNull();
         assertThat(child2.getToken()).hasSize(16);
         assertThat(child2.getCreatedAt()).isNotNull();
+        assertThat(child2.getUpdatedAt()).isNotNull();
 
         assertThat(childRepository.getChildren(familyDbId)).hasSizeGreaterThanOrEqualTo(2);
         assertThat(childRepository.findByToken(child1.getToken())).isPresent();
@@ -138,10 +141,15 @@ class RepositorySmokeTest {
         assertThat(request).isNotNull();
         assertThat(friend).isNotNull();
         assertThat(task.getCreatedAt()).isNotNull();
+        assertThat(task.getUpdatedAt()).isNotNull();
         assertThat(item.getCreatedAt()).isNotNull();
+        assertThat(item.getUpdatedAt()).isNotNull();
         assertThat(history.getCreatedAt()).isNotNull();
+        assertThat(history.getUpdatedAt()).isNotNull();
         assertThat(request.getCreatedAt()).isNotNull();
+        assertThat(request.getUpdatedAt()).isNotNull();
         assertThat(friend.getCreatedAt()).isNotNull();
+        assertThat(friend.getUpdatedAt()).isNotNull();
 
         assertThat(childRepository.deleteChild(child2.getId())).isTrue();
         assertThat(childRepository.deleteChild(child2.getId())).isFalse();

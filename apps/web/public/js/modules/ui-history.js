@@ -110,7 +110,14 @@ export function renderHistoryUI(state) {
         const [year, month] = monthKey.split('-');
         const name = new Date(year, month - 1).toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
         const items = grouped[monthKey].items
-            .sort((a, b) => new Date(getCreatedAt(b)) - new Date(getCreatedAt(a)))
+            .sort((a, b) => {
+                const ta = new Date(getCreatedAt(a)).getTime();
+                const tb = new Date(getCreatedAt(b)).getTime();
+                if (tb !== ta) return tb - ta;
+                const ida = Number(a.id || 0);
+                const idb = Number(b.id || 0);
+                return idb - ida;
+            })
             .map(item => renderHistoryItem(item, state)).join('');
         return renderMonthHeader(name, grouped[monthKey]) + items;
     }).join('');

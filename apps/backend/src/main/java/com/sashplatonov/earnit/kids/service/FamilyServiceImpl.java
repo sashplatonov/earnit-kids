@@ -650,6 +650,9 @@ public final class FamilyServiceImpl implements FamilyService {
             return;
         }
 
+        Map<Long, Instant> existingCreatedAtByExternalId = mapHistoryCreatedAtByExternalId(
+            familyDataRepository.getAllHistoryForFamily(familyDbId));
+
         Set<Integer> allowedChildIds = accessibleChildren.stream()
             .map(ChildEntity::getId)
             .collect(java.util.stream.Collectors.toCollection(HashSet::new));
@@ -662,11 +665,12 @@ public final class FamilyServiceImpl implements FamilyService {
             int targetChildId = (entryChildId != null && allowedChildIds.contains(entryChildId))
                 ? entryChildId
                 : selectedChildId;
+            Long externalId = asLong(entry.get("id"));
 
             HistoryEntryEntity entity = HistoryEntryEntity.builder()
                 .familyId(familyDbId)
                 .childId(targetChildId)
-                .externalId(asLong(entry.get("id")))
+                .externalId(externalId)
                 .type(firstNonBlank(asString(entry.get("type")), "unknown"))
                 .amount(firstDefinedInt(entry.get("amount"), entry.get("coins"), 0))
                 .description(asString(entry.get("description")))
@@ -674,7 +678,8 @@ public final class FamilyServiceImpl implements FamilyService {
                 .relatedId(firstDefinedLong(entry.get("relatedId"), entry.get("taskId"), entry.get("itemId")))
                 .groupName(firstNonBlank(asString(entry.get("groupName")), asString(entry.get("group"))))
                 .comment(asString(entry.get("comment")))
-                .createdAt(parseInstant(entry.get("createdAt"), entry.get("date"), entry.get("timestamp")))
+                .createdAt(resolveCreatedAt(externalId, existingCreatedAtByExternalId,
+                    entry.get("createdAt"), entry.get("created_at"), entry.get("date"), entry.get("timestamp")))
                 .build();
 
             if (targetChildId == selectedChildId) {
@@ -696,6 +701,9 @@ public final class FamilyServiceImpl implements FamilyService {
             return;
         }
 
+        Map<Long, Instant> existingCreatedAtByExternalId = mapRequestCreatedAtByExternalId(
+            familyDataRepository.getAllRequestsForFamily(familyDbId));
+
         Set<Integer> allowedChildIds = children.stream()
             .map(ChildEntity::getId)
             .collect(java.util.stream.Collectors.toCollection(HashSet::new));
@@ -707,11 +715,12 @@ public final class FamilyServiceImpl implements FamilyService {
             int targetChildId = requestChildId != null && allowedChildIds.contains(requestChildId)
                 ? requestChildId
                 : fallbackChildId;
+            Long externalId = asLong(request.get("id"));
 
             entries.add(PurchaseRequestEntity.builder()
                 .familyId(familyDbId)
                 .childId(targetChildId)
-                .externalId(asLong(request.get("id")))
+                .externalId(externalId)
                 .taskId(asLong(request.get("taskId")))
                 .taskName(asString(request.get("taskName")))
                 .itemId(asLong(request.get("itemId")))
@@ -719,7 +728,8 @@ public final class FamilyServiceImpl implements FamilyService {
                 .status(firstNonBlank(asString(request.get("status")), "pending"))
                 .requestType(firstNonBlank(asString(request.get("requestType")), "earn"))
                 .moneyAmount(firstDefinedInt(request.get("moneyAmount"), request.get("money_amount"), 0))
-                .createdAt(parseInstant(request.get("createdAt"), request.get("date"), request.get("timestamp")))
+                .createdAt(resolveCreatedAt(externalId, existingCreatedAtByExternalId,
+                    request.get("createdAt"), request.get("created_at"), request.get("date"), request.get("timestamp")))
                 .build());
         }
         familyDataRepository.replaceRequests(familyDbId, entries);
@@ -794,14 +804,59 @@ public final class FamilyServiceImpl implements FamilyService {
             if (candidate instanceof Instant instant) {
                 return instant;
             }
+            if (candidate instanceof Number number) {
+                Instant parsed = parseEpochTimestamp(number.longValue());
+                if (parsed != null) {
+                    return parsed;
+                }
+            }
             if (candidate instanceof String value && !value.isBlank()) {
                 try {
                     return Instant.parse(value);
                 } catch (Exception ignored) {
                 }
+                Instant parsed = parseEpochTimestamp(asLong(value));
+                if (parsed != null) {
+                    return parsed;
+                }
             }
         }
+        return null;
+    }
+
+    private Instant resolveCreatedAt(Long externalId, Map<Long, Instant> existingCreatedAtByExternalId,
+                                     Object... candidates) {
+        Instant parsed = parseInstant(candidates);
+        if (parsed != null) {
+            return parsed;
+        }
+
+        if (externalId != null) {
+            Instant existing = existingCreatedAtByExternalId.get(externalId);
+            if (existing != null) {
+                return existing;
+            }
+
+            Instant derived = parseEpochTimestamp(externalId);
+            if (derived != null) {
+                return derived;
+            }
+        }
+
         return timeProvider.now();
+    }
+
+    private Instant parseEpochTimestamp(Long value) {
+        if (value == null) {
+            return null;
+        }
+        if (value >= 946684800000L && value <= 4102444800000L) {
+            return Instant.ofEpochMilli(value);
+        }
+        if (value >= 946684800L && value <= 4102444800L) {
+            return Instant.ofEpochSecond(value);
+        }
+        return null;
     }
 
     private Integer asInteger(Object value) {
@@ -869,6 +924,32 @@ public final class FamilyServiceImpl implements FamilyService {
             return Boolean.parseBoolean(text);
         }
         return defaultValue;
+    }
+
+    private Map<Long, Instant> mapHistoryCreatedAtByExternalId(List<HistoryEntryEntity> entries) {
+        Map<Long, Instant> createdAtByExternalId = new LinkedHashMap<>();
+        if (entries == null) {
+            return createdAtByExternalId;
+        }
+        for (HistoryEntryEntity entry : entries) {
+            if (entry.getExternalId() != null && entry.getCreatedAt() != null) {
+                createdAtByExternalId.put(entry.getExternalId(), entry.getCreatedAt());
+            }
+        }
+        return createdAtByExternalId;
+    }
+
+    private Map<Long, Instant> mapRequestCreatedAtByExternalId(List<PurchaseRequestEntity> entries) {
+        Map<Long, Instant> createdAtByExternalId = new LinkedHashMap<>();
+        if (entries == null) {
+            return createdAtByExternalId;
+        }
+        for (PurchaseRequestEntity entry : entries) {
+            if (entry.getExternalId() != null && entry.getCreatedAt() != null) {
+                createdAtByExternalId.put(entry.getExternalId(), entry.getCreatedAt());
+            }
+        }
+        return createdAtByExternalId;
     }
 
     private List<HistoryEntryEntity> queryHistory(int familyDbId, Integer childId, Instant from, Instant to) {

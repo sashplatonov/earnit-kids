@@ -9,9 +9,11 @@ import java.util.UUID;
 @ApplicationScoped
 public class SecureTokenGenerator {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     public String generateHexToken(int byteCount) {
         var bytes = new byte[byteCount];
-        new SecureRandom().nextBytes(bytes);
+        RANDOM.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes);
     }
 

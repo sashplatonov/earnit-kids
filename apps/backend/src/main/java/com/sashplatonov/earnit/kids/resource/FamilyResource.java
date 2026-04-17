@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.resource;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
+import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateNicknameRequest;
@@ -18,6 +19,7 @@ import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
+import com.sashplatonov.earnit.kids.service.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
 import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -55,14 +57,17 @@ import java.util.Objects;
 @Tag(name = "Family", description = "Family dashboard, children, history, and analytics endpoints")
 public class FamilyResource {
 
+    private final FamilyActionService familyActionService;
     private final FamilyService familyService;
     private final BaseDataService baseDataService;
     private final WebSocketNotificationService webSocketNotificationService;
 
     @Inject
-    public FamilyResource(FamilyService familyService,
+    public FamilyResource(FamilyActionService familyActionService,
+                          FamilyService familyService,
                           BaseDataService baseDataService,
                           WebSocketNotificationService webSocketNotificationService) {
+        this.familyActionService = familyActionService;
         this.familyService = familyService;
         this.baseDataService = baseDataService;
         this.webSocketNotificationService = webSocketNotificationService;
@@ -116,6 +121,170 @@ public class FamilyResource {
             familyService.saveFamilyData(auth.familyId(), childId, effectivePayload, auth.isAdmin());
         notifyDataUpdated(auth, childId, result);
 
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/tasks/{taskId}/complete")
+    @Operation(summary = "Complete a task immediately and persist balance/history in one transaction")
+    public Response completeTask(@Context ContainerRequestContext ctx,
+                                 @PathParam("taskId") long taskId,
+                                 @QueryParam("childId") Integer childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+        if (childId == null) {
+            return badRequest("Child id is required");
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.completeTask(auth.familyId(), childId, taskId);
+        notifyDataUpdated(auth, childId, result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/tasks/{taskId}/request")
+    @Operation(summary = "Create a child task completion request immediately in the database")
+    public Response requestTaskCompletion(@Context ContainerRequestContext ctx,
+                                          @PathParam("taskId") long taskId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isChild()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.requestTaskCompletion(
+            auth.familyId(),
+            auth.childId(),
+            taskId
+        );
+        notifyDataUpdated(auth, auth.childId(), result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/shop/{itemId}/purchase")
+    @Operation(summary = "Purchase a shop item immediately and persist balance/history in one transaction")
+    public Response purchaseItem(@Context ContainerRequestContext ctx,
+                                 @PathParam("itemId") long itemId,
+                                 @QueryParam("childId") Integer childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+        if (childId == null) {
+            return badRequest("Child id is required");
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.purchaseItem(auth.familyId(), childId, itemId);
+        notifyDataUpdated(auth, childId, result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/shop/{itemId}/request")
+    @Operation(summary = "Create a child purchase request immediately in the database")
+    public Response requestItemPurchase(@Context ContainerRequestContext ctx,
+                                        @PathParam("itemId") long itemId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isChild()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.requestItemPurchase(
+            auth.familyId(),
+            auth.childId(),
+            itemId
+        );
+        notifyDataUpdated(auth, auth.childId(), result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/requests/{requestId}/approve")
+    @Operation(summary = "Approve a child request transactionally")
+    public Response approveRequest(@Context ContainerRequestContext ctx,
+                                   @PathParam("requestId") long requestId,
+                                   @QueryParam("childId") Integer childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.approveRequest(auth.familyId(), childId, requestId);
+        notifyDataUpdated(auth, childId, result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/requests/{requestId}/reject")
+    @Operation(summary = "Reject a child request transactionally")
+    public Response rejectRequest(@Context ContainerRequestContext ctx,
+                                  @PathParam("requestId") long requestId,
+                                  @QueryParam("childId") Integer childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.rejectRequest(auth.familyId(), childId, requestId);
+        notifyDataUpdated(auth, childId, result);
+        return toResponse(result);
+    }
+
+    @DELETE
+    @Path("/requests/{requestId}")
+    @Operation(summary = "Delete a request immediately from the database")
+    public Response deleteRequest(@Context ContainerRequestContext ctx,
+                                  @PathParam("requestId") long requestId,
+                                  @QueryParam("childId") Integer childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.deleteRequest(auth.familyId(), childId, requestId);
+        notifyDataUpdated(auth, childId, result);
+        return toResponse(result);
+    }
+
+    @DELETE
+    @Path("/history/{historyEntryId}")
+    @Operation(summary = "Delete a history entry and reverse the child balance in one transaction")
+    public Response deleteHistoryEntry(@Context ContainerRequestContext ctx,
+                                       @PathParam("historyEntryId") long historyEntryId,
+                                       @QueryParam("childId") Integer childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+        if (childId == null) {
+            return badRequest("Child id is required");
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.deleteHistoryEntry(auth.familyId(), childId, historyEntryId);
+        notifyDataUpdated(auth, childId, result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/balance/adjust")
+    @Operation(summary = "Adjust child balance immediately and persist the audit history in one transaction")
+    public Response adjustBalance(@Context ContainerRequestContext ctx,
+                                  @RequestBody(required = true, description = "Balance adjustment payload")
+                                  @Valid AdjustBalanceRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.adjustBalance(
+            auth.familyId(),
+            request.childId(),
+            request.amount(),
+            request.description()
+        );
+        notifyDataUpdated(auth, request.childId(), result);
         return toResponse(result);
     }
 

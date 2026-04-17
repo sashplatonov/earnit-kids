@@ -1,0 +1,1 @@
+-- H2 test databases start clean for every run, so there is nothing to repair.

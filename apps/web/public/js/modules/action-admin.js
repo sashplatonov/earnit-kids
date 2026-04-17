@@ -1,8 +1,9 @@
 /** @file Action Admin frontend UI module */
 import { state } from './state.js';
+import { adjustBalanceOnServer } from './api.js';
 import { renderAll } from './ui.js';
 import { showToast, showMobileEventNotification } from './utils.js';
-import { scheduleSave, addHistoryEntry, updateBalanceLocally } from './action-helpers.js';
+import { applyServerFamilyData, flushPendingSave } from './action-helpers.js';
 
 function getAwardDescription(amount) {
     const desc = prompt('Описание:', amount > 0 ? 'Бонус от родителей' : 'Списано родителями');
@@ -20,14 +21,16 @@ export function adminAwardCoins() {
     const description = getAwardDescription(amount);
     if (!description) return;
 
-    updateBalanceLocally(state.currentChildId, amount);
-    addHistoryEntry({
-        type: amount > 0 ? 'earn' : 'spend',
-        amount: Math.abs(amount),
-        description,
-        childIdOverride: state.currentChildId
-    });
-    scheduleSave();
-    renderAll();
-    showMobileEventNotification(`${amount > 0 ? 'Начислено' : 'Списано'}: ${Math.abs(amount)} мон.`, 'success', 'Balance updated');
+    void (async () => {
+        await flushPendingSave();
+        const result = await adjustBalanceOnServer(state.currentChildId, amount, description);
+        if (!result.success || !result.data) {
+            showToast(result.error || 'Не удалось изменить баланс', 'error');
+            return;
+        }
+
+        applyServerFamilyData(result.data, { currentChildId: state.currentChildId });
+        renderAll();
+        showMobileEventNotification(`${amount > 0 ? 'Начислено' : 'Списано'}: ${Math.abs(amount)} мон.`, 'success', 'Balance updated');
+    })();
 }

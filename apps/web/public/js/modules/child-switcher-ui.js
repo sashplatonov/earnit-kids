@@ -189,6 +189,8 @@ function ensureChildMenuOutsideClickListener() {
         });
         document.dispatchEvent(new CustomEvent('child-menu-visibility', { detail: { isActive: false } }));
     });
+}
+
 // dropdown positioning helpers moved to child-switcher-position.js
 
 export function renderChildSwitcherUI(state, escapeHtml) {
