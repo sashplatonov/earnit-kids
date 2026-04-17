@@ -38,3 +38,12 @@ args = ["-y", "@eslint/mcp@latest"]
 [mcp_servers.git]
 command = "uvx"
 args = ["mcp-server-git", "--repository", "/Users/sash/Dev/Projects/earnit-kids"]
+
+[mcp_servers.git.tools.git_diff_unstaged]
+approval_mode = "approve"
+
+[mcp_servers.git.tools.git_status]
+approval_mode = "approve"
+
+[mcp_servers.git.tools.git_diff]
+approval_mode = "approve"

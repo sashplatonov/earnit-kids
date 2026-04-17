@@ -1,10 +1,10 @@
 ---
-description: Применить миграции БД
+description: Apply database migrations
 ---
 // turbo-all
 
-1. Проверь список миграций:
+1. Check the list of migrations:
    `ls -la migrations/`
-2. Запусти миграцию:
+2. Run the migrations:
    `npm run migrate`
-3. Проверь логи на ошибки
+3. Check the logs for errors

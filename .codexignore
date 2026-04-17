@@ -1,9 +1,12 @@
 # Dependencies and build artifacts
 node_modules/
 mobile/node_modules/
+apps/web/node_modules/
+apps/backend/target/
 dist/
 coverage/
 public/dist/
+apps/web/coverage/
 
 # Test artifacts
 test-results/

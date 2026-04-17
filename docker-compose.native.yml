@@ -1,0 +1,81 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    env_file:
+      - .env
+    environment:
+      PORT: ${WEB_INTERNAL_PORT}
+      BACKEND_URL: http://backend:${BACKEND_INTERNAL_PORT}
+      DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      PUBLIC_BASE_URL: ${APP_URL}
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${WEB_PORT}:${WEB_INTERNAL_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${WEB_INTERNAL_PORT}/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - edge
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      args:
+        NATIVE_IMAGE_XMX: ${NATIVE_IMAGE_XMX}
+    env_file:
+      - .env
+    environment:
+      QUARKUS_HTTP_PORT: ${BACKEND_INTERNAL_PORT}
+      FRONTEND_URL: ${APP_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    expose:
+      - "${BACKEND_INTERNAL_PORT}"
+    restart: unless-stopped
+    networks:
+      - backend
+      - edge
+      - dokploy-ipv6
+
+  db:
+    profiles:
+      - db
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - earnit_kids_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - backend
+
+volumes:
+  earnit_kids_postgres_data:
+
+networks:
+  backend:
+    driver: bridge
+  edge:
+    driver: bridge
+  # ⚠️ DO NOT REMOVE: dokploy-ipv6 — Dokploy external network for IPv6 routing.
+  # Required for Dokploy reverse-proxy to reach the backend.
+  dokploy-ipv6:
+    external: true
