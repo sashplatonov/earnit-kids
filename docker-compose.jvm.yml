@@ -51,6 +51,7 @@ services:
     networks:
       - backend
       - edge
+      - dokploy-ipv6
 
   db:
     image: postgres:18-alpine
@@ -60,8 +61,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - earnit_kids_postgres_data:/var/lib/postgresql/data
-    expose:
-      - "${DB_PORT}"
+    ports:
+      - "${DB_PORT}:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
       interval: 10s
@@ -79,3 +80,5 @@ networks:
     driver: bridge
   edge:
     driver: bridge
+  dokploy-ipv6:
+    external: true

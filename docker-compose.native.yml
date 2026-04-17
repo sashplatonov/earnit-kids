@@ -47,6 +47,7 @@ services:
     networks:
       - backend
       - edge
+      - dokploy-ipv6
 
   db:
     image: postgres:18-alpine
@@ -75,3 +76,5 @@ networks:
     driver: bridge
   edge:
     driver: bridge
+  dokploy-ipv6:
+    external: true
