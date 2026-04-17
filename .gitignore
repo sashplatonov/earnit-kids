@@ -6,20 +6,30 @@
 
 # ── Backend (Quarkus / Maven) ──────────────────
 backend/target/
+apps/backend/target/
 backend/**/*.class
+apps/backend/**/*.class
 *.jar
 *.war
 *.ear
 
 # ── Frontend (Node / Web) ─────────────────────
 web/node_modules/
+apps/web/node_modules/
 web/.next/
+apps/web/.next/
 web/dist/
+apps/web/dist/
 web/build/
+apps/web/build/
 web/.nuxt/
+apps/web/.nuxt/
 web/.output/
+apps/web/.output/
 web/coverage/
+apps/web/coverage/
 web/.turbo/
+apps/web/.turbo/
 
 # ── IDE ───────────────────────────────────────
 .idea/

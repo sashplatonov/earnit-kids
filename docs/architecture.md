@@ -1,6 +1,9 @@
 # EarnIt Kids Architecture
 
+<a name="top"></a>
+
 ## Table of Contents
+
 - [🏗️ System Shape](#️-system-shape)
 - [☕ Backend Layers](#-backend-layers)
 - [🔐 Authentication Flow](#-authentication-flow)
@@ -9,17 +12,21 @@
 - [🧪 Testing and Verification](#-testing-and-verification)
 - [🚧 Extension Notes](#-extension-notes)
 
+---
+
 ## 🏗️ System Shape
 
 EarnIt Kids is split into a Quarkus backend and a Node.js web edge.
 
-- `backend/` owns authentication, family/child operations, analytics, persistence, and Flyway migrations.
-- `web/` serves the web experience, static assets, and UI-oriented tests.
+- `apps/backend/` owns authentication, family/child operations, analytics, persistence, and Flyway migrations.
+- `apps/web/` serves the web experience, static assets, and UI-oriented tests.
 - `mobile/` contains Capacitor packaging and mobile platform support assets.
 
 The backend is the source of truth for session cookies, family state, child state, analytics, and approval workflows.
 
 [↩ Back to toc](#table-of-contents)
+
+---
 
 ## ☕ Backend Layers
 
@@ -34,7 +41,7 @@ The Quarkus backend is organized into a conventional service stack.
 - `config/`: auth filter, cookie builder, JWT compatibility helpers, and grouped config mappings
 - `exception/`: REST exception mappers for validation and fallback error handling
 
-The current backend conventions are:
+Current backend conventions:
 
 - constructor injection for application beans
 - immutable request/response DTOs via Java records
@@ -43,6 +50,8 @@ The current backend conventions are:
 - OpenAPI annotations on REST endpoints for generated API docs
 
 [↩ Back to toc](#table-of-contents)
+
+---
 
 ## 🔐 Authentication Flow
 
@@ -58,6 +67,8 @@ Authentication is cookie-based and centered around a compatibility JWT.
 Child magic links use `ChildMagicLinkResource`, which authenticates a child token and redirects with the normal auth cookies already set.
 
 [↩ Back to toc](#table-of-contents)
+
+---
 
 ## 📡 REST Surface
 
@@ -117,15 +128,11 @@ Protected by `super_admin` role.
 - `WsTokenResource` (`GET /api/ws-token`) — short-lived token for WebSocket authentication
 - `ClientErrorResource` (`POST /api/client-error`) — frontend error reporting
 
-Errors returned by JSON API endpoints should use `ErrorResponse` so the frontend sees a stable shape:
-
-- `type`
-- `title`
-- `status`
-- `detail`
-- `errorCode`
+📝 Errors returned by JSON API endpoints use `ErrorResponse` with fields: `type`, `title`, `status`, `detail`, `errorCode`.
 
 [↩ Back to toc](#table-of-contents)
+
+---
 
 ## ⚙️ Configuration Model
 
@@ -144,16 +151,18 @@ Important config domains:
 
 [↩ Back to toc](#table-of-contents)
 
+---
+
 ## 🧪 Testing and Verification
 
-Backend verification is Maven-driven and currently validated against Java 25.
+Backend verification is Maven-driven and validated against Java 25.
 
 Primary command:
 
 ```bash
 export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
 export PATH="$JAVA_HOME/bin:$PATH"
-cd backend
+cd apps/backend
 ./mvnw test
 ```
 
@@ -165,6 +174,8 @@ Current backend test coverage includes:
 
 [↩ Back to toc](#table-of-contents)
 
+---
+
 ## 🚧 Extension Notes
 
 When extending the backend:
@@ -175,4 +186,4 @@ When extending the backend:
 - update OpenAPI annotations when endpoints or payloads change
 - add unit or resource tests for any changed behavior before closing the task
 
-[↑ Back to top](#earnit-kids-architecture)
+[↑ Back to top](#top)

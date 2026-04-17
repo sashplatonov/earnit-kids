@@ -1,15 +1,15 @@
 ---
-description: Деплой приложения через Docker
+description: Deploy the application using Docker
 ---
 
-1. Собери образ:
+1. Build the image:
    `docker compose build`
 // turbo
-2. Запусти контейнеры:
+2. Start containers:
    `docker compose up -d`
 // turbo
-3. Проверь статус:
+3. Check status:
    `docker compose ps`
 // turbo
-4. Проверь healthcheck:
+4. Check healthcheck:
    `curl -s http://localhost:3000/health`

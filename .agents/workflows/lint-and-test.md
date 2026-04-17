@@ -1,12 +1,12 @@
 ---
-description: Запуск полного цикла проверки кода (lint + тесты)
+description: Run full code checks (lint + tests)
 ---
 // turbo-all
 
-1. Запусти lint:
+1. Run lint:
    `npm run lint`
-2. Запусти unit-тесты:
+2. Run unit tests:
    `npm test`
-3. Запусти интеграционные тесты:
+3. Run integration tests:
    `npm run test:integration`
-4. Если есть ошибки — исправь и повтори шаги 1-3
+4. If there are errors — fix them and repeat steps 1-3

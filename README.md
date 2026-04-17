@@ -12,8 +12,8 @@
 
 EarnIt Kids is a split-stack application with:
 
-- `backend/`: a Quarkus 3 backend targeting Java 25
-- `web/`: a Node.js web edge, static assets, and UI tests
+- `apps/backend/`: a Quarkus 3 backend targeting Java 25
+- `apps/web/`: a Node.js web edge, static assets, and UI tests
 - `mobile/`: mobile packaging and Capacitor-related assets
 
 The backend now expects Java 25. If your shell defaults to another JDK, export `JAVA_HOME` before running Maven commands.
@@ -27,24 +27,25 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## 📁 Repository Structure
 
-- `backend/`: Quarkus REST API, persistence layer, Flyway migrations, Maven tests
-- `web/`: Node.js server, frontend assets, Playwright/UI/integration tests
+- `apps/backend/`: Quarkus REST API, persistence layer, Flyway migrations, Maven tests
+- `apps/web/`: Node.js server, frontend assets, Playwright/UI/integration tests
 - `mobile/`: Capacitor configuration, mobile assets, mobile-specific README files
+- `docs/`: architecture and design documentation
 - `docker-compose.yml`: local Docker Compose for native mode
 - `docker-compose.jvm.yml`: local Docker Compose for JVM mode
-- `ARCHITECTURE.md`: high-level system and backend module design
 
 [↩ Back to toc](#table-of-contents)
 
 ## ☕ Backend Commands
 
-Run from `backend/`.
+Run from `apps/backend/`.
 
 Install and validate:
 
 ```bash
 export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
 export PATH="$JAVA_HOME/bin:$PATH"
+cd apps/backend
 ./mvnw test
 ```
 
@@ -53,6 +54,7 @@ Start local development mode:
 ```bash
 export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
 export PATH="$JAVA_HOME/bin:$PATH"
+cd apps/backend
 ./mvnw quarkus:dev
 ```
 
@@ -66,7 +68,7 @@ Useful backend URLs in dev mode:
 
 ## 🌐 Web Commands
 
-Run from `web/`.
+Run from `apps/web/`.
 
 ```bash
 npm install
@@ -109,13 +111,13 @@ Stop native mode:
 ```bash
 docker compose down
 ```
-> **Note:** `docker-compose.yml` uses `backend/Dockerfile` for native mode. `docker-compose.jvm.yml` uses `backend/Dockerfile.jvm` for JVM mode.
+> **Note:** `docker-compose.yml` uses `apps/backend/Dockerfile` for native mode. `docker-compose.jvm.yml` uses `apps/backend/Dockerfile.jvm` for JVM mode.
 
 [↩ Back to toc](#table-of-contents)
 
 ## 📚 Project Docs
 
-- See `ARCHITECTURE.md` for backend layering, auth/session flow, and request lifecycle notes.
+- See [docs/architecture.md](docs/architecture.md) for backend layering, auth/session flow, and request lifecycle notes.
 - Backend API documentation is generated from Quarkus OpenAPI annotations at runtime.
 
 [↑ Back to top](#earnit-kids)

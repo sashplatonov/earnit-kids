@@ -21,80 +21,80 @@ const fsPromises = fs.promises;
 const FEATURE_PAGES = {
     tasks: {
         slug: 'tasks',
-        title: 'EarnIt Kids - Добрые семейные задания',
-        description: 'Простые задания для детей, понятные шаги для родителей и честные монетки за старание.',
-        heading: 'Задания, которые хочется выполнять',
-        subheading: 'Ребенок видит понятную цель, а родители спокойно следят за прогрессом.',
+        title: 'EarnIt Kids - Family-friendly tasks',
+        description: 'Simple tasks for kids, clear steps for parents, and fair coins for effort.',
+        heading: 'Tasks kids enjoy completing',
+        subheading: 'Kids see a clear goal and parents can easily track progress.',
         bullets: [
-            'Добавляйте домашние дела в пару кликов: убрать игрушки, почитать 10 минут, помочь на кухне.',
-            'Ребенок отмечает выполнение, а родители подтверждают результат.',
-            'За каждое выполненное дело начисляются монетки.'
+            'Add chores in a couple of clicks: tidy toys, read for 10 minutes, help in the kitchen.',
+            'The child marks completion and parents confirm the result.',
+            'Coins are awarded for each completed task.'
         ],
-        ctaText: 'Попробовать задания',
+        ctaText: 'Try the tasks',
         ctaLink: '/login.html',
         image: '/img/feature-tasks.svg'
     },
     shop: {
         slug: 'shop',
-        title: 'EarnIt Kids - Семейный магазин наград',
-        description: 'Обменивайте монетки на радости: мультик, прогулка, настольная игра или маленький приз.',
-        heading: 'Магазин радостей за монетки',
-        subheading: 'Дети учатся копить и выбирать, родители сохраняют контроль и бюджет.',
+        title: 'EarnIt Kids - Family rewards shop',
+        description: 'Exchange coins for treats: a movie, a walk, a board game, or a small prize.',
+        heading: 'Rewards shop',
+        subheading: 'Kids learn to save and choose, parents keep control and budget.',
         bullets: [
-            'Создавайте награды: от 20 минут игры до семейного похода в парк.',
-            'Задавайте лимиты, чтобы траты были разумными.',
-            'Смотрите историю обменов и обсуждайте решения вместе с ребенком.'
+            'Create rewards: from 20 minutes of play to a family trip to the park.',
+            'Set limits so spending stays reasonable.',
+            'View exchange history and discuss choices with your child.'
         ],
-        ctaText: 'Открыть магазин наград',
+        ctaText: 'Open rewards shop',
         ctaLink: '/login.html',
         image: '/img/feature-shop.svg'
     }
 };
 
 const LANDING_SEO = {
-    title: 'EarnIt Kids - Семейные задания и награды',
-    description: 'Помогаем детям 7+ выполнять полезные дела с интересом, а родителям легко поддерживать порядок без ссор.',
+    title: 'EarnIt Kids - Family tasks and rewards',
+    description: 'Helps children 7+ complete helpful tasks with engagement, and makes it easy for parents to maintain order without conflict.',
     schema: {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         'name': 'EarnIt Kids',
-        'description': 'Сервис для семейной мотивации детей и управления вознаграждениями.',
+        'description': 'A service for family motivation and reward management.',
         'url': '/'
     }
 };
 
 const ABOUT_SEO = {
-    title: 'EarnIt Kids - О проекте',
-    description: 'Узнайте, как EarnIt Kids помогает семьям превращать рутину в понятную и добрую игру.',
+    title: 'EarnIt Kids - About',
+    description: 'Learn how EarnIt Kids helps families turn routine into a clear and positive experience.',
     schema: {
         '@context': 'https://schema.org',
         '@type': 'AboutPage',
-        'name': 'EarnIt Kids — О проекте'
+        'name': 'EarnIt Kids — About'
     }
 };
 
 const FAQ_SEO = {
-    title: 'EarnIt Kids - Частые вопросы',
-    description: 'Короткие ответы для родителей и детей о заданиях, монетках и наградах в EarnIt Kids.',
+    title: 'EarnIt Kids - Frequently Asked Questions',
+    description: 'Short answers for parents and kids about tasks, coins, and rewards in EarnIt Kids.',
     schema: {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
-        'name': 'EarnIt Kids — Часто задаваемые вопросы'
+        'name': 'EarnIt Kids — FAQ'
     }
 };
 
 const FAQ_ITEMS = [
     {
-        question: 'Как это работает?',
-        answer: 'Родители дают задание, ребенок выполняет его и получает монетки. Потом монетки можно обменять на награды.'
+        question: 'How does it work?',
+        answer: 'Parents assign a task, the child completes it and earns coins. Coins can then be exchanged for rewards.'
     },
     {
-        question: 'Нужно устанавливать приложение?',
-        answer: 'Нет, все работает прямо в браузере на телефоне и компьютере.'
+        question: 'Do we need to install an app?',
+        answer: 'No, it works directly in the browser on phone and computer.'
     },
     {
-        question: 'Можно ограничить траты монет?',
-        answer: 'Да, родители ставят лимиты и решают, какие награды доступны и как часто их можно брать.'
+        question: 'Can coin spending be limited?',
+        answer: 'Yes, parents set limits and decide which rewards are available and how often they can be claimed.'
     }
 ];
 
@@ -232,12 +232,12 @@ async function serveResetPassword(req, res) {
         req,
         res,
         seoData: {
-            title: 'Сброс пароля | EarnIt Kids',
-            description: 'Восстановите доступ к аккаунту EarnIt Kids.',
+            title: 'Password reset | EarnIt Kids',
+            description: 'Restore access to your EarnIt Kids account.',
             schema: {
                 '@context': 'https://schema.org',
                 '@type': 'WebPage',
-                'name': 'Сброс пароля'
+                'name': 'Password reset'
             }
         }
     });
@@ -249,12 +249,12 @@ async function serveVerify(req, res) {
         req,
         res,
         seoData: {
-            title: 'Подтвердите вход | EarnIt Kids',
-            description: 'Подтверждение входа в EarnIt Kids.',
+            title: 'Verify sign-in | EarnIt Kids',
+            description: 'Sign-in verification for EarnIt Kids.',
             schema: {
                 '@context': 'https://schema.org',
                 '@type': 'WebPage',
-                'name': 'Подтверждение входа'
+                'name': 'Sign-in verification'
             }
         }
     });
@@ -266,8 +266,8 @@ async function serveNotFound(req, res) {
         req,
         res,
         seoData: {
-            title: 'Страница не найдена | EarnIt Kids',
-            description: 'Запрашиваемая страница не найдена.',
+            title: 'Page not found | EarnIt Kids',
+            description: 'The requested page could not be found.',
             schema: {
                 '@context': 'https://schema.org',
                 '@type': 'WebPage',

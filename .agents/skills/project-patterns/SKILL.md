@@ -1,6 +1,6 @@
 ---
 name: earnit-kids-patterns
-description: Паттерны и конвенции проекта EarnIt Kids — читай это вместо README/architecture.md
+description: Project patterns and conventions for EarnIt Kids — use instead of README/architecture.md
 ---
 
 ## Module System
@@ -51,12 +51,12 @@ description: Паттерны и конвенции проекта EarnIt Kids �
 - CSRF protection in `src/middleware/security.js`
 
 ## Java
-- Вложенные классы и интерфейсы внутри других классов запрещены: каждый класс и интерфейс должны быть объявлены как top-level и находиться в отдельном файле, соответствующем пакету и имени класса (например, `com.example.MyClass` → `src/main/java/com/example/MyClass.java`).
-- JavaDoc не нужен: не добавлять `/** ... */` (Javadoc) в кодовую базу. Для пояснений допускаются однострочные комментарии `//` и внутренние пояснения, но не Javadoc-формат.
+- Nested classes and interfaces inside other classes are forbidden: each class and interface must be declared as top-level and placed in its own file matching the package and class name (for example, `com.example.MyClass` → `src/main/java/com/example/MyClass.java`).
+- No Javadoc: do not add `/** ... */` (Javadoc) blocks to the codebase. Short inline comments (`//`) and brief internal notes are allowed, but avoid Javadoc-style blocks.
 
-### Комментарии и резервные файлы
-- Комментарии в коде допускаются ТОЛЬКО в двух случаях: 1) в сложных алгоритмах для краткого пояснения нетривиальной логики, 2) при фиксе необычных багов, где важно зафиксировать причину и контекст. Во всех остальных случаях комментарии НЕ НУЖНЫ — пишите говорящие имена классов, методов и переменных.
-- Если комментарий необходим, он должен быть кратким и начинаться с префикса `EXPLAIN:` или `FIXME:` и содержать обоснование (что, почему, как можно исправить). Длинные пояснения оформляются в документации вне кода.
-- Запрещено: любая Javadoc-форма (`/** ... */`) и произвольные блок-комментарии `/* ... */` без префикса объяснения.
-- Нельзя создавать или коммитить резервные копии в репозиторий (файлы с расширениями `*.bak`). Добавьте `*.bak` в `.gitignore` и никогда не оставляйте такие файлы в дереве исходников.
-- Применение в проекте: Checkstyle настроен выдавать ошибку при обнаружении обычных комментариев и блок-комментариев; следуйте префиксам `EXPLAIN:`/`FIXME:` для допустимых случаев.
+### Comments and backup files
+- Comments in code are allowed ONLY in two cases: 1) to briefly explain non-trivial logic in complex algorithms, and 2) when fixing unusual bugs where recording cause and context is important. In all other cases comments are NOT REQUIRED — use descriptive names for classes, methods, and variables.
+- If a comment is necessary it must be brief and start with the prefix `EXPLAIN:` or `FIXME:` and include justification (what, why, how to fix). Long explanations should be placed in external documentation.
+- Forbidden: any Javadoc form (`/** ... */`) and arbitrary block comments `/* ... */` without the explanatory prefix.
+- Do not create or commit backup files in the repository (files with `*.bak` extension). Add `*.bak` to `.gitignore` and never leave such files in the source tree.
+- Project enforcement: Checkstyle is configured to flag plain comments and block comments; follow `EXPLAIN:`/`FIXME:` prefixes for allowed cases.
