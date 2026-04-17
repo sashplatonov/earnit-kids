@@ -24,6 +24,7 @@ public class BaseDataService {
     private final Path baseDataFilePath;
     private Map<String, Object> baseData = EMPTY_BASE_DATA;
     private volatile boolean initialized;
+    private final Object baseDataLock = new Object();
 
     @Inject
     public BaseDataService(ObjectMapper objectMapper) {
@@ -37,31 +38,38 @@ public class BaseDataService {
 
     @PostConstruct
     void initialize() {
-        baseData = loadBaseData();
-        initialized = true;
+        Map<String, Object> loaded = loadBaseData();
+        synchronized (baseDataLock) {
+            baseData = loaded;
+            initialized = true;
+        }
     }
 
     public Map<String, Object> getBaseData() {
         if (!initialized) {
             initialize();
         }
-        return baseData;
+        synchronized (baseDataLock) {
+            return baseData;
+        }
     }
 
-    public synchronized boolean saveBaseData(Map<String, Object> updatedBaseData) {
+    public boolean saveBaseData(Map<String, Object> updatedBaseData) {
         Map<String, Object> normalized = normalizeBaseData(updatedBaseData);
-        try {
-            Path parent = baseDataFilePath.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
+        synchronized (baseDataLock) {
+            try {
+                Path parent = baseDataFilePath.getParent();
+                if (parent != null) {
+                    Files.createDirectories(parent);
+                }
+                objectMapper.writerWithDefaultPrettyPrinter().writeValue(baseDataFilePath.toFile(), normalized);
+                baseData = normalized;
+                initialized = true;
+                return true;
+            } catch (IOException ex) {
+                log.error("Failed to persist base data to {}", baseDataFilePath, ex);
+                return false;
             }
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(baseDataFilePath.toFile(), normalized);
-            baseData = normalized;
-            initialized = true;
-            return true;
-        } catch (IOException ex) {
-            log.error("Failed to persist base data to {}", baseDataFilePath, ex);
-            return false;
         }
     }
 

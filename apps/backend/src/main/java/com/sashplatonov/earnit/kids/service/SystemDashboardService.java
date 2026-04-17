@@ -150,7 +150,8 @@ public class SystemDashboardService {
             payload.put("module", json.getOrDefault("module", json.getOrDefault("logger", "app")));
             payload.put("reqId", json.getOrDefault("reqId", json.getOrDefault("requestId", "-")));
             return payload;
-        } catch (Exception ignored) {
+        } catch (IOException ex) {
+            // EXPLAIN: JSON parsing failed; treat line as plain text log
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("ts", timeProvider.now().toString());
             payload.put("level", inferLevel(line));
