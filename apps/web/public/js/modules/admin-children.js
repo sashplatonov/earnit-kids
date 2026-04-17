@@ -1,7 +1,7 @@
 /** @file Admin Children frontend UI module */
 import { state, setState } from './state.js';
 import { addChild, loadDataFromServer, savePreference } from './api.js';
-import { normalizeServerData } from './server-contract.js';
+import { applyServerFamilyData, flushPendingSave } from './action-helpers.js';
 import { renderAll } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
 import { refreshChildLinkInline } from './admin-settings.js';
@@ -33,24 +33,7 @@ function updateSettingsFields(child) {
 }
 
 function applyServerChildScope(data, fallbackChild) {
-    const normalized = normalizeServerData(data);
-    const children = normalized.children.length > 0 ? normalized.children : state.children;
-    const child = children.find(item => item.id == fallbackChild?.id) || fallbackChild;
-
-    setState({
-        balance: normalized.balance ?? child?.balance ?? 0,
-        tasks: normalized.tasks,
-        shopItems: normalized.shop,
-        history: normalized.history,
-        requests: normalized.requests,
-        friends: Array.isArray(normalized.friends) ? normalized.friends : [],
-        children,
-        childNickname: normalized.childNickname ?? child?.name ?? null,
-        monthlyLimit: getMonthlyLimit(child),
-        dailyCoinLimit: getDailyLimit(child)
-    });
-
-    return child;
+    return applyServerFamilyData(data, { currentChildId: fallbackChild?.id ?? state.currentChildId });
 }
 
 function persistPreferenceIfNeeded(childId, options) {
@@ -91,6 +74,8 @@ function maybeLoadAnalytics() {
 
 export async function switchChild(childId, options = {}) {
     if (!childId) return false;
+
+    await flushPendingSave();
 
     let child = state.children.find(c => c.id == childId);
     const previousSelection = {

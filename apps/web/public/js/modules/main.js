@@ -2,7 +2,7 @@
 import { state } from './state.js';
 import { renderAll, renderShop, renderTasks } from './ui.js';
 import { showToast, closeModal, openModal } from './utils.js';
-import { scheduleSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, adminAwardCoins } from './actions.js';
+import { scheduleSave, flushPendingSave, buyItem, earnCoins, requestCoins, deleteHistoryItem, approveRequest, rejectRequest, deleteRequest, adminAwardCoins } from './actions.js';
 import { initializePushNotifications, setPushRefreshHandler } from './push.js';
 import { startIosDevFallback } from './ios-dev-fallback.js';
 import { setupPullToRefresh } from './pull-to-refresh.js';
@@ -162,8 +162,23 @@ function showSkeletons() {
     });
 }
 
+function setupPendingSaveFlush() {
+    const flushWithKeepalive = () => {
+        void flushPendingSave({ keepalive: true });
+    };
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            flushWithKeepalive();
+        }
+    });
+    window.addEventListener('pagehide', flushWithKeepalive);
+    window.addEventListener('beforeunload', flushWithKeepalive);
+}
+
 async function initializeApp() {
     setupMobileViewportBudgets();
+    setupPendingSaveFlush();
     showSkeletons();
     setupPwaInstall();
 

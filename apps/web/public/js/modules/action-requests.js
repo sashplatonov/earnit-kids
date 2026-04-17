@@ -1,8 +1,9 @@
 /** @file Action Requests frontend UI module */
 import { state } from './state.js';
-import { renderAll, renderRequests } from './ui.js';
+import { renderAll } from './ui.js';
+import { approveRequestOnServer, rejectRequestOnServer, deleteRequestOnServer } from './api.js';
 import { showToast, showConfirm, showMobileEventNotification } from './utils.js';
-import { scheduleSave, addHistoryEntry, checkLimits, checkFrequency, checkDailyCoinLimit, updateBalanceLocally } from './action-helpers.js';
+import { applyServerFamilyData, checkDailyCoinLimit, checkFrequency, checkLimits, flushPendingSave } from './action-helpers.js';
 import { triggerCoinBurst } from './motion-feedback.js';
 
 function verifyPurchaseLimits(req, item, callback) {
@@ -19,12 +20,17 @@ function verifyPurchaseLimits(req, item, callback) {
     }
 }
 
-function finalizeRequest(req, status) {
-    if (!req) return null;
-    const updated = { ...req, status, resolvedAt: new Date().toISOString() };
-    state.requests = state.requests.map(r => (r.id == req.id ? updated : r));
-    scheduleSave();
-    return updated;
+async function commitRequestMutation(executor) {
+    await flushPendingSave();
+    const result = await executor();
+    if (!result.success || !result.data) {
+        showToast(result.error || 'Не удалось обновить заявку', 'error');
+        return false;
+    }
+
+    applyServerFamilyData(result.data, { currentChildId: state.currentChildId });
+    renderAll();
+    return true;
 }
 
 function handleApprovePurchase(req) {
@@ -34,20 +40,12 @@ function handleApprovePurchase(req) {
     const item = state.shopItems.find(i => i.id == (req.itemId || req.taskId));
     
     verifyPurchaseLimits(req, item, () => {
-        updateBalanceLocally(req.childId, -req.coins);
-        addHistoryEntry({
-            type: 'spend',
-            amount: req.coins,
-            description: req.taskName || 'Покупка',
-            groupName: item ? item.groupName : undefined,
-            comment: item ? item.comment : undefined,
-            relatedId: req.itemId || req.taskId,
-            moneyAmount: req.moneyAmount || 0,
-            childIdOverride: req.childId
-        });
-        finalizeRequest(req, 'approved');
-        renderAll();
-        triggerCoinBurst();
+        void commitRequestMutation(() => approveRequestOnServer(req.id, state.currentChildId))
+            .then((success) => {
+                if (success) {
+                    triggerCoinBurst();
+                }
+            });
     });
 }
 
@@ -64,22 +62,14 @@ function handleApproveTask(req) {
     if (dailyErr) warnings.push(dailyErr);
 
     const apply = () => {
-        updateBalanceLocally(req.childId, req.coins);
-        const desc = task ? task.name : req.taskName;
-
-        addHistoryEntry({
-            type: 'earn',
-            amount: req.coins,
-            description: desc,
-            groupName: task ? task.groupName : undefined,
-            comment: task ? task.comment : undefined,
-            relatedId: req.taskId,
-            childIdOverride: req.childId
-        });
-        finalizeRequest(req, 'approved');
-        renderAll();
-        showMobileEventNotification(`Заявка подтверждена: +${req.coins} мон.`, 'success', 'Заявка подтверждена');
-        triggerCoinBurst();
+        void commitRequestMutation(() => approveRequestOnServer(req.id, state.currentChildId))
+            .then((success) => {
+                if (!success) {
+                    return;
+                }
+                showMobileEventNotification(`Заявка подтверждена: +${req.coins} мон.`, 'success', 'Заявка подтверждена');
+                triggerCoinBurst();
+            });
     };
 
     if (warnings.length > 0) {
@@ -107,17 +97,18 @@ export function rejectRequest(reqId) {
     const req = state.requests.find(r => r.id == reqId);
     if (!req) return;
 
-    finalizeRequest(req, 'rejected');
-    renderRequests();
-    showToast('Заявка отклонена', 'info');
+    void commitRequestMutation(() => rejectRequestOnServer(req.id, state.currentChildId))
+        .then((success) => {
+            if (success) {
+                showToast('Заявка отклонена', 'info');
+            }
+        });
 }
 
 export function deleteRequest(reqId) {
     showConfirm('Удалить заявку?', 'Вы уверены, что хотите безвозвратно удалить заявку?', {
         onConfirm: () => {
-            state.requests = state.requests.filter(r => r.id != reqId);
-            scheduleSave();
-            renderRequests();
+            void commitRequestMutation(() => deleteRequestOnServer(reqId, state.currentChildId));
         }
     });
 }

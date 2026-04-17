@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.resource;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
+import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
@@ -15,6 +16,7 @@ import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
+import com.sashplatonov.earnit.kids.service.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
 import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -41,6 +43,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class FamilyResourceTest {
 
+    @Mock FamilyActionService familyActionService;
     @Mock FamilyService familyService;
     @Mock BaseDataService baseDataService;
     @Mock WebSocketNotificationService webSocketNotificationService;
@@ -49,7 +52,7 @@ class FamilyResourceTest {
 
     @BeforeEach
     void setUp() {
-        resource = new FamilyResource(familyService, baseDataService, webSocketNotificationService);
+        resource = new FamilyResource(familyActionService, familyService, baseDataService, webSocketNotificationService);
     }
 
     @Test
@@ -213,6 +216,48 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(400);
         verify(webSocketNotificationService, never()).notifyFamily(anyString(), anyString(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void completeTask_adminDelegatesToActionServiceAndNotifiesFamily() {
+        FamilyDataResponse payload = new FamilyDataResponse(5, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyActionService.completeTask("fam-1", 10, 1001L)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.completeTask(contextWithAuth(adminAuth()), 1001L, 10);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getEntity()).isEqualTo(payload);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "admin", "childId", 10)));
+    }
+
+    @Test
+    void requestTaskCompletion_childDelegatesToActionService() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+            List.of(), false, List.of(), 10, null, null, null);
+        when(familyActionService.requestTaskCompletion("fam-1", 10, 1001L)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.requestTaskCompletion(contextWithAuth(childAuth(10)), 1001L);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).requestTaskCompletion("fam-1", 10, 1001L);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
+    }
+
+    @Test
+    void adjustBalance_adminDelegatesToActionService() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyActionService.adjustBalance("fam-1", 10, -3, "Manual correction"))
+            .thenReturn(OperationResult.success(payload));
+
+        Response response = resource.adjustBalance(
+            contextWithAuth(adminAuth()),
+            new AdjustBalanceRequest(10, -3, "Manual correction")
+        );
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).adjustBalance("fam-1", 10, -3, "Manual correction");
     }
 
     @Test

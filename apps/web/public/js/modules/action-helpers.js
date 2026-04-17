@@ -1,26 +1,96 @@
 /** @file Action Helpers frontend UI module */
-import { state } from './state.js';
+import { state, setState } from './state.js';
 import { saveDataToServer } from './api.js';
 import { renderHistory, updateBalanceUI } from './ui.js';
-import { getCreatedAt, normalizeRequest } from './server-contract.js';
+import { getCreatedAt, normalizeRequest, normalizeServerData } from './server-contract.js';
 
 const CONFIG = window.CONFIG;
 const REQUEST_HISTORY_LIMIT = 60;
-let saveTimeout = null;
+let pendingSavePayload = null;
+let saveInFlight = Promise.resolve(false);
+
+function cloneSavePayload(payload) {
+    if (typeof globalThis.structuredClone === 'function') {
+        return globalThis.structuredClone(payload);
+    }
+    return JSON.parse(JSON.stringify(payload));
+}
+
+function buildSavePayload() {
+    return cloneSavePayload({
+        childId: state.currentChildId,
+        balance: state.balance,
+        tasks: state.tasks,
+        shop: state.shopItems,
+        history: state.history,
+        requests: state.requests,
+        children: state.children
+    });
+}
+
+function queuePendingSave() {
+    pendingSavePayload = buildSavePayload();
+}
 
 export function scheduleSave() {
-    if (saveTimeout) clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(async () => {
-        await saveDataToServer({
-            childId: state.currentChildId,
-            balance: state.balance,
-            tasks: state.tasks,
-            shop: state.shopItems,
-            history: state.history,
-            requests: state.requests,
-            children: state.children
-        });
-    }, 500);
+    queuePendingSave();
+    void flushPendingSave();
+}
+
+export function flushPendingSave(options = {}) {
+    if (!pendingSavePayload) {
+        return saveInFlight;
+    }
+
+    const payload = pendingSavePayload;
+    pendingSavePayload = null;
+    saveInFlight = saveInFlight
+        .catch(() => false)
+        .then(() => saveDataToServer(payload, options));
+    return saveInFlight;
+}
+
+function parseBoolean(value) {
+    return value === true || value === 'true' || value === 1 || value === '1';
+}
+
+function getNumericLimit(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+export function applyServerFamilyData(data, options = {}) {
+    const normalized = normalizeServerData(data);
+    const children = normalized.children.length > 0 ? normalized.children : state.children;
+    const isAdmin = parseBoolean(normalized.isAdmin) || state.isAdmin;
+    const requestedChildId = options.currentChildId;
+    const resolvedChildId = isAdmin
+        ? (
+            children.find(child => child.id == requestedChildId)?.id
+            ?? children.find(child => child.id == normalized.lastSelectedChildId)?.id
+            ?? children[0]?.id
+            ?? requestedChildId
+            ?? state.currentChildId
+            ?? null
+        )
+        : (children[0]?.id ?? requestedChildId ?? state.currentChildId ?? null);
+    const activeChild = children.find(child => child.id == resolvedChildId) || children[0] || null;
+
+    setState({
+        balance: normalized.balance ?? activeChild?.balance ?? 0,
+        tasks: normalized.tasks,
+        shopItems: normalized.shop,
+        history: normalized.history,
+        requests: normalized.requests,
+        friends: Array.isArray(normalized.friends) ? normalized.friends : [],
+        children,
+        currentChildId: resolvedChildId,
+        childNickname: normalized.childNickname ?? activeChild?.name ?? state.childNickname,
+        monthlyLimit: getNumericLimit(normalized.monthlyLimit ?? activeChild?.monthlyLimit, 10000),
+        dailyCoinLimit: getNumericLimit(normalized.dailyCoinLimit ?? activeChild?.dailyCoinLimit, 0)
+    });
+
+    return activeChild;
 }
 
 export function addRequestEntry(entry) {

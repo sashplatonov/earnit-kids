@@ -10,7 +10,7 @@ import { setupPullToRefresh } from './pull-to-refresh.js';
 import { switchChild, saveNewChild } from './admin.js';
 import { setupTabControls } from './main-tabs.js';
 import { handleSearch } from './friends.js';
-import { scheduleSave } from './actions.js';
+import { scheduleSave, flushPendingSave } from './actions.js';
 import { normalizeServerData } from './server-contract.js';
 
 function parseBoolean(value) {
@@ -59,6 +59,8 @@ export async function initializeFromServer() {
 }
 
 export async function refreshFromServerAndRender(showSuccess = false) {
+    await flushPendingSave();
+
     const lists = ['tasks-list', 'shop-list', 'history-list', 'requests-list'];
     lists.forEach(id => {
         const el = document.getElementById(id);
