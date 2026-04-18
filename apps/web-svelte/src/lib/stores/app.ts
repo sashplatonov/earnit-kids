@@ -3,7 +3,7 @@ import { writable, derived } from 'svelte/store';
 
 export interface Task {
     id: number | string;
-    title: string;
+    name: string;
     coins: number;
     groupName?: string | null;
     comment?: string | null;
@@ -16,8 +16,8 @@ export interface Task {
 
 export interface ShopItem {
     id: number | string;
-    title: string;
-    coins: number;
+    name: string;
+    price: number;
     groupName?: string | null;
     comment?: string | null;
     moneyLimit?: number | null;
@@ -26,11 +26,14 @@ export interface ShopItem {
 
 export interface HistoryEntry {
     id: number | string;
-    type: 'earn' | 'spend' | 'admin';
+    type: 'task_completed' | 'purchase' | 'admin' | 'earn' | 'spend';
     amount: number;
+    description?: string | null;
     title?: string | null;
+    moneyAmount?: number | null;
     taskId?: number | string | null;
     itemId?: number | string | null;
+    relatedId?: number | string | null;
     createdAt?: string | null;
     [key: string]: unknown;
 }

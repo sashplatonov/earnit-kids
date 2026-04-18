@@ -21,14 +21,14 @@
         const item = shopItems.find(i => i.id == itemId);
         if (!item) return;
         if (isAdmin) {
-            if (balance < item.coins) {
+            if (balance < (item.price as number)) {
                 showToast('Не хватает монет!', 'error');
                 return;
             }
             const res = await buyItem(itemId, childId) as Record<string, unknown> | null;
             if (res) {
                 applyDataSnapshot(res);
-                showToast(`Куплено: ${item.title}`, 'success');
+                showToast(`Куплено: ${item.name}`, 'success');
             }
         } else {
             const res = await requestItem(itemId) as Record<string, unknown> | null;
@@ -82,9 +82,9 @@
         {#each visibleItems as item (item.id)}
         <div class="card shop-card">
             <div class="card__header">
-                <h3 class="card__title">{item.title}</h3>
+                <h3 class="card__title">{item.name}</h3>
                 <div class="card__icon">
-                    <span class="item-coins">{item.coins} <span class="gamified-icon icon-coin" aria-hidden="true"></span></span>
+                    <span class="item-coins">{item.price} <span class="gamified-icon icon-coin" aria-hidden="true"></span></span>
                 </div>
             </div>
             {#if item.comment}
@@ -96,7 +96,7 @@
                     Изменить
                 </button>
                 {:else}
-                <button class="btn btn--primary" disabled={balance < item.coins}
+                <button class="btn btn--primary" disabled={balance < (item.price as number)}
                     on:click={() => handleBuy(item.id)}>
                     Запросить
                 </button>

@@ -13,16 +13,27 @@ export function normalizeChild(child: Record<string, unknown> = {}) {
 }
 
 export function normalizeTask(task: Record<string, unknown> = {}) {
+    const name = (task.name ?? task.title ?? '') as string;
+    const coins = (task.coins ?? task.price ?? 0) as number;
     return {
         ...task,
+        name,
+        title: name,
+        coins,
         groupName: task.groupName ?? task.group ?? null,
         moneyLimit: task.moneyLimit ?? task.money_limit ?? null,
     };
 }
 
 export function normalizeShopItem(item: Record<string, unknown> = {}) {
+    const name = (item.name ?? item.title ?? '') as string;
+    const price = (item.price ?? item.coins ?? 0) as number;
     return {
         ...item,
+        name,
+        title: name,
+        price,
+        coins: price,
         groupName: item.groupName ?? item.group ?? null,
         comment: item.comment ?? null,
         moneyLimit: item.moneyLimit ?? item.money_limit ?? null,
@@ -35,8 +46,8 @@ function getCreatedAt(entity: Record<string, unknown>): string | null {
 
 export function normalizeHistoryEntry(entry: Record<string, unknown> = {}) {
     const relatedId = entry.relatedId ?? null;
-    const taskId = entry.taskId ?? (entry.type === 'earn' ? relatedId : null);
-    const itemId = entry.itemId ?? (entry.type === 'spend' ? relatedId : null);
+    const taskId = entry.taskId ?? (entry.type === 'earn' || entry.type === 'task_completed' ? relatedId : null);
+    const itemId = entry.itemId ?? (entry.type === 'spend' || entry.type === 'purchase' ? relatedId : null);
     return {
         ...entry,
         taskId,
