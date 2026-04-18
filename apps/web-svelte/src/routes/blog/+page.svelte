@@ -5,13 +5,17 @@
     export let data: PageData;
 
     function formatDate(isoDate: string): string {
-        return new Date(isoDate).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+        return new Date(isoDate).toLocaleDateString('ru-RU');
+    }
+
+    function formatTags(tags: string[] | undefined): string {
+        return tags && tags.length > 0 ? tags.join(', ') : 'семейные советы';
     }
 </script>
 
 <svelte:head>
-    <title>Блог EarnIt Kids — полезные советы для родителей и детей</title>
-    <meta name="description" content="Короткие статьи о том, как договориться дома, поддержать ребенка и вырастить хорошие привычки без давления." />
+    <title>EarnIt Kids - Блог для родителей и детей</title>
+    <meta name="description" content="Простые советы о семейных заданиях, монетках и добрых наградах для детей 7+." />
     <link rel="canonical" href="/blog" />
 </svelte:head>
 
@@ -29,11 +33,11 @@
             </header>
             <section class="blog-list">
                 {#each data.posts as post (post.slug)}
-                    <a class="blog-card" href="/blog/{post.slug}">
-                        <p class="meta">{formatDate(post.isoDate)}</p>
-                        <h3>{post.title}</h3>
+                    <article class="blog-card">
+                        <h2><a href="/blog/{post.slug}">{post.title}</a></h2>
+                        <small>{formatDate(post.isoDate)} · {formatTags(post.tags)}</small>
                         <p>{post.summary}</p>
-                    </a>
+                    </article>
                 {:else}
                     <p>Статьи скоро появятся.</p>
                 {/each}

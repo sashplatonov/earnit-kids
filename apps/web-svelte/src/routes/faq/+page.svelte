@@ -2,17 +2,15 @@
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
 
     const faqItems = [
-        { q: 'Как это работает?', a: 'Родитель назначает задачу, ребенок выполняет ее и зарабатывает монетки. Монетки можно обменять на награды.' },
-        { q: 'Нужно ли устанавливать приложение?', a: 'Нет, работает прямо в браузере на телефоне и компьютере.' },
-        { q: 'Можно ли ограничить траты монет?', a: 'Да, родители устанавливают лимиты и решают, какие награды доступны и как часто их можно получить.' },
-        { q: 'Как ребенок видит свои задания?', a: 'На отдельном экране в 4 простых вкладках. Ребенок видит только свои задачи, баланс и магазин.' },
-        { q: 'Что если ребенок забудет отметить задачу?', a: 'Родитель может подтвердить выполненное задание вручную в разделе заявок.' },
+        { q: 'How does it work?', a: 'Parents assign a task, the child completes it and earns coins. Coins can then be exchanged for rewards.' },
+        { q: 'Do we need to install an app?', a: 'No, it works directly in the browser on phone and computer.' },
+        { q: 'Can coin spending be limited?', a: 'Yes, parents set limits and decide which rewards are available and how often they can be claimed.' },
     ];
 </script>
 
 <svelte:head>
-    <title>EarnIt Kids — Частые вопросы</title>
-    <meta name="description" content="Короткие ответы для родителей и детей о задачах, монетках и наградах в EarnIt Kids." />
+    <title>EarnIt Kids - Frequently Asked Questions</title>
+    <meta name="description" content="Short answers for parents and kids about tasks, coins, and rewards in EarnIt Kids." />
     <link rel="canonical" href="/faq" />
 </svelte:head>
 
@@ -24,17 +22,22 @@
             <p class="value-card__hint">Собрали ответы на самые частые ситуации по задачам, заявкам и магазину.</p>
             <div class="faq-grid">
                 {#each faqItems as item (item.q)}
-                    <div class="faq-card">
-                        <h3>{item.q}</h3>
-                        <p>{item.a}</p>
-                    </div>
+                    <article class="faq-card">
+                        <details>
+                            <summary>
+                                <span>{item.q}</span>
+                                <span class="faq-card__icon">❓</span>
+                            </summary>
+                            <p>{item.a}</p>
+                        </details>
+                    </article>
                 {/each}
             </div>
         </section>
-        <section class="value-grid">
+        <section class="value-grid" aria-label="Что нового">
             <article class="value-card">
                 <h3>Ясные статусы заявок</h3>
-                <p>Статусы "ожидает", "одобрено" и "отклонено" легко читаются по цвету и понятным подсказкам.</p>
+                <p>Статусы “ожидает”, “одобрено” и “отклонено” легко читаются по цвету и понятным подсказкам.</p>
             </article>
             <article class="value-card">
                 <h3>Заявки для родителей</h3>

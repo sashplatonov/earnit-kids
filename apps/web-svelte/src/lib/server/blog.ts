@@ -3,12 +3,12 @@
  * Mirrors the legacy blogController.js behaviour.
  */
 import { readdir, readFile } from 'fs/promises';
-import { join, basename } from 'path';
+import { join, basename, dirname } from 'path';
 import { marked } from 'marked';
 import fm from 'front-matter';
 import { fileURLToPath } from 'url';
 
-const BLOG_DIR = join(fileURLToPath(import.meta.url), '../../../../../../../apps/web/data/blog');
+const BLOG_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../web/data/blog');
 
 export interface BlogPost {
     slug: string;
@@ -26,7 +26,7 @@ function normaliseDate(value: unknown): Date {
     return isNaN(d.getTime()) ? new Date() : d;
 }
 
-export async function listPosts(): Promise<Pick<BlogPost, 'slug' | 'title' | 'summary' | 'isoDate'>[]> {
+export async function listPosts(): Promise<Pick<BlogPost, 'slug' | 'title' | 'summary' | 'isoDate' | 'tags'>[]> {
     let files: string[];
     try {
         files = await readdir(BLOG_DIR);

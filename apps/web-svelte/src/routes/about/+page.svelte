@@ -3,8 +3,8 @@
 </script>
 
 <svelte:head>
-    <title>EarnIt Kids — О проекте</title>
-    <meta name="description" content="Узнайте, как EarnIt Kids помогает семьям превратить рутину в понятный и позитивный опыт." />
+    <title>EarnIt Kids - About</title>
+    <meta name="description" content="Learn how EarnIt Kids helps families turn routine into a clear and positive experience." />
     <link rel="canonical" href="/about" />
 </svelte:head>
 

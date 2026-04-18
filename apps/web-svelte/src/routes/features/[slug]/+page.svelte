@@ -7,22 +7,22 @@
         bullets: string[]; ctaText: string; ctaLink: string; image: string;
     }> = {
         tasks: {
-            title: 'EarnIt Kids — Задания для детей',
-            description: 'Простые задания для детей, четкие шаги для родителей и справедливые монетки за старание.',
-            heading: 'Задания, которые дети выполняют с удовольствием',
-            subheading: 'Ребенок видит понятную цель, а родители легко отслеживают прогресс.',
-            bullets: ['Добавляйте домашние дела за пару кликов: убрать игрушки, почитать 10 минут, помочь на кухне.', 'Ребенок отмечает выполнение, а родители подтверждают результат.', 'Монетки начисляются за каждое выполненное задание.'],
-            ctaText: 'Попробовать задания',
+            title: 'EarnIt Kids - Family-friendly tasks',
+            description: 'Simple tasks for kids, clear steps for parents, and fair coins for effort.',
+            heading: 'Tasks kids enjoy completing',
+            subheading: 'Kids see a clear goal and parents can easily track progress.',
+            bullets: ['Add chores in a couple of clicks: tidy toys, read for 10 minutes, help in the kitchen.', 'The child marks completion and parents confirm the result.', 'Coins are awarded for each completed task.'],
+            ctaText: 'Try the tasks',
             ctaLink: '/login.html',
             image: '/img/feature-tasks.svg',
         },
         shop: {
-            title: 'EarnIt Kids — Магазин наград',
-            description: 'Обменивайте монетки на приятности: кино, прогулку, настолку или небольшой подарок.',
-            heading: 'Магазин наград',
-            subheading: 'Дети учатся копить и выбирать, а родители сохраняют контроль и бюджет.',
-            bullets: ['Создавайте награды: от 20 минут игры до семейного похода в парк.', 'Устанавливайте лимиты, чтобы траты оставались разумными.', 'Просматривайте историю обменов и обсуждайте выборы с ребенком.'],
-            ctaText: 'Открыть магазин наград',
+            title: 'EarnIt Kids - Family rewards shop',
+            description: 'Exchange coins for treats: a movie, a walk, a board game, or a small prize.',
+            heading: 'Rewards shop',
+            subheading: 'Kids learn to save and choose, parents keep control and budget.',
+            bullets: ['Create rewards: from 20 minutes of play to a family trip to the park.', 'Set limits so spending stays reasonable.', 'View exchange history and discuss choices with your child.'],
+            ctaText: 'Open rewards shop',
             ctaLink: '/login.html',
             image: '/img/feature-shop.svg',
         },
@@ -40,10 +40,10 @@
 
 <div class="public-shell">
     <PublicTopNav />
-    <main class="public-inner" aria-label="Страница функции">
+    <main class="public-inner" aria-label="Сторонняя страница">
         <section class="feature-layout" aria-labelledby="feature-title">
             <div class="feature-layout__content">
-                <p class="public-panel__badge">EarnIt Kids</p>
+                <p class="public-panel__badge">{feature.ctaText}</p>
                 <h1 id="feature-title">{feature.heading}</h1>
                 <p>{feature.subheading}</p>
                 <p>Ребенок и родитель получают понятные шаги и не тратят время на лишние действия.</p>

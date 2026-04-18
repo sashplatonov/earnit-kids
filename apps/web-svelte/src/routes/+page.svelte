@@ -7,11 +7,11 @@
 </script>
 
 <svelte:head>
-    <title>EarnIt Kids — Семейные задания и награды</title>
-    <meta name="description" content="Помогает детям 7+ выполнять полезные задания с интересом, а родителям поддерживать порядок без конфликтов." />
+    <title>EarnIt Kids - Family tasks and rewards</title>
+    <meta name="description" content="Helps children 7+ complete helpful tasks with engagement, and makes it easy for parents to maintain order without conflict." />
     <link rel="canonical" href="/" />
-    <meta property="og:title" content="EarnIt Kids — Семейные задания и награды" />
-    <meta property="og:description" content="Помогает детям 7+ выполнять полезные задания с интересом, а родителям поддерживать порядок без конфликтов." />
+    <meta property="og:title" content="EarnIt Kids - Family tasks and rewards" />
+    <meta property="og:description" content="Helps children 7+ complete helpful tasks with engagement, and makes it easy for parents to maintain order without conflict." />
     <meta property="og:image" content="/img/og-image.png" />
 </svelte:head>
 
@@ -45,6 +45,12 @@
             </div>
             <div class="landing-hero__visual">
                 <img class="landing-hero__illustration" src="/img/landing-family.svg" alt="Семья планирует задания и награды в светлом интерфейсе" loading="lazy" />
+                <div class="landing-hero__visual-note">
+                    <div>
+                        <strong>Спокойная яркая палитра</strong>
+                        <p>Светлый фон, теплые акценты и крупные карточки помогают детям быстрее находить действие и не уставать от экрана.</p>
+                    </div>
+                </div>
                 <div class="landing-hero__panel">
                     <p class="value-card__hint">Ребенок видит, что нужно сделать и за что получит монетки. Родители подтверждают заявки, а магазин вдохновляет на копление.</p>
                     <div class="value-grid" style="margin-top: 1.5rem;">

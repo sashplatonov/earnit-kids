@@ -1,22 +1,137 @@
 <script lang="ts">
-    import PublicTopNav from '$lib/components/PublicTopNav.svelte';
+    import { onMount } from 'svelte';
+
+    type MessageKind = 'loading' | 'error' | 'success';
+
+    let message = 'Проверка ссылки...';
+    let messageKind: MessageKind = 'loading';
+    let showLoginButton = false;
+
+    async function verifyEmail(token: string, email: string) {
+        try {
+            const response = await fetch('/api/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, email }),
+            });
+
+            const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+            const success = body.success === true || response.ok;
+
+            if (success) {
+                message = 'Email успешно подтвержден!';
+                messageKind = 'success';
+                showLoginButton = true;
+                return;
+            }
+
+            message = typeof body.error === 'string' ? body.error : 'Ошибка подтверждения';
+            messageKind = 'error';
+        } catch {
+            message = 'Ошибка сервера';
+            messageKind = 'error';
+        }
+    }
+
+    onMount(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const email = urlParams.get('email');
+
+        if (!token || !email) {
+            message = 'Неверная ссылка подтверждения.';
+            messageKind = 'error';
+            return;
+        }
+
+        void verifyEmail(token, email);
+    });
 </script>
 
 <svelte:head>
-    <title>Подтверждение | EarnIt Kids</title>
-    <meta name="description" content="Подтверждение аккаунта EarnIt Kids." />
+    <title>Подтверждение Email - EarnIt Kids</title>
+    <meta name="description" content="Подтверждение email для входа в EarnIt Kids." />
+    <link rel="canonical" href="/verify" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#fff3e0" />
 </svelte:head>
 
-<div class="public-shell">
-    <PublicTopNav />
-    <main class="public-inner" aria-label="Подтверждение">
-        <section class="public-panel">
-            <p class="public-panel__badge">EarnIt Kids</p>
-            <h1>Подтверждение аккаунта</h1>
-            <p>Ссылка проверяется... Если ничего не происходит — попробуйте войти заново.</p>
-            <div style="margin-top:1.5rem">
-                <a class="btn btn--primary" href="/login.html">Перейти к входу</a>
-            </div>
-        </section>
-    </main>
+<style>
+    .verify-shell {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        font-family: 'Open Sans', sans-serif;
+        background:
+            radial-gradient(620px 360px at 10% 0%, rgba(92, 199, 243, 0.18), transparent 58%),
+            radial-gradient(560px 320px at 100% 0%, rgba(255, 214, 107, 0.24), transparent 52%),
+            linear-gradient(180deg, #fffdf8 0%, #f5fbff 52%, #fff4e8 100%);
+    }
+
+    .verify-card {
+        width: 100%;
+        max-width: 400px;
+        padding: 2rem;
+        text-align: center;
+        border-radius: 1.5rem;
+        border: 1px solid rgba(125, 149, 187, 0.16);
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 24px 48px rgba(110, 136, 184, 0.14);
+    }
+
+    .logo {
+        margin-bottom: 2rem;
+        color: #ffb65c;
+        font-size: 2rem;
+        font-family: 'Fredoka One', cursive;
+        text-shadow: 2px 2px #ffd86f;
+    }
+
+    .message {
+        margin-top: 1rem;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 1.1rem;
+    }
+
+    .message.loading {
+        color: #2196f3;
+    }
+
+    .message.error {
+        background: #ffebee;
+        color: #c62828;
+    }
+
+    .message.success {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .btn-primary {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 2rem;
+        background: linear-gradient(135deg, #ffb65c, #ff8f70);
+        color: white;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 1.1rem;
+        box-shadow: 0 16px 28px rgba(255, 143, 112, 0.24);
+    }
+</style>
+
+<div class="verify-shell">
+    <div class="verify-card">
+        <div class="logo">🪙 Coins Shop</div>
+        <h2>Подтверждение Email</h2>
+        <div class="message {messageKind}" role={messageKind === 'error' ? 'alert' : 'status'}>{message}</div>
+        {#if showLoginButton}
+            <a href="/login.html" class="btn-primary">Войти</a>
+        {/if}
+    </div>
 </div>
