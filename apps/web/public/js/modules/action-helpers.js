@@ -59,24 +59,53 @@ function getNumericLimit(value, fallback) {
     return Number.isFinite(n) ? n : fallback;
 }
 
-export function applyServerFamilyData(data, options = {}) {
-    const normalized = normalizeServerData(data);
-    const children = normalized.children.length > 0 ? normalized.children : state.children;
-    const isAdmin = parseBoolean(normalized.isAdmin) || state.isAdmin;
-    const requestedChildId = options.currentChildId;
-    const resolvedChildId = isAdmin
-        ? (
-            children.find(child => child.id == requestedChildId)?.id
-            ?? children.find(child => child.id == normalized.lastSelectedChildId)?.id
-            ?? children[0]?.id
-            ?? requestedChildId
-            ?? state.currentChildId
-            ?? null
-        )
-        : (children[0]?.id ?? requestedChildId ?? state.currentChildId ?? null);
-    const activeChild = children.find(child => child.id == resolvedChildId) || children[0] || null;
+function resolveChildren(normalized) {
+    return normalized.children.length > 0 ? normalized.children : state.children;
+}
 
-    setState({
+function resolveAdminState(normalized) {
+    return parseBoolean(normalized.isAdmin) || state.isAdmin;
+}
+
+function findExistingChildId(children, candidateId) {
+    return children.find(child => child.id == candidateId)?.id ?? null;
+}
+
+function resolveAdminChildId(children, normalized, requestedChildId) {
+    return findExistingChildId(children, requestedChildId)
+        ?? findExistingChildId(children, normalized.lastSelectedChildId)
+        ?? children[0]?.id
+        ?? requestedChildId
+        ?? state.currentChildId
+        ?? null;
+}
+
+function resolveCurrentChildId({ children, normalized, requestedChildId, isAdmin }) {
+    if (!isAdmin) {
+        return children[0]?.id ?? requestedChildId ?? state.currentChildId ?? null;
+    }
+    return resolveAdminChildId(children, normalized, requestedChildId);
+}
+
+function resolveActiveChild(children, resolvedChildId) {
+    return children.find(child => child.id == resolvedChildId) || children[0] || null;
+}
+
+function resolveChildNickname(normalized, activeChild) {
+    return normalized.childNickname ?? activeChild?.name ?? state.childNickname;
+}
+
+function resolveFamilyLimits(normalized, activeChild) {
+    return {
+        monthlyLimit: getNumericLimit(normalized.monthlyLimit ?? activeChild?.monthlyLimit, 10000),
+        dailyCoinLimit: getNumericLimit(normalized.dailyCoinLimit ?? activeChild?.dailyCoinLimit, 0)
+    };
+}
+
+function buildFamilyState({ normalized, children, resolvedChildId, activeChild }) {
+    const limits = resolveFamilyLimits(normalized, activeChild);
+
+    return {
         balance: normalized.balance ?? activeChild?.balance ?? 0,
         tasks: normalized.tasks,
         shopItems: normalized.shop,
@@ -85,10 +114,25 @@ export function applyServerFamilyData(data, options = {}) {
         friends: Array.isArray(normalized.friends) ? normalized.friends : [],
         children,
         currentChildId: resolvedChildId,
-        childNickname: normalized.childNickname ?? activeChild?.name ?? state.childNickname,
-        monthlyLimit: getNumericLimit(normalized.monthlyLimit ?? activeChild?.monthlyLimit, 10000),
-        dailyCoinLimit: getNumericLimit(normalized.dailyCoinLimit ?? activeChild?.dailyCoinLimit, 0)
+        childNickname: resolveChildNickname(normalized, activeChild),
+        monthlyLimit: limits.monthlyLimit,
+        dailyCoinLimit: limits.dailyCoinLimit
+    };
+}
+
+export function applyServerFamilyData(data, options = {}) {
+    const normalized = normalizeServerData(data);
+    const children = resolveChildren(normalized);
+    const isAdmin = resolveAdminState(normalized);
+    const resolvedChildId = resolveCurrentChildId({
+        children,
+        normalized,
+        requestedChildId: options.currentChildId,
+        isAdmin
     });
+    const activeChild = resolveActiveChild(children, resolvedChildId);
+
+    setState(buildFamilyState({ normalized, children, resolvedChildId, activeChild }));
 
     return activeChild;
 }

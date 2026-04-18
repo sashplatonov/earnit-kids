@@ -44,32 +44,75 @@ function applyDropdownPosition({
 }) {
     const isMobile = isMobileLayout || viewportWidth <= 900;
     if (isMobile) {
-        dropdown.style.position = 'fixed';
-        dropdown.style.left = '50%';
-        dropdown.style.right = 'auto';
-        dropdown.style.transform = 'translateX(-50%)';
-        dropdown.style.width = 'calc(100vw - 16px)';
-        dropdown.style.maxWidth = '480px';
-        dropdown.style.bottom = '78px';
-        dropdown.style.top = 'auto';
-        dropdown.style.margin = '0';
-        dropdown.style.zIndex = '99999';
+        applyMobileDropdownPosition(dropdown);
         return;
     }
 
-    dropdown.style.left = '';
-    dropdown.style.right = '';
-    dropdown.style.width = '';
-    dropdown.style.maxWidth = '';
+    applyDesktopDropdownPosition(dropdown, shouldFlip, rect);
+}
+
+function applyMobileDropdownPosition(dropdown) {
+    dropdown.style.position = 'fixed';
+    dropdown.style.left = '50%';
+    dropdown.style.right = 'auto';
+    dropdown.style.transform = 'translateX(-50%)';
+    dropdown.style.width = 'calc(100vw - 16px)';
+    dropdown.style.maxWidth = '480px';
+    dropdown.style.bottom = '78px';
+    dropdown.style.top = 'auto';
+    dropdown.style.margin = '0';
+    dropdown.style.zIndex = '99999';
+}
+
+function applyDesktopDropdownPosition(dropdown, shouldFlip, rect) {
+    clearDropdownBoxStyles(dropdown);
     dropdown.style.position = 'absolute';
     if (shouldFlip) {
         dropdown.style.top = 'auto';
         dropdown.style.bottom = `calc(100% + ${DROPDOWN_GAP}px)`;
         return;
     }
-
     dropdown.style.top = `${Math.round(rect.bottom + DROPDOWN_GAP)}px`;
     dropdown.style.bottom = 'auto';
+}
+
+function clearDropdownBoxStyles(dropdown) {
+    dropdown.style.left = '';
+    dropdown.style.right = '';
+    dropdown.style.width = '';
+    dropdown.style.maxWidth = '';
+}
+
+function resetDropdownPosition(dropdown) {
+    dropdown.classList.remove('child-menu-dropdown--flipped');
+    dropdown.style.top = '';
+    dropdown.style.bottom = '';
+    dropdown.style.left = '';
+    dropdown.style.right = '';
+    dropdown.style.width = '';
+    dropdown.style.maxWidth = '';
+}
+
+function getDropdownPositionContext(dropdown, toggleButton) {
+    const viewportMetrics = getViewportMetrics();
+    const rect = toggleButton.getBoundingClientRect();
+    const adjustedRectTop = rect.top - viewportMetrics.offsetTop;
+    const adjustedRectBottom = rect.bottom - viewportMetrics.offsetTop;
+    const safeTop = parseSafeInset('--safe-top');
+    const safeBottom = parseSafeInset('--safe-bottom');
+    const isMobileLayout = isMobileChildMenuLayout();
+
+    return {
+        rect,
+        isMobileLayout,
+        viewportWidth: viewportMetrics.width,
+        viewportHeight: viewportMetrics.height,
+        dropdownHeight: dropdown.getBoundingClientRect().height || dropdown.scrollHeight,
+        safeTop,
+        safeBottom,
+        spaceAbove: adjustedRectTop - safeTop - 12,
+        spaceBelow: viewportMetrics.height - adjustedRectBottom - safeBottom - 12
+    };
 }
 
 function positionChildMenuDropdown(childMenu) {
@@ -78,49 +121,30 @@ function positionChildMenuDropdown(childMenu) {
     if (!dropdown || !toggleButton) return;
 
     if (!childMenu.classList.contains('active')) {
-        dropdown.classList.remove('child-menu-dropdown--flipped');
-        dropdown.style.top = '';
-        dropdown.style.bottom = '';
-        dropdown.style.left = '';
-        dropdown.style.right = '';
-        dropdown.style.width = '';
-        dropdown.style.maxWidth = '';
+        resetDropdownPosition(dropdown);
         return;
     }
 
-    const {
-        width: viewportWidth,
-        height: viewportHeight,
-        offsetTop: viewportOffsetTop
-    } = getViewportMetrics();
-    const rect = toggleButton.getBoundingClientRect();
-    const adjustedRectTop = rect.top - viewportOffsetTop;
-    const adjustedRectBottom = rect.bottom - viewportOffsetTop;
-    const dropdownHeight = dropdown.getBoundingClientRect().height || dropdown.scrollHeight;
-    const safeTop = parseSafeInset('--safe-top');
-    const safeBottom = parseSafeInset('--safe-bottom');
-    const spaceAbove = adjustedRectTop - safeTop - 12;
-    const spaceBelow = viewportHeight - adjustedRectBottom - safeBottom - 12;
-    const isMobileLayout = isMobileChildMenuLayout();
+    const positionContext = getDropdownPositionContext(dropdown, toggleButton);
     const shouldFlip = shouldFlipDropdown({
-        isMobileLayout,
-        spaceAbove,
-        spaceBelow,
-        dropdownHeight,
-        rectTop: rect.top,
-        viewportHeight
+        isMobileLayout: positionContext.isMobileLayout,
+        spaceAbove: positionContext.spaceAbove,
+        spaceBelow: positionContext.spaceBelow,
+        dropdownHeight: positionContext.dropdownHeight,
+        rectTop: positionContext.rect.top,
+        viewportHeight: positionContext.viewportHeight
     });
     dropdown.classList.toggle('child-menu-dropdown--flipped', shouldFlip);
     applyDropdownPosition({
         dropdown,
-        rect,
-        isMobileLayout,
+        rect: positionContext.rect,
+        isMobileLayout: positionContext.isMobileLayout,
         shouldFlip,
-        dropdownHeight,
-        viewportWidth,
-        viewportHeight,
-        safeTop,
-        safeBottom
+        dropdownHeight: positionContext.dropdownHeight,
+        viewportWidth: positionContext.viewportWidth,
+        viewportHeight: positionContext.viewportHeight,
+        safeTop: positionContext.safeTop,
+        safeBottom: positionContext.safeBottom
     });
 }
 

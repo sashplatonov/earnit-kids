@@ -1,0 +1,33 @@
+{
+  "name": "earnit-kids-web-svelte",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "svelte-kit sync",
+    "dev": "vite dev --host 0.0.0.0 --port 4173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4174",
+    "lint": "svelte-kit sync && eslint . && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.59.1",
+    "@sveltejs/adapter-node": "^5.5.4",
+    "@sveltejs/kit": "^2.57.1",
+    "@types/node": "^24.9.0",
+    "eslint": "^10.2.0",
+    "eslint-plugin-svelte": "^3.17.0",
+    "front-matter": "^4.0.2",
+    "globals": "^17.5.0",
+    "marked": "^18.0.1",
+    "svelte": "^5.0.0-next.272",
+    "svelte-check": "^4.4.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.58.2",
+    "vite": "^8.0.8",
+    "vitest": "^4.1.4"
+  }
+}

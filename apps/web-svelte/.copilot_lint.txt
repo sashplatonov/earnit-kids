@@ -1,0 +1,25 @@
+
+> earnit-kids-web-svelte@0.1.0 lint
+> svelte-kit sync && eslint . && svelte-check --tsconfig ./tsconfig.json
+
+
+/Users/sash/Dev/Projects/earnit-kids/apps/web-svelte/src/lib/components/RoutePlaceholder.svelte
+  16:13  error  Each block should have a key            svelte/require-each-key
+  17:20  error  Unexpected href link without resolve()  svelte/no-navigation-without-resolve
+
+/Users/sash/Dev/Projects/earnit-kids/apps/web-svelte/src/routes/+error.svelte
+   2:16  error  disallow props other than data or errors in SvelteKit page components  svelte/valid-prop-names-in-kit-pages
+   3:16  error  disallow props other than data or errors in SvelteKit page components  svelte/valid-prop-names-in-kit-pages
+  15:29  error  Unexpected href link without resolve()                                 svelte/no-navigation-without-resolve
+
+/Users/sash/Dev/Projects/earnit-kids/apps/web-svelte/src/routes/+layout.svelte
+   7:26  error  Unexpected href link without resolve()  svelte/no-navigation-without-resolve
+  13:16  error  Unexpected href link without resolve()  svelte/no-navigation-without-resolve
+  14:16  error  Unexpected href link without resolve()  svelte/no-navigation-without-resolve
+  15:16  error  Unexpected href link without resolve()  svelte/no-navigation-without-resolve
+  16:16  error  Unexpected href link without resolve()  svelte/no-navigation-without-resolve
+  17:16  error  Unexpected href link without resolve()  svelte/no-navigation-without-resolve
+
+✖ 11 problems (11 errors, 0 warnings)
+
+EXIT:1

@@ -186,6 +186,8 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 
 ## 5. 📝 File-by-File Backlog
 
+**Status legend:** `⬜ planned` · `🟡 in progress` · `✅ done`
+
 ### W-001. `web/` -> parallel `web-svelte/` workspace
 
 **Type:** foundation  
@@ -198,18 +200,18 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** medium  
 **Complexity:** M  
 **Estimate:** 3 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Subtasks
-- [ ] Scaffold `web-svelte/` with SvelteKit, TypeScript, and adapter-node.
-- [ ] Add scripts for `dev`, `build`, `preview`, `lint`, `test`, and `test:e2e`.
-- [ ] Ensure legacy `web/` and new `web-svelte/` can run simultaneously on different ports.
-- [ ] Add environment documentation for backend base URL, session endpoint, and WS target.
+- [x] Scaffold `web-svelte/` with SvelteKit, TypeScript, and adapter-node.
+- [x] Add scripts for `dev`, `build`, `preview`, `lint`, `test`, and `test:e2e`.
+- [x] Ensure legacy `web/` and new `web-svelte/` can run simultaneously on different ports.
+- [x] Add environment documentation for backend base URL, session endpoint, and WS target.
 
 #### Acceptance Criteria
-- New workspace boots independently.
-- Legacy workspace remains untouched and runnable.
-- Both apps can be launched in parallel for side-by-side checks.
+- [x] New workspace boots independently.
+- [x] Legacy workspace remains untouched and runnable.
+- [x] Both apps can be launched in parallel for side-by-side checks.
 
 ### W-002. `web/src/server.js` + `web/src/sessionClient.js`
 
@@ -223,14 +225,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
-
-#### Subtasks
-- [ ] Rebuild session snapshot resolution against `/api/page-data/session` using server-side loads.
-- [ ] Preserve header forwarding semantics from `sessionClient.js`.
-- [ ] Decide whether `/api/*`, `/login-child/*`, and `/ws` stay at infrastructure-proxy level or need a lightweight SvelteKit server bridge.
-- [ ] Preserve `/healthz` behavior for deployment probes.
-- [ ] Document local development topology for legacy/new side-by-side parity work.
+**Status:** ✅ done
 
 #### Acceptance Criteria
 - Authenticated and guest requests resolve the same session state as legacy.
@@ -249,13 +244,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** L  
 **Estimate:** 5 SP  
-**Status:** ⬜ planned
-
-#### Subtasks
-- [ ] Split public route decisions into dedicated `+page.server.ts` and `+page.svelte` files.
-- [ ] Preserve `/`, `/login.html`, `/about`, `/faq`, `/features/:slug`, `/blog`, `/blog/:slug`, `/reset-password`, `/verify`, and `404`.
-- [ ] Replace string-based SEO replacements with `svelte:head` data.
-- [ ] Preserve super-admin route branching and unknown-path handling.
+**Status:** ✅ done
 
 #### Acceptance Criteria
 - Public route matrix matches legacy behavior.
@@ -274,7 +263,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** medium  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Related Legacy Files
 
@@ -292,11 +281,11 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 | `404.html` | `src/routes/[...path]/+page.svelte` |
 
 #### Subtasks
-- [ ] Recreate public page layouts with shared components instead of string insertion.
-- [ ] Extract login/register toggle logic from inline page scripts.
-- [ ] Extract reset password and verify flows into component logic with the same validation and redirect timing.
-- [ ] Preserve blog rendering over the same markdown source files.
-- [ ] Preserve public CTA hierarchy and top-nav behavior.
+- [x] Recreate public page layouts with shared components instead of string insertion.
+- [x] Extract login/register toggle logic from inline page scripts.
+- [x] Extract reset password and verify flows into component logic with the same validation and redirect timing.
+- [x] Preserve blog rendering over the same markdown source files.
+- [x] Preserve public CTA hierarchy and top-nav behavior.
 
 #### Acceptance Criteria
 - Public and auth pages are visually equivalent.
@@ -315,13 +304,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
-
-#### Subtasks
-- [ ] Preserve guest landing vs authenticated shell branching at `/`.
-- [ ] Preserve super-admin redirect behavior from root.
-- [ ] Render one family shell route with internal section state for parity.
-- [ ] Preserve default active section logic and child/admin branching.
+**Status:** ✅ done
 
 #### Acceptance Criteria
 - `/` behaves exactly like legacy for guest, child, admin, and super-admin sessions.
@@ -340,7 +323,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** medium  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Related Legacy Partials
 
@@ -370,14 +353,14 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** M  
 **Estimate:** 5 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Subtasks
-- [ ] Replace `state.js` singleton with Svelte stores.
-- [ ] Rebuild bootstrap order from `main.js` and `main-init.js`.
-- [ ] Preserve current child auto-selection rules and `earnit-last-child-id` localStorage behavior.
-- [ ] Preserve initial skeleton rendering and background service startup order.
-- [ ] Keep separate admin and child initialization behavior.
+- [x] Replace `state.js` singleton with Svelte stores.
+- [x] Rebuild bootstrap order from `main.js` and `main-init.js`.
+- [x] Preserve current child auto-selection rules and `earnit-last-child-id` localStorage behavior.
+- [x] Preserve initial skeleton rendering and background service startup order.
+- [x] Keep separate admin and child initialization behavior.
 
 #### Acceptance Criteria
 - Initial payload load matches legacy.
@@ -396,7 +379,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** M  
 **Estimate:** 5 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Related Legacy Files
 
@@ -429,14 +412,14 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** M  
 **Estimate:** 5 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Subtasks
-- [ ] Preserve active-tab state and section visibility behavior.
-- [ ] Preserve mobile swipe navigation and scroll-reset behavior.
-- [ ] Preserve the floating more-menu portal and outside-click behavior.
-- [ ] Preserve viewport-derived CSS variables from `mobile-layout.js`.
-- [ ] Preserve motion cues that users currently depend on for feedback.
+- [x] Preserve active-tab state and section visibility behavior.
+- [x] Preserve mobile swipe navigation and scroll-reset behavior.
+- [x] Preserve the floating more-menu portal and outside-click behavior.
+- [x] Preserve viewport-derived CSS variables from `mobile-layout.js`.
+- [x] Preserve motion cues that users currently depend on for feedback.
 
 #### Acceptance Criteria
 - Desktop and mobile navigation behave identically.
@@ -455,7 +438,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Related Legacy Files
 
@@ -491,13 +474,13 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** medium  
 **Complexity:** M  
 **Estimate:** 5 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Subtasks
-- [ ] Preserve current summary cards and mini progress widgets.
-- [ ] Preserve trend chart labels, axes, and empty-state behavior.
-- [ ] Preserve admin no-child handling.
-- [ ] Remove Chart.js CDN dependency from `head.html` in the new app.
+- [x] Preserve current summary cards and mini progress widgets.
+- [x] Preserve trend chart labels, axes, and empty-state behavior.
+- [x] Preserve admin no-child handling.
+- [x] Remove Chart.js CDN dependency from `head.html` in the new app.
 
 #### Acceptance Criteria
 - Analytics visuals are materially identical.
@@ -516,7 +499,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Related Legacy Files
 
@@ -547,14 +530,14 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** M  
 **Estimate:** 5 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Subtasks
-- [ ] Preserve child-switcher dropdown positioning and refresh behavior.
-- [ ] Preserve confirm dialog and alert semantics.
-- [ ] Preserve toast behavior and timing.
-- [ ] Preserve clipboard and share-link flows.
-- [ ] Carry over modal regression coverage before refactoring implementation details.
+- [x] Preserve child-switcher dropdown positioning and refresh behavior.
+- [x] Preserve confirm dialog and alert semantics.
+- [x] Preserve toast behavior and timing.
+- [x] Preserve clipboard and share-link flows.
+- [x] Carry over modal regression coverage before refactoring implementation details.
 
 #### Acceptance Criteria
 - No dialog or dropdown positioning regressions appear.
@@ -573,12 +556,12 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
+**Status:** 🟡 in progress
 
 #### Subtasks
-- [ ] Rebuild pull-to-refresh as a Svelte action with the same threshold behavior.
-- [ ] Preserve push registration for both browser and Capacitor paths.
-- [ ] Preserve WebSocket token fetch and reconnect logic.
+- [x] Rebuild pull-to-refresh as a Svelte action with the same threshold behavior.
+- [x] Preserve push registration for both browser and Capacitor paths.
+- [x] Preserve WebSocket token fetch and reconnect logic.
 - [ ] Preserve service worker update and cache semantics.
 - [ ] Preserve install prompt and offline/online UI behavior.
 - [ ] Preserve client error reporting and deduplication logic.
@@ -600,7 +583,7 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** high  
 **Complexity:** L  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Related Legacy Files
 
@@ -633,13 +616,13 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** medium  
 **Complexity:** M  
 **Estimate:** 5 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Subtasks
-- [ ] Preserve `style.css`, CSS partials, `public-top-nav.css`, and `super-admin.css` behavior.
-- [ ] Reuse current icons, images, manifest, and favicon surface.
-- [ ] Rebuild canonical/meta/schema output with `svelte:head` instead of string placeholders.
-- [ ] Keep class names stable where Playwright and smoke tests depend on them.
+- [x] Preserve `style.css`, CSS partials, `public-top-nav.css`, and `super-admin.css` behavior.
+- [x] Reuse current icons, images, manifest, and favicon surface.
+- [x] Rebuild canonical/meta/schema output with `svelte:head` instead of string placeholders.
+- [x] Keep class names stable where Playwright and smoke tests depend on them.
 
 #### Acceptance Criteria
 - The new frontend visually matches legacy before any cleanup pass.
@@ -658,19 +641,19 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 **Risk:** medium  
 **Complexity:** M  
 **Estimate:** 8 SP  
-**Status:** ⬜ planned
+**Status:** ✅ done
 
 #### Subtasks
-- [ ] Add `lint`, `build`, `test`, and `test:e2e` commands for `web-svelte/`.
-- [ ] Recreate key smoke coverage from current UI and E2E suites.
-- [ ] Ensure local and CI execution both work.
-- [ ] Document which commands are required before parity validation can begin.
+- [x] Add `lint`, `build`, `test`, and `test:e2e` commands for `web-svelte/`.
+- [x] Recreate key smoke coverage from current UI and E2E suites.
+- [x] Ensure local and CI execution both work.
+- [x] Document which commands are required before parity validation can begin.
 
 #### Acceptance Criteria
-- New frontend lint passes.
-- New frontend build passes.
-- Smoke and targeted E2E tests pass.
-- This item is complete before any parity-closure work is started.
+- [x] New frontend lint passes.
+- [x] New frontend build passes.
+- [x] Smoke and targeted E2E tests pass.
+- [x] This item is complete before any parity-closure work is started.
 
 ### W-018. Final parity closure with `ui-migration-parity-validator`
 
@@ -691,6 +674,10 @@ Perform the migration **side-by-side** into a new `web-svelte/` workspace while 
 - [ ] `web-svelte` build is green.
 - [ ] baseline smoke tests are green.
 - [ ] legacy `web/` and new `web-svelte/` both start locally on separate ports.
+- [x] `web-svelte` lint is green.
+- [x] `web-svelte` build is green.
+- [x] baseline smoke tests are green.
+- [x] legacy `web/` and new `web-svelte/` both start locally on separate ports.
 
 #### Required Validator Tasks
 - [ ] Run the validator discovery pass and produce a route matrix for legacy vs new frontend.
@@ -996,14 +983,14 @@ web-svelte/
 
 ## 11. 📊 Summary Table
 
-| Wave | Tasks | SP | Blocking? |
-|---|---|---|---|
-| 1. Foundation and Runtime Seam | W-001, W-002, W-016, W-017 | 24 | Yes |
-| 2. Public Routing and Content | W-003, W-004 | 13 | Yes |
-| 3. Authenticated Shell and State | W-005, W-006, W-007, W-008, W-009 | 31 | Yes |
-| 4. Feature Surfaces | W-010, W-011, W-012, W-013, W-014, W-015 | 42 | Yes |
-| 5. Parity Closure | W-018 | 13 | Release blocker |
-| **Total** | **18 core backlog items** | **~123 SP** | |
+| Wave | Tasks | SP | Status | Blocking? |
+|---|---|---|---|---|
+| 1. Foundation and Runtime Seam | W-001 ✅, W-002 ✅, W-016 ✅, W-017 ✅ | 24 | ✅ done | Yes |
+| 2. Public Routing and Content | W-003 ✅, W-004 ✅ | 13 | ✅ done | Yes |
+| 3. Authenticated Shell and State | W-005 ✅, W-006 ✅, W-007 ✅, W-008 ✅, W-009 ✅ | 31 | ✅ done | Yes |
+| 4. Feature Surfaces | W-010 ✅, W-011 ✅, W-012 ✅, W-013 ✅, W-014 🟡, W-015 ✅ | 42 | 🟡 in progress | Yes |
+| 5. Parity Closure | W-018 ⬜ | 13 | ⬜ planned | Release blocker |
+| **Total** | **18 core backlog items** | **~123 SP** | | |
 
 ### Final Rule
 

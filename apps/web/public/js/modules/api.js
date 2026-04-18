@@ -20,6 +20,7 @@ export async function fetchWithCsrf(url, options = {}) {
         ...options
     });
 }
+
 async function parseJsonSafe(response) {
     if (typeof response.text !== 'function') {
         return typeof response.json === 'function' ? response.json() : null;
@@ -27,6 +28,45 @@ async function parseJsonSafe(response) {
     const text = await response.text();
     return text ? JSON.parse(text) : null;
 }
+
+function buildJsonRequestOptions(method, payload, options = {}) {
+    return {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+        body: JSON.stringify(payload)
+    };
+}
+
+async function fetchOkJson(url, fallback, errorMessage) {
+    try {
+        const response = await fetchWithCsrf(url);
+        return response.ok ? await parseJsonSafe(response) : fallback;
+    } catch (err) {
+        if (errorMessage) console.error(errorMessage, err);
+        return fallback;
+    }
+}
+
+async function postJsonResult(url, payload, options = {}) {
+    try {
+        const response = await fetchWithCsrf(url, buildJsonRequestOptions('POST', payload, options.requestOptions || {}));
+        return await parseJsonSafe(response);
+    } catch (err) {
+        return options.fallback;
+    }
+}
+
+async function postBoolean(url, payload, errorMessage) {
+    try {
+        const response = await fetchWithCsrf(url, buildJsonRequestOptions('POST', payload));
+        return response.ok;
+    } catch (err) {
+        console.error(errorMessage, err);
+        return false;
+    }
+}
+
 export const API_URL = '/api/data';
 export const LOGIN_URL = '/api/login';
 export const LOGOUT_URL = '/api/logout';
@@ -34,34 +74,13 @@ export const CHANGE_PASSWORD_URL = '/api/change-password';
 export const PUSH_REGISTER_URL = '/api/push/register';
 export const PUSH_UNREGISTER_URL = '/api/push/unregister';
 
-// ...existing code...
 export async function loadDataFromServer(childId = null) {
-    try {
-        const query = childId === null || childId === undefined
-            ? ''
-            : `?childId=${encodeURIComponent(childId)}`;
-        const response = await fetchWithCsrf(`/api/data${query}`);
-        if (response.ok) {
-            return await parseJsonSafe(response);
-        }
-    } catch (err) {
-        console.error('Failed to load from server:', err);
-    }
-    return null;
+    return fetchOkJson(`/api/data${buildChildQuery(childId)}`, null, 'Failed to load from server:');
 }
 
 export async function loadBaseData() {
-    try {
-        const response = await fetchWithCsrf('/api/base-data');
-        if (response.ok) {
-            return await parseJsonSafe(response);
-        }
-    } catch (err) {
-        console.error('Failed to load base data:', err);
-    }
-    return { tasks: [], products: [] };
+    return fetchOkJson('/api/base-data', { tasks: [], products: [] }, 'Failed to load base data:');
 }
-// ...existing code...
 
 export async function saveDataToServer(data, options = {}) {
     try {
@@ -114,55 +133,21 @@ export function completeTaskOnServer(taskId, childId) {
     });
 }
 
-export function requestTaskCompletionOnServer(taskId) {
-    return callAction(`/api/tasks/${encodeURIComponent(taskId)}/request`, {
-        method: 'POST'
-    });
-}
+export const requestTaskCompletionOnServer = (taskId) => callAction(`/api/tasks/${encodeURIComponent(taskId)}/request`, { method: 'POST' });
 
-export function purchaseItemOnServer(itemId, childId) {
-    return callAction(`/api/shop/${encodeURIComponent(itemId)}/purchase${buildChildQuery(childId)}`, {
-        method: 'POST'
-    });
-}
+export const purchaseItemOnServer = (itemId, childId) => callAction(`/api/shop/${encodeURIComponent(itemId)}/purchase${buildChildQuery(childId)}`, { method: 'POST' });
 
-export function requestItemPurchaseOnServer(itemId) {
-    return callAction(`/api/shop/${encodeURIComponent(itemId)}/request`, {
-        method: 'POST'
-    });
-}
+export const requestItemPurchaseOnServer = (itemId) => callAction(`/api/shop/${encodeURIComponent(itemId)}/request`, { method: 'POST' });
 
-export function approveRequestOnServer(requestId, childId) {
-    return callAction(`/api/requests/${encodeURIComponent(requestId)}/approve${buildChildQuery(childId)}`, {
-        method: 'POST'
-    });
-}
+export const approveRequestOnServer = (requestId, childId) => callAction(`/api/requests/${encodeURIComponent(requestId)}/approve${buildChildQuery(childId)}`, { method: 'POST' });
 
-export function rejectRequestOnServer(requestId, childId) {
-    return callAction(`/api/requests/${encodeURIComponent(requestId)}/reject${buildChildQuery(childId)}`, {
-        method: 'POST'
-    });
-}
+export const rejectRequestOnServer = (requestId, childId) => callAction(`/api/requests/${encodeURIComponent(requestId)}/reject${buildChildQuery(childId)}`, { method: 'POST' });
 
-export function deleteRequestOnServer(requestId, childId) {
-    return callAction(`/api/requests/${encodeURIComponent(requestId)}${buildChildQuery(childId)}`, {
-        method: 'DELETE'
-    });
-}
+export const deleteRequestOnServer = (requestId, childId) => callAction(`/api/requests/${encodeURIComponent(requestId)}${buildChildQuery(childId)}`, { method: 'DELETE' });
 
-export function deleteHistoryEntryOnServer(historyEntryId, childId) {
-    return callAction(`/api/history/${encodeURIComponent(historyEntryId)}${buildChildQuery(childId)}`, {
-        method: 'DELETE'
-    });
-}
+export const deleteHistoryEntryOnServer = (historyEntryId, childId) => callAction(`/api/history/${encodeURIComponent(historyEntryId)}${buildChildQuery(childId)}`, { method: 'DELETE' });
 
-export function adjustBalanceOnServer(childId, amount, description) {
-    return callAction('/api/balance/adjust', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId, amount, description })
-    });
-}
+export const adjustBalanceOnServer = (childId, amount, description) => callAction('/api/balance/adjust', buildJsonRequestOptions('POST', { childId, amount, description }));
 
 export async function logout() {
     try {
@@ -244,152 +229,36 @@ export async function login(email, password) {
 // Keep compatibility alias removed — use changePassword instead of changePin
 
 export async function regenerateChildToken(childId) {
-    try {
-        const response = await fetchWithCsrf(`/api/children/${childId}/regenerate-token`, { method: 'POST' });
-        if (response.ok) {
-            return await parseJsonSafe(response);
-        }
-    } catch (err) {
-        console.error('Failed to regenerate token:', err);
-    }
-    return null;
+    return fetchOkJson(`/api/children/${childId}/regenerate-token`, null, 'Failed to regenerate token:');
 }
 
-export async function addChild(name) {
-    try {
-        const response = await fetchWithCsrf('/api/children', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name })
-        });
-        return await parseJsonSafe(response);
-    } catch (err) {
-        return { success: false, error: 'Network error' };
-    }
-}
+export const addChild = (name) => postJsonResult('/api/children', { name }, { fallback: { success: false, error: 'Network error' } });
 
 export async function deleteChild(childId) {
     try {
-        const response = await fetchWithCsrf(`/api/children/${childId}`, { method: 'DELETE' });
-        return await parseJsonSafe(response);
+        return await parseJsonSafe(await fetchWithCsrf(`/api/children/${childId}`, { method: 'DELETE' }));
     } catch (err) {
         return { success: false, error: 'Network error' };
     }
 }
 
-export async function getChildLink(childId) {
-    try {
-        const response = await fetchWithCsrf(`/api/children/${childId}/link`);
-        return await parseJsonSafe(response);
-    } catch (err) {
-        return { success: false, error: 'Network error' };
-    }
-}
+export const getChildLink = (childId) => fetchOkJson(`/api/children/${childId}/link`, { success: false, error: 'Network error' });
 
-export async function updateChildSettings(familyId, childId, settings) {
-    try {
-        const response = await fetchWithCsrf(`/api/children/${childId}/settings`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(settings)
-        });
-        return await parseJsonSafe(response);
-    } catch (err) {
-        console.error('Failed to update child settings:', err);
-        return { success: false, error: 'Network error' };
-    }
-}
+export const updateChildSettings = (familyId, childId, settings) => postJsonResult(`/api/children/${childId}/settings`, settings, { fallback: { success: false, error: 'Network error' } });
 
-export async function updateNickname(nickname) {
-    try {
-        const response = await fetchWithCsrf('/api/update-nickname', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname })
-        });
-        return await parseJsonSafe(response);
-    } catch (err) {
-        console.error('Failed to update nickname:', err);
-        return { success: false, error: 'Ошибка сети' };
-    }
-}
+export const updateNickname = (nickname) => postJsonResult('/api/update-nickname', { nickname }, { fallback: { success: false, error: 'Ошибка сети' } });
 
-export async function searchUsers(nickname) {
-    try {
-        const response = await fetchWithCsrf(`/api/search-user?nickname=${encodeURIComponent(nickname)}`);
-        if (response.ok) {
-            return await parseJsonSafe(response);
-        }
-    } catch (err) {
-        console.error('Failed to search users:', err);
-    }
-    return [];
-}
+export const searchUsers = (nickname) => fetchOkJson(`/api/search-user?nickname=${encodeURIComponent(nickname)}`, [], 'Failed to search users:');
 
-export async function addFriend(friendId) {
-    try {
-        const response = await fetchWithCsrf('/api/add-friend', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ friendId })
-        });
-        return await parseJsonSafe(response);
-    } catch (err) {
-        console.error('Failed to add friend:', err);
-        return { success: false, error: 'Ошибка сети' };
-    }
-}
+export const addFriend = (friendId) => postJsonResult('/api/add-friend', { friendId }, { fallback: { success: false, error: 'Ошибка сети' } });
 
-export async function loadFriendsList() {
-    try {
-        const response = await fetchWithCsrf('/api/friends-list');
-        if (response.ok) {
-            return await parseJsonSafe(response);
-        }
-    } catch (err) {
-        console.error('Failed to load friends list:', err);
-    }
-    return [];
-}
+export const loadFriendsList = () => fetchOkJson('/api/friends-list', [], 'Failed to load friends list:');
 
-export async function savePreference(key, value) {
-    try {
-        const response = await fetchWithCsrf('/api/preferences', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key, value })
-        });
-        return response.ok;
-    } catch (err) {
-        console.error('Failed to save preference:', err);
-        return false;
-    }
-}
+export const savePreference = (key, value) => postBoolean('/api/preferences', { key, value }, 'Failed to save preference:');
 
-export async function saveChildTheme(childId, theme) {
-    try {
-        const response = await fetchWithCsrf(`/api/children/${childId}/theme`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ theme })
-        });
-        return response.ok;
-    } catch (err) {
-        console.error('Failed to save child theme:', err);
-        return false;
-    }
-}
+export const saveChildTheme = (childId, theme) => postBoolean(`/api/children/${childId}/theme`, { theme }, 'Failed to save child theme:');
 
 export async function fetchAnalyticsData(timeframe = 'month', childId = null) {
-    try {
-        let url = `/api/analytics?timeframe=${timeframe}`;
-        if (childId) url += `&childId=${childId}`;
-        const response = await fetchWithCsrf(url);
-        if (response.ok) {
-            return await parseJsonSafe(response);
-        }
-    } catch (err) {
-        console.error('Failed to fetch analytics:', err);
-    }
-    return null;
+    const childQuery = childId ? `&childId=${childId}` : '';
+    return fetchOkJson(`/api/analytics?timeframe=${timeframe}${childQuery}`, null, 'Failed to fetch analytics:');
 }

@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="eye-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+  </defs>
+  <!-- Eye glow bg -->
+  <ellipse cx="32" cy="32" rx="26" ry="18" fill="url(#eye-bg)" opacity="0.15"/>
+  <!-- Eye outline -->
+  <path d="M8 32c6-14 36-14 48 0" stroke="url(#eye-bg)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M56 32c-6 14-36 14-48 0" stroke="url(#eye-bg)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Iris -->
+  <circle cx="32" cy="32" r="10" fill="url(#eye-bg)"/>
+  <!-- Pupil -->
+  <circle cx="32" cy="32" r="5" fill="#0c4a6e"/>
+  <!-- Shine -->
+  <circle cx="35" cy="29" r="2.5" fill="white" opacity="0.8"/>
+  <circle cx="29" cy="33" r="1.2" fill="white" opacity="0.5"/>
+</svg>
