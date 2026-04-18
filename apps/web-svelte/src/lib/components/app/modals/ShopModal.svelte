@@ -16,14 +16,17 @@
     let moneyLimit = '';
     let itemType: 'micro' | 'small' | 'large' = 'small';
 
-    $: if (isOpen) {
-        if (existingItem) {
-            title = (existingItem.title as string) ?? '';
-            groupName = (existingItem.groupName as string) ?? '';
-            coins = (existingItem.coins as number) ?? 50;
-            comment = (existingItem.comment as string) ?? '';
-            moneyLimit = String((existingItem.moneyLimit as number) ?? '');
-            itemType = (existingItem.itemType as typeof itemType) ?? 'small';
+    $: if ($modalStore.open === 'shop-modal') {
+        const _item = $modalStore.data?.mode === 'edit'
+            ? ($modalStore.data?.item as Record<string, unknown>)
+            : null;
+        if (_item) {
+            title = ((_item.name ?? _item.title) as string) ?? '';
+            groupName = (_item.groupName as string) ?? '';
+            coins = ((_item.price ?? _item.coins) as number) ?? 50;
+            comment = (_item.comment as string) ?? '';
+            moneyLimit = String((_item.moneyLimit as number) ?? '');
+            itemType = ((_item.type ?? _item.itemType) as typeof itemType) ?? 'small';
         } else {
             title = ''; groupName = ''; coins = 50; comment = ''; moneyLimit = ''; itemType = 'small';
         }
@@ -35,11 +38,14 @@
         if (!title.trim()) { showToast('Введите название', 'error'); return; }
         const payload = {
             id: existingItem?.id,
+            name: title.trim(),
             title: title.trim(),
             groupName: groupName.trim() || null,
+            price: Number(coins) || 50,
             coins: Number(coins) || 50,
             comment: comment.trim() || null,
             moneyLimit: moneyLimit ? Number(moneyLimit) : null,
+            type: itemType,
             itemType,
         };
 
@@ -48,7 +54,7 @@
                 shopItems: $appStore.shopItems.map(i => i.id == payload.id ? ({ ...i, ...payload } as typeof i) : i)
             });
         } else {
-            const newItem = { ...payload, id: payload.id ?? Date.now() };
+            const newItem = { ...payload, id: (payload.id as number | string | undefined) ?? Date.now() };
             appStore.setState({ shopItems: [...$appStore.shopItems, newItem as typeof $appStore.shopItems[number]] });
         }
         void scheduleSave();

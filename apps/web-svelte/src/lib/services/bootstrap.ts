@@ -8,7 +8,7 @@ import type { AppState } from '$lib/stores/app';
 import { tabStore } from '$lib/stores/tabs';
 import { showToast } from '$lib/stores/toasts';
 import { loadDataFromServer, loadBaseData } from './api';
-import { buildInitialState, normalizeServerData } from './serverContract';
+import { buildInitialState, normalizeServerData, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from './serverContract';
 
 const LAST_CHILD_KEY = 'earnit-last-child-id';
 
@@ -56,10 +56,10 @@ export async function initializeFromServer(): Promise<boolean> {
                 const childRecord = childData as Record<string, unknown>;
                 appStore.setState({
                     balance: (childRecord.balance as number) ?? 0,
-                    tasks: (childRecord.tasks as AppState['tasks']) ?? [],
-                    shopItems: (childRecord.shop as AppState['shopItems']) ?? [],
-                    history: (childRecord.history as AppState['history']) ?? [],
-                    requests: (childRecord.requests as AppState['requests']) ?? [],
+                    tasks: Array.isArray(childRecord.tasks) ? childRecord.tasks.map(normalizeTask) as AppState['tasks'] : [],
+                    shopItems: Array.isArray(childRecord.shop) ? childRecord.shop.map(normalizeShopItem) as AppState['shopItems'] : [],
+                    history: Array.isArray(childRecord.history) ? childRecord.history.map(normalizeHistoryEntry) as AppState['history'] : [],
+                    requests: Array.isArray(childRecord.requests) ? childRecord.requests.map(normalizeRequest) as AppState['requests'] : [],
                     childNickname: (childRecord.childNickname as string) ?? null,
                 });
             }

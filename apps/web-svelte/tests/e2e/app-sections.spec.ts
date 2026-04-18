@@ -53,6 +53,46 @@ test.describe('Shop section (Награды)', () => {
         await expect(page.getByRole('button', { name: 'Изменить' }).first()).toBeVisible();
     });
 
+    test('edit modal populates name and price from existing item', async ({ page }) => {
+        // Wait for shop items to load
+        const shopList = page.locator('#shop-list, .cards');
+        await expect(shopList).toBeVisible();
+        const firstTitle = shopList.locator('.card__title').first();
+        await expect(firstTitle).toBeVisible();
+
+        // Read the displayed name and price before opening modal
+        const itemName = (await firstTitle.textContent())?.trim() ?? '';
+        const priceText = (await shopList.locator('.item-coins').first().textContent())?.trim() ?? '';
+        const itemPrice = parseInt(priceText);
+
+        // Click the first edit button
+        await page.getByRole('button', { name: 'Изменить' }).first().click();
+        await expect(page.locator('#shop-modal')).toBeVisible();
+
+        // Name field must not be empty and must match displayed item name
+        const nameInput = page.locator('#shop-name');
+        const nameValue = await nameInput.inputValue();
+        expect(nameValue).toBeTruthy();
+        expect(nameValue).not.toBe('');
+        if (itemName) {
+            expect(nameValue).toBe(itemName);
+        }
+
+        // Price must not be default 50 if actual price differs
+        const priceInput = page.locator('#shop-price');
+        const priceValue = parseInt(await priceInput.inputValue());
+        if (!isNaN(itemPrice) && itemPrice !== 50) {
+            expect(priceValue).toBe(itemPrice);
+        } else {
+            // At minimum price should be a positive number
+            expect(priceValue).toBeGreaterThan(0);
+        }
+
+        // Close modal
+        await page.locator('#shop-cancel').click();
+        await expect(page.locator('#shop-modal')).not.toBeVisible();
+    });
+
     test('group navigation appears when multiple groups exist', async ({ page }) => {
         // Only visible when items have different group names
         // At minimum, shop items list should render
