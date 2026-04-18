@@ -1,7 +1,7 @@
 <script lang="ts">
     import { modalStore } from '$lib/stores/modal';
     import { appStore } from '$lib/stores/app';
-    import { adminSaveTask, adminDeleteTask } from '$lib/services/api';
+    import { scheduleSave } from '$lib/services/save';
     import { showToast } from '$lib/stores/toasts';
 
     $: isOpen = $modalStore.open === 'task-modal';
@@ -42,30 +42,26 @@
             frequency: freqLimit ? { limit: Number(freqLimit), period: freqPeriod } : null,
         };
 
-        const res = await adminSaveTask(payload) as Record<string, unknown> | null;
-        if (res) {
-            const saved = { ...payload, id: res.id ?? payload.id };
-            if (isEdit) {
-                appStore.setState({
-                    tasks: $appStore.tasks.map(t => t.id == saved.id ? ({ ...t, ...saved } as typeof t) : t)
-                });
-            } else {
-                appStore.setState({ tasks: [...$appStore.tasks, saved as typeof $appStore.tasks[number]] });
-            }
-            showToast(isEdit ? 'Задание сохранено' : 'Задание добавлено', 'success');
-            close();
+        if (isEdit) {
+            appStore.setState({
+                tasks: $appStore.tasks.map(t => t.id == payload.id ? ({ ...t, ...payload } as typeof t) : t)
+            });
+        } else {
+            const newTask = { ...payload, id: payload.id ?? Date.now() };
+            appStore.setState({ tasks: [...$appStore.tasks, newTask as typeof $appStore.tasks[number]] });
         }
+        void scheduleSave();
+        showToast(isEdit ? 'Задание сохранено' : 'Задание добавлено', 'success');
+        close();
     }
 
     async function deleteTask() {
         if (!existingTask?.id) return;
         if (!confirm('Удалить задание?')) return;
-        const ok = await adminDeleteTask(existingTask.id);
-        if (ok) {
-            appStore.setState({ tasks: $appStore.tasks.filter(t => t.id != existingTask!.id) });
-            showToast('Задание удалено', 'info');
-            close();
-        }
+        appStore.setState({ tasks: $appStore.tasks.filter(t => t.id != existingTask!.id) });
+        void scheduleSave();
+        showToast('Задание удалено', 'info');
+        close();
     }
 </script>
 

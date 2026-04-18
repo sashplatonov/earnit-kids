@@ -1,8 +1,8 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { approveRequest, rejectRequest, deleteRequest } from '$lib/services/api';
+    import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { showToast } from '$lib/stores/toasts';
-    import { scheduleSave } from '$lib/services/save';
     import type { Request } from '$lib/stores/app';
 
     $: requests = $appStore.requests;
@@ -14,12 +14,7 @@
     async function handleApprove(req: Request) {
         const res = await approveRequest(req.id, req.childId) as Record<string, unknown> | null;
         if (res) {
-            appStore.setState({
-                requests: requests.map(r =>
-                    r.id === req.id ? { ...r, status: 'approved' } : r
-                )
-            });
-            scheduleSave();
+            applyDataSnapshot(res);
             showToast('Заявка подтверждена', 'success');
         }
     }
@@ -27,21 +22,15 @@
     async function handleReject(req: Request) {
         const res = await rejectRequest(req.id, req.childId) as Record<string, unknown> | null;
         if (res) {
-            appStore.setState({
-                requests: requests.map(r =>
-                    r.id === req.id ? { ...r, status: 'rejected' } : r
-                )
-            });
-            scheduleSave();
+            applyDataSnapshot(res);
             showToast('Заявка отклонена', 'info');
         }
     }
 
     async function handleDelete(reqId: unknown) {
-        const ok = await deleteRequest(reqId);
+        const ok = await deleteRequest(reqId, $appStore.currentChildId);
         if (ok) {
             appStore.setState({ requests: requests.filter(r => r.id !== reqId) });
-            scheduleSave();
         }
     }
 
@@ -51,7 +40,7 @@
     }
 </script>
 
-<section class="section hidden" id="requests-section">
+<section class="section" id="requests-section">
     {#if isAdmin}
     <!-- Admin view: incoming requests -->
     <div class="admin-only">

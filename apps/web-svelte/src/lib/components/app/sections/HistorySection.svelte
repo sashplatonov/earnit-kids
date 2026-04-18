@@ -2,7 +2,6 @@
     import { appStore } from '$lib/stores/app';
     import { deleteHistoryItem } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
-    import { scheduleSave } from '$lib/services/save';
 
     $: history = $appStore.history;
     $: isAdmin = $appStore.isAdmin;
@@ -44,10 +43,9 @@
     }
 
     async function handleDelete(historyId: unknown) {
-        const ok = await deleteHistoryItem(historyId);
+        const ok = await deleteHistoryItem(historyId, $appStore.currentChildId);
         if (ok) {
             appStore.setState({ history: history.filter(h => h.id !== historyId) });
-            scheduleSave();
             showToast('Запись удалена', 'info');
         }
     }
@@ -64,7 +62,7 @@
     }
 </script>
 
-<section class="section hidden" id="history-section">
+<section class="section" id="history-section">
     <h2>История операций</h2>
     {#if isAdmin}
     <div class="section__buttons admin-only" style="margin-bottom: 1rem;">

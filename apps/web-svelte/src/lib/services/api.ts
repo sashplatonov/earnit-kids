@@ -59,6 +59,30 @@ async function postBoolean(url: string, body: unknown, errorMsg?: string): Promi
 
 export const API_URL = '/api/data';
 
+function buildChildQuery(childId: unknown): string {
+    return childId != null ? `?childId=${encodeURIComponent(String(childId))}` : '';
+}
+
+async function fetchGet<T = unknown>(url: string): Promise<T | null> {
+    try {
+        const res = await fetchWithCsrf(url);
+        return res.ok ? await parseJsonSafe<T>(res) : null;
+    } catch (err) {
+        console.error('GET request failed:', url, err);
+        return null;
+    }
+}
+
+async function deleteResource(url: string, errorMsg?: string): Promise<boolean> {
+    try {
+        const res = await fetchWithCsrf(url, { method: 'DELETE' });
+        return res.ok;
+    } catch (err) {
+        if (errorMsg) console.error(errorMsg, err);
+        return false;
+    }
+}
+
 export async function loadDataFromServer(childId?: string | number | null) {
     const q = childId != null ? `?childId=${encodeURIComponent(childId)}` : '';
     try {
@@ -79,7 +103,7 @@ export async function loadBaseData() {
     }
 }
 
-export async function saveDataToServer(data: unknown, options: { keepalive?: boolean } = {}): Promise<boolean> {
+export async function saveDataToServer(data: unknown, options: { keepalive?: boolean } = {}): Promise<unknown> {
     try {
         const res = await fetchWithCsrf(API_URL, {
             method: 'POST',
@@ -87,10 +111,11 @@ export async function saveDataToServer(data: unknown, options: { keepalive?: boo
             ...(options.keepalive ? { keepalive: true } : {}),
             body: JSON.stringify(data),
         });
-        return res.ok;
+        if (!res.ok) return null;
+        return await parseJsonSafe(res);
     } catch (err) {
         console.error('Failed to save to server:', err);
-        return false;
+        return null;
     }
 }
 
@@ -99,69 +124,70 @@ export const logout = () => postBoolean('/api/logout', {}, 'Logout failed');
 // ── Task actions ──────────────────────────────────────────────────────────────
 
 export const earnCoins = (taskId: unknown, childId?: unknown) =>
-    postJson('/api/earn', { taskId, childId });
+    postJson(`/api/tasks/${encodeURIComponent(String(taskId))}/complete${buildChildQuery(childId)}`, {});
 
-export const requestCoins = (taskId: unknown, childId?: unknown) =>
-    postJson('/api/request', { taskId, childId });
+export const requestCoins = (taskId: unknown) =>
+    postJson(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, {});
 
 // ── Shop actions ──────────────────────────────────────────────────────────────
 
+/** Admin: immediately purchase an item for a child. */
 export const buyItem = (itemId: unknown, childId?: unknown) =>
-    postJson('/api/buy', { itemId, childId });
+    postJson(`/api/shop/${encodeURIComponent(String(itemId))}/purchase${buildChildQuery(childId)}`, {});
+
+/** Child: create a purchase request that requires parent approval. */
+export const requestItem = (itemId: unknown) =>
+    postJson(`/api/shop/${encodeURIComponent(String(itemId))}/request`, {});
 
 // ── Request actions ───────────────────────────────────────────────────────────
 
 export const approveRequest = (requestId: unknown, childId?: unknown) =>
-    postJson('/api/request/approve', { requestId, childId });
+    postJson(`/api/requests/${encodeURIComponent(String(requestId))}/approve${buildChildQuery(childId)}`, {});
 
 export const rejectRequest = (requestId: unknown, childId?: unknown) =>
-    postJson('/api/request/reject', { requestId, childId });
+    postJson(`/api/requests/${encodeURIComponent(String(requestId))}/reject${buildChildQuery(childId)}`, {});
 
-export const deleteRequest = (requestId: unknown) =>
-    postBoolean('/api/request/delete', { requestId }, 'Delete request failed');
+export const deleteRequest = (requestId: unknown, childId?: unknown) =>
+    deleteResource(`/api/requests/${encodeURIComponent(String(requestId))}${buildChildQuery(childId)}`, 'Delete request failed');
 
 // ── History actions ───────────────────────────────────────────────────────────
 
-export const deleteHistoryItem = (historyId: unknown) =>
-    postBoolean('/api/history/delete', { historyId }, 'Delete history failed');
+export const deleteHistoryItem = (historyId: unknown, childId?: unknown) =>
+    deleteResource(`/api/history/${encodeURIComponent(String(historyId))}${buildChildQuery(childId)}`, 'Delete history failed');
 
 // ── Admin actions ─────────────────────────────────────────────────────────────
 
-export const adminAwardCoins = (childId: unknown, amount: number, reason?: string) =>
-    postJson('/api/admin/award', { childId, amount, reason });
+/** Award or deduct coins for a child. Maps to POST /api/balance/adjust. */
+export const adminAwardCoins = (childId: unknown, amount: number, description?: string) =>
+    postJson('/api/balance/adjust', { childId, amount, description });
 
-export const adminSaveTask = (task: unknown) =>
-    postJson('/api/admin/task/save', task);
+/** Update child settings (name + limits). Admin only. */
+export const adminSaveChildSettings = (childId: unknown, settings: { name?: string; dailyCoinLimit?: number; monthlyLimit?: number }) =>
+    postJson(`/api/children/${encodeURIComponent(String(childId))}/settings`, settings);
 
-export const adminDeleteTask = (taskId: unknown) =>
-    postBoolean('/api/admin/task/delete', { taskId }, 'Delete task failed');
+/** Rename the currently-authenticated child (child session). */
+export const updateOwnNickname = (nickname: string) =>
+    postJson('/api/update-nickname', { nickname });
 
-export const adminSaveShopItem = (item: unknown) =>
-    postJson('/api/admin/shop/save', item);
+/** Create a new child profile. */
+export const adminAddChild = (name: string) =>
+    postJson('/api/children', { name });
 
-export const adminDeleteShopItem = (itemId: unknown) =>
-    postBoolean('/api/admin/shop/delete', { itemId }, 'Delete shop item failed');
+/** Delete a child profile. */
+export const adminDeleteChild = (childId: unknown) =>
+    deleteResource(`/api/children/${encodeURIComponent(String(childId))}`, 'Delete child failed');
 
-export const adminSaveChild = (childData: unknown) =>
-    postJson('/api/admin/child/save', childData);
-
-export const adminAddChild = (childData: unknown) =>
-    postJson('/api/admin/child/add', childData);
-
-export const adminChangePassword = (childId: unknown, password: string) =>
-    postBoolean('/api/admin/child/password', { childId, password }, 'Change password failed');
-
+/** Get the current login link/token for a child. */
 export const adminGetChildLink = (childId: unknown) =>
-    postJson<{ link: string }>('/api/admin/child/link', { childId });
+    fetchGet<{ link: string }>(`/api/children/${encodeURIComponent(String(childId))}/link`);
 
+/** Regenerate the login token for a child. */
 export const adminRegenerateChildLink = (childId: unknown) =>
-    postJson<{ link: string }>('/api/admin/child/regenerate-link', { childId });
+    postJson<{ link: string }>(`/api/children/${encodeURIComponent(String(childId))}/regenerate-token`, {});
 
-export const adminSaveRules = (rules: unknown) =>
-    postBoolean('/api/admin/rules/save', { rules }, 'Save rules failed');
-
-export const adminSaveLimits = (childId: unknown, limits: unknown) =>
-    postBoolean('/api/admin/limits/save', { childId, limits }, 'Save limits failed');
+/** Save child spending/coin limits. Maps to POST /api/children/{id}/settings. */
+export const adminSaveLimits = (childId: unknown, limits: { dailyCoinLimit?: number; monthlyLimit?: number }) =>
+    postJson(`/api/children/${encodeURIComponent(String(childId))}/settings`, limits);
 
 // ── Push registration ─────────────────────────────────────────────────────────
 
@@ -184,8 +210,12 @@ export async function loadAnalyticsData(childId?: unknown, timeframe = 'month') 
 
 // ── Friends ───────────────────────────────────────────────────────────────────
 
-export const searchFriend = (query: string) =>
-    postJson('/api/friends/search', { query });
+export const searchFriend = async (query: string) => {
+    try {
+        const res = await fetchWithCsrf(`/api/search-user?nickname=${encodeURIComponent(query)}`);
+        return res.ok ? await parseJsonSafe(res) : [];
+    } catch { return []; }
+};
 
 export const addFriend = (friendId: unknown) =>
-    postBoolean('/api/friends/add', { friendId }, 'Add friend failed');
+    postBoolean('/api/add-friend', { friendId }, 'Add friend failed');

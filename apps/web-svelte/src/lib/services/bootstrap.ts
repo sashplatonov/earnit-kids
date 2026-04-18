@@ -2,12 +2,13 @@
  * Bootstrap service — replaces legacy main-init.js
  * Loads server data into the app store after mount.
  */
+import { get } from 'svelte/store';
 import { appStore } from '$lib/stores/app';
 import type { AppState } from '$lib/stores/app';
 import { tabStore } from '$lib/stores/tabs';
 import { showToast } from '$lib/stores/toasts';
 import { loadDataFromServer, loadBaseData } from './api';
-import { buildInitialState } from './serverContract';
+import { buildInitialState, normalizeServerData } from './serverContract';
 
 const LAST_CHILD_KEY = 'earnit-last-child-id';
 
@@ -77,4 +78,24 @@ export async function refreshData(showSuccess = false): Promise<boolean> {
 /** Persist the currently selected child id to localStorage */
 export function persistLastChildId(childId: string | number) {
     try { localStorage.setItem(LAST_CHILD_KEY, String(childId)); } catch { /* */ }
+}
+
+/**
+ * Apply a FamilyDataResponse snapshot (returned by action endpoints like
+ * /api/tasks/{id}/complete, /api/shop/{id}/purchase, etc.) into the app store.
+ * Only overwrites fields that are present in the response.
+ */
+export function applyDataSnapshot(data: Record<string, unknown>): void {
+    if (!data || typeof data !== 'object') return;
+    const normalized = normalizeServerData(data);
+    const current = get(appStore);
+    const partial: Partial<AppState> = {};
+    if (typeof data.balance === 'number') partial.balance = data.balance;
+    if (Array.isArray(normalized.tasks)) partial.tasks = normalized.tasks as AppState['tasks'];
+    if (Array.isArray(normalized.shop)) partial.shopItems = normalized.shop as AppState['shopItems'];
+    if (Array.isArray(normalized.history)) partial.history = normalized.history as AppState['history'];
+    if (Array.isArray(normalized.requests)) partial.requests = normalized.requests as AppState['requests'];
+    // Preserve current child if server doesn't override it
+    if (!partial.tasks?.length) partial.tasks = current.tasks;
+    if (Object.keys(partial).length > 0) appStore.setState(partial);
 }

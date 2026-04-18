@@ -1,9 +1,9 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { buyItem } from '$lib/services/api';
+    import { buyItem, requestItem } from '$lib/services/api';
+    import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { showToast } from '$lib/stores/toasts';
-    import { scheduleSave } from '$lib/services/save';
 
     $: shopItems = $appStore.shopItems;
     $: isAdmin = $appStore.isAdmin;
@@ -20,15 +20,22 @@
         const childId = $appStore.currentChildId;
         const item = shopItems.find(i => i.id == itemId);
         if (!item) return;
-        if (balance < item.coins) {
-            showToast('Не хватает монет!', 'error');
-            return;
-        }
-        const res = await buyItem(itemId, childId) as Record<string, unknown> | null;
-        if (res) {
-            appStore.updateBalance(-item.coins);
-            scheduleSave();
-            showToast(`Куплено: ${item.title}`, 'success');
+        if (isAdmin) {
+            if (balance < item.coins) {
+                showToast('Не хватает монет!', 'error');
+                return;
+            }
+            const res = await buyItem(itemId, childId) as Record<string, unknown> | null;
+            if (res) {
+                applyDataSnapshot(res);
+                showToast(`Куплено: ${item.title}`, 'success');
+            }
+        } else {
+            const res = await requestItem(itemId) as Record<string, unknown> | null;
+            if (res) {
+                applyDataSnapshot(res);
+                showToast('Заявка на покупку отправлена!', 'success');
+            }
         }
     }
 
@@ -41,7 +48,7 @@
     }
 </script>
 
-<section class="section hidden" id="shop-section">
+<section class="section" id="shop-section">
     <div class="section__header">
         <div class="section__header-titles">
             <h2>
@@ -91,7 +98,7 @@
                 {:else}
                 <button class="btn btn--primary" disabled={balance < item.coins}
                     on:click={() => handleBuy(item.id)}>
-                    Купить
+                    Запросить
                 </button>
                 {/if}
             </div>

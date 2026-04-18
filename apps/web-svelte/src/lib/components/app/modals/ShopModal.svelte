@@ -1,7 +1,7 @@
 <script lang="ts">
     import { modalStore } from '$lib/stores/modal';
     import { appStore } from '$lib/stores/app';
-    import { adminSaveShopItem, adminDeleteShopItem } from '$lib/services/api';
+    import { scheduleSave } from '$lib/services/save';
     import { showToast } from '$lib/stores/toasts';
 
     $: isOpen = $modalStore.open === 'shop-modal';
@@ -43,30 +43,26 @@
             itemType,
         };
 
-        const res = await adminSaveShopItem(payload) as Record<string, unknown> | null;
-        if (res) {
-            const saved = { ...payload, id: res.id ?? payload.id };
-            if (isEdit) {
-                appStore.setState({
-                    shopItems: $appStore.shopItems.map(i => i.id == saved.id ? ({ ...i, ...saved } as typeof i) : i)
-                });
-            } else {
-                appStore.setState({ shopItems: [...$appStore.shopItems, saved as typeof $appStore.shopItems[number]] });
-            }
-            showToast(isEdit ? 'Товар сохранён' : 'Товар добавлен', 'success');
-            close();
+        if (isEdit) {
+            appStore.setState({
+                shopItems: $appStore.shopItems.map(i => i.id == payload.id ? ({ ...i, ...payload } as typeof i) : i)
+            });
+        } else {
+            const newItem = { ...payload, id: payload.id ?? Date.now() };
+            appStore.setState({ shopItems: [...$appStore.shopItems, newItem as typeof $appStore.shopItems[number]] });
         }
+        void scheduleSave();
+        showToast(isEdit ? 'Товар сохранён' : 'Товар добавлен', 'success');
+        close();
     }
 
     async function deleteItem() {
         if (!existingItem?.id) return;
         if (!confirm('Удалить товар?')) return;
-        const ok = await adminDeleteShopItem(existingItem.id);
-        if (ok) {
-            appStore.setState({ shopItems: $appStore.shopItems.filter(i => i.id != existingItem!.id) });
-            showToast('Товар удалён', 'info');
-            close();
-        }
+        appStore.setState({ shopItems: $appStore.shopItems.filter(i => i.id != existingItem!.id) });
+        void scheduleSave();
+        showToast('Товар удалён', 'info');
+        close();
     }
 </script>
 

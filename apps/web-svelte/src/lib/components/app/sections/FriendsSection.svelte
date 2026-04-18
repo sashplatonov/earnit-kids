@@ -33,7 +33,7 @@
     }
 </script>
 
-<section class="section hidden" id="friends-section">
+<section class="section" id="friends-section">
     <div class="section__header">
         <h2>Друзья</h2>
     </div>

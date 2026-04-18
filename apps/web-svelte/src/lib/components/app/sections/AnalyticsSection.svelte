@@ -121,7 +121,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 </svelte:head>
 
-<section id="analytics-section" class="section hidden">
+<section id="analytics-section" class="section">
     <div class="container">
         <header class="section-header">
             <h2 class="section-title">Мои достижения</h2>

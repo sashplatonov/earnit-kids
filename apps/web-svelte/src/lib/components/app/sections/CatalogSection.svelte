@@ -1,6 +1,6 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
-    import { adminSaveTask, adminSaveShopItem } from '$lib/services/api';
+    import { scheduleSave } from '$lib/services/save';
     import { showToast } from '$lib/stores/toasts';
 
     $: baseData = $appStore.baseData;
@@ -22,26 +22,22 @@
         return min <= ageMax && max >= ageMin;
     });
 
-    async function addTaskFromCatalog(task: Record<string, unknown>) {
-        const res = await adminSaveTask({ ...task, id: undefined }) as Record<string, unknown> | null;
-        if (res) {
-            const newTask = { ...task, id: res.id ?? Date.now() };
-            appStore.setState({ tasks: [...$appStore.tasks, newTask as typeof $appStore.tasks[0]] });
-            showToast(`Задание «${task.title}» добавлено`, 'success');
-        }
+    function addTaskFromCatalog(task: Record<string, unknown>) {
+        const newTask = { ...task, id: Date.now() };
+        appStore.setState({ tasks: [...$appStore.tasks, newTask as typeof $appStore.tasks[0]] });
+        void scheduleSave();
+        showToast(`Задание «${task.title}» добавлено`, 'success');
     }
 
-    async function addProductFromCatalog(product: Record<string, unknown>) {
-        const res = await adminSaveShopItem({ ...product, id: undefined }) as Record<string, unknown> | null;
-        if (res) {
-            const newItem = { ...product, id: res.id ?? Date.now() };
-            appStore.setState({ shopItems: [...$appStore.shopItems, newItem as typeof $appStore.shopItems[0]] });
-            showToast(`Товар «${product.title}» добавлен`, 'success');
-        }
+    function addProductFromCatalog(product: Record<string, unknown>) {
+        const newItem = { ...product, id: Date.now() };
+        appStore.setState({ shopItems: [...$appStore.shopItems, newItem as typeof $appStore.shopItems[0]] });
+        void scheduleSave();
+        showToast(`Товар «${product.title}» добавлен`, 'success');
     }
 </script>
 
-<section id="catalog-section" class="section hidden">
+<section id="catalog-section" class="section">
     <div class="container">
         <h2 class="section-title">Общий Каталог</h2>
         <p class="section-subtitle">Выберите задания и товары для вашего магазина</p>

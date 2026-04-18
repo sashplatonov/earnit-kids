@@ -1,13 +1,12 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { scheduleSave } from '$lib/services/save';
     import { earnCoins, requestCoins } from '$lib/services/api';
+    import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { showToast } from '$lib/stores/toasts';
 
     $: tasks = $appStore.tasks;
     $: isAdmin = $appStore.isAdmin;
-    $: balance = $appStore.balance;
 
     // Group tasks by groupName
     $: groups = [...new Set(tasks.map(t => t.groupName ?? 'Без группы'))];
@@ -24,13 +23,15 @@
         if (isAdmin) {
             const res = await earnCoins(taskId, childId) as Record<string, unknown> | null;
             if (res) {
-                appStore.updateBalance(task.coins);
-                scheduleSave();
+                applyDataSnapshot(res);
                 showToast(`+${task.coins} монет — ${task.title}`, 'success');
             }
         } else {
-            const res = await requestCoins(taskId, childId) as Record<string, unknown> | null;
-            if (res) showToast('Заявка отправлена!', 'success');
+            const res = await requestCoins(taskId) as Record<string, unknown> | null;
+            if (res) {
+                applyDataSnapshot(res);
+                showToast('Заявка отправлена!', 'success');
+            }
         }
     }
 

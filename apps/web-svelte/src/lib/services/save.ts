@@ -4,7 +4,9 @@
  */
 import { get } from 'svelte/store';
 import { appStore } from '$lib/stores/app';
+import type { AppState } from '$lib/stores/app';
 import { saveDataToServer } from './api';
+import { normalizeServerData } from './serverContract';
 
 let pendingSavePayload: Record<string, unknown> | null = null;
 let saveInFlight: Promise<boolean> = Promise.resolve(false);
@@ -22,6 +24,21 @@ function buildPayload(): Record<string, unknown> {
     };
 }
 
+/** Apply a POST /api/data server response back into the store (updates IDs etc.). */
+function applyServerResponse(data: unknown): void {
+    if (!data || typeof data !== 'object') return;
+    const normalized = normalizeServerData(data as Record<string, unknown>);
+    const partial: Partial<AppState> = {};
+    if (Array.isArray(normalized.tasks)) partial.tasks = normalized.tasks as AppState['tasks'];
+    if (Array.isArray(normalized.shop)) partial.shopItems = normalized.shop as AppState['shopItems'];
+    if (Array.isArray(normalized.history)) partial.history = normalized.history as AppState['history'];
+    if (Array.isArray(normalized.requests)) partial.requests = normalized.requests as AppState['requests'];
+    if (typeof (data as Record<string, unknown>).balance === 'number') {
+        partial.balance = (data as Record<string, unknown>).balance as number;
+    }
+    if (Object.keys(partial).length > 0) appStore.setState(partial);
+}
+
 export function scheduleSave() {
     pendingSavePayload = buildPayload();
     void flushPendingSave();
@@ -35,7 +52,11 @@ export function flushPendingSave(options: { keepalive?: boolean } = {}): Promise
 
     saveInFlight = saveInFlight
         .catch(() => false)
-        .then(() => saveDataToServer(payload, options));
+        .then(async () => {
+            const data = await saveDataToServer(payload, options);
+            if (data) applyServerResponse(data);
+            return data !== null;
+        });
 
     return saveInFlight;
 }

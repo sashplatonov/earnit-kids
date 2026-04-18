@@ -20,7 +20,7 @@
     }
 </script>
 
-<section class="section hidden" id="limits-section">
+<section class="section" id="limits-section">
     <div class="section__header">
         <h2>Лимиты</h2>
         <p class="section__subtitle">Деньги и монеты под контролем — изменения мгновенно применяются ко всем детям.</p>

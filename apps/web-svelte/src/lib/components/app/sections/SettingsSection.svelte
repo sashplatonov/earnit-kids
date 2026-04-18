@@ -1,6 +1,6 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
-    import { adminSaveChild, adminGetChildLink, adminRegenerateChildLink } from '$lib/services/api';
+    import { adminSaveChildSettings, updateOwnNickname, adminGetChildLink, adminRegenerateChildLink } from '$lib/services/api';
     import { fetchWithCsrf } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
 
@@ -17,7 +17,11 @@
     $: { childNameInput = $appStore.childNickname ?? ''; }
 
     async function saveProfile() {
-        await adminSaveChild({ id: currentChildId, nickname: childNameInput });
+        if (isAdmin) {
+            await adminSaveChildSettings(currentChildId, { name: childNameInput });
+        } else {
+            await updateOwnNickname(childNameInput);
+        }
         appStore.setState({ childNickname: childNameInput });
         showToast('Имя сохранено', 'success');
     }
@@ -63,7 +67,7 @@
     onMount(() => { if (isAdmin && currentChildId) void loadChildLink(); });
 </script>
 
-<section class="section hidden" id="settings-section">
+<section class="section" id="settings-section">
     <div class="section__header">
         <h2>Настройки</h2>
     </div>
@@ -162,7 +166,7 @@
 
 {#if isAdmin}
 <!-- Child access link section -->
-<section class="section hidden" id="child-link-section">
+<section class="section" id="child-link-section">
     <div class="section__header">
         <h2>Доступ для ребенка</h2>
     </div>
