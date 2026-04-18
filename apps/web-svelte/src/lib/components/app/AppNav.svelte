@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import { tabStore } from '$lib/stores/tabs';
+    import ChildSwitcher from './ChildSwitcher.svelte';
 
     export let isAdmin: boolean = false;
     export let activeTab: string = 'analytics';
@@ -21,6 +22,7 @@
 <nav class="nav" aria-label="Основная навигация">
     <div class="nav__primary" role="tablist">
         {#if isAdmin}
+            <ChildSwitcher />
             <div class="nav__group nav__group--parent">
                 <button class="nav__btn" class:active={activeTab === 'analytics'}
                     role="tab" aria-selected={activeTab === 'analytics'} aria-controls="analytics-section"

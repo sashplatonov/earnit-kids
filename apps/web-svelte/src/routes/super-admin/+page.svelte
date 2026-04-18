@@ -259,7 +259,7 @@
         </div>
     </header>
 
-    <nav class="tabs" role="tablist" aria-label="Разделы административной панели">
+    <div class="tabs" role="tablist" aria-label="Разделы административной панели">
         {#each [
             ['families', 'Семьи EarnIt Kids'],
             ['catalog-tasks', 'Каталог задач'],
@@ -274,12 +274,12 @@
             {label}
         </button>
         {/each}
-    </nav>
+    </div>
 
     <main class="super-admin-panels">
         <!-- Families tab -->
         {#if activeTab === 'families'}
-        <section id="tab-families" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-families">
+        <div id="tab-families" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-families">
             <article class="panel families-panel">
                 <div class="panel__grid">
                     <article class="stat-card">
@@ -343,13 +343,13 @@
                 </div>
                 {/if}
             </article>
-        </section>
+        </div>
 
         <!-- Catalog tabs -->
         {:else if activeTab === 'catalog-tasks' || activeTab === 'catalog-products'}
         {@const type = activeTab === 'catalog-tasks' ? 'tasks' : 'products'}
         {@const items = activeTab === 'catalog-tasks' ? catalogTasks : catalogProducts}
-        <section id="tab-{activeTab}" class="tab-content active" role="tabpanel">
+        <div id="tab-{activeTab}" class="tab-content active" role="tabpanel">
             <article class="panel catalog-panel">
                 <header class="panel__header">
                     <div>
@@ -402,11 +402,11 @@
                 <p class="panel-state panel-state--error" aria-live="polite">Ошибка сохранения</p>
                 {/if}
             </article>
-        </section>
+        </div>
 
         <!-- Database tab -->
         {:else if activeTab === 'database'}
-        <section id="tab-database" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-database">
+        <div id="tab-database" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-database">
             <article class="panel db-panel">
                 <header class="panel__header">
                     <div>
@@ -450,11 +450,11 @@
                 </div>
                 {/if}
             </article>
-        </section>
+        </div>
 
         <!-- System tab -->
         {:else if activeTab === 'system'}
-        <section id="tab-system" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-system">
+        <div id="tab-system" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-system">
             <article class="panel system-panel" id="system-panel">
                 <header class="panel__header">
                     <div>
@@ -489,7 +489,7 @@
                     <dt>Backend</dt><dd>{data.appConfig.backendOrigin}</dd>
                 </dl>
             </article>
-        </section>
+        </div>
         {/if}
     </main>
 </div>

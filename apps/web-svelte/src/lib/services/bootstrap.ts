@@ -56,10 +56,10 @@ export async function initializeFromServer(): Promise<boolean> {
                 const childRecord = childData as Record<string, unknown>;
                 appStore.setState({
                     balance: (childRecord.balance as number) ?? 0,
-                    tasks: Array.isArray(childRecord.tasks) ? childRecord.tasks.map(normalizeTask) as AppState['tasks'] : [],
-                    shopItems: Array.isArray(childRecord.shop) ? childRecord.shop.map(normalizeShopItem) as AppState['shopItems'] : [],
-                    history: Array.isArray(childRecord.history) ? childRecord.history.map(normalizeHistoryEntry) as AppState['history'] : [],
-                    requests: Array.isArray(childRecord.requests) ? childRecord.requests.map(normalizeRequest) as AppState['requests'] : [],
+                    tasks: Array.isArray(childRecord.tasks) ? (childRecord.tasks.map(normalizeTask) as unknown as AppState['tasks']) : [],
+                    shopItems: Array.isArray(childRecord.shop) ? (childRecord.shop.map(normalizeShopItem) as unknown as AppState['shopItems']) : [],
+                    history: Array.isArray(childRecord.history) ? (childRecord.history.map(normalizeHistoryEntry) as unknown as AppState['history']) : [],
+                    requests: Array.isArray(childRecord.requests) ? (childRecord.requests.map(normalizeRequest) as unknown as AppState['requests']) : [],
                     childNickname: (childRecord.childNickname as string) ?? null,
                 });
             }
@@ -91,11 +91,36 @@ export function applyDataSnapshot(data: Record<string, unknown>): void {
     const current = get(appStore);
     const partial: Partial<AppState> = {};
     if (typeof data.balance === 'number') partial.balance = data.balance;
-    if (Array.isArray(normalized.tasks)) partial.tasks = normalized.tasks as AppState['tasks'];
-    if (Array.isArray(normalized.shop)) partial.shopItems = normalized.shop as AppState['shopItems'];
-    if (Array.isArray(normalized.history)) partial.history = normalized.history as AppState['history'];
-    if (Array.isArray(normalized.requests)) partial.requests = normalized.requests as AppState['requests'];
+    if (Array.isArray(normalized.tasks)) partial.tasks = (normalized.tasks as unknown as AppState['tasks']);
+    if (Array.isArray(normalized.shop)) partial.shopItems = (normalized.shop as unknown as AppState['shopItems']);
+    if (Array.isArray(normalized.history)) partial.history = (normalized.history as unknown as AppState['history']);
+    if (Array.isArray(normalized.requests)) partial.requests = (normalized.requests as unknown as AppState['requests']);
     // Preserve current child if server doesn't override it
     if (!partial.tasks?.length) partial.tasks = current.tasks;
     if (Object.keys(partial).length > 0) appStore.setState(partial);
+}
+
+/**
+ * Switch the active child (admin only) — loads child-specific data and
+ * persists the selection to localStorage so it survives page reloads.
+ */
+export async function switchChild(childId: string | number): Promise<void> {
+    persistLastChildId(childId);
+    appStore.setState({ currentChildId: childId, isLoading: true });
+
+    const childData = await loadDataFromServer(childId);
+    if (childData && typeof childData === 'object') {
+        const rec = childData as Record<string, unknown>;
+        appStore.setState({
+            balance: (rec.balance as number) ?? 0,
+            tasks: Array.isArray(rec.tasks) ? (rec.tasks.map(normalizeTask) as unknown as AppState['tasks']) : [],
+            shopItems: Array.isArray(rec.shop) ? (rec.shop.map(normalizeShopItem) as unknown as AppState['shopItems']) : [],
+            history: Array.isArray(rec.history) ? (rec.history.map(normalizeHistoryEntry) as unknown as AppState['history']) : [],
+            requests: Array.isArray(rec.requests) ? (rec.requests.map(normalizeRequest) as unknown as AppState['requests']) : [],
+            childNickname: (rec.childNickname as string) ?? null,
+            isLoading: false,
+        });
+    } else {
+        appStore.setState({ isLoading: false });
+    }
 }

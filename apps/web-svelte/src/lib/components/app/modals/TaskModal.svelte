@@ -48,7 +48,7 @@
             });
         } else {
             const newTask = { ...payload, id: payload.id ?? Date.now() };
-            appStore.setState({ tasks: [...$appStore.tasks, newTask as typeof $appStore.tasks[number]] });
+            appStore.setState({ tasks: [...$appStore.tasks, (newTask as unknown as typeof $appStore.tasks[number])] });
         }
         void scheduleSave();
         showToast(isEdit ? 'Задание сохранено' : 'Задание добавлено', 'success');
@@ -66,7 +66,7 @@
 </script>
 
 {#if isOpen}
-<dialog class="modal" role="dialog" aria-modal="true" id="task-modal" open>
+<dialog class="modal" aria-modal="true" id="task-modal" open>
     <div class="modal__content">
         <h3 id="task-modal-title">{isEdit ? 'Редактировать задание' : 'Добавить задание'}</h3>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { SvelteMap } from 'svelte/reactivity';
     import { appStore } from '$lib/stores/app';
     import { deleteHistoryItem } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
@@ -60,7 +61,7 @@
 
     // Group history by month
     $: monthGroups = (() => {
-        const map = new Map<string, { entries: typeof history; earned: number; spent: number }>();
+        const map = new SvelteMap<string, { entries: typeof history; earned: number; spent: number }>();
         for (const h of history) {
             const key = monthKey(h.createdAt as string);
             if (!map.has(key)) map.set(key, { entries: [], earned: 0, spent: 0 });

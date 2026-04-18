@@ -195,7 +195,7 @@
         <!-- Charts grid -->
         <div class="analytics-sections">
             <div class="analytics-group">
-                <h3 class="analytics-group-title">Задания <span id="tasks-total-coins" class="group-total-badge"></span></h3>
+                <h3 class="analytics-group-title">Задания <span id="tasks-total-coins" class="group-total-badge">{statsEarned > 0 ? `Всего: ${statsEarned}` : ''}</span></h3>
                 <div class="analytics-grid">
                     <div class="card analytics-chart-card">
                         <h4 class="card__subtitle">По сумме монет</h4>
@@ -213,7 +213,7 @@
             </div>
 
             <div class="analytics-group">
-                <h3 class="analytics-group-title">Магазин и траты <span id="items-total-coins" class="group-total-badge"></span></h3>
+                <h3 class="analytics-group-title">Магазин и траты <span id="items-total-coins" class="group-total-badge">{statsSpent > 0 ? `Всего: ${statsSpent}` : ''}</span></h3>
                 <div class="analytics-grid">
                     <div class="card analytics-chart-card">
                         <h4 class="card__subtitle">По сумме монет</h4>

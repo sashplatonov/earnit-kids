@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
     import type { PageData } from './$types';
@@ -111,7 +110,7 @@
             const { response, body } = await postJson('/api/login', { email, password });
 
             if (response.ok) {
-                await goto('/');
+                location.assign('/');
                 return;
             }
 

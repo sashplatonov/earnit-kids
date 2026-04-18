@@ -44,7 +44,7 @@
 
         <div class="filter-card">
             <div class="filter-group">
-                <label>
+                <label for="catalog-age-min-filter">
                     Возраст: от <span id="age-min-val">{ageMin}</span>
                     до <span id="age-max-val">{ageMax}</span> лет
                 </label>

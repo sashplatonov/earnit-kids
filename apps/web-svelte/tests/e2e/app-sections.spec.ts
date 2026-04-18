@@ -219,7 +219,7 @@ test.describe('Analytics section (Достижения)', () => {
         const monthBtn = page.getByRole('button', { name: 'Месяц' });
         await monthBtn.click();
         // After click, button should be active/selected
-        const isActive = await monthBtn.evaluate(el => el.classList.contains('active') || el.getAttribute('aria-pressed') === 'true' || el.getAttribute('aria-selected') === 'true');
+        await monthBtn.evaluate(el => el.classList.contains('active') || el.getAttribute('aria-pressed') === 'true' || el.getAttribute('aria-selected') === 'true');
         // Just verify we can click without errors
         await expect(monthBtn).toBeVisible();
     });

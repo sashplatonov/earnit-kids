@@ -29,10 +29,10 @@ function applyServerResponse(data: unknown): void {
     if (!data || typeof data !== 'object') return;
     const normalized = normalizeServerData(data as Record<string, unknown>);
     const partial: Partial<AppState> = {};
-    if (Array.isArray(normalized.tasks)) partial.tasks = normalized.tasks as AppState['tasks'];
-    if (Array.isArray(normalized.shop)) partial.shopItems = normalized.shop as AppState['shopItems'];
-    if (Array.isArray(normalized.history)) partial.history = normalized.history as AppState['history'];
-    if (Array.isArray(normalized.requests)) partial.requests = normalized.requests as AppState['requests'];
+    if (Array.isArray(normalized.tasks)) partial.tasks = (normalized.tasks as unknown as AppState['tasks']);
+    if (Array.isArray(normalized.shop)) partial.shopItems = (normalized.shop as unknown as AppState['shopItems']);
+    if (Array.isArray(normalized.history)) partial.history = (normalized.history as unknown as AppState['history']);
+    if (Array.isArray(normalized.requests)) partial.requests = (normalized.requests as unknown as AppState['requests']);
     if (typeof (data as Record<string, unknown>).balance === 'number') {
         partial.balance = (data as Record<string, unknown>).balance as number;
     }

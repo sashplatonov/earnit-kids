@@ -73,7 +73,7 @@
 </script>
 
 {#if isOpen}
-<dialog class="modal" role="dialog" aria-modal="true" id="shop-modal" open>
+<dialog class="modal" aria-modal="true" id="shop-modal" open>
     <div class="modal__content">
         <h3 id="shop-modal-title">{isEdit ? 'Редактировать товар' : 'Добавить товар'}</h3>
 
