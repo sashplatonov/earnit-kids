@@ -3,10 +3,12 @@ import { expect, test } from '@playwright/test';
 test('public marketing routes render the legacy parity content', async ({ page, request }) => {
     const healthResponse = await request.get('/healthz');
     expect(healthResponse.ok()).toBeTruthy();
+    expect(healthResponse.headers()['x-content-type-options']).toBe('nosniff');
+    expect(healthResponse.headers()['x-frame-options']).toBe('DENY');
 
     const healthPayload = await healthResponse.json();
     expect(healthPayload.status).toBe('ok');
-    expect(healthPayload.service).toBe('web-svelte');
+    expect(healthPayload.service).toBe('web');
 
     await page.goto('/');
     await expect(page).toHaveTitle('EarnIt Kids - Family tasks and rewards');

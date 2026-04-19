@@ -14,22 +14,21 @@ apps/backend/**/*.class
 *.ear
 
 # ── Frontend (Node / Web) ─────────────────────
+mobile/node_modules/
 web/node_modules/
-apps/web/node_modules/
+apps/web-svelte/node_modules/
 web/.next/
-apps/web/.next/
 web/dist/
-apps/web/dist/
 web/build/
-apps/web/build/
+apps/web-svelte/build/
 web/.nuxt/
-apps/web/.nuxt/
 web/.output/
-apps/web/.output/
+apps/web-svelte/.svelte-kit/
 web/coverage/
-apps/web/coverage/
 web/.turbo/
-apps/web/.turbo/
+apps/web-svelte/test-results/
+apps/web-svelte/playwright-report/
+apps/web-svelte/.copilot_lint.txt
 
 # ── IDE ───────────────────────────────────────
 .idea/
@@ -46,6 +45,8 @@ desktop.ini
 # ── Logs ──────────────────────────────────────
 *.log
 logs/
+apps/backend/mvn-*.txt
+apps/backend/*build.log
 
 # Ignore IDE / build outputs
 /out/

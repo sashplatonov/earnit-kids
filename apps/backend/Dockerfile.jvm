@@ -14,7 +14,14 @@ RUN sh ./mvnw -DskipTests -Dcheckstyle.skip=true package
 FROM eclipse-temurin:25-jdk
 WORKDIR /work
 
-RUN apt-get update && apt-get install -y wget ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+	&& apt-get install -y wget ca-certificates gnupg \
+	&& install -d /usr/share/postgresql-common/pgdg \
+	&& wget -qO /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+	&& echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo ${VERSION_CODENAME})-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+	&& apt-get update \
+	&& apt-get install -y postgresql-client-18 \
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /workspace/target/quarkus-app/lib/ ./lib/
 COPY --from=build /workspace/target/quarkus-app/*.jar ./

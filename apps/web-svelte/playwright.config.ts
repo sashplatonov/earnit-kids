@@ -7,14 +7,14 @@ export default defineConfig({
     workers: 1,
     reporter: 'line',
     use: {
-        baseURL: 'http://localhost:4174',
+        baseURL: 'http://127.0.0.1:4174',
         headless: true,
         serviceWorkers: 'block',
     },
     webServer: {
-        command: 'npm run build && npm run preview -- --host 0.0.0.0 --port 4174',
-        url: 'http://localhost:4174',
-        reuseExistingServer: true,
+        command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4174',
+        url: 'http://127.0.0.1:4174',
+        reuseExistingServer: false,
         timeout: 120_000,
     },
 });

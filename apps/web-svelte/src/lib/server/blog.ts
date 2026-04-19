@@ -1,5 +1,5 @@
 /**
- * Blog post loader — reads markdown files from apps/web/data/blog/
+ * Blog post loader — reads markdown files from apps/web-svelte/data/blog/
  * Mirrors the legacy blogController.js behaviour.
  */
 import { readdir, readFile } from 'fs/promises';
@@ -8,7 +8,7 @@ import { marked } from 'marked';
 import fm from 'front-matter';
 import { fileURLToPath } from 'url';
 
-const BLOG_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../../web/data/blog');
+const BLOG_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../data/blog');
 
 export interface BlogPost {
     slug: string;

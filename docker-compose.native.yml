@@ -2,13 +2,13 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: apps/web-svelte/Dockerfile
     env_file:
       - .env
     environment:
+      # Web edge
       PORT: ${WEB_INTERNAL_PORT}
       BACKEND_URL: http://backend:${BACKEND_INTERNAL_PORT}
-      DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
       PUBLIC_BASE_URL: ${APP_URL}
     depends_on:
       backend:
@@ -30,14 +30,15 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile
       args:
-        NATIVE_IMAGE_XMX: ${NATIVE_IMAGE_XMX}
+        JAVA_XMX: ${JAVA_XMX}
     env_file:
       - .env
     environment:
+      # Backend
       QUARKUS_HTTP_PORT: ${BACKEND_INTERNAL_PORT}
       FRONTEND_URL: ${APP_URL}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      DATABASE_URL: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
     expose:
       - "${BACKEND_INTERNAL_PORT}"
     restart: unless-stopped
@@ -51,13 +52,14 @@ services:
       - db
     image: postgres:18-alpine
     environment:
+      # Database
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - earnit_kids_postgres_data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_HOST_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
       interval: 10s

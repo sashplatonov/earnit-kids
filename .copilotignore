@@ -11,5 +11,3 @@
 .env.local
 .env.production
 apps/backend/target/
-apps/web/node_modules/
-apps/web/coverage/

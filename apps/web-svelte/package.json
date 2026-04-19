@@ -7,10 +7,14 @@
     "prepare": "svelte-kit sync",
     "dev": "vite dev --host 0.0.0.0 --port 4173",
     "build": "vite build",
+    "start": "node scripts/preview.mjs",
     "preview": "node scripts/preview.mjs",
     "lint": "svelte-kit sync && eslint . && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

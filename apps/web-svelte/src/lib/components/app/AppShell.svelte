@@ -18,7 +18,9 @@
     import type { SessionSnapshot } from '$lib/types/session';
     import { tabStore } from '$lib/stores/tabs';
     import { appStore, pendingRequestsCount } from '$lib/stores/app';
-    import { initializeFromServer } from '$lib/services/bootstrap';
+    import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
+    import { initializePwa } from '$lib/services/pwa';
+    import { initializePushNotifications } from '$lib/services/push';
     import { startWebSocket, stopWebSocket } from '$lib/services/websocket';
 
     export let session: SessionSnapshot;
@@ -32,12 +34,21 @@
 
     onMount(() => {
         void initializeFromServer();
+        void initializePwa(() => refreshData(true)).then(() => initializePushNotifications());
         startWebSocket();
         return () => { stopWebSocket(); };
     });
 </script>
 
 <div class="app" id="app">
+    <div class="pull-refresh-indicator" id="pull-refresh-indicator" aria-hidden="true">
+        <span class="pull-refresh-indicator__icon">↻</span>
+        <span class="pull-refresh-indicator__text" id="pull-refresh-indicator-text">Потяните для обновления</span>
+    </div>
+    <div class="offline-banner hidden" id="offline-status-banner" role="status" aria-live="polite">
+        Сейчас оффлайн: история доступна, новые действия отправятся после восстановления сети.
+    </div>
+
     <AppHeader {isAdmin} {balance} childNickname={String(childNickname)} />
     <AppNav {isAdmin} {activeTab} requestsCount={reqCount}
         on:switch={e => tabStore.setTab(e.detail as import('$lib/stores/tabs').TabName)} />

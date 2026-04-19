@@ -1,6 +1,6 @@
-# EarnIt Kids Svelte Migration Workspace
+# EarnIt Kids Svelte Web Runtime
 
-This workspace implements the first migration foundation slice for the SvelteKit backlog.
+This workspace serves as the primary SvelteKit web edge/runtime for the project.
 
 ## Local Commands
 
@@ -10,12 +10,12 @@ npm install
 npm run lint
 npm test
 npm run build
+npm run start
 npm run test:e2e
 ```
 
 ## Local Topology
 
-- Legacy web: `http://localhost:3000`
 - SvelteKit dev: `http://localhost:4173`
 - SvelteKit preview and Playwright: `http://localhost:4174`
 - Backend: `http://localhost:8080`
@@ -23,9 +23,9 @@ npm run test:e2e
 ## Environment Variables
 
 - `BACKEND_ORIGIN`: backend base URL. Default: `http://localhost:8080`
+- `BACKEND_URL`: legacy-compatible alias for the backend base URL used by Docker Compose.
 - `SESSION_PATH`: server-side session snapshot endpoint. Default: `/api/page-data/session`
 - `WS_PATH`: backend websocket path reserved for the migration seam. Default: `/ws`
-- `LEGACY_WEB_ORIGIN`: legacy web app origin for side-by-side parity work. Default: `http://localhost:3000`
 - `DEV_PORT`: local dev port for SvelteKit. Default: `4173`
 - `PREVIEW_PORT`: local preview port for SvelteKit and Playwright. Default: `4174`
 
@@ -33,17 +33,17 @@ npm run test:e2e
 
 Completed in this pass:
 
-- Independent SvelteKit 2 workspace with TypeScript and `adapter-node`
-- Independent `lint`, `build`, `test`, and `test:e2e` commands
+- SvelteKit 2 workspace with TypeScript and `adapter-node`
+- Primary Node edge runtime for `/healthz`, `/api/*`, `/login-child/*`, and `/ws`
+- Docker runtime image for the compose `web` service
 - Server-side session bootstrap helper for the root route
-- `healthz` endpoint for deployment probes
-- Backend proxy routes for `/api/*` and `/login-child/*`
-- Public route placeholders for the current URL matrix foundation
+- Local blog markdown under `data/blog/`
+- Static verification endpoints under `static/` and `static/.well-known/`
+- Legacy-compatible security headers and gzip handling in the edge runtime
+- Service worker registration, install CTA, offline banner, and pull-to-refresh wiring
+- `lint`, `build`, `test`, and `test:e2e` commands
 
 Still pending before parity:
 
-- Legacy public content migration
-- Authenticated family shell parity
-- WebSocket proxy/cutover strategy
-- Super-admin console migration
-- Full UI parity validation
+- Wider authenticated E2E coverage against live backend data
+- Wider production-like smoke coverage for mobile deep-link and platform association endpoints

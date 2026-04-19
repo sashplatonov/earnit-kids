@@ -134,9 +134,3 @@ export const appStore = createAppStore();
 export const pendingRequestsCount = derived(appStore, ($app) =>
     $app.requests.filter(r => r.status === 'pending').length
 );
-
-/** Derived: current child for admin view */
-export const currentChild = derived(appStore, ($app) => {
-    if (!$app.isAdmin || !$app.currentChildId) return null;
-    return $app.children.find(c => String(c.id) === String($app.currentChildId)) ?? null;
-});
