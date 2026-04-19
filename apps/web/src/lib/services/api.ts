@@ -83,6 +83,25 @@ async function deleteResource(url: string, errorMsg?: string): Promise<boolean> 
     }
 }
 
+type ChildLinkPayload = {
+    link?: string;
+    token?: string;
+};
+
+function normalizeChildLink(payload: ChildLinkPayload | null): { link: string } | null {
+    if (!payload) return null;
+    if (payload.link) return { link: payload.link };
+    if (!payload.token) return null;
+
+    const origin = typeof location !== 'undefined' && location.origin
+        ? location.origin.replace(/\/+$/, '')
+        : '';
+
+    return {
+        link: `${origin}/login-child/${payload.token}`,
+    };
+}
+
 export async function loadDataFromServer(childId?: string | number | null) {
     const q = childId != null ? `?childId=${encodeURIComponent(childId)}` : '';
     try {
@@ -178,12 +197,16 @@ export const adminDeleteChild = (childId: unknown) =>
     deleteResource(`/api/children/${encodeURIComponent(String(childId))}`, 'Delete child failed');
 
 /** Get the current login link/token for a child. */
-export const adminGetChildLink = (childId: unknown) =>
-    fetchGet<{ link: string }>(`/api/children/${encodeURIComponent(String(childId))}/link`);
+export async function adminGetChildLink(childId: unknown) {
+    const payload = await fetchGet<ChildLinkPayload>(`/api/children/${encodeURIComponent(String(childId))}/link`);
+    return normalizeChildLink(payload);
+}
 
 /** Regenerate the login token for a child. */
-export const adminRegenerateChildLink = (childId: unknown) =>
-    postJson<{ link: string }>(`/api/children/${encodeURIComponent(String(childId))}/regenerate-token`, {});
+export async function adminRegenerateChildLink(childId: unknown) {
+    const payload = await postJson<ChildLinkPayload>(`/api/children/${encodeURIComponent(String(childId))}/regenerate-token`, {});
+    return normalizeChildLink(payload);
+}
 
 /** Save child spending/coin limits. Maps to POST /api/children/{id}/settings. */
 export const adminSaveLimits = (childId: unknown, limits: { dailyCoinLimit?: number; monthlyLimit?: number }) =>

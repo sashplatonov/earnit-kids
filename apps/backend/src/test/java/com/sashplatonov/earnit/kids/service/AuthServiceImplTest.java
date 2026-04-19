@@ -202,6 +202,28 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void registerFamily_thenAuthenticateAdmin_canLoginImmediately() {
+        String email = "flow@test.com";
+        String password = "strong123";
+        FamilyEntity createdFamily = mockFamily("fam_flow", email, passwordHasher.hash(password), false, true);
+
+        when(familyRepository.findByEmail(email)).thenReturn(Optional.empty(), Optional.of(createdFamily));
+        when(familyRepository.create(anyString(), anyString(), anyString(), anyBoolean(), any()))
+            .thenReturn(Optional.of(createdFamily));
+        when(familyRepository.updateLastActivity("fam_flow")).thenReturn(true);
+
+        OperationResult<AuthPayload> registerResult = authService.registerFamily(email, password);
+        OperationResult<AuthPayload> loginResult = authService.authenticateAdmin(email, password);
+
+        assertThat(registerResult).isInstanceOf(OperationResult.Success.class);
+        assertThat(loginResult).isInstanceOf(OperationResult.Success.class);
+
+        AuthPayload payload = ((OperationResult.Success<AuthPayload>) loginResult).value();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.familyId()).isEqualTo("fam_flow");
+    }
+
+    @Test
     void registerFamily_emailVerificationEnabled_generatesHexVerificationToken() {
         AuthServiceImpl serviceWithVerification = new AuthServiceImpl(
             familyRepository,

@@ -15,6 +15,7 @@ import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
+import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
@@ -151,6 +152,16 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(201);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 77)));
+    }
+
+    @Test
+    void getChildLink_adminReturnsTokenPayload() {
+        when(familyService.getChildLoginLink("fam-1", 10)).thenReturn(OperationResult.success("child-token"));
+
+        Response response = resource.getChildLink(contextWithAuth(adminAuth()), 10);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getEntity()).isEqualTo(new TokenResponse("child-token"));
     }
 
     @Test

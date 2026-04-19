@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { afterUpdate, onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
     import { adminSaveChildSettings, updateOwnNickname, adminGetChildLink, adminRegenerateChildLink } from '$lib/services/api';
     import { fetchWithCsrf } from '$lib/services/api';
@@ -13,8 +14,24 @@
     let newPassword = '';
     let childLink = '';
     let linkCopied = false;
+    let childLinkOwnerId: string | number | null = null;
 
     $: { childNameInput = $appStore.childNickname ?? ''; }
+
+    onMount(() => {
+        if (!isAdmin || currentChildId == null) return;
+
+        childLinkOwnerId = currentChildId;
+        void loadChildLink(currentChildId);
+    });
+
+    afterUpdate(() => {
+        if (!isAdmin || currentChildId == null || String(childLinkOwnerId) === String(currentChildId)) return;
+
+        childLinkOwnerId = currentChildId;
+        childLink = '';
+        void loadChildLink(currentChildId);
+    });
 
     async function saveProfile() {
         if (isAdmin) {
@@ -42,9 +59,9 @@
         }
     }
 
-    async function loadChildLink() {
-        const res = await adminGetChildLink(currentChildId) as { link: string } | null;
-        if (res?.link) childLink = res.link;
+    async function loadChildLink(targetChildId = currentChildId) {
+        const res = await adminGetChildLink(targetChildId) as { link: string } | null;
+        if (res?.link && String(currentChildId) === String(targetChildId)) childLink = res.link;
     }
 
     async function regenerateLink() {
@@ -57,14 +74,14 @@
 
     async function copyLink() {
         if (!childLink) await loadChildLink();
+        if (!childLink) {
+            showToast('Не удалось получить ссылку', 'error');
+            return;
+        }
         await navigator.clipboard.writeText(childLink).catch(() => { /* */ });
         linkCopied = true;
         setTimeout(() => { linkCopied = false; }, 2000);
     }
-
-    // Load child link on mount if admin
-    import { onMount } from 'svelte';
-    onMount(() => { if (isAdmin && currentChildId) void loadChildLink(); });
 </script>
 
 <section class="section" id="settings-section">

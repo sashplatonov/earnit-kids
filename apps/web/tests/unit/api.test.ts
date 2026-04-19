@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { adminAddChild, fetchWithCsrf, logout } from '../../src/lib/services/api';
+import { adminAddChild, adminGetChildLink, adminRegenerateChildLink, fetchWithCsrf, logout } from '../../src/lib/services/api';
 
 describe('fetchWithCsrf', () => {
     afterEach(() => {
@@ -95,5 +95,41 @@ describe('fetchWithCsrf', () => {
         expect(headers.get('Content-Type')).toBe('application/json');
         expect(headers.get('X-CSRF-Token')).toBe('test-token');
         expect(result).toEqual({ id: 15, name: 'Маша' });
+    });
+
+    it('maps token child link payloads to absolute login urls', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(
+            new Response(JSON.stringify({ token: 'child-token-1' }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+            })
+        );
+
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('document', { cookie: 'app_role=admin; csrf_token=test-token' });
+        vi.stubGlobal('location', { origin: 'http://localhost:3001' });
+
+        const result = await adminGetChildLink(15);
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(result).toEqual({ link: 'http://localhost:3001/login-child/child-token-1' });
+    });
+
+    it('maps regenerated child tokens to absolute login urls', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(
+            new Response(JSON.stringify({ token: 'child-token-2' }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+            })
+        );
+
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('document', { cookie: 'app_role=admin; csrf_token=test-token' });
+        vi.stubGlobal('location', { origin: 'http://localhost:3001' });
+
+        const result = await adminRegenerateChildLink(15);
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(result).toEqual({ link: 'http://localhost:3001/login-child/child-token-2' });
     });
 });

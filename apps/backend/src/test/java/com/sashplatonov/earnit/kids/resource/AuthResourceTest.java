@@ -107,6 +107,16 @@ class AuthResourceTest {
     }
 
     @Test
+    void register_duplicateEmail_returnsConflict() {
+        when(authService.registerFamily("a@test.com", "secret123"))
+            .thenReturn(OperationResult.failure("Email already exists"));
+
+        Response response = resource.register(new RegisterRequest("a@test.com", "secret123"));
+
+        assertThat(response.getStatus()).isEqualTo(409);
+    }
+
+    @Test
     void forgotPassword_anyEmail_returnsOk() {
         Response response = resource.forgotPassword(new ForgotPasswordRequest("a@test.com"));
 

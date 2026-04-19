@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
+import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
@@ -82,6 +83,66 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void requestTaskCompletion_persistsPendingEarnRequest() {
+        ChildEntity child = child(10, 1, "Alice", 0);
+        TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
+        io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOf(task);
+        FamilyDataResponse payload = emptyPayload(false, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(taskRepository.find(
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            1,
+            10,
+            3001L
+        )).thenReturn(taskQuery);
+        when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L);
+
+        assertThat(successValue(result)).isEqualTo(payload);
+
+        ArgumentCaptor<PurchaseRequestEntity> captor = ArgumentCaptor.forClass(PurchaseRequestEntity.class);
+        verify(purchaseRequestRepository).persist(captor.capture());
+        assertThat(captor.getValue().getRequestType()).isEqualTo("earn");
+        assertThat(captor.getValue().getTaskId()).isEqualTo(3001L);
+        assertThat(captor.getValue().getTaskName()).isEqualTo("Убрать комнату");
+        assertThat(captor.getValue().getCoins()).isEqualTo(50);
+        verify(familyService).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
+    void requestItemPurchase_persistsPendingShopRequest() {
+        ChildEntity child = child(10, 1, "Alice", 50);
+        ShopItemEntity item = shopItem(10, 1, 2001L, "PlayStation", 50);
+        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
+        FamilyDataResponse payload = emptyPayload(false, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find(
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false",
+            1,
+            10,
+            2001L
+        )).thenReturn(itemQuery);
+        when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.requestItemPurchase("fam-1", 10, 2001L);
+
+        assertThat(successValue(result)).isEqualTo(payload);
+
+        ArgumentCaptor<PurchaseRequestEntity> captor = ArgumentCaptor.forClass(PurchaseRequestEntity.class);
+        verify(purchaseRequestRepository).persist(captor.capture());
+        assertThat(captor.getValue().getRequestType()).isEqualTo("shop_purchase");
+        assertThat(captor.getValue().getItemId()).isEqualTo(2001L);
+        assertThat(captor.getValue().getTaskName()).isEqualTo("PlayStation");
+        assertThat(captor.getValue().getCoins()).isEqualTo(50);
+        verify(familyService).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
     void approveRequest_purchase_updatesBalanceStatusAndHistory() {
         ChildEntity child = child(10, 1, "Alice", 20);
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
@@ -121,6 +182,49 @@ class FamilyActionServiceImplTest {
         assertThat(captor.getValue().getType()).isEqualTo("spend");
         assertThat(captor.getValue().getAmount()).isEqualTo(7);
         assertThat(captor.getValue().getDescription()).isEqualTo("Console");
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void approveRequest_task_updatesBalanceStatusAndHistory() {
+        ChildEntity child = child(10, 1, "Alice", 0);
+        PurchaseRequestEntity request = PurchaseRequestEntity.builder()
+            .id(4002L)
+            .familyId(1)
+            .childId(10)
+            .taskId(3001L)
+            .taskName("Убрать комнату")
+            .coins(50)
+            .requestType("earn")
+            .status("pending")
+            .moneyAmount(0)
+            .build();
+        TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
+        io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOf(task);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(purchaseRequestRepository.findByIdOptional(4002L)).thenReturn(Optional.of(request));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(taskRepository.find(
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            1,
+            10,
+            3001L
+        )).thenReturn(taskQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.approveRequest("fam-1", 10, 4002L);
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        assertThat(child.getBalance()).isEqualTo(50);
+        assertThat(request.getStatus()).isEqualTo("approved");
+
+        ArgumentCaptor<HistoryEntryEntity> captor = ArgumentCaptor.forClass(HistoryEntryEntity.class);
+        verify(historyRepository).persist(captor.capture());
+        assertThat(captor.getValue().getType()).isEqualTo("earn");
+        assertThat(captor.getValue().getAmount()).isEqualTo(50);
+        assertThat(captor.getValue().getDescription()).isEqualTo("Убрать комнату");
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
@@ -194,6 +298,18 @@ class FamilyActionServiceImplTest {
             .groupName("Fun")
             .comment("Reward")
             .moneyLimit(250)
+            .build();
+    }
+
+    private static TaskEntity task(int childId, int familyId, long taskId, String name, int coins) {
+        return TaskEntity.builder()
+            .familyId(familyId)
+            .childId(childId)
+            .taskId(taskId)
+            .name(name)
+            .coins(coins)
+            .groupName("Home")
+            .comment("Task")
             .build();
     }
 }
