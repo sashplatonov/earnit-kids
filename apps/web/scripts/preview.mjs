@@ -201,5 +201,5 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.listen(Number(process.env.PORT), process.env.HOST, () => {
-    console.log(`web-svelte edge listening on ${process.env.HOST}:${process.env.PORT}`);
+    console.log(`web edge listening on ${process.env.HOST}:${process.env.PORT}`);
 });

@@ -1,5 +1,5 @@
 /**
- * Blog post loader — reads markdown files from apps/web-svelte/data/blog/
+ * Blog post loader — reads markdown files from apps/web/data/blog/
  * Mirrors the legacy blogController.js behaviour.
  */
 import { readdir, readFile } from 'fs/promises';

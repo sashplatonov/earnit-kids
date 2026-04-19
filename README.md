@@ -14,7 +14,7 @@
 EarnIt Kids is a split-stack application with:
 
 - `apps/backend/`: a Quarkus 3 backend targeting Java 25
-- `apps/web-svelte/`: the active SvelteKit web edge/runtime used by Docker Compose
+- `apps/web/`: the active SvelteKit web edge/runtime used by Docker Compose
 - `mobile/`: mobile packaging, Capacitor configuration, and platform assets
 
 The backend now expects Java 25. If your shell defaults to another JDK, export `JAVA_HOME` before running Maven commands.
@@ -47,7 +47,7 @@ Default local ports:
 ## 📁 Repository Structure
 
 - `apps/backend/`: Quarkus REST API, persistence layer, Flyway migrations, Maven tests
-- `apps/web-svelte/`: SvelteKit app, Node edge server, blog content, Vitest and Playwright checks
+- `apps/web/`: SvelteKit app, Node edge server, blog content, Vitest and Playwright checks
 - `mobile/`: Capacitor configuration, mobile assets, mobile-specific README files
 - `docs/`: architecture and design documentation
 - `docker-compose.yml`: local Docker Compose for native mode
@@ -87,10 +87,10 @@ Useful backend URLs in dev mode:
 
 ## 🌐 Web Commands
 
-Run from `apps/web-svelte/`.
+Run from `apps/web/`.
 
 ```bash
-cd apps/web-svelte
+cd apps/web
 npm install
 npm run lint
 npm test
@@ -128,7 +128,7 @@ Stop native mode:
 docker compose down
 ```
 
-> **Note:** the compose `web` service now builds from `apps/web-svelte/Dockerfile`. `docker-compose.yml` still uses `apps/backend/Dockerfile` for native mode, and `docker-compose.jvm.yml` uses `apps/backend/Dockerfile.jvm` for JVM mode.
+> **Note:** the compose `web` service now builds from `apps/web/Dockerfile`. `docker-compose.yml` still uses `apps/backend/Dockerfile` for native mode, and `docker-compose.jvm.yml` uses `apps/backend/Dockerfile.jvm` for JVM mode.
 > Docker Compose reads the root `.env`, then overrides internal URLs such as `BACKEND_URL` and backend `DATABASE_URL` inside containers.
 > If `3000` or `5432` are already occupied locally, override `WEB_PORT` or `DB_HOST_PORT` when running compose instead of changing the container-internal ports.
 

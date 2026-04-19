@@ -10,7 +10,7 @@ function buildForwardedHeaders(event: RequestEvent): Headers {
 
     headers.set('accept', 'application/json');
     headers.set('cookie', requestHeaders.get('cookie') ?? '');
-    headers.set('user-agent', requestHeaders.get('user-agent') ?? 'apps-web-svelte');
+    headers.set('user-agent', requestHeaders.get('user-agent') ?? 'apps-web');
     headers.set('x-forwarded-host', requestHeaders.get('x-forwarded-host') ?? event.url.host);
     headers.set('x-forwarded-proto', requestHeaders.get('x-forwarded-proto') ?? event.url.protocol.replace(':', ''));
 

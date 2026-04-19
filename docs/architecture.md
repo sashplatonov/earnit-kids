@@ -19,7 +19,7 @@
 EarnIt Kids is split into a Quarkus backend and a SvelteKit-based Node.js web edge.
 
 - `apps/backend/` owns authentication, family/child operations, analytics, persistence, and Flyway migrations.
-- `apps/web-svelte/` serves the web experience, same-origin proxy edge, public pages, static compliance endpoints, and blog content.
+- `apps/web/` serves the web experience, same-origin proxy edge, public pages, static compliance endpoints, and blog content.
 - `mobile/` contains Capacitor packaging, signing material, and mobile platform support assets.
 
 The backend is the source of truth for session cookies, family state, child state, analytics, and approval workflows.

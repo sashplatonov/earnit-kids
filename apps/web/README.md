@@ -5,7 +5,7 @@ This workspace serves as the primary SvelteKit web edge/runtime for the project.
 ## Local Commands
 
 ```bash
-cd apps/web-svelte
+cd apps/web
 npm install
 npm run lint
 npm test

@@ -1,21 +1,21 @@
 FROM node:20-alpine AS build
-WORKDIR /workspace/web-svelte
+WORKDIR /workspace/web
 
-COPY apps/web-svelte/package*.json ./
+COPY apps/web/package*.json ./
 RUN npm ci
 
-COPY apps/web-svelte ./
+COPY apps/web ./
 RUN npm run build
 
 FROM node:20-alpine
-WORKDIR /workspace/web-svelte
+WORKDIR /workspace/web
 
-COPY apps/web-svelte/package*.json ./
+COPY apps/web/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
-COPY --from=build /workspace/web-svelte/build ./build
-COPY --from=build /workspace/web-svelte/data ./data
-COPY --from=build /workspace/web-svelte/scripts ./scripts
+COPY --from=build /workspace/web/build ./build
+COPY --from=build /workspace/web/data ./data
+COPY --from=build /workspace/web/scripts ./scripts
 
 ENV NODE_ENV=production
 ENV PORT=3000
