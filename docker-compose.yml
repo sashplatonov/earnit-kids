@@ -34,9 +34,9 @@ services:
     env_file:
       - .env
     environment:
-      # Backend
+      # Backend (explicit overrides so shell vars don't shadow .env)
       QUARKUS_HTTP_PORT: ${BACKEND_INTERNAL_PORT}
-      FRONTEND_URL: ${APP_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5001}
       JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
     expose:

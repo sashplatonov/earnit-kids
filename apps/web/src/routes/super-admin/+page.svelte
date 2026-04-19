@@ -16,6 +16,22 @@
     let familiesStatus = 'all';
     let familiesSort = 'created';
 
+    // Family detail state
+    type FamilyDetail = {
+        familyId: string;
+        familyInfo: Record<string, unknown>;
+        data: {
+            balance?: number;
+            tasks?: Array<Record<string, unknown>>;
+            shop?: Array<Record<string, unknown>>;
+            history?: Array<Record<string, unknown>>;
+            requests?: Array<Record<string, unknown>>;
+        };
+    };
+    let familyDetail: FamilyDetail | null = null;
+    let familyDetailLoading = false;
+    let familyDetailError = '';
+
     // Catalog state
     type CatalogItem = { id?: number; name: string; group?: string; category?: string; coins?: number; price?: number; age_min?: number; age_max?: number; frequency?: { limit: number; period: string } | null; money_limit?: number | null };
     let catalogTasks: CatalogItem[] = [];
@@ -49,10 +65,10 @@
     async function loadFamilies() {
         familiesLoading = true; familiesError = '';
         try {
-            const res = await fetchWithCsrf('/api/admin/families');
+            const res = await fetchWithCsrf('/api/super/families');
             if (!res.ok) { familiesError = 'Ошибка загрузки'; return; }
-            const d = await res.json() as Array<Record<string, unknown>>;
-            families = d;
+            const d = await res.json() as { families?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>;
+            families = Array.isArray(d) ? d : (d as { families?: Array<Record<string, unknown>> }).families ?? [];
         } catch { familiesError = 'Сеть недоступна'; }
         finally { familiesLoading = false; }
     }
@@ -131,8 +147,23 @@
 
     async function loadSystem() {
         try {
-            const res = await fetchWithCsrf('/api/admin/system');
-            if (res.ok) systemInfo = await res.json() as SystemInfo;
+            const res = await fetchWithCsrf('/api/super/system/overview');
+            if (res.ok) {
+                const d = await res.json() as { process?: { rssBytes?: number; heapUsedBytes?: number; uptimeSec?: number }; os?: { loadAvg1?: number; availableProcessors?: number }; timestamp?: string };
+                const uptimeSec = d?.process?.uptimeSec ?? 0;
+                const hours = Math.floor(uptimeSec / 3600);
+                const mins = Math.floor((uptimeSec % 3600) / 60);
+                const rss = d?.process?.rssBytes ?? 0;
+                systemInfo = {
+                    memoryMB: rss > 0 ? Math.round(rss / 1048576) : undefined,
+                    uptime: uptimeSec > 0 ? `${hours}ч ${mins}мин` : undefined,
+                    version: 'Java/Quarkus',
+                    nodeVersion: undefined,
+                    dbStatus: undefined,
+                    cpu: d?.os?.loadAvg1 != null ? String(d.os.loadAvg1.toFixed(2)) : undefined,
+                    buildTs: d?.timestamp,
+                };
+            }
         } catch { /* */ }
     }
 
@@ -187,14 +218,40 @@
 
     async function blockFamily(familyId: unknown) {
         if (!confirm(`Заблокировать семью ${familyId}?`)) return;
-        const res = await fetchWithCsrf('/api/admin/families/block', {
+        const res = await fetchWithCsrf(`/api/super/family/${familyId}/block`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ familyId }),
+            body: JSON.stringify({ isBlocked: true }),
         });
         if (res.ok) {
-            families = families.map(f => f.id === familyId ? { ...f, blocked: true } : f);
+            families = families.map(f => f.id === familyId ? { ...f, isBlocked: true } : f);
         }
+    }
+
+    async function unblockFamily(familyId: unknown) {
+        if (!confirm(`Разблокировать семью ${familyId}?`)) return;
+        const res = await fetchWithCsrf(`/api/super/family/${familyId}/block`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isBlocked: false }),
+        });
+        if (res.ok) {
+            families = families.map(f => f.id === familyId ? { ...f, isBlocked: false } : f);
+        }
+    }
+
+    async function openFamilyDetail(familyId: unknown) {
+        familyDetailLoading = true; familyDetailError = ''; familyDetail = null;
+        try {
+            const res = await fetchWithCsrf(`/api/super/family/${familyId}/data`);
+            if (!res.ok) { familyDetailError = 'Ошибка загрузки данных семьи'; familyDetailLoading = false; return; }
+            familyDetail = await res.json() as FamilyDetail;
+        } catch { familyDetailError = 'Сеть недоступна'; }
+        finally { familyDetailLoading = false; }
+    }
+
+    function closeFamilyDetail() {
+        familyDetail = null; familyDetailError = '';
     }
 
     function latestFamily(fams: Array<Record<string, unknown>>) {
@@ -210,15 +267,16 @@
         if (familiesSort === 'created') {
             return new Date(String(b.createdAt ?? b.created_at ?? 0)).getTime() - new Date(String(a.createdAt ?? a.created_at ?? 0)).getTime();
         }
-        return (Number(b.lastActive ?? 0)) - (Number(a.lastActive ?? 0));
+        return new Date(String(b.lastActive ?? b.last_activity ?? 0)).getTime() - new Date(String(a.lastActive ?? a.last_activity ?? 0)).getTime();
     });
 
     $: filteredFamilies = sortedFamilies.filter(f => {
         const q = familiesSearch.toLowerCase();
         const matchSearch = !q || String(f.email ?? '').toLowerCase().includes(q) || String(f.id ?? '').includes(q);
+        const isBlocked = Boolean(f.isBlocked ?? f.blocked);
         const matchStatus = familiesStatus === 'all'
-            || (familiesStatus === 'blocked' && f.blocked)
-            || (familiesStatus === 'active' && !f.blocked);
+            || (familiesStatus === 'blocked' && isBlocked)
+            || (familiesStatus === 'active' && !isBlocked);
         return matchSearch && matchStatus;
     });
 
@@ -323,14 +381,20 @@
                 {:else}
                 <div id="families-list" class="families-list" aria-live="polite">
                     {#each filteredFamilies as family (family.id)}
-                    <article class="family-row" class:family-row--blocked={family.blocked}>
+                    {@const isFamilyBlocked = Boolean(family.isBlocked ?? family.blocked)}
+                    <article class="family-row" class:family-row--blocked={isFamilyBlocked}>
                         <div class="family-row__info">
                             <strong>{family.email ?? family.id}</strong>
                             <span class="family-row__meta">ID: {family.id}</span>
-                            {#if family.blocked}<span class="chip chip--danger">Заблокирован</span>{/if}
+                            {#if isFamilyBlocked}<span class="chip chip--danger">Заблокирован</span>{/if}
                         </div>
                         <div class="family-row__actions">
-                            {#if !family.blocked}
+                            <button class="btn btn--ghost btn--small"
+                                on:click={() => openFamilyDetail(family.id)}>Детали</button>
+                            {#if isFamilyBlocked}
+                            <button class="btn btn--success btn--small"
+                                on:click={() => unblockFamily(family.id)}>Разблокировать</button>
+                            {:else}
                             <button class="btn btn--danger btn--small"
                                 on:click={() => blockFamily(family.id)}>Заблокировать</button>
                             {/if}
@@ -493,6 +557,94 @@
         {/if}
     </main>
 </div>
+
+<!-- Family detail modal -->
+{#if familyDetailLoading || familyDetail || familyDetailError}
+<div class="modal" style="display:flex;" role="dialog" aria-modal="true" aria-label="Детали семьи">
+    <div class="modal-content" style="max-width: 720px; max-height: 80vh; overflow-y: auto;">
+        <button class="modal-close" type="button" on:click={closeFamilyDetail}>&times;</button>
+        {#if familyDetailLoading}
+            <div class="panel-state panel-state--loading">Загрузка данных семьи...</div>
+        {:else if familyDetailError}
+            <div class="panel-state panel-state--error">{familyDetailError}</div>
+        {:else if familyDetail}
+            {@const info = familyDetail.familyInfo}
+            <h2>Семья: {String(info.email ?? familyDetail.familyId)}</h2>
+            <dl style="display:grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; margin-bottom:1.5rem;">
+                <dt>ID</dt><dd>{familyDetail.familyId}</dd>
+                <dt>Email</dt><dd>{String(info.email ?? '—')}</dd>
+                <dt>Зарегистрирована</dt><dd>{String(info.created_at ?? '—')}</dd>
+                <dt>Активность</dt><dd>{String(info.last_activity ?? '—')}</dd>
+                <dt>Статус</dt><dd>{info.isBlocked ? '🔒 Заблокирована' : '✅ Активна'}</dd>
+                <dt>Детей</dt><dd>{String(info.childrenCount ?? 0)}</dd>
+            </dl>
+
+            {#if Array.isArray(info.children) && info.children.length > 0}
+            <h3>Дети</h3>
+            <table style="width:100%; border-collapse:collapse; margin-bottom:1.5rem; font-size:0.875rem;">
+                <thead><tr style="border-bottom:1px solid #e5e7eb;">
+                    <th style="text-align:left; padding:0.5rem;">Имя</th>
+                    <th style="text-align:right; padding:0.5rem;">Баланс</th>
+                    <th style="text-align:right; padding:0.5rem;">Лимит/мес.</th>
+                </tr></thead>
+                <tbody>
+                    {#each info.children as child ((child as Record<string,unknown>).id)}
+                    {@const c = child as Record<string, unknown>}
+                    <tr style="border-bottom:1px solid #f3f4f6;">
+                        <td style="padding:0.5rem;">{String(c.name ?? '—')}</td>
+                        <td style="text-align:right; padding:0.5rem;">{String(c.balance ?? 0)} 🪙</td>
+                        <td style="text-align:right; padding:0.5rem;">{c.monthly_limit ? String(c.monthly_limit) + ' 💶' : '—'}</td>
+                    </tr>
+                    {/each}
+                </tbody>
+            </table>
+            {/if}
+
+            {#if familyDetail.data.tasks && familyDetail.data.tasks.length > 0}
+            <h3>Задания ({familyDetail.data.tasks.length})</h3>
+            <ul style="margin-bottom:1.5rem; padding-left:1.25rem; font-size:0.875rem;">
+                {#each familyDetail.data.tasks as task ((task as Record<string,unknown>).id)}
+                {@const t = task as Record<string, unknown>}
+                <li>{String(t.name ?? '—')} — {String(t.coins ?? 0)} 🪙</li>
+                {/each}
+            </ul>
+            {/if}
+
+            {#if familyDetail.data.history && familyDetail.data.history.length > 0}
+            <h3>История транзакций (последние {familyDetail.data.history.length})</h3>
+            <table style="width:100%; border-collapse:collapse; margin-bottom:1.5rem; font-size:0.875rem;">
+                <thead><tr style="border-bottom:1px solid #e5e7eb;">
+                    <th style="text-align:left; padding:0.5rem;">Дата</th>
+                    <th style="text-align:left; padding:0.5rem;">Действие</th>
+                    <th style="text-align:right; padding:0.5rem;">Сумма</th>
+                </tr></thead>
+                <tbody>
+                    {#each familyDetail.data.history as entry ((entry as Record<string,unknown>).id)}
+                    {@const h = entry as Record<string, unknown>}
+                    <tr style="border-bottom:1px solid #f3f4f6;">
+                        <td style="padding:0.5rem; white-space:nowrap;">{String(h.timestamp ?? '—').slice(0, 10)}</td>
+                        <td style="padding:0.5rem;">{String(h.action ?? h.type ?? '—')}</td>
+                        <td style="text-align:right; padding:0.5rem;">{String(h.amount ?? 0)} 🪙</td>
+                    </tr>
+                    {/each}
+                </tbody>
+            </table>
+            {/if}
+
+            {#if familyDetail.data.requests && familyDetail.data.requests.length > 0}
+            <h3>Запросы ({familyDetail.data.requests.length})</h3>
+            <ul style="margin-bottom:1rem; padding-left:1.25rem; font-size:0.875rem;">
+                {#each familyDetail.data.requests as req ((req as Record<string,unknown>).id)}
+                {@const r = req as Record<string, unknown>}
+                <li>[{String(r.status ?? '—')}] {String(r.taskName ?? r.requestType ?? '—')} — {String(r.coins ?? 0)} 🪙</li>
+                {/each}
+            </ul>
+            {/if}
+        {/if}
+    </div>
+</div>
+<div class="modal-backdrop" on:click={closeFamilyDetail} role="presentation"></div>
+{/if}
 
 <!-- Catalog edit modal -->
 {#if editModalOpen}
