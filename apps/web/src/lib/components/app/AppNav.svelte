@@ -1,6 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import { tabStore } from '$lib/stores/tabs';
+    import { logout } from '$lib/services/api';
+    import { showToast } from '$lib/stores/toasts';
     import ChildSwitcher from './ChildSwitcher.svelte';
 
     export let isAdmin: boolean = false;
@@ -16,6 +18,18 @@
         activeTab = tab;
         moreOpen = false;
         dispatch('switch', tab);
+    }
+
+    async function handleLogout() {
+        moreOpen = false;
+
+        const ok = await logout();
+        if (!ok) {
+            showToast('Не удалось выйти', 'error');
+            return;
+        }
+
+        location.href = '/login.html';
     }
 </script>
 
@@ -119,10 +133,10 @@
                         <span>Настройки</span>
                     </button>
                     <div class="nav__dropdown-divider" role="presentation"></div>
-                    <a class="nav__dropdown-item nav__dropdown-action" role="menuitem" href="/api/logout">
+                    <button class="nav__dropdown-item nav__dropdown-action" type="button" role="menuitem" on:click={handleLogout}>
                         <span class="gamified-icon icon-logout" aria-hidden="true"></span>
                         <span>Выйти</span>
-                    </a>
+                    </button>
                 </div>
             {/if}
         </div>

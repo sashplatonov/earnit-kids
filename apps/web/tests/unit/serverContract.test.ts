@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from '../../src/lib/services/serverContract';
+import { normalizeChild, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from '../../src/lib/services/serverContract';
+
+describe('normalizeChild', () => {
+    it('maps name to nickname for child switcher compatibility', () => {
+        const child = normalizeChild({ id: 3, name: 'Маша', balance: 0 });
+
+        expect(child.name).toBe('Маша');
+        expect(child.nickname).toBe('Маша');
+    });
+});
 
 describe('normalizeShopItem', () => {
     it('preserves name and price from canonical fields', () => {

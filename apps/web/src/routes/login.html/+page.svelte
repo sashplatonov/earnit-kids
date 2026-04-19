@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
+    import { fetchWithCsrf } from '$lib/services/api';
     import type { PageData } from './$types';
 
     type ActivePanel = 'login' | 'register' | 'forgot';
@@ -77,10 +78,9 @@
     }
 
     async function postJson(path: string, payload: Record<string, string>) {
-        const response = await fetch(path, {
+        const response = await fetchWithCsrf(path, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
             cache: 'no-store',
             body: JSON.stringify(payload),
         });

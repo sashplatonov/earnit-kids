@@ -2,6 +2,7 @@
     import { modalStore } from '$lib/stores/modal';
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
+    import { buildTaskPayload } from '$lib/services/taskPayload';
     import { showToast } from '$lib/stores/toasts';
 
     $: isOpen = $modalStore.open === 'task-modal';
@@ -33,14 +34,15 @@
 
     async function save() {
         if (!title.trim()) { showToast('Введите название', 'error'); return; }
-        const payload = {
-            id: existingTask?.id,
-            title: title.trim(),
-            groupName: groupName.trim() || null,
-            coins: Number(coins) || 10,
-            comment: comment.trim() || null,
-            frequency: freqLimit ? { limit: Number(freqLimit), period: freqPeriod } : null,
-        };
+        const payload = buildTaskPayload({
+            id: existingTask?.id as number | string | undefined,
+            title,
+            groupName,
+            coins,
+            comment,
+            freqLimit,
+            freqPeriod,
+        });
 
         if (isEdit) {
             appStore.setState({

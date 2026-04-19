@@ -5,8 +5,12 @@ export function getGroupName(entity: Record<string, unknown> | null | undefined)
 }
 
 export function normalizeChild(child: Record<string, unknown> = {}) {
+    const nickname = (child.nickname ?? child.name ?? '') as string;
+
     return {
         ...child,
+        nickname,
+        name: (child.name ?? nickname) as string,
         monthlyLimit: child.monthlyLimit ?? child.monthly_limit ?? 10000,
         dailyCoinLimit: child.dailyCoinLimit ?? child.daily_coin_limit ?? 0,
     };

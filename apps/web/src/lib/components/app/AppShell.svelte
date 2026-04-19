@@ -3,6 +3,7 @@
     import AppHeader from './AppHeader.svelte';
     import AppNav from './AppNav.svelte';
     import Toast from './Toast.svelte';
+    import AddChildModal from './modals/AddChildModal.svelte';
     import TaskModal from './modals/TaskModal.svelte';
     import ShopModal from './modals/ShopModal.svelte';
     import TasksSection from './sections/TasksSection.svelte';
@@ -78,6 +79,7 @@
     </main>
 
     <!-- Modal host -->
+    <AddChildModal />
     <TaskModal />
     <ShopModal />
 

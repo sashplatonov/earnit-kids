@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { loadAnalyticsData } from '$lib/services/api';
+    import { modalStore } from '$lib/stores/modal';
     import { onMount } from 'svelte';
 
     type ChartInstance = { destroy(): void; data: unknown; update(): void };
@@ -8,6 +9,8 @@
     const ChartCtor = () => (window as unknown as Record<string, unknown>).Chart as ChartConstructor;
 
     $: isAdmin = $appStore.isAdmin;
+    $: children = $appStore.children;
+    $: hasChildren = children.length > 0;
 
     let timeframe: 'week' | 'month' | 'year' = 'month';
     let statsEarned = 0;
@@ -28,6 +31,10 @@
     let charts: Record<string, ChartInstance | null> = {};
 
     async function loadAndRender() {
+        if (isAdmin && !hasChildren) {
+            return;
+        }
+
         const childId = $appStore.currentChildId;
         const data = await loadAnalyticsData(childId, timeframe) as Record<string, unknown> | null;
         if (!data) return;
@@ -123,6 +130,16 @@
 
 <section id="analytics-section" class="section">
     <div class="container">
+        {#if isAdmin && !hasChildren}
+        <div class="empty-state" id="analytics-empty-state">
+            <div class="empty-state__icon" aria-hidden="true">👨‍👩‍👧</div>
+            <h2>Нет детей в профиле</h2>
+            <p>Добавьте первого ребенка, чтобы видеть его достижения, создавать задания и следить за прогрессом.</p>
+            <button class="btn btn--primary" id="analytics-add-child" type="button" on:click={() => modalStore.open('add-child-modal')}>
+                Добавить ребенка
+            </button>
+        </div>
+        {:else}
         <header class="section-header">
             <h2 class="section-title">Мои достижения</h2>
             <div class="analytics-filters">
@@ -251,5 +268,6 @@
                 </div>
             </div>
         </div>
+        {/if}
     </div>
 </section>
