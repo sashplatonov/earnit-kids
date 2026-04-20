@@ -45,11 +45,16 @@
                 showToast(`+${task.coins} монет — ${task.title}`, 'success');
             }
         } else {
-            const res = await requestCoins(taskId) as Record<string, unknown> | null;
-            if (res) {
-                applyDataSnapshot(res);
+            const result = await requestCoins(taskId);
+            if (result.ok) {
+                if (result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                }
                 showToast('Заявка отправлена!', 'success');
+                return;
             }
+
+            showToast(result.error, 'error');
         }
     }
 

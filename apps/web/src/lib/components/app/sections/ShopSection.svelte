@@ -20,6 +20,24 @@
         return Math.max(price - balance, 0);
     }
 
+    function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
+        const limit = frequency?.limit;
+        const period = frequency?.period;
+
+        if (!limit || !period) {
+            return '';
+        }
+
+        const periodLabels: Record<string, string> = {
+            day: 'день',
+            week: 'неделю',
+            month: 'месяц',
+            year: 'год',
+        };
+
+        return `${limit} раз(а) в ${periodLabels[period] ?? period}`;
+    }
+
     async function handleBuy(itemId: unknown) {
         const childId = $appStore.currentChildId;
         const item = shopItems.find(i => i.id == itemId);
@@ -35,11 +53,16 @@
                 showToast(`Куплено: ${item.name}`, 'success');
             }
         } else {
-            const res = await requestItem(itemId) as Record<string, unknown> | null;
-            if (res) {
-                applyDataSnapshot(res);
+            const result = await requestItem(itemId);
+            if (result.ok) {
+                if (result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                }
                 showToast('Заявка на покупку отправлена!', 'success');
+                return;
             }
+
+            showToast(result.error, 'error');
         }
     }
 
@@ -89,6 +112,9 @@
         <div class="card card--shop shop-card" class:card--affordable={!isAdmin && balance >= Number(item.price ?? 0)} class:card--disabled={!isAdmin && balance < Number(item.price ?? 0)}>
             <div class="card__badge-row">
                 <span class="card__badge card__badge--group">{item.groupName ?? 'Без группы'}</span>
+                {#if formatFrequency(item.frequency)}
+                <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
+                {/if}
                 {#if !isAdmin}
                 <span class:card__status--available={balance >= Number(item.price ?? 0)} class:card__status--locked={balance < Number(item.price ?? 0)} class="card__status">
                     {#if balance >= Number(item.price ?? 0)}

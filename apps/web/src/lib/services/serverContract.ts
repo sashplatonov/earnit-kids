@@ -44,6 +44,7 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
         groupName: item.groupName ?? item.group ?? null,
         comment: item.comment ?? null,
         moneyLimit: item.moneyLimit ?? item.money_limit ?? null,
+        frequency: item.frequency ?? null,
         ageMin: item.ageMin ?? item.age_min ?? null,
         ageMax: item.ageMax ?? item.age_max ?? null,
     };

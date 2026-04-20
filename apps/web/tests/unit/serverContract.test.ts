@@ -42,6 +42,11 @@ describe('normalizeShopItem', () => {
         expect(item.moneyLimit).toBe(500);
     });
 
+    it('keeps frequency payload for shop item limits', () => {
+        const item = normalizeShopItem({ name: 'Test', price: 10, frequency: { limit: 2, period: 'day' } });
+        expect(item.frequency).toEqual({ limit: 2, period: 'day' });
+    });
+
     it('sets comment to null when absent', () => {
         const item = normalizeShopItem({ name: 'Test', price: 5 });
         expect(item.comment).toBeNull();

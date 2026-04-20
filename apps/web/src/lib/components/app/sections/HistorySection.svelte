@@ -112,6 +112,10 @@
         return kind === 'other' ? type : kind;
     }
 
+    function hasMoneyAmount(value: number): boolean {
+        return Number(value ?? 0) > 0;
+    }
+
     function historyMeta(entry: HistoryViewEntry): string {
         const parts: string[] = [];
         if (entry.ui.group) parts.push(entry.ui.group);
@@ -122,14 +126,18 @@
 </script>
 
 <section class="section" id="history-section">
-    <h2>История операций</h2>
-    {#if isAdmin}
-    <div class="section__buttons admin-only" style="margin-bottom: 1rem;">
-        <button class="btn btn--danger btn--small" id="clear-history-btn" on:click={clearAll}>
-            Очистить всё
-        </button>
+    <div class="section__header history-section__header">
+        <div class="section__header-titles">
+            <h2>История операций</h2>
+        </div>
+        {#if isAdmin}
+        <div class="section__buttons admin-only">
+            <button class="btn btn--danger btn--small" id="clear-history-btn" on:click={clearAll}>
+                Очистить всё
+            </button>
+        </div>
+        {/if}
     </div>
-    {/if}
 
     <!-- Budget stats -->
     <div class="budget-stats" id="budget-stats">
@@ -205,12 +213,12 @@
                 <div class="history-item__icon">
                     <span class="gamified-icon {cssType(entry.type as string) === 'earn' ? 'icon-coin-stack' : 'icon-shop'}" aria-hidden="true"></span>
                 </div>
-                <div class="history-item__body">
-                    <p class="history-item__title">{entry.ui.title}</p>
+                <div class="history-item__body history-item__content">
+                    <p class="history-item__title history-item__desc">{entry.ui.title}</p>
                     {#if entry.ui.description}
-                    <p class="history-item__note">{entry.ui.description}</p>
+                    <p class="history-item__note history-item__comment">{entry.ui.description}</p>
                     {/if}
-                    <p class="history-item__meta">{historyMeta(entry)}</p>
+                    <p class="history-item__meta history-item__date">{historyMeta(entry)}</p>
                 </div>
                 <div class="history-item__actions">
                     <div class="history-item__amount history-item__amount--{cssType(entry.type as string)}">
@@ -218,7 +226,9 @@
                             {cssType(entry.type as string) === 'earn' ? '+' : '−'}{Math.abs(entry.amount ?? 0)}
                             <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:0.9em;height:0.9em;vertical-align:middle;"></span>
                         </span>
+                        {#if hasMoneyAmount(entry.ui.moneyAmount)}
                         <span class="history-item__money">{entry.ui.moneyAmount} 💶</span>
+                        {/if}
                     </div>
                     {#if isAdmin}
                     <button class="history-item__delete-btn" on:click={() => handleDelete(entry.id)} aria-label="Удалить запись">✕</button>

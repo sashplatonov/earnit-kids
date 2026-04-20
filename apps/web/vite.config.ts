@@ -4,9 +4,6 @@ import { defineConfig } from 'vitest/config';
 function buildTimestamp(): string {
     // Format: YYYYMMDD-HHmm in CET (Europe/Berlin)
     const now = new Date();
-    // 'sv' locale returns "YYYY-MM-DD HH:mm:ss" in the given timezone
-    const parts = now.toLocaleString('sv', { timeZone: 'Europe/Berlin' }).split(/[ :]/);
-    // parts: [YYYY-MM-DD, HH, mm, ss] — split on space then colon
     const [datePart, hh, mm] = now
         .toLocaleString('sv', { timeZone: 'Europe/Berlin' })
         .replace('T', ' ')

@@ -21,6 +21,7 @@ export interface ShopItem {
     groupName?: string | null;
     comment?: string | null;
     moneyLimit?: number | null;
+    frequency?: { period?: string; limit?: number } | null;
     ageMin?: number | null;
     ageMax?: number | null;
     [key: string]: unknown;

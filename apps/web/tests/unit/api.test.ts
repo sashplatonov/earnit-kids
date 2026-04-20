@@ -237,9 +237,7 @@ describe('fetchWithCsrf', () => {
 
     it.each([
         ['earnCoins', () => earnCoins(101, 15), '/api/tasks/101/complete?childId=15', {}],
-        ['requestCoins', () => requestCoins(101), '/api/tasks/101/request', {}],
         ['buyItem', () => buyItem(201, 15), '/api/shop/201/purchase?childId=15', {}],
-        ['requestItem', () => requestItem(201), '/api/shop/201/request', {}],
         ['approveRequest', () => approveRequest(301, 15), '/api/requests/301/approve?childId=15', {}],
         ['rejectRequest', () => rejectRequest(301, 15), '/api/requests/301/reject?childId=15', {}],
         ['adminAwardCoins', () => adminAwardCoins(15, 7, 'Bonus'), '/api/balance/adjust', { childId: 15, amount: 7, description: 'Bonus' }],
@@ -260,6 +258,40 @@ describe('fetchWithCsrf', () => {
         expect(actualUrl).toBe(url);
         expect(init.method).toBe('POST');
         expect(init.body).toBe(JSON.stringify(body));
+    });
+
+    it('wraps successful child task requests into ok/data result objects', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ balance: 25, requests: [{ id: 1 }] }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(requestCoins(101)).resolves.toEqual({
+            ok: true,
+            data: { balance: 25, requests: [{ id: 1 }] },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/tasks/101/request');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({}));
+    });
+
+    it('maps backend problem details for rejected shop requests', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+            detail: 'Лимит заявок по этому товару на сегодня исчерпан. Следующее обновление в 00:00.',
+            errorCode: 'ITEM_REQUEST_LIMIT_REACHED',
+        }, 400));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(requestItem(201)).resolves.toEqual({
+            ok: false,
+            error: 'Лимит заявок по этому товару на сегодня исчерпан. Следующее обновление в 00:00.',
+            errorCode: 'ITEM_REQUEST_LIMIT_REACHED',
+            status: 400,
+        });
     });
 
     it('uses DELETE for request and history removal helpers', async () => {

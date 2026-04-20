@@ -733,7 +733,7 @@ public class FamilyResource {
             case OperationResult.Success<T> s -> Response.ok(s.value()).build();
             case OperationResult.Failure<T> f ->
                 Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), "BAD_REQUEST", 400)).build();
+                    .entity(ErrorResponse.of(f.message(), errorCodeOrBadRequest(f.errorCode()), 400)).build();
         };
     }
 
@@ -742,8 +742,12 @@ public class FamilyResource {
             case OperationResult.Success<Void> ignored -> Response.ok(SimpleResponse.ok()).build();
             case OperationResult.Failure<Void> f ->
                 Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), "BAD_REQUEST", 400)).build();
+                    .entity(ErrorResponse.of(f.message(), errorCodeOrBadRequest(f.errorCode()), 400)).build();
         };
+    }
+
+    private String errorCodeOrBadRequest(String errorCode) {
+        return errorCode != null ? errorCode : "BAD_REQUEST";
     }
 
     private void notifyDataUpdated(AuthContext auth, Integer childId, OperationResult<FamilyDataResponse> result) {
