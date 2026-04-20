@@ -9,6 +9,10 @@ public record RequestDto(
     String taskName,
     Long itemId,
     String itemName,
+    String title,
+    String description,
+    String groupName,
+    String comment,
     int coins,
     String status,
     String requestType,
@@ -17,5 +21,6 @@ public record RequestDto(
     int childId,
     String taskGroup,
     String itemGroup,
-    String taskComment
+    String taskComment,
+    String itemComment
 ) { }

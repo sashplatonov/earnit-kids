@@ -20,6 +20,24 @@
         return Math.max(price - balance, 0);
     }
 
+    function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
+        const limit = frequency?.limit;
+        const period = frequency?.period;
+
+        if (!limit || !period) {
+            return '';
+        }
+
+        const periodLabels: Record<string, string> = {
+            day: 'день',
+            week: 'неделю',
+            month: 'месяц',
+            year: 'год',
+        };
+
+        return `${limit} раз(а) в ${periodLabels[period] ?? period}`;
+    }
+
     async function handleBuy(itemId: unknown) {
         const childId = $appStore.currentChildId;
         const item = shopItems.find(i => i.id == itemId);
@@ -35,11 +53,16 @@
                 showToast(`Куплено: ${item.name}`, 'success');
             }
         } else {
-            const res = await requestItem(itemId) as Record<string, unknown> | null;
-            if (res) {
-                applyDataSnapshot(res);
+            const result = await requestItem(itemId);
+            if (result.ok) {
+                if (result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                }
                 showToast('Заявка на покупку отправлена!', 'success');
+                return;
             }
+
+            showToast(result.error, 'error');
         }
     }
 
@@ -49,6 +72,10 @@
 
     function openEditShopItem(item: unknown) {
         modalStore.open('shop-modal', { mode: 'edit', item });
+    }
+
+    function itemPrice(item: { price?: unknown }) {
+        return Number(item.price ?? 0);
     }
 </script>
 
@@ -71,31 +98,38 @@
 
     {#if groups.length > 1}
     <nav class="group-nav" id="shop-group-nav">
-        <button class="group-nav__btn" class:active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
-            Все
-        </button>
-        {#each groups as group (group)}
-        <button class="group-nav__btn" class:active={selectedGroup === group}
-            on:click={() => selectedGroup = group}>{group}</button>
-        {/each}
+        <div class="group-nav__scroll">
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
+                Все
+            </button>
+            {#each groups as group (group)}
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
+                on:click={() => selectedGroup = group}>{group}</button>
+            {/each}
+        </div>
     </nav>
     {/if}
 
     {#if visibleItems.length > 0}
     <div class="cards" id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={!isAdmin && balance >= Number(item.price ?? 0)} class:card--disabled={!isAdmin && balance < Number(item.price ?? 0)}>
+        <div class="card card--shop shop-card" class:card--affordable={balance >= itemPrice(item)} class:card--disabled={balance < itemPrice(item)}>
             <div class="card__badge-row">
                 <span class="card__badge card__badge--group">{item.groupName ?? 'Без группы'}</span>
-                {#if !isAdmin}
-                <span class:card__status--available={balance >= Number(item.price ?? 0)} class:card__status--locked={balance < Number(item.price ?? 0)} class="card__status">
-                    {#if balance >= Number(item.price ?? 0)}
+                {#if formatFrequency(item.frequency)}
+                <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
+                {/if}
+                <span class:card__status--available={balance >= itemPrice(item)} class:card__status--locked={balance < itemPrice(item)} class="card__status">
+                    {#if balance >= itemPrice(item)}
+                        {#if isAdmin}
+                        Можно купить
+                        {:else}
                         Можно запросить
+                        {/if}
                     {:else}
-                        Еще {missingCoins(Number(item.price ?? 0))} мон.
+                        Еще {missingCoins(itemPrice(item))}
                     {/if}
                 </span>
-                {/if}
             </div>
             <div class="card__header">
                 <h3 class="card__title">{item.name}</h3>
@@ -109,18 +143,22 @@
             {:else}
             <p class="card__comment">Награда, которую можно честно заработать и обсудить вместе с родителями.</p>
             {/if}
-            {#if item.moneyLimit != null}
             <div class="card__meta">
-                <span class="card__meta-item">Лимит: {item.moneyLimit} €</span>
+                {#if item.moneyLimit != null}
+                <span class="card__meta-item">Лимит: {item.moneyLimit} 💶</span>
+                {/if}
             </div>
-            {/if}
             <div class="card__actions">
                 {#if isAdmin}
+                <button class="btn btn--primary btn--small admin-only" disabled={balance < itemPrice(item)}
+                    on:click={() => handleBuy(item.id)}>
+                    Купить
+                </button>
                 <button class="btn btn--secondary btn--small admin-only" on:click={() => openEditShopItem(item)}>
                     Изменить
                 </button>
                 {:else}
-                <button class="btn btn--primary" disabled={balance < (item.price as number)}
+                <button class="btn btn--primary" disabled={balance < itemPrice(item)}
                     on:click={() => handleBuy(item.id)}>
                     Запросить
                 </button>

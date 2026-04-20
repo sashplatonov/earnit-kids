@@ -31,7 +31,7 @@ export async function initializeFromServer(): Promise<boolean> {
     const state = buildInitialState(record, baseData as Record<string, unknown>);
     appStore.setState(state as Partial<AppState>);
 
-    // Initialize tab to role-appropriate default
+    // Initialize tab to the stored role-specific value, or the role default.
     tabStore.initForRole(!!(state as Record<string, unknown>).isAdmin);
 
     const stateRecord = state as Record<string, unknown>;

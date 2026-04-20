@@ -15,10 +15,9 @@
     $: resolvedLimitNote = earnedLimitNote !== 'Лимит: ∞'
         ? earnedLimitNote
         : $appStore.dailyCoinLimit > 0
-            ? `Лимит: ${$appStore.dailyCoinLimit} / день`
-            : isAdmin
-                ? 'История семьи'
-                : 'Последние действия';
+            ? `${$appStore.dailyCoinLimit} / день`
+            : '';
+    $: showLimitNote = resolvedLimitNote.trim().length > 0;
 
     function openSettings() {
         tabStore.setTab('settings');
@@ -70,27 +69,33 @@
                 <span class="gamified-icon icon-link" aria-hidden="true"></span>
                 <span>Установить</span>
             </button>
+            {#if isAdmin}
             <button class="btn btn--secondary btn--small header__profile" id="header-profile-btn" type="button"
                 on:click={openSettings}>
                 <span class="gamified-icon icon-profile" aria-hidden="true"></span>
                 <span class="header__profile-label">Профиль</span>
             </button>
+            {/if}
         </div>
     </div>
     <div class="header__status-row">
         <div class="header__install-hint hidden" id="pwa-install-ios-hint" aria-live="polite"></div>
         <div class="header__balance" tabindex="0" role="button" aria-label="Открыть историю"
             on:click={openHistory} on:keydown={handleBalanceKeydown}>
-            <div class="header__balance-main">
+            <div class="header__balance-main" title="Монет на счету">
                 <span class="balance__coin gamified-icon icon-coin-stack" aria-hidden="true"></span>
                 <span class="balance__value" id="balance">{balance}</span>
             </div>
-            <div class="header__earned" aria-live="polite">
+            <div class="header__earned" aria-live="polite" title="Записей в истории">
                 <span class="header__earned-main">
                     <span class="gamified-icon icon-history-menu" aria-hidden="true"></span>
                     <span id="header-earned-count">{historyCount}</span>
                 </span>
-                <span class="header__earned-limit" id="header-earned-limit-note">{resolvedLimitNote}</span>
+                {#if showLimitNote}
+                <span class="header__earned-limit" id="header-earned-limit-note"
+                    title="Дневной лимит монет"
+                >{resolvedLimitNote}</span>
+                {/if}
             </div>
             <span class="header__balance-delta hidden" id="header-balance-delta" aria-live="polite"></span>
             {#if isAdmin}

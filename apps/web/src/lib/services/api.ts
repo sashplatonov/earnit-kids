@@ -16,6 +16,16 @@ function getCsrfToken(): string {
 
 type FetchOptions = RequestInit & { body?: BodyInit };
 
+type ProblemDetails = {
+    detail?: unknown;
+    title?: unknown;
+    errorCode?: unknown;
+};
+
+export type ApiActionResult<T = unknown> =
+    | { ok: true; data: T | null }
+    | { ok: false; error: string; errorCode: string | null; status: number };
+
 export async function fetchWithCsrf(url: string, options: FetchOptions = {}): Promise<Response> {
     const method = (options.method ?? 'GET').toUpperCase();
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
@@ -39,6 +49,60 @@ async function postJson<T = unknown>(url: string, body: unknown): Promise<T | nu
         body: JSON.stringify(body),
     });
     return parseJsonSafe<T>(res);
+}
+
+function extractProblemMessage(payload: unknown): string {
+    if (!payload || typeof payload !== 'object') {
+        return 'Не удалось выполнить запрос';
+    }
+
+    const problem = payload as ProblemDetails;
+    if (typeof problem.detail === 'string' && problem.detail.trim()) {
+        return problem.detail;
+    }
+    if (typeof problem.title === 'string' && problem.title.trim()) {
+        return problem.title;
+    }
+    return 'Не удалось выполнить запрос';
+}
+
+function extractProblemCode(payload: unknown): string | null {
+    if (!payload || typeof payload !== 'object') {
+        return null;
+    }
+
+    const code = (payload as ProblemDetails).errorCode;
+    return typeof code === 'string' && code.trim() ? code : null;
+}
+
+async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
+    try {
+        const res = await fetchWithCsrf(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await parseJsonSafe<T | ProblemDetails>(res);
+
+        if (res.ok) {
+            return { ok: true, data: data as T | null };
+        }
+
+        return {
+            ok: false,
+            error: extractProblemMessage(data),
+            errorCode: extractProblemCode(data),
+            status: res.status,
+        };
+    } catch (err) {
+        console.error('POST request failed:', url, err);
+        return {
+            ok: false,
+            error: 'Сеть недоступна. Попробуйте еще раз.',
+            errorCode: null,
+            status: 0,
+        };
+    }
 }
 
 async function postBoolean(url: string, body: unknown, errorMsg?: string): Promise<boolean> {
@@ -146,7 +210,7 @@ export const earnCoins = (taskId: unknown, childId?: unknown) =>
     postJson(`/api/tasks/${encodeURIComponent(String(taskId))}/complete${buildChildQuery(childId)}`, {});
 
 export const requestCoins = (taskId: unknown) =>
-    postJson(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, {});
+    postJsonResult(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, {});
 
 // ── Shop actions ──────────────────────────────────────────────────────────────
 
@@ -156,7 +220,7 @@ export const buyItem = (itemId: unknown, childId?: unknown) =>
 
 /** Child: create a purchase request that requires parent approval. */
 export const requestItem = (itemId: unknown) =>
-    postJson(`/api/shop/${encodeURIComponent(String(itemId))}/request`, {});
+    postJsonResult(`/api/shop/${encodeURIComponent(String(itemId))}/request`, {});
 
 // ── Request actions ───────────────────────────────────────────────────────────
 

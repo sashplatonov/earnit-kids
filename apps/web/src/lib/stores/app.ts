@@ -21,6 +21,7 @@ export interface ShopItem {
     groupName?: string | null;
     comment?: string | null;
     moneyLimit?: number | null;
+    frequency?: { period?: string; limit?: number } | null;
     ageMin?: number | null;
     ageMax?: number | null;
     [key: string]: unknown;
@@ -32,6 +33,10 @@ export interface HistoryEntry {
     amount: number;
     description?: string | null;
     title?: string | null;
+    groupName?: string | null;
+    comment?: string | null;
+    taskName?: string | null;
+    itemName?: string | null;
     moneyAmount?: number | null;
     taskId?: number | string | null;
     itemId?: number | string | null;
@@ -45,6 +50,19 @@ export interface Request {
     requestType: string;
     taskId?: number | string | null;
     itemId?: number | string | null;
+    title?: string | null;
+    description?: string | null;
+    comment?: string | null;
+    groupName?: string | null;
+    taskName?: string | null;
+    itemName?: string | null;
+    taskGroup?: string | null;
+    itemGroup?: string | null;
+    taskComment?: string | null;
+    itemComment?: string | null;
+    coins?: number | null;
+    moneyAmount?: number | null;
+    createdAt?: string | null;
     status: string;
     childId?: number | string | null;
     childNickname?: string | null;

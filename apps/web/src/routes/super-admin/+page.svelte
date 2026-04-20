@@ -812,14 +812,14 @@
                     <article class="db-card">
                         <p class="db-card__label">Резервное копирование</p>
                         <p class="db-card__value">Скачать дамп</p>
-                        <p class="db-card__status">Создать полную копию PostgreSQL и скачать файл.</p>
+                        <p class="db-card__status">Создать резервную копию схемы приложения и скачать файл.</p>
                         <button id="pg-backup-btn" class="btn btn--primary" type="button"
                             on:click={triggerBackup}>Скачать бэкап</button>
                     </article>
                     <article class="db-card">
                         <p class="db-card__label">Восстановление</p>
                         <p class="db-card__value">Загрузить файл</p>
-                        <p class="db-card__status">Загрузить файл резервной копии (.dump).</p>
+                        <p class="db-card__status">Загрузить резервную копию схемы приложения (.dump).</p>
                         <button id="pg-restore-btn" class="btn btn--success" type="button"
                             on:click={triggerRestoreClick}>Загрузить файл</button>
                         <input type="file" id="pg-restore-input" hidden accept=".dump"

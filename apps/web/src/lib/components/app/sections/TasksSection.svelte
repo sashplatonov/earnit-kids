@@ -45,11 +45,16 @@
                 showToast(`+${task.coins} монет — ${task.title}`, 'success');
             }
         } else {
-            const res = await requestCoins(taskId) as Record<string, unknown> | null;
-            if (res) {
-                applyDataSnapshot(res);
+            const result = await requestCoins(taskId);
+            if (result.ok) {
+                if (result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                }
                 showToast('Заявка отправлена!', 'success');
+                return;
             }
+
+            showToast(result.error, 'error');
         }
     }
 
@@ -81,15 +86,17 @@
 
     {#if groups.length > 1}
     <nav class="group-nav" id="tasks-group-nav">
-        <button class="group-nav__btn" class:active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
-            Все
-        </button>
-        {#each groups as group (group)}
-        <button class="group-nav__btn" class:active={selectedGroup === group}
-            on:click={() => selectedGroup = group}>
-            {group}
-        </button>
-        {/each}
+        <div class="group-nav__scroll">
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
+                Все
+            </button>
+            {#each groups as group (group)}
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
+                on:click={() => selectedGroup = group}>
+                {group}
+            </button>
+            {/each}
+        </div>
     </nav>
     {/if}
 
@@ -115,16 +122,14 @@
             {:else}
             <p class="card__comment">Короткий шаг, который помогает заработать монетки и закрепить привычку.</p>
             {/if}
-            {#if task.moneyLimit != null || task.ageMin != null || task.ageMax != null}
             <div class="card__meta">
                 {#if task.moneyLimit != null}
-                <span class="card__meta-item">До {task.moneyLimit} €</span>
+                <span class="card__meta-item">До {task.moneyLimit} 💶</span>
                 {/if}
                 {#if task.ageMin != null || task.ageMax != null}
                 <span class="card__meta-item">Возраст {task.ageMin ?? 0}-{task.ageMax ?? 18}</span>
                 {/if}
             </div>
-            {/if}
             <div class="card__actions">
                 {#if isAdmin}
                 <button class="btn btn--primary btn--small" on:click={() => handleEarn(task.id)}>

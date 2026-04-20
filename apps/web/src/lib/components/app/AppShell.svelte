@@ -24,6 +24,9 @@
     import { initializePushNotifications } from '$lib/services/push';
     import { startWebSocket, stopWebSocket } from '$lib/services/websocket';
 
+    // __BUILD_TS__ is injected at build time by vite.config.ts define (declared in vite-env.d.ts)
+    const buildTs: string = __BUILD_TS__;
+
     export let session: SessionSnapshot;
 
     const isAdmin = session.role === 'admin' || session.role === 'parent';
@@ -85,4 +88,8 @@
 
     <!-- Toast notifications -->
     <Toast />
+
+    <footer class="app-footer">
+        <span class="app-footer__meta">{buildTs}</span>
+    </footer>
 </div>

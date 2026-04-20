@@ -3,6 +3,7 @@
     import { loadAnalyticsData } from '$lib/services/api';
     import { modalStore } from '$lib/stores/modal';
     import { onMount } from 'svelte';
+    import { buildAnalyticsViewModel, type AnalyticsRecommendationCard, type AnalyticsViewModel } from './analyticsViewModel';
 
     type ChartInstance = { destroy(): void; data: unknown; update(): void };
     type ChartConstructor = new (ctx: CanvasRenderingContext2D, config: unknown) => ChartInstance;
@@ -21,11 +22,11 @@
     let levelNote = 'до следующего уровня ... XP';
     let weekEarned = 0;
     let weekBar = 0;
-    let weekGoal = '—';
+    let weekNote = 'Нет активности за 7 дней';
     let streakValue = 0;
     let streakBar = 0;
     let streakNote = 'Начните сегодня!';
-    let recommendations: Array<{ icon: string; text: string }> = [];
+    let recommendations: AnalyticsRecommendationCard[] = [];
 
     // Chart instances
     let charts: Record<string, ChartInstance | null> = {};
@@ -36,12 +37,20 @@
         }
 
         const childId = $appStore.currentChildId;
-        const data = await loadAnalyticsData(childId, timeframe) as Record<string, unknown> | null;
+        // Admin must have a selected child before we can load
+        if (isAdmin && childId == null) return;
+
+        const data = await loadAnalyticsData(childId, timeframe);
         if (!data) return;
 
-        statsEarned = (data.earned as number) ?? 0;
-        statsSpent = (data.spent as number) ?? 0;
-        statsNet = statsEarned - statsSpent;
+        const view = buildAnalyticsViewModel(data, {
+            currentBalance: $appStore.balance,
+            tasks: $appStore.tasks,
+        });
+
+        statsEarned = view.earned;
+        statsSpent = view.spent;
+        statsNet = view.net;
 
         // Level/XP
         const xp = statsEarned;
@@ -52,30 +61,41 @@
         levelBar = Math.round((xpInLevel / xpPerLevel) * 100);
         levelNote = `до следующего уровня ${xpPerLevel - xpInLevel} XP`;
 
-        weekEarned = (data.weekEarned as number) ?? 0;
-        weekGoal = String((data.weekGoal as number) ?? '—');
-        weekBar = (data.weekGoal as number) > 0
-            ? Math.min(100, Math.round((weekEarned / (data.weekGoal as number)) * 100))
-            : 0;
+        weekEarned = view.weekEarned;
+        weekBar = view.weekBar;
+        weekNote = view.weekNote;
 
-        streakValue = (data.streak as number) ?? 0;
+        streakValue = view.streakValue;
         streakBar = Math.min(100, streakValue * 10);
-        streakNote = streakValue > 0 ? `${streakValue} дней подряд!` : 'Начните сегодня!';
+        streakNote = view.streakNote;
 
-        recommendations = (data.recommendations as typeof recommendations) ?? [];
+        recommendations = view.recommendations;
 
-        renderCharts(data);
+        // Render charts — retry if Chart.js CDN hasn't loaded yet
+        if (ChartCtor()) {
+            renderCharts(view);
+        } else {
+            let retries = 0;
+            const tryRender = () => {
+                if (ChartCtor()) {
+                    renderCharts(view);
+                } else if (retries++ < 12) {
+                    setTimeout(tryRender, 500);
+                }
+            };
+            setTimeout(tryRender, 500);
+        }
     }
 
-    function renderCharts(data: Record<string, unknown>) {
+    function renderCharts(view: AnalyticsViewModel) {
         const C = ChartCtor();
         if (!C) return;
 
-        const taskCoinsData = (data.taskCoins as Array<{ label: string; value: number }>) ?? [];
-        const taskCountData = (data.taskCount as Array<{ label: string; value: number }>) ?? [];
-        const itemCoinsData = (data.itemCoins as Array<{ label: string; value: number }>) ?? [];
-        const itemCountData = (data.itemCount as Array<{ label: string; value: number }>) ?? [];
-        const trendData = (data.trend as Array<{ label: string; earned: number; spent: number }>) ?? [];
+        const taskCoinsData = view.taskCoins;
+        const taskCountData = view.taskCount;
+        const itemCoinsData = view.itemCoins;
+        const itemCountData = view.itemCount;
+        const trendData = view.trend;
 
         const makeBar = (id: string, labels: string[], values: number[], color: string) => {
             charts[id]?.destroy();
@@ -120,7 +140,7 @@
         void loadAndRender();
     });
 
-    $: if (timeframe) void loadAndRender();
+    $: void ($appStore.currentChildId, $appStore.balance, $appStore.tasks, timeframe, loadAndRender());
 </script>
 
 <svelte:head>
@@ -166,7 +186,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-card__label">Баланс</div>
-                <div class="stat-card__value" id="stats-net">{statsNet} мон.</div>
+                <div class="stat-card__value" id="stats-net">{statsNet}</div>
             </div>
         </div>
 
@@ -194,7 +214,7 @@
                 <div class="progress-track">
                     <span class="progress-fill" id="progress-week-earned-bar" style="--progress: {weekBar};"></span>
                 </div>
-                <p class="analytics-mini__hint" id="progress-week-earned-goal">Цель: {weekGoal} мон.</p>
+                <p class="analytics-mini__hint" id="progress-week-earned-goal">{weekNote}</p>
             </article>
 
             <article class="analytics-mini__item">
@@ -259,11 +279,27 @@
             <div class="analytics-group">
                 <h3 class="analytics-group-title">Идеи для роста</h3>
                 <div id="analytics-recommendations" class="recommendations-grid">
-                    {#each recommendations as rec (rec.text)}
-                    <div class="recommendation-card">
-                        <span class="recommendation-icon">{rec.icon}</span>
-                        <p>{rec.text}</p>
-                    </div>
+                    {#each recommendations as rec (rec.id)}
+                    <article class="card card--task recommendation-card">
+                        <div class="card__badge-row">
+                            <span class="card__badge card__badge--group">{rec.groupName}</span>
+                            {#if rec.reason}
+                            <span class="card__badge card__badge--type">{rec.reason}</span>
+                            {/if}
+                        </div>
+                        <div class="card__header">
+                            <h4 class="card__title recommendation-card__title">{rec.title}</h4>
+                            {#if rec.coins != null && rec.coins > 0}
+                            <div class="card__coins recommendation-card__coins">
+                                <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                                <span>{rec.coins}</span>
+                            </div>
+                            {:else}
+                            <div class="recommendation-card__icon-pill" aria-hidden="true">{rec.icon}</div>
+                            {/if}
+                        </div>
+                        <p class="card__comment recommendation-card__description">{rec.description}</p>
+                    </article>
                     {/each}
                 </div>
             </div>

@@ -15,6 +15,7 @@ export default tseslint.config(
             globals: {
                 ...globals.browser,
                 ...globals.node,
+                __BUILD_TS__: 'readonly',
             },
         },
         rules: {

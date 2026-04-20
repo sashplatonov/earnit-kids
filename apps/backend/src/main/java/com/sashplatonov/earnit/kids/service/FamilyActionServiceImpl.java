@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
@@ -19,13 +21,21 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Objects;
 import java.util.Optional;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class FamilyActionServiceImpl implements FamilyActionService {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final DateTimeFormatter PERIOD_RESET_FORMATTER = DateTimeFormatter.ofPattern("dd.MM HH:mm");
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
@@ -77,6 +87,15 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             return OperationResult.failure("Task not found");
         }
 
+        String taskLimitError = validateTaskRequestLimit(
+            familyDbId.get(),
+            childId,
+            task.get()
+        );
+        if (taskLimitError != null) {
+            return OperationResult.failure("TASK_REQUEST_LIMIT_REACHED", taskLimitError);
+        }
+
         purchaseRequestRepository.persist(buildTaskRequest(familyDbId.get(), childId, task.get()));
         return familyService.loadFamilyData(familyId, childId, false);
     }
@@ -124,6 +143,15 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         Optional<ShopItemEntity> item = findActiveItem(familyDbId.get(), childId, itemId);
         if (item.isEmpty()) {
             return OperationResult.failure("Shop item not found");
+        }
+
+        String itemLimitError = validateItemRequestLimit(
+            familyDbId.get(),
+            childId,
+            item.get()
+        );
+        if (itemLimitError != null) {
+            return OperationResult.failure("ITEM_REQUEST_LIMIT_REACHED", itemLimitError);
         }
 
         purchaseRequestRepository.persist(buildPurchaseRequest(familyDbId.get(), childId, item.get()));
@@ -289,6 +317,166 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         ).firstResultOptional();
     }
 
+    private String validateTaskRequestLimit(int familyDbId, int childId, TaskEntity task) {
+        Integer limit = extractFrequencyLimit(task.getFrequency());
+        if (limit == null) {
+            return null;
+        }
+
+        String period = extractFrequencyPeriod(task.getFrequency());
+        Instant windowStart = currentPeriodStart(now(), period);
+        Instant windowEnd = nextPeriodStart(windowStart, period);
+        long usedCount = purchaseRequestRepository.countPendingTaskRequestsInWindow(
+            familyDbId,
+            childId,
+            task.getTaskId(),
+            windowStart,
+            windowEnd
+        ) + historyRepository.countTaskEarnsInWindow(
+            familyDbId,
+            childId,
+            task.getTaskId(),
+            windowStart,
+            windowEnd
+        );
+
+        return usedCount >= limit ? buildLimitReachedMessage("этому заданию", period, windowEnd) : null;
+    }
+
+    private String validateItemRequestLimit(int familyDbId, int childId, ShopItemEntity item) {
+        Integer limit = extractFrequencyLimit(item.getFrequency());
+        if (limit == null) {
+            return null;
+        }
+
+        String period = extractFrequencyPeriod(item.getFrequency());
+        Instant windowStart = currentPeriodStart(now(), period);
+        Instant windowEnd = nextPeriodStart(windowStart, period);
+        long usedCount = purchaseRequestRepository.countPendingItemRequestsInWindow(
+            familyDbId,
+            childId,
+            item.getItemId(),
+            windowStart,
+            windowEnd
+        ) + historyRepository.countShopPurchasesInWindow(
+            familyDbId,
+            childId,
+            item.getItemId(),
+            windowStart,
+            windowEnd
+        );
+
+        return usedCount >= limit ? buildLimitReachedMessage("этому товару", period, windowEnd) : null;
+    }
+
+    private Integer extractFrequencyLimit(JsonNode rawFrequency) {
+        JsonNode frequency = normalizeFrequency(rawFrequency);
+        if (frequency == null || !frequency.isObject()) {
+            return null;
+        }
+
+        JsonNode limitNode = frequency.get("limit");
+        if (limitNode == null || !limitNode.canConvertToInt()) {
+            return null;
+        }
+
+        int limit = limitNode.asInt();
+        return limit > 0 ? limit : null;
+    }
+
+    private String extractFrequencyPeriod(JsonNode rawFrequency) {
+        JsonNode frequency = normalizeFrequency(rawFrequency);
+        if (frequency == null || !frequency.isObject()) {
+            return "day";
+        }
+
+        String period = Optional.ofNullable(frequency.get("period"))
+            .map(JsonNode::asText)
+            .map(String::trim)
+            .orElse("day");
+
+        return switch (period) {
+            case "week", "month", "year" -> period;
+            default -> "day";
+        };
+    }
+
+    private JsonNode normalizeFrequency(JsonNode rawFrequency) {
+        if (rawFrequency == null || rawFrequency.isNull()) {
+            return null;
+        }
+        if (rawFrequency.isObject()) {
+            return rawFrequency;
+        }
+        if (!rawFrequency.isTextual()) {
+            return null;
+        }
+
+        String value = rawFrequency.asText();
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        try {
+            return OBJECT_MAPPER.readTree(value);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Instant currentPeriodStart(Instant currentInstant, String period) {
+        ZoneId zoneId = ZoneId.systemDefault();
+        LocalDate currentDate = currentInstant.atZone(zoneId).toLocalDate();
+
+        return switch (period) {
+            case "week" -> currentDate
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay(zoneId)
+                .toInstant();
+            case "month" -> currentDate.withDayOfMonth(1).atStartOfDay(zoneId).toInstant();
+            case "year" -> currentDate.withDayOfYear(1).atStartOfDay(zoneId).toInstant();
+            default -> currentDate.atStartOfDay(zoneId).toInstant();
+        };
+    }
+
+    private Instant nextPeriodStart(Instant currentPeriodStart, String period) {
+        return switch (period) {
+            case "week" -> currentPeriodStart.atZone(ZoneId.systemDefault())
+                .plusWeeks(1)
+                .toInstant();
+            case "month" -> currentPeriodStart.atZone(ZoneId.systemDefault())
+                .plusMonths(1)
+                .toInstant();
+            case "year" -> currentPeriodStart.atZone(ZoneId.systemDefault())
+                .plusYears(1)
+                .toInstant();
+            default -> currentPeriodStart.atZone(ZoneId.systemDefault())
+                .plusDays(1)
+                .toInstant();
+        };
+    }
+
+    private String buildLimitReachedMessage(String target, String period, Instant resetAt) {
+        return switch (period) {
+            case "week" -> "Лимит заявок по " + target + " на эту неделю исчерпан. Следующее обновление "
+                + formatResetAt(resetAt, period) + '.';
+            case "month" -> "Лимит заявок по " + target + " на этот месяц исчерпан. Следующее обновление "
+                + formatResetAt(resetAt, period) + '.';
+            case "year" -> "Лимит заявок по " + target + " на этот год исчерпан. Следующее обновление "
+                + formatResetAt(resetAt, period) + '.';
+            default -> "Лимит заявок по " + target + " на сегодня исчерпан. Следующее обновление в "
+                + formatResetAt(resetAt, period) + '.';
+        };
+    }
+
+    private String formatResetAt(Instant resetAt, String period) {
+        var zonedResetAt = resetAt.atZone(ZoneId.systemDefault());
+        if ("day".equals(period)) {
+            return zonedResetAt.format(DateTimeFormatter.ofPattern("HH:mm"));
+        }
+        return zonedResetAt.format(PERIOD_RESET_FORMATTER);
+    }
+
     private int resolveResponseChildId(int familyDbId, Integer currentChildId, int fallbackChildId) {
         if (currentChildId != null && findFamilyChild(familyDbId, currentChildId).isPresent()) {
             return currentChildId;
@@ -368,6 +556,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     }
 
     private HistoryEntryEntity buildRequestHistory(int familyDbId, PurchaseRequestEntity request) {
+        Instant requestCreatedAt = request.getCreatedAt() != null ? request.getCreatedAt() : now();
         if (isPurchaseRequest(request)) {
             Optional<ShopItemEntity> item = request.getItemId() == null
                 ? Optional.empty()
@@ -383,7 +572,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                 .relatedId(request.getItemId() != null ? request.getItemId() : request.getTaskId())
                 .groupName(item.map(ShopItemEntity::getGroupName).orElse(null))
                 .comment(item.map(ShopItemEntity::getComment).orElse(null))
-                .createdAt(now())
+                .createdAt(requestCreatedAt)
                 .build();
         }
 
@@ -401,7 +590,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             .relatedId(request.getTaskId())
             .groupName(task.map(TaskEntity::getGroupName).orElse(null))
             .comment(task.map(TaskEntity::getComment).orElse(null))
-            .createdAt(now())
+            .createdAt(requestCreatedAt)
             .build();
     }
 

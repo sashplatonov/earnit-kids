@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
@@ -113,6 +115,48 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void requestTaskCompletion_whenDailyLimitReached_returnsFailure() {
+        ChildEntity child = child(10, 1, "Alice", 0);
+        TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
+        task.setFrequency(frequency(1, "day"));
+        io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOf(task);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(taskRepository.find(
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            1,
+            10,
+            3001L
+        )).thenReturn(taskQuery);
+        when(purchaseRequestRepository.countPendingTaskRequestsInWindow(
+            org.mockito.ArgumentMatchers.eq(1),
+            org.mockito.ArgumentMatchers.eq(10),
+            org.mockito.ArgumentMatchers.eq(3001L),
+            org.mockito.ArgumentMatchers.any(Instant.class),
+            org.mockito.ArgumentMatchers.any(Instant.class)
+        ))
+            .thenReturn(1L);
+        when(historyRepository.countTaskEarnsInWindow(
+            org.mockito.ArgumentMatchers.eq(1),
+            org.mockito.ArgumentMatchers.eq(10),
+            org.mockito.ArgumentMatchers.eq(3001L),
+            org.mockito.ArgumentMatchers.any(Instant.class),
+            org.mockito.ArgumentMatchers.any(Instant.class)
+        ))
+            .thenReturn(0L);
+
+        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
+        assertThat(failure.errorCode()).isEqualTo("TASK_REQUEST_LIMIT_REACHED");
+        assertThat(failure.message()).contains("этому заданию").contains("00:00");
+        verify(purchaseRequestRepository, never()).persist(org.mockito.ArgumentMatchers.<PurchaseRequestEntity>any());
+        verify(familyService, never()).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
     void requestItemPurchase_persistsPendingShopRequest() {
         ChildEntity child = child(10, 1, "Alice", 50);
         ShopItemEntity item = shopItem(10, 1, 2001L, "PlayStation", 50);
@@ -143,8 +187,51 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void requestItemPurchase_whenDailyLimitReached_returnsFailure() {
+        ChildEntity child = child(10, 1, "Alice", 50);
+        ShopItemEntity item = shopItem(10, 1, 2001L, "PlayStation", 50);
+        item.setFrequency(frequency(1, "day"));
+        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find(
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false",
+            1,
+            10,
+            2001L
+        )).thenReturn(itemQuery);
+        when(purchaseRequestRepository.countPendingItemRequestsInWindow(
+            org.mockito.ArgumentMatchers.eq(1),
+            org.mockito.ArgumentMatchers.eq(10),
+            org.mockito.ArgumentMatchers.eq(2001L),
+            org.mockito.ArgumentMatchers.any(Instant.class),
+            org.mockito.ArgumentMatchers.any(Instant.class)
+        ))
+            .thenReturn(0L);
+        when(historyRepository.countShopPurchasesInWindow(
+            org.mockito.ArgumentMatchers.eq(1),
+            org.mockito.ArgumentMatchers.eq(10),
+            org.mockito.ArgumentMatchers.eq(2001L),
+            org.mockito.ArgumentMatchers.any(Instant.class),
+            org.mockito.ArgumentMatchers.any(Instant.class)
+        ))
+            .thenReturn(1L);
+
+        OperationResult<FamilyDataResponse> result = service.requestItemPurchase("fam-1", 10, 2001L);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
+        assertThat(failure.errorCode()).isEqualTo("ITEM_REQUEST_LIMIT_REACHED");
+        assertThat(failure.message()).contains("этому товару").contains("00:00");
+        verify(purchaseRequestRepository, never()).persist(org.mockito.ArgumentMatchers.<PurchaseRequestEntity>any());
+        verify(familyService, never()).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
     void approveRequest_purchase_updatesBalanceStatusAndHistory() {
         ChildEntity child = child(10, 1, "Alice", 20);
+        Instant requestCreatedAt = Instant.parse("2026-04-15T07:20:00Z");
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
             .id(4001L)
             .familyId(1)
@@ -155,6 +242,7 @@ class FamilyActionServiceImplTest {
             .requestType("shop_purchase")
             .status("pending")
             .moneyAmount(250)
+            .createdAt(requestCreatedAt)
             .build();
         ShopItemEntity item = shopItem(10, 1, 2001L, "Console", 7);
         io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
@@ -182,12 +270,14 @@ class FamilyActionServiceImplTest {
         assertThat(captor.getValue().getType()).isEqualTo("spend");
         assertThat(captor.getValue().getAmount()).isEqualTo(7);
         assertThat(captor.getValue().getDescription()).isEqualTo("Console");
+        assertThat(captor.getValue().getCreatedAt()).isEqualTo(requestCreatedAt);
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
     @Test
     void approveRequest_task_updatesBalanceStatusAndHistory() {
         ChildEntity child = child(10, 1, "Alice", 0);
+        Instant requestCreatedAt = Instant.parse("2026-04-14T18:05:00Z");
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
             .id(4002L)
             .familyId(1)
@@ -198,6 +288,7 @@ class FamilyActionServiceImplTest {
             .requestType("earn")
             .status("pending")
             .moneyAmount(0)
+            .createdAt(requestCreatedAt)
             .build();
         TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
         io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOf(task);
@@ -225,6 +316,7 @@ class FamilyActionServiceImplTest {
         assertThat(captor.getValue().getType()).isEqualTo("earn");
         assertThat(captor.getValue().getAmount()).isEqualTo(50);
         assertThat(captor.getValue().getDescription()).isEqualTo("Убрать комнату");
+        assertThat(captor.getValue().getCreatedAt()).isEqualTo(requestCreatedAt);
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
@@ -311,5 +403,11 @@ class FamilyActionServiceImplTest {
             .groupName("Home")
             .comment("Task")
             .build();
+    }
+
+    private static JsonNode frequency(int limit, String period) {
+        return JsonNodeFactory.instance.objectNode()
+            .put("limit", limit)
+            .put("period", period);
     }
 }

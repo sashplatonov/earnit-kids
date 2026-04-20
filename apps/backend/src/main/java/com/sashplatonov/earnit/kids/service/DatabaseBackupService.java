@@ -23,19 +23,25 @@ public class DatabaseBackupService {
     private final String jdbcUrl;
     private final String username;
     private final String password;
+    private final String schemaName;
     private final TimeProvider timeProvider;
+    private final DatabaseCommandRunner commandRunner;
 
     @Inject
     public DatabaseBackupService(
         @ConfigProperty(name = "quarkus.datasource.jdbc.url") String jdbcUrl,
         @ConfigProperty(name = "quarkus.datasource.username") String username,
         @ConfigProperty(name = "quarkus.datasource.password") Optional<String> password,
-        TimeProvider timeProvider
+        @ConfigProperty(name = "DB_SCHEMA", defaultValue = "earnit_kids") String schemaName,
+        TimeProvider timeProvider,
+        DatabaseCommandRunner commandRunner
     ) {
         this.jdbcUrl = jdbcUrl;
         this.username = username;
         this.password = password.orElse("");
+        this.schemaName = schemaName;
         this.timeProvider = timeProvider;
+        this.commandRunner = commandRunner;
     }
 
     public OperationResult<BackupArtifact> createBackup() {
@@ -48,14 +54,11 @@ public class DatabaseBackupService {
                 .format(timeProvider.now()) + ".dump";
             Path dumpFile = backupDir.resolve(filename);
 
-            ProcessBuilder builder = new ProcessBuilder(buildPgDumpCommand(connection, dumpFile));
-            builder.environment().put("PGPASSWORD", password);
-            Process process = builder.start();
-            int exitCode = process.waitFor();
-            if (exitCode != 0) {
-                String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+            DatabaseCommandResult result = commandRunner.run(buildPgDumpCommand(connection, dumpFile), password);
+            if (result.exitCode() != 0) {
+                String stderr = normalizeError(result.stderr(), "pg_dump завершился с ошибкой");
                 log.error("pg_dump failed: {}", stderr);
-                return OperationResult.failure(stderr.isBlank() ? "pg_dump завершился с ошибкой" : stderr.trim());
+                return OperationResult.failure(stderr);
             }
             return OperationResult.success(new BackupArtifact(dumpFile, filename));
         } catch (IOException ex) {
@@ -76,32 +79,44 @@ public class DatabaseBackupService {
             return OperationResult.failure("Файл бэкапа пустой");
         }
 
+        Path tempFile = null;
         try {
             PostgresConnectionDetails connection = PostgresConnectionDetails.fromJdbcUrl(jdbcUrl);
-            Path tempFile = Files.createTempFile("earnit-restore-", ".dump");
+            tempFile = Files.createTempFile("earnit-restore-", ".dump");
             Files.write(tempFile, payload);
 
-            ProcessBuilder builder = new ProcessBuilder(buildPgRestoreCommand(connection, tempFile));
-            builder.environment().put("PGPASSWORD", password);
-            Process process = builder.start();
-            int exitCode = process.waitFor();
-            Files.deleteIfExists(tempFile);
-            if (exitCode != 0) {
-                String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+            DatabaseCommandResult resetSchemaResult = commandRunner.run(buildSchemaResetCommand(connection), password);
+            if (resetSchemaResult.exitCode() != 0) {
+                String stderr = normalizeError(resetSchemaResult.stderr(), "Подготовка схемы к восстановлению завершилась с ошибкой");
+                log.error("psql schema reset failed: {}", stderr);
+                return OperationResult.failure(stderr);
+            }
+
+            DatabaseCommandResult restoreResult = commandRunner.run(buildPgRestoreCommand(connection, tempFile), password);
+            if (restoreResult.exitCode() != 0) {
+                String stderr = normalizeError(restoreResult.stderr(), "pg_restore завершился с ошибкой");
                 log.error("pg_restore failed: {}", stderr);
-                return OperationResult.failure(stderr.isBlank() ? "pg_restore завершился с ошибкой" : stderr.trim());
+                return OperationResult.failure(stderr);
             }
             return OperationResult.success(null);
         } catch (IOException ex) {
             log.error("Backup restore failed", ex);
             return OperationResult.failure(ex.getMessage().contains("No such file")
-                ? "pg_restore не найден в окружении"
+                ? "PostgreSQL CLI не найден в окружении"
                 : ex.getMessage());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return OperationResult.failure("Восстановление базы было прервано");
         } catch (IllegalArgumentException ex) {
             return OperationResult.failure(ex.getMessage());
+        } finally {
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException ex) {
+                    log.warn("Не удалось удалить временный файл restore: {}", tempFile, ex);
+                }
+            }
         }
     }
 
@@ -109,6 +124,8 @@ public class DatabaseBackupService {
         List<String> command = new ArrayList<>();
         command.add("pg_dump");
         command.add("--format=custom");
+        command.add("--schema");
+        command.add(schemaName);
         command.add("--file");
         command.add(dumpFile.toString());
         command.add("--host");
@@ -121,13 +138,33 @@ public class DatabaseBackupService {
         return command;
     }
 
+    private List<String> buildSchemaResetCommand(PostgresConnectionDetails connection) {
+        List<String> command = new ArrayList<>();
+        command.add("psql");
+        command.add("--set");
+        command.add("ON_ERROR_STOP=1");
+        command.add("--host");
+        command.add(connection.host());
+        command.add("--port");
+        command.add(String.valueOf(connection.port()));
+        command.add("--username");
+        command.add(username);
+        command.add("--dbname");
+        command.add(connection.database());
+        command.add("--command");
+        command.add(buildSchemaResetSql());
+        return command;
+    }
+
     private List<String> buildPgRestoreCommand(PostgresConnectionDetails connection, Path dumpFile) {
         List<String> command = new ArrayList<>();
         command.add("pg_restore");
-        command.add("--clean");
-        command.add("--if-exists");
+        command.add("--exit-on-error");
+        command.add("--single-transaction");
         command.add("--no-owner");
         command.add("--no-privileges");
+        command.add("--schema");
+        command.add(schemaName);
         command.add("--host");
         command.add(connection.host());
         command.add("--port");
@@ -138,6 +175,15 @@ public class DatabaseBackupService {
         command.add(connection.database());
         command.add(dumpFile.toString());
         return command;
+    }
+
+    private String buildSchemaResetSql() {
+        String quotedSchemaName = '"' + schemaName.replace("\"", "\"\"") + '"';
+        return "DROP SCHEMA IF EXISTS " + quotedSchemaName + " CASCADE; CREATE SCHEMA " + quotedSchemaName + ';';
+    }
+
+    private String normalizeError(String stderr, String fallbackMessage) {
+        return stderr == null || stderr.isBlank() ? fallbackMessage : stderr.trim();
     }
 
     public record BackupArtifact(Path path, String filename) {
