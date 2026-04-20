@@ -429,9 +429,100 @@ p,
     flex-shrink: 0;
 }
 
-.card--task,
-.card--shop {
-    height: 274px;
+.task-card,
+.shop-card {
+    gap: 0.65rem;
+}
+
+.task-card {
+    height: 312px;
+}
+
+.shop-card {
+    height: 332px;
+}
+
+.task-card .card__badge-row {
+    min-height: 2.25rem;
+    align-content: flex-start;
+}
+
+.shop-card .card__badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: flex-start;
+    gap: 0.35rem;
+    min-height: 3.8rem;
+}
+
+.shop-card .card__badge-row > * {
+    min-width: 0;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.shop-card .card__badge--group {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shop-card .card__status {
+    flex: 0 0 auto;
+}
+
+.task-card .card__header,
+.shop-card .card__header {
+    align-items: flex-start;
+    min-height: 2.8rem;
+}
+
+.task-card .card__title,
+.shop-card .card__title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    min-height: calc(1.25em * 2);
+}
+
+.task-card .card__meta,
+.shop-card .card__meta {
+    min-height: 2.35rem;
+    align-content: flex-start;
+    justify-items: start;
+}
+
+.task-card .card__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shop-card .card__meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.task-card .card__meta-item,
+.shop-card .card__meta-item {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-card .card__actions,
+.shop-card .card__actions {
+    min-height: 2.75rem;
+    align-items: stretch;
+}
+
+.task-card .card__actions .btn,
+.shop-card .card__actions .btn {
+    min-height: 100%;
 }
 
 .card__title {
@@ -1929,9 +2020,12 @@ dialog.modal[open]::backdrop {
         gap: 0.4rem;
     }
 
-    .card--task,
-    .card--shop {
-        height: 250px;
+    .task-card {
+        height: 312px;
+    }
+
+    .shop-card {
+        height: 332px;
     }
 
     .card__header {

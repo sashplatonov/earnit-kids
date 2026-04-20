@@ -108,6 +108,73 @@ test.describe('Shop section (Награды)', () => {
         await expect(page.getByRole('button', { name: 'Изменить' }).first()).toBeVisible();
     });
 
+    test('shop cards reserve space for wrapped top badges', async ({ page }) => {
+        const firstShopCard = page.locator('#shop-list .shop-card').first();
+        await expect(firstShopCard).toBeVisible();
+
+        const layout = await firstShopCard.evaluate((card) => {
+            const badgeRow = card.querySelector('.card__badge-row');
+            const header = card.querySelector('.card__header');
+
+            if (!(badgeRow instanceof HTMLElement) || !(header instanceof HTMLElement)) {
+                return null;
+            }
+
+            badgeRow.innerHTML = [
+                '<span class="card__badge card__badge--group">Развлечения и время</span>',
+                '<span class="card__badge card__badge--type">1 раз(а) в день</span>',
+                '<span class="card__status card__status--available">Можно купить</span>'
+            ].join('');
+
+            const badgeRowRect = badgeRow.getBoundingClientRect();
+            const headerRect = header.getBoundingClientRect();
+            const styles = getComputedStyle(badgeRow);
+            const chipMetrics = Array.from(badgeRow.children).map((chip) => {
+                if (!(chip instanceof HTMLElement)) {
+                    return null;
+                }
+
+                const probe = chip.cloneNode(true);
+                if (!(probe instanceof HTMLElement)) {
+                    return null;
+                }
+
+                probe.style.position = 'fixed';
+                probe.style.left = '-9999px';
+                probe.style.top = '0';
+                probe.style.width = 'max-content';
+                probe.style.maxWidth = 'none';
+                probe.style.minWidth = '0';
+                document.body.appendChild(probe);
+
+                const actualWidth = chip.getBoundingClientRect().width;
+                const naturalWidth = probe.getBoundingClientRect().width;
+                probe.remove();
+
+                return {
+                    text: chip.textContent?.trim() ?? '',
+                    actualWidth,
+                    naturalWidth
+                };
+            }).filter(Boolean);
+
+            return {
+                badgeRowHeight: badgeRowRect.height,
+                badgeRowBottom: badgeRowRect.bottom,
+                headerTop: headerRect.top,
+                reservedMinHeight: parseFloat(styles.minHeight),
+                chipMetrics
+            };
+        });
+
+        expect(layout).not.toBeNull();
+        expect(layout?.badgeRowHeight ?? 0).toBeLessThanOrEqual((layout?.reservedMinHeight ?? 0) + 1);
+        expect(layout?.badgeRowBottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual((layout?.headerTop ?? 0) + 0.5);
+        for (const chip of layout?.chipMetrics ?? []) {
+            expect(chip.actualWidth).toBeLessThanOrEqual(chip.naturalWidth + 2);
+        }
+    });
+
     test('edit modal populates name and price from existing item', async ({ page }) => {
         // Wait for shop items to load
         const shopList = page.locator('#shop-list, .cards');

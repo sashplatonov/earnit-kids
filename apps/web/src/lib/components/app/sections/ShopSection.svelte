@@ -143,11 +143,11 @@
             {:else}
             <p class="card__comment">Награда, которую можно честно заработать и обсудить вместе с родителями.</p>
             {/if}
-            {#if item.moneyLimit != null}
             <div class="card__meta">
+                {#if item.moneyLimit != null}
                 <span class="card__meta-item">Лимит: {item.moneyLimit} 💶</span>
+                {/if}
             </div>
-            {/if}
             <div class="card__actions">
                 {#if isAdmin}
                 <button class="btn btn--primary btn--small admin-only" disabled={balance < itemPrice(item)}

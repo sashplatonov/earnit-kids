@@ -122,7 +122,6 @@
             {:else}
             <p class="card__comment">Короткий шаг, который помогает заработать монетки и закрепить привычку.</p>
             {/if}
-            {#if task.moneyLimit != null || task.ageMin != null || task.ageMax != null}
             <div class="card__meta">
                 {#if task.moneyLimit != null}
                 <span class="card__meta-item">До {task.moneyLimit} 💶</span>
@@ -131,7 +130,6 @@
                 <span class="card__meta-item">Возраст {task.ageMin ?? 0}-{task.ageMax ?? 18}</span>
                 {/if}
             </div>
-            {/if}
             <div class="card__actions">
                 {#if isAdmin}
                 <button class="btn btn--primary btn--small" on:click={() => handleEarn(task.id)}>
