@@ -1,0 +1,12 @@
+node_modules/
+android/
+ios/
+build/
+dist/
+coverage/
+
+.DS_Store
+*.log
+
+.idea/
+.vscode/

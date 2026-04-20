@@ -15,6 +15,7 @@ import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
+import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
@@ -63,7 +64,7 @@ class FamilyResourceTest {
 
     @Test
     void getFamilyData_authenticatedUser_returnsPayload() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), null, null, null, null);
         when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
@@ -75,7 +76,7 @@ class FamilyResourceTest {
 
     @Test
     void getFamilyData_childSession_ignoresRequestedChildId() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), false, List.of(), 10, null, null, null);
         when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
 
@@ -87,7 +88,7 @@ class FamilyResourceTest {
 
     @Test
     void saveFamilyData_childSession_ignoresBodyChildIdAndUsesAuthChildId() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), false, List.of(), null, null, null, null);
         when(familyService.saveFamilyData(
             anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean()))
@@ -151,6 +152,16 @@ class FamilyResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(201);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 77)));
+    }
+
+    @Test
+    void getChildLink_adminReturnsTokenPayload() {
+        when(familyService.getChildLoginLink("fam-1", 10)).thenReturn(OperationResult.success("child-token"));
+
+        Response response = resource.getChildLink(contextWithAuth(adminAuth()), 10);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getEntity()).isEqualTo(new TokenResponse("child-token"));
     }
 
     @Test
@@ -220,7 +231,7 @@ class FamilyResourceTest {
 
     @Test
     void completeTask_adminDelegatesToActionServiceAndNotifiesFamily() {
-        FamilyDataResponse payload = new FamilyDataResponse(5, List.of(), List.of(), List.of(), List.of(),
+        FamilyDataResponse payload = new FamilyDataResponse(5, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), 10, null, null, null);
         when(familyActionService.completeTask("fam-1", 10, 1001L)).thenReturn(OperationResult.success(payload));
 
@@ -233,7 +244,7 @@ class FamilyResourceTest {
 
     @Test
     void requestTaskCompletion_childDelegatesToActionService() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), false, List.of(), 10, null, null, null);
         when(familyActionService.requestTaskCompletion("fam-1", 10, 1001L)).thenReturn(OperationResult.success(payload));
 
@@ -246,7 +257,7 @@ class FamilyResourceTest {
 
     @Test
     void adjustBalance_adminDelegatesToActionService() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(),
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), 10, null, null, null);
         when(familyActionService.adjustBalance("fam-1", 10, -3, "Manual correction"))
             .thenReturn(OperationResult.success(payload));

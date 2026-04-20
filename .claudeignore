@@ -1,6 +1,5 @@
 node_modules/
 mobile/node_modules/
-apps/web/node_modules/
 .claude/
 .codex/
 .playwright-browsers/
@@ -8,7 +7,6 @@ coverage/
 test-results/
 playwright-report/
 public/dist/
-apps/web/coverage/
 apps/backend/target/
 data/
 data.json
@@ -23,4 +21,3 @@ tmp/
 !.env.example
 .env.production
 .DS_Store
-mobile/

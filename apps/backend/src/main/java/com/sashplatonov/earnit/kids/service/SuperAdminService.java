@@ -8,6 +8,7 @@ import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
+import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
@@ -34,6 +35,8 @@ public class SuperAdminService {
     private final FamilyService familyService;
     private final BaseDataService baseDataService;
     private final ObjectMapper objectMapper;
+    private final PasswordHasher passwordHasher;
+    private final SuperAdminCredentialsService superAdminCredentialsService;
 
     public List<Map<String, Object>> getFamilies() {
         return familyRepository.listAll().stream()
@@ -81,6 +84,33 @@ public class SuperAdminService {
 
     public boolean saveBaseData(Map<String, Object> payload) {
         return baseDataService.saveBaseData(payload);
+    }
+
+    @Transactional
+    public OperationResult<Void> setFamilyPassword(String familyId, String newPassword) {
+        if (!isValidPassword(newPassword)) {
+            return OperationResult.failure("Слабый пароль");
+        }
+
+        Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
+        if (familyOpt.isEmpty()) {
+            return OperationResult.failure("Семья не найдена");
+        }
+
+        FamilyEntity family = familyOpt.get();
+        if (isSamePassword(newPassword, family.getAdminPassword())) {
+            return OperationResult.failure("Новый пароль должен отличаться от текущего");
+        }
+
+        boolean updated = familyRepository.updatePassword(familyId, passwordHasher.hash(newPassword));
+        if (!updated) {
+            return OperationResult.failure("Не удалось обновить пароль");
+        }
+        return OperationResult.success(null);
+    }
+
+    public OperationResult<Void> changeSuperAdminPassword(String oldPassword, String newPassword) {
+        return superAdminCredentialsService.changePassword(oldPassword, newPassword);
     }
 
     @Transactional
@@ -223,5 +253,29 @@ public class SuperAdminService {
             return primary;
         }
         return fallback;
+    }
+
+    private boolean isSamePassword(String suppliedPassword, String storedPassword) {
+        if (storedPassword == null || suppliedPassword == null) {
+            return false;
+        }
+        if (storedPassword.equals(suppliedPassword)) {
+            return true;
+        }
+        try {
+            if (passwordHasher.isArgon2Hash(storedPassword) && passwordHasher.verify(storedPassword, suppliedPassword)) {
+                return true;
+            }
+        } catch (Exception ignored) {
+        }
+        return passwordHasher.verifyLegacy(suppliedPassword, storedPassword);
+    }
+
+    private boolean isValidPassword(String password) {
+        if (password == null || password.length() < 6) {
+            return false;
+        }
+        char first = password.charAt(0);
+        return !password.chars().allMatch(c -> c == first);
     }
 }

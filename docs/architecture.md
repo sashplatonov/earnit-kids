@@ -4,186 +4,209 @@
 
 ## Table of Contents
 
-- [🏗️ System Shape](#️-system-shape)
-- [☕ Backend Layers](#-backend-layers)
-- [🔐 Authentication Flow](#-authentication-flow)
-- [📡 REST Surface](#-rest-surface)
-- [⚙️ Configuration Model](#️-configuration-model)
-- [🧪 Testing and Verification](#-testing-and-verification)
-- [🚧 Extension Notes](#-extension-notes)
+- [🌍 C4 Context](#-c4-context)
+- [📦 C4 Container View](#-c4-container-view)
+- [🧩 C4 Component View](#-c4-component-view)
+- [🔄 Data Flow](#-data-flow)
+- [🔐 Auth Flow](#-auth-flow)
+- [🐳 Docker Networking](#-docker-networking)
+- [🧾 Decision Log](#-decision-log)
 
----
+## 🌍 C4 Context
 
-## 🏗️ System Shape
+EarnIt Kids sits between three primary actors and one data system.
 
-EarnIt Kids is split into a Quarkus backend and a Node.js web edge.
+- Parent users manage children, balances, tasks, requests, and limits.
+- Child users complete tasks, request purchases, and review their own history.
+- Super-admin users inspect families, backups, and system health.
+- PostgreSQL stores the source of truth for family, child, catalog, history, request, and token data.
 
-- `apps/backend/` owns authentication, family/child operations, analytics, persistence, and Flyway migrations.
-- `apps/web/` serves the web experience, static assets, and UI-oriented tests.
-- `mobile/` contains Capacitor packaging and mobile platform support assets.
+```mermaid
+flowchart LR
+	Parent[Parent User]
+	Child[Child User]
+	SuperAdmin[Super Admin]
+	Web[Web Edge\nSvelteKit + Node]
+	Backend[Backend API\nQuarkus]
+	DB[(PostgreSQL)]
 
-The backend is the source of truth for session cookies, family state, child state, analytics, and approval workflows.
-
-[↩ Back to toc](#table-of-contents)
-
----
-
-## ☕ Backend Layers
-
-The Quarkus backend is organized into a conventional service stack.
-
-- `resource/`: JAX-RS endpoints for auth, family dashboard, session bootstrap, push, child magic links, super-admin, and WebSocket token
-- `service/`: business rules and orchestration (`AuthServiceImpl`, `FamilyServiceImpl`, `BaseDataService`, `SuperAdminService`, `SystemDashboardService`, `DatabaseBackupService`)
-- `repository/`: persistence and aggregation access over Panache/JPA-style repositories plus custom SQL/data fetches
-- `domain/model/`: database entities and domain objects
-- `dto/request/`: immutable request records validated at the REST boundary
-- `dto/response/`: immutable response records, including problem-style errors and analytics payloads
-- `config/`: auth filter, cookie builder, JWT compatibility helpers, and grouped config mappings
-- `exception/`: REST exception mappers for validation and fallback error handling
-
-Current backend conventions:
-
-- constructor injection for application beans
-- immutable request/response DTOs via Java records
-- grouped configuration via `@ConfigMapping`
-- RFC-7807-style error payloads via `ErrorResponse`
-- OpenAPI annotations on REST endpoints for generated API docs
-
-[↩ Back to toc](#table-of-contents)
-
----
-
-## 🔐 Authentication Flow
-
-Authentication is cookie-based and centered around a compatibility JWT.
-
-1. `AuthResource` accepts parent/admin login, child token login, registration, password reset, and email verification requests.
-2. `AuthServiceImpl` validates credentials and returns an `AuthPayload`.
-3. `CookieBuilder` signs the `app_auth` token and companion cookies such as `csrf_token`, `family_id`, and `child_id`.
-4. `AuthFilter` reads `app_auth`, verifies it through `JwtService`, and places an `AuthContext` on the request.
-5. Downstream resources read `AuthContext` from `ContainerRequestContext` instead of reparsing cookies.
-6. `JwtCompatVerifier` exposes a read-only session snapshot through `SessionPageDataResource` for page bootstrapping.
-
-Child magic links use `ChildMagicLinkResource`, which authenticates a child token and redirects with the normal auth cookies already set.
-
-[↩ Back to toc](#table-of-contents)
-
----
-
-## 📡 REST Surface
-
-The main backend entrypoints are:
-
-### AuthResource (`/api`)
-- `POST /api/login` — parent/admin login, sets auth cookies
-- `POST /api/login-child` — child login by magic token
-- `POST /api/logout` — clears session cookies
-- `POST /api/register` — family registration
-- `POST /api/forgot-password` — triggers password reset email
-- `POST /api/reset-password` — applies password reset token
-- `POST /api/verify-email` — confirms email verification token
-- `POST /api/change-password` — changes password for authenticated admin
-- `GET /api/auth-config` — returns auth feature flags (password recovery, email verification enabled)
-
-### FamilyResource (`/api`)
-- `GET /api/data` — dashboard payload for family or child session
-- `POST /api/data` — persist dashboard mutations, returns refreshed payload
-- `GET /api/base-data` — static task and reward catalog
-- `POST /api/children` — create a child profile (admin only)
-- `DELETE /api/children/{childId}` — delete a child profile (admin only)
-- `PUT /api/children/{childId}/nickname` — rename child (admin only)
-- `PUT /api/children/{childId}/settings` — update child limits (admin only)
-- `PUT /api/children/{childId}/theme` — update child theme
-- `GET /api/children/{childId}/link` — get child login token (admin only)
-- `POST /api/children/{childId}/regenerate-token` — rotate child login token (admin only)
-- `POST /api/update-nickname` — rename the authenticated child
-- `GET /api/search-user` — search child profiles by nickname
-- `POST /api/add-friend` — add another child as a friend
-- `GET /api/friends-list` — list friends for authenticated child
-- `GET /api/analytics` — analytics snapshot for family or child
-- `GET /api/history` — paginated history entries
-- `GET /api/requests` — paginated approval requests
-- `POST /api/preferences` — persist family UI preference
-
-### SuperAdminResource (`/api/super`)
-Protected by `super_admin` role.
-- `GET /api/super/families` — list all families
-- `GET /api/super/family/{familyId}/data` — full family detail
-- `POST /api/super/family/{familyId}/block` — toggle family block status
-- `POST /api/super/family/{familyId}/regenerate-token` — rotate all family tokens
-- `POST /api/super/child/{childId}/regenerate-token` — rotate single child token
-- `GET /api/super/base-data` — read task/reward catalog
-- `POST /api/super/base-data` — overwrite task/reward catalog
-- `GET /api/super/system/overview` — JVM/OS metrics snapshot
-- `GET /api/super/system/db` — database ping health check
-- `GET /api/super/system/http-metrics` — per-route HTTP request counters
-- `GET /api/super/system/logs` — tail application log entries
-- `GET /api/super/db-backup` — download a pg_dump archive
-- `POST /api/super/db-restore` — restore from a pg_dump archive
-
-### Other resources
-- `SessionPageDataResource` (`GET /api/session`) — session snapshot for page bootstrap derived from cookies
-- `PushResource` (`POST /api/push/register`, `POST /api/push/unregister`) — push notification subscription
-- `ChildMagicLinkResource` — browser redirect entrypoint for child magic links
-- `WsTokenResource` (`GET /api/ws-token`) — short-lived token for WebSocket authentication
-- `ClientErrorResource` (`POST /api/client-error`) — frontend error reporting
-
-📝 Errors returned by JSON API endpoints use `ErrorResponse` with fields: `type`, `title`, `status`, `detail`, `errorCode`.
-
-[↩ Back to toc](#table-of-contents)
-
----
-
-## ⚙️ Configuration Model
-
-Runtime configuration is centered around `application.properties` and grouped interfaces.
-
-- `AppConfig` maps the `app.*` namespace
-- `JwtCompatibilityConfig` maps the `compat.jwt.*` namespace
-
-Important config domains:
-
-- `app.production`: secure-cookie behavior
-- `app.super-admin.*`: optional privileged login
-- `app.email-verification.enabled`: registration/email verification flow toggle
-- `app.password-recovery.enabled`: forgot/reset password flow toggle
-- `compat.jwt.secret`: compatibility JWT signing secret
-
-[↩ Back to toc](#table-of-contents)
-
----
-
-## 🧪 Testing and Verification
-
-Backend verification is Maven-driven and validated against Java 25.
-
-Primary command:
-
-```bash
-export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
-export PATH="$JAVA_HOME/bin:$PATH"
-cd apps/backend
-./mvnw test
+	Parent --> Web
+	Child --> Web
+	SuperAdmin --> Web
+	Web --> Backend
+	Backend --> DB
 ```
 
-Current backend test coverage includes:
+[↩ Back to toc](#table-of-contents)
 
-- unit tests for auth, JWT handling, cookies, services, and exception mappers
-- resource-layer tests for auth, family, push, magic-link, and session bootstrap behavior
-- repository smoke coverage via Quarkus test bootstrapping
+## 📦 C4 Container View
+
+The deployed system is intentionally split into a thin web edge and a stateful backend API.
+
+- `apps/web/`: public pages, authenticated shell, same-origin `/api/*` proxy, `/healthz`, blog rendering, static verification assets
+- `apps/backend/`: auth, session cookies, family dashboard payloads, transactional task/shop/request endpoints, backup tooling, OpenAPI
+- `postgres`: primary relational store for runtime state and migrations
+- `mobile/`: Capacitor packaging around the web runtime; not a separate backend client contract
+
+```mermaid
+flowchart TB
+	Browser[Browser / Mobile WebView]
+	Web[apps/web\nSvelteKit adapter-node]
+	Backend[apps/backend\nQuarkus REST + WebSocket]
+	DB[(PostgreSQL)]
+
+	Browser -->|HTTP| Web
+	Web -->|Proxy /api/*| Backend
+	Web -->|Proxy /ws| Backend
+	Backend -->|JDBC| DB
+```
 
 [↩ Back to toc](#table-of-contents)
 
----
+## 🧩 C4 Component View
 
-## 🚧 Extension Notes
+Backend component responsibilities:
 
-When extending the backend:
+- `resource/`: HTTP boundary, auth checks, request/response mapping, OpenAPI annotations
+- `service/`: business rules, transaction boundaries, orchestration, validation beyond DTO annotations
+- `repository/`: database access, aggregation queries, persistence updates
+- `domain/model/`: JPA entities
+- `dto/request` and `dto/response`: external API contracts
+- `config/` and `exception/`: auth filters, headers, JWT helpers, exception mappers
 
-- add new REST payloads as request/response records instead of `Map<String, Object>` where practical
-- prefer `OperationResult` to keep success/failure contracts explicit in services
-- keep auth-sensitive resource methods behind `AuthContext`
-- update OpenAPI annotations when endpoints or payloads change
-- add unit or resource tests for any changed behavior before closing the task
+Frontend component responsibilities:
+
+- `src/routes/`: page routes, server load functions, edge proxy endpoints
+- `src/lib/components/app/`: authenticated shell and role-specific sections
+- `src/lib/services/`: client API wrapper, bootstrap, save queue, PWA, push, websocket
+- `src/lib/server/`: server-only config, proxy, session bootstrap, blog loading
+- `src/lib/stores/`: app state, tabs, modals, toasts
+- `src/lib/types/`: shared runtime types for session and config
+
+```mermaid
+flowchart LR
+	Route[Route + Server Load]
+	Store[Stores]
+	Service[Client Services]
+	Proxy[Edge Proxy]
+	Resource[Backend Resources]
+	Domain[Services + Repositories]
+
+	Route --> Store
+	Route --> Service
+	Service --> Proxy
+	Proxy --> Resource
+	Resource --> Domain
+```
+
+[↩ Back to toc](#table-of-contents)
+
+## 🔄 Data Flow
+
+The main user path is intentionally same-origin.
+
+1. Browser requests a page from SvelteKit.
+2. SvelteKit resolves route data and reads the session snapshot.
+3. Client actions call same-origin `/api/*` routes through the web edge.
+4. The web edge forwards the request to Quarkus with cookies and headers intact.
+5. Quarkus validates auth, applies service logic, persists to PostgreSQL, and returns a typed DTO.
+6. The frontend normalizes the payload into stores and re-renders the active section.
+
+```mermaid
+sequenceDiagram
+	participant U as User
+	participant W as Web Edge
+	participant B as Backend API
+	participant D as PostgreSQL
+
+	U->>W: Open page / trigger action
+	W->>B: Proxy request with cookies
+	B->>D: Read/write family state
+	D-->>B: Rows / update result
+	B-->>W: Typed JSON response
+	W-->>U: SSR payload or proxied API response
+```
+
+[↩ Back to toc](#table-of-contents)
+
+## 🔐 Auth Flow
+
+Authentication is cookie-based and role-aware.
+
+- Parent/admin login starts at `POST /api/login`.
+- Child login starts at magic-link or token-based child routes.
+- The backend signs compatibility JWT cookies plus CSRF-related cookies.
+- `AuthFilter` reconstructs `AuthContext` on every protected API request.
+- Child sessions are always scoped server-side to their own `childId`; the UI is not trusted for authorization.
+
+```mermaid
+sequenceDiagram
+	participant U as User
+	participant W as Web Edge
+	participant A as AuthResource
+	participant F as AuthFilter
+	participant R as Protected Resource
+
+	U->>W: Submit login form
+	W->>A: Forward credentials
+	A-->>W: Set auth cookies
+	U->>W: Request protected page/API
+	W->>F: Forward cookies
+	F->>R: Attach AuthContext
+	R-->>W: Scoped response
+```
+
+[↩ Back to toc](#table-of-contents)
+
+## 🐳 Docker Networking
+
+Two Compose entrypoints are maintained.
+
+- `docker-compose.yml`: JVM backend build for day-to-day local development
+- `docker-compose.native.yml`: native-image backend build for packaging validation
+
+```mermaid
+flowchart LR
+	Browser[Host Browser]
+	Web[web service]
+	Backend[backend service]
+	DB[db service]
+	Dokploy[dokploy-ipv6 network]
+
+	Browser -->|WEB_PORT| Web
+	Web -->|edge network| Backend
+	Backend -->|backend network| DB
+	Backend --> Dokploy
+```
+
+Failure modes to keep in mind:
+
+- The `db` service is profile-gated, so local full-stack boots must include `--profile db`.
+- Container-to-container URLs must stay on internal ports even when host port overrides change.
+- `docker compose config` is the fastest way to catch env drift before a rebuild.
+
+[↩ Back to toc](#table-of-contents)
+
+## 🧾 Decision Log
+
+### ADR-001: SvelteKit is the single active web runtime
+
+- Decision: keep `apps/web` as the only supported web frontend.
+- Why: it centralizes SSR, proxying, and static endpoints in one deployable Node runtime.
+
+### ADR-002: Same-origin web edge stays in front of Quarkus
+
+- Decision: browser traffic goes to the SvelteKit edge, not directly to Quarkus.
+- Why: it simplifies cookies, CSP/security headers, proxying, and mobile/web parity.
+
+### ADR-003: Quarkus remains the source of truth for family state
+
+- Decision: frontend stores are cache/view state only; durable writes stay in the backend.
+- Why: it prevents cross-role trust bugs and keeps transactional updates server-side.
+
+### ADR-004: Unversioned `/api/*` remains current until a breaking contract is required
+
+- Decision: keep the current stable API surface unversioned and introduce `/api/v2/*` only for future breaking changes.
+- Why: the current system is single-client and same-origin, so forced prefix churn would add migration noise without immediate value.
 
 [↑ Back to top](#top)

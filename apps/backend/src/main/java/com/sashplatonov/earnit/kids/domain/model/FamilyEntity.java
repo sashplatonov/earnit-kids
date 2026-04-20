@@ -59,6 +59,9 @@ public class FamilyEntity extends CreatedAtEntity {
     @Column(name = "reset_token_expires_at")
     private Instant resetTokenExpiresAt;
 
+    @Column(name = "rules")
+    private String rules;
+
     @CreationTimestamp
     @Column(name = "last_activity")
     private Instant lastActivity;

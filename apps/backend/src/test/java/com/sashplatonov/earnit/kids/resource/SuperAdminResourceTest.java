@@ -136,6 +136,59 @@ class SuperAdminResourceTest {
     }
 
     @Test
+    void setFamilyPassword_superAdmin_returnsOk() {
+        when(superAdminService.setFamilyPassword("fam-1", "newpass123")).thenReturn(OperationResult.success(null));
+
+        Response response = resource.setFamilyPassword(
+            contextWithAuth(superAdminAuth()),
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest("newpass123")
+        );
+
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void setFamilyPassword_missingFamily_returns404() {
+        when(superAdminService.setFamilyPassword("missing", "newpass123"))
+            .thenReturn(OperationResult.failure("Семья не найдена"));
+
+        Response response = resource.setFamilyPassword(
+            contextWithAuth(superAdminAuth()),
+            "missing",
+            new com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest("newpass123")
+        );
+
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    void changeSuperAdminPassword_success_returnsOk() {
+        when(superAdminService.changeSuperAdminPassword("admin123", "newpass123"))
+            .thenReturn(OperationResult.success(null));
+
+        Response response = resource.changeSuperAdminPassword(
+            contextWithAuth(superAdminAuth()),
+            new com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest("admin123", "newpass123")
+        );
+
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void changeSuperAdminPassword_failure_returns400() {
+        when(superAdminService.changeSuperAdminPassword("wrong", "newpass123"))
+            .thenReturn(OperationResult.failure("Неверный текущий пароль"));
+
+        Response response = resource.changeSuperAdminPassword(
+            contextWithAuth(superAdminAuth()),
+            new com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest("wrong", "newpass123")
+        );
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
     void getBaseData_superAdmin_returnsData() {
         when(superAdminService.getBaseData()).thenReturn(Map.of("tasks", List.of(), "products", List.of()));
 

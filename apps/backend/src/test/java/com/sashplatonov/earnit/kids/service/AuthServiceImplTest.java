@@ -1,11 +1,13 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.SuperAdminCredentialRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -44,6 +46,7 @@ class AuthServiceImplTest {
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
+    @Mock SuperAdminCredentialRepository superAdminCredentialRepository;
 
     AuthServiceImpl authService;
     PasswordHasher passwordHasher;
@@ -51,13 +54,7 @@ class AuthServiceImplTest {
     @BeforeEach
     void setUp() {
         passwordHasher = new PasswordHasher();
-        authService = new AuthServiceImpl(
-            familyRepository,
-            childRepository,
-            TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true),
-            passwordHasher,
-            TOKEN_GENERATOR,
-            TestConfigFactory.timeProvider(FIXED_NOW));
+        authService = createAuthService(TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true));
     }
 
     @Test
@@ -202,14 +199,31 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void registerFamily_thenAuthenticateAdmin_canLoginImmediately() {
+        String email = "flow@test.com";
+        String password = "strong123";
+        FamilyEntity createdFamily = mockFamily("fam_flow", email, passwordHasher.hash(password), false, true);
+
+        when(familyRepository.findByEmail(email)).thenReturn(Optional.empty(), Optional.of(createdFamily));
+        when(familyRepository.create(anyString(), anyString(), anyString(), anyBoolean(), any()))
+            .thenReturn(Optional.of(createdFamily));
+        when(familyRepository.updateLastActivity("fam_flow")).thenReturn(true);
+
+        OperationResult<AuthPayload> registerResult = authService.registerFamily(email, password);
+        OperationResult<AuthPayload> loginResult = authService.authenticateAdmin(email, password);
+
+        assertThat(registerResult).isInstanceOf(OperationResult.Success.class);
+        assertThat(loginResult).isInstanceOf(OperationResult.Success.class);
+
+        AuthPayload payload = ((OperationResult.Success<AuthPayload>) loginResult).value();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.familyId()).isEqualTo("fam_flow");
+    }
+
+    @Test
     void registerFamily_emailVerificationEnabled_generatesHexVerificationToken() {
-        AuthServiceImpl serviceWithVerification = new AuthServiceImpl(
-            familyRepository,
-            childRepository,
-            TestConfigFactory.appConfig(false, null, null, true, true),
-            passwordHasher,
-            TOKEN_GENERATOR,
-            TestConfigFactory.timeProvider(FIXED_NOW));
+        AuthServiceImpl serviceWithVerification = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, true, true));
         when(familyRepository.findByEmail("verify@test.com")).thenReturn(Optional.empty());
         when(familyRepository.create(anyString(), anyString(), anyString(), anyBoolean(), any()))
             .thenAnswer(inv -> Optional.of(mockFamily(
@@ -274,13 +288,8 @@ class AuthServiceImplTest {
 
     @Test
     void authenticateAdmin_unverifiedFamilyWithVerificationEnabled_returnsFailure() {
-        AuthServiceImpl serviceWithVerification = new AuthServiceImpl(
-            familyRepository,
-            childRepository,
-            TestConfigFactory.appConfig(false, null, null, true, true),
-            passwordHasher,
-            TOKEN_GENERATOR,
-            TestConfigFactory.timeProvider(FIXED_NOW));
+        AuthServiceImpl serviceWithVerification = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, true, true));
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
         when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
 
@@ -294,13 +303,8 @@ class AuthServiceImplTest {
 
     @Test
     void forgotPassword_recoveryDisabled_returnsFailure() {
-        AuthServiceImpl noRecoveryService = new AuthServiceImpl(
-            familyRepository,
-            childRepository,
-            TestConfigFactory.appConfig(false, null, null, false, false),
-            passwordHasher,
-            TOKEN_GENERATOR,
-            TestConfigFactory.timeProvider(FIXED_NOW));
+        AuthServiceImpl noRecoveryService = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, false, false));
 
         OperationResult<Void> result = noRecoveryService.forgotPassword("user@test.com");
 
@@ -408,6 +412,23 @@ class AuthServiceImplTest {
 
         assertThat(authService.registerFamily("dup@test.com", "strong123"))
             .isInstanceOf(OperationResult.Failure.class);
+    }
+
+    private AuthServiceImpl createAuthService(AppConfig config) {
+        SuperAdminCredentialsService superAdminCredentialsService = new SuperAdminCredentialsService(
+            config,
+            passwordHasher,
+            superAdminCredentialRepository
+        );
+        return new AuthServiceImpl(
+            familyRepository,
+            childRepository,
+            config,
+            passwordHasher,
+            TOKEN_GENERATOR,
+            TestConfigFactory.timeProvider(FIXED_NOW),
+            superAdminCredentialsService
+        );
     }
 
     private static FamilyEntity mockFamily(String familyId, String email, String password,

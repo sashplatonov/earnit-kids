@@ -28,6 +28,7 @@ public final class AuthServiceImpl implements AuthService {
     private final PasswordHasher passwordHasher;
     private final SecureTokenGenerator secureTokenGenerator;
     private final TimeProvider timeProvider;
+    private final SuperAdminCredentialsService superAdminCredentialsService;
 
     @Override
     public OperationResult<AuthPayload> authenticateAdmin(String email, String password) {
@@ -48,11 +49,10 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     private OperationResult<AuthPayload> authenticateConfiguredSuperAdmin(String email, String password) {
-        var configuredSuperAdminEmail = appConfig.superAdmin().email().filter(value -> !value.isBlank());
-        if (configuredSuperAdminEmail.isEmpty() || !configuredSuperAdminEmail.get().equals(email)) {
+        if (!superAdminCredentialsService.matchesEmail(email)) {
             return null;
         }
-        if (appConfig.superAdmin().password().orElse("").equals(password)) {
+        if (superAdminCredentialsService.verifyPassword(password)) {
             log.info("Super-admin login success: {}", email);
             return OperationResult.success(new AuthPayload(null, email, "super_admin", null, null));
         }

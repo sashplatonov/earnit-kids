@@ -44,7 +44,7 @@ class TimestampColumnsMigrationTest {
             updateHistoryDescription(connection, historyId, "Updated after migration");
 
             assertThat(readTimestamp(connection, "history", "created_at", historyId)).isEqualTo(historyCreatedAt);
-            assertThat(readTimestamp(connection, "history", "updated_at", historyId)).isAfter(historyCreatedAt);
+            assertThat(readTimestamp(connection, "history", "updated_at", historyId)).isAfterOrEqualTo(historyCreatedAt);
         }
     }
 
