@@ -231,6 +231,7 @@ class FamilyActionServiceImplTest {
     @Test
     void approveRequest_purchase_updatesBalanceStatusAndHistory() {
         ChildEntity child = child(10, 1, "Alice", 20);
+        Instant requestCreatedAt = Instant.parse("2026-04-15T07:20:00Z");
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
             .id(4001L)
             .familyId(1)
@@ -241,6 +242,7 @@ class FamilyActionServiceImplTest {
             .requestType("shop_purchase")
             .status("pending")
             .moneyAmount(250)
+            .createdAt(requestCreatedAt)
             .build();
         ShopItemEntity item = shopItem(10, 1, 2001L, "Console", 7);
         io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
@@ -268,12 +270,14 @@ class FamilyActionServiceImplTest {
         assertThat(captor.getValue().getType()).isEqualTo("spend");
         assertThat(captor.getValue().getAmount()).isEqualTo(7);
         assertThat(captor.getValue().getDescription()).isEqualTo("Console");
+        assertThat(captor.getValue().getCreatedAt()).isEqualTo(requestCreatedAt);
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
     @Test
     void approveRequest_task_updatesBalanceStatusAndHistory() {
         ChildEntity child = child(10, 1, "Alice", 0);
+        Instant requestCreatedAt = Instant.parse("2026-04-14T18:05:00Z");
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
             .id(4002L)
             .familyId(1)
@@ -284,6 +288,7 @@ class FamilyActionServiceImplTest {
             .requestType("earn")
             .status("pending")
             .moneyAmount(0)
+            .createdAt(requestCreatedAt)
             .build();
         TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
         io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOf(task);
@@ -311,6 +316,7 @@ class FamilyActionServiceImplTest {
         assertThat(captor.getValue().getType()).isEqualTo("earn");
         assertThat(captor.getValue().getAmount()).isEqualTo(50);
         assertThat(captor.getValue().getDescription()).isEqualTo("Убрать комнату");
+        assertThat(captor.getValue().getCreatedAt()).isEqualTo(requestCreatedAt);
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 

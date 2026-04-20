@@ -556,6 +556,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     }
 
     private HistoryEntryEntity buildRequestHistory(int familyDbId, PurchaseRequestEntity request) {
+        Instant requestCreatedAt = request.getCreatedAt() != null ? request.getCreatedAt() : now();
         if (isPurchaseRequest(request)) {
             Optional<ShopItemEntity> item = request.getItemId() == null
                 ? Optional.empty()
@@ -571,7 +572,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                 .relatedId(request.getItemId() != null ? request.getItemId() : request.getTaskId())
                 .groupName(item.map(ShopItemEntity::getGroupName).orElse(null))
                 .comment(item.map(ShopItemEntity::getComment).orElse(null))
-                .createdAt(now())
+                .createdAt(requestCreatedAt)
                 .build();
         }
 
@@ -589,7 +590,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             .relatedId(request.getTaskId())
             .groupName(task.map(TaskEntity::getGroupName).orElse(null))
             .comment(task.map(TaskEntity::getComment).orElse(null))
-            .createdAt(now())
+            .createdAt(requestCreatedAt)
             .build();
     }
 

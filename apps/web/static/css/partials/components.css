@@ -806,6 +806,14 @@ p,
     color: var(--color-danger);
 }
 
+.history-item__amount--earn {
+    color: var(--color-success);
+}
+
+.history-item__amount--spend {
+    color: var(--color-danger);
+}
+
 .history-item__actions {
     display: flex;
     flex-direction: column;
@@ -956,45 +964,61 @@ p,
     align-items: center;
     padding: 0.16rem 0.42rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-text-muted);
+    border: 1px solid color-mix(in srgb, var(--color-border-strong) 90%, white);
+    background: color-mix(in srgb, var(--color-bg-card) 88%, white);
+    color: var(--color-text-high-contrast);
     font-size: 0.67rem;
     font-weight: 700;
     line-height: 1.15;
 }
 
 .request-chip--group {
-    background: rgba(92, 199, 243, 0.16);
-    color: #b8ecff;
+    background: color-mix(in srgb, var(--color-secondary) 18%, white);
+    border-color: color-mix(in srgb, var(--color-secondary) 38%, white);
+    color: var(--color-text-high-contrast);
 }
 
 .request-chip--child {
-    background: rgba(255, 214, 107, 0.16);
-    color: #ffe3a0;
+    background: color-mix(in srgb, var(--color-primary) 16%, white);
+    border-color: color-mix(in srgb, var(--color-primary) 34%, white);
+    color: var(--color-text-high-contrast);
 }
 
 .request-chip--muted {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--color-text-dim);
+    background: color-mix(in srgb, var(--color-bg-light) 86%, white);
+    border-color: color-mix(in srgb, var(--color-border-strong) 75%, white);
+    color: var(--color-text-soft);
 }
 
 .request-chip--status {
-    color: var(--color-text);
+    color: var(--color-text-high-contrast);
 }
 
 .request-chip--success {
-    background: rgba(16, 185, 129, 0.18);
-    color: #b8f7d8;
+    background: color-mix(in srgb, var(--color-success) 20%, white);
+    border-color: color-mix(in srgb, var(--color-success) 42%, white);
 }
 
 .request-chip--danger {
-    background: rgba(239, 68, 68, 0.18);
-    color: #fecaca;
+    background: color-mix(in srgb, var(--color-danger) 18%, white);
+    border-color: color-mix(in srgb, var(--color-danger) 34%, white);
 }
 
 .request-chip--warning {
-    background: rgba(245, 158, 11, 0.18);
-    color: #fde68a;
+    background: color-mix(in srgb, var(--color-warning) 26%, white);
+    border-color: color-mix(in srgb, var(--color-warning) 44%, white);
+}
+
+.request-chip--type-task {
+    background: color-mix(in srgb, var(--color-success) 18%, white);
+    border-color: color-mix(in srgb, var(--color-success) 38%, white);
+    color: var(--color-text-high-contrast);
+}
+
+.request-chip--type-purchase {
+    background: color-mix(in srgb, var(--color-warning) 24%, white);
+    border-color: color-mix(in srgb, var(--color-warning) 42%, white);
+    color: var(--color-text-high-contrast);
 }
 
 #requests-section .request-item__comment,

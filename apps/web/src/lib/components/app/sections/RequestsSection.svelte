@@ -101,11 +101,12 @@
                 class:history-item--request-purchase={req.ui.isPurchase}
                 class:history-item--request-task={!req.ui.isPurchase}>
                 <div class="history-item__icon">
-                    <span class="gamified-icon icon-envelope" aria-hidden="true"></span>
+                    <span class={`gamified-icon ${req.ui.iconClass}`} aria-hidden="true"></span>
                 </div>
                 <div class="history-item__body history-item__content">
                     <p class="history-item__title history-item__desc">{req.ui.title}</p>
                     <div class="request-item__chips">
+                        <span class={`request-chip ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                         {#if req.childNickname}
                         <span class="request-chip request-chip--child request-item__child">{req.childNickname}</span>
                         {/if}
@@ -119,9 +120,9 @@
                     {/if}
                 </div>
                 <div class="history-item__actions request-item__actions">
-                    <span class="history-item__amount">
+                    <span class={`history-item__amount ${req.ui.isPurchase ? 'history-item__amount--spend' : 'history-item__amount--earn'}`}>
                         <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:1em;height:1em;"></span>
-                        {req.ui.coins}
+                        {req.ui.amountPrefix}{req.ui.coins}
                     </span>
                     {#if hasMoneyAmount(req.ui.moneyAmount)}
                     <span class="history-item__money request-item__money">{req.ui.moneyAmount} 💶</span>
@@ -161,11 +162,12 @@
                 class:history-item--request-purchase={req.ui.isPurchase}
                 class:history-item--request-task={!req.ui.isPurchase}>
                 <div class="history-item__icon">
-                    <span class="gamified-icon icon-envelope" aria-hidden="true"></span>
+                    <span class={`gamified-icon ${req.ui.iconClass}`} aria-hidden="true"></span>
                 </div>
                 <div class="history-item__body history-item__content">
                     <p class="history-item__title history-item__desc">{req.ui.title}</p>
                     <div class="request-item__chips">
+                        <span class={`request-chip ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                         <span class={`request-chip request-chip--status ${requestStatusClass(req.status)}`}>{requestStatusLabel(req.status)}</span>
                         <span class="request-chip request-chip--group request-item__group">{req.ui.group}</span>
                         {#if formatDate(requestCreatedAt(req))}
@@ -177,9 +179,9 @@
                     {/if}
                 </div>
                 <div class="history-item__actions request-item__actions">
-                    <span class="history-item__amount">
+                    <span class={`history-item__amount ${req.ui.isPurchase ? 'history-item__amount--spend' : 'history-item__amount--earn'}`}>
                         <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:1em;height:1em;"></span>
-                        {req.ui.coins}
+                        {req.ui.amountPrefix}{req.ui.coins}
                     </span>
                     {#if hasMoneyAmount(req.ui.moneyAmount)}
                     <span class="history-item__money request-item__money">{req.ui.moneyAmount} 💶</span>

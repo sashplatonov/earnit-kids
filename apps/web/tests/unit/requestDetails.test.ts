@@ -29,6 +29,11 @@ describe('resolveRequestCard', () => {
         expect(details.group).toBe('Учеба');
         expect(details.coins).toBe(12);
         expect(details.moneyAmount).toBe(0);
+        expect(details.isPurchase).toBe(false);
+        expect(details.typeLabel).toBe('Задание');
+        expect(details.typeChipClass).toBe('request-chip--type-task');
+        expect(details.iconClass).toBe('icon-coin-stack');
+        expect(details.amountPrefix).toBe('+');
     });
 
     it('fills purchase request description and group from the reward card', () => {
@@ -58,6 +63,11 @@ describe('resolveRequestCard', () => {
         expect(details.group).toBe('Красота');
         expect(details.coins).toBe(10);
         expect(details.moneyAmount).toBe(800);
+        expect(details.isPurchase).toBe(true);
+        expect(details.typeLabel).toBe('Товар');
+        expect(details.typeChipClass).toBe('request-chip--type-purchase');
+        expect(details.iconClass).toBe('icon-shop');
+        expect(details.amountPrefix).toBe('−');
     });
 
     it('keeps explicit request fields when they are present', () => {

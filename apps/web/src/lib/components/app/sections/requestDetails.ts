@@ -19,6 +19,10 @@ export interface RequestCardDetails {
     coins: number;
     moneyAmount: number;
     isPurchase: boolean;
+    typeLabel: string;
+    typeChipClass: 'request-chip--type-task' | 'request-chip--type-purchase';
+    iconClass: 'icon-coin-stack' | 'icon-shop';
+    amountPrefix: '+' | '−';
 }
 
 function asText(value: unknown): string {
@@ -112,5 +116,9 @@ export function resolveRequestCard(request: Request, lookups: RequestCatalogLook
         coins: toNumber(request['coins'] ?? request.amount ?? (purchase ? item?.price : task?.coins) ?? 0),
         moneyAmount: toNumber(request['moneyAmount'] ?? (purchase ? item?.moneyLimit : task?.moneyLimit) ?? 0),
         isPurchase: purchase,
+        typeLabel: purchase ? 'Товар' : 'Задание',
+        typeChipClass: purchase ? 'request-chip--type-purchase' : 'request-chip--type-task',
+        iconClass: purchase ? 'icon-shop' : 'icon-coin-stack',
+        amountPrefix: purchase ? '−' : '+',
     };
 }
