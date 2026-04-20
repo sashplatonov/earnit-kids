@@ -426,13 +426,23 @@ html {
 
     .super-admin-header,
     .panel__header,
-    .family-row {
+    .family-row,
+    .family-row__head,
+    .family-detail-header,
+    .family-detail-section__header {
         flex-direction: column;
         align-items: flex-start;
     }
 
     .tabs {
         border-radius: 24px;
+    }
+
+    .family-row__summary,
+    .family-detail-columns,
+    .family-detail-collections,
+    .system-panel__details {
+        grid-template-columns: 1fr;
     }
 
     .family-row__actions,
@@ -443,6 +453,22 @@ html {
     .family-row__actions .btn,
     .item-actions .btn-sm {
         flex: 1 1 0;
+    }
+
+    .family-mini-stat--wide {
+        grid-column: span 1;
+    }
+
+    .family-detail-header__pills {
+        justify-content: flex-start;
+    }
+
+    .password-panel__actions {
+        width: 100%;
+    }
+
+    .password-panel__actions .btn {
+        width: 100%;
     }
 
     /* Drag handle indicator */

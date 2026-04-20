@@ -2,6 +2,8 @@ package com.sashplatonov.earnit.kids.resource;
 
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
+import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
+import com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
@@ -21,6 +23,7 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
@@ -116,6 +119,39 @@ public class SuperAdminResource {
         }
 
         return toTokenResponse(superAdminService.regenerateChildToken(childId));
+    }
+
+    @POST
+    @Path("/family/{familyId}/password")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response setFamilyPassword(@Context ContainerRequestContext ctx,
+                                      @PathParam("familyId") String familyId,
+                                      @Valid SetPasswordRequest request) {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        return toVoidResponse(
+            superAdminService.setFamilyPassword(familyId, request.password()),
+            "FAMILY_PASSWORD_UPDATE_FAILED"
+        );
+    }
+
+    @POST
+    @Path("/system/password")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response changeSuperAdminPassword(@Context ContainerRequestContext ctx,
+                                             @Valid ChangePasswordRequest request) {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        return toVoidResponse(
+            superAdminService.changeSuperAdminPassword(request.oldPassword(), request.newPassword()),
+            "SUPER_ADMIN_PASSWORD_UPDATE_FAILED"
+        );
     }
 
     @GET
@@ -236,6 +272,25 @@ public class SuperAdminResource {
         payload.put("success", true);
         payload.put("token", ((OperationResult.Success<String>) result).value());
         return Response.ok(payload).build();
+    }
+
+    private Response toVoidResponse(OperationResult<Void> result, String errorCode) {
+        if (result instanceof OperationResult.Success<?>) {
+            return Response.ok(SimpleResponse.ok()).build();
+        }
+
+        OperationResult.Failure<Void> failure = (OperationResult.Failure<Void>) result;
+        int status = resolveFailureStatus(failure.message());
+        return Response.status(status)
+            .entity(ErrorResponse.of(failure.message(), errorCode, status))
+            .build();
+    }
+
+    private int resolveFailureStatus(String message) {
+        if ("Семья не найдена".equals(message)) {
+            return Response.Status.NOT_FOUND.getStatusCode();
+        }
+        return Response.Status.BAD_REQUEST.getStatusCode();
     }
 
     private Response requireSuperAdmin(ContainerRequestContext ctx) {

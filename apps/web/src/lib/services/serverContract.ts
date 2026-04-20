@@ -25,7 +25,10 @@ export function normalizeTask(task: Record<string, unknown> = {}) {
         title: name,
         coins,
         groupName: task.groupName ?? task.group ?? null,
+        comment: task.comment ?? null,
         moneyLimit: task.moneyLimit ?? task.money_limit ?? null,
+        ageMin: task.ageMin ?? task.age_min ?? null,
+        ageMax: task.ageMax ?? task.age_max ?? null,
     };
 }
 
@@ -41,6 +44,15 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
         groupName: item.groupName ?? item.group ?? null,
         comment: item.comment ?? null,
         moneyLimit: item.moneyLimit ?? item.money_limit ?? null,
+        ageMin: item.ageMin ?? item.age_min ?? null,
+        ageMax: item.ageMax ?? item.age_max ?? null,
+    };
+}
+
+function normalizeBaseData(baseData: Record<string, unknown> = {}) {
+    return {
+        tasks: Array.isArray(baseData.tasks) ? baseData.tasks.map(normalizeTask) : [],
+        products: Array.isArray(baseData.products) ? baseData.products.map(normalizeShopItem) : [],
     };
 }
 
@@ -88,11 +100,12 @@ function parseBoolean(v: unknown): boolean {
 
 export function buildInitialState(data: Record<string, unknown>, baseData: Record<string, unknown>): Record<string, unknown> {
     const normalized = normalizeServerData(data) as Record<string, unknown>;
+    const normalizedBaseData = normalizeBaseData(baseData);
     const isAdmin = parseBoolean(normalized.isAdmin);
     return {
         isAdmin,
         role: isAdmin ? 'admin' : null,
-        baseData,
+        baseData: normalizedBaseData,
         isLoading: false,
         familyId: normalized.familyId ?? null,
         balance: normalized.balance ?? 0,
