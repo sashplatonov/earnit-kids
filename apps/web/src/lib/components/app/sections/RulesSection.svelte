@@ -4,8 +4,7 @@
     import { showToast } from '$lib/stores/toasts';
 
     $: isAdmin = $appStore.isAdmin;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    $: rules = ($appStore as any).rules as string ?? '';
+    $: rules = $appStore.rules ?? '';
 
     let editing = false;
     let draftRules = '';
@@ -16,8 +15,7 @@
     }
 
     async function saveRules() {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        appStore.setState({ rules: draftRules } as any);
+        appStore.setState({ rules: draftRules.trim() || null });
         await scheduleSave();
         showToast('Правила сохранены', 'success');
         editing = false;
@@ -40,15 +38,30 @@
     </div>
 
     {#if editing}
-    <textarea class="input" rows="8" style="width:100%; margin-top:1rem;" bind:value={draftRules}
+    <textarea class="input rules-editor" rows="8" bind:value={draftRules}
         placeholder="Напишите правила и цели для ребенка..."></textarea>
     {:else}
     <div class="rules-content" id="rules-display">
         {#if rules}
-        <p style="white-space: pre-wrap;">{rules}</p>
+        <p class="rules-content__text">{rules}</p>
         {:else}
-        <p class="hint" style="margin-top:1rem;">Правила ещё не добавлены.</p>
+        <p class="hint rules-content__hint">Правила ещё не добавлены.</p>
         {/if}
     </div>
     {/if}
 </section>
+
+<style>
+    .rules-editor {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .rules-content__text {
+        white-space: pre-wrap;
+    }
+
+    .rules-content__hint {
+        margin-top: 1rem;
+    }
+</style>

@@ -2,6 +2,7 @@
     import type { PageData } from './$types';
     import { onMount, onDestroy } from 'svelte';
     import { fetchWithCsrf } from '$lib/services/api';
+    import { startOfTodayTimestamp, toDate } from '$lib/utils/date';
 
     export let data: PageData;
 
@@ -94,14 +95,6 @@
     function parseNumber(value: unknown): number {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : 0;
-    }
-
-    function toDate(value: unknown): Date | null {
-        if (typeof value !== 'string' && !(value instanceof Date)) {
-            return null;
-        }
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? null : date;
     }
 
     function formatShortDate(value: unknown): string {
@@ -450,12 +443,12 @@
     $: dashboardStats = (() => {
         if (families.length === 0) return null;
         const now = Date.now();
-        const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+        const todayMidnightMs = startOfTodayTimestamp(now);
         const weekAgoMs = now - 7 * 86400000;
         const monthAgoMs = now - 30 * 86400000;
         const actMs = (f: Record<string, unknown>) => toDate(f.lastActive ?? f.last_activity)?.getTime() ?? 0;
         const crtMs = (f: Record<string, unknown>) => toDate(f.createdAt ?? f.created_at)?.getTime() ?? 0;
-        const activeToday = families.filter(f => actMs(f) >= todayMidnight.getTime()).length;
+        const activeToday = families.filter(f => actMs(f) >= todayMidnightMs).length;
         const activeWeek = families.filter(f => actMs(f) >= weekAgoMs).length;
         const newWeek = families.filter(f => crtMs(f) >= weekAgoMs).length;
         const newMonth = families.filter(f => crtMs(f) >= monthAgoMs).length;

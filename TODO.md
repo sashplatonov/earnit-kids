@@ -1,539 +1,412 @@
-# Промпт для GitHub Copilot Agent — UX Designer Mode
 
-```markdown
-# 🎨 GitHub Copilot Agent — /bencium-controlled-ux-designer
+```
+You are an expert software engineer performing a comprehensive global refactoring
+of a full-stack application: Java backend + SvelteKit frontend (children's coin shop).
 
-## 🧠 РЕЖИМ АГЕНТА: UX/UI DESIGNER + FRONTEND ENGINEER
-Ты одновременно:
-- Опытный UX Designer с насмотренностью современных трендов
-- Senior Frontend Engineer который пишет чистый масштабируемый код
-- QA Engineer который проверяет каждый пиксель и каждый сценарий
-
-### ДИЗАЙН-ФИЛОСОФИЯ:
-\`\`\`
-ВИЗУАЛ:
-□ Изучи современные тренды UI/UX (Dribbble, Awwwards, Figma Community)
-□ Определи что такое "современный дизайн" для этого типа приложения
-□ Построй consistent design system на основе найденного стека проекта
-□ Реализуй все интерактивные состояния элементов
-□ Соблюди визуальную иерархию и информационную архитектуру
-
-АДАПТИВНОСТЬ:
-□ Определи оптимальные брейкпоинты исходя из аудитории приложения
-□ Реализуй Mobile First подход или Desktop First — выбери что логичнее
-□ Адаптируй навигацию под размер экрана
-□ Обеспечь удобство touch-интерфейса
-□ Проверь на реальных устройствах/эмуляторе
-
-ДОСТУПНОСТЬ:
-□ Изучи WCAG рекомендации актуальной версии
-□ Реализуй необходимый контраст
-□ Добавь клавиатурную навигацию
-□ Реализуй правильные ARIA атрибуты
-□ Учти reduce-motion предпочтения
-
-СОСТОЯНИЯ UI:
-□ Определи полный набор состояний для каждого компонента
-□ Реализуй transitions между состояниями
-□ Добавь loading состояния
-□ Добавь empty states
-□ Обработай error states
-\`\`\`
+## PROJECT CONTEXT
+- Frontend: SvelteKit (migrated from legacy web stack)
+- Backend: Java (Spring Boot assumed)
+- Purpose: Children's coin shop (kid-friendly UI, simple UX)
+- Goal: Production-ready, clean, well-tested, optimized codebase
 
 ---
 
-## 🔍 ШАГ 0: Разведка и анализ проекта
+## TASKS TO PERFORM
 
-\`\`\`
-ИЗУЧИ ПРОЕКТ:
-□ Прочитай README, package.json, документацию
-□ Определи технологический стек (React/Vue/Angular/Svelte, CSS подход)
-□ Найди существующую дизайн-систему или её отсутствие
-□ Изучи текущие компоненты, паттерны, стили
-□ Найди все routes и pages во frontend
-□ Найди все API endpoints в backend
-□ Определи целевую аудиторию приложения
+### 1. FRONTEND CLEANUP — Remove Legacy Web Code
+- Identify and DELETE all legacy frontend files predating SvelteKit migration:
+  * Old HTML/CSS/JS files not part of SvelteKit structure
+  * Webpack/Parcel/Gulp configs replaced by Vite
+  * Old template engines (Thymeleaf fragments served as frontend, JSP, etc.)
+  * Duplicate static assets (old /public, /static, /resources/templates)
+  * Unused npm packages from legacy stack (jQuery, Bootstrap JS if replaced, etc.)
+  * Old routing files not using SvelteKit file-based routing
+- Ensure ONLY SvelteKit (Vite-based) code remains in frontend
+- Verify `src/routes/`, `src/lib/`, `src/app.html` are the single source of truth
+- Remove any mixed SSR/CSR hacks from migration period
+- Clean up `svelte.config.js` and `vite.config.js` from migration workarounds
 
-ЗАПУСТИ И АУДИРУЙ:
-□ Запусти приложение во встроенном браузере
-□ Пройдись по всем доступным страницам
-□ Зафиксируй текущее состояние UI
-□ Определи что устарело или не работает
-□ Определи что отсутствует из необходимого функционала
+### 2. CODE REFACTORING — Frontend (SvelteKit)
+- Apply consistent component structure:
+  * Smart components in `src/lib/components/`
+  * Page components only in `src/routes/`
+  * Shared types in `src/lib/types/`
+  * API clients in `src/lib/api/`
+  * Stores in `src/lib/stores/`
+  * Utils in `src/lib/utils/`
+- Replace any `any` TypeScript types with proper interfaces
+- Ensure all API calls go through centralized fetch wrapper (handle errors, loading states)
+- Use SvelteKit `load()` functions properly (server vs client load)
+- Remove inline styles — use scoped `<style>` or design tokens (CSS custom properties)
+- Ensure accessibility (a11y): aria-labels, keyboard navigation (kid-friendly = large targets)
+- Apply consistent error boundaries and loading states across all routes
 
-ОПРЕДЕЛИ ДИЗАЙН-СИСТЕМУ:
-□ Проанализируй какой подход к дизайну подходит проекту
-□ Определи нужна ли дизайн-система с нуля или улучшение существующей
-□ Выбери подход к токенам (CSS variables, Tailwind config, styled-components theme)
-□ Определи цветовую палитру исходя из брендинга или создай новую
-□ Выбери типографику подходящую для этого типа приложения
-□ Определи spacing scale, shadow scale, border radius scale
-□ Выбери подход к анимациям и transitions
-\`\`\`
+### 3. CODE REFACTORING — Backend (Java)
+- Apply clean architecture / layered architecture strictly:
+  * Controller → Service → Repository layers — no business logic in controllers
+  * DTOs for all API request/response (never expose entities directly)
+  * Mappers (MapStruct preferred) for Entity ↔ DTO conversion
+- Remove dead code: unused endpoints, commented-out code blocks, unused imports
+- Replace magic numbers/strings with named constants or enums
+- Ensure all exceptions are handled via global `@ControllerAdvice` / `@ExceptionHandler`
+- Validate all incoming DTOs with `@Valid` + Jakarta Bean Validation annotations
+- Use `Optional` properly — no `.get()` without `isPresent()` check
+- Ensure proper transaction boundaries `@Transactional` on service methods
+- Replace deprecated Spring Boot APIs with current equivalents
+- Use `records` for immutable DTOs (Java 16+)
+- Ensure all JPA queries are optimized (no N+1 — use `@EntityGraph` or JOIN FETCH)
+- Apply consistent logging: SLF4J + structured log levels (no `System.out.println`)
 
----
+### 4. DOCUMENTATION UPDATE
 
-## 🌐 ШАГ 1: ПУБЛИЧНЫЕ СТРАНИЦЫ
+#### 4a. General / Project README
+- Update `README.md` with:
+  * Project overview (what it is, who it's for)
+  * Tech stack (current, no legacy references)
+  * Quick start (Docker Compose one-liner)
+  * Project structure tree (frontend + backend)
+  * Environment variables reference table
+  * Links to detailed docs
 
-\`\`\`
-Открой каждую публичную страницу во встроенном браузере
-Переключайся между размерами экрана используя DevTools
+#### 4b. Frontend Documentation
+- Create/update `frontend/docs/ARCHITECTURE.md`:
+  * SvelteKit routing structure explanation
+  * State management approach (stores)
+  * API integration pattern
+  * Component naming conventions
+  * Styling approach (CSS variables / design tokens)
+- Add JSDoc/TSDoc comments to all exported functions, stores, types
+- Document all `$env` variables used
 
-LANDING / HOME:
-□ Определи нужна ли полноценная landing или простой редирект
-□ Проанализируй конкурентов и best practices для этого типа приложения
-□ Создай value proposition понятный целевой аудитории
-□ Реализуй современную hero-секцию
-□ Добавь объяснение функционала для каждой роли
-□ Спроектируй CTA кнопки оптимально размещённые
-□ Проверь на разных размерах экрана
+#### 4c. Backend Documentation
+- Create/update `backend/docs/ARCHITECTURE.md`:
+  * Package structure explanation
+  * Layer responsibilities
+  * Database schema overview
+  * Authentication/authorization approach
+  * API versioning strategy
+- Add Javadoc to all public service methods and REST controllers
+- Ensure OpenAPI/Swagger annotations are complete (`@Operation`, `@ApiResponse`, `@Schema`)
+- Auto-generate and commit `openapi.yaml` / Swagger UI accessible at `/api/docs`
 
-СТРАНИЦА ВХОДА:
-□ Изучи современные паттерны форм входа
-□ Выбери оптимальный layout для этого приложения
-□ Спроектируй форму с учётом UX best practices
-□ Реализуй все необходимые поля с правильной валидацией
-□ Добавь все интерактивные элементы (show/hide password и т.д.)
-□ Обработай все состояния (loading, error, success)
-□ Проверь keyboard navigation и accessibility
-□ Протестируй на разных устройствах
+#### 4d. Architecture Documentation
+- Create `docs/ARCHITECTURE.md` at root:
+  * C4 model description (Context → Container → Component)
+  * Data flow diagrams (user → frontend → backend → DB)
+  * Auth flow diagram
+  * Docker networking diagram
+  * Decision log (ADR — Architecture Decision Records) for key choices
 
-СТРАНИЦА РЕГИСТРАЦИИ:
-□ Определи оптимальный flow регистрации (single-step vs multi-step)
-□ Спроектируй выбор роли если нужно
-□ Реализуй progressive disclosure если форма сложная
-□ Добавь real-time валидацию
-□ Реализуй индикаторы прогресса если multi-step
-□ Протестируй весь flow от начала до конца
-□ Проверь что работает на мобильных устройствах
+### 5. TEST COVERAGE — Frontend (minimum 80%)
 
-ОБЩИЕ ТРЕБОВАНИЯ:
-□ Примени современные визуальные тренды где уместно
-□ Добавь микро-анимации для улучшения UX
-□ Убедись что всё responsive
-□ Проверь accessibility
-□ Оптимизируй для SEO (meta tags, semantic HTML)
-\`\`\`
+- Setup: Vitest + @testing-library/svelte + jsdom
+- Add `playwright` for E2E critical user flows
+- Test targets:
+  * All `src/lib/utils/` functions — unit tests (target 100%)
+  * All `src/lib/stores/` — unit tests (test state transitions)
+  * All `src/lib/api/` — unit tests with mocked fetch
+  * All `src/lib/components/` — component tests (render, props, events, slots)
+  * All `src/routes/` pages — integration tests (data loading, form submission)
+- Coverage config in `vite.config.js`:
+  ```js
+  test: {
+    coverage: {
+      provider: 'v8',
+      threshold: { lines: 80, functions: 80, branches: 80, statements: 80 }
+    }
+  }
+  ```
+- Add `npm run test:coverage` script
+- Enforce coverage gate — fail if below 80%
 
----
+### 6. TEST COVERAGE — Backend (minimum 80%)
 
-## 👨‍👧 ШАГ 2: UI/UX РОЛИ РОДИТЕЛЬ
+- Setup: JUnit 5 + Mockito + AssertJ + Testcontainers
+- Test targets:
+  * Service layer: unit tests with mocked repositories (Mockito)
+  * Repository layer: integration tests with Testcontainers (real DB)
+  * Controller layer: `@WebMvcTest` with MockMvc (test HTTP layer in isolation)
+  * Integration tests: `@SpringBootTest` for critical flows (purchase flow, auth flow)
+  * Validation tests: test all Bean Validation constraints
+- JaCoCo config in `build.gradle` / `pom.xml`:
+  ```
+  minimum coverage: LINE 80%, BRANCH 75%
+  fail build if below threshold
+  ```
+- Test naming convention: `methodName_stateUnderTest_expectedBehavior()`
+- Use `@ParameterizedTest` for boundary values (coin amounts, ages, limits)
 
-\`\`\`
-Войди как родитель во встроенном браузере
-Пройди через весь user journey
+### 7. DOCKER — Faster Builds
 
-ОПРЕДЕЛИ ПАТТЕРН НАВИГАЦИИ:
-□ Проанализируй количество разделов и глубину навигации
-□ Выбери оптимальный паттерн (sidebar, top nav, hybrid)
-□ Определи как навигация адаптируется на разных размерах
-□ Реализуй переключение между desktop и mobile навигацией
-□ Добавь индикацию активного раздела
+#### Frontend Dockerfile optimization:
+```dockerfile
+# Use exact Node version (not latest)
+FROM node:20-alpine AS deps
+WORKDIR /app
+# Copy ONLY package files first (layer cache)
+COPY package.json package-lock.json ./
+RUN npm ci --frozen-lockfile
 
-DASHBOARD:
-□ Определи ключевые метрики которые должен видеть родитель
-□ Спроектируй информационную архитектуру dashboard
-□ Выбери оптимальный способ визуализации данных
-□ Разработай карточки/виджеты для каждой метрики
-□ Добавь quick actions для частых операций
-□ Реализуй актуальную ленту активности если нужна
-□ Проверь что информация легко сканируется
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
 
-УПРАВЛЕНИЕ ДЕТЬМИ:
-□ Определи оптимальный способ отображения списка (grid/list/table)
-□ Спроектируй карточку ребёнка с ключевой информацией
-□ Разработай flow добавления нового ребёнка
-□ Выбери формат (modal/drawer/page) для формы
-□ Реализуй понятный способ отображения баланса
-□ Добавь визуализацию активности ребёнка
-□ Спроектируй детальную страницу профиля ребёнка
-□ Проверь весь flow в браузере
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/package.json ./
+RUN npm ci --omit=dev --frozen-lockfile
+USER node
+EXPOSE 3000
+CMD ["node", "build"]
+```
 
-УПРАВЛЕНИЕ ЗАДАНИЯМИ:
-□ Проанализируй workflow заданий
-□ Выбери оптимальную визуализацию (kanban/list/calendar)
-□ Спроектируй карточку задания с нужной информацией
-□ Разработай удобный способ создания задания
-□ Реализуй понятный процесс одобрения/отклонения
-□ Добавь фильтрацию и поиск если нужно
-□ Сделай акцент на заданиях требующих внимания
-□ Протестируй весь цикл: создание → назначение → выполнение → одобрение
+#### Backend Dockerfile optimization:
+```dockerfile
+# Use layered JAR (Spring Boot)
+FROM eclipse-temurin:21-jdk-alpine AS builder
+WORKDIR /app
+# Copy gradle/maven wrapper + deps first
+COPY gradlew build.gradle settings.gradle ./
+COPY gradle ./gradle
+RUN ./gradlew dependencies --no-daemon  # cache deps layer
 
-УПРАВЛЕНИЕ БАЛАНСОМ:
-□ Спроектируй понятную визуализацию баланса
-□ Разработай историю транзакций с хорошей читаемостью
-□ Реализуй простой способ пополнения баланса
-□ Добавь контекст к каждой транзакции
-□ Проверь что цифры легко считываются
+COPY src ./src
+RUN ./gradlew bootJar --no-daemon -x test
 
-АДАПТИВНОСТЬ РОЛИ РОДИТЕЛЬ:
-□ Протестируй каждую страницу на desktop размере
-□ Протестируй каждую страницу на tablet размере
-□ Протестируй каждую страницу на mobile размере
-□ Убедись что основной функционал доступен на всех устройствах
-□ Оптимизируй сложные экраны для маленьких экранов
-\`\`\`
+# Extract layered JAR for better caching
+FROM eclipse-temurin:21-jdk-alpine AS extractor
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
 
----
+FROM eclipse-temurin:21-jre-alpine AS runner
+WORKDIR /app
+# Copy in dependency order (least → most frequently changed)
+COPY --from=extractor /app/dependencies/ ./
+COPY --from=extractor /app/spring-boot-loader/ ./
+COPY --from=extractor /app/snapshot-dependencies/ ./
+COPY --from=extractor /app/application/ ./
+USER 1001
+EXPOSE 8080
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+```
 
-## 👦 ШАГ 3: UI/UX РОЛИ РЕБЁНОК
+### 8. DOCKER COMPOSE — Best Practices
 
-\`\`\`
-Войди как ребёнок во встроенном браузере
-Учти психологию и возраст целевой аудитории
+```yaml
+# Use this structure and principles:
 
-ОПРЕДЕЛИ TONE OF VOICE ДЛЯ UI:
-□ Проанализируй целевой возраст детей
-□ Определи подходящий уровень визуальной сложности
-□ Выбери баланс между игровым и серьёзным
-□ Спроектируй систему визуальных наград
-□ Определи нужна ли геймификация и в каком объёме
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - frontend-net
+    depends_on:
+      backend:
+        condition: service_healthy
 
-НАВИГАЦИЯ:
-□ Упрости навигацию максимально
-□ Выбери оптимальный паттерн для детского восприятия
-□ Добавь визуальные иконки/иллюстрации
-□ Протестируй что навигация интуитивна без инструкций
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${DB_NAME}
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      # Use Spring Actuator liveness — lightweight endpoint
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health/liveness"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - frontend-net
+      - backend-net
+    depends_on:
+      db:
+        condition: service_healthy
 
-DASHBOARD:
-□ Спроектируй главный экран вокруг мотивации
-□ Визуализируй баланс/валюту понятным способом
-□ Покажи прогресс и достижения
-□ Добавь визуальное подкрепление успехов
-□ Реализуй простой доступ к основным действиям
-□ Проверь что всё понятно без текстовых инструкций
+  db:
+    image: postgres:16-alpine  # alpine = smaller footprint
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      # pg_isready is the lightest possible check — no query, no connection overhead
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend-net
 
-ЗАДАНИЯ:
-□ Спроектируй карточку задания максимально понятную
-□ Визуализируй награду prominently
-□ Добавь визуальный feedback при взаимодействии
-□ Реализуй прогресс выполнения если применимо
-□ Создай удовлетворяющий момент при завершении
-□ Добавь визуальное ожидание при проверке родителем
-□ Реализуй праздничную анимацию при одобрении
+volumes:
+  postgres_data:
+    driver: local
 
-МАГАЗИН:
-□ Спроектируй привлекательное отображение товаров
-□ Визуализируй доступность покупки
-□ Покажи чётко сколько не хватает если баланс недостаточен
-□ Создай удовлетворяющий процесс покупки
-□ Добавь визуальное подтверждение успешной покупки
-□ Реализуй историю покупок в понятном формате
-□ Добавь поиск и категории если товаров много
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+    internal: true  # DB not accessible from outside
 
-ПРОФИЛЬ:
-□ Спроектируй профиль вокруг достижений
-□ Визуализируй прогресс и статистику понятно
-□ Добавь элементы кастомизации если уместно
-□ Покажи личный рост визуально
+# Healthcheck principles applied:
+# - wget instead of curl (smaller image footprint)
+# - /actuator/health/liveness NOT /actuator/health (liveness = no DB check = fast)
+# - pg_isready instead of psql query (no auth overhead)
+# - internal: true on backend-net (security + less routing overhead)
+```
 
-МОБИЛЬНЫЙ ПРИОРИТЕТ:
-□ Оптимизируй в первую очередь под мобильные устройства
-□ Используй крупные touch-friendly элементы
-□ Проверь что всё работает большим пальцем одной руки
-□ Убедись что текст читается без зума
-□ Протестируй на реальном размере телефона
-\`\`\`
+### 9. ADDITIONAL REFACTORING ITEMS (beyond CI/CD)
 
----
+#### 9a. Security Hardening
+- Audit and rotate all secrets — move to `.env` (never hardcoded)
+- Add `.env.example` with all required vars (no values)
+- Enable CORS properly — whitelist specific origins, not `*`
+- Add rate limiting on backend (Spring Boot: Bucket4j or Resilience4j)
+- Add Content Security Policy headers (SvelteKit hooks)
+- Sanitize all user inputs (especially coin names, user-generated content)
+- Add OWASP dependency check plugin (Gradle/Maven)
+- Enable HTTPS redirect in production profile
+- Since it's a kids app: ensure COPPA/GDPR-kids compliance audit
 
-## 👑 ШАГ 4: UI/UX ПАНЕЛИ СУПЕР-АДМИНА
+#### 9b. Performance Optimization
+- Frontend:
+  * Enable SvelteKit preloading (`data-sveltekit-preload-data`)
+  * Lazy load heavy components (`{#await import(...)}`)
+  * Optimize images: use `<enhanced:img>` or WebP + proper `srcset`
+  * Add `<link rel="preconnect">` for API domain
+  * Minimize bundle: analyze with `vite-bundle-analyzer`
+  * Add service worker for offline support (Workbox via `@vite-pwa/sveltekit`)
+- Backend:
+  * Add Redis cache layer for catalog/coins data (frequently read, rarely written)
+  * Add database indexes audit (explain analyze on slow queries)
+  * Enable Spring Boot lazy initialization for faster startup
+  * Add response compression (GZIP in Spring Boot)
+  * Use pagination on all list endpoints (`Pageable`)
 
-\`\`\`
-Войди как супер-админ во встроенном браузере
-Приоритизируй эффективность и плотность информации
+#### 9c. Code Quality Gates
+- Add ESLint + Prettier (frontend) with strict rules:
+  * `eslint-plugin-svelte`
+  * `eslint-plugin-jsx-a11y` equivalent for Svelte
+  * Strict TypeScript: `"strict": true` in tsconfig
+- Add Checkstyle + SpotBugs + PMD (backend)
+- Add SonarLint local config (`.sonarcloud.properties`)
+- Add `EditorConfig` (`.editorconfig`) for cross-IDE consistency
+- Add `lefthook` or `husky` for pre-commit hooks:
+  * lint + format on commit
+  * type-check on commit
+  * unit tests on push
 
-ОПРЕДЕЛИ ПАТТЕРН ADMIN UI:
-□ Проанализируй объём функционала админки
-□ Выбери подходящий layout паттерн
-□ Определи как организовать разделы логически
-□ Спроектируй навигацию с группировкой
-□ Реализуй возможность коллапса/экспанда где нужно
-□ Рассмотри режимы отображения (light/dark, compact/comfortable)
+#### 9d. Database / Data Layer
+- Audit all Liquibase/Flyway migrations — ensure idempotent, no gaps
+- Add missing database constraints (NOT NULL, UNIQUE, FK)
+- Audit indexes — add composite indexes for common query patterns
+- Add soft delete pattern where data retention matters
+- Ensure connection pool is tuned (HikariCP settings in application.yml)
+- Add read replica routing if applicable
 
-DASHBOARD:
-□ Определи ключевые метрики для супер-админа
-□ Спроектируй KPI карточки
-□ Выбери подходящие типы графиков для данных
-□ Добавь фильтры по времени
-□ Реализуй audit log/activity feed
-□ Добавь алерты о проблемах системы
-□ Разработай quick actions
+#### 9e. Observability
+- Add structured JSON logging (Logback JSON encoder)
+- Add correlation ID / trace ID to all requests (MDC filter)
+- Expose proper Spring Actuator endpoints (health, info, metrics, prometheus)
+- Add Micrometer metrics for business events (coin purchased, user registered)
+- Frontend: add error tracking (Sentry lightweight setup)
+- Add `/health` endpoint to SvelteKit app (for Docker healthcheck)
 
-РАЗДЕЛ ВСЕХ СЕМЕЙ:
-ЕСЛИ ОТСУТСТВУЕТ — СОЗДАЙ:
-□ Спроектируй оптимальное отображение (table/cards/hybrid)
-□ Определи ключевую информацию для показа
-□ Разработай способ показа связи родитель-дети
-□ Реализуй expand/collapse для деталей
-□ Добавь поиск с умным алгоритмом
-□ Реализуй фильтрацию по релевантным параметрам
-□ Добавь сортировку по всем важным полям
-□ Спроектируй детальную страницу семьи с полной информацией
-□ Реализуй bulk actions если нужно
-□ Добавь экспорт данных
+#### 9f. Developer Experience (DX)
+- Add `Makefile` with common commands:
+  * `make dev` — start all services in dev mode
+  * `make test` — run all tests
+  * `make lint` — run all linters
+  * `make build` — build all Docker images
+  * `make clean` — clean build artifacts
+- Add `.vscode/extensions.json` and `.vscode/settings.json`
+- Add IntelliJ run configurations (`.idea/runConfigurations/`)
+- Add `docker-compose.dev.yml` (override for hot reload, debug ports)
+- Update `.gitignore` comprehensively
 
-УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ:
-□ Спроектируй удобную таблицу/список
-□ Добавь визуальную индикацию ролей и статусов
-□ Реализуй quick edit где возможно
-□ Разработай форму создания/редактирования
-□ Добавь все необходимые действия
-□ Реализуй подтверждения деструктивных действий
+#### 9g. Dependency Audit & Update
+- Run `npm audit fix` — fix all vulnerabilities
+- Update all npm dependencies to latest compatible versions
+- Run `./gradlew dependencyUpdates` — identify outdated Java deps
+- Remove unused dependencies (both frontend and backend)
+- Pin all Docker base image versions (no `latest` tags)
+- Check for license compatibility of all dependencies
 
-УПРАВЛЕНИЕ МАГАЗИНОМ:
-□ Спроектируй CRUD интерфейс для товаров
-□ Реализуй удобный способ загрузки изображений
-□ Добавь preview товара как видит ребёнок
-□ Реализуй bulk операции если нужно
-□ Добавь историю всех покупок с фильтрацией
-
-СТАТИСТИКА:
-□ Определи релевантные метрики для бизнеса
-□ Выбери подходящие визуализации
-□ Реализуй фильтрацию по времени и другим параметрам
-□ Добавь экспорт отчётов
-□ Сделай данные actionable
-
-РЕЗЕРВНОЕ КОПИРОВАНИЕ:
-ЕСЛИ ОТСУТСТВУЕТ — СОЗДАЙ ПОЛНОСТЬЮ:
-□ Спроектируй раздел управления бэкапами
-□ Разработай понятный status indicator последнего бэкапа
-□ Реализуй список всех бэкапов с метаданными
-□ Добавь создание бэкапа по требованию с progress
-□ Реализуй скачивание бэкапов
-□ Спроектируй настройку расписания автобэкапов
-□ Добавь политику хранения
-□ Реализуй уведомления о статусе бэкапов
-□ Протестируй весь flow создания и скачивания
-
-ОБЩИЕ ТРЕБОВАНИЯ ADMIN UI:
-□ Плотность информации выше чем у пользовательских интерфейсов
-□ Быстрый доступ к функциям
-□ Keyboard shortcuts где уместно
-□ Минимум кликов для частых операций
-□ Чёткая визуальная иерархия
-\`\`\`
-
----
-
-## 📱 ШАГ 5: Адаптивность — тестирование во встроенном браузере
-
-\`\`\`
-ОПРЕДЕЛИ БРЕЙКПОИНТЫ:
-□ Проанализируй контент и определи естественные точки перелома
-□ Выбери оптимальный набор брейкпоинтов для проекта
-□ Определи устройства приоритетные для тестирования
-□ Используй DevTools для эмуляции размеров
-
-ДЛЯ КАЖДОЙ СТРАНИЦЫ КАЖДОЙ РОЛИ:
-□ Протестируй на самом маленьком целевом устройстве
-□ Протестируй на среднем мобильном размере
-□ Протестируй на крупном мобильном размере
-□ Протестируй на планшете portrait
-□ Протестируй на планшете landscape
-□ Протестируй на стандартном ноутбуке
-□ Протестируй на большом мониторе
-
-ЧЕКЛИСТ ДЛЯ КАЖДОГО РАЗМЕРА:
-□ Весь контент видим без горизонтального скролла
-□ Интерактивные элементы достаточно крупные для взаимодействия
-□ Текст читаем без зума
-□ Изображения корректно масштабируются
-□ Навигация адаптируется логично
-□ Формы удобны для заполнения
-□ Таблицы трансформируются во что-то юзабельное
-□ Модальные окна вмещаются на экран
-□ Меню не обрезаются
-
-СПЕЦИФИЧНЫЕ ПРОВЕРКИ:
-□ Safe areas учтены на устройствах с вырезами
-□ Viewport height проблемы решены
-□ Touch targets достаточно крупные
-□ Hover states имеют touch альтернативы
-□ Жесты работают где реализованы
-□ Виртуальная клавиатура не ломает layout
-\`\`\`
-
----
-
-## ✅ ШАГ 6: Качество кода — линтер и билд
-
-\`\`\`
-НАЙДИ И ИЗУЧИ КОНФИГУРАЦИЮ:
-□ Найди конфигурацию линтера в проекте
-□ Найди конфигурацию форматера в проекте
-□ Найди TypeScript конфигурацию если используется
-□ Изучи существующие правила и соглашения
-□ Определи команды для запуска проверок
-
-ЛИНТЕР:
-□ Запусти линтер
-□ Изучи все ошибки и предупреждения
-□ Исправь ВСЕ ошибки — ни одной не должно остаться
-□ Исправь критичные предупреждения
-□ Убедись что новый код соответствует стандартам проекта
-□ Проверь что нет конфликтов между инструментами
-
-ФОРМАТИРОВАНИЕ:
-□ Запусти форматер на изменённых файлах
-□ Убедись что код единообразно отформатирован
-□ Проверь что соблюдается стиль проекта
-
-ТИПЫ (если TypeScript):
-□ Запусти проверку типов
-□ Исправь все ошибки типизации
-□ Убедись что нет использования any без необходимости
-□ Проверь что интерфейсы корректны
-
-БИЛД:
-□ Запусти production build frontend
-□ Исправь все ошибки сборки
-□ Проанализируй размер бандла
-□ Оптимизируй если размер неоправданно велик
-□ Запусти production build backend если применимо
-□ Убедись что все зависимости резолвятся
-
-ТЕСТИРОВАНИЕ БИЛДА:
-□ Запусти production версию локально
-□ Протестируй в браузере
-□ Проверь Console на ошибки
-□ Убедись что нет warning'ов в production режиме
-□ Проверь что все ресурсы загружаются
-
-ЧИСТОТА КОДА:
-□ Удали все console.log из production кода
-□ Удали закомментированный код
-□ Удали неиспользуемые импорты
-□ Проверь что все TODO имеют контекст
-□ Убедись что переменные окружения задокументированы
-\`\`\`
-
----
-
-## 🎨 ШАГ 7: Design System — компоненты
-
-\`\`\`
-ПРОАНАЛИЗИРУЙ СУЩЕСТВУЮЩИЕ КОМПОНЕНТЫ:
-□ Найди все переиспользуемые компоненты
-□ Определи что можно улучшить
-□ Определи чего не хватает
-□ Спроектируй структуру компонентов
-
-СОЗДАЙ ИЛИ УЛУЧШИ БАЗОВЫЕ КОМПОНЕНТЫ:
-Для каждого компонента определи самостоятельно:
-□ Какие варианты нужны исходя из использования в проекте
-□ Какие размеры логичны для этого приложения
-□ Какие состояния необходимы
-□ Как компонент адаптируется на разных экранах
-□ Какие props API будут удобны
-
-АТОМАРНЫЕ КОМПОНЕНТЫ:
-□ Buttons — определи нужные варианты и размеры
-□ Inputs — спроектируй все типы используемые в приложении
-□ Badges — определи цветовую систему статусов
-□ Avatars — реализуй fallback стратегию
-□ Loaders — выбери стиль подходящий дизайну
-□ Notifications — спроектируй систему уведомлений
-□ Modals — разработай гибкий компонент
-
-КОМПОЗИТНЫЕ КОМПОНЕНТЫ:
-□ Cards — базовый контейнер для всего
-□ Stat widgets — для дашбордов
-□ Empty states — для каждого типа пустого состояния
-□ Confirmation dialogs — для деструктивных действий
-□ Form fields — полный компонент с валидацией
-
-СЛОЖНЫЕ КОМПОНЕНТЫ:
-□ Navigation — адаптивная навигация
-□ Data tables — с нужным функционалом
-□ Search — с фильтрами если нужно
-□ Date pickers — если используется
-
-ТРЕБОВАНИЯ К КОМПОНЕНТАМ:
-□ Используют дизайн-токены из системы
-□ Имеют все необходимые состояния
-□ Доступны (accessibility)
-□ Имеют плавные transitions
-□ Хорошо типизированы
-□ Документированы в коде
-\`\`\`
+#### 9h. API Design Cleanup
+- Ensure consistent REST API design:
+  * Plural nouns: `/api/v1/coins`, `/api/v1/users`
+  * HTTP verbs used correctly (GET/POST/PUT/PATCH/DELETE)
+  * Consistent error response format: `{error, message, timestamp, path}`
+  * Consistent success response format or HTTP status codes
+  * API versioning: `/api/v1/` prefix on all endpoints
+- Remove any duplicate or overlapping endpoints
+- Add missing HTTP status codes (201 for create, 204 for delete)
 
 ---
 
-## 📊 ФИНАЛЬНЫЙ ОТЧЁТ
+## EXECUTION APPROACH
 
-После завершения всех шагов создай детальный отчёт:
+Work through tasks in this priority order:
+1. Legacy cleanup (unblock everything else)
+2. Docker optimization (speed up iteration)
+3. Code refactoring (backend → frontend)
+4. Documentation
+5. Tests (write as you refactor each module)
+6. Additional items (security → performance → DX)
 
-\`\`\`
-## ВЫБРАННАЯ ДИЗАЙН-СИСТЕМА
-Опиши принятые решения:
-□ Технологический подход к стилям
-□ Цветовая система и её обоснование
-□ Типографическая система
-□ Spacing и sizing системы
-□ Компонентная библиотека
+For each file modified:
+- State WHAT you changed and WHY
+- Flag any breaking changes
+- Note if manual migration steps are needed
 
-## АУДИТ СТРАНИЦ
-Для каждой страницы каждой роли:
-| Страница | Роль | Desktop | Tablet | Mobile | Статус | Комментарий |
-|----------|------|---------|--------|--------|--------|-------------|
-
-## РЕАЛИЗОВАННЫЕ УЛУЧШЕНИЯ
-Детальное описание каждого изменения:
-1. [Критично] что было → что сделано → почему
-2. [Средне] ...
-3. [Улучшение UX] ...
-
-## СОЗДАННЫЙ ФУНКЦИОНАЛ
-Что было создано с нуля:
-- Компоненты
-- Страницы
-- Функционал
-
-## ТЕХНИЧЕСКИЕ ПРОВЕРКИ
-□ ESLint: результат
-□ TypeScript: результат
-□ Build: результат
-□ Bundle size: размер
-□ Production test: результат
-
-## КРИТЕРИИ УСПЕХА
-✅ Современный UI соответствует трендам текущего года
-✅ Работает на всех целевых размерах экранов
-✅ Все интерактивные состояния реализованы
-✅ Публичные страницы привлекательны и понятны
-✅ Родитель имеет удобный и информативный интерфейс
-✅ Ребёнок получает мотивирующий опыт
-✅ Супер-админ имеет эффективную панель управления
-✅ Раздел всех семей создан и функционален
-✅ Система бэкапов создана и работает
-✅ Код проходит все проверки качества
-✅ Build успешен без ошибок
-✅ Нет ошибок в Console браузера
-\`\`\`
-
----
-
-## ⚠️ ПРИНЦИПЫ РАБОТЫ АГЕНТА
-
-\`\`\`
-✅ ИССЛЕДУЙ КОНТЕКСТ перед каждым решением
-✅ ИСПОЛЬЗУЙ СКИЛ /bencium-controlled-ux-designer для всех дизайн-решений
-✅ ПРИНИМАЙ РЕШЕНИЯ на основе современных UX/UI трендов
-✅ АДАПТИРУЙ решения под специфику проекта
-✅ ТЕСТИРУЙ во встроенном браузере каждое изменение
-✅ ПРОВЕРЯЙ на разных размерах экрана
-✅ ДУМАЙ о пользователе каждой роли отдельно
-✅ СЛЕДУЙ лучшим практикам accessibility
-✅ ПОДДЕРЖИВАЙ качество кода на высоком уровне
-✅ ДОКУМЕНТИРУЙ принятые решения
-
-❌ НЕ хардкодь значения без анализа контекста
-❌ НЕ копируй паттерны слепо — адаптируй под проект
-❌ НЕ игнорируй существующий код-стайл
-❌ НЕ пропускай тестирование в браузере
-❌ НЕ жертвуй accessibility ради визуала
-❌ НЕ создавай неиспользуемый функционал
-\`\`\`
+When unsure about business logic, ASK before refactoring.
+Never delete code without confirming it's truly unused (check all import references).
+Preserve all existing API contracts unless explicitly told to break them.
 ```

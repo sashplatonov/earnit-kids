@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeChild, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from '../../src/lib/services/serverContract';
+import { buildInitialState, normalizeChild, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from '../../src/lib/services/serverContract';
 
 describe('normalizeChild', () => {
     it('maps name to nickname for child switcher compatibility', () => {
@@ -97,5 +97,15 @@ describe('normalizeRequest', () => {
         const ts = '2026-04-17T10:00:00Z';
         const req = normalizeRequest({ requestType: 'purchase', status: 'pending', created_at: ts });
         expect(req.createdAt).toBe(ts);
+    });
+});
+
+describe('buildInitialState', () => {
+    it('preserves family rules from the backend payload', () => {
+        const state = buildInitialState({ isAdmin: true, balance: 12, rules: 'Finish homework first' }, { tasks: [], products: [] });
+
+        expect(state.rules).toBe('Finish homework first');
+        expect(state.balance).toBe(12);
+        expect(state.isAdmin).toBe(true);
     });
 });

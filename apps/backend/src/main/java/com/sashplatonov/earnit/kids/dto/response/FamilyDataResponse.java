@@ -7,6 +7,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record FamilyDataResponse(
     int balance,
+    String rules,
     List<TaskDto> tasks,
     List<ShopItemDto> shop,
     List<HistoryEntryDto> history,

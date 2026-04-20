@@ -56,6 +56,7 @@ export async function initializeFromServer(): Promise<boolean> {
                 const childRecord = childData as Record<string, unknown>;
                 appStore.setState({
                     balance: (childRecord.balance as number) ?? 0,
+                    rules: (childRecord.rules as string | null | undefined) ?? null,
                     tasks: Array.isArray(childRecord.tasks) ? (childRecord.tasks.map(normalizeTask) as unknown as AppState['tasks']) : [],
                     shopItems: Array.isArray(childRecord.shop) ? (childRecord.shop.map(normalizeShopItem) as unknown as AppState['shopItems']) : [],
                     history: Array.isArray(childRecord.history) ? (childRecord.history.map(normalizeHistoryEntry) as unknown as AppState['history']) : [],
@@ -91,6 +92,7 @@ export function applyDataSnapshot(data: Record<string, unknown>): void {
     const current = get(appStore);
     const partial: Partial<AppState> = {};
     if (typeof data.balance === 'number') partial.balance = data.balance;
+    if ('rules' in data) partial.rules = (data.rules as string | null | undefined) ?? null;
     if (Array.isArray(normalized.tasks)) partial.tasks = (normalized.tasks as unknown as AppState['tasks']);
     if (Array.isArray(normalized.shop)) partial.shopItems = (normalized.shop as unknown as AppState['shopItems']);
     if (Array.isArray(normalized.history)) partial.history = (normalized.history as unknown as AppState['history']);
@@ -113,6 +115,7 @@ export async function switchChild(childId: string | number): Promise<void> {
         const rec = childData as Record<string, unknown>;
         appStore.setState({
             balance: (rec.balance as number) ?? 0,
+            rules: (rec.rules as string | null | undefined) ?? null,
             tasks: Array.isArray(rec.tasks) ? (rec.tasks.map(normalizeTask) as unknown as AppState['tasks']) : [],
             shopItems: Array.isArray(rec.shop) ? (rec.shop.map(normalizeShopItem) as unknown as AppState['shopItems']) : [],
             history: Array.isArray(rec.history) ? (rec.history.map(normalizeHistoryEntry) as unknown as AppState['history']) : [],

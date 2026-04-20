@@ -86,6 +86,7 @@ class FamilyServiceImplTest {
     @Test
     void loadFamilyData_familyWithoutChildren_returnsEmptyPayload() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of());
 
         OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", null, true);
@@ -101,6 +102,7 @@ class FamilyServiceImplTest {
         ChildEntity child1 = child(10, 1, "Alice", 100);
         ChildEntity child2 = child(11, 1, "Bob", 50);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Bedtime by 20:30"));
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
 
@@ -143,6 +145,7 @@ class FamilyServiceImplTest {
         assertThat(payload.requests()).hasSize(1);
         assertThat(payload.friends()).hasSize(1);
         assertThat(payload.children()).hasSize(2);
+        assertThat(payload.rules()).isEqualTo("Bedtime by 20:30");
         assertThat(payload.lastSelectedChildId()).isEqualTo(11);
         assertThat(payload.history().getFirst().description()).isEqualTo("Read");
         assertThat(payload.history().getFirst().taskId()).isEqualTo(1001L);
@@ -172,6 +175,7 @@ class FamilyServiceImplTest {
             .build();
 
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+    when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Ask before spending"));
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
         when(familyDataRepository.getTasks(10)).thenReturn(List.of());
@@ -184,6 +188,7 @@ class FamilyServiceImplTest {
 
         FamilyDataResponse payload = successValue(result);
         assertThat(payload.isAdmin()).isNull();
+        assertThat(payload.rules()).isEqualTo("Ask before spending");
         assertThat(payload.children()).singleElement().satisfies(child -> assertThat(child.id()).isEqualTo(10));
         assertThat(payload.lastSelectedChildId()).isEqualTo(10);
         assertThat(payload.requests()).singleElement().satisfies(request -> assertThat(request.childId()).isEqualTo(10));
@@ -490,6 +495,7 @@ class FamilyServiceImplTest {
     void saveFamilyData_existingFamily_delegatesToLoadFamilyData() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
         when(familyDataRepository.getTasks(10)).thenReturn(List.of());
         when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
@@ -506,6 +512,7 @@ class FamilyServiceImplTest {
         ChildEntity child = child(10, 1, "Alice", 10);
         ChildEntity sibling = child(11, 1, "Bob", 15);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child, sibling));
         when(familyDataRepository.getTasks(10)).thenReturn(List.of());
         when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
@@ -532,6 +539,7 @@ class FamilyServiceImplTest {
         assertThat(service.saveFamilyData("fam-1", 10, payload, false))
             .isInstanceOf(OperationResult.Success.class);
 
+        verify(familyRepository, never()).updateRules(anyString(), any());
         verify(childRepository).updateBalance(10, 42);
         verify(childRepository, never()).updateBalance(11, 9000);
 
@@ -545,6 +553,7 @@ class FamilyServiceImplTest {
     void saveFamilyData_existingFamily_persistsTasksShopHistoryAndRequests() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
         when(familyDataRepository.getTasks(10)).thenReturn(List.of());
         when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
@@ -634,10 +643,29 @@ class FamilyServiceImplTest {
     }
 
     @Test
+    void saveFamilyData_adminSession_persistsFamilyRules() {
+        ChildEntity child = child(10, 1, "Alice", 10);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Screen time after homework"));
+        when(childRepository.getChildren(1)).thenReturn(List.of(child));
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+
+        assertThat(service.saveFamilyData("fam-1", 10, Map.of("rules", "Screen time after homework"), true))
+            .isInstanceOf(OperationResult.Success.class);
+
+        verify(familyRepository).updateRules("fam-1", "Screen time after homework");
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void saveFamilyData_historyWithoutCreatedAt_preservesExistingRowsAndDerivesTimestampIds() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
         when(familyDataRepository.getTasks(10)).thenReturn(List.of());
         when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
@@ -693,6 +721,7 @@ class FamilyServiceImplTest {
     void saveFamilyData_requestsWithoutCreatedAt_preservesExistingRowsAndDerivesTimestampIds() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
         when(familyDataRepository.getTasks(10)).thenReturn(List.of());
         when(familyDataRepository.getShopItems(10)).thenReturn(List.of());

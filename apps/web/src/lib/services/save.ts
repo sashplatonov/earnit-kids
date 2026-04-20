@@ -16,6 +16,7 @@ function buildPayload(): Record<string, unknown> {
     return {
         childId: s.currentChildId,
         balance: s.balance,
+        rules: s.rules,
         tasks: s.tasks,
         shop: s.shopItems,
         history: s.history,
@@ -33,6 +34,7 @@ function applyServerResponse(data: unknown): void {
     if (Array.isArray(normalized.shop)) partial.shopItems = (normalized.shop as unknown as AppState['shopItems']);
     if (Array.isArray(normalized.history)) partial.history = (normalized.history as unknown as AppState['history']);
     if (Array.isArray(normalized.requests)) partial.requests = (normalized.requests as unknown as AppState['requests']);
+    if ('rules' in normalized) partial.rules = (normalized.rules as string | null | undefined) ?? null;
     if (typeof (data as Record<string, unknown>).balance === 'number') {
         partial.balance = (data as Record<string, unknown>).balance as number;
     }

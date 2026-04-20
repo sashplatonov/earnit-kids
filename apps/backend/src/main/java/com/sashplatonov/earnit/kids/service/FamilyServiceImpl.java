@@ -100,13 +100,14 @@ public final class FamilyServiceImpl implements FamilyService {
             return OperationResult.failure("Семья не найдена");
         }
         int familyDbId = dbIdOpt.get();
+        String rules = familyRepository.getRules(familyId).orElse(null);
         Integer persistedChildId = familyRepository.getLastSelectedChildId(familyId).orElse(null);
 
         List<ChildEntity> children = childRepository.getChildren(familyDbId);
         if (children.isEmpty()) {
             Boolean adminFlag = adminSession ? Boolean.TRUE : null;
             return OperationResult.success(new FamilyDataResponse(
-                0, List.of(), List.of(), List.of(), List.of(), List.of(),
+                0, rules, List.of(), List.of(), List.of(), List.of(), List.of(),
                 adminFlag, List.of(), null, null, null, null));
         }
 
@@ -163,7 +164,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         Boolean adminFlag = adminSession ? Boolean.TRUE : null;
         return OperationResult.success(
-            new FamilyDataResponse(activeChild.getBalance(), tasks, shopItems, history, requests,
+            new FamilyDataResponse(activeChild.getBalance(), rules, tasks, shopItems, history, requests,
                 friends, adminFlag, childDtos, resolvedLastSelectedChildId, activeChild.getName(),
                 activeChild.getMonthlyLimit(), activeChild.getDailyCoinLimit()));
     }
@@ -194,6 +195,8 @@ public final class FamilyServiceImpl implements FamilyService {
             && accessibleChildren.stream().noneMatch(child -> Objects.equals(child.getId(), selectedChildId))) {
             return OperationResult.failure("Ребенок не найден");
         }
+
+        syncFamilyRules(familyId, payload, adminSession);
 
         syncBalances(familyDbId, selectedChildId, payload, accessibleChildren);
         syncTasks(familyDbId, selectedChildId, payload);
@@ -500,6 +503,14 @@ public final class FamilyServiceImpl implements FamilyService {
         return null;
     }
 
+    private void syncFamilyRules(String familyId, Map<String, Object> payload, boolean adminSession) {
+        if (!adminSession || !payload.containsKey("rules")) {
+            return;
+        }
+
+        familyRepository.updateRules(familyId, asNullableString(payload.get("rules")));
+    }
+
     private Integer resolveSelectedChildId(String familyId, Integer explicitChildId,
                                            Map<String, Object> payload,
                                            List<ChildEntity> children,
@@ -746,6 +757,17 @@ public final class FamilyServiceImpl implements FamilyService {
             }
         }
         return result;
+    }
+
+    private String asNullableString(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String s) {
+            return s.isBlank() ? null : s;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
     }
 
     private Object parseFrequency(JsonNode rawFrequency) {

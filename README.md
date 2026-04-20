@@ -1,74 +1,132 @@
 # EarnIt Kids
 
+<a name="top"></a>
+
 ## Table of Contents
 - [🧭 Overview](#-overview)
-- [🔧 Local Environment](#-local-environment)
-- [📁 Repository Structure](#-repository-structure)
-- [☕ Backend Commands](#-backend-commands)
-- [🌐 Web Commands](#-web-commands)
-- [🐳 Docker Compose](#-docker-compose)
-- [📚 Project Docs](#-project-docs)
+- [⚙️ Tech Stack](#️-tech-stack)
+- [🚀 Quick Start](#-quick-start)
+- [📁 Project Structure](#-project-structure)
+- [🔐 Environment Variables](#-environment-variables)
+- [🛠️ Local Commands](#️-local-commands)
+- [🐳 Docker Modes](#-docker-modes)
+- [📚 Detailed Docs](#-detailed-docs)
 
 ## 🧭 Overview
 
-EarnIt Kids is a split-stack application with:
+EarnIt Kids is a full-stack family coin shop for parents and children.
 
-- `apps/backend/`: a Quarkus 3 backend targeting Java 25
-- `apps/web/`: the active SvelteKit web edge/runtime used by Docker Compose
-- `mobile/`: mobile packaging, Capacitor configuration, and platform assets
+- `apps/web/` serves the SvelteKit web experience, public pages, same-origin proxy endpoints, and health checks.
+- `apps/backend/` serves the Quarkus API, authentication, family data flows, admin tooling, and Flyway migrations.
+- `mobile/` contains Capacitor packaging and mobile platform assets.
 
-The backend now expects Java 25. If your shell defaults to another JDK, export `JAVA_HOME` before running Maven commands.
+The current production path is SvelteKit + Quarkus. Legacy pre-SvelteKit frontend code is no longer part of the active runtime.
+
+[↩ Back to toc](#table-of-contents)
+
+## ⚙️ Tech Stack
+
+- Frontend: SvelteKit 2, Vite, TypeScript, Vitest, Playwright, adapter-node
+- Backend: Quarkus 3, Java 25, JAX-RS, Hibernate ORM, Flyway, SmallRye OpenAPI
+- Database: PostgreSQL 18 for local Docker, H2 for selected tests
+- Delivery: Docker Compose with separate JVM and native backend modes
+
+[↩ Back to toc](#table-of-contents)
+
+## 🚀 Quick Start
+
+Run the JVM-based local stack from the repository root:
 
 ```bash
-export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
-export PATH="$JAVA_HOME/bin:$PATH"
+docker compose --profile db up -d --build
 ```
 
-[↩ Back to toc](#table-of-contents)
+Run the native-image local stack from the repository root:
 
-## 🔧 Local Environment
+```bash
+docker compose -f docker-compose.native.yml --profile db up -d --build
+```
 
-The repository root keeps the shared environment files:
+Stop the stacks:
 
-- `.env`: safe local defaults for development
-- `.env.example`: copy/reference file for local setup
-- `.env.production`: deployment-oriented defaults
+```bash
+docker compose down
+docker compose -f docker-compose.native.yml down
+```
 
-Local-friendly values live in `BACKEND_URL` and `DATABASE_URL`, while Docker Compose overrides internal service-to-service URLs for containers.
+Assumptions:
 
-Default local ports:
-
-- Web edge: `3000`
-- Backend: `8080`
-- PostgreSQL: `5432`
-
-[↩ Back to toc](#table-of-contents)
-
-## 📁 Repository Structure
-
-- `apps/backend/`: Quarkus REST API, persistence layer, Flyway migrations, Maven tests
-- `apps/web/`: SvelteKit app, Node edge server, blog content, Vitest and Playwright checks
-- `mobile/`: Capacitor configuration, mobile assets, mobile-specific README files
-- `docs/`: architecture and design documentation
-- `docker-compose.yml`: local Docker Compose for native mode
-- `docker-compose.jvm.yml`: local Docker Compose for JVM mode
+- Root `.env` contains local-safe defaults.
+- If `3000` or `5432` are already taken, override `WEB_PORT` or `DB_HOST_PORT` at launch time.
+- Default `docker-compose.yml` is the JVM stack. `docker-compose.native.yml` is the native stack.
 
 [↩ Back to toc](#table-of-contents)
 
-## ☕ Backend Commands
+## 📁 Project Structure
 
-Run from `apps/backend/`.
+```text
+.
+├── apps/
+│   ├── backend/
+│   │   ├── config/
+│   │   ├── scripts/
+│   │   └── src/
+│   └── web/
+│       ├── data/
+│       ├── scripts/
+│       ├── src/
+│       ├── static/
+│       └── tests/
+├── docs/
+├── mobile/
+├── docker-compose.yml
+└── docker-compose.native.yml
+```
 
-Install and validate:
+- `apps/backend/src/main/java/`: REST resources, services, repositories, entities, DTOs, config
+- `apps/backend/src/main/resources/db/migration/`: Flyway migrations for PostgreSQL
+- `apps/web/src/routes/`: SvelteKit routes and edge endpoints
+- `apps/web/src/lib/`: components, stores, services, server helpers, shared types
+- `apps/web/tests/`: unit and E2E test coverage
+
+[↩ Back to toc](#table-of-contents)
+
+## 🔐 Environment Variables
+
+The full reference lives in root `.env.example`. The table below lists the variables most developers touch first.
+
+| Variable | Scope | Example | Purpose |
+| --- | --- | --- | --- |
+| `APP_URL` | Web + Compose | `http://localhost:3000` | Public origin used by the web edge and backend CORS |
+| `WEB_PORT` | Compose | `3000` | Host port published for the web service |
+| `WEB_INTERNAL_PORT` | Web + Compose | `3000` | Internal Node port inside the web container |
+| `BACKEND_INTERNAL_PORT` | Backend + Compose | `8080` | Internal Quarkus HTTP port |
+| `JWT_SECRET` | Backend | `local-dev-secret-change-in-prod` | Compatibility JWT signing secret |
+| `DB_HOST_PORT` | Compose | `5432` | Host port published for PostgreSQL |
+| `DB_NAME` | Backend + DB | `earnit_kids` | Database name |
+| `DB_USER` | Backend + DB | `postgres` | Database username |
+| `DB_PASSWORD` | Backend + DB | `change-me` | Database password |
+| `DATABASE_URL` | Backend | `jdbc:postgresql://localhost:5432/earnit_kids` | Direct JDBC URL for non-Compose backend runs |
+| `SUPER_ADMIN_EMAIL` | Backend bootstrap | `admin@example.com` | Optional super-admin bootstrap account |
+| `SUPER_ADMIN_PASSWORD` | Backend bootstrap | `change-me` | Optional super-admin bootstrap password |
+| `ENABLE_EMAIL_VERIFICATION` | Backend feature flag | `false` | Toggle email verification flow |
+| `ENABLE_PASSWORD_RECOVERY` | Backend feature flag | `false` | Toggle forgot/reset password flow |
+| `JAVA_XMX` | Native Docker build | `2500m` | Native image builder memory cap |
+
+[↩ Back to toc](#table-of-contents)
+
+## 🛠️ Local Commands
+
+Backend validation:
 
 ```bash
 export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
 export PATH="$JAVA_HOME/bin:$PATH"
 cd apps/backend
-./mvnw test
+./mvnw verify
 ```
 
-Start local development mode:
+Backend dev mode:
 
 ```bash
 export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
@@ -77,67 +135,51 @@ cd apps/backend
 ./mvnw quarkus:dev
 ```
 
-Useful backend URLs in dev mode:
-
-- Health: `http://localhost:8080/q/health`
-- OpenAPI: `http://localhost:8080/q/openapi`
-- Swagger UI: `http://localhost:8080/q/swagger-ui`
-
-[↩ Back to toc](#table-of-contents)
-
-## 🌐 Web Commands
-
-Run from `apps/web/`.
+Web validation:
 
 ```bash
 cd apps/web
 npm install
 npm run lint
-npm test
+npm run test
+npm run test:coverage
 npm run build
-npm run preview -- --host 127.0.0.1 --port 4174
 ```
+
+Useful local URLs:
+
+- Web: `http://localhost:3000`
+- Backend health: `http://localhost:8080/q/health`
+- Backend OpenAPI: `http://localhost:8080/api/openapi.yaml`
+- Backend Swagger UI: `http://localhost:8080/q/swagger-ui`
 
 [↩ Back to toc](#table-of-contents)
 
-## 🐳 Docker Compose
+## 🐳 Docker Modes
 
-Run from the repository root.
+`docker-compose.yml`
 
-Local JVM mode:
+- Web: `apps/web/Dockerfile`
+- Backend: `apps/backend/Dockerfile.jvm`
+- Best for fast local iteration and debugging
 
-```bash
-docker compose -f docker-compose.jvm.yml up -d --build
-```
+`docker-compose.native.yml`
 
-Local native mode:
+- Web: `apps/web/Dockerfile`
+- Backend: `apps/backend/Dockerfile`
+- Best for validating native-image packaging
 
-```bash
-docker compose up -d --build
-```
+Verification tip:
 
-Stop JVM mode:
-
-```bash
-docker compose -f docker-compose.jvm.yml down
-```
-
-Stop native mode:
-
-```bash
-docker compose down
-```
-
-> **Note:** the compose `web` service now builds from `apps/web/Dockerfile`. `docker-compose.yml` still uses `apps/backend/Dockerfile` for native mode, and `docker-compose.jvm.yml` uses `apps/backend/Dockerfile.jvm` for JVM mode.
-> Docker Compose reads the root `.env`, then overrides internal URLs such as `BACKEND_URL` and backend `DATABASE_URL` inside containers.
-> If `3000` or `5432` are already occupied locally, override `WEB_PORT` or `DB_HOST_PORT` when running compose instead of changing the container-internal ports.
+- After Compose changes, run `docker compose config` or `docker compose -f docker-compose.native.yml config` before rebuilding.
 
 [↩ Back to toc](#table-of-contents)
 
-## 📚 Project Docs
+## 📚 Detailed Docs
 
-- See [docs/architecture.md](docs/architecture.md) for backend layering, auth/session flow, and request lifecycle notes.
-- See [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md) for the archived migration checklist.
-- Backend API documentation is generated from Quarkus OpenAPI annotations at runtime.
+- Root system view: [docs/architecture.md](docs/architecture.md)
+- Frontend architecture: [apps/web/docs/ARCHITECTURE.md](apps/web/docs/ARCHITECTURE.md)
+- Backend architecture: [apps/backend/docs/ARCHITECTURE.md](apps/backend/docs/ARCHITECTURE.md)
+- SvelteKit migration backlog archive: [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md)
 
-[↑ Back to top](#earnit-kids)
+[↑ Back to top](#top)

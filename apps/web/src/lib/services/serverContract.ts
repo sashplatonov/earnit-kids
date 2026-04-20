@@ -109,6 +109,7 @@ export function buildInitialState(data: Record<string, unknown>, baseData: Recor
         isLoading: false,
         familyId: normalized.familyId ?? null,
         balance: normalized.balance ?? 0,
+        rules: (normalized.rules as string | null | undefined) ?? null,
         tasks: normalized.tasks,
         shopItems: normalized.shop,
         history: normalized.history,

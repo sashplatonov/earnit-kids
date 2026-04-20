@@ -75,6 +75,7 @@ export interface AppState {
     isAdmin: boolean;
     role: string | null;
     balance: number;
+    rules: string | null;
     tasks: Task[];
     shopItems: ShopItem[];
     history: HistoryEntry[];
@@ -95,6 +96,7 @@ const initialState: AppState = {
     isAdmin: false,
     role: null,
     balance: 0,
+    rules: null,
     tasks: [],
     shopItems: [],
     history: [],

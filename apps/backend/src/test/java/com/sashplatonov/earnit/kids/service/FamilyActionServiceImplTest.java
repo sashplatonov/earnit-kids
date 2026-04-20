@@ -270,7 +270,7 @@ class FamilyActionServiceImplTest {
     }
 
     private static FamilyDataResponse emptyPayload(boolean isAdmin, Integer childId) {
-        return new FamilyDataResponse(0, List.of(), List.of(), List.of(), List.of(), List.of(), isAdmin, List.of(), childId, null, null, null);
+        return new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(), List.of(), isAdmin, List.of(), childId, null, null, null);
     }
 
     @SuppressWarnings("unchecked")

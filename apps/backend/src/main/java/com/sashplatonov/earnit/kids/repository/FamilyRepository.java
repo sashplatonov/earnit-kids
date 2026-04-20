@@ -54,6 +54,12 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
             .map(FamilyEntity::getLastSelectedChildId);
     }
 
+    public Optional<String> getRules(String familyId) {
+        return find("familyId = ?1", familyId)
+            .firstResultOptional()
+            .map(FamilyEntity::getRules);
+    }
+
     @Transactional
     public boolean updatePassword(String familyId, String newPassword) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
@@ -81,6 +87,16 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
             return false;
         }
         opt.get().setLastSelectedChildId(childId);
+        return true;
+    }
+
+    @Transactional
+    public boolean updateRules(String familyId, String rules) {
+        Optional<FamilyEntity> opt = findByFamilyId(familyId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        opt.get().setRules(rules);
         return true;
     }
 

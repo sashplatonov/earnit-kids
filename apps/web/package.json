@@ -11,6 +11,7 @@
     "preview": "node scripts/preview.mjs",
     "lint": "svelte-kit sync && eslint . && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "@sveltejs/adapter-node": "^5.5.4",
     "@sveltejs/kit": "^2.57.1",
     "@types/node": "^24.9.0",
+    "@vitest/coverage-v8": "^4.1.4",
     "eslint": "^10.2.0",
     "eslint-plugin-svelte": "^3.17.0",
     "front-matter": "^4.0.2",
