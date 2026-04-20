@@ -18,5 +18,6 @@ tmp/
 .vscode/
 .env
 .env.*
+!.env.example
 .env.production
 .DS_Store
