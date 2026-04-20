@@ -8,6 +8,11 @@
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="/css/style.css?v=20260420-compact-detail" />
         <link rel="stylesheet" href="/css/public-top-nav.css?v=20260419-ui-refresh" />
+        <style>
+            /* Inline override: ensure super-admin header isn't pushed down */
+            body.super-admin-page { padding-top: 0 !important; }
+            body.super-admin-page .super-admin-shell { padding-top: 0.35rem !important; }
+        </style>
         <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon" />
         <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png" />
         <link rel="apple-touch-icon" href="/img/icon-192.png" />
@@ -15,6 +20,7 @@
         %sveltekit.head%
     </head>
     <body data-sveltekit-preload-data="hover">
+        <script>if (typeof window !== 'undefined' && location && location.pathname && location.pathname.startsWith('/super-admin')) { try{ document.body.classList.add('super-admin-page'); }catch(e){} }</script>
         <div style="display: contents">%sveltekit.body%</div>
     </body>
 </html>

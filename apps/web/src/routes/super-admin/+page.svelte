@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { PageData } from './$types';
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { fetchWithCsrf } from '$lib/services/api';
 
     export let data: PageData;
@@ -8,6 +8,15 @@
     type TabId = 'dashboard' | 'families' | 'catalog-tasks' | 'catalog-products' | 'database' | 'system';
     type StatusTone = 'success' | 'error' | 'info' | '';
     let activeTab: TabId = 'dashboard';
+
+    // keep the global public padding (used for the site top nav) disabled
+    // while viewing the super-admin UI so the header sits at the top.
+    onMount(() => {
+        if (typeof document !== 'undefined') document.body.classList.add('super-admin-page');
+    });
+    onDestroy(() => {
+        if (typeof document !== 'undefined') document.body.classList.remove('super-admin-page');
+    });
 
     const shortDateFormatter = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' });
     const dateTimeFormatter = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });

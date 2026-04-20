@@ -3270,6 +3270,16 @@ dialog.modal[open]::backdrop {
     gap: 0.5rem;
 }
 
+/* Neutralize global public top-nav body padding on admin pages */
+body.super-admin-page {
+    padding-top: 0 !important;
+}
+
+/* Slight tweak for super-admin shell when body padding is overridden */
+body.super-admin-page .super-admin-shell {
+    padding-top: 0.35rem !important;
+}
+
 .super-admin-header {
     display: flex;
     align-items: center;
