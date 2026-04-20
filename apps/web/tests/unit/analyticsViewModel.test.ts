@@ -5,7 +5,7 @@ import { buildAnalyticsViewModel } from '../../src/lib/components/app/sections/a
 describe('buildAnalyticsViewModel', () => {
     it('maps the backend analytics contract into the dashboard view model', () => {
         const view = buildAnalyticsViewModel({
-            summary: { totalEarned: 50, totalSpent: 20, netChange: 30 },
+            summary: { totalEarned: 999, totalSpent: 20, netChange: 5 },
             topTasks: [{ name: 'Собрать рюкзак', coins: 50, count: 2 }],
             topItems: [{ name: 'Настольная игра', coins: 20, count: 1 }],
             trends: [
@@ -14,6 +14,9 @@ describe('buildAnalyticsViewModel', () => {
                 { date: '2026-04-16', earned: 20, spent: 20 },
             ],
             recommendations: [{ name: 'Собрать рюкзак', coins: 40, reason: 'Давно не выполнялось' }],
+        }, {
+            currentBalance: 30,
+            tasks: [{ name: 'Собрать рюкзак', groupName: 'Учеба', comment: 'Подготовить книги и тетради', coins: 40 }],
         });
 
         expect(view.earned).toBe(50);
@@ -35,7 +38,10 @@ describe('buildAnalyticsViewModel', () => {
         ]);
         expect(view.recommendations).toHaveLength(1);
         expect(view.recommendations[0].icon).toBe('🎯');
-        expect(view.recommendations[0].text).toBe('Собрать рюкзак • 40 мон. • Давно не выполнялось');
+        expect(view.recommendations[0].title).toBe('Собрать рюкзак');
+        expect(view.recommendations[0].groupName).toBe('Учеба');
+        expect(view.recommendations[0].description).toBe('Подготовить книги и тетради');
+        expect(view.recommendations[0].coins).toBe(40);
     });
 
     it('preserves already-normalized frontend payload fields', () => {
@@ -59,6 +65,7 @@ describe('buildAnalyticsViewModel', () => {
         expect(view.itemCoins).toEqual([{ label: 'Комикс', value: 2 }]);
         expect(view.itemCount).toEqual([{ label: 'Комикс', value: 1 }]);
         expect(view.recommendations[0].icon).toBe('⭐');
-        expect(view.recommendations[0].text).toBe('Повторить любимое задание');
+        expect(view.recommendations[0].title).toBe('Повторить любимое задание');
+        expect(view.recommendations[0].description).toBe('Повторить любимое задание');
     });
 });

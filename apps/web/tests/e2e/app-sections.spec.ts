@@ -102,8 +102,9 @@ test.describe('Shop section (Награды)', () => {
         expect(parseInt(firstPrice ?? '')).toBeGreaterThan(0);
     });
 
-    test('admin can see add and edit buttons', async ({ page }) => {
+    test('admin can see add, buy, and edit buttons', async ({ page }) => {
         await expect(page.getByRole('button', { name: '+ Добавить' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Купить' }).first()).toBeVisible();
         await expect(page.getByRole('button', { name: 'Изменить' }).first()).toBeVisible();
     });
 

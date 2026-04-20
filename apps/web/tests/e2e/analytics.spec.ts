@@ -92,6 +92,16 @@ test.describe('Analytics section — parent view', () => {
         expect(Number(earnedText)).toBeGreaterThanOrEqual(TASK_COINS);
     });
 
+    test('shows analytics balance equal to the main header balance', async ({ page }) => {
+        await loginAsParent(page);
+        await selectChild(page, CHILD_NAME_A);
+
+        await goToAnalytics(page);
+
+        const headerBalance = (await page.locator('#balance').textContent())?.trim() ?? '';
+        await expect(page.locator('#stats-net')).toHaveText(headerBalance);
+    });
+
     test('shows readable recommendation cards instead of blank placeholders', async ({ page }) => {
         await loginAsParent(page);
         await selectChild(page, CHILD_NAME_A);
@@ -100,7 +110,11 @@ test.describe('Analytics section — parent view', () => {
 
         const firstRecommendation = page.locator('#analytics-recommendations .recommendation-card').first();
         await expect(firstRecommendation).toBeVisible();
-        await expect(firstRecommendation.locator('p')).toContainText(TASK_TITLE_A);
+        await expect(firstRecommendation.locator('.card__title')).toContainText(TASK_TITLE_A);
+        await expect(firstRecommendation.locator('.card__badge--group')).toBeVisible();
+        await expect(firstRecommendation.locator('.card__coins')).toBeVisible();
+        await expect(firstRecommendation.locator('.card__comment')).toContainText('Полить все цветы в комнате');
+        await expect(firstRecommendation).not.toContainText(/мон\.?/);
     });
 
     test('shows zero earned for child B who has no completed tasks', async ({ page }) => {

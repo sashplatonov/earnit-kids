@@ -73,6 +73,10 @@
     function openEditShopItem(item: unknown) {
         modalStore.open('shop-modal', { mode: 'edit', item });
     }
+
+    function itemPrice(item: { price?: unknown }) {
+        return Number(item.price ?? 0);
+    }
 </script>
 
 <section class="section" id="shop-section">
@@ -109,21 +113,23 @@
     {#if visibleItems.length > 0}
     <div class="cards" id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={!isAdmin && balance >= Number(item.price ?? 0)} class:card--disabled={!isAdmin && balance < Number(item.price ?? 0)}>
+        <div class="card card--shop shop-card" class:card--affordable={balance >= itemPrice(item)} class:card--disabled={balance < itemPrice(item)}>
             <div class="card__badge-row">
                 <span class="card__badge card__badge--group">{item.groupName ?? 'Без группы'}</span>
                 {#if formatFrequency(item.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
                 {/if}
-                {#if !isAdmin}
-                <span class:card__status--available={balance >= Number(item.price ?? 0)} class:card__status--locked={balance < Number(item.price ?? 0)} class="card__status">
-                    {#if balance >= Number(item.price ?? 0)}
+                <span class:card__status--available={balance >= itemPrice(item)} class:card__status--locked={balance < itemPrice(item)} class="card__status">
+                    {#if balance >= itemPrice(item)}
+                        {#if isAdmin}
+                        Можно купить
+                        {:else}
                         Можно запросить
+                        {/if}
                     {:else}
-                        Еще {missingCoins(Number(item.price ?? 0))} мон.
+                        Еще {missingCoins(itemPrice(item))}
                     {/if}
                 </span>
-                {/if}
             </div>
             <div class="card__header">
                 <h3 class="card__title">{item.name}</h3>
@@ -144,11 +150,15 @@
             {/if}
             <div class="card__actions">
                 {#if isAdmin}
+                <button class="btn btn--primary btn--small admin-only" disabled={balance < itemPrice(item)}
+                    on:click={() => handleBuy(item.id)}>
+                    Купить
+                </button>
                 <button class="btn btn--secondary btn--small admin-only" on:click={() => openEditShopItem(item)}>
                     Изменить
                 </button>
                 {:else}
-                <button class="btn btn--primary" disabled={balance < (item.price as number)}
+                <button class="btn btn--primary" disabled={balance < itemPrice(item)}
                     on:click={() => handleBuy(item.id)}>
                     Запросить
                 </button>

@@ -1,5 +1,3 @@
-import { normalizeAnalyticsRecommendations, type AnalyticsRecommendationView } from './analyticsRecommendations';
-
 export interface AnalyticsChartDatum {
     label: string;
     value: number;
@@ -9,6 +7,16 @@ export interface AnalyticsTrendDatum {
     label: string;
     earned: number;
     spent: number;
+}
+
+export interface AnalyticsRecommendationCard {
+    id: string;
+    icon: string;
+    title: string;
+    description: string;
+    groupName: string;
+    coins: number | null;
+    reason: string | null;
 }
 
 export interface AnalyticsViewModel {
@@ -25,11 +33,31 @@ export interface AnalyticsViewModel {
     itemCoins: AnalyticsChartDatum[];
     itemCount: AnalyticsChartDatum[];
     trend: AnalyticsTrendDatum[];
-    recommendations: AnalyticsRecommendationView[];
+    recommendations: AnalyticsRecommendationCard[];
 }
 
 type JsonRecord = Record<string, unknown>;
 type TrendDatumInternal = AnalyticsTrendDatum & { isoDate: string };
+
+interface AnalyticsSourceTask {
+    name?: unknown;
+    title?: unknown;
+    groupName?: unknown;
+    comment?: unknown;
+    coins?: unknown;
+}
+
+interface AnalyticsViewModelOptions {
+    currentBalance?: unknown;
+    tasks?: AnalyticsSourceTask[] | null;
+}
+
+interface RecommendationTaskContext {
+    title: string;
+    groupName: string;
+    comment: string | null;
+    coins: number | null;
+}
 
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit',
@@ -37,19 +65,23 @@ const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
     timeZone: 'UTC',
 });
 
-export function buildAnalyticsViewModel(payload: unknown): AnalyticsViewModel {
+export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsViewModelOptions = {}): AnalyticsViewModel {
     const root = asRecord(payload);
     const summary = asRecord(root?.summary);
-
-    const earned = readNumber(summary?.totalEarned) ?? readNumber(root?.earned) ?? 0;
-    const spent = readNumber(summary?.totalSpent) ?? readNumber(root?.spent) ?? 0;
-    const net = readNumber(summary?.netChange) ?? readNumber(root?.net) ?? earned - spent;
 
     const taskCoins = readChartSeries(root?.taskCoins, root?.topTasks, 'coins');
     const taskCount = readChartSeries(root?.taskCount, root?.topTasks, 'count');
     const itemCoins = readChartSeries(root?.itemCoins, root?.topItems, 'coins');
     const itemCount = readChartSeries(root?.itemCount, root?.topItems, 'count');
     const trend = readTrendSeries(root?.trend, root?.trends);
+
+    const spent = readNumber(summary?.totalSpent) ?? readNumber(root?.spent) ?? sumTrend(trend, 'spent');
+    const currentBalance = readNumber(options.currentBalance) ?? readNumber(root?.balance);
+    const fallbackNet = readNumber(summary?.netChange) ?? readNumber(root?.net) ?? Math.max(sumTrend(trend, 'earned') - spent, 0);
+    const net = currentBalance ?? fallbackNet;
+    const earned = currentBalance != null
+        ? currentBalance + spent
+        : readNumber(summary?.totalEarned) ?? readNumber(root?.earned) ?? net + spent;
 
     const weekSummary = buildWeekSummary(trend, earned);
     const streakValue = buildStreak(trend);
@@ -68,7 +100,7 @@ export function buildAnalyticsViewModel(payload: unknown): AnalyticsViewModel {
         itemCoins,
         itemCount,
         trend: trend.map(({ isoDate: _isoDate, ...item }) => item),
-        recommendations: readRecommendations(root?.recommendations),
+        recommendations: readRecommendations(root?.recommendations, options.tasks),
     };
 }
 
@@ -196,46 +228,99 @@ function readSimpleTrendSeries(source: unknown): TrendDatumInternal[] {
     });
 }
 
-function readRecommendations(source: unknown): AnalyticsRecommendationView[] {
+function readRecommendations(source: unknown, tasksSource: AnalyticsSourceTask[] | null | undefined): AnalyticsRecommendationCard[] {
     if (!Array.isArray(source)) {
         return [];
     }
 
-    return normalizeAnalyticsRecommendations(
-        source.flatMap((item) => {
+    const tasks = normalizeTaskContext(tasksSource);
+
+    return source.flatMap((item, index) => {
             const record = asRecord(item);
             if (!record) {
                 return [];
             }
 
             const directText = readText(record.text);
+            const directReason = readText(record.reason);
+            const directDescription = readText(record.description) ?? readText(record.comment) ?? directReason ?? directText;
+            const directCoins = readNumber(record.coins);
+            const directTitle = directText ?? readText(record.name);
             if (directText != null) {
                 return [{
-                    icon: readText(record.icon) ?? '✨',
-                    text: directText,
+                    id: buildRecommendationId(index, directText, directCoins, directReason),
+                    icon: readText(record.icon) ?? chooseRecommendationIcon(directReason),
+                    title: directText,
+                    description: directDescription ?? directText,
+                    groupName: readText(record.groupName) ?? 'Идея для роста',
+                    coins: directCoins,
+                    reason: directReason,
                 }];
             }
 
             const name = readText(record.name);
             const reason = readText(record.reason);
-            if (name == null && reason == null) {
+            if (name == null && reason == null && directTitle == null) {
                 return [];
             }
 
-            const coins = readNumber(record.coins);
-            const parts = [name, coins != null && coins > 0 ? `${coins} мон.` : null, reason]
-                .filter((value): value is string => value != null);
-
-            if (parts.length === 0) {
+            const matchedTask = findRecommendationTask(tasks, name, readNumber(record.coins));
+            const title = name ?? matchedTask?.title;
+            if (title == null) {
                 return [];
             }
 
             return [{
+                id: buildRecommendationId(index, title, readNumber(record.coins) ?? matchedTask?.coins ?? null, reason),
                 icon: chooseRecommendationIcon(reason),
-                text: parts.join(' • '),
+                title,
+                description: matchedTask?.comment ?? readText(record.comment) ?? reason ?? 'Повторите этот шаг, чтобы сохранить темп.',
+                groupName: matchedTask?.groupName ?? readText(record.groupName) ?? 'Без группы',
+                coins: readNumber(record.coins) ?? matchedTask?.coins ?? null,
+                reason,
             }];
-        })
-    );
+        });
+}
+
+function normalizeTaskContext(tasksSource: AnalyticsSourceTask[] | null | undefined): RecommendationTaskContext[] {
+    if (!Array.isArray(tasksSource)) {
+        return [];
+    }
+
+    return tasksSource.flatMap((task) => {
+        const title = readText(task.name) ?? readText(task.title);
+        if (title == null) {
+            return [];
+        }
+
+        return [{
+            title,
+            groupName: readText(task.groupName) ?? 'Без группы',
+            comment: readText(task.comment),
+            coins: readNumber(task.coins),
+        }];
+    });
+}
+
+function findRecommendationTask(tasks: RecommendationTaskContext[], name: string | null, coins: number | null): RecommendationTaskContext | null {
+    if (name == null) {
+        return null;
+    }
+
+    const exactMatch = tasks.find((task) => task.title === name && (coins == null || task.coins === coins));
+    if (exactMatch) {
+        return exactMatch;
+    }
+
+    return tasks.find((task) => task.title === name) ?? null;
+}
+
+function buildRecommendationId(index: number, title: string, coins: number | null, reason: string | null): string {
+    return `${index}:${title}:${coins ?? 'na'}:${reason ?? ''}`;
+}
+
+function sumTrend(trend: TrendDatumInternal[], key: 'earned' | 'spent'): number {
+    return trend.reduce((total, item) => total + item[key], 0);
 }
 
 function chooseRecommendationIcon(reason: string | null): string {

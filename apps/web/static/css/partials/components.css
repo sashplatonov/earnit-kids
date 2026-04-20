@@ -2945,33 +2945,59 @@ dialog.modal[open]::backdrop {
     gap: 1rem;
 }
 
-.recommendation-card {
-    background: rgba(255, 215, 0, 0.05);
-    border: 1px dashed rgba(255, 215, 0, 0.3);
-    padding: 1rem;
-    border-radius: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+#analytics-section .recommendation-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 251, 255, 0.94));
+    border: 1px solid rgba(125, 149, 187, 0.16);
+    box-shadow: 0 22px 46px -34px rgba(104, 133, 176, 0.24);
 }
 
-.recommendation-card__title {
-    font-weight: 700;
-    color: var(--color-warning);
-    font-size: 1rem;
+#analytics-section .recommendation-card::before {
+    background: linear-gradient(90deg, #8ddfb7 0%, #5cc7f3 52%, #ffd86b 100%);
+    opacity: 0.92;
 }
 
-.recommendation-card__reason {
-    font-size: 0.8rem;
-    color: var(--color-text-muted);
+#analytics-section .recommendation-card .card__title {
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
-.recommendation-card__coins {
-    font-weight: 800;
-    color: var(--color-success);
+#analytics-section .recommendation-card .card__comment {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    min-height: 4.2em;
+}
+
+#analytics-section .recommendation-card .card__badge--group {
+    border-color: rgba(92, 199, 243, 0.24);
+    background: rgba(92, 199, 243, 0.12);
+    color: #3d82aa;
+}
+
+#analytics-section .recommendation-card .card__badge--type {
+    border-color: rgba(255, 214, 107, 0.26);
+    background: rgba(255, 214, 107, 0.18);
+    color: #9b6d1f;
+}
+
+#analytics-section .recommendation-card__coins {
+    background: linear-gradient(135deg, #8ddfb7 0%, #5cc7f3 100%);
+    color: #ffffff;
+}
+
+#analytics-section .recommendation-card__icon-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(255, 214, 107, 0.28), rgba(92, 199, 243, 0.22));
+    font-size: 1.15rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 /* Pull-to-refresh safe inset */

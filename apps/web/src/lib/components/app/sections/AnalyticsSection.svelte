@@ -3,8 +3,7 @@
     import { loadAnalyticsData } from '$lib/services/api';
     import { modalStore } from '$lib/stores/modal';
     import { onMount } from 'svelte';
-    import { buildAnalyticsViewModel, type AnalyticsViewModel } from './analyticsViewModel';
-    import type { AnalyticsRecommendationView } from './analyticsRecommendations';
+    import { buildAnalyticsViewModel, type AnalyticsRecommendationCard, type AnalyticsViewModel } from './analyticsViewModel';
 
     type ChartInstance = { destroy(): void; data: unknown; update(): void };
     type ChartConstructor = new (ctx: CanvasRenderingContext2D, config: unknown) => ChartInstance;
@@ -27,7 +26,7 @@
     let streakValue = 0;
     let streakBar = 0;
     let streakNote = 'Начните сегодня!';
-    let recommendations: AnalyticsRecommendationView[] = [];
+    let recommendations: AnalyticsRecommendationCard[] = [];
 
     // Chart instances
     let charts: Record<string, ChartInstance | null> = {};
@@ -44,7 +43,10 @@
         const data = await loadAnalyticsData(childId, timeframe);
         if (!data) return;
 
-        const view = buildAnalyticsViewModel(data);
+        const view = buildAnalyticsViewModel(data, {
+            currentBalance: $appStore.balance,
+            tasks: $appStore.tasks,
+        });
 
         statsEarned = view.earned;
         statsSpent = view.spent;
@@ -138,7 +140,7 @@
         void loadAndRender();
     });
 
-    $: void ($appStore.currentChildId, timeframe, loadAndRender());
+    $: void ($appStore.currentChildId, $appStore.balance, $appStore.tasks, timeframe, loadAndRender());
 </script>
 
 <svelte:head>
@@ -184,7 +186,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-card__label">Баланс</div>
-                <div class="stat-card__value" id="stats-net">{statsNet} мон.</div>
+                <div class="stat-card__value" id="stats-net">{statsNet}</div>
             </div>
         </div>
 
@@ -278,10 +280,26 @@
                 <h3 class="analytics-group-title">Идеи для роста</h3>
                 <div id="analytics-recommendations" class="recommendations-grid">
                     {#each recommendations as rec (rec.id)}
-                    <div class="recommendation-card">
-                        <span class="recommendation-icon">{rec.icon}</span>
-                        <p>{rec.text}</p>
-                    </div>
+                    <article class="card card--task recommendation-card">
+                        <div class="card__badge-row">
+                            <span class="card__badge card__badge--group">{rec.groupName}</span>
+                            {#if rec.reason}
+                            <span class="card__badge card__badge--type">{rec.reason}</span>
+                            {/if}
+                        </div>
+                        <div class="card__header">
+                            <h4 class="card__title recommendation-card__title">{rec.title}</h4>
+                            {#if rec.coins != null && rec.coins > 0}
+                            <div class="card__coins recommendation-card__coins">
+                                <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                                <span>{rec.coins}</span>
+                            </div>
+                            {:else}
+                            <div class="recommendation-card__icon-pill" aria-hidden="true">{rec.icon}</div>
+                            {/if}
+                        </div>
+                        <p class="card__comment recommendation-card__description">{rec.description}</p>
+                    </article>
                     {/each}
                 </div>
             </div>
