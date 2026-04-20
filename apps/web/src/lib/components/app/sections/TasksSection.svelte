@@ -16,6 +16,24 @@
         ? tasks.filter(t => (t.groupName ?? 'Без группы') === selectedGroup)
         : tasks;
 
+    function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
+        const limit = frequency?.limit;
+        const period = frequency?.period;
+
+        if (!limit || !period) {
+            return '';
+        }
+
+        const periodLabels: Record<string, string> = {
+            day: 'день',
+            week: 'неделю',
+            month: 'месяц',
+            year: 'год',
+        };
+
+        return `${limit} раз(а) в ${periodLabels[period] ?? period}`;
+    }
+
     async function handleEarn(taskId: unknown) {
         const childId = $appStore.currentChildId;
         const task = tasks.find(t => t.id == taskId);
@@ -78,15 +96,34 @@
     {#if visibleTasks.length > 0}
     <div class="cards" id="tasks-list">
         {#each visibleTasks as task (task.id)}
-        <div class="card task-card">
+        <div class="card card--task task-card">
+            <div class="card__badge-row">
+                <span class="card__badge card__badge--group">{task.groupName ?? 'Без группы'}</span>
+                {#if formatFrequency(task.frequency)}
+                <span class="card__badge card__badge--type">{formatFrequency(task.frequency)}</span>
+                {/if}
+            </div>
             <div class="card__header">
                 <h3 class="card__title">{task.title}</h3>
-                <div class="card__icon">
-                    <span class="task-coins">{task.coins} <span class="gamified-icon icon-coin" aria-hidden="true"></span></span>
+                <div class="card__coins task-coins">
+                    <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                    <span>{task.coins}</span>
                 </div>
             </div>
             {#if task.comment}
             <p class="card__comment">{task.comment}</p>
+            {:else}
+            <p class="card__comment">Короткий шаг, который помогает заработать монетки и закрепить привычку.</p>
+            {/if}
+            {#if task.moneyLimit != null || task.ageMin != null || task.ageMax != null}
+            <div class="card__meta">
+                {#if task.moneyLimit != null}
+                <span class="card__meta-item">До {task.moneyLimit} €</span>
+                {/if}
+                {#if task.ageMin != null || task.ageMax != null}
+                <span class="card__meta-item">Возраст {task.ageMin ?? 0}-{task.ageMax ?? 18}</span>
+                {/if}
+            </div>
             {/if}
             <div class="card__actions">
                 {#if isAdmin}
@@ -116,7 +153,7 @@
         </p>
         {#if isAdmin}
         <div class="empty-state__actions">
-            <span class="empty-state__tip">Кнопка «+ Добавить» в правом верхнем углу раздела.</span>
+            <button class="btn btn--add" type="button" on:click={openAddTask}>Добавить задачу</button>
         </div>
         {/if}
     </div>

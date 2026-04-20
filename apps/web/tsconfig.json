@@ -12,6 +12,8 @@
     "types": ["vitest/globals"]
   },
   "include": [
+    "scripts/**/*.d.ts",
+    "scripts/**/*.d.mts",
     "src/**/*.d.ts",
     "src/**/*.ts",
     "src/**/*.svelte",

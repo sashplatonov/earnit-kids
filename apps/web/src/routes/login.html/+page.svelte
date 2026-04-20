@@ -27,6 +27,8 @@
     let submitting: ActivePanel | null = null;
     let emailVerificationEnabled = true;
     let passwordRecoveryEnabled = true;
+    let showLoginPassword = false;
+    let showRegisterPassword = false;
 
     let loginEmailInput: HTMLInputElement | null = null;
     let loginPasswordInput: HTMLInputElement | null = null;
@@ -64,11 +66,13 @@
 
     function showLoginPanel() {
         activePanel = 'login';
+        showLoginPassword = false;
         clearMessages();
     }
 
     function showRegisterPanel() {
         activePanel = 'register';
+        showRegisterPassword = false;
         clearMessages();
     }
 
@@ -240,22 +244,22 @@
 
 <style>
     :root {
-        --page-surface: rgba(255, 255, 255, 0.82);
-        --panel-border: rgba(125, 149, 187, 0.16);
-        --highlight: #ffb65c;
-        --highlight-strong: #ff8f70;
-        --accent: #5cc7f3;
-        --text-main: #26344f;
-        --muted: #667892;
+        --page-surface: rgba(255, 250, 244, 0.86);
+        --panel-border: rgba(142, 111, 82, 0.14);
+        --highlight: #d59b57;
+        --highlight-strong: #b96d56;
+        --accent: #5f8a9d;
+        --text-main: #2b3550;
+        --muted: #6b778d;
     }
 
     .login-bg-wrapper {
         min-height: 100vh;
         background:
-            radial-gradient(780px 460px at 8% 0%, rgba(92, 199, 243, 0.24), transparent 58%),
-            radial-gradient(760px 520px at 92% 4%, rgba(255, 214, 107, 0.28), transparent 52%),
-            radial-gradient(720px 480px at 80% 82%, rgba(255, 156, 188, 0.18), transparent 48%),
-            linear-gradient(180deg, #fffdf8 0%, #f4fbff 50%, #fff4e8 100%);
+            radial-gradient(780px 460px at 8% 0%, rgba(194, 166, 126, 0.16), transparent 58%),
+            radial-gradient(760px 520px at 92% 4%, rgba(214, 151, 111, 0.14), transparent 52%),
+            radial-gradient(720px 480px at 80% 82%, rgba(129, 165, 152, 0.12), transparent 48%),
+            linear-gradient(180deg, #fffdf8 0%, #f8f1e7 50%, #fcf6ef 100%);
         color: var(--text-main);
         font-family: 'Nunito', system-ui, sans-serif;
     }
@@ -271,11 +275,11 @@
     .login-hero,
     .login-panel,
     .onboarding-steps {
-        border-radius: 1.5rem;
+        border-radius: 1.75rem;
         border: 1px solid var(--panel-border);
         background: var(--page-surface);
         padding: 2rem;
-        box-shadow: 0 28px 60px -34px rgba(99, 128, 177, 0.35);
+        box-shadow: 0 30px 70px -42px rgba(77, 62, 49, 0.32);
     }
 
     .login-hero {
@@ -351,9 +355,9 @@
 
     .hero-stat {
         border-radius: 1rem;
-        border: 1px solid rgba(125, 149, 187, 0.16);
-        padding: 0.85rem;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 249, 255, 0.92));
+        border: 1px solid rgba(142, 111, 82, 0.12);
+        padding: 0.95rem;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(251, 245, 238, 0.92));
     }
 
     .hero-stat strong {
@@ -376,8 +380,8 @@
     .role-card {
         border-radius: 1.1rem;
         padding: 1rem;
-        border: 1px solid rgba(125, 149, 187, 0.16);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(247, 250, 255, 0.92));
+        border: 1px solid rgba(142, 111, 82, 0.12);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(250, 244, 236, 0.92));
         min-height: 155px;
     }
 
@@ -418,8 +422,8 @@
     .scenario-card {
         padding: 1rem;
         border-radius: 1rem;
-        border: 1px solid rgba(125, 149, 187, 0.16);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(246, 249, 255, 0.93));
+        border: 1px solid rgba(142, 111, 82, 0.12);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(250, 244, 236, 0.93));
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
@@ -523,9 +527,9 @@
     }
 
     .form-frame {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.94));
-        border-radius: 1rem;
-        border: 1px solid rgba(125, 149, 187, 0.14);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(250, 244, 236, 0.94));
+        border-radius: 1.2rem;
+        border: 1px solid rgba(142, 111, 82, 0.12);
         padding: 1.4rem;
         min-height: 320px;
     }
@@ -540,7 +544,7 @@
         padding: 0.85rem 1rem;
         font-size: 1rem;
         border-radius: 0.9rem;
-        border: 1px solid rgba(125, 149, 187, 0.22);
+        border: 1px solid rgba(142, 111, 82, 0.18);
         background: rgba(255, 255, 255, 0.98);
         color: var(--text-main);
         transition: border 0.2s ease, box-shadow 0.2s ease;
@@ -570,14 +574,43 @@
         background: linear-gradient(135deg, var(--highlight), var(--highlight-strong));
         color: #ffffff;
         margin-top: 0.8rem;
-        box-shadow: 0 16px 32px rgba(255, 143, 112, 0.28);
+        box-shadow: 0 16px 32px rgba(185, 109, 86, 0.24);
     }
 
     .btn-secondary {
         background: rgba(255, 255, 255, 0.82);
-        border: 1px solid rgba(125, 149, 187, 0.18);
+        border: 1px solid rgba(142, 111, 82, 0.16);
         color: var(--text-main);
         margin-top: 0.9rem;
+    }
+
+    .password-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-field .input-field {
+        padding-right: 5.4rem;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 0.45rem;
+        border: none;
+        background: rgba(245, 238, 228, 0.92);
+        color: var(--text-main);
+        border-radius: 999px;
+        padding: 0.4rem 0.7rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .password-toggle:hover,
+    .password-toggle:focus-visible {
+        background: rgba(232, 221, 206, 0.96);
+        outline: none;
     }
 
     .link-btn {
@@ -746,23 +779,26 @@
                                     autocapitalize="none"
                                     spellcheck="false"
                                 />
-                                <input
-                                    bind:this={loginPasswordInput}
-                                    bind:value={loginPassword}
-                                    type="password"
-                                    class="input-field"
-                                    placeholder="Пароль"
-                                    autocomplete="current-password"
-                                    on:keydown={(event) => event.key === 'Enter' && handleLogin()}
-                                />
+                                <div class="password-field">
+                                    <input
+                                        bind:this={loginPasswordInput}
+                                        bind:value={loginPassword}
+                                        type={showLoginPassword ? 'text' : 'password'}
+                                        class="input-field"
+                                        placeholder="Пароль"
+                                        autocomplete="current-password"
+                                        on:keydown={(event) => event.key === 'Enter' && handleLogin()}
+                                    />
+                                    <button class="password-toggle" type="button" on:click={() => showLoginPassword = !showLoginPassword}>
+                                        {showLoginPassword ? 'Скрыть' : 'Показать'}
+                                    </button>
+                                </div>
                             </div>
                             <button class="btn-login" on:click={handleLogin} disabled={submitting === 'login'}>
                                 {submitting === 'login' ? 'Вход...' : 'Войти'}
                             </button>
                             <div class="form-links">
-                                {#if passwordRecoveryEnabled}
-                                    <a href="/login.html#forgot-password" on:click|preventDefault={showForgotPanel}>Восстановить пароль</a>
-                                {/if}
+                                <a href="/login.html#forgot-password" on:click|preventDefault={showForgotPanel}>Восстановить пароль</a>
                                 <span style="color: var(--muted); font-size: 0.85rem;">или</span>
                                 <button type="button" class="link-btn" on:click={showRegisterPanel}>Собери семью</button>
                             </div>
@@ -780,15 +816,20 @@
                                     autocapitalize="none"
                                     spellcheck="false"
                                 />
-                                <input
-                                    bind:value={regPassword}
-                                    type="password"
-                                    class="input-field"
-                                    placeholder="Пароль (мин. 6)"
-                                    minlength="6"
-                                    autocomplete="new-password"
-                                    on:keydown={(event) => event.key === 'Enter' && handleRegister()}
-                                />
+                                <div class="password-field">
+                                    <input
+                                        bind:value={regPassword}
+                                        type={showRegisterPassword ? 'text' : 'password'}
+                                        class="input-field"
+                                        placeholder="Пароль (мин. 6)"
+                                        minlength="6"
+                                        autocomplete="new-password"
+                                        on:keydown={(event) => event.key === 'Enter' && handleRegister()}
+                                    />
+                                    <button class="password-toggle" type="button" on:click={() => showRegisterPassword = !showRegisterPassword}>
+                                        {showRegisterPassword ? 'Скрыть' : 'Показать'}
+                                    </button>
+                                </div>
                             </div>
                             <button class="btn-login" on:click={handleRegister} disabled={submitting === 'register'}>
                                 {submitting === 'register' ? 'Регистрация...' : 'Зарегистрировать'}
@@ -799,7 +840,13 @@
                         </div>
                     {:else}
                         <div aria-label="Восстановление">
-                            <p class="hero-subtitle" style="margin-bottom: 1rem;">Восстановите доступ и отправьте ребенку новую ссылку.</p>
+                            <p class="hero-subtitle" style="margin-bottom: 1rem;">
+                                {#if passwordRecoveryEnabled}
+                                    Восстановите доступ и отправьте ребенку новую ссылку.
+                                {:else}
+                                    Оставьте email, чтобы получить следующий шаг для восстановления доступа и вернуться к родительскому входу.
+                                {/if}
+                            </p>
                             <div class="form-grid">
                                 <input
                                     bind:value={forgotEmail}

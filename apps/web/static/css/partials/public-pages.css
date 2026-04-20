@@ -1,24 +1,24 @@
 :root {
-    --public-bg: #fffaf2;
-    --public-bg-contrast: rgba(255, 255, 255, 0.78);
-    --public-surface: rgba(255, 255, 255, 0.9);
+    --public-bg: #fbf5ec;
+    --public-bg-contrast: rgba(255, 255, 255, 0.82);
+    --public-surface: rgba(255, 250, 244, 0.9);
     --public-surface-strong: #ffffff;
-    --public-border: rgba(132, 158, 190, 0.2);
-    --public-shadow: 0 26px 60px rgba(118, 138, 176, 0.15);
-    --public-shadow-soft: 0 16px 34px rgba(123, 145, 185, 0.11);
-    --public-text: #33425f;
-    --public-text-strong: #22314d;
-    --public-text-muted: #56677f;
-    --public-primary: linear-gradient(135deg, #ffd36b 0%, #ffb86b 50%, #ff92a8 100%);
-    --public-primary-hover: linear-gradient(135deg, #ffcb57 0%, #ffac62 50%, #f887a3 100%);
-    --public-accent: linear-gradient(135deg, #ffd96a 0%, #ffb86b 55%, #ff92a8 100%);
-    --public-accent-soft: linear-gradient(135deg, rgba(255, 217, 106, 0.18), rgba(255, 146, 168, 0.18));
-    --public-mint-soft: linear-gradient(135deg, rgba(153, 233, 190, 0.22), rgba(111, 207, 255, 0.18));
-    --public-hero-glow: radial-gradient(circle at 12% 18%, rgba(109, 212, 255, 0.32), transparent 32%),
-        radial-gradient(circle at 88% 6%, rgba(255, 214, 116, 0.28), transparent 30%),
-        radial-gradient(circle at 74% 76%, rgba(159, 236, 198, 0.24), transparent 26%),
-        radial-gradient(circle at 30% 88%, rgba(255, 176, 195, 0.22), transparent 28%),
-        linear-gradient(180deg, #fffdf8 0%, #f4fbff 48%, #fff6eb 100%);
+    --public-border: rgba(145, 113, 79, 0.14);
+    --public-shadow: 0 30px 70px rgba(88, 72, 58, 0.12);
+    --public-shadow-soft: 0 18px 34px rgba(88, 72, 58, 0.08);
+    --public-text: #40506a;
+    --public-text-strong: #24324b;
+    --public-text-muted: #627189;
+    --public-primary: linear-gradient(135deg, #d39a56 0%, #c77f5e 55%, #a96256 100%);
+    --public-primary-hover: linear-gradient(135deg, #cb914d 0%, #bb7456 55%, #9e574c 100%);
+    --public-accent: linear-gradient(135deg, #efd39b 0%, #d48f67 55%, #9ab6aa 100%);
+    --public-accent-soft: linear-gradient(135deg, rgba(239, 211, 155, 0.18), rgba(154, 182, 170, 0.18));
+    --public-mint-soft: linear-gradient(135deg, rgba(184, 211, 194, 0.22), rgba(171, 207, 222, 0.18));
+    --public-hero-glow: radial-gradient(circle at 12% 18%, rgba(209, 175, 124, 0.18), transparent 32%),
+        radial-gradient(circle at 88% 6%, rgba(192, 120, 92, 0.12), transparent 30%),
+        radial-gradient(circle at 74% 76%, rgba(152, 186, 171, 0.14), transparent 26%),
+        radial-gradient(circle at 30% 88%, rgba(232, 208, 176, 0.18), transparent 28%),
+        linear-gradient(180deg, #fffdf8 0%, #f8f1e7 48%, #fdf7f0 100%);
 }
 
 .public-shell {
@@ -47,13 +47,13 @@
 .public-shell::before {
     top: 6rem;
     left: -6rem;
-    background: rgba(145, 219, 255, 0.62);
+    background: rgba(217, 191, 148, 0.42);
 }
 
 .public-shell::after {
     right: -6rem;
     bottom: 2rem;
-    background: rgba(255, 187, 141, 0.52);
+    background: rgba(174, 198, 184, 0.34);
 }
 
 .public-inner {
@@ -74,7 +74,7 @@
 .blog-shell,
 .article-shell,
 .public-cta {
-    border-radius: 32px;
+    border-radius: 28px;
     background: var(--public-surface);
     border: 1px solid var(--public-border);
     box-shadow: var(--public-shadow);
@@ -135,7 +135,7 @@
 .feature-layout__panel,
 .blog-image-wrap,
 .article-image-wrap {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(245, 249, 255, 0.96));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 244, 236, 0.96));
     border-radius: 28px;
     padding: 1.35rem;
     border: 1px solid rgba(122, 149, 191, 0.16);
@@ -234,24 +234,24 @@
     padding: 0.82rem 1.35rem;
     font-weight: 800;
     letter-spacing: 0.01em;
-    box-shadow: 0 10px 24px rgba(110, 136, 184, 0.15);
+    box-shadow: 0 10px 24px rgba(88, 72, 58, 0.12);
 }
 
 .public-shell .btn--primary {
     background: var(--public-primary);
     color: #ffffff;
-    box-shadow: 0 14px 28px rgba(255, 160, 133, 0.24);
+    box-shadow: 0 14px 28px rgba(169, 98, 86, 0.2);
 }
 
 .public-shell .btn--primary:hover {
     background: var(--public-primary-hover);
-    box-shadow: 0 18px 34px rgba(255, 160, 133, 0.3);
+    box-shadow: 0 18px 34px rgba(169, 98, 86, 0.24);
 }
 
 .public-shell .btn--ghost {
     background: rgba(255, 255, 255, 0.7);
     color: var(--public-text-strong);
-    border: 1px solid rgba(122, 149, 191, 0.22);
+    border: 1px solid rgba(145, 113, 79, 0.16);
 }
 
 .public-shell .btn--ghost:hover {
@@ -276,7 +276,7 @@
 .wizard-step,
 .faq-card,
 .blog-card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.96));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(251, 245, 237, 0.96));
     border-radius: 24px;
     padding: 1.15rem 1.25rem;
     border: 1px solid var(--public-border);
@@ -287,19 +287,19 @@
 .value-card:nth-child(3n + 1),
 .feature-point:nth-child(3n + 1),
 .wizard-step:nth-child(3n + 1) {
-    background: linear-gradient(180deg, rgba(239, 249, 255, 0.96), rgba(255, 255, 255, 0.95));
+    background: linear-gradient(180deg, rgba(255, 248, 238, 0.96), rgba(255, 255, 255, 0.95));
 }
 
 .value-card:nth-child(3n + 2),
 .feature-point:nth-child(3n + 2),
 .wizard-step:nth-child(3n + 2) {
-    background: linear-gradient(180deg, rgba(255, 247, 226, 0.96), rgba(255, 255, 255, 0.95));
+    background: linear-gradient(180deg, rgba(249, 241, 228, 0.96), rgba(255, 255, 255, 0.95));
 }
 
 .value-card:nth-child(3n),
 .feature-point:nth-child(3n),
 .wizard-step:nth-child(3n) {
-    background: linear-gradient(180deg, rgba(241, 255, 245, 0.96), rgba(255, 255, 255, 0.95));
+    background: linear-gradient(180deg, rgba(243, 248, 245, 0.96), rgba(255, 255, 255, 0.95));
 }
 
 .value-card h3,

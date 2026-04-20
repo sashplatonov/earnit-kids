@@ -40,4 +40,14 @@ describe('loadAppConfig', () => {
         expect(config.backendOrigin).toBe('http://backend:8080');
         expect(config.publicOrigin).toBe('http://localhost:3001');
     });
+
+    it('prefers APP_URL over PUBLIC_BASE_URL for live public origin resolution', () => {
+        const config = loadAppConfig({
+            BACKEND_URL: 'http://backend:8080',
+            PUBLIC_BASE_URL: 'http://localhost:3000',
+            APP_URL: 'http://localhost:5001',
+        } as NodeJS.ProcessEnv);
+
+        expect(config.publicOrigin).toBe('http://localhost:5001');
+    });
 });

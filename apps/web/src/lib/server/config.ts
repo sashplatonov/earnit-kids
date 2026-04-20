@@ -18,7 +18,7 @@ function parsePort(rawValue: string | undefined, fallbackValue: number): number 
 
 export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     const backendOrigin = env.BACKEND_ORIGIN || env.BACKEND_URL || DEFAULT_BACKEND_ORIGIN;
-    const publicOrigin = env.PUBLIC_BASE_URL || env.APP_URL || env.FRONTEND_URL || DEFAULT_PUBLIC_ORIGIN;
+    const publicOrigin = env.APP_URL || env.FRONTEND_URL || env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN;
 
     return {
         backendOrigin: trimTrailingSlashes(backendOrigin),

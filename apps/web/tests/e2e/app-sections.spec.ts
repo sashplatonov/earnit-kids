@@ -1,22 +1,69 @@
 /**
  * E2E tests for app sections: shop, history, analytics.
- * Requires backend running at localhost:8080 and test account:
- *   parent@test.com / test1234
+ * The suite seeds its own family data to avoid relying on a fixed account.
  */
 import { expect, test } from '@playwright/test';
 
-const LOGIN_URL = '/login.html';
-const EMAIL = 'parent@test.com';
-const PASSWORD = 'test1234';
+import {
+    DEFAULT_PARENT_PASSWORD,
+    addChild,
+    approveFirstRequest,
+    createReward,
+    createTask,
+    getChildMagicLink,
+    loginChildByMagicLink,
+    loginParent,
+    logout,
+    openFamilyApp,
+    registerParent,
+    uniqueEmail,
+} from './helpers';
+
+const CHILD_NAME = 'Разделы Ребёнок';
+const TASK_TITLE = 'Собрать рюкзак для школы';
+const REWARD_TITLE = 'Настольная игра вечером';
+
+let parentEmail = '';
+
+test.beforeAll(async ({ browser }) => {
+    parentEmail = uniqueEmail('app.sections');
+
+    const page = await browser.newPage();
+
+    await registerParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
+    await openFamilyApp(page);
+
+    await addChild(page, CHILD_NAME);
+    await createTask(page, TASK_TITLE, 40, 'Проверить тетради и собрать вещи на завтра');
+    await createReward(page, REWARD_TITLE, 40, 'После всех обязательных дел');
+
+    const childLink = await getChildMagicLink(page);
+
+    await loginChildByMagicLink(page, childLink, TASK_TITLE);
+    await page.getByRole('button', { name: 'Выполнил!' }).click();
+    await expect(page.getByText('Заявка отправлена')).toBeVisible();
+
+    await logout(page);
+    await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
+    await approveFirstRequest(page);
+
+    await loginChildByMagicLink(page, childLink, TASK_TITLE);
+    await page.getByRole('tab', { name: 'Награды' }).click();
+    await expect(page.getByRole('heading', { name: REWARD_TITLE })).toBeVisible();
+    await page.getByRole('button', { name: 'Запросить' }).click();
+    await expect(page.getByText('Заявка на покупку отправлена!')).toBeVisible();
+
+    await logout(page);
+    await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
+    await approveFirstRequest(page);
+    await page.close();
+});
 
 async function login(page: import('@playwright/test').Page) {
-    await page.goto(LOGIN_URL);
-    await page.getByRole('textbox', { name: 'Email' }).fill(EMAIL);
-    await page.getByRole('textbox', { name: 'Пароль' }).fill(PASSWORD);
-    await page.getByRole('button', { name: 'Войти' }).click();
-    // Wait for redirect to main app page
-    await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { name: /EarnIt Kids/i })).toBeVisible();
+    await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD, {
+        destination: /\/$/,
+        heading: /EarnIt Kids/i,
+    });
 }
 
 test.describe('Shop section (Награды)', () => {

@@ -12,12 +12,31 @@
     const dispatch = createEventDispatcher<{ switch: string }>();
 
     let moreOpen = false;
+    let navElement: HTMLElement | null = null;
 
     function switchTab(tab: string) {
         tabStore.setTab(tab as Parameters<typeof tabStore.setTab>[0]);
         activeTab = tab;
         moreOpen = false;
         dispatch('switch', tab);
+    }
+
+    function handleWindowClick(event: MouseEvent) {
+        const target = event.target;
+
+        if (!(target instanceof Node)) {
+            return;
+        }
+
+        if (moreOpen && navElement && !navElement.contains(target)) {
+            moreOpen = false;
+        }
+    }
+
+    function handleWindowKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+            moreOpen = false;
+        }
     }
 
     async function handleLogout() {
@@ -33,7 +52,9 @@
     }
 </script>
 
-<nav class="nav" aria-label="Основная навигация">
+<svelte:window on:click={handleWindowClick} on:keydown={handleWindowKeydown} />
+
+<nav class="nav" bind:this={navElement} aria-label="Основная навигация">
     <div class="nav__primary" role="tablist">
         {#if isAdmin}
             <ChildSwitcher />

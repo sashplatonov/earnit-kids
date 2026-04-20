@@ -16,6 +16,10 @@
         ? shopItems.filter(i => (i.groupName ?? 'Без группы') === selectedGroup)
         : shopItems;
 
+    function missingCoins(price: number) {
+        return Math.max(price - balance, 0);
+    }
+
     async function handleBuy(itemId: unknown) {
         const childId = $appStore.currentChildId;
         const item = shopItems.find(i => i.id == itemId);
@@ -80,15 +84,35 @@
     {#if visibleItems.length > 0}
     <div class="cards" id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card shop-card">
+        <div class="card card--shop shop-card" class:card--affordable={!isAdmin && balance >= Number(item.price ?? 0)} class:card--disabled={!isAdmin && balance < Number(item.price ?? 0)}>
+            <div class="card__badge-row">
+                <span class="card__badge card__badge--group">{item.groupName ?? 'Без группы'}</span>
+                {#if !isAdmin}
+                <span class:card__status--available={balance >= Number(item.price ?? 0)} class:card__status--locked={balance < Number(item.price ?? 0)} class="card__status">
+                    {#if balance >= Number(item.price ?? 0)}
+                        Можно запросить
+                    {:else}
+                        Еще {missingCoins(Number(item.price ?? 0))} мон.
+                    {/if}
+                </span>
+                {/if}
+            </div>
             <div class="card__header">
                 <h3 class="card__title">{item.name}</h3>
-                <div class="card__icon">
-                    <span class="item-coins">{item.price} <span class="gamified-icon icon-coin" aria-hidden="true"></span></span>
+                <div class="card__coins item-coins">
+                    <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                    <span>{item.price}</span>
                 </div>
             </div>
             {#if item.comment}
             <p class="card__comment">{item.comment}</p>
+            {:else}
+            <p class="card__comment">Награда, которую можно честно заработать и обсудить вместе с родителями.</p>
+            {/if}
+            {#if item.moneyLimit != null}
+            <div class="card__meta">
+                <span class="card__meta-item">Лимит: {item.moneyLimit} €</span>
+            </div>
             {/if}
             <div class="card__actions">
                 {#if isAdmin}
@@ -114,6 +138,11 @@
         <p class="empty-state__hint">
             {#if isAdmin}Добавьте первую награду, и магазин сразу станет понятной целью для ребенка.{:else}Скоро появятся призы!{/if}
         </p>
+        {#if isAdmin}
+        <div class="empty-state__actions">
+            <button class="btn btn--add" type="button" on:click={openAddShopItem}>Добавить награду</button>
+        </div>
+        {/if}
     </div>
     {/if}
 </section>

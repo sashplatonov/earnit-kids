@@ -279,6 +279,7 @@
             || (familiesStatus === 'active' && !isBlocked);
         return matchSearch && matchStatus;
     });
+    $: blockedFamiliesCount = families.filter(f => Boolean(f.isBlocked ?? f.blocked)).length;
 
     async function logout() {
         await fetchWithCsrf('/api/logout', { method: 'POST' });
@@ -326,7 +327,7 @@
             ['system', 'Система'],
         ] as [id, label] (id)}
         <button class="tab-btn" class:active={activeTab === id}
-            data-tab={id} type="button" role="tab"
+            id="tab-btn-{id}" data-tab={id} type="button" role="tab"
             aria-controls="tab-{id}" aria-selected={activeTab === id}
             on:click={() => switchTab(id as TabId)}>
             {label}
@@ -353,6 +354,11 @@
                                 {:else}—{/if}
                             {:else}-{/if}
                         </p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-card__label">Нужно внимания</p>
+                        <p class="stat-card__value" id="blocked-families">{blockedFamiliesCount}</p>
+                        <p class="stat-card__hint">заблокированных семей</p>
                     </article>
                 </div>
 
@@ -386,7 +392,11 @@
                         <div class="family-row__info">
                             <strong>{family.email ?? family.id}</strong>
                             <span class="family-row__meta">ID: {family.id}</span>
-                            {#if isFamilyBlocked}<span class="chip chip--danger">Заблокирован</span>{/if}
+                            <div class="family-row__facts">
+                                {#if family.childrenCount != null}<span class="chip">{family.childrenCount} детей</span>{/if}
+                                {#if family.lastActive ?? family.last_activity}<span class="chip">Активность: {String(family.lastActive ?? family.last_activity).slice(0, 10)}</span>{/if}
+                                {#if isFamilyBlocked}<span class="chip chip--danger">Заблокирован</span>{/if}
+                            </div>
                         </div>
                         <div class="family-row__actions">
                             <button class="btn btn--ghost btn--small"
@@ -413,7 +423,7 @@
         {:else if activeTab === 'catalog-tasks' || activeTab === 'catalog-products'}
         {@const type = activeTab === 'catalog-tasks' ? 'tasks' : 'products'}
         {@const items = activeTab === 'catalog-tasks' ? catalogTasks : catalogProducts}
-        <div id="tab-{activeTab}" class="tab-content active" role="tabpanel">
+        <div id="tab-{activeTab}" class="tab-content active" role="tabpanel" aria-labelledby={`tab-btn-${activeTab}`}>
             <article class="panel catalog-panel">
                 <header class="panel__header">
                     <div>
@@ -449,9 +459,9 @@
                         <div class="item-meta">Возраст: {item.age_min ?? 0}–{item.age_max ?? 18} лет</div>
                         <div class="item-actions">
                             <button class="btn-sm btn-edit" type="button"
-                                on:click={() => openEditModal(type as 'tasks' | 'products', idx)}>✏️</button>
+                                on:click={() => openEditModal(type as 'tasks' | 'products', idx)}>Изменить</button>
                             <button class="btn-sm btn-del" type="button"
-                                on:click={() => deleteCatalogItem(type as 'tasks' | 'products', idx)}>🗑️</button>
+                                on:click={() => deleteCatalogItem(type as 'tasks' | 'products', idx)}>Удалить</button>
                         </div>
                     </div>
                     {/each}

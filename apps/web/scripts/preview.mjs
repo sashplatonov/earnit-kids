@@ -3,6 +3,7 @@ import process from 'node:process';
 import { gzip } from 'node:zlib';
 import httpProxy from 'http-proxy';
 import { handler } from '../build/handler.js';
+import { buildProxyReferer, resolveProxyContext } from './proxy-context.mjs';
 
 function applyCliOverrides(argv) {
     for (let index = 0; index < argv.length; index += 1) {
@@ -31,8 +32,12 @@ if (!process.env.PORT) {
     process.env.PORT = '4174';
 }
 
-const backendOrigin = (process.env.BACKEND_ORIGIN || process.env.BACKEND_URL || 'http://localhost:8080')
-    .replace(/\/+$/, '');
+const {
+    backendOrigin,
+    backendUrl,
+    publicOrigin,
+    publicUrl,
+} = resolveProxyContext(process.env);
 
 if (!process.env.BACKEND_ORIGIN) {
     process.env.BACKEND_ORIGIN = backendOrigin;
@@ -49,6 +54,23 @@ const proxy = httpProxy.createProxyServer({
 
 proxy.on('proxyReq', (proxyReq) => {
     proxyReq.setHeader('Accept-Encoding', 'identity');
+    proxyReq.setHeader('Host', backendUrl.host);
+    proxyReq.setHeader('Origin', publicUrl.origin);
+});
+
+proxy.on('proxyReq', (proxyReq, req) => {
+    const referer = buildProxyReferer(req?.headers?.referer, publicOrigin);
+
+    if (!referer) {
+        return;
+    }
+
+    proxyReq.setHeader('Referer', referer);
+});
+
+proxy.on('proxyReqWs', (proxyReq) => {
+    proxyReq.setHeader('Host', backendUrl.host);
+    proxyReq.setHeader('Origin', publicUrl.origin);
 });
 
 proxy.on('error', (error, req, res) => {

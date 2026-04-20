@@ -11,6 +11,15 @@
     export let isAdmin: boolean = false;
     export let childNickname: string = '';
 
+    $: historyCount = earnedCount || $appStore.history.length;
+    $: resolvedLimitNote = earnedLimitNote !== 'Лимит: ∞'
+        ? earnedLimitNote
+        : $appStore.dailyCoinLimit > 0
+            ? `Лимит: ${$appStore.dailyCoinLimit} / день`
+            : isAdmin
+                ? 'История семьи'
+                : 'Последние действия';
+
     function openSettings() {
         tabStore.setTab('settings');
     }
@@ -78,10 +87,10 @@
             </div>
             <div class="header__earned" aria-live="polite">
                 <span class="header__earned-main">
-                    <span class="gamified-icon icon-trophy" aria-hidden="true"></span>
-                    <span id="header-earned-count">{earnedCount}</span>
+                    <span class="gamified-icon icon-history-menu" aria-hidden="true"></span>
+                    <span id="header-earned-count">{historyCount}</span>
                 </span>
-                <span class="header__earned-limit" id="header-earned-limit-note">{earnedLimitNote}</span>
+                <span class="header__earned-limit" id="header-earned-limit-note">{resolvedLimitNote}</span>
             </div>
             <span class="header__balance-delta hidden" id="header-balance-delta" aria-live="polite"></span>
             {#if isAdmin}

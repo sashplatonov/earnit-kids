@@ -41,7 +41,7 @@
     });
 </script>
 
-<div class="app" id="app">
+<div class="app" class:app--admin={isAdmin} class:app--child={!isAdmin} data-role={isAdmin ? 'admin' : 'child'} id="app">
     <div class="pull-refresh-indicator" id="pull-refresh-indicator" aria-hidden="true">
         <span class="pull-refresh-indicator__icon">↻</span>
         <span class="pull-refresh-indicator__text" id="pull-refresh-indicator-text">Потяните для обновления</span>

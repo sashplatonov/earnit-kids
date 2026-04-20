@@ -9,6 +9,12 @@
     $: monthlyLimit = $appStore.monthlyLimit;
     $: dailyCoinLimit = $appStore.dailyCoinLimit;
 
+    function historyKind(type: unknown): 'earn' | 'spend' | 'other' {
+        if (type === 'task_completed' || type === 'earn') return 'earn';
+        if (type === 'purchase' || type === 'spend') return 'spend';
+        return 'other';
+    }
+
     // Budget stats
     $: thisMonth = (() => {
         const now = new Date();
@@ -19,13 +25,15 @@
         });
     })();
 
-    $: moneySpent = thisMonth.filter(h => h.type === 'purchase').reduce((s, h) => s + Math.abs((h.moneyAmount as number) ?? 0), 0);
+    $: moneySpent = thisMonth
+        .filter(h => historyKind(h.type) === 'spend')
+        .reduce((sum, entry) => sum + Math.abs((entry.moneyAmount as number) ?? 0), 0);
     $: spentPercent = monthlyLimit > 0 ? Math.min(100, Math.round((moneySpent / monthlyLimit) * 100)) : 0;
     $: moneyRemaining = Math.max(0, monthlyLimit - moneySpent);
 
     const today = new Date();
     $: coinsEarnedToday = history.filter(h => {
-        if (h.type !== 'task_completed' || !h.createdAt) return false;
+        if (historyKind(h.type) !== 'earn' || !h.createdAt) return false;
         const d = new Date(h.createdAt as string);
         return d.toDateString() === today.toDateString();
     }).reduce((s, h) => s + (h.amount ?? 0), 0);
@@ -33,7 +41,7 @@
     $: coinsPercent = dailyCoinLimit > 0 ? Math.min(100, Math.round((coinsEarnedToday / dailyCoinLimit) * 100)) : 0;
 
     $: largePurchase = (() => {
-        const spends = thisMonth.filter(h => h.type === 'purchase');
+        const spends = thisMonth.filter(h => historyKind(h.type) === 'spend');
         if (!spends.length) return null;
         return spends.reduce((max, h) => Math.abs(h.amount ?? 0) > Math.abs(max.amount ?? 0) ? h : max);
     })();
@@ -67,8 +75,8 @@
             if (!map.has(key)) map.set(key, { entries: [], earned: 0, spent: 0 });
             const g = map.get(key)!;
             g.entries.push(h);
-            if (h.type === 'task_completed') g.earned += (h.amount ?? 0);
-            else if (h.type === 'purchase') g.spent += Math.abs(h.amount ?? 0);
+            if (historyKind(h.type) === 'earn') g.earned += (h.amount ?? 0);
+            else if (historyKind(h.type) === 'spend') g.spent += Math.abs(h.amount ?? 0);
         }
         return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
     })();
@@ -88,9 +96,8 @@
     }
 
     function cssType(type: string): string {
-        if (type === 'task_completed' || type === 'earn') return 'earn';
-        if (type === 'purchase' || type === 'spend') return 'spend';
-        return type;
+        const kind = historyKind(type);
+        return kind === 'other' ? type : kind;
     }
 </script>
 
