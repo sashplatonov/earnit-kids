@@ -13,4 +13,15 @@ describe('normalizeAnalyticsRecommendations', () => {
         expect(recommendations[0].text).toBe('Повторить любимое задание');
         expect(recommendations[1].text).toBe('Повторить любимое задание');
     });
+
+    it('filters empty text items and falls back to the default icon', () => {
+        const recommendations = normalizeAnalyticsRecommendations([
+            { text: '   ' },
+            { icon: null, text: 'Сыграть в шахматы вечером' },
+        ]);
+
+        expect(recommendations).toHaveLength(1);
+        expect(recommendations[0].icon).toBe('✨');
+        expect(recommendations[0].text).toBe('Сыграть в шахматы вечером');
+    });
 });

@@ -3,7 +3,7 @@
     import { loadAnalyticsData } from '$lib/services/api';
     import { modalStore } from '$lib/stores/modal';
     import { onMount } from 'svelte';
-    import { normalizeAnalyticsRecommendations } from './analyticsRecommendations';
+    import { buildAnalyticsViewModel, type AnalyticsViewModel } from './analyticsViewModel';
     import type { AnalyticsRecommendationView } from './analyticsRecommendations';
 
     type ChartInstance = { destroy(): void; data: unknown; update(): void };
@@ -23,7 +23,7 @@
     let levelNote = 'до следующего уровня ... XP';
     let weekEarned = 0;
     let weekBar = 0;
-    let weekGoal = '—';
+    let weekNote = 'Нет активности за 7 дней';
     let streakValue = 0;
     let streakBar = 0;
     let streakNote = 'Начните сегодня!';
@@ -41,12 +41,14 @@
         // Admin must have a selected child before we can load
         if (isAdmin && childId == null) return;
 
-        const data = await loadAnalyticsData(childId, timeframe) as Record<string, unknown> | null;
+        const data = await loadAnalyticsData(childId, timeframe);
         if (!data) return;
 
-        statsEarned = (data.earned as number) ?? 0;
-        statsSpent = (data.spent as number) ?? 0;
-        statsNet = statsEarned - statsSpent;
+        const view = buildAnalyticsViewModel(data);
+
+        statsEarned = view.earned;
+        statsSpent = view.spent;
+        statsNet = view.net;
 
         // Level/XP
         const xp = statsEarned;
@@ -57,28 +59,24 @@
         levelBar = Math.round((xpInLevel / xpPerLevel) * 100);
         levelNote = `до следующего уровня ${xpPerLevel - xpInLevel} XP`;
 
-        weekEarned = (data.weekEarned as number) ?? 0;
-        weekGoal = String((data.weekGoal as number) ?? '—');
-        weekBar = (data.weekGoal as number) > 0
-            ? Math.min(100, Math.round((weekEarned / (data.weekGoal as number)) * 100))
-            : 0;
+        weekEarned = view.weekEarned;
+        weekBar = view.weekBar;
+        weekNote = view.weekNote;
 
-        streakValue = (data.streak as number) ?? 0;
+        streakValue = view.streakValue;
         streakBar = Math.min(100, streakValue * 10);
-        streakNote = streakValue > 0 ? `${streakValue} дней подряд!` : 'Начните сегодня!';
+        streakNote = view.streakNote;
 
-        recommendations = normalizeAnalyticsRecommendations(
-            (data.recommendations as Array<{ icon?: unknown; text?: unknown }> | null | undefined) ?? []
-        );
+        recommendations = view.recommendations;
 
         // Render charts — retry if Chart.js CDN hasn't loaded yet
         if (ChartCtor()) {
-            renderCharts(data);
+            renderCharts(view);
         } else {
             let retries = 0;
             const tryRender = () => {
                 if (ChartCtor()) {
-                    renderCharts(data);
+                    renderCharts(view);
                 } else if (retries++ < 12) {
                     setTimeout(tryRender, 500);
                 }
@@ -87,15 +85,15 @@
         }
     }
 
-    function renderCharts(data: Record<string, unknown>) {
+    function renderCharts(view: AnalyticsViewModel) {
         const C = ChartCtor();
         if (!C) return;
 
-        const taskCoinsData = (data.taskCoins as Array<{ label: string; value: number }>) ?? [];
-        const taskCountData = (data.taskCount as Array<{ label: string; value: number }>) ?? [];
-        const itemCoinsData = (data.itemCoins as Array<{ label: string; value: number }>) ?? [];
-        const itemCountData = (data.itemCount as Array<{ label: string; value: number }>) ?? [];
-        const trendData = (data.trend as Array<{ label: string; earned: number; spent: number }>) ?? [];
+        const taskCoinsData = view.taskCoins;
+        const taskCountData = view.taskCount;
+        const itemCoinsData = view.itemCoins;
+        const itemCountData = view.itemCount;
+        const trendData = view.trend;
 
         const makeBar = (id: string, labels: string[], values: number[], color: string) => {
             charts[id]?.destroy();
@@ -214,7 +212,7 @@
                 <div class="progress-track">
                     <span class="progress-fill" id="progress-week-earned-bar" style="--progress: {weekBar};"></span>
                 </div>
-                <p class="analytics-mini__hint" id="progress-week-earned-goal">Цель: {weekGoal} мон.</p>
+                <p class="analytics-mini__hint" id="progress-week-earned-goal">{weekNote}</p>
             </article>
 
             <article class="analytics-mini__item">

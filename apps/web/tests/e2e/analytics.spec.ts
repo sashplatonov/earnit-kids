@@ -16,6 +16,7 @@ import {
     logout,
     openFamilyApp,
     registerParent,
+    selectChild,
     uniqueEmail,
 } from './helpers';
 
@@ -50,17 +51,7 @@ test.beforeAll(async ({ browser }) => {
     await approveFirstRequest(page);
 
     // Add second child with no completed tasks
-    await page.getByRole('button', { name: /Дополнительные разделы/ }).click();
-    await page.getByRole('menuitem', { name: 'Настройки' }).click();
-    // Use add child via switcher instead of analytics empty state
-    await page.locator('#child-switcher-add-child').click().catch(async () => {
-        // Fallback: go to analytics tab and use the button there
-        await page.getByRole('tab', { name: /Достижения|Аналитика/ }).click();
-        await page.locator('#analytics-add-child').click();
-    });
-    await page.locator('#new-child-name').fill(CHILD_NAME_B);
-    await page.locator('#add-child-save').click();
-    await expect(page.locator('.child-menu-btn__name')).toHaveText(CHILD_NAME_B);
+    await addChild(page, CHILD_NAME_B);
     await createTask(page, TASK_TITLE_B, TASK_COINS, 'Почитать 30 минут');
 
     await page.close();
@@ -90,14 +81,7 @@ test.describe('Analytics section — parent view', () => {
 
     test('shows earned coins after approved task for child A', async ({ page }) => {
         await loginAsParent(page);
-
-        // Make sure child A is selected
-        const childBtn = page.locator('.child-menu-btn__name');
-        const currentChild = await childBtn.textContent();
-        if (currentChild !== CHILD_NAME_A) {
-            await page.locator('.child-menu-btn').click();
-            await page.getByRole('menuitem', { name: CHILD_NAME_A }).click();
-        }
+        await selectChild(page, CHILD_NAME_A);
 
         await goToAnalytics(page);
 
@@ -108,12 +92,20 @@ test.describe('Analytics section — parent view', () => {
         expect(Number(earnedText)).toBeGreaterThanOrEqual(TASK_COINS);
     });
 
+    test('shows readable recommendation cards instead of blank placeholders', async ({ page }) => {
+        await loginAsParent(page);
+        await selectChild(page, CHILD_NAME_A);
+
+        await goToAnalytics(page);
+
+        const firstRecommendation = page.locator('#analytics-recommendations .recommendation-card').first();
+        await expect(firstRecommendation).toBeVisible();
+        await expect(firstRecommendation.locator('p')).toContainText(TASK_TITLE_A);
+    });
+
     test('shows zero earned for child B who has no completed tasks', async ({ page }) => {
         await loginAsParent(page);
-
-        // Switch to child B
-        await page.locator('.child-menu-btn').click();
-        await page.getByRole('menuitem', { name: CHILD_NAME_B }).click();
+        await selectChild(page, CHILD_NAME_B);
 
         await goToAnalytics(page);
 
@@ -125,18 +117,13 @@ test.describe('Analytics section — parent view', () => {
 
     test('reloads analytics when switching between children', async ({ page }) => {
         await loginAsParent(page);
-
-        // Start with child A — should have earned coins
-        await page.locator('.child-menu-btn').click();
-        await page.getByRole('menuitem', { name: CHILD_NAME_A }).click();
+        await selectChild(page, CHILD_NAME_A);
         await goToAnalytics(page);
 
         const earnedA = Number(await page.locator('#stats-earned').textContent());
         expect(earnedA).toBeGreaterThanOrEqual(TASK_COINS);
 
-        // Switch to child B — should reload and show 0
-        await page.locator('.child-menu-btn').click();
-        await page.getByRole('menuitem', { name: CHILD_NAME_B }).click();
+        await selectChild(page, CHILD_NAME_B);
         // Wait for stats to reload
         await page.waitForTimeout(800);
         const earnedB = Number(await page.locator('#stats-earned').textContent());
@@ -145,10 +132,7 @@ test.describe('Analytics section — parent view', () => {
 
     test('timeframe filter buttons change the displayed timeframe', async ({ page }) => {
         await loginAsParent(page);
-
-        // Make sure child A is selected (has data)
-        await page.locator('.child-menu-btn').click();
-        await page.getByRole('menuitem', { name: CHILD_NAME_A }).click();
+        await selectChild(page, CHILD_NAME_A);
         await goToAnalytics(page);
 
         const timeframeGroup = page.locator('#analytics-timeframe-group');

@@ -1,5 +1,5 @@
 /**
- * E2E tests for app sections: shop, history, analytics.
+ * E2E tests for app sections: requests, shop, history, analytics.
  * The suite seeds its own family data to avoid relying on a fixed account.
  */
 import { expect, test } from '@playwright/test';
@@ -24,6 +24,7 @@ const TASK_TITLE = 'Собрать рюкзак для школы';
 const REWARD_TITLE = 'Настольная игра вечером';
 
 let parentEmail = '';
+let childLink = '';
 
 test.beforeAll(async ({ browser }) => {
     parentEmail = uniqueEmail('app.sections');
@@ -37,7 +38,7 @@ test.beforeAll(async ({ browser }) => {
     await createTask(page, TASK_TITLE, 40, 'Проверить тетради и собрать вещи на завтра');
     await createReward(page, REWARD_TITLE, 40, 'После всех обязательных дел');
 
-    const childLink = await getChildMagicLink(page);
+    childLink = await getChildMagicLink(page);
 
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
     await page.getByRole('button', { name: 'Выполнил!' }).click();
@@ -56,6 +57,12 @@ test.beforeAll(async ({ browser }) => {
     await logout(page);
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
     await approveFirstRequest(page);
+
+    await logout(page);
+    await loginChildByMagicLink(page, childLink, TASK_TITLE);
+    await page.getByRole('button', { name: 'Выполнил!' }).click();
+    await expect(page.getByText('Заявка отправлена')).toBeVisible();
+
     await page.close();
 });
 
@@ -144,6 +151,34 @@ test.describe('Shop section (Награды)', () => {
         // Only visible when items have different group names
         // At minimum, shop items list should render
         await expect(page.locator('#shop-list, .cards, .empty-state')).toBeVisible();
+    });
+});
+
+test.describe('Requests section (Заявки)', () => {
+    test('admin sees an incoming pending request with action buttons', async ({ page }) => {
+        await login(page);
+        await page.getByRole('tab', { name: 'Заявки' }).click();
+
+        const requestsList = page.locator('#incoming-requests-list');
+        await expect(requestsList).toBeVisible();
+        await expect(requestsList.getByText(TASK_TITLE)).toBeVisible();
+        await expect(requestsList.getByRole('button', { name: 'Одобрить заявку' }).first()).toBeVisible();
+        await expect(requestsList.getByRole('button', { name: 'Отклонить заявку' }).first()).toBeVisible();
+    });
+
+    test('child sees own pending request with waiting status', async ({ page }) => {
+        await loginChildByMagicLink(page, childLink, TASK_TITLE);
+        await page.getByRole('tab', { name: 'Заявки' }).click();
+
+        const requestsList = page.locator('#my-requests-list');
+        const pendingTaskRequest = requestsList
+            .locator('.request-item')
+            .filter({ hasText: TASK_TITLE })
+            .filter({ hasText: 'Ожидает' })
+            .first();
+
+        await expect(requestsList).toBeVisible();
+        await expect(pendingTaskRequest).toBeVisible();
     });
 });
 

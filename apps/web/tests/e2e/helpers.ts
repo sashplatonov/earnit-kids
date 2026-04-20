@@ -50,17 +50,35 @@ export async function registerParent(page: Page, email: string, password = DEFAU
 }
 
 export async function addChild(page: Page, childName: string) {
-    const switcherButton = page.locator('#child-switcher-add-child');
+    const firstChildButton = page.locator('#child-switcher-add-child');
+    const childMenuButton = page.locator('.child-menu-btn');
 
-    if (await switcherButton.isVisible().catch(() => false)) {
-        await switcherButton.click();
+    if (await firstChildButton.isVisible().catch(() => false)) {
+        await firstChildButton.click();
+    } else if (await childMenuButton.isVisible().catch(() => false)) {
+        await childMenuButton.click();
+        await page.getByRole('option', { name: 'Добавить ребенка' }).click();
     } else {
+        await page.getByRole('tab', { name: /Достижения|Аналитика/ }).click();
         await page.locator('#analytics-add-child').click();
     }
 
     await page.locator('#new-child-name').fill(childName);
     await page.locator('#add-child-save').click();
     await expect(page.locator('.child-menu-btn__name')).toHaveText(childName);
+}
+
+export async function selectChild(page: Page, childName: string) {
+    const activeName = page.locator('.child-menu-btn__name');
+    if ((await activeName.textContent())?.trim() === childName) {
+        return;
+    }
+
+    await page.locator('.child-menu-btn').click();
+    const option = page.getByRole('option', { name: childName });
+    await expect(option).toBeVisible();
+    await option.click();
+    await expect(activeName).toHaveText(childName);
 }
 
 export async function createTask(page: Page, title: string, reward: number, comment: string) {
@@ -103,7 +121,17 @@ export async function loginChildByMagicLink(page: Page, childLink: string, taskT
     if (taskTitle) {
         const taskHeading = page.getByRole('heading', { name: taskTitle });
         if (!(await taskHeading.isVisible().catch(() => false))) {
+            const tasksTab = page.getByRole('tab', { name: 'Задания' });
+            if (await tasksTab.isVisible().catch(() => false)) {
+                await tasksTab.click();
+            }
+        }
+        if (!(await taskHeading.isVisible().catch(() => false))) {
             await page.reload();
+            const tasksTab = page.getByRole('tab', { name: 'Задания' });
+            if (await tasksTab.isVisible().catch(() => false)) {
+                await tasksTab.click();
+            }
         }
         await expect(taskHeading).toBeVisible();
     }
@@ -111,7 +139,12 @@ export async function loginChildByMagicLink(page: Page, childLink: string, taskT
 
 export async function approveFirstRequest(page: Page) {
     await page.getByRole('tab', { name: /Заявки/ }).click();
-    await page.getByRole('button', { name: '✓' }).click();
+    const requestList = page.locator('#incoming-requests-list');
+    await expect(requestList).toBeVisible();
+
+    const approveButton = requestList.getByRole('button', { name: 'Одобрить заявку' }).first();
+    await expect(approveButton).toBeVisible();
+    await approveButton.click();
 }
 
 export async function expectHeaderBalance(page: Page, amount: number) {
