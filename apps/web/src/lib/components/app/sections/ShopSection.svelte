@@ -71,13 +71,15 @@
 
     {#if groups.length > 1}
     <nav class="group-nav" id="shop-group-nav">
-        <button class="group-nav__btn" class:active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
-            Все
-        </button>
-        {#each groups as group (group)}
-        <button class="group-nav__btn" class:active={selectedGroup === group}
-            on:click={() => selectedGroup = group}>{group}</button>
-        {/each}
+        <div class="group-nav__scroll">
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
+                Все
+            </button>
+            {#each groups as group (group)}
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
+                on:click={() => selectedGroup = group}>{group}</button>
+            {/each}
+        </div>
     </nav>
     {/if}
 
@@ -111,7 +113,7 @@
             {/if}
             {#if item.moneyLimit != null}
             <div class="card__meta">
-                <span class="card__meta-item">Лимит: {item.moneyLimit} €</span>
+                <span class="card__meta-item">Лимит: {item.moneyLimit} 💶</span>
             </div>
             {/if}
             <div class="card__actions">

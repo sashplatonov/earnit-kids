@@ -183,21 +183,26 @@
             {#each group.entries as entry (entry.id)}
             <article class="history-item history-item--{cssType(entry.type as string)}">
                 <div class="history-item__icon">
-                    <span class="gamified-icon {cssType(entry.type as string) === 'earn' ? 'icon-coin' : 'icon-shop'}" aria-hidden="true"></span>
+                    <span class="gamified-icon {cssType(entry.type as string) === 'earn' ? 'icon-coin-stack' : 'icon-shop'}" aria-hidden="true"></span>
                 </div>
                 <div class="history-item__body">
                     <p class="history-item__title">{entry.description ?? (entry.type === 'task_completed' ? 'Задание' : 'Покупка')}</p>
                     <p class="history-item__meta">{formatDate(entry.createdAt as string)}</p>
                 </div>
-                <div class="history-item__amount history-item__amount--{cssType(entry.type as string)}">
-                    {(entry.amount ?? 0) >= 0 ? '+' : ''}{entry.amount}
-                    {#if entry.moneyAmount && (entry.moneyAmount as number) > 0}
-                    <span class="history-item__money">{entry.moneyAmount} ₽</span>
+                <div class="history-item__actions">
+                    <div class="history-item__amount history-item__amount--{cssType(entry.type as string)}">
+                        <span>
+                            {cssType(entry.type as string) === 'earn' ? '+' : '−'}{Math.abs(entry.amount ?? 0)}
+                            <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:0.9em;height:0.9em;vertical-align:middle;"></span>
+                        </span>
+                        {#if entry.moneyAmount && (entry.moneyAmount as number) > 0}
+                        <span class="history-item__money">{entry.moneyAmount} 💶</span>
+                        {/if}
+                    </div>
+                    {#if isAdmin}
+                    <button class="history-item__delete-btn" on:click={() => handleDelete(entry.id)} aria-label="Удалить запись">✕</button>
                     {/if}
                 </div>
-                {#if isAdmin}
-                <button class="btn btn--ghost btn--small" on:click={() => handleDelete(entry.id)} aria-label="Удалить запись">✕</button>
-                {/if}
             </article>
             {/each}
         </div>

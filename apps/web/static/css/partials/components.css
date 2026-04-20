@@ -759,30 +759,43 @@ p,
     background: rgba(239, 68, 68, 0.2);
 }
 
-.history-item__content {
+.history-item__content,
+.history-item__body {
     flex: 1;
     min-width: 0;
 }
 
-.history-item__desc {
+.history-item__desc,
+.history-item__title {
     font-weight: 600;
     color: var(--color-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin: 0;
 }
 
-.history-item__date {
+.history-item__date,
+.history-item__meta {
     font-size: 0.85rem;
     color: var(--color-text-dim);
+    margin: 0;
 }
 
 .history-item__amount {
     font-weight: 700;
     font-size: 1.1rem;
     display: flex;
-    align-items: center;
-    gap: 0.25rem;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+    flex-shrink: 0;
+}
+
+.history-item__money {
+    font-size: 0.78rem;
+    font-weight: 600;
+    opacity: 0.82;
 }
 
 .history-item--earn .history-item__amount {

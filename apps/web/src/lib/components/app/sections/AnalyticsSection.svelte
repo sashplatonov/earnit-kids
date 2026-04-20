@@ -36,6 +36,9 @@
         }
 
         const childId = $appStore.currentChildId;
+        // Admin must have a selected child before we can load
+        if (isAdmin && childId == null) return;
+
         const data = await loadAnalyticsData(childId, timeframe) as Record<string, unknown> | null;
         if (!data) return;
 
@@ -64,7 +67,20 @@
 
         recommendations = (data.recommendations as typeof recommendations) ?? [];
 
-        renderCharts(data);
+        // Render charts — retry if Chart.js CDN hasn't loaded yet
+        if (ChartCtor()) {
+            renderCharts(data);
+        } else {
+            let retries = 0;
+            const tryRender = () => {
+                if (ChartCtor()) {
+                    renderCharts(data);
+                } else if (retries++ < 12) {
+                    setTimeout(tryRender, 500);
+                }
+            };
+            setTimeout(tryRender, 500);
+        }
     }
 
     function renderCharts(data: Record<string, unknown>) {
@@ -120,7 +136,7 @@
         void loadAndRender();
     });
 
-    $: if (timeframe) void loadAndRender();
+    $: void ($appStore.currentChildId, timeframe, loadAndRender());
 </script>
 
 <svelte:head>
