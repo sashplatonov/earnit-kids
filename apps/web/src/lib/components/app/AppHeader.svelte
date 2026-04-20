@@ -16,9 +16,8 @@
         ? earnedLimitNote
         : $appStore.dailyCoinLimit > 0
             ? `${$appStore.dailyCoinLimit} / день`
-            : isAdmin
-                ? 'История'
-                : 'Последнее';
+            : '';
+    $: showLimitNote = resolvedLimitNote.trim().length > 0;
 
     function openSettings() {
         tabStore.setTab('settings');
@@ -92,9 +91,11 @@
                     <span class="gamified-icon icon-history-menu" aria-hidden="true"></span>
                     <span id="header-earned-count">{historyCount}</span>
                 </span>
+                {#if showLimitNote}
                 <span class="header__earned-limit" id="header-earned-limit-note"
-                    title={$appStore.dailyCoinLimit > 0 ? 'Дневной лимит монет' : isAdmin ? 'Статистика / лимит' : 'Последние операции'}
+                    title="Дневной лимит монет"
                 >{resolvedLimitNote}</span>
+                {/if}
             </div>
             <span class="header__balance-delta hidden" id="header-balance-delta" aria-live="polite"></span>
             {#if isAdmin}

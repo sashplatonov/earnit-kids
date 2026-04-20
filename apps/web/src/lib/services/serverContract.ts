@@ -64,22 +64,33 @@ export function normalizeHistoryEntry(entry: Record<string, unknown> = {}) {
     const relatedId = entry.relatedId ?? null;
     const taskId = entry.taskId ?? (entry.type === 'earn' || entry.type === 'task_completed' ? relatedId : null);
     const itemId = entry.itemId ?? (entry.type === 'spend' || entry.type === 'purchase' ? relatedId : null);
+    const title = (entry.title ?? entry.taskName ?? entry.itemName ?? entry.description ?? null) as string | null;
     return {
         ...entry,
+        title,
         taskId,
         itemId,
         groupName: entry.groupName ?? entry.group ?? null,
+        comment: entry.comment ?? null,
         createdAt: getCreatedAt(entry),
     };
 }
 
 export function normalizeRequest(request: Record<string, unknown> = {}) {
+    const taskComment = request.taskComment ?? request.description ?? request.comment ?? null;
+    const itemComment = request.itemComment ?? request.description ?? request.comment ?? null;
+    const groupName = request.groupName ?? request.taskGroup ?? request.itemGroup ?? request.group ?? null;
     return {
         ...request,
+        title: request.title ?? request.itemName ?? request.taskName ?? null,
+        description: request.description ?? taskComment ?? itemComment ?? null,
+        comment: request.comment ?? request.description ?? null,
         createdAt: getCreatedAt(request),
-        taskGroup: request.taskGroup ?? request.group ?? null,
-        itemGroup: request.itemGroup ?? request.group ?? null,
-        taskComment: request.taskComment ?? request.comment ?? null,
+        groupName,
+        taskGroup: request.taskGroup ?? groupName,
+        itemGroup: request.itemGroup ?? groupName,
+        taskComment,
+        itemComment,
     };
 }
 

@@ -1,13 +1,25 @@
 <script lang="ts">
     import { SvelteMap } from 'svelte/reactivity';
     import { appStore } from '$lib/stores/app';
+    import type { HistoryEntry } from '$lib/stores/app';
     import { deleteHistoryItem } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
+    import { buildHistoryCatalog, resolveHistoryCard } from './historyDetails';
+    import type { HistoryCardDetails } from './historyDetails';
+
+    type HistoryViewEntry = HistoryEntry & { ui: HistoryCardDetails };
 
     $: history = $appStore.history;
     $: isAdmin = $appStore.isAdmin;
     $: monthlyLimit = $appStore.monthlyLimit;
     $: dailyCoinLimit = $appStore.dailyCoinLimit;
+    $: historyCatalog = buildHistoryCatalog({
+        tasks: $appStore.tasks,
+        shopItems: $appStore.shopItems,
+        baseTasks: $appStore.baseData.tasks,
+        baseProducts: $appStore.baseData.products,
+    });
+    $: historyEntries = history.map(entry => ({ ...entry, ui: resolveHistoryCard(entry, historyCatalog) })) as HistoryViewEntry[];
 
     function historyKind(type: unknown): 'earn' | 'spend' | 'other' {
         if (type === 'task_completed' || type === 'earn') return 'earn';
@@ -18,7 +30,7 @@
     // Budget stats
     $: thisMonth = (() => {
         const now = new Date();
-        return history.filter(h => {
+        return historyEntries.filter(h => {
             if (!h.createdAt) return false;
             const d = new Date(h.createdAt as string);
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -32,7 +44,7 @@
     $: moneyRemaining = Math.max(0, monthlyLimit - moneySpent);
 
     const today = new Date();
-    $: coinsEarnedToday = history.filter(h => {
+    $: coinsEarnedToday = historyEntries.filter(h => {
         if (historyKind(h.type) !== 'earn' || !h.createdAt) return false;
         const d = new Date(h.createdAt as string);
         return d.toDateString() === today.toDateString();
@@ -69,8 +81,8 @@
 
     // Group history by month
     $: monthGroups = (() => {
-        const map = new SvelteMap<string, { entries: typeof history; earned: number; spent: number }>();
-        for (const h of history) {
+        const map = new SvelteMap<string, { entries: HistoryViewEntry[]; earned: number; spent: number }>();
+        for (const h of historyEntries) {
             const key = monthKey(h.createdAt as string);
             if (!map.has(key)) map.set(key, { entries: [], earned: 0, spent: 0 });
             const g = map.get(key)!;
@@ -98,6 +110,14 @@
     function cssType(type: string): string {
         const kind = historyKind(type);
         return kind === 'other' ? type : kind;
+    }
+
+    function historyMeta(entry: HistoryViewEntry): string {
+        const parts: string[] = [];
+        if (entry.ui.group) parts.push(entry.ui.group);
+        const createdAt = formatDate(entry.createdAt as string);
+        if (createdAt) parts.push(createdAt);
+        return parts.join(' · ');
     }
 </script>
 
@@ -162,7 +182,7 @@
             </div>
             <div class="stat-card__content">
                 <div class="stat-card__value" id="large-purchase">
-                    {largePurchase ? `${Math.abs(largePurchase.amount)} монет — ${largePurchase.description ?? '—'}` : 'Нет'}
+                    {largePurchase ? `${Math.abs(largePurchase.amount)} монет — ${largePurchase.ui.title}` : 'Нет'}
                 </div>
                 <div class="stat-card__label">Крупная покупка месяца</div>
             </div>
@@ -186,8 +206,11 @@
                     <span class="gamified-icon {cssType(entry.type as string) === 'earn' ? 'icon-coin-stack' : 'icon-shop'}" aria-hidden="true"></span>
                 </div>
                 <div class="history-item__body">
-                    <p class="history-item__title">{entry.description ?? (entry.type === 'task_completed' ? 'Задание' : 'Покупка')}</p>
-                    <p class="history-item__meta">{formatDate(entry.createdAt as string)}</p>
+                    <p class="history-item__title">{entry.ui.title}</p>
+                    {#if entry.ui.description}
+                    <p class="history-item__note">{entry.ui.description}</p>
+                    {/if}
+                    <p class="history-item__meta">{historyMeta(entry)}</p>
                 </div>
                 <div class="history-item__actions">
                     <div class="history-item__amount history-item__amount--{cssType(entry.type as string)}">
@@ -195,9 +218,7 @@
                             {cssType(entry.type as string) === 'earn' ? '+' : '−'}{Math.abs(entry.amount ?? 0)}
                             <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:0.9em;height:0.9em;vertical-align:middle;"></span>
                         </span>
-                        {#if entry.moneyAmount && (entry.moneyAmount as number) > 0}
-                        <span class="history-item__money">{entry.moneyAmount} 💶</span>
-                        {/if}
+                        <span class="history-item__money">{entry.ui.moneyAmount} 💶</span>
                     </div>
                     {#if isAdmin}
                     <button class="history-item__delete-btn" on:click={() => handleDelete(entry.id)} aria-label="Удалить запись">✕</button>

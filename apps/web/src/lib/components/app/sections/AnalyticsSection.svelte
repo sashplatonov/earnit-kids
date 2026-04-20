@@ -3,6 +3,8 @@
     import { loadAnalyticsData } from '$lib/services/api';
     import { modalStore } from '$lib/stores/modal';
     import { onMount } from 'svelte';
+    import { normalizeAnalyticsRecommendations } from './analyticsRecommendations';
+    import type { AnalyticsRecommendationView } from './analyticsRecommendations';
 
     type ChartInstance = { destroy(): void; data: unknown; update(): void };
     type ChartConstructor = new (ctx: CanvasRenderingContext2D, config: unknown) => ChartInstance;
@@ -25,7 +27,7 @@
     let streakValue = 0;
     let streakBar = 0;
     let streakNote = 'Начните сегодня!';
-    let recommendations: Array<{ icon: string; text: string }> = [];
+    let recommendations: AnalyticsRecommendationView[] = [];
 
     // Chart instances
     let charts: Record<string, ChartInstance | null> = {};
@@ -65,7 +67,9 @@
         streakBar = Math.min(100, streakValue * 10);
         streakNote = streakValue > 0 ? `${streakValue} дней подряд!` : 'Начните сегодня!';
 
-        recommendations = (data.recommendations as typeof recommendations) ?? [];
+        recommendations = normalizeAnalyticsRecommendations(
+            (data.recommendations as Array<{ icon?: unknown; text?: unknown }> | null | undefined) ?? []
+        );
 
         // Render charts — retry if Chart.js CDN hasn't loaded yet
         if (ChartCtor()) {
@@ -275,7 +279,7 @@
             <div class="analytics-group">
                 <h3 class="analytics-group-title">Идеи для роста</h3>
                 <div id="analytics-recommendations" class="recommendations-grid">
-                    {#each recommendations as rec (rec.text)}
+                    {#each recommendations as rec (rec.id)}
                     <div class="recommendation-card">
                         <span class="recommendation-icon">{rec.icon}</span>
                         <p>{rec.text}</p>

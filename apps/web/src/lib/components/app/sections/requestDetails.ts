@@ -83,6 +83,7 @@ export function resolveRequestCard(request: Request, lookups: RequestCatalogLook
 
     return {
         title: firstNonBlank(
+            request.title,
             request['itemName'],
             request['taskName'],
             purchase ? item?.name : task?.name,
@@ -91,6 +92,7 @@ export function resolveRequestCard(request: Request, lookups: RequestCatalogLook
         ),
         description: firstNonBlank(
             request['description'],
+            request.comment,
             request['taskComment'],
             request['itemComment'],
             request['comment'],
@@ -99,6 +101,7 @@ export function resolveRequestCard(request: Request, lookups: RequestCatalogLook
             'Без описания'
         ),
         group: firstNonBlank(
+            request.groupName,
             request['taskGroup'],
             request['itemGroup'],
             request['group'],

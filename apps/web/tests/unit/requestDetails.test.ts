@@ -84,6 +84,27 @@ describe('resolveRequestCard', () => {
         expect(details.group).toBe('Особая группа');
         expect(details.description).toBe('Свое описание из заявки');
     });
+
+    it('prefers pre-resolved backend title and group fields', () => {
+        const request = {
+            id: 4,
+            requestType: 'earn',
+            status: 'pending',
+            title: 'Готовое название',
+            description: 'Готовое описание',
+            groupName: 'Готовая группа',
+            coins: 9,
+            moneyAmount: 120,
+        } as Request;
+
+        const details = resolveRequestCard(request, buildRequestCatalog());
+
+        expect(details.title).toBe('Готовое название');
+        expect(details.description).toBe('Готовое описание');
+        expect(details.group).toBe('Готовая группа');
+        expect(details.coins).toBe(9);
+        expect(details.moneyAmount).toBe(120);
+    });
 });
 
 describe('app shell body padding override', () => {

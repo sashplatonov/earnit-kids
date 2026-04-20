@@ -90,6 +90,20 @@ describe('normalizeHistoryEntry', () => {
         const entry = normalizeHistoryEntry({ type: 'earn', amount: 5, created_at: ts });
         expect(entry.createdAt).toBe(ts);
     });
+
+    it('keeps backend title, group and comment fields', () => {
+        const entry = normalizeHistoryEntry({
+            type: 'spend',
+            title: 'Велосипед',
+            description: 'Велосипед',
+            groupName: 'Транспорт',
+            comment: 'Только на выходных',
+        });
+
+        expect(entry.title).toBe('Велосипед');
+        expect(entry.groupName).toBe('Транспорт');
+        expect(entry.comment).toBe('Только на выходных');
+    });
 });
 
 describe('normalizeRequest', () => {
@@ -97,6 +111,20 @@ describe('normalizeRequest', () => {
         const ts = '2026-04-17T10:00:00Z';
         const req = normalizeRequest({ requestType: 'purchase', status: 'pending', created_at: ts });
         expect(req.createdAt).toBe(ts);
+    });
+
+    it('maps generic backend display fields', () => {
+        const req = normalizeRequest({
+            requestType: 'shop_purchase',
+            status: 'pending',
+            title: 'Набор красок',
+            description: 'Только после уроков',
+            groupName: 'Творчество',
+        });
+
+        expect(req.title).toBe('Набор красок');
+        expect(req.description).toBe('Только после уроков');
+        expect(req.groupName).toBe('Творчество');
     });
 });
 
