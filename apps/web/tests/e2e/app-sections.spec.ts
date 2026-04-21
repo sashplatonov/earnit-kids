@@ -49,7 +49,7 @@ test.beforeAll(async ({ browser }) => {
     await approveFirstRequest(page);
 
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
-    await page.getByRole('tab', { name: 'Награды' }).click();
+    await page.getByRole('link', { name: 'Награды' }).click();
     await expect(page.getByRole('heading', { name: REWARD_TITLE })).toBeVisible();
     await page.getByRole('button', { name: 'Запросить' }).click();
     await expect(page.getByText('Заявка на покупку отправлена!')).toBeVisible();
@@ -68,7 +68,7 @@ test.beforeAll(async ({ browser }) => {
 
 async function login(page: import('@playwright/test').Page) {
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD, {
-        destination: /\/$/,
+        destination: /\/app\/analytics$/,
         heading: /EarnIt Kids/i,
     });
 }
@@ -76,7 +76,7 @@ async function login(page: import('@playwright/test').Page) {
 test.describe('Shop section (Награды)', () => {
     test.beforeEach(async ({ page }) => {
         await login(page);
-        await page.getByRole('tab', { name: 'Награды' }).click();
+        await page.getByRole('link', { name: 'Награды' }).click();
         await expect(page.getByRole('heading', { name: 'Магазин наград' })).toBeVisible();
     });
 
@@ -228,7 +228,7 @@ test.describe('Shop section (Награды)', () => {
 test.describe('Requests section (Заявки)', () => {
     test('admin sees an incoming pending request with action buttons', async ({ page }) => {
         await login(page);
-        await page.getByRole('tab', { name: 'Заявки' }).click();
+        await page.getByRole('link', { name: 'Заявки' }).click();
 
         const requestsList = page.locator('#incoming-requests-list');
         await expect(requestsList).toBeVisible();
@@ -239,7 +239,7 @@ test.describe('Requests section (Заявки)', () => {
 
     test('child sees own pending request with waiting status', async ({ page }) => {
         await loginChildByMagicLink(page, childLink, TASK_TITLE);
-        await page.getByRole('tab', { name: 'Заявки' }).click();
+        await page.getByRole('link', { name: 'Заявки' }).click();
 
         const requestsList = page.locator('#my-requests-list');
         const pendingTaskRequest = requestsList
@@ -346,7 +346,7 @@ test.describe('History section (История)', () => {
 test.describe('Analytics section (Достижения)', () => {
     test.beforeEach(async ({ page }) => {
         await login(page);
-        await page.getByRole('tab', { name: 'Достижения' }).click();
+        await page.getByRole('link', { name: 'Достижения' }).click();
         await expect(page.getByRole('heading', { name: 'Мои достижения' })).toBeVisible();
     });
 

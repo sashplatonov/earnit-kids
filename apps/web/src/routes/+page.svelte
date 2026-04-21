@@ -1,6 +1,5 @@
 <script lang="ts">
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
-    import AppShell from '$lib/components/app/AppShell.svelte';
     import type { PageData } from './$types';
 
     export let data: PageData;
@@ -121,7 +120,4 @@
         </section>
     </main>
 </div>
-{:else}
-<!-- W-005: Authenticated family shell -->
-<AppShell session={data.session} />
 {/if}

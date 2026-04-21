@@ -5,7 +5,6 @@
 import { get } from 'svelte/store';
 import { appStore } from '$lib/stores/app';
 import type { AppState } from '$lib/stores/app';
-import { tabStore } from '$lib/stores/tabs';
 import { showToast } from '$lib/stores/toasts';
 import { loadDataFromServer, loadBaseData } from './api';
 import { buildInitialState, normalizeServerData, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from './serverContract';
@@ -30,9 +29,6 @@ export async function initializeFromServer(): Promise<boolean> {
 
     const state = buildInitialState(record, baseData as Record<string, unknown>);
     appStore.setState(state as Partial<AppState>);
-
-    // Initialize tab to the stored role-specific value, or the role default.
-    tabStore.initForRole(!!(state as Record<string, unknown>).isAdmin);
 
     const stateRecord = state as Record<string, unknown>;
     // Auto-select child for admin

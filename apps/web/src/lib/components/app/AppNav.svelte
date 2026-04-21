@@ -1,24 +1,28 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
-    import { tabStore } from '$lib/stores/tabs';
+    import { resolve } from '$app/paths';
+    import {
+        ADMIN_MANAGEMENT_SECTIONS,
+        ADMIN_PRIMARY_SECTIONS,
+        APP_SECTION_META,
+        CHILD_PRIMARY_SECTIONS,
+        COMMON_OVERFLOW_SECTIONS,
+        type AppSection,
+    } from '$lib/app/routes';
     import { logout } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
     import ChildSwitcher from './ChildSwitcher.svelte';
 
     export let isAdmin: boolean = false;
-    export let activeTab: string = 'analytics';
+    export let activeSection: AppSection = 'analytics';
     export let requestsCount: number = 0;
-
-    const dispatch = createEventDispatcher<{ switch: string }>();
 
     let moreOpen = false;
     let navElement: HTMLElement | null = null;
 
-    function switchTab(tab: string) {
-        tabStore.setTab(tab as Parameters<typeof tabStore.setTab>[0]);
-        activeTab = tab;
+    $: primarySections = isAdmin ? ADMIN_PRIMARY_SECTIONS : CHILD_PRIMARY_SECTIONS;
+
+    function closeMoreMenu() {
         moreOpen = false;
-        dispatch('switch', tab);
     }
 
     function handleWindowClick(event: MouseEvent) {
@@ -55,61 +59,42 @@
 <svelte:window on:click={handleWindowClick} on:keydown={handleWindowKeydown} />
 
 <nav class="nav" bind:this={navElement} aria-label="Основная навигация">
-    <div class="nav__primary" role="tablist">
+    <div class="nav__primary">
         {#if isAdmin}
             <ChildSwitcher />
             <div class="nav__group nav__group--parent">
-                <button class="nav__btn" class:active={activeTab === 'analytics'}
-                    role="tab" aria-selected={activeTab === 'analytics'} aria-controls="analytics-section"
-                    data-tab="analytics" on:click={() => switchTab('analytics')}>
-                    <span class="nav__btn-icon gamified-icon icon-chart" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Достижения</span>
-                </button>
-                <button class="nav__btn" class:active={activeTab === 'tasks'}
-                    role="tab" aria-selected={activeTab === 'tasks'} aria-controls="section-tasks"
-                    data-tab="tasks" on:click={() => switchTab('tasks')}>
-                    <span class="nav__btn-icon gamified-icon icon-tasks" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Задания</span>
-                </button>
-                <button class="nav__btn" class:active={activeTab === 'requests'}
-                    role="tab" aria-selected={activeTab === 'requests'} aria-controls="section-requests"
-                    data-tab="requests" on:click={() => switchTab('requests')}>
-                    <span class="nav__btn-icon gamified-icon icon-envelope" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Заявки {#if requestsCount > 0}<span class="nav__counter">{requestsCount}</span>{/if}</span>
-                </button>
-                <button class="nav__btn" class:active={activeTab === 'shop'}
-                    role="tab" aria-selected={activeTab === 'shop'} aria-controls="section-shop"
-                    data-tab="shop" on:click={() => switchTab('shop')}>
-                    <span class="nav__btn-icon gamified-icon icon-shop" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Награды</span>
-                </button>
+                {#each primarySections as section (section)}
+                    <a
+                        class="nav__btn"
+                        class:active={activeSection === section}
+                        href={resolve('/app/[section]', { section })}
+                        aria-current={activeSection === section ? 'page' : undefined}
+                        on:click={closeMoreMenu}
+                    >
+                        <span class={`nav__btn-icon gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
+                        <span class="nav__btn-label">
+                            {APP_SECTION_META[section].label}
+                            {#if section === 'requests' && requestsCount > 0}
+                                <span class="nav__counter">{requestsCount}</span>
+                            {/if}
+                        </span>
+                    </a>
+                {/each}
             </div>
         {:else}
             <div class="nav__group nav__group--child">
-                <button class="nav__btn" class:active={activeTab === 'analytics'}
-                    role="tab" aria-selected={activeTab === 'analytics'} aria-controls="analytics-section"
-                    data-tab="analytics" on:click={() => switchTab('analytics')}>
-                    <span class="nav__btn-icon gamified-icon icon-chart" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Достижения</span>
-                </button>
-                <button class="nav__btn" class:active={activeTab === 'tasks'}
-                    role="tab" aria-selected={activeTab === 'tasks'} aria-controls="section-tasks"
-                    data-tab="tasks" on:click={() => switchTab('tasks')}>
-                    <span class="nav__btn-icon gamified-icon icon-tasks" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Задания</span>
-                </button>
-                <button class="nav__btn" class:active={activeTab === 'shop'}
-                    role="tab" aria-selected={activeTab === 'shop'} aria-controls="section-shop"
-                    data-tab="shop" on:click={() => switchTab('shop')}>
-                    <span class="nav__btn-icon gamified-icon icon-shop" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Награды</span>
-                </button>
-                <button class="nav__btn" class:active={activeTab === 'requests'}
-                    role="tab" aria-selected={activeTab === 'requests'} aria-controls="section-requests"
-                    data-tab="requests" on:click={() => switchTab('requests')}>
-                    <span class="nav__btn-icon gamified-icon icon-envelope" aria-hidden="true"></span>
-                    <span class="nav__btn-label">Заявки</span>
-                </button>
+                {#each primarySections as section (section)}
+                    <a
+                        class="nav__btn"
+                        class:active={activeSection === section}
+                        href={resolve('/app/[section]', { section })}
+                        aria-current={activeSection === section ? 'page' : undefined}
+                        on:click={closeMoreMenu}
+                    >
+                        <span class={`nav__btn-icon gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
+                        <span class="nav__btn-label">{APP_SECTION_META[section].label}</span>
+                    </a>
+                {/each}
             </div>
         {/if}
 
@@ -124,35 +109,21 @@
                 <div class="nav__dropdown" id="nav-more-dropdown" role="menu">
                     {#if isAdmin}
                         <div class="nav__dropdown-group-label" role="presentation">Управление</div>
-                        <button class="nav__dropdown-item" role="menuitem" data-tab="limits" on:click={() => switchTab('limits')}>
-                            <span class="gamified-icon icon-chart" aria-hidden="true"></span>
-                            <span>Лимиты</span>
-                        </button>
-                        <button class="nav__dropdown-item" role="menuitem" data-tab="catalog" on:click={() => switchTab('catalog')}>
-                            <span class="gamified-icon icon-tasks" aria-hidden="true"></span>
-                            <span>Каталог</span>
-                        </button>
+                        {#each ADMIN_MANAGEMENT_SECTIONS as section (section)}
+                            <a class="nav__dropdown-item" role="menuitem" href={resolve('/app/[section]', { section })} on:click={closeMoreMenu}>
+                                <span class={`gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
+                                <span>{APP_SECTION_META[section].label}</span>
+                            </a>
+                        {/each}
                         <div class="nav__dropdown-divider" role="presentation"></div>
                     {/if}
                     <div class="nav__dropdown-group-label" role="presentation">Разделы</div>
-                    <button class="nav__dropdown-item" role="menuitem" data-tab="history" on:click={() => switchTab('history')}>
-                        <span class="gamified-icon icon-history-menu" aria-hidden="true"></span>
-                        <span>История</span>
-                    </button>
-                    <button class="nav__dropdown-item" role="menuitem" data-tab="friends" on:click={() => switchTab('friends')}>
-                        <span class="gamified-icon icon-star" aria-hidden="true"></span>
-                        <span>Друзья</span>
-                    </button>
-                    <div class="nav__dropdown-divider" role="presentation"></div>
-                    <div class="nav__dropdown-group-label" role="presentation">Настройки</div>
-                    <button class="nav__dropdown-item" role="menuitem" data-tab="rules" on:click={() => switchTab('rules')}>
-                        <span class="gamified-icon icon-rules-menu" aria-hidden="true"></span>
-                        <span>Правила</span>
-                    </button>
-                    <button class="nav__dropdown-item" role="menuitem" data-tab="settings" on:click={() => switchTab('settings')}>
-                        <span class="gamified-icon icon-settings-menu" aria-hidden="true"></span>
-                        <span>Настройки</span>
-                    </button>
+                    {#each COMMON_OVERFLOW_SECTIONS as section (section)}
+                        <a class="nav__dropdown-item" role="menuitem" href={resolve('/app/[section]', { section })} on:click={closeMoreMenu}>
+                            <span class={`gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
+                            <span>{APP_SECTION_META[section].label}</span>
+                        </a>
+                    {/each}
                     <div class="nav__dropdown-divider" role="presentation"></div>
                     <button class="nav__dropdown-item nav__dropdown-action" type="button" role="menuitem" on:click={handleLogout}>
                         <span class="gamified-icon icon-logout" aria-hidden="true"></span>

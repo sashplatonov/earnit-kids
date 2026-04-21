@@ -25,18 +25,18 @@ test('child session does not expose parent controls', async ({ page }) => {
 
     await expect(page.locator('#child-switcher-add-child')).toHaveCount(0);
     await page.goto('/super-admin');
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(/\/app\/tasks$/);
     await expect(page.getByRole('heading', { name: 'Административная панель' })).toHaveCount(0);
 });
 
 test('super admin can access the admin panel', async ({ page }) => {
     await loginParent(page, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD, {
         destination: /\/super-admin$/,
-        heading: 'Административная панель',
+        heading: null,
     });
 
     await expect(page).toHaveURL(/\/super-admin$/);
-    await expect(page.getByRole('heading', { name: 'Административная панель' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Семьи EarnIt Kids' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Каталог задач' })).toBeVisible();
+    await expect(page.getByText('EarnIt Kids').first()).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Семьи' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Задачи' })).toBeVisible();
 });

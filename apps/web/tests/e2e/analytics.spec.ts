@@ -59,13 +59,13 @@ test.beforeAll(async ({ browser }) => {
 
 async function loginAsParent(page: import('@playwright/test').Page) {
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD, {
-        destination: /\/$/,
+        destination: /\/app\/analytics$/,
         heading: /EarnIt Kids/i,
     });
 }
 
 async function goToAnalytics(page: import('@playwright/test').Page) {
-    await page.getByRole('tab', { name: /Достижения|Аналитика/ }).click();
+    await page.getByRole('link', { name: /Достижения|Аналитика/ }).click();
     await expect(page.locator('#analytics-section')).toBeVisible();
 }
 
@@ -181,7 +181,7 @@ test.describe('Analytics section — child view', () => {
     test('child sees own achievements after completing a task', async ({ page }) => {
         await loginChildByMagicLink(page, childLinkA, TASK_TITLE_A);
 
-        await page.getByRole('tab', { name: /Достижения|Аналитика/ }).click();
+        await page.getByRole('link', { name: /Достижения|Аналитика/ }).click();
         await expect(page.locator('#analytics-section')).toBeVisible();
 
         // Child should NOT see the "no children" empty state

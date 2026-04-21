@@ -41,7 +41,7 @@ test('parent can register, child can complete task, and reward purchase is appro
 
     await loginChildByMagicLink(page, childLink, taskTitle);
     await expectHeaderBalance(page, 50);
-    await page.getByRole('tab', { name: 'Награды' }).click();
+    await page.getByRole('link', { name: 'Награды' }).click();
     await expect(page.getByRole('heading', { name: rewardTitle })).toBeVisible();
     await page.getByRole('button', { name: 'Запросить' }).click();
     await expect(page.getByText('Заявка на покупку отправлена!')).toBeVisible();
@@ -51,6 +51,6 @@ test('parent can register, child can complete task, and reward purchase is appro
     await approveFirstRequest(page);
 
     await loginChildByMagicLink(page, childLink);
-    await page.getByRole('tab', { name: 'Награды' }).click();
+    await page.getByRole('link', { name: 'Награды' }).click();
     await expectHeaderBalance(page, 0);
 });
