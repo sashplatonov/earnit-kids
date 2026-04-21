@@ -1,4 +1,5 @@
 <script lang="ts">
+    import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
@@ -8,7 +9,6 @@
         applyGroupOrderToChildren,
         getEffectiveGroupOrder,
         hasSavedGroupOrder,
-        moveGroup,
         normalizeGroupLabel,
         orderGroups,
         sortItemsByGroup,
@@ -18,7 +18,6 @@
     let selectedGroup = '';
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
-    let groupOrderDraft: string[] = [];
 
     $: shopItems = $appStore.shopItems;
     $: isAdmin = $appStore.isAdmin;
@@ -33,9 +32,6 @@
     $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
     $: if (selectedGroup && !groups.includes(selectedGroup)) {
         selectedGroup = '';
-    }
-    $: if (!isEditingGroupOrder) {
-        groupOrderDraft = [...groups];
     }
 
     $: visibleItems = selectedGroup
@@ -104,19 +100,6 @@
         return Number(item.price ?? 0);
     }
 
-    function openGroupOrderEditor() {
-        groupOrderDraft = [...groups];
-        isEditingGroupOrder = true;
-    }
-
-    function cancelGroupOrderEditor() {
-        isEditingGroupOrder = false;
-    }
-
-    function shiftGroup(index: number, direction: -1 | 1) {
-        groupOrderDraft = moveGroup(groupOrderDraft, index, direction);
-    }
-
     async function persistGroupOrder(nextOrder: string[]) {
         if (resolvedChildId == null) {
             showToast('Сначала выберите ребенка', 'error');
@@ -141,11 +124,11 @@
         isSavingGroupOrder = false;
     }
 
-    async function saveGroupOrder() {
-        await persistGroupOrder(groupOrderDraft);
+    async function handleGroupOrderSave(event: CustomEvent<string[]>) {
+        await persistGroupOrder(event.detail);
     }
 
-    async function resetGroupOrder() {
+    async function handleGroupOrderReset() {
         await persistGroupOrder([]);
     }
 </script>
@@ -180,81 +163,20 @@
         </div>
     </nav>
 
-    <div class="group-order-toolbar">
-        <p class="group-order-toolbar__hint">
-            {#if isAdmin}
-                Родитель задает порядок групп магазина по умолчанию для этого ребенка.
-            {:else}
-                Можно переставить группы наград под себя, не меняя родительский порядок.
-            {/if}
-        </p>
-        {#if !isEditingGroupOrder}
-        <div class="group-order-toolbar__actions">
-            <button class="btn btn--secondary btn--small" type="button" on:click={openGroupOrderEditor}>
-                {isAdmin ? 'Настроить порядок' : 'Настроить под себя'}
-            </button>
-            {#if hasStoredGroupOrder}
-            <button class="btn btn--secondary btn--small" type="button" on:click={resetGroupOrder} disabled={isSavingGroupOrder}>
-                {isAdmin ? 'Сбросить' : 'К родительскому'}
-            </button>
-            {/if}
-        </div>
-        {/if}
-    </div>
-
-    {#if isEditingGroupOrder}
-    <div class="group-order-panel" aria-live="polite">
-        <div class="group-order-panel__header">
-            <h3 class="group-order-panel__title">Порядок групп наград</h3>
-            <p class="group-order-panel__description">
-                {#if isAdmin}
-                    Новый порядок станет основным для магазина этого ребенка.
-                {:else}
-                    Этот порядок увидишь только ты. Родительский вариант останется отдельно.
-                {/if}
-            </p>
-        </div>
-
-        <div class="group-order-list" role="list">
-            {#each groupOrderDraft as group, index (group)}
-            <div class="group-order-row" role="listitem">
-                <span class="group-order-row__index">{index + 1}</span>
-                <span class="group-order-row__name">{group}</span>
-                <div class="group-order-row__actions">
-                    <button
-                        class="group-order-row__btn"
-                        type="button"
-                        aria-label={`Поднять группу ${group}`}
-                        on:click={() => shiftGroup(index, -1)}
-                        disabled={index === 0 || isSavingGroupOrder}
-                    >↑</button>
-                    <button
-                        class="group-order-row__btn"
-                        type="button"
-                        aria-label={`Опустить группу ${group}`}
-                        on:click={() => shiftGroup(index, 1)}
-                        disabled={index === groupOrderDraft.length - 1 || isSavingGroupOrder}
-                    >↓</button>
-                </div>
-            </div>
-            {/each}
-        </div>
-
-        <div class="group-order-panel__actions">
-            <button class="btn btn--secondary btn--small" type="button" on:click={cancelGroupOrderEditor} disabled={isSavingGroupOrder}>
-                Отмена
-            </button>
-            {#if hasStoredGroupOrder}
-            <button class="btn btn--secondary btn--small" type="button" on:click={resetGroupOrder} disabled={isSavingGroupOrder}>
-                {isAdmin ? 'Сбросить' : 'К родительскому'}
-            </button>
-            {/if}
-            <button class="btn btn--primary btn--small" type="button" on:click={saveGroupOrder} disabled={isSavingGroupOrder}>
-                {isSavingGroupOrder ? 'Сохраняю...' : 'Сохранить'}
-            </button>
-        </div>
-    </div>
-    {/if}
+    <GroupOrderEditor
+        bind:isOpen={isEditingGroupOrder}
+        {isAdmin}
+        isSaving={isSavingGroupOrder}
+        hasStoredOrder={hasStoredGroupOrder}
+        {groups}
+        title="Порядок групп наград"
+        hintAdmin="Родитель задает порядок групп магазина по умолчанию для этого ребенка."
+        hintChild="Можно переставить группы наград под себя, не меняя родительский порядок."
+        descriptionAdmin="Перетащи группу в нужное место. Новый порядок станет основным для магазина этого ребенка."
+        descriptionChild="Перетащи группу в нужное место. Этот порядок увидишь только ты, родительский вариант останется отдельно."
+        on:save={handleGroupOrderSave}
+        on:reset={handleGroupOrderReset}
+    />
     {/if}
 
     {#if visibleItems.length > 0}

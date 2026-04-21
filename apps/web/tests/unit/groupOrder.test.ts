@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
     applyGroupOrderToChildren,
     getEffectiveGroupOrder,
+    isNoopGroupDrop,
     moveGroup,
     normalizeGroupLabel,
     orderGroups,
+    reorderGroupsBySlot,
     sortItemsByGroup,
 } from '../../src/lib/services/groupOrder';
 
@@ -37,6 +39,21 @@ describe('moveGroup', () => {
     it('swaps neighbors and ignores out-of-bounds moves', () => {
         expect(moveGroup(['Дом', 'Учеба', 'Спорт'], 1, -1)).toEqual(['Учеба', 'Дом', 'Спорт']);
         expect(moveGroup(['Дом', 'Учеба'], 0, -1)).toEqual(['Дом', 'Учеба']);
+    });
+});
+
+describe('reorderGroupsBySlot', () => {
+    it('moves a group to the requested insertion slot', () => {
+        expect(reorderGroupsBySlot(['Дом', 'Учеба', 'Спорт'], 0, 3)).toEqual(['Учеба', 'Спорт', 'Дом']);
+        expect(reorderGroupsBySlot(['Дом', 'Учеба', 'Спорт'], 2, 0)).toEqual(['Спорт', 'Дом', 'Учеба']);
+    });
+});
+
+describe('isNoopGroupDrop', () => {
+    it('treats before-self and after-self slots as no-op drops', () => {
+        expect(isNoopGroupDrop(1, 1)).toBe(true);
+        expect(isNoopGroupDrop(1, 2)).toBe(true);
+        expect(isNoopGroupDrop(1, 0)).toBe(false);
     });
 });
 

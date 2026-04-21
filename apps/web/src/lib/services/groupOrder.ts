@@ -4,6 +4,10 @@ export const UNGROUPED_LABEL = 'Без группы';
 
 export type GroupOrderSection = 'tasks' | 'shop';
 
+export function isNoopGroupDrop(sourceIndex: number, slotIndex: number): boolean {
+    return slotIndex === sourceIndex || slotIndex === sourceIndex + 1;
+}
+
 function sanitizeGroupOrder(groups: readonly string[] | null | undefined): string[] {
     if (!groups || groups.length === 0) {
         return [];
@@ -75,6 +79,22 @@ export function moveGroup(groups: readonly string[], index: number, direction: -
 
     const next = [...groups];
     [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+    return next;
+}
+
+export function reorderGroupsBySlot(groups: readonly string[], sourceIndex: number, slotIndex: number): string[] {
+    if (sourceIndex < 0 || sourceIndex >= groups.length || slotIndex < 0 || slotIndex > groups.length) {
+        return [...groups];
+    }
+
+    if (isNoopGroupDrop(sourceIndex, slotIndex)) {
+        return [...groups];
+    }
+
+    const next = [...groups];
+    const [movedGroup] = next.splice(sourceIndex, 1);
+    const insertionIndex = slotIndex > sourceIndex ? slotIndex - 1 : slotIndex;
+    next.splice(insertionIndex, 0, movedGroup);
     return next;
 }
 
