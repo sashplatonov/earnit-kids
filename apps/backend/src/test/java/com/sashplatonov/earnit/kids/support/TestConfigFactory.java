@@ -77,6 +77,10 @@ public final class TestConfigFactory {
                     public Optional<String> clientId() {
                         return Optional.ofNullable(googleClientId);
                     }
+                    @Override
+                    public Optional<String> clientSecret() {
+                        return Optional.empty();
+                    }
                 };
             }
         };

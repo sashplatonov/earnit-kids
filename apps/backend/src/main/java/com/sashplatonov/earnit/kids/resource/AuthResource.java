@@ -75,6 +75,31 @@ public class AuthResource {
         this.appUrl = appUrl == null ? "" : appUrl;
     }
 
+    // Compatibility constructor used by unit tests that previously instantiated
+    // AuthResource with only the core deps. Provides lightweight defaults
+    // for GoogleOAuthService and JwtService so tests do not need full DI.
+    public AuthResource(AuthService authService,
+                        CookieBuilder cookieBuilder,
+                        AppConfig appConfig) {
+        this(
+            authService,
+            cookieBuilder,
+            appConfig,
+            new com.sashplatonov.earnit.kids.service.GoogleOAuthService(appConfig, new com.fasterxml.jackson.databind.ObjectMapper()),
+            new com.sashplatonov.earnit.kids.config.JwtService(
+                new com.sashplatonov.earnit.kids.config.JwtCompatibilityConfig() {
+                    @Override public String secret() { return "test-secret"; }
+                },
+                new com.fasterxml.jackson.databind.ObjectMapper(),
+                new com.sashplatonov.earnit.kids.util.SecureTokenGenerator(),
+                new com.sashplatonov.earnit.kids.util.TimeProvider() {
+                    @Override public java.time.Instant now() { return java.time.Instant.now(); }
+                }
+            ),
+            "http://localhost:5001"
+        );
+    }
+
     @POST
     @Path("/login")
     @Operation(summary = "Authenticate a parent or admin account")
@@ -329,7 +354,7 @@ public class AuthResource {
         }
 
         String callbackUri = (appUrl != null && !appUrl.isBlank() ? appUrl : "") + "/api/login-google/callback";
-        var payload = Map.of("redirect", redirectTo == null ? "/" : redirectTo);
+        var payload = Map.<String, Object>of("redirect", redirectTo == null ? "/" : redirectTo);
         String stateToken = jwtService.signToken(payload, 300);
         String authUrl = googleOAuthService.buildAuthorizationUrl(callbackUri, stateToken);
 
@@ -361,7 +386,7 @@ public class AuthResource {
 
         String callbackUri = (appUrl != null && !appUrl.isBlank() ? appUrl : "") + "/api/login-google/callback";
         var tokenRespOpt = googleOAuthService.exchangeCode(code, callbackUri);
-        if (tokenRespOpt.isEmpty() || tokenRespOpt.get().id_token == null) {
+        if (tokenRespOpt.isEmpty() || tokenRespOpt.get().id_token() == null) {
             return Response.seeOther(URI.create(redirectTarget + "?error=google_exchange_failed")).build();
         }
 
