@@ -20,22 +20,17 @@ public class BackupTelegramSettingsService {
 
     private final BackupTelegramSettingsRepository repository;
     private final boolean fallbackEnabled;
-    private final String fallbackBotToken;
-    private final String fallbackChatId;
     private final int fallbackIntervalHours;
 
     @Inject
     public BackupTelegramSettingsService(
         BackupTelegramSettingsRepository repository,
         @ConfigProperty(name = "ENABLE_TELEGRAM_ALERTS", defaultValue = "false") boolean fallbackEnabled,
-        @ConfigProperty(name = "TELEGRAM_BOT_TOKEN", defaultValue = "") String fallbackBotToken,
-        @ConfigProperty(name = "TELEGRAM_CHAT_ID", defaultValue = "") String fallbackChatId,
         @ConfigProperty(name = "BACKUP_INTERVAL_HOURS", defaultValue = "24") int fallbackIntervalHours
     ) {
         this.repository = repository;
         this.fallbackEnabled = fallbackEnabled;
-        this.fallbackBotToken = normalize(fallbackBotToken);
-        this.fallbackChatId = normalize(fallbackChatId);
+        // Telegram credentials are no longer provided via environment variables.
         this.fallbackIntervalHours = sanitizeInterval(fallbackIntervalHours);
     }
 
@@ -101,8 +96,8 @@ public class BackupTelegramSettingsService {
         BackupTelegramSettingsEntity entity = BackupTelegramSettingsEntity.builder()
             .id(BackupTelegramSettingsEntity.DEFAULT_ID)
             .enabled(fallbackEnabled)
-            .botToken(fallbackBotToken)
-            .chatId(fallbackChatId)
+            .botToken(null)
+            .chatId(null)
             .intervalHours(fallbackIntervalHours)
             .build();
         repository.persistAndFlush(entity);
@@ -112,8 +107,8 @@ public class BackupTelegramSettingsService {
     private TelegramBackupSettingsSnapshot fallbackSnapshot() {
         return new TelegramBackupSettingsSnapshot(
             fallbackEnabled,
-            fallbackBotToken,
-            fallbackChatId,
+            null,
+            null,
             fallbackIntervalHours,
             null,
             null,

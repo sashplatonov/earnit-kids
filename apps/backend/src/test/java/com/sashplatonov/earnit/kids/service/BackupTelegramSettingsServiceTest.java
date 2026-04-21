@@ -27,7 +27,7 @@ class BackupTelegramSettingsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new BackupTelegramSettingsService(repository, false, "fallback-token", "fallback-chat", 24);
+        service = new BackupTelegramSettingsService(repository, false, 24);
     }
 
     @Test
@@ -37,10 +37,10 @@ class BackupTelegramSettingsServiceTest {
         BackupTelegramSettingsResponse response = service.getSettings();
 
         assertThat(response.enabled()).isFalse();
-        assertThat(response.chatId()).isEqualTo("fallback-chat");
+        assertThat(response.chatId()).isNull();
         assertThat(response.intervalHours()).isEqualTo(24);
-        assertThat(response.hasBotToken()).isTrue();
-        assertThat(response.configured()).isTrue();
+        assertThat(response.hasBotToken()).isFalse();
+        assertThat(response.configured()).isFalse();
     }
 
     @Test
