@@ -3976,6 +3976,18 @@ dialog.modal[open]::backdrop {
     display: block;
 }
 
+/* On small screens open the child menu upwards and allow scrolling */
+@media (max-width: 640px) {
+    .child-menu-dropdown {
+        top: auto;
+        bottom: 100%;
+        margin-top: 0;
+        margin-bottom: 10px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+}
+
 .child-menu-item {
     padding: 12px 18px;
     display: flex;
