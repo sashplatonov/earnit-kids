@@ -14,8 +14,8 @@
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
     import { showToast } from '$lib/stores/toasts';
+    import { page } from '$app/stores';
 
-    let selectedGroup = '';
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
 
@@ -30,8 +30,13 @@
     $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
     $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
     $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
+    
+    // Read selected group from query parameter
+    $: selectedGroup = ($page.url.searchParams.get('group') ?? '');
     $: if (selectedGroup && !groups.includes(selectedGroup)) {
-        selectedGroup = '';
+        const url = new URL($page.url);
+        url.searchParams.delete('group');
+        history.replaceState(null, '', url);
     }
 
     $: visibleItems = selectedGroup
@@ -153,12 +158,20 @@
     {#if groups.length > 1}
     <nav class="group-nav" id="shop-group-nav">
         <div class="group-nav__scroll">
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => {
+                const url = new URL($page.url);
+                url.searchParams.delete('group');
+                history.pushState(null, '', url);
+            }}>
                 Все
             </button>
             {#each groups as group (group)}
             <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
-                on:click={() => selectedGroup = group}>{group}</button>
+                on:click={() => {
+                    const url = new URL($page.url);
+                    url.searchParams.set('group', group);
+                    history.pushState(null, '', url);
+                }}>{group}</button>
             {/each}
         </div>
     </nav>
