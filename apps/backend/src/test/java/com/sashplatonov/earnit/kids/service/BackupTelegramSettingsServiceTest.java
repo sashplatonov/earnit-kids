@@ -3,8 +3,11 @@ package com.sashplatonov.earnit.kids.service;
 import com.sashplatonov.earnit.kids.domain.model.BackupTelegramSettingsEntity;
 import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.repository.BackupTelegramSettingsRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +30,13 @@ class BackupTelegramSettingsServiceTest {
 
     @BeforeEach
     void setUp() {
+        RequestLocaleHolder.set("en");
         service = new BackupTelegramSettingsService(repository, false, 24);
+    }
+
+    @AfterEach
+    void tearDown() {
+        RequestLocaleHolder.clear();
     }
 
     @Test
@@ -80,6 +89,6 @@ class BackupTelegramSettingsServiceTest {
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<BackupTelegramSettingsResponse>) result).message())
-            .isEqualTo("Сохраните Telegram bot token");
+            .isEqualTo(BackendMessages.message("backup.botTokenRequired"));
     }
 }

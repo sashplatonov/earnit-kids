@@ -32,8 +32,8 @@ test('parent can register, child can complete task, and reward purchase is appro
 
     await loginChildByMagicLink(page, childLink, taskTitle);
     await expectHeaderBalance(page, 0);
-    await page.getByRole('button', { name: 'Выполнил!' }).click();
-    await expect(page.getByText('Заявка отправлена')).toBeVisible();
+    await page.locator('#tasks-section [data-task-action="request"]').first().click();
+    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
 
     await logout(page);
     await loginParent(page, email, DEFAULT_PARENT_PASSWORD);
@@ -41,16 +41,16 @@ test('parent can register, child can complete task, and reward purchase is appro
 
     await loginChildByMagicLink(page, childLink, taskTitle);
     await expectHeaderBalance(page, 50);
-    await page.getByRole('link', { name: 'Награды' }).click();
+    await page.getByRole('link', { name: /Rewards|Награды/i }).click();
     await expect(page.getByRole('heading', { name: rewardTitle })).toBeVisible();
-    await page.getByRole('button', { name: 'Запросить' }).click();
-    await expect(page.getByText('Заявка на покупку отправлена!')).toBeVisible();
+    await page.locator('#shop-section [data-shop-action="request"]').first().click();
+    await expect(page.getByText(/Purchase request sent|Заявка на покупку отправлена/i)).toBeVisible();
 
     await logout(page);
     await loginParent(page, email, DEFAULT_PARENT_PASSWORD);
     await approveFirstRequest(page);
 
     await loginChildByMagicLink(page, childLink);
-    await page.getByRole('link', { name: 'Награды' }).click();
+    await page.getByRole('link', { name: /Rewards|Награды/i }).click();
     await expectHeaderBalance(page, 0);
 });

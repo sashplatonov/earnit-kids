@@ -1,4 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
+import { DEFAULT_LOCALE } from '$lib/i18n';
 import { loadAppConfig } from '$lib/server/config';
 
 const BODYLESS_METHODS = new Set(['GET', 'HEAD']);
@@ -45,8 +46,11 @@ export async function proxyToBackend(event: RequestEvent): Promise<Response> {
     const config = event.locals.appConfig ?? loadAppConfig();
     const targetUrl = new URL(`${event.url.pathname}${event.url.search}`, config.backendOrigin);
     const proxiedHeaders = cloneHeaders(event.request.headers, EXCLUDED_REQUEST_HEADERS);
+    const locale = event.locals.locale ?? DEFAULT_LOCALE;
 
     applyPublicRequestContext(proxiedHeaders, config.publicOrigin);
+    proxiedHeaders.set('accept-language', locale);
+    proxiedHeaders.set('x-app-locale', locale);
 
     const requestInit: RequestInit & { duplex?: 'half' } = {
         method: event.request.method,

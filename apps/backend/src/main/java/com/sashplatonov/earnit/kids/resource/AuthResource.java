@@ -16,6 +16,7 @@ import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.dto.response.AuthResponse;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.AuthService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -196,7 +197,7 @@ public class AuthResource {
         AuthContext auth = getAuth(ctx);
         if (auth == null || !auth.isAdmin()) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized("Unauthorized"))
+                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
                 .build();
         }
 

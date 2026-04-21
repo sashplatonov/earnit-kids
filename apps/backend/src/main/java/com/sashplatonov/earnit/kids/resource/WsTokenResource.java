@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.config.JwtService;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -33,7 +34,7 @@ public class WsTokenResource {
         Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
         if (!(prop instanceof AuthContext auth)) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized("Unauthorized"))
+                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
                 .build();
         }
 

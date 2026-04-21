@@ -1,7 +1,15 @@
 <script lang="ts">
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import { switchChild } from '$lib/services/bootstrap';
     import { modalStore } from '$lib/stores/modal';
+
+    const i18n = useI18n();
+
+    function tApp(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`app.${key}` as MessageKey, variables);
+    }
 
     $: children = $appStore.children;
     $: currentChildId = $appStore.currentChildId;
@@ -37,10 +45,10 @@
     type="button"
     class="btn btn--primary btn--small"
     id="child-switcher-add-child"
-    aria-label="Добавить ребенка"
+    aria-label={tApp('childSwitcher.addChildAria')}
     on:click={openAddChild}
 >
-    + Ребенок
+    {tApp('childSwitcher.addChildButton')}
 </button>
 {:else}
 <div class="nav__child-switcher child-menu" class:active={open}>
@@ -52,12 +60,12 @@
         on:click|stopPropagation={toggle}
     >
         <span class="child-menu-btn__icon"><span class="gamified-icon icon-child" aria-hidden="true"></span></span>
-        <span class="child-menu-btn__name">{currentChild?.nickname ?? 'Выберите ребенка'}</span>
+        <span class="child-menu-btn__name">{currentChild?.nickname ?? tApp('childSwitcher.selectChild')}</span>
         <span class="child-menu-btn__arrow" aria-hidden="true">▼</span>
     </button>
 
     {#if open}
-    <ul class="child-menu-dropdown" role="listbox" aria-label="Выбор ребенка">
+    <ul class="child-menu-dropdown" role="listbox" aria-label={tApp('childSwitcher.listAria')}>
         {#each children as child (child.id)}
         <li
             class="child-menu-item"
@@ -70,12 +78,13 @@
         >
             <span class="child-menu-item__name">{child.nickname}</span>
             <span class="child-menu-item__balance">
-                {child.balance}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>
+                {$i18n.formatNumber(child.balance ?? 0)}<span class="gamified-icon icon-coin-stack" aria-hidden="true"></span>
             </span>
         </li>
         {/each}
         <li class="child-menu-divider" role="presentation"></li>
         <li
+            id="child-menu-add-child"
             class="child-menu-item add-child-item"
             role="option"
             aria-selected="false"
@@ -83,7 +92,7 @@
             on:click|stopPropagation={openAddChild}
             on:keydown={(event) => (event.key === 'Enter' || event.key === ' ') && openAddChild()}
         >
-            <span class="child-menu-item__name">Добавить ребенка</span>
+            <span class="child-menu-item__name">{tApp('childSwitcher.addChildOption')}</span>
             <span class="child-menu-item__balance">+</span>
         </li>
     </ul>

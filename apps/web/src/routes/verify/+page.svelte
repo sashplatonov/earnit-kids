@@ -1,11 +1,19 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { useI18n } from '$lib/i18n/context';
 
     type MessageKind = 'loading' | 'error' | 'success';
 
-    let message = 'Проверка ссылки...';
+    const i18n = useI18n();
+
+    let message = '';
     let messageKind: MessageKind = 'loading';
     let showLoginButton = false;
+
+    $: alternates = $i18n.alternates('/verify');
+    $: if (!message && messageKind === 'loading') {
+        message = $i18n.t('auth.verify.verifying');
+    }
 
     async function verifyEmail(token: string, email: string) {
         try {
@@ -19,16 +27,16 @@
             const success = body.success === true || response.ok;
 
             if (success) {
-                message = 'Email успешно подтвержден!';
+                message = $i18n.t('auth.verify.success');
                 messageKind = 'success';
                 showLoginButton = true;
                 return;
             }
 
-            message = typeof body.error === 'string' ? body.error : 'Ошибка подтверждения';
+            message = typeof body.error === 'string' ? body.error : $i18n.t('auth.verify.fallbackError');
             messageKind = 'error';
         } catch {
-            message = 'Ошибка сервера';
+            message = $i18n.t('auth.verify.serverError');
             messageKind = 'error';
         }
     }
@@ -39,7 +47,7 @@
         const email = urlParams.get('email');
 
         if (!token || !email) {
-            message = 'Неверная ссылка подтверждения.';
+            message = $i18n.t('auth.verify.invalidLink');
             messageKind = 'error';
             return;
         }
@@ -49,9 +57,12 @@
 </script>
 
 <svelte:head>
-    <title>Подтверждение Email - EarnIt Kids</title>
-    <meta name="description" content="Подтверждение email для входа в EarnIt Kids." />
-    <link rel="canonical" href="/verify" />
+    <title>{$i18n.t('auth.verify.metaTitle')}</title>
+    <meta name="description" content={$i18n.t('auth.verify.metaDescription')} />
+    <link rel="canonical" href={$i18n.href('/verify')} />
+    <link rel="alternate" hreflang="en" href={alternates.en} />
+    <link rel="alternate" hreflang="ru" href={alternates.ru} />
+    <link rel="alternate" hreflang="x-default" href={alternates['x-default']} />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#fff3e0" />
 </svelte:head>
@@ -127,11 +138,11 @@
 
 <div class="verify-shell">
     <div class="verify-card">
-        <div class="logo">🪙 Coins Shop</div>
-        <h2>Подтверждение Email</h2>
+        <div class="logo">{$i18n.t('common.brand.name')}</div>
+        <h2>{$i18n.t('auth.verify.heading')}</h2>
         <div class="message {messageKind}" role={messageKind === 'error' ? 'alert' : 'status'}>{message}</div>
         {#if showLoginButton}
-            <a href="/login.html" class="btn-primary">Войти</a>
+            <a href={$i18n.href('/login')} class="btn-primary">{$i18n.t('auth.verify.loginCta')}</a>
         {/if}
     </div>
 </div>

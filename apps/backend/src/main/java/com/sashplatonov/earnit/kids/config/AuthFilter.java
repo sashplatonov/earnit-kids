@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import lombok.RequiredArgsConstructor;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 
 @Provider
 @RequiredArgsConstructor(onConstructor_ = @Inject)
@@ -40,7 +41,7 @@ public class AuthFilter implements ContainerRequestFilter {
             if (headerCsrf == null || expected == null || !headerCsrf.equals(expected)) {
                 requestContext.abortWith(
                     Response.status(Response.Status.FORBIDDEN)
-                        .entity(ErrorResponse.of("CSRF token missing or invalid"))
+                        .entity(ErrorResponse.of(BackendMessages.message("security.csrfInvalid")))
                         .build());
                 return;
             }

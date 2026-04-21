@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service;
 import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.domain.model.SuperAdminCredentialEntity;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.SuperAdminCredentialRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -39,16 +40,16 @@ public class SuperAdminCredentialsService {
 
     public OperationResult<Void> changePassword(String oldPassword, String newPassword) {
         if (configuredEmail().isEmpty()) {
-            return OperationResult.failure("Супер-админ не настроен");
+            return OperationResult.failure("SUPER_ADMIN_NOT_CONFIGURED", BackendMessages.message("super.notConfigured"));
         }
         if (!isValidPassword(newPassword)) {
-            return OperationResult.failure("Слабый пароль");
+            return OperationResult.failure("WEAK_PASSWORD", BackendMessages.message("auth.weakPassword"));
         }
         if (!verifyPassword(oldPassword)) {
-            return OperationResult.failure("Неверный текущий пароль");
+            return OperationResult.failure("INVALID_CURRENT_PASSWORD", BackendMessages.message("super.invalidCurrentPassword"));
         }
         if (oldPassword != null && oldPassword.equals(newPassword)) {
-            return OperationResult.failure("Новый пароль должен отличаться от старого");
+            return OperationResult.failure("PASSWORD_REUSE", BackendMessages.message("super.newPasswordMustDifferOld"));
         }
 
         superAdminCredentialRepository.upsertPasswordHash(configuredEmail().orElseThrow(), passwordHasher.hash(newPassword));

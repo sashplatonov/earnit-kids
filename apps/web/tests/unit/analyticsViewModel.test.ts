@@ -1,6 +1,39 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildAnalyticsViewModel } from '../../src/lib/components/app/sections/analyticsViewModel';
+import {
+    buildAnalyticsViewModel,
+    type AnalyticsViewModelI18n,
+} from '../../src/lib/components/app/sections/analyticsViewModel';
+import { analyticsMessages as ruAnalyticsMessages } from '../../src/lib/i18n/messages/ru/analytics';
+
+function interpolate(template: string, variables?: Record<string, string | number>): string {
+    if (!variables) {
+        return template;
+    }
+
+    return template.replace(/\{([\w-]+)\}/g, (match, key: string) => {
+        const value = variables[key];
+        return value === undefined ? match : String(value);
+    });
+}
+
+function createRussianAnalyticsI18n(): AnalyticsViewModelI18n {
+    const formatter = new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        timeZone: 'UTC',
+    });
+
+    return {
+        locale: 'ru',
+        formatShortDate(value: string) {
+            return formatter.format(new Date(`${value}T00:00:00Z`));
+        },
+        t(key, variables) {
+            return interpolate(ruAnalyticsMessages.model[key], variables);
+        },
+    };
+}
 
 describe('buildAnalyticsViewModel', () => {
     it('maps the backend analytics contract into the dashboard view model', () => {
@@ -17,6 +50,7 @@ describe('buildAnalyticsViewModel', () => {
         }, {
             currentBalance: 30,
             tasks: [{ name: 'Собрать рюкзак', groupName: 'Учеба', comment: 'Подготовить книги и тетради', coins: 40 }],
+            i18n: createRussianAnalyticsI18n(),
         });
 
         expect(view.earned).toBe(50);

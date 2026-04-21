@@ -1,7 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { historyMessages as russianHistoryMessages } from '../../src/lib/i18n/messages/ru/history';
 import type { Request, ShopItem, Task } from '../../src/lib/stores/app';
-import { buildRequestCatalog, resolveRequestCard } from '../../src/lib/components/app/sections/requestDetails';
+import { buildRequestCatalog, resolveRequestCard, type RequestDetailsI18n } from '../../src/lib/components/app/sections/requestDetails';
+
+function createRussianRequestDetailsI18n(): RequestDetailsI18n {
+    return {
+        t(key) {
+            return russianHistoryMessages.model[key];
+        },
+    };
+}
 
 describe('resolveRequestCard', () => {
     it('fills task request description and group from the task card', () => {
@@ -22,7 +31,7 @@ describe('resolveRequestCard', () => {
             moneyAmount: 0,
         } as Request;
 
-        const details = resolveRequestCard(request, buildRequestCatalog({ tasks: [task] }));
+        const details = resolveRequestCard(request, buildRequestCatalog({ tasks: [task] }), createRussianRequestDetailsI18n());
 
         expect(details.title).toBe('Уроки без напоминаний');
         expect(details.description).toBe('Собрать рюкзак и сделать домашнее задание');
@@ -56,7 +65,7 @@ describe('resolveRequestCard', () => {
             moneyAmount: 800,
         } as Request;
 
-        const details = resolveRequestCard(request, buildRequestCatalog({ shopItems: [reward] }));
+        const details = resolveRequestCard(request, buildRequestCatalog({ shopItems: [reward] }), createRussianRequestDetailsI18n());
 
         expect(details.title).toBe('Небольшая косметика');
         expect(details.description).toBe('Только после согласования с родителем');
@@ -89,7 +98,7 @@ describe('resolveRequestCard', () => {
             taskComment: 'Свое описание из заявки',
         } as Request;
 
-        const details = resolveRequestCard(request, buildRequestCatalog({ tasks: [task] }));
+        const details = resolveRequestCard(request, buildRequestCatalog({ tasks: [task] }), createRussianRequestDetailsI18n());
 
         expect(details.group).toBe('Особая группа');
         expect(details.description).toBe('Свое описание из заявки');
@@ -107,13 +116,22 @@ describe('resolveRequestCard', () => {
             moneyAmount: 120,
         } as Request;
 
-        const details = resolveRequestCard(request, buildRequestCatalog());
+        const details = resolveRequestCard(request, buildRequestCatalog(), createRussianRequestDetailsI18n());
 
         expect(details.title).toBe('Готовое название');
         expect(details.description).toBe('Готовое описание');
         expect(details.group).toBe('Готовая группа');
         expect(details.coins).toBe(9);
         expect(details.moneyAmount).toBe(120);
+    });
+
+    it('uses localized fallback labels when request data is sparse', () => {
+        const details = resolveRequestCard({ id: 5, requestType: 'shop_purchase' } as Request, buildRequestCatalog(), createRussianRequestDetailsI18n());
+
+        expect(details.title).toBe('Покупка');
+        expect(details.description).toBe('Без описания');
+        expect(details.group).toBe('Без группы');
+        expect(details.typeLabel).toBe('Товар');
     });
 });
 

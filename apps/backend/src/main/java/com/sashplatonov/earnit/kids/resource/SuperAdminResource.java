@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequ
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.BackupTelegramSettingsService;
 import com.sashplatonov.earnit.kids.service.DatabaseBackupService;
 import com.sashplatonov.earnit.kids.service.TelegramBackupService;
@@ -71,7 +72,7 @@ public class SuperAdminResource {
         Map<String, Object> payload = superAdminService.getFamilyDetails(familyId);
         if (payload == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of("Семья не найдена", "NOT_FOUND", 404))
+                .entity(ErrorResponse.of(BackendMessages.message("family.familyNotFound"), "NOT_FOUND", 404))
                 .build();
         }
         return Response.ok(payload).build();
@@ -90,14 +91,14 @@ public class SuperAdminResource {
 
         if (request == null || request.isBlocked() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                .entity(SimpleResponse.error("isBlocked is required"))
+                .entity(SimpleResponse.error(BackendMessages.message("errors.isBlockedRequired")))
                 .build();
         }
 
         boolean updated = superAdminService.setFamilyBlocked(familyId, request.isBlocked());
         if (!updated) {
             return Response.status(Response.Status.NOT_FOUND)
-                .entity(SimpleResponse.error("Семья не найдена"))
+                .entity(SimpleResponse.error(BackendMessages.message("family.familyNotFound")))
                 .build();
         }
         return Response.ok(SimpleResponse.ok()).build();
@@ -181,7 +182,7 @@ public class SuperAdminResource {
 
         boolean saved = superAdminService.saveBaseData(payload);
         if (!saved) {
-            return Response.serverError().entity(SimpleResponse.error("Не удалось сохранить каталог"))
+            return Response.serverError().entity(SimpleResponse.error(BackendMessages.message("super.catalogSaveFailed")))
                 .build();
         }
         return Response.ok(SimpleResponse.ok()).build();
@@ -312,7 +313,7 @@ public class SuperAdminResource {
 
         if (!telegramBackupService.isConfigured()) {
             return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                .entity(SimpleResponse.error("Telegram alerts are not configured"))
+                .entity(SimpleResponse.error(BackendMessages.message("super.telegramNotConfigured")))
                 .build();
         }
 
@@ -353,29 +354,29 @@ public class SuperAdminResource {
         }
 
         OperationResult.Failure<Void> failure = (OperationResult.Failure<Void>) result;
-        int status = resolveFailureStatus(failure.message());
+        int status = resolveFailureStatus(failure.errorCode());
         return Response.status(status)
             .entity(ErrorResponse.of(failure.message(), errorCode, status))
             .build();
     }
 
-    private int resolveFailureStatus(String message) {
-        if ("Семья не найдена".equals(message)) {
-            return Response.Status.NOT_FOUND.getStatusCode();
-        }
-        return Response.Status.BAD_REQUEST.getStatusCode();
+    private int resolveFailureStatus(String errorCode) {
+        return switch (errorCode) {
+            case "FAMILY_NOT_FOUND", "CHILD_NOT_FOUND" -> Response.Status.NOT_FOUND.getStatusCode();
+            default -> Response.Status.BAD_REQUEST.getStatusCode();
+        };
     }
 
     private Response requireSuperAdmin(ContainerRequestContext ctx) {
         AuthContext auth = auth(ctx);
         if (auth == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized("Unauthorized"))
+                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
                 .build();
         }
         if (!auth.isSuperAdmin()) {
             return Response.status(Response.Status.FORBIDDEN)
-                .entity(ErrorResponse.of("Forbidden", "FORBIDDEN", 403))
+                .entity(ErrorResponse.of(BackendMessages.message("errors.forbidden"), "FORBIDDEN", 403))
                 .build();
         }
         return null;

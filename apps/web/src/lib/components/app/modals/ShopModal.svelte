@@ -1,8 +1,16 @@
 <script lang="ts">
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { modalStore } from '$lib/stores/modal';
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { showToast } from '$lib/stores/toasts';
+
+    const i18n = useI18n();
+
+    function tShop(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`shop.${key}` as MessageKey, variables);
+    }
 
     $: isOpen = $modalStore.open === 'shop-modal';
     $: modalData = $modalStore.data;
@@ -35,7 +43,7 @@
     function close() { modalStore.close(); }
 
     async function save() {
-        if (!title.trim()) { showToast('Введите название', 'error'); return; }
+        if (!title.trim()) { showToast(tShop('modal.enterTitle'), 'error'); return; }
         const payload = {
             id: existingItem?.id,
             name: title.trim(),
@@ -58,16 +66,16 @@
             appStore.setState({ shopItems: [...$appStore.shopItems, newItem as typeof $appStore.shopItems[number]] });
         }
         void scheduleSave();
-        showToast(isEdit ? 'Товар сохранён' : 'Товар добавлен', 'success');
+        showToast(isEdit ? tShop('modal.saved') : tShop('modal.added'), 'success');
         close();
     }
 
     async function deleteItem() {
         if (!existingItem?.id) return;
-        if (!confirm('Удалить товар?')) return;
+        if (!confirm(tShop('modal.confirmDelete'))) return;
         appStore.setState({ shopItems: $appStore.shopItems.filter(i => i.id != existingItem!.id) });
         void scheduleSave();
-        showToast('Товар удалён', 'info');
+        showToast(tShop('modal.deleted'), 'info');
         close();
     }
 </script>
@@ -75,46 +83,46 @@
 {#if isOpen}
 <dialog class="modal" aria-modal="true" id="shop-modal" open>
     <div class="modal__content">
-        <h3 id="shop-modal-title">{isEdit ? 'Редактировать товар' : 'Добавить товар'}</h3>
+        <h3 id="shop-modal-title">{isEdit ? tShop('modal.titleEdit') : tShop('modal.titleAdd')}</h3>
 
         <div class="form-group">
-            <label for="shop-name">Название</label>
-            <input type="text" class="input" id="shop-name" placeholder="Час игры на планшете" bind:value={title} />
+            <label for="shop-name">{tShop('modal.nameLabel')}</label>
+            <input type="text" class="input" id="shop-name" placeholder={tShop('modal.namePlaceholder')} bind:value={title} />
         </div>
         <div class="form-group">
-            <label for="shop-group">Группа</label>
-            <input type="text" class="input" id="shop-group" placeholder="Напр: Развлечения, Мелочи..." bind:value={groupName} />
+            <label for="shop-group">{tShop('modal.groupLabel')}</label>
+            <input type="text" class="input" id="shop-group" placeholder={tShop('modal.groupPlaceholder')} bind:value={groupName} />
         </div>
         <div class="form-group">
-            <label for="shop-price">Цена (монеты)</label>
+            <label for="shop-price">{tShop('modal.priceLabel')}</label>
             <input type="number" inputmode="numeric" class="input" id="shop-price" min="0" bind:value={coins} />
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label for="shop-money-limit">Лимит в деньгах</label>
+                <label for="shop-money-limit">{tShop('modal.moneyLimitLabel')}</label>
                 <input type="number" inputmode="numeric" class="input" id="shop-money-limit"
-                    placeholder="Без лимита" min="0" bind:value={moneyLimit} />
+                    placeholder={tShop('modal.noLimitPlaceholder')} min="0" bind:value={moneyLimit} />
             </div>
             <div class="form-group">
-                <label for="shop-type">Тип</label>
+                <label for="shop-type">{tShop('modal.typeLabel')}</label>
                 <select class="input" id="shop-type" bind:value={itemType}>
-                    <option value="micro">Микро</option>
-                    <option value="small">Малая</option>
-                    <option value="large">Крупная (1/мес)</option>
+                    <option value="micro">{tShop('modal.typeMicro')}</option>
+                    <option value="small">{tShop('modal.typeSmall')}</option>
+                    <option value="large">{tShop('modal.typeLarge')}</option>
                 </select>
             </div>
         </div>
         <div class="form-group">
-            <label for="shop-comment">Комментарий</label>
+            <label for="shop-comment">{tShop('modal.commentLabel')}</label>
             <textarea class="input textarea" id="shop-comment" bind:value={comment}></textarea>
         </div>
 
         <div class="modal__actions">
-            <button class="btn btn--secondary" id="shop-cancel" on:click={close}>Отмена</button>
+            <button class="btn btn--secondary" id="shop-cancel" on:click={close}>{tShop('modal.cancel')}</button>
             {#if isEdit}
-            <button class="btn btn--danger" id="shop-delete" on:click={deleteItem}>Удалить</button>
+            <button class="btn btn--danger" id="shop-delete" on:click={deleteItem}>{tShop('modal.delete')}</button>
             {/if}
-            <button class="btn btn--primary" id="shop-save" on:click={save}>Сохранить</button>
+            <button class="btn btn--primary" id="shop-save" on:click={save}>{tShop('modal.save')}</button>
         </div>
     </div>
 </dialog>

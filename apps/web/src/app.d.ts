@@ -1,4 +1,5 @@
 import type { AppConfig } from '$lib/types/config';
+import type { I18nPayload, Locale } from '$lib/i18n';
 import type { SessionSnapshot } from '$lib/types/session';
 
 declare global {
@@ -7,11 +8,14 @@ declare global {
     namespace App {
         interface Locals {
             appConfig: AppConfig;
+            locale: Locale;
             session: SessionSnapshot;
         }
 
         interface PageData {
             appConfig: AppConfig;
+            i18n: I18nPayload;
+            locale: Locale;
             session: SessionSnapshot;
         }
     }

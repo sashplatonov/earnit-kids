@@ -1,3 +1,5 @@
+import { analyticsMessages as englishAnalyticsMessages } from '$lib/i18n/messages/en/analytics';
+
 export interface AnalyticsChartDatum {
     label: string;
     value: number;
@@ -50,6 +52,7 @@ interface AnalyticsSourceTask {
 interface AnalyticsViewModelOptions {
     currentBalance?: unknown;
     tasks?: AnalyticsSourceTask[] | null;
+    i18n?: AnalyticsViewModelI18n;
 }
 
 interface RecommendationTaskContext {
@@ -59,13 +62,35 @@ interface RecommendationTaskContext {
     coins: number | null;
 }
 
-const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+type AnalyticsModelMessageKey = keyof typeof englishAnalyticsMessages.model;
+
+export interface AnalyticsViewModelI18n {
+    locale: string;
+    formatShortDate(value: string): string;
+    t(key: AnalyticsModelMessageKey, variables?: Record<string, string | number>): string;
+}
+
+const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: '2-digit',
     timeZone: 'UTC',
 });
 
+const DEFAULT_ANALYTICS_MODEL_MESSAGES = englishAnalyticsMessages.model;
+
+const DEFAULT_ANALYTICS_I18N: AnalyticsViewModelI18n = {
+    locale: 'en',
+    formatShortDate(value: string) {
+        const parsed = parseIsoDate(value);
+        return parsed == null ? value : SHORT_DATE_FORMATTER.format(parsed);
+    },
+    t(key, variables) {
+        return interpolate(DEFAULT_ANALYTICS_MODEL_MESSAGES[key], variables);
+    },
+};
+
 export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsViewModelOptions = {}): AnalyticsViewModel {
+    const i18n = options.i18n ?? DEFAULT_ANALYTICS_I18N;
     const root = asRecord(payload);
     const summary = asRecord(root?.summary);
 
@@ -73,7 +98,7 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
     const taskCount = readChartSeries(root?.taskCount, root?.topTasks, 'count');
     const itemCoins = readChartSeries(root?.itemCoins, root?.topItems, 'coins');
     const itemCount = readChartSeries(root?.itemCount, root?.topItems, 'count');
-    const trend = readTrendSeries(root?.trend, root?.trends);
+    const trend = readTrendSeries(root?.trend, root?.trends, i18n);
 
     const spent = readNumber(summary?.totalSpent) ?? readNumber(root?.spent) ?? sumTrend(trend, 'spent');
     const currentBalance = readNumber(options.currentBalance) ?? readNumber(root?.balance);
@@ -83,7 +108,7 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
         ? currentBalance + spent
         : readNumber(summary?.totalEarned) ?? readNumber(root?.earned) ?? net + spent;
 
-    const weekSummary = buildWeekSummary(trend, earned);
+    const weekSummary = buildWeekSummary(trend, earned, i18n);
     const streakValue = buildStreak(trend);
 
     return {
@@ -94,14 +119,27 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
         weekBar: weekSummary.weekBar,
         weekNote: weekSummary.weekNote,
         streakValue,
-        streakNote: streakValue > 0 ? `${streakValue} ${formatDayWord(streakValue)} подряд!` : 'Начните сегодня!',
+        streakNote: streakValue > 0
+            ? i18n.t('streakDaysTemplate', { count: streakValue, dayWord: formatDayWord(streakValue, i18n) })
+            : i18n.t('streakToday'),
         taskCoins,
         taskCount,
         itemCoins,
         itemCount,
         trend: trend.map(({ label, earned, spent }) => ({ label, earned, spent })),
-        recommendations: readRecommendations(root?.recommendations, options.tasks),
+        recommendations: readRecommendations(root?.recommendations, options.tasks, i18n),
     };
+}
+
+function interpolate(template: string, variables?: Record<string, string | number>): string {
+    if (!variables) {
+        return template;
+    }
+
+    return template.replace(/\{([\w-]+)\}/g, (match, key: string) => {
+        const value = variables[key];
+        return value === undefined ? match : String(value);
+    });
 }
 
 function asRecord(value: unknown): JsonRecord | null {
@@ -152,7 +190,7 @@ function readChartSeries(formattedSource: unknown, statsSource: unknown, valueKe
         }
 
         return [{
-            label: readText(record.name) ?? 'Без названия',
+            label: readText(record.name) ?? DEFAULT_ANALYTICS_I18N.t('untitled'),
             value,
         }];
     });
@@ -179,7 +217,7 @@ function readSimpleChartSeries(source: unknown): AnalyticsChartDatum[] {
     });
 }
 
-function readTrendSeries(formattedSource: unknown, statsSource: unknown): TrendDatumInternal[] {
+function readTrendSeries(formattedSource: unknown, statsSource: unknown, i18n: AnalyticsViewModelI18n): TrendDatumInternal[] {
     const formatted = readSimpleTrendSeries(formattedSource);
     if (formatted.length > 0) {
         return formatted;
@@ -198,7 +236,7 @@ function readTrendSeries(formattedSource: unknown, statsSource: unknown): TrendD
 
         return [{
             isoDate,
-            label: formatShortDate(isoDate),
+            label: i18n.formatShortDate(isoDate),
             earned: readNumber(record?.earned) ?? 0,
             spent: readNumber(record?.spent) ?? 0,
         }];
@@ -228,12 +266,16 @@ function readSimpleTrendSeries(source: unknown): TrendDatumInternal[] {
     });
 }
 
-function readRecommendations(source: unknown, tasksSource: AnalyticsSourceTask[] | null | undefined): AnalyticsRecommendationCard[] {
+function readRecommendations(
+    source: unknown,
+    tasksSource: AnalyticsSourceTask[] | null | undefined,
+    i18n: AnalyticsViewModelI18n,
+): AnalyticsRecommendationCard[] {
     if (!Array.isArray(source)) {
         return [];
     }
 
-    const tasks = normalizeTaskContext(tasksSource);
+    const tasks = normalizeTaskContext(tasksSource, i18n);
 
     return source.flatMap((item, index) => {
             const record = asRecord(item);
@@ -249,10 +291,10 @@ function readRecommendations(source: unknown, tasksSource: AnalyticsSourceTask[]
             if (directText != null) {
                 return [{
                     id: buildRecommendationId(index, directText, directCoins, directReason),
-                    icon: readText(record.icon) ?? chooseRecommendationIcon(directReason),
+                    icon: readText(record.icon) ?? chooseRecommendationIcon(directReason, i18n),
                     title: directText,
                     description: directDescription ?? directText,
-                    groupName: readText(record.groupName) ?? 'Идея для роста',
+                    groupName: readText(record.groupName) ?? i18n.t('growthIdea'),
                     coins: directCoins,
                     reason: directReason,
                 }];
@@ -272,17 +314,20 @@ function readRecommendations(source: unknown, tasksSource: AnalyticsSourceTask[]
 
             return [{
                 id: buildRecommendationId(index, title, readNumber(record.coins) ?? matchedTask?.coins ?? null, reason),
-                icon: chooseRecommendationIcon(reason),
+                icon: chooseRecommendationIcon(reason, i18n),
                 title,
-                description: matchedTask?.comment ?? readText(record.comment) ?? reason ?? 'Повторите этот шаг, чтобы сохранить темп.',
-                groupName: matchedTask?.groupName ?? readText(record.groupName) ?? 'Без группы',
+                description: matchedTask?.comment ?? readText(record.comment) ?? reason ?? i18n.t('repeatStepDescription'),
+                groupName: matchedTask?.groupName ?? readText(record.groupName) ?? i18n.t('noGroup'),
                 coins: readNumber(record.coins) ?? matchedTask?.coins ?? null,
                 reason,
             }];
         });
 }
 
-function normalizeTaskContext(tasksSource: AnalyticsSourceTask[] | null | undefined): RecommendationTaskContext[] {
+function normalizeTaskContext(
+    tasksSource: AnalyticsSourceTask[] | null | undefined,
+    i18n: AnalyticsViewModelI18n,
+): RecommendationTaskContext[] {
     if (!Array.isArray(tasksSource)) {
         return [];
     }
@@ -295,7 +340,7 @@ function normalizeTaskContext(tasksSource: AnalyticsSourceTask[] | null | undefi
 
         return [{
             title,
-            groupName: readText(task.groupName) ?? 'Без группы',
+            groupName: readText(task.groupName) ?? i18n.t('noGroup'),
             comment: readText(task.comment),
             coins: readNumber(task.coins),
         }];
@@ -323,23 +368,23 @@ function sumTrend(trend: TrendDatumInternal[], key: 'earned' | 'spent'): number 
     return trend.reduce((total, item) => total + item[key], 0);
 }
 
-function chooseRecommendationIcon(reason: string | null): string {
+function chooseRecommendationIcon(reason: string | null, i18n: AnalyticsViewModelI18n): string {
     const normalized = reason?.toLowerCase() ?? '';
-    if (normalized.includes('давно')) {
+    if (normalized.includes(i18n.t('reasonStaleKeyword').toLowerCase())) {
         return '🎯';
     }
-    if (normalized.includes('повтор')) {
+    if (normalized.includes(i18n.t('reasonRepeatKeyword').toLowerCase())) {
         return '🔁';
     }
     return '✨';
 }
 
-function buildWeekSummary(trend: TrendDatumInternal[], earned: number) {
+function buildWeekSummary(trend: TrendDatumInternal[], earned: number, i18n: AnalyticsViewModelI18n) {
     if (trend.length === 0) {
         return {
             weekEarned: 0,
             weekBar: 0,
-            weekNote: 'Нет активности за 7 дней',
+            weekNote: i18n.t('noActivityWeek'),
         };
     }
 
@@ -349,7 +394,7 @@ function buildWeekSummary(trend: TrendDatumInternal[], earned: number) {
         return {
             weekEarned: earned,
             weekBar: earned > 0 ? 100 : 0,
-            weekNote: earned > 0 ? `За выбранный период: ${earned} мон.` : 'Нет активности за 7 дней',
+            weekNote: earned > 0 ? i18n.t('selectedPeriodSummary', { earned }) : i18n.t('noActivityWeek'),
         };
     }
 
@@ -367,8 +412,8 @@ function buildWeekSummary(trend: TrendDatumInternal[], earned: number) {
         weekEarned,
         weekBar: baseTotal > 0 ? Math.min(100, Math.round((weekEarned / baseTotal) * 100)) : 0,
         weekNote: baseTotal > 0
-            ? `За 7 дней из ${baseTotal} мон. в периоде`
-            : 'Нет активности за 7 дней',
+            ? i18n.t('last7DaysSummary', { baseTotal })
+            : i18n.t('noActivityWeek'),
     };
 }
 
@@ -413,19 +458,17 @@ function formatIsoDate(value: Date): string {
     return value.toISOString().slice(0, 10);
 }
 
-function formatShortDate(value: string): string {
-    const parsed = parseIsoDate(value);
-    return parsed == null ? value : SHORT_DATE_FORMATTER.format(parsed);
-}
+function formatDayWord(value: number, i18n: AnalyticsViewModelI18n): string {
+    const category = new Intl.PluralRules(i18n.locale).select(value);
 
-function formatDayWord(value: number): string {
-    const mod10 = value % 10;
-    const mod100 = value % 100;
-    if (mod10 === 1 && mod100 !== 11) {
-        return 'день';
+    switch (category) {
+        case 'one':
+            return i18n.t('dayOne');
+        case 'few':
+            return i18n.t('dayFew');
+        case 'many':
+            return i18n.t('dayMany');
+        default:
+            return i18n.t('dayOther');
     }
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-        return 'дня';
-    }
-    return 'дней';
 }

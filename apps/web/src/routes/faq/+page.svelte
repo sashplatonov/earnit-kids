@@ -1,25 +1,32 @@
 <script lang="ts">
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
+    import { useI18n } from '$lib/i18n/context';
 
-    const faqItems = [
-        { q: 'How does it work?', a: 'Parents assign a task, the child completes it and earns coins. Coins can then be exchanged for rewards.' },
-        { q: 'Do we need to install an app?', a: 'No, it works directly in the browser on phone and computer.' },
-        { q: 'Can coin spending be limited?', a: 'Yes, parents set limits and decide which rewards are available and how often they can be claimed.' },
+    const i18n = useI18n();
+
+    $: alternates = $i18n.alternates('/faq');
+    $: faqItems = [
+        { q: $i18n.t('public.faq.q1Question'), a: $i18n.t('public.faq.q1Answer') },
+        { q: $i18n.t('public.faq.q2Question'), a: $i18n.t('public.faq.q2Answer') },
+        { q: $i18n.t('public.faq.q3Question'), a: $i18n.t('public.faq.q3Answer') },
     ];
 </script>
 
 <svelte:head>
-    <title>EarnIt Kids - Frequently Asked Questions</title>
-    <meta name="description" content="Short answers for parents and kids about tasks, coins, and rewards in EarnIt Kids." />
-    <link rel="canonical" href="/faq" />
+    <title>{$i18n.t('public.faq.metaTitle')}</title>
+    <meta name="description" content={$i18n.t('public.faq.metaDescription')} />
+    <link rel="canonical" href={$i18n.href('/faq')} />
+    <link rel="alternate" hreflang="en" href={alternates.en} />
+    <link rel="alternate" hreflang="ru" href={alternates.ru} />
+    <link rel="alternate" hreflang="x-default" href={alternates['x-default']} />
 </svelte:head>
 
 <div class="public-shell">
     <PublicTopNav />
-    <main class="public-inner" aria-label="Частые вопросы">
+    <main class="public-inner" aria-label={$i18n.t('public.faq.mainAria')}>
         <section class="faq-shell" aria-labelledby="faq-title">
-            <h1 id="faq-title">Вопросы и ответы</h1>
-            <p class="value-card__hint">Собрали ответы на самые частые ситуации по задачам, заявкам и магазину.</p>
+            <h1 id="faq-title">{$i18n.t('public.faq.title')}</h1>
+            <p class="value-card__hint">{$i18n.t('public.faq.intro')}</p>
             <div class="faq-grid">
                 {#each faqItems as item (item.q)}
                     <article class="faq-card">
@@ -34,26 +41,26 @@
                 {/each}
             </div>
         </section>
-        <section class="value-grid" aria-label="Что нового">
+        <section class="value-grid" aria-label={$i18n.t('public.faq.updatesAria')}>
             <article class="value-card">
-                <h3>Ясные статусы заявок</h3>
-                <p>Статусы “ожидает”, “одобрено” и “отклонено” легко читаются по цвету и понятным подсказкам.</p>
+                <h3>{$i18n.t('public.faq.requestsStatusTitle')}</h3>
+                <p>{$i18n.t('public.faq.requestsStatusText')}</p>
             </article>
             <article class="value-card">
-                <h3>Заявки для родителей</h3>
-                <p>Заявки по всем детям видны сразу, а одобрение или отклонение происходит в одном разделе, без поиска по меню.</p>
+                <h3>{$i18n.t('public.faq.parentRequestsTitle')}</h3>
+                <p>{$i18n.t('public.faq.parentRequestsText')}</p>
             </article>
             <article class="value-card">
-                <h3>Мобильная навигация</h3>
-                <p>4 вкладки в нижнем меню и крупные кнопки помогают детям не промахиваться и быстрее находить нужный раздел.</p>
+                <h3>{$i18n.t('public.faq.mobileNavTitle')}</h3>
+                <p>{$i18n.t('public.faq.mobileNavText')}</p>
             </article>
         </section>
         <section class="public-cta">
             <div>
-                <h3>Нужна поддержка?</h3>
-                <p>Пишите support@earnit-kids.com, когда нужна помощь с настройкой семьи.</p>
+                <h3>{$i18n.t('public.faq.supportTitle')}</h3>
+                <p>{$i18n.t('public.faq.supportText')}</p>
             </div>
-            <a class="btn btn--ghost" href="/login.html">Войти и спросить</a>
+            <a class="btn btn--ghost" href={$i18n.href('/login')}>{$i18n.t('public.faq.supportCta')}</a>
         </section>
     </main>
 </div>

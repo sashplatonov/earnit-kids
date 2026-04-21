@@ -1,52 +1,60 @@
 <script lang="ts">
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
+    import { useI18n } from '$lib/i18n/context';
+
+    const i18n = useI18n();
+
+    $: alternates = $i18n.alternates('/about');
 </script>
 
 <svelte:head>
-    <title>EarnIt Kids - About</title>
-    <meta name="description" content="Learn how EarnIt Kids helps families turn routine into a clear and positive experience." />
-    <link rel="canonical" href="/about" />
+    <title>{$i18n.t('public.about.metaTitle')}</title>
+    <meta name="description" content={$i18n.t('public.about.metaDescription')} />
+    <link rel="canonical" href={$i18n.href('/about')} />
+    <link rel="alternate" hreflang="en" href={alternates.en} />
+    <link rel="alternate" hreflang="ru" href={alternates.ru} />
+    <link rel="alternate" hreflang="x-default" href={alternates['x-default']} />
 </svelte:head>
 
 <div class="public-shell">
     <PublicTopNav />
-    <main class="public-inner" aria-label="О проекте EarnIt Kids">
+    <main class="public-inner" aria-label={$i18n.t('public.about.mainAria')}>
         <section class="landing-hero" aria-labelledby="about-hero-title">
             <div>
-                <p class="public-panel__badge">EarnIt Kids</p>
-                <h1 id="about-hero-title">Мы делаем повседневные задачи позитивным маршрутом</h1>
-                <p>Создаем систему, где ребенок видит список заданий с понятными действиями, а родитель управляет заявками и правилами семьи.</p>
+                <p class="public-panel__badge">{$i18n.t('public.about.heroBadge')}</p>
+                <h1 id="about-hero-title">{$i18n.t('public.about.heroTitle')}</h1>
+                <p>{$i18n.t('public.about.heroText')}</p>
                 <div class="hero-actions">
-                    <a class="btn btn--primary" href="/login.html">Войти</a>
-                    <a class="btn btn--ghost" href="/faq">FAQ</a>
+                    <a class="btn btn--primary" href={$i18n.href('/login')}>{$i18n.t('common.actions.login')}</a>
+                    <a class="btn btn--ghost" href={$i18n.href('/faq')}>{$i18n.t('public.about.faqLink')}</a>
                 </div>
             </div>
             <div>
-                <img src="/img/about-family.svg" alt="Семья работает над задачами вместе" loading="lazy" />
+                <img src="/img/about-family.svg" alt={$i18n.t('public.about.heroAlt')} loading="lazy" />
             </div>
         </section>
 
         <section class="value-grid" aria-label="Основные принципы">
             <article class="value-card">
-                <h3>Для ребенка</h3>
-                <p>Ребенок получает прозрачный список заданий, понятные статусы заявок и заметные акценты на наградах.</p>
+                <h3>{$i18n.t('public.about.childTitle')}</h3>
+                <p>{$i18n.t('public.about.childText')}</p>
             </article>
             <article class="value-card">
-                <h3>Контроль родителей</h3>
-                <p>Раздел заявок, мастер задач и лимиты помогают спокойно управлять семейными правилами без споров.</p>
+                <h3>{$i18n.t('public.about.parentTitle')}</h3>
+                <p>{$i18n.t('public.about.parentText')}</p>
             </article>
             <article class="value-card">
-                <h3>Семейный контроль</h3>
-                <p>Родитель видит заявки, настраивает задания и награды, а ребенок сразу понимает, что делать дальше.</p>
+                <h3>{$i18n.t('public.about.familyTitle')}</h3>
+                <p>{$i18n.t('public.about.familyText')}</p>
             </article>
         </section>
 
         <section class="public-cta">
             <div>
-                <h3>Готовы перевести задачи в игру?</h3>
-                <p>Ребенок и родитель получают ясный маршрут: задания, раздел заявок и прозрачные статусы.</p>
+                <h3>{$i18n.t('public.about.ctaTitle')}</h3>
+                <p>{$i18n.t('public.about.ctaText')}</p>
             </div>
-            <a class="btn btn--primary" href="/login.html">Попробовать</a>
+            <a class="btn btn--primary" href={$i18n.href('/login')}>{$i18n.t('common.actions.tryIt')}</a>
         </section>
     </main>
 </div>

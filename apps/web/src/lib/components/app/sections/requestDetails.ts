@@ -1,3 +1,4 @@
+import { historyMessages as englishHistoryMessages } from '$lib/i18n/messages/en/history';
 import type { Request, ShopItem, Task } from '$lib/stores/app';
 
 export interface RequestCatalog {
@@ -24,6 +25,18 @@ export interface RequestCardDetails {
     iconClass: 'icon-coin-stack' | 'icon-shop';
     amountPrefix: '+' | '−';
 }
+
+type ActivityModelMessageKey = keyof typeof englishHistoryMessages.model;
+
+export interface RequestDetailsI18n {
+    t(key: ActivityModelMessageKey): string;
+}
+
+const DEFAULT_REQUEST_DETAILS_I18N: RequestDetailsI18n = {
+    t(key) {
+        return englishHistoryMessages.model[key];
+    },
+};
 
 function asText(value: unknown): string {
     return typeof value === 'string' ? value.trim() : '';
@@ -80,7 +93,11 @@ function findItem(request: Request, lookups: RequestCatalogLookups): ShopItem | 
     return itemId ? lookups.itemLookup.get(itemId) : undefined;
 }
 
-export function resolveRequestCard(request: Request, lookups: RequestCatalogLookups): RequestCardDetails {
+export function resolveRequestCard(
+    request: Request,
+    lookups: RequestCatalogLookups,
+    i18n: RequestDetailsI18n = DEFAULT_REQUEST_DETAILS_I18N,
+): RequestCardDetails {
     const purchase = isPurchaseRequest(request);
     const task = findTask(request, lookups);
     const item = findItem(request, lookups);
@@ -92,7 +109,7 @@ export function resolveRequestCard(request: Request, lookups: RequestCatalogLook
             request['taskName'],
             purchase ? item?.name : task?.name,
             purchase ? task?.name : item?.name,
-            purchase ? 'Покупка' : 'Задание'
+            purchase ? i18n.t('requestPurchaseFallbackTitle') : i18n.t('requestTaskFallbackTitle')
         ),
         description: firstNonBlank(
             request['description'],
@@ -102,7 +119,7 @@ export function resolveRequestCard(request: Request, lookups: RequestCatalogLook
             request['comment'],
             purchase ? item?.comment : task?.comment,
             purchase ? task?.comment : item?.comment,
-            'Без описания'
+            i18n.t('noDescription')
         ),
         group: firstNonBlank(
             request.groupName,
@@ -111,12 +128,12 @@ export function resolveRequestCard(request: Request, lookups: RequestCatalogLook
             request['group'],
             purchase ? item?.groupName : task?.groupName,
             purchase ? task?.groupName : item?.groupName,
-            'Без группы'
+            i18n.t('noGroup')
         ),
         coins: toNumber(request['coins'] ?? request.amount ?? (purchase ? item?.price : task?.coins) ?? 0),
         moneyAmount: toNumber(request['moneyAmount'] ?? (purchase ? item?.moneyLimit : task?.moneyLimit) ?? 0),
         isPurchase: purchase,
-        typeLabel: purchase ? 'Товар' : 'Задание',
+        typeLabel: purchase ? i18n.t('requestTypePurchase') : i18n.t('requestTypeTask'),
         typeChipClass: purchase ? 'request-chip--type-purchase' : 'request-chip--type-task',
         iconClass: purchase ? 'icon-shop' : 'icon-coin-stack',
         amountPrefix: purchase ? '−' : '+',

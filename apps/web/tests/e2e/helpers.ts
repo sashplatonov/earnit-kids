@@ -59,9 +59,9 @@ export async function addChild(page: Page, childName: string) {
         await firstChildButton.click();
     } else if (await childMenuButton.isVisible().catch(() => false)) {
         await childMenuButton.click();
-        await page.getByRole('option', { name: 'Добавить ребенка' }).click();
+        await page.locator('#child-menu-add-child').click();
     } else {
-        await page.getByRole('link', { name: /Достижения|Аналитика/ }).click();
+        await page.getByRole('link', { name: /Achievements|Analytics|Достижения|Аналитика/i }).click();
         await page.locator('#analytics-add-child').click();
     }
 
@@ -88,31 +88,31 @@ export async function selectChild(page: Page, childName: string) {
 }
 
 export async function createTask(page: Page, title: string, reward: number, comment: string) {
-    await page.getByRole('link', { name: 'Задания' }).click();
-    await page.getByRole('button', { name: '+ Добавить' }).click();
-    await page.getByRole('textbox', { name: 'Название' }).fill(title);
-    await page.getByRole('textbox', { name: 'Группа' }).fill('Дом');
-    await page.getByRole('spinbutton', { name: 'Монеты' }).fill(String(reward));
-    await page.getByRole('textbox', { name: 'Комментарий' }).fill(comment);
-    await page.getByRole('button', { name: 'Сохранить' }).click();
+    await page.getByRole('link', { name: /Tasks|Задания/i }).click();
+    await page.locator('#add-task-btn').click();
+    await page.locator('#task-name').fill(title);
+    await page.locator('#task-group').fill('Дом');
+    await page.locator('#task-coins').fill(String(reward));
+    await page.locator('#task-comment').fill(comment);
+    await page.locator('#task-save').click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }
 
 export async function createReward(page: Page, title: string, price: number, comment: string) {
-    await page.getByRole('link', { name: 'Награды' }).click();
-    await page.getByRole('button', { name: '+ Добавить' }).click();
-    await page.getByRole('textbox', { name: 'Название' }).fill(title);
-    await page.getByRole('textbox', { name: 'Группа' }).fill('Игры');
-    await page.getByRole('spinbutton', { name: 'Цена (монеты)' }).fill(String(price));
-    await page.getByRole('textbox', { name: 'Комментарий' }).fill(comment);
-    await page.getByRole('button', { name: 'Сохранить' }).click();
+    await page.getByRole('link', { name: /Rewards|Награды/i }).click();
+    await page.locator('#add-shop-btn').click();
+    await page.locator('#shop-name').fill(title);
+    await page.locator('#shop-group').fill('Игры');
+    await page.locator('#shop-price').fill(String(price));
+    await page.locator('#shop-comment').fill(comment);
+    await page.locator('#shop-save').click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }
 
 export async function openSettings(page: Page) {
-    await page.getByRole('button', { name: 'Дополнительные разделы' }).click();
-    await page.getByRole('menuitem', { name: 'Настройки' }).click();
-    await expect(page.locator('#settings-section h2')).toHaveText('Настройки');
+    await page.getByRole('button', { name: /Additional sections|Дополнительные разделы/i }).click();
+    await page.getByRole('menuitem', { name: /Settings|Настройки/i }).click();
+    await expect(page.locator('#settings-section')).toBeVisible();
 }
 
 export async function getChildMagicLink(page: Page) {
@@ -127,14 +127,14 @@ export async function loginChildByMagicLink(page: Page, childLink: string, taskT
     if (taskTitle) {
         const taskHeading = page.getByRole('heading', { name: taskTitle });
         if (!(await taskHeading.isVisible().catch(() => false))) {
-            const tasksLink = page.getByRole('link', { name: 'Задания' });
+            const tasksLink = page.getByRole('link', { name: /Tasks|Задания/i });
             if (await tasksLink.isVisible().catch(() => false)) {
                 await tasksLink.click();
             }
         }
         if (!(await taskHeading.isVisible().catch(() => false))) {
             await page.reload();
-            const tasksLink = page.getByRole('link', { name: 'Задания' });
+            const tasksLink = page.getByRole('link', { name: /Tasks|Задания/i });
             if (await tasksLink.isVisible().catch(() => false)) {
                 await tasksLink.click();
             }

@@ -21,7 +21,7 @@
         %sveltekit.head%
     </head>
     <body data-sveltekit-preload-data="hover">
-        <script>if (typeof window !== 'undefined' && location && location.pathname && location.pathname.startsWith('/super-admin')) { try{ document.body.classList.add('super-admin-page'); }catch(e){} }</script>
+        <script>if (typeof window !== 'undefined' && location && location.pathname) { try { const normalized = location.pathname.replace(/^\/(en|ru)(?=\/|$)/, ''); if (normalized.startsWith('/super-admin')) { document.body.classList.add('super-admin-page'); } } catch (error) {} }</script>
         <div style="display: contents">%sveltekit.body%</div>
     </body>
 </html>

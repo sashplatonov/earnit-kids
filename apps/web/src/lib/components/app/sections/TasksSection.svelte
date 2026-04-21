@@ -1,5 +1,7 @@
 <script lang="ts">
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
@@ -15,9 +17,15 @@
     } from '$lib/services/groupOrder';
     import { showToast } from '$lib/stores/toasts';
 
+    const i18n = useI18n();
+
     let selectedGroup = '';
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
+
+    function tTasks(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`tasks.${key}` as MessageKey, variables);
+    }
 
     $: tasks = $appStore.tasks;
     $: isAdmin = $appStore.isAdmin;
@@ -45,14 +53,21 @@
             return '';
         }
 
-        const periodLabels: Record<string, string> = {
-            day: 'день',
-            week: 'неделю',
-            month: 'месяц',
-            year: 'год',
+        const periodMap: Record<string, string> = {
+            day: 'frequencyDay',
+            week: 'frequencyWeek',
+            month: 'frequencyMonth',
+            year: 'frequencyYear',
         };
+        const numericLimit = Number(limit);
+        const pluralCategory = new Intl.PluralRules($i18n.locale).select(numericLimit);
+        const periodKey = periodMap[period];
 
-        return `${limit} раз(а) в ${periodLabels[period] ?? period}`;
+        if (!periodKey) {
+            return tTasks('frequencyFallback', { limit: $i18n.formatNumber(numericLimit) });
+        }
+
+        return tTasks(`${periodKey}.${pluralCategory}`, { limit: $i18n.formatNumber(numericLimit) });
     }
 
     async function handleEarn(taskId: unknown) {
@@ -63,7 +78,13 @@
             const res = await earnCoins(taskId, childId) as Record<string, unknown> | null;
             if (res) {
                 applyDataSnapshot(res);
-                showToast(`+${task.coins} монет — ${String(task.title ?? task.name)}`, 'success');
+                showToast(
+                    tTasks('toasts.awarded', {
+                        amount: $i18n.formatNumber(Number(task.coins ?? 0)),
+                        title: String(task.title ?? task.name),
+                    }),
+                    'success'
+                );
             }
         } else {
             const result = await requestCoins(taskId);
@@ -71,7 +92,7 @@
                 if (result.data && typeof result.data === 'object') {
                     applyDataSnapshot(result.data as Record<string, unknown>);
                 }
-                showToast('Заявка отправлена!', 'success');
+                showToast(tTasks('toasts.requestSent'), 'success');
                 return;
             }
 
@@ -89,7 +110,7 @@
 
     async function persistGroupOrder(nextOrder: string[]) {
         if (resolvedChildId == null) {
-            showToast('Сначала выберите ребенка', 'error');
+            showToast(tTasks('toasts.selectChildFirst'), 'error');
             return;
         }
 
@@ -101,10 +122,7 @@
                 children: applyGroupOrderToChildren(state.children, resolvedChildId, 'tasks', isAdmin, nextOrder),
             }));
             isEditingGroupOrder = false;
-            showToast(
-                isAdmin ? 'Порядок групп задач сохранен' : 'Твой порядок групп задач сохранен',
-                'success'
-            );
+            showToast(isAdmin ? tTasks('toasts.groupOrderSavedAdmin') : tTasks('toasts.groupOrderSavedChild'), 'success');
         } else {
             showToast(result.error, 'error');
         }
@@ -126,13 +144,13 @@
             <h2>
                 <span class="gamified-icon icon-tasks" aria-hidden="true"
                     style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></span>
-                За что можно заработать
+                {tTasks('section.title')}
             </h2>
-            <p class="section__subtitle">Выполняйте задания, чтобы получать монетки и опыт</p>
+            <p class="section__subtitle">{tTasks('section.subtitle')}</p>
         </div>
         {#if isAdmin}
         <div class="section__buttons admin-only">
-            <button class="btn btn--add" id="add-task-btn" on:click={openAddTask}>+ Добавить</button>
+            <button class="btn btn--add" id="add-task-btn" on:click={openAddTask}>{tTasks('section.add')}</button>
         </div>
         {/if}
     </div>
@@ -141,7 +159,7 @@
     <nav class="group-nav" id="tasks-group-nav">
         <div class="group-nav__scroll">
             <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
-                Все
+                {tTasks('section.all')}
             </button>
             {#each groups as group (group)}
             <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
@@ -158,11 +176,11 @@
         isSaving={isSavingGroupOrder}
         hasStoredOrder={hasStoredGroupOrder}
         {groups}
-        title="Порядок групп задач"
-        hintAdmin="Родитель задает порядок групп по умолчанию для этого ребенка."
-        hintChild="Можно переставить группы под себя, не меняя родительский порядок."
-        descriptionAdmin="Перетащи группу в нужное место. Новый порядок станет основным для задач этого ребенка."
-        descriptionChild="Перетащи группу в нужное место. Этот порядок увидишь только ты, родительский вариант останется отдельно."
+        title={tTasks('groupOrder.title')}
+        hintAdmin={tTasks('groupOrder.hintAdmin')}
+        hintChild={tTasks('groupOrder.hintChild')}
+        descriptionAdmin={tTasks('groupOrder.descriptionAdmin')}
+        descriptionChild={tTasks('groupOrder.descriptionChild')}
         on:save={handleGroupOrderSave}
         on:reset={handleGroupOrderReset}
     />
@@ -173,7 +191,7 @@
         {#each visibleTasks as task (task.id)}
         <div class="card card--task task-card">
             <div class="card__badge-row">
-                <span class="card__badge card__badge--group">{task.groupName ?? 'Без группы'}</span>
+                <span class="card__badge card__badge--group">{task.groupName ?? tTasks('section.noGroup')}</span>
                 {#if formatFrequency(task.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(task.frequency)}</span>
                 {/if}
@@ -188,27 +206,27 @@
             {#if task.comment}
             <p class="card__comment">{task.comment}</p>
             {:else}
-            <p class="card__comment">Короткий шаг, который помогает заработать монетки и закрепить привычку.</p>
+            <p class="card__comment">{tTasks('section.defaultComment')}</p>
             {/if}
             <div class="card__meta">
                 {#if task.moneyLimit != null}
-                <span class="card__meta-item">До {task.moneyLimit} 💶</span>
+                <span class="card__meta-item">{tTasks('section.moneyLimit', { amount: $i18n.formatNumber(task.moneyLimit) })}</span>
                 {/if}
                 {#if task.ageMin != null || task.ageMax != null}
-                <span class="card__meta-item">Возраст {task.ageMin ?? 0}-{task.ageMax ?? 18}</span>
+                <span class="card__meta-item">{tTasks('section.ageRange', { min: task.ageMin ?? 0, max: task.ageMax ?? 18 })}</span>
                 {/if}
             </div>
             <div class="card__actions">
                 {#if isAdmin}
-                <button class="btn btn--primary btn--small" on:click={() => handleEarn(task.id)}>
-                    Начислить
+                <button class="btn btn--primary btn--small" data-task-action="award" on:click={() => handleEarn(task.id)}>
+                    {tTasks('actions.award')}
                 </button>
-                <button class="btn btn--secondary btn--small admin-only" on:click={() => openEditTask(task)}>
-                    Изменить
+                <button class="btn btn--secondary btn--small admin-only" data-task-action="edit" on:click={() => openEditTask(task)}>
+                    {tTasks('actions.edit')}
                 </button>
                 {:else}
-                <button class="btn btn--primary" on:click={() => handleEarn(task.id)}>
-                    Выполнил!
+                <button class="btn btn--primary" data-task-action="request" on:click={() => handleEarn(task.id)}>
+                    {tTasks('actions.complete')}
                 </button>
                 {/if}
             </div>
@@ -220,13 +238,13 @@
         <span class="empty-state__icon">
             <span class="gamified-icon icon-empty" aria-hidden="true"></span>
         </span>
-        <p class="empty-state__title">Пока нет заданий</p>
+        <p class="empty-state__title">{tTasks('section.emptyTitle')}</p>
         <p class="empty-state__hint">
-            {#if isAdmin}Создайте первую задачу — она сразу появится в списке ребенка.{:else}Попроси родителя добавить задания.{/if}
+            {#if isAdmin}{tTasks('section.emptyAdminHint')}{:else}{tTasks('section.emptyChildHint')}{/if}
         </p>
         {#if isAdmin}
         <div class="empty-state__actions">
-            <button class="btn btn--add" type="button" on:click={openAddTask}>Добавить задачу</button>
+            <button class="btn btn--add" type="button" on:click={openAddTask}>{tTasks('section.addTask')}</button>
         </div>
         {/if}
     </div>

@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.SuperAdminCredentialRepository;
@@ -53,6 +54,7 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        RequestLocaleHolder.set("en");
         passwordHasher = new PasswordHasher();
         authService = createAuthService(TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true));
     }
@@ -76,7 +78,7 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure1 = (OperationResult.Failure<?>) result;
         assertThat(failure1.message())
-            .contains("Неверный пароль");
+            .contains("Invalid super-admin password");
     }
 
     @Test
@@ -133,7 +135,7 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure2 = (OperationResult.Failure<?>) result;
         assertThat(failure2.message())
-            .isEqualTo("Аккаунт заблокирован");
+            .isEqualTo("Account is blocked");
     }
 
     @Test
@@ -298,7 +300,18 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure3 = (OperationResult.Failure<?>) result;
         assertThat(failure3.message())
-            .contains("Email не подтвержден");
+            .contains("Email is not verified");
+    }
+
+    @Test
+    void authenticateAdmin_wrongSuperAdminPassword_returnsRussianMessageWhenLocaleIsRussian() {
+        RequestLocaleHolder.set("ru");
+
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "wrong");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        OperationResult.Failure<?> failure = (OperationResult.Failure<?>) result;
+        assertThat(failure.message()).isEqualTo("Неверный пароль администратора");
     }
 
     @Test

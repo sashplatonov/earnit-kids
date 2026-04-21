@@ -1,25 +1,42 @@
 <script lang="ts">
     import { SvelteMap } from 'svelte/reactivity';
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import type { HistoryEntry } from '$lib/stores/app';
     import { deleteHistoryItem } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
     import { buildHistoryCatalog, resolveHistoryCard } from './historyDetails';
-    import type { HistoryCardDetails } from './historyDetails';
+    import type { HistoryCardDetails, HistoryDetailsI18n } from './historyDetails';
 
     type HistoryViewEntry = HistoryEntry & { ui: HistoryCardDetails };
+
+    const i18n = useI18n();
+
+    function tHistory(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`history.${key}` as MessageKey, variables);
+    }
+
+    function createHistoryDetailsI18n(): HistoryDetailsI18n {
+        return {
+            t(key) {
+                return tHistory(`model.${key}`);
+            },
+        };
+    }
 
     $: history = $appStore.history;
     $: isAdmin = $appStore.isAdmin;
     $: monthlyLimit = $appStore.monthlyLimit;
     $: dailyCoinLimit = $appStore.dailyCoinLimit;
+    $: historyDetailsI18n = ($i18n.locale, createHistoryDetailsI18n());
     $: historyCatalog = buildHistoryCatalog({
         tasks: $appStore.tasks,
         shopItems: $appStore.shopItems,
         baseTasks: $appStore.baseData.tasks,
         baseProducts: $appStore.baseData.products,
     });
-    $: historyEntries = history.map(entry => ({ ...entry, ui: resolveHistoryCard(entry, historyCatalog) })) as HistoryViewEntry[];
+    $: historyEntries = history.map(entry => ({ ...entry, ui: resolveHistoryCard(entry, historyCatalog, historyDetailsI18n) })) as HistoryViewEntry[];
 
     function historyKind(type: unknown): 'earn' | 'spend' | 'other' {
         if (type === 'task_completed' || type === 'earn') return 'earn';
@@ -61,7 +78,7 @@
     function formatDate(dateStr: string | null | undefined): string {
         if (!dateStr) return '';
         try {
-            return new Date(dateStr as string).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return $i18n.formatDateTime(new Date(dateStr as string));
         } catch { return ''; }
     }
 
@@ -76,7 +93,7 @@
     function monthLabel(key: string): string {
         if (!key) return '';
         const [y, m] = key.split('-');
-        return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+        return $i18n.formatDate(new Date(Number(y), Number(m) - 1, 1), { month: 'long', year: 'numeric' });
     }
 
     // Group history by month
@@ -97,14 +114,14 @@
         const ok = await deleteHistoryItem(historyId, $appStore.currentChildId);
         if (ok) {
             appStore.setState({ history: history.filter(h => h.id !== historyId) });
-            showToast('Запись удалена', 'info');
+            showToast(tHistory('history.itemDeleted'), 'info');
         }
     }
 
     async function clearAll() {
-        if (!confirm('Очистить всю историю?')) return;
+        if (!confirm(tHistory('history.clearAllConfirm'))) return;
         appStore.setState({ history: [] });
-        showToast('История очищена', 'success');
+        showToast(tHistory('history.clearedAll'), 'success');
     }
 
     function cssType(type: string): string {
@@ -128,12 +145,12 @@
 <section class="section" id="history-section">
     <div class="section__header history-section__header">
         <div class="section__header-titles">
-            <h2>История операций</h2>
+            <h2>{tHistory('history.title')}</h2>
         </div>
         {#if isAdmin}
         <div class="section__buttons admin-only">
             <button class="btn btn--danger btn--small" id="clear-history-btn" on:click={clearAll}>
-                Очистить всё
+                {tHistory('history.clearAll')}
             </button>
         </div>
         {/if}
@@ -147,16 +164,16 @@
             </div>
             <div class="stat-card__content">
                 <div class="stat-card__value">
-                    <span id="money-spent">{moneySpent.toLocaleString('ru-RU')}</span>
+                    <span id="money-spent">{$i18n.formatNumber(moneySpent)}</span>
                     /
-                    <span id="money-limit">{monthlyLimit.toLocaleString('ru-RU')}</span>
+                    <span id="money-limit">{$i18n.formatNumber(monthlyLimit)}</span>
                     {#if moneyRemaining > 0}
                     <span id="money-remaining" style="font-size:0.8em;font-weight:400;margin-left:4px;">
-                        (ещё {moneyRemaining.toLocaleString('ru-RU')})
+                        ({tHistory('history.remaining', { amount: $i18n.formatNumber(moneyRemaining) })})
                     </span>
                     {/if}
                 </div>
-                <div class="stat-card__label">Потрачено в этом месяце</div>
+                <div class="stat-card__label">{tHistory('history.spentThisMonth')}</div>
             </div>
             <div class="stat-card__progress">
                 <div class="progress-bar" id="money-progress" style="width:{spentPercent}%"></div>
@@ -170,14 +187,16 @@
             <div class="stat-card__content">
                 <div class="stat-card__value">
                     <div class="stat-card__value-head">
-                        <span class="stat-card__value-number" id="coins-earned-today">{coinsEarnedToday}</span>
+                        <span class="stat-card__value-number" id="coins-earned-today">{$i18n.formatNumber(coinsEarnedToday)}</span>
                         <span class="stat-card__value-unit gamified-icon icon-coin-stack" aria-hidden="true"></span>
                     </div>
                     <div class="stat-card__value-note" id="coins-daily-limit">
-                        {dailyCoinLimit > 0 ? `Лимит: ${dailyCoinLimit}` : 'Лимит: ∞'}
+                        {dailyCoinLimit > 0
+                            ? tHistory('history.dailyLimitValue', { amount: $i18n.formatNumber(dailyCoinLimit) })
+                            : tHistory('history.dailyLimitUnlimited')}
                     </div>
                 </div>
-                <div class="stat-card__label">Заработано сегодня</div>
+                <div class="stat-card__label">{tHistory('history.earnedToday')}</div>
                 <div class="stat-card__progress stat-card__progress--coins">
                     <div class="progress-bar" id="coins-daily-progress" style="width:{coinsPercent}%"></div>
                 </div>
@@ -190,9 +209,14 @@
             </div>
             <div class="stat-card__content">
                 <div class="stat-card__value" id="large-purchase">
-                    {largePurchase ? `${Math.abs(largePurchase.amount)} монет — ${largePurchase.ui.title}` : 'Нет'}
+                    {largePurchase
+                        ? tHistory('history.largePurchaseValue', {
+                            amount: $i18n.formatNumber(Math.abs(largePurchase.amount ?? 0)),
+                            title: largePurchase.ui.title,
+                        })
+                        : tHistory('history.largePurchaseNone')}
                 </div>
-                <div class="stat-card__label">Крупная покупка месяца</div>
+                <div class="stat-card__label">{tHistory('history.largePurchaseTitle')}</div>
             </div>
         </div>
     </div>
@@ -204,8 +228,8 @@
             <div class="history-month-header">
                 <span class="month-title">{monthLabel(key)}</span>
                 <span class="month-stats">
-                    {#if group.earned > 0}<span class="earn">+{group.earned} монет</span>{/if}
-                    {#if group.spent > 0}&nbsp;<span class="spend">−{group.spent} монет</span>{/if}
+                    {#if group.earned > 0}<span class="earn">{tHistory('history.monthEarned', { amount: $i18n.formatNumber(group.earned) })}</span>{/if}
+                    {#if group.spent > 0}&nbsp;<span class="spend">{tHistory('history.monthSpent', { amount: $i18n.formatNumber(group.spent) })}</span>{/if}
                 </span>
             </div>
             {#each group.entries as entry (entry.id)}
@@ -223,15 +247,15 @@
                 <div class="history-item__actions">
                     <div class="history-item__amount history-item__amount--{cssType(entry.type as string)}">
                         <span>
-                            {cssType(entry.type as string) === 'earn' ? '+' : '−'}{Math.abs(entry.amount ?? 0)}
+                            {cssType(entry.type as string) === 'earn' ? '+' : '−'}{$i18n.formatNumber(Math.abs(entry.amount ?? 0))}
                             <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:0.9em;height:0.9em;vertical-align:middle;"></span>
                         </span>
                         {#if hasMoneyAmount(entry.ui.moneyAmount)}
-                        <span class="history-item__money">{entry.ui.moneyAmount} 💶</span>
+                        <span class="history-item__money">{$i18n.formatNumber(entry.ui.moneyAmount)} 💶</span>
                         {/if}
                     </div>
                     {#if isAdmin}
-                    <button class="history-item__delete-btn" on:click={() => handleDelete(entry.id)} aria-label="Удалить запись">✕</button>
+                    <button class="history-item__delete-btn" on:click={() => handleDelete(entry.id)} aria-label={tHistory('history.deleteAria')}>✕</button>
                     {/if}
                 </div>
             </article>
@@ -244,8 +268,8 @@
         <span class="empty-state__icon">
             <span class="gamified-icon icon-empty" aria-hidden="true"></span>
         </span>
-        <p class="empty-state__title">История пока пуста</p>
-        <p class="empty-state__hint">Выполните или подтвердите первое действие — и запись появится тут.</p>
+        <p class="empty-state__title">{tHistory('history.emptyTitle')}</p>
+        <p class="empty-state__hint">{tHistory('history.emptyHint')}</p>
     </div>
     {/if}
 </section>

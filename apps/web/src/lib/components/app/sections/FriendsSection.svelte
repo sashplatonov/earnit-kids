@@ -1,7 +1,15 @@
 <script lang="ts">
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import { searchFriend, addFriend } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
+
+    const i18n = useI18n();
+
+    function tApp(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`app.${key}` as MessageKey, variables);
+    }
 
     $: friends = $appStore.friends;
 
@@ -11,14 +19,14 @@
 
     async function handleSearch() {
         if (searchQuery.trim().length < 3) {
-            showToast('Введите минимум 3 символа', 'info');
+            showToast(tApp('friends.minSearchToast'), 'info');
             return;
         }
         searching = true;
         try {
             const res = await searchFriend(searchQuery.trim()) as unknown;
             searchResults = Array.isArray(res) ? res as Array<{ id: unknown; nickname: string; balance?: number }> : [];
-            if (!searchResults.length) showToast('Никого не нашли', 'info');
+            if (!searchResults.length) showToast(tApp('friends.noResultsToast'), 'info');
         } finally {
             searching = false;
         }
@@ -27,7 +35,7 @@
     async function handleAddFriend(friendId: unknown) {
         const ok = await addFriend(friendId);
         if (ok) {
-            showToast('Друг добавлен!', 'success');
+            showToast(tApp('friends.addedToast'), 'success');
             searchResults = searchResults.filter(r => r.id !== friendId);
         }
     }
@@ -35,29 +43,29 @@
 
 <section class="section" id="friends-section">
     <div class="section__header">
-        <h2>Друзья</h2>
+        <h2>{tApp('friends.title')}</h2>
     </div>
 
     <div class="cards" style="align-items: stretch;">
         <!-- Search -->
         <div class="card" style="max-width: 600px; width: 100%; display: flex; flex-direction: column;">
             <div class="card__header">
-                <h3 class="card__title">Найти друга</h3>
+                <h3 class="card__title">{tApp('friends.searchTitle')}</h3>
                 <div class="card__icon">
                     <span class="gamified-icon icon-magnifier" aria-hidden="true"></span>
                 </div>
             </div>
 
             <div class="form-group" style="margin-top: 1rem;">
-                <label for="friend-search-input">Ник друга</label>
+                <label for="friend-search-input">{tApp('friends.nicknameLabel')}</label>
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="text" class="input" id="friend-search-input"
-                        placeholder="Введите ник (мин. 3 символа)..."
+                        placeholder={tApp('friends.searchPlaceholder')}
                         bind:value={searchQuery}
                         on:keydown={e => e.key === 'Enter' && handleSearch()} />
                     <button class="btn btn--primary" id="friend-search-btn"
                         on:click={handleSearch} disabled={searching}>
-                        {searching ? '…' : 'Найти'}
+                        {searching ? '…' : tApp('friends.searchButton')}
                     </button>
                 </div>
             </div>
@@ -67,7 +75,7 @@
                 <div class="search-result-item">
                     <span>{result.nickname}</span>
                     <button class="btn btn--primary btn--small" on:click={() => handleAddFriend(result.id)}>
-                        + Добавить
+                        {tApp('friends.addButton')}
                     </button>
                 </div>
                 {/each}
@@ -77,7 +85,7 @@
         <!-- Friends list -->
         <div class="card" style="max-width: 600px; width: 100%; display: flex; flex-direction: column;">
             <div class="card__header">
-                <h3 class="card__title">Мои друзья</h3>
+                <h3 class="card__title">{tApp('friends.listTitle')}</h3>
                 <div class="card__icon">
                     <span class="gamified-icon icon-star" aria-hidden="true"></span>
                 </div>
@@ -89,13 +97,13 @@
                 <div class="friend-item">
                     <span class="friend-nickname">{friend.nickname}</span>
                     {#if friend.balance != null}
-                    <span class="friend-balance">{friend.balance} монет</span>
+                    <span class="friend-balance">{$i18n.formatNumber(friend.balance)} {tApp('friends.coinsUnit')}</span>
                     {/if}
                 </div>
                 {/each}
                 {:else}
                 <div class="empty-state" id="friends-empty">
-                    <p>У тебя пока нет друзей. Добавь кого-нибудь по нику!</p>
+                    <p>{tApp('friends.empty')}</p>
                 </div>
                 {/if}
             </div>

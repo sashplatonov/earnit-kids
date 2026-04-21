@@ -6,8 +6,10 @@
         APP_SECTION_META,
         CHILD_PRIMARY_SECTIONS,
         COMMON_OVERFLOW_SECTIONS,
+        getAppSectionLabelKey,
         type AppSection,
     } from '$lib/app/routes';
+    import { useI18n } from '$lib/i18n/context';
     import { logout } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
     import ChildSwitcher from './ChildSwitcher.svelte';
@@ -15,6 +17,8 @@
     export let isAdmin: boolean = false;
     export let activeSection: AppSection = 'analytics';
     export let requestsCount: number = 0;
+
+    const i18n = useI18n();
 
     let moreOpen = false;
     let navElement: HTMLElement | null = null;
@@ -48,17 +52,17 @@
 
         const ok = await logout();
         if (!ok) {
-            showToast('Не удалось выйти', 'error');
+            showToast($i18n.t('app.shell.loginError'), 'error');
             return;
         }
 
-        location.href = '/login.html';
+        location.href = $i18n.href('/login');
     }
 </script>
 
 <svelte:window on:click={handleWindowClick} on:keydown={handleWindowKeydown} />
 
-<nav class="nav" bind:this={navElement} aria-label="Основная навигация">
+<nav class="nav" bind:this={navElement} aria-label={$i18n.t('common.navigation.main')}>
     <div class="nav__primary">
         {#if isAdmin}
             <ChildSwitcher />
@@ -67,13 +71,13 @@
                     <a
                         class="nav__btn"
                         class:active={activeSection === section}
-                        href={resolve('/app/[section]', { section })}
+                        href={$i18n.href(resolve('/app/[section]', { section }))}
                         aria-current={activeSection === section ? 'page' : undefined}
                         on:click={closeMoreMenu}
                     >
                         <span class={`nav__btn-icon gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
                         <span class="nav__btn-label">
-                            {APP_SECTION_META[section].label}
+                            {$i18n.t(getAppSectionLabelKey(section))}
                             {#if section === 'requests' && requestsCount > 0}
                                 <span class="nav__counter">{requestsCount}</span>
                             {/if}
@@ -87,12 +91,12 @@
                     <a
                         class="nav__btn"
                         class:active={activeSection === section}
-                        href={resolve('/app/[section]', { section })}
+                        href={$i18n.href(resolve('/app/[section]', { section }))}
                         aria-current={activeSection === section ? 'page' : undefined}
                         on:click={closeMoreMenu}
                     >
                         <span class={`nav__btn-icon gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
-                        <span class="nav__btn-label">{APP_SECTION_META[section].label}</span>
+                        <span class="nav__btn-label">{$i18n.t(getAppSectionLabelKey(section))}</span>
                     </a>
                 {/each}
             </div>
@@ -101,33 +105,33 @@
         <div class="nav__more-wrapper">
             <button class="nav__more" id="nav-more-btn" aria-haspopup="menu"
                 aria-expanded={moreOpen} aria-controls="nav-more-dropdown"
-                aria-label="Дополнительные разделы" on:click={() => (moreOpen = !moreOpen)}>
+                aria-label={$i18n.t('app.shell.moreAria')} on:click={() => (moreOpen = !moreOpen)}>
                 <span class="nav__btn-icon gamified-icon icon-dots" aria-hidden="true"></span>
-                <span class="nav__btn-label">Еще</span>
+                <span class="nav__btn-label">{$i18n.t('common.navigation.more')}</span>
             </button>
             {#if moreOpen}
                 <div class="nav__dropdown" id="nav-more-dropdown" role="menu">
                     {#if isAdmin}
-                        <div class="nav__dropdown-group-label" role="presentation">Управление</div>
+                        <div class="nav__dropdown-group-label" role="presentation">{$i18n.t('common.navigation.management')}</div>
                         {#each ADMIN_MANAGEMENT_SECTIONS as section (section)}
-                            <a class="nav__dropdown-item" role="menuitem" href={resolve('/app/[section]', { section })} on:click={closeMoreMenu}>
+                            <a class="nav__dropdown-item" role="menuitem" href={$i18n.href(resolve('/app/[section]', { section }))} on:click={closeMoreMenu}>
                                 <span class={`gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
-                                <span>{APP_SECTION_META[section].label}</span>
+                                <span>{$i18n.t(getAppSectionLabelKey(section))}</span>
                             </a>
                         {/each}
                         <div class="nav__dropdown-divider" role="presentation"></div>
                     {/if}
-                    <div class="nav__dropdown-group-label" role="presentation">Разделы</div>
+                    <div class="nav__dropdown-group-label" role="presentation">{$i18n.t('common.navigation.sections')}</div>
                     {#each COMMON_OVERFLOW_SECTIONS as section (section)}
-                        <a class="nav__dropdown-item" role="menuitem" href={resolve('/app/[section]', { section })} on:click={closeMoreMenu}>
+                        <a class="nav__dropdown-item" role="menuitem" href={$i18n.href(resolve('/app/[section]', { section }))} on:click={closeMoreMenu}>
                             <span class={`gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
-                            <span>{APP_SECTION_META[section].label}</span>
+                            <span>{$i18n.t(getAppSectionLabelKey(section))}</span>
                         </a>
                     {/each}
                     <div class="nav__dropdown-divider" role="presentation"></div>
                     <button class="nav__dropdown-item nav__dropdown-action" type="button" role="menuitem" on:click={handleLogout}>
                         <span class="gamified-icon icon-logout" aria-hidden="true"></span>
-                        <span>Выйти</span>
+                        <span>{$i18n.t('app.shell.logout')}</span>
                     </button>
                 </div>
             {/if}

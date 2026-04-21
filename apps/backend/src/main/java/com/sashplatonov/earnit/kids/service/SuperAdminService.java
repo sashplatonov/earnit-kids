@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.config.PasswordHasher;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
@@ -89,22 +90,22 @@ public class SuperAdminService {
     @Transactional
     public OperationResult<Void> setFamilyPassword(String familyId, String newPassword) {
         if (!isValidPassword(newPassword)) {
-            return OperationResult.failure("Слабый пароль");
+            return OperationResult.failure("WEAK_PASSWORD", BackendMessages.message("auth.weakPassword"));
         }
 
         Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
         if (familyOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
         }
 
         FamilyEntity family = familyOpt.get();
         if (isSamePassword(newPassword, family.getAdminPassword())) {
-            return OperationResult.failure("Новый пароль должен отличаться от текущего");
+            return OperationResult.failure("PASSWORD_REUSE", BackendMessages.message("super.newPasswordMustDifferCurrent"));
         }
 
         boolean updated = familyRepository.updatePassword(familyId, passwordHasher.hash(newPassword));
         if (!updated) {
-            return OperationResult.failure("Не удалось обновить пароль");
+            return OperationResult.failure("PASSWORD_UPDATE_FAILED", BackendMessages.message("auth.passwordUpdateFailed"));
         }
         return OperationResult.success(null);
     }
@@ -125,11 +126,11 @@ public class SuperAdminService {
     public OperationResult<String> regenerateFamilyToken(String familyId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
         }
         List<ChildEntity> children = childRepository.getChildren(familyDbId.get());
         if (children.isEmpty()) {
-            return OperationResult.failure("У семьи нет детей");
+            return OperationResult.failure("FAMILY_HAS_NO_CHILDREN", BackendMessages.message("super.familyHasNoChildren"));
         }
         return familyService.regenerateChildToken(familyId, children.getFirst().getId());
     }
@@ -137,12 +138,12 @@ public class SuperAdminService {
     public OperationResult<String> regenerateChildToken(int childId) {
         Optional<ChildEntity> child = childRepository.findByIdOptional(childId);
         if (child.isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return OperationResult.failure("CHILD_NOT_FOUND", BackendMessages.message("family.childNotFound"));
         }
 
         Optional<FamilyEntity> family = familyRepository.findByDbId(child.get().getFamilyDbId());
         if (family.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
         }
 
         return familyService.regenerateChildToken(family.get().getFamilyId(), childId);

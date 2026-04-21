@@ -19,6 +19,7 @@ import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
@@ -136,7 +137,7 @@ public class FamilyResource {
             return unauthorized();
         }
         if (childId == null) {
-            return badRequest("Child id is required");
+            return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
         OperationResult<FamilyDataResponse> result = familyActionService.completeTask(auth.familyId(), childId, taskId);
@@ -174,7 +175,7 @@ public class FamilyResource {
             return unauthorized();
         }
         if (childId == null) {
-            return badRequest("Child id is required");
+            return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
         OperationResult<FamilyDataResponse> result = familyActionService.purchaseItem(auth.familyId(), childId, itemId);
@@ -260,7 +261,7 @@ public class FamilyResource {
             return unauthorized();
         }
         if (childId == null) {
-            return badRequest("Child id is required");
+            return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
         OperationResult<FamilyDataResponse> result = familyActionService.deleteHistoryEntry(auth.familyId(), childId, historyEntryId);
@@ -557,7 +558,7 @@ public class FamilyResource {
 
         if (request.friendId() <= 0) {
             return Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of("friendId is required", "BAD_REQUEST", 400))
+                .entity(ErrorResponse.of(BackendMessages.message("errors.friendIdRequired"), "BAD_REQUEST", 400))
                 .build();
         }
 
@@ -683,7 +684,7 @@ public class FamilyResource {
 
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
         if (effectiveChildId == null) {
-            return badRequest("childId is required");
+            return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
         return toResponse(familyService.getHistory(auth.familyId(), effectiveChildId, page, limit));
@@ -732,7 +733,7 @@ public class FamilyResource {
 
         if (request.key() == null || request.key().isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of("key is required", "BAD_REQUEST", 400))
+                .entity(ErrorResponse.of(BackendMessages.message("errors.keyRequired"), "BAD_REQUEST", 400))
                 .build();
         }
 
@@ -746,7 +747,7 @@ public class FamilyResource {
 
     private Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(ErrorResponse.unauthorized("Unauthorized"))
+            .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
             .build();
     }
 

@@ -41,18 +41,18 @@ test.beforeAll(async ({ browser }) => {
     childLink = await getChildMagicLink(page);
 
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
-    await page.getByRole('button', { name: 'Выполнил!' }).click();
-    await expect(page.getByText('Заявка отправлена')).toBeVisible();
+    await page.locator('#tasks-section [data-task-action="request"]').first().click();
+    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
 
     await logout(page);
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
     await approveFirstRequest(page);
 
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
-    await page.getByRole('link', { name: 'Награды' }).click();
+    await page.getByRole('link', { name: /Rewards|Награды/i }).click();
     await expect(page.getByRole('heading', { name: REWARD_TITLE })).toBeVisible();
-    await page.getByRole('button', { name: 'Запросить' }).click();
-    await expect(page.getByText('Заявка на покупку отправлена!')).toBeVisible();
+    await page.locator('#shop-section [data-shop-action="request"]').first().click();
+    await expect(page.getByText(/Purchase request sent|Заявка на покупку отправлена/i)).toBeVisible();
 
     await logout(page);
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
@@ -60,8 +60,8 @@ test.beforeAll(async ({ browser }) => {
 
     await logout(page);
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
-    await page.getByRole('button', { name: 'Выполнил!' }).click();
-    await expect(page.getByText('Заявка отправлена')).toBeVisible();
+    await page.locator('#tasks-section [data-task-action="request"]').first().click();
+    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
 
     await page.close();
 });
@@ -73,11 +73,11 @@ async function login(page: import('@playwright/test').Page) {
     });
 }
 
-test.describe('Shop section (Награды)', () => {
+test.describe('Shop section', () => {
     test.beforeEach(async ({ page }) => {
         await login(page);
-        await page.getByRole('link', { name: 'Награды' }).click();
-        await expect(page.getByRole('heading', { name: 'Магазин наград' })).toBeVisible();
+        await page.getByRole('link', { name: /Rewards|Награды/i }).click();
+        await expect(page.locator('#shop-section')).toBeVisible();
     });
 
     test('shows shop items with correct name and price from API', async ({ page }) => {
@@ -103,9 +103,9 @@ test.describe('Shop section (Награды)', () => {
     });
 
     test('admin can see add, buy, and edit buttons', async ({ page }) => {
-        await expect(page.getByRole('button', { name: '+ Добавить' })).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Купить' }).first()).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Изменить' }).first()).toBeVisible();
+        await expect(page.locator('#add-shop-btn')).toBeVisible();
+        await expect(page.locator('[data-shop-action="buy"]').first()).toBeVisible();
+        await expect(page.locator('[data-shop-action="edit"]').first()).toBeVisible();
     });
 
     test('shop cards reserve space for wrapped top badges', async ({ page }) => {
@@ -122,8 +122,8 @@ test.describe('Shop section (Награды)', () => {
 
             badgeRow.innerHTML = [
                 '<span class="card__badge card__badge--group">Развлечения и время</span>',
-                '<span class="card__badge card__badge--type">1 раз(а) в день</span>',
-                '<span class="card__status card__status--available">Можно купить</span>'
+                '<span class="card__badge card__badge--type">1 time per day</span>',
+                '<span class="card__status card__status--available">Available to buy</span>'
             ].join('');
 
             const badgeRowRect = badgeRow.getBoundingClientRect();
@@ -191,7 +191,7 @@ test.describe('Shop section (Награды)', () => {
         const itemPrice = parseInt(priceText);
 
         // Click the first edit button
-        await page.getByRole('button', { name: 'Изменить' }).first().click();
+        await page.locator('[data-shop-action="edit"]').first().click();
         await expect(page.locator('#shop-modal')).toBeVisible();
 
         // Name field must not be empty and must match displayed item name

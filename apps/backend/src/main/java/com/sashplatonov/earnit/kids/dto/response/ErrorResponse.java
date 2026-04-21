@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorResponse(
@@ -30,14 +31,6 @@ public record ErrorResponse(
     }
 
     private static String resolveTitle(int status) {
-        return switch (status) {
-            case 400 -> "Bad Request";
-            case 401 -> "Unauthorized";
-            case 403 -> "Forbidden";
-            case 404 -> "Not Found";
-            case 409 -> "Conflict";
-            case 500 -> "Internal Server Error";
-            default -> "Request Failed";
-        };
+        return BackendMessages.statusTitle(status);
     }
 }

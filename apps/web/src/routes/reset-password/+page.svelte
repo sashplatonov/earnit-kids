@@ -1,7 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { useI18n } from '$lib/i18n/context';
 
     type MessageKind = 'error' | 'success' | 'neutral';
+
+    const i18n = useI18n();
 
     let token = '';
     let email = '';
@@ -11,6 +14,8 @@
     let submitting = false;
     let message = '';
     let messageKind: MessageKind = 'neutral';
+
+    $: alternates = $i18n.alternates('/reset-password');
 
     function showMessage(text: string, kind: MessageKind) {
         message = text;
@@ -22,12 +27,12 @@
 
         if (!token || !email) {
             formVisible = false;
-            showMessage('Неверная ссылка для сброса пароля.', 'error');
+            showMessage($i18n.t('auth.reset.invalidLink'), 'error');
             return;
         }
 
         if (password !== confirmPassword) {
-            showMessage('Пароли не совпадают', 'error');
+            showMessage($i18n.t('auth.reset.passwordsMismatch'), 'error');
             return;
         }
 
@@ -45,16 +50,16 @@
 
             if (success) {
                 formVisible = false;
-                showMessage('Пароль успешно изменен! Перенаправление...', 'success');
+                showMessage($i18n.t('auth.reset.success'), 'success');
                 window.setTimeout(() => {
-                    window.location.href = '/login.html';
+                    window.location.href = $i18n.href('/login');
                 }, 2000);
                 return;
             }
 
-            showMessage(typeof body.error === 'string' ? body.error : 'Ошибка смены пароля', 'error');
+            showMessage(typeof body.error === 'string' ? body.error : $i18n.t('auth.reset.fallbackError'), 'error');
         } catch {
-            showMessage('Ошибка сервера', 'error');
+            showMessage($i18n.t('auth.reset.serverError'), 'error');
         } finally {
             submitting = false;
         }
@@ -67,15 +72,18 @@
 
         if (!token || !email) {
             formVisible = false;
-            showMessage('Неверная ссылка для сброса пароля.', 'error');
+            showMessage($i18n.t('auth.reset.invalidLink'), 'error');
         }
     });
 </script>
 
 <svelte:head>
-    <title>Сброс пароля - EarnIt Kids</title>
-    <meta name="description" content="Сброс пароля для аккаунта в EarnIt Kids." />
-    <link rel="canonical" href="/reset-password" />
+    <title>{$i18n.t('auth.reset.metaTitle')}</title>
+    <meta name="description" content={$i18n.t('auth.reset.metaDescription')} />
+    <link rel="canonical" href={$i18n.href('/reset-password')} />
+    <link rel="alternate" hreflang="en" href={alternates.en} />
+    <link rel="alternate" hreflang="ru" href={alternates.ru} />
+    <link rel="alternate" hreflang="x-default" href={alternates['x-default']} />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#fff3e0" />
 </svelte:head>
@@ -184,37 +192,37 @@
 
 <div class="reset-shell">
     <div class="login-card">
-        <div class="logo">🪙 Coins Shop</div>
-        <h2>Новый пароль</h2>
+        <div class="logo">{$i18n.t('common.brand.name')}</div>
+        <h2>{$i18n.t('auth.reset.heading')}</h2>
 
         {#if formVisible}
             <form on:submit={handleSubmit}>
                 <div class="input-group">
-                    <label for="password">Новый пароль</label>
+                    <label for="password">{$i18n.t('auth.reset.newPasswordLabel')}</label>
                     <input
                         id="password"
                         bind:value={password}
                         type="password"
                         required
                         minlength="6"
-                        placeholder="Минимум 6 символов"
+                        placeholder={$i18n.t('auth.reset.newPasswordPlaceholder')}
                     />
                 </div>
 
                 <div class="input-group">
-                    <label for="confirmPassword">Подтвердите пароль</label>
+                    <label for="confirmPassword">{$i18n.t('auth.reset.confirmPasswordLabel')}</label>
                     <input
                         id="confirmPassword"
                         bind:value={confirmPassword}
                         type="password"
                         required
                         minlength="6"
-                        placeholder="Повторите пароль"
+                        placeholder={$i18n.t('auth.reset.confirmPasswordPlaceholder')}
                     />
                 </div>
 
                 <button type="submit" class="btn-primary" disabled={submitting}>
-                    {submitting ? 'Сохранение...' : 'Сохранить'}
+                    {submitting ? $i18n.t('auth.reset.submitting') : $i18n.t('auth.reset.submit')}
                 </button>
             </form>
         {/if}
@@ -222,7 +230,7 @@
         <div class="message {messageKind}" role={messageKind === 'error' ? 'alert' : 'status'}>{message}</div>
 
         <p class="back-link">
-            <a href="/login.html">Вернуться ко входу</a>
+            <a href={$i18n.href('/login')}>{$i18n.t('common.actions.backToLogin')}</a>
         </p>
     </div>
 </div>

@@ -5,6 +5,8 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.service.BackupTelegramSettingsService;
 import com.sashplatonov.earnit.kids.service.DatabaseBackupService;
 import com.sashplatonov.earnit.kids.service.SuperAdminService;
@@ -13,6 +15,7 @@ import com.sashplatonov.earnit.kids.service.TelegramBackupService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +44,7 @@ class SuperAdminResourceTest {
 
     @BeforeEach
     void setUp() {
+        RequestLocaleHolder.set("en");
         resource = new SuperAdminResource(
             superAdminService,
             systemDashboardService,
@@ -48,6 +52,11 @@ class SuperAdminResourceTest {
             backupTelegramSettingsService,
             telegramBackupService
         );
+    }
+
+    @AfterEach
+    void tearDown() {
+        RequestLocaleHolder.clear();
     }
 
     @Test
@@ -164,7 +173,7 @@ class SuperAdminResourceTest {
     @Test
     void setFamilyPassword_missingFamily_returns404() {
         when(superAdminService.setFamilyPassword("missing", "newpass123"))
-            .thenReturn(OperationResult.failure("Семья не найдена"));
+            .thenReturn(OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound")));
 
         Response response = resource.setFamilyPassword(
             contextWithAuth(superAdminAuth()),
@@ -191,7 +200,7 @@ class SuperAdminResourceTest {
     @Test
     void changeSuperAdminPassword_failure_returns400() {
         when(superAdminService.changeSuperAdminPassword("wrong", "newpass123"))
-            .thenReturn(OperationResult.failure("Неверный текущий пароль"));
+            .thenReturn(OperationResult.failure("INVALID_CURRENT_PASSWORD", BackendMessages.message("super.invalidCurrentPassword")));
 
         Response response = resource.changeSuperAdminPassword(
             contextWithAuth(superAdminAuth()),
@@ -291,7 +300,8 @@ class SuperAdminResourceTest {
 
     @Test
     void restoreDatabase_emptyPayload_returns500() {
-        when(databaseBackupService.restoreBackup(new byte[0])).thenReturn(OperationResult.failure("Файл бэкапа пустой"));
+        when(databaseBackupService.restoreBackup(new byte[0]))
+            .thenReturn(OperationResult.failure(BackendMessages.message("backup.emptyFile")));
 
         Response response = resource.restoreDatabase(contextWithAuth(superAdminAuth()), new byte[0]);
 
@@ -333,7 +343,7 @@ class SuperAdminResourceTest {
         UpdateBackupTelegramSettingsRequest request =
             new UpdateBackupTelegramSettingsRequest(true, null, "chat-1", 24);
         when(backupTelegramSettingsService.updateSettings(request))
-            .thenReturn(OperationResult.failure("Сохраните Telegram bot token"));
+            .thenReturn(OperationResult.failure(BackendMessages.message("backup.botTokenRequired")));
 
         Response response = resource.updateBackupTelegramSettings(contextWithAuth(superAdminAuth()), request);
 
