@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @ApplicationScoped
 @Slf4j
@@ -30,6 +31,7 @@ public final class AuthServiceImpl implements AuthService {
     private final SecureTokenGenerator secureTokenGenerator;
     private final TimeProvider timeProvider;
     private final SuperAdminCredentialsService superAdminCredentialsService;
+    private final GoogleIdentityVerifier googleIdentityVerifier;
 
     @Override
     public OperationResult<AuthPayload> authenticateAdmin(String email, String password) {
@@ -47,6 +49,35 @@ public final class AuthServiceImpl implements AuthService {
         }
 
         return authenticateFamily(email, password, familyOpt.get());
+    }
+
+    @Override
+    public OperationResult<AuthPayload> authenticateAdminWithGoogle(String credential) {
+        Optional<String> googleClientId = googleClientId();
+        if (googleClientId.isEmpty()) {
+            log.warn("Google login requested but Google auth is not configured");
+            return OperationResult.failure(BackendMessages.message("auth.googleNotConfigured"));
+        }
+
+        var identityOpt = googleIdentityVerifier.verify(credential, googleClientId.get());
+        if (identityOpt.isEmpty()) {
+            log.info("Google login failed: token verification failed");
+            return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
+        }
+
+        GoogleIdentity identity = identityOpt.get();
+        if (!identity.emailVerified()) {
+            log.info("Google login failed: email is not verified by provider");
+            return OperationResult.failure(BackendMessages.message("auth.googleEmailNotVerified"));
+        }
+
+        var familyOpt = familyRepository.findByEmail(identity.email());
+        if (familyOpt.isEmpty()) {
+            log.info("Google login failed: family not found for email={}", identity.email());
+            return OperationResult.failure(BackendMessages.message("auth.googleAccountNotLinked"));
+        }
+
+        return authenticateGoogleFamily(identity.email(), familyOpt.get());
     }
 
     private OperationResult<AuthPayload> authenticateConfiguredSuperAdmin(String email, String password) {
@@ -78,6 +109,25 @@ public final class AuthServiceImpl implements AuthService {
 
         familyRepository.updateLastActivity(family.getFamilyId());
         log.info("Admin login success: familyId={}, email={}", family.getFamilyId(), family.getEmail());
+        return OperationResult.success(
+            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null));
+    }
+
+    private OperationResult<AuthPayload> authenticateGoogleFamily(String email, FamilyEntity family) {
+        if (family.isBlocked()) {
+            log.info("Google authentication failed (account blocked): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
+        }
+
+        if (appConfig.emailVerification().enabled() && !family.isVerified()) {
+            boolean verified = familyRepository.verifyFamily(family.getFamilyId());
+            if (!verified) {
+                log.warn("Google authentication verified email but local verification update failed for familyId={}", family.getFamilyId());
+            }
+        }
+
+        familyRepository.updateLastActivity(family.getFamilyId());
+        log.info("Google admin login success: familyId={}, email={}", family.getFamilyId(), family.getEmail());
         return OperationResult.success(
             new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null));
     }
@@ -283,6 +333,16 @@ public final class AuthServiceImpl implements AuthService {
 
     private String generateHexToken(int byteCount) {
         return secureTokenGenerator.generateHexToken(byteCount);
+    }
+
+    private Optional<String> googleClientId() {
+        if (!appConfig.google().enabled()) {
+            return Optional.empty();
+        }
+
+        return appConfig.google().clientId()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty());
     }
 }
 

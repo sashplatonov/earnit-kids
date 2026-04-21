@@ -7,6 +7,8 @@ public interface AuthService {
 
     OperationResult<AuthPayload> authenticateAdmin(String email, String password);
 
+    OperationResult<AuthPayload> authenticateAdminWithGoogle(String credential);
+
     OperationResult<AuthPayload> authenticateChild(String childToken);
 
     OperationResult<AuthPayload> registerFamily(String email, String adminPassword);

@@ -15,6 +15,8 @@ export default defineConfig({
         baseURL,
         headless: true,
         serviceWorkers: 'block',
+        // Default to Russian locale for the existing tests; allow override with PLAYWRIGHT_LOCALE
+        locale: process.env.PLAYWRIGHT_LOCALE ?? 'ru-RU',
     },
     webServer: usePreviewServer
         ? {

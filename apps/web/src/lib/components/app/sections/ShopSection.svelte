@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { browser } from '$app/environment';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
@@ -15,6 +16,7 @@
         orderGroups,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
+    import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
     import { page } from '$app/stores';
 
@@ -22,6 +24,8 @@
 
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
+    let viewMode: CardViewMode = 'grid';
+    let loadedViewRole: CardViewRole | null = null;
 
     function tShop(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`shop.${key}` as MessageKey, variables);
@@ -30,6 +34,7 @@
     $: shopItems = $appStore.shopItems;
     $: isAdmin = $appStore.isAdmin;
     $: balance = $appStore.balance;
+    $: viewRole = (isAdmin ? 'admin' : 'child') as CardViewRole;
 
     $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
     $: currentChild = (($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
@@ -38,6 +43,10 @@
     $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
     $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
     $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
+    $: if (browser && loadedViewRole !== viewRole) {
+        viewMode = loadCardViewMode('shop', viewRole);
+        loadedViewRole = viewRole;
+    }
     
     // Read selected group from query parameter
     $: selectedGroup = ($page.url.searchParams.get('group') ?? '');
@@ -148,6 +157,11 @@
     async function handleGroupOrderReset() {
         await persistGroupOrder([]);
     }
+
+    function setViewMode(nextMode: CardViewMode) {
+        viewMode = nextMode;
+        saveCardViewMode('shop', viewRole, nextMode);
+    }
 </script>
 
 <section class="section" id="shop-section">
@@ -160,11 +174,31 @@
             </h2>
             <p class="section__subtitle">{tShop('section.subtitle')}</p>
         </div>
-        {#if isAdmin}
-        <div class="section__buttons admin-only">
+        <div class="section__header-actions">
+            <div class="view-toggle" role="group" aria-label={tShop('section.viewAria')}>
+                <button
+                    type="button"
+                    class="view-toggle__button"
+                    class:view-toggle__button--active={viewMode === 'grid'}
+                    aria-pressed={viewMode === 'grid'}
+                    on:click={() => setViewMode('grid')}
+                >
+                    {tShop('section.viewGrid')}
+                </button>
+                <button
+                    type="button"
+                    class="view-toggle__button"
+                    class:view-toggle__button--active={viewMode === 'list'}
+                    aria-pressed={viewMode === 'list'}
+                    on:click={() => setViewMode('list')}
+                >
+                    {tShop('section.viewList')}
+                </button>
+            </div>
+            {#if isAdmin}
             <button class="btn btn--add" id="add-shop-btn" on:click={openAddShopItem}>{tShop('section.add')}</button>
+            {/if}
         </div>
-        {/if}
     </div>
 
     {#if groups.length > 1}
@@ -205,9 +239,9 @@
     {/if}
 
     {#if visibleItems.length > 0}
-    <div class="cards" id="shop-list">
+    <div class="cards" class:cards--list={viewMode === 'list'} id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={balance >= itemPrice(item)} class:card--disabled={balance < itemPrice(item)}>
+        <div class="card card--shop shop-card" class:card--affordable={balance >= itemPrice(item)} class:card--disabled={balance < itemPrice(item)} class:shop-card--list={viewMode === 'list'}>
             <div class="card__badge-row">
                 <span class="card__badge card__badge--group">{item.groupName ?? tShop('section.noGroup')}</span>
                 {#if formatFrequency(item.frequency)}
@@ -225,38 +259,44 @@
                     {/if}
                 </span>
             </div>
-            <div class="card__header">
-                <h3 class="card__title">{item.name}</h3>
-                <div class="card__coins item-coins">
-                    <span class="gamified-icon icon-coin" aria-hidden="true"></span>
-                    <span>{item.price}</span>
+            <div class="shop-card__layout">
+                <div class="shop-card__main">
+                    <div class="card__header">
+                        <h3 class="card__title">{item.name}</h3>
+                        <div class="card__coins item-coins">
+                            <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                            <span>{item.price}</span>
+                        </div>
+                    </div>
+                    {#if item.comment}
+                    <p class="card__comment">{item.comment}</p>
+                    {:else}
+                    <p class="card__comment">{tShop('section.defaultComment')}</p>
+                    {/if}
                 </div>
-            </div>
-            {#if item.comment}
-            <p class="card__comment">{item.comment}</p>
-            {:else}
-            <p class="card__comment">{tShop('section.defaultComment')}</p>
-            {/if}
-            <div class="card__meta">
-                {#if item.moneyLimit != null}
-                <span class="card__meta-item">{tShop('section.moneyLimit', { amount: $i18n.formatNumber(item.moneyLimit) })}</span>
-                {/if}
-            </div>
-            <div class="card__actions">
-                {#if isAdmin}
-                <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item)}
-                    on:click={() => handleBuy(item.id)}>
-                    {tShop('actions.buy')}
-                </button>
-                <button class="btn btn--secondary btn--small admin-only" data-shop-action="edit" on:click={() => openEditShopItem(item)}>
-                    {tShop('actions.edit')}
-                </button>
-                {:else}
-                <button class="btn btn--primary" data-shop-action="request" disabled={balance < itemPrice(item)}
-                    on:click={() => handleBuy(item.id)}>
-                    {tShop('actions.request')}
-                </button>
-                {/if}
+                <div class="shop-card__side">
+                    <div class="card__meta">
+                        {#if item.moneyLimit != null}
+                        <span class="card__meta-item">{tShop('section.moneyLimit', { amount: $i18n.formatNumber(item.moneyLimit) })}</span>
+                        {/if}
+                    </div>
+                    <div class="card__actions">
+                        {#if isAdmin}
+                        <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item)}
+                            on:click={() => handleBuy(item.id)}>
+                            {tShop('actions.buy')}
+                        </button>
+                        <button class="btn btn--secondary btn--small admin-only" data-shop-action="edit" on:click={() => openEditShopItem(item)}>
+                            {tShop('actions.edit')}
+                        </button>
+                        {:else}
+                        <button class="btn btn--primary" data-shop-action="request" disabled={balance < itemPrice(item)}
+                            on:click={() => handleBuy(item.id)}>
+                            {tShop('actions.request')}
+                        </button>
+                        {/if}
+                    </div>
+                </div>
             </div>
         </div>
         {/each}
@@ -278,3 +318,121 @@
     </div>
     {/if}
 </section>
+
+<style>
+    .section__header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .view-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem;
+        border-radius: 999px;
+        border: 1px solid rgba(120, 140, 175, 0.18);
+        background: rgba(246, 248, 252, 0.92);
+    }
+
+    .view-toggle__button {
+        border: 0;
+        background: transparent;
+        color: rgba(54, 68, 96, 0.72);
+        font: inherit;
+        font-size: 0.84rem;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0.62rem 0.9rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .view-toggle__button--active {
+        background: linear-gradient(135deg, rgba(87, 121, 206, 0.18), rgba(84, 179, 160, 0.2));
+        color: #20304e;
+        box-shadow: inset 0 0 0 1px rgba(87, 121, 206, 0.14);
+    }
+
+    .cards--list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.9rem;
+    }
+
+    .shop-card__layout {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+    }
+
+    .shop-card__side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .shop-card--list {
+        padding: 1rem 1.05rem;
+    }
+
+    .shop-card--list .card__comment {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .shop-card--list .card__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+    }
+
+    .shop-card--list .card__actions .btn {
+        flex: 1 1 10rem;
+    }
+
+    @media (min-width: 720px) {
+        .shop-card--list .shop-card__layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(14rem, auto);
+            align-items: center;
+            gap: 1rem 1.25rem;
+        }
+
+        .shop-card--list .shop-card__side {
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        .shop-card--list .card__meta {
+            justify-content: flex-end;
+        }
+
+        .shop-card--list .card__actions {
+            justify-content: flex-end;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .section__header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .view-toggle {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .view-toggle__button {
+            flex: 1 1 0;
+            text-align: center;
+        }
+    }
+</style>

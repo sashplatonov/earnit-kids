@@ -11,6 +11,22 @@
     interface AuthConfig {
         emailVerificationEnabled: boolean;
         passwordRecoveryEnabled: boolean;
+        googleEnabled?: boolean;
+        googleClientId?: string | null;
+    }
+
+    interface GoogleCredentialResponse {
+        credential?: string;
+    }
+
+    interface GoogleIdApi {
+        initialize(config: {
+            client_id: string;
+            callback: (response: GoogleCredentialResponse) => void;
+            cancel_on_tap_outside?: boolean;
+            context?: 'signin';
+        }): void;
+        renderButton(parent: HTMLElement, options: Record<string, string | number>): void;
     }
 
     export let data: PageData;
@@ -28,8 +44,13 @@
     let submitting: ActivePanel | null = null;
     let emailVerificationEnabled = true;
     let passwordRecoveryEnabled = true;
+    let googleAuthEnabled = false;
+    let googleClientId = '';
+    let googleLoadFailed = false;
     let showLoginPassword = false;
     let showRegisterPassword = false;
+    let googleButtonHost: HTMLDivElement | null = null;
+    let googleScriptPromise: Promise<void> | null = null;
 
     $: alternates = $i18n.alternates('/login');
 
@@ -84,6 +105,18 @@
         clearMessages();
     }
 
+    function googleIdApi(): GoogleIdApi | undefined {
+        const googleWindow = window as unknown as {
+            google?: {
+                accounts?: {
+                    id?: GoogleIdApi;
+                };
+            };
+        };
+
+        return googleWindow.google?.accounts?.id;
+    }
+
     async function postJson(path: string, payload: Record<string, string>) {
         const response = await fetchWithCsrf(path, {
             method: 'POST',
@@ -123,6 +156,31 @@
 
             showError(readMessage(body, $i18n.t('auth.login.loginError')));
             loginPassword = '';
+        } catch {
+            showError($i18n.t('auth.login.loginNetworkError'));
+        } finally {
+            submitting = null;
+        }
+    }
+
+    async function handleGoogleLogin(response: GoogleCredentialResponse) {
+        if (!response.credential) {
+            showError($i18n.t('auth.login.googleError'));
+            return;
+        }
+
+        submitting = 'login';
+        clearMessages();
+
+        try {
+            const { response: serverResponse, body } = await postJson('/api/login-google', { credential: response.credential });
+
+            if (serverResponse.ok) {
+                location.assign($i18n.href('/app'));
+                return;
+            }
+
+            showError(readMessage(body, $i18n.t('auth.login.googleError')));
         } catch {
             showError($i18n.t('auth.login.loginNetworkError'));
         } finally {
@@ -209,6 +267,67 @@
         }
     }
 
+    async function loadGoogleScript(): Promise<void> {
+        if (googleIdApi()) {
+            return;
+        }
+
+        if (!googleScriptPromise) {
+            googleScriptPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error('google-script-load-failed'));
+                document.head.appendChild(script);
+            });
+        }
+
+        await googleScriptPromise;
+    }
+
+    async function renderGoogleButton() {
+        if (activePanel !== 'login' || !googleAuthEnabled || !googleClientId || !googleButtonHost) {
+            return;
+        }
+
+        try {
+            await loadGoogleScript();
+
+            const googleApi = googleIdApi();
+
+            if (!googleButtonHost || !googleApi) {
+                googleLoadFailed = true;
+                return;
+            }
+
+            googleButtonHost.innerHTML = '';
+            googleApi.initialize({
+                client_id: googleClientId,
+                callback: (response: GoogleCredentialResponse) => {
+                    void handleGoogleLogin(response);
+                },
+                cancel_on_tap_outside: true,
+                context: 'signin',
+            });
+            googleApi.renderButton(googleButtonHost, {
+                type: 'standard',
+                theme: 'outline',
+                size: 'large',
+                shape: 'pill',
+                text: 'continue_with',
+                width: 380,
+            });
+        } catch {
+            googleLoadFailed = true;
+        }
+    }
+
+    $: if (activePanel === 'login' && googleAuthEnabled && googleClientId && googleButtonHost && !googleLoadFailed) {
+        void renderGoogleButton();
+    }
+
     onMount(() => {
         const searchParams = new URLSearchParams(window.location.search);
 
@@ -232,6 +351,11 @@
 
                 if (typeof config.passwordRecoveryEnabled === 'boolean') {
                     passwordRecoveryEnabled = config.passwordRecoveryEnabled;
+                }
+
+                if (config.googleEnabled === true && typeof config.googleClientId === 'string' && config.googleClientId.trim()) {
+                    googleAuthEnabled = true;
+                    googleClientId = config.googleClientId.trim();
                 }
             })
             .catch(() => undefined);
@@ -545,6 +669,50 @@
         gap: 0.9rem;
     }
 
+    .google-auth {
+        display: grid;
+        gap: 0.85rem;
+        margin-bottom: 1rem;
+    }
+
+    .google-auth__button {
+        min-height: 44px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .google-auth__button--busy {
+        pointer-events: none;
+        opacity: 0.68;
+    }
+
+    .google-auth__hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .google-auth__divider {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .google-auth__divider::before,
+    .google-auth__divider::after {
+        content: '';
+        flex: 1 1 auto;
+        height: 1px;
+        background: rgba(125, 149, 187, 0.18);
+    }
+
     .input-field {
         width: 100%;
         padding: 0.85rem 1rem;
@@ -774,6 +942,21 @@
                     {#if activePanel === 'login'}
                         <div aria-label={$i18n.t('auth.login.loginFormAria')}>
                             <p class="hero-subtitle" style="margin-bottom: 1rem;">{$i18n.t('auth.login.loginIntro')}</p>
+                            {#if googleAuthEnabled}
+                                <div class="google-auth">
+                                    <div class="google-auth__divider">{$i18n.t('auth.login.googleDivider')}</div>
+                                    {#if googleLoadFailed}
+                                        <p class="google-auth__hint">{$i18n.t('auth.login.googleUnavailable')}</p>
+                                    {:else}
+                                        <div
+                                            bind:this={googleButtonHost}
+                                            class="google-auth__button"
+                                            class:google-auth__button--busy={submitting === 'login'}
+                                        ></div>
+                                        <p class="google-auth__hint">{$i18n.t('auth.login.googleHint')}</p>
+                                    {/if}
+                                </div>
+                            {/if}
                             <div class="form-grid">
                                 <input
                                     bind:this={loginEmailInput}

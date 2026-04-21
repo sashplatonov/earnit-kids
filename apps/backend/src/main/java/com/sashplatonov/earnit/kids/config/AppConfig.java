@@ -17,6 +17,8 @@ public interface AppConfig {
 
     PasswordRecovery passwordRecovery();
 
+    Google google();
+
     interface SuperAdmin {
 
         Optional<String> email();
@@ -34,5 +36,14 @@ public interface AppConfig {
 
         @WithDefault("true")
         boolean enabled();
+    }
+
+    interface Google {
+
+        @WithDefault("false")
+        boolean enabled();
+
+        Optional<String> clientId();
+        Optional<String> clientSecret();
     }
 }

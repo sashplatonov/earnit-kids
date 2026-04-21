@@ -48,6 +48,7 @@ class AuthServiceImplTest {
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
     @Mock SuperAdminCredentialRepository superAdminCredentialRepository;
+    @Mock GoogleIdentityVerifier googleIdentityVerifier;
 
     AuthServiceImpl authService;
     PasswordHasher passwordHasher;
@@ -145,6 +146,51 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("unknown@test.com", "password");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
+    }
+
+    @Test
+    void authenticateAdminWithGoogle_verifiedExistingFamily_returnsAdminPayloadAndVerifiesLocalEmail() {
+        AuthServiceImpl serviceWithGoogle = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
+        when(googleIdentityVerifier.verify("google-token", "google-client-id"))
+            .thenReturn(Optional.of(new GoogleIdentity("user@test.com", true)));
+        when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
+        when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
+        when(familyRepository.verifyFamily("fam_1")).thenReturn(true);
+
+        OperationResult<AuthPayload> result = serviceWithGoogle.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.familyId()).isEqualTo("fam_1");
+        verify(familyRepository).verifyFamily("fam_1");
+    }
+
+    @Test
+    void authenticateAdminWithGoogle_missingLinkedFamily_returnsFailure() {
+        AuthServiceImpl serviceWithGoogle = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, false, true, true, "google-client-id"));
+        when(googleIdentityVerifier.verify("google-token", "google-client-id"))
+            .thenReturn(Optional.of(new GoogleIdentity("missing@test.com", true)));
+        when(familyRepository.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+
+        OperationResult<AuthPayload> result = serviceWithGoogle.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+            .contains("No family account is linked");
+    }
+
+    @Test
+    void authenticateAdminWithGoogle_disabledConfig_returnsFailureWithoutVerifierCall() {
+        OperationResult<AuthPayload> result = authService.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+            .contains("Google sign-in is not configured");
+        verify(googleIdentityVerifier, never()).verify(anyString(), anyString());
     }
 
     @Test
@@ -440,7 +486,8 @@ class AuthServiceImplTest {
             passwordHasher,
             TOKEN_GENERATOR,
             TestConfigFactory.timeProvider(FIXED_NOW),
-            superAdminCredentialsService
+            superAdminCredentialsService,
+            googleIdentityVerifier
         );
     }
 

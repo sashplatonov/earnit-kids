@@ -6,11 +6,13 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.config.CookieBuilder;
 import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ForgotPasswordRequest;
+import com.sashplatonov.earnit.kids.dto.request.GoogleLoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.RegisterRequest;
 import com.sashplatonov.earnit.kids.dto.request.ResetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.VerifyEmailRequest;
+import com.sashplatonov.earnit.kids.dto.response.AuthConfigResponse;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.service.AuthService;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
@@ -65,6 +67,30 @@ class AuthResourceTest {
             .thenReturn(OperationResult.failure("bad creds"));
 
         Response response = resource.login(new LoginRequest("a@test.com", "bad"));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void loginGoogle_validParentCredential_returnsCookies() {
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
+        when(authService.authenticateAdminWithGoogle("google-token"))
+            .thenReturn(OperationResult.success(payload));
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, 2592000))
+            .thenReturn(List.of("cookie-1"));
+
+        Response response = resource.loginGoogle(new GoogleLoginRequest("google-token"));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaders().get("Set-Cookie")).hasSize(1);
+    }
+
+    @Test
+    void loginGoogle_invalidCredential_returnsUnauthorized() {
+        when(authService.authenticateAdminWithGoogle("bad-token"))
+            .thenReturn(OperationResult.failure("bad creds"));
+
+        Response response = resource.loginGoogle(new GoogleLoginRequest("bad-token"));
 
         assertThat(response.getStatus()).isEqualTo(401);
     }
@@ -168,6 +194,21 @@ class AuthResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getEntity()).isNotNull();
+    }
+
+    @Test
+    void authConfig_googleFeatureEnabled_exposesClientId() {
+        resource = new AuthResource(
+            authService,
+            cookieBuilder,
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+
+        Response response = resource.authConfig();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        AuthConfigResponse config = (AuthConfigResponse) response.getEntity();
+        assertThat(config.googleEnabled()).isTrue();
+        assertThat(config.googleClientId()).isEqualTo("google-client-id");
     }
 
     private static ContainerRequestContext contextWithAuth(AuthContext auth) {

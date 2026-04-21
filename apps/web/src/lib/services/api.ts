@@ -105,6 +105,21 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
     }
 }
 
+async function flushPendingCrudSave(): Promise<void> {
+    const { flushPendingSave } = await import('$lib/services/save');
+    await flushPendingSave();
+}
+
+async function postJsonAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<T | null> {
+    await flushPendingCrudSave();
+    return postJson<T>(url, body);
+}
+
+async function postJsonResultAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
+    await flushPendingCrudSave();
+    return postJsonResult<T>(url, body);
+}
+
 async function postBoolean(url: string, body: unknown, errorMsg?: string): Promise<boolean> {
     try {
         const res = await fetchWithCsrf(url, {
@@ -145,6 +160,11 @@ async function deleteResource(url: string, errorMsg?: string): Promise<boolean> 
         if (errorMsg) console.error(errorMsg, err);
         return false;
     }
+}
+
+async function deleteResourceAfterPendingSave(url: string, errorMsg?: string): Promise<boolean> {
+    await flushPendingCrudSave();
+    return deleteResource(url, errorMsg);
 }
 
 type ChildLinkPayload = {
@@ -207,42 +227,42 @@ export const logout = () => postBoolean('/api/logout', {}, 'Logout failed');
 // ── Task actions ──────────────────────────────────────────────────────────────
 
 export const earnCoins = (taskId: unknown, childId?: unknown) =>
-    postJson(`/api/tasks/${encodeURIComponent(String(taskId))}/complete${buildChildQuery(childId)}`, {});
+    postJsonAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/complete${buildChildQuery(childId)}`, {});
 
 export const requestCoins = (taskId: unknown) =>
-    postJsonResult(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, {});
+    postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, {});
 
 // ── Shop actions ──────────────────────────────────────────────────────────────
 
 /** Admin: immediately purchase an item for a child. */
 export const buyItem = (itemId: unknown, childId?: unknown) =>
-    postJson(`/api/shop/${encodeURIComponent(String(itemId))}/purchase${buildChildQuery(childId)}`, {});
+    postJsonAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/purchase${buildChildQuery(childId)}`, {});
 
 /** Child: create a purchase request that requires parent approval. */
 export const requestItem = (itemId: unknown) =>
-    postJsonResult(`/api/shop/${encodeURIComponent(String(itemId))}/request`, {});
+    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request`, {});
 
 // ── Request actions ───────────────────────────────────────────────────────────
 
 export const approveRequest = (requestId: unknown, childId?: unknown) =>
-    postJson(`/api/requests/${encodeURIComponent(String(requestId))}/approve${buildChildQuery(childId)}`, {});
+    postJsonAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}/approve${buildChildQuery(childId)}`, {});
 
 export const rejectRequest = (requestId: unknown, childId?: unknown) =>
-    postJson(`/api/requests/${encodeURIComponent(String(requestId))}/reject${buildChildQuery(childId)}`, {});
+    postJsonAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}/reject${buildChildQuery(childId)}`, {});
 
 export const deleteRequest = (requestId: unknown, childId?: unknown) =>
-    deleteResource(`/api/requests/${encodeURIComponent(String(requestId))}${buildChildQuery(childId)}`, 'Delete request failed');
+    deleteResourceAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}${buildChildQuery(childId)}`, 'Delete request failed');
 
 // ── History actions ───────────────────────────────────────────────────────────
 
 export const deleteHistoryItem = (historyId: unknown, childId?: unknown) =>
-    deleteResource(`/api/history/${encodeURIComponent(String(historyId))}${buildChildQuery(childId)}`, 'Delete history failed');
+    deleteResourceAfterPendingSave(`/api/history/${encodeURIComponent(String(historyId))}${buildChildQuery(childId)}`, 'Delete history failed');
 
 // ── Admin actions ─────────────────────────────────────────────────────────────
 
 /** Award or deduct coins for a child. Maps to POST /api/balance/adjust. */
 export const adminAwardCoins = (childId: unknown, amount: number, description?: string) =>
-    postJson('/api/balance/adjust', { childId, amount, description });
+    postJsonAfterPendingSave('/api/balance/adjust', { childId, amount, description });
 
 /** Update child settings (name + limits). Admin only. */
 export const adminSaveChildSettings = (childId: unknown, settings: { name?: string; dailyCoinLimit?: number; monthlyLimit?: number }) =>
