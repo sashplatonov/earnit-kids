@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, onMount, onDestroy } from 'svelte';
     import { isNoopGroupDrop, moveGroup, reorderGroupsBySlot } from '$lib/services/groupOrder';
 
     export let isOpen = false;
@@ -29,6 +29,26 @@
     let startX = 0;
     let startY = 0;
     let isTouchDrag = false;
+        let ghostEl: HTMLDivElement | null = null;
+
+        onMount(() => {
+            if (typeof document !== 'undefined') {
+                ghostEl = document.createElement('div');
+                ghostEl.className = 'group-order-drag-ghost';
+                ghostEl.setAttribute('aria-hidden', 'true');
+                ghostEl.style.position = 'fixed';
+                ghostEl.style.pointerEvents = 'none';
+                ghostEl.style.display = 'none';
+                document.body.appendChild(ghostEl);
+            }
+        });
+
+        onDestroy(() => {
+            if (ghostEl && ghostEl.parentNode) {
+                ghostEl.parentNode.removeChild(ghostEl);
+            }
+            ghostEl = null;
+        });
 
     $: if (!isOpen) {
         draft = [...groups];
@@ -173,6 +193,17 @@
             && dropSlotIndex === slotIndex
             && !isNoopGroupDrop(dragSourceIndex, slotIndex);
     }
+
+    $: if (ghostEl) {
+        if (dragStarted && dragSourceIndex != null) {
+            ghostEl.style.display = 'block';
+            ghostEl.style.left = `${dragGhostX + (isTouchDrag ? 26 : 18)}px`;
+            ghostEl.style.top = `${dragGhostY - (isTouchDrag ? 40 : 10)}px`;
+            ghostEl.textContent = draft[dragSourceIndex] ?? '';
+        } else {
+            ghostEl.style.display = 'none';
+        }
+    }
 </script>
 
 <svelte:window on:pointermove={handlePointerMove} on:pointerup={handlePointerUp} on:pointercancel={handlePointerUp} on:keydown={handleWindowKeydown} />
@@ -265,12 +296,4 @@
 </div>
 {/if}
 
-{#if dragStarted && dragSourceIndex != null}
-<div
-    class="group-order-drag-ghost"
-    aria-hidden="true"
-    style={`left:${dragGhostX + (isTouchDrag ? 26 : 18)}px; top:${dragGhostY - (isTouchDrag ? 40 : 10)}px;`}
->
-    {draft[dragSourceIndex]}
-</div>
-{/if}
+<!-- Drag ghost is rendered into document.body via portal to avoid transform offset issues -->
