@@ -113,6 +113,8 @@ The full reference lives in root `.env.example`. The table below lists the varia
 | `ENABLE_PASSWORD_RECOVERY` | Backend feature flag | `false` | Toggle forgot/reset password flow |
 | `JAVA_XMX` | Native Docker build | `2500m` | Native image builder memory cap |
 
+Telegram backup credentials and schedule are configured from the super-admin panel, not from the env examples.
+
 [↩ Back to toc](#table-of-contents)
 
 ## 🛠️ Local Commands

@@ -3,9 +3,13 @@ package com.sashplatonov.earnit.kids.resource;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
+import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
+import com.sashplatonov.earnit.kids.service.BackupTelegramSettingsService;
 import com.sashplatonov.earnit.kids.service.DatabaseBackupService;
 import com.sashplatonov.earnit.kids.service.SuperAdminService;
 import com.sashplatonov.earnit.kids.service.SystemDashboardService;
+import com.sashplatonov.earnit.kids.service.TelegramBackupService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
@@ -17,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -29,12 +34,20 @@ class SuperAdminResourceTest {
     @Mock SuperAdminService superAdminService;
     @Mock SystemDashboardService systemDashboardService;
     @Mock DatabaseBackupService databaseBackupService;
+    @Mock BackupTelegramSettingsService backupTelegramSettingsService;
+    @Mock TelegramBackupService telegramBackupService;
 
     private SuperAdminResource resource;
 
     @BeforeEach
     void setUp() {
-        resource = new SuperAdminResource(superAdminService, systemDashboardService, databaseBackupService);
+        resource = new SuperAdminResource(
+            superAdminService,
+            systemDashboardService,
+            databaseBackupService,
+            backupTelegramSettingsService,
+            telegramBackupService
+        );
     }
 
     @Test
@@ -291,6 +304,61 @@ class SuperAdminResourceTest {
         when(databaseBackupService.restoreBackup(payload)).thenReturn(OperationResult.success(null));
 
         Response response = resource.restoreDatabase(contextWithAuth(superAdminAuth()), payload);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void getBackupTelegramSettings_returnsPayload() {
+        BackupTelegramSettingsResponse payload = new BackupTelegramSettingsResponse(
+            true,
+            "chat-1",
+            12,
+            true,
+            true,
+            null,
+            null,
+            null
+        );
+        when(backupTelegramSettingsService.getSettings()).thenReturn(payload);
+
+        Response response = resource.getBackupTelegramSettings(contextWithAuth(superAdminAuth()));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getEntity()).isEqualTo(payload);
+    }
+
+    @Test
+    void updateBackupTelegramSettings_invalid_returns400() {
+        UpdateBackupTelegramSettingsRequest request =
+            new UpdateBackupTelegramSettingsRequest(true, null, "chat-1", 24);
+        when(backupTelegramSettingsService.updateSettings(request))
+            .thenReturn(OperationResult.failure("Сохраните Telegram bot token"));
+
+        Response response = resource.updateBackupTelegramSettings(contextWithAuth(superAdminAuth()), request);
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    void sendBackupToTelegram_notConfigured_returns503() throws Exception {
+        when(telegramBackupService.isConfigured()).thenReturn(false);
+
+        Response response = resource.sendBackupToTelegram(contextWithAuth(superAdminAuth()));
+
+        assertThat(response.getStatus()).isEqualTo(503);
+    }
+
+    @Test
+    void sendBackupToTelegram_success_returnsOk() throws Exception {
+        DatabaseBackupService.BackupArtifact artifact =
+            new DatabaseBackupService.BackupArtifact(Path.of("backup.dump"), "backup.dump");
+        when(telegramBackupService.isConfigured()).thenReturn(true);
+        when(databaseBackupService.createBackup()).thenReturn(OperationResult.success(artifact));
+        when(telegramBackupService.sendBackup(artifact.path(), artifact.filename()))
+            .thenReturn(OperationResult.success(null));
+
+        Response response = resource.sendBackupToTelegram(contextWithAuth(superAdminAuth()));
 
         assertThat(response.getStatus()).isEqualTo(200);
     }

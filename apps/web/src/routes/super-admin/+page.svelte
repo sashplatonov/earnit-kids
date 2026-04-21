@@ -70,6 +70,20 @@
     let dbStatus = '';
     let dbStatusType: StatusTone = '';
     let dbChecking = false;
+    let telegramScheduleMode: 'on' | 'off' = 'off';
+    let telegramChatId = '';
+    let telegramIntervalHours = '24';
+    let telegramBotToken = '';
+    let telegramHasBotToken = false;
+    let telegramConfigured = false;
+    let telegramLastAttemptAt: string | null = null;
+    let telegramLastSentAt: string | null = null;
+    let telegramLastError: string | null = null;
+    let telegramSettingsLoading = false;
+    let telegramSettingsSaving = false;
+    let telegramBackupSending = false;
+    let telegramSettingsStatus = '';
+    let telegramSettingsStatusType: StatusTone = '';
 
     // System state
     type SystemInfo = { version?: string; uptime?: string; nodeVersion?: string; dbStatus?: string; memoryMB?: number; buildTs?: string; cpu?: string; memory?: string; uptimeSeconds?: number };
@@ -276,6 +290,120 @@
             } else { dbStatus = 'Ошибка запроса'; dbStatusType = 'error'; }
         } catch { dbStatus = 'Сеть недоступна'; dbStatusType = 'error'; }
         finally { dbChecking = false; }
+    }
+
+    function applyTelegramBackupSettings(payload: unknown) {
+        if (!payload || typeof payload !== 'object') {
+            telegramScheduleMode = 'off';
+            telegramChatId = '';
+            telegramIntervalHours = '24';
+            telegramHasBotToken = false;
+            telegramConfigured = false;
+            telegramLastAttemptAt = null;
+            telegramLastSentAt = null;
+            telegramLastError = null;
+            return;
+        }
+
+        const record = payload as Record<string, unknown>;
+        telegramScheduleMode = record.enabled === true ? 'on' : 'off';
+        telegramChatId = typeof record.chatId === 'string' ? record.chatId : '';
+        telegramIntervalHours = String(parseNumber(record.intervalHours) || 24);
+        telegramHasBotToken = record.hasBotToken === true;
+        telegramConfigured = record.configured === true;
+        telegramLastAttemptAt = typeof record.lastAttemptAt === 'string' ? record.lastAttemptAt : null;
+        telegramLastSentAt = typeof record.lastSentAt === 'string' ? record.lastSentAt : null;
+        telegramLastError = typeof record.lastError === 'string' ? record.lastError : null;
+    }
+
+    async function loadTelegramBackupSettings() {
+        telegramSettingsLoading = true;
+        try {
+            const res = await fetchWithCsrf('/api/super/db-backup/telegram-settings');
+            const payload = await res.json().catch(() => null);
+            if (res.ok) {
+                applyTelegramBackupSettings(payload);
+            } else {
+                telegramSettingsStatus = messageFromPayload(payload, 'Не удалось загрузить Telegram-настройки');
+                telegramSettingsStatusType = 'error';
+            }
+        } catch {
+            telegramSettingsStatus = 'Сеть недоступна';
+            telegramSettingsStatusType = 'error';
+        } finally {
+            telegramSettingsLoading = false;
+        }
+    }
+
+    async function saveTelegramBackupSettings() {
+        const intervalHours = parseInt(telegramIntervalHours, 10) || 0;
+        if (intervalHours < 1 || intervalHours > 720) {
+            telegramSettingsStatus = 'Интервал должен быть от 1 до 720 часов';
+            telegramSettingsStatusType = 'error';
+            return;
+        }
+
+        telegramSettingsSaving = true;
+        telegramSettingsStatus = 'Сохраняем Telegram-настройки...';
+        telegramSettingsStatusType = 'info';
+
+        try {
+            const body: Record<string, unknown> = {
+                enabled: telegramScheduleMode === 'on',
+                chatId: telegramChatId,
+                intervalHours,
+            };
+            if (telegramBotToken !== '') {
+                body.botToken = telegramBotToken;
+            }
+
+            const res = await fetchWithCsrf('/api/super/db-backup/telegram-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const payload = await res.json().catch(() => null);
+            if (res.ok) {
+                applyTelegramBackupSettings(payload);
+                telegramBotToken = '';
+                telegramSettingsStatus = 'Telegram-настройки сохранены';
+                telegramSettingsStatusType = 'success';
+            } else {
+                telegramSettingsStatus = messageFromPayload(payload, 'Не удалось сохранить Telegram-настройки');
+                telegramSettingsStatusType = 'error';
+            }
+        } catch {
+            telegramSettingsStatus = 'Сеть недоступна';
+            telegramSettingsStatusType = 'error';
+        } finally {
+            telegramSettingsSaving = false;
+        }
+    }
+
+    async function sendBackupToTelegram() {
+        telegramBackupSending = true;
+        telegramSettingsStatus = 'Отправляем бэкап в Telegram...';
+        telegramSettingsStatusType = 'info';
+
+        try {
+            const res = await fetchWithCsrf('/api/super/db-backup/send-telegram', {
+                method: 'POST',
+            });
+            const payload = await res.json().catch(() => null);
+            if (res.ok) {
+                await loadTelegramBackupSettings();
+                telegramSettingsStatus = 'Бэкап отправлен в Telegram';
+                telegramSettingsStatusType = 'success';
+            } else {
+                telegramSettingsStatus = messageFromPayload(payload, 'Не удалось отправить бэкап в Telegram');
+                telegramSettingsStatusType = 'error';
+            }
+        } catch {
+            telegramSettingsStatus = 'Сеть недоступна';
+            telegramSettingsStatusType = 'error';
+        } finally {
+            telegramBackupSending = false;
+        }
     }
 
     function triggerBackup() {
@@ -504,6 +632,7 @@
     onMount(() => {
         void loadFamilies();
         void loadSystem();
+        void loadTelegramBackupSettings();
     });
 </script>
 
@@ -832,6 +961,103 @@
                         <button class="btn btn--ghost" type="button" on:click={checkDbStatus}>Проверить</button>
                     </article>
                 </div>
+                {#if telegramSettingsLoading}
+                <div class="panel-state panel-state--loading">Загрузка Telegram-настроек...</div>
+                {:else}
+                <div class="system-panel__details">
+                    <article class="system-card system-card--form">
+                        <p class="system-card__label">Telegram</p>
+                        <h3 class="system-card__heading">Автоотправка бэкапов</h3>
+                        <div class="password-form-grid">
+                            <div class="input-group">
+                                <label for="backup-telegram-enabled">Расписание</label>
+                                <select id="backup-telegram-enabled" bind:value={telegramScheduleMode}>
+                                    <option value="off">Выключено</option>
+                                    <option value="on">Включено</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="backup-telegram-chat-id">Chat ID</label>
+                                <input id="backup-telegram-chat-id" type="text" bind:value={telegramChatId}
+                                    placeholder="-1001234567890" autocomplete="off" />
+                            </div>
+                            <div class="input-group">
+                                <label for="backup-telegram-interval">Интервал, часов</label>
+                                <input id="backup-telegram-interval" type="number" min="1" max="720"
+                                    bind:value={telegramIntervalHours} />
+                            </div>
+                            <div class="input-group">
+                                <label for="backup-telegram-token">Bot token</label>
+                                <input id="backup-telegram-token" type="password" bind:value={telegramBotToken}
+                                    placeholder={telegramHasBotToken
+                                        ? 'Сохранён. Оставьте пустым, чтобы не менять'
+                                        : '123456:ABCDEF...'}
+                                    autocomplete="new-password" />
+                            </div>
+                        </div>
+                        <p class="db-card__status">
+                            {#if telegramHasBotToken}
+                            Токен сохранён.
+                            {:else}
+                            Токен ещё не сохранён.
+                            {/if}
+                            {#if telegramConfigured}
+                            Отправка доступна.
+                            {:else}
+                            Для отправки нужны chat id и bot token.
+                            {/if}
+                        </p>
+                        {#if telegramSettingsStatus}
+                        <div class="status-callout"
+                            class:status-callout--success={telegramSettingsStatusType === 'success'}
+                            class:status-callout--error={telegramSettingsStatusType === 'error'}
+                            class:status-callout--info={telegramSettingsStatusType === 'info'}
+                            role="status">
+                            {telegramSettingsStatus}
+                        </div>
+                        {/if}
+                        <div class="password-panel__actions">
+                            <button class="btn btn--ghost" type="button"
+                                disabled={telegramSettingsSaving || telegramBackupSending}
+                                on:click={loadTelegramBackupSettings}>
+                                Обновить
+                            </button>
+                            <button class="btn btn--primary" type="button"
+                                disabled={telegramSettingsSaving || telegramBackupSending}
+                                on:click={saveTelegramBackupSettings}>
+                                {telegramSettingsSaving ? 'Сохраняем...' : 'Сохранить'}
+                            </button>
+                            <button class="btn btn--success" type="button"
+                                disabled={telegramSettingsSaving || telegramBackupSending || !telegramConfigured}
+                                on:click={sendBackupToTelegram}>
+                                {telegramBackupSending ? 'Отправляем...' : 'Отправить сейчас'}
+                            </button>
+                        </div>
+                    </article>
+                    <article class="system-card">
+                        <p class="system-card__label">Статус Telegram</p>
+                        <h3 class="system-card__heading">Последняя активность</h3>
+                        <dl class="system-detail-list">
+                            <div>
+                                <dt>Состояние</dt>
+                                <dd>{telegramScheduleMode === 'on' ? 'Расписание включено' : 'Расписание выключено'}</dd>
+                            </div>
+                            <div>
+                                <dt>Последняя попытка</dt>
+                                <dd>{formatDateTime(telegramLastAttemptAt)}</dd>
+                            </div>
+                            <div>
+                                <dt>Последняя отправка</dt>
+                                <dd>{formatDateTime(telegramLastSentAt)}</dd>
+                            </div>
+                            <div>
+                                <dt>Последняя ошибка</dt>
+                                <dd>{telegramLastError || '—'}</dd>
+                            </div>
+                        </dl>
+                    </article>
+                </div>
+                {/if}
                 {#if dbStatus}
                 <div class="status-callout"
                     class:status-callout--success={dbStatusType === 'success'}
