@@ -4,6 +4,26 @@ export function getGroupName(entity: Record<string, unknown> | null | undefined)
     return (entity?.groupName ?? entity?.group ?? entity?.category ?? null) as string | null;
 }
 
+function readStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    const result: string[] = [];
+    for (const entry of value) {
+        if (typeof entry !== 'string') {
+            continue;
+        }
+
+        const trimmed = entry.trim();
+        if (trimmed && !result.includes(trimmed)) {
+            result.push(trimmed);
+        }
+    }
+
+    return result;
+}
+
 export function normalizeChild(child: Record<string, unknown> = {}) {
     const nickname = (child.nickname ?? child.name ?? '') as string;
 
@@ -13,6 +33,11 @@ export function normalizeChild(child: Record<string, unknown> = {}) {
         name: (child.name ?? nickname) as string,
         monthlyLimit: child.monthlyLimit ?? child.monthly_limit ?? 10000,
         dailyCoinLimit: child.dailyCoinLimit ?? child.daily_coin_limit ?? 0,
+        theme: (child.theme ?? null) as string | null,
+        taskGroupOrder: readStringArray(child.taskGroupOrder ?? child.task_group_order),
+        shopGroupOrder: readStringArray(child.shopGroupOrder ?? child.shop_group_order),
+        childTaskGroupOrder: readStringArray(child.childTaskGroupOrder ?? child.child_task_group_order),
+        childShopGroupOrder: readStringArray(child.childShopGroupOrder ?? child.child_shop_group_order),
     };
 }
 

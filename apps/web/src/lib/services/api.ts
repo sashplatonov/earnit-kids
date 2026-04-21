@@ -276,6 +276,9 @@ export async function adminRegenerateChildLink(childId: unknown) {
 export const adminSaveLimits = (childId: unknown, limits: { dailyCoinLimit?: number; monthlyLimit?: number }) =>
     postJson(`/api/children/${encodeURIComponent(String(childId))}/settings`, limits);
 
+export const saveChildGroupOrder = (childId: unknown, section: 'tasks' | 'shop', groups: string[]) =>
+    postJsonResult(`/api/children/${encodeURIComponent(String(childId))}/group-order`, { section, groups });
+
 // ── Push registration ─────────────────────────────────────────────────────────
 
 export const registerPushTokenOnServer = (payload: unknown) =>

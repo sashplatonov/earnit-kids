@@ -52,4 +52,16 @@ public class ChildEntity extends CreatedAtEntity {
     @Column(name = "theme")
     @Builder.Default
     private String theme = "ocean";
+
+    @Column(name = "task_group_order")
+    private String taskGroupOrder;
+
+    @Column(name = "shop_group_order")
+    private String shopGroupOrder;
+
+    @Column(name = "child_task_group_order")
+    private String childTaskGroupOrder;
+
+    @Column(name = "child_shop_group_order")
+    private String childShopGroupOrder;
 }

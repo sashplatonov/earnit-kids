@@ -86,6 +86,11 @@ export interface Child {
     isPinSet?: boolean;
     ageMin?: number | null;
     ageMax?: number | null;
+    theme?: string | null;
+    taskGroupOrder?: string[];
+    shopGroupOrder?: string[];
+    childTaskGroupOrder?: string[];
+    childShopGroupOrder?: string[];
     [key: string]: unknown;
 }
 

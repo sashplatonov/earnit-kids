@@ -5,9 +5,13 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.service.BackupTelegramSettingsService;
 import com.sashplatonov.earnit.kids.service.DatabaseBackupService;
+import com.sashplatonov.earnit.kids.service.TelegramBackupService;
 import com.sashplatonov.earnit.kids.service.SuperAdminService;
 import com.sashplatonov.earnit.kids.service.SystemDashboardService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -39,6 +43,8 @@ public class SuperAdminResource {
     private final SuperAdminService superAdminService;
     private final SystemDashboardService systemDashboardService;
     private final DatabaseBackupService databaseBackupService;
+    private final BackupTelegramSettingsService backupTelegramSettingsService;
+    private final TelegramBackupService telegramBackupService;
 
     @GET
     @Path("/families")
@@ -259,6 +265,73 @@ public class SuperAdminResource {
             return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
         }
         return Response.ok(SimpleResponse.ok()).build();
+    }
+
+    @GET
+    @Path("/db-backup/telegram-settings")
+    public Response getBackupTelegramSettings(@Context ContainerRequestContext ctx) {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        BackupTelegramSettingsResponse payload = backupTelegramSettingsService.getSettings();
+        return Response.ok(payload).build();
+    }
+
+    @POST
+    @Path("/db-backup/telegram-settings")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateBackupTelegramSettings(@Context ContainerRequestContext ctx,
+                                                 @Valid UpdateBackupTelegramSettingsRequest request) {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        OperationResult<BackupTelegramSettingsResponse> result = backupTelegramSettingsService.updateSettings(request);
+        if (result instanceof OperationResult.Success<BackupTelegramSettingsResponse> success) {
+            return Response.ok(success.value()).build();
+        }
+
+        OperationResult.Failure<BackupTelegramSettingsResponse> failure =
+            (OperationResult.Failure<BackupTelegramSettingsResponse>) result;
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse.of(failure.message(), "BACKUP_TELEGRAM_SETTINGS_INVALID", 400))
+            .build();
+    }
+
+    @POST
+    @Path("/db-backup/send-telegram")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response sendBackupToTelegram(@Context ContainerRequestContext ctx) throws IOException {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        if (!telegramBackupService.isConfigured()) {
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                .entity(SimpleResponse.error("Telegram alerts are not configured"))
+                .build();
+        }
+
+        OperationResult<DatabaseBackupService.BackupArtifact> result = databaseBackupService.createBackup();
+        if (result instanceof OperationResult.Failure<DatabaseBackupService.BackupArtifact> failure) {
+            return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
+        }
+
+        DatabaseBackupService.BackupArtifact artifact = ((OperationResult.Success<DatabaseBackupService.BackupArtifact>) result).value();
+
+        OperationResult<Void> sent = telegramBackupService.sendBackup(artifact.path(), artifact.filename());
+        if (sent instanceof OperationResult.Success<?>) {
+            return Response.ok(SimpleResponse.ok()).build();
+        } else {
+            OperationResult.Failure<Void> f = (OperationResult.Failure<Void>) sent;
+            return Response.status(Response.Status.BAD_GATEWAY)
+                .entity(SimpleResponse.error(f.message()))
+                .build();
+        }
     }
 
     private Response toTokenResponse(OperationResult<String> result) {

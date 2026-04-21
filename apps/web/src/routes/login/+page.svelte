@@ -114,7 +114,7 @@
             const { response, body } = await postJson('/api/login', { email, password });
 
             if (response.ok) {
-                location.assign('/');
+                location.assign('/app');
                 return;
             }
 

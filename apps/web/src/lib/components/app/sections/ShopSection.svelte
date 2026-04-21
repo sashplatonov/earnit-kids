@@ -1,20 +1,47 @@
 <script lang="ts">
+    import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import { appStore } from '$lib/stores/app';
+    import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { buyItem, requestItem } from '$lib/services/api';
+    import { buyItem, requestItem, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
+    import {
+        applyGroupOrderToChildren,
+        getEffectiveGroupOrder,
+        hasSavedGroupOrder,
+        normalizeGroupLabel,
+        orderGroups,
+        sortItemsByGroup,
+    } from '$lib/services/groupOrder';
     import { showToast } from '$lib/stores/toasts';
+    import { page } from '$app/stores';
+
+    let isEditingGroupOrder = false;
+    let isSavingGroupOrder = false;
 
     $: shopItems = $appStore.shopItems;
     $: isAdmin = $appStore.isAdmin;
     $: balance = $appStore.balance;
 
-    $: groups = [...new Set(shopItems.map(i => i.groupName ?? 'Без группы'))];
-    let selectedGroup = '';
+    $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
+    $: currentChild = (($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
+        ?? $appStore.children[0]
+        ?? null) as Child | null);
+    $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
+    $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
+    $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
+    
+    // Read selected group from query parameter
+    $: selectedGroup = ($page.url.searchParams.get('group') ?? '');
+    $: if (selectedGroup && !groups.includes(selectedGroup)) {
+        const url = new URL($page.url);
+        url.searchParams.delete('group');
+        history.replaceState(null, '', url);
+    }
 
     $: visibleItems = selectedGroup
-        ? shopItems.filter(i => (i.groupName ?? 'Без группы') === selectedGroup)
-        : shopItems;
+        ? shopItems.filter((item) => normalizeGroupLabel(item.groupName) === selectedGroup)
+        : sortItemsByGroup(shopItems, groups, (item) => normalizeGroupLabel(item.groupName));
 
     function missingCoins(price: number) {
         return Math.max(price - balance, 0);
@@ -39,8 +66,8 @@
     }
 
     async function handleBuy(itemId: unknown) {
-        const childId = $appStore.currentChildId;
-        const item = shopItems.find(i => i.id == itemId);
+        const childId = resolvedChildId;
+        const item = shopItems.find((entry) => entry.id == itemId);
         if (!item) return;
         if (isAdmin) {
             if (balance < (item.price as number)) {
@@ -77,6 +104,38 @@
     function itemPrice(item: { price?: unknown }) {
         return Number(item.price ?? 0);
     }
+
+    async function persistGroupOrder(nextOrder: string[]) {
+        if (resolvedChildId == null) {
+            showToast('Сначала выберите ребенка', 'error');
+            return;
+        }
+
+        isSavingGroupOrder = true;
+        const result = await saveChildGroupOrder(resolvedChildId, 'shop', nextOrder);
+        if (result.ok) {
+            appStore.update((state) => ({
+                ...state,
+                children: applyGroupOrderToChildren(state.children, resolvedChildId, 'shop', isAdmin, nextOrder),
+            }));
+            isEditingGroupOrder = false;
+            showToast(
+                isAdmin ? 'Порядок групп наград сохранен' : 'Твой порядок групп наград сохранен',
+                'success'
+            );
+        } else {
+            showToast(result.error, 'error');
+        }
+        isSavingGroupOrder = false;
+    }
+
+    async function handleGroupOrderSave(event: CustomEvent<string[]>) {
+        await persistGroupOrder(event.detail);
+    }
+
+    async function handleGroupOrderReset() {
+        await persistGroupOrder([]);
+    }
 </script>
 
 <section class="section" id="shop-section">
@@ -99,15 +158,38 @@
     {#if groups.length > 1}
     <nav class="group-nav" id="shop-group-nav">
         <div class="group-nav__scroll">
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => {
+                const url = new URL($page.url);
+                url.searchParams.delete('group');
+                history.pushState(null, '', url);
+            }}>
                 Все
             </button>
             {#each groups as group (group)}
             <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
-                on:click={() => selectedGroup = group}>{group}</button>
+                on:click={() => {
+                    const url = new URL($page.url);
+                    url.searchParams.set('group', group);
+                    history.pushState(null, '', url);
+                }}>{group}</button>
             {/each}
         </div>
     </nav>
+
+    <GroupOrderEditor
+        bind:isOpen={isEditingGroupOrder}
+        {isAdmin}
+        isSaving={isSavingGroupOrder}
+        hasStoredOrder={hasStoredGroupOrder}
+        {groups}
+        title="Порядок групп наград"
+        hintAdmin="Родитель задает порядок групп магазина по умолчанию для этого ребенка."
+        hintChild="Можно переставить группы наград под себя, не меняя родительский порядок."
+        descriptionAdmin="Перетащи группу в нужное место. Новый порядок станет основным для магазина этого ребенка."
+        descriptionChild="Перетащи группу в нужное место. Этот порядок увидишь только ты, родительский вариант останется отдельно."
+        on:save={handleGroupOrderSave}
+        on:reset={handleGroupOrderReset}
+    />
     {/if}
 
     {#if visibleItems.length > 0}

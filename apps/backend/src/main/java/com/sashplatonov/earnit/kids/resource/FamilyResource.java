@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateGroupOrderRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
@@ -463,6 +464,33 @@ public class FamilyResource {
                                          @RequestBody(required = true, description = "Theme selection payload")
                                          @Valid UpdateThemeRequest request) {
         return updateChildTheme(ctx, childId, request);
+    }
+
+    @POST
+    @Path("/children/{childId}/group-order")
+    @Operation(summary = "Update the saved group order for tasks or shop")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Group order updated",
+            content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
+        @APIResponse(responseCode = "400", description = "Group order update failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response updateChildGroupOrder(@Context ContainerRequestContext ctx,
+                                          @Parameter(required = true, description = "Child id to update")
+                                          @PathParam("childId") int childId,
+                                          @RequestBody(required = true, description = "Group order payload")
+                                          @Valid UpdateGroupOrderRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || (!auth.isAdmin() && (!auth.isChild() || !Objects.equals(auth.childId(), childId)))) {
+            return unauthorized();
+        }
+
+        OperationResult<Void> result = familyService.updateChildGroupOrder(
+            auth.familyId(), childId, request.section(), request.groups(), auth.isChild());
+        notifyChildUpdated(auth.familyId(), childId, result);
+        return toVoidResponse(result);
     }
 
     @POST

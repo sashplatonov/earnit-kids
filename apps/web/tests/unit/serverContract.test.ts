@@ -8,6 +8,19 @@ describe('normalizeChild', () => {
         expect(child.name).toBe('Маша');
         expect(child.nickname).toBe('Маша');
     });
+
+    it('normalizes parent and child group order arrays', () => {
+        const child = normalizeChild({
+            id: 3,
+            name: 'Маша',
+            balance: 0,
+            task_group_order: [' Дом ', 'Учеба', 'Дом'],
+            child_shop_group_order: ['Хочу', ' Потом '],
+        });
+
+        expect(child.taskGroupOrder).toEqual(['Дом', 'Учеба']);
+        expect(child.childShopGroupOrder).toEqual(['Хочу', 'Потом']);
+    });
 });
 
 describe('normalizeShopItem', () => {

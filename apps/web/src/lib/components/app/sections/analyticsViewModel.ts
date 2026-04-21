@@ -99,7 +99,7 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
         taskCount,
         itemCoins,
         itemCount,
-        trend: trend.map(({ isoDate: _isoDate, ...item }) => item),
+        trend: trend.map(({ label, earned, spent }) => ({ label, earned, spent })),
         recommendations: readRecommendations(root?.recommendations, options.tasks),
     };
 }

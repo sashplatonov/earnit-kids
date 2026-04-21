@@ -523,6 +523,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    text-decoration: none;
 }
 
 .nav__dropdown-item .gamified-icon {
@@ -568,6 +569,7 @@
     text-align: center;
     scroll-snap-align: start;
     box-shadow: 0 8px 16px rgba(88, 72, 58, 0.05);
+    text-decoration: none;
 }
 
 .nav__btn-icon {

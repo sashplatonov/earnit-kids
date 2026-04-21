@@ -1,20 +1,41 @@
 <script lang="ts">
+    import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import { appStore } from '$lib/stores/app';
+    import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { earnCoins, requestCoins } from '$lib/services/api';
+    import { earnCoins, requestCoins, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
+    import {
+        applyGroupOrderToChildren,
+        getEffectiveGroupOrder,
+        hasSavedGroupOrder,
+        normalizeGroupLabel,
+        orderGroups,
+        sortItemsByGroup,
+    } from '$lib/services/groupOrder';
     import { showToast } from '$lib/stores/toasts';
+
+    let selectedGroup = '';
+    let isEditingGroupOrder = false;
+    let isSavingGroupOrder = false;
 
     $: tasks = $appStore.tasks;
     $: isAdmin = $appStore.isAdmin;
 
-    // Group tasks by groupName
-    $: groups = [...new Set(tasks.map(t => t.groupName ?? 'Без группы'))];
-    let selectedGroup = '';
+    $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
+    $: currentChild = (($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
+        ?? $appStore.children[0]
+        ?? null) as Child | null);
+    $: rawGroups = [...new Set(tasks.map((task) => normalizeGroupLabel(task.groupName)))];
+    $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'tasks', isAdmin));
+    $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'tasks', isAdmin);
+    $: if (selectedGroup && !groups.includes(selectedGroup)) {
+        selectedGroup = '';
+    }
 
     $: visibleTasks = selectedGroup
-        ? tasks.filter(t => (t.groupName ?? 'Без группы') === selectedGroup)
-        : tasks;
+        ? tasks.filter((task) => normalizeGroupLabel(task.groupName) === selectedGroup)
+        : sortItemsByGroup(tasks, groups, (task) => normalizeGroupLabel(task.groupName));
 
     function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
         const limit = frequency?.limit;
@@ -35,14 +56,14 @@
     }
 
     async function handleEarn(taskId: unknown) {
-        const childId = $appStore.currentChildId;
-        const task = tasks.find(t => t.id == taskId);
+        const childId = resolvedChildId;
+        const task = tasks.find((entry) => entry.id == taskId);
         if (!task) return;
         if (isAdmin) {
             const res = await earnCoins(taskId, childId) as Record<string, unknown> | null;
             if (res) {
                 applyDataSnapshot(res);
-                showToast(`+${task.coins} монет — ${task.title}`, 'success');
+                showToast(`+${task.coins} монет — ${String(task.title ?? task.name)}`, 'success');
             }
         } else {
             const result = await requestCoins(taskId);
@@ -64,6 +85,38 @@
 
     function openEditTask(task: unknown) {
         modalStore.open('task-modal', { mode: 'edit', task });
+    }
+
+    async function persistGroupOrder(nextOrder: string[]) {
+        if (resolvedChildId == null) {
+            showToast('Сначала выберите ребенка', 'error');
+            return;
+        }
+
+        isSavingGroupOrder = true;
+        const result = await saveChildGroupOrder(resolvedChildId, 'tasks', nextOrder);
+        if (result.ok) {
+            appStore.update((state) => ({
+                ...state,
+                children: applyGroupOrderToChildren(state.children, resolvedChildId, 'tasks', isAdmin, nextOrder),
+            }));
+            isEditingGroupOrder = false;
+            showToast(
+                isAdmin ? 'Порядок групп задач сохранен' : 'Твой порядок групп задач сохранен',
+                'success'
+            );
+        } else {
+            showToast(result.error, 'error');
+        }
+        isSavingGroupOrder = false;
+    }
+
+    async function handleGroupOrderSave(event: CustomEvent<string[]>) {
+        await persistGroupOrder(event.detail);
+    }
+
+    async function handleGroupOrderReset() {
+        await persistGroupOrder([]);
     }
 </script>
 
@@ -98,6 +151,21 @@
             {/each}
         </div>
     </nav>
+
+    <GroupOrderEditor
+        bind:isOpen={isEditingGroupOrder}
+        {isAdmin}
+        isSaving={isSavingGroupOrder}
+        hasStoredOrder={hasStoredGroupOrder}
+        {groups}
+        title="Порядок групп задач"
+        hintAdmin="Родитель задает порядок групп по умолчанию для этого ребенка."
+        hintChild="Можно переставить группы под себя, не меняя родительский порядок."
+        descriptionAdmin="Перетащи группу в нужное место. Новый порядок станет основным для задач этого ребенка."
+        descriptionChild="Перетащи группу в нужное место. Этот порядок увидишь только ты, родительский вариант останется отдельно."
+        on:save={handleGroupOrderSave}
+        on:reset={handleGroupOrderReset}
+    />
     {/if}
 
     {#if visibleTasks.length > 0}
@@ -111,7 +179,7 @@
                 {/if}
             </div>
             <div class="card__header">
-                <h3 class="card__title">{task.title}</h3>
+                <h3 class="card__title">{task.title ?? task.name}</h3>
                 <div class="card__coins task-coins">
                     <span class="gamified-icon icon-coin" aria-hidden="true"></span>
                     <span>{task.coins}</span>

@@ -1,8 +1,9 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import { appStore } from '$lib/stores/app';
     import { adminAwardCoins } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
-    import { tabStore } from '$lib/stores/tabs';
     import { showToast } from '$lib/stores/toasts';
 
     export let balance: number = 0;
@@ -20,11 +21,11 @@
     $: showLimitNote = resolvedLimitNote.trim().length > 0;
 
     function openSettings() {
-        tabStore.setTab('settings');
+        void goto(resolve('/app/[section]', { section: 'settings' }));
     }
 
     function openHistory() {
-        tabStore.setTab('history');
+        void goto(resolve('/app/[section]', { section: 'history' }));
     }
 
     function handleBalanceKeydown(event: KeyboardEvent) {

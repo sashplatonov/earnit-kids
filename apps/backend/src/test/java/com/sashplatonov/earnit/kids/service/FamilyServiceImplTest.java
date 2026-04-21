@@ -101,6 +101,10 @@ class FamilyServiceImplTest {
     void loadFamilyData_existingChildData_mapsTasksHistoryRequestsAndFriends() {
         ChildEntity child1 = child(10, 1, "Alice", 100);
         ChildEntity child2 = child(11, 1, "Bob", 50);
+        child1.setTaskGroupOrder("[\"Дом\",\"Учеба\"]");
+        child1.setShopGroupOrder("[\"Призы\",\"Выходные\"]");
+        child1.setChildTaskGroupOrder("[\"Учеба\",\"Дом\"]");
+        child1.setChildShopGroupOrder("[\"Выходные\",\"Призы\"]");
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Bedtime by 20:30"));
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
@@ -169,6 +173,10 @@ class FamilyServiceImplTest {
         assertThat(payload.shop().getFirst().comment()).isEqualTo("Prize");
         assertThat(payload.tasks().getFirst().frequency()).isInstanceOf(Map.class);
         assertThat(payload.shop().getFirst().frequency()).isInstanceOf(Map.class);
+        assertThat(payload.children().getFirst().taskGroupOrder()).containsExactly("Дом", "Учеба");
+        assertThat(payload.children().getFirst().shopGroupOrder()).containsExactly("Призы", "Выходные");
+        assertThat(payload.children().getFirst().childTaskGroupOrder()).containsExactly("Учеба", "Дом");
+        assertThat(payload.children().getFirst().childShopGroupOrder()).containsExactly("Выходные", "Призы");
     }
 
     @Test
@@ -277,6 +285,34 @@ class FamilyServiceImplTest {
             .isInstanceOf(OperationResult.Failure.class);
         assertThat(service.updateChildTheme("fam-1", 10, "ocean"))
             .isInstanceOf(OperationResult.Success.class);
+    }
+
+    @Test
+    void updateChildGroupOrder_unknownOrKnownSection_returnsExpectedResult() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
+
+        assertThat(service.updateChildGroupOrder("fam-1", 10, "unknown", List.of("Дом"), false))
+            .isInstanceOf(OperationResult.Failure.class);
+
+        assertThat(service.updateChildGroupOrder("fam-1", 10, "tasks", List.of(" Дом ", "Учеба", "Дом"), false))
+            .isInstanceOf(OperationResult.Success.class);
+
+        verify(childRepository).updateGroupOrder(10, "tasks", false, "[\"Дом\",\"Учеба\"]");
+    }
+
+    @Test
+    void updateChildGroupOrder_childSessionStoresPersonalOrderSeparately() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
+
+        assertThat(service.updateChildGroupOrder("fam-1", 10, "shop", List.of("Хочу", "Потом"), true))
+            .isInstanceOf(OperationResult.Success.class);
+        assertThat(service.updateChildGroupOrder("fam-1", 10, "shop", List.of(), true))
+            .isInstanceOf(OperationResult.Success.class);
+
+        verify(childRepository).updateGroupOrder(10, "shop", true, "[\"Хочу\",\"Потом\"]");
+        verify(childRepository).updateGroupOrder(10, "shop", true, null);
     }
 
     @Test
