@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -52,6 +53,7 @@ import java.util.Set;
 @Slf4j
 public final class FamilyServiceImpl implements FamilyService {
     private static final Set<String> VALID_THEMES = Set.of("mint", "ocean", "sun", "coral", "cosmos");
+    private static final Set<String> VALID_GROUP_ORDER_SECTIONS = Set.of("tasks", "shop");
     private static final int MAX_PAGE_SIZE = 100;
 
     private final FamilyRepository familyRepository;
@@ -156,8 +158,7 @@ public final class FamilyServiceImpl implements FamilyService {
             .toList();
 
         List<ChildDto> childDtos = visibleChildren.stream()
-            .map(c -> new ChildDto(c.getId(), c.getName(), c.getBalance(),
-                c.getMonthlyLimit(), c.getDailyCoinLimit(), c.getTheme()))
+            .map(this::toChildDto)
             .toList();
 
         Boolean adminFlag = adminSession ? Boolean.TRUE : null;
@@ -305,6 +306,36 @@ public final class FamilyServiceImpl implements FamilyService {
             return OperationResult.failure("Ребенок не найден");
         }
         childRepository.updateTheme(childId, theme);
+        return OperationResult.success(null);
+    }
+
+    @Override
+    public OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
+                                                       String section, List<String> groups,
+                                                       boolean personalOrder) {
+        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        if (dbIdOpt.isEmpty()) {
+            return OperationResult.failure("Семья не найдена");
+        }
+
+        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+            return OperationResult.failure("Ребенок не найден");
+        }
+
+        String normalizedSection = normalizeGroupOrderSection(section);
+        if (normalizedSection == null) {
+            return OperationResult.failure("Неизвестный раздел порядка групп: " + section);
+        }
+
+        String serializedOrder;
+        try {
+            serializedOrder = serializeGroupOrder(groups);
+        } catch (JsonProcessingException ex) {
+            log.warn("Failed to serialize group order familyId={} childId={} section={}", familyId, childId, normalizedSection, ex);
+            return OperationResult.failure("Не удалось сохранить порядок групп");
+        }
+
+        childRepository.updateGroupOrder(childId, normalizedSection, personalOrder, serializedOrder);
         return OperationResult.success(null);
     }
 
@@ -493,6 +524,73 @@ public final class FamilyServiceImpl implements FamilyService {
             }
         }
         return null;
+    }
+
+    private String normalizeGroupOrderSection(String section) {
+        if (section == null) {
+            return null;
+        }
+
+        String normalized = section.trim().toLowerCase();
+        return VALID_GROUP_ORDER_SECTIONS.contains(normalized) ? normalized : null;
+    }
+
+    private String serializeGroupOrder(List<String> groups) throws JsonProcessingException {
+        List<String> normalizedGroups = normalizeGroupOrder(groups);
+        if (normalizedGroups.isEmpty()) {
+            return null;
+        }
+        return objectMapper.writeValueAsString(normalizedGroups);
+    }
+
+    private List<String> normalizeGroupOrder(List<String> groups) {
+        if (groups == null || groups.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashSet<String> normalized = new LinkedHashSet<>();
+        for (String group : groups) {
+            if (group == null) {
+                continue;
+            }
+
+            String trimmed = group.trim();
+            if (!trimmed.isEmpty()) {
+                normalized.add(trimmed);
+            }
+        }
+
+        return List.copyOf(normalized);
+    }
+
+    private List<String> parseGroupOrder(String rawGroupOrder) {
+        if (rawGroupOrder == null || rawGroupOrder.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            JsonNode node = objectMapper.readTree(rawGroupOrder);
+            if (!node.isArray()) {
+                return List.of();
+            }
+
+            List<String> groups = new ArrayList<>();
+            for (JsonNode item : node) {
+                if (!item.isTextual()) {
+                    continue;
+                }
+
+                String value = item.asText().trim();
+                if (!value.isEmpty() && !groups.contains(value)) {
+                    groups.add(value);
+                }
+            }
+
+            return List.copyOf(groups);
+        } catch (JsonProcessingException ex) {
+            log.warn("Failed to parse child group order payload={}", rawGroupOrder, ex);
+            return List.of();
+        }
     }
 
     private void syncFamilyRules(String familyId, Map<String, Object> payload, boolean adminSession) {
@@ -1158,6 +1256,21 @@ public final class FamilyServiceImpl implements FamilyService {
 
     private List<ShopItemDto> loadShopItems(int childId) {
         return familyDataRepository.getShopItems(childId).stream().map(this::toShopItemDto).toList();
+    }
+
+    private ChildDto toChildDto(ChildEntity child) {
+        return new ChildDto(
+            child.getId(),
+            child.getName(),
+            child.getBalance(),
+            child.getMonthlyLimit(),
+            child.getDailyCoinLimit(),
+            child.getTheme(),
+            parseGroupOrder(child.getTaskGroupOrder()),
+            parseGroupOrder(child.getShopGroupOrder()),
+            parseGroupOrder(child.getChildTaskGroupOrder()),
+            parseGroupOrder(child.getChildShopGroupOrder())
+        );
     }
 
     private TaskDto toTaskDto(TaskEntity task) {

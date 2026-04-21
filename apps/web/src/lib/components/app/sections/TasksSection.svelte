@@ -1,20 +1,45 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
+    import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { earnCoins, requestCoins } from '$lib/services/api';
+    import { earnCoins, requestCoins, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
+    import {
+        applyGroupOrderToChildren,
+        getEffectiveGroupOrder,
+        hasSavedGroupOrder,
+        moveGroup,
+        normalizeGroupLabel,
+        orderGroups,
+        sortItemsByGroup,
+    } from '$lib/services/groupOrder';
     import { showToast } from '$lib/stores/toasts';
+
+    let selectedGroup = '';
+    let isEditingGroupOrder = false;
+    let isSavingGroupOrder = false;
+    let groupOrderDraft: string[] = [];
 
     $: tasks = $appStore.tasks;
     $: isAdmin = $appStore.isAdmin;
 
-    // Group tasks by groupName
-    $: groups = [...new Set(tasks.map(t => t.groupName ?? 'Без группы'))];
-    let selectedGroup = '';
+    $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
+    $: currentChild = (($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
+        ?? $appStore.children[0]
+        ?? null) as Child | null);
+    $: rawGroups = [...new Set(tasks.map((task) => normalizeGroupLabel(task.groupName)))];
+    $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'tasks', isAdmin));
+    $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'tasks', isAdmin);
+    $: if (selectedGroup && !groups.includes(selectedGroup)) {
+        selectedGroup = '';
+    }
+    $: if (!isEditingGroupOrder) {
+        groupOrderDraft = [...groups];
+    }
 
     $: visibleTasks = selectedGroup
-        ? tasks.filter(t => (t.groupName ?? 'Без группы') === selectedGroup)
-        : tasks;
+        ? tasks.filter((task) => normalizeGroupLabel(task.groupName) === selectedGroup)
+        : sortItemsByGroup(tasks, groups, (task) => normalizeGroupLabel(task.groupName));
 
     function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
         const limit = frequency?.limit;
@@ -35,14 +60,14 @@
     }
 
     async function handleEarn(taskId: unknown) {
-        const childId = $appStore.currentChildId;
-        const task = tasks.find(t => t.id == taskId);
+        const childId = resolvedChildId;
+        const task = tasks.find((entry) => entry.id == taskId);
         if (!task) return;
         if (isAdmin) {
             const res = await earnCoins(taskId, childId) as Record<string, unknown> | null;
             if (res) {
                 applyDataSnapshot(res);
-                showToast(`+${task.coins} монет — ${task.title}`, 'success');
+                showToast(`+${task.coins} монет — ${String(task.title ?? task.name)}`, 'success');
             }
         } else {
             const result = await requestCoins(taskId);
@@ -64,6 +89,51 @@
 
     function openEditTask(task: unknown) {
         modalStore.open('task-modal', { mode: 'edit', task });
+    }
+
+    function openGroupOrderEditor() {
+        groupOrderDraft = [...groups];
+        isEditingGroupOrder = true;
+    }
+
+    function cancelGroupOrderEditor() {
+        isEditingGroupOrder = false;
+    }
+
+    function shiftGroup(index: number, direction: -1 | 1) {
+        groupOrderDraft = moveGroup(groupOrderDraft, index, direction);
+    }
+
+    async function persistGroupOrder(nextOrder: string[]) {
+        if (resolvedChildId == null) {
+            showToast('Сначала выберите ребенка', 'error');
+            return;
+        }
+
+        isSavingGroupOrder = true;
+        const result = await saveChildGroupOrder(resolvedChildId, 'tasks', nextOrder);
+        if (result.ok) {
+            appStore.update((state) => ({
+                ...state,
+                children: applyGroupOrderToChildren(state.children, resolvedChildId, 'tasks', isAdmin, nextOrder),
+            }));
+            isEditingGroupOrder = false;
+            showToast(
+                isAdmin ? 'Порядок групп задач сохранен' : 'Твой порядок групп задач сохранен',
+                'success'
+            );
+        } else {
+            showToast(result.error, 'error');
+        }
+        isSavingGroupOrder = false;
+    }
+
+    async function saveGroupOrder() {
+        await persistGroupOrder(groupOrderDraft);
+    }
+
+    async function resetGroupOrder() {
+        await persistGroupOrder([]);
     }
 </script>
 
@@ -98,6 +168,82 @@
             {/each}
         </div>
     </nav>
+
+    <div class="group-order-toolbar">
+        <p class="group-order-toolbar__hint">
+            {#if isAdmin}
+                Родитель задает порядок групп по умолчанию для этого ребенка.
+            {:else}
+                Можно переставить группы под себя, не меняя родительский порядок.
+            {/if}
+        </p>
+        {#if !isEditingGroupOrder}
+        <div class="group-order-toolbar__actions">
+            <button class="btn btn--secondary btn--small" type="button" on:click={openGroupOrderEditor}>
+                {isAdmin ? 'Настроить порядок' : 'Настроить под себя'}
+            </button>
+            {#if hasStoredGroupOrder}
+            <button class="btn btn--secondary btn--small" type="button" on:click={resetGroupOrder} disabled={isSavingGroupOrder}>
+                {isAdmin ? 'Сбросить' : 'К родительскому'}
+            </button>
+            {/if}
+        </div>
+        {/if}
+    </div>
+
+    {#if isEditingGroupOrder}
+    <div class="group-order-panel" aria-live="polite">
+        <div class="group-order-panel__header">
+            <h3 class="group-order-panel__title">Порядок групп задач</h3>
+            <p class="group-order-panel__description">
+                {#if isAdmin}
+                    Новый порядок станет основным для задач этого ребенка.
+                {:else}
+                    Этот порядок увидишь только ты. Родительский вариант останется отдельно.
+                {/if}
+            </p>
+        </div>
+
+        <div class="group-order-list" role="list">
+            {#each groupOrderDraft as group, index (group)}
+            <div class="group-order-row" role="listitem">
+                <span class="group-order-row__index">{index + 1}</span>
+                <span class="group-order-row__name">{group}</span>
+                <div class="group-order-row__actions">
+                    <button
+                        class="group-order-row__btn"
+                        type="button"
+                        aria-label={`Поднять группу ${group}`}
+                        on:click={() => shiftGroup(index, -1)}
+                        disabled={index === 0 || isSavingGroupOrder}
+                    >↑</button>
+                    <button
+                        class="group-order-row__btn"
+                        type="button"
+                        aria-label={`Опустить группу ${group}`}
+                        on:click={() => shiftGroup(index, 1)}
+                        disabled={index === groupOrderDraft.length - 1 || isSavingGroupOrder}
+                    >↓</button>
+                </div>
+            </div>
+            {/each}
+        </div>
+
+        <div class="group-order-panel__actions">
+            <button class="btn btn--secondary btn--small" type="button" on:click={cancelGroupOrderEditor} disabled={isSavingGroupOrder}>
+                Отмена
+            </button>
+            {#if hasStoredGroupOrder}
+            <button class="btn btn--secondary btn--small" type="button" on:click={resetGroupOrder} disabled={isSavingGroupOrder}>
+                {isAdmin ? 'Сбросить' : 'К родительскому'}
+            </button>
+            {/if}
+            <button class="btn btn--primary btn--small" type="button" on:click={saveGroupOrder} disabled={isSavingGroupOrder}>
+                {isSavingGroupOrder ? 'Сохраняю...' : 'Сохранить'}
+            </button>
+        </div>
+    </div>
+    {/if}
     {/if}
 
     {#if visibleTasks.length > 0}
@@ -111,7 +257,7 @@
                 {/if}
             </div>
             <div class="card__header">
-                <h3 class="card__title">{task.title}</h3>
+                <h3 class="card__title">{task.title ?? task.name}</h3>
                 <div class="card__coins task-coins">
                     <span class="gamified-icon icon-coin" aria-hidden="true"></span>
                     <span>{task.coins}</span>

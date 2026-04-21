@@ -2487,6 +2487,125 @@ dialog.modal[open]::backdrop {
     border-color: transparent;
 }
 
+.group-order-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin: -0.15rem 0 1rem;
+}
+
+.group-order-toolbar__hint {
+    margin: 0;
+    color: var(--color-text-dim);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.group-order-toolbar__actions,
+.group-order-panel__actions,
+.group-order-row__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.group-order-panel {
+    margin: 0 0 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(125, 149, 187, 0.18);
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 18px 36px -30px rgba(37, 56, 85, 0.45);
+}
+
+.group-order-panel__header {
+    display: grid;
+    gap: 0.25rem;
+    margin-bottom: 0.9rem;
+}
+
+.group-order-panel__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.group-order-panel__description {
+    margin: 0;
+    color: var(--color-text-dim);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.group-order-list {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.group-order-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(125, 149, 187, 0.14);
+    background: rgba(247, 250, 255, 0.92);
+}
+
+.group-order-row__index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: rgba(255, 182, 92, 0.18);
+    color: #9a5a0d;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.group-order-row__name {
+    min-width: 0;
+    color: var(--color-text);
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.group-order-row__btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid rgba(125, 149, 187, 0.2);
+    border-radius: 0.8rem;
+    background: #ffffff;
+    color: #425a7d;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.group-order-row__btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: rgba(255, 143, 112, 0.35);
+    background: rgba(255, 244, 236, 0.95);
+    color: #a85236;
+}
+
+.group-order-row__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.group-order-panel__actions {
+    justify-content: flex-end;
+    margin-top: 0.9rem;
+}
+
 
 
 
@@ -2501,6 +2620,20 @@ dialog.modal[open]::backdrop {
         font-size: 0.8rem;
         padding: 0.38rem 0.9rem;
     }
+
+    .group-order-toolbar,
+    .group-order-panel__actions {
+        align-items: stretch;
+    }
+
+    .group-order-row {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .group-order-row__actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
 }
 
 @media (max-width: 480px) {
@@ -2512,6 +2645,16 @@ dialog.modal[open]::backdrop {
     .group-nav__tab {
         font-size: 0.75rem;
         padding: 0.32rem 0.75rem;
+    }
+
+    .group-order-toolbar__actions,
+    .group-order-panel__actions {
+        width: 100%;
+    }
+
+    .group-order-toolbar__actions .btn,
+    .group-order-panel__actions .btn {
+        flex: 1 1 100%;
     }
 }
 

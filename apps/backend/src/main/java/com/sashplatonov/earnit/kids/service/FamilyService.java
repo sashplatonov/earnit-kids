@@ -30,6 +30,10 @@ public interface FamilyService {
 
     OperationResult<Void> updateChildTheme(String familyId, int childId, String theme);
 
+    OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
+                                                String section, List<String> groups,
+                                                boolean personalOrder);
+
     OperationResult<List<FriendDto>> searchByNickname(String nickname, int excludeChildId);
 
     OperationResult<Void> addFriend(String familyId, int childId, int friendChildId);

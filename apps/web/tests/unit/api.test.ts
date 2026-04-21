@@ -7,6 +7,7 @@ import {
     adminGetChildLink,
     adminRegenerateChildLink,
     adminSaveChildSettings,
+    saveChildGroupOrder,
     adminSaveLimits,
     approveRequest,
     buyItem,
@@ -258,6 +259,23 @@ describe('fetchWithCsrf', () => {
         expect(actualUrl).toBe(url);
         expect(init.method).toBe('POST');
         expect(init.body).toBe(JSON.stringify(body));
+    });
+
+    it('wraps group-order saves into the shared ok/data action result contract', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(saveChildGroupOrder(15, 'tasks', ['Дом', 'Учеба'])).resolves.toEqual({
+            ok: true,
+            data: { ok: true },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/children/15/group-order');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({ section: 'tasks', groups: ['Дом', 'Учеба'] }));
     });
 
     it('wraps successful child task requests into ok/data result objects', async () => {

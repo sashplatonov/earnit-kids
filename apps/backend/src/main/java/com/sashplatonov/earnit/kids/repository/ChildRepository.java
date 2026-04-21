@@ -90,6 +90,35 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
     }
 
     @Transactional
+    public boolean updateGroupOrder(int childId, String section, boolean personalOrder, String groupOrder) {
+        Optional<ChildEntity> opt = findByIdOptional(childId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+
+        ChildEntity child = opt.get();
+        if ("tasks".equals(section)) {
+            if (personalOrder) {
+                child.setChildTaskGroupOrder(groupOrder);
+            } else {
+                child.setTaskGroupOrder(groupOrder);
+            }
+            return true;
+        }
+
+        if ("shop".equals(section)) {
+            if (personalOrder) {
+                child.setChildShopGroupOrder(groupOrder);
+            } else {
+                child.setShopGroupOrder(groupOrder);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    @Transactional
     public Optional<String> regenerateToken(int childId) {
         Optional<ChildEntity> opt = findByIdOptional(childId);
         if (opt.isEmpty()) {

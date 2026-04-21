@@ -1,20 +1,46 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
+    import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { buyItem, requestItem } from '$lib/services/api';
+    import { buyItem, requestItem, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
+    import {
+        applyGroupOrderToChildren,
+        getEffectiveGroupOrder,
+        hasSavedGroupOrder,
+        moveGroup,
+        normalizeGroupLabel,
+        orderGroups,
+        sortItemsByGroup,
+    } from '$lib/services/groupOrder';
     import { showToast } from '$lib/stores/toasts';
+
+    let selectedGroup = '';
+    let isEditingGroupOrder = false;
+    let isSavingGroupOrder = false;
+    let groupOrderDraft: string[] = [];
 
     $: shopItems = $appStore.shopItems;
     $: isAdmin = $appStore.isAdmin;
     $: balance = $appStore.balance;
 
-    $: groups = [...new Set(shopItems.map(i => i.groupName ?? 'Без группы'))];
-    let selectedGroup = '';
+    $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
+    $: currentChild = (($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
+        ?? $appStore.children[0]
+        ?? null) as Child | null);
+    $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
+    $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
+    $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
+    $: if (selectedGroup && !groups.includes(selectedGroup)) {
+        selectedGroup = '';
+    }
+    $: if (!isEditingGroupOrder) {
+        groupOrderDraft = [...groups];
+    }
 
     $: visibleItems = selectedGroup
-        ? shopItems.filter(i => (i.groupName ?? 'Без группы') === selectedGroup)
-        : shopItems;
+        ? shopItems.filter((item) => normalizeGroupLabel(item.groupName) === selectedGroup)
+        : sortItemsByGroup(shopItems, groups, (item) => normalizeGroupLabel(item.groupName));
 
     function missingCoins(price: number) {
         return Math.max(price - balance, 0);
@@ -39,8 +65,8 @@
     }
 
     async function handleBuy(itemId: unknown) {
-        const childId = $appStore.currentChildId;
-        const item = shopItems.find(i => i.id == itemId);
+        const childId = resolvedChildId;
+        const item = shopItems.find((entry) => entry.id == itemId);
         if (!item) return;
         if (isAdmin) {
             if (balance < (item.price as number)) {
@@ -77,6 +103,51 @@
     function itemPrice(item: { price?: unknown }) {
         return Number(item.price ?? 0);
     }
+
+    function openGroupOrderEditor() {
+        groupOrderDraft = [...groups];
+        isEditingGroupOrder = true;
+    }
+
+    function cancelGroupOrderEditor() {
+        isEditingGroupOrder = false;
+    }
+
+    function shiftGroup(index: number, direction: -1 | 1) {
+        groupOrderDraft = moveGroup(groupOrderDraft, index, direction);
+    }
+
+    async function persistGroupOrder(nextOrder: string[]) {
+        if (resolvedChildId == null) {
+            showToast('Сначала выберите ребенка', 'error');
+            return;
+        }
+
+        isSavingGroupOrder = true;
+        const result = await saveChildGroupOrder(resolvedChildId, 'shop', nextOrder);
+        if (result.ok) {
+            appStore.update((state) => ({
+                ...state,
+                children: applyGroupOrderToChildren(state.children, resolvedChildId, 'shop', isAdmin, nextOrder),
+            }));
+            isEditingGroupOrder = false;
+            showToast(
+                isAdmin ? 'Порядок групп наград сохранен' : 'Твой порядок групп наград сохранен',
+                'success'
+            );
+        } else {
+            showToast(result.error, 'error');
+        }
+        isSavingGroupOrder = false;
+    }
+
+    async function saveGroupOrder() {
+        await persistGroupOrder(groupOrderDraft);
+    }
+
+    async function resetGroupOrder() {
+        await persistGroupOrder([]);
+    }
 </script>
 
 <section class="section" id="shop-section">
@@ -108,6 +179,82 @@
             {/each}
         </div>
     </nav>
+
+    <div class="group-order-toolbar">
+        <p class="group-order-toolbar__hint">
+            {#if isAdmin}
+                Родитель задает порядок групп магазина по умолчанию для этого ребенка.
+            {:else}
+                Можно переставить группы наград под себя, не меняя родительский порядок.
+            {/if}
+        </p>
+        {#if !isEditingGroupOrder}
+        <div class="group-order-toolbar__actions">
+            <button class="btn btn--secondary btn--small" type="button" on:click={openGroupOrderEditor}>
+                {isAdmin ? 'Настроить порядок' : 'Настроить под себя'}
+            </button>
+            {#if hasStoredGroupOrder}
+            <button class="btn btn--secondary btn--small" type="button" on:click={resetGroupOrder} disabled={isSavingGroupOrder}>
+                {isAdmin ? 'Сбросить' : 'К родительскому'}
+            </button>
+            {/if}
+        </div>
+        {/if}
+    </div>
+
+    {#if isEditingGroupOrder}
+    <div class="group-order-panel" aria-live="polite">
+        <div class="group-order-panel__header">
+            <h3 class="group-order-panel__title">Порядок групп наград</h3>
+            <p class="group-order-panel__description">
+                {#if isAdmin}
+                    Новый порядок станет основным для магазина этого ребенка.
+                {:else}
+                    Этот порядок увидишь только ты. Родительский вариант останется отдельно.
+                {/if}
+            </p>
+        </div>
+
+        <div class="group-order-list" role="list">
+            {#each groupOrderDraft as group, index (group)}
+            <div class="group-order-row" role="listitem">
+                <span class="group-order-row__index">{index + 1}</span>
+                <span class="group-order-row__name">{group}</span>
+                <div class="group-order-row__actions">
+                    <button
+                        class="group-order-row__btn"
+                        type="button"
+                        aria-label={`Поднять группу ${group}`}
+                        on:click={() => shiftGroup(index, -1)}
+                        disabled={index === 0 || isSavingGroupOrder}
+                    >↑</button>
+                    <button
+                        class="group-order-row__btn"
+                        type="button"
+                        aria-label={`Опустить группу ${group}`}
+                        on:click={() => shiftGroup(index, 1)}
+                        disabled={index === groupOrderDraft.length - 1 || isSavingGroupOrder}
+                    >↓</button>
+                </div>
+            </div>
+            {/each}
+        </div>
+
+        <div class="group-order-panel__actions">
+            <button class="btn btn--secondary btn--small" type="button" on:click={cancelGroupOrderEditor} disabled={isSavingGroupOrder}>
+                Отмена
+            </button>
+            {#if hasStoredGroupOrder}
+            <button class="btn btn--secondary btn--small" type="button" on:click={resetGroupOrder} disabled={isSavingGroupOrder}>
+                {isAdmin ? 'Сбросить' : 'К родительскому'}
+            </button>
+            {/if}
+            <button class="btn btn--primary btn--small" type="button" on:click={saveGroupOrder} disabled={isSavingGroupOrder}>
+                {isSavingGroupOrder ? 'Сохраняю...' : 'Сохранить'}
+            </button>
+        </div>
+    </div>
+    {/if}
     {/if}
 
     {#if visibleItems.length > 0}
