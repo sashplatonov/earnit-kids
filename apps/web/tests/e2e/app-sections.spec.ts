@@ -170,7 +170,7 @@ test.describe('Shop section (Награды)', () => {
         expect(layout).not.toBeNull();
         expect(layout?.badgeRowHeight ?? 0).toBeLessThanOrEqual((layout?.reservedMinHeight ?? 0) + 1);
         expect(layout?.badgeRowBottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual((layout?.headerTop ?? 0) + 0.5);
-        for (const chip of layout?.chipMetrics ?? []) {
+        for (const chip of (layout?.chipMetrics ?? []) as NonNullable<typeof layout["chipMetrics"]>) {
             expect(chip.actualWidth).toBeLessThanOrEqual(chip.naturalWidth + 2);
         }
     });
