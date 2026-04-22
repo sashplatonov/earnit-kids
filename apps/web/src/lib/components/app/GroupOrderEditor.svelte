@@ -288,9 +288,6 @@
                         <span class="group-order-row__index">{index + 1}</span>
                         <div class="group-order-row__content">
                             <span class="group-order-row__name">{group}</span>
-                            <span class="group-order-row__meta">
-                                {dragSourceIndex === index ? tApp('groupOrder.moving') : tApp('groupOrder.dragHint')}
-                            </span>
                         </div>
                         <button
                             class="group-order-row__handle"
@@ -350,8 +347,8 @@
 
     .group-order-panel {
         position: relative;
-        width: min(36rem, calc(100vw - 2rem));
-        max-height: min(42rem, calc(100dvh - 2rem));
+        width: min(32rem, calc(100vw - 2rem));
+        max-height: min(34rem, calc(100dvh - 2rem));
         display: grid;
         grid-template-rows: auto minmax(0, 1fr) auto;
         overflow: hidden;
@@ -365,8 +362,8 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
         align-items: start;
-        gap: 1rem;
-        padding: 1.1rem 1.1rem 0.85rem;
+        gap: 0.8rem;
+        padding: 0.9rem 1rem 0.72rem;
         border-bottom: 1px solid rgba(120, 140, 175, 0.14);
     }
 
@@ -412,7 +409,7 @@
         scrollbar-gutter: stable;
         scrollbar-width: thin;
         scrollbar-color: rgba(87, 121, 206, 0.58) rgba(231, 236, 246, 0.9);
-        padding: 0.85rem 1.1rem;
+        padding: 0.62rem 0.9rem;
     }
 
     .group-order-panel__body::-webkit-scrollbar {
@@ -431,17 +428,18 @@
 
     .group-order-list {
         display: grid;
-        gap: 0.5rem;
+        gap: 0.34rem;
     }
 
     .group-order-row {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-columns: 1.55rem minmax(0, 1fr) 1.9rem;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.7rem;
+        gap: 0.52rem;
+        min-height: 2.35rem;
+        padding: 0.35rem 0.45rem;
         border: 1px solid rgba(120, 140, 175, 0.16);
-        border-radius: 0.85rem;
+        border-radius: 0.62rem;
         background: rgba(248, 250, 253, 0.92);
     }
 
@@ -450,8 +448,8 @@
     }
 
     .group-order-row__index {
-        width: 1.8rem;
-        height: 1.8rem;
+        width: 1.45rem;
+        height: 1.45rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -464,26 +462,23 @@
 
     .group-order-row__content {
         min-width: 0;
-        display: grid;
-        gap: 0.15rem;
+        display: flex;
+        align-items: center;
     }
 
     .group-order-row__name {
         overflow: hidden;
         color: #20304e;
+        font-size: 0.95rem;
         font-weight: 800;
+        line-height: 1.15;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .group-order-row__meta {
-        color: rgba(54, 68, 96, 0.58);
-        font-size: 0.78rem;
-    }
-
     .group-order-row__handle {
-        width: 2.15rem;
-        height: 2.15rem;
+        width: 1.9rem;
+        height: 1.9rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -549,7 +544,7 @@
         display: flex;
         justify-content: flex-end;
         gap: 0.6rem;
-        padding: 0.85rem 1.1rem 1.1rem;
+        padding: 0.72rem 1rem 0.88rem;
         border-top: 1px solid rgba(120, 140, 175, 0.14);
         background: rgba(255, 255, 255, 0.98);
     }
@@ -566,8 +561,8 @@
         }
 
         .group-order-panel {
-            width: min(30rem, calc(100vw - 1rem));
-            max-height: min(30rem, calc(100dvh - 1rem));
+            width: min(28rem, calc(100vw - 1rem));
+            max-height: min(28rem, calc(100dvh - 1rem));
             border-radius: 0.85rem;
             grid-template-rows: auto minmax(0, 1fr) auto;
         }
@@ -593,20 +588,20 @@
         }
 
         .group-order-panel__body {
-            padding: 0.45rem 0.42rem 0.5rem 0.55rem;
+            padding: 0.38rem 0.42rem 0.42rem;
             overscroll-behavior: contain;
         }
 
         .group-order-list {
-            gap: 0.32rem;
+            gap: 0.26rem;
         }
 
         .group-order-row {
-            grid-template-columns: 1.45rem minmax(0, 1fr) 2rem;
-            gap: 0.48rem;
-            min-height: 2.7rem;
-            padding: 0.36rem 0.4rem;
-            border-radius: 0.62rem;
+            grid-template-columns: 1.38rem minmax(0, 1fr) 1.8rem;
+            gap: 0.42rem;
+            min-height: 2.18rem;
+            padding: 0.28rem 0.36rem;
+            border-radius: 0.56rem;
         }
 
         .group-order-row__index {
@@ -616,22 +611,18 @@
         }
 
         .group-order-row__content {
-            gap: 0.05rem;
+            display: flex;
+            align-items: center;
         }
 
         .group-order-row__name {
-            font-size: 0.84rem;
-            line-height: 1.12;
-        }
-
-        .group-order-row__meta {
-            font-size: 0.66rem;
+            font-size: 0.86rem;
             line-height: 1.1;
         }
 
         .group-order-row__handle {
-            width: 2rem;
-            height: 2rem;
+            width: 1.8rem;
+            height: 1.8rem;
             border-radius: 999px;
         }
 
