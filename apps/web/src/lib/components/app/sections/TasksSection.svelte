@@ -1,5 +1,8 @@
 <script lang="ts">
+    import { browser } from '$app/environment';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
@@ -13,14 +16,24 @@
         orderGroups,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
+    import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
+
+    const i18n = useI18n();
 
     let selectedGroup = '';
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
+    let viewMode: CardViewMode = 'grid';
+    let loadedViewRole: CardViewRole | null = null;
+
+    function tTasks(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`tasks.${key}` as MessageKey, variables);
+    }
 
     $: tasks = $appStore.tasks;
     $: isAdmin = $appStore.isAdmin;
+    $: viewRole = (isAdmin ? 'admin' : 'child') as CardViewRole;
 
     $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
     $: currentChild = (($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
@@ -29,6 +42,10 @@
     $: rawGroups = [...new Set(tasks.map((task) => normalizeGroupLabel(task.groupName)))];
     $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'tasks', isAdmin));
     $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'tasks', isAdmin);
+    $: if (browser && loadedViewRole !== viewRole) {
+        viewMode = loadCardViewMode('tasks', viewRole);
+        loadedViewRole = viewRole;
+    }
     $: if (selectedGroup && !groups.includes(selectedGroup)) {
         selectedGroup = '';
     }
@@ -45,14 +62,21 @@
             return '';
         }
 
-        const periodLabels: Record<string, string> = {
-            day: 'день',
-            week: 'неделю',
-            month: 'месяц',
-            year: 'год',
+        const periodMap: Record<string, string> = {
+            day: 'frequencyDay',
+            week: 'frequencyWeek',
+            month: 'frequencyMonth',
+            year: 'frequencyYear',
         };
+        const numericLimit = Number(limit);
+        const pluralCategory = new Intl.PluralRules($i18n.locale).select(numericLimit);
+        const periodKey = periodMap[period];
 
-        return `${limit} раз(а) в ${periodLabels[period] ?? period}`;
+        if (!periodKey) {
+            return tTasks('frequencyFallback', { limit: $i18n.formatNumber(numericLimit) });
+        }
+
+        return tTasks(`${periodKey}.${pluralCategory}`, { limit: $i18n.formatNumber(numericLimit) });
     }
 
     async function handleEarn(taskId: unknown) {
@@ -63,7 +87,13 @@
             const res = await earnCoins(taskId, childId) as Record<string, unknown> | null;
             if (res) {
                 applyDataSnapshot(res);
-                showToast(`+${task.coins} монет — ${String(task.title ?? task.name)}`, 'success');
+                showToast(
+                    tTasks('toasts.awarded', {
+                        amount: $i18n.formatNumber(Number(task.coins ?? 0)),
+                        title: String(task.title ?? task.name),
+                    }),
+                    'success'
+                );
             }
         } else {
             const result = await requestCoins(taskId);
@@ -71,7 +101,7 @@
                 if (result.data && typeof result.data === 'object') {
                     applyDataSnapshot(result.data as Record<string, unknown>);
                 }
-                showToast('Заявка отправлена!', 'success');
+                showToast(tTasks('toasts.requestSent'), 'success');
                 return;
             }
 
@@ -89,7 +119,7 @@
 
     async function persistGroupOrder(nextOrder: string[]) {
         if (resolvedChildId == null) {
-            showToast('Сначала выберите ребенка', 'error');
+            showToast(tTasks('toasts.selectChildFirst'), 'error');
             return;
         }
 
@@ -101,10 +131,7 @@
                 children: applyGroupOrderToChildren(state.children, resolvedChildId, 'tasks', isAdmin, nextOrder),
             }));
             isEditingGroupOrder = false;
-            showToast(
-                isAdmin ? 'Порядок групп задач сохранен' : 'Твой порядок групп задач сохранен',
-                'success'
-            );
+            showToast(isAdmin ? tTasks('toasts.groupOrderSavedAdmin') : tTasks('toasts.groupOrderSavedChild'), 'success');
         } else {
             showToast(result.error, 'error');
         }
@@ -118,6 +145,11 @@
     async function handleGroupOrderReset() {
         await persistGroupOrder([]);
     }
+
+    function setViewMode(nextMode: CardViewMode) {
+        viewMode = nextMode;
+        saveCardViewMode('tasks', viewRole, nextMode);
+    }
 </script>
 
 <section class="section" id="tasks-section">
@@ -126,22 +158,42 @@
             <h2>
                 <span class="gamified-icon icon-tasks" aria-hidden="true"
                     style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></span>
-                За что можно заработать
+                {tTasks('section.title')}
             </h2>
-            <p class="section__subtitle">Выполняйте задания, чтобы получать монетки и опыт</p>
+            <p class="section__subtitle">{tTasks('section.subtitle')}</p>
         </div>
-        {#if isAdmin}
-        <div class="section__buttons admin-only">
-            <button class="btn btn--add" id="add-task-btn" on:click={openAddTask}>+ Добавить</button>
+        <div class="section__header-actions">
+            <div class="view-toggle" role="group" aria-label={tTasks('section.viewAria')}>
+                <button
+                    type="button"
+                    class="view-toggle__button"
+                    class:view-toggle__button--active={viewMode === 'grid'}
+                    aria-pressed={viewMode === 'grid'}
+                    on:click={() => setViewMode('grid')}
+                >
+                    {tTasks('section.viewGrid')}
+                </button>
+                <button
+                    type="button"
+                    class="view-toggle__button"
+                    class:view-toggle__button--active={viewMode === 'list'}
+                    aria-pressed={viewMode === 'list'}
+                    on:click={() => setViewMode('list')}
+                >
+                    {tTasks('section.viewList')}
+                </button>
+            </div>
+            {#if isAdmin}
+            <button class="btn btn--add" id="add-task-btn" on:click={openAddTask}>{tTasks('section.add')}</button>
+            {/if}
         </div>
-        {/if}
     </div>
 
     {#if groups.length > 1}
     <nav class="group-nav" id="tasks-group-nav">
         <div class="group-nav__scroll">
             <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
-                Все
+                {tTasks('section.all')}
             </button>
             {#each groups as group (group)}
             <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
@@ -158,59 +210,65 @@
         isSaving={isSavingGroupOrder}
         hasStoredOrder={hasStoredGroupOrder}
         {groups}
-        title="Порядок групп задач"
-        hintAdmin="Родитель задает порядок групп по умолчанию для этого ребенка."
-        hintChild="Можно переставить группы под себя, не меняя родительский порядок."
-        descriptionAdmin="Перетащи группу в нужное место. Новый порядок станет основным для задач этого ребенка."
-        descriptionChild="Перетащи группу в нужное место. Этот порядок увидишь только ты, родительский вариант останется отдельно."
+        title={tTasks('groupOrder.title')}
+        hintAdmin={tTasks('groupOrder.hintAdmin')}
+        hintChild={tTasks('groupOrder.hintChild')}
+        descriptionAdmin={tTasks('groupOrder.descriptionAdmin')}
+        descriptionChild={tTasks('groupOrder.descriptionChild')}
         on:save={handleGroupOrderSave}
         on:reset={handleGroupOrderReset}
     />
     {/if}
 
     {#if visibleTasks.length > 0}
-    <div class="cards" id="tasks-list">
+    <div class="cards" class:cards--list={viewMode === 'list'} id="tasks-list">
         {#each visibleTasks as task (task.id)}
-        <div class="card card--task task-card">
+        <div class="card card--task task-card" class:task-card--list={viewMode === 'list'}>
             <div class="card__badge-row">
-                <span class="card__badge card__badge--group">{task.groupName ?? 'Без группы'}</span>
+                <span class="card__badge card__badge--group">{task.groupName ?? tTasks('section.noGroup')}</span>
                 {#if formatFrequency(task.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(task.frequency)}</span>
                 {/if}
             </div>
-            <div class="card__header">
-                <h3 class="card__title">{task.title ?? task.name}</h3>
-                <div class="card__coins task-coins">
-                    <span class="gamified-icon icon-coin" aria-hidden="true"></span>
-                    <span>{task.coins}</span>
+            <div class="task-card__layout">
+                <div class="task-card__main">
+                    <div class="card__header">
+                        <h3 class="card__title">{task.title ?? task.name}</h3>
+                        <div class="card__coins task-coins">
+                            <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                            <span>{task.coins}</span>
+                        </div>
+                    </div>
+                    {#if task.comment}
+                    <p class="card__comment">{task.comment}</p>
+                    {:else}
+                    <p class="card__comment">{tTasks('section.defaultComment')}</p>
+                    {/if}
                 </div>
-            </div>
-            {#if task.comment}
-            <p class="card__comment">{task.comment}</p>
-            {:else}
-            <p class="card__comment">Короткий шаг, который помогает заработать монетки и закрепить привычку.</p>
-            {/if}
-            <div class="card__meta">
-                {#if task.moneyLimit != null}
-                <span class="card__meta-item">До {task.moneyLimit} 💶</span>
-                {/if}
-                {#if task.ageMin != null || task.ageMax != null}
-                <span class="card__meta-item">Возраст {task.ageMin ?? 0}-{task.ageMax ?? 18}</span>
-                {/if}
-            </div>
-            <div class="card__actions">
-                {#if isAdmin}
-                <button class="btn btn--primary btn--small" on:click={() => handleEarn(task.id)}>
-                    Начислить
-                </button>
-                <button class="btn btn--secondary btn--small admin-only" on:click={() => openEditTask(task)}>
-                    Изменить
-                </button>
-                {:else}
-                <button class="btn btn--primary" on:click={() => handleEarn(task.id)}>
-                    Выполнил!
-                </button>
-                {/if}
+                <div class="task-card__side">
+                    <div class="card__meta">
+                        {#if task.moneyLimit != null}
+                        <span class="card__meta-item">{tTasks('section.moneyLimit', { amount: $i18n.formatNumber(task.moneyLimit) })}</span>
+                        {/if}
+                        {#if task.ageMin != null || task.ageMax != null}
+                        <span class="card__meta-item">{tTasks('section.ageRange', { min: task.ageMin ?? 0, max: task.ageMax ?? 18 })}</span>
+                        {/if}
+                    </div>
+                    <div class="card__actions">
+                        {#if isAdmin}
+                        <button class="btn btn--primary btn--small" data-task-action="award" on:click={() => handleEarn(task.id)}>
+                            {tTasks('actions.award')}
+                        </button>
+                        <button class="btn btn--secondary btn--small admin-only" data-task-action="edit" on:click={() => openEditTask(task)}>
+                            {tTasks('actions.edit')}
+                        </button>
+                        {:else}
+                        <button class="btn btn--primary" data-task-action="request" on:click={() => handleEarn(task.id)}>
+                            {tTasks('actions.complete')}
+                        </button>
+                        {/if}
+                    </div>
+                </div>
             </div>
         </div>
         {/each}
@@ -220,15 +278,146 @@
         <span class="empty-state__icon">
             <span class="gamified-icon icon-empty" aria-hidden="true"></span>
         </span>
-        <p class="empty-state__title">Пока нет заданий</p>
+        <p class="empty-state__title">{tTasks('section.emptyTitle')}</p>
         <p class="empty-state__hint">
-            {#if isAdmin}Создайте первую задачу — она сразу появится в списке ребенка.{:else}Попроси родителя добавить задания.{/if}
+            {#if isAdmin}{tTasks('section.emptyAdminHint')}{:else}{tTasks('section.emptyChildHint')}{/if}
         </p>
         {#if isAdmin}
         <div class="empty-state__actions">
-            <button class="btn btn--add" type="button" on:click={openAddTask}>Добавить задачу</button>
+            <button class="btn btn--add" type="button" on:click={openAddTask}>{tTasks('section.addTask')}</button>
         </div>
         {/if}
     </div>
     {/if}
 </section>
+
+<style>
+    .section__header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .view-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem;
+        border-radius: 999px;
+        border: 1px solid rgba(120, 140, 175, 0.18);
+        background: rgba(246, 248, 252, 0.92);
+    }
+
+    .view-toggle__button {
+        border: 0;
+        background: transparent;
+        color: rgba(54, 68, 96, 0.72);
+        font: inherit;
+        font-size: 0.84rem;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0.62rem 0.9rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .view-toggle__button--active {
+        background: linear-gradient(135deg, rgba(87, 121, 206, 0.18), rgba(84, 179, 160, 0.2));
+        color: #20304e;
+        box-shadow: inset 0 0 0 1px rgba(87, 121, 206, 0.14);
+    }
+
+    .cards--list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.35rem;
+    }
+
+    .task-card__layout {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+    }
+
+    .task-card__side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    /* ── Compact list row ── */
+    .task-card--list {
+        height: auto;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .task-card--list .card__badge-row,
+    .task-card--list .card__comment,
+    .task-card--list .card__meta {
+        display: none;
+    }
+
+    .task-card--list .task-card__layout {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+    }
+
+    .task-card--list .task-card__main {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .task-card--list .card__header {
+        min-height: 0;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .task-card--list .card__title {
+        min-height: 0;
+        display: block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .task-card--list .task-card__side {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+    }
+
+    .task-card--list .card__actions {
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        justify-content: flex-end;
+    }
+
+    .task-card--list .card__actions .btn {
+        flex: none;
+        padding: 0.38rem 0.7rem;
+        font-size: 0.82rem;
+    }
+
+    @media (max-width: 640px) {
+        .section__header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .view-toggle {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .view-toggle__button {
+            flex: 1 1 0;
+            text-align: center;
+        }
+    }
+</style>

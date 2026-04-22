@@ -7,6 +7,7 @@
     import TaskModal from './modals/TaskModal.svelte';
     import ShopModal from './modals/ShopModal.svelte';
     import type { AppSection } from '$lib/app/routes';
+    import { useI18n } from '$lib/i18n/context';
     import type { SessionSnapshot } from '$lib/types/session';
     import { appStore, pendingRequestsCount } from '$lib/stores/app';
     import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
@@ -16,6 +17,7 @@
 
     // __BUILD_TS__ is injected at build time by vite.config.ts define (declared in vite-env.d.ts)
     const buildTs: string = __BUILD_TS__;
+    const i18n = useI18n();
 
     export let session: SessionSnapshot;
     export let activeSection: AppSection;
@@ -37,10 +39,10 @@
 <div class="app" class:app--admin={isAdmin} class:app--child={!isAdmin} data-role={isAdmin ? 'admin' : 'child'} id="app">
     <div class="pull-refresh-indicator" id="pull-refresh-indicator" aria-hidden="true">
         <span class="pull-refresh-indicator__icon">↻</span>
-        <span class="pull-refresh-indicator__text" id="pull-refresh-indicator-text">Потяните для обновления</span>
+        <span class="pull-refresh-indicator__text" id="pull-refresh-indicator-text">{$i18n.t('app.shell.pullToRefresh')}</span>
     </div>
     <div class="offline-banner hidden" id="offline-status-banner" role="status" aria-live="polite">
-        Сейчас оффлайн: история доступна, новые действия отправятся после восстановления сети.
+        {$i18n.t('app.shell.offlineBanner')}
     </div>
 
     <AppHeader {isAdmin} {balance} childNickname={String(childNickname)} />

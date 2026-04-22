@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service;
 import com.sashplatonov.earnit.kids.domain.model.BackupTelegramSettingsEntity;
 import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.BackupTelegramSettingsRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -30,7 +31,6 @@ public class BackupTelegramSettingsService {
     ) {
         this.repository = repository;
         this.fallbackEnabled = fallbackEnabled;
-        // Telegram credentials are no longer provided via environment variables.
         this.fallbackIntervalHours = sanitizeInterval(fallbackIntervalHours);
     }
 
@@ -45,12 +45,12 @@ public class BackupTelegramSettingsService {
     @Transactional
     public OperationResult<BackupTelegramSettingsResponse> updateSettings(UpdateBackupTelegramSettingsRequest request) {
         if (request == null) {
-            return OperationResult.failure("Настройки Telegram не переданы");
+            return OperationResult.failure("BACKUP_SETTINGS_REQUIRED", BackendMessages.message("backup.settingsPayloadRequired"));
         }
 
         int intervalHours = request.intervalHours();
         if (intervalHours < MIN_INTERVAL_HOURS || intervalHours > MAX_INTERVAL_HOURS) {
-            return OperationResult.failure("Интервал отправки должен быть от 1 до 720 часов");
+            return OperationResult.failure("BACKUP_INTERVAL_OUT_OF_RANGE", BackendMessages.message("backup.intervalOutOfRange"));
         }
 
         BackupTelegramSettingsEntity entity = ensureEntity();
@@ -150,10 +150,10 @@ public class BackupTelegramSettingsService {
             return null;
         }
         if (!hasText(entity.getChatId())) {
-            return "Укажите Telegram chat id";
+            return BackendMessages.message("backup.chatIdRequired");
         }
         if (!hasText(entity.getBotToken())) {
-            return "Сохраните Telegram bot token";
+            return BackendMessages.message("backup.botTokenRequired");
         }
         return null;
     }

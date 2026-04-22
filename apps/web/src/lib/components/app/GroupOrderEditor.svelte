@@ -1,6 +1,14 @@
 <script lang="ts">
     import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { isNoopGroupDrop, moveGroup, reorderGroupsBySlot } from '$lib/services/groupOrder';
+
+    const i18n = useI18n();
+
+    function tApp(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`app.${key}` as MessageKey, variables);
+    }
 
     export let isOpen = false;
     export let isAdmin = false;
@@ -215,11 +223,11 @@
     {#if !isOpen}
     <div class="group-order-toolbar__actions">
         <button class="btn btn--secondary btn--small" type="button" on:click={openEditor} disabled={isSaving}>
-            {isAdmin ? 'Настроить порядок' : 'Настроить под себя'}
+            {isAdmin ? tApp('groupOrder.configureAdmin') : tApp('groupOrder.configureChild')}
         </button>
         {#if hasStoredOrder}
         <button class="btn btn--secondary btn--small" type="button" on:click={resetOrder} disabled={isSaving}>
-            {isAdmin ? 'Сбросить' : 'К родительскому'}
+            {isAdmin ? tApp('groupOrder.resetAdmin') : tApp('groupOrder.resetChild')}
         </button>
         {/if}
     </div>
@@ -240,7 +248,7 @@
             {#if showDropSlot(index)}
             <div class="group-order-drop-slot" aria-hidden="true">
                 <span class="group-order-drop-slot__line"></span>
-                <span class="group-order-drop-slot__label">Отпусти здесь</span>
+                <span class="group-order-drop-slot__label">{tApp('groupOrder.dropHere')}</span>
             </div>
             {/if}
 
@@ -255,19 +263,19 @@
                 <div class="group-order-row__content">
                     <span class="group-order-row__name">{group}</span>
                     <span class="group-order-row__meta">
-                        {dragSourceIndex === index ? 'Перемещается' : 'Тяни за ручку или меняй стрелками'}
+                        {dragSourceIndex === index ? tApp('groupOrder.moving') : tApp('groupOrder.dragHint')}
                     </span>
                 </div>
                 <button
                     class="group-order-row__handle"
                     type="button"
-                    aria-label={`Перетащить группу ${group}`}
+                    aria-label={tApp('groupOrder.dragAria', { group })}
                     disabled={isSaving}
                     on:pointerdown={(event) => { event.stopPropagation(); startPointerDrag(event, index); }}
                     on:keydown={(event) => moveByKeyboard(event, index)}
                 >
                     <span class="group-order-row__handle-grip" aria-hidden="true"></span>
-                    <span class="group-order-row__handle-label">Тащить</span>
+                    <span class="group-order-row__handle-label">{tApp('groupOrder.dragHandle')}</span>
                 </button>
             </div>
         {/each}
@@ -275,22 +283,22 @@
         {#if showDropSlot(draft.length)}
         <div class="group-order-drop-slot group-order-drop-slot--end" aria-hidden="true">
             <span class="group-order-drop-slot__line"></span>
-            <span class="group-order-drop-slot__label">Отпусти в конец</span>
+            <span class="group-order-drop-slot__label">{tApp('groupOrder.dropAtEnd')}</span>
         </div>
         {/if}
     </div>
 
     <div class="group-order-panel__actions">
         <button class="btn btn--secondary btn--small" type="button" on:click={closeEditor} disabled={isSaving}>
-            Отмена
+            {tApp('groupOrder.cancel')}
         </button>
         {#if hasStoredOrder}
         <button class="btn btn--secondary btn--small" type="button" on:click={resetOrder} disabled={isSaving}>
-            {isAdmin ? 'Сбросить' : 'К родительскому'}
+            {isAdmin ? tApp('groupOrder.resetAdmin') : tApp('groupOrder.resetChild')}
         </button>
         {/if}
         <button class="btn btn--primary btn--small" type="button" on:click={saveOrder} disabled={isSaving}>
-            {isSaving ? 'Сохраняю...' : 'Сохранить'}
+            {isSaving ? tApp('groupOrder.saving') : tApp('groupOrder.save')}
         </button>
     </div>
 </div>

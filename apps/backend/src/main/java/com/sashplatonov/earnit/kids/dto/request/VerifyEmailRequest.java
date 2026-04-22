@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record VerifyEmailRequest(
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     String email,
 
-    @NotBlank(message = "Token is required")
+    @NotBlank(message = "{validation.token.required}")
     @Schema(format = "password")
     String token
 ) { }

@@ -1,5 +1,9 @@
 <script lang="ts">
+    import { browser } from '$app/environment';
+    import { onMount } from 'svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
@@ -13,15 +17,25 @@
         orderGroups,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
+    import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
-    import { page } from '$app/stores';
+
+    const i18n = useI18n();
 
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
+    let selectedGroup = '';
+    let viewMode: CardViewMode = 'grid';
+    let loadedViewRole: CardViewRole | null = null;
+
+    function tShop(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`shop.${key}` as MessageKey, variables);
+    }
 
     $: shopItems = $appStore.shopItems;
     $: isAdmin = $appStore.isAdmin;
     $: balance = $appStore.balance;
+    $: viewRole = (isAdmin ? 'admin' : 'child') as CardViewRole;
 
     $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
     $: currentChild = (($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
@@ -30,18 +44,32 @@
     $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
     $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
     $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
-    
-    // Read selected group from query parameter
-    $: selectedGroup = ($page.url.searchParams.get('group') ?? '');
-    $: if (selectedGroup && !groups.includes(selectedGroup)) {
-        const url = new URL($page.url);
-        url.searchParams.delete('group');
-        history.replaceState(null, '', url);
+    $: if (browser && loadedViewRole !== viewRole) {
+        viewMode = loadCardViewMode('shop', viewRole);
+        loadedViewRole = viewRole;
+    }
+
+    $: if (selectedGroup && groups.length > 0 && !groups.includes(selectedGroup)) {
+        setSelectedGroup('', { replace: true });
     }
 
     $: visibleItems = selectedGroup
         ? shopItems.filter((item) => normalizeGroupLabel(item.groupName) === selectedGroup)
         : sortItemsByGroup(shopItems, groups, (item) => normalizeGroupLabel(item.groupName));
+
+    onMount(() => {
+        selectedGroup = readSelectedGroupFromLocation();
+
+        const handlePopState = () => {
+            selectedGroup = readSelectedGroupFromLocation();
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    });
 
     function missingCoins(price: number) {
         return Math.max(price - balance, 0);
@@ -55,14 +83,21 @@
             return '';
         }
 
-        const periodLabels: Record<string, string> = {
-            day: 'день',
-            week: 'неделю',
-            month: 'месяц',
-            year: 'год',
+        const periodMap: Record<string, string> = {
+            day: 'frequencyDay',
+            week: 'frequencyWeek',
+            month: 'frequencyMonth',
+            year: 'frequencyYear',
         };
+        const numericLimit = Number(limit);
+        const pluralCategory = new Intl.PluralRules($i18n.locale).select(numericLimit);
+        const periodKey = periodMap[period];
 
-        return `${limit} раз(а) в ${periodLabels[period] ?? period}`;
+        if (!periodKey) {
+            return tShop('frequencyFallback', { limit: $i18n.formatNumber(numericLimit) });
+        }
+
+        return tShop(`${periodKey}.${pluralCategory}`, { limit: $i18n.formatNumber(numericLimit) });
     }
 
     async function handleBuy(itemId: unknown) {
@@ -71,13 +106,13 @@
         if (!item) return;
         if (isAdmin) {
             if (balance < (item.price as number)) {
-                showToast('Не хватает монет!', 'error');
+                showToast(tShop('toasts.notEnoughCoins'), 'error');
                 return;
             }
             const res = await buyItem(itemId, childId) as Record<string, unknown> | null;
             if (res) {
                 applyDataSnapshot(res);
-                showToast(`Куплено: ${item.name}`, 'success');
+                showToast(tShop('toasts.bought', { name: item.name }), 'success');
             }
         } else {
             const result = await requestItem(itemId);
@@ -85,7 +120,7 @@
                 if (result.data && typeof result.data === 'object') {
                     applyDataSnapshot(result.data as Record<string, unknown>);
                 }
-                showToast('Заявка на покупку отправлена!', 'success');
+                showToast(tShop('toasts.requestSent'), 'success');
                 return;
             }
 
@@ -105,9 +140,54 @@
         return Number(item.price ?? 0);
     }
 
+    function moneyLimitBadge(value: number | null | undefined) {
+        return value != null && Number(value) > 0
+            ? `${$i18n.formatNumber(Number(value))} 💶`
+            : '';
+    }
+
+    function readSelectedGroupFromLocation(): string {
+        if (!browser) {
+            return '';
+        }
+
+        return new URL(window.location.href).searchParams.get('group') ?? '';
+    }
+
+    function syncSelectedGroupUrl(nextGroup: string, replace = false) {
+        if (!browser) {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        if (nextGroup) {
+            url.searchParams.set('group', nextGroup);
+        } else {
+            url.searchParams.delete('group');
+        }
+
+        if (replace) {
+            history.replaceState(history.state, '', url);
+        } else {
+            history.pushState(history.state, '', url);
+        }
+    }
+
+    function setSelectedGroup(nextGroup: string, options?: { replace?: boolean }) {
+        const resolvedGroup = groups.includes(nextGroup) ? nextGroup : '';
+        const currentGroup = readSelectedGroupFromLocation();
+
+        selectedGroup = resolvedGroup;
+        if (currentGroup === resolvedGroup) {
+            return;
+        }
+
+        syncSelectedGroupUrl(resolvedGroup, options?.replace ?? false);
+    }
+
     async function persistGroupOrder(nextOrder: string[]) {
         if (resolvedChildId == null) {
-            showToast('Сначала выберите ребенка', 'error');
+            showToast(tShop('toasts.selectChildFirst'), 'error');
             return;
         }
 
@@ -119,10 +199,7 @@
                 children: applyGroupOrderToChildren(state.children, resolvedChildId, 'shop', isAdmin, nextOrder),
             }));
             isEditingGroupOrder = false;
-            showToast(
-                isAdmin ? 'Порядок групп наград сохранен' : 'Твой порядок групп наград сохранен',
-                'success'
-            );
+            showToast(isAdmin ? tShop('toasts.groupOrderSavedAdmin') : tShop('toasts.groupOrderSavedChild'), 'success');
         } else {
             showToast(result.error, 'error');
         }
@@ -136,6 +213,11 @@
     async function handleGroupOrderReset() {
         await persistGroupOrder([]);
     }
+
+    function setViewMode(nextMode: CardViewMode) {
+        viewMode = nextMode;
+        saveCardViewMode('shop', viewRole, nextMode);
+    }
 </script>
 
 <section class="section" id="shop-section">
@@ -144,34 +226,46 @@
             <h2>
                 <span class="gamified-icon icon-shop" aria-hidden="true"
                     style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></span>
-                Магазин наград
+                {tShop('section.title')}
             </h2>
-            <p class="section__subtitle">Обменивайте честно заработанные монетки на призы</p>
+            <p class="section__subtitle">{tShop('section.subtitle')}</p>
         </div>
-        {#if isAdmin}
-        <div class="section__buttons admin-only">
-            <button class="btn btn--add" id="add-shop-btn" on:click={openAddShopItem}>+ Добавить</button>
+        <div class="section__header-actions">
+            <div class="view-toggle" role="group" aria-label={tShop('section.viewAria')}>
+                <button
+                    type="button"
+                    class="view-toggle__button"
+                    class:view-toggle__button--active={viewMode === 'grid'}
+                    aria-pressed={viewMode === 'grid'}
+                    on:click={() => setViewMode('grid')}
+                >
+                    {tShop('section.viewGrid')}
+                </button>
+                <button
+                    type="button"
+                    class="view-toggle__button"
+                    class:view-toggle__button--active={viewMode === 'list'}
+                    aria-pressed={viewMode === 'list'}
+                    on:click={() => setViewMode('list')}
+                >
+                    {tShop('section.viewList')}
+                </button>
+            </div>
+            {#if isAdmin}
+            <button class="btn btn--add" id="add-shop-btn" on:click={openAddShopItem}>{tShop('section.add')}</button>
+            {/if}
         </div>
-        {/if}
     </div>
 
     {#if groups.length > 1}
     <nav class="group-nav" id="shop-group-nav">
         <div class="group-nav__scroll">
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => {
-                const url = new URL($page.url);
-                url.searchParams.delete('group');
-                history.pushState(null, '', url);
-            }}>
-                Все
+            <button type="button" class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => setSelectedGroup('')}>
+                {tShop('section.all')}
             </button>
             {#each groups as group (group)}
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
-                on:click={() => {
-                    const url = new URL($page.url);
-                    url.searchParams.set('group', group);
-                    history.pushState(null, '', url);
-                }}>{group}</button>
+            <button type="button" class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
+                on:click={() => setSelectedGroup(group)}>{group}</button>
             {/each}
         </div>
     </nav>
@@ -182,69 +276,83 @@
         isSaving={isSavingGroupOrder}
         hasStoredOrder={hasStoredGroupOrder}
         {groups}
-        title="Порядок групп наград"
-        hintAdmin="Родитель задает порядок групп магазина по умолчанию для этого ребенка."
-        hintChild="Можно переставить группы наград под себя, не меняя родительский порядок."
-        descriptionAdmin="Перетащи группу в нужное место. Новый порядок станет основным для магазина этого ребенка."
-        descriptionChild="Перетащи группу в нужное место. Этот порядок увидишь только ты, родительский вариант останется отдельно."
+        title={tShop('groupOrder.title')}
+        hintAdmin={tShop('groupOrder.hintAdmin')}
+        hintChild={tShop('groupOrder.hintChild')}
+        descriptionAdmin={tShop('groupOrder.descriptionAdmin')}
+        descriptionChild={tShop('groupOrder.descriptionChild')}
         on:save={handleGroupOrderSave}
         on:reset={handleGroupOrderReset}
     />
     {/if}
 
     {#if visibleItems.length > 0}
-    <div class="cards" id="shop-list">
+    <div class="cards" class:cards--list={viewMode === 'list'} id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={balance >= itemPrice(item)} class:card--disabled={balance < itemPrice(item)}>
+        <div class="card card--shop shop-card" class:card--affordable={balance >= itemPrice(item)} class:card--disabled={balance < itemPrice(item)} class:shop-card--list={viewMode === 'list'}>
             <div class="card__badge-row">
-                <span class="card__badge card__badge--group">{item.groupName ?? 'Без группы'}</span>
+                <span class="card__badge card__badge--group">{item.groupName ?? tShop('section.noGroup')}</span>
                 {#if formatFrequency(item.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
                 {/if}
                 <span class:card__status--available={balance >= itemPrice(item)} class:card__status--locked={balance < itemPrice(item)} class="card__status">
                     {#if balance >= itemPrice(item)}
                         {#if isAdmin}
-                        Можно купить
+                        {tShop('section.availableAdmin')}
                         {:else}
-                        Можно запросить
+                        {tShop('section.availableChild')}
                         {/if}
                     {:else}
-                        Еще {missingCoins(itemPrice(item))}
+                        {tShop('section.missingCoins', { amount: $i18n.formatNumber(missingCoins(itemPrice(item))) })}
                     {/if}
                 </span>
             </div>
-            <div class="card__header">
-                <h3 class="card__title">{item.name}</h3>
-                <div class="card__coins item-coins">
-                    <span class="gamified-icon icon-coin" aria-hidden="true"></span>
-                    <span>{item.price}</span>
+            <div class="shop-card__layout">
+                <div class="shop-card__main">
+                    <div class="card__header">
+                        <div class="shop-card__title-row">
+                            <h3 class="card__title">{item.name}</h3>
+                            <div class="shop-card__list-badges">
+                                <span class="card__badge card__badge--group shop-card__list-group-badge">{item.groupName ?? tShop('section.noGroup')}</span>
+                                {#if moneyLimitBadge(item.moneyLimit)}
+                                <span class="card__badge card__badge--type shop-card__list-money-badge">{moneyLimitBadge(item.moneyLimit)}</span>
+                                {/if}
+                            </div>
+                        </div>
+                        <div class="card__coins item-coins">
+                            <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                            <span>{item.price}</span>
+                        </div>
+                    </div>
+                    {#if item.comment}
+                    <p class="card__comment">{item.comment}</p>
+                    {:else}
+                    <p class="card__comment">{tShop('section.defaultComment')}</p>
+                    {/if}
                 </div>
-            </div>
-            {#if item.comment}
-            <p class="card__comment">{item.comment}</p>
-            {:else}
-            <p class="card__comment">Награда, которую можно честно заработать и обсудить вместе с родителями.</p>
-            {/if}
-            <div class="card__meta">
-                {#if item.moneyLimit != null}
-                <span class="card__meta-item">Лимит: {item.moneyLimit} 💶</span>
-                {/if}
-            </div>
-            <div class="card__actions">
-                {#if isAdmin}
-                <button class="btn btn--primary btn--small admin-only" disabled={balance < itemPrice(item)}
-                    on:click={() => handleBuy(item.id)}>
-                    Купить
-                </button>
-                <button class="btn btn--secondary btn--small admin-only" on:click={() => openEditShopItem(item)}>
-                    Изменить
-                </button>
-                {:else}
-                <button class="btn btn--primary" disabled={balance < itemPrice(item)}
-                    on:click={() => handleBuy(item.id)}>
-                    Запросить
-                </button>
-                {/if}
+                <div class="shop-card__side">
+                    <div class="card__meta">
+                        {#if item.moneyLimit != null}
+                        <span class="card__meta-item">{tShop('section.moneyLimit', { amount: $i18n.formatNumber(item.moneyLimit) })}</span>
+                        {/if}
+                    </div>
+                    <div class="card__actions">
+                        {#if isAdmin}
+                        <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item)}
+                            on:click={() => handleBuy(item.id)}>
+                            {tShop('actions.buy')}
+                        </button>
+                        <button class="btn btn--secondary btn--small admin-only" data-shop-action="edit" on:click={() => openEditShopItem(item)}>
+                            {tShop('actions.edit')}
+                        </button>
+                        {:else}
+                        <button class="btn btn--primary" data-shop-action="request" disabled={balance < itemPrice(item)}
+                            on:click={() => handleBuy(item.id)}>
+                            {tShop('actions.request')}
+                        </button>
+                        {/if}
+                    </div>
+                </div>
             </div>
         </div>
         {/each}
@@ -254,15 +362,201 @@
         <span class="empty-state__icon">
             <span class="gamified-icon icon-shop" aria-hidden="true"></span>
         </span>
-        <p class="empty-state__title">Магазин пока пуст</p>
+        <p class="empty-state__title">{tShop('section.emptyTitle')}</p>
         <p class="empty-state__hint">
-            {#if isAdmin}Добавьте первую награду, и магазин сразу станет понятной целью для ребенка.{:else}Скоро появятся призы!{/if}
+            {#if isAdmin}{tShop('section.emptyAdminHint')}{:else}{tShop('section.emptyChildHint')}{/if}
         </p>
         {#if isAdmin}
         <div class="empty-state__actions">
-            <button class="btn btn--add" type="button" on:click={openAddShopItem}>Добавить награду</button>
+            <button class="btn btn--add" type="button" on:click={openAddShopItem}>{tShop('section.addReward')}</button>
         </div>
         {/if}
     </div>
     {/if}
 </section>
+
+<style>
+    .section__header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .view-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem;
+        border-radius: 999px;
+        border: 1px solid rgba(120, 140, 175, 0.18);
+        background: rgba(246, 248, 252, 0.92);
+    }
+
+    .view-toggle__button {
+        border: 0;
+        background: transparent;
+        color: rgba(54, 68, 96, 0.72);
+        font: inherit;
+        font-size: 0.84rem;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0.62rem 0.9rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .view-toggle__button--active {
+        background: linear-gradient(135deg, rgba(87, 121, 206, 0.18), rgba(84, 179, 160, 0.2));
+        color: #20304e;
+        box-shadow: inset 0 0 0 1px rgba(87, 121, 206, 0.14);
+    }
+
+    .cards--list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.35rem;
+    }
+
+    .shop-card__layout {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+    }
+
+    .shop-card__side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .shop-card__title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .shop-card__list-group-badge {
+        display: none;
+    }
+
+    .shop-card__list-badges {
+        display: none;
+    }
+
+    /* ── Compact list row ── */
+    .shop-card--list {
+        height: auto;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .shop-card--list .card__badge-row,
+    .shop-card--list .card__comment,
+    .shop-card--list .card__meta {
+        display: none;
+    }
+
+    .shop-card--list .shop-card__layout {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+    }
+
+    .shop-card--list .shop-card__main {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .shop-card--list .card__header {
+        min-height: 0;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .shop-card--list .card__title {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .shop-card--list .shop-card__title-row {
+        gap: 0.35rem;
+    }
+
+    .shop-card--list .shop-card__list-badges {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        flex: 0 0 auto;
+        min-width: 0;
+        max-width: min(11rem, 46vw);
+    }
+
+    .shop-card--list .shop-card__list-group-badge {
+        display: inline-flex;
+        flex: 0 0 auto;
+        min-width: 0;
+        max-width: 7rem;
+        padding: 0.08rem 0.35rem;
+        font-size: 0.62rem;
+        line-height: 1.05;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .shop-card--list .shop-card__list-money-badge {
+        display: inline-flex;
+        flex: 0 0 auto;
+        min-width: 0;
+        max-width: 4.8rem;
+        padding: 0.08rem 0.35rem;
+        font-size: 0.62rem;
+        line-height: 1.05;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .shop-card--list .shop-card__side {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+    }
+
+    .shop-card--list .card__actions {
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        justify-content: flex-end;
+    }
+
+    .shop-card--list .card__actions .btn {
+        flex: none;
+        padding: 0.38rem 0.7rem;
+        font-size: 0.82rem;
+    }
+
+    @media (max-width: 640px) {
+        .section__header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .view-toggle {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .view-toggle__button {
+            flex: 1 1 0;
+            text-align: center;
+        }
+    }
+</style>

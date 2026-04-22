@@ -4,7 +4,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
     if (locals.session.authenticated) {
-        throw redirect(302, toAppPath(getDefaultAppSection(locals.session.role)));
+        throw redirect(302, toAppPath(getDefaultAppSection(locals.session.role), locals.locale));
     }
 
     return {

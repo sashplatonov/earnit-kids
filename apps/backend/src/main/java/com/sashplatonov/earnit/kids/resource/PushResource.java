@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -38,7 +39,7 @@ public class PushResource {
         AuthContext auth = getAuth(ctx);
         if (auth == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized("Unauthorized"))
+                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
                 .build();
         }
 
@@ -58,7 +59,7 @@ public class PushResource {
         AuthContext auth = getAuth(ctx);
         if (auth == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized("Unauthorized"))
+                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
                 .build();
         }
 

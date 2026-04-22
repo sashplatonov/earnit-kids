@@ -57,6 +57,24 @@ class JwtCompatVerifierTest {
     }
 
     @Test
+    void readSession_fallsBackToRefreshToken() {
+        String refreshToken = JwtCompatVerifier.sign(Map.of(
+            "familyId", "fam-1",
+            "role", "admin",
+            "email", "a@test.com",
+            "csrfToken", "payload-csrf"
+        ), "test-secret-key-for-unit-tests", 120, TestConfigFactory.timeProvider(FIXED_NOW));
+
+        SessionPageDataResponse response = verifier.readSession("app_refresh=" + refreshToken + "; csrf_token=cookie-csrf");
+
+        assertThat(response.authenticated()).isTrue();
+        assertThat(response.familyId()).isEqualTo("fam-1");
+        assertThat(response.role()).isEqualTo("admin");
+        assertThat(response.email()).isEqualTo("a@test.com");
+        assertThat(response.csrfToken()).isEqualTo("cookie-csrf");
+    }
+
+    @Test
     void verify_malformedOrTamperedToken_returnsEmptyOptional() {
         assertThat(verifier.verify("bad")).isEmpty();
 

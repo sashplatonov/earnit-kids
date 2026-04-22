@@ -1,13 +1,14 @@
 import { redirect } from '@sveltejs/kit';
+import { localizePath } from '$lib/i18n';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, parent }) => {
     if (!locals.session.authenticated) {
-        throw redirect(302, '/login.html');
+        throw redirect(302, localizePath('/login', locals.locale));
     }
 
     if (locals.session.role === 'super_admin') {
-        throw redirect(302, '/super-admin');
+        throw redirect(302, localizePath('/super-admin', locals.locale));
     }
 
     const parentData = await parent();

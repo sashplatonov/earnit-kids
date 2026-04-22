@@ -8,6 +8,7 @@ import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
+import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
@@ -49,6 +50,7 @@ class FamilyActionServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        RequestLocaleHolder.set("en");
         service = new FamilyActionServiceImpl(
             familyRepository,
             childRepository,
@@ -151,7 +153,7 @@ class FamilyActionServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
         assertThat(failure.errorCode()).isEqualTo("TASK_REQUEST_LIMIT_REACHED");
-        assertThat(failure.message()).contains("этому заданию").contains("00:00");
+        assertThat(failure.message()).contains("this task").contains("00:00");
         verify(purchaseRequestRepository, never()).persist(org.mockito.ArgumentMatchers.<PurchaseRequestEntity>any());
         verify(familyService, never()).loadFamilyData("fam-1", 10, false);
     }
@@ -223,9 +225,50 @@ class FamilyActionServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
         assertThat(failure.errorCode()).isEqualTo("ITEM_REQUEST_LIMIT_REACHED");
-        assertThat(failure.message()).contains("этому товару").contains("00:00");
+        assertThat(failure.message()).contains("this item").contains("00:00");
         verify(purchaseRequestRepository, never()).persist(org.mockito.ArgumentMatchers.<PurchaseRequestEntity>any());
         verify(familyService, never()).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
+    void requestTaskCompletion_whenLocaleIsRussian_returnsRussianLimitMessage() {
+        RequestLocaleHolder.set("ru");
+
+        ChildEntity child = child(10, 1, "Alice", 0);
+        TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
+        task.setFrequency(frequency(1, "day"));
+        io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOf(task);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(taskRepository.find(
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            1,
+            10,
+            3001L
+        )).thenReturn(taskQuery);
+        when(purchaseRequestRepository.countPendingTaskRequestsInWindow(
+            org.mockito.ArgumentMatchers.eq(1),
+            org.mockito.ArgumentMatchers.eq(10),
+            org.mockito.ArgumentMatchers.eq(3001L),
+            org.mockito.ArgumentMatchers.any(Instant.class),
+            org.mockito.ArgumentMatchers.any(Instant.class)
+        ))
+            .thenReturn(1L);
+        when(historyRepository.countTaskEarnsInWindow(
+            org.mockito.ArgumentMatchers.eq(1),
+            org.mockito.ArgumentMatchers.eq(10),
+            org.mockito.ArgumentMatchers.eq(3001L),
+            org.mockito.ArgumentMatchers.any(Instant.class),
+            org.mockito.ArgumentMatchers.any(Instant.class)
+        ))
+            .thenReturn(0L);
+
+        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
+        assertThat(failure.message()).contains("этому заданию").contains("00:00");
     }
 
     @Test

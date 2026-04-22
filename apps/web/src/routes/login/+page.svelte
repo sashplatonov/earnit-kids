@@ -1,6 +1,8 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
+    import { GOOGLE_LOGIN_NETWORK_ERROR, GOOGLE_LOGIN_URL_UNAVAILABLE, requestGoogleLoginUrl } from '$lib/auth/googleOAuth';
+    import { useI18n } from '$lib/i18n/context';
     import { fetchWithCsrf } from '$lib/services/api';
     import type { PageData } from './$types';
 
@@ -10,11 +12,13 @@
     interface AuthConfig {
         emailVerificationEnabled: boolean;
         passwordRecoveryEnabled: boolean;
+        googleEnabled?: boolean;
+        googleClientId?: string | null;
     }
 
-    const INVALID_TOKEN_MESSAGE = 'Эта ссылка для входа больше не работает. Попросите родителей прислать новую ссылку из настроек магазина.';
-
     export let data: PageData;
+
+    const i18n = useI18n();
 
     let activePanel: ActivePanel = 'login';
     let loginEmail = '';
@@ -27,8 +31,11 @@
     let submitting: ActivePanel | null = null;
     let emailVerificationEnabled = true;
     let passwordRecoveryEnabled = true;
+    let googleAuthEnabled = false;
     let showLoginPassword = false;
     let showRegisterPassword = false;
+
+    $: alternates = $i18n.alternates('/login');
 
     let loginEmailInput: HTMLInputElement | null = null;
     let loginPasswordInput: HTMLInputElement | null = null;
@@ -98,12 +105,12 @@
         const password = loginPassword;
 
         if (!email) {
-            showError('Введите Email');
+            showError($i18n.t('auth.login.emailRequired'));
             return;
         }
 
         if (password.length < 6) {
-            showError('Пароль должен быть не менее 6 знаков');
+            showError($i18n.t('auth.login.passwordTooShort'));
             return;
         }
 
@@ -114,14 +121,50 @@
             const { response, body } = await postJson('/api/login', { email, password });
 
             if (response.ok) {
-                location.assign('/app');
+                location.assign($i18n.href('/app'));
                 return;
             }
 
-            showError(readMessage(body, 'Ошибка входа'));
+            showError(readMessage(body, $i18n.t('auth.login.loginError')));
             loginPassword = '';
         } catch {
-            showError('Ошибка связи с сервером');
+            showError($i18n.t('auth.login.loginNetworkError'));
+        } finally {
+            submitting = null;
+        }
+    }
+
+    async function handleGoogleLogin() {
+        if (!googleAuthEnabled) {
+            showError($i18n.t('auth.login.googleUnavailable'));
+            return;
+        }
+
+        submitting = 'login';
+        clearMessages();
+
+        try {
+            const redirectTo = $i18n.href('/app');
+            const loginUrl = await requestGoogleLoginUrl(fetch, redirectTo);
+            location.assign(loginUrl);
+            return;
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.message === GOOGLE_LOGIN_NETWORK_ERROR) {
+                    showError($i18n.t('auth.login.loginNetworkError'));
+                    return;
+                }
+
+                if (error.message === GOOGLE_LOGIN_URL_UNAVAILABLE) {
+                    showError($i18n.t('auth.login.googleError'));
+                    return;
+                }
+
+                showError(error.message);
+                return;
+            }
+
+            showError($i18n.t('auth.login.googleError'));
         } finally {
             submitting = null;
         }
@@ -132,12 +175,12 @@
         const password = regPassword;
 
         if (!email || !email.includes('@')) {
-            showError('Введите корректный Email');
+            showError($i18n.t('auth.login.registerEmailInvalid'));
             return;
         }
 
         if (password.length < 6) {
-            showError('Пароль должен быть не менее 6 символов');
+            showError($i18n.t('auth.login.registerPasswordTooShort'));
             return;
         }
 
@@ -149,9 +192,9 @@
 
             if (response.ok) {
                 if (emailVerificationEnabled) {
-                    showSuccess('Семья зарегистрирована! ПРОВЕРЬТЕ ПОЧТУ для подтверждения.');
+                    showSuccess($i18n.t('auth.login.registerSuccessVerify'));
                 } else {
-                    showSuccess('Семья зарегистрирована! Теперь войдите.');
+                    showSuccess($i18n.t('auth.login.registerSuccessDirect'));
                 }
 
                 submitting = null;
@@ -164,9 +207,9 @@
                 return;
             }
 
-            showError(readMessage(body, 'Ошибка регистрации'));
+            showError(readMessage(body, $i18n.t('auth.login.registerError')));
         } catch {
-            showError('Ошибка связи с сервером');
+            showError($i18n.t('auth.login.loginNetworkError'));
         } finally {
             submitting = null;
         }
@@ -176,7 +219,7 @@
         const email = forgotEmail.trim();
 
         if (!email || !email.includes('@')) {
-            showError('Введите корректный Email');
+            showError($i18n.t('auth.login.recoverEmailInvalid'));
             return;
         }
 
@@ -187,7 +230,7 @@
             const { response, body } = await postJson('/api/forgot-password', { email });
 
             if (response.ok) {
-                showSuccess('Ссылка на восстановление пароля на ваш Email!');
+                showSuccess($i18n.t('auth.login.recoverSuccess'));
                 submitting = null;
 
                 window.setTimeout(() => {
@@ -198,9 +241,9 @@
                 return;
             }
 
-            showError(readMessage(body, 'Ошибка восстановления'));
+            showError(readMessage(body, $i18n.t('auth.login.recoverError')));
         } catch {
-            showError('Ошибка связи с сервером');
+            showError($i18n.t('auth.login.loginNetworkError'));
         } finally {
             submitting = null;
         }
@@ -209,8 +252,21 @@
     onMount(() => {
         const searchParams = new URLSearchParams(window.location.search);
 
-        if (searchParams.get('error') === 'invalid_token') {
-            showError(INVALID_TOKEN_MESSAGE);
+        switch (searchParams.get('error')) {
+            case 'invalid_token':
+                showError($i18n.t('auth.login.invalidToken'));
+                break;
+            case 'oauth_state_mismatch':
+                showError($i18n.t('auth.login.googleStateError'));
+                break;
+            case 'google_exchange_failed':
+                showError($i18n.t('auth.login.googleExchangeError'));
+                break;
+            case 'authentication_failed':
+                showError($i18n.t('auth.login.googleError'));
+                break;
+            default:
+                break;
         }
 
         loginEmailInput?.focus();
@@ -230,16 +286,23 @@
                 if (typeof config.passwordRecoveryEnabled === 'boolean') {
                     passwordRecoveryEnabled = config.passwordRecoveryEnabled;
                 }
+
+                if (config.googleEnabled === true) {
+                    googleAuthEnabled = true;
+                }
             })
             .catch(() => undefined);
     });
 </script>
 
 <svelte:head>
-    <title>Вход и первые шаги | EarnIt Kids</title>
-    <meta name="description" content="Войдите в EarnIt Kids — систему мотивации для детей. Настройте роли, задания и магазин без долгого обучения." />
-    <meta property="og:title" content="Вход и первые шаги | EarnIt Kids" />
-    <link rel="canonical" href="/login.html" />
+    <title>{$i18n.t('auth.login.metaTitle')}</title>
+    <meta name="description" content={$i18n.t('auth.login.metaDescription')} />
+    <meta property="og:title" content={$i18n.t('auth.login.metaTitle')} />
+    <link rel="canonical" href={$i18n.href('/login')} />
+    <link rel="alternate" hreflang="en" href={alternates.en} />
+    <link rel="alternate" hreflang="ru" href={alternates.ru} />
+    <link rel="alternate" hreflang="x-default" href={alternates['x-default']} />
 </svelte:head>
 
 <style>
@@ -539,6 +602,42 @@
         gap: 0.9rem;
     }
 
+    .google-auth {
+        display: grid;
+        gap: 0.85rem;
+        margin-bottom: 1rem;
+    }
+
+    .google-auth__cta {
+        margin-top: 0;
+    }
+
+    .google-auth__hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .google-auth__divider {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .google-auth__divider::before,
+    .google-auth__divider::after {
+        content: '';
+        flex: 1 1 auto;
+        height: 1px;
+        background: rgba(125, 149, 187, 0.18);
+    }
+
     .input-field {
         width: 100%;
         padding: 0.85rem 1rem;
@@ -739,9 +838,9 @@
     <main class="login-shell" data-authenticated={data.session.authenticated ? 'true' : 'false'}>
         <section class="login-panel" aria-labelledby="login-panel-title">
             <div class="panel-header">
-                <p class="eyebrow" style="margin-bottom:0.4rem;">Доступ и проверка</p>
-                <h2 id="login-panel-title">Вход для родителей и детей</h2>
-                <p>Войдите по email и паролю родителя или отправьте ребенку ссылку для входа.</p>
+                <p class="eyebrow" style="margin-bottom:0.4rem;">{$i18n.t('auth.login.accessBadge')}</p>
+                <h2 id="login-panel-title">{$i18n.t('auth.login.accessTitle')}</h2>
+                <p>{$i18n.t('auth.login.accessText')}</p>
             </div>
 
             <div class="form-switch" role="tablist">
@@ -751,7 +850,7 @@
                     class:active={activeTab() === 'login'}
                     on:click={showLoginPanel}
                 >
-                    Вход
+                    {$i18n.t('auth.login.tabLogin')}
                 </button>
                 <button
                     type="button"
@@ -759,22 +858,36 @@
                     class:active={activeTab() === 'register'}
                     on:click={showRegisterPanel}
                 >
-                    Регистрация
+                    {$i18n.t('auth.login.tabRegister')}
                 </button>
             </div>
 
             <div class="auth-forms">
                 <div class="form-frame">
                     {#if activePanel === 'login'}
-                        <div aria-label="Форма входа">
-                            <p class="hero-subtitle" style="margin-bottom: 1rem;">Войдите в аккаунт или используйте ссылку для ребенка.</p>
+                        <div aria-label={$i18n.t('auth.login.loginFormAria')}>
+                            <p class="hero-subtitle" style="margin-bottom: 1rem;">{$i18n.t('auth.login.loginIntro')}</p>
+                            {#if googleAuthEnabled}
+                                <div class="google-auth">
+                                    <div class="google-auth__divider">{$i18n.t('auth.login.googleDivider')}</div>
+                                    <button
+                                        type="button"
+                                        class="btn-secondary google-auth__cta"
+                                        on:click={handleGoogleLogin}
+                                        disabled={submitting === 'login'}
+                                    >
+                                        {submitting === 'login' ? $i18n.t('auth.login.googleSubmitting') : $i18n.t('auth.login.googleSubmit')}
+                                    </button>
+                                    <p class="google-auth__hint">{$i18n.t('auth.login.googleHint')}</p>
+                                </div>
+                            {/if}
                             <div class="form-grid">
                                 <input
                                     bind:this={loginEmailInput}
                                     bind:value={loginEmail}
                                     type="email"
                                     class="input-field"
-                                    placeholder="Email"
+                                    placeholder={$i18n.t('auth.login.loginEmailPlaceholder')}
                                     autocomplete="username"
                                     autocapitalize="none"
                                     spellcheck="false"
@@ -785,33 +898,33 @@
                                         bind:value={loginPassword}
                                         type={showLoginPassword ? 'text' : 'password'}
                                         class="input-field"
-                                        placeholder="Пароль"
+                                        placeholder={$i18n.t('auth.login.loginPasswordPlaceholder')}
                                         autocomplete="current-password"
                                         on:keydown={(event) => event.key === 'Enter' && handleLogin()}
                                     />
                                     <button class="password-toggle" type="button" on:click={() => showLoginPassword = !showLoginPassword}>
-                                        {showLoginPassword ? 'Скрыть' : 'Показать'}
+                                        {showLoginPassword ? $i18n.t('auth.login.hidePassword') : $i18n.t('auth.login.showPassword')}
                                     </button>
                                 </div>
                             </div>
                             <button class="btn-login" on:click={handleLogin} disabled={submitting === 'login'}>
-                                {submitting === 'login' ? 'Вход...' : 'Войти'}
+                                {submitting === 'login' ? $i18n.t('auth.login.loginSubmitting') : $i18n.t('auth.login.loginSubmit')}
                             </button>
                             <div class="form-links">
-                                <a href="/login.html#forgot-password" on:click|preventDefault={showForgotPanel}>Восстановить пароль</a>
+                                <a href={$i18n.href('/login')} on:click|preventDefault={showForgotPanel}>{$i18n.t('auth.login.forgotLink')}</a>
                                 <span style="color: var(--muted); font-size: 0.85rem;">или</span>
-                                <button type="button" class="link-btn" on:click={showRegisterPanel}>Собери семью</button>
+                                <button type="button" class="link-btn" on:click={showRegisterPanel}>{$i18n.t('auth.login.familyCta')}</button>
                             </div>
                         </div>
                     {:else if activePanel === 'register'}
-                        <div aria-label="Регистрация">
-                            <p class="hero-subtitle" style="margin-bottom: 1rem;">Создайте родительский аккаунт и пригласите ребенка одним нажатием.</p>
+                        <div aria-label={$i18n.t('auth.login.registerAria')}>
+                            <p class="hero-subtitle" style="margin-bottom: 1rem;">{$i18n.t('auth.login.registerIntro')}</p>
                             <div class="form-grid">
                                 <input
                                     bind:value={regEmail}
                                     type="email"
                                     class="input-field"
-                                    placeholder="Email родителя"
+                                    placeholder={$i18n.t('auth.login.registerEmailPlaceholder')}
                                     autocomplete="email"
                                     autocapitalize="none"
                                     spellcheck="false"
@@ -821,30 +934,30 @@
                                         bind:value={regPassword}
                                         type={showRegisterPassword ? 'text' : 'password'}
                                         class="input-field"
-                                        placeholder="Пароль (мин. 6)"
+                                        placeholder={$i18n.t('auth.login.registerPasswordPlaceholder')}
                                         minlength="6"
                                         autocomplete="new-password"
                                         on:keydown={(event) => event.key === 'Enter' && handleRegister()}
                                     />
                                     <button class="password-toggle" type="button" on:click={() => showRegisterPassword = !showRegisterPassword}>
-                                        {showRegisterPassword ? 'Скрыть' : 'Показать'}
+                                        {showRegisterPassword ? $i18n.t('auth.login.hidePassword') : $i18n.t('auth.login.showPassword')}
                                     </button>
                                 </div>
                             </div>
                             <button class="btn-login" on:click={handleRegister} disabled={submitting === 'register'}>
-                                {submitting === 'register' ? 'Регистрация...' : 'Зарегистрировать'}
+                                {submitting === 'register' ? $i18n.t('auth.login.registerSubmitting') : $i18n.t('auth.login.registerSubmit')}
                             </button>
                             <button type="button" class="btn-secondary" on:click={showLoginPanel}>
-                                Уже есть аккаунт? Войти
+                                {$i18n.t('auth.login.registerBackToLogin')}
                             </button>
                         </div>
                     {:else}
-                        <div aria-label="Восстановление">
+                        <div aria-label={$i18n.t('auth.login.forgotAria')}>
                             <p class="hero-subtitle" style="margin-bottom: 1rem;">
                                 {#if passwordRecoveryEnabled}
-                                    Восстановите доступ и отправьте ребенку новую ссылку.
+                                    {$i18n.t('auth.login.forgotIntroEnabled')}
                                 {:else}
-                                    Оставьте email, чтобы получить следующий шаг для восстановления доступа и вернуться к родительскому входу.
+                                    {$i18n.t('auth.login.forgotIntroDisabled')}
                                 {/if}
                             </p>
                             <div class="form-grid">
@@ -852,7 +965,7 @@
                                     bind:value={forgotEmail}
                                     type="email"
                                     class="input-field"
-                                    placeholder="Email для восстановления"
+                                    placeholder={$i18n.t('auth.login.forgotEmailPlaceholder')}
                                     autocomplete="email"
                                     autocapitalize="none"
                                     spellcheck="false"
@@ -860,10 +973,10 @@
                                 />
                             </div>
                             <button class="btn-login" on:click={handleRecover} disabled={submitting === 'forgot'}>
-                                {submitting === 'forgot' ? 'Отправка...' : 'Отправить'}
+                                {submitting === 'forgot' ? $i18n.t('auth.login.forgotSubmitting') : $i18n.t('auth.login.forgotSubmit')}
                             </button>
                             <button type="button" class="btn-secondary" on:click={showLoginPanel}>
-                                Вернуться ко входу
+                                {$i18n.t('auth.login.forgotBackToLogin')}
                             </button>
                         </div>
                     {/if}
@@ -882,25 +995,25 @@
 
         <section class="login-hero" aria-labelledby="login-hero-title">
             <div>
-                <p class="eyebrow">Семейный старт</p>
-                <h1 id="login-hero-title" class="hero-title">EarnIt Kids запускается за пару минут</h1>
-                <p class="hero-subtitle">Настройте задания и награды, отправьте ссылку ребенку и отслеживайте прогресс без сложных шагов.</p>
+                <p class="eyebrow">{$i18n.t('auth.login.heroBadge')}</p>
+                <h1 id="login-hero-title" class="hero-title">{$i18n.t('auth.login.heroTitle')}</h1>
+                <p class="hero-subtitle">{$i18n.t('auth.login.heroSubtitle')}</p>
                 <div class="hero-actions">
-                    <a class="btn-hero" href="/">Посмотреть ресурсы</a>
-                    <a class="btn-ghost" href="/faq">Часто задаваемые вопросы</a>
+                    <a class="btn-hero" href={$i18n.href('/')}>{$i18n.t('auth.login.heroPrimaryCta')}</a>
+                    <a class="btn-ghost" href={$i18n.href('/faq')}>{$i18n.t('auth.login.heroSecondaryCta')}</a>
                 </div>
                 <div class="hero-stats">
                     <div class="hero-stat">
-                        <strong>3 шага</strong>
-                        <span>От роли к действию</span>
+                        <strong>{$i18n.t('auth.login.statOneTitle')}</strong>
+                        <span>{$i18n.t('auth.login.statOneText')}</span>
                     </div>
                     <div class="hero-stat">
-                        <strong>1 минуту</strong>
-                        <span>На стартовую настройку</span>
+                        <strong>{$i18n.t('auth.login.statTwoTitle')}</strong>
+                        <span>{$i18n.t('auth.login.statTwoText')}</span>
                     </div>
                     <div class="hero-stat">
-                        <strong>Без лишнего</strong>
-                        <span>Только нужные шаги</span>
+                        <strong>{$i18n.t('auth.login.statThreeTitle')}</strong>
+                        <span>{$i18n.t('auth.login.statThreeText')}</span>
                     </div>
                 </div>
             </div>
@@ -908,61 +1021,61 @@
             <div>
                 <div class="role-grid">
                     <article class="role-card">
-                        <div class="role-card__badge">Родитель</div>
-                        <h3>Настройте семью</h3>
-                        <p>Создайте задания, лимиты и магазин. Получайте заявки, подтверждайте и рассказывайте ребенку, что происходит.</p>
+                        <div class="role-card__badge">{$i18n.t('auth.login.parentBadge')}</div>
+                        <h3>{$i18n.t('auth.login.parentTitle')}</h3>
+                        <p>{$i18n.t('auth.login.parentText')}</p>
                     </article>
                     <article class="role-card">
-                        <div class="role-card__badge">Ребенок</div>
-                        <h3>Игровой вход</h3>
-                        <p>Ссылка для входа позволяет зайти без пароля, сразу увидеть, что нужно сделать, и выбрать награду.</p>
+                        <div class="role-card__badge">{$i18n.t('auth.login.childBadge')}</div>
+                        <h3>{$i18n.t('auth.login.childTitle')}</h3>
+                        <p>{$i18n.t('auth.login.childText')}</p>
                     </article>
                 </div>
 
-                <div class="hero-scenarios" aria-label="Как работают роли">
+                <div class="hero-scenarios" aria-label={$i18n.t('auth.login.scenariosAria')}>
                     <article class="scenario-card">
                         <div class="scenario-card__header">
-                            <h3 class="scenario-card__title">Ребенок — Задания</h3>
-                            <span class="role-chip role-chip--child">Ребенок</span>
+                            <h3 class="scenario-card__title">{$i18n.t('auth.login.childScenarioTitle')}</h3>
+                            <span class="role-chip role-chip--child">{$i18n.t('auth.login.childBadge')}</span>
                         </div>
                         <ul class="scenario-card__list">
-                            <li>Список заданий с фиксированными табами и крупной карточкой.</li>
-                            <li>Яркие статусы заявки: ожидает, одобрено, отклонено.</li>
-                            <li>Баланс монет, быстрые награды и мгновенный отклик после действия.</li>
+                            <li>{$i18n.t('auth.login.childScenarioItemOne')}</li>
+                            <li>{$i18n.t('auth.login.childScenarioItemTwo')}</li>
+                            <li>{$i18n.t('auth.login.childScenarioItemThree')}</li>
                         </ul>
-                        <p class="scenario-card__hint">Понятный следующий шаг, минимум текста и ощущение награды каждый раз.</p>
+                        <p class="scenario-card__hint">{$i18n.t('auth.login.childScenarioHint')}</p>
                     </article>
                     <article class="scenario-card">
                         <div class="scenario-card__header">
-                            <h3 class="scenario-card__title">Родитель — Заявки</h3>
-                            <span class="role-chip role-chip--parent">Родитель</span>
+                            <h3 class="scenario-card__title">{$i18n.t('auth.login.parentScenarioTitle')}</h3>
+                            <span class="role-chip role-chip--parent">{$i18n.t('auth.login.parentBadge')}</span>
                         </div>
                         <ul class="scenario-card__list">
-                            <li>Заявки собраны в одном месте, одобрение и отклонение проходят быстро.</li>
-                            <li>Шаблоны и мастер задач и наград помогают запускать новые привычки.</li>
-                            <li>Лимиты и частота на виду, чтобы покупки оставались справедливыми.</li>
+                            <li>{$i18n.t('auth.login.parentScenarioItemOne')}</li>
+                            <li>{$i18n.t('auth.login.parentScenarioItemTwo')}</li>
+                            <li>{$i18n.t('auth.login.parentScenarioItemThree')}</li>
                         </ul>
-                        <p class="scenario-card__hint">Режим управления умеренный, без перегруженного интерфейса.</p>
+                        <p class="scenario-card__hint">{$i18n.t('auth.login.parentScenarioHint')}</p>
                     </article>
                 </div>
             </div>
         </section>
 
-        <section class="onboarding-steps" aria-label="Первые шаги">
+        <section class="onboarding-steps" aria-label={$i18n.t('auth.login.stepsAria')}>
             <article class="step-card">
                 <div class="step-index">1</div>
-                <h3>Выберите роль</h3>
-                <p>Родитель и ребенок получают понятные экраны и простые инструкции.</p>
+                <h3>{$i18n.t('auth.login.stepOneTitle')}</h3>
+                <p>{$i18n.t('auth.login.stepOneText')}</p>
             </article>
             <article class="step-card">
                 <div class="step-index">2</div>
-                <h3>Настройте задания и магазин</h3>
-                <p>Задайте монетки, лимиты и любимые награды. Помогите ребенку увидеть, что делать прямо сейчас.</p>
+                <h3>{$i18n.t('auth.login.stepTwoTitle')}</h3>
+                <p>{$i18n.t('auth.login.stepTwoText')}</p>
             </article>
             <article class="step-card">
                 <div class="step-index">3</div>
-                <h3>Отправьте ссылку ребенку</h3>
-                <p>Ребенок получает ссылку и сразу видит все доступные задания с понятным следующим шагом. Все действия и статусы прозрачны.</p>
+                <h3>{$i18n.t('auth.login.stepThreeTitle')}</h3>
+                <p>{$i18n.t('auth.login.stepThreeText')}</p>
             </article>
         </section>
     </main>

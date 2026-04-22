@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, localizePath, stripLocaleFromPath, type Locale, type MessageKey } from '$lib/i18n';
+
 export const SHARED_APP_SECTIONS = [
     'analytics',
     'tasks',
@@ -22,60 +24,60 @@ export const APP_SECTIONS = [
 export type AppSection = (typeof APP_SECTIONS)[number];
 
 type AppSectionMeta = {
-    label: string;
-    title: string;
+    labelKey: MessageKey;
+    titleKey: MessageKey;
     iconClass: string;
 };
 
 export const APP_SECTION_META: Record<AppSection, AppSectionMeta> = {
     analytics: {
-        label: 'Достижения',
-        title: 'Достижения',
+        labelKey: 'app.sections.analyticsLabel',
+        titleKey: 'app.sections.analyticsTitle',
         iconClass: 'icon-chart',
     },
     tasks: {
-        label: 'Задания',
-        title: 'Задания',
+        labelKey: 'app.sections.tasksLabel',
+        titleKey: 'app.sections.tasksTitle',
         iconClass: 'icon-tasks',
     },
     shop: {
-        label: 'Награды',
-        title: 'Магазин наград',
+        labelKey: 'app.sections.shopLabel',
+        titleKey: 'app.sections.shopTitle',
         iconClass: 'icon-shop',
     },
     requests: {
-        label: 'Заявки',
-        title: 'Заявки',
+        labelKey: 'app.sections.requestsLabel',
+        titleKey: 'app.sections.requestsTitle',
         iconClass: 'icon-envelope',
     },
     history: {
-        label: 'История',
-        title: 'История',
+        labelKey: 'app.sections.historyLabel',
+        titleKey: 'app.sections.historyTitle',
         iconClass: 'icon-history-menu',
     },
     friends: {
-        label: 'Друзья',
-        title: 'Друзья',
+        labelKey: 'app.sections.friendsLabel',
+        titleKey: 'app.sections.friendsTitle',
         iconClass: 'icon-star',
     },
     rules: {
-        label: 'Правила',
-        title: 'Правила',
+        labelKey: 'app.sections.rulesLabel',
+        titleKey: 'app.sections.rulesTitle',
         iconClass: 'icon-rules-menu',
     },
     settings: {
-        label: 'Настройки',
-        title: 'Настройки',
+        labelKey: 'app.sections.settingsLabel',
+        titleKey: 'app.sections.settingsTitle',
         iconClass: 'icon-settings-menu',
     },
     limits: {
-        label: 'Лимиты',
-        title: 'Лимиты',
+        labelKey: 'app.sections.limitsLabel',
+        titleKey: 'app.sections.limitsTitle',
         iconClass: 'icon-chart',
     },
     catalog: {
-        label: 'Каталог',
-        title: 'Каталог',
+        labelKey: 'app.sections.catalogLabel',
+        titleKey: 'app.sections.catalogTitle',
         iconClass: 'icon-tasks',
     },
 };
@@ -122,16 +124,20 @@ export function getDefaultAppSection(role?: string): AppSection {
     return isAdminRole(role) ? 'analytics' : 'tasks';
 }
 
-export function toAppPath(section: AppSection): `/app/${AppSection}` {
-    return `/app/${section}`;
+export function toAppPath(section: AppSection, locale: Locale = DEFAULT_LOCALE): string {
+    return localizePath(`/app/${section}`, locale);
 }
 
-export function getAppSectionTitle(section: AppSection): string {
-    return APP_SECTION_META[section].title;
+export function getAppSectionTitleKey(section: AppSection): MessageKey {
+    return APP_SECTION_META[section].titleKey;
+}
+
+export function getAppSectionLabelKey(section: AppSection): MessageKey {
+    return APP_SECTION_META[section].labelKey;
 }
 
 export function getAppSectionFromPath(pathname: string): AppSection | null {
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = stripLocaleFromPath(pathname).split('/').filter(Boolean);
 
     if (segments[0] !== 'app') {
         return null;

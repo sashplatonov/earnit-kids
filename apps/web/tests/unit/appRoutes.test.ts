@@ -6,6 +6,7 @@ import {
     isSectionAllowed,
     toAppPath,
 } from '../../src/lib/app/routes';
+import { buildAlternatePaths, localizePath, swapPathLocale } from '../../src/lib/i18n';
 
 describe('app routes', () => {
     it('uses analytics as the default parent section', () => {
@@ -24,10 +25,23 @@ describe('app routes', () => {
         expect(isSectionAllowed('shop', 'child')).toBe(true);
     });
 
-    it('builds and parses canonical /app section paths', () => {
-        expect(toAppPath('requests')).toBe('/app/requests');
-        expect(getAppSectionFromPath('/app/requests')).toBe('requests');
-        expect(getAppSectionFromPath('/app')).toBeNull();
+    it('builds and parses locale-prefixed /app section paths', () => {
+        expect(toAppPath('requests')).toBe('/en/app/requests');
+        expect(toAppPath('requests', 'ru')).toBe('/ru/app/requests');
+        expect(getAppSectionFromPath('/en/app/requests')).toBe('requests');
+        expect(getAppSectionFromPath('/ru/app/requests')).toBe('requests');
+        expect(getAppSectionFromPath('/en/app')).toBeNull();
         expect(getAppSectionFromPath('/blog')).toBeNull();
+    });
+
+    it('swaps and builds locale prefixes for public paths', () => {
+        expect(localizePath('/about', 'ru')).toBe('/ru/about');
+        expect(localizePath('/', 'en')).toBe('/en/');
+        expect(swapPathLocale('/en/app/shop', 'ru')).toBe('/ru/app/shop');
+        expect(buildAlternatePaths('/ru/about')).toEqual({
+            en: '/en/about',
+            ru: '/ru/about',
+            'x-default': '/en/about',
+        });
     });
 });

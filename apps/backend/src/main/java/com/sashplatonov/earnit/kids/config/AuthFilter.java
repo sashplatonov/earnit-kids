@@ -7,29 +7,34 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import lombok.RequiredArgsConstructor;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+
+import java.util.Map;
+import java.util.Optional;
 
 @Provider
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class AuthFilter implements ContainerRequestFilter {
     public static final String AUTH_CONTEXT_PROPERTY = "auth.context";
+    public static final String AUTH_REFRESHED_PAYLOAD_PROPERTY = "auth.refreshed-payload";
 
     private final JwtService jwtService;
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
         var cookieHeader = requestContext.getHeaderString("Cookie");
-        var token = readCookie(cookieHeader, "app_auth");
-        if (token == null || token.isBlank()) {
-            return;
+        var payloadOpt = verifyCookieToken(readCookie(cookieHeader, CookieBuilder.AUTH_COOKIE_NAME));
+        var refreshedFromRefreshToken = false;
+        if (payloadOpt.isEmpty()) {
+            payloadOpt = verifyCookieToken(readCookie(cookieHeader, CookieBuilder.REFRESH_COOKIE_NAME));
+            refreshedFromRefreshToken = payloadOpt.isPresent();
         }
-
-        var payloadOpt = jwtService.verifyToken(token);
         if (payloadOpt.isEmpty()) {
             return;
         }
 
         var resolvedPayload = payloadOpt.get();
-        var cookieCsrf = readCookie(cookieHeader, "csrf_token");
+        var cookieCsrf = readCookie(cookieHeader, CookieBuilder.CSRF_COOKIE_NAME);
 
         var method = requestContext.getMethod();
         if ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)
@@ -40,7 +45,7 @@ public class AuthFilter implements ContainerRequestFilter {
             if (headerCsrf == null || expected == null || !headerCsrf.equals(expected)) {
                 requestContext.abortWith(
                     Response.status(Response.Status.FORBIDDEN)
-                        .entity(ErrorResponse.of("CSRF token missing or invalid"))
+                        .entity(ErrorResponse.of(BackendMessages.message("security.csrfInvalid")))
                         .build());
                 return;
             }
@@ -48,6 +53,16 @@ public class AuthFilter implements ContainerRequestFilter {
 
         var ctx = AuthContext.fromPayload(resolvedPayload, cookieCsrf);
         requestContext.setProperty(AUTH_CONTEXT_PROPERTY, ctx);
+        if (refreshedFromRefreshToken) {
+            requestContext.setProperty(AUTH_REFRESHED_PAYLOAD_PROPERTY, resolvedPayload);
+        }
+    }
+
+    private Optional<Map<String, Object>> verifyCookieToken(String token) {
+        if (token == null || token.isBlank()) {
+            return Optional.empty();
+        }
+        return jwtService.verifyToken(token);
     }
 
     private String readCookie(String cookieHeader, String name) {

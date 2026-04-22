@@ -19,6 +19,18 @@ class CreatedAtEntityTest {
     }
 
     @Test
+    void onCreate_preservesPresetCreatedAt() {
+        Instant createdAt = Instant.parse("2026-04-10T12:30:00Z");
+        TestCreatedAtEntity entity = new TestCreatedAtEntity();
+        entity.seed(createdAt, null);
+
+        entity.markCreated();
+
+        assertThat(entity.getCreatedAt()).isEqualTo(createdAt);
+        assertThat(entity.getUpdatedAt()).isEqualTo(createdAt);
+    }
+
+    @Test
     void onUpdate_refreshesUpdatedAtWithoutChangingCreatedAt() {
         Instant createdAt = Instant.parse("2026-04-20T00:00:00Z");
         Instant previousUpdatedAt = Instant.EPOCH;

@@ -58,6 +58,35 @@ class AuthFilterTest {
     }
 
     @Test
+    void filter_validRefreshToken_populatesContextAndMarksRotation() {
+        ContainerRequestContext context = mock(ContainerRequestContext.class);
+        Map<String, Object> payload = Map.of(
+            "familyId", "fam-1",
+            "childId", 10,
+            "role", "child",
+            "email", "c@test.com",
+            "csrfToken", "payload-csrf"
+        );
+
+        when(context.getHeaderString("Cookie"))
+            .thenReturn("app_auth=expired; app_refresh=refresh-good; csrf_token=cookie-csrf");
+        when(context.getMethod()).thenReturn("GET");
+        when(jwtService.verifyToken("expired")).thenReturn(Optional.empty());
+        when(jwtService.verifyToken("refresh-good")).thenReturn(Optional.of(payload));
+
+        filter.filter(context);
+
+        verify(context).setProperty(org.mockito.ArgumentMatchers.eq(AuthFilter.AUTH_CONTEXT_PROPERTY),
+            org.mockito.ArgumentMatchers.argThat(value -> value instanceof AuthContext auth
+                && "fam-1".equals(auth.familyId())
+                && Integer.valueOf(10).equals(auth.childId())
+                && "child".equals(auth.role())
+                && "c@test.com".equals(auth.email())
+                && "cookie-csrf".equals(auth.csrfToken())));
+        verify(context).setProperty(AuthFilter.AUTH_REFRESHED_PAYLOAD_PROPERTY, payload);
+    }
+
+    @Test
     void filter_validToken_populatesAuthContext() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Cookie")).thenReturn("app_auth=good; csrf_token=cookie-csrf");

@@ -1,9 +1,17 @@
 <script lang="ts">
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { modalStore } from '$lib/stores/modal';
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { buildTaskPayload } from '$lib/services/taskPayload';
     import { showToast } from '$lib/stores/toasts';
+
+    const i18n = useI18n();
+
+    function tTasks(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`tasks.${key}` as MessageKey, variables);
+    }
 
     $: isOpen = $modalStore.open === 'task-modal';
     $: modalData = $modalStore.data;
@@ -33,7 +41,7 @@
     function close() { modalStore.close(); }
 
     async function save() {
-        if (!title.trim()) { showToast('Введите название', 'error'); return; }
+        if (!title.trim()) { showToast(tTasks('modal.enterTitle'), 'error'); return; }
         const payload = buildTaskPayload({
             id: existingTask?.id as number | string | undefined,
             title,
@@ -53,16 +61,16 @@
             appStore.setState({ tasks: [...$appStore.tasks, (newTask as unknown as typeof $appStore.tasks[number])] });
         }
         void scheduleSave();
-        showToast(isEdit ? 'Задание сохранено' : 'Задание добавлено', 'success');
+        showToast(isEdit ? tTasks('modal.saved') : tTasks('modal.added'), 'success');
         close();
     }
 
     async function deleteTask() {
         if (!existingTask?.id) return;
-        if (!confirm('Удалить задание?')) return;
+        if (!confirm(tTasks('modal.confirmDelete'))) return;
         appStore.setState({ tasks: $appStore.tasks.filter(t => t.id != existingTask!.id) });
         void scheduleSave();
-        showToast('Задание удалено', 'info');
+        showToast(tTasks('modal.deleted'), 'info');
         close();
     }
 </script>
@@ -70,44 +78,44 @@
 {#if isOpen}
 <dialog class="modal" aria-modal="true" id="task-modal" open>
     <div class="modal__content">
-        <h3 id="task-modal-title">{isEdit ? 'Редактировать задание' : 'Добавить задание'}</h3>
+        <h3 id="task-modal-title">{isEdit ? tTasks('modal.titleEdit') : tTasks('modal.titleAdd')}</h3>
 
         <div class="form-group">
-            <label for="task-name">Название</label>
-            <input type="text" class="input" id="task-name" placeholder="Помыть посуду" bind:value={title} />
+            <label for="task-name">{tTasks('modal.nameLabel')}</label>
+            <input type="text" class="input" id="task-name" placeholder={tTasks('modal.namePlaceholder')} bind:value={title} />
         </div>
         <div class="form-group">
-            <label for="task-group">Группа</label>
-            <input type="text" class="input" id="task-group" placeholder="Напр: Дом, Учеба..." bind:value={groupName} />
+            <label for="task-group">{tTasks('modal.groupLabel')}</label>
+            <input type="text" class="input" id="task-group" placeholder={tTasks('modal.groupPlaceholder')} bind:value={groupName} />
         </div>
         <div class="form-group">
-            <label for="task-coins">Монеты</label>
+            <label for="task-coins">{tTasks('modal.coinsLabel')}</label>
             <input type="number" inputmode="numeric" class="input" id="task-coins" min="1" bind:value={coins} />
         </div>
         <div class="form-group">
-            <label for="task-comment">Комментарий</label>
-            <textarea class="input textarea" id="task-comment" placeholder="Дополнительная информация..." bind:value={comment}></textarea>
+            <label for="task-comment">{tTasks('modal.commentLabel')}</label>
+            <textarea class="input textarea" id="task-comment" placeholder={tTasks('modal.commentPlaceholder')} bind:value={comment}></textarea>
         </div>
         <div class="form-group">
-            <label for="task-freq-limit">Частота (раз в период)</label>
+            <label for="task-freq-limit">{tTasks('modal.frequencyLabel')}</label>
             <div class="input-group">
                 <input type="number" inputmode="numeric" class="input" id="task-freq-limit"
-                    placeholder="Без лимита" min="0" bind:value={freqLimit} />
+                    placeholder={tTasks('modal.noLimitPlaceholder')} min="0" bind:value={freqLimit} />
                 <select class="input" id="task-freq-period" bind:value={freqPeriod}>
-                    <option value="day">в день</option>
-                    <option value="week">в неделю</option>
-                    <option value="month">в месяц</option>
-                    <option value="year">в год</option>
+                    <option value="day">{tTasks('modal.periodDay')}</option>
+                    <option value="week">{tTasks('modal.periodWeek')}</option>
+                    <option value="month">{tTasks('modal.periodMonth')}</option>
+                    <option value="year">{tTasks('modal.periodYear')}</option>
                 </select>
             </div>
         </div>
 
         <div class="modal__actions">
-            <button class="btn btn--secondary" id="task-cancel" on:click={close}>Отмена</button>
+            <button class="btn btn--secondary" id="task-cancel" on:click={close}>{tTasks('modal.cancel')}</button>
             {#if isEdit}
-            <button class="btn btn--danger" id="task-delete" on:click={deleteTask}>Удалить</button>
+            <button class="btn btn--danger" id="task-delete" on:click={deleteTask}>{tTasks('modal.delete')}</button>
             {/if}
-            <button class="btn btn--primary" id="task-save" on:click={save}>Сохранить</button>
+            <button class="btn btn--primary" id="task-save" on:click={save}>{tTasks('modal.save')}</button>
         </div>
     </div>
 </dialog>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -99,7 +100,7 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         int familyDbId = dbIdOpt.get();
         String rules = familyRepository.getRules(familyId).orElse(null);
@@ -115,7 +116,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         List<ChildEntity> visibleChildren = resolveVisibleChildren(children, adminSession, childId);
         if (visibleChildren.isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         Integer preferredChildId = adminSession
@@ -175,7 +176,7 @@ public final class FamilyServiceImpl implements FamilyService {
                                                               boolean adminSession) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         int familyDbId = dbIdOpt.get();
@@ -186,13 +187,13 @@ public final class FamilyServiceImpl implements FamilyService {
 
         List<ChildEntity> accessibleChildren = resolveVisibleChildren(children, adminSession, childId);
         if (accessibleChildren.isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         Integer selectedChildId = resolveSelectedChildId(familyId, childId, payload, accessibleChildren, adminSession);
         if (selectedChildId != null
             && accessibleChildren.stream().noneMatch(child -> Objects.equals(child.getId(), selectedChildId))) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         syncFamilyRules(familyId, payload, adminSession);
@@ -212,24 +213,24 @@ public final class FamilyServiceImpl implements FamilyService {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             log.warn("createChild failed: family not found familyId={}", familyId);
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         int familyDbId = dbIdOpt.get();
 
         if (childName == null || childName.isBlank()) {
-            return OperationResult.failure("Имя ребенка обязательно");
+            return failure("CHILD_NAME_REQUIRED", "family.childNameRequired");
         }
         if (childName.length() > 50) {
-            return OperationResult.failure("Имя слишком длинное");
+            return failure("CHILD_NAME_TOO_LONG", "family.childNameTooLong");
         }
         if (childRepository.isNicknameTaken(familyDbId, childName, null)) {
-            return OperationResult.failure("Это имя уже занято");
+            return failure("CHILD_NAME_TAKEN", "family.childNameTaken");
         }
 
         Optional<ChildEntity> childOpt = childRepository.createChild(familyDbId, childName);
         if (childOpt.isEmpty()) {
             log.error("createChild failed: repository returned empty familyId={}", familyId);
-            return OperationResult.failure("Ошибка создания");
+            return failure("CHILD_CREATE_FAILED", "family.createFailed");
         }
 
         ChildEntity child = childOpt.get();
@@ -242,13 +243,13 @@ public final class FamilyServiceImpl implements FamilyService {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             log.warn("deleteChild failed: family not found familyId={} childId={}", familyId, childId);
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         var childOpt = childRepository.findByIdOptional(childId);
         if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), dbIdOpt.get())) {
             log.warn("deleteChild failed: child not found or family mismatch familyId={} childId={}", familyId, childId);
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         childRepository.deleteChild(childId);
@@ -260,18 +261,18 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<Void> updateNickname(String familyId, int childId, String newName) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         if (newName == null || newName.isBlank()) {
-            return OperationResult.failure("Имя обязательно");
+            return failure("NAME_REQUIRED", "family.nameRequired");
         }
         if (childRepository.isNicknameTaken(dbIdOpt.get(), newName, childId)) {
-            return OperationResult.failure("Это имя уже занято");
+            return failure("CHILD_NAME_TAKEN", "family.childNameTaken");
         }
 
         childRepository.updateName(childId, newName);
@@ -284,10 +285,10 @@ public final class FamilyServiceImpl implements FamilyService {
                                                       int monthlyLimit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit);
         return OperationResult.success(null);
@@ -297,13 +298,13 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<Void> updateChildTheme(String familyId, int childId, String theme) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (!VALID_THEMES.contains(theme)) {
-            return OperationResult.failure("Недопустимая тема: " + theme);
+            return failure("INVALID_THEME", "family.invalidTheme", Map.of("theme", String.valueOf(theme)));
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         childRepository.updateTheme(childId, theme);
         return OperationResult.success(null);
@@ -315,16 +316,17 @@ public final class FamilyServiceImpl implements FamilyService {
                                                        boolean personalOrder) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         String normalizedSection = normalizeGroupOrderSection(section);
         if (normalizedSection == null) {
-            return OperationResult.failure("Неизвестный раздел порядка групп: " + section);
+            return failure("INVALID_GROUP_ORDER_SECTION", "family.invalidGroupOrderSection",
+                Map.of("section", String.valueOf(section)));
         }
 
         String serializedOrder;
@@ -332,7 +334,7 @@ public final class FamilyServiceImpl implements FamilyService {
             serializedOrder = serializeGroupOrder(groups);
         } catch (JsonProcessingException ex) {
             log.warn("Failed to serialize group order familyId={} childId={} section={}", familyId, childId, normalizedSection, ex);
-            return OperationResult.failure("Не удалось сохранить порядок групп");
+            return failure("GROUP_ORDER_SAVE_FAILED", "family.groupOrderSaveFailed");
         }
 
         childRepository.updateGroupOrder(childId, normalizedSection, personalOrder, serializedOrder);
@@ -355,20 +357,20 @@ public final class FamilyServiceImpl implements FamilyService {
     @Override
     public OperationResult<Void> addFriend(String familyId, int childId, int friendChildId) {
         if (childId == friendChildId) {
-            return OperationResult.failure("Cannot add yourself");
+            return failure("CANNOT_ADD_SELF", "family.cannotAddSelf");
         }
 
         if (familyRepository.getDbId(familyId).isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         if (childRepository.findByIdOptional(friendChildId).isEmpty()) {
-            return OperationResult.failure("User not found");
+            return failure("USER_NOT_FOUND", "family.userNotFound");
         }
 
         boolean saved = familyDataRepository.addFriend(childId, friendChildId);
         if (!saved) {
-            return OperationResult.failure("Already friends or failed to add");
+            return failure("FRIEND_ADD_FAILED", "family.friendAddFailed");
         }
 
         return OperationResult.success(null);
@@ -387,7 +389,7 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe) {
         Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
         if (familyDbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         int familyDbId = familyDbIdOpt.get();
@@ -422,10 +424,10 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<PaginatedHistory> getHistory(String familyId, int childId, int page, int limit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
@@ -442,7 +444,7 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<PaginatedRequests> getRequests(String familyId, int page, int limit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         int familyDbId = dbIdOpt.get();
         int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
@@ -457,12 +459,12 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<String> getChildLoginLink(String familyId, int childId) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         var childOpt = findFamilyChild(dbIdOpt.get(), childId);
         if (childOpt.isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         return OperationResult.success(childOpt.get().getToken());
     }
@@ -471,15 +473,15 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<String> regenerateChildToken(String familyId, int childId) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return OperationResult.failure("Ребенок не найден");
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         Optional<String> newToken = childRepository.regenerateToken(childId);
         if (newToken.isEmpty()) {
-            return OperationResult.failure("Ошибка генерации токена");
+            return failure("TOKEN_GENERATION_FAILED", "family.tokenGenerationFailed");
         }
         return OperationResult.success(newToken.get());
     }
@@ -489,24 +491,32 @@ public final class FamilyServiceImpl implements FamilyService {
         if ("lastSelectedChildId".equals(key)) {
             Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
             if (familyDbIdOpt.isEmpty()) {
-                return OperationResult.failure("Семья не найдена");
+                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
             Integer childId = parseChildIdPreference(value);
             if (value != null && childId == null) {
-                return OperationResult.failure("Некорректный идентификатор ребенка");
+                return failure("INVALID_CHILD_ID", "family.invalidChildId");
             }
             if (childId != null) {
                 Optional<ChildEntity> childOpt = childRepository.findByIdOptional(childId);
                 if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), familyDbIdOpt.get())) {
-                    return OperationResult.failure("Ребенок не найден");
+                    return failure("CHILD_NOT_FOUND", "family.childNotFound");
                 }
             }
 
             familyRepository.updateLastSelectedChild(familyId, childId);
             return OperationResult.success(null);
         }
-        return OperationResult.failure("Неизвестная настройка: " + key);
+        return failure("UNKNOWN_SETTING", "family.unknownSetting", Map.of("key", String.valueOf(key)));
+    }
+
+    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
+        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
+    }
+
+    private static <T> OperationResult<T> failure(String errorCode, String messageKey, Map<String, String> variables) {
+        return OperationResult.failure(errorCode, BackendMessages.message(messageKey, variables));
     }
 
     private Integer parseChildIdPreference(Object value) {
@@ -1128,7 +1138,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 }
                 if (name == null || name.isBlank()) {
                     name = entry.getDescription() == null || entry.getDescription().isBlank()
-                        ? "Задание"
+                        ? BackendMessages.message("analytics.taskFallback")
                         : entry.getDescription();
                 }
 
@@ -1156,7 +1166,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 }
                 if (name == null || name.isBlank()) {
                     name = entry.getDescription() == null || entry.getDescription().isBlank()
-                        ? "Товар"
+                        ? BackendMessages.message("analytics.itemFallback")
                         : entry.getDescription();
                 }
 
@@ -1238,7 +1248,9 @@ public final class FamilyServiceImpl implements FamilyService {
             .map(task -> new AnalyticsResponse.AnalyticsRecommendation(
                 task.getName(),
                 task.getCoins(),
-                completionCounts.getOrDefault(task.getTaskId(), 0) == 0 ? "Давно не выполнялось" : "Стоит повторить"
+                completionCounts.getOrDefault(task.getTaskId(), 0) == 0
+                    ? BackendMessages.message("analytics.recommendationStale")
+                    : BackendMessages.message("analytics.recommendationRepeat")
             ))
             .toList();
     }

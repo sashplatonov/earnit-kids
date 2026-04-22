@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -56,7 +57,7 @@ public class DatabaseBackupService {
 
             DatabaseCommandResult result = commandRunner.run(buildPgDumpCommand(connection, dumpFile), password);
             if (result.exitCode() != 0) {
-                String stderr = normalizeError(result.stderr(), "pg_dump завершился с ошибкой");
+                String stderr = normalizeError(result.stderr(), BackendMessages.message("backup.pgDumpFailed"));
                 log.error("pg_dump failed: {}", stderr);
                 return OperationResult.failure(stderr);
             }
@@ -64,11 +65,11 @@ public class DatabaseBackupService {
         } catch (IOException ex) {
             log.error("Backup creation failed", ex);
             return OperationResult.failure(ex.getMessage().contains("No such file")
-                ? "pg_dump не найден в окружении"
+                ? BackendMessages.message("backup.pgDumpMissing")
                 : ex.getMessage());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            return OperationResult.failure("Создание бэкапа было прервано");
+            return OperationResult.failure(BackendMessages.message("backup.backupInterrupted"));
         } catch (IllegalArgumentException ex) {
             return OperationResult.failure(ex.getMessage());
         }
@@ -76,7 +77,7 @@ public class DatabaseBackupService {
 
     public OperationResult<Void> restoreBackup(byte[] payload) {
         if (payload == null || payload.length == 0) {
-            return OperationResult.failure("Файл бэкапа пустой");
+            return OperationResult.failure(BackendMessages.message("backup.emptyFile"));
         }
 
         Path tempFile = null;
@@ -87,14 +88,14 @@ public class DatabaseBackupService {
 
             DatabaseCommandResult resetSchemaResult = commandRunner.run(buildSchemaResetCommand(connection), password);
             if (resetSchemaResult.exitCode() != 0) {
-                String stderr = normalizeError(resetSchemaResult.stderr(), "Подготовка схемы к восстановлению завершилась с ошибкой");
+                String stderr = normalizeError(resetSchemaResult.stderr(), BackendMessages.message("backup.schemaResetFailed"));
                 log.error("psql schema reset failed: {}", stderr);
                 return OperationResult.failure(stderr);
             }
 
             DatabaseCommandResult restoreResult = commandRunner.run(buildPgRestoreCommand(connection, tempFile), password);
             if (restoreResult.exitCode() != 0) {
-                String stderr = normalizeError(restoreResult.stderr(), "pg_restore завершился с ошибкой");
+                String stderr = normalizeError(restoreResult.stderr(), BackendMessages.message("backup.pgRestoreFailed"));
                 log.error("pg_restore failed: {}", stderr);
                 return OperationResult.failure(stderr);
             }
@@ -102,11 +103,11 @@ public class DatabaseBackupService {
         } catch (IOException ex) {
             log.error("Backup restore failed", ex);
             return OperationResult.failure(ex.getMessage().contains("No such file")
-                ? "PostgreSQL CLI не найден в окружении"
+                ? BackendMessages.message("backup.pgCliMissing")
                 : ex.getMessage());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            return OperationResult.failure("Восстановление базы было прервано");
+            return OperationResult.failure(BackendMessages.message("backup.restoreInterrupted"));
         } catch (IllegalArgumentException ex) {
             return OperationResult.failure(ex.getMessage());
         } finally {
@@ -194,14 +195,14 @@ public class DatabaseBackupService {
 
         private static PostgresConnectionDetails fromJdbcUrl(String jdbcUrl) {
             if (jdbcUrl == null || !jdbcUrl.startsWith(JDBC_PREFIX)) {
-                throw new IllegalArgumentException("Поддерживается только PostgreSQL datasource");
+                throw new IllegalArgumentException(BackendMessages.message("backup.postgresOnly"));
             }
 
             String withoutPrefix = jdbcUrl.substring(JDBC_PREFIX.length());
             String hostAndPath = withoutPrefix.split("\\?", 2)[0];
             String[] hostParts = hostAndPath.split("/", 2);
             if (hostParts.length != 2) {
-                throw new IllegalArgumentException("Некорректный PostgreSQL JDBC URL");
+                throw new IllegalArgumentException(BackendMessages.message("backup.invalidJdbcUrl"));
             }
 
             String hostPort = hostParts[0];

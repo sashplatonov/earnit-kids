@@ -43,8 +43,8 @@ test.beforeAll(async ({ browser }) => {
     childLinkA = await getChildMagicLink(page);
 
     await loginChildByMagicLink(page, childLinkA, TASK_TITLE_A);
-    await page.getByRole('button', { name: 'Выполнил!' }).click();
-    await expect(page.getByText('Заявка отправлена')).toBeVisible();
+    await page.locator('#tasks-section [data-task-action="request"]').first().click();
+    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
 
     await logout(page);
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
@@ -65,7 +65,7 @@ async function loginAsParent(page: import('@playwright/test').Page) {
 }
 
 async function goToAnalytics(page: import('@playwright/test').Page) {
-    await page.getByRole('link', { name: /Достижения|Аналитика/ }).click();
+    await page.getByRole('link', { name: /Достижения|Аналитика|Achievements|Analytics|My achievements/i }).click();
     await expect(page.locator('#analytics-section')).toBeVisible();
 }
 
@@ -153,14 +153,14 @@ test.describe('Analytics section — parent view', () => {
         await expect(timeframeGroup).toBeVisible();
 
         // Switch to week
-        await page.getByRole('button', { name: 'Неделя' }).click();
-        await expect(page.getByRole('button', { name: 'Неделя' })).toHaveClass(/active/);
+        await page.locator('#analytics-timeframe-group [data-timeframe="week"]').click();
+        await expect(page.locator('#analytics-timeframe-group [data-timeframe="week"]')).toHaveClass(/active/);
         await page.waitForTimeout(500);
         await expect(page.locator('#stats-earned')).toBeVisible();
 
         // Switch to year
-        await page.getByRole('button', { name: 'Год' }).click();
-        await expect(page.getByRole('button', { name: 'Год' })).toHaveClass(/active/);
+        await page.locator('#analytics-timeframe-group [data-timeframe="year"]').click();
+        await expect(page.locator('#analytics-timeframe-group [data-timeframe="year"]')).toHaveClass(/active/);
         await page.waitForTimeout(500);
         await expect(page.locator('#stats-earned')).toBeVisible();
     });
@@ -181,7 +181,7 @@ test.describe('Analytics section — child view', () => {
     test('child sees own achievements after completing a task', async ({ page }) => {
         await loginChildByMagicLink(page, childLinkA, TASK_TITLE_A);
 
-        await page.getByRole('link', { name: /Достижения|Аналитика/ }).click();
+        await page.getByRole('link', { name: /Достижения|Аналитика|Achievements|Analytics|My achievements/i }).click();
         await expect(page.locator('#analytics-section')).toBeVisible();
 
         // Child should NOT see the "no children" empty state

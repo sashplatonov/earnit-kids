@@ -1,7 +1,15 @@
 <script lang="ts">
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import { adminSaveLimits } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
+
+    const i18n = useI18n();
+
+    function tAdmin(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`admin.${key}` as MessageKey, variables);
+    }
 
     $: isAdmin = $appStore.isAdmin;
     $: currentChildId = $appStore.currentChildId;
@@ -15,46 +23,46 @@
         const ok = await adminSaveLimits(currentChildId, { monthlyLimit, dailyCoinLimit });
         if (ok) {
             appStore.setState({ monthlyLimit, dailyCoinLimit });
-            showToast('Лимиты сохранены', 'success');
+            showToast(tAdmin('limits.savedToast'), 'success');
         }
     }
 </script>
 
 <section class="section" id="limits-section">
     <div class="section__header">
-        <h2>Лимиты</h2>
-        <p class="section__subtitle">Деньги и монеты под контролем — изменения мгновенно применяются ко всем детям.</p>
+        <h2>{tAdmin('limits.title')}</h2>
+        <p class="section__subtitle">{tAdmin('limits.subtitle')}</p>
     </div>
 
     <div class="cards" id="limits-cards" style="grid-template-columns: 1fr;">
         <div class="card admin-only" style="max-width: 600px; margin: 0 auto;">
             <div class="card__header">
-                <h3 class="card__title">Лимиты</h3>
+                <h3 class="card__title">{tAdmin('limits.cardTitle')}</h3>
                 <div class="card__icon">
                     <span class="gamified-icon icon-chart" aria-hidden="true"></span>
                 </div>
             </div>
 
             <div class="form-group" style="margin-top: 1rem;">
-                <label for="settings-child-monthly-limit-inline">Деньги — лимит трат в месяц</label>
+                <label for="settings-child-monthly-limit-inline">{tAdmin('limits.monthlyLabel')}</label>
                 <input type="number" class="input" id="settings-child-monthly-limit-inline"
-                    min="0" placeholder="10000"
+                    min="0" placeholder={tAdmin('limits.monthlyPlaceholder')}
                     bind:value={monthlyLimit} />
-                <p class="hint">Контролируйте расход на любые покупки.</p>
+                <p class="hint">{tAdmin('limits.monthlyHint')}</p>
             </div>
 
             <div class="form-group">
-                <label for="settings-child-day-coin-limit-inline">Монеты — лимит заработка в день</label>
+                <label for="settings-child-day-coin-limit-inline">{tAdmin('limits.dailyLabel')}</label>
                 <input type="number" class="input" id="settings-child-day-coin-limit-inline"
-                    min="0" placeholder="0 (Без лимита)"
+                    min="0" placeholder={tAdmin('limits.dailyPlaceholder')}
                     bind:value={dailyCoinLimit} />
-                <p class="hint">Оставьте пустым, чтобы не ограничивать.</p>
+                <p class="hint">{tAdmin('limits.dailyHint')}</p>
             </div>
 
             <div class="card__actions">
                 <button class="btn btn--primary btn--small" id="settings-save-limits-btn"
                     on:click={saveLimits}>
-                    Сохранить лимиты
+                    {tAdmin('limits.save')}
                 </button>
             </div>
         </div>

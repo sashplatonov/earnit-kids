@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @ApplicationScoped
 @Slf4j
@@ -29,6 +31,7 @@ public final class AuthServiceImpl implements AuthService {
     private final SecureTokenGenerator secureTokenGenerator;
     private final TimeProvider timeProvider;
     private final SuperAdminCredentialsService superAdminCredentialsService;
+    private final GoogleIdentityVerifier googleIdentityVerifier;
 
     @Override
     public OperationResult<AuthPayload> authenticateAdmin(String email, String password) {
@@ -42,10 +45,39 @@ public final class AuthServiceImpl implements AuthService {
         var familyOpt = familyRepository.findByEmail(email);
         if (familyOpt.isEmpty()) {
             log.info("Authentication failed (family not found): {}", email);
-            return OperationResult.failure("Неверные учетные данные");
+            return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
         }
 
         return authenticateFamily(email, password, familyOpt.get());
+    }
+
+    @Override
+    public OperationResult<AuthPayload> authenticateAdminWithGoogle(String credential) {
+        Optional<String> googleClientId = googleClientId();
+        if (googleClientId.isEmpty()) {
+            log.warn("Google login requested but Google auth is not configured");
+            return OperationResult.failure(BackendMessages.message("auth.googleNotConfigured"));
+        }
+
+        var identityOpt = googleIdentityVerifier.verify(credential, googleClientId.get());
+        if (identityOpt.isEmpty()) {
+            log.info("Google login failed: token verification failed");
+            return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
+        }
+
+        GoogleIdentity identity = identityOpt.get();
+        if (!identity.emailVerified()) {
+            log.info("Google login failed: email is not verified by provider");
+            return OperationResult.failure(BackendMessages.message("auth.googleEmailNotVerified"));
+        }
+
+        var familyOpt = familyRepository.findByEmail(identity.email());
+        if (familyOpt.isEmpty()) {
+            log.info("Google login failed: family not found for email={}", identity.email());
+            return OperationResult.failure(BackendMessages.message("auth.googleAccountNotLinked"));
+        }
+
+        return authenticateGoogleFamily(identity.email(), familyOpt.get());
     }
 
     private OperationResult<AuthPayload> authenticateConfiguredSuperAdmin(String email, String password) {
@@ -57,26 +89,45 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.success(new AuthPayload(null, email, "super_admin", null, null));
         }
         log.info("Super-admin login failed (wrong password): {}", email);
-        return OperationResult.failure("Неверный пароль администратора");
+        return OperationResult.failure(BackendMessages.message("auth.invalidAdminPassword"));
     }
 
     private OperationResult<AuthPayload> authenticateFamily(String email, String password, FamilyEntity family) {
         if (family.isBlocked()) {
             log.info("Authentication failed (account blocked): {}", email);
-            return OperationResult.failure("Аккаунт заблокирован");
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
         if (appConfig.emailVerification().enabled() && !family.isVerified()) {
             log.info("Authentication failed (email not verified): {}", email);
-            return OperationResult.failure("Email не подтвержден. Проверьте почту.");
+            return OperationResult.failure(BackendMessages.message("auth.emailNotVerified"));
         }
         String storedPassword = family.getAdminPassword();
         if (!isPasswordValid(email, password, family.getFamilyId(), storedPassword)) {
             log.info("Authentication failed (wrong password): {}", email);
-            return OperationResult.failure("Неверный пароль");
+            return OperationResult.failure(BackendMessages.message("auth.invalidPassword"));
         }
 
         familyRepository.updateLastActivity(family.getFamilyId());
         log.info("Admin login success: familyId={}, email={}", family.getFamilyId(), family.getEmail());
+        return OperationResult.success(
+            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null));
+    }
+
+    private OperationResult<AuthPayload> authenticateGoogleFamily(String email, FamilyEntity family) {
+        if (family.isBlocked()) {
+            log.info("Google authentication failed (account blocked): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
+        }
+
+        if (appConfig.emailVerification().enabled() && !family.isVerified()) {
+            boolean verified = familyRepository.verifyFamily(family.getFamilyId());
+            if (!verified) {
+                log.warn("Google authentication verified email but local verification update failed for familyId={}", family.getFamilyId());
+            }
+        }
+
+        familyRepository.updateLastActivity(family.getFamilyId());
+        log.info("Google admin login success: familyId={}, email={}", family.getFamilyId(), family.getEmail());
         return OperationResult.success(
             new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null));
     }
@@ -121,26 +172,26 @@ public final class AuthServiceImpl implements AuthService {
 
         if (childToken == null || childToken.isBlank()) {
             log.info("Child auth failed: token missing");
-            return OperationResult.failure("Токен отсутствует");
+            return OperationResult.failure(BackendMessages.message("auth.tokenMissing"));
         }
 
         var childOpt = childRepository.findByToken(childToken);
         if (childOpt.isEmpty()) {
             log.info("Child auth failed: token not found");
-            return OperationResult.failure("Неверная ссылка");
+            return OperationResult.failure(BackendMessages.message("auth.invalidLink"));
         }
 
         var child = childOpt.get();
         var familyOpt = familyRepository.findByDbId(child.getFamilyDbId());
         if (familyOpt.isEmpty()) {
             log.info("Child auth failed: family not found for childId={}", child.getId());
-            return OperationResult.failure("Семья не найдена");
+            return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
         }
 
         var family = familyOpt.get();
         if (family.isBlocked()) {
             log.info("Child auth failed: account blocked for familyId={}", family.getFamilyId());
-            return OperationResult.failure("Аккаунт заблокирован");
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
 
         log.info("Child login success: familyId={}, childId={}", family.getFamilyId(), child.getId());
@@ -152,10 +203,10 @@ public final class AuthServiceImpl implements AuthService {
     @Override
     public OperationResult<AuthPayload> registerFamily(String email, String adminPassword) {
         if (familyRepository.findByEmail(email).isPresent()) {
-            return OperationResult.failure("Email уже зарегистрирован");
+            return OperationResult.failure(BackendMessages.message("auth.emailRegistered"));
         }
         if (!isValidPassword(adminPassword)) {
-            return OperationResult.failure("Слабый пароль родителя");
+            return OperationResult.failure(BackendMessages.message("auth.weakParentPassword"));
         }
 
         var familyId = email.replaceAll("[^a-zA-Z0-9]", "_") + "_" + System.currentTimeMillis();
@@ -166,7 +217,7 @@ public final class AuthServiceImpl implements AuthService {
             familyId, email, hashedPassword, !appConfig.emailVerification().enabled(), verificationToken);
 
         if (created.isEmpty()) {
-            return OperationResult.failure("Email уже зарегистрирован");
+            return OperationResult.failure(BackendMessages.message("auth.emailRegistered"));
         }
 
         return OperationResult.success(
@@ -176,7 +227,7 @@ public final class AuthServiceImpl implements AuthService {
     @Override
     public OperationResult<Void> forgotPassword(String email) {
         if (!appConfig.passwordRecovery().enabled()) {
-            return OperationResult.failure("Функция восстановления пароля отключена");
+            return OperationResult.failure(BackendMessages.message("auth.passwordRecoveryDisabled"));
         }
 
         var familyOpt = familyRepository.findByEmail(email);
@@ -193,15 +244,15 @@ public final class AuthServiceImpl implements AuthService {
     @Override
     public OperationResult<Void> changeAdminPassword(String familyId, String oldPassword, String newPassword) {
         if (familyId == null || familyId.isBlank()) {
-            return OperationResult.failure("Семья не найдена");
+            return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
         }
         if (!isValidPassword(newPassword)) {
-            return OperationResult.failure("Слабый пароль");
+            return OperationResult.failure(BackendMessages.message("auth.weakPassword"));
         }
 
         var familyOpt = familyRepository.findById(familyId);
         if (familyOpt.isEmpty()) {
-            return OperationResult.failure("Семья не найдена");
+            return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
         }
 
         var family = familyOpt.get();
@@ -219,16 +270,16 @@ public final class AuthServiceImpl implements AuthService {
         }
 
         if (!oldMatches) {
-            return OperationResult.failure("Неверный пароль");
+            return OperationResult.failure(BackendMessages.message("auth.invalidPassword"));
         }
         if (oldPassword != null && oldPassword.equals(newPassword)) {
-            return OperationResult.failure("Новый пароль должен отличаться от старого");
+            return OperationResult.failure(BackendMessages.message("auth.newPasswordMustDiffer"));
         }
 
         String newHash = passwordHasher.hash(newPassword);
         boolean updated = familyRepository.updatePassword(familyId, newHash);
         if (!updated) {
-            return OperationResult.failure("Не удалось обновить пароль");
+            return OperationResult.failure(BackendMessages.message("auth.passwordUpdateFailed"));
         }
 
         return OperationResult.success(null);
@@ -237,17 +288,17 @@ public final class AuthServiceImpl implements AuthService {
     @Override
     public OperationResult<Void> resetPassword(String email, String token, String newPassword) {
         if (!isValidPassword(newPassword)) {
-            return OperationResult.failure("Слабый пароль");
+            return OperationResult.failure(BackendMessages.message("auth.weakPassword"));
         }
 
         var familyOpt = familyRepository.findByResetToken(token);
         if (familyOpt.isEmpty()) {
-            return OperationResult.failure("Недействительная или просроченная ссылка");
+            return OperationResult.failure(BackendMessages.message("auth.invalidOrExpiredResetLink"));
         }
 
         var family = familyOpt.get();
         if (!family.getEmail().equalsIgnoreCase(email)) {
-            return OperationResult.failure("Недействительная или просроченная ссылка");
+            return OperationResult.failure(BackendMessages.message("auth.invalidOrExpiredResetLink"));
         }
 
         String newHash = passwordHasher.hash(newPassword);
@@ -260,12 +311,12 @@ public final class AuthServiceImpl implements AuthService {
     public OperationResult<Void> verifyEmail(String email, String token) {
         var familyOpt = familyRepository.findByVerificationToken(token);
         if (familyOpt.isEmpty()) {
-            return OperationResult.failure("Недействительный токен верификации");
+            return OperationResult.failure(BackendMessages.message("auth.invalidVerificationToken"));
         }
 
         var family = familyOpt.get();
         if (!family.getEmail().equalsIgnoreCase(email)) {
-            return OperationResult.failure("Недействительный токен верификации");
+            return OperationResult.failure(BackendMessages.message("auth.invalidVerificationToken"));
         }
 
         familyRepository.verifyFamily(family.getFamilyId());
@@ -283,4 +334,17 @@ public final class AuthServiceImpl implements AuthService {
     private String generateHexToken(int byteCount) {
         return secureTokenGenerator.generateHexToken(byteCount);
     }
+
+    private Optional<String> googleClientId() {
+        if (!appConfig.google().enabled()) {
+            return Optional.empty();
+        }
+
+        return appConfig.google().clientId()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty());
+    }
 }
+
+
+

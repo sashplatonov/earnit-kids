@@ -6,6 +6,7 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.config.CookieBuilder;
 import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ForgotPasswordRequest;
+import com.sashplatonov.earnit.kids.dto.request.GoogleLoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.RegisterRequest;
@@ -16,8 +17,18 @@ import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.dto.response.AuthResponse;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.AuthService;
+import com.sashplatonov.earnit.kids.service.GoogleOAuthService;
+import com.sashplatonov.earnit.kids.config.JwtService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.PublicOriginResolver;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.CookieParam;
+import java.util.Map;
+import java.util.Optional;
+import java.net.URI;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -42,19 +53,57 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Authentication", description = "Session, registration, and account lifecycle endpoints")
 public class AuthResource {
-    private static final int AUTH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
-
     private final AuthService authService;
     private final CookieBuilder cookieBuilder;
     private final AppConfig appConfig;
+    private final GoogleOAuthService googleOAuthService;
+    private final JwtService jwtService;
+    private final PublicOriginResolver publicOriginResolver;
 
     @Inject
     public AuthResource(AuthService authService,
                         CookieBuilder cookieBuilder,
-                        AppConfig appConfig) {
+                        AppConfig appConfig,
+                        GoogleOAuthService googleOAuthService,
+                        JwtService jwtService,
+                        @ConfigProperty(name = "APP_URL") Optional<String> appUrl) {
+        this(authService, cookieBuilder, appConfig, googleOAuthService, jwtService, appUrl.orElse(null));
+    }
+
+    AuthResource(AuthService authService,
+                 CookieBuilder cookieBuilder,
+                 AppConfig appConfig,
+                 GoogleOAuthService googleOAuthService,
+                 JwtService jwtService,
+                 String appUrl) {
         this.authService = authService;
         this.cookieBuilder = cookieBuilder;
         this.appConfig = appConfig;
+        this.googleOAuthService = googleOAuthService;
+        this.jwtService = jwtService;
+        this.publicOriginResolver = new PublicOriginResolver(appUrl);
+    }
+
+    public AuthResource(AuthService authService,
+                        CookieBuilder cookieBuilder,
+                        AppConfig appConfig) {
+        this(
+            authService,
+            cookieBuilder,
+            appConfig,
+            new com.sashplatonov.earnit.kids.service.GoogleOAuthService(appConfig, new com.fasterxml.jackson.databind.ObjectMapper()),
+            new com.sashplatonov.earnit.kids.config.JwtService(
+                new com.sashplatonov.earnit.kids.config.JwtCompatibilityConfig() {
+                    @Override public String secret() { return "test-secret"; }
+                },
+                new com.fasterxml.jackson.databind.ObjectMapper(),
+                new com.sashplatonov.earnit.kids.util.SecureTokenGenerator(),
+                new com.sashplatonov.earnit.kids.util.TimeProvider() {
+                    @Override public java.time.Instant now() { return java.time.Instant.now(); }
+                }
+            ),
+            (String) null
+        );
     }
 
     @POST
@@ -70,12 +119,31 @@ public class AuthResource {
         OperationResult<AuthPayload> result = authService.authenticateAdmin(
             request.email(), request.password());
 
+        return buildAdminAuthResponse(result);
+    }
+
+    @POST
+    @Path("/login-google")
+    @Operation(summary = "Authenticate a parent account using Google Identity Services")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Authenticated session started",
+            content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+        @APIResponse(responseCode = "401", description = "Authentication failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response loginGoogle(@RequestBody(required = true, description = "Google credential payload")
+                                @Valid GoogleLoginRequest request) {
+        OperationResult<AuthPayload> result = authService.authenticateAdminWithGoogle(request.credential());
+
+        return buildAdminAuthResponse(result);
+    }
+
+    private Response buildAdminAuthResponse(OperationResult<AuthPayload> result) {
         return switch (result) {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), AUTH_COOKIE_MAX_AGE);
+                    payload.email(), payload.role(), payload.familyId(), payload.childId());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.success(payload.role(), payload.familyId()));
@@ -105,8 +173,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), AUTH_COOKIE_MAX_AGE);
+                    payload.email(), payload.role(), payload.familyId(), payload.childId());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.childSuccess(
@@ -151,8 +218,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    null, AUTH_COOKIE_MAX_AGE);
+                    payload.email(), payload.role(), payload.familyId(), null);
 
                 Response.ResponseBuilder rb = Response
                     .status(Response.Status.CREATED)
@@ -196,7 +262,7 @@ public class AuthResource {
         AuthContext auth = getAuth(ctx);
         if (auth == null || !auth.isAdmin()) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized("Unauthorized"))
+                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
                 .build();
         }
 
@@ -268,15 +334,113 @@ public class AuthResource {
     @APIResponse(responseCode = "200", description = "Feature flags returned",
         content = @Content(schema = @Schema(implementation = AuthConfigResponse.class)))
     public Response authConfig() {
+        String googleClientId = configuredGoogleOAuthClientId();
+
         return Response.ok(new AuthConfigResponse(
             appConfig.emailVerification().enabled(),
-            appConfig.passwordRecovery().enabled()))
+            appConfig.passwordRecovery().enabled(),
+            googleClientId != null,
+            googleClientId))
             .build();
+    }
+
+    @GET
+    @Path("/login-google/url")
+    @Operation(summary = "Build Google authorization URL for server-side OAuth flow")
+    public Response loginGoogleUrl(@Context ContainerRequestContext request,
+                                   @QueryParam("redirect_to") String redirectTo) {
+        if (configuredGoogleOAuthClientId() == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ErrorResponse.of(BackendMessages.message("auth.googleNotConfigured"), "GOOGLE_NOT_CONFIGURED", 400))
+                .build();
+        }
+
+        String callbackUri = configuredGoogleCallbackUri(request);
+        String redirectValue = publicOriginResolver.toAbsoluteRedirect(redirectTo, request);
+        var payload = Map.<String, Object>of("redirect", redirectValue);
+        String stateToken = jwtService.signToken(payload, 300);
+        String authUrl = googleOAuthService.buildAuthorizationUrl(callbackUri, stateToken);
+
+        String secureSegment = appConfig.production() ? "Secure; " : "";
+        String cookie = "oauth_state=" + stateToken + "; Max-Age=300; Path=/; HttpOnly; " + secureSegment + "SameSite=Lax";
+
+        Response.ResponseBuilder rb = Response.ok(Map.of("url", authUrl));
+        rb.header("Set-Cookie", cookie);
+        return rb.build();
+    }
+
+    @GET
+    @Path("/login-google/callback")
+    @Operation(summary = "Handle Google OAuth2 authorization code callback and start session")
+    public Response loginGoogleCallback(@Context ContainerRequestContext request,
+                                        @QueryParam("code") String code,
+                                        @QueryParam("state") String state,
+                                        @CookieParam("oauth_state") String oauthStateCookie) {
+        String redirectTarget = "/";
+        if (oauthStateCookie == null || state == null || !state.equals(oauthStateCookie)) {
+            redirectTarget = "/?error=oauth_state_mismatch";
+            String abs = publicOriginResolver.toAbsoluteRedirect(redirectTarget, request);
+            return Response.seeOther(java.net.URI.create(abs)).build();
+        }
+
+        var verified = jwtService.verifyToken(state);
+        if (verified.isPresent() && verified.get().get("redirect") instanceof String r) {
+            redirectTarget = r;
+        }
+
+        String callbackUri = configuredGoogleCallbackUri(request);
+        var tokenRespOpt = googleOAuthService.exchangeCode(code, callbackUri);
+        if (tokenRespOpt.isEmpty() || tokenRespOpt.get().id_token() == null) {
+            String abs = publicOriginResolver.toAbsoluteRedirect(redirectTarget + "?error=google_exchange_failed", request);
+            return Response.seeOther(URI.create(abs)).build();
+        }
+
+        String idToken = tokenRespOpt.get().id_token();
+        OperationResult<AuthPayload> result = authService.authenticateAdminWithGoogle(idToken);
+        if (result instanceof OperationResult.Success<AuthPayload> s) {
+            AuthPayload payload = s.value();
+            var cookies = cookieBuilder.buildAuthCookies(
+                payload.email(), payload.role(), payload.familyId(), payload.childId());
+
+            Response.ResponseBuilder rb = Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));
+            cookies.forEach(c -> rb.header("Set-Cookie", c));
+            rb.header("Set-Cookie", "oauth_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict");
+            return rb.build();
+        }
+        return Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget + "?error=authentication_failed", request))).build();
     }
 
     private AuthContext getAuth(ContainerRequestContext ctx) {
         Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
         return prop instanceof AuthContext auth ? auth : null;
+    }
+
+    private String configuredGoogleOAuthClientId() {
+        if (!appConfig.google().enabled()) {
+            return null;
+        }
+
+        String clientId = appConfig.google().clientId()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .orElse(null);
+        String clientSecret = appConfig.google().clientSecret()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .orElse(null);
+
+        if (clientId == null || clientSecret == null) {
+            return null;
+        }
+
+        return clientId;
+    }
+
+    private String configuredGoogleCallbackUri(ContainerRequestContext request) {
+        return appConfig.google().redirectUri()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .orElseGet(() -> publicOriginResolver.resolveAbsoluteAppUri("/api/login-google/callback", request));
     }
 
 }

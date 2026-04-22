@@ -1,4 +1,15 @@
 import type { Handle } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
+import {
+    DEFAULT_LOCALE,
+    LOCALE_COOKIE_NAME,
+    localizePath,
+    normalizeLocale,
+    resolveLegacyAlias,
+    resolveLocaleFromAcceptLanguage,
+    shouldCanonicalizePath,
+    splitLocaleFromPath,
+} from '$lib/i18n';
 import { loadAppConfig } from '$lib/server/config';
 import { resolveSessionSnapshot } from '$lib/server/session';
 
@@ -13,9 +24,39 @@ const SECURITY_HEADERS = {
 
 export const handle: Handle = async ({ event, resolve }) => {
     event.locals.appConfig = loadAppConfig();
+    const { locale: localeFromPath, pathname: internalPath } = splitLocaleFromPath(event.url.pathname);
+    const cookieLocale = normalizeLocale(event.cookies.get(LOCALE_COOKIE_NAME));
+    const headerLocale = resolveLocaleFromAcceptLanguage(event.request.headers.get('accept-language'));
+    const resolvedLocale = localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
+
+    event.locals.locale = resolvedLocale;
+
+    if (event.url.pathname === '/') {
+        throw redirect(302, localizePath('/', DEFAULT_LOCALE));
+    }
+
+    const legacyAliasTarget = resolveLegacyAlias(internalPath);
+    if (legacyAliasTarget) {
+        throw redirect(302, `${localizePath(legacyAliasTarget, resolvedLocale)}${event.url.search}`);
+    }
+
+    if (shouldCanonicalizePath(event.url.pathname)) {
+        throw redirect(302, `${localizePath(event.url.pathname, resolvedLocale)}${event.url.search}`);
+    }
+
     event.locals.session = await resolveSessionSnapshot(event);
 
-    const response = await resolve(event);
+    if (localeFromPath && cookieLocale !== localeFromPath) {
+        event.cookies.set(LOCALE_COOKIE_NAME, localeFromPath, {
+            path: '/',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 365,
+        });
+    }
+
+    const response = await resolve(event, {
+        transformPageChunk: ({ html }) => html.replace('<html lang="ru">', `<html lang="${event.locals.locale}">`),
+    });
 
     Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
         if (!response.headers.has(key)) {

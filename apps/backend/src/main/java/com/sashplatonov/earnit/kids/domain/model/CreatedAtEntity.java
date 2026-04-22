@@ -27,9 +27,9 @@ public abstract class CreatedAtEntity {
 
     @PrePersist
     protected void onCreate() {
-        Instant now = Instant.now();
-        this.createdAt = now;
-        this.updatedAt = now;
+        Instant createdInstant = this.createdAt != null ? this.createdAt : Instant.now();
+        this.createdAt = createdInstant;
+        this.updatedAt = this.updatedAt != null ? this.updatedAt : createdInstant;
     }
 
     @PreUpdate

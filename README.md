@@ -180,6 +180,8 @@ Verification tip:
 ## 📚 Detailed Docs
 
 - Root system view: [docs/architecture.md](docs/architecture.md)
+- I18n contract: [docs/i18n-contract.md](docs/i18n-contract.md)
+- I18n string inventory: [docs/i18n-string-inventory.md](docs/i18n-string-inventory.md)
 - Frontend architecture: [apps/web/docs/ARCHITECTURE.md](apps/web/docs/ARCHITECTURE.md)
 - Backend architecture: [apps/backend/docs/ARCHITECTURE.md](apps/backend/docs/ARCHITECTURE.md)
 - SvelteKit migration backlog archive: [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md)

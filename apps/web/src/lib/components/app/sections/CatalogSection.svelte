@@ -1,8 +1,16 @@
 <script lang="ts">
+    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '$lib/i18n/context';
     import type { ShopItem, Task } from '$lib/stores/app';
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { showToast } from '$lib/stores/toasts';
+
+    const i18n = useI18n();
+
+    function tAdmin(key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`admin.${key}` as MessageKey, variables);
+    }
 
     $: baseData = $appStore.baseData;
     $: catalogTasks = (baseData?.tasks ?? []) as Task[];
@@ -27,37 +35,46 @@
         const newTask = { ...task, id: Date.now() };
         appStore.setState({ tasks: [...$appStore.tasks, newTask as typeof $appStore.tasks[0]] });
         void scheduleSave();
-        showToast(`Задание «${task.name}» добавлено`, 'success');
+        showToast(tAdmin('catalog.taskAdded', { name: task.name }), 'success');
     }
 
     function addProductFromCatalog(product: ShopItem) {
         const newItem = { ...product, id: Date.now() };
         appStore.setState({ shopItems: [...$appStore.shopItems, newItem as typeof $appStore.shopItems[0]] });
         void scheduleSave();
-        showToast(`Товар «${product.name}» добавлен`, 'success');
+        showToast(tAdmin('catalog.productAdded', { name: product.name }), 'success');
     }
 
     function formatAgeLabel(item: { ageMin?: number | null; ageMax?: number | null }) {
-        const min = item.ageMin ?? 0;
-        const max = item.ageMax ?? 18;
-        return `${min}-${max} лет`;
+        return tAdmin('catalog.ageRange', {
+            min: item.ageMin ?? 0,
+            max: item.ageMax ?? 18,
+        });
     }
 
     function formatFrequencyLabel(frequency: { limit?: number; period?: string } | null | undefined) {
         if (!frequency?.limit) return '';
-
         const periodMap: Record<string, string> = {
-            day: 'в день',
-            week: 'в неделю',
-            month: 'в месяц',
-            year: 'в год',
+            day: 'frequencyDay',
+            week: 'frequencyWeek',
+            month: 'frequencyMonth',
+            year: 'frequencyYear',
         };
+        const limit = Number(frequency.limit);
+        const pluralCategory = new Intl.PluralRules($i18n.locale).select(limit);
+        const periodKey = periodMap[frequency.period ?? 'week'];
 
-        return `${frequency.limit} ${periodMap[frequency.period ?? 'week'] ?? 'за период'}`;
+        if (!periodKey) {
+            return tAdmin('catalog.frequencyFallback', { limit: $i18n.formatNumber(limit) });
+        }
+
+        return tAdmin(`catalog.${periodKey}.${pluralCategory}`, { limit: $i18n.formatNumber(limit) });
     }
 
     function moneyLimitLabel(value: number | null | undefined) {
-        return value != null && value > 0 ? `До ${value} EUR` : '';
+        return value != null && value > 0
+            ? tAdmin('catalog.moneyLimit', { amount: $i18n.formatNumber(value) })
+            : '';
     }
 </script>
 
@@ -65,18 +82,18 @@
     <div class="container">
         <div class="catalog-hero">
             <div>
-                <p class="catalog-hero__eyebrow">Подборка для семьи</p>
-                <h2 class="section-title">Общий каталог</h2>
-                <p class="section-subtitle">Выбирайте готовые задания и товары с понятными условиями и возрастными рамками.</p>
+                <p class="catalog-hero__eyebrow">{tAdmin('catalog.eyebrow')}</p>
+                <h2 class="section-title">{tAdmin('catalog.title')}</h2>
+                <p class="section-subtitle">{tAdmin('catalog.subtitle')}</p>
             </div>
             <div class="catalog-hero__summary" aria-hidden="true">
                 <div class="catalog-hero__summary-card">
-                    <span>Заданий</span>
-                    <strong>{filteredTasks.length}</strong>
+                    <span>{tAdmin('catalog.tasksCount')}</span>
+                    <strong>{$i18n.formatNumber(filteredTasks.length)}</strong>
                 </div>
                 <div class="catalog-hero__summary-card">
-                    <span>Товаров</span>
-                    <strong>{filteredProducts.length}</strong>
+                    <span>{tAdmin('catalog.productsCount')}</span>
+                    <strong>{$i18n.formatNumber(filteredProducts.length)}</strong>
                 </div>
             </div>
         </div>
@@ -84,15 +101,12 @@
         <div class="filter-card">
             <div class="filter-card__header">
                 <div class="filter-group">
-                    <label for="catalog-age-min-filter">
-                        Возрастной диапазон: от <span id="age-min-val">{ageMin}</span>
-                        до <span id="age-max-val">{ageMax}</span> лет
-                    </label>
-                    <p class="hint">Показываем только те позиции, которые подходят ребёнку по возрасту.</p>
+                    <label for="catalog-age-min-filter">{tAdmin('catalog.filterLabel', { min: ageMin, max: ageMax })}</label>
+                    <p class="hint">{tAdmin('catalog.filterHint')}</p>
                 </div>
                 <div class="catalog-pill-row" aria-hidden="true">
-                    <span class="catalog-pill">Живой каталог</span>
-                    <span class="catalog-pill">Быстрое добавление</span>
+                    <span class="catalog-pill">{tAdmin('catalog.liveCatalog')}</span>
+                    <span class="catalog-pill">{tAdmin('catalog.quickAdd')}</span>
                 </div>
             </div>
             <div class="slider-container" style="max-width: 100%;">
@@ -109,10 +123,10 @@
             <article class="catalog-column">
                 <div class="catalog-column__header">
                     <div>
-                        <p class="catalog-column__eyebrow">Каталог задач</p>
-                        <h3>Задания</h3>
+                        <p class="catalog-column__eyebrow">{tAdmin('catalog.tasksEyebrow')}</p>
+                        <h3>{tAdmin('catalog.tasksTitle')}</h3>
                     </div>
-                    <span class="catalog-column__count">{filteredTasks.length}</span>
+                    <span class="catalog-column__count">{$i18n.formatNumber(filteredTasks.length)}</span>
                 </div>
                 <div id="catalog-tasks-list" class="catalog-stack">
                     {#each filteredTasks as task (task.id)}
@@ -120,12 +134,12 @@
                         <div class="catalog-card__body">
                             <div class="catalog-card__headline">
                                 <div>
-                                    <p class="catalog-card__group">{task.groupName ?? 'Задание'}</p>
+                                    <p class="catalog-card__group">{task.groupName ?? tAdmin('catalog.defaultTaskGroup')}</p>
                                     <h4 class="catalog-card__title">{task.name}</h4>
                                 </div>
                                 <div class="catalog-card__price">
-                                    <strong>{task.coins}</strong>
-                                    <span>монет</span>
+                                    <strong>{$i18n.formatNumber(task.coins ?? 0)}</strong>
+                                    <span>{tAdmin('catalog.coinsUnit')}</span>
                                 </div>
                             </div>
 
@@ -146,22 +160,22 @@
 
                         <button class="btn btn--primary btn--small catalog-card__action" type="button"
                             on:click={() => addTaskFromCatalog(task)}>
-                            Добавить задание
+                            {tAdmin('catalog.addTask')}
                         </button>
                     </article>
                     {/each}
                     {#if filteredTasks.length === 0}
-                    <p class="hint">Нет заданий для выбранного возраста.</p>
+                    <p class="hint">{tAdmin('catalog.noTasks')}</p>
                     {/if}
                 </div>
             </article>
             <article class="catalog-column">
                 <div class="catalog-column__header">
                     <div>
-                        <p class="catalog-column__eyebrow">Каталог наград</p>
-                        <h3>Товары</h3>
+                        <p class="catalog-column__eyebrow">{tAdmin('catalog.productsEyebrow')}</p>
+                        <h3>{tAdmin('catalog.productsTitle')}</h3>
                     </div>
-                    <span class="catalog-column__count">{filteredProducts.length}</span>
+                    <span class="catalog-column__count">{$i18n.formatNumber(filteredProducts.length)}</span>
                 </div>
                 <div id="catalog-products-list" class="catalog-stack">
                     {#each filteredProducts as product (product.id)}
@@ -169,12 +183,12 @@
                         <div class="catalog-card__body">
                             <div class="catalog-card__headline">
                                 <div>
-                                    <p class="catalog-card__group">{product.groupName ?? 'Товар'}</p>
+                                    <p class="catalog-card__group">{product.groupName ?? tAdmin('catalog.defaultProductGroup')}</p>
                                     <h4 class="catalog-card__title">{product.name}</h4>
                                 </div>
                                 <div class="catalog-card__price">
-                                    <strong>{product.price}</strong>
-                                    <span>монет</span>
+                                    <strong>{$i18n.formatNumber(product.price ?? 0)}</strong>
+                                    <span>{tAdmin('catalog.coinsUnit')}</span>
                                 </div>
                             </div>
 
@@ -192,12 +206,12 @@
 
                         <button class="btn btn--primary btn--small catalog-card__action" type="button"
                             on:click={() => addProductFromCatalog(product)}>
-                            Добавить товар
+                            {tAdmin('catalog.addProduct')}
                         </button>
                     </article>
                     {/each}
                     {#if filteredProducts.length === 0}
-                    <p class="hint">Нет товаров для выбранного возраста.</p>
+                    <p class="hint">{tAdmin('catalog.noProducts')}</p>
                     {/if}
                 </div>
             </article>

@@ -1,4 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { flushPendingSave } from '../../src/lib/services/save';
+
+vi.mock('../../src/lib/services/save', () => ({
+    flushPendingSave: vi.fn().mockResolvedValue(false),
+}));
+
 import {
     addFriend,
     adminAddChild,
@@ -43,6 +49,11 @@ function setBrowserGlobals() {
 }
 
 describe('fetchWithCsrf', () => {
+    beforeEach(() => {
+        vi.mocked(flushPendingSave).mockClear();
+        vi.mocked(flushPendingSave).mockResolvedValue(false);
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
@@ -259,6 +270,28 @@ describe('fetchWithCsrf', () => {
         expect(actualUrl).toBe(url);
         expect(init.method).toBe('POST');
         expect(init.body).toBe(JSON.stringify(body));
+    });
+
+    it('waits for pending generic saves before transactional action requests', async () => {
+        const callOrder: string[] = [];
+        const fetchMock = vi.fn().mockImplementation(async () => {
+            callOrder.push('fetch');
+            return jsonResponse({ ok: true });
+        });
+
+        vi.mocked(flushPendingSave).mockImplementation(async () => {
+            callOrder.push('flush');
+            return true;
+        });
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(approveRequest(301, 15)).resolves.toEqual({ ok: true });
+
+        expect(flushPendingSave).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(callOrder).toEqual(['flush', 'fetch']);
     });
 
     it('wraps group-order saves into the shared ok/data action result contract', async () => {

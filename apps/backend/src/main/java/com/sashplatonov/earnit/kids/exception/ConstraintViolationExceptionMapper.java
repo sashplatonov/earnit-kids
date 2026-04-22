@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.exception;
 
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -14,7 +15,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
         var message = exception.getConstraintViolations().stream()
             .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
             .reduce((left, right) -> left + "; " + right)
-            .orElse("Validation failed");
+            .orElse(BackendMessages.message("errors.validationFailed"));
 
         return Response.status(Response.Status.BAD_REQUEST)
             .entity(ErrorResponse.of(message, "VALIDATION_ERROR", 400))

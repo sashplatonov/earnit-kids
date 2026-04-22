@@ -1,4 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
+import { DEFAULT_LOCALE } from '$lib/i18n';
 import type { SessionSnapshot } from '$lib/types/session';
 import { loadAppConfig } from '$lib/server/config';
 
@@ -7,10 +8,13 @@ const GUEST_SESSION: SessionSnapshot = { authenticated: false };
 function buildForwardedHeaders(event: RequestEvent): Headers {
     const headers = new Headers();
     const requestHeaders = event.request.headers;
+    const locale = event.locals.locale ?? DEFAULT_LOCALE;
 
     headers.set('accept', 'application/json');
+    headers.set('accept-language', locale);
     headers.set('cookie', requestHeaders.get('cookie') ?? '');
     headers.set('user-agent', requestHeaders.get('user-agent') ?? 'apps-web');
+    headers.set('x-app-locale', locale);
     headers.set('x-forwarded-host', requestHeaders.get('x-forwarded-host') ?? event.url.host);
     headers.set('x-forwarded-proto', requestHeaders.get('x-forwarded-proto') ?? event.url.protocol.replace(':', ''));
 

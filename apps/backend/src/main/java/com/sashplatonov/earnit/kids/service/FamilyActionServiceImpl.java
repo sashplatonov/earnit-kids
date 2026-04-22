@@ -8,6 +8,7 @@ import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
@@ -51,17 +52,17 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> completeTask(String familyId, int childId, long taskId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
         if (child.isEmpty()) {
-            return OperationResult.failure("Child not found");
+            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         Optional<TaskEntity> task = findActiveTask(familyDbId.get(), childId, taskId);
         if (task.isEmpty()) {
-            return OperationResult.failure("Task not found");
+            return OperationResult.failure(BackendMessages.message("tasks.notFound"));
         }
 
         child.get().setBalance(child.get().getBalance() + task.get().getCoins());
@@ -74,17 +75,17 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> requestTaskCompletion(String familyId, int childId, long taskId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
         if (child.isEmpty()) {
-            return OperationResult.failure("Child not found");
+            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         Optional<TaskEntity> task = findActiveTask(familyDbId.get(), childId, taskId);
         if (task.isEmpty()) {
-            return OperationResult.failure("Task not found");
+            return OperationResult.failure(BackendMessages.message("tasks.notFound"));
         }
 
         String taskLimitError = validateTaskRequestLimit(
@@ -105,21 +106,21 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> purchaseItem(String familyId, int childId, long itemId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
         if (child.isEmpty()) {
-            return OperationResult.failure("Child not found");
+            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         Optional<ShopItemEntity> item = findActiveItem(familyDbId.get(), childId, itemId);
         if (item.isEmpty()) {
-            return OperationResult.failure("Shop item not found");
+            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
         }
 
         if (child.get().getBalance() < item.get().getPrice()) {
-            return OperationResult.failure("Insufficient balance");
+            return OperationResult.failure(BackendMessages.message("balance.insufficient"));
         }
 
         child.get().setBalance(child.get().getBalance() - item.get().getPrice());
@@ -132,17 +133,17 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> requestItemPurchase(String familyId, int childId, long itemId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
         if (child.isEmpty()) {
-            return OperationResult.failure("Child not found");
+            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         Optional<ShopItemEntity> item = findActiveItem(familyDbId.get(), childId, itemId);
         if (item.isEmpty()) {
-            return OperationResult.failure("Shop item not found");
+            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
         }
 
         String itemLimitError = validateItemRequestLimit(
@@ -163,25 +164,25 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> approveRequest(String familyId, Integer currentChildId, long requestId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
         if (request.isEmpty()) {
-            return OperationResult.failure("Request not found");
+            return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
         if (!isPending(request.get())) {
-            return OperationResult.failure("Request is already processed");
+            return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
         }
 
         Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), request.get().getChildId());
         if (child.isEmpty()) {
-            return OperationResult.failure("Child not found");
+            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         if (isPurchaseRequest(request.get())) {
             if (child.get().getBalance() < request.get().getCoins()) {
-                return OperationResult.failure("Insufficient balance");
+                return OperationResult.failure(BackendMessages.message("balance.insufficient"));
             }
             child.get().setBalance(child.get().getBalance() - request.get().getCoins());
         } else {
@@ -199,15 +200,15 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> rejectRequest(String familyId, Integer currentChildId, long requestId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
         if (request.isEmpty()) {
-            return OperationResult.failure("Request not found");
+            return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
         if (!isPending(request.get())) {
-            return OperationResult.failure("Request is already processed");
+            return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
         }
 
         request.get().setStatus("rejected");
@@ -220,12 +221,12 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> deleteRequest(String familyId, Integer currentChildId, long requestId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
         if (request.isEmpty()) {
-            return OperationResult.failure("Request not found");
+            return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
 
         int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
@@ -238,17 +239,17 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> deleteHistoryEntry(String familyId, int childId, long historyEntryId) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
         Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
         if (child.isEmpty()) {
-            return OperationResult.failure("Child not found");
+            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         Optional<HistoryEntryEntity> historyEntry = findHistoryEntry(familyDbId.get(), childId, historyEntryId);
         if (historyEntry.isEmpty()) {
-            return OperationResult.failure("History entry not found");
+            return OperationResult.failure(BackendMessages.message("history.entryNotFound"));
         }
 
         int delta = "earn".equals(historyEntry.get().getType())
@@ -264,15 +265,15 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> adjustBalance(String familyId, int childId, int amount, String description) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
-            return OperationResult.failure("Family not found");
+            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
         if (amount == 0) {
-            return OperationResult.failure("Amount must not be zero");
+            return OperationResult.failure(BackendMessages.message("balance.amountZero"));
         }
 
         Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
         if (child.isEmpty()) {
-            return OperationResult.failure("Child not found");
+            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         child.get().setBalance(child.get().getBalance() + amount);
@@ -340,7 +341,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             windowEnd
         );
 
-        return usedCount >= limit ? buildLimitReachedMessage("этому заданию", period, windowEnd) : null;
+        return usedCount >= limit ? buildTaskLimitReachedMessage(period, windowEnd) : null;
     }
 
     private String validateItemRequestLimit(int familyDbId, int childId, ShopItemEntity item) {
@@ -366,7 +367,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             windowEnd
         );
 
-        return usedCount >= limit ? buildLimitReachedMessage("этому товару", period, windowEnd) : null;
+        return usedCount >= limit ? buildItemLimitReachedMessage(period, windowEnd) : null;
     }
 
     private Integer extractFrequencyLimit(JsonNode rawFrequency) {
@@ -456,17 +457,12 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         };
     }
 
-    private String buildLimitReachedMessage(String target, String period, Instant resetAt) {
-        return switch (period) {
-            case "week" -> "Лимит заявок по " + target + " на эту неделю исчерпан. Следующее обновление "
-                + formatResetAt(resetAt, period) + '.';
-            case "month" -> "Лимит заявок по " + target + " на этот месяц исчерпан. Следующее обновление "
-                + formatResetAt(resetAt, period) + '.';
-            case "year" -> "Лимит заявок по " + target + " на этот год исчерпан. Следующее обновление "
-                + formatResetAt(resetAt, period) + '.';
-            default -> "Лимит заявок по " + target + " на сегодня исчерпан. Следующее обновление в "
-                + formatResetAt(resetAt, period) + '.';
-        };
+    private String buildTaskLimitReachedMessage(String period, Instant resetAt) {
+        return BackendMessages.taskLimitReached(period, formatResetAt(resetAt, period));
+    }
+
+    private String buildItemLimitReachedMessage(String period, Instant resetAt) {
+        return BackendMessages.itemLimitReached(period, formatResetAt(resetAt, period));
     }
 
     private String formatResetAt(Instant resetAt, String period) {
@@ -597,7 +593,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     private HistoryEntryEntity buildAdjustmentHistory(int familyDbId, int childId, int amount, String description) {
         String normalizedDescription = description != null && !description.isBlank()
             ? description.trim()
-            : amount > 0 ? "Начисление" : "Списание";
+            : amount > 0 ? BackendMessages.message("balance.adjustmentCredit") : BackendMessages.message("balance.adjustmentDebit");
         return HistoryEntryEntity.builder()
             .familyId(familyDbId)
             .childId(childId)

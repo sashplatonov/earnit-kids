@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.exception;
 
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
@@ -14,7 +15,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
     public Response toResponse(Throwable exception) {
         log.error("Unhandled exception while processing REST request", exception);
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-            .entity(ErrorResponse.of("Internal server error", "INTERNAL_ERROR", 500))
+            .entity(ErrorResponse.of(BackendMessages.message("errors.internalServerError"), "INTERNAL_ERROR", 500))
             .build();
     }
 }

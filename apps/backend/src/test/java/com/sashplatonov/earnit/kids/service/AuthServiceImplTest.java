@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.SuperAdminCredentialRepository;
@@ -47,12 +48,14 @@ class AuthServiceImplTest {
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
     @Mock SuperAdminCredentialRepository superAdminCredentialRepository;
+    @Mock GoogleIdentityVerifier googleIdentityVerifier;
 
     AuthServiceImpl authService;
     PasswordHasher passwordHasher;
 
     @BeforeEach
     void setUp() {
+        RequestLocaleHolder.set("en");
         passwordHasher = new PasswordHasher();
         authService = createAuthService(TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true));
     }
@@ -76,7 +79,7 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure1 = (OperationResult.Failure<?>) result;
         assertThat(failure1.message())
-            .contains("Неверный пароль");
+            .contains("Invalid super-admin password");
     }
 
     @Test
@@ -133,7 +136,7 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure2 = (OperationResult.Failure<?>) result;
         assertThat(failure2.message())
-            .isEqualTo("Аккаунт заблокирован");
+            .isEqualTo("Account is blocked");
     }
 
     @Test
@@ -143,6 +146,67 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.authenticateAdmin("unknown@test.com", "password");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
+    }
+
+    @Test
+    void authenticateAdminWithGoogle_verifiedExistingFamily_returnsAdminPayloadAndVerifiesLocalEmail() {
+        AuthServiceImpl serviceWithGoogle = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
+        when(googleIdentityVerifier.verify("google-token", "google-client-id"))
+            .thenReturn(Optional.of(new GoogleIdentity("user@test.com", true)));
+        when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
+        when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
+        when(familyRepository.verifyFamily("fam_1")).thenReturn(true);
+
+        OperationResult<AuthPayload> result = serviceWithGoogle.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.familyId()).isEqualTo("fam_1");
+        verify(familyRepository).verifyFamily("fam_1");
+    }
+
+    @Test
+    void authenticateAdminWithGoogle_blockedLinkedFamily_returnsFailure() {
+        AuthServiceImpl serviceWithGoogle = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+        FamilyEntity family = mockFamily("fam_1", "blocked@test.com", "password123", true, true);
+        when(googleIdentityVerifier.verify("google-token", "google-client-id"))
+            .thenReturn(Optional.of(new GoogleIdentity("blocked@test.com", true)));
+        when(familyRepository.findByEmail("blocked@test.com")).thenReturn(Optional.of(family));
+
+        OperationResult<AuthPayload> result = serviceWithGoogle.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+            .contains("Account is blocked");
+    }
+
+    @Test
+    void authenticateAdminWithGoogle_missingLinkedFamily_returnsFailure() {
+        AuthServiceImpl serviceWithGoogle = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, false, true, true, "google-client-id"));
+        when(googleIdentityVerifier.verify("google-token", "google-client-id"))
+            .thenReturn(Optional.of(new GoogleIdentity("missing@test.com", true)));
+        when(familyRepository.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+
+        OperationResult<AuthPayload> result = serviceWithGoogle.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+            .contains("No family account is linked");
+    }
+
+    @Test
+    void authenticateAdminWithGoogle_disabledConfig_returnsFailureWithoutVerifierCall() {
+        OperationResult<AuthPayload> result = authService.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+            .contains("Google sign-in is not configured");
+        verify(googleIdentityVerifier, never()).verify(anyString(), anyString());
     }
 
     @Test
@@ -298,7 +362,18 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<?> failure3 = (OperationResult.Failure<?>) result;
         assertThat(failure3.message())
-            .contains("Email не подтвержден");
+            .contains("Email is not verified");
+    }
+
+    @Test
+    void authenticateAdmin_wrongSuperAdminPassword_returnsRussianMessageWhenLocaleIsRussian() {
+        RequestLocaleHolder.set("ru");
+
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "wrong");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        OperationResult.Failure<?> failure = (OperationResult.Failure<?>) result;
+        assertThat(failure.message()).isEqualTo("Неверный пароль администратора");
     }
 
     @Test
@@ -427,7 +502,8 @@ class AuthServiceImplTest {
             passwordHasher,
             TOKEN_GENERATOR,
             TestConfigFactory.timeProvider(FIXED_NOW),
-            superAdminCredentialsService
+            superAdminCredentialsService,
+            googleIdentityVerifier
         );
     }
 
