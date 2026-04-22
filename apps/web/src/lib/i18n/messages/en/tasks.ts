@@ -55,8 +55,6 @@ export const tasksMessages = {
 	},
 	groupOrder: {
 		title: 'Task group order',
-		hintAdmin: 'The parent sets the default group order for this child.',
-		hintChild: 'You can rearrange groups for yourself without changing the parent order.',
 		descriptionAdmin: 'Drag a group into the desired place. The new order becomes the main order for this child’s tasks.',
 		descriptionChild: 'Drag a group into the desired place. Only you will see this order, and the parent order stays separate.',
 	},

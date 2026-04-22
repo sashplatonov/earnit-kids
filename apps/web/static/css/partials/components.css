@@ -2501,23 +2501,6 @@ dialog.modal[open]::backdrop {
     border-color: transparent;
 }
 
-.group-order-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin: -0.15rem 0 1rem;
-}
-
-.group-order-toolbar__hint {
-    margin: 0;
-    color: var(--color-text-dim);
-    font-size: 0.88rem;
-    line-height: 1.45;
-}
-
-.group-order-toolbar__actions,
 .group-order-panel__actions,
 .group-order-row__actions {
     display: flex;
@@ -2754,7 +2737,6 @@ dialog.modal[open]::backdrop {
         padding: 0.38rem 0.9rem;
     }
 
-    .group-order-toolbar,
     .group-order-panel__actions {
         align-items: stretch;
     }
@@ -2786,12 +2768,10 @@ dialog.modal[open]::backdrop {
         padding: 0.32rem 0.75rem;
     }
 
-    .group-order-toolbar__actions,
     .group-order-panel__actions {
         width: 100%;
     }
 
-    .group-order-toolbar__actions .btn,
     .group-order-panel__actions .btn {
         flex: 1 1 100%;
     }

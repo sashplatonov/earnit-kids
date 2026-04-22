@@ -57,8 +57,6 @@ export const shopMessages = {
 	},
 	groupOrder: {
 		title: 'Reward group order',
-		hintAdmin: 'The parent sets the default shop group order for this child.',
-		hintChild: 'You can rearrange reward groups for yourself without changing the parent order.',
 		descriptionAdmin: 'Drag a group into the desired place. The new order becomes the main order for this child’s shop.',
 		descriptionChild: 'Drag a group into the desired place. Only you will see this order, and the parent order stays separate.',
 	},

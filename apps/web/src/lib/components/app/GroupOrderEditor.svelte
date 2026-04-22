@@ -15,11 +15,8 @@
     export let isSaving = false;
     export let groups: string[] = [];
     export let title = '';
-    export let hintAdmin = '';
-    export let hintChild = '';
     export let descriptionAdmin = '';
     export let descriptionChild = '';
-    export let hideToolbarOnMobile = false;
 
     const dispatch = createEventDispatcher<{
         save: string[];
@@ -229,19 +226,6 @@
 </script>
 
 <svelte:window on:pointermove={handlePointerMove} on:pointerup={handlePointerUp} on:pointercancel={handlePointerUp} on:keydown={handleWindowKeydown} />
-
-<div class="group-order-toolbar" class:group-order-toolbar--mobile-hidden={hideToolbarOnMobile}>
-    <p class="group-order-toolbar__hint">
-        {isAdmin ? hintAdmin : hintChild}
-    </p>
-    {#if !isOpen}
-    <div class="group-order-toolbar__actions">
-        <button class="btn btn--secondary btn--small" type="button" on:click={openEditor} disabled={isSaving}>
-            {isAdmin ? tApp('groupOrder.configureAdmin') : tApp('groupOrder.configureChild')}
-        </button>
-    </div>
-    {/if}
-</div>
 
 {#if isOpen}
 <div class="group-order-modal" bind:this={modalPanel}>
@@ -550,10 +534,6 @@
     }
 
     @media (max-width: 640px) {
-        .group-order-toolbar--mobile-hidden {
-            display: none;
-        }
-
         .group-order-modal {
             align-items: center;
             justify-content: center;

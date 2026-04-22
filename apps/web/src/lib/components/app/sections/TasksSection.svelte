@@ -241,11 +241,8 @@
         isSaving={isSavingGroupOrder}
         {groups}
         title={tTasks('groupOrder.title')}
-        hintAdmin={tTasks('groupOrder.hintAdmin')}
-        hintChild={tTasks('groupOrder.hintChild')}
         descriptionAdmin={tTasks('groupOrder.descriptionAdmin')}
         descriptionChild={tTasks('groupOrder.descriptionChild')}
-        hideToolbarOnMobile
         on:save={handleGroupOrderSave}
     />
     {/if}

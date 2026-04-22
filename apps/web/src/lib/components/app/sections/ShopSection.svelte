@@ -306,11 +306,8 @@
         isSaving={isSavingGroupOrder}
         {groups}
         title={tShop('groupOrder.title')}
-        hintAdmin={tShop('groupOrder.hintAdmin')}
-        hintChild={tShop('groupOrder.hintChild')}
         descriptionAdmin={tShop('groupOrder.descriptionAdmin')}
         descriptionChild={tShop('groupOrder.descriptionChild')}
-        hideToolbarOnMobile
         on:save={handleGroupOrderSave}
     />
     {/if}
@@ -441,6 +438,20 @@
         align-items: center;
         gap: 0.4rem;
         flex-shrink: 0;
+    }
+
+    .shop-card--list .shop-card__money-price {
+        display: inline-flex;
+        align-items: center;
+        flex: none;
+        padding: 0.18rem 0.46rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.12);
+        color: #8a6118;
+        font-size: 0.76rem;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
     }
 
     .shop-card--list .card__actions {
