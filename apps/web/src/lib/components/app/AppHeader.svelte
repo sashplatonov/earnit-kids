@@ -15,9 +15,6 @@
 
     const i18n = useI18n();
 
-    let menuOpen = false;
-    let menuElement: HTMLElement | null = null;
-
     $: historyCount = earnedCount || $appStore.history.length;
     $: resolvedLimitNote = earnedLimitNote.trim().length > 0
         ? earnedLimitNote
@@ -38,24 +35,6 @@
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             openHistory();
-        }
-    }
-
-    function closeMenu() {
-        menuOpen = false;
-    }
-
-    function handleWindowClick(event: MouseEvent) {
-        const target = event.target;
-        if (!(target instanceof Node)) return;
-        if (menuOpen && menuElement && !menuElement.contains(target)) {
-            menuOpen = false;
-        }
-    }
-
-    function handleWindowKeydown(event: KeyboardEvent) {
-        if (event.key === 'Escape') {
-            menuOpen = false;
         }
     }
 
@@ -86,8 +65,6 @@
     }
 </script>
 
-<svelte:window on:click={handleWindowClick} on:keydown={handleWindowKeydown} />
-
 <header class="header" class:header--admin={isAdmin}>
     <div class="header__system-row">
         <div class="header__logo">
@@ -101,26 +78,6 @@
         </div>
         <div class="header__actions">
             <LocaleSwitcher compact={true} />
-            <div class="header__overflow-menu" bind:this={menuElement}>
-                <button
-                    class="btn btn--secondary btn--small header__overflow-btn"
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={menuOpen}
-                    aria-controls="header-overflow-dropdown"
-                    aria-label={$i18n.t('common.navigation.more')}
-                    on:click={() => (menuOpen = !menuOpen)}
-                >
-                    <span class="gamified-icon icon-dots" aria-hidden="true"></span>
-                </button>
-                {#if menuOpen}
-                    <div class="header__overflow-dropdown" id="header-overflow-dropdown" role="menu">
-                        <div class="header__overflow-item" role="presentation" on:click={closeMenu}>
-                            <LocaleSwitcher compact={true} />
-                        </div>
-                    </div>
-                {/if}
-            </div>
             <button class="btn btn--secondary btn--small header__install hidden" id="pwa-install-btn" type="button">
                 <span class="gamified-icon icon-link" aria-hidden="true"></span>
                 <span>{$i18n.t('common.actions.install')}</span>
