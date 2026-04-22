@@ -96,23 +96,62 @@
 
     @media (max-width: 640px) {
         :global(.shop-card--list) .card__header {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: start;
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            margin-bottom: 0;
+            gap: 0.32rem;
         }
 
         :global(.shop-card--list) .card__header-main {
             min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.28rem;
         }
 
         :global(.shop-card--list) .card__title {
-            font-size: 0.95rem;
+            min-width: 0;
             min-height: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.84rem;
+            line-height: 1.12;
+            word-break: normal;
         }
 
         :global(.shop-card--list) .card__compact-meta {
-            gap: 0.22rem;
-            margin-top: 0.24rem;
+            flex: 0 0 auto;
+            flex-wrap: nowrap;
+            gap: 0;
+            margin-top: 0;
+        }
+
+        :global(.shop-card--list) .card__compact-chip:not(.card__compact-chip--group) {
+            display: none;
+        }
+
+        :global(.shop-card--list) .card__compact-chip--group {
+            max-width: 4.8rem;
+            overflow: hidden;
+            padding: 0.12rem 0.34rem;
+            font-size: 0.62rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        :global(.shop-card--list) .card__coins {
+            flex: 0 0 auto;
+            padding: 0.16rem 0.34rem;
+            font-size: 0.68rem;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        :global(.shop-card--list) .card__coins .gamified-icon {
+            width: 0.78rem;
+            height: 0.78rem;
         }
     }
 </style>

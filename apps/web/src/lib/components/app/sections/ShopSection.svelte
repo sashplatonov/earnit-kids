@@ -162,6 +162,12 @@
             : '';
     }
 
+    function shopMoneyPriceLabel(item: { moneyLimit?: number | null }) {
+        return item.moneyLimit != null
+            ? `${$i18n.formatNumber(item.moneyLimit)} 💶`
+            : '';
+    }
+
     function shopCompactChips(item: {
         groupName?: string | null;
         frequency?: { limit?: number; period?: string } | null;
@@ -350,6 +356,9 @@
                         <span class="card__meta-item">{tShop('section.moneyLimit', { amount: $i18n.formatNumber(item.moneyLimit) })}</span>
                         {/if}
                     </div>
+                    {#if shopMoneyPriceLabel(item)}
+                    <span class="shop-card__money-price">{shopMoneyPriceLabel(item)}</span>
+                    {/if}
                     <div class="card__actions">
                         {#if isAdmin}
                         <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item)}
@@ -407,6 +416,10 @@
         gap: 0.8rem;
     }
 
+    .shop-card__money-price {
+        display: none;
+    }
+
     /* Compact list row */
     .shop-card--list {
         height: auto;
@@ -451,19 +464,78 @@
     }
 
     @media (max-width: 640px) {
+        #shop-section .section__header {
+            align-items: flex-start;
+            row-gap: 0.45rem;
+            margin-bottom: 0.55rem;
+        }
+
+        #shop-section .section__header-titles {
+            min-width: 0;
+        }
+
+        #shop-section .section__header h2 {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            line-height: 1.3;
+            overflow-wrap: anywhere;
+        }
+
+        .shop-card--list {
+            padding: 0.34rem 0.52rem;
+        }
+
         .shop-card--list .shop-card__layout {
-            align-items: stretch;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .shop-card--list .shop-card__main {
+            min-width: 0;
         }
 
         .shop-card--list .shop-card__side {
-            width: 100%;
-            justify-content: space-between;
-            flex-wrap: wrap;
+            width: auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: nowrap;
+            gap: 0.28rem;
+        }
+
+        .shop-card--list .shop-card__money-price {
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
+            padding: 0.16rem 0.38rem;
+            border-radius: 999px;
+            background: rgba(255, 214, 107, 0.18);
+            color: #8a6118;
+            font-size: 0.68rem;
+            font-weight: 800;
+            line-height: 1;
+            white-space: nowrap;
         }
 
         .shop-card--list .card__actions {
-            width: 100%;
-            justify-content: flex-start;
+            width: auto;
+            display: flex;
+            flex: 0 0 auto;
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+            gap: 0.24rem;
+        }
+
+        .shop-card--list .card__actions .btn {
+            min-height: 1.82rem;
+            padding: 0.28rem 0.46rem;
+            font-size: 0.72rem;
+            white-space: nowrap;
         }
     }
 </style>
