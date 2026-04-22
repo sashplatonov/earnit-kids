@@ -20,6 +20,7 @@
     export let hintChild = '';
     export let descriptionAdmin = '';
     export let descriptionChild = '';
+    export let hideToolbarOnMobile = false;
 
     const dispatch = createEventDispatcher<{
         save: string[];
@@ -72,7 +73,7 @@
         isTouchDrag = false;
     }
 
-    function openEditor() {
+    export function openEditor() {
         isOpen = true;
     }
 
@@ -84,7 +85,7 @@
         dispatch('save', draft);
     }
 
-    function resetOrder() {
+    export function resetOrder() {
         dispatch('reset');
     }
 
@@ -216,7 +217,7 @@
 
 <svelte:window on:pointermove={handlePointerMove} on:pointerup={handlePointerUp} on:pointercancel={handlePointerUp} on:keydown={handleWindowKeydown} />
 
-<div class="group-order-toolbar">
+<div class="group-order-toolbar" class:group-order-toolbar--mobile-hidden={hideToolbarOnMobile}>
     <p class="group-order-toolbar__hint">
         {isAdmin ? hintAdmin : hintChild}
     </p>
@@ -303,5 +304,13 @@
     </div>
 </div>
 {/if}
+
+<style>
+    @media (max-width: 640px) {
+        .group-order-toolbar--mobile-hidden {
+            display: none;
+        }
+    }
+</style>
 
 <!-- Drag ghost is rendered into document.body via portal to avoid transform offset issues -->

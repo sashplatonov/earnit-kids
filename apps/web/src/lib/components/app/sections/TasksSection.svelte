@@ -31,6 +31,7 @@
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
     let viewMode: CardViewMode = 'grid';
+    let groupOrderEditor: { openEditor: () => void; resetOrder: () => void } | null = null;
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
     function tTasks(key: string, variables?: Record<string, string | number>): string {
@@ -189,6 +190,14 @@
         viewMode = nextMode;
         saveCardViewMode('tasks', viewRole, nextMode);
     }
+
+    function openGroupOrderEditor() {
+        groupOrderEditor?.openEditor();
+    }
+
+    function resetGroupOrderFromHeader() {
+        groupOrderEditor?.resetOrder();
+    }
 </script>
 
 <section class="section" id="tasks-section">
@@ -201,30 +210,60 @@
             </h2>
             <p class="section__subtitle">{tTasks('section.subtitle')}</p>
         </div>
-        <div class="section__header-actions">
-            <div class="view-toggle" role="group" aria-label={tTasks('section.viewAria')}>
-                <button
-                    type="button"
-                    class="view-toggle__button"
-                    class:view-toggle__button--active={viewMode === 'grid'}
-                    aria-pressed={viewMode === 'grid'}
-                    on:click={() => setViewMode('grid')}
-                >
-                    {tTasks('section.viewGrid')}
-                </button>
-                <button
-                    type="button"
-                    class="view-toggle__button"
-                    class:view-toggle__button--active={viewMode === 'list'}
-                    aria-pressed={viewMode === 'list'}
-                    on:click={() => setViewMode('list')}
-                >
-                    {tTasks('section.viewList')}
-                </button>
-            </div>
+        <div class="section__header-actions" class:section__header-actions--without-add={!isAdmin}>
             {#if isAdmin}
-            <button class="btn btn--add" id="add-task-btn" on:click={openAddTask}>{tTasks('section.add')}</button>
+            <button class="btn btn--add section__add-btn" id="add-task-btn" on:click={openAddTask}>{tTasks('section.add')}</button>
             {/if}
+            <div class="mobile-control-strip">
+                <div class="view-toggle" role="group" aria-label={tTasks('section.viewAria')}>
+                    <button
+                        type="button"
+                        class="view-toggle__button"
+                        class:view-toggle__button--active={viewMode === 'grid'}
+                        aria-label={tTasks('section.viewGrid')}
+                        aria-pressed={viewMode === 'grid'}
+                        on:click={() => setViewMode('grid')}
+                    >
+                        <span class="view-toggle__icon view-toggle__icon--grid" aria-hidden="true"></span>
+                        <span class="view-toggle__label">{tTasks('section.viewGrid')}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="view-toggle__button"
+                        class:view-toggle__button--active={viewMode === 'list'}
+                        aria-label={tTasks('section.viewList')}
+                        aria-pressed={viewMode === 'list'}
+                        on:click={() => setViewMode('list')}
+                    >
+                        <span class="view-toggle__icon view-toggle__icon--rows" aria-hidden="true"></span>
+                        <span class="view-toggle__label">{tTasks('section.viewList')}</span>
+                    </button>
+                </div>
+                {#if groups.length > 1 && !isEditingGroupOrder}
+                <div class="mobile-order-actions" role="group" aria-label={tTasks('groupOrder.title')}>
+                    <button
+                        class="mobile-order-actions__button"
+                        type="button"
+                        aria-label={isAdmin ? $i18n.t('app.groupOrder.configureAdmin') : $i18n.t('app.groupOrder.configureChild')}
+                        on:click={openGroupOrderEditor}
+                        disabled={isSavingGroupOrder}
+                    >
+                        <span class="mobile-order-actions__icon mobile-order-actions__icon--order" aria-hidden="true"></span>
+                    </button>
+                    {#if hasStoredGroupOrder}
+                    <button
+                        class="mobile-order-actions__button"
+                        type="button"
+                        aria-label={isAdmin ? $i18n.t('app.groupOrder.resetAdmin') : $i18n.t('app.groupOrder.resetChild')}
+                        on:click={resetGroupOrderFromHeader}
+                        disabled={isSavingGroupOrder}
+                    >
+                        <span class="mobile-order-actions__icon mobile-order-actions__icon--reset" aria-hidden="true"></span>
+                    </button>
+                    {/if}
+                </div>
+                {/if}
+            </div>
         </div>
     </div>
 
@@ -244,6 +283,7 @@
     </nav>
 
     <GroupOrderEditor
+        bind:this={groupOrderEditor}
         bind:isOpen={isEditingGroupOrder}
         {isAdmin}
         isSaving={isSavingGroupOrder}
@@ -254,6 +294,7 @@
         hintChild={tTasks('groupOrder.hintChild')}
         descriptionAdmin={tTasks('groupOrder.descriptionAdmin')}
         descriptionChild={tTasks('groupOrder.descriptionChild')}
+        hideToolbarOnMobile
         on:save={handleGroupOrderSave}
         on:reset={handleGroupOrderReset}
     />
@@ -338,6 +379,17 @@
         flex-wrap: wrap;
     }
 
+    .mobile-control-strip {
+        order: 1;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    .section__add-btn {
+        order: 2;
+    }
+
     .view-toggle {
         display: inline-flex;
         align-items: center;
@@ -349,6 +401,10 @@
     }
 
     .view-toggle__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.38rem;
         border: 0;
         background: transparent;
         color: rgba(54, 68, 96, 0.72);
@@ -360,6 +416,84 @@
         border-radius: 999px;
         cursor: pointer;
         transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .view-toggle__icon,
+    .mobile-order-actions__icon {
+        position: relative;
+        display: none;
+        width: 1rem;
+        height: 1rem;
+        flex: none;
+    }
+
+    .view-toggle__icon--grid {
+        background:
+            linear-gradient(currentColor 0 0) 0 0 / 0.38rem 0.38rem no-repeat,
+            linear-gradient(currentColor 0 0) 100% 0 / 0.38rem 0.38rem no-repeat,
+            linear-gradient(currentColor 0 0) 0 100% / 0.38rem 0.38rem no-repeat,
+            linear-gradient(currentColor 0 0) 100% 100% / 0.38rem 0.38rem no-repeat;
+    }
+
+    .view-toggle__icon--rows {
+        background:
+            linear-gradient(currentColor 0 0) 0 0.08rem / 100% 0.18rem no-repeat,
+            linear-gradient(currentColor 0 0) 0 0.41rem / 100% 0.18rem no-repeat,
+            linear-gradient(currentColor 0 0) 0 0.74rem / 100% 0.18rem no-repeat;
+    }
+
+    .mobile-order-actions {
+        display: none;
+    }
+
+    .mobile-order-actions__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: rgba(54, 68, 96, 0.72);
+        cursor: pointer;
+    }
+
+    .mobile-order-actions__button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+    .mobile-order-actions__icon--order {
+        background:
+            radial-gradient(circle, currentColor 0.12rem, transparent 0.13rem) 0 0.02rem / 100% 0.32rem no-repeat,
+            radial-gradient(circle, currentColor 0.12rem, transparent 0.13rem) 0 0.36rem / 100% 0.32rem no-repeat,
+            radial-gradient(circle, currentColor 0.12rem, transparent 0.13rem) 0 0.7rem / 100% 0.32rem no-repeat,
+            linear-gradient(currentColor 0 0) 0.35rem 0.09rem / 0.62rem 0.14rem no-repeat,
+            linear-gradient(currentColor 0 0) 0.35rem 0.43rem / 0.62rem 0.14rem no-repeat,
+            linear-gradient(currentColor 0 0) 0.35rem 0.77rem / 0.62rem 0.14rem no-repeat;
+    }
+
+    .mobile-order-actions__icon--reset::before {
+        content: '';
+        position: absolute;
+        inset: 0.16rem;
+        border: 0.17rem solid currentColor;
+        border-left-color: transparent;
+        border-radius: 999px;
+    }
+
+    .mobile-order-actions__icon--reset::after {
+        content: '';
+        position: absolute;
+        top: 0.02rem;
+        left: 0.11rem;
+        width: 0;
+        height: 0;
+        border-top: 0.27rem solid transparent;
+        border-bottom: 0.27rem solid transparent;
+        border-right: 0.37rem solid currentColor;
+        transform: rotate(-18deg);
     }
 
     .view-toggle__button--active {
@@ -431,17 +565,70 @@
     @media (max-width: 640px) {
         .section__header-actions {
             width: 100%;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: minmax(4.25rem, auto) minmax(0, 1fr);
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mobile-control-strip {
+            order: 2;
+            justify-self: end;
+            max-width: 100%;
+            gap: 0.35rem;
+            min-width: 0;
+        }
+
+        .section__add-btn {
+            order: 1;
+            min-height: 2.55rem;
+            padding-inline: 0.72rem;
+            white-space: nowrap;
+        }
+
+        .section__header-actions--without-add {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .section__header-actions--without-add .mobile-control-strip {
+            justify-self: start;
         }
 
         .view-toggle {
-            width: 100%;
-            justify-content: stretch;
+            width: auto;
+            flex: none;
+            justify-content: center;
         }
 
         .view-toggle__button {
-            flex: 1 1 0;
-            text-align: center;
+            width: 2.1rem;
+            height: 2.1rem;
+            flex: none;
+            padding: 0;
+        }
+
+        .view-toggle__label {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
+        .view-toggle__icon,
+        .mobile-order-actions__icon {
+            display: block;
+        }
+
+        .mobile-order-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(120, 140, 175, 0.18);
+            background: rgba(246, 248, 252, 0.92);
         }
 
         .task-card--list .task-card__layout {
