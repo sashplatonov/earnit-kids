@@ -5,7 +5,7 @@ const PTR_TRIGGER_DISTANCE = 72;
 const PTR_MAX_PULL = 110;
 
 type RefreshCallback = () => Promise<unknown> | unknown;
-type CleanupFn = () => void;
+export type CleanupFn = () => void;
 type BeforeInstallPromptEvent = Event & {
     prompt: () => Promise<void>;
     userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -252,41 +252,84 @@ function requestImmediateActivation(registration: ServiceWorkerRegistration) {
     registration.waiting.postMessage({ type: 'SKIP_WAITING' });
 }
 
-function setupServiceWorkerAutoReload() {
+function isServiceWorkerUpdateStateError(error: unknown) {
+    if (!(error instanceof DOMException)) return false;
+
+    const message = error.message.toLowerCase();
+    return error.name === 'InvalidStateError'
+        || message.includes('no longer')
+        || message.includes('not, or is no longer, usable');
+}
+
+function setupServiceWorkerAutoReload(): CleanupFn {
     let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const handleControllerChange = () => {
         if (refreshing) return;
         refreshing = true;
         window.location.reload();
-    });
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
+    return () => {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+    };
 }
 
-function setupServiceWorkerUpdateChecks(registration: ServiceWorkerRegistration) {
+function setupServiceWorkerUpdateChecks(registration: ServiceWorkerRegistration): CleanupFn {
     const updateIntervalMs = 5 * 60 * 1000;
-    const safeUpdate = () => registration.update().catch((error) => console.log('SW update check failed:', error));
+    const safeUpdate = async () => {
+        if (document.visibilityState !== 'visible') return;
+        if (!registration.active && !registration.waiting && !registration.installing) return;
 
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            safeUpdate();
+        try {
+            await registration.update();
+        } catch (error) {
+            if (isServiceWorkerUpdateStateError(error)) return;
+            console.log('SW update check failed:', error);
         }
-    });
+    };
+
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            void safeUpdate();
+        }
+    };
 
     window.addEventListener('focus', safeUpdate);
-    window.setInterval(safeUpdate, updateIntervalMs);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const intervalId = window.setInterval(safeUpdate, updateIntervalMs);
+
+    return () => {
+        window.removeEventListener('focus', safeUpdate);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.clearInterval(intervalId);
+    };
 }
 
-function setupServiceWorkerLifecycle(registration: ServiceWorkerRegistration) {
+function setupServiceWorkerLifecycle(registration: ServiceWorkerRegistration): CleanupFn {
     requestImmediateActivation(registration);
+    const cleanupFns: CleanupFn[] = [];
 
-    registration.addEventListener('updatefound', () => {
+    const handleUpdateFound = () => {
         const installing = registration.installing;
         if (!installing) return;
-        installing.addEventListener('statechange', () => {
+        const handleStateChange = () => {
             if (installing.state === 'installed' && navigator.serviceWorker.controller) {
                 requestImmediateActivation(registration);
             }
-        });
-    });
+        };
+
+        installing.addEventListener('statechange', handleStateChange);
+        cleanupFns.push(() => installing.removeEventListener('statechange', handleStateChange));
+    };
+
+    registration.addEventListener('updatefound', handleUpdateFound);
+
+    return () => {
+        registration.removeEventListener('updatefound', handleUpdateFound);
+        cleanupFns.forEach((cleanup) => cleanup());
+    };
 }
 
 async function clearLocalhostCaches() {
@@ -300,20 +343,24 @@ async function clearLocalhostCaches() {
     }
 }
 
-async function registerServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
+async function registerServiceWorker(): Promise<CleanupFn> {
+    if (!('serviceWorker' in navigator)) return () => {};
     if (isLocalhost()) {
         await clearLocalhostCaches();
     }
-    setupServiceWorkerAutoReload();
+    const cleanupFns = [setupServiceWorkerAutoReload()];
 
     try {
         const registration = await navigator.serviceWorker.register(getServiceWorkerUrl());
-        setupServiceWorkerLifecycle(registration);
-        setupServiceWorkerUpdateChecks(registration);
+        cleanupFns.push(setupServiceWorkerLifecycle(registration));
+        cleanupFns.push(setupServiceWorkerUpdateChecks(registration));
     } catch (error) {
         console.log('SW registration failed:', error);
     }
+
+    return () => {
+        cleanupFns.forEach((cleanup) => cleanup());
+    };
 }
 
 export async function initializePwa(refreshCallback: RefreshCallback): Promise<CleanupFn> {
@@ -323,7 +370,7 @@ export async function initializePwa(refreshCallback: RefreshCallback): Promise<C
         setupPullToRefresh(refreshCallback),
     ];
 
-    await registerServiceWorker();
+    cleanupFns.push(await registerServiceWorker());
 
     return () => {
         cleanupFns.forEach((cleanup) => cleanup());

@@ -29,10 +29,25 @@
     $: reqCount = $pendingRequestsCount;
 
     onMount(() => {
+        let mounted = true;
+        let cleanupPwa: (() => void) | null = null;
+
         void initializeFromServer();
-        void initializePwa(() => refreshData(true)).then(() => initializePushNotifications());
+        void initializePwa(() => refreshData(true)).then((cleanup) => {
+            if (!mounted) {
+                cleanup();
+                return null;
+            }
+
+            cleanupPwa = cleanup;
+            return initializePushNotifications();
+        });
         startWebSocket();
-        return () => { stopWebSocket(); };
+        return () => {
+            mounted = false;
+            cleanupPwa?.();
+            stopWebSocket();
+        };
     });
 </script>
 
