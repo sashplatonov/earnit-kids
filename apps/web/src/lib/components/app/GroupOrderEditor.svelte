@@ -606,6 +606,7 @@
 
         .group-order-row__index {
             width: 1.18rem;
+            min-width: 1.18rem;
             height: 1.18rem;
             font-size: 0.66rem;
         }
@@ -622,7 +623,12 @@
 
         .group-order-row__handle {
             width: 1.54rem;
+            min-width: 1.54rem;
             height: 1.54rem;
+            min-height: 0;
+            grid-column: auto;
+            padding: 0;
+            gap: 0;
             border-radius: 999px;
         }
 
