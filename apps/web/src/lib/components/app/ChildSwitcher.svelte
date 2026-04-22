@@ -41,15 +41,19 @@
 <svelte:window on:click={handleOutsideClick} />
 
 {#if !hasChildren}
-<button
-    type="button"
-    class="btn btn--primary btn--small"
-    id="child-switcher-add-child"
-    aria-label={tApp('childSwitcher.addChildAria')}
-    on:click={openAddChild}
->
-    {tApp('childSwitcher.addChildButton')}
-</button>
+<div class="nav__child-switcher">
+    <button
+        type="button"
+        class="child-menu-btn"
+        id="child-switcher-add-child"
+        aria-label={tApp('childSwitcher.addChildAria')}
+        on:click={openAddChild}
+    >
+        <span class="child-menu-btn__icon"><span class="gamified-icon icon-child" aria-hidden="true"></span></span>
+        <span class="child-menu-btn__name">{tApp('childSwitcher.addChildButton')}</span>
+        <span class="child-menu-btn__arrow" aria-hidden="true">+</span>
+    </button>
+</div>
 {:else}
 <div class="nav__child-switcher child-menu" class:active={open}>
     <button

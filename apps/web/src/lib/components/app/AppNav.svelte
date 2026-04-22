@@ -65,7 +65,9 @@
 <nav class="nav" bind:this={navElement} aria-label={$i18n.t('common.navigation.main')}>
     <div class="nav__primary">
         {#if isAdmin}
-            <ChildSwitcher />
+            <div id="child-switcher-container">
+                <ChildSwitcher />
+            </div>
             <div class="nav__group nav__group--parent">
                 {#each primarySections as section (section)}
                     <a

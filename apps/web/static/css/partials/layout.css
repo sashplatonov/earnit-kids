@@ -148,6 +148,46 @@
     flex-shrink: 0;
 }
 
+.header__overflow-menu {
+    position: relative;
+    display: none;
+    align-items: center;
+}
+
+.header__overflow-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    min-height: var(--touch-target-height);
+    height: var(--touch-target-height);
+    padding: 0 0.65rem;
+}
+
+.header__overflow-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: rgba(255, 251, 246, 0.98);
+    border-radius: var(--radius-lg);
+    padding: 0.55rem 0.75rem;
+    border: 1px solid rgba(123, 97, 75, 0.12);
+    box-shadow: var(--shadow-lg);
+    z-index: var(--layer-dropdown);
+    min-width: 220px;
+}
+
+.header--admin .header__overflow-dropdown {
+    background: rgba(30, 23, 18, 0.92);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.header__overflow-item .locale-switcher {
+    width: 100%;
+    justify-content: space-between;
+}
+
 .header__install {
     width: auto;
     max-width: 100%;
