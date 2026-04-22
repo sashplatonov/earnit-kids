@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import CardHeader from '$lib/components/app/CardHeader.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
+    import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
@@ -13,7 +14,6 @@
     import {
         applyGroupOrderToChildren,
         getEffectiveGroupOrder,
-        hasSavedGroupOrder,
         normalizeGroupLabel,
         orderGroups,
         sortItemsByGroup,
@@ -32,6 +32,7 @@
     let isSavingGroupOrder = false;
     let selectedGroup = '';
     let viewMode: CardViewMode = 'grid';
+    let groupOrderEditor: { openEditor: () => void } | null = null;
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
     function tShop(key: string, variables?: Record<string, string | number>): string {
@@ -49,7 +50,6 @@
         ?? null) as Child | null);
     $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
     $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
-    $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
     $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('shop', viewRole);
         loadedViewRole.value = viewRole;
@@ -250,13 +250,13 @@
         await persistGroupOrder(event.detail);
     }
 
-    async function handleGroupOrderReset() {
-        await persistGroupOrder([]);
-    }
-
     function setViewMode(nextMode: CardViewMode) {
         viewMode = nextMode;
         saveCardViewMode('shop', viewRole, nextMode);
+    }
+
+    function openGroupOrderEditor() {
+        groupOrderEditor?.openEditor();
     }
 </script>
 
@@ -270,31 +270,22 @@
             </h2>
             <p class="section__subtitle">{tShop('section.subtitle')}</p>
         </div>
-        <div class="section__header-actions">
-            <div class="view-toggle" role="group" aria-label={tShop('section.viewAria')}>
-                <button
-                    type="button"
-                    class="view-toggle__button"
-                    class:view-toggle__button--active={viewMode === 'grid'}
-                    aria-pressed={viewMode === 'grid'}
-                    on:click={() => setViewMode('grid')}
-                >
-                    {tShop('section.viewGrid')}
-                </button>
-                <button
-                    type="button"
-                    class="view-toggle__button"
-                    class:view-toggle__button--active={viewMode === 'list'}
-                    aria-pressed={viewMode === 'list'}
-                    on:click={() => setViewMode('list')}
-                >
-                    {tShop('section.viewList')}
-                </button>
-            </div>
-            {#if isAdmin}
-            <button class="btn btn--add" id="add-shop-btn" on:click={openAddShopItem}>{tShop('section.add')}</button>
-            {/if}
-        </div>
+        <SectionHeaderControls
+            {isAdmin}
+            addLabel={tShop('section.add')}
+            addId="add-shop-btn"
+            {viewMode}
+            viewAriaLabel={tShop('section.viewAria')}
+            gridLabel={tShop('section.viewGrid')}
+            listLabel={tShop('section.viewList')}
+            orderLabel={isAdmin ? $i18n.t('app.groupOrder.configureAdmin') : $i18n.t('app.groupOrder.configureChild')}
+            hasGroups={groups.length > 1}
+            {isEditingGroupOrder}
+            {isSavingGroupOrder}
+            on:add={openAddShopItem}
+            on:editOrder={openGroupOrderEditor}
+            on:viewMode={(event) => setViewMode(event.detail)}
+        />
     </div>
 
     {#if groups.length > 1}
@@ -311,18 +302,18 @@
     </nav>
 
     <GroupOrderEditor
+        bind:this={groupOrderEditor}
         bind:isOpen={isEditingGroupOrder}
         {isAdmin}
         isSaving={isSavingGroupOrder}
-        hasStoredOrder={hasStoredGroupOrder}
         {groups}
         title={tShop('groupOrder.title')}
         hintAdmin={tShop('groupOrder.hintAdmin')}
         hintChild={tShop('groupOrder.hintChild')}
         descriptionAdmin={tShop('groupOrder.descriptionAdmin')}
         descriptionChild={tShop('groupOrder.descriptionChild')}
+        hideToolbarOnMobile
         on:save={handleGroupOrderSave}
-        on:reset={handleGroupOrderReset}
     />
     {/if}
 
@@ -399,44 +390,6 @@
 </section>
 
 <style>
-    .section__header-actions {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .view-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.25rem;
-        border-radius: 999px;
-        border: 1px solid rgba(120, 140, 175, 0.18);
-        background: rgba(246, 248, 252, 0.92);
-    }
-
-    .view-toggle__button {
-        border: 0;
-        background: transparent;
-        color: rgba(54, 68, 96, 0.72);
-        font: inherit;
-        font-size: 0.84rem;
-        font-weight: 700;
-        line-height: 1;
-        padding: 0.62rem 0.9rem;
-        border-radius: 999px;
-        cursor: pointer;
-        transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
-    }
-
-    .view-toggle__button--active {
-        background: linear-gradient(135deg, rgba(87, 121, 206, 0.18), rgba(84, 179, 160, 0.2));
-        color: #20304e;
-        box-shadow: inset 0 0 0 1px rgba(87, 121, 206, 0.14);
-    }
-
     .cards--list {
         grid-template-columns: minmax(0, 1fr);
         gap: 0.35rem;
@@ -498,21 +451,6 @@
     }
 
     @media (max-width: 640px) {
-        .section__header-actions {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .view-toggle {
-            width: 100%;
-            justify-content: stretch;
-        }
-
-        .view-toggle__button {
-            flex: 1 1 0;
-            text-align: center;
-        }
-
         .shop-card--list .shop-card__layout {
             align-items: stretch;
         }
