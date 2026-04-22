@@ -18,7 +18,6 @@
     const i18n = useI18n();
     let viewMode: CardViewMode = 'grid';
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
-    let historyGroupCollapseOverrides: Record<string, boolean> = {};
 
     function tHistory(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`history.${key}` as MessageKey, variables);
@@ -113,24 +112,6 @@
         if (group.kind === 'lastWeek') return tHistory('history.groupLastWeek');
         if (group.kind === 'noDate') return tHistory('history.groupNoDate');
         return monthLabel(group.monthKey);
-    }
-
-    function historyGroupPanelId(key: string): string {
-        return `history-group-${key.replace(/[^a-z0-9_-]/gi, '-')}`;
-    }
-
-    function isHistoryGroupCollapsed(group: HistoryGroup<HistoryViewEntry>): boolean {
-        if (Object.hasOwn(historyGroupCollapseOverrides, group.key)) {
-            return historyGroupCollapseOverrides[group.key];
-        }
-        return group.collapsedByDefault;
-    }
-
-    function toggleHistoryGroup(group: HistoryGroup<HistoryViewEntry>) {
-        historyGroupCollapseOverrides = {
-            ...historyGroupCollapseOverrides,
-            [group.key]: !isHistoryGroupCollapsed(group),
-        };
     }
 
     async function handleDelete(historyId: unknown) {
@@ -297,26 +278,17 @@
     {#if historyGroups.length > 0}
     <div class="history-list history-list--transactions" id="history-list">
         {#each historyGroups as group (group.key)}
-        {@const isCollapsed = isHistoryGroupCollapsed(group)}
-        <div class="history-month">
-            <button
-                class="history-month-header history-month-header--button"
-                type="button"
-                aria-expanded={!isCollapsed}
-                aria-controls={historyGroupPanelId(group.key)}
-                aria-label={tHistory('history.groupToggleAria', { title: historyGroupLabel(group) })}
-                on:click={() => toggleHistoryGroup(group)}>
+        <details class="history-month" open={!group.collapsedByDefault}>
+            <summary class="history-month-header history-month-header--summary">
                 <span class="month-title">
-                    <span class="history-month-header__chevron" aria-hidden="true">{isCollapsed ? '▸' : '▾'}</span>
                     {historyGroupLabel(group)}
                 </span>
                 <span class="month-stats">
                     {#if group.earned > 0}<span class="earn">{tHistory('history.monthEarned', { amount: $i18n.formatNumber(group.earned) })}</span>{/if}
                     {#if group.spent > 0}&nbsp;<span class="spend">{tHistory('history.monthSpent', { amount: $i18n.formatNumber(group.spent) })}</span>{/if}
                 </span>
-            </button>
-            {#if !isCollapsed}
-            <div id={historyGroupPanelId(group.key)} class="cards history-transaction-list" class:cards--list={viewMode === 'list'}>
+            </summary>
+            <div class="cards history-transaction-list" class:cards--list={viewMode === 'list'}>
             {#each group.entries as entry (entry.id)}
             <article
                 class="card history-transaction-card history-transaction-card--{cssType(entry.type as string)}"
@@ -362,8 +334,7 @@
             </article>
             {/each}
             </div>
-            {/if}
-        </div>
+        </details>
         {/each}
     </div>
     {:else}
@@ -393,28 +364,32 @@
         margin-top: 0.6rem;
     }
 
-    .history-month-header--button {
-        width: 100%;
-        border: 0;
-        border-left: 4px solid var(--color-primary);
-        background: rgba(255, 255, 255, 0.05);
-        color: inherit;
+    .history-month-header--summary {
         cursor: pointer;
-        font: inherit;
-        text-align: left;
+        list-style: none;
+        user-select: none;
     }
 
-    .history-month-header--button:hover,
-    .history-month-header--button:focus-visible {
+    .history-month-header--summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .history-month-header--summary:hover,
+    .history-month-header--summary:focus-visible {
         filter: brightness(0.98);
     }
 
-    .history-month-header__chevron {
+    .history-month-header--summary .month-title::before {
+        content: '▸';
         display: inline-flex;
         align-items: center;
         justify-content: center;
         width: 1rem;
         margin-right: 0.25rem;
+    }
+
+    .history-month[open] .history-month-header--summary .month-title::before {
+        content: '▾';
     }
 
     .cards--list {
