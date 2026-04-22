@@ -34,13 +34,11 @@ export function groupHistoryEntries<T>(options: HistoryGroupOptions<T>): History
     const thisWeekStart = startOfWeek(todayStart);
     const lastWeekStart = addDays(thisWeekStart, -7);
     const nextWeekStart = addDays(thisWeekStart, 7);
-    const currentMonthKey = getMonthKey(now);
     const map = new Map<string, HistoryGroup<T>>();
 
     for (const entry of [...options.entries].sort((left, right) => compareEntriesByDate(left, right, options.getCreatedAt))) {
         const date = parseDate(options.getCreatedAt(entry));
         const bucket = getHistoryGroupBucket(date, {
-            currentMonthKey,
             lastWeekStart,
             nextWeekStart,
             thisWeekStart,
@@ -70,7 +68,6 @@ export function groupHistoryEntries<T>(options: HistoryGroupOptions<T>): History
 function getHistoryGroupBucket(
     date: Date | null,
     dates: {
-        currentMonthKey: string;
         lastWeekStart: Date;
         nextWeekStart: Date;
         thisWeekStart: Date;
@@ -104,7 +101,7 @@ function getHistoryGroupBucket(
         key: `month:${monthKey}`,
         kind: 'month',
         monthKey,
-        collapsedByDefault: monthKey !== dates.currentMonthKey,
+        collapsedByDefault: true,
     };
 }
 
@@ -113,7 +110,7 @@ function createRelativeBucket(kind: 'today' | 'thisWeek' | 'lastWeek', monthKey:
         key: kind,
         kind,
         monthKey,
-        collapsedByDefault: false,
+        collapsedByDefault: kind !== 'today',
     };
 }
 

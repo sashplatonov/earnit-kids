@@ -1,6 +1,6 @@
 <script lang="ts">
     import { browser } from '$app/environment';
-    import { SvelteMap } from 'svelte/reactivity';
+    import { SvelteSet } from 'svelte/reactivity';
     import CardHeader from '$lib/components/app/CardHeader.svelte';
     import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
@@ -19,7 +19,8 @@
     const i18n = useI18n();
     let viewMode: CardViewMode = 'grid';
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
-    const collapsedHistoryGroups = new SvelteMap<string, boolean>();
+    const collapsedHistoryGroupKeys = new SvelteSet<string>();
+    const expandedHistoryGroupKeys = new SvelteSet<string>();
 
     function tHistory(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`history.${key}` as MessageKey, variables);
@@ -121,11 +122,20 @@
     }
 
     function isHistoryGroupCollapsed(group: HistoryGroup<HistoryViewEntry>): boolean {
-        return collapsedHistoryGroups.get(group.key) ?? group.collapsedByDefault;
+        if (collapsedHistoryGroupKeys.has(group.key)) return true;
+        if (expandedHistoryGroupKeys.has(group.key)) return false;
+        return group.collapsedByDefault;
     }
 
     function toggleHistoryGroup(group: HistoryGroup<HistoryViewEntry>) {
-        collapsedHistoryGroups.set(group.key, !isHistoryGroupCollapsed(group));
+        if (isHistoryGroupCollapsed(group)) {
+            expandedHistoryGroupKeys.add(group.key);
+            collapsedHistoryGroupKeys.delete(group.key);
+            return;
+        }
+
+        collapsedHistoryGroupKeys.add(group.key);
+        expandedHistoryGroupKeys.delete(group.key);
     }
 
     async function handleDelete(historyId: unknown) {

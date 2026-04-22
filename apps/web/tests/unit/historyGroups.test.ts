@@ -44,10 +44,13 @@ describe('groupHistoryEntries', () => {
         expect(groups[4]?.entries.map(entry => entry.id)).toEqual(['old-month']);
     });
 
-    it('collapses non-current month groups by default', () => {
+    it('expands only today by default', () => {
         const groups = groupHistoryEntries<TestEntry>({
             now: new Date(2026, 3, 22, 12),
             entries: [
+                { id: 'today', type: 'earn', amount: 3, createdAt: localIso(2026, 4, 22) },
+                { id: 'this-week', type: 'earn', amount: 4, createdAt: localIso(2026, 4, 21) },
+                { id: 'last-week', type: 'spend', amount: 5, createdAt: localIso(2026, 4, 14) },
                 { id: 'current-month', type: 'spend', amount: 7, createdAt: localIso(2026, 4, 10) },
                 { id: 'old-month', type: 'earn', amount: 2, createdAt: localIso(2026, 3, 30) },
             ],
@@ -56,7 +59,10 @@ describe('groupHistoryEntries', () => {
             getKind: entry => entry.type,
         });
 
-        expect(groups.find(group => group.key === 'month:2026-04')?.collapsedByDefault).toBe(false);
+        expect(groups.find(group => group.key === 'today')?.collapsedByDefault).toBe(false);
+        expect(groups.find(group => group.key === 'thisWeek')?.collapsedByDefault).toBe(true);
+        expect(groups.find(group => group.key === 'lastWeek')?.collapsedByDefault).toBe(true);
+        expect(groups.find(group => group.key === 'month:2026-04')?.collapsedByDefault).toBe(true);
         expect(groups.find(group => group.key === 'month:2026-03')?.collapsedByDefault).toBe(true);
     });
 
