@@ -537,23 +537,104 @@
         .group-order-modal {
             align-items: center;
             justify-content: center;
-            padding: 0.75rem;
+            padding: 0.5rem;
         }
 
         .group-order-panel {
-            width: min(34rem, calc(100vw - 1.5rem));
-            max-height: min(38rem, calc(100dvh - 1.5rem));
-            border-radius: 1rem;
+            width: min(30rem, calc(100vw - 1rem));
+            max-height: min(30rem, calc(100dvh - 1rem));
+            border-radius: 0.85rem;
+            grid-template-rows: auto minmax(0, 1fr) auto;
         }
 
-        .group-order-panel__header,
-        .group-order-panel__body,
+        .group-order-panel__header {
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.58rem 0.62rem 0.48rem;
+        }
+
+        .group-order-panel__title {
+            font-size: 0.94rem;
+            line-height: 1.15;
+        }
+
+        .group-order-panel__description {
+            display: none;
+        }
+
+        .group-order-panel__close {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .group-order-panel__body {
+            padding: 0.45rem 0.55rem 0.5rem;
+            overscroll-behavior: contain;
+        }
+
+        .group-order-list {
+            gap: 0.32rem;
+        }
+
+        .group-order-row {
+            grid-template-columns: 1.45rem minmax(0, 1fr) 2rem;
+            gap: 0.48rem;
+            min-height: 2.7rem;
+            padding: 0.36rem 0.4rem;
+            border-radius: 0.62rem;
+        }
+
+        .group-order-row__index {
+            width: 1.45rem;
+            height: 1.45rem;
+            font-size: 0.72rem;
+        }
+
+        .group-order-row__content {
+            gap: 0.05rem;
+        }
+
+        .group-order-row__name {
+            font-size: 0.84rem;
+            line-height: 1.12;
+        }
+
+        .group-order-row__meta {
+            font-size: 0.66rem;
+            line-height: 1.1;
+        }
+
+        .group-order-row__handle {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.58rem;
+        }
+
+        .group-order-row__handle-grip {
+            width: 0.72rem;
+            height: 0.92rem;
+            background:
+                radial-gradient(circle, currentColor 0.07rem, transparent 0.08rem) 0 0 / 0.36rem 0.36rem,
+                radial-gradient(circle, currentColor 0.07rem, transparent 0.08rem) 0.36rem 0 / 0.36rem 0.36rem;
+        }
+
+        .group-order-drop-slot {
+            gap: 0.32rem;
+            font-size: 0.64rem;
+        }
+
         .group-order-panel__actions {
-            padding-inline: 0.85rem;
+            position: sticky;
+            bottom: 0;
+            gap: 0.45rem;
+            padding: 0.52rem 0.62rem calc(0.58rem + env(safe-area-inset-bottom));
         }
 
         .group-order-panel__actions .btn {
             flex: 1 1 0;
+            min-height: 2.3rem;
+            padding: 0.48rem 0.68rem;
+            font-size: 0.82rem;
         }
     }
 </style>
