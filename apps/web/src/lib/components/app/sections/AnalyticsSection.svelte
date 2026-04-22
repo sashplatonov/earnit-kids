@@ -123,6 +123,8 @@
         const itemCountData = view.itemCount;
         const trendData = view.trend;
 
+        const chartTextColor = 'rgba(66, 74, 92, 0.86)';
+        const chartGridColor = 'rgba(116, 134, 170, 0.16)';
         const makeBar = (id: string, labels: string[], values: number[], color: string) => {
             charts[id]?.destroy();
             const canvas = document.getElementById(id) as HTMLCanvasElement | null;
@@ -132,7 +134,15 @@
             charts[id] = new C(ctx, {
                 type: 'bar',
                 data: { labels, datasets: [{ data: values, backgroundColor: color, borderRadius: 4 }] },
-                options: { responsive: true, plugins: { legend: { display: false } } },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: chartTextColor, font: { size: 10 } }, grid: { display: false } },
+                        y: { ticks: { color: chartTextColor, font: { size: 10 } }, grid: { color: chartGridColor } },
+                    },
+                },
             });
         };
 
@@ -152,11 +162,31 @@
                     data: {
                         labels: trendData.map(d => d.label),
                         datasets: [
-                            { label: tAnalytics('charts.datasetEarned'), data: trendData.map(d => d.earned), borderColor: 'rgba(123,197,104,1)', fill: false },
-                            { label: tAnalytics('charts.datasetSpent'), data: trendData.map(d => d.spent), borderColor: 'rgba(255,174,66,1)', fill: false },
+                            { label: tAnalytics('charts.datasetEarned'), data: trendData.map(d => d.earned), borderColor: 'rgba(69,155,88,1)', backgroundColor: 'rgba(69,155,88,0.16)', tension: 0.28, fill: false },
+                            { label: tAnalytics('charts.datasetSpent'), data: trendData.map(d => d.spent), borderColor: 'rgba(208,115,35,1)', backgroundColor: 'rgba(208,115,35,0.16)', tension: 0.28, fill: false },
                         ],
                     },
-                    options: { responsive: true },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    color: chartTextColor,
+                                    boxWidth: 10,
+                                    boxHeight: 10,
+                                    padding: 12,
+                                    font: { size: 12, weight: 700 },
+                                },
+                            },
+                        },
+                        scales: {
+                            x: { ticks: { color: chartTextColor, font: { size: 10 } }, grid: { display: false } },
+                            y: { ticks: { color: chartTextColor, font: { size: 10 } }, grid: { color: chartGridColor } },
+                        },
+                    },
                 });
             }
         }
