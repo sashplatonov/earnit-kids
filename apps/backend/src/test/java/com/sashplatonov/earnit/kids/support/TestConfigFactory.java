@@ -53,7 +53,47 @@ public final class TestConfigFactory {
                                       boolean googleEnabled,
                                       String googleClientId,
                                       String googleClientSecret) {
+        return appConfig(
+            production,
+            superAdminEmail,
+            superAdminPassword,
+            emailVerificationEnabled,
+            passwordRecoveryEnabled,
+            googleEnabled,
+            googleClientId,
+            googleClientSecret,
+            null,
+            2592000,
+            7776000);
+    }
+
+    public static AppConfig appConfig(boolean production,
+                                      String superAdminEmail,
+                                      String superAdminPassword,
+                                      boolean emailVerificationEnabled,
+                                      boolean passwordRecoveryEnabled,
+                                      boolean googleEnabled,
+                                      String googleClientId,
+                                      String googleClientSecret,
+                                      String googleRedirectUri,
+                                      int sessionTtlSeconds,
+                                      int refreshTokenTtlSeconds) {
         return new AppConfig() {
+            @Override
+            public Auth auth() {
+                return new Auth() {
+                    @Override
+                    public int sessionTtlSeconds() {
+                        return sessionTtlSeconds;
+                    }
+
+                    @Override
+                    public int refreshTokenTtlSeconds() {
+                        return refreshTokenTtlSeconds;
+                    }
+                };
+            }
+
             @Override
             public boolean production() {
                 return production;
@@ -96,9 +136,15 @@ public final class TestConfigFactory {
                     public Optional<String> clientId() {
                         return Optional.ofNullable(googleClientId);
                     }
+
                     @Override
                     public Optional<String> clientSecret() {
                         return Optional.ofNullable(googleClientSecret);
+                    }
+
+                    @Override
+                    public Optional<String> redirectUri() {
+                        return Optional.ofNullable(googleRedirectUri);
                     }
                 };
             }

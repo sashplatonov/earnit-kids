@@ -8,6 +8,8 @@ import java.util.Optional;
 @ConfigMapping(prefix = "app")
 public interface AppConfig {
 
+    Auth auth();
+
     @WithDefault("false")
     boolean production();
 
@@ -18,6 +20,15 @@ public interface AppConfig {
     PasswordRecovery passwordRecovery();
 
     Google google();
+
+    interface Auth {
+
+        @WithDefault("2592000")
+        int sessionTtlSeconds();
+
+        @WithDefault("7776000")
+        int refreshTokenTtlSeconds();
+    }
 
     interface SuperAdmin {
 
@@ -44,6 +55,9 @@ public interface AppConfig {
         boolean enabled();
 
         Optional<String> clientId();
+
         Optional<String> clientSecret();
+
+        Optional<String> redirectUri();
     }
 }

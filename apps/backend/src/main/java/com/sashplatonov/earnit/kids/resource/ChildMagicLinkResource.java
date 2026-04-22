@@ -46,8 +46,7 @@ public class ChildMagicLinkResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), MAGIC_LINK_COOKIE_MAX_AGE);
+                    payload.email(), payload.role(), payload.familyId(), payload.childId());
 
                 String forwardedProto = request != null ? request.getHeaderString("X-Forwarded-Proto") : null;
                 String forwardedHost = request != null ? request.getHeaderString("X-Forwarded-Host") : null;

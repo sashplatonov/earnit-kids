@@ -53,7 +53,7 @@ class AuthResourceTest {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
         when(authService.authenticateAdmin("a@test.com", "secret"))
             .thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, 2592000))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
             .thenReturn(List.of("cookie-1", "cookie-2"));
 
         Response response = resource.login(new LoginRequest("a@test.com", "secret"));
@@ -77,7 +77,7 @@ class AuthResourceTest {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
         when(authService.authenticateAdminWithGoogle("google-token"))
             .thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, 2592000))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
             .thenReturn(List.of("cookie-1"));
 
         Response response = resource.loginGoogle(new GoogleLoginRequest("google-token"));
@@ -100,7 +100,7 @@ class AuthResourceTest {
     void loginChild_validToken_returnsCookies() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid");
         when(authService.authenticateChild("token")).thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10, 2592000))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10))
             .thenReturn(List.of("cookie-1"));
 
         Response response = resource.loginChild(new LoginChildRequest("token"));
@@ -125,7 +125,7 @@ class AuthResourceTest {
     void register_validPayload_returnsCreated() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
         when(authService.registerFamily("a@test.com", "secret123")).thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, 2592000))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
             .thenReturn(List.of("cookie"));
 
         Response response = resource.register(new RegisterRequest("a@test.com", "secret123"));
@@ -243,6 +243,31 @@ class AuthResourceTest {
         Map<?, ?> payload = (Map<?, ?>) response.getEntity();
         assertThat(payload.containsKey("url")).isTrue();
         assertThat(String.valueOf(payload.get("url"))).contains("https://accounts.google.com/o/oauth2/v2/auth");
+    }
+
+    @Test
+    void loginGoogleUrl_prefersExplicitRedirectUriEnv() {
+        resource = new AuthResource(
+            authService,
+            cookieBuilder,
+            TestConfigFactory.appConfig(
+                false,
+                null,
+                null,
+                true,
+                true,
+                true,
+                "google-client-id",
+                "google-client-secret",
+                "https://auth.example.com/api/login-google/callback",
+                2592000,
+                7776000));
+
+        Response response = resource.loginGoogleUrl("/en/app");
+
+        Map<?, ?> payload = (Map<?, ?>) response.getEntity();
+        assertThat(String.valueOf(payload.get("url")))
+            .contains("redirect_uri=https%3A%2F%2Fauth.example.com%2Fapi%2Flogin-google%2Fcallback");
     }
 
     private static ContainerRequestContext contextWithAuth(AuthContext auth) {

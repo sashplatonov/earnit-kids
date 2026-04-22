@@ -31,12 +31,7 @@ public class JwtCompatVerifier {
     private final TimeProvider timeProvider;
 
     public SessionPageDataResponse readSession(String cookieHeader) {
-        var token = readCookie(cookieHeader, "app_auth");
-        if (token == null || token.isBlank()) {
-            return SessionPageDataResponse.unauthenticated();
-        }
-
-        var payload = verify(token);
+        var payload = verifySessionCookie(cookieHeader);
         if (payload.isEmpty()) {
             return SessionPageDataResponse.unauthenticated();
         }
@@ -58,6 +53,10 @@ public class JwtCompatVerifier {
 
     public Optional<Map<String, Object>> verify(String token) {
         try {
+            if (token == null || token.isBlank()) {
+                return Optional.empty();
+            }
+
             var parts = token.split("\\.");
             if (parts.length != 3) {
                 return Optional.empty();
@@ -146,5 +145,15 @@ public class JwtCompatVerifier {
         }
 
         return null;
+    }
+
+    private Optional<Map<String, Object>> verifySessionCookie(String cookieHeader) {
+        var accessToken = readCookie(cookieHeader, CookieBuilder.AUTH_COOKIE_NAME);
+        var accessPayload = verify(accessToken);
+        if (accessPayload.isPresent()) {
+            return accessPayload;
+        }
+
+        return verify(readCookie(cookieHeader, CookieBuilder.REFRESH_COOKIE_NAME));
     }
 }

@@ -51,7 +51,7 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Authentication", description = "Session, registration, and account lifecycle endpoints")
 public class AuthResource {
-    private static final int AUTH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
+    private static final String LOCAL_APP_URL = "http:" + "/" + "/localhost:5001";
 
     private final AuthService authService;
     private final CookieBuilder cookieBuilder;
@@ -66,7 +66,7 @@ public class AuthResource {
                         AppConfig appConfig,
                         GoogleOAuthService googleOAuthService,
                         JwtService jwtService,
-                        @ConfigProperty(name = "APP_URL", defaultValue = "http://localhost:5001") String appUrl) {
+                        @ConfigProperty(name = "APP_URL", defaultValue = LOCAL_APP_URL) String appUrl) {
         this.authService = authService;
         this.cookieBuilder = cookieBuilder;
         this.appConfig = appConfig;
@@ -75,9 +75,6 @@ public class AuthResource {
         this.appUrl = appUrl == null ? "" : appUrl;
     }
 
-    // Compatibility constructor used by unit tests that previously instantiated
-    // AuthResource with only the core deps. Provides lightweight defaults
-    // for GoogleOAuthService and JwtService so tests do not need full DI.
     public AuthResource(AuthService authService,
                         CookieBuilder cookieBuilder,
                         AppConfig appConfig) {
@@ -96,7 +93,7 @@ public class AuthResource {
                     @Override public java.time.Instant now() { return java.time.Instant.now(); }
                 }
             ),
-            "http://localhost:5001"
+            LOCAL_APP_URL
         );
     }
 
@@ -137,8 +134,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), AUTH_COOKIE_MAX_AGE);
+                    payload.email(), payload.role(), payload.familyId(), payload.childId());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.success(payload.role(), payload.familyId()));
@@ -168,8 +164,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), AUTH_COOKIE_MAX_AGE);
+                    payload.email(), payload.role(), payload.familyId(), payload.childId());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.childSuccess(
@@ -214,8 +209,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    null, AUTH_COOKIE_MAX_AGE);
+                    payload.email(), payload.role(), payload.familyId(), null);
 
                 Response.ResponseBuilder rb = Response
                     .status(Response.Status.CREATED)
@@ -351,7 +345,7 @@ public class AuthResource {
                 .build();
         }
 
-        String callbackUri = (appUrl != null && !appUrl.isBlank() ? appUrl : "") + "/api/login-google/callback";
+        String callbackUri = configuredGoogleCallbackUri();
         var payload = Map.<String, Object>of("redirect", redirectTo == null ? "/" : redirectTo);
         String stateToken = jwtService.signToken(payload, 300);
         String authUrl = googleOAuthService.buildAuthorizationUrl(callbackUri, stateToken);
@@ -372,7 +366,6 @@ public class AuthResource {
                                         @CookieParam("oauth_state") String oauthStateCookie) {
         String redirectTarget = "/";
         if (oauthStateCookie == null || state == null || !state.equals(oauthStateCookie)) {
-            // invalid state
             redirectTarget = "/?error=oauth_state_mismatch";
             return Response.seeOther(java.net.URI.create(redirectTarget)).build();
         }
@@ -382,7 +375,7 @@ public class AuthResource {
             redirectTarget = r;
         }
 
-        String callbackUri = (appUrl != null && !appUrl.isBlank() ? appUrl : "") + "/api/login-google/callback";
+        String callbackUri = configuredGoogleCallbackUri();
         var tokenRespOpt = googleOAuthService.exchangeCode(code, callbackUri);
         if (tokenRespOpt.isEmpty() || tokenRespOpt.get().id_token() == null) {
             return Response.seeOther(URI.create(redirectTarget + "?error=google_exchange_failed")).build();
@@ -393,11 +386,10 @@ public class AuthResource {
         if (result instanceof OperationResult.Success<AuthPayload> s) {
             AuthPayload payload = s.value();
             var cookies = cookieBuilder.buildAuthCookies(
-                payload.email(), payload.role(), payload.familyId(), payload.childId(), AUTH_COOKIE_MAX_AGE);
+                payload.email(), payload.role(), payload.familyId(), payload.childId());
 
             Response.ResponseBuilder rb = Response.seeOther(URI.create(redirectTarget));
             cookies.forEach(c -> rb.header("Set-Cookie", c));
-            // clear oauth_state
             rb.header("Set-Cookie", "oauth_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict");
             return rb.build();
         }
@@ -429,6 +421,13 @@ public class AuthResource {
         }
 
         return clientId;
+    }
+
+    private String configuredGoogleCallbackUri() {
+        return appConfig.google().redirectUri()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .orElseGet(() -> (appUrl != null && !appUrl.isBlank() ? appUrl : "") + "/api/login-google/callback");
     }
 
 }

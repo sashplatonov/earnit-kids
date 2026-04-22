@@ -31,14 +31,16 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10, 3600);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10);
 
-        assertThat(cookies).hasSize(5);
+        assertThat(cookies).hasSize(6);
         assertThat(cookies.get(0)).contains("app_auth=").contains("HttpOnly").contains("SameSite=Lax");
-        assertThat(cookies.get(1)).contains("app_role=admin");
-        assertThat(cookies.get(2)).contains("csrf_token=").contains("SameSite=Strict");
-        assertThat(cookies.get(3)).contains("family_id=fam-1");
-        assertThat(cookies.get(4)).contains("child_id=10");
+        assertThat(cookies.get(0)).contains("Max-Age=2592000");
+        assertThat(cookies.get(1)).contains("app_refresh=").contains("HttpOnly").contains("Max-Age=7776000");
+        assertThat(cookies.get(2)).contains("app_role=admin");
+        assertThat(cookies.get(3)).contains("csrf_token=").contains("SameSite=Strict");
+        assertThat(cookies.get(4)).contains("family_id=fam-1");
+        assertThat(cookies.get(5)).contains("child_id=10");
     }
 
     @Test
@@ -47,7 +49,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(true, null, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, 3600);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null);
 
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).contains("Secure"));
     }
@@ -58,7 +60,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, 3600);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null);
 
         // app_role must not be present for child role (no client-readable role)
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).doesNotContain("app_role="));
@@ -70,7 +72,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5, 3600);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5);
         String appAuth = cookies.stream().filter(v -> v.startsWith("app_auth=")).findFirst().orElseThrow();
         String token = appAuth.substring("app_auth=".length(), appAuth.indexOf(';'));
 
@@ -92,7 +94,7 @@ class CookieBuilderTest {
 
         List<String> cookies = builder.buildLogoutCookies();
 
-        assertThat(cookies).hasSize(5);
+        assertThat(cookies).hasSize(6);
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).contains("Max-Age=0"));
     }
 }

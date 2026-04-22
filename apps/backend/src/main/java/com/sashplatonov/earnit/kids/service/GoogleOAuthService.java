@@ -21,8 +21,9 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 @Slf4j
 public class GoogleOAuthService {
-    private static final String AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
-    private static final String TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
+    private static final String HTTPS_SCHEME = "https:";
+    private static final String AUTH_ENDPOINT = HTTPS_SCHEME + "/" + "/accounts.google.com/o/oauth2/v2/auth";
+    private static final String TOKEN_ENDPOINT = HTTPS_SCHEME + "/" + "/oauth2.googleapis.com/token";
 
     private final AppConfig appConfig;
     private final ObjectMapper objectMapper;
