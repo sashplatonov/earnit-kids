@@ -1,6 +1,5 @@
 <script lang="ts">
     import { resolve } from '$app/paths';
-    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import { adminAwardCoins } from '$lib/services/api';
@@ -77,7 +76,6 @@
             </div>
         </div>
         <div class="header__actions">
-            <LocaleSwitcher compact={true} />
             <button class="btn btn--secondary btn--small header__install hidden" id="pwa-install-btn" type="button">
                 <span class="gamified-icon icon-link" aria-hidden="true"></span>
                 <span>{$i18n.t('common.actions.install')}</span>

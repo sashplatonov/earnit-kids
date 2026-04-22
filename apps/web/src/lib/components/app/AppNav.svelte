@@ -13,6 +13,7 @@
     import { logout } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
     import ChildSwitcher from './ChildSwitcher.svelte';
+    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
 
     export let isAdmin: boolean = false;
     export let activeSection: AppSection = 'analytics';
@@ -128,6 +129,10 @@
                             <span>{$i18n.t(getAppSectionLabelKey(section))}</span>
                         </a>
                     {/each}
+                    <div class="nav__dropdown-divider" role="presentation"></div>
+                    <div style="padding: 0.5rem 1rem; display: flex; justify-content: center;">
+                        <LocaleSwitcher compact={true} />
+                    </div>
                     <div class="nav__dropdown-divider" role="presentation"></div>
                     <button class="nav__dropdown-item nav__dropdown-action" type="button" role="menuitem" on:click={handleLogout}>
                         <span class="gamified-icon icon-logout" aria-hidden="true"></span>
