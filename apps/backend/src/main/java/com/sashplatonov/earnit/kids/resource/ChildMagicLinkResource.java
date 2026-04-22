@@ -4,6 +4,8 @@ import com.sashplatonov.earnit.kids.config.CookieBuilder;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.service.AuthService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.PublicOriginResolver;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -17,19 +19,30 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
+import java.util.Optional;
 
 @Path("/login-child")
 @Tag(name = "Authentication", description = "Child magic-link entrypoints")
 public class ChildMagicLinkResource {
-    private static final int MAGIC_LINK_COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
-
     private final AuthService authService;
     private final CookieBuilder cookieBuilder;
+    private final PublicOriginResolver publicOriginResolver;
+
+    public ChildMagicLinkResource(AuthService authService, CookieBuilder cookieBuilder) {
+        this(authService, cookieBuilder, (String) null);
+    }
 
     @Inject
-    public ChildMagicLinkResource(AuthService authService, CookieBuilder cookieBuilder) {
+    public ChildMagicLinkResource(AuthService authService,
+                                  CookieBuilder cookieBuilder,
+                                  @ConfigProperty(name = "APP_URL") Optional<String> appUrl) {
+        this(authService, cookieBuilder, appUrl.orElse(null));
+    }
+
+    ChildMagicLinkResource(AuthService authService, CookieBuilder cookieBuilder, String appUrl) {
         this.authService = authService;
         this.cookieBuilder = cookieBuilder;
+        this.publicOriginResolver = new PublicOriginResolver(appUrl);
     }
 
     @GET
@@ -48,16 +61,7 @@ public class ChildMagicLinkResource {
                 var cookies = cookieBuilder.buildAuthCookies(
                     payload.email(), payload.role(), payload.familyId(), payload.childId());
 
-                String forwardedProto = request != null ? request.getHeaderString("X-Forwarded-Proto") : null;
-                String forwardedHost = request != null ? request.getHeaderString("X-Forwarded-Host") : null;
-                java.net.URI locationUri;
-                if (forwardedProto != null && !forwardedProto.isBlank() && forwardedHost != null && !forwardedHost.isBlank()) {
-                    String proto = forwardedProto.split(",")[0].trim();
-                    String host = forwardedHost.split(",")[0].trim();
-                    locationUri = URI.create(proto + ":" + '/' + '/' + host + "/");
-                } else {
-                    locationUri = URI.create("/");
-                }
+                URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/", request));
 
                 Response.ResponseBuilder response = Response.seeOther(locationUri)
                     .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
@@ -67,7 +71,7 @@ public class ChildMagicLinkResource {
                 yield response.build();
             }
             case OperationResult.Failure<AuthPayload> ignored -> Response
-                .seeOther(URI.create("/login.html?error=invalid_token"))
+                .seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect("/login.html?error=invalid_token", request)))
                 .build();
         };
     }

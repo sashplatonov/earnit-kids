@@ -22,10 +22,12 @@ import com.sashplatonov.earnit.kids.service.AuthService;
 import com.sashplatonov.earnit.kids.service.GoogleOAuthService;
 import com.sashplatonov.earnit.kids.config.JwtService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.PublicOriginResolver;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.CookieParam;
 import java.util.Map;
+import java.util.Optional;
 import java.net.URI;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -51,14 +53,12 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Authentication", description = "Session, registration, and account lifecycle endpoints")
 public class AuthResource {
-    private static final String LOCAL_APP_URL = "http:" + "/" + "/localhost:5001";
-
     private final AuthService authService;
     private final CookieBuilder cookieBuilder;
     private final AppConfig appConfig;
     private final GoogleOAuthService googleOAuthService;
     private final JwtService jwtService;
-    private final String appUrl;
+    private final PublicOriginResolver publicOriginResolver;
 
     @Inject
     public AuthResource(AuthService authService,
@@ -66,13 +66,22 @@ public class AuthResource {
                         AppConfig appConfig,
                         GoogleOAuthService googleOAuthService,
                         JwtService jwtService,
-                        @ConfigProperty(name = "APP_URL", defaultValue = LOCAL_APP_URL) String appUrl) {
+                        @ConfigProperty(name = "APP_URL") Optional<String> appUrl) {
+        this(authService, cookieBuilder, appConfig, googleOAuthService, jwtService, appUrl.orElse(null));
+    }
+
+    AuthResource(AuthService authService,
+                 CookieBuilder cookieBuilder,
+                 AppConfig appConfig,
+                 GoogleOAuthService googleOAuthService,
+                 JwtService jwtService,
+                 String appUrl) {
         this.authService = authService;
         this.cookieBuilder = cookieBuilder;
         this.appConfig = appConfig;
         this.googleOAuthService = googleOAuthService;
         this.jwtService = jwtService;
-        this.appUrl = appUrl == null ? "" : appUrl;
+        this.publicOriginResolver = new PublicOriginResolver(appUrl);
     }
 
     public AuthResource(AuthService authService,
@@ -93,7 +102,7 @@ public class AuthResource {
                     @Override public java.time.Instant now() { return java.time.Instant.now(); }
                 }
             ),
-            LOCAL_APP_URL
+            (String) null
         );
     }
 
@@ -338,18 +347,16 @@ public class AuthResource {
     @GET
     @Path("/login-google/url")
     @Operation(summary = "Build Google authorization URL for server-side OAuth flow")
-    public Response loginGoogleUrl(@QueryParam("redirect_to") String redirectTo) {
+    public Response loginGoogleUrl(@Context ContainerRequestContext request,
+                                   @QueryParam("redirect_to") String redirectTo) {
         if (configuredGoogleOAuthClientId() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(ErrorResponse.of(BackendMessages.message("auth.googleNotConfigured"), "GOOGLE_NOT_CONFIGURED", 400))
                 .build();
         }
 
-        String callbackUri = configuredGoogleCallbackUri();
-        String redirectValue = redirectTo == null ? "/" : redirectTo;
-        if (!redirectValue.startsWith("http://") && !redirectValue.startsWith("https://")) {
-            redirectValue = (appUrl != null && !appUrl.isBlank() ? appUrl : "") + redirectValue;
-        }
+        String callbackUri = configuredGoogleCallbackUri(request);
+        String redirectValue = publicOriginResolver.toAbsoluteRedirect(redirectTo, request);
         var payload = Map.<String, Object>of("redirect", redirectValue);
         String stateToken = jwtService.signToken(payload, 300);
         String authUrl = googleOAuthService.buildAuthorizationUrl(callbackUri, stateToken);
@@ -365,13 +372,15 @@ public class AuthResource {
     @GET
     @Path("/login-google/callback")
     @Operation(summary = "Handle Google OAuth2 authorization code callback and start session")
-    public Response loginGoogleCallback(@QueryParam("code") String code,
+    public Response loginGoogleCallback(@Context ContainerRequestContext request,
+                                        @QueryParam("code") String code,
                                         @QueryParam("state") String state,
                                         @CookieParam("oauth_state") String oauthStateCookie) {
         String redirectTarget = "/";
         if (oauthStateCookie == null || state == null || !state.equals(oauthStateCookie)) {
             redirectTarget = "/?error=oauth_state_mismatch";
-            return Response.seeOther(java.net.URI.create(redirectTarget)).build();
+            String abs = publicOriginResolver.toAbsoluteRedirect(redirectTarget, request);
+            return Response.seeOther(java.net.URI.create(abs)).build();
         }
 
         var verified = jwtService.verifyToken(state);
@@ -379,10 +388,11 @@ public class AuthResource {
             redirectTarget = r;
         }
 
-        String callbackUri = configuredGoogleCallbackUri();
+        String callbackUri = configuredGoogleCallbackUri(request);
         var tokenRespOpt = googleOAuthService.exchangeCode(code, callbackUri);
         if (tokenRespOpt.isEmpty() || tokenRespOpt.get().id_token() == null) {
-            return Response.seeOther(URI.create(redirectTarget + "?error=google_exchange_failed")).build();
+            String abs = publicOriginResolver.toAbsoluteRedirect(redirectTarget + "?error=google_exchange_failed", request);
+            return Response.seeOther(URI.create(abs)).build();
         }
 
         String idToken = tokenRespOpt.get().id_token();
@@ -392,13 +402,12 @@ public class AuthResource {
             var cookies = cookieBuilder.buildAuthCookies(
                 payload.email(), payload.role(), payload.familyId(), payload.childId());
 
-            Response.ResponseBuilder rb = Response.seeOther(URI.create(redirectTarget));
+            Response.ResponseBuilder rb = Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));
             cookies.forEach(c -> rb.header("Set-Cookie", c));
             rb.header("Set-Cookie", "oauth_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict");
             return rb.build();
         }
-
-        return Response.seeOther(URI.create(redirectTarget + "?error=authentication_failed")).build();
+        return Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget + "?error=authentication_failed", request))).build();
     }
 
     private AuthContext getAuth(ContainerRequestContext ctx) {
@@ -427,11 +436,11 @@ public class AuthResource {
         return clientId;
     }
 
-    private String configuredGoogleCallbackUri() {
+    private String configuredGoogleCallbackUri(ContainerRequestContext request) {
         return appConfig.google().redirectUri()
             .map(String::trim)
             .filter(value -> !value.isEmpty())
-            .orElseGet(() -> (appUrl != null && !appUrl.isBlank() ? appUrl : "") + "/api/login-google/callback");
+            .orElseGet(() -> publicOriginResolver.resolveAbsoluteAppUri("/api/login-google/callback", request));
     }
 
 }

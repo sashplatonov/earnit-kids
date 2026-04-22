@@ -169,6 +169,22 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void authenticateAdminWithGoogle_blockedLinkedFamily_returnsFailure() {
+        AuthServiceImpl serviceWithGoogle = createAuthService(
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+        FamilyEntity family = mockFamily("fam_1", "blocked@test.com", "password123", true, true);
+        when(googleIdentityVerifier.verify("google-token", "google-client-id"))
+            .thenReturn(Optional.of(new GoogleIdentity("blocked@test.com", true)));
+        when(familyRepository.findByEmail("blocked@test.com")).thenReturn(Optional.of(family));
+
+        OperationResult<AuthPayload> result = serviceWithGoogle.authenticateAdminWithGoogle("google-token");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+            .contains("Account is blocked");
+    }
+
+    @Test
     void authenticateAdminWithGoogle_missingLinkedFamily_returnsFailure() {
         AuthServiceImpl serviceWithGoogle = createAuthService(
             TestConfigFactory.appConfig(false, null, null, false, true, true, "google-client-id"));
