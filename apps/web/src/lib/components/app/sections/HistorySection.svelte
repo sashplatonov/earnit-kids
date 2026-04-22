@@ -12,12 +12,14 @@
     import { showToast } from '$lib/stores/toasts';
     import { buildHistoryCatalog, resolveHistoryCard } from './historyDetails';
     import type { HistoryCardDetails, HistoryDetailsI18n } from './historyDetails';
+    import { groupHistoryEntries, type HistoryGroup } from './historyGroups';
 
     type HistoryViewEntry = HistoryEntry & { ui: HistoryCardDetails };
 
     const i18n = useI18n();
     let viewMode: CardViewMode = 'grid';
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
+    const collapsedHistoryGroups = new SvelteMap<string, boolean>();
 
     function tHistory(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`history.${key}` as MessageKey, variables);
@@ -93,33 +95,38 @@
         } catch { return ''; }
     }
 
-    function monthKey(dateStr: string | null | undefined): string {
-        if (!dateStr) return '';
-        try {
-            const d = new Date(dateStr as string);
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        } catch { return ''; }
-    }
-
     function monthLabel(key: string): string {
         if (!key) return '';
         const [y, m] = key.split('-');
         return $i18n.formatDate(new Date(Number(y), Number(m) - 1, 1), { month: 'long', year: 'numeric' });
     }
 
-    // Group history by month
-    $: monthGroups = (() => {
-        const map = new SvelteMap<string, { entries: HistoryViewEntry[]; earned: number; spent: number }>();
-        for (const h of historyEntries) {
-            const key = monthKey(h.createdAt as string);
-            if (!map.has(key)) map.set(key, { entries: [], earned: 0, spent: 0 });
-            const g = map.get(key)!;
-            g.entries.push(h);
-            if (historyKind(h.type) === 'earn') g.earned += (h.amount ?? 0);
-            else if (historyKind(h.type) === 'spend') g.spent += Math.abs(h.amount ?? 0);
-        }
-        return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-    })();
+    $: historyGroups = groupHistoryEntries({
+        entries: historyEntries,
+        getAmount: entry => entry.amount ?? 0,
+        getCreatedAt: entry => entry.createdAt as string,
+        getKind: entry => historyKind(entry.type),
+    });
+
+    function historyGroupLabel(group: HistoryGroup<HistoryViewEntry>): string {
+        if (group.kind === 'today') return tHistory('history.groupToday');
+        if (group.kind === 'thisWeek') return tHistory('history.groupThisWeek');
+        if (group.kind === 'lastWeek') return tHistory('history.groupLastWeek');
+        if (group.kind === 'noDate') return tHistory('history.groupNoDate');
+        return monthLabel(group.monthKey);
+    }
+
+    function historyGroupPanelId(key: string): string {
+        return `history-group-${key.replace(/[^a-z0-9_-]/gi, '-')}`;
+    }
+
+    function isHistoryGroupCollapsed(group: HistoryGroup<HistoryViewEntry>): boolean {
+        return collapsedHistoryGroups.get(group.key) ?? group.collapsedByDefault;
+    }
+
+    function toggleHistoryGroup(group: HistoryGroup<HistoryViewEntry>) {
+        collapsedHistoryGroups.set(group.key, !isHistoryGroupCollapsed(group));
+    }
 
     async function handleDelete(historyId: unknown) {
         const ok = await deleteHistoryItem(historyId, $appStore.currentChildId);
@@ -282,18 +289,29 @@
         </div>
     </div>
 
-    {#if monthGroups.length > 0}
+    {#if historyGroups.length > 0}
     <div class="history-list history-list--transactions" id="history-list">
-        {#each monthGroups as [key, group] (key)}
+        {#each historyGroups as group (group.key)}
+        {@const isCollapsed = isHistoryGroupCollapsed(group)}
         <div class="history-month">
-            <div class="history-month-header">
-                <span class="month-title">{monthLabel(key)}</span>
+            <button
+                class="history-month-header history-month-header--button"
+                type="button"
+                aria-expanded={!isCollapsed}
+                aria-controls={historyGroupPanelId(group.key)}
+                aria-label={tHistory('history.groupToggleAria', { title: historyGroupLabel(group) })}
+                on:click={() => toggleHistoryGroup(group)}>
+                <span class="month-title">
+                    <span class="history-month-header__chevron" aria-hidden="true">{isCollapsed ? '▸' : '▾'}</span>
+                    {historyGroupLabel(group)}
+                </span>
                 <span class="month-stats">
                     {#if group.earned > 0}<span class="earn">{tHistory('history.monthEarned', { amount: $i18n.formatNumber(group.earned) })}</span>{/if}
                     {#if group.spent > 0}&nbsp;<span class="spend">{tHistory('history.monthSpent', { amount: $i18n.formatNumber(group.spent) })}</span>{/if}
                 </span>
-            </div>
-            <div class="cards history-transaction-list" class:cards--list={viewMode === 'list'}>
+            </button>
+            {#if !isCollapsed}
+            <div id={historyGroupPanelId(group.key)} class="cards history-transaction-list" class:cards--list={viewMode === 'list'}>
             {#each group.entries as entry (entry.id)}
             <article
                 class="card history-transaction-card history-transaction-card--{cssType(entry.type as string)}"
@@ -339,6 +357,7 @@
             </article>
             {/each}
             </div>
+            {/if}
         </div>
         {/each}
     </div>
@@ -367,6 +386,30 @@
 
     .history-transaction-list {
         margin-top: 0.6rem;
+    }
+
+    .history-month-header--button {
+        width: 100%;
+        border: 0;
+        border-left: 4px solid var(--color-primary);
+        background: rgba(255, 255, 255, 0.05);
+        color: inherit;
+        cursor: pointer;
+        font: inherit;
+        text-align: left;
+    }
+
+    .history-month-header--button:hover,
+    .history-month-header--button:focus-visible {
+        filter: brightness(0.98);
+    }
+
+    .history-month-header__chevron {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1rem;
+        margin-right: 0.25rem;
     }
 
     .cards--list {
