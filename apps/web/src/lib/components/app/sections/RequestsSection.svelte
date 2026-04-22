@@ -1,18 +1,29 @@
 <script lang="ts">
+    import { browser } from '$app/environment';
     import { onMount, onDestroy } from 'svelte';
+    import CardHeader from '$lib/components/app/CardHeader.svelte';
+    import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import { approveRequest, rejectRequest, deleteRequest } from '$lib/services/api';
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
+    import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
     import type { Request } from '$lib/stores/app';
     import { buildRequestCatalog, resolveRequestCard, type RequestDetailsI18n } from './requestDetails';
 
     const i18n = useI18n();
+    let viewMode: CardViewMode = 'grid';
+    const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
     $: requests = $appStore.requests;
     $: isAdmin = $appStore.isAdmin;
+    $: viewRole = (isAdmin ? 'admin' : 'child') as CardViewRole;
+    $: if (browser && loadedViewRole.value !== viewRole) {
+        viewMode = loadCardViewMode('requests', viewRole);
+        loadedViewRole.value = viewRole;
+    }
 
     function tHistory(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`history.${key}` as MessageKey, variables);
@@ -106,6 +117,51 @@
     function hasMoneyAmount(value: number): boolean {
         return Number(value ?? 0) > 0;
     }
+
+    function formatRequestAmount(req: { ui: { amountPrefix: string; coins: number } }): string {
+        return `${req.ui.amountPrefix}${$i18n.formatNumber(req.ui.coins)}`;
+    }
+
+    function requestMoneyLabel(value: number): string {
+        return hasMoneyAmount(value) ? `${$i18n.formatNumber(value)} 💶` : '';
+    }
+
+    function requestCompactChips(req: {
+        childNickname?: string | null;
+        status?: string | null;
+        ui: {
+            group: string;
+            typeLabel: string;
+            isPurchase: boolean;
+        };
+    }) {
+        const chips = [
+            { label: req.ui.group, className: 'card__compact-chip--group' },
+            { label: req.ui.typeLabel },
+        ];
+
+        if (req.childNickname) {
+            chips.push({ label: req.childNickname });
+        }
+
+        if (!isAdmin) {
+            chips.push({
+                label: requestStatusLabel(req.status),
+                className: req.status === 'approved'
+                    ? 'card__compact-chip--status-available'
+                    : req.status === 'rejected'
+                        ? 'card__compact-chip--status-locked'
+                        : '',
+            });
+        }
+
+        return chips;
+    }
+
+    function setViewMode(nextMode: CardViewMode) {
+        viewMode = nextMode;
+        saveCardViewMode('requests', viewRole, nextMode);
+    }
 </script>
 
 <section class="section" id="requests-section">
@@ -117,45 +173,60 @@
                 <h2>{tHistory('requests.adminTitle')}</h2>
                 <p class="section__subtitle">{tHistory('requests.adminSubtitle')}</p>
             </div>
+            <SectionHeaderControls
+                isAdmin={false}
+                {viewMode}
+                viewAriaLabel={tHistory('requests.viewAria')}
+                gridLabel={tHistory('requests.viewGrid')}
+                listLabel={tHistory('requests.viewList')}
+                on:viewMode={(event) => setViewMode(event.detail)}
+            />
         </div>
 
         {#if incomingRequests.length > 0}
-        <div id="incoming-requests-list" class="history-list request-list">
+        <div id="incoming-requests-list" class="cards request-list" class:cards--list={viewMode === 'list'}>
             {#each incomingRequests as req (req.id)}
             <article
-                class="history-item request-item"
-                class:history-item--request-purchase={req.ui.isPurchase}
-                class:history-item--request-task={!req.ui.isPurchase}>
-                <div class="history-item__icon">
-                    <span class={`gamified-icon ${req.ui.iconClass}`} aria-hidden="true"></span>
+                class="card request-card"
+                class:request-card--list={viewMode === 'list'}
+                class:request-card--purchase={req.ui.isPurchase}
+                class:request-card--task={!req.ui.isPurchase}>
+                <div class="card__badge-row">
+                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
+                    {#if req.childNickname}
+                    <span class="card__badge request-chip--child">{req.childNickname}</span>
+                    {/if}
+                    <span class="card__badge card__badge--group">{req.ui.group}</span>
                 </div>
-                <div class="history-item__body history-item__content">
-                    <p class="history-item__title history-item__desc">{req.ui.title}</p>
-                    <div class="request-item__chips">
-                        <span class={`request-chip ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
-                        {#if req.childNickname}
-                        <span class="request-chip request-chip--child request-item__child">{req.childNickname}</span>
-                        {/if}
-                        <span class="request-chip request-chip--group request-item__group">{req.ui.group}</span>
-                        {#if formatDate(requestCreatedAt(req))}
-                        <span class="request-chip request-chip--muted request-item__date history-item__meta">{formatDate(requestCreatedAt(req))}</span>
+                <div class="request-card__layout">
+                    <div class="request-card__main">
+                        <CardHeader
+                            title={req.ui.title}
+                            amount={formatRequestAmount(req)}
+                            amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
+                            amountNote={requestMoneyLabel(req.ui.moneyAmount)}
+                            compactChips={requestCompactChips(req)}
+                        />
+                        {#if req.ui.description}
+                        <p class="card__comment">{req.ui.description}</p>
                         {/if}
                     </div>
-                    {#if req.ui.description}
-                    <p class="history-item__note request-item__comment">{req.ui.description}</p>
-                    {/if}
-                </div>
-                <div class="history-item__actions request-item__actions">
-                    <span class={`history-item__amount ${req.ui.isPurchase ? 'history-item__amount--spend' : 'history-item__amount--earn'}`}>
-                        <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:1em;height:1em;"></span>
-                        {req.ui.amountPrefix}{req.ui.coins}
-                    </span>
-                    {#if hasMoneyAmount(req.ui.moneyAmount)}
-                    <span class="history-item__money request-item__money">{req.ui.moneyAmount} 💶</span>
-                    {/if}
-                    <div class="request-item__buttons">
-                        <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓</button>
-                        <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗</button>
+                    <div class="request-card__side">
+                        <div class="card__meta">
+                        {#if req.childNickname}
+                            <span class="card__meta-item">{req.childNickname}</span>
+                        {/if}
+                        {#if formatDate(requestCreatedAt(req))}
+                            <span class="card__meta-item">{formatDate(requestCreatedAt(req))}</span>
+                        {/if}
+                        </div>
+                        {#if requestMoneyLabel(req.ui.moneyAmount)}
+                        <span class="request-card__money-price">{requestMoneyLabel(req.ui.moneyAmount)}</span>
+                        {/if}
+                        <div class="card__actions request-card__actions">
+                            <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓</button>
+                            <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗</button>
+                        </div>
                     </div>
                 </div>
             </article>
@@ -179,44 +250,57 @@
                 <h2>{tHistory('requests.childTitle')}</h2>
                 <p class="section__subtitle">{tHistory('requests.childSubtitle')}</p>
             </div>
+            <SectionHeaderControls
+                isAdmin={false}
+                {viewMode}
+                viewAriaLabel={tHistory('requests.viewAria')}
+                gridLabel={tHistory('requests.viewGrid')}
+                listLabel={tHistory('requests.viewList')}
+                on:viewMode={(event) => setViewMode(event.detail)}
+            />
         </div>
         {#if myRequests.length > 0}
-        <div class="history-list request-list" id="my-requests-list">
+        <div class="cards request-list" class:cards--list={viewMode === 'list'} id="my-requests-list">
             {#each myRequests as req (req.id)}
             <article
-                class="history-item request-item"
-                class:history-item--request-purchase={req.ui.isPurchase}
-                class:history-item--request-task={!req.ui.isPurchase}>
-                <div class="history-item__icon">
-                    <span class={`gamified-icon ${req.ui.iconClass}`} aria-hidden="true"></span>
+                class="card request-card"
+                class:request-card--list={viewMode === 'list'}
+                class:request-card--purchase={req.ui.isPurchase}
+                class:request-card--task={!req.ui.isPurchase}>
+                <div class="card__badge-row">
+                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
+                    <span class={`card__badge request-chip--status ${requestStatusClass(req.status)}`}>{requestStatusLabel(req.status)}</span>
+                    <span class="card__badge card__badge--group">{req.ui.group}</span>
                 </div>
-                <div class="history-item__body history-item__content">
-                    <p class="history-item__title history-item__desc">{req.ui.title}</p>
-                    <div class="request-item__chips">
-                        <span class={`request-chip ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
-                        <span class={`request-chip request-chip--status ${requestStatusClass(req.status)}`}>{requestStatusLabel(req.status)}</span>
-                        <span class="request-chip request-chip--group request-item__group">{req.ui.group}</span>
-                        {#if formatDate(requestCreatedAt(req))}
-                        <span class="request-chip request-chip--muted request-item__date history-item__meta">{formatDate(requestCreatedAt(req))}</span>
+                <div class="request-card__layout">
+                    <div class="request-card__main">
+                        <CardHeader
+                            title={req.ui.title}
+                            amount={formatRequestAmount(req)}
+                            amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
+                            amountNote={requestMoneyLabel(req.ui.moneyAmount)}
+                            compactChips={requestCompactChips(req)}
+                        />
+                        {#if req.ui.description}
+                        <p class="card__comment">{req.ui.description}</p>
                         {/if}
                     </div>
-                    {#if req.ui.description}
-                    <p class="history-item__note request-item__comment">{req.ui.description}</p>
-                    {/if}
-                </div>
-                <div class="history-item__actions request-item__actions">
-                    <span class={`history-item__amount ${req.ui.isPurchase ? 'history-item__amount--spend' : 'history-item__amount--earn'}`}>
-                        <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:1em;height:1em;"></span>
-                        {req.ui.amountPrefix}{req.ui.coins}
-                    </span>
-                    {#if hasMoneyAmount(req.ui.moneyAmount)}
-                    <span class="history-item__money request-item__money">{req.ui.moneyAmount} 💶</span>
-                    {/if}
-                    {#if req.status === 'rejected'}
-                    <div class="request-item__buttons">
-                        <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
+                    <div class="request-card__side">
+                        <div class="card__meta">
+                        <span class="card__meta-item">{requestStatusLabel(req.status)}</span>
+                        {#if formatDate(requestCreatedAt(req))}
+                            <span class="card__meta-item">{formatDate(requestCreatedAt(req))}</span>
+                        {/if}
+                        </div>
+                        {#if requestMoneyLabel(req.ui.moneyAmount)}
+                        <span class="request-card__money-price">{requestMoneyLabel(req.ui.moneyAmount)}</span>
+                        {/if}
+                        {#if req.status === 'rejected'}
+                        <div class="card__actions request-card__actions">
+                            <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
+                        </div>
+                        {/if}
                     </div>
-                    {/if}
                 </div>
             </article>
             {/each}
@@ -233,3 +317,154 @@
     </div>
     {/if}
 </section>
+
+<style>
+    .cards--list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.35rem;
+    }
+
+    .request-card {
+        min-height: 312px;
+    }
+
+    .request-card--purchase .card__coins {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(190, 70, 52, 0.9));
+        color: white;
+    }
+
+    .request-card--task .card__coins {
+        background: var(--gradient-success);
+        color: white;
+    }
+
+    .request-card__layout {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        height: 100%;
+    }
+
+    .request-card__main,
+    .request-card__side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .request-card__side {
+        margin-top: auto;
+    }
+
+    .request-card__money-price {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        padding: 0.18rem 0.46rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.12);
+        color: #8a6118;
+        font-size: 0.76rem;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .request-card--list {
+        min-height: 0;
+        height: auto;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .request-card--list .card__badge-row,
+    .request-card--list .card__comment,
+    .request-card--list .card__meta {
+        display: none;
+    }
+
+    .request-card--list .request-card__layout {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+    }
+
+    .request-card--list .request-card__main {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .request-card--list .request-card__side {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+        margin-top: 0;
+    }
+
+    .request-card--list .request-card__money-price {
+        flex: none;
+    }
+
+    .request-card--list .request-card__actions {
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        justify-content: flex-end;
+        margin-top: 0;
+    }
+
+    .request-card--list .request-card__actions .btn {
+        flex: none;
+        padding: 0.38rem 0.7rem;
+        font-size: 0.82rem;
+    }
+
+    .request-card--list .history-item__delete-btn {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+
+    @media (max-width: 640px) {
+        .request-card {
+            min-height: 0;
+        }
+
+        .request-card--list {
+            padding: 0.38rem 0.46rem 0.38rem 0.56rem;
+        }
+
+        .request-card--list .request-card__layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: stretch;
+            gap: 0.48rem;
+        }
+
+        .request-card--list .request-card__side {
+            align-self: stretch;
+            align-items: stretch;
+            gap: 0;
+        }
+
+        .request-card--list .request-card__money-price {
+            display: none;
+        }
+
+        .request-card--list .request-card__actions {
+            width: auto;
+            min-height: 3.15rem;
+            flex-direction: column;
+            justify-content: stretch;
+            gap: 0.24rem;
+        }
+
+        .request-card--list .request-card__actions .btn {
+            flex: 1 1 0;
+            min-width: 3.6rem;
+            min-height: 0;
+            padding: 0.2rem 0.42rem;
+            font-size: 0.68rem;
+            line-height: 1.05;
+        }
+    }
+</style>

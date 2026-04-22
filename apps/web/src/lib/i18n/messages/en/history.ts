@@ -16,6 +16,9 @@ export const historyMessages = {
         approveAria: 'Approve request',
         rejectAria: 'Reject request',
         deleteAria: 'Delete request',
+        viewAria: 'Requests view',
+        viewGrid: 'Tiles',
+        viewList: 'Rows',
     },
     history: {
         title: 'Activity history',
@@ -36,6 +39,9 @@ export const historyMessages = {
         emptyTitle: 'History is empty for now',
         emptyHint: 'Complete or approve the first action and it will appear here.',
         deleteAria: 'Delete entry',
+        viewAria: 'History view',
+        viewGrid: 'Tiles',
+        viewList: 'Rows',
     },
     model: {
         requestPurchaseFallbackTitle: 'Purchase',

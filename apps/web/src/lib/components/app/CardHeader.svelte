@@ -46,14 +46,18 @@
     }
 
     :global(.task-card--list) .card__header,
-    :global(.shop-card--list) .card__header {
+    :global(.shop-card--list) .card__header,
+    :global(.request-card--list) .card__header,
+    :global(.history-transaction-card--list) .card__header {
         min-height: 0;
         align-items: flex-start;
         gap: 0.65rem;
     }
 
     :global(.task-card--list) .card__title,
-    :global(.shop-card--list) .card__title {
+    :global(.shop-card--list) .card__title,
+    :global(.request-card--list) .card__title,
+    :global(.history-transaction-card--list) .card__title {
         min-height: 0;
         display: block;
         overflow: visible;
@@ -64,7 +68,9 @@
     }
 
     :global(.task-card--list) .card__compact-meta,
-    :global(.shop-card--list) .card__compact-meta {
+    :global(.shop-card--list) .card__compact-meta,
+    :global(.request-card--list) .card__compact-meta,
+    :global(.history-transaction-card--list) .card__compact-meta {
         display: flex;
         flex-wrap: wrap;
         gap: 0.28rem;
@@ -72,7 +78,9 @@
     }
 
     :global(.task-card--list) .card__compact-chip,
-    :global(.shop-card--list) .card__compact-chip {
+    :global(.shop-card--list) .card__compact-chip,
+    :global(.request-card--list) .card__compact-chip,
+    :global(.history-transaction-card--list) .card__compact-chip {
         display: inline-flex;
         align-items: center;
         min-width: 0;
@@ -87,7 +95,9 @@
     }
 
     :global(.task-card--list) .card__compact-chip--group,
-    :global(.shop-card--list) .card__compact-chip--group {
+    :global(.shop-card--list) .card__compact-chip--group,
+    :global(.request-card--list) .card__compact-chip--group,
+    :global(.history-transaction-card--list) .card__compact-chip--group {
         background: rgba(87, 121, 206, 0.16);
         color: #20304e;
     }
@@ -104,7 +114,9 @@
 
     @media (max-width: 640px) {
         :global(.task-card--list) .card__header,
-        :global(.shop-card--list) .card__header {
+        :global(.shop-card--list) .card__header,
+        :global(.request-card--list) .card__header,
+        :global(.history-transaction-card--list) .card__header {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             grid-template-areas:
@@ -117,12 +129,16 @@
         }
 
         :global(.task-card--list) .card__header-main,
-        :global(.shop-card--list) .card__header-main {
+        :global(.shop-card--list) .card__header-main,
+        :global(.request-card--list) .card__header-main,
+        :global(.history-transaction-card--list) .card__header-main {
             display: contents;
         }
 
         :global(.task-card--list) .card__title,
-        :global(.shop-card--list) .card__title {
+        :global(.shop-card--list) .card__title,
+        :global(.request-card--list) .card__title,
+        :global(.history-transaction-card--list) .card__title {
             grid-area: title;
             min-width: 0;
             min-height: 0;
@@ -135,7 +151,9 @@
         }
 
         :global(.task-card--list) .card__compact-meta,
-        :global(.shop-card--list) .card__compact-meta {
+        :global(.shop-card--list) .card__compact-meta,
+        :global(.request-card--list) .card__compact-meta,
+        :global(.history-transaction-card--list) .card__compact-meta {
             grid-area: meta;
             min-width: 0;
             flex-wrap: nowrap;
@@ -145,7 +163,9 @@
         }
 
         :global(.task-card--list) .card__compact-chip,
-        :global(.shop-card--list) .card__compact-chip {
+        :global(.shop-card--list) .card__compact-chip,
+        :global(.request-card--list) .card__compact-chip,
+        :global(.history-transaction-card--list) .card__compact-chip {
             flex: 0 1 auto;
             max-width: 5.8rem;
             overflow: hidden;
@@ -156,17 +176,23 @@
         }
 
         :global(.task-card--list) .card__compact-chip:not(.card__compact-chip--group):not(:nth-child(2)),
-        :global(.shop-card--list) .card__compact-chip:not(.card__compact-chip--group):not(:nth-child(2)) {
+        :global(.shop-card--list) .card__compact-chip:not(.card__compact-chip--group):not(:nth-child(2)),
+        :global(.request-card--list) .card__compact-chip:not(.card__compact-chip--group):not(:nth-child(2)),
+        :global(.history-transaction-card--list) .card__compact-chip:not(.card__compact-chip--group):not(:nth-child(2)) {
             display: none;
         }
 
         :global(.task-card--list) .card__compact-chip--group,
-        :global(.shop-card--list) .card__compact-chip--group {
+        :global(.shop-card--list) .card__compact-chip--group,
+        :global(.request-card--list) .card__compact-chip--group,
+        :global(.history-transaction-card--list) .card__compact-chip--group {
             max-width: 4.8rem;
         }
 
         :global(.task-card--list) .card__coins,
-        :global(.shop-card--list) .card__coins {
+        :global(.shop-card--list) .card__coins,
+        :global(.request-card--list) .card__coins,
+        :global(.history-transaction-card--list) .card__coins {
             grid-area: coins;
             flex: 0 0 auto;
             padding: 0.16rem 0.34rem;
@@ -176,7 +202,9 @@
         }
 
         :global(.task-card--list) .card__amount-note,
-        :global(.shop-card--list) .card__amount-note {
+        :global(.shop-card--list) .card__amount-note,
+        :global(.request-card--list) .card__amount-note,
+        :global(.history-transaction-card--list) .card__amount-note {
             grid-area: amount-note;
             justify-self: end;
             display: inline-flex;
@@ -195,7 +223,9 @@
         }
 
         :global(.task-card--list) .card__coins .gamified-icon,
-        :global(.shop-card--list) .card__coins .gamified-icon {
+        :global(.shop-card--list) .card__coins .gamified-icon,
+        :global(.request-card--list) .card__coins .gamified-icon,
+        :global(.history-transaction-card--list) .card__coins .gamified-icon {
             width: 0.78rem;
             height: 0.78rem;
         }

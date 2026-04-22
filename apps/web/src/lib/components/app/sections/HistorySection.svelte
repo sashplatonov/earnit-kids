@@ -1,10 +1,14 @@
 <script lang="ts">
+    import { browser } from '$app/environment';
     import { SvelteMap } from 'svelte/reactivity';
+    import CardHeader from '$lib/components/app/CardHeader.svelte';
+    import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import type { HistoryEntry } from '$lib/stores/app';
     import { deleteHistoryItem } from '$lib/services/api';
+    import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
     import { buildHistoryCatalog, resolveHistoryCard } from './historyDetails';
     import type { HistoryCardDetails, HistoryDetailsI18n } from './historyDetails';
@@ -12,6 +16,8 @@
     type HistoryViewEntry = HistoryEntry & { ui: HistoryCardDetails };
 
     const i18n = useI18n();
+    let viewMode: CardViewMode = 'grid';
+    const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
     function tHistory(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`history.${key}` as MessageKey, variables);
@@ -27,8 +33,13 @@
 
     $: history = $appStore.history;
     $: isAdmin = $appStore.isAdmin;
+    $: viewRole = (isAdmin ? 'admin' : 'child') as CardViewRole;
     $: monthlyLimit = $appStore.monthlyLimit;
     $: dailyCoinLimit = $appStore.dailyCoinLimit;
+    $: if (browser && loadedViewRole.value !== viewRole) {
+        viewMode = loadCardViewMode('history', viewRole);
+        loadedViewRole.value = viewRole;
+    }
     $: historyDetailsI18n = ($i18n.locale, createHistoryDetailsI18n());
     $: historyCatalog = buildHistoryCatalog({
         tasks: $appStore.tasks,
@@ -140,6 +151,39 @@
         if (createdAt) parts.push(createdAt);
         return parts.join(' · ');
     }
+
+    function historyAmount(entry: HistoryViewEntry): string {
+        const prefix = cssType(entry.type as string) === 'earn' ? '+' : '−';
+        return `${prefix}${$i18n.formatNumber(Math.abs(entry.amount ?? 0))}`;
+    }
+
+    function historyMoneyLabel(value: number): string {
+        return hasMoneyAmount(value) ? `${$i18n.formatNumber(value)} 💶` : '';
+    }
+
+    function historyTypeLabel(entry: HistoryViewEntry): string {
+        return cssType(entry.type as string) === 'earn'
+            ? tHistory('model.requestTypeTask')
+            : tHistory('model.requestTypePurchase');
+    }
+
+    function historyCompactChips(entry: HistoryViewEntry) {
+        const chips = [];
+        if (entry.ui.group) {
+            chips.push({ label: entry.ui.group, className: 'card__compact-chip--group' });
+        }
+        chips.push({ label: historyTypeLabel(entry) });
+        const createdAt = formatDate(entry.createdAt as string);
+        if (createdAt) {
+            chips.push({ label: createdAt });
+        }
+        return chips;
+    }
+
+    function setViewMode(nextMode: CardViewMode) {
+        viewMode = nextMode;
+        saveCardViewMode('history', viewRole, nextMode);
+    }
 </script>
 
 <section class="section" id="history-section">
@@ -148,11 +192,28 @@
             <h2>{tHistory('history.title')}</h2>
         </div>
         {#if isAdmin}
-        <div class="section__buttons admin-only">
+        <div class="section__buttons admin-only history-section__actions">
+            <SectionHeaderControls
+                isAdmin={false}
+                {viewMode}
+                viewAriaLabel={tHistory('history.viewAria')}
+                gridLabel={tHistory('history.viewGrid')}
+                listLabel={tHistory('history.viewList')}
+                on:viewMode={(event) => setViewMode(event.detail)}
+            />
             <button class="btn btn--danger btn--small" id="clear-history-btn" on:click={clearAll}>
                 {tHistory('history.clearAll')}
             </button>
         </div>
+        {:else}
+        <SectionHeaderControls
+            isAdmin={false}
+            {viewMode}
+            viewAriaLabel={tHistory('history.viewAria')}
+            gridLabel={tHistory('history.viewGrid')}
+            listLabel={tHistory('history.viewList')}
+            on:viewMode={(event) => setViewMode(event.detail)}
+        />
         {/if}
     </div>
 
@@ -222,7 +283,7 @@
     </div>
 
     {#if monthGroups.length > 0}
-    <div class="history-list" id="history-list">
+    <div class="history-list history-list--transactions" id="history-list">
         {#each monthGroups as [key, group] (key)}
         <div class="history-month">
             <div class="history-month-header">
@@ -232,34 +293,52 @@
                     {#if group.spent > 0}&nbsp;<span class="spend">{tHistory('history.monthSpent', { amount: $i18n.formatNumber(group.spent) })}</span>{/if}
                 </span>
             </div>
+            <div class="cards history-transaction-list" class:cards--list={viewMode === 'list'}>
             {#each group.entries as entry (entry.id)}
-            <article class="history-item history-item--{cssType(entry.type as string)}">
-                <div class="history-item__icon">
-                    <span class="gamified-icon {cssType(entry.type as string) === 'earn' ? 'icon-coin-stack' : 'icon-shop'}" aria-hidden="true"></span>
-                </div>
-                <div class="history-item__body history-item__content">
-                    <p class="history-item__title history-item__desc">{entry.ui.title}</p>
-                    {#if entry.ui.description}
-                    <p class="history-item__note history-item__comment">{entry.ui.description}</p>
+            <article
+                class="card history-transaction-card history-transaction-card--{cssType(entry.type as string)}"
+                class:history-transaction-card--list={viewMode === 'list'}>
+                <div class="card__badge-row">
+                    <span class={`card__badge ${cssType(entry.type as string) === 'earn' ? 'request-chip--type-task' : 'request-chip--type-purchase'}`}>{historyTypeLabel(entry)}</span>
+                    {#if entry.ui.group}
+                    <span class="card__badge card__badge--group">{entry.ui.group}</span>
                     {/if}
-                    <p class="history-item__meta history-item__date">{historyMeta(entry)}</p>
+                    {#if formatDate(entry.createdAt as string)}
+                    <span class="card__badge request-chip--muted">{formatDate(entry.createdAt as string)}</span>
+                    {/if}
                 </div>
-                <div class="history-item__actions">
-                    <div class="history-item__amount history-item__amount--{cssType(entry.type as string)}">
-                        <span>
-                            {cssType(entry.type as string) === 'earn' ? '+' : '−'}{$i18n.formatNumber(Math.abs(entry.amount ?? 0))}
-                            <span class="gamified-icon icon-coin-stack" aria-hidden="true" style="width:0.9em;height:0.9em;vertical-align:middle;"></span>
-                        </span>
-                        {#if hasMoneyAmount(entry.ui.moneyAmount)}
-                        <span class="history-item__money">{$i18n.formatNumber(entry.ui.moneyAmount)} 💶</span>
+                <div class="history-transaction-card__layout">
+                    <div class="history-transaction-card__main">
+                    <CardHeader
+                        title={entry.ui.title}
+                        amount={historyAmount(entry)}
+                        amountClass={cssType(entry.type as string) === 'earn' ? 'task-coins' : 'item-coins'}
+                        amountNote={historyMoneyLabel(entry.ui.moneyAmount)}
+                        compactChips={historyCompactChips(entry)}
+                    />
+                    {#if entry.ui.description}
+                    <p class="card__comment">{entry.ui.description}</p>
+                    {/if}
+                    </div>
+                    <div class="history-transaction-card__side">
+                    <div class="card__meta">
+                        {#if historyMeta(entry)}
+                        <span class="card__meta-item">{historyMeta(entry)}</span>
                         {/if}
                     </div>
-                    {#if isAdmin}
-                    <button class="history-item__delete-btn" on:click={() => handleDelete(entry.id)} aria-label={tHistory('history.deleteAria')}>✕</button>
+                    {#if historyMoneyLabel(entry.ui.moneyAmount)}
+                    <span class="history-transaction-card__money-price">{historyMoneyLabel(entry.ui.moneyAmount)}</span>
                     {/if}
+                    {#if isAdmin}
+                    <div class="card__actions history-transaction-card__actions">
+                        <button class="history-item__delete-btn" on:click={() => handleDelete(entry.id)} aria-label={tHistory('history.deleteAria')}>✕</button>
+                    </div>
+                    {/if}
+                    </div>
                 </div>
             </article>
             {/each}
+            </div>
         </div>
         {/each}
     </div>
@@ -273,3 +352,146 @@
     </div>
     {/if}
 </section>
+
+<style>
+    .history-section__actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        flex-wrap: wrap;
+    }
+
+    .history-list--transactions {
+        gap: 1rem;
+    }
+
+    .history-transaction-list {
+        margin-top: 0.6rem;
+    }
+
+    .cards--list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.35rem;
+    }
+
+    .history-transaction-card {
+        min-height: 312px;
+    }
+
+    .history-transaction-card--spend .card__coins {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(190, 70, 52, 0.9));
+        color: white;
+    }
+
+    .history-transaction-card--earn .card__coins {
+        background: var(--gradient-success);
+        color: white;
+    }
+
+    .history-transaction-card__layout {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        height: 100%;
+    }
+
+    .history-transaction-card__main,
+    .history-transaction-card__side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .history-transaction-card__side {
+        margin-top: auto;
+    }
+
+    .history-transaction-card__money-price {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        padding: 0.18rem 0.46rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.12);
+        color: #8a6118;
+        font-size: 0.76rem;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .history-transaction-card--list {
+        min-height: 0;
+        height: auto;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .history-transaction-card--list .card__badge-row,
+    .history-transaction-card--list .card__comment,
+    .history-transaction-card--list .card__meta {
+        display: none;
+    }
+
+    .history-transaction-card--list .history-transaction-card__layout {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+    }
+
+    .history-transaction-card--list .history-transaction-card__main {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .history-transaction-card--list .history-transaction-card__side {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+        margin-top: 0;
+    }
+
+    .history-transaction-card--list .history-transaction-card__actions {
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        justify-content: flex-end;
+        margin-top: 0;
+    }
+
+    .history-transaction-card--list .history-item__delete-btn {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+
+    @media (max-width: 640px) {
+        .history-section__actions {
+            width: 100%;
+        }
+
+        .history-transaction-card {
+            min-height: 0;
+        }
+
+        .history-transaction-card--list {
+            padding: 0.38rem 0.46rem 0.38rem 0.56rem;
+        }
+
+        .history-transaction-card--list .history-transaction-card__layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: stretch;
+            gap: 0.48rem;
+        }
+
+        .history-transaction-card--list .history-transaction-card__side {
+            align-self: stretch;
+            align-items: stretch;
+            gap: 0;
+        }
+
+        .history-transaction-card--list .history-transaction-card__money-price {
+            display: none;
+        }
+    }
+</style>

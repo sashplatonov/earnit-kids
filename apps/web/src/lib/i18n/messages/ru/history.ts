@@ -16,6 +16,9 @@ export const historyMessages = {
         approveAria: 'Одобрить заявку',
         rejectAria: 'Отклонить заявку',
         deleteAria: 'Удалить заявку',
+        viewAria: 'Вид заявок',
+        viewGrid: 'Плитки',
+        viewList: 'Строки',
     },
     history: {
         title: 'История операций',
@@ -36,6 +39,9 @@ export const historyMessages = {
         emptyTitle: 'История пока пуста',
         emptyHint: 'Выполните или подтвердите первое действие, и запись появится тут.',
         deleteAria: 'Удалить запись',
+        viewAria: 'Вид истории',
+        viewGrid: 'Плитки',
+        viewList: 'Строки',
     },
     model: {
         requestPurchaseFallbackTitle: 'Покупка',

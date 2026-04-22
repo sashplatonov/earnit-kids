@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 
 export type CardViewMode = 'grid' | 'list';
-export type CardViewSection = 'tasks' | 'shop';
+export type CardViewSection = 'tasks' | 'shop' | 'requests' | 'history';
 export type CardViewRole = 'admin' | 'child';
 
 const CARD_VIEW_MODE_KEY_PREFIX = 'earnit-card-view';
