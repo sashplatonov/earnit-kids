@@ -36,26 +36,36 @@
     let startX = 0;
     let startY = 0;
     let isTouchDrag = false;
-        let ghostEl: HTMLDivElement | null = null;
+    let ghostEl: HTMLDivElement | null = null;
+    let modalHost: HTMLDivElement | null = null;
+    let modalPanel: HTMLDivElement | null = null;
 
-        onMount(() => {
-            if (typeof document !== 'undefined') {
-                ghostEl = document.createElement('div');
-                ghostEl.className = 'group-order-drag-ghost';
-                ghostEl.setAttribute('aria-hidden', 'true');
-                ghostEl.style.position = 'fixed';
-                ghostEl.style.pointerEvents = 'none';
-                ghostEl.style.display = 'none';
-                document.body.appendChild(ghostEl);
-            }
-        });
+    onMount(() => {
+        if (typeof document !== 'undefined') {
+            ghostEl = document.createElement('div');
+            ghostEl.className = 'group-order-drag-ghost';
+            ghostEl.setAttribute('aria-hidden', 'true');
+            ghostEl.style.position = 'fixed';
+            ghostEl.style.pointerEvents = 'none';
+            ghostEl.style.display = 'none';
+            document.body.appendChild(ghostEl);
 
-        onDestroy(() => {
-            if (ghostEl && ghostEl.parentNode) {
-                ghostEl.parentNode.removeChild(ghostEl);
-            }
-            ghostEl = null;
-        });
+            modalHost = document.createElement('div');
+            modalHost.className = 'group-order-modal-host';
+            document.body.appendChild(modalHost);
+        }
+    });
+
+    onDestroy(() => {
+        if (ghostEl && ghostEl.parentNode) {
+            ghostEl.parentNode.removeChild(ghostEl);
+        }
+        if (modalHost && modalHost.parentNode) {
+            modalHost.parentNode.removeChild(modalHost);
+        }
+        ghostEl = null;
+        modalHost = null;
+    });
 
     $: if (!isOpen) {
         draft = [...groups];
@@ -202,6 +212,10 @@
             && !isNoopGroupDrop(dragSourceIndex, slotIndex);
     }
 
+    $: if (modalHost && modalPanel && modalPanel.parentNode !== modalHost) {
+        modalHost.appendChild(modalPanel);
+    }
+
     $: if (ghostEl) {
         if (dragStarted && dragSourceIndex != null) {
             ghostEl.style.display = 'block';
@@ -230,7 +244,7 @@
 </div>
 
 {#if isOpen}
-<div class="group-order-modal">
+<div class="group-order-modal" bind:this={modalPanel}>
     <button class="group-order-modal__backdrop" type="button" aria-label={tApp('groupOrder.cancel')} on:click={closeEditor} disabled={isSaving}></button>
     <div
         class="group-order-panel"
@@ -318,8 +332,9 @@
         position: fixed;
         inset: 0;
         z-index: 1200;
-        display: grid;
-        place-items: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         padding: 1rem;
         background: rgba(18, 28, 46, 0.38);
         backdrop-filter: blur(8px);
@@ -335,7 +350,7 @@
 
     .group-order-panel {
         position: relative;
-        width: min(36rem, 100%);
+        width: min(36rem, calc(100vw - 2rem));
         max-height: min(42rem, calc(100dvh - 2rem));
         display: grid;
         grid-template-rows: auto minmax(0, 1fr) auto;
@@ -520,12 +535,14 @@
         }
 
         .group-order-modal {
-            align-items: end;
-            padding: 0.6rem;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
         }
 
         .group-order-panel {
-            max-height: min(38rem, calc(100dvh - 1.2rem));
+            width: min(34rem, calc(100vw - 1.5rem));
+            max-height: min(38rem, calc(100dvh - 1.5rem));
             border-radius: 1rem;
         }
 
