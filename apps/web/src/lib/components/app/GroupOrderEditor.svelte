@@ -428,18 +428,18 @@
 
     .group-order-list {
         display: grid;
-        gap: 0.34rem;
+        gap: 0.22rem;
     }
 
     .group-order-row {
         display: grid;
-        grid-template-columns: 1.55rem minmax(0, 1fr) 1.9rem;
+        grid-template-columns: 1.32rem minmax(0, 1fr) 1.58rem;
         align-items: center;
-        gap: 0.52rem;
-        min-height: 2.35rem;
-        padding: 0.35rem 0.45rem;
+        gap: 0.42rem;
+        min-height: 1.86rem;
+        padding: 0.16rem 0.34rem;
         border: 1px solid rgba(120, 140, 175, 0.16);
-        border-radius: 0.62rem;
+        border-radius: 0.5rem;
         background: rgba(248, 250, 253, 0.92);
     }
 
@@ -448,15 +448,15 @@
     }
 
     .group-order-row__index {
-        width: 1.45rem;
-        height: 1.45rem;
+        width: 1.24rem;
+        height: 1.24rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         border-radius: 999px;
         background: rgba(87, 121, 206, 0.12);
         color: #2d436e;
-        font-size: 0.82rem;
+        font-size: 0.72rem;
         font-weight: 800;
     }
 
@@ -469,16 +469,16 @@
     .group-order-row__name {
         overflow: hidden;
         color: #20304e;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 800;
-        line-height: 1.15;
+        line-height: 1.08;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
     .group-order-row__handle {
-        width: 1.9rem;
-        height: 1.9rem;
+        width: 1.58rem;
+        height: 1.58rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -503,11 +503,11 @@
     }
 
     .group-order-row__handle-grip {
-        width: 0.9rem;
-        height: 1.1rem;
+        width: 0.66rem;
+        height: 0.82rem;
         background:
-            radial-gradient(circle, currentColor 0.08rem, transparent 0.09rem) 0 0 / 0.45rem 0.45rem,
-            radial-gradient(circle, currentColor 0.08rem, transparent 0.09rem) 0.45rem 0 / 0.45rem 0.45rem;
+            radial-gradient(circle, currentColor 0.06rem, transparent 0.07rem) 0 0 / 0.33rem 0.33rem,
+            radial-gradient(circle, currentColor 0.06rem, transparent 0.07rem) 0.33rem 0 / 0.33rem 0.33rem;
         opacity: 0.8;
     }
 
@@ -593,21 +593,21 @@
         }
 
         .group-order-list {
-            gap: 0.26rem;
+            gap: 0.2rem;
         }
 
         .group-order-row {
-            grid-template-columns: 1.38rem minmax(0, 1fr) 1.8rem;
-            gap: 0.42rem;
-            min-height: 2.18rem;
-            padding: 0.28rem 0.36rem;
-            border-radius: 0.56rem;
+            grid-template-columns: 1.24rem minmax(0, 1fr) 1.54rem;
+            gap: 0.36rem;
+            min-height: 1.84rem;
+            padding: 0.14rem 0.3rem;
+            border-radius: 0.48rem;
         }
 
         .group-order-row__index {
-            width: 1.45rem;
-            height: 1.45rem;
-            font-size: 0.72rem;
+            width: 1.18rem;
+            height: 1.18rem;
+            font-size: 0.66rem;
         }
 
         .group-order-row__content {
@@ -616,22 +616,22 @@
         }
 
         .group-order-row__name {
-            font-size: 0.86rem;
-            line-height: 1.1;
+            font-size: 0.84rem;
+            line-height: 1.06;
         }
 
         .group-order-row__handle {
-            width: 1.8rem;
-            height: 1.8rem;
+            width: 1.54rem;
+            height: 1.54rem;
             border-radius: 999px;
         }
 
         .group-order-row__handle-grip {
-            width: 0.72rem;
-            height: 0.92rem;
+            width: 0.6rem;
+            height: 0.76rem;
             background:
-                radial-gradient(circle, currentColor 0.07rem, transparent 0.08rem) 0 0 / 0.36rem 0.36rem,
-                radial-gradient(circle, currentColor 0.07rem, transparent 0.08rem) 0.36rem 0 / 0.36rem 0.36rem;
+                radial-gradient(circle, currentColor 0.055rem, transparent 0.065rem) 0 0 / 0.3rem 0.3rem,
+                radial-gradient(circle, currentColor 0.055rem, transparent 0.065rem) 0.3rem 0 / 0.3rem 0.3rem;
         }
 
         .group-order-drop-slot {
