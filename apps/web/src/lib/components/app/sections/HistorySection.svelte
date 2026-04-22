@@ -356,6 +356,11 @@
         flex-wrap: wrap;
     }
 
+    .history-section__actions :global(.section-controls) {
+        width: auto;
+        flex: 0 0 auto;
+    }
+
     .history-list--transactions {
         gap: 1rem;
     }
@@ -489,7 +494,26 @@
 
     @media (max-width: 640px) {
         .history-section__actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
             width: 100%;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+        }
+
+        .history-section__actions :global(.section-controls) {
+            width: auto;
+            min-width: 0;
+        }
+
+        .history-section__actions :global(.section-controls__tools) {
+            justify-self: start;
+        }
+
+        #clear-history-btn {
+            justify-self: end;
+            white-space: nowrap;
         }
 
         .history-transaction-card {
