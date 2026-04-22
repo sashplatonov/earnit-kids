@@ -1,5 +1,6 @@
 <script lang="ts">
     import { browser } from '$app/environment';
+    import { onMount } from 'svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
@@ -18,12 +19,12 @@
     } from '$lib/services/groupOrder';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
-    import { page } from '$app/stores';
 
     const i18n = useI18n();
 
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
+    let selectedGroup = '';
     let viewMode: CardViewMode = 'grid';
     let loadedViewRole: CardViewRole | null = null;
 
@@ -47,18 +48,28 @@
         viewMode = loadCardViewMode('shop', viewRole);
         loadedViewRole = viewRole;
     }
-    
-    // Read selected group from query parameter
-    $: selectedGroup = ($page.url.searchParams.get('group') ?? '');
-    $: if (selectedGroup && !groups.includes(selectedGroup)) {
-        const url = new URL($page.url);
-        url.searchParams.delete('group');
-        history.replaceState(null, '', url);
+
+    $: if (selectedGroup && groups.length > 0 && !groups.includes(selectedGroup)) {
+        setSelectedGroup('', { replace: true });
     }
 
     $: visibleItems = selectedGroup
         ? shopItems.filter((item) => normalizeGroupLabel(item.groupName) === selectedGroup)
         : sortItemsByGroup(shopItems, groups, (item) => normalizeGroupLabel(item.groupName));
+
+    onMount(() => {
+        selectedGroup = readSelectedGroupFromLocation();
+
+        const handlePopState = () => {
+            selectedGroup = readSelectedGroupFromLocation();
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    });
 
     function missingCoins(price: number) {
         return Math.max(price - balance, 0);
@@ -127,6 +138,51 @@
 
     function itemPrice(item: { price?: unknown }) {
         return Number(item.price ?? 0);
+    }
+
+    function moneyLimitBadge(value: number | null | undefined) {
+        return value != null && Number(value) > 0
+            ? `${$i18n.formatNumber(Number(value))} 💶`
+            : '';
+    }
+
+    function readSelectedGroupFromLocation(): string {
+        if (!browser) {
+            return '';
+        }
+
+        return new URL(window.location.href).searchParams.get('group') ?? '';
+    }
+
+    function syncSelectedGroupUrl(nextGroup: string, replace = false) {
+        if (!browser) {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        if (nextGroup) {
+            url.searchParams.set('group', nextGroup);
+        } else {
+            url.searchParams.delete('group');
+        }
+
+        if (replace) {
+            history.replaceState(history.state, '', url);
+        } else {
+            history.pushState(history.state, '', url);
+        }
+    }
+
+    function setSelectedGroup(nextGroup: string, options?: { replace?: boolean }) {
+        const resolvedGroup = groups.includes(nextGroup) ? nextGroup : '';
+        const currentGroup = readSelectedGroupFromLocation();
+
+        selectedGroup = resolvedGroup;
+        if (currentGroup === resolvedGroup) {
+            return;
+        }
+
+        syncSelectedGroupUrl(resolvedGroup, options?.replace ?? false);
     }
 
     async function persistGroupOrder(nextOrder: string[]) {
@@ -204,20 +260,12 @@
     {#if groups.length > 1}
     <nav class="group-nav" id="shop-group-nav">
         <div class="group-nav__scroll">
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => {
-                const url = new URL($page.url);
-                url.searchParams.delete('group');
-                history.pushState(null, '', url);
-            }}>
+            <button type="button" class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => setSelectedGroup('')}>
                 {tShop('section.all')}
             </button>
             {#each groups as group (group)}
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
-                on:click={() => {
-                    const url = new URL($page.url);
-                    url.searchParams.set('group', group);
-                    history.pushState(null, '', url);
-                }}>{group}</button>
+            <button type="button" class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
+                on:click={() => setSelectedGroup(group)}>{group}</button>
             {/each}
         </div>
     </nav>
@@ -262,7 +310,15 @@
             <div class="shop-card__layout">
                 <div class="shop-card__main">
                     <div class="card__header">
-                        <h3 class="card__title">{item.name}</h3>
+                        <div class="shop-card__title-row">
+                            <h3 class="card__title">{item.name}</h3>
+                            <div class="shop-card__list-badges">
+                                <span class="card__badge card__badge--group shop-card__list-group-badge">{item.groupName ?? tShop('section.noGroup')}</span>
+                                {#if moneyLimitBadge(item.moneyLimit)}
+                                <span class="card__badge card__badge--type shop-card__list-money-badge">{moneyLimitBadge(item.moneyLimit)}</span>
+                                {/if}
+                            </div>
+                        </div>
                         <div class="card__coins item-coins">
                             <span class="gamified-icon icon-coin" aria-hidden="true"></span>
                             <span>{item.price}</span>
@@ -375,6 +431,22 @@
         gap: 0.8rem;
     }
 
+    .shop-card__title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .shop-card__list-group-badge {
+        display: none;
+    }
+
+    .shop-card__list-badges {
+        display: none;
+    }
+
     /* ── Compact list row ── */
     .shop-card--list {
         height: auto;
@@ -406,10 +478,49 @@
     }
 
     .shop-card--list .card__title {
+        flex: 1 1 auto;
         min-height: 0;
         display: block;
         overflow: hidden;
         white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .shop-card--list .shop-card__title-row {
+        gap: 0.35rem;
+    }
+
+    .shop-card--list .shop-card__list-badges {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        flex: 0 0 auto;
+        min-width: 0;
+        max-width: min(11rem, 46vw);
+    }
+
+    .shop-card--list .shop-card__list-group-badge {
+        display: inline-flex;
+        flex: 0 0 auto;
+        min-width: 0;
+        max-width: 7rem;
+        padding: 0.08rem 0.35rem;
+        font-size: 0.62rem;
+        line-height: 1.05;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .shop-card--list .shop-card__list-money-badge {
+        display: inline-flex;
+        flex: 0 0 auto;
+        min-width: 0;
+        max-width: 4.8rem;
+        padding: 0.08rem 0.35rem;
+        font-size: 0.62rem;
+        line-height: 1.05;
+        white-space: nowrap;
+        overflow: hidden;
         text-overflow: ellipsis;
     }
 
