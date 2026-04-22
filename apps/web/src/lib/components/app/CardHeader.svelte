@@ -95,22 +95,27 @@
     }
 
     @media (max-width: 640px) {
+        :global(.task-card--list) .card__header,
         :global(.shop-card--list) .card__header {
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                'title title'
+                'meta coins';
             align-items: center;
             min-width: 0;
             margin-bottom: 0;
-            gap: 0.32rem;
+            gap: 0.22rem 0.4rem;
         }
 
+        :global(.task-card--list) .card__header-main,
         :global(.shop-card--list) .card__header-main {
-            min-width: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.28rem;
+            display: contents;
         }
 
+        :global(.task-card--list) .card__title,
         :global(.shop-card--list) .card__title {
+            grid-area: title;
             min-width: 0;
             min-height: 0;
             overflow: hidden;
@@ -121,19 +126,20 @@
             word-break: normal;
         }
 
+        :global(.task-card--list) .card__compact-meta,
         :global(.shop-card--list) .card__compact-meta {
-            flex: 0 0 auto;
+            grid-area: meta;
+            min-width: 0;
             flex-wrap: nowrap;
-            gap: 0;
+            overflow: hidden;
+            gap: 0.22rem;
             margin-top: 0;
         }
 
-        :global(.shop-card--list) .card__compact-chip:not(.card__compact-chip--group) {
-            display: none;
-        }
-
-        :global(.shop-card--list) .card__compact-chip--group {
-            max-width: 4.8rem;
+        :global(.task-card--list) .card__compact-chip,
+        :global(.shop-card--list) .card__compact-chip {
+            flex: 0 1 auto;
+            max-width: 5.8rem;
             overflow: hidden;
             padding: 0.12rem 0.34rem;
             font-size: 0.62rem;
@@ -141,7 +147,19 @@
             white-space: nowrap;
         }
 
+        :global(.task-card--list) .card__compact-chip:not(.card__compact-chip--group):not(:nth-child(2)),
+        :global(.shop-card--list) .card__compact-chip:not(.card__compact-chip--group):not(:nth-child(2)) {
+            display: none;
+        }
+
+        :global(.task-card--list) .card__compact-chip--group,
+        :global(.shop-card--list) .card__compact-chip--group {
+            max-width: 4.8rem;
+        }
+
+        :global(.task-card--list) .card__coins,
         :global(.shop-card--list) .card__coins {
+            grid-area: coins;
             flex: 0 0 auto;
             padding: 0.16rem 0.34rem;
             font-size: 0.68rem;
@@ -149,6 +167,7 @@
             white-space: nowrap;
         }
 
+        :global(.task-card--list) .card__coins .gamified-icon,
         :global(.shop-card--list) .card__coins .gamified-icon {
             width: 0.78rem;
             height: 0.78rem;

@@ -338,7 +338,6 @@
         gap: 0.8rem;
     }
 
-    /* Compact list row */
     .task-card--list {
         height: auto;
         padding: 0.4rem 0.75rem;
@@ -382,19 +381,41 @@
     }
 
     @media (max-width: 640px) {
+        .task-card--list {
+            padding: 0.38rem 0.46rem 0.38rem 0.56rem;
+        }
+
         .task-card--list .task-card__layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
             align-items: stretch;
+            gap: 0.48rem;
         }
 
         .task-card--list .task-card__side {
-            width: 100%;
-            justify-content: space-between;
-            flex-wrap: wrap;
+            width: auto;
+            min-width: 0;
+            justify-content: stretch;
+            align-self: stretch;
         }
 
         .task-card--list .card__actions {
-            width: 100%;
-            justify-content: flex-start;
+            width: auto;
+            height: 100%;
+            min-height: 3.15rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: stretch;
+            gap: 0.24rem;
+        }
+
+        .task-card--list .card__actions .btn {
+            flex: 1 1 0;
+            min-width: 3.6rem;
+            min-height: 0;
+            padding: 0.2rem 0.42rem;
+            font-size: 0.68rem;
+            line-height: 1.05;
         }
     }
 </style>

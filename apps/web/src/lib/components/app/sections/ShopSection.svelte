@@ -420,7 +420,6 @@
         display: none;
     }
 
-    /* Compact list row */
     .shop-card--list {
         height: auto;
         padding: 0.4rem 0.75rem;
@@ -483,14 +482,14 @@
         }
 
         .shop-card--list {
-            padding: 0.34rem 0.52rem;
+            padding: 0.38rem 0.46rem 0.38rem 0.56rem;
         }
 
         .shop-card--list .shop-card__layout {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
-            align-items: center;
-            gap: 0.4rem;
+            align-items: stretch;
+            gap: 0.48rem;
         }
 
         .shop-card--list .shop-card__main {
@@ -502,39 +501,35 @@
             min-width: 0;
             display: flex;
             flex-direction: row;
-            align-items: center;
-            justify-content: flex-end;
+            align-items: stretch;
+            align-self: stretch;
+            justify-content: stretch;
             flex-wrap: nowrap;
-            gap: 0.28rem;
+            gap: 0;
         }
 
         .shop-card--list .shop-card__money-price {
-            display: inline-flex;
-            align-items: center;
-            flex: 0 0 auto;
-            padding: 0.16rem 0.38rem;
-            border-radius: 999px;
-            background: rgba(255, 214, 107, 0.18);
-            color: #8a6118;
-            font-size: 0.68rem;
-            font-weight: 800;
-            line-height: 1;
-            white-space: nowrap;
+            display: none;
         }
 
         .shop-card--list .card__actions {
             width: auto;
+            height: 100%;
+            min-height: 3.15rem;
             display: flex;
             flex: 0 0 auto;
-            flex-wrap: nowrap;
-            justify-content: flex-end;
+            flex-direction: column;
+            justify-content: stretch;
             gap: 0.24rem;
         }
 
         .shop-card--list .card__actions .btn {
-            min-height: 1.82rem;
-            padding: 0.28rem 0.46rem;
-            font-size: 0.72rem;
+            flex: 1 1 0;
+            min-width: 3.6rem;
+            min-height: 0;
+            padding: 0.2rem 0.42rem;
+            font-size: 0.68rem;
+            line-height: 1.05;
             white-space: nowrap;
         }
     }
