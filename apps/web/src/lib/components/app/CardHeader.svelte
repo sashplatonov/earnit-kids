@@ -7,6 +7,7 @@
     export let title = '';
     export let amount: string | number = '';
     export let amountClass = '';
+    export let amountNote = '';
     export let compactChips: CardHeaderChip[] = [];
 </script>
 
@@ -25,6 +26,9 @@
         <span class="gamified-icon icon-coin" aria-hidden="true"></span>
         <span>{amount}</span>
     </div>
+    {#if amountNote}
+    <span class="card__amount-note">{amountNote}</span>
+    {/if}
 </div>
 
 <style>
@@ -34,6 +38,10 @@
     }
 
     .card__compact-meta {
+        display: none;
+    }
+
+    .card__amount-note {
         display: none;
     }
 
@@ -100,8 +108,8 @@
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             grid-template-areas:
-                'title title'
-                'meta coins';
+                'title coins'
+                'meta amount-note';
             align-items: center;
             min-width: 0;
             margin-bottom: 0;
@@ -164,6 +172,25 @@
             padding: 0.16rem 0.34rem;
             font-size: 0.68rem;
             line-height: 1;
+            white-space: nowrap;
+        }
+
+        :global(.task-card--list) .card__amount-note,
+        :global(.shop-card--list) .card__amount-note {
+            grid-area: amount-note;
+            justify-self: end;
+            display: inline-flex;
+            align-items: center;
+            max-width: 4.8rem;
+            overflow: hidden;
+            padding: 0.12rem 0.34rem;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #8a6118;
+            font-size: 0.62rem;
+            font-weight: 800;
+            line-height: 1.05;
+            text-overflow: ellipsis;
             white-space: nowrap;
         }
 

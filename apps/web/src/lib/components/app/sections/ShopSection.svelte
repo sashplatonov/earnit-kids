@@ -156,12 +156,6 @@
             : tShop('section.missingCoins', { amount: $i18n.formatNumber(missingCoins(itemPrice(item))) });
     }
 
-    function shopMoneyLimitLabel(item: { moneyLimit?: number | null }) {
-        return item.moneyLimit != null
-            ? tShop('section.moneyLimit', { amount: $i18n.formatNumber(item.moneyLimit) })
-            : '';
-    }
-
     function shopMoneyPriceLabel(item: { moneyLimit?: number | null }) {
         return item.moneyLimit != null
             ? `${$i18n.formatNumber(item.moneyLimit)} 💶`
@@ -178,10 +172,8 @@
             { label: item.groupName ?? tShop('section.noGroup'), className: 'card__compact-chip--group' },
         ];
         const frequency = formatFrequency(item.frequency);
-        const moneyLimit = shopMoneyLimitLabel(item);
 
         if (frequency) chips.push({ label: frequency });
-        if (moneyLimit) chips.push({ label: moneyLimit });
         chips.push({
             label: availabilityLabel(item),
             className: isItemAffordable(item)
@@ -342,6 +334,7 @@
                         title={String(item.name ?? '')}
                         amount={String(item.price ?? 0)}
                         amountClass="item-coins"
+                        amountNote={shopMoneyPriceLabel(item)}
                         compactChips={shopCompactChips(item)}
                     />
                     {#if item.comment}
