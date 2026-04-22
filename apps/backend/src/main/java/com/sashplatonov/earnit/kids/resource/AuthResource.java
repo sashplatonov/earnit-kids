@@ -331,9 +331,7 @@ public class AuthResource {
     @APIResponse(responseCode = "200", description = "Feature flags returned",
         content = @Content(schema = @Schema(implementation = AuthConfigResponse.class)))
     public Response authConfig() {
-        String googleClientId = appConfig.google().enabled()
-            ? appConfig.google().clientId().map(String::trim).filter(value -> !value.isEmpty()).orElse(null)
-            : null;
+        String googleClientId = configuredGoogleOAuthClientId();
 
         return Response.ok(new AuthConfigResponse(
             appConfig.emailVerification().enabled(),
@@ -347,7 +345,7 @@ public class AuthResource {
     @Path("/login-google/url")
     @Operation(summary = "Build Google authorization URL for server-side OAuth flow")
     public Response loginGoogleUrl(@QueryParam("redirect_to") String redirectTo) {
-        if (!appConfig.google().enabled() || appConfig.google().clientId().isEmpty()) {
+        if (configuredGoogleOAuthClientId() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(ErrorResponse.of(BackendMessages.message("auth.googleNotConfigured"), "GOOGLE_NOT_CONFIGURED", 400))
                 .build();
@@ -410,6 +408,27 @@ public class AuthResource {
     private AuthContext getAuth(ContainerRequestContext ctx) {
         Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
         return prop instanceof AuthContext auth ? auth : null;
+    }
+
+    private String configuredGoogleOAuthClientId() {
+        if (!appConfig.google().enabled()) {
+            return null;
+        }
+
+        String clientId = appConfig.google().clientId()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .orElse(null);
+        String clientSecret = appConfig.google().clientSecret()
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .orElse(null);
+
+        if (clientId == null || clientSecret == null) {
+            return null;
+        }
+
+        return clientId;
     }
 
 }

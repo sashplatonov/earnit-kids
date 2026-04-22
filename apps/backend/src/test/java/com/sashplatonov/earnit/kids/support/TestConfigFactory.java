@@ -34,6 +34,25 @@ public final class TestConfigFactory {
                                       boolean passwordRecoveryEnabled,
                                       boolean googleEnabled,
                                       String googleClientId) {
+        return appConfig(
+            production,
+            superAdminEmail,
+            superAdminPassword,
+            emailVerificationEnabled,
+            passwordRecoveryEnabled,
+            googleEnabled,
+            googleClientId,
+            null);
+    }
+
+    public static AppConfig appConfig(boolean production,
+                                      String superAdminEmail,
+                                      String superAdminPassword,
+                                      boolean emailVerificationEnabled,
+                                      boolean passwordRecoveryEnabled,
+                                      boolean googleEnabled,
+                                      String googleClientId,
+                                      String googleClientSecret) {
         return new AppConfig() {
             @Override
             public boolean production() {
@@ -79,7 +98,7 @@ public final class TestConfigFactory {
                     }
                     @Override
                     public Optional<String> clientSecret() {
-                        return Optional.empty();
+                        return Optional.ofNullable(googleClientSecret);
                     }
                 };
             }

@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -201,7 +202,7 @@ class AuthResourceTest {
         resource = new AuthResource(
             authService,
             cookieBuilder,
-            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id", "google-client-secret"));
 
         Response response = resource.authConfig();
 
@@ -209,6 +210,39 @@ class AuthResourceTest {
         AuthConfigResponse config = (AuthConfigResponse) response.getEntity();
         assertThat(config.googleEnabled()).isTrue();
         assertThat(config.googleClientId()).isEqualTo("google-client-id");
+    }
+
+    @Test
+    void authConfig_googleMissingSecret_hidesGoogleOption() {
+        resource = new AuthResource(
+            authService,
+            cookieBuilder,
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+
+        Response response = resource.authConfig();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        AuthConfigResponse config = (AuthConfigResponse) response.getEntity();
+        assertThat(config.googleEnabled()).isFalse();
+        assertThat(config.googleClientId()).isNull();
+    }
+
+    @Test
+    void loginGoogleUrl_googleFeatureEnabled_returnsAuthorizationUrlAndStateCookie() {
+        resource = new AuthResource(
+            authService,
+            cookieBuilder,
+            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id", "google-client-secret"));
+
+        Response response = resource.loginGoogleUrl("/en/app");
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        List<?> cookies = response.getHeaders().get("Set-Cookie");
+        assertThat(cookies).hasSize(1);
+        assertThat(String.valueOf(cookies.get(0))).contains("oauth_state=");
+        Map<?, ?> payload = (Map<?, ?>) response.getEntity();
+        assertThat(payload.containsKey("url")).isTrue();
+        assertThat(String.valueOf(payload.get("url"))).contains("https://accounts.google.com/o/oauth2/v2/auth");
     }
 
     private static ContainerRequestContext contextWithAuth(AuthContext auth) {

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
+    import { GOOGLE_LOGIN_NETWORK_ERROR, GOOGLE_LOGIN_URL_UNAVAILABLE, requestGoogleLoginUrl } from '$lib/auth/googleOAuth';
     import { useI18n } from '$lib/i18n/context';
     import { fetchWithCsrf } from '$lib/services/api';
     import type { PageData } from './$types';
@@ -13,20 +14,6 @@
         passwordRecoveryEnabled: boolean;
         googleEnabled?: boolean;
         googleClientId?: string | null;
-    }
-
-    interface GoogleCredentialResponse {
-        credential?: string;
-    }
-
-    interface GoogleIdApi {
-        initialize(config: {
-            client_id: string;
-            callback: (response: GoogleCredentialResponse) => void;
-            cancel_on_tap_outside?: boolean;
-            context?: 'signin';
-        }): void;
-        renderButton(parent: HTMLElement, options: Record<string, string | number>): void;
     }
 
     export let data: PageData;
@@ -45,12 +32,8 @@
     let emailVerificationEnabled = true;
     let passwordRecoveryEnabled = true;
     let googleAuthEnabled = false;
-    let googleClientId = '';
-    let googleLoadFailed = false;
     let showLoginPassword = false;
     let showRegisterPassword = false;
-    let googleButtonHost: HTMLDivElement | null = null;
-    let googleScriptPromise: Promise<void> | null = null;
 
     $: alternates = $i18n.alternates('/login');
 
@@ -105,18 +88,6 @@
         clearMessages();
     }
 
-    function googleIdApi(): GoogleIdApi | undefined {
-        const googleWindow = window as unknown as {
-            google?: {
-                accounts?: {
-                    id?: GoogleIdApi;
-                };
-            };
-        };
-
-        return googleWindow.google?.accounts?.id;
-    }
-
     async function postJson(path: string, payload: Record<string, string>) {
         const response = await fetchWithCsrf(path, {
             method: 'POST',
@@ -163,9 +134,9 @@
         }
     }
 
-    async function handleGoogleLogin(response: GoogleCredentialResponse) {
-        if (!response.credential) {
-            showError($i18n.t('auth.login.googleError'));
+    async function handleGoogleLogin() {
+        if (!googleAuthEnabled) {
+            showError($i18n.t('auth.login.googleUnavailable'));
             return;
         }
 
@@ -173,16 +144,27 @@
         clearMessages();
 
         try {
-            const { response: serverResponse, body } = await postJson('/api/login-google', { credential: response.credential });
+            const redirectTo = $i18n.href('/app');
+            const loginUrl = await requestGoogleLoginUrl(fetch, redirectTo);
+            location.assign(loginUrl);
+            return;
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.message === GOOGLE_LOGIN_NETWORK_ERROR) {
+                    showError($i18n.t('auth.login.loginNetworkError'));
+                    return;
+                }
 
-            if (serverResponse.ok) {
-                location.assign($i18n.href('/app'));
+                if (error.message === GOOGLE_LOGIN_URL_UNAVAILABLE) {
+                    showError($i18n.t('auth.login.googleError'));
+                    return;
+                }
+
+                showError(error.message);
                 return;
             }
 
-            showError(readMessage(body, $i18n.t('auth.login.googleError')));
-        } catch {
-            showError($i18n.t('auth.login.loginNetworkError'));
+            showError($i18n.t('auth.login.googleError'));
         } finally {
             submitting = null;
         }
@@ -267,72 +249,24 @@
         }
     }
 
-    async function loadGoogleScript(): Promise<void> {
-        if (googleIdApi()) {
-            return;
-        }
-
-        if (!googleScriptPromise) {
-            googleScriptPromise = new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = 'https://accounts.google.com/gsi/client';
-                script.async = true;
-                script.defer = true;
-                script.onload = () => resolve();
-                script.onerror = () => reject(new Error('google-script-load-failed'));
-                document.head.appendChild(script);
-            });
-        }
-
-        await googleScriptPromise;
-    }
-
-    async function renderGoogleButton() {
-        if (activePanel !== 'login' || !googleAuthEnabled || !googleClientId || !googleButtonHost) {
-            return;
-        }
-
-        try {
-            await loadGoogleScript();
-
-            const googleApi = googleIdApi();
-
-            if (!googleButtonHost || !googleApi) {
-                googleLoadFailed = true;
-                return;
-            }
-
-            googleButtonHost.innerHTML = '';
-            googleApi.initialize({
-                client_id: googleClientId,
-                callback: (response: GoogleCredentialResponse) => {
-                    void handleGoogleLogin(response);
-                },
-                cancel_on_tap_outside: true,
-                context: 'signin',
-            });
-            googleApi.renderButton(googleButtonHost, {
-                type: 'standard',
-                theme: 'outline',
-                size: 'large',
-                shape: 'pill',
-                text: 'continue_with',
-                width: 380,
-            });
-        } catch {
-            googleLoadFailed = true;
-        }
-    }
-
-    $: if (activePanel === 'login' && googleAuthEnabled && googleClientId && googleButtonHost && !googleLoadFailed) {
-        void renderGoogleButton();
-    }
-
     onMount(() => {
         const searchParams = new URLSearchParams(window.location.search);
 
-        if (searchParams.get('error') === 'invalid_token') {
-            showError($i18n.t('auth.login.invalidToken'));
+        switch (searchParams.get('error')) {
+            case 'invalid_token':
+                showError($i18n.t('auth.login.invalidToken'));
+                break;
+            case 'oauth_state_mismatch':
+                showError($i18n.t('auth.login.googleStateError'));
+                break;
+            case 'google_exchange_failed':
+                showError($i18n.t('auth.login.googleExchangeError'));
+                break;
+            case 'authentication_failed':
+                showError($i18n.t('auth.login.googleError'));
+                break;
+            default:
+                break;
         }
 
         loginEmailInput?.focus();
@@ -353,9 +287,8 @@
                     passwordRecoveryEnabled = config.passwordRecoveryEnabled;
                 }
 
-                if (config.googleEnabled === true && typeof config.googleClientId === 'string' && config.googleClientId.trim()) {
+                if (config.googleEnabled === true) {
                     googleAuthEnabled = true;
-                    googleClientId = config.googleClientId.trim();
                 }
             })
             .catch(() => undefined);
@@ -675,16 +608,8 @@
         margin-bottom: 1rem;
     }
 
-    .google-auth__button {
-        min-height: 44px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .google-auth__button--busy {
-        pointer-events: none;
-        opacity: 0.68;
+    .google-auth__cta {
+        margin-top: 0;
     }
 
     .google-auth__hint {
@@ -945,16 +870,15 @@
                             {#if googleAuthEnabled}
                                 <div class="google-auth">
                                     <div class="google-auth__divider">{$i18n.t('auth.login.googleDivider')}</div>
-                                    {#if googleLoadFailed}
-                                        <p class="google-auth__hint">{$i18n.t('auth.login.googleUnavailable')}</p>
-                                    {:else}
-                                        <div
-                                            bind:this={googleButtonHost}
-                                            class="google-auth__button"
-                                            class:google-auth__button--busy={submitting === 'login'}
-                                        ></div>
-                                        <p class="google-auth__hint">{$i18n.t('auth.login.googleHint')}</p>
-                                    {/if}
+                                    <button
+                                        type="button"
+                                        class="btn-secondary google-auth__cta"
+                                        on:click={handleGoogleLogin}
+                                        disabled={submitting === 'login'}
+                                    >
+                                        {submitting === 'login' ? $i18n.t('auth.login.googleSubmitting') : $i18n.t('auth.login.googleSubmit')}
+                                    </button>
+                                    <p class="google-auth__hint">{$i18n.t('auth.login.googleHint')}</p>
                                 </div>
                             {/if}
                             <div class="form-grid">
