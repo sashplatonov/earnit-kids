@@ -1,5 +1,6 @@
 <script lang="ts">
     import { browser } from '$app/environment';
+    import CardHeader from '$lib/components/app/CardHeader.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
@@ -21,11 +22,16 @@
 
     const i18n = useI18n();
 
+    type CardHeaderChip = {
+        label: string;
+        className?: string;
+    };
+
     let selectedGroup = '';
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
     let viewMode: CardViewMode = 'grid';
-    let loadedViewRole: CardViewRole | null = null;
+    const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
     function tTasks(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`tasks.${key}` as MessageKey, variables);
@@ -42,9 +48,9 @@
     $: rawGroups = [...new Set(tasks.map((task) => normalizeGroupLabel(task.groupName)))];
     $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'tasks', isAdmin));
     $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'tasks', isAdmin);
-    $: if (browser && loadedViewRole !== viewRole) {
+    $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('tasks', viewRole);
-        loadedViewRole = viewRole;
+        loadedViewRole.value = viewRole;
     }
     $: if (selectedGroup && !groups.includes(selectedGroup)) {
         selectedGroup = '';
@@ -77,6 +83,39 @@
         }
 
         return tTasks(`${periodKey}.${pluralCategory}`, { limit: $i18n.formatNumber(numericLimit) });
+    }
+
+    function taskMoneyLimitLabel(task: { moneyLimit?: number | null }) {
+        return task.moneyLimit != null
+            ? tTasks('section.moneyLimit', { amount: $i18n.formatNumber(task.moneyLimit) })
+            : '';
+    }
+
+    function taskAgeRangeLabel(task: { ageMin?: number | null; ageMax?: number | null }) {
+        return task.ageMin != null || task.ageMax != null
+            ? tTasks('section.ageRange', { min: task.ageMin ?? 0, max: task.ageMax ?? 18 })
+            : '';
+    }
+
+    function taskCompactChips(task: {
+        groupName?: string | null;
+        frequency?: { limit?: number; period?: string } | null;
+        moneyLimit?: number | null;
+        ageMin?: number | null;
+        ageMax?: number | null;
+    }): CardHeaderChip[] {
+        const chips: CardHeaderChip[] = [
+            { label: task.groupName ?? tTasks('section.noGroup'), className: 'card__compact-chip--group' },
+        ];
+        const frequency = formatFrequency(task.frequency);
+        const moneyLimit = taskMoneyLimitLabel(task);
+        const ageRange = taskAgeRangeLabel(task);
+
+        if (frequency) chips.push({ label: frequency });
+        if (moneyLimit) chips.push({ label: moneyLimit });
+        if (ageRange) chips.push({ label: ageRange });
+
+        return chips;
     }
 
     async function handleEarn(taskId: unknown) {
@@ -232,13 +271,12 @@
             </div>
             <div class="task-card__layout">
                 <div class="task-card__main">
-                    <div class="card__header">
-                        <h3 class="card__title">{task.title ?? task.name}</h3>
-                        <div class="card__coins task-coins">
-                            <span class="gamified-icon icon-coin" aria-hidden="true"></span>
-                            <span>{task.coins}</span>
-                        </div>
-                    </div>
+                    <CardHeader
+                        title={String(task.title ?? task.name ?? '')}
+                        amount={String(task.coins ?? 0)}
+                        amountClass="task-coins"
+                        compactChips={taskCompactChips(task)}
+                    />
                     {#if task.comment}
                     <p class="card__comment">{task.comment}</p>
                     {:else}
@@ -347,7 +385,7 @@
         gap: 0.8rem;
     }
 
-    /* ── Compact list row ── */
+    /* Compact list row */
     .task-card--list {
         height: auto;
         padding: 0.4rem 0.75rem;
@@ -369,20 +407,6 @@
     .task-card--list .task-card__main {
         flex: 1 1 0;
         min-width: 0;
-    }
-
-    .task-card--list .card__header {
-        min-height: 0;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .task-card--list .card__title {
-        min-height: 0;
-        display: block;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
     }
 
     .task-card--list .task-card__side {
@@ -418,6 +442,21 @@
         .view-toggle__button {
             flex: 1 1 0;
             text-align: center;
+        }
+
+        .task-card--list .task-card__layout {
+            align-items: stretch;
+        }
+
+        .task-card--list .task-card__side {
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .task-card--list .card__actions {
+            width: 100%;
+            justify-content: flex-start;
         }
     }
 </style>

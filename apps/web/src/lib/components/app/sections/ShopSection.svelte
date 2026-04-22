@@ -1,6 +1,7 @@
 <script lang="ts">
     import { browser } from '$app/environment';
     import { onMount } from 'svelte';
+    import CardHeader from '$lib/components/app/CardHeader.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
@@ -22,11 +23,16 @@
 
     const i18n = useI18n();
 
+    type CardHeaderChip = {
+        label: string;
+        className?: string;
+    };
+
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
     let selectedGroup = '';
     let viewMode: CardViewMode = 'grid';
-    let loadedViewRole: CardViewRole | null = null;
+    const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
     function tShop(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`shop.${key}` as MessageKey, variables);
@@ -44,9 +50,9 @@
     $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
     $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
     $: hasStoredGroupOrder = hasSavedGroupOrder(currentChild, 'shop', isAdmin);
-    $: if (browser && loadedViewRole !== viewRole) {
+    $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('shop', viewRole);
-        loadedViewRole = viewRole;
+        loadedViewRole.value = viewRole;
     }
 
     $: if (selectedGroup && groups.length > 0 && !groups.includes(selectedGroup)) {
@@ -140,10 +146,44 @@
         return Number(item.price ?? 0);
     }
 
-    function moneyLimitBadge(value: number | null | undefined) {
-        return value != null && Number(value) > 0
-            ? `${$i18n.formatNumber(Number(value))} 💶`
+    function isItemAffordable(item: { price?: unknown }) {
+        return balance >= itemPrice(item);
+    }
+
+    function availabilityLabel(item: { price?: unknown }) {
+        return isItemAffordable(item)
+            ? (isAdmin ? tShop('section.availableAdmin') : tShop('section.availableChild'))
+            : tShop('section.missingCoins', { amount: $i18n.formatNumber(missingCoins(itemPrice(item))) });
+    }
+
+    function shopMoneyLimitLabel(item: { moneyLimit?: number | null }) {
+        return item.moneyLimit != null
+            ? tShop('section.moneyLimit', { amount: $i18n.formatNumber(item.moneyLimit) })
             : '';
+    }
+
+    function shopCompactChips(item: {
+        groupName?: string | null;
+        frequency?: { limit?: number; period?: string } | null;
+        moneyLimit?: number | null;
+        price?: unknown;
+    }): CardHeaderChip[] {
+        const chips: CardHeaderChip[] = [
+            { label: item.groupName ?? tShop('section.noGroup'), className: 'card__compact-chip--group' },
+        ];
+        const frequency = formatFrequency(item.frequency);
+        const moneyLimit = shopMoneyLimitLabel(item);
+
+        if (frequency) chips.push({ label: frequency });
+        if (moneyLimit) chips.push({ label: moneyLimit });
+        chips.push({
+            label: availabilityLabel(item),
+            className: isItemAffordable(item)
+                ? 'card__compact-chip--status card__compact-chip--status-available'
+                : 'card__compact-chip--status card__compact-chip--status-locked',
+        });
+
+        return chips;
     }
 
     function readSelectedGroupFromLocation(): string {
@@ -289,41 +329,24 @@
     {#if visibleItems.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={balance >= itemPrice(item)} class:card--disabled={balance < itemPrice(item)} class:shop-card--list={viewMode === 'list'}>
+        <div class="card card--shop shop-card" class:card--affordable={isItemAffordable(item)} class:card--disabled={!isItemAffordable(item)} class:shop-card--list={viewMode === 'list'}>
             <div class="card__badge-row">
                 <span class="card__badge card__badge--group">{item.groupName ?? tShop('section.noGroup')}</span>
                 {#if formatFrequency(item.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
                 {/if}
-                <span class:card__status--available={balance >= itemPrice(item)} class:card__status--locked={balance < itemPrice(item)} class="card__status">
-                    {#if balance >= itemPrice(item)}
-                        {#if isAdmin}
-                        {tShop('section.availableAdmin')}
-                        {:else}
-                        {tShop('section.availableChild')}
-                        {/if}
-                    {:else}
-                        {tShop('section.missingCoins', { amount: $i18n.formatNumber(missingCoins(itemPrice(item))) })}
-                    {/if}
+                <span class:card__status--available={isItemAffordable(item)} class:card__status--locked={!isItemAffordable(item)} class="card__status">
+                    {availabilityLabel(item)}
                 </span>
             </div>
             <div class="shop-card__layout">
                 <div class="shop-card__main">
-                    <div class="card__header">
-                        <div class="shop-card__title-row">
-                            <h3 class="card__title">{item.name}</h3>
-                            <div class="shop-card__list-badges">
-                                <span class="card__badge card__badge--group shop-card__list-group-badge">{item.groupName ?? tShop('section.noGroup')}</span>
-                                {#if moneyLimitBadge(item.moneyLimit)}
-                                <span class="card__badge card__badge--type shop-card__list-money-badge">{moneyLimitBadge(item.moneyLimit)}</span>
-                                {/if}
-                            </div>
-                        </div>
-                        <div class="card__coins item-coins">
-                            <span class="gamified-icon icon-coin" aria-hidden="true"></span>
-                            <span>{item.price}</span>
-                        </div>
-                    </div>
+                    <CardHeader
+                        title={String(item.name ?? '')}
+                        amount={String(item.price ?? 0)}
+                        amountClass="item-coins"
+                        compactChips={shopCompactChips(item)}
+                    />
                     {#if item.comment}
                     <p class="card__comment">{item.comment}</p>
                     {:else}
@@ -431,23 +454,7 @@
         gap: 0.8rem;
     }
 
-    .shop-card__title-row {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        min-width: 0;
-        flex: 1 1 auto;
-    }
-
-    .shop-card__list-group-badge {
-        display: none;
-    }
-
-    .shop-card__list-badges {
-        display: none;
-    }
-
-    /* ── Compact list row ── */
+    /* Compact list row */
     .shop-card--list {
         height: auto;
         padding: 0.4rem 0.75rem;
@@ -469,59 +476,6 @@
     .shop-card--list .shop-card__main {
         flex: 1 1 0;
         min-width: 0;
-    }
-
-    .shop-card--list .card__header {
-        min-height: 0;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .shop-card--list .card__title {
-        flex: 1 1 auto;
-        min-height: 0;
-        display: block;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
-
-    .shop-card--list .shop-card__title-row {
-        gap: 0.35rem;
-    }
-
-    .shop-card--list .shop-card__list-badges {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.28rem;
-        flex: 0 0 auto;
-        min-width: 0;
-        max-width: min(11rem, 46vw);
-    }
-
-    .shop-card--list .shop-card__list-group-badge {
-        display: inline-flex;
-        flex: 0 0 auto;
-        min-width: 0;
-        max-width: 7rem;
-        padding: 0.08rem 0.35rem;
-        font-size: 0.62rem;
-        line-height: 1.05;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .shop-card--list .shop-card__list-money-badge {
-        display: inline-flex;
-        flex: 0 0 auto;
-        min-width: 0;
-        max-width: 4.8rem;
-        padding: 0.08rem 0.35rem;
-        font-size: 0.62rem;
-        line-height: 1.05;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .shop-card--list .shop-card__side {
@@ -557,6 +511,21 @@
         .view-toggle__button {
             flex: 1 1 0;
             text-align: center;
+        }
+
+        .shop-card--list .shop-card__layout {
+            align-items: stretch;
+        }
+
+        .shop-card--list .shop-card__side {
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .shop-card--list .card__actions {
+            width: 100%;
+            justify-content: flex-start;
         }
     }
 </style>

@@ -29,7 +29,7 @@ async function createRewardWithGroup(
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }
 
-test('shop group filter works, persists after reload, and keeps compact list badge', async ({ page }) => {
+test('shop group filter works, persists after reload, and keeps compact list readable on mobile', async ({ page }) => {
     const email = uniqueEmail('shop.filters');
     const rewardGames = `Игра ${Date.now()}`;
     const rewardBooks = `Книга ${Date.now()}`;
@@ -62,8 +62,9 @@ test('shop group filter works, persists after reload, and keeps compact list bad
 
     const listCard = page.locator('#shop-list .shop-card--list').first();
     await expect(listCard).toBeVisible();
-    await expect(listCard.locator('.shop-card__list-group-badge')).toHaveText('Книги');
-    await expect(listCard.locator('.shop-card__list-money-badge')).toHaveText('15 💶');
+    await expect(listCard.locator('.card__title')).toHaveText(rewardBooks);
+    await expect(listCard.locator('.card__compact-meta')).toContainText('Книги');
+    await expect(listCard.locator('.card__compact-meta')).toContainText('15');
 
     const metrics = await listCard.evaluate((card) => {
         const rect = card.getBoundingClientRect();
@@ -75,6 +76,31 @@ test('shop group filter works, persists after reload, and keeps compact list bad
         };
     });
 
-    expect(metrics.cardHeight).toBeLessThan(80);
+    expect(metrics.cardHeight).toBeLessThan(120);
     expect(metrics.badgeRowDisplay).toBe('none');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(listCard.locator('.card__title')).toBeVisible();
+    await expect(listCard.locator('.card__compact-meta')).toContainText('Книги');
+
+    const mobileMetrics = await listCard.evaluate((card) => {
+        const title = card.querySelector('.card__title');
+        const side = card.querySelector('.shop-card__side');
+        const rect = card.getBoundingClientRect();
+        const titleRect = title?.getBoundingClientRect();
+        const sideRect = side?.getBoundingClientRect();
+
+        return {
+            cardHeight: rect.height,
+            titleHeight: titleRect?.height ?? 0,
+            titleWidth: titleRect?.width ?? 0,
+            sideTop: sideRect?.top ?? 0,
+            titleBottom: titleRect?.bottom ?? 0,
+        };
+    });
+
+    expect(mobileMetrics.cardHeight).toBeLessThan(180);
+    expect(mobileMetrics.titleHeight).toBeGreaterThan(16);
+    expect(mobileMetrics.titleWidth).toBeGreaterThan(120);
+    expect(mobileMetrics.sideTop).toBeGreaterThanOrEqual(mobileMetrics.titleBottom);
 });
