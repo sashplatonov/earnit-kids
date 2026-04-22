@@ -346,7 +346,11 @@ public class AuthResource {
         }
 
         String callbackUri = configuredGoogleCallbackUri();
-        var payload = Map.<String, Object>of("redirect", redirectTo == null ? "/" : redirectTo);
+        String redirectValue = redirectTo == null ? "/" : redirectTo;
+        if (!redirectValue.startsWith("http://") && !redirectValue.startsWith("https://")) {
+            redirectValue = (appUrl != null && !appUrl.isBlank() ? appUrl : "") + redirectValue;
+        }
+        var payload = Map.<String, Object>of("redirect", redirectValue);
         String stateToken = jwtService.signToken(payload, 300);
         String authUrl = googleOAuthService.buildAuthorizationUrl(callbackUri, stateToken);
 
