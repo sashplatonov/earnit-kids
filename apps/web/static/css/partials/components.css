@@ -2447,15 +2447,29 @@ dialog.modal[open]::backdrop {
 
     .group-nav__scroll {
         flex-wrap: nowrap;     /* Single row on mobile -- horizontal scroll */
-        overflow-x: auto;
-        padding: 0.35rem 2.5rem;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        padding: 0.35rem 2.5rem 0.55rem;
         scroll-snap-type: x proximity;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 143, 112, 0.7) rgba(125, 149, 187, 0.16);
     }
 
     .group-nav__scroll::-webkit-scrollbar {
-        display: none;
+        display: block;
+        height: 0.35rem;
+    }
+
+    .group-nav__scroll::-webkit-scrollbar-track {
+        border-radius: 999px;
+        background: rgba(125, 149, 187, 0.16);
+    }
+
+    .group-nav__scroll::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgba(255, 143, 112, 0.7);
     }
 }
 

@@ -408,8 +408,25 @@
 
     .group-order-panel__body {
         min-height: 0;
-        overflow-y: auto;
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(87, 121, 206, 0.58) rgba(231, 236, 246, 0.9);
         padding: 0.85rem 1.1rem;
+    }
+
+    .group-order-panel__body::-webkit-scrollbar {
+        width: 0.45rem;
+    }
+
+    .group-order-panel__body::-webkit-scrollbar-track {
+        border-radius: 999px;
+        background: rgba(231, 236, 246, 0.9);
+    }
+
+    .group-order-panel__body::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgba(87, 121, 206, 0.58);
     }
 
     .group-order-list {
@@ -470,12 +487,20 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid rgba(120, 140, 175, 0.18);
-        border-radius: 0.75rem;
-        background: #fff;
-        color: rgba(54, 68, 96, 0.72);
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: rgba(54, 68, 96, 0.62);
         cursor: grab;
         touch-action: none;
+        box-shadow: none;
+    }
+
+    .group-order-row__handle:hover,
+    .group-order-row__handle:focus-visible {
+        background: rgba(87, 121, 206, 0.1);
+        color: #2d436e;
+        outline: none;
     }
 
     .group-order-row__handle:active {
@@ -568,7 +593,7 @@
         }
 
         .group-order-panel__body {
-            padding: 0.45rem 0.55rem 0.5rem;
+            padding: 0.45rem 0.42rem 0.5rem 0.55rem;
             overscroll-behavior: contain;
         }
 
@@ -607,7 +632,7 @@
         .group-order-row__handle {
             width: 2rem;
             height: 2rem;
-            border-radius: 0.58rem;
+            border-radius: 999px;
         }
 
         .group-order-row__handle-grip {
