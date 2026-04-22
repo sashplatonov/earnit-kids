@@ -463,24 +463,6 @@
     }
 
     @media (max-width: 640px) {
-        #shop-section .section__header {
-            align-items: flex-start;
-            row-gap: 0.45rem;
-            margin-bottom: 0.55rem;
-        }
-
-        #shop-section .section__header-titles {
-            min-width: 0;
-        }
-
-        #shop-section .section__header h2 {
-            display: flex;
-            align-items: center;
-            min-width: 0;
-            line-height: 1.3;
-            overflow-wrap: anywhere;
-        }
-
         .shop-card--list {
             padding: 0.38rem 0.46rem 0.38rem 0.56rem;
         }
