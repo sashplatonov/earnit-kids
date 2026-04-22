@@ -360,7 +360,7 @@
 
     .cards--list {
         grid-template-columns: minmax(0, 1fr);
-        gap: 0.9rem;
+        gap: 0.35rem;
     }
 
     .shop-card__layout {
@@ -375,48 +375,61 @@
         gap: 0.8rem;
     }
 
+    /* ── Compact list row ── */
     .shop-card--list {
-        padding: 1rem 1.05rem;
+        height: auto;
+        padding: 0.4rem 0.75rem;
     }
 
-    .shop-card--list .card__comment {
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
+    .shop-card--list .card__badge-row,
+    .shop-card--list .card__comment,
+    .shop-card--list .card__meta {
+        display: none;
+    }
+
+    .shop-card--list .shop-card__layout {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+    }
+
+    .shop-card--list .shop-card__main {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .shop-card--list .card__header {
+        min-height: 0;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .shop-card--list .card__title {
+        min-height: 0;
+        display: block;
         overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .shop-card--list .shop-card__side {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
     }
 
     .shop-card--list .card__actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.55rem;
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        justify-content: flex-end;
     }
 
     .shop-card--list .card__actions .btn {
-        flex: 1 1 10rem;
-    }
-
-    @media (min-width: 720px) {
-        .shop-card--list .shop-card__layout {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(14rem, auto);
-            align-items: center;
-            gap: 1rem 1.25rem;
-        }
-
-        .shop-card--list .shop-card__side {
-            align-items: flex-end;
-            text-align: right;
-        }
-
-        .shop-card--list .card__meta {
-            justify-content: flex-end;
-        }
-
-        .shop-card--list .card__actions {
-            justify-content: flex-end;
-        }
+        flex: none;
+        padding: 0.38rem 0.7rem;
+        font-size: 0.82rem;
     }
 
     @media (max-width: 640px) {
