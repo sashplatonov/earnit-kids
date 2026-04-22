@@ -3,10 +3,10 @@ package com.sashplatonov.earnit.kids.dto.request;
 import jakarta.validation.constraints.NotNull;
 
 public record AdjustBalanceRequest(
-    @NotNull(message = "Child id is required")
+    @NotNull(message = "{validation.child.id.required}")
     Integer childId,
 
-    @NotNull(message = "Amount is required")
+    @NotNull(message = "{validation.amount.required}")
     Integer amount,
 
     String description

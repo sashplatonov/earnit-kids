@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 public record UpdateGroupOrderRequest(
-    @NotBlank(message = "Section is required")
+    @NotBlank(message = "{validation.section.required}")
     String section,
 
     List<String> groups

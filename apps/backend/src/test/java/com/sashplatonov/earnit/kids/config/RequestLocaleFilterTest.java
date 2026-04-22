@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.config;
 
+import com.sashplatonov.earnit.kids.i18n.RequestLocaleContext;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
@@ -13,10 +14,12 @@ import static org.mockito.Mockito.when;
 
 class RequestLocaleFilterTest {
 
-    private final RequestLocaleFilter filter = new RequestLocaleFilter();
+    private final RequestLocaleContext requestLocaleContext = new RequestLocaleContext();
+    private final RequestLocaleFilter filter = new RequestLocaleFilter(requestLocaleContext);
 
     @AfterEach
     void tearDown() {
+        requestLocaleContext.clear();
         RequestLocaleHolder.clear();
     }
 
@@ -29,6 +32,7 @@ class RequestLocaleFilterTest {
         filter.filter(requestContext);
 
         verify(requestContext).setProperty(RequestLocaleFilter.REQUEST_LOCALE_PROPERTY, "ru");
+        assertThat(requestLocaleContext.getLanguageTag()).isEqualTo("ru");
         assertThat(RequestLocaleHolder.get()).isEqualTo("ru");
     }
 
@@ -40,9 +44,11 @@ class RequestLocaleFilterTest {
         when(requestContext.getHeaderString("Accept-Language")).thenReturn("ru-RU,ru;q=0.9,en;q=0.8");
 
         filter.filter(requestContext);
+        assertThat(requestLocaleContext.getLanguageTag()).isEqualTo("ru");
         assertThat(RequestLocaleHolder.get()).isEqualTo("ru");
 
         filter.filter(requestContext, responseContext);
+        assertThat(requestLocaleContext.getLanguageTag()).isEqualTo("en");
         assertThat(RequestLocaleHolder.get()).isEqualTo("en");
     }
 }

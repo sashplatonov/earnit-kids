@@ -7,17 +7,17 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record UpdateChildSettingsRequest(
-    @NotBlank(message = "Child name is required")
-    @Size(max = 50, message = "Child name must be at most 50 characters")
+    @NotBlank(message = "{validation.child.name.required}")
+    @Size(max = 50, message = "{validation.child.name.max}")
     String name,
 
-    @NotNull(message = "Daily coin limit is required")
-    @Min(value = 0, message = "Daily coin limit must be zero or greater")
+    @NotNull(message = "{validation.daily.coin.limit.required}")
+    @Min(value = 0, message = "{validation.daily.coin.limit.min}")
     @JsonAlias("daily_coin_limit")
     Integer dailyCoinLimit,
 
-    @NotNull(message = "Monthly limit is required")
-    @Min(value = 0, message = "Monthly limit must be zero or greater")
+    @NotNull(message = "{validation.monthly.limit.required}")
+    @Min(value = 0, message = "{validation.monthly.limit.min}")
     @JsonAlias("monthly_limit")
     Integer monthlyLimit
 ) { }

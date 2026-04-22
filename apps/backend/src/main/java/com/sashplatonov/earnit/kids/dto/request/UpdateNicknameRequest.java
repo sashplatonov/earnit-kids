@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record UpdateNicknameRequest(
-    @NotBlank(message = "Nickname is required")
-    @Size(max = 50, message = "Nickname must be at most 50 characters")
+    @NotBlank(message = "{validation.nickname.required}")
+    @Size(max = 50, message = "{validation.nickname.max}")
     String name
 ) { }

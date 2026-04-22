@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CreateChildRequest(
-    @NotBlank(message = "Child name is required")
-    @Size(max = 50, message = "Child name must be at most 50 characters")
+    @NotBlank(message = "{validation.child.name.required}")
+    @Size(max = 50, message = "{validation.child.name.max}")
     String name
 ) { }

@@ -6,12 +6,12 @@ import jakarta.validation.constraints.Size;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record RegisterRequest(
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     String email,
 
-    @NotBlank(message = "Admin password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @NotBlank(message = "{validation.password.admin.required}")
+    @Size(min = 6, message = "{validation.password.min}")
     @Schema(format = "password")
     String password
 ) { }

@@ -6,15 +6,15 @@ import jakarta.validation.constraints.Size;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record ResetPasswordRequest(
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     String email,
 
-    @NotBlank(message = "Token is required")
+    @NotBlank(message = "{validation.token.required}")
     String token,
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @NotBlank(message = "{validation.password.required}")
+    @Size(min = 6, message = "{validation.password.min}")
     @Schema(format = "password")
     String password
 ) { }

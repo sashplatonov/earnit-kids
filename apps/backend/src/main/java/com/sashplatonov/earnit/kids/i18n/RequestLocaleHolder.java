@@ -1,18 +1,27 @@
 package com.sashplatonov.earnit.kids.i18n;
 
+import java.util.Locale;
+
 public final class RequestLocaleHolder {
-    private static final ThreadLocal<String> CURRENT_LOCALE = ThreadLocal.withInitial(() -> "en");
+    private static final ThreadLocal<Locale> CURRENT_LOCALE = ThreadLocal.withInitial(BackendLocaleSupport::defaultLocale);
 
     private RequestLocaleHolder() {
     }
 
     public static String get() {
-        String locale = CURRENT_LOCALE.get();
-        return "ru".equals(locale) ? "ru" : "en";
+        return BackendLocaleSupport.toLanguageTag(CURRENT_LOCALE.get());
+    }
+
+    public static Locale getLocale() {
+        return BackendLocaleSupport.supportedOrDefault(CURRENT_LOCALE.get());
     }
 
     public static void set(String locale) {
-        CURRENT_LOCALE.set("ru".equalsIgnoreCase(locale) ? "ru" : "en");
+        set(BackendLocaleSupport.normalizeLocale(locale));
+    }
+
+    public static void set(Locale locale) {
+        CURRENT_LOCALE.set(BackendLocaleSupport.supportedOrDefault(locale));
     }
 
     public static void clear() {

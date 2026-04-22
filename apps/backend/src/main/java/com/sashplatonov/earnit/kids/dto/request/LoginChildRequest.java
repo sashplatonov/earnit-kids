@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record LoginChildRequest(
-    @NotBlank(message = "Token is required")
+    @NotBlank(message = "{validation.token.required}")
     @Schema(format = "password")
     String token
 ) { }

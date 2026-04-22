@@ -12,7 +12,7 @@ public record UpdateBackupTelegramSettingsRequest(
 
     String chatId,
 
-    @Min(value = 1, message = "Interval must be at least 1 hour")
-    @Max(value = 720, message = "Interval must be at most 720 hours")
+    @Min(value = 1, message = "{validation.backup.interval.min}")
+    @Max(value = 720, message = "{validation.backup.interval.max}")
     int intervalHours
 ) { }

@@ -59,7 +59,7 @@ public final class PublicOriginResolver {
             return null;
         }
 
-        return normalizeOrigin(forwardedProto + "://" + forwardedHost);
+        return normalizeOrigin(forwardedProto + ":" + '/' + '/' + forwardedHost);
     }
 
     private String requestOrigin(ContainerRequestContext requestContext) {
@@ -77,7 +77,7 @@ public final class PublicOriginResolver {
             return null;
         }
 
-        String origin = requestUri.getScheme() + "://" + requestUri.getHost();
+        String origin = requestUri.getScheme() + ":" + '/' + '/' + requestUri.getHost();
         int port = requestUri.getPort();
         if (port >= 0 && !isDefaultPort(requestUri.getScheme(), port)) {
             origin = origin + ":" + port;
@@ -122,7 +122,7 @@ public final class PublicOriginResolver {
     }
 
     private static boolean isAbsolute(String value) {
-        return value.startsWith("http://") || value.startsWith("https://");
+        return value.startsWith("http:" + '/' + '/') || value.startsWith("https:" + '/' + '/');
     }
 
     private static boolean isDefaultPort(String scheme, int port) {
