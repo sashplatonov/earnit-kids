@@ -4,6 +4,8 @@
 
 Planning snapshot created on 2026-04-27.
 
+Delivery status: ✅ Completed and verified on 2026-04-27.
+
 This backlog covers the "Daily Quest" redesign for the authenticated Analytics
 section. The current section already has summary stats, level/week/streak mini
 progress, charts, and recommendation cards in
@@ -53,13 +55,13 @@ Turn the Achievements tab into a short daily action list:
 
 ## 🧩 Phases
 
-| Phase | Priority | Purpose | Exit criteria |
-| --- | --- | --- | --- |
-| Phase 1 - Quest model | P0 | Define quest data from existing analytics, tasks, balance, and shop signals | View-model tests cover quest progress and destinations |
-| Phase 2 - Compact quest UI | P0 | Replace the top analytics layout with actionable daily quests | Parent and child see compact quests with progress and buttons |
-| Phase 3 - Collapsible details | P1 | Move charts and recommendations below the quests in a details area | Existing charts still load after expand and timeframe changes |
-| Phase 4 - Motivation tuning | P1 | Add better purchase and task nudges without backend schema changes | Empty and low-progress states show useful next actions |
-| Phase 5 - Polish and release gates | P2 | Tighten responsive UI, accessibility, i18n, and regression coverage | E2E, unit, lint, and visual checks pass |
+| Phase | Priority | Purpose | Exit criteria | Status |
+| --- | --- | --- | --- | --- |
+| Phase 1 - Quest model | P0 | Define quest data from existing analytics, tasks, balance, and shop signals | View-model tests cover quest progress and destinations | ✅ |
+| Phase 2 - Compact quest UI | P0 | Replace the top analytics layout with actionable daily quests | Parent and child see compact quests with progress and buttons | ✅ |
+| Phase 3 - Collapsible details | P1 | Move charts and recommendations below the quests in a details area | Existing charts still load after expand and timeframe changes | ✅ |
+| Phase 4 - Motivation tuning | P1 | Add better purchase and task nudges without backend schema changes | Empty and low-progress states show useful next actions | ✅ |
+| Phase 5 - Polish and release gates | P2 | Tighten responsive UI, accessibility, i18n, and regression coverage | E2E, unit, lint, and visual checks pass | ✅ |
 
 [↑ Back to top](#top)
 
@@ -67,22 +69,22 @@ Turn the Achievements tab into a short daily action list:
 
 ## 📝 Backlog Tasks
 
-| ID | Phase | Priority | Depends on | Main outcome |
-| --- | --- | --- | --- | --- |
-| ADQ-01 | 1 | P0 | none | Frozen quest rules and reusable quest view model |
-| ADQ-02 | 1 | P0 | ADQ-01 | Route/action target contract for Tasks and Shop navigation |
-| ADQ-03 | 1 | P0 | ADQ-01 | Unit coverage for quest progress, empty states, and role-safe output |
-| ADQ-04 | 2 | P0 | ADQ-01, ADQ-02 | Compact daily quest list replaces bulky above-the-fold analytics |
-| ADQ-05 | 2 | P0 | ADQ-04 | Quest CTA buttons navigate to the correct app sections |
-| ADQ-06 | 2 | P0 | ADQ-04 | Parent and child layouts handle no children, selected child changes, and reloads |
-| ADQ-07 | 3 | P1 | ADQ-04 | Charts, trend, and top lists move into a compact collapsible details block |
-| ADQ-08 | 3 | P1 | ADQ-07 | Chart rendering stays reliable when details are expanded after load |
-| ADQ-09 | 4 | P1 | ADQ-01, ADQ-04 | Purchase-oriented quest encourages earning toward the nearest reward |
-| ADQ-10 | 4 | P1 | ADQ-01, ADQ-04 | Task-oriented quest recommends the fastest useful task |
-| ADQ-11 | 4 | P1 | ADQ-09, ADQ-10 | Empty and low-activity states become action-first quest states |
-| ADQ-12 | 5 | P2 | ADQ-04, ADQ-07 | Responsive and accessible UI polish |
-| ADQ-13 | 5 | P2 | ADQ-12 | i18n messages for quest labels, hints, states, and CTAs |
-| ADQ-14 | 5 | P0 | ADQ-03 onward | Regression and release verification gates |
+| ID | Phase | Priority | Depends on | Main outcome | Status |
+| --- | --- | --- | --- | --- | --- |
+| ADQ-01 | 1 | P0 | none | Frozen quest rules and reusable quest view model | ✅ |
+| ADQ-02 | 1 | P0 | ADQ-01 | Route/action target contract for Tasks and Shop navigation | ✅ |
+| ADQ-03 | 1 | P0 | ADQ-01 | Unit coverage for quest progress, empty states, and role-safe output | ✅ |
+| ADQ-04 | 2 | P0 | ADQ-01, ADQ-02 | Compact daily quest list replaces bulky above-the-fold analytics | ✅ |
+| ADQ-05 | 2 | P0 | ADQ-04 | Quest CTA buttons navigate to the correct app sections | ✅ |
+| ADQ-06 | 2 | P0 | ADQ-04 | Parent and child layouts handle no children, selected child changes, and reloads | ✅ |
+| ADQ-07 | 3 | P1 | ADQ-04 | Charts, trend, and top lists move into a compact collapsible details block | ✅ |
+| ADQ-08 | 3 | P1 | ADQ-07 | Chart rendering stays reliable when details are expanded after load | ✅ |
+| ADQ-09 | 4 | P1 | ADQ-01, ADQ-04 | Purchase-oriented quest encourages earning toward the nearest reward | ✅ |
+| ADQ-10 | 4 | P1 | ADQ-01, ADQ-04 | Task-oriented quest recommends the fastest useful task | ✅ |
+| ADQ-11 | 4 | P1 | ADQ-09, ADQ-10 | Empty and low-activity states become action-first quest states | ✅ |
+| ADQ-12 | 5 | P2 | ADQ-04, ADQ-07 | Responsive and accessible UI polish | ✅ |
+| ADQ-13 | 5 | P2 | ADQ-12 | i18n messages for quest labels, hints, states, and CTAs | ✅ |
+| ADQ-14 | 5 | P0 | ADQ-03 onward | Regression and release verification gates | ✅ |
 
 [↑ Back to top](#top)
 

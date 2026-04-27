@@ -64,9 +64,24 @@ async function loginAsParent(page: import('@playwright/test').Page) {
     });
 }
 
-async function goToAnalytics(page: import('@playwright/test').Page) {
+async function goToAnalytics(
+    page: import('@playwright/test').Page,
+    options: { expectQuests?: boolean } = {}
+) {
+    const { expectQuests = true } = options;
+
     await page.getByRole('link', { name: /Достижения|Аналитика|Achievements|Analytics|My achievements/i }).click();
     await expect(page.locator('#analytics-section')).toBeVisible();
+    if (expectQuests) {
+        await expect(page.locator('#daily-quest-list')).toBeVisible();
+    }
+}
+
+async function openAnalyticsDetails(page: import('@playwright/test').Page) {
+    const toggle = page.locator('#analytics-details-toggle');
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    await expect(page.locator('#analytics-details-panel')).toBeVisible();
 }
 
 test.describe('Analytics section — parent view', () => {
@@ -77,6 +92,16 @@ test.describe('Analytics section — parent view', () => {
         await expect(page.locator('#analytics-section')).toBeVisible();
         // Should NOT show the "no children" empty state
         await expect(page.locator('#analytics-empty-state')).not.toBeVisible();
+    });
+
+    test('shows daily quests first and keeps details collapsed by default', async ({ page }) => {
+        await loginAsParent(page);
+        await selectChild(page, CHILD_NAME_A);
+        await goToAnalytics(page);
+
+        const quests = page.locator('#daily-quest-list [data-quest-id]');
+        await expect(quests).toHaveCount(5);
+        await expect(page.locator('#analytics-details-panel')).toHaveCount(0);
     });
 
     test('shows earned coins after approved task for child A', async ({ page }) => {
@@ -107,6 +132,7 @@ test.describe('Analytics section — parent view', () => {
         await selectChild(page, CHILD_NAME_A);
 
         await goToAnalytics(page);
+        await openAnalyticsDetails(page);
 
         const firstRecommendation = page.locator('#analytics-recommendations .recommendation-card').first();
         await expect(firstRecommendation).toBeVisible();
@@ -135,19 +161,22 @@ test.describe('Analytics section — parent view', () => {
         await goToAnalytics(page);
 
         const earnedA = Number(await page.locator('#stats-earned').textContent());
+        const questMetricA = (await page.locator('[data-quest-id="earn-coins"] .analytics-quest-card__metric').textContent())?.trim() ?? '';
         expect(earnedA).toBeGreaterThanOrEqual(TASK_COINS);
 
         await selectChild(page, CHILD_NAME_B);
-        // Wait for stats to reload
-        await page.waitForTimeout(800);
+        await expect.poll(async () => (await page.locator('#stats-earned').textContent())?.trim() ?? '').toBe('0');
         const earnedB = Number(await page.locator('#stats-earned').textContent());
+        const questMetricB = (await page.locator('[data-quest-id="earn-coins"] .analytics-quest-card__metric').textContent())?.trim() ?? '';
         expect(earnedB).toBe(0);
+        expect(questMetricA).not.toBe(questMetricB);
     });
 
     test('timeframe filter buttons change the displayed timeframe', async ({ page }) => {
         await loginAsParent(page);
         await selectChild(page, CHILD_NAME_A);
         await goToAnalytics(page);
+        await openAnalyticsDetails(page);
 
         const timeframeGroup = page.locator('#analytics-timeframe-group');
         await expect(timeframeGroup).toBeVisible();
@@ -155,14 +184,36 @@ test.describe('Analytics section — parent view', () => {
         // Switch to week
         await page.locator('#analytics-timeframe-group [data-timeframe="week"]').click();
         await expect(page.locator('#analytics-timeframe-group [data-timeframe="week"]')).toHaveClass(/active/);
-        await page.waitForTimeout(500);
+        await expect(page.locator('#analytics-details-panel')).toBeVisible();
         await expect(page.locator('#stats-earned')).toBeVisible();
+        await expect(page.locator('#achievements-trend-chart')).toBeVisible();
 
         // Switch to year
         await page.locator('#analytics-timeframe-group [data-timeframe="year"]').click();
         await expect(page.locator('#analytics-timeframe-group [data-timeframe="year"]')).toHaveClass(/active/);
-        await page.waitForTimeout(500);
+        await expect(page.locator('#analytics-details-panel')).toBeVisible();
         await expect(page.locator('#stats-earned')).toBeVisible();
+        await expect(page.locator('#achievements-trend-chart')).toBeVisible();
+    });
+
+    test('quest CTA buttons open tasks, rewards, and analytics details', async ({ page }) => {
+        await loginAsParent(page);
+        await selectChild(page, CHILD_NAME_A);
+        await goToAnalytics(page);
+
+        await page.locator('[data-quest-id="complete-tasks"] button').click();
+        await expect(page).toHaveURL(/\/app\/tasks$/);
+        await expect(page.locator('#tasks-section')).toBeVisible();
+
+        await goToAnalytics(page);
+        await page.locator('[data-quest-id="reward-target"] button').click();
+        await expect(page).toHaveURL(/\/app\/shop$/);
+        await expect(page.locator('#shop-section')).toBeVisible();
+
+        await goToAnalytics(page);
+        await page.locator('[data-quest-id="keep-streak"] button[data-quest-action-target="details"]').click();
+        await expect(page.locator('#analytics-details-panel')).toBeVisible();
+        await expect(page.locator('#achievements-trend-chart')).toBeVisible();
     });
 
     test('shows empty state when parent has no children', async ({ page }) => {
@@ -170,7 +221,7 @@ test.describe('Analytics section — parent view', () => {
         const freshEmail = uniqueEmail('analytics.empty');
         await registerParent(page, freshEmail, DEFAULT_PARENT_PASSWORD);
         await openFamilyApp(page);
-        await goToAnalytics(page);
+        await goToAnalytics(page, { expectQuests: false });
 
         await expect(page.locator('#analytics-empty-state')).toBeVisible();
         await expect(page.locator('#analytics-add-child')).toBeVisible();
@@ -183,6 +234,7 @@ test.describe('Analytics section — child view', () => {
 
         await page.getByRole('link', { name: /Достижения|Аналитика|Achievements|Analytics|My achievements/i }).click();
         await expect(page.locator('#analytics-section')).toBeVisible();
+        await expect(page.locator('#daily-quest-list [data-quest-id]')).toHaveCount(5);
 
         // Child should NOT see the "no children" empty state
         await expect(page.locator('#analytics-empty-state')).not.toBeVisible();

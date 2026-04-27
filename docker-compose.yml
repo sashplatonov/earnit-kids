@@ -9,6 +9,8 @@ services:
       # Web edge
       PORT: ${WEB_INTERNAL_PORT}
       BACKEND_URL: http://backend:${BACKEND_INTERNAL_PORT}
+      APP_URL: ${APP_URL}
+      FRONTEND_URL: ${APP_URL}
       PUBLIC_BASE_URL: ${APP_URL}
     depends_on:
       backend:

@@ -1,4 +1,11 @@
 import { analyticsMessages as englishAnalyticsMessages } from '$lib/i18n/messages/en/analytics';
+import {
+    buildDailyQuests,
+    type AnalyticsDailyQuest,
+    type AnalyticsDailyQuestI18n,
+    type AnalyticsQuestShopItemContext,
+    type AnalyticsQuestTaskContext,
+} from './analyticsDailyQuests';
 
 export interface AnalyticsChartDatum {
     label: string;
@@ -21,6 +28,8 @@ export interface AnalyticsRecommendationCard {
     reason: string | null;
 }
 
+export type { AnalyticsDailyQuest } from './analyticsDailyQuests';
+
 export interface AnalyticsViewModel {
     earned: number;
     spent: number;
@@ -36,6 +45,7 @@ export interface AnalyticsViewModel {
     itemCount: AnalyticsChartDatum[];
     trend: AnalyticsTrendDatum[];
     recommendations: AnalyticsRecommendationCard[];
+    dailyQuests: AnalyticsDailyQuest[];
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -49,17 +59,21 @@ interface AnalyticsSourceTask {
     coins?: unknown;
 }
 
+interface AnalyticsSourceShopItem {
+    name?: unknown;
+    title?: unknown;
+    groupName?: unknown;
+    comment?: unknown;
+    price?: unknown;
+    coins?: unknown;
+}
+
 interface AnalyticsViewModelOptions {
     currentBalance?: unknown;
     tasks?: AnalyticsSourceTask[] | null;
+    shopItems?: AnalyticsSourceShopItem[] | null;
+    isAdmin?: boolean;
     i18n?: AnalyticsViewModelI18n;
-}
-
-interface RecommendationTaskContext {
-    title: string;
-    groupName: string;
-    comment: string | null;
-    coins: number | null;
 }
 
 type AnalyticsModelMessageKey = keyof typeof englishAnalyticsMessages.model;
@@ -67,6 +81,7 @@ type AnalyticsModelMessageKey = keyof typeof englishAnalyticsMessages.model;
 export interface AnalyticsViewModelI18n {
     locale: string;
     formatShortDate(value: string): string;
+    formatNumber(value: number): string;
     t(key: AnalyticsModelMessageKey, variables?: Record<string, string | number>): string;
 }
 
@@ -84,6 +99,9 @@ const DEFAULT_ANALYTICS_I18N: AnalyticsViewModelI18n = {
         const parsed = parseIsoDate(value);
         return parsed == null ? value : SHORT_DATE_FORMATTER.format(parsed);
     },
+    formatNumber(value: number) {
+        return new Intl.NumberFormat('en-US').format(value);
+    },
     t(key, variables) {
         return interpolate(DEFAULT_ANALYTICS_MODEL_MESSAGES[key], variables);
     },
@@ -99,6 +117,8 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
     const itemCoins = readChartSeries(root?.itemCoins, root?.topItems, 'coins');
     const itemCount = readChartSeries(root?.itemCount, root?.topItems, 'count');
     const trend = readTrendSeries(root?.trend, root?.trends, i18n);
+    const normalizedTasks = normalizeTaskContext(options.tasks, i18n);
+    const normalizedShopItems = normalizeShopContext(options.shopItems);
 
     const spent = readNumber(summary?.totalSpent) ?? readNumber(root?.spent) ?? sumTrend(trend, 'spent');
     const currentBalance = readNumber(options.currentBalance) ?? readNumber(root?.balance);
@@ -110,6 +130,22 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
 
     const weekSummary = buildWeekSummary(trend, earned, i18n);
     const streakValue = buildStreak(trend);
+    const recommendations = readRecommendations(root?.recommendations, options.tasks, i18n);
+    const completedTaskCount = taskCount.reduce((total, item) => total + Math.max(0, item.value), 0);
+    const periodEarned = trend.length > 0
+        ? sumTrend(trend, 'earned')
+        : readNumber(summary?.totalEarned) ?? readNumber(root?.earned) ?? earned;
+    const dailyQuests = buildDailyQuests({
+        currentBalance: currentBalance ?? net,
+        completedTaskCount,
+        i18n: i18n as AnalyticsDailyQuestI18n,
+        isAdmin: options.isAdmin === true,
+        periodEarned,
+        recommendations,
+        shopItems: normalizedShopItems,
+        streakValue,
+        tasks: normalizedTasks,
+    });
 
     return {
         earned,
@@ -127,7 +163,8 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
         itemCoins,
         itemCount,
         trend: trend.map(({ label, earned, spent }) => ({ label, earned, spent })),
-        recommendations: readRecommendations(root?.recommendations, options.tasks, i18n),
+        recommendations,
+        dailyQuests,
     };
 }
 
@@ -234,6 +271,10 @@ function readTrendSeries(formattedSource: unknown, statsSource: unknown, i18n: A
             return [];
         }
 
+        if (parseIsoDate(isoDate) == null) {
+            return [];
+        }
+
         return [{
             isoDate,
             label: i18n.formatShortDate(isoDate),
@@ -327,7 +368,7 @@ function readRecommendations(
 function normalizeTaskContext(
     tasksSource: AnalyticsSourceTask[] | null | undefined,
     i18n: AnalyticsViewModelI18n,
-): RecommendationTaskContext[] {
+): AnalyticsQuestTaskContext[] {
     if (!Array.isArray(tasksSource)) {
         return [];
     }
@@ -347,7 +388,30 @@ function normalizeTaskContext(
     });
 }
 
-function findRecommendationTask(tasks: RecommendationTaskContext[], name: string | null, coins: number | null): RecommendationTaskContext | null {
+function normalizeShopContext(
+    shopItemsSource: AnalyticsSourceShopItem[] | null | undefined,
+): AnalyticsQuestShopItemContext[] {
+    if (!Array.isArray(shopItemsSource)) {
+        return [];
+    }
+
+    return shopItemsSource.flatMap((item) => {
+        const title = readText(item.name) ?? readText(item.title);
+        const price = readNumber(item.price) ?? readNumber(item.coins);
+        if (title == null || price == null || price <= 0) {
+            return [];
+        }
+
+        return [{
+            title,
+            groupName: readText(item.groupName) ?? '',
+            comment: readText(item.comment),
+            price,
+        }];
+    });
+}
+
+function findRecommendationTask(tasks: AnalyticsQuestTaskContext[], name: string | null, coins: number | null): AnalyticsQuestTaskContext | null {
     if (name == null) {
         return null;
     }

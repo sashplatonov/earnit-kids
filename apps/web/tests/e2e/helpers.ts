@@ -22,8 +22,8 @@ export async function loginParent(
 
     await page.goto('/login.html');
     await page.getByRole('textbox', { name: 'Email' }).fill(email);
-    await page.getByRole('textbox', { name: 'Пароль' }).fill(password);
-    await page.getByRole('button', { name: 'Войти' }).click();
+    await page.getByRole('textbox', { name: /Password|Пароль/i }).fill(password);
+    await page.locator('.auth-forms .btn-login').click();
     await expect(page).toHaveURL(destination);
     if (heading !== null) {
         await expect(page.getByRole('heading', { name: heading })).toBeVisible();
@@ -37,18 +37,18 @@ export async function openFamilyApp(page: Page) {
 }
 
 export async function logout(page: Page) {
-    await page.getByRole('button', { name: 'Дополнительные разделы' }).click();
-    await page.getByRole('menuitem', { name: 'Выйти' }).click();
-    await expect(page).toHaveURL(/\/login\.html/);
+    await page.getByRole('button', { name: /Additional sections|Дополнительные разделы/i }).click();
+    await page.getByRole('menuitem', { name: /Sign out|Logout|Выйти/i }).click();
+    await expect(page).toHaveURL(/\/(?:[a-z]{2}\/)?login(?:\.html)?$/);
 }
 
 export async function registerParent(page: Page, email: string, password = DEFAULT_PARENT_PASSWORD) {
     await page.goto('/login.html');
-    await page.getByRole('button', { name: 'Регистрация' }).click();
-    await page.getByPlaceholder('Email родителя').fill(email);
-    await page.getByPlaceholder('Пароль (мин. 6)').fill(password);
-    await page.getByRole('button', { name: 'Зарегистрировать' }).click();
-    await expect(page.getByText('Семья зарегистрирована')).toBeVisible();
+    await page.getByRole('button', { name: /Register|Регистрация/i }).click();
+    await page.getByPlaceholder(/Parent email|Email родителя/i).fill(email);
+    await page.getByPlaceholder(/Password \(min\. 6\)|Пароль \(мин\. 6\)/i).fill(password);
+    await page.locator('.auth-forms .btn-login').click();
+    await expect(page.getByText(/Family account created|Семья зарегистрирована/i)).toBeVisible();
 }
 
 export async function addChild(page: Page, childName: string) {
@@ -144,16 +144,16 @@ export async function loginChildByMagicLink(page: Page, childLink: string, taskT
 }
 
 export async function approveFirstRequest(page: Page) {
-    await page.getByRole('link', { name: /Заявки/ }).click();
+    await page.getByRole('link', { name: /Requests|Заявки/i }).click();
     const requestList = page.locator('#incoming-requests-list');
     await expect(requestList).toBeVisible();
 
-    const approveButton = requestList.getByRole('button', { name: 'Одобрить заявку' }).first();
+    const approveButton = requestList.getByRole('button', { name: /Approve request|Одобрить заявку/i }).first();
     await expect(approveButton).toBeVisible();
     await approveButton.click();
 }
 
 export async function expectHeaderBalance(page: Page, amount: number) {
-    const historyButton: Locator = page.getByRole('button', { name: /Открыть историю/ });
+    const historyButton: Locator = page.getByRole('button', { name: /Open history|Открыть историю/i });
     await expect(historyButton).toContainText(String(amount));
 }

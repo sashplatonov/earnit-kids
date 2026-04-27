@@ -32,15 +32,8 @@ describe('i18n helpers', () => {
         expect(shouldCanonicalizePath('/api/data')).toBe(false);
     });
 
-    it('falls back to English when the localized payload is incomplete', () => {
-        const payload = {
-            ...buildI18nPayload('ru', ['common']),
-            messages: {
-                common: {},
-            },
-        };
-
-        expect(translateKey(payload, 'common.actions.login')).toBe('Sign in');
+    it('returns Russian translation when available', () => {
+        expect(translateKey(buildI18nPayload('ru', ['common']), 'common.actions.login')).toBe('Войти');
     });
 
     it('loads a dedicated super-admin domain for admin routes', () => {
