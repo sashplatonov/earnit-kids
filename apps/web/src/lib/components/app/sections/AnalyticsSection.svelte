@@ -136,6 +136,8 @@
         if (target === 'details') {
             detailsExpanded = true;
             await scheduleChartRender();
+            await tick();
+            document.querySelector<HTMLElement>('.analytics-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
 
@@ -1005,22 +1007,52 @@
     }
 
     @media (max-width: 760px) {
-        #analytics-section .analytics-quest-panel__header,
-        #analytics-section .analytics-details__head,
-        #analytics-section .analytics-quest-card,
-        #analytics-section .analytics-quest-card__top {
-            grid-template-columns: none;
+        /* Quest panel header: hint below title on narrow */
+        #analytics-section .analytics-quest-panel__header {
             flex-direction: column;
             align-items: stretch;
+            gap: 0.35rem;
         }
 
+        /* Details head: keep row but allow wrap */
+        #analytics-section .analytics-details__head {
+            flex-wrap: wrap;
+        }
+
+        /* Quest card: icon + body on same row, action button below */
         #analytics-section .analytics-quest-card {
-            grid-template-columns: 1fr;
+            grid-template-columns: 2.75rem 1fr;
+            grid-template-rows: auto auto;
+            grid-template-areas:
+                'icon body'
+                'cta  cta';
+            gap: 0.55rem 0.75rem;
+            padding: 0.8rem;
         }
 
         #analytics-section .analytics-quest-card__icon {
+            grid-area: icon;
+            align-self: start;
             width: 2.4rem;
             height: 2.4rem;
+            font-size: 1.05rem;
+        }
+
+        #analytics-section .analytics-quest-card__body {
+            grid-area: body;
+        }
+
+        #analytics-section .analytics-quest-card__action {
+            grid-area: cta;
+            width: 100%;
+            justify-self: stretch;
+            min-width: 0;
+        }
+
+        #analytics-section .analytics-quest-card__top {
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: start;
         }
 
         #analytics-section .analytics-quest-card__metric {
@@ -1028,13 +1060,13 @@
             text-align: left;
         }
 
-        #analytics-section .analytics-quest-card__action {
-            width: 100%;
-            justify-self: stretch;
+        /* Summary strip: 3-col for stat items, progress spans full width */
+        #analytics-section .analytics-summary-strip {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
-        #analytics-section .analytics-summary-strip {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        #analytics-section .analytics-summary-strip__item--progress {
+            grid-column: 1 / -1;
         }
     }
 
@@ -1136,11 +1168,16 @@
         }
 
         #analytics-section .analytics-summary-strip {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        #analytics-section .analytics-summary-strip__item--progress {
+            grid-column: 1 / -1;
         }
 
         #analytics-section .analytics-details__toggle {
-            width: 100%;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
     }
 </style>
