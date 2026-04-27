@@ -398,7 +398,7 @@
         <div class="analytics-quest-shell">
             <section class="analytics-quest-panel" aria-labelledby="analytics-quests-title">
                 <div class="analytics-quest-panel__header">
-                    <div>
+                    <div class="analytics-quest-panel__text">
                         <p class="analytics-quest-panel__eyebrow">{tAnalytics('quests.eyebrow')}</p>
                         <h3 class="analytics-quest-panel__title" id="analytics-quests-title">{tAnalytics('quests.title')}</h3>
                     </div>
@@ -512,7 +512,7 @@
 
         <section class="analytics-details" aria-labelledby="analytics-details-heading">
             <div class="analytics-details__head">
-                <div>
+                <div class="analytics-details__title-group">
                     <h3 class="analytics-details__title" id="analytics-details-heading">{tAnalytics('details.title')}</h3>
                     <p class="analytics-details__hint">{tAnalytics('details.hint')}</p>
                 </div>
@@ -875,6 +875,9 @@
         font-size: 0.76rem;
         color: var(--color-text-muted);
         line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     #analytics-section .analytics-summary-strip__value {
@@ -910,6 +913,22 @@
         align-items: center;
     }
 
+    #analytics-section .analytics-details__title-group {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    #analytics-section .analytics-quest-panel__text {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    #analytics-section .analytics-quest-panel__hint {
+        min-width: 0;
+    }
+
     #analytics-section .analytics-details__toggle {
         border: 1px solid rgba(255, 255, 255, 0.12);
         background: rgba(255, 255, 255, 0.08);
@@ -919,6 +938,11 @@
         font: inherit;
         font-weight: 700;
         cursor: pointer;
+        min-height: 2.75rem;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     #analytics-section .analytics-details__panel {
@@ -995,6 +1019,13 @@
         gap: 0.85rem;
     }
 
+    @media (max-width: 600px) {
+        #analytics-section .analytics-grid,
+        #analytics-section .recommendations-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
     @media (min-width: 960px) {
         #analytics-section .analytics-quest-shell {
             grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.9fr);
@@ -1003,6 +1034,10 @@
 
         #analytics-section .analytics-summary-strip {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #analytics-section .analytics-summary-strip__item--progress {
+            grid-column: 1 / -1;
         }
     }
 
@@ -1047,6 +1082,10 @@
             width: 100%;
             justify-self: stretch;
             min-width: 0;
+            min-height: 2.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #analytics-section .analytics-quest-card__top {
@@ -1072,7 +1111,6 @@
 
     @media (max-width: 480px) {
         #analytics-section .section-header {
-            gap: 0.45rem;
             margin-bottom: 0.7rem;
         }
 
