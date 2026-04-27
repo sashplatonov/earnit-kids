@@ -2933,15 +2933,24 @@ dialog.modal[open]::backdrop {
 
 /* ===== Nav Counter ===== */
 .nav__counter {
-    background: var(--color-danger);
+    position: absolute;
+    top: 0.42rem;
+    right: 0.52rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    border-radius: 12px;
-    margin-left: 0.5rem;
-    vertical-align: middle;
-    font-weight: 700;
-    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+    font-size: 0.68rem;
+    line-height: 1;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    font-weight: 800;
+    box-shadow: 0 4px 10px rgba(217, 119, 6, 0.34);
+    border: 2px solid rgba(255, 251, 246, 0.95);
+    pointer-events: none;
 }
 
 /* ===== Analytics Section ===== */

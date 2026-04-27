@@ -549,6 +549,7 @@
 }
 
 .nav__btn {
+    position: relative;
     padding: 0.65rem 0.9rem;
     border: 1px solid transparent;
     border-radius: var(--radius-lg);

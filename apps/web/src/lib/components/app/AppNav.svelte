@@ -74,14 +74,17 @@
                         class:active={activeSection === section}
                         href={$i18n.href(resolve('/app/[section]', { section }))}
                         aria-current={activeSection === section ? 'page' : undefined}
+                        aria-label={section === 'requests' && requestsCount > 0
+                            ? `${$i18n.t(getAppSectionLabelKey(section))}: ${$i18n.formatNumber(requestsCount)}`
+                            : $i18n.t(getAppSectionLabelKey(section))}
                         on:click={closeMoreMenu}
                     >
                         <span class={`nav__btn-icon gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>
+                        {#if section === 'requests' && requestsCount > 0}
+                            <span class="nav__counter">{$i18n.formatNumber(requestsCount)}</span>
+                        {/if}
                         <span class="nav__btn-label">
                             {$i18n.t(getAppSectionLabelKey(section))}
-                            {#if section === 'requests' && requestsCount > 0}
-                                <span class="nav__counter">{requestsCount}</span>
-                            {/if}
                         </span>
                     </a>
                 {/each}
