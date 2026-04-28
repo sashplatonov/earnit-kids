@@ -71,6 +71,14 @@ public class FamilyDataRepository {
     }
 
     @Transactional
+    public boolean upsertTask(int familyDbId, int childId, long taskId, String name,
+                              int coins, String groupName, JsonNode frequency,
+                              String comment, Integer moneyLimit, boolean deleted) {
+        return upsertTask(familyDbId, childId, taskId, name, coins, groupName, frequency,
+            comment, moneyLimit, true, deleted);
+    }
+
+    @Transactional
     public boolean softDeleteTask(int childId, long taskId) {
         return taskRepo.find("childId = ?1 AND taskId = ?2", childId, taskId)
             .firstResultOptional()
@@ -126,6 +134,14 @@ public class FamilyDataRepository {
                 .build());
         }
         return true;
+    }
+
+    @Transactional
+    public boolean upsertShopItem(int familyDbId, int childId, long itemId, String name,
+                                  int price, String groupName, JsonNode frequency,
+                                  String comment, Integer moneyLimit, boolean deleted) {
+        return upsertShopItem(familyDbId, childId, itemId, name, price, groupName, frequency,
+            comment, moneyLimit, true, deleted);
     }
 
     @Transactional

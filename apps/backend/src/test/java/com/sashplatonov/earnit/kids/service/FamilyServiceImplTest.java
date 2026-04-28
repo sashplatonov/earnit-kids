@@ -675,7 +675,7 @@ class FamilyServiceImplTest {
         ArgumentCaptor<JsonNode> taskFrequencyCaptor = ArgumentCaptor.forClass(JsonNode.class);
         verify(familyDataRepository).upsertTask(
             eq(1), eq(10), eq(101L), eq("Read"), eq(5), eq("Home"),
-            taskFrequencyCaptor.capture(), eq("Daily"), eq(12), eq(false)
+            taskFrequencyCaptor.capture(), eq("Daily"), eq(12), eq(true), eq(false)
         );
         assertThat(taskFrequencyCaptor.getValue().get("limit").asInt()).isEqualTo(1);
         assertThat(taskFrequencyCaptor.getValue().get("period").asText()).isEqualTo("day");
@@ -683,13 +683,58 @@ class FamilyServiceImplTest {
         ArgumentCaptor<JsonNode> shopFrequencyCaptor = ArgumentCaptor.forClass(JsonNode.class);
         verify(familyDataRepository).upsertShopItem(
             eq(1), eq(10), eq(201L), eq("Toy"), eq(7), eq("Fun"),
-            shopFrequencyCaptor.capture(), eq("Prize"), eq(30), eq(false)
+            shopFrequencyCaptor.capture(), eq("Prize"), eq(30), eq(true), eq(false)
         );
         assertThat(shopFrequencyCaptor.getValue().get("limit").asInt()).isEqualTo(2);
         assertThat(shopFrequencyCaptor.getValue().get("period").asText()).isEqualTo("week");
 
         verify(familyDataRepository, never()).replaceHistory(eq(1), eq(10), any());
         verify(familyDataRepository, never()).replaceRequests(eq(1), any());
+    }
+
+    @Test
+    void saveFamilyData_existingFamily_passesActiveAndDeletedFlagsToRepository() {
+        ChildEntity child = child(10, 1, "Alice", 10);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
+        when(childRepository.getChildren(1)).thenReturn(List.of(child));
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("children", List.of(Map.of("id", 10, "balance", 42)));
+        payload.put("tasks", List.of(Map.of(
+            "id", 101L,
+            "name", "Read",
+            "coins", 5,
+            "group", "Home",
+            "frequency", Map.of("limit", 1, "period", "day"),
+            "is_active", false,
+            "isDeleted", true
+        )));
+        payload.put("shop", List.of(Map.of(
+            "id", 201L,
+            "name", "Toy",
+            "price", 7,
+            "group", "Fun",
+            "frequency", Map.of("limit", 2, "period", "week"),
+            "isActive", false,
+            "isDeleted", true
+        )));
+
+        assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
+
+        verify(familyDataRepository).upsertTask(
+            eq(1), eq(10), eq(101L), eq("Read"), eq(5), eq("Home"),
+            any(JsonNode.class), eq(null), eq(null), eq(false), eq(true)
+        );
+        verify(familyDataRepository).upsertShopItem(
+            eq(1), eq(10), eq(201L), eq("Toy"), eq(7), eq("Fun"),
+            any(JsonNode.class), eq(null), eq(null), eq(false), eq(true)
+        );
     }
 
     @Test

@@ -94,16 +94,30 @@ class RepositorySmokeTest {
         long itemExternalId = 80001L;
 
         assertThat(familyDataRepository.upsertTask(familyDbId, child1.getId(), taskExternalId,
-            "Read", 5, "Study", OBJECT_MAPPER.readTree("{\"period\":\"day\"}"), "comment", 100, false)).isTrue();
+            "Read", 5, "Study", OBJECT_MAPPER.readTree("{\"period\":\"day\"}"), "comment", 100, false, false)).isTrue();
         assertThat(familyDataRepository.upsertTask(familyDbId, child1.getId(), taskExternalId,
-            "Read updated", 6, "Study", OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), "comment2", 150, false)).isTrue();
+            "Read updated", 6, "Study", OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), "comment2", 150, true, false)).isTrue();
         assertThat(familyDataRepository.upsertShopItem(familyDbId, child1.getId(), itemExternalId,
-            "Toy", 7, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false)).isTrue();
+            "Toy", 7, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false, false)).isTrue();
         assertThat(familyDataRepository.upsertShopItem(familyDbId, child1.getId(), itemExternalId,
-            "Toy updated", 8, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, false)).isTrue();
+            "Toy updated", 8, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, true, false)).isTrue();
 
         assertThat(familyDataRepository.getTasks(child1.getId())).isNotEmpty();
         assertThat(familyDataRepository.getShopItems(child1.getId())).isNotEmpty();
+
+        TaskEntity storedTask = familyDataRepository.getTasks(child1.getId()).stream()
+            .filter(taskEntity -> taskEntity.getTaskId() == taskExternalId)
+            .findFirst()
+            .orElseThrow();
+        assertThat(storedTask.isActive()).isTrue();
+        assertThat(storedTask.isDeleted()).isFalse();
+
+        ShopItemEntity storedShopItem = familyDataRepository.getShopItems(child1.getId()).stream()
+            .filter(shopItemEntity -> shopItemEntity.getItemId() == itemExternalId)
+            .findFirst()
+            .orElseThrow();
+        assertThat(storedShopItem.isActive()).isTrue();
+        assertThat(storedShopItem.isDeleted()).isFalse();
 
         assertThat(familyDataRepository.addHistory(familyDbId, child1.getId(), 90001L, "earn",
             5, "Read", 0, taskExternalId, "Study", "Great")).isTrue();
