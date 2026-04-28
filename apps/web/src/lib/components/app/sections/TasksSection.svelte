@@ -30,7 +30,7 @@
     let selectedGroup = '';
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
-    let viewMode: CardViewMode = 'grid';
+    let viewMode: CardViewMode = 'list';
     let groupOrderEditor: { openEditor: () => void } | null = null;
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
@@ -98,6 +98,7 @@
     }
 
     function taskCompactChips(task: {
+        isActive?: unknown;
         groupName?: string | null;
         frequency?: { limit?: number; period?: string } | null;
         moneyLimit?: number | null;
@@ -114,8 +115,15 @@
         if (frequency) chips.push({ label: frequency });
         if (moneyLimit) chips.push({ label: moneyLimit });
         if (ageRange) chips.push({ label: ageRange });
+        if (!isTaskActive(task)) {
+            chips.push({ label: tTasks('section.blocked'), className: 'card__compact-chip--status card__compact-chip--status-locked' });
+        }
 
         return chips;
+    }
+
+    function isTaskActive(task: { isActive?: unknown }) {
+        return task.isActive !== false;
     }
 
     async function handleEarn(taskId: unknown) {
@@ -250,11 +258,14 @@
     {#if visibleTasks.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="tasks-list">
         {#each visibleTasks as task (task.id)}
-        <div class="card card--task task-card" class:task-card--list={viewMode === 'list'}>
+        <div class="card card--task task-card" class:task-card--list={viewMode === 'list'} class:task-card--inactive={!isTaskActive(task)} class:card--disabled={!isTaskActive(task)}>
             <div class="card__badge-row">
                 <span class="card__badge card__badge--group">{task.groupName ?? tTasks('section.noGroup')}</span>
                 {#if formatFrequency(task.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(task.frequency)}</span>
+                {/if}
+                {#if !isTaskActive(task)}
+                <span class="card__status card__status--locked">{tTasks('section.blocked')}</span>
                 {/if}
             </div>
             <div class="task-card__layout">
@@ -282,14 +293,14 @@
                     </div>
                     <div class="card__actions">
                         {#if isAdmin}
-                        <button class="btn btn--primary btn--small" data-task-action="award" on:click={() => handleEarn(task.id)}>
+                        <button class="btn btn--primary btn--small" data-task-action="award" disabled={!isTaskActive(task)} on:click={() => handleEarn(task.id)}>
                             {tTasks('actions.award')}
                         </button>
                         <button class="btn btn--secondary btn--small admin-only" data-task-action="edit" on:click={() => openEditTask(task)}>
                             {tTasks('actions.edit')}
                         </button>
                         {:else}
-                        <button class="btn btn--primary" data-task-action="request" on:click={() => handleEarn(task.id)}>
+                        <button class="btn btn--primary" data-task-action="request" disabled={!isTaskActive(task)} on:click={() => handleEarn(task.id)}>
                             {tTasks('actions.complete')}
                         </button>
                         {/if}
@@ -375,6 +386,10 @@
         flex: none;
         padding: 0.38rem 0.7rem;
         font-size: 0.82rem;
+    }
+
+    .task-card--inactive {
+        opacity: 0.72;
     }
 
     @media (max-width: 640px) {

@@ -6,6 +6,7 @@ export interface TaskPayloadInput {
     comment: string;
     freqLimit: string;
     freqPeriod: 'day' | 'week' | 'month' | 'year';
+    isActive?: boolean;
 }
 
 export interface TaskPayload {
@@ -16,6 +17,7 @@ export interface TaskPayload {
     coins: number;
     comment: string | null;
     frequency: { limit: number; period: 'day' | 'week' | 'month' | 'year' } | null;
+    isActive: boolean;
 }
 
 export function buildTaskPayload(input: TaskPayloadInput): TaskPayload {
@@ -31,5 +33,6 @@ export function buildTaskPayload(input: TaskPayloadInput): TaskPayload {
         frequency: input.freqLimit
             ? { limit: Number(input.freqLimit), period: input.freqPeriod }
             : null,
+        isActive: input.isActive !== false,
     };
 }

@@ -288,7 +288,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
 
     private Optional<TaskEntity> findActiveTask(int familyDbId, int childId, long taskId) {
         return taskRepository.find(
-            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
             familyDbId,
             childId,
             taskId
@@ -297,7 +297,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
 
     private Optional<ShopItemEntity> findActiveItem(int familyDbId, int childId, long itemId) {
         return shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
             familyDbId,
             childId,
             itemId

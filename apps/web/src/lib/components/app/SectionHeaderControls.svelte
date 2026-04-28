@@ -6,7 +6,7 @@
     export let isAdmin = false;
     export let addLabel = '';
     export let addId = '';
-    export let viewMode: CardViewMode = 'grid';
+    export let viewMode: CardViewMode = 'list';
     export let viewAriaLabel = '';
     export let gridLabel = '';
     export let listLabel = '';

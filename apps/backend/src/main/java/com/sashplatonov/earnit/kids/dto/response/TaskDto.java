@@ -11,5 +11,6 @@ public record TaskDto(
     Object frequency,
     String comment,
     Integer moneyLimit,
+    boolean isActive,
     int childId
 ) { }

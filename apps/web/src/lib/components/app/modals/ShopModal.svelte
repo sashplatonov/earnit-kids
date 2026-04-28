@@ -23,6 +23,7 @@
     let comment = '';
     let moneyLimit = '';
     let itemType: 'micro' | 'small' | 'large' = 'small';
+    let isActive = true;
 
     $: if ($modalStore.open === 'shop-modal') {
         const _item = $modalStore.data?.mode === 'edit'
@@ -35,8 +36,9 @@
             comment = (_item.comment as string) ?? '';
             moneyLimit = String((_item.moneyLimit as number) ?? '');
             itemType = ((_item.type ?? _item.itemType) as typeof itemType) ?? 'small';
+            isActive = _item.isActive !== false;
         } else {
-            title = ''; groupName = ''; coins = 50; comment = ''; moneyLimit = ''; itemType = 'small';
+            title = ''; groupName = ''; coins = 50; comment = ''; moneyLimit = ''; itemType = 'small'; isActive = true;
         }
     }
 
@@ -55,6 +57,7 @@
             moneyLimit: moneyLimit ? Number(moneyLimit) : null,
             type: itemType,
             itemType,
+            isActive,
         };
 
         if (isEdit) {
@@ -67,6 +70,20 @@
         }
         void scheduleSave();
         showToast(isEdit ? tShop('modal.saved') : tShop('modal.added'), 'success');
+        close();
+    }
+
+    async function toggleItemActive() {
+        if (!existingItem?.id) return;
+        const nextActive = !isActive;
+        appStore.setState({
+            shopItems: $appStore.shopItems.map((item) =>
+                item.id == existingItem.id ? ({ ...item, isActive: nextActive } as typeof item) : item
+            ),
+        });
+        isActive = nextActive;
+        void scheduleSave();
+        showToast(nextActive ? tShop('modal.unblocked') : tShop('modal.blocked'), 'info');
         close();
     }
 
@@ -120,6 +137,9 @@
         <div class="modal__actions">
             <button class="btn btn--secondary" id="shop-cancel" on:click={close}>{tShop('modal.cancel')}</button>
             {#if isEdit}
+            <button class="btn btn--secondary" id="shop-toggle-active" on:click={toggleItemActive}>
+                {isActive ? tShop('modal.block') : tShop('modal.unblock')}
+            </button>
             <button class="btn btn--danger" id="shop-delete" on:click={deleteItem}>{tShop('modal.delete')}</button>
             {/if}
             <button class="btn btn--primary" id="shop-save" on:click={save}>{tShop('modal.save')}</button>

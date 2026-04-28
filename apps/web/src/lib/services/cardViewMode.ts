@@ -12,13 +12,14 @@ function storageKey(section: CardViewSection, role: CardViewRole): string {
 
 export function loadCardViewMode(section: CardViewSection, role: CardViewRole): CardViewMode {
     if (!browser) {
-        return 'grid';
+        return 'list';
     }
 
     try {
-        return localStorage.getItem(storageKey(section, role)) === 'list' ? 'list' : 'grid';
+        const mode = localStorage.getItem(storageKey(section, role));
+        return mode === 'grid' ? 'grid' : 'list';
     } catch {
-        return 'grid';
+        return 'list';
     }
 }
 

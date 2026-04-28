@@ -24,6 +24,7 @@
     let comment = '';
     let freqLimit = '';
     let freqPeriod: 'day' | 'week' | 'month' | 'year' = 'week';
+    let isActive = true;
 
     $: if (isOpen) {
         if (existingTask) {
@@ -33,8 +34,9 @@
             comment = (existingTask.comment as string) ?? '';
             freqLimit = String((existingTask.frequency as Record<string, unknown>)?.limit ?? '');
             freqPeriod = ((existingTask.frequency as Record<string, unknown>)?.period as typeof freqPeriod) ?? 'week';
+            isActive = existingTask.isActive !== false;
         } else {
-            title = ''; groupName = ''; coins = 10; comment = ''; freqLimit = ''; freqPeriod = 'week';
+            title = ''; groupName = ''; coins = 10; comment = ''; freqLimit = ''; freqPeriod = 'week'; isActive = true;
         }
     }
 
@@ -50,6 +52,7 @@
             comment,
             freqLimit,
             freqPeriod,
+            isActive,
         });
 
         if (isEdit) {
@@ -62,6 +65,20 @@
         }
         void scheduleSave();
         showToast(isEdit ? tTasks('modal.saved') : tTasks('modal.added'), 'success');
+        close();
+    }
+
+    async function toggleTaskActive() {
+        if (!existingTask?.id) return;
+        const nextActive = !isActive;
+        appStore.setState({
+            tasks: $appStore.tasks.map((task) =>
+                task.id == existingTask.id ? ({ ...task, isActive: nextActive } as typeof task) : task
+            ),
+        });
+        isActive = nextActive;
+        void scheduleSave();
+        showToast(nextActive ? tTasks('modal.unblocked') : tTasks('modal.blocked'), 'info');
         close();
     }
 
@@ -113,6 +130,9 @@
         <div class="modal__actions">
             <button class="btn btn--secondary" id="task-cancel" on:click={close}>{tTasks('modal.cancel')}</button>
             {#if isEdit}
+            <button class="btn btn--secondary" id="task-toggle-active" on:click={toggleTaskActive}>
+                {isActive ? tTasks('modal.block') : tTasks('modal.unblock')}
+            </button>
             <button class="btn btn--danger" id="task-delete" on:click={deleteTask}>{tTasks('modal.delete')}</button>
             {/if}
             <button class="btn btn--primary" id="task-save" on:click={save}>{tTasks('modal.save')}</button>

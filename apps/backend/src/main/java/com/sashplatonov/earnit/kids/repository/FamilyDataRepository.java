@@ -39,7 +39,7 @@ public class FamilyDataRepository {
     @Transactional
     public boolean upsertTask(int familyDbId, int childId, long taskId, String name,
                               int coins, String groupName, JsonNode frequency,
-                              String comment, Integer moneyLimit, boolean deleted) {
+                              String comment, Integer moneyLimit, boolean active, boolean deleted) {
         var existing = taskRepo.find("childId = ?1 AND taskId = ?2", childId, taskId)
             .firstResultOptional();
         if (existing.isPresent()) {
@@ -50,6 +50,7 @@ public class FamilyDataRepository {
             task.setFrequency(frequency);
             task.setComment(comment);
             task.setMoneyLimit(moneyLimit);
+            task.setActive(active);
             task.setDeleted(deleted);
         } else {
             taskRepo.persist(TaskEntity.builder()
@@ -62,6 +63,7 @@ public class FamilyDataRepository {
                 .frequency(frequency)
                 .comment(comment)
                 .moneyLimit(moneyLimit)
+                .active(active)
                 .deleted(deleted)
                 .build());
         }
@@ -95,7 +97,7 @@ public class FamilyDataRepository {
     @Transactional
     public boolean upsertShopItem(int familyDbId, int childId, long itemId, String name,
                                   int price, String groupName, JsonNode frequency,
-                                  String comment, Integer moneyLimit, boolean deleted) {
+                                  String comment, Integer moneyLimit, boolean active, boolean deleted) {
         var existing = shopRepo.find("childId = ?1 AND itemId = ?2", childId, itemId)
             .firstResultOptional();
         if (existing.isPresent()) {
@@ -106,6 +108,7 @@ public class FamilyDataRepository {
             shopItem.setFrequency(frequency);
             shopItem.setComment(comment);
             shopItem.setMoneyLimit(moneyLimit);
+            shopItem.setActive(active);
             shopItem.setDeleted(deleted);
         } else {
             shopRepo.persist(ShopItemEntity.builder()
@@ -118,6 +121,7 @@ public class FamilyDataRepository {
                 .frequency(frequency)
                 .comment(comment)
                 .moneyLimit(moneyLimit)
+                .active(active)
                 .deleted(deleted)
                 .build());
         }

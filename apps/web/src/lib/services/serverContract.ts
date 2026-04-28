@@ -44,11 +44,13 @@ export function normalizeChild(child: Record<string, unknown> = {}) {
 export function normalizeTask(task: Record<string, unknown> = {}) {
     const name = (task.name ?? task.title ?? '') as string;
     const coins = (task.coins ?? task.price ?? 0) as number;
+    const isActive = task.isActive ?? task.is_active;
     return {
         ...task,
         name,
         title: name,
         coins,
+        isActive: isActive == null ? true : parseBoolean(isActive),
         groupName: task.groupName ?? task.group ?? null,
         comment: task.comment ?? null,
         moneyLimit: task.moneyLimit ?? task.money_limit ?? null,
@@ -60,12 +62,14 @@ export function normalizeTask(task: Record<string, unknown> = {}) {
 export function normalizeShopItem(item: Record<string, unknown> = {}) {
     const name = (item.name ?? item.title ?? '') as string;
     const price = (item.price ?? item.coins ?? 0) as number;
+    const isActive = item.isActive ?? item.is_active;
     return {
         ...item,
         name,
         title: name,
         price,
         coins: price,
+        isActive: isActive == null ? true : parseBoolean(isActive),
         groupName: item.groupName ?? item.group ?? null,
         comment: item.comment ?? null,
         moneyLimit: item.moneyLimit ?? item.money_limit ?? null,

@@ -14,7 +14,7 @@
     import { buildRequestCatalog, resolveRequestCard, type RequestDetailsI18n } from './requestDetails';
 
     const i18n = useI18n();
-    let viewMode: CardViewMode = 'grid';
+    let viewMode: CardViewMode = 'list';
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
     $: requests = $appStore.requests;

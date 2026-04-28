@@ -59,6 +59,10 @@ public class ShopItemEntity extends CreatedAtEntity {
     @Column(name = "money_limit")
     private Integer moneyLimit;
 
+    @Column(name = "is_active")
+    @Builder.Default
+    private boolean active = true;
+
     @Column(name = "is_deleted")
     @Builder.Default
     private boolean deleted = false;

@@ -1,0 +1,9 @@
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS is_active BOOLEAN;
+UPDATE tasks SET is_active = TRUE WHERE is_active IS NULL;
+ALTER TABLE tasks ALTER COLUMN is_active SET NOT NULL;
+ALTER TABLE tasks ALTER COLUMN is_active SET DEFAULT TRUE;
+
+ALTER TABLE shop_items ADD COLUMN IF NOT EXISTS is_active BOOLEAN;
+UPDATE shop_items SET is_active = TRUE WHERE is_active IS NULL;
+ALTER TABLE shop_items ALTER COLUMN is_active SET NOT NULL;
+ALTER TABLE shop_items ALTER COLUMN is_active SET DEFAULT TRUE;

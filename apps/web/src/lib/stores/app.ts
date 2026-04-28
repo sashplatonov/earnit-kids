@@ -5,6 +5,7 @@ export interface Task {
     id: number | string;
     name: string;
     coins: number;
+    isActive?: boolean;
     groupName?: string | null;
     comment?: string | null;
     moneyLimit?: number | null;
@@ -18,6 +19,7 @@ export interface ShopItem {
     id: number | string;
     name: string;
     price: number;
+    isActive?: boolean;
     groupName?: string | null;
     comment?: string | null;
     moneyLimit?: number | null;

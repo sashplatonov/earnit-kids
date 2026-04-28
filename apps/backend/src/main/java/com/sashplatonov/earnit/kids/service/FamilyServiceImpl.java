@@ -720,6 +720,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 serializeFrequency(task.get("frequency")),
                 asString(task.get("comment")),
                 coalesceInt(task.get("moneyLimit"), task.get("money_limit")),
+                defaultBoolean(coalesceFirst(task.get("isActive"), task.get("is_active")), true),
                 defaultBoolean(task.get("isDeleted"), false)
             );
         }
@@ -748,6 +749,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 serializeFrequency(item.get("frequency")),
                 asString(item.get("comment")),
                 coalesceInt(item.get("moneyLimit"), item.get("money_limit")),
+                defaultBoolean(coalesceFirst(item.get("isActive"), item.get("is_active")), true),
                 defaultBoolean(item.get("isDeleted"), false)
             );
         }
@@ -860,6 +862,10 @@ public final class FamilyServiceImpl implements FamilyService {
     private Integer coalesceInt(Object primary, Object fallback) {
         Integer primaryValue = asInteger(primary);
         return primaryValue != null ? primaryValue : asInteger(fallback);
+    }
+
+    private Object coalesceFirst(Object primary, Object fallback) {
+        return primary != null ? primary : fallback;
     }
 
     private int defaultInt(Object value, int defaultValue) {
@@ -1090,12 +1096,12 @@ public final class FamilyServiceImpl implements FamilyService {
 
     private TaskDto toTaskDto(TaskEntity task) {
         return new TaskDto(task.getTaskId(), task.getName(), task.getCoins(), task.getGroupName(),
-            parseFrequency(task.getFrequency()), task.getComment(), task.getMoneyLimit(), task.getChildId());
+            parseFrequency(task.getFrequency()), task.getComment(), task.getMoneyLimit(), task.isActive(), task.getChildId());
     }
 
     private ShopItemDto toShopItemDto(ShopItemEntity shopItem) {
         return new ShopItemDto(shopItem.getItemId(), shopItem.getName(), shopItem.getPrice(), shopItem.getGroupName(),
-            parseFrequency(shopItem.getFrequency()), shopItem.getComment(), shopItem.getMoneyLimit(), shopItem.getChildId());
+            parseFrequency(shopItem.getFrequency()), shopItem.getComment(), shopItem.getMoneyLimit(), shopItem.isActive(), shopItem.getChildId());
     }
 
     private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, List<TaskDto> tasks, List<ShopItemDto> shopItems) {

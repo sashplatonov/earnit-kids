@@ -31,7 +31,7 @@
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
     let selectedGroup = '';
-    let viewMode: CardViewMode = 'grid';
+    let viewMode: CardViewMode = 'list';
     let groupOrderEditor: { openEditor: () => void } | null = null;
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
 
@@ -146,11 +146,18 @@
         return Number(item.price ?? 0);
     }
 
+    function isItemActive(item: { isActive?: unknown }) {
+        return item.isActive !== false;
+    }
+
     function isItemAffordable(item: { price?: unknown }) {
         return balance >= itemPrice(item);
     }
 
-    function availabilityLabel(item: { price?: unknown }) {
+    function availabilityLabel(item: { price?: unknown; isActive?: unknown }) {
+        if (!isItemActive(item)) {
+            return tShop('section.blocked');
+        }
         return isItemAffordable(item)
             ? (isAdmin ? tShop('section.availableAdmin') : tShop('section.availableChild'))
             : tShop('section.missingCoins', { amount: $i18n.formatNumber(missingCoins(itemPrice(item))) });
@@ -163,6 +170,7 @@
     }
 
     function shopCompactChips(item: {
+        isActive?: unknown;
         groupName?: string | null;
         frequency?: { limit?: number; period?: string } | null;
         moneyLimit?: number | null;
@@ -176,7 +184,7 @@
         if (frequency) chips.push({ label: frequency });
         chips.push({
             label: availabilityLabel(item),
-            className: isItemAffordable(item)
+            className: isItemActive(item) && isItemAffordable(item)
                 ? 'card__compact-chip--status card__compact-chip--status-available'
                 : 'card__compact-chip--status card__compact-chip--status-locked',
         });
@@ -315,13 +323,13 @@
     {#if visibleItems.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={isItemAffordable(item)} class:card--disabled={!isItemAffordable(item)} class:shop-card--list={viewMode === 'list'}>
+        <div class="card card--shop shop-card" class:card--affordable={isItemActive(item) && isItemAffordable(item)} class:card--disabled={!isItemActive(item) || !isItemAffordable(item)} class:shop-card--list={viewMode === 'list'}>
             <div class="card__badge-row">
                 <span class="card__badge card__badge--group">{item.groupName ?? tShop('section.noGroup')}</span>
                 {#if formatFrequency(item.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
                 {/if}
-                <span class:card__status--available={isItemAffordable(item)} class:card__status--locked={!isItemAffordable(item)} class="card__status">
+                <span class:card__status--available={isItemActive(item) && isItemAffordable(item)} class:card__status--locked={!isItemActive(item) || !isItemAffordable(item)} class="card__status">
                     {availabilityLabel(item)}
                 </span>
             </div>
@@ -351,7 +359,7 @@
                     {/if}
                     <div class="card__actions">
                         {#if isAdmin}
-                        <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item)}
+                        <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item) || !isItemActive(item)}
                             on:click={() => handleBuy(item.id)}>
                             {tShop('actions.buy')}
                         </button>
@@ -359,7 +367,7 @@
                             {tShop('actions.edit')}
                         </button>
                         {:else}
-                        <button class="btn btn--primary" data-shop-action="request" disabled={balance < itemPrice(item)}
+                        <button class="btn btn--primary" data-shop-action="request" disabled={balance < itemPrice(item) || !isItemActive(item)}
                             on:click={() => handleBuy(item.id)}>
                             {tShop('actions.request')}
                         </button>

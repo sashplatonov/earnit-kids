@@ -11,5 +11,6 @@ public record ShopItemDto(
     Object frequency,
     String comment,
     Integer moneyLimit,
+    boolean isActive,
     int childId
 ) { }
