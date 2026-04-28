@@ -201,8 +201,6 @@ public final class FamilyServiceImpl implements FamilyService {
         syncBalances(familyDbId, selectedChildId, payload, accessibleChildren);
         syncTasks(familyDbId, selectedChildId, payload);
         syncShopItems(familyDbId, selectedChildId, payload);
-        syncHistory(familyDbId, selectedChildId, payload, accessibleChildren);
-        syncRequests(familyDbId, selectedChildId, payload, accessibleChildren);
         familyRepository.updateLastActivity(familyId);
 
         return loadFamilyData(familyId, selectedChildId, adminSession);
@@ -755,97 +753,6 @@ public final class FamilyServiceImpl implements FamilyService {
         }
     }
 
-    private void syncHistory(int familyDbId, Integer selectedChildId, Map<String, Object> payload,
-                              List<ChildEntity> accessibleChildren) {
-        if (selectedChildId == null || !payload.containsKey("history")) {
-            return;
-        }
-
-        Map<Long, Instant> existingCreatedAtByExternalId = mapHistoryCreatedAtByExternalId(
-            familyDataRepository.getAllHistoryForFamily(familyDbId));
-
-        Set<Integer> allowedChildIds = accessibleChildren.stream()
-            .map(ChildEntity::getId)
-            .collect(java.util.stream.Collectors.toCollection(HashSet::new));
-
-        List<HistoryEntryEntity> selectedChildEntries = new ArrayList<>();
-        List<HistoryEntryEntity> otherChildEntries = new ArrayList<>();
-
-        for (Map<String, Object> entry : asMapList(payload.get("history"))) {
-            Integer entryChildId = asInteger(entry.get("childId"));
-            int targetChildId = (entryChildId != null && allowedChildIds.contains(entryChildId))
-                ? entryChildId
-                : selectedChildId;
-            Long externalId = asLong(entry.get("id"));
-
-            HistoryEntryEntity entity = HistoryEntryEntity.builder()
-                .familyId(familyDbId)
-                .childId(targetChildId)
-                .externalId(externalId)
-                .type(firstNonBlank(asString(entry.get("type")), "unknown"))
-                .amount(firstDefinedInt(entry.get("amount"), entry.get("coins"), 0))
-                .description(asString(entry.get("description")))
-                .moneyAmount(firstDefinedInt(entry.get("moneyAmount"), entry.get("money_amount"), 0))
-                .relatedId(firstDefinedLong(entry.get("relatedId"), entry.get("taskId"), entry.get("itemId")))
-                .groupName(firstNonBlank(asString(entry.get("groupName")), asString(entry.get("group"))))
-                .comment(asString(entry.get("comment")))
-                .createdAt(resolveCreatedAt(externalId, existingCreatedAtByExternalId,
-                    entry.get("createdAt"), entry.get("created_at"), entry.get("date"), entry.get("timestamp")))
-                .build();
-
-            if (targetChildId == selectedChildId) {
-                selectedChildEntries.add(entity);
-            } else {
-                otherChildEntries.add(entity);
-            }
-        }
-
-        familyDataRepository.replaceHistory(familyDbId, selectedChildId, selectedChildEntries);
-        for (HistoryEntryEntity entry : otherChildEntries) {
-            familyDataRepository.upsertHistoryEntry(entry);
-        }
-    }
-
-    private void syncRequests(int familyDbId, Integer selectedChildId, Map<String, Object> payload,
-                              List<ChildEntity> children) {
-        if (!payload.containsKey("requests")) {
-            return;
-        }
-
-        Map<Long, Instant> existingCreatedAtByExternalId = mapRequestCreatedAtByExternalId(
-            familyDataRepository.getAllRequestsForFamily(familyDbId));
-
-        Set<Integer> allowedChildIds = children.stream()
-            .map(ChildEntity::getId)
-            .collect(java.util.stream.Collectors.toCollection(HashSet::new));
-        int fallbackChildId = selectedChildId != null ? selectedChildId : children.getFirst().getId();
-
-        List<PurchaseRequestEntity> entries = new ArrayList<>();
-        for (Map<String, Object> request : asMapList(payload.get("requests"))) {
-            Integer requestChildId = asInteger(request.get("childId"));
-            int targetChildId = requestChildId != null && allowedChildIds.contains(requestChildId)
-                ? requestChildId
-                : fallbackChildId;
-            Long externalId = asLong(request.get("id"));
-
-            entries.add(PurchaseRequestEntity.builder()
-                .familyId(familyDbId)
-                .childId(targetChildId)
-                .externalId(externalId)
-                .taskId(asLong(request.get("taskId")))
-                .taskName(asString(request.get("taskName")))
-                .itemId(asLong(request.get("itemId")))
-                .coins(defaultInt(request.get("coins"), 0))
-                .status(firstNonBlank(asString(request.get("status")), "pending"))
-                .requestType(firstNonBlank(asString(request.get("requestType")), "earn"))
-                .moneyAmount(firstDefinedInt(request.get("moneyAmount"), request.get("money_amount"), 0))
-                .createdAt(resolveCreatedAt(externalId, existingCreatedAtByExternalId,
-                    request.get("createdAt"), request.get("created_at"), request.get("date"), request.get("timestamp")))
-                .build());
-        }
-        familyDataRepository.replaceRequests(familyDbId, entries);
-    }
-
     private List<Map<String, Object>> asMapList(Object rawValue) {
         if (!(rawValue instanceof Collection<?> collection)) {
             return List.of();
@@ -918,69 +825,6 @@ public final class FamilyServiceImpl implements FamilyService {
         }
     }
 
-    private Instant parseInstant(Object... candidates) {
-        for (Object candidate : candidates) {
-            if (candidate == null) {
-                continue;
-            }
-            if (candidate instanceof Instant instant) {
-                return instant;
-            }
-            if (candidate instanceof Number number) {
-                Instant parsed = parseEpochTimestamp(number.longValue());
-                if (parsed != null) {
-                    return parsed;
-                }
-            }
-            if (candidate instanceof String value && !value.isBlank()) {
-                try {
-                    return Instant.parse(value);
-                } catch (Exception ignored) {
-                }
-                Instant parsed = parseEpochTimestamp(asLong(value));
-                if (parsed != null) {
-                    return parsed;
-                }
-            }
-        }
-        return null;
-    }
-
-    private Instant resolveCreatedAt(Long externalId, Map<Long, Instant> existingCreatedAtByExternalId,
-                                     Object... candidates) {
-        Instant parsed = parseInstant(candidates);
-        if (parsed != null) {
-            return parsed;
-        }
-
-        if (externalId != null) {
-            Instant existing = existingCreatedAtByExternalId.get(externalId);
-            if (existing != null) {
-                return existing;
-            }
-
-            Instant derived = parseEpochTimestamp(externalId);
-            if (derived != null) {
-                return derived;
-            }
-        }
-
-        return timeProvider.now();
-    }
-
-    private Instant parseEpochTimestamp(Long value) {
-        if (value == null) {
-            return null;
-        }
-        if (value >= 946684800000L && value <= 4102444800000L) {
-            return Instant.ofEpochMilli(value);
-        }
-        if (value >= 946684800L && value <= 4102444800L) {
-            return Instant.ofEpochSecond(value);
-        }
-        return null;
-    }
-
     private Integer asInteger(Object value) {
         if (value instanceof Number number) {
             return number.intValue();
@@ -1023,21 +867,6 @@ public final class FamilyServiceImpl implements FamilyService {
         return parsed != null ? parsed : defaultValue;
     }
 
-    private int firstDefinedInt(Object primary, Object fallback, int defaultValue) {
-        Integer value = coalesceInt(primary, fallback);
-        return value != null ? value : defaultValue;
-    }
-
-    private Long firstDefinedLong(Object... values) {
-        for (Object value : values) {
-            Long parsed = asLong(value);
-            if (parsed != null) {
-                return parsed;
-            }
-        }
-        return null;
-    }
-
     private boolean defaultBoolean(Object value, boolean defaultValue) {
         if (value instanceof Boolean bool) {
             return bool;
@@ -1046,32 +875,6 @@ public final class FamilyServiceImpl implements FamilyService {
             return Boolean.parseBoolean(text);
         }
         return defaultValue;
-    }
-
-    private Map<Long, Instant> mapHistoryCreatedAtByExternalId(List<HistoryEntryEntity> entries) {
-        Map<Long, Instant> createdAtByExternalId = new LinkedHashMap<>();
-        if (entries == null) {
-            return createdAtByExternalId;
-        }
-        for (HistoryEntryEntity entry : entries) {
-            if (entry.getExternalId() != null && entry.getCreatedAt() != null) {
-                createdAtByExternalId.put(entry.getExternalId(), entry.getCreatedAt());
-            }
-        }
-        return createdAtByExternalId;
-    }
-
-    private Map<Long, Instant> mapRequestCreatedAtByExternalId(List<PurchaseRequestEntity> entries) {
-        Map<Long, Instant> createdAtByExternalId = new LinkedHashMap<>();
-        if (entries == null) {
-            return createdAtByExternalId;
-        }
-        for (PurchaseRequestEntity entry : entries) {
-            if (entry.getExternalId() != null && entry.getCreatedAt() != null) {
-                createdAtByExternalId.put(entry.getExternalId(), entry.getCreatedAt());
-            }
-        }
-        return createdAtByExternalId;
     }
 
     private List<HistoryEntryEntity> queryHistory(int familyDbId, Integer childId, Instant from, Instant to) {

@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -577,7 +576,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void saveFamilyData_childSession_ignoresSiblingPayload() {
+    void saveFamilyData_childSession_ignoresSiblingPayloadAndDoesNotReplaceRequests() {
         ChildEntity child = child(10, 1, "Alice", 10);
         ChildEntity sibling = child(11, 1, "Bob", 15);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
@@ -612,14 +611,11 @@ class FamilyServiceImplTest {
         verify(childRepository).updateBalance(10, 42);
         verify(childRepository, never()).updateBalance(11, 9000);
 
-        ArgumentCaptor<List<PurchaseRequestEntity>> requestCaptor = ArgumentCaptor.forClass(List.class);
-        verify(familyDataRepository).replaceRequests(eq(1), requestCaptor.capture());
-        assertThat(requestCaptor.getValue()).singleElement().satisfies(entry -> assertThat(entry.getChildId()).isEqualTo(10));
+        verify(familyDataRepository, never()).replaceRequests(eq(1), any());
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void saveFamilyData_existingFamily_persistsTasksShopHistoryAndRequests() {
+    void saveFamilyData_existingFamily_persistsTasksShopButDoesNotReplaceLedgers() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
@@ -692,23 +688,8 @@ class FamilyServiceImplTest {
         assertThat(shopFrequencyCaptor.getValue().get("limit").asInt()).isEqualTo(2);
         assertThat(shopFrequencyCaptor.getValue().get("period").asText()).isEqualTo("week");
 
-        ArgumentCaptor<List<HistoryEntryEntity>> historyCaptor = ArgumentCaptor.forClass(List.class);
-        verify(familyDataRepository).replaceHistory(eq(1), eq(10), historyCaptor.capture());
-        assertThat(historyCaptor.getValue()).singleElement().satisfies(entry -> {
-            assertThat(entry.getExternalId()).isEqualTo(301L);
-            assertThat(entry.getType()).isEqualTo("earn");
-            assertThat(entry.getDescription()).isEqualTo("Read");
-            assertThat(entry.getCreatedAt()).isEqualTo(timestamp);
-        });
-
-        ArgumentCaptor<List<PurchaseRequestEntity>> requestCaptor = ArgumentCaptor.forClass(List.class);
-        verify(familyDataRepository).replaceRequests(eq(1), requestCaptor.capture());
-        assertThat(requestCaptor.getValue()).singleElement().satisfies(entry -> {
-            assertThat(entry.getExternalId()).isEqualTo(401L);
-            assertThat(entry.getTaskId()).isEqualTo(101L);
-            assertThat(entry.getChildId()).isEqualTo(10);
-            assertThat(entry.getCreatedAt()).isEqualTo(timestamp);
-        });
+        verify(familyDataRepository, never()).replaceHistory(eq(1), eq(10), any());
+        verify(familyDataRepository, never()).replaceRequests(eq(1), any());
     }
 
     @Test
@@ -730,8 +711,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void saveFamilyData_historyWithoutCreatedAt_preservesExistingRowsAndDerivesTimestampIds() {
+    void saveFamilyData_emptyHistorySnapshot_doesNotDeletePersistedTransactions() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
@@ -742,52 +722,17 @@ class FamilyServiceImplTest {
         when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
 
-        Instant preservedCreatedAt = FIXED_NOW.minus(Duration.ofDays(7));
-        long derivedExternalId = FIXED_NOW.minus(Duration.ofDays(2)).toEpochMilli();
-
-        when(familyDataRepository.getAllHistoryForFamily(1)).thenReturn(List.of(
-            HistoryEntryEntity.builder()
-                .familyId(1)
-                .childId(10)
-                .externalId(901L)
-                .type("earn")
-                .createdAt(preservedCreatedAt)
-                .build()
-        ));
-
-        Map<String, Object> preservedEntry = new LinkedHashMap<>();
-        preservedEntry.put("id", 901L);
-        preservedEntry.put("type", "earn");
-        preservedEntry.put("coins", 5);
-        preservedEntry.put("description", "Read");
-        preservedEntry.put("taskId", 101L);
-
-        Map<String, Object> derivedEntry = new LinkedHashMap<>();
-        derivedEntry.put("id", derivedExternalId);
-        derivedEntry.put("type", "spend");
-        derivedEntry.put("amount", 3);
-        derivedEntry.put("description", "Toy");
-        derivedEntry.put("itemId", 201L);
-
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("children", List.of(Map.of("id", 10, "balance", 10)));
-        payload.put("history", List.of(preservedEntry, derivedEntry));
+        payload.put("history", List.of());
 
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
-        ArgumentCaptor<List<HistoryEntryEntity>> historyCaptor = ArgumentCaptor.forClass(List.class);
-        verify(familyDataRepository).replaceHistory(eq(1), eq(10), historyCaptor.capture());
-        assertThat(historyCaptor.getValue())
-            .extracting(HistoryEntryEntity::getExternalId, HistoryEntryEntity::getCreatedAt)
-            .containsExactly(
-                tuple(901L, preservedCreatedAt),
-                tuple(derivedExternalId, Instant.ofEpochMilli(derivedExternalId))
-            );
+        verify(familyDataRepository, never()).replaceHistory(eq(1), eq(10), any());
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void saveFamilyData_requestsWithoutCreatedAt_preservesExistingRowsAndDerivesTimestampIds() {
+    void saveFamilyData_emptyRequestSnapshot_doesNotDeletePersistedRequests() {
         ChildEntity child = child(10, 1, "Alice", 10);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
@@ -798,55 +743,13 @@ class FamilyServiceImplTest {
         when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
 
-        Instant preservedCreatedAt = FIXED_NOW.minus(Duration.ofDays(3));
-        long derivedExternalId = FIXED_NOW.minus(Duration.ofHours(6)).toEpochMilli();
-
-        when(familyDataRepository.getAllRequestsForFamily(1)).thenReturn(List.of(
-            PurchaseRequestEntity.builder()
-                .familyId(1)
-                .childId(10)
-                .externalId(902L)
-                .taskId(101L)
-                .taskName("Read")
-                .coins(5)
-                .status("pending")
-                .requestType("earn")
-                .createdAt(preservedCreatedAt)
-                .build()
-        ));
-
-        Map<String, Object> preservedRequest = new LinkedHashMap<>();
-        preservedRequest.put("id", 902L);
-        preservedRequest.put("childId", 10);
-        preservedRequest.put("taskId", 101L);
-        preservedRequest.put("taskName", "Read");
-        preservedRequest.put("coins", 5);
-        preservedRequest.put("status", "pending");
-        preservedRequest.put("requestType", "earn");
-
-        Map<String, Object> derivedRequest = new LinkedHashMap<>();
-        derivedRequest.put("id", derivedExternalId);
-        derivedRequest.put("childId", 10);
-        derivedRequest.put("itemId", 201L);
-        derivedRequest.put("taskName", "Toy");
-        derivedRequest.put("coins", 7);
-        derivedRequest.put("status", "pending");
-        derivedRequest.put("requestType", "shop_purchase");
-
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("children", List.of(Map.of("id", 10, "balance", 10)));
-        payload.put("requests", List.of(preservedRequest, derivedRequest));
+        payload.put("requests", List.of());
 
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
-        ArgumentCaptor<List<PurchaseRequestEntity>> requestCaptor = ArgumentCaptor.forClass(List.class);
-        verify(familyDataRepository).replaceRequests(eq(1), requestCaptor.capture());
-        assertThat(requestCaptor.getValue())
-            .extracting(PurchaseRequestEntity::getExternalId, PurchaseRequestEntity::getCreatedAt)
-            .containsExactly(
-                tuple(902L, preservedCreatedAt),
-                tuple(derivedExternalId, Instant.ofEpochMilli(derivedExternalId))
-            );
+        verify(familyDataRepository, never()).replaceRequests(eq(1), any());
     }
 
     private static ChildEntity child(int id, int familyDbId, String name, int balance) {
