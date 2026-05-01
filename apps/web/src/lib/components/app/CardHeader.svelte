@@ -14,8 +14,6 @@
     export let titleActionAria = '';
     export let titleActionExpanded = false;
     export let titleActionControls = '';
-    export let titleActionLabel = '';
-    export let titleActionText = '';
     export let onTitleAction: (() => void) | null = null;
 </script>
 
@@ -38,14 +36,6 @@
 					>
 						<span aria-hidden="true">📝</span>
 					</button>
-					{#if titleActionExpanded && titleActionText}
-						<span class="card__title-action-tooltip" id={titleActionControls} role="tooltip">
-							{#if titleActionLabel}
-								<span class="card__title-action-tooltip-label">{titleActionLabel}</span>
-							{/if}
-							<span>{titleActionText}</span>
-						</span>
-					{/if}
 				</span>
 			{/if}
 		</h3>
@@ -115,31 +105,6 @@
 		border-color: rgba(99, 102, 241, 0.34);
 		transform: translateY(-1px);
 		outline: none;
-	}
-
-	.card__title-action-tooltip {
-		position: absolute;
-		right: 0;
-		top: calc(100% + 0.45rem);
-		z-index: 20;
-		display: grid;
-		gap: 0.22rem;
-		width: min(18rem, 70vw);
-		max-width: calc(100vw - 1.5rem);
-		padding: 0.6rem 0.7rem;
-		border: 1px solid rgba(148, 163, 184, 0.28);
-		border-radius: 0.85rem;
-		background: rgba(255, 255, 255, 0.98);
-		box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
-		color: #334155;
-		font-size: 0.76rem;
-		line-height: 1.35;
-		white-space: normal;
-	}
-
-	.card__title-action-tooltip-label {
-		font-weight: 800;
-		color: #1e293b;
 	}
 
     :global(.task-card--list) .card__header,
@@ -291,13 +256,6 @@
 			width: 1.4rem;
 			height: 1.4rem;
 			min-width: 1.4rem;
-		}
-
-		.card__title-action-tooltip {
-			right: 0;
-			left: auto;
-			width: min(16rem, 72vw);
-			max-width: calc(100vw - 1rem);
 		}
 
         :global(.task-card--list) .card__compact-meta,

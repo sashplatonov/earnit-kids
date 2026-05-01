@@ -17,6 +17,7 @@
     let viewMode: CardViewMode = 'list';
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
     let openNoteRequestId: string | null = null;
+    let notePopoverStyle = '';
 
     $: requests = $appStore.requests;
     $: isAdmin = $appStore.isAdmin;
@@ -209,9 +210,34 @@
         return `request-note-${String(reqId)}`;
     }
 
-    function toggleNote(reqId: unknown) {
+    function toggleNote(reqId: unknown, event?: MouseEvent) {
         const nextId = String(reqId);
-        openNoteRequestId = openNoteRequestId === nextId ? null : nextId;
+        if (openNoteRequestId === nextId) {
+            openNoteRequestId = null;
+            return;
+        }
+
+        openNoteRequestId = nextId;
+
+        const button = event?.currentTarget instanceof HTMLElement
+            ? event.currentTarget
+            : null;
+
+        if (!button) {
+            notePopoverStyle = '';
+            return;
+        }
+
+        const rect = button.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const tooltipWidth = Math.min(288, viewportWidth - 16);
+        const left = Math.min(
+            Math.max(8, rect.right - tooltipWidth),
+            viewportWidth - tooltipWidth - 8
+        );
+        const top = rect.bottom + 8;
+
+        notePopoverStyle = `left:${left}px; top:${top}px; width:min(18rem, calc(100vw - 1rem));`;
     }
 </script>
 
@@ -261,9 +287,7 @@
                             titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
                             titleActionExpanded={openNoteRequestId === String(req.id)}
                             titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
-                            titleActionLabel={tHistory('requests.noteLabel')}
-                            titleActionText={req.ui.note ?? ''}
-                            onTitleAction={req.ui.note ? () => toggleNote(req.id) : null}
+                            onTitleAction={req.ui.note ? ((event?: MouseEvent) => toggleNote(req.id, event)) : null}
                         />
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
@@ -345,9 +369,7 @@
                             titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
                             titleActionExpanded={openNoteRequestId === String(req.id)}
                             titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
-                            titleActionLabel={tHistory('requests.noteLabel')}
-                            titleActionText={req.ui.note ?? ''}
-                            onTitleAction={req.ui.note ? () => toggleNote(req.id) : null}
+                            onTitleAction={req.ui.note ? ((event?: MouseEvent) => toggleNote(req.id, event)) : null}
                         />
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
@@ -385,6 +407,16 @@
     </div>
     {/if}
 </section>
+
+{#if openNoteRequestId}
+    {@const activeRequest = [...incomingRequests, ...myRequests].find((req) => String(req.id) === openNoteRequestId)}
+    {#if activeRequest?.ui.note}
+    <div class="request-note-popover" id={requestNoteId(openNoteRequestId)} role="tooltip" style={notePopoverStyle}>
+        <span class="request-note-popover__label">{tHistory('requests.noteLabel')}</span>
+        <span>{activeRequest.ui.note}</span>
+    </div>
+    {/if}
+{/if}
 
 <style>
     .cards--list {
@@ -439,6 +471,28 @@
         font-weight: 800;
         line-height: 1;
         white-space: nowrap;
+    }
+
+    .request-note-popover {
+        position: fixed;
+        z-index: 1200;
+        display: grid;
+        gap: 0.22rem;
+        max-width: calc(100vw - 1rem);
+        padding: 0.6rem 0.7rem;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        border-radius: 0.85rem;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+        color: #334155;
+        font-size: 0.76rem;
+        line-height: 1.35;
+        white-space: normal;
+    }
+
+    .request-note-popover__label {
+        font-weight: 800;
+        color: #1e293b;
     }
 
     .request-card--list {
