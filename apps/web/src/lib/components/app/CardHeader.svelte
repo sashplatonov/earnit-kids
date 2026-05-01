@@ -11,6 +11,12 @@
     export let amountClass = '';
     export let amountNote = '';
     export let compactChips: CardHeaderChip[] = [];
+    export let titleActionAria = '';
+    export let titleActionExpanded = false;
+    export let titleActionControls = '';
+    export let titleActionLabel = '';
+    export let titleActionText = '';
+    export let onTitleAction: (() => void) | null = null;
 </script>
 
 <div class="card__header">
@@ -19,6 +25,28 @@
 			<span class="card__title-text">{title}</span>
 			{#if titleSuffix}
 				<span class="card__title-suffix"> — {titleSuffix}</span>
+			{/if}
+			{#if titleActionAria && onTitleAction}
+				<span class="card__title-action-wrap">
+					<button
+						type="button"
+						class="card__title-action"
+						aria-label={titleActionAria}
+						aria-expanded={titleActionExpanded}
+						aria-controls={titleActionControls || undefined}
+						on:click|stopPropagation={onTitleAction}
+					>
+						<span aria-hidden="true">📝</span>
+					</button>
+					{#if titleActionExpanded && titleActionText}
+						<span class="card__title-action-tooltip" id={titleActionControls} role="tooltip">
+							{#if titleActionLabel}
+								<span class="card__title-action-tooltip-label">{titleActionLabel}</span>
+							{/if}
+							<span>{titleActionText}</span>
+						</span>
+					{/if}
+				</span>
 			{/if}
 		</h3>
         {#if compactChips.length > 0}
@@ -58,6 +86,62 @@
 		font-size: 0.92em;
 	}
 
+	.card__title-action-wrap {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		flex: 0 0 auto;
+	}
+
+	.card__title-action {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.55rem;
+		height: 1.55rem;
+		min-width: 1.55rem;
+		padding: 0;
+		border: 1px solid rgba(99, 102, 241, 0.22);
+		border-radius: 999px;
+		background: rgba(99, 102, 241, 0.1);
+		color: #4338ca;
+		cursor: pointer;
+		transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+	}
+
+	.card__title-action:hover,
+	.card__title-action:focus-visible {
+		background: rgba(99, 102, 241, 0.16);
+		border-color: rgba(99, 102, 241, 0.34);
+		transform: translateY(-1px);
+		outline: none;
+	}
+
+	.card__title-action-tooltip {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 0.45rem);
+		z-index: 20;
+		display: grid;
+		gap: 0.22rem;
+		width: min(18rem, 70vw);
+		max-width: calc(100vw - 1.5rem);
+		padding: 0.6rem 0.7rem;
+		border: 1px solid rgba(148, 163, 184, 0.28);
+		border-radius: 0.85rem;
+		background: rgba(255, 255, 255, 0.98);
+		box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+		color: #334155;
+		font-size: 0.76rem;
+		line-height: 1.35;
+		white-space: normal;
+	}
+
+	.card__title-action-tooltip-label {
+		font-weight: 800;
+		color: #1e293b;
+	}
+
     :global(.task-card--list) .card__header,
     :global(.shop-card--list) .card__header,
     :global(.request-card--list) .card__header,
@@ -72,7 +156,10 @@
     :global(.request-card--list) .card__title,
     :global(.history-transaction-card--list) .card__title {
         min-height: 0;
-        display: block;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
         overflow: visible;
         white-space: normal;
         text-overflow: clip;
@@ -161,6 +248,10 @@
         :global(.request-card--list) .card__title,
         :global(.history-transaction-card--list) .card__title {
             grid-area: title;
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 0.28rem;
             min-width: 0;
             min-height: 0;
             overflow: hidden;
@@ -179,6 +270,19 @@
 		:global(.request-card--list) .card__title-suffix {
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+
+		.card__title-action {
+			width: 1.4rem;
+			height: 1.4rem;
+			min-width: 1.4rem;
+		}
+
+		.card__title-action-tooltip {
+			right: 0;
+			left: auto;
+			width: min(16rem, 72vw);
+			max-width: calc(100vw - 1rem);
 		}
 
         :global(.task-card--list) .card__compact-meta,

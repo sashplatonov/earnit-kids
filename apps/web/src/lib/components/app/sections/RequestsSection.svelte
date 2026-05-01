@@ -258,6 +258,12 @@
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
                             compactChips={requestCompactChips(req)}
+                            titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
+                            titleActionExpanded={openNoteRequestId === String(req.id)}
+                            titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
+                            titleActionLabel={tHistory('requests.noteLabel')}
+                            titleActionText={req.ui.note ?? ''}
+                            onTitleAction={req.ui.note ? () => toggleNote(req.id) : null}
                         />
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
@@ -276,26 +282,6 @@
                         <span class="request-card__money-price">{requestMoneyLabel(req.ui.moneyAmount)}</span>
                         {/if}
                         <div class="card__actions request-card__actions">
-                            {#if req.ui.note}
-                            <div class="request-note-tooltip">
-                                <button
-                                    class="request-note-tooltip__button"
-                                    type="button"
-                                    aria-label={tHistory('requests.noteButtonAria')}
-                                    aria-expanded={openNoteRequestId === String(req.id)}
-                                    aria-controls={requestNoteId(req.id)}
-                                    on:click|stopPropagation={() => toggleNote(req.id)}
-                                >
-                                    <span class="request-note-tooltip__icon" aria-hidden="true">📝</span>
-                                </button>
-                                {#if openNoteRequestId === String(req.id)}
-                                <div class="request-note-tooltip__content" id={requestNoteId(req.id)} role="tooltip">
-                                    <span class="request-note-tooltip__label">{tHistory('requests.noteLabel')}</span>
-                                    <span>{req.ui.note}</span>
-                                </div>
-                                {/if}
-                            </div>
-                            {/if}
                             <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓</button>
                             <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗</button>
                         </div>
@@ -356,6 +342,12 @@
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
                             compactChips={requestCompactChips(req)}
+                            titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
+                            titleActionExpanded={openNoteRequestId === String(req.id)}
+                            titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
+                            titleActionLabel={tHistory('requests.noteLabel')}
+                            titleActionText={req.ui.note ?? ''}
+                            onTitleAction={req.ui.note ? () => toggleNote(req.id) : null}
                         />
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
@@ -373,26 +365,6 @@
                         {/if}
                         {#if req.status !== 'approved'}
                         <div class="card__actions request-card__actions">
-                            {#if req.ui.note}
-                            <div class="request-note-tooltip">
-                                <button
-                                    class="request-note-tooltip__button"
-                                    type="button"
-                                    aria-label={tHistory('requests.noteButtonAria')}
-                                    aria-expanded={openNoteRequestId === String(req.id)}
-                                    aria-controls={requestNoteId(req.id)}
-                                    on:click|stopPropagation={() => toggleNote(req.id)}
-                                >
-                                    <span class="request-note-tooltip__icon" aria-hidden="true">📝</span>
-                                </button>
-                                {#if openNoteRequestId === String(req.id)}
-                                <div class="request-note-tooltip__content" id={requestNoteId(req.id)} role="tooltip">
-                                    <span class="request-note-tooltip__label">{tHistory('requests.noteLabel')}</span>
-                                    <span>{req.ui.note}</span>
-                                </div>
-                                {/if}
-                            </div>
-                            {/if}
                             <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
                         </div>
                         {/if}
@@ -467,64 +439,6 @@
         font-weight: 800;
         line-height: 1;
         white-space: nowrap;
-    }
-
-    .request-note-tooltip {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    .request-note-tooltip__button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 2.2rem;
-        height: 2.2rem;
-        border: 1px solid rgba(99, 102, 241, 0.22);
-        border-radius: 999px;
-        background: rgba(99, 102, 241, 0.1);
-        color: #4338ca;
-        cursor: pointer;
-        transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-    }
-
-    .request-note-tooltip__button:hover,
-    .request-note-tooltip__button:focus-visible {
-        background: rgba(99, 102, 241, 0.16);
-        border-color: rgba(99, 102, 241, 0.34);
-        transform: translateY(-1px);
-        outline: none;
-    }
-
-    .request-note-tooltip__icon {
-        font-size: 0.98rem;
-        line-height: 1;
-    }
-
-    .request-note-tooltip__content {
-        position: absolute;
-        right: 0;
-        top: calc(100% + 0.45rem);
-        z-index: 20;
-        display: grid;
-        gap: 0.22rem;
-        width: min(18rem, 70vw);
-        padding: 0.6rem 0.7rem;
-        border: 1px solid rgba(148, 163, 184, 0.28);
-        border-radius: 0.85rem;
-        background: rgba(255, 255, 255, 0.98);
-        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
-        color: #334155;
-        font-size: 0.76rem;
-        line-height: 1.35;
-        white-space: normal;
-        max-width: calc(100vw - 1.5rem);
-    }
-
-    .request-note-tooltip__label {
-        font-weight: 800;
-        color: #1e293b;
     }
 
     .request-card--list {
@@ -634,16 +548,5 @@
             line-height: 1.05;
         }
 
-        .request-note-tooltip,
-        .request-note-tooltip__button {
-            width: 100%;
-        }
-
-        .request-note-tooltip__content {
-            right: 0;
-            left: auto;
-            width: min(16rem, 72vw);
-            max-width: calc(100vw - 1rem);
-        }
     }
 </style>
