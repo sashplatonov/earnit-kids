@@ -540,10 +540,8 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             .build();
     }
 
-    /**
-     * Note is optional; empty -> null.
-     * Constraints: single-line only, max 120 chars.
-     */
+    // EXPLAIN: Note is optional; empty -> null.
+    // EXPLAIN: Constraints: single-line only, max 120 chars.
     private OperationResult<String> validateAndNormalizeRequestNote(String note) {
         if (note == null) {
             return OperationResult.success(null);
@@ -554,7 +552,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             return OperationResult.success(null);
         }
 
-        // one line only
+        // EXPLAIN: one line only
         if (trimmed.contains("\n") || trimmed.contains("\r")) {
             return OperationResult.failure("REQUEST_NOTE_INVALID", BackendMessages.message("requests.noteInvalid"));
         }

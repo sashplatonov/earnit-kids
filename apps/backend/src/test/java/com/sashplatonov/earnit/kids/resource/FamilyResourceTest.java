@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
+import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdatePreferenceRequest;
@@ -246,12 +247,12 @@ class FamilyResourceTest {
     void requestTaskCompletion_childDelegatesToActionService() {
         FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), false, List.of(), 10, null, null, null);
-        when(familyActionService.requestTaskCompletion("fam-1", 10, 1001L)).thenReturn(OperationResult.success(payload));
+        when(familyActionService.requestTaskCompletion("fam-1", 10, 1001L, null)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.requestTaskCompletion(contextWithAuth(childAuth(10)), 1001L);
+        Response response = resource.requestTaskCompletion(contextWithAuth(childAuth(10)), 1001L, new CreateRequestNoteRequest(null));
 
         assertThat(response.getStatus()).isEqualTo(200);
-        verify(familyActionService).requestTaskCompletion("fam-1", 10, 1001L);
+        verify(familyActionService).requestTaskCompletion("fam-1", 10, 1001L, null);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
     }
 

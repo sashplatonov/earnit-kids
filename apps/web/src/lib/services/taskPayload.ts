@@ -17,13 +17,17 @@ export interface TaskPayload {
     coins: number;
     comment: string | null;
     frequency: { limit: number; period: 'day' | 'week' | 'month' | 'year' } | null;
-    isActive: boolean;
+    /**
+     * Optional because the backend defaults tasks to active when the field is absent.
+     * We only send it when the user explicitly disables a task.
+     */
+    isActive?: boolean;
 }
 
 export function buildTaskPayload(input: TaskPayloadInput): TaskPayload {
     const name = input.title.trim();
 
-    return {
+    const payload: TaskPayload = {
         id: input.id,
         name,
         title: name,
@@ -33,6 +37,13 @@ export function buildTaskPayload(input: TaskPayloadInput): TaskPayload {
         frequency: input.freqLimit
             ? { limit: Number(input.freqLimit), period: input.freqPeriod }
             : null,
-        isActive: input.isActive !== false,
     };
+
+    // Preserve previous behaviour: if user explicitly disables a task, send isActive=false.
+    // Otherwise omit the field to keep payload minimal and compatible with older backend expectations.
+    if (input.isActive === false) {
+        payload.isActive = false;
+    }
+
+    return payload;
 }

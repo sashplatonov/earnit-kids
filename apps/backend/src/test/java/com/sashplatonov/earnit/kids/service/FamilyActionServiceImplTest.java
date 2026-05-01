@@ -72,7 +72,7 @@ class FamilyActionServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
             1,
             10,
             2001L
@@ -96,14 +96,14 @@ class FamilyActionServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(taskRepository.find(
-            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
             1,
             10,
             3001L
         )).thenReturn(taskQuery);
         when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
 
-        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L);
+        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L, null);
 
         assertThat(successValue(result)).isEqualTo(payload);
 
@@ -126,7 +126,7 @@ class FamilyActionServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(taskRepository.find(
-            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
             1,
             10,
             3001L
@@ -148,7 +148,7 @@ class FamilyActionServiceImplTest {
         ))
             .thenReturn(0L);
 
-        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L);
+        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L, null);
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
@@ -168,14 +168,14 @@ class FamilyActionServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
             1,
             10,
             2001L
         )).thenReturn(itemQuery);
         when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
 
-        OperationResult<FamilyDataResponse> result = service.requestItemPurchase("fam-1", 10, 2001L);
+        OperationResult<FamilyDataResponse> result = service.requestItemPurchase("fam-1", 10, 2001L, null);
 
         assertThat(successValue(result)).isEqualTo(payload);
 
@@ -198,7 +198,7 @@ class FamilyActionServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
             1,
             10,
             2001L
@@ -220,7 +220,7 @@ class FamilyActionServiceImplTest {
         ))
             .thenReturn(1L);
 
-        OperationResult<FamilyDataResponse> result = service.requestItemPurchase("fam-1", 10, 2001L);
+        OperationResult<FamilyDataResponse> result = service.requestItemPurchase("fam-1", 10, 2001L, null);
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
@@ -242,7 +242,7 @@ class FamilyActionServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(taskRepository.find(
-            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
             1,
             10,
             3001L
@@ -264,7 +264,7 @@ class FamilyActionServiceImplTest {
         ))
             .thenReturn(0L);
 
-        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L);
+        OperationResult<FamilyDataResponse> result = service.requestTaskCompletion("fam-1", 10, 3001L, null);
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
@@ -295,7 +295,7 @@ class FamilyActionServiceImplTest {
         when(purchaseRequestRepository.findByIdOptional(4001L)).thenReturn(Optional.of(request));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
             1,
             10,
             2001L
@@ -341,7 +341,7 @@ class FamilyActionServiceImplTest {
         when(purchaseRequestRepository.findByIdOptional(4002L)).thenReturn(Optional.of(request));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
         when(taskRepository.find(
-            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false",
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
             1,
             10,
             3001L
