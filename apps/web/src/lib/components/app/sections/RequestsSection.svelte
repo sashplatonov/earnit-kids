@@ -411,6 +411,14 @@
         display: none;
     }
 
+    /* In list (row) view we still want to show the child's note. */
+    .request-card--list .request-card__note {
+        display: block;
+        margin: 0.35rem 0 0;
+        font-size: 0.88rem;
+        opacity: 0.92;
+    }
+
     .request-card--list .request-card__layout {
         flex-direction: row;
         flex-wrap: wrap;
