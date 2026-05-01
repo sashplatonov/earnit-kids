@@ -59,7 +59,7 @@ public class ChildMagicLinkResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId());
+                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin());
 
                 URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/", request));
 

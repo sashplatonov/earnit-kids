@@ -111,4 +111,73 @@ class JwtCompatVerifierTest {
         assertThat(payload.orElseThrow()).containsEntry("familyId", "fam-1");
         assertThat(payload.orElseThrow()).containsEntry("childId", "7");
     }
+
+    @Test
+    void readSession_isSuperAdminTrue_upgradesRoleToSuperAdmin() {
+        String token = JwtCompatVerifier.sign(Map.of(
+            "familyId", "fam-1",
+            "role", "admin",
+            "email", "super@test.com",
+            "csrfToken", "csrf-123",
+            "isSuperAdmin", true
+        ), "test-secret-key-for-unit-tests", 120, TestConfigFactory.timeProvider(FIXED_NOW));
+
+        SessionPageDataResponse response = verifier.readSession("app_auth=" + token + "; csrf_token=cookie-csrf");
+
+        assertThat(response.authenticated()).isTrue();
+        assertThat(response.role()).isEqualTo("super_admin");
+        assertThat(response.email()).isEqualTo("super@test.com");
+    }
+
+    @Test
+    void readSession_isSuperAdminFalse_keepsAdminRole() {
+        String token = JwtCompatVerifier.sign(Map.of(
+            "familyId", "fam-1",
+            "role", "admin",
+            "email", "regular@test.com",
+            "csrfToken", "csrf-123",
+            "isSuperAdmin", false
+        ), "test-secret-key-for-unit-tests", 120, TestConfigFactory.timeProvider(FIXED_NOW));
+
+        SessionPageDataResponse response = verifier.readSession("app_auth=" + token + "; csrf_token=cookie-csrf");
+
+        assertThat(response.authenticated()).isTrue();
+        assertThat(response.role()).isEqualTo("admin");
+    }
+
+    @Test
+    void readSession_isSuperAdminMissing_keepsAdminRole() {
+        String token = JwtCompatVerifier.sign(Map.of(
+            "familyId", "fam-1",
+            "role", "admin",
+            "email", "regular@test.com",
+            "csrfToken", "csrf-123"
+        ), "test-secret-key-for-unit-tests", 120, TestConfigFactory.timeProvider(FIXED_NOW));
+
+        SessionPageDataResponse response = verifier.readSession("app_auth=" + token + "; csrf_token=cookie-csrf");
+
+        assertThat(response.authenticated()).isTrue();
+        assertThat(response.role()).isEqualTo("admin");
+    }
+
+    @Test
+    void verify_tamperedIsSuperAdminInPayload_rejectsToken() {
+        // Create a valid token without isSuperAdmin
+        String valid = JwtCompatVerifier.sign(Map.of(
+            "familyId", "fam-1",
+            "role", "admin",
+            "email", "regular@test.com",
+            "csrfToken", "csrf-123"
+        ), "test-secret-key-for-unit-tests", 120, TestConfigFactory.timeProvider(FIXED_NOW));
+
+        // Tamper with the payload: replace the base64 payload with one that has isSuperAdmin=true
+        // The token format is: base64(header).base64(payload).signature
+        String[] parts = valid.split("\\.");
+        String tamperedPayload = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("{\"familyId\":\"fam-1\",\"role\":\"admin\",\"email\":\"regular@test.com\",\"csrfToken\":\"csrf-123\",\"isSuperAdmin\":true,\"exp\":9999999999}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String tamperedToken = parts[0] + "." + tamperedPayload + "." + parts[2];
+
+        // The tampered token should be rejected because the signature no longer matches
+        assertThat(verifier.verify(tamperedToken)).isEmpty();
+    }
 }

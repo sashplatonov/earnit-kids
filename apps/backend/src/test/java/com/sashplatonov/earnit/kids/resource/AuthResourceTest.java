@@ -59,7 +59,7 @@ class AuthResourceTest {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
         when(authService.authenticateAdmin("a@test.com", "secret"))
             .thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false))
             .thenReturn(List.of("cookie-1", "cookie-2"));
 
         Response response = resource.login(new LoginRequest("a@test.com", "secret"));
@@ -83,7 +83,7 @@ class AuthResourceTest {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
         when(authService.authenticateAdminWithGoogle("google-token"))
             .thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false))
             .thenReturn(List.of("cookie-1"));
 
         Response response = resource.loginGoogle(new GoogleLoginRequest("google-token"));
@@ -106,7 +106,7 @@ class AuthResourceTest {
     void loginChild_validToken_returnsCookies() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid", false);
         when(authService.authenticateChild("token")).thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10, false))
             .thenReturn(List.of("cookie-1"));
 
         Response response = resource.loginChild(new LoginChildRequest("token"));
@@ -131,7 +131,7 @@ class AuthResourceTest {
     void register_validPayload_returnsCreated() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
         when(authService.registerFamily("a@test.com", "secret123")).thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false))
             .thenReturn(List.of("cookie"));
 
         Response response = resource.register(new RegisterRequest("a@test.com", "secret123"));

@@ -31,7 +31,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10, false);
 
         assertThat(cookies).hasSize(6);
         assertThat(cookies.get(0)).contains("app_auth=").contains("HttpOnly").contains("SameSite=Lax");
@@ -49,7 +49,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(true, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, false);
 
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).contains("Secure"));
     }
@@ -60,7 +60,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, false);
 
         // app_role must not be present for child role (no client-readable role)
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).doesNotContain("app_role="));
@@ -72,7 +72,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5, true);
         String appAuth = cookies.stream().filter(v -> v.startsWith("app_auth=")).findFirst().orElseThrow();
         String token = appAuth.substring("app_auth=".length(), appAuth.indexOf(';'));
 
@@ -83,6 +83,7 @@ class CookieBuilderTest {
         assertThat(payload.orElseThrow()).containsEntry("role", "admin");
         assertThat(payload.orElseThrow()).containsEntry("familyId", "fam-1");
         assertThat(payload.orElseThrow()).containsEntry("childId", 5);
+        assertThat(payload.orElseThrow()).containsEntry("isSuperAdmin", true);
         assertThat(payload.orElseThrow()).containsKey("csrfToken");
     }
 

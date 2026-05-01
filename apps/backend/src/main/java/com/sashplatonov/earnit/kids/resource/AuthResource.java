@@ -143,7 +143,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId());
+                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.success(payload.role(), payload.familyId()));
@@ -173,7 +173,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId());
+                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.childSuccess(
@@ -218,7 +218,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), null);
+                    payload.email(), payload.role(), payload.familyId(), null, payload.isSuperAdmin());
 
                 Response.ResponseBuilder rb = Response
                     .status(Response.Status.CREATED)
@@ -400,7 +400,7 @@ public class AuthResource {
         if (result instanceof OperationResult.Success<AuthPayload> s) {
             AuthPayload payload = s.value();
             var cookies = cookieBuilder.buildAuthCookies(
-                payload.email(), payload.role(), payload.familyId(), payload.childId());
+                payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin());
 
             Response.ResponseBuilder rb = Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));
             cookies.forEach(c -> rb.header("Set-Cookie", c));

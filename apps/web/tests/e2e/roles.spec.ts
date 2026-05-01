@@ -39,3 +39,16 @@ test('super admin can access the admin panel', async ({ page }) => {
     await expect(page.getByRole('tab', { name: 'Семьи' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Задачи' })).toBeVisible();
 });
+
+test('super admin sees super admin menu item in overflow menu', async ({ page }) => {
+    await loginParent(page, SUPER_ADMIN_EMAIL, DEFAULT_PARENT_PASSWORD, {
+        destination: /\/app\/analytics$/,
+        heading: /EarnIt Kids/i,
+    });
+
+    // Open the overflow menu (three dots / "Ещё")
+    await page.getByRole('button', { name: /Additional sections|Дополнительные разделы/i }).click();
+
+    // The super admin menu item should be visible in the dropdown
+    await expect(page.getByRole('menuitem', { name: /Super admin|Супер админка/i })).toBeVisible();
+});
