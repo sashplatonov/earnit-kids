@@ -324,6 +324,7 @@ class SuperAdminResourceTest {
             true,
             "chat-1",
             12,
+            20,
             true,
             true,
             null,
@@ -341,13 +342,36 @@ class SuperAdminResourceTest {
     @Test
     void updateBackupTelegramSettings_invalid_returns400() {
         UpdateBackupTelegramSettingsRequest request =
-            new UpdateBackupTelegramSettingsRequest(true, null, "chat-1", 24);
+            new UpdateBackupTelegramSettingsRequest(true, null, "chat-1", 24, 20);
         when(backupTelegramSettingsService.updateSettings(request))
             .thenReturn(OperationResult.failure(BackendMessages.message("backup.botTokenRequired")));
 
         Response response = resource.updateBackupTelegramSettings(contextWithAuth(superAdminAuth()), request);
 
         assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void getBackupHistory_returnsPayload() {
+        List<com.sashplatonov.earnit.kids.dto.response.BackupHistoryItemResponse> payload = List.of(
+            new com.sashplatonov.earnit.kids.dto.response.BackupHistoryItemResponse("one.dump", 12L, null)
+        );
+        when(databaseBackupService.listBackups()).thenReturn(payload);
+
+        Response response = resource.getBackupHistory(contextWithAuth(superAdminAuth()));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat((Map<String, Object>) response.getEntity()).containsEntry("backups", payload);
+    }
+
+    @Test
+    void restoreDatabaseFromHistory_success_returnsOk() {
+        when(databaseBackupService.restoreBackup("one.dump")).thenReturn(OperationResult.success(null));
+
+        Response response = resource.restoreDatabaseFromHistory(contextWithAuth(superAdminAuth()), "one.dump");
+
+        assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test

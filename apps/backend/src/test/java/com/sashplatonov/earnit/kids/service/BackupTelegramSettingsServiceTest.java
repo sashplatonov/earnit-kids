@@ -48,6 +48,7 @@ class BackupTelegramSettingsServiceTest {
         assertThat(response.enabled()).isFalse();
         assertThat(response.chatId()).isNull();
         assertThat(response.intervalHours()).isEqualTo(24);
+        assertThat(response.backupRetentionCount()).isEqualTo(20);
         assertThat(response.hasBotToken()).isFalse();
         assertThat(response.configured()).isFalse();
     }
@@ -64,12 +65,13 @@ class BackupTelegramSettingsServiceTest {
         when(repository.findSettings()).thenReturn(Optional.of(entity));
 
         OperationResult<BackupTelegramSettingsResponse> result =
-            service.updateSettings(new UpdateBackupTelegramSettingsRequest(false, null, "chat-2", 48));
+            service.updateSettings(new UpdateBackupTelegramSettingsRequest(false, null, "chat-2", 48, 15));
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         assertThat(entity.getBotToken()).isEqualTo("token-1");
         assertThat(entity.getChatId()).isEqualTo("chat-2");
         assertThat(entity.getIntervalHours()).isEqualTo(48);
+        assertThat(entity.getBackupRetentionCount()).isEqualTo(15);
         verify(repository).flushChanges();
     }
 
@@ -85,10 +87,29 @@ class BackupTelegramSettingsServiceTest {
         when(repository.findSettings()).thenReturn(Optional.of(entity));
 
         OperationResult<BackupTelegramSettingsResponse> result =
-            service.updateSettings(new UpdateBackupTelegramSettingsRequest(true, null, "chat-1", 24));
+            service.updateSettings(new UpdateBackupTelegramSettingsRequest(true, null, "chat-1", 24, 20));
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<BackupTelegramSettingsResponse>) result).message())
             .isEqualTo(BackendMessages.message("backup.botTokenRequired"));
+    }
+
+    @Test
+    void updateSettings_rejectsInvalidRetentionCount() {
+        when(repository.findSettings()).thenReturn(Optional.of(
+            BackupTelegramSettingsEntity.builder()
+                .id(BackupTelegramSettingsEntity.DEFAULT_ID)
+                .enabled(false)
+                .intervalHours(24)
+                .backupRetentionCount(20)
+                .build()
+        ));
+
+        OperationResult<BackupTelegramSettingsResponse> result =
+            service.updateSettings(new UpdateBackupTelegramSettingsRequest(false, null, "chat-1", 24, 0));
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<BackupTelegramSettingsResponse>) result).message())
+            .isEqualTo(BackendMessages.message("backup.retentionOutOfRange"));
     }
 }

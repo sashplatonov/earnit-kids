@@ -6,6 +6,7 @@ public record BackupTelegramSettingsResponse(
     boolean enabled,
     String chatId,
     int intervalHours,
+    int backupRetentionCount,
     boolean hasBotToken,
     boolean configured,
     Instant lastAttemptAt,

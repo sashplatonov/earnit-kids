@@ -14,5 +14,9 @@ public record UpdateBackupTelegramSettingsRequest(
 
     @Min(value = 1, message = "{validation.backup.interval.min}")
     @Max(value = 720, message = "{validation.backup.interval.max}")
-    int intervalHours
+    int intervalHours,
+
+    @Min(value = 1, message = "{validation.backup.retention.min}")
+    @Max(value = 500, message = "{validation.backup.retention.max}")
+    int backupRetentionCount
 ) { }

@@ -90,6 +90,7 @@
     let telegramScheduleMode: 'on' | 'off' = 'off';
     let telegramChatId = '';
     let telegramIntervalHours = '24';
+    let telegramBackupRetentionCount = '20';
     let telegramBotToken = '';
     let telegramHasBotToken = false;
     let telegramConfigured = false;
@@ -97,10 +98,12 @@
     let telegramLastSentAt: string | null = null;
     let telegramLastError: string | null = null;
     let telegramSettingsLoading = false;
+    let backupHistoryLoading = false;
     let telegramSettingsSaving = false;
     let telegramBackupSending = false;
     let telegramSettingsStatus = '';
     let telegramSettingsStatusType: StatusTone = '';
+    let backupHistory: Array<{ filename: string; sizeBytes: number; createdAt: string | null }> = [];
 
     let systemInfo: SystemInfo = {};
     let familyPassword = '';
@@ -123,6 +126,7 @@
         void loadFamilies();
         void loadSystem();
         void loadTelegramBackupSettings();
+        void loadBackupHistory();
     });
 
     onDestroy(() => {
@@ -473,6 +477,7 @@
             telegramScheduleMode = 'off';
             telegramChatId = '';
             telegramIntervalHours = '24';
+            telegramBackupRetentionCount = '20';
             telegramHasBotToken = false;
             telegramConfigured = false;
             telegramLastAttemptAt = null;
@@ -485,11 +490,37 @@
         telegramScheduleMode = record.enabled === true ? 'on' : 'off';
         telegramChatId = typeof record.chatId === 'string' ? record.chatId : '';
         telegramIntervalHours = String(parseNumber(record.intervalHours) || 24);
+        telegramBackupRetentionCount = String(parseNumber(record.backupRetentionCount) || 20);
         telegramHasBotToken = record.hasBotToken === true;
         telegramConfigured = record.configured === true;
         telegramLastAttemptAt = typeof record.lastAttemptAt === 'string' ? record.lastAttemptAt : null;
         telegramLastSentAt = typeof record.lastSentAt === 'string' ? record.lastSentAt : null;
         telegramLastError = typeof record.lastError === 'string' ? record.lastError : null;
+    }
+
+    async function loadBackupHistory() {
+        backupHistoryLoading = true;
+
+        try {
+            const res = await fetchWithCsrf('/api/super/db-backup/history');
+            const payload = await res.json().catch(() => null) as { backups?: Array<{ filename?: string; sizeBytes?: number; createdAt?: string | null }> } | null;
+            if (res.ok) {
+                backupHistory = (payload?.backups ?? []).map((item) => ({
+                    filename: String(item.filename ?? ''),
+                    sizeBytes: parseNumber(item.sizeBytes),
+                    createdAt: typeof item.createdAt === 'string' ? item.createdAt : null,
+                }));
+                return;
+            }
+
+            telegramSettingsStatus = messageFromPayload(payload, $i18n.t('superadmin.database.loadSettingsError'));
+            telegramSettingsStatusType = 'error';
+        } catch {
+            telegramSettingsStatus = $i18n.t('superadmin.states.networkUnavailable');
+            telegramSettingsStatusType = 'error';
+        } finally {
+            backupHistoryLoading = false;
+        }
     }
 
     async function loadTelegramBackupSettings() {
@@ -515,8 +546,14 @@
 
     async function saveTelegramBackupSettings() {
         const intervalHours = parseInt(telegramIntervalHours, 10) || 0;
+        const backupRetentionCount = parseInt(telegramBackupRetentionCount, 10) || 0;
         if (intervalHours < 1 || intervalHours > 720) {
             telegramSettingsStatus = $i18n.t('superadmin.database.intervalError');
+            telegramSettingsStatusType = 'error';
+            return;
+        }
+        if (backupRetentionCount < 1 || backupRetentionCount > 500) {
+            telegramSettingsStatus = $i18n.t('superadmin.states.errorPrefix', { message: '1..500' });
             telegramSettingsStatusType = 'error';
             return;
         }
@@ -530,6 +567,7 @@
                 enabled: telegramScheduleMode === 'on',
                 chatId: telegramChatId,
                 intervalHours,
+                backupRetentionCount,
             };
             if (telegramBotToken !== '') {
                 body.botToken = telegramBotToken;
@@ -557,6 +595,45 @@
             telegramSettingsStatusType = 'error';
         } finally {
             telegramSettingsSaving = false;
+        }
+    }
+
+    function formatFileSize(sizeBytes: number): string {
+        if (sizeBytes < 1024) {
+            return `${sizeBytes} B`;
+        }
+        if (sizeBytes < 1024 * 1024) {
+            return `${(sizeBytes / 1024).toFixed(1)} KB`;
+        }
+        return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    async function restoreBackupFromHistory(filename: string) {
+        if (!confirm($i18n.t('superadmin.database.backupRestoreConfirm', { filename }))) {
+            return;
+        }
+
+        dbStatus = $i18n.t('superadmin.database.restoreInProgress');
+        dbStatusType = 'info';
+
+        try {
+            const res = await fetchWithCsrf(`/api/super/db-restore/history/${encodeURIComponent(filename)}`, {
+                method: 'POST',
+            });
+            const payload = await res.json().catch(() => ({})) as ResponsePayload;
+            if (res.ok && payload.success) {
+                dbStatus = $i18n.t('superadmin.database.backupRestoreSuccess');
+                dbStatusType = 'success';
+                setTimeout(() => location.reload(), 2000);
+                return;
+            }
+            dbStatus = $i18n.t('superadmin.states.errorPrefix', {
+                message: messageFromPayload(payload, $i18n.t('superadmin.states.unknown')),
+            });
+            dbStatusType = 'error';
+        } catch {
+            dbStatus = $i18n.t('superadmin.database.connectionError');
+            dbStatusType = 'error';
         }
     }
 
@@ -1197,6 +1274,10 @@
                                 <input id="backup-telegram-interval" type="number" min="1" max="720" bind:value={telegramIntervalHours} />
                             </div>
                             <div class="input-group">
+                                <label for="backup-retention-count">{$i18n.t('superadmin.database.retentionCount')}</label>
+                                <input id="backup-retention-count" type="number" min="1" max="500" bind:value={telegramBackupRetentionCount} />
+                            </div>
+                            <div class="input-group">
                                 <label for="backup-telegram-token">Bot token</label>
                                 <input id="backup-telegram-token" type="password" bind:value={telegramBotToken}
                                     placeholder={telegramHasBotToken ? $i18n.t('superadmin.database.botTokenPlaceholderSaved') : $i18n.t('superadmin.database.botTokenPlaceholderNew')}
@@ -1233,6 +1314,29 @@
                                 {telegramBackupSending ? $i18n.t('superadmin.actions.sending') : $i18n.t('superadmin.actions.sendNow')}
                             </button>
                         </div>
+                    </article>
+                    <article class="system-card">
+                        <p class="system-card__label">{$i18n.t('superadmin.database.backupHistoryLabel')}</p>
+                        <h3 class="system-card__heading">{$i18n.t('superadmin.database.backupHistoryHeading')}</h3>
+                        {#if backupHistoryLoading}
+                        <div class="panel-state panel-state--loading">{$i18n.t('superadmin.database.loadingBackups')}</div>
+                        {:else if backupHistory.length === 0}
+                        <p class="panel-state">{$i18n.t('superadmin.database.backupHistoryEmpty')}</p>
+                        {:else}
+                        <div class="family-detail-list">
+                            {#each backupHistory as item (item.filename)}
+                            <div class="family-detail-list__item">
+                                <div>
+                                    <strong>{item.filename}</strong>
+                                    <span>{formatDateTime(item.createdAt)} · {formatFileSize(item.sizeBytes)}</span>
+                                </div>
+                                <button class="btn btn--ghost btn--small" type="button" on:click={() => restoreBackupFromHistory(item.filename)}>
+                                    {$i18n.t('superadmin.database.backupRestoreAction')}
+                                </button>
+                            </div>
+                            {/each}
+                        </div>
+                        {/if}
                     </article>
                     <article class="system-card">
                         <p class="system-card__label">{$i18n.t('superadmin.database.telegramStatusLabel')}</p>

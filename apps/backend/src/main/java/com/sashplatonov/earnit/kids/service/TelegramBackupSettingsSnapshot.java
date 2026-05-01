@@ -8,6 +8,7 @@ public record TelegramBackupSettingsSnapshot(
     String botToken,
     String chatId,
     int intervalHours,
+    int backupRetentionCount,
     Instant lastAttemptAt,
     Instant lastSentAt,
     String lastError

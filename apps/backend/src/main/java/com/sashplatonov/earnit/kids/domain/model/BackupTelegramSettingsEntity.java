@@ -40,6 +40,9 @@ public class BackupTelegramSettingsEntity extends CreatedAtEntity {
     @Column(name = "interval_hours", nullable = false)
     private int intervalHours;
 
+    @Column(name = "backup_retention_count", nullable = false)
+    private int backupRetentionCount;
+
     @Column(name = "last_attempt_at")
     private Instant lastAttemptAt;
 

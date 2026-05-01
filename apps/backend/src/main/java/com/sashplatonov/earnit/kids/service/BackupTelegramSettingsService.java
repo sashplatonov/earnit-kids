@@ -18,6 +18,9 @@ public class BackupTelegramSettingsService {
 
     private static final int MIN_INTERVAL_HOURS = 1;
     private static final int MAX_INTERVAL_HOURS = 720;
+    private static final int DEFAULT_BACKUP_RETENTION_COUNT = 20;
+    private static final int MIN_BACKUP_RETENTION_COUNT = 1;
+    private static final int MAX_BACKUP_RETENTION_COUNT = 500;
 
     private final BackupTelegramSettingsRepository repository;
     private final boolean fallbackEnabled;
@@ -53,10 +56,16 @@ public class BackupTelegramSettingsService {
             return OperationResult.failure("BACKUP_INTERVAL_OUT_OF_RANGE", BackendMessages.message("backup.intervalOutOfRange"));
         }
 
+        int backupRetentionCount = request.backupRetentionCount();
+        if (backupRetentionCount < MIN_BACKUP_RETENTION_COUNT || backupRetentionCount > MAX_BACKUP_RETENTION_COUNT) {
+            return OperationResult.failure("BACKUP_RETENTION_OUT_OF_RANGE", BackendMessages.message("backup.retentionOutOfRange"));
+        }
+
         BackupTelegramSettingsEntity entity = ensureEntity();
         entity.setEnabled(request.enabled());
         entity.setChatId(normalize(request.chatId()));
         entity.setIntervalHours(intervalHours);
+        entity.setBackupRetentionCount(backupRetentionCount);
 
         if (request.botToken() != null) {
             entity.setBotToken(normalize(request.botToken()));
@@ -99,6 +108,7 @@ public class BackupTelegramSettingsService {
             .botToken(null)
             .chatId(null)
             .intervalHours(fallbackIntervalHours)
+            .backupRetentionCount(DEFAULT_BACKUP_RETENTION_COUNT)
             .build();
         repository.persistAndFlush(entity);
         return entity;
@@ -110,6 +120,7 @@ public class BackupTelegramSettingsService {
             null,
             null,
             fallbackIntervalHours,
+            DEFAULT_BACKUP_RETENTION_COUNT,
             null,
             null,
             null
@@ -122,6 +133,7 @@ public class BackupTelegramSettingsService {
             normalize(entity.getBotToken()),
             normalize(entity.getChatId()),
             sanitizeInterval(entity.getIntervalHours()),
+            sanitizeRetention(entity.getBackupRetentionCount()),
             entity.getLastAttemptAt(),
             entity.getLastSentAt(),
             entity.getLastError()
@@ -133,6 +145,7 @@ public class BackupTelegramSettingsService {
             snapshot.enabled(),
             snapshot.chatId(),
             snapshot.intervalHours(),
+            snapshot.backupRetentionCount(),
             snapshot.hasBotToken(),
             snapshot.configured(),
             snapshot.lastAttemptAt(),
@@ -143,6 +156,13 @@ public class BackupTelegramSettingsService {
 
     private int sanitizeInterval(int intervalHours) {
         return Math.max(MIN_INTERVAL_HOURS, Math.min(intervalHours, MAX_INTERVAL_HOURS));
+    }
+
+    private int sanitizeRetention(int retentionCount) {
+        if (retentionCount <= 0) {
+            return DEFAULT_BACKUP_RETENTION_COUNT;
+        }
+        return Math.max(MIN_BACKUP_RETENTION_COUNT, Math.min(retentionCount, MAX_BACKUP_RETENTION_COUNT));
     }
 
     private String validate(BackupTelegramSettingsEntity entity) {

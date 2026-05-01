@@ -3,12 +3,15 @@ package com.sashplatonov.earnit.kids.service;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +26,10 @@ class DatabaseBackupServiceTest {
     private static final Instant FIXED_NOW = Instant.parse("2026-04-20T10:15:30Z");
 
     @Mock DatabaseCommandRunner commandRunner;
+    @Mock BackupTelegramSettingsService backupTelegramSettingsService;
+
+    @TempDir
+    Path tempDir;
 
     private DatabaseBackupService service;
 
@@ -33,15 +40,24 @@ class DatabaseBackupServiceTest {
             "earnit",
             Optional.of("secret"),
             "earnit_kids",
+            tempDir.toString(),
             TestConfigFactory.timeProvider(FIXED_NOW),
-            commandRunner
+            commandRunner,
+            backupTelegramSettingsService
         );
+        when(backupTelegramSettingsService.currentSettings())
+            .thenReturn(new TelegramBackupSettingsSnapshot(false, null, null, 24, 20, null, null, null));
     }
 
     @Test
     void createBackup_limitsDumpToConfiguredSchema() throws Exception {
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
-            .thenReturn(new DatabaseCommandResult(0, ""));
+            .thenAnswer(invocation -> {
+                List<String> command = invocation.getArgument(0);
+                Path dumpPath = Path.of(command.get(command.indexOf("--file") + 1));
+                Files.writeString(dumpPath, "dump");
+                return new DatabaseCommandResult(0, "");
+            });
 
         OperationResult<DatabaseBackupService.BackupArtifact> result = service.createBackup();
 
@@ -52,6 +68,39 @@ class DatabaseBackupServiceTest {
         assertThat(command).containsSequence("pg_dump", "--format=custom", "--schema", "earnit_kids");
         assertThat(command).contains("--file");
         assertThat(command).contains("--host", "db", "--port", "5432", "--username", "earnit", "earnit_kids");
+    }
+
+    @Test
+    void createBackup_prunesFilesBeyondRetentionLimit() throws Exception {
+        when(backupTelegramSettingsService.currentSettings())
+            .thenReturn(new TelegramBackupSettingsSnapshot(false, null, null, 24, 2, null, null, null));
+        when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
+            .thenAnswer(invocation -> {
+                List<String> command = invocation.getArgument(0);
+                Path dumpPath = Path.of(command.get(command.indexOf("--file") + 1));
+                Files.writeString(dumpPath, "dump");
+                return new DatabaseCommandResult(0, "");
+            });
+
+        service.createBackup();
+        Thread.sleep(5L);
+        service.createBackup();
+        Thread.sleep(5L);
+        service.createBackup();
+
+        assertThat(service.listBackups()).hasSize(2);
+    }
+
+    @Test
+    void restoreBackup_fromStoredFile_restoresSuccessfully() throws Exception {
+        Files.write(tempDir.resolve("saved.dump"), new byte[]{1, 2, 3});
+        when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
+            .thenReturn(new DatabaseCommandResult(0, ""));
+
+        OperationResult<Void> result = service.restoreBackup("saved.dump");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        verify(commandRunner, times(2)).run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret"));
     }
 
     @Test

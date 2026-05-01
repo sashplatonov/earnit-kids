@@ -7,6 +7,7 @@ import com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.dto.response.BackupHistoryItemResponse;
 import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Path("/api/super")
@@ -262,6 +264,34 @@ public class SuperAdminResource {
         }
 
         OperationResult<Void> result = databaseBackupService.restoreBackup(payload);
+        if (result instanceof OperationResult.Failure<Void> failure) {
+            return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
+        }
+        return Response.ok(SimpleResponse.ok()).build();
+    }
+
+    @GET
+    @Path("/db-backup/history")
+    public Response getBackupHistory(@Context ContainerRequestContext ctx) {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        List<BackupHistoryItemResponse> backups = databaseBackupService.listBackups();
+        return Response.ok(Map.of("backups", backups)).build();
+    }
+
+    @POST
+    @Path("/db-restore/history/{filename}")
+    public Response restoreDatabaseFromHistory(@Context ContainerRequestContext ctx,
+                                               @PathParam("filename") String filename) {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        OperationResult<Void> result = databaseBackupService.restoreBackup(filename);
         if (result instanceof OperationResult.Failure<Void> failure) {
             return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
         }
