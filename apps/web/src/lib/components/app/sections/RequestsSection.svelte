@@ -224,6 +224,7 @@
                     <div class="request-card__main">
                         <CardHeader
                             title={req.ui.title}
+							titleSuffix={req.ui.note ? `${tHistory('requests.noteLabel')}: ${req.ui.note}` : ''}
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
@@ -232,9 +233,7 @@
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
                         {/if}
-                        {#if req.ui.note}
-                        <p class="card__comment request-card__note"><strong>{tHistory('requests.noteLabel')}</strong> {req.ui.note}</p>
-                        {/if}
+						<!-- note is rendered inline after title in list view (see CardHeader.titleSuffix) -->
                     </div>
                     <div class="request-card__side">
                         <div class="card__meta">
@@ -305,6 +304,7 @@
                     <div class="request-card__main">
                         <CardHeader
                             title={req.ui.title}
+							titleSuffix={req.ui.note ? `${tHistory('requests.noteLabel')}: ${req.ui.note}` : ''}
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
@@ -313,9 +313,7 @@
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
                         {/if}
-                        {#if req.ui.note}
-                        <p class="card__comment request-card__note"><strong>{tHistory('requests.noteLabel')}</strong> {req.ui.note}</p>
-                        {/if}
+						<!-- note is rendered inline after title in list view (see CardHeader.titleSuffix) -->
                     </div>
                     <div class="request-card__side">
                         <div class="card__meta">
@@ -414,13 +412,10 @@
         display: none;
     }
 
-    /* In list (row) view we still want to show the child's note. */
-    .request-card--list .request-card__note {
-        display: block;
-        margin: 0.35rem 0 0;
-        font-size: 0.88rem;
-        opacity: 0.92;
-    }
+	/* NOTE:
+	   Previously we rendered request note as a separate paragraph (.request-card__note).
+	   Now the note is shown inline after the title (CardHeader.titleSuffix), so this
+	   selector is no longer used and kept removed for compact row view. */
 
     .request-card--list .request-card__layout {
         flex-direction: row;

@@ -5,6 +5,8 @@
     };
 
     export let title = '';
+	// Optional compact inline note/suffix shown after the title (used in requests row view).
+	export let titleSuffix = '';
     export let amount: string | number = '';
     export let amountClass = '';
     export let amountNote = '';
@@ -13,7 +15,12 @@
 
 <div class="card__header">
     <div class="card__header-main">
-        <h3 class="card__title">{title}</h3>
+		<h3 class="card__title">
+			<span class="card__title-text">{title}</span>
+			{#if titleSuffix}
+				<span class="card__title-suffix"> — {titleSuffix}</span>
+			{/if}
+		</h3>
         {#if compactChips.length > 0}
         <div class="card__compact-meta">
             {#each compactChips as chip (`${chip.label}:${chip.className ?? ''}`)}
@@ -44,6 +51,12 @@
     .card__amount-note {
         display: none;
     }
+
+	.card__title-suffix {
+		opacity: 0.78;
+		font-weight: 600;
+		font-size: 0.92em;
+	}
 
     :global(.task-card--list) .card__header,
     :global(.shop-card--list) .card__header,
@@ -157,6 +170,16 @@
             line-height: 1.12;
             word-break: normal;
         }
+
+		/* Keep the suffix on the same line, but make it ellipsis-friendly. */
+		:global(.request-card--list) .card__title-text,
+		:global(.request-card--list) .card__title-suffix {
+			white-space: nowrap;
+		}
+		:global(.request-card--list) .card__title-suffix {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 
         :global(.task-card--list) .card__compact-meta,
         :global(.shop-card--list) .card__compact-meta,
