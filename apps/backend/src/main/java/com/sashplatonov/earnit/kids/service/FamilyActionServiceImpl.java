@@ -37,6 +37,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DateTimeFormatter PERIOD_RESET_FORMATTER = DateTimeFormatter.ofPattern("dd.MM HH:mm");
+    private static final int MAX_REQUEST_NOTE_LENGTH = 120;
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
@@ -72,7 +73,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
 
     @Override
     @Transactional
-    public OperationResult<FamilyDataResponse> requestTaskCompletion(String familyId, int childId, long taskId) {
+    public OperationResult<FamilyDataResponse> requestTaskCompletion(String familyId, int childId, long taskId, String note) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
@@ -97,7 +98,16 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             return OperationResult.failure("TASK_REQUEST_LIMIT_REACHED", taskLimitError);
         }
 
-        purchaseRequestRepository.persist(buildTaskRequest(familyDbId.get(), childId, task.get()));
+        OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
+        if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
+            return OperationResult.failure(failure.errorCode(), failure.message());
+        }
+
+        String normalizedNote = normalizedNoteResult instanceof OperationResult.Success<String> success
+            ? success.value()
+            : null;
+
+        purchaseRequestRepository.persist(buildTaskRequest(familyDbId.get(), childId, task.get(), normalizedNote));
         return familyService.loadFamilyData(familyId, childId, false);
     }
 
@@ -130,7 +140,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
 
     @Override
     @Transactional
-    public OperationResult<FamilyDataResponse> requestItemPurchase(String familyId, int childId, long itemId) {
+    public OperationResult<FamilyDataResponse> requestItemPurchase(String familyId, int childId, long itemId, String note) {
         Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
         if (familyDbId.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
@@ -155,7 +165,16 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             return OperationResult.failure("ITEM_REQUEST_LIMIT_REACHED", itemLimitError);
         }
 
-        purchaseRequestRepository.persist(buildPurchaseRequest(familyDbId.get(), childId, item.get()));
+        OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
+        if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
+            return OperationResult.failure(failure.errorCode(), failure.message());
+        }
+
+        String normalizedNote = normalizedNoteResult instanceof OperationResult.Success<String> success
+            ? success.value()
+            : null;
+
+        purchaseRequestRepository.persist(buildPurchaseRequest(familyDbId.get(), childId, item.get(), normalizedNote));
         return familyService.loadFamilyData(familyId, childId, false);
     }
 
@@ -488,7 +507,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         return "shop_purchase".equals(request.getRequestType());
     }
 
-    private PurchaseRequestEntity buildTaskRequest(int familyDbId, int childId, TaskEntity task) {
+    private PurchaseRequestEntity buildTaskRequest(int familyDbId, int childId, TaskEntity task, String note) {
         return PurchaseRequestEntity.builder()
             .familyId(familyDbId)
             .childId(childId)
@@ -499,11 +518,12 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             .status("pending")
             .requestType("earn")
             .moneyAmount(0)
+            .note(note)
             .createdAt(now())
             .build();
     }
 
-    private PurchaseRequestEntity buildPurchaseRequest(int familyDbId, int childId, ShopItemEntity item) {
+    private PurchaseRequestEntity buildPurchaseRequest(int familyDbId, int childId, ShopItemEntity item, String note) {
         return PurchaseRequestEntity.builder()
             .familyId(familyDbId)
             .childId(childId)
@@ -515,8 +535,35 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             .status("pending")
             .requestType("shop_purchase")
             .moneyAmount(item.getMoneyLimit() != null ? item.getMoneyLimit() : 0)
+            .note(note)
             .createdAt(now())
             .build();
+    }
+
+    /**
+     * Note is optional; empty -> null.
+     * Constraints: single-line only, max 120 chars.
+     */
+    private OperationResult<String> validateAndNormalizeRequestNote(String note) {
+        if (note == null) {
+            return OperationResult.success(null);
+        }
+
+        String trimmed = note.trim();
+        if (trimmed.isEmpty()) {
+            return OperationResult.success(null);
+        }
+
+        // one line only
+        if (trimmed.contains("\n") || trimmed.contains("\r")) {
+            return OperationResult.failure("REQUEST_NOTE_INVALID", BackendMessages.message("requests.noteInvalid"));
+        }
+
+        if (trimmed.length() > MAX_REQUEST_NOTE_LENGTH) {
+            return OperationResult.failure("REQUEST_NOTE_TOO_LONG", BackendMessages.message("requests.noteTooLong"));
+        }
+
+        return OperationResult.success(trimmed);
     }
 
     private HistoryEntryEntity buildTaskHistory(int familyDbId, int childId, TaskEntity task) {

@@ -1175,7 +1175,7 @@ public final class FamilyServiceImpl implements FamilyService {
         RequestDetails details = enrichRequestDetails(request, tasks, shopItems);
         return new RequestDto(request.getId(), request.getTaskId(), details.taskName(),
             request.getItemId(), details.itemName(), details.title(), details.description(),
-            details.groupName(), details.comment(), request.getCoins(), request.getStatus(), request.getRequestType(),
+            details.groupName(), details.comment(), request.getNote(), request.getCoins(), request.getStatus(), request.getRequestType(),
             request.getMoneyAmount(), request.getCreatedAt() != null ? request.getCreatedAt().toString() : null,
             request.getChildId(), details.taskGroup(), details.itemGroup(), details.taskComment(), details.itemComment());
     }

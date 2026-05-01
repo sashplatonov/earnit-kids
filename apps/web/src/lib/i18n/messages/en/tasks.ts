@@ -29,6 +29,7 @@ export const tasksMessages = {
 		groupOrderSavedAdmin: 'Task group order saved',
 		groupOrderSavedChild: 'Your task group order saved',
 	},
+	requestNotePrompt: 'Optional note for this request (max 120 chars):',
 	modal: {
 		titleEdit: 'Edit task',
 		titleAdd: 'Add task',

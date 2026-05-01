@@ -8,7 +8,7 @@
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { earnCoins, requestCoins, saveChildGroupOrder } from '$lib/services/api';
+    import { earnCoins, requestCoinsWithNote, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import {
         applyGroupOrderToChildren,
@@ -143,7 +143,8 @@
                 );
             }
         } else {
-            const result = await requestCoins(taskId);
+            const note = prompt($i18n.t('tasks.requestNotePrompt') as string) ?? '';
+            const result = await requestCoinsWithNote(taskId, note);
             if (result.ok) {
                 if (result.data && typeof result.data === 'object') {
                     applyDataSnapshot(result.data as Record<string, unknown>);

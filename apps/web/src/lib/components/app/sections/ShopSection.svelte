@@ -9,7 +9,7 @@
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { buyItem, requestItem, saveChildGroupOrder } from '$lib/services/api';
+    import { buyItem, requestItemWithNote, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import {
         applyGroupOrderToChildren,
@@ -121,7 +121,8 @@
                 showToast(tShop('toasts.bought', { name: item.name }), 'success');
             }
         } else {
-            const result = await requestItem(itemId);
+            const note = prompt($i18n.t('shop.requestNotePrompt') as string) ?? '';
+            const result = await requestItemWithNote(itemId, note);
             if (result.ok) {
                 if (result.data && typeof result.data === 'object') {
                     applyDataSnapshot(result.data as Record<string, unknown>);

@@ -232,6 +232,9 @@ export const earnCoins = (taskId: unknown, childId?: unknown) =>
 export const requestCoins = (taskId: unknown) =>
     postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, {});
 
+export const requestCoinsWithNote = (taskId: unknown, note?: string | null) =>
+    postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, { note: note ?? null });
+
 // ── Shop actions ──────────────────────────────────────────────────────────────
 
 /** Admin: immediately purchase an item for a child. */
@@ -241,6 +244,10 @@ export const buyItem = (itemId: unknown, childId?: unknown) =>
 /** Child: create a purchase request that requires parent approval. */
 export const requestItem = (itemId: unknown) =>
     postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request`, {});
+
+/** Child: create a purchase request with optional note. */
+export const requestItemWithNote = (itemId: unknown, note?: string | null) =>
+    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request`, { note: note ?? null });
 
 // ── Request actions ───────────────────────────────────────────────────────────
 

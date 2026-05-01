@@ -7,11 +7,11 @@ public interface FamilyActionService {
 
     OperationResult<FamilyDataResponse> completeTask(String familyId, int childId, long taskId);
 
-    OperationResult<FamilyDataResponse> requestTaskCompletion(String familyId, int childId, long taskId);
+    OperationResult<FamilyDataResponse> requestTaskCompletion(String familyId, int childId, long taskId, String note);
 
     OperationResult<FamilyDataResponse> purchaseItem(String familyId, int childId, long itemId);
 
-    OperationResult<FamilyDataResponse> requestItemPurchase(String familyId, int childId, long itemId);
+    OperationResult<FamilyDataResponse> requestItemPurchase(String familyId, int childId, long itemId, String note);
 
     OperationResult<FamilyDataResponse> approveRequest(String familyId, Integer currentChildId, long requestId);
 

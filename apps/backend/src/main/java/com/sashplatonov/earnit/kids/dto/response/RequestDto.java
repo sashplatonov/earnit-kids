@@ -13,6 +13,7 @@ public record RequestDto(
     String description,
     String groupName,
     String comment,
+    String note,
     int coins,
     String status,
     String requestType,

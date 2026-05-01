@@ -29,6 +29,7 @@ export const tasksMessages = {
 		groupOrderSavedAdmin: 'Порядок групп задач сохранен',
 		groupOrderSavedChild: 'Твой порядок групп задач сохранен',
 	},
+	requestNotePrompt: 'Заметка к заявке (необязательно, до 120 символов):',
 	modal: {
 		titleEdit: 'Редактировать задание',
 		titleAdd: 'Добавить задание',

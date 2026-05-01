@@ -55,6 +55,7 @@ export interface Request {
     title?: string | null;
     description?: string | null;
     comment?: string | null;
+    note?: string | null;
     groupName?: string | null;
     taskName?: string | null;
     itemName?: string | null;

@@ -58,4 +58,8 @@ public class PurchaseRequestEntity extends CreatedAtEntity {
 
     @Column(name = "money_amount")
     private int moneyAmount;
+
+    /** Optional child note attached at submission time. */
+    @Column(name = "note", length = 120)
+    private String note;
 }

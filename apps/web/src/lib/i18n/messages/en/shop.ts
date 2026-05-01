@@ -32,6 +32,7 @@ export const shopMessages = {
 		groupOrderSavedAdmin: 'Reward group order saved',
 		groupOrderSavedChild: 'Your reward group order saved',
 	},
+	requestNotePrompt: 'Optional note for this purchase request (max 120 chars):',
 	modal: {
 		titleEdit: 'Edit reward',
 		titleAdd: 'Add reward',

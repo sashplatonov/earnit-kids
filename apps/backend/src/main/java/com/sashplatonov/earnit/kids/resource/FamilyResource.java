@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
+import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateGroupOrderRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateNicknameRequest;
@@ -149,7 +150,8 @@ public class FamilyResource {
     @Path("/tasks/{taskId}/request")
     @Operation(summary = "Create a child task completion request immediately in the database")
     public Response requestTaskCompletion(@Context ContainerRequestContext ctx,
-                                          @PathParam("taskId") long taskId) {
+                                          @PathParam("taskId") long taskId,
+                                          @Valid CreateRequestNoteRequest payload) {
         var auth = getAuthOrFail(ctx);
         if (auth == null || !auth.isChild()) {
             return unauthorized();
@@ -158,7 +160,8 @@ public class FamilyResource {
         OperationResult<FamilyDataResponse> result = familyActionService.requestTaskCompletion(
             auth.familyId(),
             auth.childId(),
-            taskId
+            taskId,
+            payload != null ? payload.note() : null
         );
         notifyDataUpdated(auth, auth.childId(), result);
         return toResponse(result);
@@ -187,7 +190,8 @@ public class FamilyResource {
     @Path("/shop/{itemId}/request")
     @Operation(summary = "Create a child purchase request immediately in the database")
     public Response requestItemPurchase(@Context ContainerRequestContext ctx,
-                                        @PathParam("itemId") long itemId) {
+                                        @PathParam("itemId") long itemId,
+                                        @Valid CreateRequestNoteRequest payload) {
         var auth = getAuthOrFail(ctx);
         if (auth == null || !auth.isChild()) {
             return unauthorized();
@@ -196,7 +200,8 @@ public class FamilyResource {
         OperationResult<FamilyDataResponse> result = familyActionService.requestItemPurchase(
             auth.familyId(),
             auth.childId(),
-            itemId
+            itemId,
+            payload != null ? payload.note() : null
         );
         notifyDataUpdated(auth, auth.childId(), result);
         return toResponse(result);

@@ -115,6 +115,7 @@ export function normalizeRequest(request: Record<string, unknown> = {}) {
         title: request.title ?? request.itemName ?? request.taskName ?? null,
         description: request.description ?? taskComment ?? itemComment ?? null,
         comment: request.comment ?? request.description ?? null,
+        note: request.note ?? null,
         createdAt: getCreatedAt(request),
         groupName,
         taskGroup: request.taskGroup ?? groupName,

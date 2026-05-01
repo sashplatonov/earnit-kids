@@ -112,6 +112,7 @@ export function resolveRequestCard(
             purchase ? i18n.t('requestPurchaseFallbackTitle') : i18n.t('requestTaskFallbackTitle')
         ),
         description: firstNonBlank(
+            request['note'],
             request['description'],
             request.comment,
             request['taskComment'],

@@ -32,6 +32,7 @@ export const shopMessages = {
 		groupOrderSavedAdmin: 'Порядок групп наград сохранен',
 		groupOrderSavedChild: 'Твой порядок групп наград сохранен',
 	},
+	requestNotePrompt: 'Заметка к заявке на покупку (необязательно, до 120 символов):',
 	modal: {
 		titleEdit: 'Редактировать товар',
 		titleAdd: 'Добавить товар',
