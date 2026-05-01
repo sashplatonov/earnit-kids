@@ -8,7 +8,6 @@ import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
-import com.sashplatonov.earnit.kids.repository.SuperAdminCredentialRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -47,7 +46,6 @@ class AuthServiceImplTest {
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
-    @Mock SuperAdminCredentialRepository superAdminCredentialRepository;
     @Mock GoogleIdentityVerifier googleIdentityVerifier;
 
     AuthServiceImpl authService;
@@ -57,30 +55,41 @@ class AuthServiceImplTest {
     void setUp() {
         RequestLocaleHolder.set("en");
         passwordHasher = new PasswordHasher();
-        authService = createAuthService(TestConfigFactory.appConfig(false, "admin@test.com", "admin123", false, true));
+        authService = createAuthService(TestConfigFactory.appConfig(false, "admin@test.com", false, true));
     }
 
     @Test
-    void authenticateAdmin_matchingSuperAdminCredentials_returnsSuperAdminPayload() {
-        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "admin123");
+    void authenticateAdmin_superAdminEmailWithValidFamilyPassword_returnsAdminPayloadWithIsSuperAdmin() {
+        FamilyEntity family = mockFamily("fam_1", "admin@test.com", "password123", false, true);
+        when(familyRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(family));
+        when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
+        when(familyRepository.updatePassword(eq("fam_1"), anyString())).thenReturn(true);
+
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "password123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        OperationResult.Success<AuthPayload> success1 = (OperationResult.Success<AuthPayload>) result;
-        AuthPayload payload = success1.value();
-        assertThat(payload).isNotNull();
-        assertThat(payload.role()).isEqualTo("super_admin");
-        assertThat(payload.email()).isEqualTo("admin@test.com");
+        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.familyId()).isEqualTo("fam_1");
+        assertThat(payload.isSuperAdmin()).isTrue();
     }
 
     @Test
-    void authenticateAdmin_wrongSuperAdminPassword_returnsFailure() {
-        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "wrong");
+    void authenticateAdmin_nonSuperAdminEmail_returnsAdminPayloadWithIsSuperAdminFalse() {
+        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, true);
+        when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
+        when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
+        when(familyRepository.updatePassword(eq("fam_1"), anyString())).thenReturn(true);
 
-        assertThat(result).isInstanceOf(OperationResult.Failure.class);
-        OperationResult.Failure<?> failure1 = (OperationResult.Failure<?>) result;
-        assertThat(failure1.message())
-            .contains("Invalid super-admin password");
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("user@test.com", "password123");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.isSuperAdmin()).isFalse();
     }
+
+
 
     @Test
     void authenticateAdmin_familyCredentialsMatch_returnsAdminPayload() {
@@ -151,7 +160,7 @@ class AuthServiceImplTest {
     @Test
     void authenticateAdminWithGoogle_verifiedExistingFamily_returnsAdminPayloadAndVerifiesLocalEmail() {
         AuthServiceImpl serviceWithGoogle = createAuthService(
-            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id"));
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
         when(googleIdentityVerifier.verify("google-token", "google-client-id"))
             .thenReturn(Optional.of(new GoogleIdentity("user@test.com", true)));
@@ -171,7 +180,7 @@ class AuthServiceImplTest {
     @Test
     void authenticateAdminWithGoogle_blockedLinkedFamily_returnsFailure() {
         AuthServiceImpl serviceWithGoogle = createAuthService(
-            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id"));
         FamilyEntity family = mockFamily("fam_1", "blocked@test.com", "password123", true, true);
         when(googleIdentityVerifier.verify("google-token", "google-client-id"))
             .thenReturn(Optional.of(new GoogleIdentity("blocked@test.com", true)));
@@ -187,7 +196,7 @@ class AuthServiceImplTest {
     @Test
     void authenticateAdminWithGoogle_missingLinkedFamily_returnsFailure() {
         AuthServiceImpl serviceWithGoogle = createAuthService(
-            TestConfigFactory.appConfig(false, null, null, false, true, true, "google-client-id"));
+            TestConfigFactory.appConfig(false, null, false, true, true, "google-client-id"));
         when(googleIdentityVerifier.verify("google-token", "google-client-id"))
             .thenReturn(Optional.of(new GoogleIdentity("missing@test.com", true)));
         when(familyRepository.findByEmail("missing@test.com")).thenReturn(Optional.empty());
@@ -287,7 +296,7 @@ class AuthServiceImplTest {
     @Test
     void registerFamily_emailVerificationEnabled_generatesHexVerificationToken() {
         AuthServiceImpl serviceWithVerification = createAuthService(
-            TestConfigFactory.appConfig(false, null, null, true, true));
+            TestConfigFactory.appConfig(false, null, true, true));
         when(familyRepository.findByEmail("verify@test.com")).thenReturn(Optional.empty());
         when(familyRepository.create(anyString(), anyString(), anyString(), anyBoolean(), any()))
             .thenAnswer(inv -> Optional.of(mockFamily(
@@ -353,7 +362,7 @@ class AuthServiceImplTest {
     @Test
     void authenticateAdmin_unverifiedFamilyWithVerificationEnabled_returnsFailure() {
         AuthServiceImpl serviceWithVerification = createAuthService(
-            TestConfigFactory.appConfig(false, null, null, true, true));
+            TestConfigFactory.appConfig(false, null, true, true));
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
         when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
 
@@ -366,20 +375,18 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void authenticateAdmin_wrongSuperAdminPassword_returnsRussianMessageWhenLocaleIsRussian() {
-        RequestLocaleHolder.set("ru");
+    void authenticateAdmin_superAdminEmailNotFound_returnsFailure() {
+        when(familyRepository.findByEmail("admin@test.com")).thenReturn(Optional.empty());
 
-        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "wrong");
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "password123");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
-        OperationResult.Failure<?> failure = (OperationResult.Failure<?>) result;
-        assertThat(failure.message()).isEqualTo("Неверный пароль администратора");
     }
 
     @Test
     void forgotPassword_recoveryDisabled_returnsFailure() {
         AuthServiceImpl noRecoveryService = createAuthService(
-            TestConfigFactory.appConfig(false, null, null, false, false));
+            TestConfigFactory.appConfig(false, null, false, false));
 
         OperationResult<Void> result = noRecoveryService.forgotPassword("user@test.com");
 
@@ -490,11 +497,6 @@ class AuthServiceImplTest {
     }
 
     private AuthServiceImpl createAuthService(AppConfig config) {
-        SuperAdminCredentialsService superAdminCredentialsService = new SuperAdminCredentialsService(
-            config,
-            passwordHasher,
-            superAdminCredentialRepository
-        );
         return new AuthServiceImpl(
             familyRepository,
             childRepository,
@@ -502,7 +504,6 @@ class AuthServiceImplTest {
             passwordHasher,
             TOKEN_GENERATOR,
             TestConfigFactory.timeProvider(FIXED_NOW),
-            superAdminCredentialsService,
             googleIdentityVerifier
         );
     }

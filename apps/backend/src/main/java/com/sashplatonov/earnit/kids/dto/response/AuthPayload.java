@@ -5,5 +5,6 @@ public record AuthPayload(
     String email,
     String role,
     Integer childId,
-    String childName
+    String childName,
+    boolean isSuperAdmin
 ) { }

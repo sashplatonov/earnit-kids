@@ -6,3 +6,4 @@ export interface AppConfig {
     devPort: number;
     previewPort: number;
 }
+

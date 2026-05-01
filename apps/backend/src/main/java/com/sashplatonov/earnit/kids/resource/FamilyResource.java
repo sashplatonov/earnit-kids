@@ -750,7 +750,7 @@ public class FamilyResource {
 
     private AuthContext getAuthOrFail(ContainerRequestContext ctx) {
         Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return prop instanceof AuthContext auth && !auth.isSuperAdmin() ? auth : null;
+        return prop instanceof AuthContext auth ? auth : null;
     }
 
     private Response unauthorized() {

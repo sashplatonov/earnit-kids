@@ -105,10 +105,15 @@ class FamilyResourceTest {
     }
 
     @Test
-    void getFamilyData_superAdminSession_returnsUnauthorized() {
-        Response response = resource.getFamilyData(contextWithAuth(superAdminAuth()), null);
+    void getFamilyData_superAdminSession_canAccessFamilyData() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), null, null, null, null);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
-        assertThat(response.getStatus()).isEqualTo(401);
+        Response response = resource.getFamilyData(contextWithAuth(superAdminAuth()), 10);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getEntity()).isEqualTo(payload);
     }
 
     @Test
@@ -383,14 +388,14 @@ class FamilyResourceTest {
     }
 
     private static AuthContext adminAuth() {
-        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf");
+        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf", false);
     }
 
     private static AuthContext childAuth(int childId) {
-        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf");
+        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf", false);
     }
 
     private static AuthContext superAdminAuth() {
-        return new AuthContext(null, null, "super_admin", "root@test.com", "csrf");
+        return new AuthContext("fam-1", null, "admin", "root@test.com", "csrf", true);
     }
 }

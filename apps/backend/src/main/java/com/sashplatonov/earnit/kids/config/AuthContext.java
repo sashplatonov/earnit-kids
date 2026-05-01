@@ -7,7 +7,8 @@ public record AuthContext(
     Integer childId,
     String role,
     String email,
-    String csrfToken
+    String csrfToken,
+    boolean isSuperAdmin
 ) {
     public static AuthContext fromPayload(Map<String, Object> payload, String cookieCsrf) {
         String familyId = toStringValue(payload.get("familyId"));
@@ -15,7 +16,8 @@ public record AuthContext(
         String role = toStringValue(payload.get("role"));
         String email = toStringValue(payload.get("email"));
         String csrf = cookieCsrf != null ? cookieCsrf : toStringValue(payload.get("csrfToken"));
-        return new AuthContext(familyId, childId, role, email, csrf);
+        boolean isSuperAdmin = Boolean.TRUE.equals(payload.get("isSuperAdmin"));
+        return new AuthContext(familyId, childId, role, email, csrf, isSuperAdmin);
     }
 
     public boolean isAdmin() {
@@ -27,7 +29,7 @@ public record AuthContext(
     }
 
     public boolean isSuperAdmin() {
-        return "super_admin".equals(role);
+        return isSuperAdmin;
     }
 
     private static Integer toInteger(Object value) {

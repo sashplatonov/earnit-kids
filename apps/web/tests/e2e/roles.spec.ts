@@ -11,7 +11,6 @@ import {
 } from './helpers';
 
 const SUPER_ADMIN_EMAIL = process.env.E2E_SUPER_ADMIN_EMAIL ?? 'admin@example.com';
-const SUPER_ADMIN_PASSWORD = process.env.E2E_SUPER_ADMIN_PASSWORD ?? 'change-me';
 
 test('child session does not expose parent controls', async ({ page }) => {
     const email = uniqueEmail('role.child');
@@ -30,7 +29,7 @@ test('child session does not expose parent controls', async ({ page }) => {
 });
 
 test('super admin can access the admin panel', async ({ page }) => {
-    await loginParent(page, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD, {
+    await loginParent(page, SUPER_ADMIN_EMAIL, DEFAULT_PARENT_PASSWORD, {
         destination: /\/super-admin$/,
         heading: null,
     });

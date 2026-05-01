@@ -26,6 +26,7 @@
     const isAdmin = session.role === 'admin' || session.role === 'parent';
     const isSuperAdmin = session.role === 'super_admin';
 
+
     $: balance = $appStore.balance;
     $: childNickname = $appStore.childNickname ?? session.childName ?? '';
     $: reqCount = $pendingRequestsCount;
@@ -64,6 +65,7 @@
 
     <AppHeader {isAdmin} {balance} childNickname={String(childNickname)} />
     <AppNav {isAdmin} {isSuperAdmin} activeSection={activeSection} requestsCount={reqCount} />
+
 
     <main class="main" id="main-content">
         <slot />

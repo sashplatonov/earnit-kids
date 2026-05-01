@@ -36,11 +36,6 @@ public final class AuthServiceImpl implements AuthService {
     public OperationResult<AuthPayload> authenticateAdmin(String email, String password) {
         log.debug("authenticateAdmin attempt for email={}", email);
 
-        var superAdminResult = authenticateConfiguredSuperAdmin(email, password);
-        if (superAdminResult != null) {
-            return superAdminResult;
-        }
-
         var familyOpt = familyRepository.findByEmail(email);
         if (familyOpt.isEmpty()) {
             log.info("Authentication failed (family not found): {}", email);
@@ -79,13 +74,11 @@ public final class AuthServiceImpl implements AuthService {
         return authenticateGoogleFamily(identity.email(), familyOpt.get());
     }
 
-    private OperationResult<AuthPayload> authenticateConfiguredSuperAdmin(String email, String password) {
-        var configuredEmail = appConfig.superAdmin().email().filter(value -> !value.isBlank());
-        if (configuredEmail.isEmpty() || !configuredEmail.get().equals(email)) {
-            return null;
-        }
-        log.info("Super-admin login success: {}", email);
-        return OperationResult.success(new AuthPayload(null, email, "super_admin", null, null));
+    private boolean isSuperAdminEmail(String email) {
+        return appConfig.superAdmin().email()
+            .filter(value -> !value.isBlank())
+            .map(configuredEmail -> configuredEmail.equals(email))
+            .orElse(false);
     }
 
     private OperationResult<AuthPayload> authenticateFamily(String email, String password, FamilyEntity family) {
@@ -104,9 +97,10 @@ public final class AuthServiceImpl implements AuthService {
         }
 
         familyRepository.updateLastActivity(family.getFamilyId());
-        log.info("Admin login success: familyId={}, email={}", family.getFamilyId(), family.getEmail());
+        boolean isSuperAdmin = isSuperAdminEmail(email);
+        log.info("Admin login success: familyId={}, email={}, isSuperAdmin={}", family.getFamilyId(), family.getEmail(), isSuperAdmin);
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null));
+            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null, isSuperAdmin));
     }
 
     private OperationResult<AuthPayload> authenticateGoogleFamily(String email, FamilyEntity family) {
@@ -123,9 +117,10 @@ public final class AuthServiceImpl implements AuthService {
         }
 
         familyRepository.updateLastActivity(family.getFamilyId());
-        log.info("Google admin login success: familyId={}, email={}", family.getFamilyId(), family.getEmail());
+        boolean isSuperAdmin = isSuperAdminEmail(email);
+        log.info("Google admin login success: familyId={}, email={}, isSuperAdmin={}", family.getFamilyId(), family.getEmail(), isSuperAdmin);
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null));
+            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null, isSuperAdmin));
     }
 
     private boolean isPasswordValid(String email, String password, String familyId, String storedPassword) {
@@ -193,7 +188,7 @@ public final class AuthServiceImpl implements AuthService {
         log.info("Child login success: familyId={}, childId={}", family.getFamilyId(), child.getId());
         return OperationResult.success(
             new AuthPayload(family.getFamilyId(), family.getEmail(), "child",
-                child.getId(), child.getName()));
+                child.getId(), child.getName(), false));
     }
 
     @Override
@@ -217,7 +212,7 @@ public final class AuthServiceImpl implements AuthService {
         }
 
         return OperationResult.success(
-            new AuthPayload(familyId, email, "admin", null, null));
+            new AuthPayload(familyId, email, "admin", null, null, false));
     }
 
     @Override

@@ -185,32 +185,6 @@ class SuperAdminResourceTest {
     }
 
     @Test
-    void changeSuperAdminPassword_success_returnsOk() {
-        when(superAdminService.changeSuperAdminPassword("admin123", "newpass123"))
-            .thenReturn(OperationResult.success(null));
-
-        Response response = resource.changeSuperAdminPassword(
-            contextWithAuth(superAdminAuth()),
-            new com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest("admin123", "newpass123")
-        );
-
-        assertThat(response.getStatus()).isEqualTo(200);
-    }
-
-    @Test
-    void changeSuperAdminPassword_failure_returns400() {
-        when(superAdminService.changeSuperAdminPassword("wrong", "newpass123"))
-            .thenReturn(OperationResult.failure("INVALID_CURRENT_PASSWORD", BackendMessages.message("super.invalidCurrentPassword")));
-
-        Response response = resource.changeSuperAdminPassword(
-            contextWithAuth(superAdminAuth()),
-            new com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest("wrong", "newpass123")
-        );
-
-        assertThat(response.getStatus()).isEqualTo(400);
-    }
-
-    @Test
     void getBaseData_superAdmin_returnsData() {
         when(superAdminService.getBaseData()).thenReturn(Map.of("tasks", List.of(), "products", List.of()));
 
@@ -404,10 +378,10 @@ class SuperAdminResourceTest {
     }
 
     private static AuthContext adminAuth() {
-        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf");
+        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf", false);
     }
 
     private static AuthContext superAdminAuth() {
-        return new AuthContext("fam-1", null, "super_admin", "root@test.com", "csrf");
+        return new AuthContext("fam-1", null, "admin", "root@test.com", "csrf", true);
     }
 }

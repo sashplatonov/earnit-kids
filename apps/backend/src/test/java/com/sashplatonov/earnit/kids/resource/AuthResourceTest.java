@@ -50,13 +50,13 @@ class AuthResourceTest {
 
     @BeforeEach
     void setUp() {
-        appConfig = TestConfigFactory.appConfig(false, null, null, true, true);
+        appConfig = TestConfigFactory.appConfig(false, null, true, true);
         resource = new AuthResource(authService, cookieBuilder, appConfig);
     }
 
     @Test
     void login_validAdminCredentials_returnsCookies() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
         when(authService.authenticateAdmin("a@test.com", "secret"))
             .thenReturn(OperationResult.success(payload));
         when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
@@ -80,7 +80,7 @@ class AuthResourceTest {
 
     @Test
     void loginGoogle_validParentCredential_returnsCookies() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
         when(authService.authenticateAdminWithGoogle("google-token"))
             .thenReturn(OperationResult.success(payload));
         when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
@@ -104,7 +104,7 @@ class AuthResourceTest {
 
     @Test
     void loginChild_validToken_returnsCookies() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid");
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid", false);
         when(authService.authenticateChild("token")).thenReturn(OperationResult.success(payload));
         when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10))
             .thenReturn(List.of("cookie-1"));
@@ -129,7 +129,7 @@ class AuthResourceTest {
 
     @Test
     void register_validPayload_returnsCreated() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null);
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
         when(authService.registerFamily("a@test.com", "secret123")).thenReturn(OperationResult.success(payload));
         when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null))
             .thenReturn(List.of("cookie"));
@@ -208,7 +208,7 @@ class AuthResourceTest {
         resource = new AuthResource(
             authService,
             cookieBuilder,
-            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id", "google-client-secret"));
+            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id", "google-client-secret"));
 
         Response response = resource.authConfig();
 
@@ -223,7 +223,7 @@ class AuthResourceTest {
         resource = new AuthResource(
             authService,
             cookieBuilder,
-            TestConfigFactory.appConfig(false, null, null, true, true, true, "google-client-id"));
+            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id"));
 
         Response response = resource.authConfig();
 
@@ -237,7 +237,6 @@ class AuthResourceTest {
     void loginGoogleUrl_googleFeatureEnabled_returnsAuthorizationUrlAndStateCookie() {
         AppConfig config = TestConfigFactory.appConfig(
             false,
-            null,
             null,
             true,
             true,
@@ -275,7 +274,6 @@ class AuthResourceTest {
             TestConfigFactory.appConfig(
                 false,
                 null,
-                null,
                 true,
                 true,
                 true,
@@ -287,7 +285,6 @@ class AuthResourceTest {
             new GoogleOAuthService(
                 TestConfigFactory.appConfig(
                     false,
-                    null,
                     null,
                     true,
                     true,
@@ -312,7 +309,6 @@ class AuthResourceTest {
     void loginGoogleCallback_authenticationFailure_redirectsToConfiguredAppUrl() {
         AppConfig config = TestConfigFactory.appConfig(
             false,
-            null,
             null,
             true,
             true,
@@ -351,7 +347,6 @@ class AuthResourceTest {
         AppConfig config = TestConfigFactory.appConfig(
             false,
             null,
-            null,
             true,
             true,
             true,
@@ -388,7 +383,6 @@ class AuthResourceTest {
     void loginGoogleCallback_stateMismatch_withoutAppUrl_keepsRelativeRedirect() {
         AppConfig config = TestConfigFactory.appConfig(
             false,
-            null,
             null,
             true,
             true,
@@ -443,10 +437,10 @@ class AuthResourceTest {
     }
 
     private static AuthContext adminAuth() {
-        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf");
+        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf", false);
     }
 
     private static AuthContext childAuth(int childId) {
-        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf");
+        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf", false);
     }
 }

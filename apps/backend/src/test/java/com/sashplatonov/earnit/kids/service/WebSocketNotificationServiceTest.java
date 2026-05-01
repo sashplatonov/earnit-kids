@@ -48,8 +48,8 @@ class WebSocketNotificationServiceTest {
         lenient().when(openConnections.findByConnectionId("admin-1")).thenReturn(Optional.of(adminConnection));
         lenient().when(openConnections.findByConnectionId("child-1")).thenReturn(Optional.of(childConnection));
 
-        service.register("admin-1", new AuthContext("fam-1", null, "admin", null, null));
-        service.register("child-1", new AuthContext("fam-1", 10, "child", null, null));
+        service.register("admin-1", new AuthContext("fam-1", null, "admin", null, null, false));
+        service.register("child-1", new AuthContext("fam-1", 10, "child", null, null, false));
     }
 
     @Test

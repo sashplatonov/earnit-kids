@@ -29,7 +29,7 @@ class CookieBuilderTest {
     void buildAuthCookies_developmentProfile_includesExpectedCookies() {
         CookieBuilder builder = new CookieBuilder(
             jwtService,
-            TestConfigFactory.appConfig(false, null, null, true, true));
+            TestConfigFactory.appConfig(false, null, true, true));
 
         List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10);
 
@@ -47,7 +47,7 @@ class CookieBuilderTest {
     void buildAuthCookies_productionProfile_addsSecureFlag() {
         CookieBuilder builder = new CookieBuilder(
             jwtService,
-            TestConfigFactory.appConfig(true, null, null, true, true));
+            TestConfigFactory.appConfig(true, null, true, true));
 
         List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null);
 
@@ -58,7 +58,7 @@ class CookieBuilderTest {
     void buildAuthCookies_childRole_doesNotExposeRoleCookie() {
         CookieBuilder builder = new CookieBuilder(
             jwtService,
-            TestConfigFactory.appConfig(false, null, null, true, true));
+            TestConfigFactory.appConfig(false, null, true, true));
 
         List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null);
 
@@ -70,7 +70,7 @@ class CookieBuilderTest {
     void buildAuthCookies_signedToken_canBeVerified() {
         CookieBuilder builder = new CookieBuilder(
             jwtService,
-            TestConfigFactory.appConfig(false, null, null, true, true));
+            TestConfigFactory.appConfig(false, null, true, true));
 
         List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5);
         String appAuth = cookies.stream().filter(v -> v.startsWith("app_auth=")).findFirst().orElseThrow();
@@ -90,7 +90,7 @@ class CookieBuilderTest {
     void buildLogoutCookies_anyProfile_clearsAllKnownCookies() {
         CookieBuilder builder = new CookieBuilder(
             jwtService,
-            TestConfigFactory.appConfig(false, null, null, true, true));
+            TestConfigFactory.appConfig(false, null, true, true));
 
         List<String> cookies = builder.buildLogoutCookies();
 

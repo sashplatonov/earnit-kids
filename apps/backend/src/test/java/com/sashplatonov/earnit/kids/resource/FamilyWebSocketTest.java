@@ -46,7 +46,7 @@ class FamilyWebSocketTest {
 
         familyWebSocket.onOpen(connection, handshakeRequest);
 
-        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", 10, "child", null, null)));
+        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", 10, "child", null, null, false)));
     }
 
     @Test
@@ -57,7 +57,7 @@ class FamilyWebSocketTest {
 
         familyWebSocket.onOpen(connection, handshakeRequest);
 
-        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", null, "admin", null, null)));
+        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", null, "admin", null, null, false)));
     }
 
     @Test

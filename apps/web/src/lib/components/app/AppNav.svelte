@@ -17,8 +17,10 @@
 
     export let isAdmin: boolean = false;
     export let isSuperAdmin: boolean = false;
+    export let canAccessSuperAdmin: boolean = false;
     export let activeSection: AppSection = 'analytics';
     export let requestsCount: number = 0;
+
 
     const i18n = useI18n();
 
@@ -126,7 +128,7 @@
                         {/each}
                         <div class="nav__dropdown-divider" role="presentation"></div>
                     {/if}
-                    {#if isSuperAdmin}
+                    {#if isSuperAdmin || canAccessSuperAdmin}
                         <div class="nav__dropdown-group-label" role="presentation">{$i18n.t('common.navigation.admin')}</div>
                         <a class="nav__dropdown-item" role="menuitem" href={$i18n.href('/super-admin')} on:click={closeMoreMenu}>
                             <span class="gamified-icon icon-shield" aria-hidden="true"></span>
@@ -134,6 +136,7 @@
                         </a>
                         <div class="nav__dropdown-divider" role="presentation"></div>
                     {/if}
+
                     <div class="nav__dropdown-group-label" role="presentation">{$i18n.t('common.navigation.sections')}</div>
                     {#each COMMON_OVERFLOW_SECTIONS as section (section)}
                         <a class="nav__dropdown-item" role="menuitem" href={$i18n.href(resolve('/app/[section]', { section }))} on:click={closeMoreMenu}>

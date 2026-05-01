@@ -12,6 +12,7 @@ services:
       APP_URL: ${APP_URL}
       FRONTEND_URL: ${APP_URL}
       PUBLIC_BASE_URL: ${APP_URL}
+
     depends_on:
       backend:
         condition: service_healthy
@@ -42,6 +43,7 @@ services:
       APP_URL: ${APP_URL:-http://localhost:5001}
       GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-http://localhost:5001/api/login-google/callback}
       JWT_SECRET: ${JWT_SECRET}
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
     expose:
       - "${BACKEND_INTERNAL_PORT}"

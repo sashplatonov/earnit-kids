@@ -28,4 +28,5 @@ export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         devPort: parsePort(env.DEV_PORT, DEFAULT_DEV_PORT),
         previewPort: parsePort(env.PREVIEW_PORT, DEFAULT_PREVIEW_PORT),
     };
+
 }
