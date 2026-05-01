@@ -37,7 +37,6 @@ public class SuperAdminService {
     private final BaseDataService baseDataService;
     private final ObjectMapper objectMapper;
     private final PasswordHasher passwordHasher;
-    private final SuperAdminCredentialsService superAdminCredentialsService;
 
     public List<Map<String, Object>> getFamilies() {
         return familyRepository.listAll().stream()
@@ -108,10 +107,6 @@ public class SuperAdminService {
             return OperationResult.failure("PASSWORD_UPDATE_FAILED", BackendMessages.message("auth.passwordUpdateFailed"));
         }
         return OperationResult.success(null);
-    }
-
-    public OperationResult<Void> changeSuperAdminPassword(String oldPassword, String newPassword) {
-        return superAdminCredentialsService.changePassword(oldPassword, newPassword);
     }
 
     @Transactional

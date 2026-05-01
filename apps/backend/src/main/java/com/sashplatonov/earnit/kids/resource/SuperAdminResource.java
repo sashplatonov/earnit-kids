@@ -2,7 +2,6 @@ package com.sashplatonov.earnit.kids.resource;
 
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
-import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
@@ -144,22 +143,6 @@ public class SuperAdminResource {
         return toVoidResponse(
             superAdminService.setFamilyPassword(familyId, request.password()),
             "FAMILY_PASSWORD_UPDATE_FAILED"
-        );
-    }
-
-    @POST
-    @Path("/system/password")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response changeSuperAdminPassword(@Context ContainerRequestContext ctx,
-                                             @Valid ChangePasswordRequest request) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        return toVoidResponse(
-            superAdminService.changeSuperAdminPassword(request.oldPassword(), request.newPassword()),
-            "SUPER_ADMIN_PASSWORD_UPDATE_FAILED"
         );
     }
 

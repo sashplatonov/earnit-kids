@@ -111,13 +111,6 @@
     let familyPasswordStatus = '';
     let familyPasswordStatusType: StatusTone = '';
     let familyPasswordSaving = false;
-    let superAdminOldPassword = '';
-    let superAdminNewPassword = '';
-    let superAdminConfirmPassword = '';
-    let superAdminPasswordStatus = '';
-    let superAdminPasswordStatusType: StatusTone = '';
-    let superAdminPasswordSaving = false;
-
     onMount(() => {
         if (typeof document !== 'undefined') {
             document.body.classList.add('super-admin-page');
@@ -234,15 +227,6 @@
         familyPasswordStatus = '';
         familyPasswordStatusType = '';
         familyPasswordSaving = false;
-    }
-
-    function resetSuperAdminPasswordState() {
-        superAdminOldPassword = '';
-        superAdminNewPassword = '';
-        superAdminConfirmPassword = '';
-        superAdminPasswordStatus = '';
-        superAdminPasswordStatusType = '';
-        superAdminPasswordSaving = false;
     }
 
     function catalogTitle(type: CatalogType): string {
@@ -757,50 +741,6 @@
             familyPasswordStatusType = 'error';
         } finally {
             familyPasswordSaving = false;
-        }
-    }
-
-    async function updateSuperAdminPassword() {
-        if (superAdminNewPassword.length < 6) {
-            superAdminPasswordStatus = $i18n.t('superadmin.system.passwordTooShort');
-            superAdminPasswordStatusType = 'error';
-            return;
-        }
-
-        if (superAdminNewPassword !== superAdminConfirmPassword) {
-            superAdminPasswordStatus = $i18n.t('superadmin.system.passwordMismatch');
-            superAdminPasswordStatusType = 'error';
-            return;
-        }
-
-        superAdminPasswordSaving = true;
-        superAdminPasswordStatus = $i18n.t('superadmin.system.passwordSaving');
-        superAdminPasswordStatusType = 'info';
-
-        try {
-            const res = await fetchWithCsrf('/api/super/system/password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldPassword: superAdminOldPassword, newPassword: superAdminNewPassword }),
-            });
-            const payload = await res.json().catch(() => null);
-
-            if (res.ok) {
-                superAdminPasswordStatus = $i18n.t('superadmin.system.passwordSaved');
-                superAdminPasswordStatusType = 'success';
-                superAdminOldPassword = '';
-                superAdminNewPassword = '';
-                superAdminConfirmPassword = '';
-                return;
-            }
-
-            superAdminPasswordStatus = messageFromPayload(payload, $i18n.t('superadmin.system.passwordSaveError'));
-            superAdminPasswordStatusType = 'error';
-        } catch {
-            superAdminPasswordStatus = $i18n.t('superadmin.states.networkUnavailable');
-            superAdminPasswordStatusType = 'error';
-        } finally {
-            superAdminPasswordSaving = false;
         }
     }
 
@@ -1406,38 +1346,6 @@
                     </article>
                 </div>
                 <div class="system-panel__details">
-                    <article class="system-card system-card--form">
-                        <p class="system-card__label">{$i18n.t('superadmin.system.security')}</p>
-                        <h3 class="system-card__heading">{$i18n.t('superadmin.system.passwordHeading')}</h3>
-                        <div class="password-form-grid">
-                            <div class="input-group">
-                                <label for="super-admin-old-password">{$i18n.t('superadmin.system.currentPassword')}</label>
-                                <input id="super-admin-old-password" type="password" bind:value={superAdminOldPassword} autocomplete="current-password" />
-                            </div>
-                            <div class="input-group">
-                                <label for="super-admin-new-password">{$i18n.t('superadmin.system.newPassword')}</label>
-                                <input id="super-admin-new-password" type="password" bind:value={superAdminNewPassword} autocomplete="new-password" />
-                            </div>
-                            <div class="input-group">
-                                <label for="super-admin-confirm-password">{$i18n.t('superadmin.system.confirmPassword')}</label>
-                                <input id="super-admin-confirm-password" type="password" bind:value={superAdminConfirmPassword} autocomplete="new-password" />
-                            </div>
-                        </div>
-                        {#if superAdminPasswordStatus}
-                        <div class="status-callout"
-                            class:status-callout--success={superAdminPasswordStatusType === 'success'}
-                            class:status-callout--error={superAdminPasswordStatusType === 'error'}
-                            class:status-callout--info={superAdminPasswordStatusType === 'info'}
-                            role="status">
-                            {superAdminPasswordStatus}
-                        </div>
-                        {/if}
-                        <div class="password-panel__actions">
-                            <button class="btn btn--primary" type="button" disabled={superAdminPasswordSaving} on:click={updateSuperAdminPassword}>
-                                {superAdminPasswordSaving ? $i18n.t('superadmin.actions.saving') : $i18n.t('superadmin.actions.changePassword')}
-                            </button>
-                        </div>
-                    </article>
                     <article class="system-card system-card--details">
                         <p class="system-card__label">{$i18n.t('superadmin.system.connection')}</p>
                         <h3 class="system-card__heading">{$i18n.t('superadmin.system.integrationHeading')}</h3>

@@ -30,7 +30,6 @@ public final class AuthServiceImpl implements AuthService {
     private final PasswordHasher passwordHasher;
     private final SecureTokenGenerator secureTokenGenerator;
     private final TimeProvider timeProvider;
-    private final SuperAdminCredentialsService superAdminCredentialsService;
     private final GoogleIdentityVerifier googleIdentityVerifier;
 
     @Override
@@ -81,15 +80,12 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     private OperationResult<AuthPayload> authenticateConfiguredSuperAdmin(String email, String password) {
-        if (!superAdminCredentialsService.matchesEmail(email)) {
+        var configuredEmail = appConfig.superAdmin().email().filter(value -> !value.isBlank());
+        if (configuredEmail.isEmpty() || !configuredEmail.get().equals(email)) {
             return null;
         }
-        if (superAdminCredentialsService.verifyPassword(password)) {
-            log.info("Super-admin login success: {}", email);
-            return OperationResult.success(new AuthPayload(null, email, "super_admin", null, null));
-        }
-        log.info("Super-admin login failed (wrong password): {}", email);
-        return OperationResult.failure(BackendMessages.message("auth.invalidAdminPassword"));
+        log.info("Super-admin login success: {}", email);
+        return OperationResult.success(new AuthPayload(null, email, "super_admin", null, null));
     }
 
     private OperationResult<AuthPayload> authenticateFamily(String email, String password, FamilyEntity family) {

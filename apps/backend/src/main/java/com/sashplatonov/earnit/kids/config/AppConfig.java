@@ -33,8 +33,6 @@ public interface AppConfig {
     interface SuperAdmin {
 
         Optional<String> email();
-
-        Optional<String> password();
     }
 
     interface EmailVerification {
