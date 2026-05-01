@@ -14,7 +14,7 @@
     export let titleActionAria = '';
     export let titleActionExpanded = false;
     export let titleActionControls = '';
-    export let onTitleAction: (() => void) | null = null;
+    export let onTitleAction: ((event?: MouseEvent) => void) | null = null;
 </script>
 
 <div class="card__header">
@@ -85,17 +85,24 @@
 
 	.card__title-action {
 		display: inline-flex;
+		flex: 0 0 auto;
 		align-items: center;
 		justify-content: center;
 		width: 1.55rem;
 		height: 1.55rem;
 		min-width: 1.55rem;
+		min-height: 1.55rem;
+		max-width: 1.55rem;
+		max-height: 1.55rem;
+		aspect-ratio: 1 / 1;
+		box-sizing: border-box;
 		padding: 0;
 		border: 1px solid rgba(99, 102, 241, 0.22);
-		border-radius: 50%;
+		border-radius: 9999px;
 		background: rgba(99, 102, 241, 0.1);
 		color: #4338ca;
 		cursor: pointer;
+		line-height: 1;
 		transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 	}
 
@@ -256,6 +263,9 @@
 			width: 1.4rem;
 			height: 1.4rem;
 			min-width: 1.4rem;
+			min-height: 1.4rem;
+			max-width: 1.4rem;
+			max-height: 1.4rem;
 		}
 
         :global(.task-card--list) .card__compact-meta,

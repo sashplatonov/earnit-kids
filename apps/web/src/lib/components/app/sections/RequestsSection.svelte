@@ -1,6 +1,6 @@
 <script lang="ts">
     import { browser } from '$app/environment';
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount, onDestroy, tick } from 'svelte';
     import CardHeader from '$lib/components/app/CardHeader.svelte';
     import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
@@ -18,6 +18,8 @@
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
     let openNoteRequestId: string | null = null;
     let notePopoverStyle = '';
+    let notePopoverElement: HTMLDivElement | null = null;
+    let noteAnchorRect: DOMRect | null = null;
 
     $: requests = $appStore.requests;
     $: isAdmin = $appStore.isAdmin;
@@ -210,10 +212,11 @@
         return `request-note-${String(reqId)}`;
     }
 
-    function toggleNote(reqId: unknown, event?: MouseEvent) {
+    async function toggleNote(reqId: unknown, event?: MouseEvent) {
         const nextId = String(reqId);
         if (openNoteRequestId === nextId) {
             openNoteRequestId = null;
+            noteAnchorRect = null;
             return;
         }
 
@@ -225,19 +228,35 @@
 
         if (!button) {
             notePopoverStyle = '';
+            noteAnchorRect = null;
             return;
         }
 
-        const rect = button.getBoundingClientRect();
+        noteAnchorRect = button.getBoundingClientRect();
+
+        await tick();
+
+        const rect = noteAnchorRect;
+        const popover = notePopoverElement;
+        if (!rect || !popover) {
+            notePopoverStyle = '';
+            return;
+        }
+
         const viewportWidth = window.innerWidth;
-        const tooltipWidth = Math.min(288, viewportWidth - 16);
+        const viewportHeight = window.innerHeight;
+        const tooltipWidth = Math.min(popover.offsetWidth || 288, viewportWidth - 16);
+        const tooltipHeight = popover.offsetHeight || 0;
         const left = Math.min(
             Math.max(8, rect.right - tooltipWidth),
             viewportWidth - tooltipWidth - 8
         );
-        const top = rect.bottom + 8;
+        const preferredTop = rect.bottom + 8;
+        const top = preferredTop + tooltipHeight > viewportHeight - 8
+            ? Math.max(8, rect.top - tooltipHeight - 8)
+            : preferredTop;
 
-        notePopoverStyle = `left:${left}px; top:${top}px; width:min(18rem, calc(100vw - 1rem));`;
+        notePopoverStyle = `left:${left}px; top:${top}px;`;
     }
 </script>
 
@@ -411,7 +430,7 @@
 {#if openNoteRequestId}
     {@const activeRequest = [...incomingRequests, ...myRequests].find((req) => String(req.id) === openNoteRequestId)}
     {#if activeRequest?.ui.note}
-    <div class="request-note-popover" id={requestNoteId(openNoteRequestId)} role="tooltip" style={notePopoverStyle}>
+    <div class="request-note-popover" id={requestNoteId(openNoteRequestId)} role="tooltip" style={notePopoverStyle} bind:this={notePopoverElement}>
         <span class="request-note-popover__label">{tHistory('requests.noteLabel')}</span>
         <span>{activeRequest.ui.note}</span>
     </div>
@@ -478,6 +497,7 @@
         z-index: 1200;
         display: grid;
         gap: 0.22rem;
+        width: min(18rem, calc(100vw - 1rem));
         max-width: calc(100vw - 1rem);
         padding: 0.6rem 0.7rem;
         border: 1px solid rgba(148, 163, 184, 0.28);
@@ -600,6 +620,10 @@
             padding: 0.2rem 0.42rem;
             font-size: 0.68rem;
             line-height: 1.05;
+        }
+
+        .request-note-popover {
+            width: min(16rem, calc(100vw - 1rem));
         }
 
     }
