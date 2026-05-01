@@ -121,7 +121,13 @@
                 showToast(tShop('toasts.bought', { name: item.name }), 'success');
             }
         } else {
-            const note = prompt($i18n.t('shop.requestNotePrompt') as string) ?? '';
+            const note = await requestNote({
+                title: tShop('requestNoteModal.title'),
+                description: tShop('requestNoteModal.description', { title: String(item.name ?? '') }),
+                placeholder: tShop('requestNoteModal.placeholder'),
+                saveLabel: tShop('requestNoteModal.save'),
+                skipLabel: tShop('requestNoteModal.skip'),
+            });
             const result = await requestItemWithNote(itemId, note);
             if (result.ok) {
                 if (result.data && typeof result.data === 'object') {
@@ -162,6 +168,16 @@
         return isItemAffordable(item)
             ? (isAdmin ? tShop('section.availableAdmin') : tShop('section.availableChild'))
             : tShop('section.missingCoins', { amount: $i18n.formatNumber(missingCoins(itemPrice(item))) });
+    }
+
+    function requestNote(options: { title: string; description: string; placeholder: string; saveLabel: string; skipLabel: string }) {
+        return new Promise<string>((resolve) => {
+            modalStore.open('request-note-modal', {
+                ...options,
+                onSubmit: (note: string) => resolve(note),
+                onSkip: () => resolve(''),
+            });
+        });
     }
 
     function shopMoneyPriceLabel(item: { moneyLimit?: number | null }) {

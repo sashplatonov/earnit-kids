@@ -30,6 +30,13 @@ export const tasksMessages = {
 		groupOrderSavedChild: 'Твой порядок групп задач сохранен',
 	},
 	requestNotePrompt: 'Заметка к заявке (необязательно, до 120 символов):',
+	requestNoteModal: {
+		title: 'Заметка к заявке',
+		description: 'Если хочешь, добавь заметку к заданию «{title}». Можно и отправить без нее.',
+		placeholder: 'Напиши короткую заметку для родителя…',
+		skip: 'Пропустить',
+		save: 'Сохранить',
+	},
 	modal: {
 		titleEdit: 'Редактировать задание',
 		titleAdd: 'Добавить задание',

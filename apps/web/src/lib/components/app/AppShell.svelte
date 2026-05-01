@@ -4,6 +4,7 @@
     import AppNav from './AppNav.svelte';
     import Toast from './Toast.svelte';
     import AddChildModal from './modals/AddChildModal.svelte';
+    import RequestNoteModal from './modals/RequestNoteModal.svelte';
     import TaskModal from './modals/TaskModal.svelte';
     import ShopModal from './modals/ShopModal.svelte';
     import type { AppSection } from '$lib/app/routes';
@@ -69,6 +70,7 @@
 
     <!-- Modal host -->
     <AddChildModal />
+    <RequestNoteModal />
     <TaskModal />
     <ShopModal />
 

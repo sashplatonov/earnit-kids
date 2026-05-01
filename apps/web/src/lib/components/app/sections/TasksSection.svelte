@@ -126,6 +126,16 @@
         return task.isActive !== false;
     }
 
+    function requestNote(options: { title: string; description: string; placeholder: string; saveLabel: string; skipLabel: string }) {
+        return new Promise<string>((resolve) => {
+            modalStore.open('request-note-modal', {
+                ...options,
+                onSubmit: (note: string) => resolve(note),
+                onSkip: () => resolve(''),
+            });
+        });
+    }
+
     async function handleEarn(taskId: unknown) {
         const childId = resolvedChildId;
         const task = tasks.find((entry) => entry.id == taskId);
@@ -143,7 +153,13 @@
                 );
             }
         } else {
-            const note = prompt($i18n.t('tasks.requestNotePrompt') as string) ?? '';
+            const note = await requestNote({
+                title: tTasks('requestNoteModal.title'),
+                description: tTasks('requestNoteModal.description', { title: String(task.title ?? task.name ?? '') }),
+                placeholder: tTasks('requestNoteModal.placeholder'),
+                saveLabel: tTasks('requestNoteModal.save'),
+                skipLabel: tTasks('requestNoteModal.skip'),
+            });
             const result = await requestCoinsWithNote(taskId, note);
             if (result.ok) {
                 if (result.data && typeof result.data === 'object') {

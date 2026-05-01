@@ -33,6 +33,13 @@ export const shopMessages = {
 		groupOrderSavedChild: 'Твой порядок групп наград сохранен',
 	},
 	requestNotePrompt: 'Заметка к заявке на покупку (необязательно, до 120 символов):',
+	requestNoteModal: {
+		title: 'Заметка к заявке',
+		description: 'Если хочешь, добавь заметку к товару «{title}». Можно и отправить без нее.',
+		placeholder: 'Напиши короткую заметку для родителя…',
+		skip: 'Пропустить',
+		save: 'Сохранить',
+	},
 	modal: {
 		titleEdit: 'Редактировать товар',
 		titleAdd: 'Добавить товар',

@@ -30,6 +30,13 @@ export const tasksMessages = {
 		groupOrderSavedChild: 'Your task group order saved',
 	},
 	requestNotePrompt: 'Optional note for this request (max 120 chars):',
+	requestNoteModal: {
+		title: 'Request note',
+		description: 'Add a note for the task “{title}” if you want. You can also send it without a note.',
+		placeholder: 'Write a short note for the parent…',
+		skip: 'Skip',
+		save: 'Save',
+	},
 	modal: {
 		titleEdit: 'Edit task',
 		titleAdd: 'Add task',
