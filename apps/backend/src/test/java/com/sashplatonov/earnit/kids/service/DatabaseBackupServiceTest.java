@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
@@ -45,8 +46,6 @@ class DatabaseBackupServiceTest {
             commandRunner,
             backupTelegramSettingsService
         );
-        when(backupTelegramSettingsService.currentSettings())
-            .thenReturn(new TelegramBackupSettingsSnapshot(false, null, null, 24, 20, null, null, null));
     }
 
     private DatabaseCommandResult dumpCreated(List<String> command) throws Exception {
@@ -59,6 +58,8 @@ class DatabaseBackupServiceTest {
 
     @Test
     void createBackup_limitsDumpToConfiguredSchema() throws Exception {
+        when(backupTelegramSettingsService.currentSettings())
+            .thenReturn(new TelegramBackupSettingsSnapshot(false, null, null, 24, 20, null, null, null));
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
             .thenAnswer(invocation -> {
                 List<String> command = invocation.getArgument(0);
@@ -78,6 +79,18 @@ class DatabaseBackupServiceTest {
 
     @Test
     void createBackup_prunesFilesBeyondRetentionLimit() throws Exception {
+        AtomicInteger counter = new AtomicInteger(0);
+        DatabaseBackupService serviceWithIncrementingTime = new DatabaseBackupService(
+            "jdbc:postgresql://db:5432/earnit_kids",
+            "earnit",
+            Optional.of("secret"),
+            "earnit_kids",
+            tempDir.toString(),
+            () -> FIXED_NOW.plusSeconds(counter.incrementAndGet()),
+            commandRunner,
+            backupTelegramSettingsService
+        );
+
         when(backupTelegramSettingsService.currentSettings())
             .thenReturn(new TelegramBackupSettingsSnapshot(false, null, null, 24, 2, null, null, null));
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
@@ -86,13 +99,11 @@ class DatabaseBackupServiceTest {
                 return dumpCreated(command);
             });
 
-        service.createBackup();
-        Thread.sleep(5L);
-        service.createBackup();
-        Thread.sleep(5L);
-        service.createBackup();
+        serviceWithIncrementingTime.createBackup();
+        serviceWithIncrementingTime.createBackup();
+        serviceWithIncrementingTime.createBackup();
 
-        assertThat(service.listBackups()).hasSize(2);
+        assertThat(serviceWithIncrementingTime.listBackups()).hasSize(2);
     }
 
     @Test

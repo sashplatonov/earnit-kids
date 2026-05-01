@@ -96,15 +96,6 @@ class BackupTelegramSettingsServiceTest {
 
     @Test
     void updateSettings_rejectsInvalidRetentionCount() {
-        when(repository.findSettings()).thenReturn(Optional.of(
-            BackupTelegramSettingsEntity.builder()
-                .id(BackupTelegramSettingsEntity.DEFAULT_ID)
-                .enabled(false)
-                .intervalHours(24)
-                .backupRetentionCount(20)
-                .build()
-        ));
-
         OperationResult<BackupTelegramSettingsResponse> result =
             service.updateSettings(new UpdateBackupTelegramSettingsRequest(false, null, "chat-1", 24, 0));
 

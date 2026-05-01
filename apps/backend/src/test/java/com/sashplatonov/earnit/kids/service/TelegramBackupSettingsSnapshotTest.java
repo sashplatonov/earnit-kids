@@ -15,6 +15,7 @@ class TelegramBackupSettingsSnapshotTest {
             "token",
             "chat",
             12,
+            7,
             Instant.parse("2026-04-21T00:00:00Z"),
             Instant.parse("2026-04-20T12:00:00Z"),
             null
