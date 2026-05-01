@@ -94,6 +94,14 @@
         line-height: 1.15;
     }
 
+    /* Highlighted child name chip for requests list (row) view */
+    :global(.request-card--list) .card__compact-chip--child {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(168, 85, 247, 0.22));
+        color: #2d1b5a;
+        border: 1px solid rgba(99, 102, 241, 0.18);
+        font-weight: 900;
+    }
+
     :global(.task-card--list) .card__compact-chip--group,
     :global(.shop-card--list) .card__compact-chip--group,
     :global(.request-card--list) .card__compact-chip--group,

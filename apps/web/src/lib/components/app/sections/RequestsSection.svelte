@@ -135,14 +135,18 @@
             isPurchase: boolean;
         };
     }) {
-        const chips = [
+        // NOTE: In list (row) view on mobile we only show the 1st chip (group) and the 2nd chip.
+        // We want the child's name to always be visible and placed near the beginning, so we
+        // inject it as the 2nd chip when available.
+        const chips: Array<{ label: string; className?: string }> = [
             { label: req.ui.group, className: 'card__compact-chip--group' },
-            { label: req.ui.typeLabel },
         ];
 
         if (req.childNickname) {
-            chips.push({ label: req.childNickname });
+            chips.push({ label: req.childNickname, className: 'card__compact-chip--child' });
         }
+
+        chips.push({ label: req.ui.typeLabel });
 
         if (!isAdmin) {
             chips.push({
@@ -192,10 +196,10 @@
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
                 <div class="card__badge-row">
-                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     {#if req.childNickname}
                     <span class="card__badge request-chip--child">{req.childNickname}</span>
                     {/if}
+                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     <span class="card__badge card__badge--group">{req.ui.group}</span>
                 </div>
                 <div class="request-card__layout">
@@ -268,6 +272,9 @@
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
                 <div class="card__badge-row">
+                    {#if req.childNickname}
+                    <span class="card__badge request-chip--child">{req.childNickname}</span>
+                    {/if}
                     <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     <span class={`card__badge request-chip--status ${requestStatusClass(req.status)}`}>{requestStatusLabel(req.status)}</span>
                     <span class="card__badge card__badge--group">{req.ui.group}</span>
@@ -417,6 +424,14 @@
         flex: none;
         padding: 0.38rem 0.7rem;
         font-size: 0.82rem;
+    }
+
+    /* Bright child name badge for requests */
+    .request-chip--child {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(168, 85, 247, 0.22));
+        color: #2d1b5a;
+        border: 1px solid rgba(99, 102, 241, 0.18);
+        font-weight: 900;
     }
 
     .request-card--list .history-item__delete-btn {
