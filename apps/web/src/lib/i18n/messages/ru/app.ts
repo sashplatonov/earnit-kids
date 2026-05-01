@@ -43,6 +43,7 @@ export const appMessages = {
         loginError: 'Не удалось выйти',
         logout: 'Выйти',
         moreAria: 'Дополнительные разделы',
+        superAdmin: 'Супер админка',
     },
     friends: {
         minSearchToast: 'Введите минимум 3 символа',

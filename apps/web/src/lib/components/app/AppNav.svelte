@@ -16,6 +16,7 @@
     import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
 
     export let isAdmin: boolean = false;
+    export let isSuperAdmin: boolean = false;
     export let activeSection: AppSection = 'analytics';
     export let requestsCount: number = 0;
 
@@ -123,6 +124,14 @@
                                 <span>{$i18n.t(getAppSectionLabelKey(section))}</span>
                             </a>
                         {/each}
+                        <div class="nav__dropdown-divider" role="presentation"></div>
+                    {/if}
+                    {#if isSuperAdmin}
+                        <div class="nav__dropdown-group-label" role="presentation">{$i18n.t('common.navigation.admin')}</div>
+                        <a class="nav__dropdown-item" role="menuitem" href={$i18n.href('/super-admin')} on:click={closeMoreMenu}>
+                            <span class="gamified-icon icon-shield" aria-hidden="true"></span>
+                            <span>{$i18n.t('app.shell.superAdmin')}</span>
+                        </a>
                         <div class="nav__dropdown-divider" role="presentation"></div>
                     {/if}
                     <div class="nav__dropdown-group-label" role="presentation">{$i18n.t('common.navigation.sections')}</div>

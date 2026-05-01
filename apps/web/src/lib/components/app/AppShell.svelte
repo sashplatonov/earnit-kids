@@ -24,6 +24,7 @@
     export let activeSection: AppSection;
 
     const isAdmin = session.role === 'admin' || session.role === 'parent';
+    const isSuperAdmin = session.role === 'super_admin';
 
     $: balance = $appStore.balance;
     $: childNickname = $appStore.childNickname ?? session.childName ?? '';
@@ -62,7 +63,7 @@
     </div>
 
     <AppHeader {isAdmin} {balance} childNickname={String(childNickname)} />
-    <AppNav {isAdmin} activeSection={activeSection} requestsCount={reqCount} />
+    <AppNav {isAdmin} {isSuperAdmin} activeSection={activeSection} requestsCount={reqCount} />
 
     <main class="main" id="main-content">
         <slot />

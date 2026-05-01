@@ -41,6 +41,7 @@ export const superadminMessages = {
         downloadBackup: 'Download backup',
         sendNow: 'Send now',
         sending: 'Sending...',
+        backToApp: '← Back to app',
     },
     dashboard: {
         totalFamilies: 'Total families',

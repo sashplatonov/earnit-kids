@@ -351,6 +351,7 @@ p,
 .gamified-icon.icon-empty { background-image: url('/img/gamified/icon-empty.svg'); }
 .gamified-icon.icon-profile { background-image: url('/img/gamified/icon-profile.svg'); }
 .gamified-icon.icon-logout { background-image: url('/img/gamified/icon-logout.svg'); }
+.gamified-icon.icon-shield { background-image: url('/img/gamified/icon-shield.svg'); }
 .gamified-icon.icon-settings-menu { background-image: url('/img/gamified/icon-settings-menu.svg'); }
 .gamified-icon.icon-child-link-menu { background-image: url('/img/gamified/icon-child-link-menu.svg'); }
 .gamified-icon.icon-history-menu { background-image: url('/img/gamified/icon-history-menu.svg'); }
@@ -4103,6 +4104,28 @@ body.super-admin-page .super-admin-shell {
 
 .logout-btn:hover {
     background: rgba(255, 255, 255, 0.14);
+}
+
+.back-to-app-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0.4rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.back-to-app-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .tabs {

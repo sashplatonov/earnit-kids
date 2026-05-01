@@ -20,6 +20,7 @@ export const commonMessages = {
         faq: 'FAQ',
         more: 'More',
         management: 'Management',
+        admin: 'Admin',
         sections: 'Sections',
     },
     actions: {

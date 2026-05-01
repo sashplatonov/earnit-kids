@@ -43,6 +43,7 @@ export const appMessages = {
         loginError: 'Could not sign out',
         logout: 'Sign out',
         moreAria: 'Additional sections',
+        superAdmin: 'Super admin',
     },
     friends: {
         minSearchToast: 'Enter at least 3 characters',

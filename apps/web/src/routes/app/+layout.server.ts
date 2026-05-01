@@ -7,10 +7,6 @@ export const load: LayoutServerLoad = async ({ locals, parent }) => {
         throw redirect(302, localizePath('/login', locals.locale));
     }
 
-    if (locals.session.role === 'super_admin') {
-        throw redirect(302, localizePath('/super-admin', locals.locale));
-    }
-
     const parentData = await parent();
 
     return {

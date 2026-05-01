@@ -41,6 +41,7 @@ export const superadminMessages = {
         downloadBackup: 'Скачать бэкап',
         sendNow: 'Отправить сейчас',
         sending: 'Отправляем...',
+        backToApp: '← Вернуться в приложение',
     },
     dashboard: {
         totalFamilies: 'Всего семей',

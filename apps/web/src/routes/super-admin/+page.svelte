@@ -968,6 +968,7 @@
             {#if data.session.email}
             <span class="super-admin-header__identity">{data.session.email}</span>
             {/if}
+            <a class="back-to-app-btn" href={$i18n.href('/app')}>{$i18n.t('superadmin.actions.backToApp')}</a>
             <button class="logout-btn" type="button" on:click={logout}>{$i18n.t('superadmin.actions.logout')}</button>
         </div>
     </header>
