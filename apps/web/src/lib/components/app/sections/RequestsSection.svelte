@@ -12,6 +12,7 @@
     import { showToast } from '$lib/stores/toasts';
     import type { Request } from '$lib/stores/app';
     import { buildRequestCatalog, resolveRequestCard, type RequestDetailsI18n } from './requestDetails';
+	import { formatLabelSuffix } from '$lib/utils/labelSuffix';
 
     const i18n = useI18n();
     let viewMode: CardViewMode = 'list';
@@ -224,7 +225,7 @@
                     <div class="request-card__main">
                         <CardHeader
                             title={req.ui.title}
-							titleSuffix={req.ui.note ? `${tHistory('requests.noteLabel')}: ${req.ui.note}` : ''}
+							titleSuffix={formatLabelSuffix(tHistory('requests.noteLabel'), req.ui.note)}
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
@@ -304,7 +305,7 @@
                     <div class="request-card__main">
                         <CardHeader
                             title={req.ui.title}
-							titleSuffix={req.ui.note ? `${tHistory('requests.noteLabel')}: ${req.ui.note}` : ''}
+							titleSuffix={formatLabelSuffix(tHistory('requests.noteLabel'), req.ui.note)}
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
