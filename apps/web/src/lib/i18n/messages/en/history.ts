@@ -21,6 +21,7 @@ export const historyMessages = {
         viewAria: 'Requests view',
         viewGrid: 'Tiles',
         viewList: 'Rows',
+        noteButtonAria: 'Show request note',
         noteLabel: 'Note:',
     },
     history: {

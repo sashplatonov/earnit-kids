@@ -12,11 +12,11 @@
     import { showToast } from '$lib/stores/toasts';
     import type { Request } from '$lib/stores/app';
     import { buildRequestCatalog, resolveRequestCard, type RequestDetailsI18n } from './requestDetails';
-	import { formatLabelSuffix } from '$lib/utils/labelSuffix';
 
     const i18n = useI18n();
     let viewMode: CardViewMode = 'list';
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
+    let openNoteRequestId: string | null = null;
 
     $: requests = $appStore.requests;
     $: isAdmin = $appStore.isAdmin;
@@ -58,7 +58,27 @@
 
     onMount(() => {
         pollTimer = setInterval(() => { void refreshData(); }, 8_000);
-        return () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
+        const handleDocumentClick = (event: MouseEvent) => {
+            const target = event.target;
+            if (!(target instanceof Element) || !target.closest('.request-note-tooltip')) {
+                openNoteRequestId = null;
+            }
+        };
+
+        const handleDocumentKeydown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                openNoteRequestId = null;
+            }
+        };
+
+        document.addEventListener('click', handleDocumentClick);
+        document.addEventListener('keydown', handleDocumentKeydown);
+
+        return () => {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            document.removeEventListener('click', handleDocumentClick);
+            document.removeEventListener('keydown', handleDocumentKeydown);
+        };
     });
 
     onDestroy(() => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } });
@@ -184,6 +204,15 @@
         viewMode = nextMode;
         saveCardViewMode('requests', viewRole, nextMode);
     }
+
+    function requestNoteId(reqId: unknown): string {
+        return `request-note-${String(reqId)}`;
+    }
+
+    function toggleNote(reqId: unknown) {
+        const nextId = String(reqId);
+        openNoteRequestId = openNoteRequestId === nextId ? null : nextId;
+    }
 </script>
 
 <section class="section" id="requests-section">
@@ -225,7 +254,6 @@
                     <div class="request-card__main">
                         <CardHeader
                             title={req.ui.title}
-							titleSuffix={formatLabelSuffix(tHistory('requests.noteLabel'), req.ui.note)}
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
@@ -234,7 +262,6 @@
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
                         {/if}
-						<!-- note is rendered inline after title in list view (see CardHeader.titleSuffix) -->
                     </div>
                     <div class="request-card__side">
                         <div class="card__meta">
@@ -249,6 +276,26 @@
                         <span class="request-card__money-price">{requestMoneyLabel(req.ui.moneyAmount)}</span>
                         {/if}
                         <div class="card__actions request-card__actions">
+                            {#if req.ui.note}
+                            <div class="request-note-tooltip">
+                                <button
+                                    class="request-note-tooltip__button"
+                                    type="button"
+                                    aria-label={tHistory('requests.noteButtonAria')}
+                                    aria-expanded={openNoteRequestId === String(req.id)}
+                                    aria-controls={requestNoteId(req.id)}
+                                    on:click|stopPropagation={() => toggleNote(req.id)}
+                                >
+                                    <span class="request-note-tooltip__icon" aria-hidden="true">📝</span>
+                                </button>
+                                {#if openNoteRequestId === String(req.id)}
+                                <div class="request-note-tooltip__content" id={requestNoteId(req.id)} role="tooltip">
+                                    <span class="request-note-tooltip__label">{tHistory('requests.noteLabel')}</span>
+                                    <span>{req.ui.note}</span>
+                                </div>
+                                {/if}
+                            </div>
+                            {/if}
                             <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓</button>
                             <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗</button>
                         </div>
@@ -305,7 +352,6 @@
                     <div class="request-card__main">
                         <CardHeader
                             title={req.ui.title}
-							titleSuffix={formatLabelSuffix(tHistory('requests.noteLabel'), req.ui.note)}
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
@@ -314,7 +360,6 @@
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
                         {/if}
-						<!-- note is rendered inline after title in list view (see CardHeader.titleSuffix) -->
                     </div>
                     <div class="request-card__side">
                         <div class="card__meta">
@@ -328,6 +373,26 @@
                         {/if}
                         {#if req.status !== 'approved'}
                         <div class="card__actions request-card__actions">
+                            {#if req.ui.note}
+                            <div class="request-note-tooltip">
+                                <button
+                                    class="request-note-tooltip__button"
+                                    type="button"
+                                    aria-label={tHistory('requests.noteButtonAria')}
+                                    aria-expanded={openNoteRequestId === String(req.id)}
+                                    aria-controls={requestNoteId(req.id)}
+                                    on:click|stopPropagation={() => toggleNote(req.id)}
+                                >
+                                    <span class="request-note-tooltip__icon" aria-hidden="true">📝</span>
+                                </button>
+                                {#if openNoteRequestId === String(req.id)}
+                                <div class="request-note-tooltip__content" id={requestNoteId(req.id)} role="tooltip">
+                                    <span class="request-note-tooltip__label">{tHistory('requests.noteLabel')}</span>
+                                    <span>{req.ui.note}</span>
+                                </div>
+                                {/if}
+                            </div>
+                            {/if}
                             <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
                         </div>
                         {/if}
@@ -357,6 +422,7 @@
 
     .request-card {
         min-height: 312px;
+        overflow: visible;
     }
 
     .request-card--purchase .card__coins {
@@ -374,6 +440,7 @@
         flex-direction: column;
         gap: 0.9rem;
         height: 100%;
+        overflow: visible;
     }
 
     .request-card__main,
@@ -381,6 +448,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.8rem;
+        overflow: visible;
     }
 
     .request-card__side {
@@ -401,6 +469,64 @@
         white-space: nowrap;
     }
 
+    .request-note-tooltip {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .request-note-tooltip__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border: 1px solid rgba(99, 102, 241, 0.22);
+        border-radius: 999px;
+        background: rgba(99, 102, 241, 0.1);
+        color: #4338ca;
+        cursor: pointer;
+        transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .request-note-tooltip__button:hover,
+    .request-note-tooltip__button:focus-visible {
+        background: rgba(99, 102, 241, 0.16);
+        border-color: rgba(99, 102, 241, 0.34);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .request-note-tooltip__icon {
+        font-size: 0.98rem;
+        line-height: 1;
+    }
+
+    .request-note-tooltip__content {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.45rem);
+        z-index: 20;
+        display: grid;
+        gap: 0.22rem;
+        width: min(18rem, 70vw);
+        padding: 0.6rem 0.7rem;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        border-radius: 0.85rem;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+        color: #334155;
+        font-size: 0.76rem;
+        line-height: 1.35;
+        white-space: normal;
+        max-width: calc(100vw - 1.5rem);
+    }
+
+    .request-note-tooltip__label {
+        font-weight: 800;
+        color: #1e293b;
+    }
+
     .request-card--list {
         min-height: 0;
         height: auto;
@@ -412,11 +538,6 @@
     .request-card--list .card__meta {
         display: none;
     }
-
-	/* NOTE:
-	   Previously we rendered request note as a separate paragraph (.request-card__note).
-	   Now the note is shown inline after the title (CardHeader.titleSuffix), so this
-	   selector is no longer used and kept removed for compact row view. */
 
     .request-card--list .request-card__layout {
         flex-direction: row;
@@ -447,6 +568,7 @@
         gap: 0.4rem;
         justify-content: flex-end;
         margin-top: 0;
+        align-items: center;
     }
 
     .request-card--list .request-card__actions .btn {
@@ -499,6 +621,7 @@
             min-height: 3.15rem;
             flex-direction: column;
             justify-content: stretch;
+            align-items: stretch;
             gap: 0.24rem;
         }
 
@@ -509,6 +632,18 @@
             padding: 0.2rem 0.42rem;
             font-size: 0.68rem;
             line-height: 1.05;
+        }
+
+        .request-note-tooltip,
+        .request-note-tooltip__button {
+            width: 100%;
+        }
+
+        .request-note-tooltip__content {
+            right: 0;
+            left: auto;
+            width: min(16rem, 72vw);
+            max-width: calc(100vw - 1rem);
         }
     }
 </style>

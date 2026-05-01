@@ -21,6 +21,7 @@ export const historyMessages = {
         viewAria: 'Вид заявок',
         viewGrid: 'Плитки',
         viewList: 'Строки',
+        noteButtonAria: 'Показать заметку к заявке',
         noteLabel: 'Заметка:',
     },
     history: {
