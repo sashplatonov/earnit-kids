@@ -27,7 +27,7 @@
 				<span class="card__title-suffix"> — {titleSuffix}</span>
 			{/if}
 			{#if titleActionAria && onTitleAction}
-				<span class="card__title-action-wrap">
+				<span class="card__title-action-wrap request-note-tooltip">
 					<button
 						type="button"
 						class="card__title-action"
@@ -102,7 +102,7 @@
 		min-width: 1.55rem;
 		padding: 0;
 		border: 1px solid rgba(99, 102, 241, 0.22);
-		border-radius: 999px;
+		border-radius: 50%;
 		background: rgba(99, 102, 241, 0.1);
 		color: #4338ca;
 		cursor: pointer;
@@ -270,6 +270,21 @@
 		:global(.request-card--list) .card__title-suffix {
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+
+		:global(.request-card--list) .card__title {
+			overflow: visible;
+		}
+
+		:global(.request-card--list) .card__title-text,
+		:global(.request-card--list) .card__title-suffix {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		:global(.request-card--list) .card__title-text {
+			flex: 1 1 auto;
 		}
 
 		.card__title-action {
