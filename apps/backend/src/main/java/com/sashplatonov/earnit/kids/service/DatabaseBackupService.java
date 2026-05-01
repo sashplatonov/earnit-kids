@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -126,10 +127,13 @@ public class DatabaseBackupService {
         }
 
         Path tempFile = null;
+        Path tocFile = null;
         try {
             PostgresConnectionDetails connection = PostgresConnectionDetails.fromJdbcUrl(jdbcUrl);
             tempFile = Files.createTempFile("earnit-restore-", ".dump");
             Files.write(tempFile, payload);
+
+            tocFile = buildSchemaScopedRestoreList(tempFile);
 
             DatabaseCommandResult resetSchemaResult = commandRunner.run(buildSchemaResetCommand(connection), password);
             if (resetSchemaResult.exitCode() != 0) {
@@ -138,7 +142,7 @@ public class DatabaseBackupService {
                 return OperationResult.failure(stderr);
             }
 
-            DatabaseCommandResult restoreResult = commandRunner.run(buildPgRestoreCommand(connection, tempFile), password);
+            DatabaseCommandResult restoreResult = commandRunner.run(buildPgRestoreCommand(connection, tempFile, tocFile), password);
             if (restoreResult.exitCode() != 0) {
                 String stderr = normalizeError(restoreResult.stderr(), BackendMessages.message("backup.pgRestoreFailed"));
                 log.error("pg_restore failed: {}", stderr);
@@ -161,6 +165,13 @@ public class DatabaseBackupService {
                     Files.deleteIfExists(tempFile);
                 } catch (IOException ex) {
                     log.warn("Не удалось удалить временный файл restore: {}", tempFile, ex);
+                }
+            }
+            if (tocFile != null) {
+                try {
+                    Files.deleteIfExists(tocFile);
+                } catch (IOException ex) {
+                    log.warn("Не удалось удалить временный TOC файл restore: {}", tocFile, ex);
                 }
             }
         }
@@ -202,7 +213,7 @@ public class DatabaseBackupService {
         return command;
     }
 
-    private List<String> buildPgRestoreCommand(PostgresConnectionDetails connection, Path dumpFile) {
+    private List<String> buildPgRestoreCommand(PostgresConnectionDetails connection, Path dumpFile, Path tocFile) {
         List<String> command = new ArrayList<>();
         command.add("pg_restore");
         command.add("--exit-on-error");
@@ -211,6 +222,8 @@ public class DatabaseBackupService {
         command.add("--no-privileges");
         command.add("--schema");
         command.add(schemaName);
+        command.add("--use-list");
+        command.add(tocFile.toString());
         command.add("--host");
         command.add(connection.host());
         command.add("--port");
@@ -221,6 +234,38 @@ public class DatabaseBackupService {
         command.add(connection.database());
         command.add(dumpFile.toString());
         return command;
+    }
+
+    private Path buildSchemaScopedRestoreList(Path dumpFile) throws IOException, InterruptedException {
+        DatabaseCommandResult listResult = commandRunner.run(buildPgRestoreListCommand(dumpFile), password);
+        if (listResult.exitCode() != 0) {
+            String stderr = normalizeError(listResult.stderr(), BackendMessages.message("backup.pgRestoreFailed"));
+            throw new IOException(stderr);
+        }
+
+        List<String> filteredLines = filterRestoreList(listResult.stdout());
+        if (filteredLines.stream().noneMatch(line -> !line.startsWith(";") && !line.isBlank())) {
+            throw new IOException(BackendMessages.message("backup.schemaNotFoundInDump"));
+        }
+
+        Path tocFile = Files.createTempFile("earnit-restore-list-", ".toc");
+        Files.writeString(tocFile, String.join(System.lineSeparator(), filteredLines), StandardCharsets.UTF_8);
+        return tocFile;
+    }
+
+    private List<String> buildPgRestoreListCommand(Path dumpFile) {
+        List<String> command = new ArrayList<>();
+        command.add("pg_restore");
+        command.add("--list");
+        command.add(dumpFile.toString());
+        return command;
+    }
+
+    private List<String> filterRestoreList(String tocContent) {
+        Pattern schemaPattern = Pattern.compile("(^|\\s)" + Pattern.quote(schemaName) + "(\\s|$)");
+        return tocContent.lines()
+            .filter(line -> line.startsWith(";") || line.isBlank() || schemaPattern.matcher(line).find())
+            .toList();
     }
 
     private String buildSchemaResetSql() {

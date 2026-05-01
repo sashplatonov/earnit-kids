@@ -49,14 +49,20 @@ class DatabaseBackupServiceTest {
             .thenReturn(new TelegramBackupSettingsSnapshot(false, null, null, 24, 20, null, null, null));
     }
 
+    private DatabaseCommandResult dumpCreated(List<String> command) throws Exception {
+        if (command.contains("--file")) {
+            Path dumpPath = Path.of(command.get(command.indexOf("--file") + 1));
+            Files.writeString(dumpPath, "dump");
+        }
+        return new DatabaseCommandResult(0, "", "");
+    }
+
     @Test
     void createBackup_limitsDumpToConfiguredSchema() throws Exception {
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
             .thenAnswer(invocation -> {
                 List<String> command = invocation.getArgument(0);
-                Path dumpPath = Path.of(command.get(command.indexOf("--file") + 1));
-                Files.writeString(dumpPath, "dump");
-                return new DatabaseCommandResult(0, "");
+                return dumpCreated(command);
             });
 
         OperationResult<DatabaseBackupService.BackupArtifact> result = service.createBackup();
@@ -77,9 +83,7 @@ class DatabaseBackupServiceTest {
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
             .thenAnswer(invocation -> {
                 List<String> command = invocation.getArgument(0);
-                Path dumpPath = Path.of(command.get(command.indexOf("--file") + 1));
-                Files.writeString(dumpPath, "dump");
-                return new DatabaseCommandResult(0, "");
+                return dumpCreated(command);
             });
 
         service.createBackup();
@@ -95,26 +99,49 @@ class DatabaseBackupServiceTest {
     void restoreBackup_fromStoredFile_restoresSuccessfully() throws Exception {
         Files.write(tempDir.resolve("saved.dump"), new byte[]{1, 2, 3});
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
-            .thenReturn(new DatabaseCommandResult(0, ""));
+            .thenReturn(
+                new DatabaseCommandResult(0, String.join("\n",
+                    "; comment",
+                    "1; 0 0 SCHEMA - earnit_kids owner",
+                    "2; 0 0 TABLE earnit_kids sample owner",
+                    "3; 0 0 TABLE other_schema ignored owner"
+                ), ""),
+                new DatabaseCommandResult(0, "", ""),
+                new DatabaseCommandResult(0, "", "")
+            );
 
         OperationResult<Void> result = service.restoreBackup("saved.dump");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        verify(commandRunner, times(2)).run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret"));
+        verify(commandRunner, times(3)).run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret"));
     }
 
     @Test
     void restoreBackup_resetsSchemaBeforeSchemaScopedRestore() throws Exception {
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
-            .thenReturn(new DatabaseCommandResult(0, ""));
+            .thenReturn(
+                new DatabaseCommandResult(0, String.join("\n",
+                    "; comment",
+                    "1; 0 0 SCHEMA - earnit_kids owner",
+                    "2; 0 0 TABLE earnit_kids sample owner",
+                    "3; 0 0 TABLE other_schema ignored owner"
+                ), ""),
+                new DatabaseCommandResult(0, "", ""),
+                new DatabaseCommandResult(0, "", "")
+            );
 
         OperationResult<Void> result = service.restoreBackup(new byte[]{1, 2, 3});
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         ArgumentCaptor<List<String>> commandCaptor = ArgumentCaptor.forClass(List.class);
-        verify(commandRunner, times(2)).run(commandCaptor.capture(), org.mockito.ArgumentMatchers.eq("secret"));
+        verify(commandRunner, times(3)).run(commandCaptor.capture(), org.mockito.ArgumentMatchers.eq("secret"));
         List<List<String>> commands = commandCaptor.getAllValues();
+        assertThat(commands.get(0)).containsSequence("pg_restore", "--list");
         assertThat(commands.get(0)).containsSequence(
+            "pg_restore",
+            "--list"
+        );
+        assertThat(commands.get(1)).containsSequence(
             "psql",
             "--set",
             "ON_ERROR_STOP=1",
@@ -127,8 +154,8 @@ class DatabaseBackupServiceTest {
             "--dbname",
             "earnit_kids"
         );
-        assertThat(commands.get(0)).contains("--command", "DROP SCHEMA IF EXISTS \"earnit_kids\" CASCADE; CREATE SCHEMA \"earnit_kids\";");
-        assertThat(commands.get(1)).containsSequence(
+        assertThat(commands.get(1)).contains("--command", "DROP SCHEMA IF EXISTS \"earnit_kids\" CASCADE; CREATE SCHEMA \"earnit_kids\";");
+        assertThat(commands.get(2)).containsSequence(
             "pg_restore",
             "--exit-on-error",
             "--single-transaction",
@@ -137,18 +164,25 @@ class DatabaseBackupServiceTest {
             "--schema",
             "earnit_kids"
         );
-        assertThat(commands.get(1)).doesNotContain("--clean", "--if-exists");
-        assertThat(commands.get(1)).contains("--host", "db", "--port", "5432", "--username", "earnit", "--dbname", "earnit_kids");
+        assertThat(commands.get(2)).contains("--use-list");
+        assertThat(commands.get(2)).doesNotContain("--clean", "--if-exists");
+        assertThat(commands.get(2)).contains("--host", "db", "--port", "5432", "--username", "earnit", "--dbname", "earnit_kids");
     }
 
     @Test
     void restoreBackup_schemaResetFailure_returnsFailure() throws Exception {
         when(commandRunner.run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret")))
-            .thenReturn(new DatabaseCommandResult(1, "schema reset failed"));
+            .thenReturn(
+                new DatabaseCommandResult(0, String.join("\n",
+                    "; comment",
+                    "1; 0 0 SCHEMA - earnit_kids owner"
+                ), ""),
+                new DatabaseCommandResult(1, "", "schema reset failed")
+            );
 
         OperationResult<Void> result = service.restoreBackup(new byte[]{1, 2, 3});
 
         assertThat(result).isEqualTo(OperationResult.failure("schema reset failed"));
-        verify(commandRunner, times(1)).run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret"));
+        verify(commandRunner, times(2)).run(org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq("secret"));
     }
 }

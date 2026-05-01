@@ -14,7 +14,8 @@ public class DatabaseCommandRunner {
         builder.environment().put("PGPASSWORD", password);
         Process process = builder.start();
         int exitCode = process.waitFor();
+        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-        return new DatabaseCommandResult(exitCode, stderr);
+        return new DatabaseCommandResult(exitCode, stdout, stderr);
     }
 }
