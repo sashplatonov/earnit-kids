@@ -19,6 +19,7 @@ export const historyMessages = {
         viewAria: 'Requests view',
         viewGrid: 'Tiles',
         viewList: 'Rows',
+        noteLabel: 'Note:',
     },
     history: {
         title: 'Activity history',

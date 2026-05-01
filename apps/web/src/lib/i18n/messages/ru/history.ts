@@ -19,6 +19,7 @@ export const historyMessages = {
         viewAria: 'Вид заявок',
         viewGrid: 'Плитки',
         viewList: 'Строки',
+        noteLabel: 'Заметка:',
     },
     history: {
         title: 'История операций',

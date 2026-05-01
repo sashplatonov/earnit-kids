@@ -229,6 +229,9 @@
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
                         {/if}
+                        {#if req.ui.note}
+                        <p class="card__comment request-card__note"><strong>{tHistory('requests.noteLabel')}</strong> {req.ui.note}</p>
+                        {/if}
                     </div>
                     <div class="request-card__side">
                         <div class="card__meta">
@@ -306,6 +309,9 @@
                         />
                         {#if req.ui.description}
                         <p class="card__comment">{req.ui.description}</p>
+                        {/if}
+                        {#if req.ui.note}
+                        <p class="card__comment request-card__note"><strong>{tHistory('requests.noteLabel')}</strong> {req.ui.note}</p>
                         {/if}
                     </div>
                     <div class="request-card__side">

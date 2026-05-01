@@ -16,6 +16,7 @@ export interface RequestCatalogLookups {
 export interface RequestCardDetails {
     title: string;
     description: string;
+    note: string;
     group: string;
     coins: number;
     moneyAmount: number;
@@ -102,6 +103,8 @@ export function resolveRequestCard(
     const task = findTask(request, lookups);
     const item = findItem(request, lookups);
 
+    const note = firstNonBlank(request['note'], request.note);
+
     return {
         title: firstNonBlank(
             request.title,
@@ -111,8 +114,8 @@ export function resolveRequestCard(
             purchase ? task?.name : item?.name,
             purchase ? i18n.t('requestPurchaseFallbackTitle') : i18n.t('requestTaskFallbackTitle')
         ),
+        // Description is the item/task description/comment. Note (child message) is rendered separately.
         description: firstNonBlank(
-            request['note'],
             request['description'],
             request.comment,
             request['taskComment'],
@@ -122,6 +125,7 @@ export function resolveRequestCard(
             purchase ? task?.comment : item?.comment,
             i18n.t('noDescription')
         ),
+        note,
         group: firstNonBlank(
             request.groupName,
             request['taskGroup'],
