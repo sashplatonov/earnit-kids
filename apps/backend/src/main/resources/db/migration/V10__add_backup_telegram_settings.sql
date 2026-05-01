@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS backup_telegram_settings (
     bot_token VARCHAR(512),
     chat_id VARCHAR(255),
     interval_hours INTEGER NOT NULL DEFAULT 24,
-    backup_retention_count INTEGER NOT NULL DEFAULT 20,
     last_attempt_at TIMESTAMP WITH TIME ZONE,
     last_sent_at TIMESTAMP WITH TIME ZONE,
     last_error VARCHAR(1000),
