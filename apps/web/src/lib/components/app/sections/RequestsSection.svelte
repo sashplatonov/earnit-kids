@@ -126,9 +126,24 @@
         return hasMoneyAmount(value) ? `${$i18n.formatNumber(value)} 💶` : '';
     }
 
-    function requestCompactChips(req: {
-        childNickname?: string | null;
-        status?: string | null;
+    function resolveChildName(req: Request): string {
+        // Prefer backend-provided nickname if present
+        if (req.childNickname) return req.childNickname;
+
+        // Fallback: lookup in loaded children list by childId
+        const childId = req.childId;
+        if (childId != null) {
+            const fromChildren = $appStore.children?.find(c => String(c.id) === String(childId))?.nickname;
+            if (fromChildren) return fromChildren;
+        }
+
+        // Fallback: for child role, use current child's nickname if store has it
+        if (!isAdmin && $appStore.childNickname) return $appStore.childNickname;
+
+        return '';
+    }
+
+    function requestCompactChips(req: Request & {
         ui: {
             group: string;
             typeLabel: string;
@@ -142,9 +157,8 @@
             { label: req.ui.group, className: 'card__compact-chip--group' },
         ];
 
-        if (req.childNickname) {
-            chips.push({ label: req.childNickname, className: 'card__compact-chip--child' });
-        }
+        const childName = resolveChildName(req);
+        if (childName) chips.push({ label: childName, className: 'card__compact-chip--child' });
 
         chips.push({ label: req.ui.typeLabel });
 
@@ -190,14 +204,15 @@
         {#if incomingRequests.length > 0}
         <div id="incoming-requests-list" class="cards request-list" class:cards--list={viewMode === 'list'}>
             {#each incomingRequests as req (req.id)}
+            {@const childName = resolveChildName(req)}
             <article
                 class="card request-card"
                 class:request-card--list={viewMode === 'list'}
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
                 <div class="card__badge-row">
-                    {#if req.childNickname}
-                    <span class="card__badge request-chip--child">{req.childNickname}</span>
+                    {#if childName}
+                    <span class="card__badge request-chip--child">{childName}</span>
                     {/if}
                     <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     <span class="card__badge card__badge--group">{req.ui.group}</span>
@@ -217,8 +232,8 @@
                     </div>
                     <div class="request-card__side">
                         <div class="card__meta">
-                        {#if req.childNickname}
-                            <span class="card__meta-item">{req.childNickname}</span>
+                        {#if childName}
+                            <span class="card__meta-item">{childName}</span>
                         {/if}
                         {#if formatDate(requestCreatedAt(req))}
                             <span class="card__meta-item">{formatDate(requestCreatedAt(req))}</span>
@@ -266,14 +281,15 @@
         {#if myRequests.length > 0}
         <div class="cards request-list" class:cards--list={viewMode === 'list'} id="my-requests-list">
             {#each myRequests as req (req.id)}
+            {@const childName = resolveChildName(req)}
             <article
                 class="card request-card"
                 class:request-card--list={viewMode === 'list'}
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
                 <div class="card__badge-row">
-                    {#if req.childNickname}
-                    <span class="card__badge request-chip--child">{req.childNickname}</span>
+                    {#if childName}
+                    <span class="card__badge request-chip--child">{childName}</span>
                     {/if}
                     <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     <span class={`card__badge request-chip--status ${requestStatusClass(req.status)}`}>{requestStatusLabel(req.status)}</span>
