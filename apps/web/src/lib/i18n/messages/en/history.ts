@@ -10,6 +10,8 @@ export const historyMessages = {
         emptyMineHint: 'Complete a task and the request will immediately move to pending.',
         approvedToast: 'Request approved',
         rejectedToast: 'Request rejected',
+        deletedToast: 'Request deleted',
+        deleteFailedToast: 'Failed to delete request',
         statusApproved: 'Approved',
         statusRejected: 'Rejected',
         statusPending: 'Pending',

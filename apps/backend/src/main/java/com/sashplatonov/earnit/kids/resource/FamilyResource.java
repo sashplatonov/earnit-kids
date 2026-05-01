@@ -246,12 +246,15 @@ public class FamilyResource {
                                   @PathParam("requestId") long requestId,
                                   @QueryParam("childId") Integer childId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || (!auth.isAdmin() && !auth.isChild())) {
             return unauthorized();
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.deleteRequest(auth.familyId(), childId, requestId);
-        notifyDataUpdated(auth, childId, result);
+        // EXPLAIN: Child sessions may only delete their own requests; ignore client-provided childId.
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
+
+        OperationResult<FamilyDataResponse> result = familyActionService.deleteRequest(auth.familyId(), effectiveChildId, requestId);
+        notifyDataUpdated(auth, effectiveChildId, result);
         return toResponse(result);
     }
 

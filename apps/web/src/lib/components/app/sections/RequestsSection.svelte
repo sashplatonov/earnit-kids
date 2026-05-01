@@ -82,6 +82,9 @@
         const ok = await deleteRequest(reqId, $appStore.currentChildId);
         if (ok) {
             appStore.setState({ requests: requests.filter(r => r.id !== reqId) });
+            showToast(tHistory('requests.deletedToast'), 'info');
+        } else {
+            showToast(tHistory('requests.deleteFailedToast'), 'error');
         }
     }
 
@@ -324,7 +327,7 @@
                         {#if requestMoneyLabel(req.ui.moneyAmount)}
                         <span class="request-card__money-price">{requestMoneyLabel(req.ui.moneyAmount)}</span>
                         {/if}
-                        {#if req.status === 'rejected'}
+                        {#if req.status !== 'approved'}
                         <div class="card__actions request-card__actions">
                             <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
                         </div>

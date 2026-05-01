@@ -248,6 +248,18 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
 
+        // EXPLAIN: Child sessions can only delete their own requests, and only while not approved yet.
+        // EXPLAIN: `currentChildId` historically served as a *response childId hint* for admin sessions,
+        // EXPLAIN: so we only apply child-only rules when it is clear the caller is the request owner.
+        boolean isChildDeletingOwnRequest = currentChildId != null
+            && Objects.equals(request.get().getChildId(), currentChildId);
+        if (isChildDeletingOwnRequest) {
+            // EXPLAIN: Not yet approved => allow deleting pending or rejected.
+            if ("approved".equals(request.get().getStatus())) {
+                return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
+            }
+        }
+
         int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
         purchaseRequestRepository.delete(request.get());
         return familyService.loadFamilyData(familyId, responseChildId, true);

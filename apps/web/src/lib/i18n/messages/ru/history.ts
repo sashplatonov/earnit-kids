@@ -10,6 +10,8 @@ export const historyMessages = {
         emptyMineHint: 'Отмечайте выполнение задач, и заявка сразу перейдет в статус ожидания.',
         approvedToast: 'Заявка подтверждена',
         rejectedToast: 'Заявка отклонена',
+        deletedToast: 'Заявка удалена',
+        deleteFailedToast: 'Не удалось удалить заявку',
         statusApproved: 'Одобрено',
         statusRejected: 'Отклонено',
         statusPending: 'Ожидает',

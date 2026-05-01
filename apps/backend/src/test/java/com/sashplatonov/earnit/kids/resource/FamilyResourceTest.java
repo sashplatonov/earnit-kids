@@ -341,6 +341,19 @@ class FamilyResourceTest {
     }
 
     @Test
+    void deleteRequest_childSession_ignoresRequestedChildIdAndUsesAuthChildId() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), false, List.of(), 10, null, null, null);
+        when(familyActionService.deleteRequest("fam-1", 10, 123L)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.deleteRequest(contextWithAuth(childAuth(10)), 123L, 99);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).deleteRequest("fam-1", 10, 123L);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
+    }
+
+    @Test
     void updatePreference_missingKeyOrValidPayload_returnsExpectedStatus() {
         Response bad = resource.updatePreference(contextWithAuth(adminAuth()), new UpdatePreferenceRequest("", 1));
         assertThat(bad.getStatus()).isEqualTo(400);
