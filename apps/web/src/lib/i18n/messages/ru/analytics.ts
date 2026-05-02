@@ -129,5 +129,12 @@ export const analyticsMessages = {
         achShopPlatinum: '30 покупок',
         achShopDiamond: '50 покупок',
         achShopDesc: '{current} из {target} покупок',
+        // ── Legend ────────────────────────────────────────────────────
+        achLegendTitle: 'Уровни ачивок',
+        achLegendBronze: 'Бронза',
+        achLegendSilver: 'Серебро',
+        achLegendGold: 'Золото',
+        achLegendPlatinum: 'Платина',
+        achLegendDiamond: 'Бриллиант',
     },
 } as const;

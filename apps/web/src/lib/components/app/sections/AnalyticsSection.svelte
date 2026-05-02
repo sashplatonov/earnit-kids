@@ -41,6 +41,7 @@
     let streakNote = tAnalytics('model.streakToday');
     let dailyQuests: AnalyticsDailyQuest[] = [];
     let achievements: AchievementBadge[] = [];
+    let showAchievementLegend = false;
     let recommendations: AnalyticsRecommendationCard[] = [];
     let detailsExpanded = false;
     let activeView: AnalyticsViewModel | null = null;
@@ -87,6 +88,7 @@
         streakNote = tAnalytics('model.streakToday');
         dailyQuests = [];
         achievements = [];
+        showAchievementLegend = false;
         recommendations = [];
         activeView = null;
         destroyCharts();
@@ -479,6 +481,29 @@
                         </div>
                         {/each}
                     </div>
+
+                    <button
+                        class="ach-legend-toggle"
+                        type="button"
+                        aria-expanded={showAchievementLegend}
+                        on:click={() => showAchievementLegend = !showAchievementLegend}
+                    >
+                        {showAchievementLegend ? tAnalytics('model.achLegendTitle') : '?'} {tAnalytics('model.achLegendTitle')}
+                    </button>
+
+                    {#if showAchievementLegend}
+                    <div class="ach-legend">
+                        <span class="ach-legend__item"><span class="ach-legend__icon">🥉</span> {tAnalytics('model.achLegendBronze')}</span>
+                        <span class="ach-legend__sep">→</span>
+                        <span class="ach-legend__item"><span class="ach-legend__icon">🥈</span> {tAnalytics('model.achLegendSilver')}</span>
+                        <span class="ach-legend__sep">→</span>
+                        <span class="ach-legend__item"><span class="ach-legend__icon">🥇</span> {tAnalytics('model.achLegendGold')}</span>
+                        <span class="ach-legend__sep">→</span>
+                        <span class="ach-legend__item"><span class="ach-legend__icon">💠</span> {tAnalytics('model.achLegendPlatinum')}</span>
+                        <span class="ach-legend__sep">→</span>
+                        <span class="ach-legend__item"><span class="ach-legend__icon">💎</span> {tAnalytics('model.achLegendDiamond')}</span>
+                    </div>
+                    {/if}
                 </article>
             </div>
         </div>
@@ -994,6 +1019,60 @@
         color: var(--color-warning);
     }
 
+    /* ── Achievement Tier Legend ─────────────────────────────────────── */
+
+    #analytics-section .ach-legend-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 0.2rem;
+        padding: 0.18rem 0.45rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--color-text-muted);
+        font: inherit;
+        font-size: 0.6rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s;
+    }
+
+    #analytics-section .ach-legend-toggle:hover {
+        color: var(--color-text-soft);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    #analytics-section .ach-legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem 0.3rem;
+        margin-top: 0.35rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 0.5rem;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    #analytics-section .ach-legend__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.15rem;
+        font-size: 0.6rem;
+        color: var(--color-text-muted);
+        white-space: nowrap;
+    }
+
+    #analytics-section .ach-legend__icon {
+        font-size: 0.75rem;
+        line-height: 1;
+    }
+
+    #analytics-section .ach-legend__sep {
+        font-size: 0.55rem;
+        color: rgba(148, 163, 184, 0.35);
+    }
+
     #analytics-section .analytics-details {
         padding: 1rem;
     }
@@ -1251,6 +1330,19 @@
 
         #analytics-section .ach-badge__metric {
             font-size: 0.58rem;
+        }
+
+        #analytics-section .ach-legend {
+            gap: 0.1rem 0.2rem;
+            padding: 0.25rem 0.35rem;
+        }
+
+        #analytics-section .ach-legend__item {
+            font-size: 0.55rem;
+        }
+
+        #analytics-section .ach-legend__icon {
+            font-size: 0.65rem;
         }
 
         #analytics-section .analytics-summary-strip {

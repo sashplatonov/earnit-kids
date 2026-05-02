@@ -129,5 +129,12 @@ export const analyticsMessages = {
         achShopPlatinum: '30 buys',
         achShopDiamond: '50 buys',
         achShopDesc: '{current} of {target} buys',
+        // ── Legend ────────────────────────────────────────────────────
+        achLegendTitle: 'Achievement tiers',
+        achLegendBronze: 'Bronze',
+        achLegendSilver: 'Silver',
+        achLegendGold: 'Gold',
+        achLegendPlatinum: 'Platinum',
+        achLegendDiamond: 'Diamond',
     },
 } as const;
