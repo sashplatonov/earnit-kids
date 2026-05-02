@@ -81,17 +81,18 @@ describe('buildAnalyticsViewModel', () => {
         expect(view.recommendations[0].groupName).toBe('Учеба');
         expect(view.recommendations[0].description).toBe('Подготовить книги и тетради');
         expect(view.recommendations[0].coins).toBe(40);
-        expect(view.dailyQuests).toHaveLength(5);
+        expect(view.dailyQuests).toHaveLength(3);
         expect(view.dailyQuests.map((quest) => quest.id)).toEqual([
-            'complete-tasks',
-            'earn-coins',
-            'keep-streak',
-            'reward-target',
             'next-task',
+            'reward-goal',
+            'streak',
         ]);
-        expect(view.dailyQuests[2].actionTarget).toBe('details');
-        expect(view.dailyQuests[3].status).toBe('ready');
-        expect(view.dailyQuests[4].rewardLabel).toBe('+40 мон.');
+        expect(view.dailyQuests[0].variant).toBe('task');
+        expect(view.dailyQuests[1].variant).toBe('reward');
+        expect(view.dailyQuests[2].variant).toBe('streak');
+        expect(view.dailyQuests[0].actionTarget).toBe('tasks');
+        expect(view.dailyQuests[1].status).toBe('ready');
+        expect(view.dailyQuests[0].rewardLabel).toBe('+40 🪙');
     });
 
     it('preserves already-normalized frontend payload fields', () => {
@@ -117,10 +118,10 @@ describe('buildAnalyticsViewModel', () => {
         expect(view.recommendations[0].icon).toBe('⭐');
         expect(view.recommendations[0].title).toBe('Повторить любимое задание');
         expect(view.recommendations[0].description).toBe('Повторить любимое задание');
-        expect(view.dailyQuests).toHaveLength(5);
+        expect(view.dailyQuests).toHaveLength(3);
         expect(view.dailyQuests.every((quest) => quest.title.trim().length > 0)).toBe(true);
         expect(view.dailyQuests.every((quest) => Number.isFinite(quest.percent) && quest.percent >= 0 && quest.percent <= 100)).toBe(true);
-        expect(view.dailyQuests.every((quest) => ['tasks', 'shop', 'details'].includes(quest.actionTarget))).toBe(true);
+        expect(view.dailyQuests.every((quest) => ['tasks', 'shop'].includes(quest.actionTarget))).toBe(true);
     });
 
     it('keeps empty analytics action-first with safe progress values', () => {
@@ -132,12 +133,11 @@ describe('buildAnalyticsViewModel', () => {
             i18n: createRussianAnalyticsI18n(),
         });
 
-        expect(view.dailyQuests).toHaveLength(5);
+        expect(view.dailyQuests).toHaveLength(3);
         expect(view.dailyQuests.every((quest) => quest.percent === 0 || quest.percent === 100)).toBe(true);
         expect(view.dailyQuests[0].actionTarget).toBe('tasks');
-        expect(view.dailyQuests[1].actionTarget).toBe('tasks');
-        expect(view.dailyQuests[3].actionTarget).toBe('shop');
-        expect(view.dailyQuests[4].description).toContain('первое задание');
+        expect(view.dailyQuests[1].actionTarget).toBe('shop');
+        expect(view.dailyQuests[0].description).toContain('первое задание');
     });
 
     it('clamps malformed numeric fields and keeps purchase progress deterministic', () => {
@@ -156,6 +156,6 @@ describe('buildAnalyticsViewModel', () => {
         expect(view.dailyQuests.every((quest) => quest.current >= 0)).toBe(true);
         expect(view.dailyQuests.every((quest) => quest.target >= 0)).toBe(true);
         expect(view.dailyQuests.every((quest) => Number.isFinite(quest.percent) && quest.percent >= 0 && quest.percent <= 100)).toBe(true);
-        expect(view.dailyQuests.find((quest) => quest.id === 'reward-target')?.title).toBe('Копить на Игра');
+        expect(view.dailyQuests.find((quest) => quest.id === 'reward-goal')?.title).toBe('Игра');
     });
 });

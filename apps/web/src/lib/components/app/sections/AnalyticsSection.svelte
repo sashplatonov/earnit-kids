@@ -102,45 +102,14 @@
         charts = {};
     }
 
-    function questIcon(id: string): string {
-        switch (id) {
-            case 'complete-tasks':
-                return '✅';
-            case 'earn-coins':
-                return '🪙';
-            case 'keep-streak':
-                return '🔥';
-            case 'reward-target':
-                return '🎁';
-            case 'next-task':
-                return '⚡';
-            default:
-                return '✨';
-        }
+    function questIcon(id: string, variant: string): string {
+        if (variant === 'task') return '⚡';
+        if (variant === 'reward') return '🎁';
+        return '🔥';
     }
 
-    function questStatusLabel(status: AnalyticsDailyQuest['status']): string {
-        switch (status) {
-            case 'completed':
-                return tAnalytics('quests.status.completed');
-            case 'in-progress':
-                return tAnalytics('quests.status.inProgress');
-            case 'ready':
-                return tAnalytics('quests.status.ready');
-            default:
-                return tAnalytics('quests.status.notStarted');
-        }
-    }
 
     async function handleQuestAction(target: AnalyticsDailyQuest['actionTarget']) {
-        if (target === 'details') {
-            detailsExpanded = true;
-            await scheduleChartRender();
-            await tick();
-            document.querySelector<HTMLElement>('.analytics-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            return;
-        }
-
         const section: AppSection = target === 'shop' ? 'shop' : 'tasks';
         location.assign($i18n.href(resolve('/app/[section]', { section })));
     }
@@ -395,61 +364,56 @@
                 </div>
             </div>
         </header>
-        <div class="analytics-quest-shell">
-            <section class="analytics-quest-panel" aria-labelledby="analytics-quests-title">
-                <div class="analytics-quest-panel__header">
-                    <div class="analytics-quest-panel__text">
-                        <p class="analytics-quest-panel__eyebrow">{tAnalytics('quests.eyebrow')}</p>
-                        <h3 class="analytics-quest-panel__title" id="analytics-quests-title">{tAnalytics('quests.title')}</h3>
+        <div class="analytics-next-shell">
+            <section class="analytics-next-panel" aria-labelledby="analytics-next-title">
+                <div class="analytics-next-panel__header">
+                    <div class="analytics-next-panel__text">
+                        <p class="analytics-next-panel__eyebrow">{tAnalytics('quests.eyebrow')}</p>
+                        <h3 class="analytics-next-panel__title" id="analytics-next-title">{tAnalytics('quests.title')}</h3>
                     </div>
-                    <p class="analytics-quest-panel__hint">{tAnalytics('quests.hint')}</p>
+                    <p class="analytics-next-panel__hint">{tAnalytics('quests.hint')}</p>
                 </div>
 
-                <div class="analytics-quest-list" id="daily-quest-list" aria-label={tAnalytics('quests.ariaLabel')}>
+                <div class="analytics-next-cards" aria-label={tAnalytics('quests.ariaLabel')}>
                     {#each dailyQuests as quest (quest.id)}
-                    <article class="analytics-quest-card" data-quest-id={quest.id}>
-                        <div class="analytics-quest-card__icon" aria-hidden="true">{questIcon(quest.id)}</div>
+                    <article
+                        class="analytics-next-card"
+                        class:analytics-next-card--task={quest.variant === 'task'}
+                        class:analytics-next-card--reward={quest.variant === 'reward'}
+                        class:analytics-next-card--streak={quest.variant === 'streak'}
+                        data-quest-id={quest.id}
+                    >
+                        <div class="analytics-next-card__icon" aria-hidden="true">{questIcon(quest.id, quest.variant)}</div>
 
-                        <div class="analytics-quest-card__body">
-                            <div class="analytics-quest-card__top">
-                                <div class="analytics-quest-card__copy">
-                                    <div class="analytics-quest-card__title-row">
-                                        <h4 class="analytics-quest-card__title">{quest.title}</h4>
-                                        <span class={`analytics-quest-card__status analytics-quest-card__status--${quest.status}`}>{questStatusLabel(quest.status)}</span>
-                                    </div>
-                                    <p class="analytics-quest-card__description">{quest.description}</p>
-                                </div>
-                                <span class="analytics-quest-card__reward">{quest.rewardLabel}</span>
+                        <div class="analytics-next-card__body">
+                            <div class="analytics-next-card__header-row">
+                                <h4 class="analytics-next-card__title">{quest.title}</h4>
+                                {#if quest.rewardLabel}
+                                <span class="analytics-next-card__badge">{quest.rewardLabel}</span>
+                                {/if}
                             </div>
+                            {#if quest.subtitle}
+                            <p class="analytics-next-card__subtitle">{quest.subtitle}</p>
+                            {/if}
+                            <p class="analytics-next-card__desc">{quest.description}</p>
 
-                            <div class="analytics-quest-card__progress-row">
-                                <div
-                                    class="analytics-quest-card__track progress-track"
-                                    role="progressbar"
-                                    aria-valuemin={0}
-                                    aria-valuemax={quest.target}
-                                    aria-valuenow={Math.min(quest.current, quest.target)}
-                                    aria-label={tAnalytics('quests.progressLabel', {
-                                        title: quest.title,
-                                        current: $i18n.formatNumber(quest.current),
-                                        target: $i18n.formatNumber(quest.target),
-                                    })}
-                                >
-                                    <span class="analytics-quest-card__fill progress-fill" style={`--progress: ${quest.percent};`}></span>
-                                </div>
-                                <span class="analytics-quest-card__metric">
-                                    {tAnalytics('quests.progressValue', {
-                                        current: $i18n.formatNumber(quest.current),
-                                        target: $i18n.formatNumber(quest.target),
-                                    })}
-                                </span>
+                            {#if quest.target > 0 && quest.variant !== 'task'}
+                            <div
+                                class="analytics-next-card__track progress-track"
+                                role="progressbar"
+                                aria-valuemin={0}
+                                aria-valuemax={quest.target}
+                                aria-valuenow={Math.min(quest.current, quest.target)}
+                                aria-label="{quest.title}: {quest.current} / {quest.target}"
+                            >
+                                <span class="analytics-next-card__fill progress-fill" style={`--progress: ${quest.percent};`}></span>
                             </div>
+                            {/if}
                         </div>
 
                         <button
-                            class="btn btn--secondary analytics-quest-card__action"
+                            class="analytics-next-card__action"
                             type="button"
-                            data-quest-action-target={quest.actionTarget}
                             on:click={() => void handleQuestAction(quest.actionTarget)}
                         >
                             {quest.actionLabel}
@@ -643,13 +607,13 @@
         margin-bottom: 0;
     }
 
-    #analytics-section .analytics-quest-shell {
+    #analytics-section .analytics-next-shell {
         display: grid;
         gap: 1rem;
         margin-bottom: 1rem;
     }
 
-    #analytics-section .analytics-quest-panel,
+    #analytics-section .analytics-next-panel,
     #analytics-section .analytics-summary-strip,
     #analytics-section .analytics-details {
         background: var(--analytics-surface);
@@ -659,187 +623,190 @@
         backdrop-filter: blur(14px);
     }
 
-    #analytics-section .analytics-quest-panel {
+    #analytics-section .analytics-next-panel {
         padding: 1rem;
     }
 
-    #analytics-section .analytics-quest-panel__header {
+    #analytics-section .analytics-next-panel__header {
         display: flex;
         justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 0.9rem;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
         align-items: end;
     }
 
-    #analytics-section .analytics-quest-panel__eyebrow {
-        margin: 0 0 0.25rem;
-        font-size: 0.75rem;
+    #analytics-section .analytics-next-panel__eyebrow {
+        margin: 0 0 0.2rem;
+        font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: var(--color-warning);
     }
 
-    #analytics-section .analytics-quest-panel__title,
+    #analytics-section .analytics-next-panel__title,
     #analytics-section .analytics-details__title {
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.15rem;
         color: var(--color-text-high-contrast);
     }
 
-    #analytics-section .analytics-quest-panel__hint,
+    #analytics-section .analytics-next-panel__hint,
     #analytics-section .analytics-details__hint,
     #analytics-section .analytics-empty-detail {
         margin: 0;
         color: var(--color-text-muted);
         line-height: 1.4;
+        font-size: 0.8rem;
     }
 
-    #analytics-section .analytics-quest-list {
+    /* ── 3-Card Grid ─────────────────────────────────────────────────── */
+
+    #analytics-section .analytics-next-cards {
         display: grid;
-        gap: 0.75rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.65rem;
     }
 
-    #analytics-section .analytics-quest-card {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        gap: 0.85rem;
-        align-items: center;
-        padding: 0.95rem 1rem;
-        border-radius: 0.95rem;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    #analytics-section .analytics-quest-card__icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 2.75rem;
-        height: 2.75rem;
+    #analytics-section .analytics-next-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        padding: 0.85rem 0.9rem;
         border-radius: 0.9rem;
-        background: rgba(255, 255, 255, 0.12);
-        font-size: 1.2rem;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: border-color 0.2s, background 0.2s;
     }
 
-    #analytics-section .analytics-quest-card__body {
-        min-width: 0;
-        display: grid;
-        gap: 0.7rem;
+    #analytics-section .analytics-next-card--task {
+        border-left: 3px solid var(--color-success);
     }
 
-    #analytics-section .analytics-quest-card__top {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.75rem;
-        align-items: start;
+    #analytics-section .analytics-next-card--reward {
+        border-left: 3px solid var(--color-warning);
     }
 
-    #analytics-section .analytics-quest-card__copy {
-        min-width: 0;
+    #analytics-section .analytics-next-card--streak {
+        border-left: 3px solid #f97316;
     }
 
-    #analytics-section .analytics-quest-card__title-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.45rem;
-        align-items: center;
-        margin-bottom: 0.25rem;
+    #analytics-section .analytics-next-card__icon {
+        font-size: 1.4rem;
+        line-height: 1;
     }
 
-    #analytics-section .analytics-quest-card__title {
-        margin: 0;
-        font-size: 1rem;
-        color: var(--color-text-high-contrast);
-    }
-
-    #analytics-section .analytics-quest-card__description {
-        margin: 0;
-        color: var(--color-text-muted);
-        line-height: 1.35;
-        font-size: 0.92rem;
-    }
-
-    #analytics-section .analytics-quest-card__status,
-    #analytics-section .analytics-quest-card__reward {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.24rem 0.58rem;
-        border-radius: 999px;
-        font-size: 0.74rem;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    #analytics-section .analytics-quest-card__reward {
-        background: rgba(255, 215, 0, 0.13);
-        color: var(--color-warning);
-        border: 1px solid rgba(255, 215, 0, 0.18);
-    }
-
-    #analytics-section .analytics-quest-card__status--not-started {
-        background: rgba(148, 163, 184, 0.16);
-        color: var(--color-text-muted);
-    }
-
-    #analytics-section .analytics-quest-card__status--in-progress {
-        background: rgba(92, 199, 243, 0.14);
-        color: #74d1f5;
-    }
-
-    #analytics-section .analytics-quest-card__status--ready {
-        background: rgba(141, 223, 183, 0.16);
-        color: #8ddfb7;
-    }
-
-    #analytics-section .analytics-quest-card__status--completed {
-        background: rgba(251, 191, 36, 0.16);
-        color: #ffd86b;
-    }
-
-    #analytics-section .progress-track {
-        position: relative;
-        width: 100%;
-        height: 0.5rem;
-        border-radius: 999px;
-        background: rgba(148, 163, 184, 0.22);
-        overflow: hidden;
-    }
-
-    #analytics-section .progress-fill {
-        display: block;
-        height: 100%;
-        width: calc(var(--progress, 0) * 1%);
-        background: linear-gradient(135deg, var(--color-success), #facc15);
-        border-radius: inherit;
-        transition: width 0.25s ease;
-    }
-
-    #analytics-section .analytics-quest-card__progress-row {
-        display: flex;
-        gap: 0.75rem;
-        align-items: center;
-    }
-
-    #analytics-section .analytics-quest-card__track {
+    #analytics-section .analytics-next-card__body {
         flex: 1;
         min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
     }
 
-    #analytics-section .analytics-quest-card__metric {
-        flex: none;
-        font-size: 0.8rem;
+    #analytics-section .analytics-next-card__header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+    #analytics-section .analytics-next-card__title {
+        margin: 0;
+        font-size: 0.9rem;
         font-weight: 700;
-        color: var(--color-text-soft);
-        min-width: 4.5rem;
-        text-align: right;
+        color: var(--color-text-high-contrast);
+        line-height: 1.25;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
 
-    #analytics-section .analytics-quest-card__action {
-        min-width: 8.5rem;
-        justify-self: end;
+    #analytics-section .analytics-next-card__badge {
+        flex-shrink: 0;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.18rem 0.5rem;
+        border-radius: 999px;
         white-space: nowrap;
+        line-height: 1.35;
+    }
+
+    #analytics-section .analytics-next-card--task .analytics-next-card__badge {
+        background: rgba(123, 197, 104, 0.16);
+        color: var(--color-success);
+    }
+
+    #analytics-section .analytics-next-card--reward .analytics-next-card__badge {
+        background: rgba(255, 215, 0, 0.14);
+        color: var(--color-warning);
+    }
+
+    #analytics-section .analytics-next-card--streak .analytics-next-card__badge {
+        background: rgba(249, 115, 22, 0.14);
+        color: #fb923c;
+    }
+
+    #analytics-section .analytics-next-card__subtitle {
+        margin: 0;
+        font-size: 0.7rem;
+        color: var(--color-text-muted);
+        line-height: 1.2;
+    }
+
+    #analytics-section .analytics-next-card__desc {
+        margin: 0;
+        font-size: 0.78rem;
+        color: var(--color-text-soft);
+        line-height: 1.35;
+        flex: 1;
+    }
+
+    #analytics-section .analytics-next-card__track {
+        margin-top: 0.1rem;
+    }
+
+    #analytics-section .analytics-next-card__action {
+        margin-top: auto;
+        width: 100%;
+        padding: 0.45rem 0.6rem;
+        border: none;
+        border-radius: 0.55rem;
+        font: inherit;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #fff;
+        transition: opacity 0.15s, transform 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        min-height: 2.2rem;
+    }
+
+    #analytics-section .analytics-next-card--task .analytics-next-card__action {
+        background: linear-gradient(135deg, var(--color-success), #4ade80);
+    }
+
+    #analytics-section .analytics-next-card--reward .analytics-next-card__action {
+        background: linear-gradient(135deg, #eab308, #facc15);
+        color: #422006;
+    }
+
+    #analytics-section .analytics-next-card--streak .analytics-next-card__action {
+        background: linear-gradient(135deg, #f97316, #fb923c);
+    }
+
+    #analytics-section .analytics-next-card__action:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    #analytics-section .analytics-next-card__action:active {
+        transform: translateY(0);
     }
 
     #analytics-section .analytics-summary-strip {
@@ -919,14 +886,10 @@
         overflow: hidden;
     }
 
-    #analytics-section .analytics-quest-panel__text {
+    #analytics-section .analytics-next-panel__text {
         min-width: 0;
         flex: 1;
         overflow: hidden;
-    }
-
-    #analytics-section .analytics-quest-panel__hint {
-        min-width: 0;
     }
 
     #analytics-section .analytics-details__toggle {
@@ -1019,103 +982,60 @@
         gap: 0.85rem;
     }
 
-    @media (max-width: 600px) {
-        #analytics-section .analytics-grid,
-        #analytics-section .recommendations-grid {
+    /* ── Responsive ──────────────────────────────────────────────────── */
+
+    @media (max-width: 900px) {
+        #analytics-section .analytics-next-cards {
             grid-template-columns: 1fr;
-        }
-    }
-
-    @media (min-width: 960px) {
-        #analytics-section .analytics-quest-shell {
-            grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.9fr);
-            align-items: start;
+            gap: 0.5rem;
         }
 
-        #analytics-section .analytics-summary-strip {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        #analytics-section .analytics-next-card {
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 0.75rem;
+            padding: 0.7rem 0.8rem;
         }
 
-        #analytics-section .analytics-summary-strip__item--progress {
-            grid-column: 1 / -1;
+        #analytics-section .analytics-next-card__icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        #analytics-section .analytics-next-card__body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        #analytics-section .analytics-next-card__action {
+            width: auto;
+            flex: 0 0 auto;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.74rem;
+            min-height: 2rem;
         }
     }
 
     @media (max-width: 760px) {
-        /* Quest panel header: hint below title on narrow */
-        #analytics-section .analytics-quest-panel__header {
+        #analytics-section .analytics-next-panel__header {
             flex-direction: column;
             align-items: stretch;
-            gap: 0.35rem;
+            gap: 0.3rem;
         }
 
-        /* Details head: keep row but allow wrap */
         #analytics-section .analytics-details__head {
             flex-wrap: wrap;
-        }
-
-        /* Quest card: icon + body on same row, action button below */
-        #analytics-section .analytics-quest-card {
-            grid-template-columns: 2.75rem 1fr;
-            grid-template-rows: auto auto;
-            grid-template-areas:
-                'icon body'
-                'cta  cta';
-            gap: 0.55rem 0.75rem;
-            padding: 0.8rem;
-        }
-
-        #analytics-section .analytics-quest-card__icon {
-            grid-area: icon;
-            align-self: start;
-            width: 2.4rem;
-            height: 2.4rem;
-            font-size: 1.05rem;
-        }
-
-        #analytics-section .analytics-quest-card__body {
-            grid-area: body;
-        }
-
-        #analytics-section .analytics-quest-card__action {
-            grid-area: cta;
-            width: 100%;
-            justify-self: stretch;
-            min-width: 0;
-            min-height: 2.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #analytics-section .analytics-quest-card__top {
-            flex-direction: row;
-            flex-wrap: wrap;
-            align-items: start;
-        }
-
-        #analytics-section .analytics-quest-card__metric {
-            min-width: 0;
-            text-align: left;
-        }
-
-        /* Summary strip: 3-col for stat items, progress spans full width */
-        #analytics-section .analytics-summary-strip {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        #analytics-section .analytics-summary-strip__item--progress {
-            grid-column: 1 / -1;
         }
     }
 
     @media (max-width: 480px) {
         #analytics-section .section-header {
-            margin-bottom: 0.7rem;
+            margin-bottom: 0.5rem;
         }
 
         #analytics-section .section-title {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         #analytics-section .analytics-filters {
@@ -1124,98 +1044,56 @@
 
         #analytics-section .analytics-filters .tab-group {
             width: 100%;
-            padding: 0.16rem;
-            border-radius: 0.6rem;
+            padding: 0.14rem;
+            border-radius: 0.55rem;
         }
 
         #analytics-section .analytics-filters .tab-btn {
             flex: 1;
-            padding: 0.34rem 0.38rem;
-            font-size: 0.72rem;
-            border-radius: 0.48rem;
+            padding: 0.3rem 0.35rem;
+            font-size: 0.7rem;
+            border-radius: 0.45rem;
         }
 
-        #analytics-section .analytics-quest-panel,
+        #analytics-section .analytics-next-panel,
         #analytics-section .analytics-summary-strip,
         #analytics-section .analytics-details {
-            padding: 0.72rem;
-            border-radius: 0.82rem;
+            padding: 0.65rem;
+            border-radius: 0.75rem;
         }
 
-        #analytics-section .analytics-quest-panel__title,
+        #analytics-section .analytics-next-panel__title,
         #analytics-section .analytics-details__title {
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
-        #analytics-section .analytics-quest-panel__hint,
-        #analytics-section .analytics-details__hint,
-        #analytics-section .analytics-quest-card__description,
-        #analytics-section .analytics-empty-detail {
-            font-size: 0.8rem;
+        #analytics-section .analytics-next-panel__hint,
+        #analytics-section .analytics-details__hint {
+            font-size: 0.74rem;
         }
 
-        #analytics-section .analytics-quest-card {
-            padding: 0.72rem;
-            gap: 0.65rem;
+        #analytics-section .analytics-next-card {
+            padding: 0.6rem 0.7rem;
+            gap: 0.4rem 0.6rem;
         }
 
-        #analytics-section .analytics-quest-card__title {
-            font-size: 0.92rem;
+        #analytics-section .analytics-next-card__title {
+            font-size: 0.82rem;
         }
 
-        #analytics-section .analytics-quest-card__status,
-        #analytics-section .analytics-quest-card__reward {
-            font-size: 0.68rem;
-            padding: 0.18rem 0.48rem;
+        #analytics-section .analytics-next-card__desc {
+            font-size: 0.72rem;
         }
 
-        #analytics-section .analytics-quest-card__metric,
-        #analytics-section .analytics-summary-strip__label,
-        #analytics-section .analytics-summary-strip__note,
-        #analytics-section .card__subtitle,
-        #analytics-section .group-total-badge {
-            font-size: 0.68rem;
+        #analytics-section .analytics-next-card__badge {
+            font-size: 0.64rem;
+            padding: 0.14rem 0.4rem;
         }
 
-        #analytics-section .analytics-summary-strip__value {
-            font-size: 0.88rem;
-        }
-
-        #analytics-section .analytics-group-title {
-            margin-bottom: 0.5rem;
-            padding-left: 0.5rem;
-            border-left-width: 3px;
-            font-size: 0.86rem;
-            line-height: 1.15;
-        }
-
-        #analytics-section .analytics-grid,
-        #analytics-section .recommendations-grid,
-        #analytics-section .analytics-sections {
-            gap: 0.55rem;
-        }
-
-        #analytics-section .analytics-chart-card {
-            min-height: 188px;
-            padding: 0.58rem;
-            border-radius: 0.7rem;
-        }
-
-        #analytics-section .chart-container {
-            min-height: 142px;
-        }
-
-        #analytics-section .analytics-summary-strip {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        #analytics-section .analytics-summary-strip__item--progress {
-            grid-column: 1 / -1;
-        }
-
-        #analytics-section .analytics-details__toggle {
-            white-space: nowrap;
-            flex-shrink: 0;
+        #analytics-section .analytics-next-card__action {
+            font-size: 0.7rem;
+            padding: 0.35rem 0.7rem;
+            min-height: 1.85rem;
         }
     }
 </style>
