@@ -55,6 +55,14 @@
 
     let activeTab: TabId = 'dashboard';
 
+    // Restore the previously active tab from session storage (survives page reloads)
+    if (typeof sessionStorage !== 'undefined') {
+        const saved = sessionStorage.getItem('superAdminActiveTab') as TabId | null;
+        if (saved && ['dashboard', 'families', 'catalog-tasks', 'catalog-products', 'database', 'system'].includes(saved)) {
+            activeTab = saved;
+        }
+    }
+
     let families: Array<Record<string, unknown>> = [];
     let familiesLoading = false;
     let familiesError = '';
@@ -634,6 +642,7 @@
 
             if (res.ok) {
                 await loadTelegramBackupSettings();
+                await loadBackupHistory();
                 telegramSettingsStatus = $i18n.t('superadmin.database.backupSent');
                 telegramSettingsStatusType = 'success';
                 return;
@@ -881,6 +890,7 @@
 
     function switchTab(tabId: TabId) {
         activeTab = tabId;
+        sessionStorage.setItem('superAdminActiveTab', tabId);
 
         if (tabId === 'catalog-tasks' || tabId === 'catalog-products') {
             if (catalogTasks.length === 0 && catalogProducts.length === 0 && !catalogLoading) {
@@ -1160,153 +1170,146 @@
         </div>
         {:else if activeTab === 'database'}
         <div id="tab-database" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-database">
-            <article class="panel db-panel">
-                <header class="panel__header">
-                    <div>
-                        <p class="panel__eyebrow">{$i18n.t('superadmin.database.eyebrow')}</p>
-                        <h2>{$i18n.t('superadmin.database.title')}</h2>
+            <!-- Compact Backup Blocks -->
+            <div class="db-compact">
+                <!-- Row 1: Download + Restore -->
+                <div class="db-compact__row">
+                    <div class="db-compact__cell">
+                        <div class="db-compact__cell-head">
+                            <span class="db-compact__cell-label">{$i18n.t('superadmin.database.backupLabel')}</span>
+                            <span class="db-compact__cell-title">{$i18n.t('superadmin.database.backupValue')}</span>
+                        </div>
+                        <p class="db-compact__desc">{$i18n.t('superadmin.database.backupDescription')}</p>
+                        <button id="pg-backup-btn" class="btn btn--primary btn--small" type="button" on:click={triggerBackup}>{$i18n.t('superadmin.actions.downloadBackup')}</button>
                     </div>
-                </header>
-                {#if dbChecking}
-                <div class="panel-state panel-state--loading" id="db-panel-state">{$i18n.t('superadmin.database.checkingStatus')}</div>
-                {/if}
-                <div class="db-grid">
-                    <article class="db-card">
-                        <p class="db-card__label">{$i18n.t('superadmin.database.backupLabel')}</p>
-                        <p class="db-card__value">{$i18n.t('superadmin.database.backupValue')}</p>
-                        <p class="db-card__status">{$i18n.t('superadmin.database.backupDescription')}</p>
-                        <button id="pg-backup-btn" class="btn btn--primary" type="button" on:click={triggerBackup}>{$i18n.t('superadmin.actions.downloadBackup')}</button>
-                    </article>
-                    <article class="db-card">
-                        <p class="db-card__label">{$i18n.t('superadmin.database.restoreLabel')}</p>
-                        <p class="db-card__value">{$i18n.t('superadmin.database.restoreValue')}</p>
-                        <p class="db-card__status">{$i18n.t('superadmin.database.restoreDescription')}</p>
-                        <button id="pg-restore-btn" class="btn btn--success" type="button" on:click={triggerRestoreClick}>{$i18n.t('superadmin.actions.uploadFile')}</button>
+                    <div class="db-compact__cell">
+                        <div class="db-compact__cell-head">
+                            <span class="db-compact__cell-label">{$i18n.t('superadmin.database.restoreLabel')}</span>
+                            <span class="db-compact__cell-title">{$i18n.t('superadmin.database.restoreValue')}</span>
+                        </div>
+                        <p class="db-compact__desc">{$i18n.t('superadmin.database.restoreDescription')}</p>
+                        <button id="pg-restore-btn" class="btn btn--success btn--small" type="button" on:click={triggerRestoreClick}>{$i18n.t('superadmin.actions.uploadFile')}</button>
                         <input type="file" id="pg-restore-input" hidden accept=".dump" on:change={handleRestoreChange} />
-                    </article>
-                    <article class="db-card">
-                        <p class="db-card__label">{$i18n.t('superadmin.database.statusLabel')}</p>
-                        <p class="db-card__value">{$i18n.t('superadmin.database.statusValue')}</p>
-                        <p class="db-card__status">{$i18n.t('superadmin.database.backendOrigin', { origin: data.appConfig.backendOrigin })}</p>
-                        <button class="btn btn--ghost" type="button" on:click={checkDbStatus}>{$i18n.t('superadmin.actions.check')}</button>
-                    </article>
+                    </div>
                 </div>
+
+                <!-- Row 2: Telegram -->
                 {#if telegramSettingsLoading}
-                <div class="panel-state panel-state--loading">{$i18n.t('superadmin.database.loadingTelegram')}</div>
+                <div class="db-compact__section-loading">{$i18n.t('superadmin.database.loadingTelegram')}</div>
                 {:else}
-                <div class="system-panel__details">
-                    <article class="system-card system-card--form">
-                        <p class="system-card__label">{$i18n.t('superadmin.database.telegramLabel')}</p>
-                        <h3 class="system-card__heading">{$i18n.t('superadmin.database.telegramHeading')}</h3>
-                        <div class="password-form-grid">
-                            <div class="input-group">
-                                <label for="backup-telegram-enabled">{$i18n.t('superadmin.database.schedule')}</label>
-                                <select id="backup-telegram-enabled" bind:value={telegramScheduleMode}>
-                                    <option value="off">{$i18n.t('superadmin.database.scheduleOff')}</option>
-                                    <option value="on">{$i18n.t('superadmin.database.scheduleOn')}</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="backup-telegram-chat-id">Chat ID</label>
-                                <input id="backup-telegram-chat-id" type="text" bind:value={telegramChatId} placeholder="-1001234567890" autocomplete="off" />
-                            </div>
-                            <div class="input-group">
-                                <label for="backup-telegram-interval">{$i18n.t('superadmin.database.intervalHours')}</label>
-                                <input id="backup-telegram-interval" type="number" min="1" max="720" bind:value={telegramIntervalHours} />
-                            </div>
-                            <div class="input-group">
-                                <label for="backup-retention-count">{$i18n.t('superadmin.database.retentionCount')}</label>
-                                <input id="backup-retention-count" type="number" min="1" max="500" bind:value={telegramBackupRetentionCount} />
-                            </div>
-                            <div class="input-group">
-                                <label for="backup-telegram-token">Bot token</label>
-                                <input id="backup-telegram-token" type="password" bind:value={telegramBotToken}
-                                    placeholder={telegramHasBotToken ? $i18n.t('superadmin.database.botTokenPlaceholderSaved') : $i18n.t('superadmin.database.botTokenPlaceholderNew')}
-                                    autocomplete="new-password" />
-                            </div>
+                <div class="db-compact__section">
+                    <div class="db-compact__section-head">
+                        <span class="db-compact__section-label">{$i18n.t('superadmin.database.telegramLabel')}</span>
+                        <span class="db-compact__section-title">{$i18n.t('superadmin.database.telegramHeading')}</span>
+                    </div>
+                    <div class="db-compact__telegram-form">
+                        <div class="db-compact__tg-field">
+                            <label for="backup-telegram-enabled">{$i18n.t('superadmin.database.schedule')}</label>
+                            <select id="backup-telegram-enabled" bind:value={telegramScheduleMode}>
+                                <option value="off">{$i18n.t('superadmin.database.scheduleOff')}</option>
+                                <option value="on">{$i18n.t('superadmin.database.scheduleOn')}</option>
+                            </select>
                         </div>
-                        <p class="db-card__status">
-                            {#if telegramHasBotToken}
-                            {$i18n.t('superadmin.database.tokenSaved')}
-                            {:else}
-                            {$i18n.t('superadmin.database.tokenMissing')}
-                            {/if}
-                            {#if telegramConfigured}
-                            {$i18n.t('superadmin.database.sendingAvailable')}
-                            {:else}
-                            {$i18n.t('superadmin.database.sendingNeedsCredentials')}
-                            {/if}
-                        </p>
-                        {#if telegramSettingsStatus}
-                        <div class="status-callout"
-                            class:status-callout--success={telegramSettingsStatusType === 'success'}
-                            class:status-callout--error={telegramSettingsStatusType === 'error'}
-                            class:status-callout--info={telegramSettingsStatusType === 'info'}
-                            role="status">
-                            {telegramSettingsStatus}
+                        <div class="db-compact__tg-field">
+                            <label for="backup-telegram-chat-id">Chat ID</label>
+                            <input id="backup-telegram-chat-id" type="text" bind:value={telegramChatId} placeholder="-1001234567890" autocomplete="off" />
                         </div>
-                        {/if}
-                        <div class="password-panel__actions">
-                            <button class="btn btn--ghost" type="button" disabled={telegramSettingsSaving || telegramBackupSending} on:click={loadTelegramBackupSettings}>{$i18n.t('superadmin.states.refresh')}</button>
-                            <button class="btn btn--primary" type="button" disabled={telegramSettingsSaving || telegramBackupSending} on:click={saveTelegramBackupSettings}>
-                                {telegramSettingsSaving ? $i18n.t('superadmin.actions.saving') : $i18n.t('superadmin.actions.save')}
-                            </button>
-                            <button class="btn btn--success" type="button" disabled={telegramSettingsSaving || telegramBackupSending || !telegramConfigured} on:click={sendBackupToTelegram}>
-                                {telegramBackupSending ? $i18n.t('superadmin.actions.sending') : $i18n.t('superadmin.actions.sendNow')}
-                            </button>
+                        <div class="db-compact__tg-field db-compact__tg-field--narrow">
+                            <label for="backup-telegram-interval">{$i18n.t('superadmin.database.intervalHours')}</label>
+                            <input id="backup-telegram-interval" type="number" min="1" max="720" bind:value={telegramIntervalHours} />
                         </div>
-                    </article>
-                    <article class="system-card">
-                        <p class="system-card__label">{$i18n.t('superadmin.database.backupHistoryLabel')}</p>
-                        <h3 class="system-card__heading">{$i18n.t('superadmin.database.backupHistoryHeading')}</h3>
-                        {#if backupHistoryLoading}
-                        <div class="panel-state panel-state--loading">{$i18n.t('superadmin.database.loadingBackups')}</div>
-                        {:else if backupHistory.length === 0}
-                        <p class="panel-state">{$i18n.t('superadmin.database.backupHistoryEmpty')}</p>
+                        <div class="db-compact__tg-field db-compact__tg-field--narrow">
+                            <label for="backup-retention-count">{$i18n.t('superadmin.database.retentionCount')}</label>
+                            <input id="backup-retention-count" type="number" min="1" max="500" bind:value={telegramBackupRetentionCount} />
+                        </div>
+                        <div class="db-compact__tg-field db-compact__tg-field--wide">
+                            <label for="backup-telegram-token">Bot token</label>
+                            <input id="backup-telegram-token" type="password" bind:value={telegramBotToken}
+                                placeholder={telegramHasBotToken ? $i18n.t('superadmin.database.botTokenPlaceholderSaved') : $i18n.t('superadmin.database.botTokenPlaceholderNew')}
+                                autocomplete="new-password" />
+                        </div>
+                    </div>
+                    <div class="db-compact__tg-status">
+                        <span class="db-compact__tg-badge" class:db-compact__tg-badge--ok={telegramConfigured} class:db-compact__tg-badge--missing={!telegramConfigured}>
+                            {telegramConfigured ? '●' : '○'}
+                        </span>
+                        {#if telegramHasBotToken}
+                        <span>{$i18n.t('superadmin.database.tokenSaved')}</span>
                         {:else}
-                        <div class="family-detail-list">
-                            {#each backupHistory as item (item.filename)}
-                            <div class="family-detail-list__item">
-                                <div>
-                                    <strong>{item.filename}</strong>
-                                    <span>{formatDateTime(item.createdAt)} · {formatFileSize(item.sizeBytes)}</span>
-                                </div>
-                                <div class="family-detail-list__actions">
-                                    <a class="btn btn--ghost btn--small" download href={`/api/super/db-backup/history/${encodeURIComponent(item.filename)}`}>
-                                        {$i18n.t('superadmin.database.backupDownloadAction')}
-                                    </a>
-                                    <button class="btn btn--danger btn--small" type="button" on:click={() => restoreBackupFromHistory(item.filename)}>
-                                        {$i18n.t('superadmin.database.backupRestoreAction')}
-                                    </button>
-                                </div>
-                            </div>
-                            {/each}
-                        </div>
+                        <span>{$i18n.t('superadmin.database.tokenMissing')}</span>
                         {/if}
-                    </article>
-                    <article class="system-card">
-                        <p class="system-card__label">{$i18n.t('superadmin.database.telegramStatusLabel')}</p>
-                        <h3 class="system-card__heading">{$i18n.t('superadmin.database.telegramActivityHeading')}</h3>
-                        <dl class="system-detail-list">
-                            <div>
-                                <dt>{$i18n.t('superadmin.database.state')}</dt>
-                                <dd>{telegramScheduleMode === 'on' ? $i18n.t('superadmin.database.stateOn') : $i18n.t('superadmin.database.stateOff')}</dd>
-                            </div>
-                            <div>
-                                <dt>{$i18n.t('superadmin.database.lastAttempt')}</dt>
-                                <dd>{formatDateTime(telegramLastAttemptAt)}</dd>
-                            </div>
-                            <div>
-                                <dt>{$i18n.t('superadmin.database.lastSent')}</dt>
-                                <dd>{formatDateTime(telegramLastSentAt)}</dd>
-                            </div>
-                            <div>
-                                <dt>{$i18n.t('superadmin.database.lastError')}</dt>
-                                <dd>{telegramLastError || EMPTY_VALUE}</dd>
-                            </div>
-                        </dl>
-                    </article>
+                        {#if telegramConfigured}
+                        <span>{$i18n.t('superadmin.database.sendingAvailable')}</span>
+                        {:else}
+                        <span>{$i18n.t('superadmin.database.sendingNeedsCredentials')}</span>
+                        {/if}
+                        <span class="db-compact__tg-divider"></span>
+                        <span>{$i18n.t('superadmin.database.state')}: {telegramScheduleMode === 'on' ? $i18n.t('superadmin.database.stateOn') : $i18n.t('superadmin.database.stateOff')}</span>
+                        {#if telegramLastSentAt}
+                        <span class="db-compact__tg-divider"></span>
+                        <span>{$i18n.t('superadmin.database.lastSent')}: {formatDateTime(telegramLastSentAt)}</span>
+                        {/if}
+                        {#if telegramLastError}
+                        <span class="db-compact__tg-divider"></span>
+                        <span style="color: var(--color-danger-dark, #dc2626);">{$i18n.t('superadmin.database.lastError')}: {telegramLastError}</span>
+                        {/if}
+                    </div>
+                    <div class="db-compact__tg-actions">
+                        <button class="btn btn--ghost btn--small" type="button" disabled={telegramSettingsSaving || telegramBackupSending} on:click={loadTelegramBackupSettings}>{$i18n.t('superadmin.states.refresh')}</button>
+                        <button class="btn btn--primary btn--small" type="button" disabled={telegramSettingsSaving || telegramBackupSending} on:click={saveTelegramBackupSettings}>
+                            {telegramSettingsSaving ? $i18n.t('superadmin.actions.saving') : $i18n.t('superadmin.actions.save')}
+                        </button>
+                        <button class="btn btn--success btn--small" type="button" disabled={telegramSettingsSaving || telegramBackupSending || !telegramConfigured} on:click={sendBackupToTelegram}>
+                            {telegramBackupSending ? $i18n.t('superadmin.actions.sending') : $i18n.t('superadmin.actions.sendNow')}
+                        </button>
+                    </div>
+                    {#if telegramSettingsStatus}
+                    <div class="status-callout"
+                        class:status-callout--success={telegramSettingsStatusType === 'success'}
+                        class:status-callout--error={telegramSettingsStatusType === 'error'}
+                        class:status-callout--info={telegramSettingsStatusType === 'info'}
+                        role="status">
+                        {telegramSettingsStatus}
+                    </div>
+                    {/if}
                 </div>
+                {/if}
+
+                <!-- Row 3: Backup History -->
+                <div class="db-compact__section">
+                    <div class="db-compact__section-head">
+                        <span class="db-compact__section-label">{$i18n.t('superadmin.database.backupHistoryLabel')}</span>
+                        <span class="db-compact__section-title">{$i18n.t('superadmin.database.backupHistoryHeading')}</span>
+                    </div>
+                    {#if backupHistoryLoading}
+                    <div class="db-compact__section-loading">{$i18n.t('superadmin.database.loadingBackups')}</div>
+                    {:else if backupHistory.length === 0}
+                    <p class="db-compact__empty">{$i18n.t('superadmin.database.backupHistoryEmpty')}</p>
+                    {:else}
+                    <div class="db-compact__history-list">
+                        {#each backupHistory as item (item.filename)}
+                        <div class="db-compact__history-item">
+                            <div class="db-compact__history-info">
+                                <span class="db-compact__history-filename">{item.filename}</span>
+                                <span class="db-compact__history-meta">{formatDateTime(item.createdAt)} · {formatFileSize(item.sizeBytes)}</span>
+                            </div>
+                            <div class="db-compact__history-actions">
+                                <a class="btn btn--ghost btn--small" download href={`/api/super/db-backup/history/${encodeURIComponent(item.filename)}`}>
+                                    {$i18n.t('superadmin.database.backupDownloadAction')}
+                                </a>
+                                <button class="btn btn--danger btn--small" type="button" on:click={() => restoreBackupFromHistory(item.filename)}>
+                                    {$i18n.t('superadmin.database.backupRestoreAction')}
+                                </button>
+                            </div>
+                        </div>
+                        {/each}
+                    </div>
+                    {/if}
+                </div>
+
+                <!-- DB Status callout -->
+                {#if dbChecking}
+                <div class="db-compact__section-loading" id="db-panel-state">{$i18n.t('superadmin.database.checkingStatus')}</div>
                 {/if}
                 {#if dbStatus}
                 <div class="status-callout"
@@ -1317,7 +1320,7 @@
                     {dbStatus}
                 </div>
                 {/if}
-            </article>
+            </div>
         </div>
         {:else if activeTab === 'system'}
         <div id="tab-system" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-system">

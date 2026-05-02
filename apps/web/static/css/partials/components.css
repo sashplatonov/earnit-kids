@@ -5244,3 +5244,220 @@ body.super-admin-page .super-admin-shell {
     color: #b0a090;
     font-size: 0.82rem;
 }
+
+/* ─── Compact Database Backup Blocks ─── */
+.db-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.db-compact__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.db-compact__cell {
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(123, 97, 75, 0.12);
+    border-radius: 16px;
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.db-compact__cell-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.db-compact__cell-label {
+    color: var(--color-text-dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.db-compact__cell-title {
+    color: var(--color-text-high-contrast);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.db-compact__desc {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.db-compact__section {
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(123, 97, 75, 0.12);
+    border-radius: 16px;
+    padding: 0.75rem 0.9rem;
+}
+
+.db-compact__section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.db-compact__section-label {
+    color: var(--color-text-dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.db-compact__section-title {
+    color: var(--color-text-high-contrast);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.db-compact__section-loading {
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px dashed rgba(123, 97, 75, 0.16);
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+}
+
+.db-compact__empty {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    padding: 0.4rem 0;
+}
+
+.db-compact__telegram-form {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto 1fr;
+    gap: 0.4rem 0.6rem;
+    align-items: end;
+}
+
+.db-compact__tg-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.db-compact__tg-field label {
+    color: var(--color-text-dim);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.db-compact__tg-field input,
+.db-compact__tg-field select {
+    width: 100%;
+    min-height: 34px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(123, 97, 75, 0.14);
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--color-text-high-contrast);
+    font: inherit;
+    font-size: 0.82rem;
+}
+
+.db-compact__tg-field--narrow {
+    max-width: 100px;
+}
+
+.db-compact__tg-field--wide {
+    grid-column: span 2;
+}
+
+.db-compact__tg-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.5rem;
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.db-compact__tg-badge {
+    font-size: 0.7rem;
+}
+
+.db-compact__tg-badge--ok {
+    color: #16a34a;
+}
+
+.db-compact__tg-badge--missing {
+    color: #9ca3af;
+}
+
+.db-compact__tg-divider {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--color-text-dim);
+    display: inline-block;
+    opacity: 0.4;
+}
+
+.db-compact__tg-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.db-compact__history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.db-compact__history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(190, 137, 90, 0.1);
+}
+
+.db-compact__history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.db-compact__history-filename {
+    color: var(--color-text-high-contrast);
+    font-weight: 700;
+    font-size: 0.82rem;
+    word-break: break-all;
+}
+
+.db-compact__history-meta {
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+}
+
+.db-compact__history-actions {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}

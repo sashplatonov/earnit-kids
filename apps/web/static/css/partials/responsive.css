@@ -609,6 +609,19 @@ html {
     .toast-container {
         bottom: calc(var(--bottom-nav-height, 0px) + 0.75rem);
     }
+
+    /* Compact DB layout responsive */
+    .db-compact__row {
+        grid-template-columns: 1fr;
+    }
+
+    .db-compact__telegram-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .db-compact__tg-field--wide {
+        grid-column: span 2;
+    }
 }
 
 @media (hover: none) and (pointer: coarse) {
