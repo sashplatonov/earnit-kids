@@ -610,16 +610,16 @@ html {
         bottom: calc(var(--bottom-nav-height, 0px) + 0.75rem);
     }
 
-    /* Compact DB layout responsive */
-    .db-compact__row {
+    /* One-block DB layout responsive */
+    .db-oneblock__actions {
         grid-template-columns: 1fr;
     }
 
-    .db-compact__telegram-form {
+    .db-oneblock__tg-form {
         grid-template-columns: 1fr 1fr;
     }
 
-    .db-compact__tg-field--wide {
+    .db-oneblock__tg-field--wide {
         grid-column: span 2;
     }
 }
