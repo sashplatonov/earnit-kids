@@ -3955,6 +3955,8 @@ dialog.modal[open]::backdrop {
     .child-menu-dropdown {
         top: auto;
         bottom: 100%;
+        left: 0;
+        right: auto;
         margin-top: 0;
         margin-bottom: 10px;
         max-height: calc(100vh - 120px);
