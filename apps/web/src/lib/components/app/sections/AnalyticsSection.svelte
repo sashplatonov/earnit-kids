@@ -456,6 +456,7 @@
                                 <div class="ach-badge__icon" aria-hidden="true">{badge.icon}</div>
                                 <div class="ach-badge__header">
                                     <span class="ach-badge__name">{badge.name}</span>
+                                    <span class="ach-badge__tier" aria-hidden="true">{badge.tierIcon}</span>
                                     {#if badge.earned}
                                     <span class="ach-badge__check">✅</span>
                                     {/if}
@@ -471,7 +472,6 @@
                                 aria-label={badge.description}
                             >
                                 <span class="ach-badge__fill progress-fill" style={`--progress: ${Math.min(badge.percent, 100)};`}></span>
-                                <span class="ach-badge__tier" aria-hidden="true">{badge.tierIcon}</span>
                             </div>
                             <span class="ach-badge__metric">
                                 {badge.current}/{badge.target}
@@ -969,22 +969,18 @@
         box-shadow: 0 0 6px -1px rgba(255, 215, 0, 0.4);
     }
 
-    /* Tier medal badge — sits on the right side of the progress bar */
+    /* Tier medal — next to title in header */
     #analytics-section .ach-badge__tier {
-        position: absolute;
-        right: -2px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1rem;
+        font-size: 0.9rem;
         line-height: 1;
-        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
-        pointer-events: none;
-        transition: transform 0.2s, filter 0.2s;
+        flex-shrink: 0;
+        filter: grayscale(0.4);
+        transition: filter 0.2s, transform 0.2s;
     }
 
     #analytics-section .ach-badge--earned .ach-badge__tier {
-        transform: translateY(-50%) scale(1.15);
-        filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+        filter: none;
+        transform: scale(1.15);
     }
 
     #analytics-section .ach-badge__metric {
