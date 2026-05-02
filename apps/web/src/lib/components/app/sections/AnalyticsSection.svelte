@@ -9,6 +9,7 @@
     import { onDestroy, onMount, tick } from 'svelte';
     import {
         buildAnalyticsViewModel,
+        type AchievementBadge,
         type AnalyticsDailyQuest,
         type AnalyticsRecommendationCard,
         type AnalyticsViewModel,
@@ -39,6 +40,7 @@
     let streakBar = 0;
     let streakNote = tAnalytics('model.streakToday');
     let dailyQuests: AnalyticsDailyQuest[] = [];
+    let achievements: AchievementBadge[] = [];
     let recommendations: AnalyticsRecommendationCard[] = [];
     let detailsExpanded = false;
     let activeView: AnalyticsViewModel | null = null;
@@ -84,6 +86,7 @@
         streakBar = 0;
         streakNote = tAnalytics('model.streakToday');
         dailyQuests = [];
+        achievements = [];
         recommendations = [];
         activeView = null;
         destroyCharts();
@@ -212,6 +215,7 @@
         streakNote = view.streakNote;
 
         dailyQuests = view.dailyQuests;
+        achievements = view.achievements;
         recommendations = view.recommendations;
 
         if (detailsExpanded) {
@@ -439,37 +443,41 @@
                     <strong class="analytics-summary-strip__value" id="stats-net">{statsNet}</strong>
                 </article>
 
-                <article class="analytics-summary-strip__item analytics-summary-strip__item--progress">
-                    <div class="analytics-summary-strip__header">
-                        <span class="analytics-summary-strip__label">⭐ {tAnalytics('progress.level')}</span>
-                        <strong class="analytics-summary-strip__value" id="progress-level-value">{levelValue}</strong>
+                <article class="analytics-summary-strip__item analytics-summary-strip__item--achievements">
+                    <div class="ach-row" aria-label={tAnalytics('achievements.ariaLabel')}>
+                        {#each achievements as badge (badge.id)}
+                        <div
+                            class="ach-badge"
+                            class:ach-badge--earned={badge.earned}
+                            class:ach-badge--bronze={badge.tier === 'bronze'}
+                            class:ach-badge--silver={badge.tier === 'silver'}
+                            class:ach-badge--gold={badge.tier === 'gold'}
+                        >
+                            <div class="ach-badge__icon" aria-hidden="true">{badge.icon}</div>
+                            <div class="ach-badge__body">
+                                <div class="ach-badge__header">
+                                    <span class="ach-badge__name">{badge.name}</span>
+                                    {#if badge.earned}
+                                    <span class="ach-badge__check">✅</span>
+                                    {/if}
+                                </div>
+                                <div
+                                    class="ach-badge__track progress-track"
+                                    role="progressbar"
+                                    aria-valuemin={0}
+                                    aria-valuemax={badge.target}
+                                    aria-valuenow={Math.min(badge.current, badge.target)}
+                                    aria-label={badge.description}
+                                >
+                                    <span class="ach-badge__fill progress-fill" style={`--progress: ${badge.percent};`}></span>
+                                </div>
+                                <span class="ach-badge__metric">
+                                    {badge.current}/{badge.target}
+                                </span>
+                            </div>
+                        </div>
+                        {/each}
                     </div>
-                    <div class="progress-track analytics-summary-strip__track">
-                        <span class="progress-fill analytics-summary-strip__fill" id="progress-level-bar" style={`--progress: ${levelBar};`}></span>
-                    </div>
-                    <p class="analytics-summary-strip__note" id="progress-level-note">{levelNote}</p>
-                </article>
-
-                <article class="analytics-summary-strip__item analytics-summary-strip__item--progress">
-                    <div class="analytics-summary-strip__header">
-                        <span class="analytics-summary-strip__label">📅 {tAnalytics('progress.week')}</span>
-                        <strong class="analytics-summary-strip__value" id="progress-week-earned-value">{weekEarned}</strong>
-                    </div>
-                    <div class="progress-track analytics-summary-strip__track">
-                        <span class="progress-fill analytics-summary-strip__fill" id="progress-week-earned-bar" style={`--progress: ${weekBar};`}></span>
-                    </div>
-                    <p class="analytics-summary-strip__note" id="progress-week-earned-goal">{weekNote}</p>
-                </article>
-
-                <article class="analytics-summary-strip__item analytics-summary-strip__item--progress">
-                    <div class="analytics-summary-strip__header">
-                        <span class="analytics-summary-strip__label">🔥 {tAnalytics('progress.streak')}</span>
-                        <strong class="analytics-summary-strip__value" id="progress-streak-value">{streakValue}</strong>
-                    </div>
-                    <div class="progress-track analytics-summary-strip__track">
-                        <span class="progress-fill analytics-summary-strip__fill" id="progress-streak-bar" style={`--progress: ${streakBar};`}></span>
-                    </div>
-                    <p class="analytics-summary-strip__note" id="progress-streak-note">{streakNote}</p>
                 </article>
             </div>
         </div>
@@ -827,8 +835,12 @@
         gap: 0.35rem;
     }
 
-    #analytics-section .analytics-summary-strip__item--progress {
-        gap: 0.45rem;
+    #analytics-section .analytics-summary-strip__item--achievements {
+        grid-column: 1 / -1;
+        padding: 0;
+        background: none;
+        border: none;
+        gap: 0;
     }
 
     #analytics-section .analytics-summary-strip__header {
@@ -862,11 +874,96 @@
         color: var(--color-danger);
     }
 
-    #analytics-section .analytics-summary-strip__note {
-        margin: 0;
-        font-size: 0.74rem;
-        line-height: 1.3;
+    /* ── Achievement Badge Row ────────────────────────────────────────── */
+
+    #analytics-section .ach-row {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    #analytics-section .ach-badge {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        padding: 0.55rem 0.6rem;
+        border-radius: 0.7rem;
+        background: var(--analytics-surface-strong);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    #analytics-section .ach-badge--earned {
+        border-color: rgba(255, 215, 0, 0.35);
+        box-shadow: 0 0 12px -4px rgba(255, 215, 0, 0.18);
+    }
+
+    #analytics-section .ach-badge--gold.ach-badge--earned {
+        border-color: rgba(255, 215, 0, 0.55);
+        box-shadow: 0 0 16px -4px rgba(255, 215, 0, 0.28);
+    }
+
+    #analytics-section .ach-badge__icon {
+        font-size: 1.2rem;
+        line-height: 1;
+    }
+
+    #analytics-section .ach-badge__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    #analytics-section .ach-badge__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    #analytics-section .ach-badge__name {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--color-text-soft);
+        line-height: 1.2;
+    }
+
+    #analytics-section .ach-badge--earned .ach-badge__name {
+        color: var(--color-warning);
+    }
+
+    #analytics-section .ach-badge__check {
+        font-size: 0.65rem;
+        flex-shrink: 0;
+    }
+
+    #analytics-section .ach-badge__track {
+        height: 0.35rem;
+        background: rgba(148, 163, 184, 0.18);
+    }
+
+    #analytics-section .ach-badge__fill {
+        display: block;
+        height: 100%;
+        width: calc(var(--progress, 0) * 1%);
+        background: linear-gradient(135deg, var(--color-success), #facc15);
+        border-radius: inherit;
+        transition: width 0.3s ease;
+    }
+
+    #analytics-section .ach-badge--earned .ach-badge__fill {
+        background: linear-gradient(135deg, #facc15, #fbbf24);
+    }
+
+    #analytics-section .ach-badge__metric {
+        font-size: 0.64rem;
+        font-weight: 700;
         color: var(--color-text-muted);
+        text-align: right;
+    }
+
+    #analytics-section .ach-badge--earned .ach-badge__metric {
+        color: var(--color-warning);
     }
 
     #analytics-section .analytics-details {
@@ -1015,6 +1112,11 @@
             font-size: 0.74rem;
             min-height: 2rem;
         }
+
+        /* Achievement row: 3 + 2 on narrow screens */
+        #analytics-section .ach-row {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
     }
 
     @media (max-width: 760px) {
@@ -1094,6 +1196,33 @@
             font-size: 0.7rem;
             padding: 0.35rem 0.7rem;
             min-height: 1.85rem;
+        }
+
+        /* Achievement row: 2 per row on mobile */
+        #analytics-section .ach-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.35rem;
+        }
+
+        #analytics-section .ach-badge {
+            padding: 0.4rem 0.45rem;
+            gap: 0.25rem;
+        }
+
+        #analytics-section .ach-badge__icon {
+            font-size: 1rem;
+        }
+
+        #analytics-section .ach-badge__name {
+            font-size: 0.62rem;
+        }
+
+        #analytics-section .ach-badge__metric {
+            font-size: 0.58rem;
+        }
+
+        #analytics-section .analytics-summary-strip {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
 </style>

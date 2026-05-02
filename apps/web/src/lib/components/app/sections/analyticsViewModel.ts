@@ -1,5 +1,10 @@
 import { analyticsMessages as englishAnalyticsMessages } from '$lib/i18n/messages/en/analytics';
 import {
+    buildAchievements,
+    type AchievementBadge,
+    type AchievementI18n,
+} from './analyticsAchievements';
+import {
     buildDailyQuests,
     type AnalyticsDailyQuest,
     type AnalyticsDailyQuestI18n,
@@ -29,6 +34,7 @@ export interface AnalyticsRecommendationCard {
 }
 
 export type { AnalyticsDailyQuest } from './analyticsDailyQuests';
+export type { AchievementBadge } from './analyticsAchievements';
 
 export interface AnalyticsViewModel {
     earned: number;
@@ -46,6 +52,7 @@ export interface AnalyticsViewModel {
     trend: AnalyticsTrendDatum[];
     recommendations: AnalyticsRecommendationCard[];
     dailyQuests: AnalyticsDailyQuest[];
+    achievements: AchievementBadge[];
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -132,6 +139,7 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
     const streakValue = buildStreak(trend);
     const recommendations = readRecommendations(root?.recommendations, options.tasks, i18n);
     const completedTaskCount = taskCount.reduce((total, item) => total + Math.max(0, item.value), 0);
+    const completedItemCount = itemCount.reduce((total, item) => total + Math.max(0, item.value), 0);
     const periodEarned = trend.length > 0
         ? sumTrend(trend, 'earned')
         : readNumber(summary?.totalEarned) ?? readNumber(root?.earned) ?? earned;
@@ -145,6 +153,14 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
         shopItems: normalizedShopItems,
         streakValue,
         tasks: normalizedTasks,
+    });
+
+    const achievements = buildAchievements({
+        earned,
+        taskCount: completedTaskCount,
+        itemCount: completedItemCount,
+        streakValue,
+        i18n: i18n as AchievementI18n,
     });
 
     return {
@@ -165,6 +181,7 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
         trend: trend.map(({ label, earned, spent }) => ({ label, earned, spent })),
         recommendations,
         dailyQuests,
+        achievements,
     };
 }
 
