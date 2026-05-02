@@ -328,7 +328,8 @@ public class DatabaseBackupService {
     }
 
     private Path resolveBackupFile(String filename) {
-        String normalized = Path.of(filename).getFileName().toString();
+        Path path = Path.of(filename).getFileName();
+        String normalized = path != null ? path.toString() : filename;
         return backupDir.resolve(normalized);
     }
 

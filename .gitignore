@@ -72,7 +72,10 @@ playwright-report/
 .playwright-browsers/
 
 # Data / local dumps
-data/
+data/*
+!data/backups/
+data/backups/*
+!data/backups/.gitkeep
 data.json
 
 # Agent tools (do not track local agent storage)
