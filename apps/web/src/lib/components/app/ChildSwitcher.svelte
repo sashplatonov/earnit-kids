@@ -51,7 +51,7 @@
     {tApp('childSwitcher.addChildButton')}
 </button>
 {:else}
-<div class="nav__child-switcher child-menu" class:active={open}>
+<div class="nav__child-switcher child-menu" id="child-switcher-container" class:active={open}>
     <button
         type="button"
         class="child-menu-btn"
