@@ -109,7 +109,7 @@ html {
     }
 
     #child-switcher-container,
-    #child-switcher-container .child-menu,
+    #child-switcher-container.child-menu,
     #child-switcher-container .child-menu-dropdown {
         overflow: visible;
     }
