@@ -45,7 +45,7 @@ services:
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
       APP_BACKUP_DIR: /work/data/backups
     volumes:
-      - ./data/backups:/work/data/backups
+      - earnit_kids_backups:/work/data/backups
     expose:
       - "${BACKEND_INTERNAL_PORT}"
     restart: unless-stopped
@@ -78,6 +78,7 @@ services:
 
 volumes:
   earnit_kids_postgres_data:
+  earnit_kids_backups:
 
 networks:
   backend:
