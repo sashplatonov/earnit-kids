@@ -1,12 +1,8 @@
 ---
 description: Run full code checks (lint + tests)
 ---
-// turbo-all
 
-1. Run lint:
-   `npm run lint`
-2. Run unit tests:
-   `npm test`
-3. Run integration tests:
-   `npm run test:integration`
-4. If there are errors — fix them and repeat steps 1-3
+1. `npm run lint` — ESLint
+2. `npm run test` — Vitest unit tests
+3. `npm run test:e2e` — Playwright E2E (if UI changed)
+4. `npm run build` — production build check

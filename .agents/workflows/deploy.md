@@ -1,15 +1,8 @@
 ---
-description: Deploy the application using Docker
+description: Deploy with Docker Compose
 ---
 
-1. Build the image:
-   `docker compose build`
-// turbo
-2. Start containers:
-   `docker compose up -d`
-// turbo
-3. Check status:
-   `docker compose ps`
-// turbo
-4. Check healthcheck:
-   `curl -s http://localhost:3000/health`
+1. `docker compose --profile db up -d --build` — JVM backend
+2. Or `docker compose -f docker-compose.native.yml --profile db up -d --build` — native
+3. `docker compose down` — stop
+4. Run `docker compose config` before rebuild to catch env drift
