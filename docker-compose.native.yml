@@ -43,6 +43,9 @@ services:
       GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-http://localhost:5001/api/login-google/callback}
       JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
+      APP_BACKUP_DIR: /work/data/backups
+    volumes:
+      - ./data/backups:/work/data/backups
     expose:
       - "${BACKEND_INTERNAL_PORT}"
     restart: unless-stopped
