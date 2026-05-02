@@ -205,6 +205,7 @@ export const superadminMessages = {
         backupHistoryEmpty: 'Сохранённых бэкапов пока нет.',
         backupRestoreConfirm: 'Восстановить базу из сохранённого бэкапа {filename}? Текущие данные будут заменены.',
         backupRestoreAction: 'Восстановить',
+        backupDownloadAction: 'Скачать',
         backupRestoreSuccess: 'Восстановление из сохранённого бэкапа выполнено. Перезагрузка...',
     },
     system: {

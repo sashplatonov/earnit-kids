@@ -332,6 +332,18 @@ public class DatabaseBackupService {
         return backupDir.resolve(normalized);
     }
 
+    // EXPLAIN: resolves a backup file path by filename for download; returns empty if not found
+    public java.util.Optional<Path> getBackupFilePath(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        Path file = resolveBackupFile(filename);
+        if (!Files.isRegularFile(file)) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(file);
+    }
+
     public record BackupArtifact(Path path, String filename) {
     }
 

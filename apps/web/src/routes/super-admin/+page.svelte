@@ -1271,9 +1271,14 @@
                                     <strong>{item.filename}</strong>
                                     <span>{formatDateTime(item.createdAt)} · {formatFileSize(item.sizeBytes)}</span>
                                 </div>
-                                <button class="btn btn--ghost btn--small" type="button" on:click={() => restoreBackupFromHistory(item.filename)}>
-                                    {$i18n.t('superadmin.database.backupRestoreAction')}
-                                </button>
+                                <div class="family-detail-list__actions">
+                                    <a class="btn btn--ghost btn--small" download href={`/api/super/db-backup/history/${encodeURIComponent(item.filename)}`}>
+                                        {$i18n.t('superadmin.database.backupDownloadAction')}
+                                    </a>
+                                    <button class="btn btn--danger btn--small" type="button" on:click={() => restoreBackupFromHistory(item.filename)}>
+                                        {$i18n.t('superadmin.database.backupRestoreAction')}
+                                    </button>
+                                </div>
                             </div>
                             {/each}
                         </div>

@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -263,6 +264,29 @@ public class SuperAdminResource {
 
         List<BackupHistoryItemResponse> backups = databaseBackupService.listBackups();
         return Response.ok(Map.of("backups", backups)).build();
+    }
+
+    @GET
+    @Path("/db-backup/history/{filename}")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response downloadBackupFromHistory(@Context ContainerRequestContext ctx,
+                                              @PathParam("filename") String filename) throws IOException {
+        Response authFailure = requireSuperAdmin(ctx);
+        if (authFailure != null) {
+            return authFailure;
+        }
+
+        var filePath = databaseBackupService.getBackupFilePath(filename);
+        if (filePath.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                .entity(SimpleResponse.error(BackendMessages.message("backup.fileNotFound")))
+                .type(MediaType.APPLICATION_JSON)
+                .build();
+        }
+
+        return Response.ok(Files.readAllBytes(filePath.get()), MediaType.APPLICATION_OCTET_STREAM)
+            .header("Content-Disposition", "attachment; filename=\"" + Path.of(filename).getFileName() + "\"")
+            .build();
     }
 
     @POST

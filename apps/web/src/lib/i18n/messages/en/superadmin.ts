@@ -205,6 +205,7 @@ export const superadminMessages = {
         backupHistoryEmpty: 'No saved backups yet.',
         backupRestoreConfirm: 'Restore the database from saved backup {filename}? Current data will be replaced.',
         backupRestoreAction: 'Restore',
+        backupDownloadAction: 'Download',
         backupRestoreSuccess: 'Restore from saved backup completed. Reloading...',
     },
     system: {
