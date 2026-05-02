@@ -15,6 +15,7 @@
     }
 
     $: isAdmin = $appStore.isAdmin;
+    $: isLoading = $appStore.isLoading;
     $: childNickname = $appStore.childNickname ?? '';
     $: currentChildId = $appStore.currentChildId;
 
@@ -93,11 +94,34 @@
     }
 </script>
 
+{#if isLoading}
 <section class="section" id="settings-section">
     <div class="section__header">
         <h2>{tAdmin('settings.sectionTitle')}</h2>
     </div>
-
+    <div class="cards cards--skeleton-settings" id="settings-skeleton">
+        {#each { length: 2 } as _, i (i)}
+        <div class="card settings-card card--skeleton-settings">
+            <div class="card__header">
+                <div class="skel-sett skel-sett--title">&nbsp;</div>
+                <div class="skel-sett skel-sett--icon">&nbsp;</div>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <div class="skel-sett skel-sett--label">&nbsp;</div>
+                <div class="skel-sett skel-sett--input">&nbsp;</div>
+            </div>
+            <div class="card__actions" style="margin-top: 1rem;">
+                <div class="skel-sett skel-sett--button">&nbsp;</div>
+            </div>
+        </div>
+        {/each}
+    </div>
+</section>
+{:else}
+<section class="section" id="settings-section">
+    <div class="section__header">
+        <h2>{tAdmin('settings.sectionTitle')}</h2>
+    </div>
     <div class="cards" id="settings-cards">
         {#if isAdmin}
         <!-- Admin: child name -->
@@ -226,3 +250,67 @@
     </div>
 </section>
 {/if}
+{/if}
+
+<style>
+    /* ── Skeleton loader ── */
+    .cards--skeleton-settings {
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .card--skeleton-settings {
+        background: var(--card-bg, #ffffff) !important;
+        border-color: var(--card-border, rgba(0, 0, 0, 0.06)) !important;
+    }
+
+    .skel-sett {
+        display: block;
+        background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+        background-size: 200% 100%;
+        animation: skel-sett-shimmer 1.5s ease-in-out infinite;
+        border-radius: 6px;
+        color: transparent !important;
+    }
+
+    .skel-sett--title {
+        width: 60%;
+        height: 1.2rem;
+    }
+
+    .skel-sett--icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+    }
+
+    .skel-sett--label {
+        width: 40%;
+        height: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .skel-sett--input {
+        width: 100%;
+        height: 2.4rem;
+        border-radius: 8px;
+    }
+
+    .skel-sett--button {
+        width: 8rem;
+        height: 2.2rem;
+        border-radius: 8px;
+    }
+
+    .card__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    @keyframes skel-sett-shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
