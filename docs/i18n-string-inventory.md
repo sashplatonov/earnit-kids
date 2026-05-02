@@ -14,7 +14,7 @@
   - [Non-Translatable Data](#non-translatable-data)
   - [Implementation Notes](#implementation-notes)
 
-## Purpose
+## 🎯 Purpose
 
 This inventory turns the current hardcoded-string surfaces into implementation-ready domain ownership. It is the source document for extraction, translation key placement, and test coverage planning.
 
@@ -27,7 +27,7 @@ Rules for this inventory:
 
 [↩ Back to toc](#table-of-contents)
 
-## Domain Taxonomy
+## 🏷️ Domain Taxonomy
 
 The approved domain groups are:
 
@@ -81,7 +81,7 @@ Each hotspot below is assigned to its target domain group and extraction status.
 
 [↩ Back to toc](#table-of-contents)
 
-## Dynamic Template Rules
+## 📐 Dynamic Template Rules
 
 Dynamic strings must be modeled as templates whenever they include:
 
@@ -105,7 +105,7 @@ String concatenation is not allowed for user-visible copy when template variable
 
 [↩ Back to toc](#table-of-contents)
 
-## Pluralization Targets
+## 🔢 Pluralization Targets
 
 Pluralization treatment is mandatory for:
 
@@ -123,7 +123,7 @@ Rules:
 
 [↩ Back to toc](#table-of-contents)
 
-## Non-Translatable Data
+## 🚫 Non-Translatable Data
 
 The following values must never be moved into dictionaries:
 
@@ -136,7 +136,7 @@ The following values must never be moved into dictionaries:
 
 [↩ Back to toc](#table-of-contents)
 
-## Implementation Notes
+## 📝 Implementation Notes
 
 Sequencing notes for the remaining backlog:
 

@@ -180,10 +180,14 @@ Verification tip:
 ## 📚 Detailed Docs
 
 - Root system view: [docs/architecture.md](docs/architecture.md)
+- Docker operations: [docs/docker-ops.md](docs/docker-ops.md)
+- Testing guide: [docs/testing.md](docs/testing.md)
 - I18n contract: [docs/i18n-contract.md](docs/i18n-contract.md)
 - I18n string inventory: [docs/i18n-string-inventory.md](docs/i18n-string-inventory.md)
+- I18n backlog: [docs/i18n-backlog.md](docs/i18n-backlog.md)
+- SvelteKit migration backlog: [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md)
+- Analytics daily quest backlog: [docs/analytics-daily-quest-backlog.md](docs/analytics-daily-quest-backlog.md)
 - Frontend architecture: [apps/web/docs/ARCHITECTURE.md](apps/web/docs/ARCHITECTURE.md)
 - Backend architecture: [apps/backend/docs/ARCHITECTURE.md](apps/backend/docs/ARCHITECTURE.md)
-- SvelteKit migration backlog archive: [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md)
 
 [↑ Back to top](#top)

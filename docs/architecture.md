@@ -179,6 +179,8 @@ flowchart LR
 	Backend --> Dokploy
 ```
 
+> 📝 **See also:** [docs/docker-ops.md](docker-ops.md) for the full Docker operations guide, including compose entrypoints, env configuration, networking, and failure modes.
+
 Failure modes to keep in mind:
 
 - The `db` service is profile-gated, so local full-stack boots must include `--profile db`.

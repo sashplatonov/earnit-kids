@@ -15,7 +15,7 @@
 - [Failure Modes](#failure-modes)
 - [Rollback Notes](#rollback-notes)
 
-## Goal
+## 🎯 Goal
 
 This document freezes the production i18n contract for EarnIt Kids across the SvelteKit web app in `apps/web` and the user-facing backend responses in `apps/backend`.
 
@@ -26,7 +26,7 @@ This document freezes the production i18n contract for EarnIt Kids across the Sv
 
 [↩ Back to toc](#table-of-contents)
 
-## Supported Locales
+## 🌐 Supported Locales
 
 Supported locales are fixed to:
 
@@ -37,7 +37,7 @@ No other locale code is valid in URLs, cookies, or server-side rendering state.
 
 [↩ Back to toc](#table-of-contents)
 
-## Resolution Order
+## 🔍 Resolution Order
 
 Locale resolution order is fixed and must not be changed without a new ADR:
 
@@ -54,7 +54,7 @@ Operational notes:
 
 [↩ Back to toc](#table-of-contents)
 
-## Canonical URL Policy
+## 🔗 Canonical URL Policy
 
 Canonical routing rules:
 
@@ -112,7 +112,7 @@ Route helper rules:
 
 [↩ Back to toc](#table-of-contents)
 
-## Fallback Rules
+## 🛡️ Fallback Rules
 
 Runtime fallback rules are fixed:
 
@@ -129,7 +129,7 @@ Development behavior:
 
 [↩ Back to toc](#table-of-contents)
 
-## Non-Translated Surfaces
+## 🚫 Non-Translated Surfaces
 
 The following surfaces are explicitly out of scope for translation:
 
@@ -152,7 +152,7 @@ Translated surfaces include:
 
 [↩ Back to toc](#table-of-contents)
 
-## Backend Contract
+## ⚙️ Backend Contract
 
 Backend-specific rules:
 
@@ -164,7 +164,7 @@ Backend-specific rules:
 
 [↩ Back to toc](#table-of-contents)
 
-## Failure Modes
+## ⚠️ Failure Modes
 
 Known failure modes and expected behavior:
 
@@ -177,7 +177,7 @@ Known failure modes and expected behavior:
 
 [↩ Back to toc](#table-of-contents)
 
-## Rollback Notes
+## ↩️ Rollback Notes
 
 If a release introduces a locale-routing regression:
 
