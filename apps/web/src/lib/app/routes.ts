@@ -109,7 +109,7 @@ export const ADMIN_MANAGEMENT_SECTIONS: AppSection[] = [
 ];
 
 export function isAdminRole(role?: string): boolean {
-    return role === 'admin' || role === 'parent';
+    return role === 'admin' || role === 'parent' || role === 'super_admin';
 }
 
 export function isAppSection(value: string): value is AppSection {

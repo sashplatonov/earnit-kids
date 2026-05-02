@@ -23,7 +23,7 @@
     export let session: SessionSnapshot;
     export let activeSection: AppSection;
 
-    const isAdmin = session.role === 'admin' || session.role === 'parent';
+    const isAdmin = session.role === 'admin' || session.role === 'parent' || session.role === 'super_admin';
     const isSuperAdmin = session.role === 'super_admin';
 
 
