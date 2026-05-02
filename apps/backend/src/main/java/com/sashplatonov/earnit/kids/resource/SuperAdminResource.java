@@ -33,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -285,7 +284,7 @@ public class SuperAdminResource {
         }
 
         return Response.ok(Files.readAllBytes(filePath.get()), MediaType.APPLICATION_OCTET_STREAM)
-            .header("Content-Disposition", "attachment; filename=\"" + Path.of(filename).getFileName() + "\"")
+            .header("Content-Disposition", "attachment; filename=\"" + java.nio.file.Path.of(filename).getFileName() + "\"")
             .build();
     }
 
