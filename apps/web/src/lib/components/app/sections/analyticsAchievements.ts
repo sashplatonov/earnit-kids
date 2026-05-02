@@ -3,6 +3,8 @@ export interface AchievementBadge {
     category: 'level' | 'tasks' | 'coins' | 'streak' | 'shop';
     tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
     icon: string;
+    /** Tier medal emoji (🥉🥈🥇💠💎) */
+    tierIcon: string;
     name: string;
     description: string;
     current: number;
@@ -27,6 +29,16 @@ interface AchievementDef {
     descKey: string;
     target: number;
 }
+
+// ── Tier Medal Icons ───────────────────────────────────────────────────────
+
+const TIER_ICONS: Record<AchievementDef['tier'], string> = {
+    bronze: '🥉',
+    silver: '🥈',
+    gold: '🥇',
+    platinum: '💠',
+    diamond: '💎',
+};
 
 // ── Achievement Definitions ────────────────────────────────────────────────
 
@@ -122,6 +134,7 @@ export function buildAchievements(input: BuildAchievementsInput): AchievementBad
             category: targetDef.category,
             tier: targetDef.tier,
             icon: targetDef.icon,
+            tierIcon: TIER_ICONS[targetDef.tier],
             name: i18n.t(targetDef.nameKey),
             description: i18n.t(targetDef.descKey, {
                 current: i18n.formatNumber(current),
