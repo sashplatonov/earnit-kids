@@ -40,6 +40,7 @@
 
     $: tasks = $appStore.tasks;
     $: isAdmin = $appStore.isAdmin;
+    $: isLoading = $appStore.isLoading;
     $: viewRole = (isAdmin ? 'admin' : 'child') as CardViewRole;
 
     $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
@@ -272,7 +273,28 @@
     />
     {/if}
 
-    {#if visibleTasks.length > 0}
+    {#if isLoading}
+    <div class="cards cards--skeleton" id="tasks-skeleton">
+        {#each { length: 3 } as _}
+        <div class="card card--task card--skeleton">
+            <div class="card__badge-row">
+                <span class="skeleton skeleton--badge">&nbsp;</span>
+                <span class="skeleton skeleton--badge skeleton--badge-sm">&nbsp;</span>
+            </div>
+            <div class="task-card__layout">
+                <div class="task-card__main">
+                    <div class="skeleton skeleton--title">&nbsp;</div>
+                    <div class="skeleton skeleton--text">&nbsp;</div>
+                    <div class="skeleton skeleton--text skeleton--text-short">&nbsp;</div>
+                </div>
+                <div class="task-card__side">
+                    <div class="skeleton skeleton--button">&nbsp;</div>
+                </div>
+            </div>
+        </div>
+        {/each}
+    </div>
+    {:else if visibleTasks.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="tasks-list">
         {#each visibleTasks as task (task.id)}
         <div class="card card--task task-card" class:task-card--list={viewMode === 'list'} class:task-card--inactive={!isTaskActive(task)} class:card--disabled={!isTaskActive(task)}>
@@ -446,5 +468,62 @@
             font-size: 0.68rem;
             line-height: 1.05;
         }
+    }
+
+    /* ── Skeleton loader ── */
+    .cards--skeleton {
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .card--skeleton {
+        background: var(--card-bg, #ffffff) !important;
+        border-color: var(--card-border, rgba(0, 0, 0, 0.06)) !important;
+    }
+
+    .skeleton {
+        display: block;
+        background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 1.5s ease-in-out infinite;
+        border-radius: 6px;
+        color: transparent !important;
+    }
+
+    .skeleton--badge {
+        width: 5rem;
+        height: 1.2rem;
+        border-radius: 999px;
+    }
+
+    .skeleton--badge-sm {
+        width: 3.5rem;
+    }
+
+    .skeleton--title {
+        width: 70%;
+        height: 1.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .skeleton--text {
+        width: 100%;
+        height: 0.85rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .skeleton--text-short {
+        width: 55%;
+    }
+
+    .skeleton--button {
+        width: 5rem;
+        height: 2.2rem;
+        border-radius: 8px;
+    }
+
+    @keyframes skeleton-shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
     }
 </style>

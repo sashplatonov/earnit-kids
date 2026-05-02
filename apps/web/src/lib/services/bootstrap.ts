@@ -28,7 +28,8 @@ export async function initializeFromServer(): Promise<boolean> {
         : { tasks: [], products: [] };
 
     const state = buildInitialState(record, baseData as Record<string, unknown>);
-    appStore.setState(state as Partial<AppState>);
+    // Keep isLoading true — will be cleared after all data (including child data) is loaded
+    appStore.setState({ ...(state as Partial<AppState>), isLoading: true });
 
     const stateRecord = state as Record<string, unknown>;
     // Auto-select child for admin
@@ -63,6 +64,8 @@ export async function initializeFromServer(): Promise<boolean> {
         }
     }
 
+    // All data is now loaded — clear loading flag
+    appStore.setState({ isLoading: false });
     return true;
 }
 
