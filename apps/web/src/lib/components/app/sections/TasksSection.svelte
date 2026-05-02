@@ -274,21 +274,21 @@
     {/if}
 
     {#if isLoading}
-    <div class="cards cards--skeleton" id="tasks-skeleton">
-        {#each { length: 3 } as _}
-        <div class="card card--task card--skeleton">
+    <div class="cards cards--skeleton-task" id="tasks-skeleton">
+        {#each { length: 3 } as _, i (i)}
+        <div class="card card--task card--skeleton-task">
             <div class="card__badge-row">
-                <span class="skeleton skeleton--badge">&nbsp;</span>
-                <span class="skeleton skeleton--badge skeleton--badge-sm">&nbsp;</span>
+                <span class="skel-task skel-task--badge">&nbsp;</span>
+                <span class="skel-task skel-task--badge skel-task--badge-sm">&nbsp;</span>
             </div>
             <div class="task-card__layout">
                 <div class="task-card__main">
-                    <div class="skeleton skeleton--title">&nbsp;</div>
-                    <div class="skeleton skeleton--text">&nbsp;</div>
-                    <div class="skeleton skeleton--text skeleton--text-short">&nbsp;</div>
+                    <div class="skel-task skel-task--title">&nbsp;</div>
+                    <div class="skel-task skel-task--text">&nbsp;</div>
+                    <div class="skel-task skel-task--text skel-task--text-short">&nbsp;</div>
                 </div>
                 <div class="task-card__side">
-                    <div class="skeleton skeleton--button">&nbsp;</div>
+                    <div class="skel-task skel-task--button">&nbsp;</div>
                 </div>
             </div>
         </div>
@@ -470,59 +470,59 @@
         }
     }
 
-    /* ── Skeleton loader ── */
-    .cards--skeleton {
+    /* ── Skeleton loader (scoped names to avoid global .skeleton conflicts) ── */
+    .cards--skeleton-task {
         pointer-events: none;
         user-select: none;
     }
 
-    .card--skeleton {
+    .card--skeleton-task {
         background: var(--card-bg, #ffffff) !important;
         border-color: var(--card-border, rgba(0, 0, 0, 0.06)) !important;
     }
 
-    .skeleton {
+    .skel-task {
         display: block;
         background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
         background-size: 200% 100%;
-        animation: skeleton-shimmer 1.5s ease-in-out infinite;
+        animation: skel-task-shimmer 1.5s ease-in-out infinite;
         border-radius: 6px;
         color: transparent !important;
     }
 
-    .skeleton--badge {
+    .skel-task--badge {
         width: 5rem;
         height: 1.2rem;
         border-radius: 999px;
     }
 
-    .skeleton--badge-sm {
+    .skel-task--badge-sm {
         width: 3.5rem;
     }
 
-    .skeleton--title {
+    .skel-task--title {
         width: 70%;
         height: 1.4rem;
         margin-bottom: 0.5rem;
     }
 
-    .skeleton--text {
+    .skel-task--text {
         width: 100%;
         height: 0.85rem;
         margin-bottom: 0.35rem;
     }
 
-    .skeleton--text-short {
+    .skel-task--text-short {
         width: 55%;
     }
 
-    .skeleton--button {
+    .skel-task--button {
         width: 5rem;
         height: 2.2rem;
         border-radius: 8px;
     }
 
-    @keyframes skeleton-shimmer {
+    @keyframes skel-task-shimmer {
         0% { background-position: 200% 0; }
         100% { background-position: -200% 0; }
     }
