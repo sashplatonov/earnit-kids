@@ -449,9 +449,13 @@
                         <div
                             class="ach-badge"
                             class:ach-badge--earned={badge.earned}
+                            class:ach-badge--over={badge.earned && badge.percent >= 100}
                             class:ach-badge--bronze={badge.tier === 'bronze'}
                             class:ach-badge--silver={badge.tier === 'silver'}
                             class:ach-badge--gold={badge.tier === 'gold'}
+                            class:ach-badge--platinum={badge.tier === 'platinum'}
+                            class:ach-badge--diamond={badge.tier === 'diamond'}
+                            title={badge.earnedBadge ? `${badge.description} — ${badge.earnedBadge} ✅` : badge.description}
                         >
                             <div class="ach-badge__icon" aria-hidden="true">{badge.icon}</div>
                             <div class="ach-badge__body">
@@ -463,13 +467,14 @@
                                 </div>
                                 <div
                                     class="ach-badge__track progress-track"
+                                    class:ach-badge__track--over={badge.earned && badge.percent >= 100}
                                     role="progressbar"
                                     aria-valuemin={0}
                                     aria-valuemax={badge.target}
                                     aria-valuenow={Math.min(badge.current, badge.target)}
                                     aria-label={badge.description}
                                 >
-                                    <span class="ach-badge__fill progress-fill" style={`--progress: ${badge.percent};`}></span>
+                                    <span class="ach-badge__fill progress-fill" style={`--progress: ${Math.min(badge.percent, 100)};`}></span>
                                 </div>
                                 <span class="ach-badge__metric">
                                     {badge.current}/{badge.target}
@@ -898,9 +903,39 @@
         box-shadow: 0 0 12px -4px rgba(255, 215, 0, 0.18);
     }
 
+    /* Over-fulfilled: earned + current > target */
+    #analytics-section .ach-badge--over {
+        border-color: rgba(255, 215, 0, 0.5);
+        box-shadow: 0 0 18px -4px rgba(255, 215, 0, 0.35);
+        background: linear-gradient(180deg, rgba(255, 215, 0, 0.06), var(--analytics-surface-strong));
+    }
+
     #analytics-section .ach-badge--gold.ach-badge--earned {
         border-color: rgba(255, 215, 0, 0.55);
         box-shadow: 0 0 16px -4px rgba(255, 215, 0, 0.28);
+    }
+
+    #analytics-section .ach-badge--gold.ach-badge--over {
+        border-color: rgba(255, 215, 0, 0.7);
+        box-shadow: 0 0 22px -6px rgba(255, 215, 0, 0.45);
+    }
+
+    #analytics-section .ach-badge--platinum {
+        border-left: 3px solid #a78bfa;
+    }
+
+    #analytics-section .ach-badge--platinum.ach-badge--over {
+        border-color: rgba(167, 139, 250, 0.5);
+        box-shadow: 0 0 18px -4px rgba(167, 139, 250, 0.35);
+    }
+
+    #analytics-section .ach-badge--diamond {
+        border-left: 3px solid #67e8f9;
+    }
+
+    #analytics-section .ach-badge--diamond.ach-badge--over {
+        border-color: rgba(103, 232, 249, 0.5);
+        box-shadow: 0 0 22px -6px rgba(103, 232, 249, 0.45);
     }
 
     #analytics-section .ach-badge__icon {
@@ -942,10 +977,15 @@
         background: rgba(148, 163, 184, 0.18);
     }
 
+    #analytics-section .ach-badge__track--over {
+        background: rgba(255, 215, 0, 0.12);
+    }
+
     #analytics-section .ach-badge__fill {
         display: block;
         height: 100%;
         width: calc(var(--progress, 0) * 1%);
+        max-width: 100%;
         background: linear-gradient(135deg, var(--color-success), #facc15);
         border-radius: inherit;
         transition: width 0.3s ease;
@@ -953,6 +993,7 @@
 
     #analytics-section .ach-badge--earned .ach-badge__fill {
         background: linear-gradient(135deg, #facc15, #fbbf24);
+        box-shadow: 0 0 6px -1px rgba(255, 215, 0, 0.4);
     }
 
     #analytics-section .ach-badge__metric {
