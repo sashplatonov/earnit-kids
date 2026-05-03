@@ -4439,13 +4439,11 @@ body.super-admin-page .super-admin-shell {
     gap: 0.75rem;
 }
 
-.sa-catalog-card__group {
-    margin: 0 0 0.15rem;
-    font-size: 0.78rem;
-    font-weight: 650;
-    color: var(--color-text-dim);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
+.sa-catalog-card__title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
 }
 
 .sa-catalog-card__title {
@@ -4529,12 +4527,8 @@ body.super-admin-page .super-admin-shell {
 
 .sa-catalog-card--list .sa-catalog-card__headline {
     flex: none;
-    min-width: 0;
+    min-width: 120px;
     gap: 0.4rem;
-}
-
-.sa-catalog-card--list .sa-catalog-card__group {
-    display: none;
 }
 
 .sa-catalog-card--list .sa-catalog-card__description {
@@ -4547,6 +4541,23 @@ body.super-admin-page .super-admin-shell {
 
 .sa-catalog-card--list .sa-catalog-card__price strong {
     font-size: 1rem;
+}
+
+.sa-catalog-card--list .card__badge-row {
+    display: inline-flex;
+    flex: none;
+    min-height: 0;
+    margin: 0;
+}
+
+.sa-catalog-card--list .card__badge--group {
+    font-size: 0.75rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
 }
 
 .sa-catalog-card--list .sa-catalog-card__actions {

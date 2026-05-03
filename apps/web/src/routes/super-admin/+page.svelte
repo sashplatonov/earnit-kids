@@ -1169,11 +1169,11 @@
                         <div class="sa-catalog-card__layout">
                             <div class="sa-catalog-card__main">
                                 <div class="sa-catalog-card__headline">
-                                    <div>
-                                        {#if item.group}
-                                        <p class="sa-catalog-card__group">{item.group}</p>
-                                        {/if}
+                                    <div class="sa-catalog-card__title-row">
                                         <h4 class="sa-catalog-card__title">{item.name}</h4>
+                                        {#if item.group}
+                                        <span class="card__badge card__badge--group">{item.group}</span>
+                                        {/if}
                                     </div>
                                     <div class="sa-catalog-card__price">
                                         <strong>{item.coins ?? item.price ?? 0}</strong>
