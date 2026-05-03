@@ -149,6 +149,10 @@ export const superadminMessages = {
         periodMonth: 'В месяц',
         periodYear: 'В год',
         moneyLimitField: 'Денежный лимит',
+        coinsUnit: 'монет',
+        viewAria: 'Вид каталога',
+        viewGrid: 'Сетка',
+        viewList: 'Строка',
     },
     database: {
         eyebrow: 'Инфраструктура',

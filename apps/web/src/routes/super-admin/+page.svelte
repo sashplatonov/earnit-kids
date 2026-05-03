@@ -4,6 +4,8 @@
     import { useI18n } from '$lib/i18n/context';
     import { fetchWithCsrf } from '$lib/services/api';
     import { startOfTodayTimestamp, toDate } from '$lib/utils/date';
+    import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
+    import { loadCardViewMode, saveCardViewMode, type CardViewMode } from '$lib/services/cardViewMode';
 
     export let data: PageData;
 
@@ -91,6 +93,8 @@
     let editFreqLimit = '';
     let editFreqPeriod = 'week';
     let editMoneyLimit = '';
+
+    let catalogViewMode: CardViewMode = 'grid';
 
     let dbStatus = '';
     let dbStatusType: StatusTone = '';
@@ -302,6 +306,7 @@
     async function loadCatalog() {
         catalogLoading = true;
         catalogError = '';
+        catalogViewMode = loadCardViewMode(activeTab === 'catalog-tasks' ? 'tasks' : 'shop', 'admin');
 
         try {
             const res = await fetchWithCsrf('/api/super/base-data');
@@ -318,6 +323,11 @@
         } finally {
             catalogLoading = false;
         }
+    }
+
+    function setCatalogViewMode(mode: CardViewMode) {
+        catalogViewMode = mode;
+        saveCardViewMode(activeTab === 'catalog-tasks' ? 'tasks' : 'shop', 'admin', mode);
     }
 
     async function saveCatalog() {
@@ -1126,7 +1136,21 @@
                         <p class="panel__eyebrow">{$i18n.t('superadmin.catalog.eyebrow')}</p>
                         <h2>{catalogTitle(type)}</h2>
                     </div>
-                    <button class="btn btn--ghost" type="button" on:click={() => openEditModal(type, -1)}>{catalogAddLabel(type)}</button>
+                    <SectionHeaderControls
+                        isAdmin={true}
+                        addLabel={catalogAddLabel(type)}
+                        addId="sa-catalog-add-btn"
+                        viewMode={catalogViewMode}
+                        viewAriaLabel={$i18n.t('superadmin.catalog.viewAria')}
+                        gridLabel={$i18n.t('superadmin.catalog.viewGrid')}
+                        listLabel={$i18n.t('superadmin.catalog.viewList')}
+                        orderLabel=""
+                        hasGroups={false}
+                        isEditingGroupOrder={false}
+                        isSavingGroupOrder={false}
+                        on:add={() => openEditModal(type, -1)}
+                        on:viewMode={(e) => setCatalogViewMode(e.detail)}
+                    />
                 </header>
 
                 {#if catalogLoading}
@@ -1136,23 +1160,49 @@
                 {:else if items.length === 0}
                 <div class="panel-state panel-state--empty" aria-live="polite">{catalogEmptyLabel(type)}</div>
                 {:else}
-                <div id={activeTab === 'catalog-tasks' ? 'base-tasks-list' : 'base-products-list'} class="items-grid" aria-live="polite">
+                <div id={activeTab === 'catalog-tasks' ? 'base-tasks-list' : 'base-products-list'}
+                    class="cards sa-catalog-items"
+                    class:cards--list={catalogViewMode === 'list'}>
                     {#each items as item, index (item.id ?? index)}
-                    <div class="item-card">
-                        <div class="item-header"><span>{item.name}</span></div>
-                        <div class="item-meta" style="color: #6366f1; font-weight: 600;">
-                            {item.coins ?? item.price ?? 0} 🪙
-                            {#if item.frequency?.limit}
-                            <span> • {item.frequency.limit} {formatCatalogPeriod(item.frequency.period).toLowerCase()}</span>
-                            {/if}
-                            {#if item.money_limit}
-                            <span> | {$i18n.t('superadmin.catalog.moneyLimitValue', { amount: item.money_limit })}</span>
-                            {/if}
-                        </div>
-                        <div class="item-meta">{$i18n.t('superadmin.catalog.ageValue', { min: item.age_min ?? 0, max: item.age_max ?? 18 })}</div>
-                        <div class="item-actions">
-                            <button class="btn-sm btn-edit" type="button" on:click={() => openEditModal(type, index)}>{$i18n.t('superadmin.actions.edit')}</button>
-                            <button class="btn-sm btn-del" type="button" on:click={() => deleteCatalogItem(type, index)}>{$i18n.t('superadmin.actions.delete')}</button>
+                    <div class="card sa-catalog-card"
+                        class:sa-catalog-card--list={catalogViewMode === 'list'}>
+                        <div class="sa-catalog-card__layout">
+                            <div class="sa-catalog-card__main">
+                                <div class="sa-catalog-card__headline">
+                                    <div>
+                                        {#if item.group}
+                                        <p class="sa-catalog-card__group">{item.group}</p>
+                                        {/if}
+                                        <h4 class="sa-catalog-card__title">{item.name}</h4>
+                                    </div>
+                                    <div class="sa-catalog-card__price">
+                                        <strong>{item.coins ?? item.price ?? 0}</strong>
+                                        <span>{$i18n.t('superadmin.catalog.coinsUnit')}</span>
+                                    </div>
+                                </div>
+
+                                {#if item.comment}
+                                <p class="sa-catalog-card__description">{item.comment}</p>
+                                {/if}
+
+                                <div class="sa-catalog-card__meta">
+                                    <span class="sa-catalog-chip">{$i18n.t('superadmin.catalog.ageValue', { min: item.age_min ?? 0, max: item.age_max ?? 18 })}</span>
+                                    {#if item.frequency?.limit}
+                                    <span class="sa-catalog-chip">{item.frequency.limit} {formatCatalogPeriod(item.frequency.period).toLowerCase()}</span>
+                                    {/if}
+                                    {#if item.money_limit}
+                                    <span class="sa-catalog-chip">{$i18n.t('superadmin.catalog.moneyLimitValue', { amount: item.money_limit })}</span>
+                                    {/if}
+                                </div>
+                            </div>
+                            <div class="sa-catalog-card__actions">
+                                <button class="btn btn--secondary btn--small" type="button" on:click={() => openEditModal(type, index)}>
+                                    {$i18n.t('superadmin.actions.edit')}
+                                </button>
+                                <button class="btn btn--danger btn--small" type="button" on:click={() => deleteCatalogItem(type, index)}>
+                                    {$i18n.t('superadmin.actions.delete')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                     {/each}
