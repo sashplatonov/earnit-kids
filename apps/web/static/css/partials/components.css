@@ -686,6 +686,41 @@ p,
     pointer-events: auto;
 }
 
+/* Blocked/inactive task groups - more dim styling */
+.task-card.task-card--inactive {
+    opacity: 0.55;
+}
+
+.task-card.task-card--inactive .card__badge--group,
+.task-card.task-card--inactive .card__compact-chip--group {
+    opacity: 0.65;
+    background: var(--color-surface-strong) !important;
+    color: var(--color-text-muted) !important;
+}
+
+.task-card.task-card--inactive .card__title {
+    color: var(--color-text-muted);
+}
+
+.task-card.task-card--inactive .card__comment {
+    color: var(--color-text-muted);
+}
+
+.task-card.task-card--inactive .card__actions .btn {
+    opacity: 0.7;
+    filter: grayscale(0.3);
+}
+
+/* Shop items with blocked groups */
+.shop-card:has(.card__compact-chip--status-locked) {
+    opacity: 0.78;
+}
+
+.shop-card:has(.card__compact-chip--status-locked) .card__badge--group,
+.shop-card:has(.card__compact-chip--status-locked) .card__compact-chip--group {
+    opacity: 0.7;
+}
+
 .card--affordable .card__coins {
     background: var(--gradient-success);
     color: white;

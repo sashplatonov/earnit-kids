@@ -88,3 +88,69 @@ describe('applyGroupOrderToChildren', () => {
         expect(updated[1]?.taskGroupOrder).toEqual(['Спорт']);
     });
 });
+
+describe('orderGroupsByFrequency', () => {
+    it('orders groups by item count with most frequent first', () => {
+        const items = [
+            { id: 1, groupName: 'Дом' },
+            { id: 2, groupName: 'Учеба' },
+            { id: 3, groupName: 'Дом' },
+            { id: 4, groupName: 'Спорт' },
+            { id: 5, groupName: 'Дом' },
+        ];
+
+        expect(
+            orderGroupsByFrequency(items, (item) => item.groupName, () => true, null)
+        ).toEqual(['Дом', 'Учеба', 'Спорт']);
+    });
+
+    it('puts blocked groups (all items inactive) at the bottom', () => {
+        const items = [
+            { id: 1, groupName: 'Дом', isActive: true },
+            { id: 2, groupName: 'Учеба', isActive: false },
+            { id: 3, groupName: 'Дом', isActive: true },
+            { id: 4, groupName: 'Спорт', isActive: false },
+            { id: 5, groupName: 'Спорт', isActive: false },
+        ];
+
+        expect(
+            orderGroupsByFrequency(
+                items,
+                (item) => item.groupName,
+                (item) => item.isActive !== false,
+                null
+            )
+        ).toEqual(['Дом', 'Учеба', 'Спорт']);
+    });
+
+    it('respects preferred order when provided', () => {
+        const items = [
+            { id: 1, groupName: 'Дом' },
+            { id: 2, groupName: 'Учеба' },
+            { id: 3, groupName: 'Дом' },
+            { id: 4, groupName: 'Спорт' },
+            { id: 5, groupName: 'Дом' },
+        ];
+
+        expect(
+            orderGroupsByFrequency(items, (item) => item.groupName, () => true, ['Спорт', 'Дом'])
+        ).toEqual(['Спорт', 'Дом', 'Учеба']);
+    });
+
+    it('handles empty items list', () => {
+        expect(orderGroupsByFrequency([], () => '', () => true, null)).toEqual([]);
+    });
+
+    it('sorts alphabetically within same frequency', () => {
+        const items = [
+            { id: 1, groupName: 'Бег' },
+            { id: 2, groupName: 'Спорт' },
+            { id: 3, groupName: 'Дом' },
+            { id: 4, groupName: 'Учеба' },
+        ];
+
+        expect(
+            orderGroupsByFrequency(items, (item) => item.groupName, () => true, null)
+        ).toEqual(['Бег', 'Дом', 'Спорт', 'Учеба']);
+    });
+});

@@ -16,6 +16,7 @@
         getEffectiveGroupOrder,
         normalizeGroupLabel,
         orderGroups,
+        orderGroupsByFrequency,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
@@ -50,7 +51,12 @@
         ?? $appStore.children[0]
         ?? null) as Child | null);
     $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
-    $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
+    $: groups = orderGroupsByFrequency(
+        shopItems,
+        (item) => normalizeGroupLabel(item.groupName),
+        (item) => isItemActive(item),
+        getEffectiveGroupOrder(currentChild, 'shop', isAdmin)
+    );
     $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('shop', viewRole);
         loadedViewRole.value = viewRole;
