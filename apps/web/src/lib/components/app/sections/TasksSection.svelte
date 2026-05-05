@@ -15,7 +15,6 @@
         getEffectiveGroupOrder,
         normalizeGroupLabel,
         orderGroups,
-        orderGroupsByFrequency,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
@@ -49,12 +48,7 @@
         ?? $appStore.children[0]
         ?? null) as Child | null);
     $: rawGroups = [...new Set(tasks.map((task) => normalizeGroupLabel(task.groupName)))];
-    $: groups = orderGroupsByFrequency(
-        tasks,
-        (task) => normalizeGroupLabel(task.groupName),
-        (task) => isTaskActive(task),
-        getEffectiveGroupOrder(currentChild, 'tasks', isAdmin)
-    );
+    $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'tasks', isAdmin));
     $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('tasks', viewRole);
         loadedViewRole.value = viewRole;
@@ -64,7 +58,21 @@
     }
 
     $: visibleTasks = selectedGroup
-        ? tasks.filter((task) => normalizeGroupLabel(task.groupName) === selectedGroup)
+        ? tasks
+              .filter((task) => normalizeGroupLabel(task.groupName) === selectedGroup)
+              .sort((a, b) => {
+                  // Blocked tasks go to the bottom
+                  const aActive = isTaskActive(a);
+                  const bActive = isTaskActive(b);
+                  if (aActive && !bActive) return -1;
+                  if (!aActive && bActive) return 1;
+                  if (!aActive && !bActive) return 0;
+                  // Both active: sort by frequency limit (descending)
+                  const aLimit = a.frequency?.limit ?? 0;
+                  const bLimit = b.frequency?.limit ?? 0;
+                  if (bLimit !== aLimit) return bLimit - aLimit;
+                  return 0;
+              })
         : sortItemsByGroup(tasks, groups, (task) => normalizeGroupLabel(task.groupName));
 
     function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {

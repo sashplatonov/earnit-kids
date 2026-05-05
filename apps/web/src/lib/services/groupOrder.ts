@@ -54,62 +54,6 @@ export function orderGroups(groups: readonly string[], preferredOrder: readonly 
     return [...ordered, ...remainder];
 }
 
-export function orderGroupsByFrequency<T>(
-    items: readonly T[],
-    getGroupLabel: (item: T) => string,
-    getItemActive: (item: T) => boolean,
-    preferredOrder: readonly string[] | null | undefined
-): string[] {
-    const groups = new Map<string, { total: number; active: number }>();
-
-    for (const item of items) {
-        const label = getGroupLabel(item);
-        const isActive = getItemActive(item);
-        const entry = groups.get(label);
-        if (entry) {
-            entry.total++;
-            if (isActive) entry.active++;
-        } else {
-            groups.set(label, { total: 1, active: isActive ? 1 : 0 });
-        }
-    }
-
-    const groupList = Array.from(groups.entries());
-
-    const hasBlocked = groupList.some(([, stats]) => stats.active === 0 && stats.total > 0);
-
-    if (hasBlocked) {
-        groupList.sort(([labelA, statsA], [labelB, statsB]) => {
-            const aBlocked = statsA.active === 0;
-            const bBlocked = statsB.active === 0;
-
-            if (aBlocked && !bBlocked) return 1;
-            if (!aBlocked && bBlocked) return -1;
-
-            if (statsB.total !== statsA.total) {
-                return statsB.total - statsA.total;
-            }
-
-            return labelA.localeCompare(labelB);
-        });
-    } else {
-        groupList.sort(([labelA, statsA], [labelB, statsB]) => {
-            if (statsB.total !== statsA.total) {
-                return statsB.total - statsA.total;
-            }
-            return labelA.localeCompare(labelB);
-        });
-    }
-
-    const orderedByFrequency = groupList.map(([label]) => label);
-
-    const preferred = sanitizeGroupOrder(preferredOrder);
-    const userOrdered = preferred.filter((g) => orderedByFrequency.includes(g));
-    const remainder = orderedByFrequency.filter((g) => !userOrdered.includes(g));
-
-    return [...userOrdered, ...remainder];
-}
-
 export function sortItemsByGroup<T>(
     items: readonly T[],
     orderedGroups: readonly string[],

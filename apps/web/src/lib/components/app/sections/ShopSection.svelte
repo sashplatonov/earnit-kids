@@ -16,7 +16,6 @@
         getEffectiveGroupOrder,
         normalizeGroupLabel,
         orderGroups,
-        orderGroupsByFrequency,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
@@ -51,12 +50,7 @@
         ?? $appStore.children[0]
         ?? null) as Child | null);
     $: rawGroups = [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))];
-    $: groups = orderGroupsByFrequency(
-        shopItems,
-        (item) => normalizeGroupLabel(item.groupName),
-        (item) => isItemActive(item),
-        getEffectiveGroupOrder(currentChild, 'shop', isAdmin)
-    );
+    $: groups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', isAdmin));
     $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('shop', viewRole);
         loadedViewRole.value = viewRole;
@@ -67,7 +61,21 @@
     }
 
     $: visibleItems = selectedGroup
-        ? shopItems.filter((item) => normalizeGroupLabel(item.groupName) === selectedGroup)
+        ? shopItems
+              .filter((item) => normalizeGroupLabel(item.groupName) === selectedGroup)
+              .sort((a, b) => {
+                  // Blocked items go to the bottom
+                  const aActive = isItemActive(a);
+                  const bActive = isItemActive(b);
+                  if (aActive && !bActive) return -1;
+                  if (!aActive && bActive) return 1;
+                  if (!aActive && !bActive) return 0;
+                  // Both active: sort by price (descending) as a proxy for value
+                  const aPrice = itemPrice(a);
+                  const bPrice = itemPrice(b);
+                  if (bPrice !== aPrice) return bPrice - aPrice;
+                  return 0;
+              })
         : sortItemsByGroup(shopItems, groups, (item) => normalizeGroupLabel(item.groupName));
 
     onMount(() => {

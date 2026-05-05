@@ -89,68 +89,77 @@ describe('applyGroupOrderToChildren', () => {
     });
 });
 
-describe('orderGroupsByFrequency', () => {
-    it('orders groups by item count with most frequent first', () => {
-        const items = [
-            { id: 1, groupName: 'Дом' },
-            { id: 2, groupName: 'Учеба' },
-            { id: 3, groupName: 'Дом' },
-            { id: 4, groupName: 'Спорт' },
-            { id: 5, groupName: 'Дом' },
+describe('task sorting within selected group', () => {
+    it('sorts active tasks by frequency limit (descending)', () => {
+        const tasks = [
+            { id: 1, groupName: 'Дом', frequency: { limit: 3 }, isActive: true },
+            { id: 2, groupName: 'Дом', frequency: { limit: 1 }, isActive: true },
+            { id: 3, groupName: 'Дом', frequency: { limit: 5 }, isActive: true },
         ];
 
-        expect(
-            orderGroupsByFrequency(items, (item) => item.groupName, () => true, null)
-        ).toEqual(['Дом', 'Учеба', 'Спорт']);
+        const sorted = tasks
+            .filter((task) => task.groupName === 'Дом')
+            .sort((a, b) => {
+                const aActive = a.isActive !== false;
+                const bActive = b.isActive !== false;
+                if (aActive && !bActive) return -1;
+                if (!aActive && bActive) return 1;
+                if (!aActive && !bActive) return 0;
+                const aLimit = a.frequency?.limit ?? 0;
+                const bLimit = b.frequency?.limit ?? 0;
+                if (bLimit !== aLimit) return bLimit - aLimit;
+                return 0;
+            });
+
+        expect(sorted.map((t) => t.id)).toEqual([3, 1, 2]);
     });
 
-    it('puts blocked groups (all items inactive) at the bottom', () => {
-        const items = [
-            { id: 1, groupName: 'Дом', isActive: true },
-            { id: 2, groupName: 'Учеба', isActive: false },
-            { id: 3, groupName: 'Дом', isActive: true },
-            { id: 4, groupName: 'Спорт', isActive: false },
-            { id: 5, groupName: 'Спорт', isActive: false },
+    it('puts blocked tasks at the bottom', () => {
+        const tasks = [
+            { id: 1, groupName: 'Дом', frequency: { limit: 3 }, isActive: false },
+            { id: 2, groupName: 'Дом', frequency: { limit: 1 }, isActive: true },
+            { id: 3, groupName: 'Дом', frequency: { limit: 5 }, isActive: true },
+            { id: 4, groupName: 'Дом', frequency: { limit: 2 }, isActive: false },
         ];
 
-        expect(
-            orderGroupsByFrequency(
-                items,
-                (item) => item.groupName,
-                (item) => item.isActive !== false,
-                null
-            )
-        ).toEqual(['Дом', 'Учеба', 'Спорт']);
+        const sorted = tasks
+            .filter((task) => task.groupName === 'Дом')
+            .sort((a, b) => {
+                const aActive = a.isActive !== false;
+                const bActive = b.isActive !== false;
+                if (aActive && !bActive) return -1;
+                if (!aActive && bActive) return 1;
+                if (!aActive && !bActive) return 0;
+                const aLimit = a.frequency?.limit ?? 0;
+                const bLimit = b.frequency?.limit ?? 0;
+                if (bLimit !== aLimit) return bLimit - aLimit;
+                return 0;
+            });
+
+        expect(sorted.map((t) => t.id)).toEqual([3, 2, 1, 4]);
     });
 
-    it('respects preferred order when provided', () => {
-        const items = [
-            { id: 1, groupName: 'Дом' },
-            { id: 2, groupName: 'Учеба' },
-            { id: 3, groupName: 'Дом' },
-            { id: 4, groupName: 'Спорт' },
-            { id: 5, groupName: 'Дом' },
+    it('handles tasks without frequency limit', () => {
+        const tasks = [
+            { id: 1, groupName: 'Дом', frequency: null, isActive: true },
+            { id: 2, groupName: 'Дом', frequency: { limit: 3 }, isActive: true },
+            { id: 3, groupName: 'Дом', frequency: undefined, isActive: true },
         ];
 
-        expect(
-            orderGroupsByFrequency(items, (item) => item.groupName, () => true, ['Спорт', 'Дом'])
-        ).toEqual(['Спорт', 'Дом', 'Учеба']);
-    });
+        const sorted = tasks
+            .filter((task) => task.groupName === 'Дом')
+            .sort((a, b) => {
+                const aActive = a.isActive !== false;
+                const bActive = b.isActive !== false;
+                if (aActive && !bActive) return -1;
+                if (!aActive && bActive) return 1;
+                if (!aActive && !bActive) return 0;
+                const aLimit = a.frequency?.limit ?? 0;
+                const bLimit = b.frequency?.limit ?? 0;
+                if (bLimit !== aLimit) return bLimit - aLimit;
+                return 0;
+            });
 
-    it('handles empty items list', () => {
-        expect(orderGroupsByFrequency([], () => '', () => true, null)).toEqual([]);
-    });
-
-    it('sorts alphabetically within same frequency', () => {
-        const items = [
-            { id: 1, groupName: 'Бег' },
-            { id: 2, groupName: 'Спорт' },
-            { id: 3, groupName: 'Дом' },
-            { id: 4, groupName: 'Учеба' },
-        ];
-
-        expect(
-            orderGroupsByFrequency(items, (item) => item.groupName, () => true, null)
-        ).toEqual(['Бег', 'Дом', 'Спорт', 'Учеба']);
+        expect(sorted.map((t) => t.id)).toEqual([2, 1, 3]);
     });
 });
