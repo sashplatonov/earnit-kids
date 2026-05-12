@@ -28,3 +28,4 @@ public final class RequestLocaleHolder {
         CURRENT_LOCALE.remove();
     }
 }
+

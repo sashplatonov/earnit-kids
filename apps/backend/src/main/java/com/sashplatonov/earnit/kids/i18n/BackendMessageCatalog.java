@@ -69,7 +69,8 @@ final class BackendMessageCatalog {
 
     private static ResourceBundle bundle(Locale locale) {
         Locale normalizedLocale = BackendLocaleSupport.supportedOrDefault(locale);
-        return BUNDLES.computeIfAbsent(normalizedLocale, currentLocale -> ResourceBundle.getBundle(BASE_NAME, currentLocale));
+        return BUNDLES.computeIfAbsent(
+            normalizedLocale, currentLocale -> ResourceBundle.getBundle(BASE_NAME, currentLocale));
     }
 
     private static String normalizePeriod(String period) {

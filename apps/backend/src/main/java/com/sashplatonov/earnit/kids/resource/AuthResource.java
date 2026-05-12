@@ -93,15 +93,22 @@ public class AuthResource {
             authService,
             cookieBuilder,
             appConfig,
-            new com.sashplatonov.earnit.kids.service.GoogleOAuthService(appConfig, new com.fasterxml.jackson.databind.ObjectMapper()),
+            new com.sashplatonov.earnit.kids.service.GoogleOAuthService(
+                appConfig, new com.fasterxml.jackson.databind.ObjectMapper()),
             new com.sashplatonov.earnit.kids.config.JwtService(
                 new com.sashplatonov.earnit.kids.config.JwtCompatibilityConfig() {
-                    @Override public String secret() { return "test-secret"; }
+                    @Override
+                    public String secret() {
+                        return "test-secret";
+                    }
                 },
                 new com.fasterxml.jackson.databind.ObjectMapper(),
                 new com.sashplatonov.earnit.kids.util.SecureTokenGenerator(),
                 new com.sashplatonov.earnit.kids.util.TimeProvider() {
-                    @Override public java.time.Instant now() { return java.time.Instant.now(); }
+                    @Override
+                    public java.time.Instant now() {
+                        return java.time.Instant.now();
+                    }
                 }
             ),
             (String) null
@@ -117,7 +124,8 @@ public class AuthResource {
         @APIResponse(responseCode = "401", description = "Authentication failed",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public Response login(@RequestBody(required = true, description = "Parent login payload") @Valid LoginRequest request) {
+    public Response login(
+        @RequestBody(required = true, description = "Parent login payload") @Valid LoginRequest request) {
         OperationResult<AuthPayload> result = authService.authenticateAdmin(
             request.email(), request.password());
 
@@ -133,8 +141,9 @@ public class AuthResource {
         @APIResponse(responseCode = "401", description = "Authentication failed",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public Response loginGoogle(@RequestBody(required = true, description = "Google credential payload")
-                                @Valid GoogleLoginRequest request) {
+    public Response loginGoogle(
+        @RequestBody(required = true, description = "Google credential payload")
+        @Valid GoogleLoginRequest request) {
         OperationResult<AuthPayload> result = authService.authenticateAdminWithGoogle(request.credential());
 
         return buildAdminAuthResponse(result);
@@ -146,12 +155,14 @@ public class AuthResource {
                 AuthPayload payload = s.value();
                 if (payload.selectionRequired() && payload.familyChoices() != null) {
                     List<AuthResponse.FamilyChoice> choices = payload.familyChoices().stream()
-                        .map(fc -> new AuthResponse.FamilyChoice(fc.familyId(), fc.familyName(), fc.permission()))
+                        .map(fc -> new AuthResponse.FamilyChoice(
+                            fc.familyId(), fc.familyName(), fc.permission()))
                         .toList();
                     yield Response.ok(AuthResponse.selectionRequired(choices)).build();
                 }
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
+                    payload.email(), payload.role(), payload.familyId(),
+                    payload.childId(), payload.isSuperAdmin(), payload.permission());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.success(payload.role(), payload.familyId()));
@@ -174,14 +185,16 @@ public class AuthResource {
         @APIResponse(responseCode = "401", description = "Token is invalid or expired",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public Response loginChild(@RequestBody(required = true, description = "Child login payload") @Valid LoginChildRequest request) {
+    public Response loginChild(
+        @RequestBody(required = true, description = "Child login payload") @Valid LoginChildRequest request) {
         OperationResult<AuthPayload> result = authService.authenticateChild(request.token());
 
         return switch (result) {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
+                    payload.email(), payload.role(), payload.familyId(),
+                    payload.childId(), payload.isSuperAdmin(), payload.permission());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.childSuccess(
@@ -226,7 +239,8 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), null, payload.isSuperAdmin(), payload.permission());
+                    payload.email(), payload.role(), payload.familyId(),
+                    null, payload.isSuperAdmin(), payload.permission());
 
                 Response.ResponseBuilder rb = Response
                     .status(Response.Status.CREATED)
@@ -359,7 +373,9 @@ public class AuthResource {
                                    @QueryParam("redirect_to") String redirectTo) {
         if (configuredGoogleOAuthClientId() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of(BackendMessages.message("auth.googleNotConfigured"), "GOOGLE_NOT_CONFIGURED", 400))
+                .entity(ErrorResponse.of(
+                    BackendMessages.message("auth.googleNotConfigured"),
+                    "GOOGLE_NOT_CONFIGURED", 400))
                 .build();
         }
 
@@ -370,7 +386,8 @@ public class AuthResource {
         String authUrl = googleOAuthService.buildAuthorizationUrl(callbackUri, stateToken);
 
         String secureSegment = appConfig.production() ? "Secure; " : "";
-        String cookie = "oauth_state=" + stateToken + "; Max-Age=300; Path=/; HttpOnly; " + secureSegment + "SameSite=Lax";
+        String cookie = "oauth_state=" + stateToken
+            + "; Max-Age=300; Path=/; HttpOnly; " + secureSegment + "SameSite=Lax";
 
         Response.ResponseBuilder rb = Response.ok(Map.of("url", authUrl));
         rb.header("Set-Cookie", cookie);
@@ -399,7 +416,8 @@ public class AuthResource {
         String callbackUri = configuredGoogleCallbackUri(request);
         var tokenRespOpt = googleOAuthService.exchangeCode(code, callbackUri);
         if (tokenRespOpt.isEmpty() || tokenRespOpt.get().id_token() == null) {
-            String abs = publicOriginResolver.toAbsoluteRedirect(redirectTarget + "?error=google_exchange_failed", request);
+            String abs = publicOriginResolver.toAbsoluteRedirect(
+                redirectTarget + "?error=google_exchange_failed", request);
             return Response.seeOther(URI.create(abs)).build();
         }
 
@@ -408,14 +426,18 @@ public class AuthResource {
         if (result instanceof OperationResult.Success<AuthPayload> s) {
             AuthPayload payload = s.value();
             var cookies = cookieBuilder.buildAuthCookies(
-                payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
+                payload.email(), payload.role(), payload.familyId(),
+                payload.childId(), payload.isSuperAdmin(), payload.permission());
 
-            Response.ResponseBuilder rb = Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));
+            Response.ResponseBuilder rb = Response.seeOther(
+                URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));
             cookies.forEach(c -> rb.header("Set-Cookie", c));
             rb.header("Set-Cookie", "oauth_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict");
             return rb.build();
         }
-        return Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget + "?error=authentication_failed", request))).build();
+        return Response.seeOther(
+            URI.create(publicOriginResolver.toAbsoluteRedirect(
+                redirectTarget + "?error=authentication_failed", request))).build();
     }
 
     private AuthContext getAuth(ContainerRequestContext ctx) {
@@ -462,8 +484,9 @@ public class AuthResource {
         @APIResponse(responseCode = "401", description = "Authentication required",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public Response selectFamily(@RequestBody(required = true, description = "Family selection payload")
-                                 @Valid SelectFamilyRequest request) {
+    public Response selectFamily(
+        @RequestBody(required = true, description = "Family selection payload")
+        @Valid SelectFamilyRequest request) {
         OperationResult<AuthPayload> result = authService.selectFamily(
             request.email(), request.familyId());
 
@@ -471,7 +494,8 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
+                    payload.email(), payload.role(), payload.familyId(),
+                    payload.childId(), payload.isSuperAdmin(), payload.permission());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.success(payload.role(), payload.familyId()));
