@@ -52,3 +52,20 @@ test('family admin settings still open after re-login', async ({ page }) => {
     await expect(page.locator('#settings-section')).toBeVisible();
     await expect(page.locator('#parent-access-section')).toBeVisible();
 });
+
+test('primary parent email shows toast error and stays out of membership list', async ({ page }) => {
+    const ownerEmail = uniqueEmail('parent.access.primary');
+
+    await registerParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
+    await openSettings(page);
+
+    await page.locator('#parent-access-email').fill(ownerEmail);
+    await page.locator('#parent-access-permission').selectOption('editor');
+    await page.locator('#parent-access-invite').click();
+
+    await expect(page.getByRole('alert').filter({
+        hasText: /main parent account|основному родителю/i,
+    })).toBeVisible();
+    await expect(page.locator('#parent-access-list [data-membership-id]')).toHaveCount(0);
+    await expect(page.locator('#parent-access-section')).not.toContainText(/already in the family|уже в семье/i);
+});

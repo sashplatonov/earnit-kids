@@ -28,6 +28,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
     private static final String ERROR_FAMILY_NOT_FOUND = "FAMILY_NOT_FOUND";
     private static final String ERROR_ALREADY_MEMBER = "PARENT_ALREADY_MEMBER";
+    private static final String ERROR_PRIMARY_ADMIN = "PARENT_PRIMARY_ADMIN";
     private static final String ERROR_INVALID_PERMISSION = "PARENT_INVALID_PERMISSION";
     private static final String ERROR_MEMBERSHIP_NOT_FOUND = "PARENT_MEMBERSHIP_NOT_FOUND";
     private static final String ERROR_NOT_AUTHORIZED = "PARENT_MEMBERSHIP_FORBIDDEN";
@@ -76,7 +77,12 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
         }
 
-        Integer familyDbId = familyOpt.get().getId();
+        var family = familyOpt.get();
+        Integer familyDbId = family.getId();
+        if (family.getEmail() != null && family.getEmail().equalsIgnoreCase(email)) {
+            return failure(ERROR_PRIMARY_ADMIN, "parentAccess.primaryAdminAlreadyHasAccess");
+        }
+
         var existingParent = parentAccountRepository.findByEmail(email);
         if (existingParent.isPresent()) {
             var existingMembership = membershipRepository.findByParentAndFamily(

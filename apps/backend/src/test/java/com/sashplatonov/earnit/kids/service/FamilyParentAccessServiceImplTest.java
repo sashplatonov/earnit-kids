@@ -110,6 +110,26 @@ class FamilyParentAccessServiceImplTest {
     }
 
     @Test
+    void addMembership_primaryFamilyAdminEmail_returnsDedicatedFailure() {
+        FamilyEntity family = FamilyEntity.builder()
+            .id(7)
+            .familyId("fam-1")
+            .email("owner@test.com")
+            .adminPassword("hash")
+            .verified(true)
+            .build();
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+
+        OperationResult<ParentMembershipDto> result = service.addMembership(
+            "fam-1", "owner@test.com", "editor", "invite@test.com");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
+            .isEqualTo("PARENT_PRIMARY_ADMIN");
+    }
+
+    @Test
     void addMembership_invalidPermission_returnsFailure() {
         FamilyEntity family = mockFamily(7);
         ParentAccountEntity parent = parent(1, "parent@test.com");

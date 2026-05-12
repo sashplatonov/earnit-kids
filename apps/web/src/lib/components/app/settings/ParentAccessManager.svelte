@@ -15,8 +15,6 @@
 
     let memberships: ParentMembership[] = [];
     let isLoading = false;
-    let statusMessage = '';
-    let statusTone: 'info' | 'success' | 'error' = 'info';
     let isBusy = false;
     let newEmail = '';
     let newPermission: MembershipPermission = 'editor';
@@ -51,6 +49,8 @@
         switch (errorCode) {
             case 'PARENT_ALREADY_MEMBER':
                 return $i18n.t('app.parentAccess.duplicateError');
+            case 'PARENT_PRIMARY_ADMIN':
+                return $i18n.t('app.parentAccess.primaryAdminError');
             case 'PARENT_INVALID_PERMISSION':
                 return $i18n.t('app.parentAccess.invalidPermissionError');
             case 'PARENT_LAST_ADMIN':
@@ -62,11 +62,6 @@
         }
     }
 
-    function showStatus(message: string, tone: 'info' | 'success' | 'error') {
-        statusMessage = message;
-        statusTone = tone;
-    }
-
     async function refreshMemberships() {
         if (!canManage || !familyId) {
             memberships = [];
@@ -74,15 +69,13 @@
         }
 
         isLoading = true;
-        showStatus($i18n.t('app.parentAccess.loading'), 'info');
 
         const result = await loadParentMemberships();
         if (result.ok) {
             memberships = result.data ?? [];
-            showStatus(memberships.length > 0 ? '' : $i18n.t('app.parentAccess.empty'), 'info');
         } else {
             memberships = [];
-            showStatus(errorMessage(result.errorCode, result.error), 'error');
+            showToast(errorMessage(result.errorCode, result.error), 'error');
         }
 
         isLoading = false;
@@ -91,7 +84,7 @@
     async function inviteParent() {
         const email = newEmail.trim();
         if (!email) {
-            showStatus($i18n.t('app.parentAccess.emailRequired'), 'error');
+            showToast($i18n.t('app.parentAccess.emailRequired'), 'error');
             return;
         }
 
@@ -102,16 +95,13 @@
                 memberships = [...memberships, result.data];
                 newEmail = '';
                 newPermission = 'editor';
-                showStatus($i18n.t('app.parentAccess.successAdd'), 'success');
                 showToast($i18n.t('app.parentAccess.successAdd'), 'success');
             } else {
                 const message = $i18n.t('app.parentAccess.genericError');
-                showStatus(message, 'error');
                 showToast(message, 'error');
             }
         } else {
             const message = errorMessage(result.errorCode, result.error);
-            showStatus(message, 'error');
             showToast(message, 'error');
         }
 
@@ -124,16 +114,13 @@
         if (result.ok) {
             if (result.data) {
                 memberships = memberships.map((entry) => entry.id === membership.id ? result.data as ParentMembership : entry);
-                showStatus($i18n.t('app.parentAccess.successUpdate'), 'success');
                 showToast($i18n.t('app.parentAccess.successUpdate'), 'success');
             } else {
                 const message = $i18n.t('app.parentAccess.genericError');
-                showStatus(message, 'error');
                 showToast(message, 'error');
             }
         } else {
             const message = errorMessage(result.errorCode, result.error);
-            showStatus(message, 'error');
             showToast(message, 'error');
         }
         isBusy = false;
@@ -148,11 +135,9 @@
         const result = await removeParentMembership(membership.id);
         if (result.ok) {
             memberships = memberships.filter((entry) => entry.id !== membership.id);
-            showStatus($i18n.t('app.parentAccess.successRemove'), 'success');
             showToast($i18n.t('app.parentAccess.successRemove'), 'success');
         } else {
             const message = errorMessage(result.errorCode, result.error);
-            showStatus(message, 'error');
             showToast(message, 'error');
         }
         isBusy = false;
@@ -178,12 +163,6 @@
             </div>
             <div class="parent-access__count" aria-hidden="true">{memberships.length}</div>
         </div>
-
-        {#if statusMessage}
-            <div class="parent-access__status parent-access__status--{statusTone}" role="status" aria-live="polite">
-                {statusMessage}
-            </div>
-        {/if}
 
         <div class="parent-access__form">
             <div class="form-group parent-access__field">
@@ -350,35 +329,28 @@
         font-weight: 700;
     }
 
-    .parent-access__status {
-        margin-top: 1rem;
-        padding: 0.75rem 0.9rem;
-        border-radius: 14px;
-        font-size: 0.95rem;
-    }
-
-    .parent-access__status--success {
-        background: rgba(38, 166, 91, 0.12);
-        color: #0f5d2a;
-    }
-
-    .parent-access__status--error {
-        background: rgba(230, 57, 70, 0.12);
-        color: #8a1823;
-    }
-
-    .parent-access__status--info {
-        background: rgba(13, 32, 54, 0.06);
-    }
-
     .parent-access__form {
         display: grid;
-        gap: 1rem;
-        margin-top: 1rem;
+        row-gap: 0.65rem;
+        column-gap: 0.7rem;
+        margin-top: 0.85rem;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "email email"
+            "permission action";
+        align-items: end;
     }
 
     .parent-access__field {
         min-width: 0;
+    }
+
+    .parent-access__field:first-child {
+        grid-area: email;
+    }
+
+    .parent-access__field:last-of-type {
+        grid-area: permission;
     }
 
     .parent-access__input {
@@ -389,7 +361,9 @@
     .parent-access__actions {
         display: flex;
         justify-content: flex-end;
-        margin-top: -0.25rem;
+        grid-area: action;
+        align-self: end;
+        margin-top: 0;
     }
 
     .parent-access__list {
@@ -498,7 +472,6 @@
     .parent-access__select--form {
         min-height: 3rem;
         width: 100%;
-        flex: 1 1 auto;
     }
 
     .parent-access__icon-action {
@@ -562,21 +535,21 @@
     @media (max-width: 900px) {
         .parent-access__header {
             grid-template-columns: 1fr;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
 
         .parent-access__count {
             justify-self: start;
         }
 
-        .parent-access__status {
-            margin-top: 0.75rem;
-            padding: 0.7rem 0.85rem;
-        }
-
         .parent-access__form {
-            gap: 0.8rem;
-            margin-top: 0.85rem;
+            row-gap: 0.55rem;
+            column-gap: 0.55rem;
+            margin-top: 0.7rem;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                "email email"
+                "permission action";
         }
 
         .parent-access__input,
@@ -611,7 +584,7 @@
         }
 
         .parent-access__actions {
-            margin-top: -0.4rem;
+            margin-top: 0;
         }
 
         .parent-access__icon-action--danger {

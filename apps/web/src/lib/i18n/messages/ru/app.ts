@@ -98,6 +98,7 @@ export const appMessages = {
         successUpdate: 'Доступ родителя обновлен',
         successRemove: 'Родитель удален',
         duplicateError: 'Этот родитель уже есть в семье',
+        primaryAdminError: 'Этот email уже принадлежит основному родителю этой семьи',
         invalidPermissionError: 'Выберите корректный уровень доступа',
         lastAdminError: 'Последнего семейного администратора нельзя удалить или понизить',
         adminDeleteForbiddenError: 'Нельзя удалить другого родителя с правами семейного администратора',

@@ -98,6 +98,7 @@ export const appMessages = {
         successUpdate: 'Parent access updated',
         successRemove: 'Parent removed',
         duplicateError: 'This parent is already in the family',
+        primaryAdminError: 'This email already belongs to the main parent account for this family',
         invalidPermissionError: 'Choose a valid permission',
         lastAdminError: 'The last family admin cannot be removed or downgraded',
         adminDeleteForbiddenError: 'Another family admin cannot be removed',
