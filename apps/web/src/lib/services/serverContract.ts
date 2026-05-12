@@ -1,5 +1,7 @@
 /** Server contract normalization — replaces legacy server-contract.js */
 
+import type { AuthResponseSnapshot, FamilyChoice, MembershipPermission } from '$lib/types/auth';
+
 export function getGroupName(entity: Record<string, unknown> | null | undefined): string | null {
     return (entity?.groupName ?? entity?.group ?? entity?.category ?? null) as string | null;
 }
@@ -140,6 +142,33 @@ function parseBoolean(v: unknown): boolean {
     return v === true || v === 'true' || v === 1 || v === '1';
 }
 
+function normalizePermission(value: unknown): MembershipPermission | null {
+    return value === 'viewer' || value === 'editor' || value === 'family_admin' ? value : null;
+}
+
+function normalizeFamilyChoice(choice: Record<string, unknown> = {}): FamilyChoice {
+    return {
+        familyId: (choice.familyId ?? choice.family_id ?? '') as string,
+        familyName: (choice.familyName ?? choice.family_name ?? '') as string,
+        permission: normalizePermission(choice.permission) ?? 'viewer',
+    };
+}
+
+export function normalizeAuthResponse(data: Record<string, unknown> = {}): AuthResponseSnapshot {
+    return {
+        success: parseBoolean(data.success),
+        role: (data.role ?? null) as string | null,
+        familyId: (data.familyId ?? data.family_id ?? null) as string | null,
+        childId: (data.childId ?? data.child_id ?? null) as number | null,
+        childName: (data.childName ?? data.child_name ?? null) as string | null,
+        error: (data.error ?? null) as string | null,
+        selectionRequired: parseBoolean(data.selectionRequired),
+        familyChoices: Array.isArray(data.familyChoices)
+            ? data.familyChoices.map(choice => normalizeFamilyChoice(choice as Record<string, unknown>))
+            : null,
+    };
+}
+
 export function buildInitialState(data: Record<string, unknown>, baseData: Record<string, unknown>): Record<string, unknown> {
     const normalized = normalizeServerData(data) as Record<string, unknown>;
     const normalizedBaseData = normalizeBaseData(baseData);
@@ -147,6 +176,7 @@ export function buildInitialState(data: Record<string, unknown>, baseData: Recor
     return {
         isAdmin,
         role: isAdmin ? 'admin' : null,
+        permission: normalizePermission(normalized.permission),
         baseData: normalizedBaseData,
         isLoading: false,
         familyId: normalized.familyId ?? null,

@@ -3,6 +3,9 @@
  * Preserves: CSRF cookie, credentials: same-origin, same endpoint paths.
  */
 
+import { normalizeAuthResponse } from './serverContract';
+import type { AuthResponseSnapshot } from '$lib/types/auth';
+
 // ── CSRF ─────────────────────────────────────────────────────────────────────
 
 function getCsrfToken(): string {
@@ -25,6 +28,8 @@ type ProblemDetails = {
 export type ApiActionResult<T = unknown> =
     | { ok: true; data: T | null }
     | { ok: false; error: string; errorCode: string | null; status: number };
+
+export type AuthActionResult = ApiActionResult<AuthResponseSnapshot>;
 
 export async function fetchWithCsrf(url: string, options: FetchOptions = {}): Promise<Response> {
     const method = (options.method ?? 'GET').toUpperCase();
@@ -103,6 +108,19 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
             status: 0,
         };
     }
+}
+
+async function postAuthJson(url: string, body: unknown): Promise<AuthActionResult> {
+    const result = await postJsonResult<Record<string, unknown>>(url, body);
+
+    if (!result.ok) {
+        return result;
+    }
+
+    return {
+        ok: true,
+        data: result.data ? normalizeAuthResponse(result.data) : null,
+    };
 }
 
 async function flushPendingCrudSave(): Promise<void> {
@@ -223,6 +241,12 @@ export async function saveDataToServer(data: unknown, options: { keepalive?: boo
 }
 
 export const logout = () => postBoolean('/api/logout', {}, 'Logout failed');
+
+export const loginWithEmail = (email: string, password: string) =>
+    postAuthJson('/api/login', { email, password });
+
+export const selectFamily = (email: string, familyId: string) =>
+    postAuthJson('/api/select-family', { email, familyId });
 
 // ── Task actions ──────────────────────────────────────────────────────────────
 

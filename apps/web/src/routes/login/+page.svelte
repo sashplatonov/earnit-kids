@@ -3,10 +3,11 @@
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
     import { GOOGLE_LOGIN_NETWORK_ERROR, GOOGLE_LOGIN_URL_UNAVAILABLE, requestGoogleLoginUrl } from '$lib/auth/googleOAuth';
     import { useI18n } from '$lib/i18n/context';
-    import { fetchWithCsrf } from '$lib/services/api';
+    import { fetchWithCsrf, loginWithEmail, selectFamily } from '$lib/services/api';
+    import type { FamilyChoice } from '$lib/types/auth';
     import type { PageData } from './$types';
 
-    type ActivePanel = 'login' | 'register' | 'forgot';
+    type ActivePanel = 'login' | 'register' | 'forgot' | 'choose-family';
     type ResponsePayload = Record<string, unknown>;
 
     interface AuthConfig {
@@ -34,6 +35,10 @@
     let googleAuthEnabled = false;
     let showLoginPassword = false;
     let showRegisterPassword = false;
+    let pendingLoginEmail = '';
+    let pendingFamilyChoices: FamilyChoice[] = [];
+    let chooserError = '';
+    let chooserSubmittingFamilyId: string | null = null;
 
     $: alternates = $i18n.alternates('/login');
 
@@ -45,8 +50,71 @@
         successMsg = '';
     }
 
-    function activeTab(): 'login' | 'register' {
-        return activePanel === 'register' ? 'register' : 'login';
+    function activeTab(): 'login' | 'register' | null {
+        if (activePanel === 'register') {
+            return 'register';
+        }
+
+        if (activePanel === 'login') {
+            return 'login';
+        }
+
+        return null;
+    }
+
+    function permissionLabel(permission: FamilyChoice['permission']) {
+        switch (permission) {
+            case 'viewer':
+                return $i18n.t('auth.login.permissionViewer');
+            case 'editor':
+                return $i18n.t('auth.login.permissionEditor');
+            case 'family_admin':
+                return $i18n.t('auth.login.permissionFamilyAdmin');
+            default:
+                return permission;
+        }
+    }
+
+    function clearChooserState() {
+        pendingLoginEmail = '';
+        pendingFamilyChoices = [];
+        chooserError = '';
+        chooserSubmittingFamilyId = null;
+    }
+
+    function showFamilyChooser(email: string, choices: FamilyChoice[]) {
+        pendingLoginEmail = email;
+        pendingFamilyChoices = choices;
+        chooserError = '';
+        chooserSubmittingFamilyId = null;
+        activePanel = 'choose-family';
+        errorMsg = '';
+        successMsg = '';
+        loginPassword = '';
+    }
+
+    function showLoginPanel() {
+        activePanel = 'login';
+        showLoginPassword = false;
+        clearMessages();
+        clearChooserState();
+    }
+
+    function showRegisterPanel() {
+        activePanel = 'register';
+        showRegisterPassword = false;
+        clearMessages();
+        clearChooserState();
+    }
+
+    function showForgotPanel() {
+        activePanel = 'forgot';
+        clearMessages();
+        clearChooserState();
+    }
+
+    function showChooserBackToLogin() {
+        showLoginPanel();
     }
 
     function readMessage(body: ResponsePayload, fallback: string) {
@@ -69,23 +137,6 @@
     function showSuccess(message: string) {
         successMsg = `✅ ${message}`;
         errorMsg = '';
-    }
-
-    function showLoginPanel() {
-        activePanel = 'login';
-        showLoginPassword = false;
-        clearMessages();
-    }
-
-    function showRegisterPanel() {
-        activePanel = 'register';
-        showRegisterPassword = false;
-        clearMessages();
-    }
-
-    function showForgotPanel() {
-        activePanel = 'forgot';
-        clearMessages();
     }
 
     async function postJson(path: string, payload: Record<string, string>) {
@@ -118,19 +169,50 @@
         clearMessages();
 
         try {
-            const { response, body } = await postJson('/api/login', { email, password });
+            const result = await loginWithEmail(email, password);
 
-            if (response.ok) {
+            if (result.ok) {
+                const payload = result.data;
+                if (payload?.selectionRequired && Array.isArray(payload.familyChoices) && payload.familyChoices.length > 0) {
+                    showFamilyChooser(email, payload.familyChoices);
+                    return;
+                }
+
+                if (payload?.selectionRequired) {
+                    showError($i18n.t('auth.login.chooserError'));
+                    return;
+                }
+
                 location.assign($i18n.href('/app'));
                 return;
             }
 
-            showError(readMessage(body, $i18n.t('auth.login.loginError')));
+            showError(result.error || $i18n.t('auth.login.loginError'));
             loginPassword = '';
         } catch {
             showError($i18n.t('auth.login.loginNetworkError'));
         } finally {
             submitting = null;
+        }
+    }
+
+    async function handleFamilyChoice(choice: FamilyChoice) {
+        chooserError = '';
+        chooserSubmittingFamilyId = choice.familyId;
+
+        try {
+            const result = await selectFamily(pendingLoginEmail, choice.familyId);
+
+            if (result.ok) {
+                location.assign($i18n.href('/app'));
+                return;
+            }
+
+            chooserError = result.error || $i18n.t('auth.login.chooserError');
+        } catch {
+            chooserError = $i18n.t('auth.login.chooserNetworkError');
+        } finally {
+            chooserSubmittingFamilyId = null;
         }
     }
 
@@ -619,6 +701,121 @@
         line-height: 1.45;
     }
 
+    .chooser-shell {
+        display: grid;
+        gap: 0.9rem;
+    }
+
+    .chooser-shell__header {
+        display: grid;
+        gap: 0.45rem;
+    }
+
+    .chooser-shell__eyebrow {
+        margin: 0;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        font-weight: 700;
+    }
+
+    .chooser-shell__title {
+        margin: 0;
+        font-size: 1.35rem;
+        line-height: 1.2;
+    }
+
+    .chooser-shell__text {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+    }
+
+    .chooser-shell__error {
+        border-radius: 0.9rem;
+        padding: 0.85rem 1rem;
+        font-weight: 700;
+        color: #ff6b6b;
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        background: rgba(255, 107, 107, 0.08);
+    }
+
+    .chooser-shell__list {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .chooser-item {
+        border: 1px solid rgba(142, 111, 82, 0.14);
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 1rem;
+        padding: 1rem 1.1rem;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        text-align: left;
+        cursor: pointer;
+        color: var(--text-main);
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .chooser-item:hover,
+    .chooser-item:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(185, 109, 86, 0.34);
+        box-shadow: 0 14px 28px -22px rgba(77, 62, 49, 0.32);
+        outline: none;
+    }
+
+    .chooser-item--loading {
+        opacity: 0.72;
+        cursor: progress;
+    }
+
+    .chooser-item__copy {
+        display: grid;
+        gap: 0.2rem;
+    }
+
+    .chooser-item__copy strong {
+        font-size: 1rem;
+    }
+
+    .chooser-item__copy span {
+        color: var(--muted);
+        font-size: 0.86rem;
+    }
+
+    .chooser-item__meta {
+        display: grid;
+        justify-items: end;
+        gap: 0.25rem;
+        text-align: right;
+    }
+
+    .chooser-item__permission {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        background: rgba(92, 199, 243, 0.12);
+        color: #547198;
+    }
+
+    .chooser-item__action {
+        color: var(--accent);
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
     .google-auth__divider {
         display: flex;
         align-items: center;
@@ -864,7 +1061,53 @@
 
             <div class="auth-forms">
                 <div class="form-frame">
-                    {#if activePanel === 'login'}
+                    {#if activePanel === 'choose-family'}
+                        <div aria-label={$i18n.t('auth.login.chooseFamilyAria')}>
+                            <p class="hero-subtitle" style="margin-bottom: 1rem;">{$i18n.t('auth.login.chooseFamilyIntro')}</p>
+                            <div class="chooser-shell">
+                                <div class="chooser-shell__header">
+                                    <p class="chooser-shell__eyebrow">{$i18n.t('auth.login.chooseFamilyBadge')}</p>
+                                    <h3 class="chooser-shell__title">{$i18n.t('auth.login.chooseFamilyTitle')}</h3>
+                                    <p class="chooser-shell__text">
+                                        {$i18n.t('auth.login.chooseFamilyText', { email: pendingLoginEmail })}
+                                    </p>
+                                </div>
+
+                                {#if chooserError}
+                                    <div class="chooser-shell__error" role="alert">{chooserError}</div>
+                                {/if}
+
+                                <div class="chooser-shell__list" role="list" aria-label={$i18n.t('auth.login.chooseFamilyListAria')}>
+                                    {#each pendingFamilyChoices as choice (choice.familyId)}
+                                        <button
+                                            type="button"
+                                            class="chooser-item"
+                                            class:chooser-item--loading={chooserSubmittingFamilyId === choice.familyId}
+                                            on:click={() => handleFamilyChoice(choice)}
+                                            disabled={chooserSubmittingFamilyId !== null}
+                                        >
+                                            <div class="chooser-item__copy">
+                                                <strong>{choice.familyName}</strong>
+                                                <span>{choice.familyId}</span>
+                                            </div>
+                                            <div class="chooser-item__meta">
+                                                <span class="chooser-item__permission">{permissionLabel(choice.permission)}</span>
+                                                <span class="chooser-item__action">
+                                                    {chooserSubmittingFamilyId === choice.familyId
+                                                        ? $i18n.t('auth.login.chooseFamilySubmitting')
+                                                        : $i18n.t('auth.login.chooseFamilySelect')}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    {/each}
+                                </div>
+
+                                <button type="button" class="btn-secondary" on:click={showChooserBackToLogin}>
+                                    {$i18n.t('auth.login.chooseFamilyUseAnother')}
+                                </button>
+                            </div>
+                        </div>
+                    {:else if activePanel === 'login'}
                         <div aria-label={$i18n.t('auth.login.loginFormAria')}>
                             <p class="hero-subtitle" style="margin-bottom: 1rem;">{$i18n.t('auth.login.loginIntro')}</p>
                             {#if googleAuthEnabled}

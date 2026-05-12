@@ -112,8 +112,8 @@ The implementation must:
 | FPA-04 | 1 | P0 | FPA-03 | Add login family-selection flow and active-family session contract | ✅ **DONE**
 | FPA-05 | 2 | P0 | FPA-03 | Add parent membership management service and resource endpoints | ✅ **DONE**
 | FPA-06 | 2 | P0 | FPA-05 | Enforce role-based mutation guards across existing family write paths | ✅ **DONE**
-| FPA-07 | 3 | P0 | FPA-04 | Extend web auth/session models for membership-aware login |
-| FPA-08 | 3 | P0 | FPA-07 | Build parent family chooser screen and routing behavior |
+| FPA-07 | 3 | P0 | FPA-04 | Extend web auth/session models for membership-aware login | ✅ **DONE**
+| FPA-08 | 3 | P0 | FPA-07 | Build parent family chooser screen and routing behavior | ✅ **DONE**
 | FPA-09 | 4 | P1 | FPA-05, FPA-07 | Add parent access management UI in Settings |
 | FPA-10 | 4 | P1 | FPA-06, FPA-09 | Add copy, i18n, UX polish, and empty/error states |
 | FPA-11 | 4 | P0 | all implementation tasks | Add regression tests and run release gates |

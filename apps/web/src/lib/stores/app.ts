@@ -1,5 +1,6 @@
 /** Svelte store replacing legacy state.js singleton */
 import { writable, derived } from 'svelte/store';
+import type { MembershipPermission } from '$lib/types/auth';
 
 export interface Task {
     id: number | string;
@@ -100,6 +101,7 @@ export interface Child {
 export interface AppState {
     isAdmin: boolean;
     role: string | null;
+    permission: MembershipPermission | null;
     balance: number;
     rules: string | null;
     tasks: Task[];
@@ -121,6 +123,7 @@ export interface AppState {
 const initialState: AppState = {
     isAdmin: false,
     role: null,
+    permission: null,
     balance: 0,
     rules: null,
     tasks: [],

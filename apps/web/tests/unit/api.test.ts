@@ -21,6 +21,7 @@ import {
     deleteRequest,
     earnCoins,
     fetchWithCsrf,
+    loginWithEmail,
     loadAnalyticsData,
     loadBaseData,
     loadDataFromServer,
@@ -29,6 +30,7 @@ import {
     rejectRequest,
     requestCoins,
     requestItem,
+    selectFamily,
     saveDataToServer,
     searchFriend,
     unregisterPushTokenOnServer,
@@ -115,6 +117,74 @@ describe('fetchWithCsrf', () => {
         expect(init.body).toBe('{}');
         expect(headers.get('Content-Type')).toBe('application/json');
         expect(headers.get('X-CSRF-Token')).toBe('test-token');
+    });
+
+    it('normalizes selection-required login responses', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+            success: true,
+            selectionRequired: true,
+            familyChoices: [
+                { familyId: 'family-1', familyName: 'Winter House', permission: 'viewer' },
+                { familyId: 'family-2', familyName: 'Summer House', permission: 'family_admin' },
+            ],
+        }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(loginWithEmail('parent@example.com', 'secret123')).resolves.toEqual({
+            ok: true,
+            data: {
+                success: true,
+                role: null,
+                familyId: null,
+                childId: null,
+                childName: null,
+                error: null,
+                selectionRequired: true,
+                familyChoices: [
+                    { familyId: 'family-1', familyName: 'Winter House', permission: 'viewer' },
+                    { familyId: 'family-2', familyName: 'Summer House', permission: 'family_admin' },
+                ],
+            },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/login');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({ email: 'parent@example.com', password: 'secret123' }));
+    });
+
+    it('posts active-family selection requests with the expected payload', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+            success: true,
+            role: 'parent',
+            familyId: 'family-2',
+            selectionRequired: false,
+            familyChoices: null,
+        }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(selectFamily('parent@example.com', 'family-2')).resolves.toEqual({
+            ok: true,
+            data: {
+                success: true,
+                role: 'parent',
+                familyId: 'family-2',
+                childId: null,
+                childName: null,
+                error: null,
+                selectionRequired: false,
+                familyChoices: null,
+            },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/select-family');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({ email: 'parent@example.com', familyId: 'family-2' }));
     });
 
     it('posts child creation payload to the child endpoint', async () => {
