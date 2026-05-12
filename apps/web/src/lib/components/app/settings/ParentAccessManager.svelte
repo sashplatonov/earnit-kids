@@ -562,18 +562,56 @@
     @media (max-width: 900px) {
         .parent-access__header {
             grid-template-columns: 1fr;
+            margin-bottom: 1rem;
         }
 
         .parent-access__count {
             justify-self: start;
         }
 
+        .parent-access__status {
+            margin-top: 0.75rem;
+            padding: 0.7rem 0.85rem;
+        }
+
+        .parent-access__form {
+            gap: 0.8rem;
+            margin-top: 0.85rem;
+        }
+
+        .parent-access__input,
+        .parent-access__select--form {
+            min-height: 2.9rem;
+        }
+
         .parent-access__row-actions {
             justify-content: flex-end;
         }
 
+        .parent-access__list {
+            gap: 0.6rem;
+            margin-top: 0.95rem;
+        }
+
+        .parent-access__row {
+            gap: 0.7rem;
+            padding: 0.8rem 0.85rem;
+        }
+
+        .parent-access__email {
+            font-size: 0.95rem;
+        }
+
+        .parent-access__meta {
+            margin-top: 0.25rem;
+        }
+
         .parent-access__select {
             width: 7.5rem;
+        }
+
+        .parent-access__actions {
+            margin-top: -0.4rem;
         }
 
         .parent-access__icon-action--danger {
