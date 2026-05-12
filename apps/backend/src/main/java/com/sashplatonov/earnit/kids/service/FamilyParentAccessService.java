@@ -15,5 +15,5 @@ public interface FamilyParentAccessService {
     OperationResult<ParentMembershipDto> updateMembership(
         Integer membershipId, String permission, String familyId);
 
-    OperationResult<Void> removeMembership(Integer membershipId, String familyId);
+    OperationResult<Void> removeMembership(Integer membershipId, String familyId, String actorEmail);
 }

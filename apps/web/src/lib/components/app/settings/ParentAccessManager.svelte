@@ -55,6 +55,8 @@
                 return $i18n.t('app.parentAccess.invalidPermissionError');
             case 'PARENT_LAST_ADMIN':
                 return $i18n.t('app.parentAccess.lastAdminError');
+            case 'PARENT_ADMIN_DELETE_FORBIDDEN':
+                return $i18n.t('app.parentAccess.adminDeleteForbiddenError');
             default:
                 return fallback || $i18n.t('app.parentAccess.genericError');
         }
@@ -160,6 +162,10 @@
         return membership.permission === 'family_admin'
             && memberships.filter((entry) => entry.permission === 'family_admin').length === 1;
     }
+
+    function cannotRemoveMembership(membership: ParentMembership): boolean {
+        return membership.permission === 'family_admin';
+    }
 </script>
 
 <section class="parent-access" aria-labelledby="parent-access-title" id="parent-access-section">
@@ -257,7 +263,7 @@
                                     id={`parent-access-remove-${membership.id}`}
                                     type="button"
                                     on:click={() => deleteMembership(membership)}
-                                    disabled={isBusy || isLastFamilyAdmin(membership)}
+                                    disabled={isBusy || cannotRemoveMembership(membership)}
                                 >
                                     {$i18n.t('app.parentAccess.removeButton')}
                                 </button>

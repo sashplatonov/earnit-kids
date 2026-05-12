@@ -431,12 +431,12 @@ class FamilyResourceTest {
 
     @Test
     void removeParent_adminDelegatesToService() {
-        when(familyParentAccessService.removeMembership(7, "fam-1")).thenReturn(OperationResult.success(null));
+        when(familyParentAccessService.removeMembership(7, "fam-1", "admin@test.com")).thenReturn(OperationResult.success(null));
 
         Response response = resource.removeParent(contextWithAuth(adminAuth()), 7);
 
         assertThat(response.getStatus()).isEqualTo(200);
-        verify(familyParentAccessService).removeMembership(7, "fam-1");
+        verify(familyParentAccessService).removeMembership(7, "fam-1", "admin@test.com");
     }
 
     private static ContainerRequestContext contextWithAuth(AuthContext auth) {

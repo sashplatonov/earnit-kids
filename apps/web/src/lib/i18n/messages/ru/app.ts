@@ -100,6 +100,7 @@ export const appMessages = {
         duplicateError: 'Этот родитель уже есть в семье',
         invalidPermissionError: 'Выберите корректный уровень доступа',
         lastAdminError: 'Последнего семейного администратора нельзя удалить или понизить',
+        adminDeleteForbiddenError: 'Нельзя удалить другого родителя с правами семейного администратора',
         genericError: 'Не удалось обновить доступ родителей',
         statusActive: 'Активен',
         statusPending: 'Ожидает',

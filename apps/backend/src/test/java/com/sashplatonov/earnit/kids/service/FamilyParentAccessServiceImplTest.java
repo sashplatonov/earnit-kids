@@ -193,10 +193,30 @@ class FamilyParentAccessServiceImplTest {
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
         when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(membership));
 
-        OperationResult<Void> result = service.removeMembership(11, "fam-1");
+        OperationResult<Void> result = service.removeMembership(11, "fam-1", "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         verify(membershipRepository).delete(membership);
+    }
+
+    @Test
+    void removeMembership_otherAdminMembershipIsRejected() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity targetMembership = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.family_admin);
+        FamilyParentMembershipEntity actorMembership = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        ParentAccountEntity actor = parent(1, "admin@test.com");
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(targetMembership));
+        when(parentAccountRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(actor));
+        when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actorMembership));
+
+        OperationResult<Void> result = service.removeMembership(11, "fam-1", "admin@test.com");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<Void>) result).errorCode())
+            .isEqualTo("PARENT_ADMIN_DELETE_FORBIDDEN");
+        verify(membershipRepository, org.mockito.Mockito.never()).delete(any(FamilyParentMembershipEntity.class));
     }
 
     private static FamilyEntity mockFamily(int id) {

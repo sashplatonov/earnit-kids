@@ -849,7 +849,7 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        return toVoidResponse(familyParentAccessService.removeMembership(membershipId, auth.familyId()));
+        return toVoidResponse(familyParentAccessService.removeMembership(membershipId, auth.familyId(), auth.email()));
     }
 
     private AuthContext getAuthOrFail(ContainerRequestContext ctx) {

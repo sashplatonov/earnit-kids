@@ -100,6 +100,7 @@ export const appMessages = {
         duplicateError: 'This parent is already in the family',
         invalidPermissionError: 'Choose a valid permission',
         lastAdminError: 'The last family admin cannot be removed or downgraded',
+        adminDeleteForbiddenError: 'Another family admin cannot be removed',
         genericError: 'Could not update parent access',
         statusActive: 'Active',
         statusPending: 'Pending',

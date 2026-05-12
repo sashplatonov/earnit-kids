@@ -32,6 +32,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     private static final String ERROR_MEMBERSHIP_NOT_FOUND = "PARENT_MEMBERSHIP_NOT_FOUND";
     private static final String ERROR_NOT_AUTHORIZED = "PARENT_MEMBERSHIP_FORBIDDEN";
     private static final String ERROR_LAST_ADMIN = "PARENT_LAST_ADMIN";
+    private static final String ERROR_ADMIN_DELETE_FORBIDDEN = "PARENT_ADMIN_DELETE_FORBIDDEN";
 
     private final FamilyRepository familyRepository;
     private final ParentAccountRepository parentAccountRepository;
@@ -159,7 +160,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
     @Override
     @Transactional
-    public OperationResult<Void> removeMembership(Integer membershipId, String familyId) {
+    public OperationResult<Void> removeMembership(Integer membershipId, String familyId, String actorEmail) {
         var familyOpt = resolveFamily(familyId);
         if (familyOpt.isEmpty()) {
             return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
@@ -177,6 +178,9 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         }
 
         if (membership.getPermission() == FamilyParentMembershipEntity.Permission.family_admin) {
+            if (isDifferentAdmin(membership, familyDbId, actorEmail)) {
+                return failure(ERROR_ADMIN_DELETE_FORBIDDEN, "parentAccess.cannotRemoveAdmin");
+            }
             long adminCount = membershipRepository.countFamilyAdmins(familyDbId);
             if (adminCount <= 1) {
                 return failure(ERROR_LAST_ADMIN, "parentAccess.cannotRemoveLastAdmin");
@@ -188,6 +192,25 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         log.info("Removed parent membership: id={}, familyId={}", membershipId, familyId);
 
         return OperationResult.success(null);
+    }
+
+    private boolean isDifferentAdmin(
+        FamilyParentMembershipEntity membership, Integer familyDbId, String actorEmail) {
+        if (actorEmail == null || actorEmail.isBlank()) {
+            return true;
+        }
+
+        var actorParentOpt = parentAccountRepository.findByEmail(actorEmail);
+        if (actorParentOpt.isEmpty()) {
+            return true;
+        }
+
+        var actorMembershipOpt = membershipRepository.findByParentAndFamily(actorParentOpt.get().getId(), familyDbId);
+        if (actorMembershipOpt.isEmpty()) {
+            return true;
+        }
+
+        return !membership.getParentAccountId().equals(actorMembershipOpt.get().getParentAccountId());
     }
 
     private Optional<FamilyEntity> resolveFamily(String familyId) {
