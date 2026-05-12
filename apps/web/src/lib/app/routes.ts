@@ -21,6 +21,8 @@ export const APP_SECTIONS = [
     ...ADMIN_ONLY_APP_SECTIONS,
 ] as const;
 
+export const LAST_APP_SECTION_COOKIE = 'earnit_last_app_section';
+
 export type AppSection = (typeof APP_SECTIONS)[number];
 
 type AppSectionMeta = {
@@ -122,6 +124,14 @@ export function isSectionAllowed(section: AppSection, role?: string): boolean {
 
 export function getDefaultAppSection(role?: string): AppSection {
     return isAdminRole(role) ? 'analytics' : 'tasks';
+}
+
+export function resolvePreferredAppSection(role?: string, preferredSection?: string | null): AppSection {
+    if (preferredSection && isAppSection(preferredSection) && isSectionAllowed(preferredSection, role)) {
+        return preferredSection;
+    }
+
+    return getDefaultAppSection(role);
 }
 
 export function toAppPath(section: AppSection, locale: Locale = DEFAULT_LOCALE): string {

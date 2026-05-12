@@ -4,6 +4,8 @@ import {
     getAppSectionFromPath,
     getDefaultAppSection,
     isSectionAllowed,
+    LAST_APP_SECTION_COOKIE,
+    resolvePreferredAppSection,
     toAppPath,
 } from '../../src/lib/app/routes';
 import { buildAlternatePaths, localizePath, swapPathLocale } from '../../src/lib/i18n';
@@ -17,6 +19,13 @@ describe('app routes', () => {
     it('uses tasks as the default child section', () => {
         expect(getDefaultAppSection('child')).toBe('tasks');
         expect(getDefaultAppSection(undefined)).toBe('tasks');
+    });
+
+    it('prefers a saved allowed section over the role default', () => {
+        expect(resolvePreferredAppSection('super_admin', 'shop')).toBe('shop');
+        expect(resolvePreferredAppSection('child', 'limits')).toBe('tasks');
+        expect(resolvePreferredAppSection('parent', 'unknown')).toBe('analytics');
+        expect(LAST_APP_SECTION_COOKIE).toBe('earnit_last_app_section');
     });
 
     it('limits admin-only sections for child sessions', () => {
