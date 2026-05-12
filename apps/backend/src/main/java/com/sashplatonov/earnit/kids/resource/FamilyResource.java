@@ -26,6 +26,7 @@ import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
+import com.sashplatonov.earnit.kids.service.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
 import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -39,6 +40,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -119,7 +121,7 @@ public class FamilyResource {
                                    @RequestBody(required = true, description = "Client-side dashboard payload")
                                    Map<String, Object> payload) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
+        if (auth == null) {
             return unauthorized();
         }
 
@@ -754,8 +756,6 @@ public class FamilyResource {
         return toVoidResponse(familyService.updatePreference(auth.familyId(), request.key(), request.value()));
     }
 
-    // Parent membership management endpoints
-
     @GET
     @Path("/parents")
     @Operation(summary = "List parent memberships for the active family")
@@ -787,7 +787,7 @@ public class FamilyResource {
     })
     public Response addParent(@Context ContainerRequestContext ctx,
                               @RequestBody(required = true, description = "Add parent membership payload")
-                              @Valid AddParentMembershipRequest request) {
+                              @NotNull @Valid AddParentMembershipRequest request) {
         var auth = getAuthOrFail(ctx);
         if (auth == null || !auth.canManageMemberships()) {
             return unauthorized();
@@ -820,7 +820,7 @@ public class FamilyResource {
                                  @Parameter(required = true, description = "Membership id to update")
                                  @PathParam("membershipId") int membershipId,
                                  @RequestBody(required = true, description = "Update permission payload")
-                                 @Valid UpdateParentMembershipRequest request) {
+                                 @NotNull @Valid UpdateParentMembershipRequest request) {
         var auth = getAuthOrFail(ctx);
         if (auth == null || !auth.canManageMemberships()) {
             return unauthorized();

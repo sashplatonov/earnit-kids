@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -19,5 +20,9 @@ public class ParentAccountRepository implements PanacheRepositoryBase<ParentAcco
 
     public Optional<ParentAccountEntity> findByResetToken(String token) {
         return find("resetToken = ?1", token).firstResultOptional();
+    }
+
+    public List<ParentAccountEntity> findByIdList(List<Integer> ids) {
+        return find("id in ?1", ids).list();
     }
 }

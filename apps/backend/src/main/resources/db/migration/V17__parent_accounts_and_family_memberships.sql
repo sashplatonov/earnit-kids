@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS parent_accounts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_parent_accounts_email ON parent_accounts(email);
-CREATE INDEX IF NOT EXISTS idx_parent_accounts_reset_token ON parent_accounts(reset_token)
-    WHERE reset_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_parent_accounts_reset_token ON parent_accounts(reset_token);
 
 -- Family parent memberships table: links parents to families with permissions
 CREATE TYPE membership_permission AS ENUM ('viewer', 'editor', 'family_admin');

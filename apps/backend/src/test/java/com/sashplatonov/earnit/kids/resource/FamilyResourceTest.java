@@ -3,11 +3,13 @@ package com.sashplatonov.earnit.kids.resource;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
+import com.sashplatonov.earnit.kids.dto.request.AddParentMembershipRequest;
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateParentMembershipRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdatePreferenceRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateThemeRequest;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
@@ -16,9 +18,11 @@ import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
+import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
+import com.sashplatonov.earnit.kids.service.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
 import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -49,12 +53,18 @@ class FamilyResourceTest {
     @Mock FamilyService familyService;
     @Mock BaseDataService baseDataService;
     @Mock WebSocketNotificationService webSocketNotificationService;
+    @Mock FamilyParentAccessService familyParentAccessService;
 
     private FamilyResource resource;
 
     @BeforeEach
     void setUp() {
-        resource = new FamilyResource(familyActionService, familyService, baseDataService, webSocketNotificationService);
+        resource = new FamilyResource(
+            familyActionService,
+            familyService,
+            baseDataService,
+            webSocketNotificationService,
+            familyParentAccessService);
     }
 
     @Test
@@ -379,6 +389,54 @@ class FamilyResourceTest {
             new UpdatePreferenceRequest("lastSelectedChildId", 10));
 
         assertThat(response.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void listParents_adminDelegatesToService() {
+        when(familyParentAccessService.listMemberships("fam-1"))
+            .thenReturn(OperationResult.success(List.of(new ParentMembershipDto(1, "parent@test.com", "editor", "active"))));
+
+        Response response = resource.listParents(contextWithAuth(adminAuth()));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyParentAccessService).listMemberships("fam-1");
+    }
+
+    @Test
+    void addParent_adminDelegatesToService() {
+        when(familyParentAccessService.addMembership("fam-1", "parent@test.com", "editor", "admin@test.com"))
+            .thenReturn(OperationResult.success(new ParentMembershipDto(1, "parent@test.com", "editor", "active")));
+
+        Response response = resource.addParent(
+            contextWithAuth(adminAuth()),
+            new AddParentMembershipRequest("parent@test.com", "editor"));
+
+        assertThat(response.getStatus()).isEqualTo(201);
+        verify(familyParentAccessService).addMembership("fam-1", "parent@test.com", "editor", "admin@test.com");
+    }
+
+    @Test
+    void updateParent_adminDelegatesToService() {
+        when(familyParentAccessService.updateMembership(7, "viewer", "fam-1"))
+            .thenReturn(OperationResult.success(new ParentMembershipDto(7, "parent@test.com", "viewer", "active")));
+
+        Response response = resource.updateParent(
+            contextWithAuth(adminAuth()),
+            7,
+            new UpdateParentMembershipRequest("viewer"));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyParentAccessService).updateMembership(7, "viewer", "fam-1");
+    }
+
+    @Test
+    void removeParent_adminDelegatesToService() {
+        when(familyParentAccessService.removeMembership(7, "fam-1")).thenReturn(OperationResult.success(null));
+
+        Response response = resource.removeParent(contextWithAuth(adminAuth()), 7);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyParentAccessService).removeMembership(7, "fam-1");
     }
 
     private static ContainerRequestContext contextWithAuth(AuthContext auth) {

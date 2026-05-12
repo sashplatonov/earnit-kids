@@ -2,9 +2,11 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
+import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
+import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -22,142 +26,160 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class FamilyParentAccessServiceImpl implements FamilyParentAccessService {
 
+    private static final String ERROR_FAMILY_NOT_FOUND = "FAMILY_NOT_FOUND";
+    private static final String ERROR_ALREADY_MEMBER = "PARENT_ALREADY_MEMBER";
+    private static final String ERROR_INVALID_PERMISSION = "PARENT_INVALID_PERMISSION";
+    private static final String ERROR_MEMBERSHIP_NOT_FOUND = "PARENT_MEMBERSHIP_NOT_FOUND";
+    private static final String ERROR_NOT_AUTHORIZED = "PARENT_MEMBERSHIP_FORBIDDEN";
+    private static final String ERROR_LAST_ADMIN = "PARENT_LAST_ADMIN";
+
+    private final FamilyRepository familyRepository;
     private final ParentAccountRepository parentAccountRepository;
     private final FamilyParentMembershipRepository membershipRepository;
 
     @Override
     @Transactional
-    public OperationResult<List<ParentMembershipDto>> listMemberships(Integer familyId) {
-        var memberships = membershipRepository.findByFamilyId(familyId);
+    public OperationResult<List<ParentMembershipDto>> listMemberships(String familyId) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var memberships = membershipRepository.findByFamilyId(familyOpt.get().getId());
+        if (memberships.isEmpty()) {
+            return OperationResult.success(List.of());
+        }
+
+        var parentIds = memberships.stream()
+            .map(FamilyParentMembershipEntity::getParentAccountId)
+            .distinct()
+            .toList();
+        Map<Integer, ParentAccountEntity> parentsById = parentAccountRepository.findByIdList(parentIds).stream()
+            .collect(java.util.stream.Collectors.toMap(
+                ParentAccountEntity::getId,
+                parent -> parent,
+                (left, right) -> left,
+                LinkedHashMap::new));
         var dtos = memberships.stream()
-            .map(m -> {
-                var parentOpt = parentAccountRepository.findById(m.getParentAccountId());
-                String email = parentOpt.map(ParentAccountEntity::getEmail).orElse("unknown");
-                return new ParentMembershipDto(
-                    m.getId(),
-                    email,
-                    m.getPermission().name(),
-                    m.getStatus()
-                );
-            })
+            .map(m -> toDto(m, parentsById.get(m.getParentAccountId())))
             .toList();
         return OperationResult.success(dtos);
     }
 
     @Override
     @Transactional
-    public OperationResult<ParentMembershipDto> addMembership(Integer familyId, String email, String permission, String invitedByEmail) {
-        // Check for existing membership
+    public OperationResult<ParentMembershipDto> addMembership(
+        String familyId, String email, String permission, String invitedByEmail) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        Integer familyDbId = familyOpt.get().getId();
         var existingParent = parentAccountRepository.findByEmail(email);
         if (existingParent.isPresent()) {
-            var existingMembership = membershipRepository.findByParentAndFamily(existingParent.get().getId(), familyId);
+            var existingMembership = membershipRepository.findByParentAndFamily(
+                existingParent.get().getId(), familyDbId);
             if (existingMembership.isPresent()) {
-                return OperationResult.failure(BackendMessages.message("parentAccess.alreadyMember"));
+                return failure(ERROR_ALREADY_MEMBER, "parentAccess.alreadyMember");
             }
         }
 
-        // Get or create parent account
         ParentAccountEntity parent = existingParent.orElseGet(() -> {
-            var newParent = new ParentAccountEntity();
-            newParent.setEmail(email);
-            newParent.setPasswordHash(""); // Empty password - invitation flow
-            newParent.setVerified(false);
+            var newParent = ParentAccountEntity.builder()
+                .email(email)
+                .passwordHash("")
+                .verified(false)
+                .build();
             parentAccountRepository.persist(newParent);
             return newParent;
         });
 
-        // Validate permission
-        FamilyParentMembershipEntity.Permission perm;
-        try {
-            perm = FamilyParentMembershipEntity.Permission.valueOf(permission);
-        } catch (IllegalArgumentException e) {
-            return OperationResult.failure(BackendMessages.message("parentAccess.invalidPermission"));
+        var permOpt = parsePermission(permission);
+        if (permOpt.isEmpty()) {
+            return failure(ERROR_INVALID_PERMISSION, "parentAccess.invalidPermission");
         }
 
-        // Create membership
-        var membership = new FamilyParentMembershipEntity();
-        membership.setParentAccountId(parent.getId());
-        membership.setFamilyId(familyId);
-        membership.setPermission(perm);
-        membership.setStatus("active");
-        membership.setInvitedByEmail(invitedByEmail);
-        membership.setInvitedAt(Instant.now());
+        var membership = FamilyParentMembershipEntity.builder()
+            .parentAccountId(parent.getId())
+            .familyId(familyDbId)
+            .permission(permOpt.get())
+            .status("active")
+            .invitedByEmail(invitedByEmail)
+            .invitedAt(Instant.now())
+            .build();
         membershipRepository.persist(membership);
 
         log.info("Added parent membership: email={}, familyId={}, permission={}", email, familyId, permission);
 
-        return OperationResult.success(new ParentMembershipDto(
-            membership.getId(),
-            parent.getEmail(),
-            membership.getPermission().name(),
-            membership.getStatus()
-        ));
+        return OperationResult.success(toDto(membership, parent));
     }
 
     @Override
     @Transactional
-    public OperationResult<ParentMembershipDto> updateMembership(Integer membershipId, String permission, Integer familyId) {
-        var membershipOpt = membershipRepository.findById(membershipId);
+    public OperationResult<ParentMembershipDto> updateMembership(
+        Integer membershipId, String permission, String familyId) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var membershipOpt = membershipRepository.findByIdOptional(membershipId);
         if (membershipOpt.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("parentAccess.membershipNotFound"));
+            return failure(ERROR_MEMBERSHIP_NOT_FOUND, "parentAccess.membershipNotFound");
         }
 
         var membership = membershipOpt.get();
-        if (!membership.getFamilyId().equals(familyId)) {
-            return OperationResult.failure(BackendMessages.message("parentAccess.notAuthorized"));
+        Integer familyDbId = familyOpt.get().getId();
+        if (!membership.getFamilyId().equals(familyDbId)) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }
 
-        // Validate permission
-        FamilyParentMembershipEntity.Permission perm;
-        try {
-            perm = FamilyParentMembershipEntity.Permission.valueOf(permission);
-        } catch (IllegalArgumentException e) {
-            return OperationResult.failure(BackendMessages.message("parentAccess.invalidPermission"));
+        var permOpt = parsePermission(permission);
+        if (permOpt.isEmpty()) {
+            return failure(ERROR_INVALID_PERMISSION, "parentAccess.invalidPermission");
         }
 
-        // Prevent removing last family_admin
         if (membership.getPermission() == FamilyParentMembershipEntity.Permission.family_admin
-            && perm != FamilyParentMembershipEntity.Permission.family_admin) {
-            long adminCount = membershipRepository.countFamilyAdmins(familyId);
+            && permOpt.get() != FamilyParentMembershipEntity.Permission.family_admin) {
+            long adminCount = membershipRepository.countFamilyAdmins(familyDbId);
             if (adminCount <= 1) {
-                return OperationResult.failure(BackendMessages.message("parentAccess.cannotRemoveLastAdmin"));
+                return failure(ERROR_LAST_ADMIN, "parentAccess.cannotRemoveLastAdmin");
             }
         }
 
-        membership.setPermission(perm);
-        membershipRepository.persist(membership);
+        membership.setPermission(permOpt.get());
 
-        var parentOpt = parentAccountRepository.findById(membership.getParentAccountId());
-        String email = parentOpt.map(ParentAccountEntity::getEmail).orElse("unknown");
+        var parent = parentAccountRepository.findByIdOptional(membership.getParentAccountId()).orElse(null);
 
         log.info("Updated parent membership: id={}, permission={}", membershipId, permission);
 
-        return OperationResult.success(new ParentMembershipDto(
-            membership.getId(),
-            email,
-            membership.getPermission().name(),
-            membership.getStatus()
-        ));
+        return OperationResult.success(toDto(membership, parent));
     }
 
     @Override
     @Transactional
-    public OperationResult<Void> removeMembership(Integer membershipId, Integer familyId) {
-        var membershipOpt = membershipRepository.findById(membershipId);
+    public OperationResult<Void> removeMembership(Integer membershipId, String familyId) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var membershipOpt = membershipRepository.findByIdOptional(membershipId);
         if (membershipOpt.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("parentAccess.membershipNotFound"));
+            return failure(ERROR_MEMBERSHIP_NOT_FOUND, "parentAccess.membershipNotFound");
         }
 
         var membership = membershipOpt.get();
-        if (!membership.getFamilyId().equals(familyId)) {
-            return OperationResult.failure(BackendMessages.message("parentAccess.notAuthorized"));
+        Integer familyDbId = familyOpt.get().getId();
+        if (!membership.getFamilyId().equals(familyDbId)) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }
 
-        // Prevent removing last family_admin
         if (membership.getPermission() == FamilyParentMembershipEntity.Permission.family_admin) {
-            long adminCount = membershipRepository.countFamilyAdmins(familyId);
+            long adminCount = membershipRepository.countFamilyAdmins(familyDbId);
             if (adminCount <= 1) {
-                return OperationResult.failure(BackendMessages.message("parentAccess.cannotRemoveLastAdmin"));
+                return failure(ERROR_LAST_ADMIN, "parentAccess.cannotRemoveLastAdmin");
             }
         }
 
@@ -166,5 +188,37 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         log.info("Removed parent membership: id={}, familyId={}", membershipId, familyId);
 
         return OperationResult.success(null);
+    }
+
+    private Optional<FamilyEntity> resolveFamily(String familyId) {
+        if (familyId == null || familyId.isBlank()) {
+            return Optional.empty();
+        }
+        return familyRepository.findById(familyId);
+    }
+
+    private Optional<FamilyParentMembershipEntity.Permission> parsePermission(String permission) {
+        if (permission == null || permission.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(FamilyParentMembershipEntity.Permission.valueOf(permission));
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private <T> OperationResult<T> failure(String errorCode, String messageKey) {
+        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
+    }
+
+    private ParentMembershipDto toDto(FamilyParentMembershipEntity membership, ParentAccountEntity parent) {
+        String email = parent != null ? parent.getEmail() : "unknown";
+        return new ParentMembershipDto(
+            membership.getId(),
+            email,
+            membership.getPermission().name(),
+            membership.getStatus()
+        );
     }
 }
