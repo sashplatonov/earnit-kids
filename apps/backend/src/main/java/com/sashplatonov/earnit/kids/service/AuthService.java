@@ -20,4 +20,6 @@ public interface AuthService {
     OperationResult<Void> resetPassword(String email, String token, String newPassword);
 
     OperationResult<Void> verifyEmail(String email, String token);
+
+    OperationResult<AuthPayload> selectFamily(String email, String familyId);
 }

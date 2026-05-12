@@ -388,14 +388,14 @@ class FamilyResourceTest {
     }
 
     private static AuthContext adminAuth() {
-        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf", false);
+        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf", false, "family_admin");
     }
 
     private static AuthContext childAuth(int childId) {
-        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf", false);
+        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf", false, "child");
     }
 
     private static AuthContext superAdminAuth() {
-        return new AuthContext("fam-1", null, "admin", "root@test.com", "csrf", true);
+        return new AuthContext("fam-1", null, "admin", "root@test.com", "csrf", true, "family_admin");
     }
 }

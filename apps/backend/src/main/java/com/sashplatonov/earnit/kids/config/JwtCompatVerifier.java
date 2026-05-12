@@ -47,13 +47,16 @@ public class JwtCompatVerifier {
             role = "super_admin";
         }
 
+        var permission = toStringValue(resolvedPayload.get("permission"));
+
         return new SessionPageDataResponse(
             true,
             role,
             toStringValue(resolvedPayload.get("familyId")),
             childId,
             toStringValue(resolvedPayload.get("email")),
-            cookieCsrfToken != null ? cookieCsrfToken : payloadCsrfToken
+            cookieCsrfToken != null ? cookieCsrfToken : payloadCsrfToken,
+            permission
         );
     }
 
@@ -102,8 +105,10 @@ public class JwtCompatVerifier {
 
             var headerJson = SIGN_MAPPER.writeValueAsString(Map.of("alg", "HS256", "typ", "JWT"));
             var payloadJson = SIGN_MAPPER.writeValueAsString(effectivePayload);
-            var encodedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
-            var encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+            var encodedHeader = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+            var encodedPayload = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
             var signatureInput = encodedHeader + "." + encodedPayload;
             return signatureInput + "." + signSegment(signatureInput, secret);
         } catch (JsonProcessingException | GeneralSecurityException ex) {
@@ -114,7 +119,8 @@ public class JwtCompatVerifier {
     private static String signSegment(String value, String secret) throws GeneralSecurityException {
         var mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(value.getBytes(StandardCharsets.UTF_8)));
+        return Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(mac.doFinal(value.getBytes(StandardCharsets.UTF_8)));
     }
 
     private Integer toInteger(Object value) {

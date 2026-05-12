@@ -36,7 +36,8 @@ class SessionPageDataResourceTest {
             "familyId", "family-1",
             "role", "admin",
             "email", "parent@example.com",
-            "csrfToken", "csrf-123"
+            "csrfToken", "csrf-123",
+            "permission", "family_admin"
         ), "test-secret-key-for-unit-tests", 300, TestConfigFactory.timeProvider(FIXED_NOW));
 
         var response = resource.session("app_auth=" + token + "; csrf_token=csrf-123");
@@ -47,7 +48,8 @@ class SessionPageDataResourceTest {
             "family-1",
             null,
             "parent@example.com",
-            "csrf-123"
+            "csrf-123",
+            "family_admin"
         ));
     }
 }

@@ -31,7 +31,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10, false);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 10, false, "family_admin");
 
         assertThat(cookies).hasSize(6);
         assertThat(cookies.get(0)).contains("app_auth=").contains("HttpOnly").contains("SameSite=Lax");
@@ -49,7 +49,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(true, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, false);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, false, "child");
 
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).contains("Secure"));
     }
@@ -60,7 +60,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, false);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "child", "fam-1", null, false, "child");
 
         // app_role must not be present for child role (no client-readable role)
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).doesNotContain("app_role="));
@@ -72,7 +72,7 @@ class CookieBuilderTest {
             jwtService,
             TestConfigFactory.appConfig(false, null, true, true));
 
-        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5, true);
+        List<String> cookies = builder.buildAuthCookies("a@test.com", "admin", "fam-1", 5, true, "family_admin");
         String appAuth = cookies.stream().filter(v -> v.startsWith("app_auth=")).findFirst().orElseThrow();
         String token = appAuth.substring("app_auth=".length(), appAuth.indexOf(';'));
 

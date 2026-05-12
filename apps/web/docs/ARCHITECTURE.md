@@ -51,6 +51,14 @@ The authenticated app shell is store-driven.
 - `src/lib/stores/modal.ts`: modal host state
 - `src/lib/stores/toasts.ts`: transient UI notifications
 
+### Parent Access State
+
+Session state includes membership permission for UI gating:
+
+- `permission`: `viewer`, `editor`, or `family_admin` from active family membership
+- `familyChoices`: available families when login returns multiple memberships
+- `selectionRequired`: boolean flag when family chooser is needed before app entry
+
 State lifecycle:
 
 1. `initializeFromServer()` loads the backend snapshot.

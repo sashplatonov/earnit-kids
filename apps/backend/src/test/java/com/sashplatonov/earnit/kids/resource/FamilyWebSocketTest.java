@@ -42,22 +42,22 @@ class FamilyWebSocketTest {
         when(handshakeRequest.header("Cookie")).thenReturn(null);
         when(handshakeRequest.query()).thenReturn("token=query.jwt");
         when(jwtService.verifyToken("query.jwt"))
-            .thenReturn(Optional.of(Map.of("familyId", "fam-1", "role", "child", "childId", 10)));
+            .thenReturn(Optional.of(Map.of("familyId", "fam-1", "role", "child", "childId", 10, "permission", "child")));
 
         familyWebSocket.onOpen(connection, handshakeRequest);
 
-        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", 10, "child", null, null, false)));
+        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", 10, "child", null, null, false, "child")));
     }
 
     @Test
     void onOpen_prefersCookieTokenWhenPresent() {
         when(handshakeRequest.header("Cookie")).thenReturn("app_auth=cookie.jwt; other=value");
         when(jwtService.verifyToken("cookie.jwt"))
-            .thenReturn(Optional.of(Map.of("familyId", "fam-1", "role", "admin")));
+            .thenReturn(Optional.of(Map.of("familyId", "fam-1", "role", "admin", "permission", "family_admin")));
 
         familyWebSocket.onOpen(connection, handshakeRequest);
 
-        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", null, "admin", null, null, false)));
+        verify(webSocketNotificationService).register(eq("conn-1"), eq(new AuthContext("fam-1", null, "admin", null, null, false, "family_admin")));
     }
 
     @Test

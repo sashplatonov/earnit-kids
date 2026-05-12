@@ -25,7 +25,7 @@ class PushResourceTest {
         Response unauthorized = resource.register(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        Response ok = resource.register(contextWithAuth(new AuthContext("fam-1", 10, "child", "c@test.com", "csrf", false)));
+        Response ok = resource.register(contextWithAuth(new AuthContext("fam-1", 10, "child", "c@test.com", "csrf", false, "child")));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
@@ -34,7 +34,7 @@ class PushResourceTest {
         Response unauthorized = resource.unregister(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        Response ok = resource.unregister(contextWithAuth(new AuthContext("fam-1", null, "admin", "a@test.com", "csrf", false)));
+        Response ok = resource.unregister(contextWithAuth(new AuthContext("fam-1", null, "admin", "a@test.com", "csrf", false, "family_admin")));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 

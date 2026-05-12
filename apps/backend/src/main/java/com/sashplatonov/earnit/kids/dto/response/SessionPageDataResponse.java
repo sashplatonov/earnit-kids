@@ -6,9 +6,10 @@ public record SessionPageDataResponse(
     String familyId,
     Integer childId,
     String email,
-    String csrfToken
+    String csrfToken,
+    String permission
 ) {
     public static SessionPageDataResponse unauthenticated() {
-        return new SessionPageDataResponse(false, null, null, null, null, null);
+        return new SessionPageDataResponse(false, null, null, null, null, null, null);
     }
 }

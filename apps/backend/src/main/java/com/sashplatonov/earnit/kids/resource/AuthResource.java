@@ -11,6 +11,7 @@ import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.RegisterRequest;
 import com.sashplatonov.earnit.kids.dto.request.ResetPasswordRequest;
+import com.sashplatonov.earnit.kids.dto.request.SelectFamilyRequest;
 import com.sashplatonov.earnit.kids.dto.request.VerifyEmailRequest;
 import com.sashplatonov.earnit.kids.dto.response.AuthConfigResponse;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
@@ -26,6 +27,7 @@ import com.sashplatonov.earnit.kids.util.PublicOriginResolver;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.CookieParam;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.net.URI;
@@ -142,8 +144,14 @@ public class AuthResource {
         return switch (result) {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
+                if (payload.selectionRequired() && payload.familyChoices() != null) {
+                    List<AuthResponse.FamilyChoice> choices = payload.familyChoices().stream()
+                        .map(fc -> new AuthResponse.FamilyChoice(fc.familyId(), fc.familyName(), fc.permission()))
+                        .toList();
+                    yield Response.ok(AuthResponse.selectionRequired(choices)).build();
+                }
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin());
+                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.success(payload.role(), payload.familyId()));
@@ -173,7 +181,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin());
+                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
 
                 Response.ResponseBuilder rb = Response.ok(
                     AuthResponse.childSuccess(
@@ -218,7 +226,7 @@ public class AuthResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), null, payload.isSuperAdmin());
+                    payload.email(), payload.role(), payload.familyId(), null, payload.isSuperAdmin(), payload.permission());
 
                 Response.ResponseBuilder rb = Response
                     .status(Response.Status.CREATED)
@@ -400,7 +408,7 @@ public class AuthResource {
         if (result instanceof OperationResult.Success<AuthPayload> s) {
             AuthPayload payload = s.value();
             var cookies = cookieBuilder.buildAuthCookies(
-                payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin());
+                payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
 
             Response.ResponseBuilder rb = Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));
             cookies.forEach(c -> rb.header("Set-Cookie", c));
@@ -443,4 +451,37 @@ public class AuthResource {
             .orElseGet(() -> publicOriginResolver.resolveAbsoluteAppUri("/api/login-google/callback", request));
     }
 
+    @POST
+    @Path("/select-family")
+    @Operation(summary = "Select active family after login with multiple memberships")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Family selected, session started",
+            content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+        @APIResponse(responseCode = "400", description = "Invalid selection",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response selectFamily(@RequestBody(required = true, description = "Family selection payload")
+                                 @Valid SelectFamilyRequest request) {
+        OperationResult<AuthPayload> result = authService.selectFamily(
+            request.email(), request.familyId());
+
+        return switch (result) {
+            case OperationResult.Success<AuthPayload> s -> {
+                AuthPayload payload = s.value();
+                var cookies = cookieBuilder.buildAuthCookies(
+                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
+
+                Response.ResponseBuilder rb = Response.ok(
+                    AuthResponse.success(payload.role(), payload.familyId()));
+                cookies.forEach(c -> rb.header("Set-Cookie", c));
+                yield rb.build();
+            }
+            case OperationResult.Failure<AuthPayload> f ->
+                Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ErrorResponse.of(f.message(), "FAMILY_SELECTION_FAILED", 400))
+                    .build();
+        };
+    }
 }

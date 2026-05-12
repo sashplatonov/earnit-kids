@@ -106,10 +106,10 @@ The implementation must:
 
 | ID | Sprint | Priority | Depends on | Main outcome |
 | --- | --- | --- | --- | --- |
-| FPA-01 | 1 | P0 | none | Freeze the auth and membership contract |
-| FPA-02 | 1 | P0 | FPA-01 | Add DB schema for parent accounts and family memberships |
-| FPA-03 | 1 | P0 | FPA-02 | Refactor backend entities, repositories, and auth payloads |
-| FPA-04 | 1 | P0 | FPA-03 | Add login family-selection flow and active-family session contract |
+| FPA-01 | 1 | P0 | none | Freeze the auth and membership contract | ✅ **DONE**
+| FPA-02 | 1 | P0 | FPA-01 | Add DB schema for parent accounts and family memberships | ✅ **DONE**
+| FPA-03 | 1 | P0 | FPA-02 | Refactor backend entities, repositories, and auth payloads | ✅ **DONE**
+| FPA-04 | 1 | P0 | FPA-03 | Add login family-selection flow and active-family session contract | ✅ **DONE**
 | FPA-05 | 2 | P0 | FPA-03 | Add parent membership management service and resource endpoints |
 | FPA-06 | 2 | P0 | FPA-05 | Enforce role-based mutation guards across existing family write paths |
 | FPA-07 | 3 | P0 | FPA-04 | Extend web auth/session models for membership-aware login |

@@ -86,11 +86,25 @@ Auth is cookie-based and handled centrally.
 - `AuthFilter` converts cookies into `AuthContext` for downstream resources.
 - Roles are `admin`, `child`, and `super_admin`.
 
+### Parent Access Model
+
+Parent identity is account-based, not family-row-based. A parent email can belong to multiple families through membership rows.
+
+- `parent_accounts` table stores unique email, password hash, verification state, and reset token state.
+- `family_parent_memberships` table links parent accounts to families with permission levels.
+- Permission levels: `viewer` (read-only), `editor` (read/write family data), `family_admin` (full access including membership management).
+- At least one `family_admin` must remain in every family.
+- Login with multiple memberships triggers a family chooser before entering the app.
+- Session state carries both parent account identity and active family membership permission.
+
 Authorization rules:
 
 - Family data must always remain isolated by family ownership.
 - Child sessions are restricted to the authenticated child server-side.
 - Super-admin endpoints live under `/api/super/*` and must not bleed into family endpoints.
+- `viewer` can read family data but cannot mutate it.
+- `editor` can read and write family data but cannot manage parent memberships.
+- `family_admin` can read/write family data and manage parent memberships.
 
 [↩ Back to toc](#table-of-contents)
 

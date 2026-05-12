@@ -22,9 +22,9 @@ public class CookieBuilder {
     private final JwtService jwtService;
     private final AppConfig appConfig;
 
-    public List<String> buildAuthCookies(String email, String role, String familyId, Integer childId, boolean isSuperAdmin) {
+    public List<String> buildAuthCookies(String email, String role, String familyId, Integer childId, boolean isSuperAdmin, String permission) {
         var csrfToken = jwtService.generateCsrfToken();
-        var payload = buildAuthPayload(email, role, familyId, childId, csrfToken, isSuperAdmin);
+        var payload = buildAuthPayload(email, role, familyId, childId, csrfToken, isSuperAdmin, permission);
         var helperMaxAge = Math.max(appConfig.auth().sessionTtlSeconds(), appConfig.auth().refreshTokenTtlSeconds());
         var roleFlags = buildReadableCookieFlags(helperMaxAge);
 
@@ -63,13 +63,15 @@ public class CookieBuilder {
     }
 
     private Map<String, Object> buildAuthPayload(String email, String role, String familyId,
-                                                 Integer childId, String csrfToken, boolean isSuperAdmin) {
+                                                 Integer childId, String csrfToken, boolean isSuperAdmin,
+                                                 String permission) {
         var payload = new LinkedHashMap<String, Object>();
         payload.put("email", email);
         payload.put("role", role);
         payload.put("familyId", familyId);
         payload.put("csrfToken", csrfToken);
         payload.put("isSuperAdmin", isSuperAdmin);
+        payload.put("permission", permission);
         if (childId != null) {
             payload.put("childId", childId);
         }

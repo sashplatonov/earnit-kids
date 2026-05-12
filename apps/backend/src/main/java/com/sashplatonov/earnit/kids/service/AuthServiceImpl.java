@@ -3,10 +3,14 @@ package com.sashplatonov.earnit.kids.service;
 import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
+import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
+import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -16,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -26,6 +31,8 @@ public final class AuthServiceImpl implements AuthService {
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
+    private final ParentAccountRepository parentAccountRepository;
+    private final FamilyParentMembershipRepository membershipRepository;
     private final AppConfig appConfig;
     private final PasswordHasher passwordHasher;
     private final SecureTokenGenerator secureTokenGenerator;
@@ -36,13 +43,75 @@ public final class AuthServiceImpl implements AuthService {
     public OperationResult<AuthPayload> authenticateAdmin(String email, String password) {
         log.debug("authenticateAdmin attempt for email={}", email);
 
-        var familyOpt = familyRepository.findByEmail(email);
-        if (familyOpt.isEmpty()) {
-            log.info("Authentication failed (family not found): {}", email);
+        var parentOpt = parentAccountRepository.findByEmail(email);
+        if (parentOpt.isEmpty()) {
+            log.info("Authentication failed (parent account not found): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
         }
 
-        return authenticateFamily(email, password, familyOpt.get());
+        var parent = parentOpt.get();
+        if (parent.isBlocked()) {
+            log.info("Authentication failed (account blocked): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
+        }
+        if (appConfig.emailVerification().enabled() && !parent.isVerified()) {
+            log.info("Authentication failed (email not verified): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.emailNotVerified"));
+        }
+
+        String storedPassword = parent.getPasswordHash();
+        if (!isPasswordValid(email, password, storedPassword)) {
+            log.info("Authentication failed (wrong password): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.invalidPassword"));
+        }
+
+        return resolveMembershipAndAuthenticate(email, parent);
+    }
+
+    private OperationResult<AuthPayload> resolveMembershipAndAuthenticate(String email, ParentAccountEntity parent) {
+        var memberships = membershipRepository.findByParentAccountId(parent.getId());
+        if (memberships.isEmpty()) {
+            log.info("Authentication failed (no active memberships): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.noActiveMemberships"));
+        }
+
+        if (memberships.size() == 1) {
+            return authenticateWithMembership(email, memberships.get(0));
+        }
+
+        List<AuthPayload.FamilyChoice> choices = memberships.stream()
+            .map(m -> {
+                var familyOpt = familyRepository.findByDbId(m.getFamilyId());
+                String familyName = familyOpt.map(FamilyEntity::getFamilyId).orElse("Unknown");
+                return new AuthPayload.FamilyChoice(familyName, familyName, m.getPermission().name());
+            })
+            .toList();
+
+        log.info("Multiple memberships found for email={}, returning family chooser", email);
+        return OperationResult.success(
+            new AuthPayload(null, email, "admin", null, null, false, null, choices, true));
+    }
+
+    private OperationResult<AuthPayload> authenticateWithMembership(String email, FamilyParentMembershipEntity membership) {
+        var familyOpt = familyRepository.findByDbId(membership.getFamilyId());
+        if (familyOpt.isEmpty()) {
+            log.info("Authentication failed (family not found for membership): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
+        }
+
+        var family = familyOpt.get();
+        if (family.isBlocked()) {
+            log.info("Authentication failed (family blocked): {}", email);
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
+        }
+
+        familyRepository.updateLastActivity(family.getFamilyId());
+        boolean isSuperAdmin = isSuperAdminEmail(email);
+        String permission = membership.getPermission().name();
+        log.info("Admin login success: familyId={}, email={}, permission={}, isSuperAdmin={}",
+            family.getFamilyId(), email, permission, isSuperAdmin);
+        return OperationResult.success(
+            new AuthPayload(family.getFamilyId(), email, "admin", null, null, isSuperAdmin, permission, null, false));
     }
 
     @Override
@@ -65,13 +134,19 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure(BackendMessages.message("auth.googleEmailNotVerified"));
         }
 
-        var familyOpt = familyRepository.findByEmail(identity.email());
-        if (familyOpt.isEmpty()) {
-            log.info("Google login failed: family not found for email={}", identity.email());
+        var parentOpt = parentAccountRepository.findByEmail(identity.email());
+        if (parentOpt.isEmpty()) {
+            log.info("Google login failed: parent account not found for email={}", identity.email());
             return OperationResult.failure(BackendMessages.message("auth.googleAccountNotLinked"));
         }
 
-        return authenticateGoogleFamily(identity.email(), familyOpt.get());
+        var parent = parentOpt.get();
+        if (parent.isBlocked()) {
+            log.info("Google login failed: account blocked for email={}", identity.email());
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
+        }
+
+        return resolveMembershipAndAuthenticate(identity.email(), parent);
     }
 
     private boolean isSuperAdminEmail(String email) {
@@ -91,7 +166,7 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure(BackendMessages.message("auth.emailNotVerified"));
         }
         String storedPassword = family.getAdminPassword();
-        if (!isPasswordValid(email, password, family.getFamilyId(), storedPassword)) {
+        if (!isPasswordValid(email, password, storedPassword)) {
             log.info("Authentication failed (wrong password): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.invalidPassword"));
         }
@@ -100,7 +175,7 @@ public final class AuthServiceImpl implements AuthService {
         boolean isSuperAdmin = isSuperAdminEmail(email);
         log.info("Admin login success: familyId={}, email={}, isSuperAdmin={}", family.getFamilyId(), family.getEmail(), isSuperAdmin);
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null, isSuperAdmin));
+            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null, isSuperAdmin, "family_admin", null, false));
     }
 
     private OperationResult<AuthPayload> authenticateGoogleFamily(String email, FamilyEntity family) {
@@ -120,17 +195,17 @@ public final class AuthServiceImpl implements AuthService {
         boolean isSuperAdmin = isSuperAdminEmail(email);
         log.info("Google admin login success: familyId={}, email={}, isSuperAdmin={}", family.getFamilyId(), family.getEmail(), isSuperAdmin);
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null, isSuperAdmin));
+            new AuthPayload(family.getFamilyId(), family.getEmail(), "admin", null, null, isSuperAdmin, "family_admin", null, false));
     }
 
-    private boolean isPasswordValid(String email, String password, String familyId, String storedPassword) {
+    private boolean isPasswordValid(String email, String password, String storedPassword) {
         if (verifyArgon2Password(email, password, storedPassword)) {
             return true;
         }
         if (!passwordHasher.verifyLegacy(password, storedPassword)) {
             return false;
         }
-        rehashLegacyPassword(email, password, familyId);
+        rehashLegacyPassword(email, password);
         return true;
     }
 
@@ -143,14 +218,13 @@ public final class AuthServiceImpl implements AuthService {
         }
     }
 
-    private void rehashLegacyPassword(String email, String password, String familyId) {
+    private void rehashLegacyPassword(String email, String password) {
         try {
             String newHash = passwordHasher.hash(password);
-            boolean updated = familyRepository.updatePassword(familyId, newHash);
-            if (updated) {
-                log.info("Re-hashed legacy password for familyId={}", familyId);
-            } else {
-                log.warn("Failed to persist re-hashed password for familyId={}", familyId);
+            var parentOpt = parentAccountRepository.findByEmail(email);
+            if (parentOpt.isPresent()) {
+                parentOpt.get().setPasswordHash(newHash);
+                log.info("Re-hashed legacy password for email={}", email);
             }
         } catch (Exception ex) {
             log.warn("Failed to re-hash legacy password for {}: {}", email, ex.getMessage());
@@ -188,12 +262,12 @@ public final class AuthServiceImpl implements AuthService {
         log.info("Child login success: familyId={}, childId={}", family.getFamilyId(), child.getId());
         return OperationResult.success(
             new AuthPayload(family.getFamilyId(), family.getEmail(), "child",
-                child.getId(), child.getName(), false));
+                child.getId(), child.getName(), false, "child", null, false));
     }
 
     @Override
     public OperationResult<AuthPayload> registerFamily(String email, String adminPassword) {
-        if (familyRepository.findByEmail(email).isPresent()) {
+        if (parentAccountRepository.findByEmail(email).isPresent()) {
             return OperationResult.failure(BackendMessages.message("auth.emailRegistered"));
         }
         if (!isValidPassword(adminPassword)) {
@@ -204,15 +278,36 @@ public final class AuthServiceImpl implements AuthService {
         var verificationToken = appConfig.emailVerification().enabled() ? generateHexToken(32) : null;
 
         String hashedPassword = passwordHasher.hash(adminPassword);
-        var created = familyRepository.create(
-            familyId, email, hashedPassword, !appConfig.emailVerification().enabled(), verificationToken);
 
-        if (created.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("auth.emailRegistered"));
+        try {
+            var parent = ParentAccountEntity.builder()
+                .email(email)
+                .passwordHash(hashedPassword)
+                .verified(!appConfig.emailVerification().enabled())
+                .verificationToken(verificationToken)
+                .build();
+            parentAccountRepository.persistAndFlush(parent);
+
+            var family = FamilyEntity.builder()
+                .familyId(familyId)
+                .build();
+            familyRepository.persistAndFlush(family);
+
+            var membership = FamilyParentMembershipEntity.builder()
+                .parentAccountId(parent.getId())
+                .familyId(family.getId())
+                .permission(FamilyParentMembershipEntity.Permission.family_admin)
+                .status("active")
+                .build();
+            membershipRepository.persistAndFlush(membership);
+
+            log.info("New family registered: familyId={}, email={}", familyId, email);
+            return OperationResult.success(
+                new AuthPayload(familyId, email, "admin", null, null, false, "family_admin", null, false));
+        } catch (Exception ex) {
+            log.error("Failed to register family for email={}: {}", email, ex.getMessage());
+            return OperationResult.failure(BackendMessages.message("auth.registrationFailed"));
         }
-
-        return OperationResult.success(
-            new AuthPayload(familyId, email, "admin", null, null, false));
     }
 
     @Override
@@ -334,6 +429,33 @@ public final class AuthServiceImpl implements AuthService {
         return appConfig.google().clientId()
             .map(String::trim)
             .filter(value -> !value.isEmpty());
+    }
+
+    @Override
+    public OperationResult<AuthPayload> selectFamily(String email, String familyId) {
+        var parentOpt = parentAccountRepository.findByEmail(email);
+        if (parentOpt.isEmpty()) {
+            return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
+        }
+
+        var parent = parentOpt.get();
+        var familyOpt = familyRepository.findById(familyId);
+        if (familyOpt.isEmpty()) {
+            return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
+        }
+
+        var family = familyOpt.get();
+        var membershipOpt = membershipRepository.findByParentAndFamily(parent.getId(), family.getId());
+        if (membershipOpt.isEmpty()) {
+            return OperationResult.failure(BackendMessages.message("auth.noActiveMemberships"));
+        }
+
+        var membership = membershipOpt.get();
+        boolean isSuperAdmin = isSuperAdminEmail(email);
+        String permission = membership.getPermission().name();
+        log.info("Family selected: familyId={}, email={}, permission={}", familyId, email, permission);
+        return OperationResult.success(
+            new AuthPayload(family.getFamilyId(), email, "admin", null, null, isSuperAdmin, permission, null, false));
     }
 }
 

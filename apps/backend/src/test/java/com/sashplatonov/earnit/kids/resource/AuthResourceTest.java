@@ -56,10 +56,10 @@ class AuthResourceTest {
 
     @Test
     void login_validAdminCredentials_returnsCookies() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false, "family_admin", null, false);
         when(authService.authenticateAdmin("a@test.com", "secret"))
             .thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false, "family_admin"))
             .thenReturn(List.of("cookie-1", "cookie-2"));
 
         Response response = resource.login(new LoginRequest("a@test.com", "secret"));
@@ -80,10 +80,10 @@ class AuthResourceTest {
 
     @Test
     void loginGoogle_validParentCredential_returnsCookies() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false, "family_admin", null, false);
         when(authService.authenticateAdminWithGoogle("google-token"))
             .thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false, "family_admin"))
             .thenReturn(List.of("cookie-1"));
 
         Response response = resource.loginGoogle(new GoogleLoginRequest("google-token"));
@@ -104,9 +104,9 @@ class AuthResourceTest {
 
     @Test
     void loginChild_validToken_returnsCookies() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid", false);
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid", false, "child", null, false);
         when(authService.authenticateChild("token")).thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10, false))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "child", "fam-1", 10, false, "child"))
             .thenReturn(List.of("cookie-1"));
 
         Response response = resource.loginChild(new LoginChildRequest("token"));
@@ -129,9 +129,9 @@ class AuthResourceTest {
 
     @Test
     void register_validPayload_returnsCreated() {
-        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false);
+        AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false, "family_admin", null, false);
         when(authService.registerFamily("a@test.com", "secret123")).thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false))
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-1", null, false, "family_admin"))
             .thenReturn(List.of("cookie"));
 
         Response response = resource.register(new RegisterRequest("a@test.com", "secret123"));
@@ -437,10 +437,10 @@ class AuthResourceTest {
     }
 
     private static AuthContext adminAuth() {
-        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf", false);
+        return new AuthContext("fam-1", null, "admin", "admin@test.com", "csrf", false, "family_admin");
     }
 
     private static AuthContext childAuth(int childId) {
-        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf", false);
+        return new AuthContext("fam-1", childId, "child", "child@test.com", "csrf", false, "child");
     }
 }

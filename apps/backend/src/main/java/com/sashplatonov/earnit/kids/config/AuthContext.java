@@ -8,7 +8,8 @@ public record AuthContext(
     String role,
     String email,
     String csrfToken,
-    boolean isSuperAdmin
+    boolean isSuperAdmin,
+    String permission
 ) {
     public static AuthContext fromPayload(Map<String, Object> payload, String cookieCsrf) {
         String familyId = toStringValue(payload.get("familyId"));
@@ -17,7 +18,8 @@ public record AuthContext(
         String email = toStringValue(payload.get("email"));
         String csrf = cookieCsrf != null ? cookieCsrf : toStringValue(payload.get("csrfToken"));
         boolean isSuperAdmin = Boolean.TRUE.equals(payload.get("isSuperAdmin"));
-        return new AuthContext(familyId, childId, role, email, csrf, isSuperAdmin);
+        String permission = toStringValue(payload.get("permission"));
+        return new AuthContext(familyId, childId, role, email, csrf, isSuperAdmin, permission);
     }
 
     public boolean isAdmin() {
@@ -30,6 +32,26 @@ public record AuthContext(
 
     public boolean isSuperAdmin() {
         return isSuperAdmin;
+    }
+
+    public boolean isFamilyAdmin() {
+        return "family_admin".equals(permission);
+    }
+
+    public boolean isEditor() {
+        return "editor".equals(permission);
+    }
+
+    public boolean isViewer() {
+        return "viewer".equals(permission);
+    }
+
+    public boolean canEditFamilyData() {
+        return isSuperAdmin || isFamilyAdmin() || isEditor();
+    }
+
+    public boolean canManageMemberships() {
+        return isSuperAdmin || isFamilyAdmin();
     }
 
     private static Integer toInteger(Object value) {
