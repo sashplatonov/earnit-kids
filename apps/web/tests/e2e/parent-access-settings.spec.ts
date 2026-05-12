@@ -28,7 +28,6 @@ test('family admin can manage parent access from settings', async ({ page }) => 
     await expect(invitedRow).toContainText(/Editor|Редактор/i);
 
     await invitedRow.locator('select').selectOption('viewer');
-    await invitedRow.getByRole('button', { name: /Save changes|Сохранить изменения/i }).click();
     await expect(invitedRow).toContainText(/Viewer|Просмотр/i);
 
     page.once('dialog', async (dialog) => {
