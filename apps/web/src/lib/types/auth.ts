@@ -6,6 +6,13 @@ export interface FamilyChoice {
     permission: MembershipPermission;
 }
 
+export interface ParentMembership {
+    id: number;
+    email: string;
+    permission: MembershipPermission;
+    status: string;
+}
+
 export interface AuthResponseSnapshot {
     success: boolean;
     role: string | null;

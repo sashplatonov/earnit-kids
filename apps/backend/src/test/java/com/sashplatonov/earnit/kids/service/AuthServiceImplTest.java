@@ -295,8 +295,12 @@ class AuthServiceImplTest {
         OperationResult<AuthPayload> result = authService.registerFamily("new@test.com", "strong123");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        verify(parentAccountRepository).persistAndFlush(any());
-        verify(familyRepository).persistAndFlush(any());
+        verify(parentAccountRepository).persistAndFlush(argThat(parent -> "new@test.com".equals(parent.getEmail())));
+        verify(familyRepository).persistAndFlush(argThat(family ->
+            "new@test.com".equals(family.getEmail())
+                && family.getAdminPassword() != null
+                && family.getFamilyId() != null
+        ));
         verify(membershipRepository).persistAndFlush(any());
     }
 

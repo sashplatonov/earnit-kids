@@ -35,6 +35,7 @@
         let mounted = true;
         let cleanupPwa: (() => void) | null = null;
 
+        appStore.setState({ permission: session.permission ?? null });
         void initializeFromServer();
         void initializePwa(() => refreshData(true)).then((cleanup) => {
             if (!mounted) {

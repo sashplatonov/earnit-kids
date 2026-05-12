@@ -16,6 +16,7 @@ import com.sashplatonov.earnit.kids.util.TimeProvider;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -270,6 +271,7 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public OperationResult<AuthPayload> registerFamily(String email, String adminPassword) {
         if (parentAccountRepository.findByEmail(email).isPresent()) {
             return OperationResult.failure(BackendMessages.message("auth.emailRegistered"));
@@ -294,6 +296,10 @@ public final class AuthServiceImpl implements AuthService {
 
             var family = FamilyEntity.builder()
                 .familyId(familyId)
+                .email(email)
+                .adminPassword(hashedPassword)
+                .verified(!appConfig.emailVerification().enabled())
+                .verificationToken(verificationToken)
                 .build();
             familyRepository.persistAndFlush(family);
 
@@ -462,6 +468,4 @@ public final class AuthServiceImpl implements AuthService {
             new AuthPayload(family.getFamilyId(), email, "admin", null, null, isSuperAdmin, permission, null, false));
     }
 }
-
-
 

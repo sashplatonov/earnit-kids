@@ -21,8 +21,8 @@ export async function loginParent(
     const heading = options.heading === undefined ? /EarnIt Kids/i : options.heading;
 
     await page.goto('/login.html');
-    await page.getByRole('textbox', { name: 'Email' }).fill(email);
-    await page.getByRole('textbox', { name: /Password|Пароль/i }).fill(password);
+    await page.getByPlaceholder(/Email|Email родителя/i).fill(email);
+    await page.getByPlaceholder(/Password|Пароль/i).fill(password);
     await page.locator('.auth-forms .btn-login').click();
     await expect(page).toHaveURL(destination);
     if (heading !== null) {
@@ -48,7 +48,14 @@ export async function registerParent(page: Page, email: string, password = DEFAU
     await page.getByPlaceholder(/Parent email|Email родителя/i).fill(email);
     await page.getByPlaceholder(/Password \(min\. 6\)|Пароль \(мин\. 6\)/i).fill(password);
     await page.locator('.auth-forms .btn-login').click();
-    await expect(page.getByText(/Family account created|Семья зарегистрирована/i)).toBeVisible();
+    await page.waitForFunction(
+        () => document.cookie.includes('app_role=') && document.cookie.includes('csrf_token=')
+    );
+
+    await page.goto('/app');
+
+    await expect(page).toHaveURL(/\/app\/analytics$/);
+    await expect(page.getByRole('heading', { name: /EarnIt Kids|EarnIt Kids/i })).toBeVisible();
 }
 
 export async function addChild(page: Page, childName: string) {
@@ -110,8 +117,7 @@ export async function createReward(page: Page, title: string, price: number, com
 }
 
 export async function openSettings(page: Page) {
-    await page.getByRole('button', { name: /Additional sections|Дополнительные разделы/i }).click();
-    await page.getByRole('menuitem', { name: /Settings|Настройки/i }).click();
+    await page.goto('/app/settings');
     await expect(page.locator('#settings-section')).toBeVisible();
 }
 

@@ -172,10 +172,11 @@ export function normalizeAuthResponse(data: Record<string, unknown> = {}): AuthR
 export function buildInitialState(data: Record<string, unknown>, baseData: Record<string, unknown>): Record<string, unknown> {
     const normalized = normalizeServerData(data) as Record<string, unknown>;
     const normalizedBaseData = normalizeBaseData(baseData);
-    const isAdmin = parseBoolean(normalized.isAdmin);
+    const role = typeof normalized.role === 'string' ? normalized.role : null;
+    const isAdmin = parseBoolean(normalized.isAdmin) || role === 'admin' || role === 'parent' || role === 'super_admin';
     return {
         isAdmin,
-        role: isAdmin ? 'admin' : null,
+        role: role ?? (isAdmin ? 'admin' : null),
         permission: normalizePermission(normalized.permission),
         baseData: normalizedBaseData,
         isLoading: false,

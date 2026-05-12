@@ -26,8 +26,12 @@ export async function initializeFromServer(): Promise<boolean> {
     const baseData = isAdmin
         ? ((await loadBaseData()) as { tasks: unknown[]; products: unknown[] }) ?? { tasks: [], products: [] }
         : { tasks: [], products: [] };
+    const currentPermission = get(appStore).permission;
 
     const state = buildInitialState(record, baseData as Record<string, unknown>);
+    if (state.permission == null && currentPermission != null) {
+        state.permission = currentPermission;
+    }
     // Keep isLoading true — will be cleared after all data (including child data) is loaded
     appStore.setState({ ...(state as Partial<AppState>), isLoading: true });
 

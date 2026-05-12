@@ -25,6 +25,7 @@ import {
     loadAnalyticsData,
     loadBaseData,
     loadDataFromServer,
+    loadParentMemberships,
     logout,
     registerPushTokenOnServer,
     rejectRequest,
@@ -33,6 +34,9 @@ import {
     selectFamily,
     saveDataToServer,
     searchFriend,
+    addParentMembership,
+    removeParentMembership,
+    updateParentMembership,
     unregisterPushTokenOnServer,
     updateOwnNickname,
 } from '../../src/lib/services/api';
@@ -185,6 +189,95 @@ describe('fetchWithCsrf', () => {
         expect(url).toBe('/api/select-family');
         expect(init.method).toBe('POST');
         expect(init.body).toBe(JSON.stringify({ email: 'parent@example.com', familyId: 'family-2' }));
+    });
+
+    it('loads parent memberships for the active family', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse([
+            { id: 1, email: 'parent@example.com', permission: 'family_admin', status: 'active' },
+            { id: 2, email: 'editor@example.com', permission: 'editor', status: 'pending' },
+        ]));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(loadParentMemberships()).resolves.toEqual({
+            ok: true,
+            data: [
+                { id: 1, email: 'parent@example.com', permission: 'family_admin', status: 'active' },
+                { id: 2, email: 'editor@example.com', permission: 'editor', status: 'pending' },
+            ],
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/parents');
+        expect(init.method ?? 'GET').toBe('GET');
+    });
+
+    it('posts parent membership payloads to the parent access endpoint', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+            id: 11,
+            email: 'new.parent@example.com',
+            permission: 'editor',
+            status: 'active',
+        }, 201));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(addParentMembership({ email: 'new.parent@example.com', permission: 'editor' })).resolves.toEqual({
+            ok: true,
+            data: {
+                id: 11,
+                email: 'new.parent@example.com',
+                permission: 'editor',
+                status: 'active',
+            },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/parents');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({ email: 'new.parent@example.com', permission: 'editor' }));
+    });
+
+    it('updates parent membership permissions through the parent access endpoint', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+            id: 11,
+            email: 'new.parent@example.com',
+            permission: 'viewer',
+            status: 'active',
+        }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(updateParentMembership(11, { permission: 'viewer' })).resolves.toEqual({
+            ok: true,
+            data: {
+                id: 11,
+                email: 'new.parent@example.com',
+                permission: 'viewer',
+                status: 'active',
+            },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/parents/11');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({ permission: 'viewer' }));
+    });
+
+    it('deletes parent memberships through the parent access endpoint', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ success: true }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(removeParentMembership(11)).resolves.toEqual({ ok: true, data: { success: true } });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/parents/11');
+        expect(init.method).toBe('DELETE');
     });
 
     it('posts child creation payload to the child endpoint', async () => {
