@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test';
 import {
     DEFAULT_PARENT_PASSWORD,
     loginParent,
-    openFamilyApp,
     openSettings,
     registerParent,
     uniqueEmail,
@@ -13,10 +12,7 @@ test('family admin can manage parent access from settings', async ({ page }) => 
     const invitedEmail = uniqueEmail('parent.access.invited');
 
     await registerParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
-    await openFamilyApp(page);
-    await page.getByRole('button', { name: /Additional sections|Дополнительные разделы/i }).click();
-    await expect(page.getByRole('menuitem', { name: /Manage parent access|Управление доступом родителей/i })).toBeVisible();
-    await page.getByRole('menuitem', { name: /Manage parent access|Управление доступом родителей/i }).click();
+    await openSettings(page);
 
     const parentAccessHeading = /Manage parent access|Управление доступом родителей/i;
     await expect(page.getByRole('heading', { name: parentAccessHeading })).toBeVisible();
@@ -48,7 +44,7 @@ test('family admin settings still open after re-login', async ({ page }) => {
     const ownerEmail = uniqueEmail('parent.access.relogin');
 
     await registerParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
-    await openFamilyApp(page);
+    await openSettings(page);
     await loginParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
     await openSettings(page);
 

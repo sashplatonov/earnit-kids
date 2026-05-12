@@ -165,7 +165,7 @@
 <section class="parent-access" aria-labelledby="parent-access-title" id="parent-access-section">
     <div class="card parent-access__card">
         <div class="card__header parent-access__header">
-            <div>
+            <div class="parent-access__heading">
                 <p class="parent-access__eyebrow">{$i18n.t('app.parentAccess.badge')}</p>
                 <h3 class="card__title" id="parent-access-title">{$i18n.t('app.parentAccess.title')}</h3>
                 <p class="card__comment">{$i18n.t('app.parentAccess.description')}</p>
@@ -226,7 +226,7 @@
                             </div>
                         </div>
 
-                        <div class="parent-access__row-actions">
+                        <div class="parent-access__row-controls">
                             <label class="sr-only" for={`parent-access-permission-${membership.id}`}>
                                 {$i18n.t('app.parentAccess.permissionLabel')} {membership.email}
                             </label>
@@ -241,25 +241,27 @@
                                 <option value="family_admin">{$i18n.t('app.parentAccess.permissionFamilyAdmin')}</option>
                             </select>
 
-                            <button
-                                class="btn btn--secondary btn--small"
-                                id={`parent-access-save-${membership.id}`}
-                                type="button"
-                                on:click={() => saveMembership(membership)}
-                                disabled={isBusy || isLastFamilyAdmin(membership)}
-                            >
-                                {$i18n.t('app.parentAccess.saveButton')}
-                            </button>
+                            <div class="parent-access__row-actions">
+                                <button
+                                    class="btn btn--secondary btn--small"
+                                    id={`parent-access-save-${membership.id}`}
+                                    type="button"
+                                    on:click={() => saveMembership(membership)}
+                                    disabled={isBusy || isLastFamilyAdmin(membership)}
+                                >
+                                    {$i18n.t('app.parentAccess.saveButton')}
+                                </button>
 
-                            <button
-                                class="btn btn--danger btn--small"
-                                id={`parent-access-remove-${membership.id}`}
-                                type="button"
-                                on:click={() => deleteMembership(membership)}
-                                disabled={isBusy || isLastFamilyAdmin(membership)}
-                            >
-                                {$i18n.t('app.parentAccess.removeButton')}
-                            </button>
+                                <button
+                                    class="btn btn--danger btn--small"
+                                    id={`parent-access-remove-${membership.id}`}
+                                    type="button"
+                                    on:click={() => deleteMembership(membership)}
+                                    disabled={isBusy || isLastFamilyAdmin(membership)}
+                                >
+                                    {$i18n.t('app.parentAccess.removeButton')}
+                                </button>
+                            </div>
                         </div>
                     </article>
                 {/each}
@@ -280,7 +282,14 @@
     }
 
     .parent-access__header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .parent-access__heading {
+        min-width: 0;
     }
 
     .parent-access__eyebrow {
@@ -292,6 +301,7 @@
     }
 
     .parent-access__count {
+        flex-shrink: 0;
         width: 2.5rem;
         height: 2.5rem;
         display: grid;
@@ -345,9 +355,9 @@
 
     .parent-access__row {
         display: grid;
-        gap: 0.9rem;
-        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-        align-items: center;
+        gap: 1rem;
+        grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr);
+        align-items: start;
         padding: 0.95rem 1rem;
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.72);
@@ -360,8 +370,8 @@
 
     .parent-access__email {
         font-weight: 700;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
         word-break: break-word;
     }
 
@@ -381,15 +391,22 @@
         background: rgba(13, 32, 54, 0.08);
     }
 
+    .parent-access__row-controls {
+        display: grid;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+
     .parent-access__row-actions {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.5rem;
         align-items: center;
     }
 
     .parent-access__select {
         min-width: 0;
+        width: 100%;
     }
 
     .sr-only {
@@ -409,6 +426,14 @@
         .parent-access__row,
         .parent-access__row-actions {
             grid-template-columns: 1fr;
+        }
+
+        .parent-access__header {
+            grid-template-columns: 1fr;
+        }
+
+        .parent-access__count {
+            justify-self: start;
         }
 
         .parent-access__row-actions {

@@ -25,7 +25,6 @@
 
     const isAdmin = session.role === 'admin' || session.role === 'parent' || session.role === 'super_admin';
     const isSuperAdmin = session.role === 'super_admin';
-    const canManageParentAccess = session.permission === 'family_admin';
 
 
     $: balance = $appStore.balance;
@@ -66,7 +65,7 @@
     </div>
 
     <AppHeader {isAdmin} {balance} childNickname={String(childNickname)} />
-    <AppNav {isAdmin} {isSuperAdmin} {canManageParentAccess} activeSection={activeSection} requestsCount={reqCount} />
+    <AppNav {isAdmin} {isSuperAdmin} activeSection={activeSection} requestsCount={reqCount} />
 
 
     <main class="main" id="main-content">
