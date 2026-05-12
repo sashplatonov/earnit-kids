@@ -3,6 +3,7 @@ import {
     DEFAULT_PARENT_PASSWORD,
     loginParent,
     openSettings,
+    logout,
     registerParent,
     uniqueEmail,
 } from './helpers';
@@ -44,7 +45,8 @@ test('family admin settings still open after re-login', async ({ page }) => {
 
     await registerParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
     await openSettings(page);
-    await loginParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
+    await logout(page);
+    await loginParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD, { destination: /\/app\/settings$/ });
     await openSettings(page);
 
     await expect(page.locator('#settings-section')).toBeVisible();

@@ -186,7 +186,7 @@
         {/if}
 
         <div class="parent-access__form">
-            <div class="form-group parent-access__field parent-access__field--email">
+            <div class="form-group parent-access__field">
                 <label for="parent-access-email">{$i18n.t('app.parentAccess.emailLabel')}</label>
                 <input
                     id="parent-access-email"
@@ -198,38 +198,18 @@
                     disabled={isBusy}
                 />
             </div>
-            <div class="form-group parent-access__field parent-access__field--permission">
+            <div class="form-group parent-access__field">
                 <label for="parent-access-permission">{$i18n.t('app.parentAccess.permissionLabel')}</label>
-                <div class="parent-access__permission-control">
-                    <span class="parent-access__permission-icon" aria-hidden="true">
-                        {#if newPermission === 'viewer'}
-                            <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
-                                <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        {:else if newPermission === 'editor'}
-                            <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
-                                <path d="m4 20 4.2-1 9.4-9.4-3.2-3.2L5 15.8 4 20Z"></path>
-                                <path d="m13.9 5 3.2 3.2"></path>
-                            </svg>
-                        {:else}
-                            <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
-                                <path d="M12 3.5 5.5 6v5.2c0 4.2 2.7 8 6.5 9.3 3.8-1.3 6.5-5.1 6.5-9.3V6L12 3.5Z"></path>
-                                <path d="M9.5 12.2 11.3 14l3.7-4"></path>
-                            </svg>
-                        {/if}
-                    </span>
-                    <select
-                        id="parent-access-permission"
-                        class="input parent-access__select parent-access__select--form"
-                        bind:value={newPermission}
-                        disabled={isBusy}
-                    >
-                        <option value="viewer">{$i18n.t('app.parentAccess.permissionViewer')}</option>
-                        <option value="editor">{$i18n.t('app.parentAccess.permissionEditor')}</option>
-                        <option value="family_admin">{$i18n.t('app.parentAccess.permissionFamilyAdmin')}</option>
-                    </select>
-                </div>
+                <select
+                    id="parent-access-permission"
+                    class="input parent-access__select parent-access__select--form"
+                    bind:value={newPermission}
+                    disabled={isBusy}
+                >
+                    <option value="viewer">{$i18n.t('app.parentAccess.permissionViewer')}</option>
+                    <option value="editor">{$i18n.t('app.parentAccess.permissionEditor')}</option>
+                    <option value="family_admin">{$i18n.t('app.parentAccess.permissionFamilyAdmin')}</option>
+                </select>
             </div>
             <div class="parent-access__actions">
                 <button
@@ -394,7 +374,6 @@
     .parent-access__form {
         display: grid;
         gap: 1rem;
-        grid-template-columns: 1fr;
         margin-top: 1rem;
     }
 
@@ -404,12 +383,13 @@
 
     .parent-access__input {
         width: 100%;
-        min-height: 3.1rem;
+        min-height: 3.15rem;
     }
 
     .parent-access__actions {
         display: flex;
         justify-content: flex-end;
+        margin-top: -0.25rem;
     }
 
     .parent-access__list {
@@ -426,10 +406,9 @@
     }
 
     .parent-access__row {
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: minmax(0, 1fr) minmax(12rem, 15rem) auto;
+        display: flex;
         align-items: center;
+        gap: 0.9rem;
         padding: 0.95rem 1rem;
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.72);
@@ -438,6 +417,7 @@
 
     .parent-access__row-main {
         min-width: 0;
+        flex: 1 1 auto;
     }
 
     .parent-access__email {
@@ -464,16 +444,14 @@
     }
 
     .parent-access__permission-control {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        display: flex;
         align-items: center;
         gap: 0.6rem;
         min-width: 0;
     }
 
     .parent-access__permission-control--row {
-        width: 100%;
-        min-width: 0;
+        flex: 0 0 auto;
     }
 
     .parent-access__permission-icon {
@@ -500,29 +478,32 @@
 
     .parent-access__row-controls {
         min-width: 0;
-        width: 100%;
+        flex: 0 0 auto;
     }
 
     .parent-access__row-actions {
         display: flex;
         justify-content: center;
         align-items: center;
+        flex: 0 0 auto;
     }
 
     .parent-access__select {
         min-width: 0;
-        width: 100%;
+        width: 11rem;
         padding-left: 0.95rem;
         padding-right: 2.2rem;
     }
 
     .parent-access__select--form {
         min-height: 3rem;
+        width: 100%;
+        flex: 1 1 auto;
     }
 
     .parent-access__icon-action {
-        width: 3rem;
-        height: 3rem;
+        width: 2.8rem;
+        height: 2.8rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -579,10 +560,6 @@
     }
 
     @media (max-width: 900px) {
-        .parent-access__row {
-            grid-template-columns: 1fr;
-        }
-
         .parent-access__header {
             grid-template-columns: 1fr;
         }
@@ -591,12 +568,17 @@
             justify-self: start;
         }
 
-        .parent-access__row-controls {
-            width: 100%;
-        }
-
         .parent-access__row-actions {
             justify-content: flex-end;
+        }
+
+        .parent-access__select {
+            width: 7.5rem;
+        }
+
+        .parent-access__icon-action--danger {
+            width: 2.5rem;
+            height: 2.5rem;
         }
     }
 </style>
