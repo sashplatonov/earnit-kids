@@ -18,6 +18,7 @@
     export let isAdmin: boolean = false;
     export let isSuperAdmin: boolean = false;
     export let canAccessSuperAdmin: boolean = false;
+    export let canManageParentAccess: boolean = false;
     export let activeSection: AppSection = 'analytics';
     export let requestsCount: number = 0;
 
@@ -120,6 +121,18 @@
                 <div class="nav__dropdown" id="nav-more-dropdown" role="menu">
                     {#if isAdmin}
                         <div class="nav__dropdown-group-label" role="presentation">{$i18n.t('common.navigation.management')}</div>
+                        {#if canManageParentAccess}
+                            <a
+                                class="nav__dropdown-item"
+                                class:active={activeSection === 'settings'}
+                                role="menuitem"
+                                href={`${$i18n.href(resolve('/app/[section]', { section: 'settings' }))}#parent-access-section`}
+                                on:click={closeMoreMenu}
+                            >
+                                <span class="gamified-icon icon-profile" aria-hidden="true"></span>
+                                <span>{$i18n.t('app.parentAccess.title')}</span>
+                            </a>
+                        {/if}
                         {#each ADMIN_MANAGEMENT_SECTIONS as section (section)}
                             <a class="nav__dropdown-item" role="menuitem" href={$i18n.href(resolve('/app/[section]', { section }))} on:click={closeMoreMenu}>
                                 <span class={`gamified-icon ${APP_SECTION_META[section].iconClass}`} aria-hidden="true"></span>

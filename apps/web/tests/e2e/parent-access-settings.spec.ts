@@ -14,7 +14,9 @@ test('family admin can manage parent access from settings', async ({ page }) => 
 
     await registerParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
     await openFamilyApp(page);
-    await openSettings(page);
+    await page.getByRole('button', { name: /Additional sections|Дополнительные разделы/i }).click();
+    await expect(page.getByRole('menuitem', { name: /Manage parent access|Управление доступом родителей/i })).toBeVisible();
+    await page.getByRole('menuitem', { name: /Manage parent access|Управление доступом родителей/i }).click();
 
     const parentAccessHeading = /Manage parent access|Управление доступом родителей/i;
     await expect(page.getByRole('heading', { name: parentAccessHeading })).toBeVisible();
