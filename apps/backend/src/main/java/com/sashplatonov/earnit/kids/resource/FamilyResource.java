@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.resource;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
+import com.sashplatonov.earnit.kids.dto.request.AddParentMembershipRequest;
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
@@ -10,6 +11,7 @@ import com.sashplatonov.earnit.kids.dto.request.UpdateGroupOrderRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
+import com.sashplatonov.earnit.kids.dto.request.UpdateParentMembershipRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdatePreferenceRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateThemeRequest;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
@@ -18,6 +20,7 @@ import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
+import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
@@ -64,16 +67,19 @@ public class FamilyResource {
     private final FamilyService familyService;
     private final BaseDataService baseDataService;
     private final WebSocketNotificationService webSocketNotificationService;
+    private final FamilyParentAccessService familyParentAccessService;
 
     @Inject
     public FamilyResource(FamilyActionService familyActionService,
                           FamilyService familyService,
                           BaseDataService baseDataService,
-                          WebSocketNotificationService webSocketNotificationService) {
+                          WebSocketNotificationService webSocketNotificationService,
+                          FamilyParentAccessService familyParentAccessService) {
         this.familyActionService = familyActionService;
         this.familyService = familyService;
         this.baseDataService = baseDataService;
         this.webSocketNotificationService = webSocketNotificationService;
+        this.familyParentAccessService = familyParentAccessService;
     }
 
     @GET
@@ -113,7 +119,7 @@ public class FamilyResource {
                                    @RequestBody(required = true, description = "Client-side dashboard payload")
                                    Map<String, Object> payload) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -134,7 +140,7 @@ public class FamilyResource {
                                  @PathParam("taskId") long taskId,
                                  @QueryParam("childId") Integer childId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
         if (childId == null) {
@@ -214,7 +220,7 @@ public class FamilyResource {
                                    @PathParam("requestId") long requestId,
                                    @QueryParam("childId") Integer childId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -230,7 +236,7 @@ public class FamilyResource {
                                   @PathParam("requestId") long requestId,
                                   @QueryParam("childId") Integer childId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -265,7 +271,7 @@ public class FamilyResource {
                                        @PathParam("historyEntryId") long historyEntryId,
                                        @QueryParam("childId") Integer childId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
         if (childId == null) {
@@ -284,7 +290,7 @@ public class FamilyResource {
                                   @RequestBody(required = true, description = "Balance adjustment payload")
                                   @Valid AdjustBalanceRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -361,7 +367,7 @@ public class FamilyResource {
                                 @Parameter(required = true, description = "Child id to delete")
                                 @PathParam("childId") int childId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -387,7 +393,7 @@ public class FamilyResource {
                                    @RequestBody(required = true, description = "New child nickname payload")
                                    @Valid UpdateNicknameRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -413,7 +419,7 @@ public class FamilyResource {
                                         @RequestBody(required = true, description = "Updated child settings payload")
                                         @Valid UpdateChildSettingsRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -656,7 +662,7 @@ public class FamilyResource {
                                          @Parameter(required = true, description = "Child id to update")
                                          @PathParam("childId") int childId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -713,7 +719,7 @@ public class FamilyResource {
                                 @Parameter(description = "Page size", example = "20")
                                 @QueryParam("limit") @DefaultValue("20") int limit) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -735,7 +741,7 @@ public class FamilyResource {
                                      @RequestBody(required = true, description = "Preference update payload")
                                      @Valid UpdatePreferenceRequest request) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
@@ -746,6 +752,104 @@ public class FamilyResource {
         }
 
         return toVoidResponse(familyService.updatePreference(auth.familyId(), request.key(), request.value()));
+    }
+
+    // Parent membership management endpoints
+
+    @GET
+    @Path("/parents")
+    @Operation(summary = "List parent memberships for the active family")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Membership list returned",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "401", description = "Family admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response listParents(@Context ContainerRequestContext ctx) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) {
+            return unauthorized();
+        }
+
+        return toResponse(familyParentAccessService.listMemberships(auth.familyId()));
+    }
+
+    @POST
+    @Path("/parents")
+    @Operation(summary = "Add a parent membership to the active family")
+    @APIResponses({
+        @APIResponse(responseCode = "201", description = "Membership created",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "400", description = "Membership creation failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Family admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response addParent(@Context ContainerRequestContext ctx,
+                              @RequestBody(required = true, description = "Add parent membership payload")
+                              @Valid AddParentMembershipRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) {
+            return unauthorized();
+        }
+
+        var result = familyParentAccessService.addMembership(
+            auth.familyId(), request.email(), request.permission(), auth.email());
+
+        return switch (result) {
+            case OperationResult.Success<ParentMembershipDto> s ->
+                Response.status(Response.Status.CREATED).entity(s.value()).build();
+            case OperationResult.Failure<ParentMembershipDto> f ->
+                Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ErrorResponse.of(f.message(), errorCodeOrBadRequest(f.errorCode()), 400)).build();
+        };
+    }
+
+    @PUT
+    @Path("/parents/{membershipId}")
+    @Operation(summary = "Update a parent membership permission")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Membership updated",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "400", description = "Update failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Family admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response updateParent(@Context ContainerRequestContext ctx,
+                                 @Parameter(required = true, description = "Membership id to update")
+                                 @PathParam("membershipId") int membershipId,
+                                 @RequestBody(required = true, description = "Update permission payload")
+                                 @Valid UpdateParentMembershipRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) {
+            return unauthorized();
+        }
+
+        return toResponse(familyParentAccessService.updateMembership(
+            membershipId, request.permission(), auth.familyId()));
+    }
+
+    @DELETE
+    @Path("/parents/{membershipId}")
+    @Operation(summary = "Remove a parent membership from the active family")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Membership removed",
+            content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
+        @APIResponse(responseCode = "400", description = "Removal failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Family admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response removeParent(@Context ContainerRequestContext ctx,
+                                 @Parameter(required = true, description = "Membership id to remove")
+                                 @PathParam("membershipId") int membershipId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) {
+            return unauthorized();
+        }
+
+        return toVoidResponse(familyParentAccessService.removeMembership(membershipId, auth.familyId()));
     }
 
     private AuthContext getAuthOrFail(ContainerRequestContext ctx) {

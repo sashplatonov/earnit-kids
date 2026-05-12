@@ -110,8 +110,8 @@ The implementation must:
 | FPA-02 | 1 | P0 | FPA-01 | Add DB schema for parent accounts and family memberships | ✅ **DONE**
 | FPA-03 | 1 | P0 | FPA-02 | Refactor backend entities, repositories, and auth payloads | ✅ **DONE**
 | FPA-04 | 1 | P0 | FPA-03 | Add login family-selection flow and active-family session contract | ✅ **DONE**
-| FPA-05 | 2 | P0 | FPA-03 | Add parent membership management service and resource endpoints |
-| FPA-06 | 2 | P0 | FPA-05 | Enforce role-based mutation guards across existing family write paths |
+| FPA-05 | 2 | P0 | FPA-03 | Add parent membership management service and resource endpoints | ✅ **DONE**
+| FPA-06 | 2 | P0 | FPA-05 | Enforce role-based mutation guards across existing family write paths | ✅ **DONE**
 | FPA-07 | 3 | P0 | FPA-04 | Extend web auth/session models for membership-aware login |
 | FPA-08 | 3 | P0 | FPA-07 | Build parent family chooser screen and routing behavior |
 | FPA-09 | 4 | P1 | FPA-05, FPA-07 | Add parent access management UI in Settings |

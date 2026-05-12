@@ -1,0 +1,17 @@
+package com.sashplatonov.earnit.kids.service;
+
+import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
+import com.sashplatonov.earnit.kids.util.OperationResult;
+
+import java.util.List;
+
+public interface FamilyParentAccessService {
+
+    OperationResult<List<ParentMembershipDto>> listMemberships(Integer familyId);
+
+    OperationResult<ParentMembershipDto> addMembership(Integer familyId, String email, String permission, String invitedByEmail);
+
+    OperationResult<ParentMembershipDto> updateMembership(Integer membershipId, String permission, Integer familyId);
+
+    OperationResult<Void> removeMembership(Integer membershipId, Integer familyId);
+}
