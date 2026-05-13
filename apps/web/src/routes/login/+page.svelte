@@ -39,6 +39,7 @@
     let pendingFamilyChoices: FamilyChoice[] = [];
     let chooserError = '';
     let chooserSubmittingFamilyId: string | null = null;
+    let blockedModalOpen = false;
 
     $: alternates = $i18n.alternates('/login');
 
@@ -80,6 +81,74 @@
         pendingFamilyChoices = [];
         chooserError = '';
         chooserSubmittingFamilyId = null;
+    }
+
+    function readCookie(name: string): string | null {
+        if (typeof document === 'undefined') {
+            return null;
+        }
+
+        const row = document.cookie
+            .split(';')
+            .map((entry) => entry.trim())
+            .find((entry) => entry.startsWith(`${name}=`));
+        return row ? decodeURIComponent(row.slice(name.length + 1)) : null;
+    }
+
+    function clearCookie(name: string) {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+    }
+
+    function showBlockedAccessModal() {
+        blockedModalOpen = true;
+    }
+
+    function hideBlockedAccessModal() {
+        blockedModalOpen = false;
+    }
+
+    function restoreChooserFromCookie() {
+        const encoded = readCookie('pending_family_chooser');
+        if (!encoded) {
+            return false;
+        }
+
+        clearCookie('pending_family_chooser');
+
+        try {
+            const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+            const decoded = window.atob(padded);
+            const [email, ...rawChoices] = decoded.split('\n');
+            const choices = rawChoices
+                .map((rawChoice) => {
+                    const [familyId, familyName, permission, blocked] = rawChoice.split('|');
+                    if (!familyId || !familyName) {
+                        return null;
+                    }
+
+                    return {
+                        familyId,
+                        familyName,
+                        permission: (permission ?? 'viewer') as FamilyChoice['permission'],
+                        blocked: blocked === 'true',
+                    } satisfies FamilyChoice;
+                })
+                .filter((choice): choice is FamilyChoice => choice !== null);
+
+            if (!email || choices.length === 0) {
+                return false;
+            }
+
+            showFamilyChooser(email, choices);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     function showFamilyChooser(email: string, choices: FamilyChoice[]) {
@@ -187,7 +256,11 @@
                 return;
             }
 
-            showError(result.error || $i18n.t('auth.login.loginError'));
+            if (result.errorCode === 'FAMILY_BLOCKED' || result.errorCode === 'ACCOUNT_BLOCKED') {
+                showBlockedAccessModal();
+            } else {
+                showError(result.error || $i18n.t('auth.login.loginError'));
+            }
             loginPassword = '';
         } catch {
             showError($i18n.t('auth.login.loginNetworkError'));
@@ -197,6 +270,11 @@
     }
 
     async function handleFamilyChoice(choice: FamilyChoice) {
+        if (choice.blocked) {
+            showBlockedAccessModal();
+            return;
+        }
+
         chooserError = '';
         chooserSubmittingFamilyId = choice.familyId;
 
@@ -333,6 +411,7 @@
 
     onMount(() => {
         const searchParams = new URLSearchParams(window.location.search);
+        const restoredChooser = restoreChooserFromCookie();
 
         switch (searchParams.get('error')) {
             case 'invalid_token':
@@ -351,7 +430,9 @@
                 break;
         }
 
-        loginEmailInput?.focus();
+        if (!restoredChooser) {
+            loginEmailInput?.focus();
+        }
 
         void fetch('/api/auth-config', { credentials: 'same-origin', cache: 'no-store' })
             .then(async (response) => {
@@ -775,6 +856,11 @@
         cursor: progress;
     }
 
+    .chooser-item--blocked {
+        border-color: rgba(214, 106, 106, 0.28);
+        background: linear-gradient(180deg, rgba(255, 248, 248, 0.98), rgba(255, 238, 238, 0.96));
+    }
+
     .chooser-item__copy {
         display: grid;
         gap: 0.2rem;
@@ -814,6 +900,31 @@
         color: var(--accent);
         font-size: 0.82rem;
         font-weight: 700;
+    }
+
+    .chooser-item--blocked .chooser-item__action {
+        color: #c0392b;
+    }
+
+    .login-blocked-modal {
+        border: 0;
+        padding: 0;
+        background: transparent;
+    }
+
+    .login-blocked-modal::backdrop {
+        background: rgba(15, 23, 42, 0.48);
+        backdrop-filter: blur(6px);
+    }
+
+    .login-blocked-modal__content {
+        width: min(420px, calc(100vw - 2rem));
+    }
+
+    .login-blocked-modal__actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1.25rem;
     }
 
     .google-auth__divider {
@@ -1083,6 +1194,7 @@
                                             type="button"
                                             class="chooser-item"
                                             class:chooser-item--loading={chooserSubmittingFamilyId === choice.familyId}
+                                            class:chooser-item--blocked={choice.blocked}
                                             on:click={() => handleFamilyChoice(choice)}
                                             disabled={chooserSubmittingFamilyId !== null}
                                         >
@@ -1093,7 +1205,9 @@
                                             <div class="chooser-item__meta">
                                                 <span class="chooser-item__permission">{permissionLabel(choice.permission)}</span>
                                                 <span class="chooser-item__action">
-                                                    {chooserSubmittingFamilyId === choice.familyId
+                                                    {choice.blocked
+                                                        ? $i18n.t('auth.login.chooseFamilyBlockedAction')
+                                                        : chooserSubmittingFamilyId === choice.familyId
                                                         ? $i18n.t('auth.login.chooseFamilySubmitting')
                                                         : $i18n.t('auth.login.chooseFamilySelect')}
                                                 </span>
@@ -1323,3 +1437,17 @@
         </section>
     </main>
 </div>
+
+{#if blockedModalOpen}
+    <dialog class="modal login-blocked-modal" aria-modal="true" open>
+        <div class="modal__content login-blocked-modal__content">
+            <h3>{$i18n.t('auth.login.blockedAccessTitle')}</h3>
+            <p>{$i18n.t('auth.login.blockedAccessText')}</p>
+            <div class="login-blocked-modal__actions">
+                <button class="btn-secondary" type="button" on:click={hideBlockedAccessModal}>
+                    {$i18n.t('auth.login.blockedAccessClose')}
+                </button>
+            </div>
+        </div>
+    </dialog>
+{/if}

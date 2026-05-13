@@ -16,6 +16,7 @@ public record AuthPayload(
     public record FamilyChoice(
         String familyId,
         String familyName,
-        String permission
+        String permission,
+        boolean blocked
     ) {}
 }

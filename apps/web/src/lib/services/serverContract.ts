@@ -151,6 +151,7 @@ function normalizeFamilyChoice(choice: Record<string, unknown> = {}): FamilyChoi
         familyId: (choice.familyId ?? choice.family_id ?? '') as string,
         familyName: (choice.familyName ?? choice.family_name ?? '') as string,
         permission: normalizePermission(choice.permission) ?? 'viewer',
+        blocked: parseBoolean(choice.blocked),
     };
 }
 

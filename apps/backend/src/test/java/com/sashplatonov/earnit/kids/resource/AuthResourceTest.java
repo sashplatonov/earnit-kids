@@ -13,6 +13,7 @@ import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.RegisterRequest;
 import com.sashplatonov.earnit.kids.dto.request.ResetPasswordRequest;
+import com.sashplatonov.earnit.kids.dto.request.SelectFamilyRequest;
 import com.sashplatonov.earnit.kids.dto.request.VerifyEmailRequest;
 import com.sashplatonov.earnit.kids.dto.response.AuthConfigResponse;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
@@ -79,6 +80,36 @@ class AuthResourceTest {
     }
 
     @Test
+    void login_selectionRequired_returnsChooserPayloadWithoutCookies() {
+        AuthPayload payload = new AuthPayload(
+            null,
+            "a@test.com",
+            "admin",
+            null,
+            null,
+            false,
+            null,
+            List.of(
+                new AuthPayload.FamilyChoice("fam-1", "Family One", "family_admin", false),
+                new AuthPayload.FamilyChoice("fam-2", "Family Two", "viewer", true)
+            ),
+            true);
+        when(authService.authenticateAdmin("a@test.com", "secret"))
+            .thenReturn(OperationResult.success(payload));
+
+        Response response = resource.login(new LoginRequest("a@test.com", "secret"));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaders().get("Set-Cookie")).isNull();
+        var entity = (com.sashplatonov.earnit.kids.dto.response.AuthResponse) response.getEntity();
+        assertThat(entity.selectionRequired()).isTrue();
+        assertThat(entity.familyChoices()).containsExactly(
+            new com.sashplatonov.earnit.kids.dto.response.AuthResponse.FamilyChoice("fam-1", "Family One", "family_admin", false),
+            new com.sashplatonov.earnit.kids.dto.response.AuthResponse.FamilyChoice("fam-2", "Family Two", "viewer", true)
+        );
+    }
+
+    @Test
     void loginGoogle_validParentCredential_returnsCookies() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "admin", null, null, false, "family_admin", null, false);
         when(authService.authenticateAdminWithGoogle("google-token"))
@@ -100,6 +131,20 @@ class AuthResourceTest {
         Response response = resource.loginGoogle(new GoogleLoginRequest("bad-token"));
 
         assertThat(response.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void selectFamily_validSelection_returnsCookies() {
+        AuthPayload payload = new AuthPayload("fam-2", "a@test.com", "admin", null, null, false, "viewer", null, false);
+        when(authService.selectFamily("a@test.com", "fam-2"))
+            .thenReturn(OperationResult.success(payload));
+        when(cookieBuilder.buildAuthCookies("a@test.com", "admin", "fam-2", null, false, "viewer"))
+            .thenReturn(List.of("cookie-1"));
+
+        Response response = resource.selectFamily(new SelectFamilyRequest("a@test.com", "fam-2"));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaders().get("Set-Cookie")).hasSize(1);
     }
 
     @Test
@@ -377,6 +422,56 @@ class AuthResourceTest {
         assertThat(response.getStatus()).isEqualTo(303);
         assertThat(response.getLocation().toString())
             .isEqualTo("https://app.example.com/en/app?error=authentication_failed");
+    }
+
+    @Test
+    void loginGoogleCallback_selectionRequired_redirectsToLocalizedLoginWithChooserCookie() {
+        AppConfig config = TestConfigFactory.appConfig(
+            false,
+            null,
+            true,
+            true,
+            true,
+            "google-client-id",
+            "google-client-secret");
+        GoogleOAuthService googleOAuthService = mock(GoogleOAuthService.class);
+        JwtService jwtService = testJwtService();
+        resource = new AuthResource(
+            authService,
+            cookieBuilder,
+            config,
+            googleOAuthService,
+            jwtService,
+            "https://app.example.com");
+
+        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/ru/app"), 300);
+        when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
+            .thenReturn(java.util.Optional.of(new GoogleTokenResponse(null, null, null, null, null, "google-id-token")));
+        when(authService.authenticateAdminWithGoogle("google-id-token"))
+            .thenReturn(OperationResult.success(new AuthPayload(
+                null,
+                "a@test.com",
+                "admin",
+                null,
+                null,
+                false,
+                null,
+                List.of(
+                    new AuthPayload.FamilyChoice("fam-1", "Family One", "family_admin", false),
+                    new AuthPayload.FamilyChoice("fam-2", "Family Two", "viewer", true)
+                ),
+                true
+            )));
+
+        Response response = resource.loginGoogleCallback(
+            null,
+            "valid-code",
+            state,
+            state);
+
+        assertThat(response.getStatus()).isEqualTo(303);
+        assertThat(response.getLocation().toString()).isEqualTo("https://app.example.com/ru/login");
+        assertThat(String.valueOf(response.getHeaders().get("Set-Cookie"))).contains("pending_family_chooser=");
     }
 
     @Test

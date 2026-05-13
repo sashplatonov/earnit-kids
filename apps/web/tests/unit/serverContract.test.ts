@@ -174,15 +174,15 @@ describe('normalizeAuthResponse', () => {
             success: true,
             selectionRequired: true,
             familyChoices: [
-                { familyId: 'f-1', familyName: 'Winter House', permission: 'viewer' },
-                { familyId: 'f-2', familyName: 'Summer House', permission: 'family_admin' },
+                { familyId: 'f-1', familyName: 'Winter House', permission: 'viewer', blocked: false },
+                { familyId: 'f-2', familyName: 'Summer House', permission: 'family_admin', blocked: true },
             ],
         });
 
         expect(response.selectionRequired).toBe(true);
         expect(response.familyChoices).toEqual([
-            { familyId: 'f-1', familyName: 'Winter House', permission: 'viewer' },
-            { familyId: 'f-2', familyName: 'Summer House', permission: 'family_admin' },
+            { familyId: 'f-1', familyName: 'Winter House', permission: 'viewer', blocked: false },
+            { familyId: 'f-2', familyName: 'Summer House', permission: 'family_admin', blocked: true },
         ]);
     });
 });

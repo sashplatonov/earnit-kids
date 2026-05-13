@@ -17,7 +17,8 @@ public record AuthResponse(
     public record FamilyChoice(
         String familyId,
         String familyName,
-        String permission
+        String permission,
+        boolean blocked
     ) {}
 
     public static AuthResponse success(String role, String familyId) {

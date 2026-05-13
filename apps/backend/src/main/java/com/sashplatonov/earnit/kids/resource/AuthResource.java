@@ -50,6 +50,9 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -156,7 +159,7 @@ public class AuthResource {
                 if (payload.selectionRequired() && payload.familyChoices() != null) {
                     List<AuthResponse.FamilyChoice> choices = payload.familyChoices().stream()
                         .map(fc -> new AuthResponse.FamilyChoice(
-                            fc.familyId(), fc.familyName(), fc.permission()))
+                            fc.familyId(), fc.familyName(), fc.permission(), fc.blocked()))
                         .toList();
                     yield Response.ok(AuthResponse.selectionRequired(choices)).build();
                 }
@@ -171,7 +174,7 @@ public class AuthResource {
             }
             case OperationResult.Failure<AuthPayload> f ->
                 Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(ErrorResponse.of(f.message(), "AUTHENTICATION_FAILED", 401))
+                    .entity(ErrorResponse.of(f.message(), authFailureCode(f.message()), 401))
                     .build();
         };
     }
@@ -425,6 +428,15 @@ public class AuthResource {
         OperationResult<AuthPayload> result = authService.authenticateAdminWithGoogle(idToken);
         if (result instanceof OperationResult.Success<AuthPayload> s) {
             AuthPayload payload = s.value();
+            if (payload.selectionRequired() && payload.familyChoices() != null) {
+                String chooserCookie = buildPendingChooserCookie(payload);
+                Response.ResponseBuilder rb = Response.seeOther(
+                    URI.create(publicOriginResolver.toAbsoluteRedirect(
+                        deriveLoginRedirectTarget(redirectTarget), request)));
+                rb.header("Set-Cookie", chooserCookie);
+                rb.header("Set-Cookie", "oauth_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict");
+                return rb.build();
+            }
             var cookies = cookieBuilder.buildAuthCookies(
                 payload.email(), payload.role(), payload.familyId(),
                 payload.childId(), payload.isSuperAdmin(), payload.permission());
@@ -438,6 +450,51 @@ public class AuthResource {
         return Response.seeOther(
             URI.create(publicOriginResolver.toAbsoluteRedirect(
                 redirectTarget + "?error=authentication_failed", request))).build();
+    }
+
+    private String authFailureCode(String message) {
+        if (BackendMessages.message("auth.familyBlocked").equals(message)) {
+            return "FAMILY_BLOCKED";
+        }
+        if (BackendMessages.message("auth.accountBlocked").equals(message)) {
+            return "ACCOUNT_BLOCKED";
+        }
+        return "AUTHENTICATION_FAILED";
+    }
+
+    private String deriveLoginRedirectTarget(String redirectTarget) {
+        if (redirectTarget == null || redirectTarget.isBlank()) {
+            return "/login";
+        }
+
+        try {
+            URI uri = URI.create(redirectTarget);
+            String path = uri.getPath();
+            if (path == null || path.isBlank()) {
+                return "/login";
+            }
+            if ("/app".equals(path)) {
+                return "/login";
+            }
+            if (path.endsWith("/app")) {
+                return path.substring(0, path.length() - 4) + "/login";
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        return "/login";
+    }
+
+    private String buildPendingChooserCookie(AuthPayload payload) {
+        String raw = payload.email() + "\n" + payload.familyChoices().stream()
+            .map(choice -> choice.familyId() + "|" + choice.familyName() + "|" + choice.permission() + "|" + choice.blocked())
+            .reduce((left, right) -> left + "\n" + right)
+            .orElse("");
+        String encoded = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+        String secureSegment = appConfig.production() ? "Secure; " : "";
+        return "pending_family_chooser=" + encoded + "; Max-Age=300; Path=/; "
+            + secureSegment + "SameSite=Lax";
     }
 
     private AuthContext getAuth(ContainerRequestContext ctx) {

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,21 +77,34 @@ public final class AuthServiceImpl implements AuthService {
             return OperationResult.failure(BackendMessages.message("auth.noActiveMemberships"));
         }
 
+        List<AuthPayload.FamilyChoice> choices = buildFamilyChoices(memberships);
+
         if (memberships.size() == 1) {
             return authenticateWithMembership(email, memberships.get(0));
         }
 
-        List<AuthPayload.FamilyChoice> choices = memberships.stream()
-            .map(m -> {
-                var familyOpt = familyRepository.findByDbId(m.getFamilyId());
-                String familyName = familyOpt.map(FamilyEntity::getFamilyId).orElse("Unknown");
-                return new AuthPayload.FamilyChoice(familyName, familyName, m.getPermission().name());
-            })
-            .toList();
-
         log.info("Multiple memberships found for email={}, returning family chooser", email);
         return OperationResult.success(
             new AuthPayload(null, email, "admin", null, null, false, null, choices, true));
+    }
+
+    private List<AuthPayload.FamilyChoice> buildFamilyChoices(List<FamilyParentMembershipEntity> memberships) {
+        var choices = new ArrayList<AuthPayload.FamilyChoice>(memberships.size());
+        for (var membership : memberships) {
+            var familyOpt = familyRepository.findByDbId(membership.getFamilyId());
+            if (familyOpt.isEmpty()) {
+                continue;
+            }
+
+            FamilyEntity family = familyOpt.get();
+            String familyName = family.getFamilyId();
+            choices.add(new AuthPayload.FamilyChoice(
+                family.getFamilyId(),
+                familyName,
+                membership.getPermission().name(),
+                family.isBlocked()));
+        }
+        return choices;
     }
 
     private OperationResult<AuthPayload> authenticateWithMembership(String email, FamilyParentMembershipEntity membership) {
@@ -103,7 +117,7 @@ public final class AuthServiceImpl implements AuthService {
         var family = familyOpt.get();
         if (family.isBlocked()) {
             log.info("Authentication failed (family blocked): {}", email);
-            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
+            return OperationResult.failure(BackendMessages.message("auth.familyBlocked"));
         }
 
         familyRepository.updateLastActivity(family.getFamilyId());
@@ -449,18 +463,25 @@ public final class AuthServiceImpl implements AuthService {
         }
 
         var parent = parentOpt.get();
+        if (parent.isBlocked()) {
+            return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
+        }
         var familyOpt = familyRepository.findById(familyId);
         if (familyOpt.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
         }
 
         var family = familyOpt.get();
+        if (family.isBlocked()) {
+            return OperationResult.failure(BackendMessages.message("auth.familyBlocked"));
+        }
         var membershipOpt = membershipRepository.findByParentAndFamily(parent.getId(), family.getId());
         if (membershipOpt.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("auth.noActiveMemberships"));
         }
 
         var membership = membershipOpt.get();
+        familyRepository.updateLastActivity(family.getFamilyId());
         boolean isSuperAdmin = isSuperAdminEmail(email);
         String permission = membership.getPermission().name();
         log.info("Family selected: familyId={}, email={}, permission={}", familyId, email, permission);
@@ -468,4 +489,3 @@ public final class AuthServiceImpl implements AuthService {
             new AuthPayload(family.getFamilyId(), email, "admin", null, null, isSuperAdmin, permission, null, false));
     }
 }
-

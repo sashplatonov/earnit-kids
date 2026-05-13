@@ -4,6 +4,7 @@ export interface FamilyChoice {
     familyId: string;
     familyName: string;
     permission: MembershipPermission;
+    blocked: boolean;
 }
 
 export interface ParentMembership {

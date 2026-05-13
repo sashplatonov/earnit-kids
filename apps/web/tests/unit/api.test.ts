@@ -128,8 +128,8 @@ describe('fetchWithCsrf', () => {
             success: true,
             selectionRequired: true,
             familyChoices: [
-                { familyId: 'family-1', familyName: 'Winter House', permission: 'viewer' },
-                { familyId: 'family-2', familyName: 'Summer House', permission: 'family_admin' },
+                { familyId: 'family-1', familyName: 'Winter House', permission: 'viewer', blocked: false },
+                { familyId: 'family-2', familyName: 'Summer House', permission: 'family_admin', blocked: true },
             ],
         }));
 
@@ -147,8 +147,8 @@ describe('fetchWithCsrf', () => {
                 error: null,
                 selectionRequired: true,
                 familyChoices: [
-                    { familyId: 'family-1', familyName: 'Winter House', permission: 'viewer' },
-                    { familyId: 'family-2', familyName: 'Summer House', permission: 'family_admin' },
+                    { familyId: 'family-1', familyName: 'Winter House', permission: 'viewer', blocked: false },
+                    { familyId: 'family-2', familyName: 'Summer House', permission: 'family_admin', blocked: true },
                 ],
             },
         });

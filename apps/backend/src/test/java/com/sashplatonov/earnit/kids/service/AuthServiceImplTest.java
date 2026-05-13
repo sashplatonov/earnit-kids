@@ -163,6 +163,30 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void authenticateAdmin_multipleMemberships_returnsChooserWithBlockedFlags() {
+        var parent = mockParentAccount("user@test.com", "password123", false, true);
+        var firstMembership = mockMembership(1, 1, "family_admin");
+        var secondMembership = mockMembership(1, 2, "viewer");
+        FamilyEntity activeFamily = mockFamily("fam_active", "user@test.com", "password123", false, true);
+        FamilyEntity blockedFamily = mockFamily("fam_blocked", "other@test.com", "password123", true, true);
+
+        when(parentAccountRepository.findByEmail("user@test.com")).thenReturn(Optional.of(parent));
+        when(membershipRepository.findByParentAccountId(1)).thenReturn(List.of(firstMembership, secondMembership));
+        when(familyRepository.findByDbId(1)).thenReturn(Optional.of(activeFamily));
+        when(familyRepository.findByDbId(2)).thenReturn(Optional.of(blockedFamily));
+
+        OperationResult<AuthPayload> result = authService.authenticateAdmin("user@test.com", "password123");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
+        assertThat(payload.selectionRequired()).isTrue();
+        assertThat(payload.familyChoices()).containsExactly(
+            new AuthPayload.FamilyChoice("fam_active", "fam_active", "family_admin", false),
+            new AuthPayload.FamilyChoice("fam_blocked", "fam_blocked", "viewer", true)
+        );
+    }
+
+    @Test
     void authenticateAdmin_blockedFamily_returnsFailure() {
         var parent = mockParentAccount("blocked@test.com", "password123", true, true);
         when(parentAccountRepository.findByEmail("blocked@test.com")).thenReturn(Optional.of(parent));
@@ -531,6 +555,21 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<AuthPayload>) result).message())
             .contains("auth.registrationFailed");
+    }
+
+    @Test
+    void selectFamily_blockedFamily_returnsFailure() {
+        var parent = mockParentAccount("user@test.com", "password123", false, true);
+        FamilyEntity blockedFamily = mockFamily("fam_blocked", "other@test.com", "password123", true, true);
+
+        when(parentAccountRepository.findByEmail("user@test.com")).thenReturn(Optional.of(parent));
+        when(familyRepository.findById("fam_blocked")).thenReturn(Optional.of(blockedFamily));
+
+        OperationResult<AuthPayload> result = authService.selectFamily("user@test.com", "fam_blocked");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<AuthPayload>) result).message())
+            .isEqualTo("Sign-in is blocked for this family");
     }
 
     private AuthServiceImpl createAuthService(AppConfig config) {
