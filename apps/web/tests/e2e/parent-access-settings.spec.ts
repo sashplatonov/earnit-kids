@@ -53,6 +53,30 @@ test('family admin settings still open after re-login', async ({ page }) => {
     await expect(page.locator('#parent-access-section')).toBeVisible();
 });
 
+test('invited parent memberships stay visible after page reload', async ({ page }) => {
+    const ownerEmail = uniqueEmail('parent.access.reload');
+    const invitedEmail = uniqueEmail('parent.access.persisted');
+
+    await registerParent(page, ownerEmail, DEFAULT_PARENT_PASSWORD);
+    await openSettings(page);
+
+    await page.locator('#parent-access-email').fill(invitedEmail);
+    await page.locator('#parent-access-permission').selectOption('editor');
+    await page.locator('#parent-access-invite').click();
+
+    const invitedRow = page.locator('#parent-access-list [data-membership-id]')
+        .filter({ hasText: invitedEmail })
+        .first();
+    await expect(invitedRow).toBeVisible();
+
+    await page.reload();
+    await openSettings(page);
+
+    await expect(page.locator('#parent-access-list [data-membership-id]')
+        .filter({ hasText: invitedEmail })
+        .first()).toBeVisible();
+});
+
 test('primary parent email shows toast error and stays out of membership list', async ({ page }) => {
     const ownerEmail = uniqueEmail('parent.access.primary');
 

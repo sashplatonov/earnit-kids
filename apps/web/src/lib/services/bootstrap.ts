@@ -27,10 +27,14 @@ export async function initializeFromServer(): Promise<boolean> {
         ? ((await loadBaseData()) as { tasks: unknown[]; products: unknown[] }) ?? { tasks: [], products: [] }
         : { tasks: [], products: [] };
     const currentPermission = get(appStore).permission;
+    const currentFamilyId = get(appStore).familyId;
 
     const state = buildInitialState(record, baseData as Record<string, unknown>);
     if (state.permission == null && currentPermission != null) {
         state.permission = currentPermission;
+    }
+    if (state.familyId == null && currentFamilyId != null) {
+        state.familyId = currentFamilyId;
     }
     // Keep isLoading true — will be cleared after all data (including child data) is loaded
     appStore.setState({ ...(state as Partial<AppState>), isLoading: true });

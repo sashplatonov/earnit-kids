@@ -35,7 +35,10 @@
         let mounted = true;
         let cleanupPwa: (() => void) | null = null;
 
-        appStore.setState({ permission: session.permission ?? null });
+        appStore.setState({
+            permission: session.permission ?? null,
+            familyId: (session.familyId as string | null | undefined) ?? null,
+        });
         void initializeFromServer();
         void initializePwa(() => refreshData(true)).then((cleanup) => {
             if (!mounted) {

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { afterUpdate, onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import {
         addParentMembership,
@@ -17,18 +18,31 @@
     let isBusy = false;
     let newEmail = '';
     let newPermission: MembershipPermission = 'editor';
-    let loadedFamilyId: string | null = null;
-    let loadingFamilyId: string | null = null;
+    let lastLoadedFamilyId: string | null = null;
 
     $: familyId = $appStore.familyId;
     $: canManage = $appStore.permission === 'family_admin';
 
-    $: if (!canManage || !familyId) {
-        memberships = [];
-        loadedFamilyId = null;
-        loadingFamilyId = null;
-    } else if (loadedFamilyId !== familyId && loadingFamilyId !== familyId) {
-        loadingFamilyId = familyId;
+    onMount(() => {
+        syncMembershipsWithSession();
+    });
+
+    afterUpdate(() => {
+        syncMembershipsWithSession();
+    });
+
+    function syncMembershipsWithSession() {
+        if (!canManage || !familyId) {
+            memberships = [];
+            lastLoadedFamilyId = null;
+            return;
+        }
+
+        if (lastLoadedFamilyId === familyId || isLoading) {
+            return;
+        }
+
+        lastLoadedFamilyId = familyId;
         void refreshMemberships(familyId);
     }
 
@@ -69,8 +83,7 @@
     async function refreshMemberships(targetFamilyId = familyId) {
         if (!canManage || !targetFamilyId) {
             memberships = [];
-            loadedFamilyId = null;
-            loadingFamilyId = null;
+            lastLoadedFamilyId = null;
             return;
         }
 
@@ -79,14 +92,12 @@
         const result = await loadParentMemberships();
         if (result.ok) {
             memberships = result.data ?? [];
-            loadedFamilyId = targetFamilyId;
         } else {
             memberships = [];
-            loadedFamilyId = null;
+            lastLoadedFamilyId = null;
             showToast(errorMessage(result.errorCode, result.error), 'error');
         }
 
-        loadingFamilyId = null;
         isLoading = false;
     }
 
@@ -102,7 +113,7 @@
         if (result.ok) {
             if (result.data) {
                 memberships = [...memberships, result.data];
-                loadedFamilyId = familyId ?? null;
+                lastLoadedFamilyId = familyId ?? null;
                 newEmail = '';
                 newPermission = 'editor';
                 showToast($i18n.t('app.parentAccess.successAdd'), 'success');
