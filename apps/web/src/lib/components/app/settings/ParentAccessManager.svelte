@@ -165,7 +165,7 @@
         </div>
 
         <div class="parent-access__form">
-            <div class="form-group parent-access__field">
+            <div class="form-group parent-access__field parent-access__field--email">
                 <label for="parent-access-email">{$i18n.t('app.parentAccess.emailLabel')}</label>
                 <input
                     id="parent-access-email"
@@ -177,7 +177,7 @@
                     disabled={isBusy}
                 />
             </div>
-            <div class="form-group parent-access__field">
+            <div class="form-group parent-access__field parent-access__field--permission">
                 <label for="parent-access-permission">{$i18n.t('app.parentAccess.permissionLabel')}</label>
                 <select
                     id="parent-access-permission"
@@ -190,22 +190,20 @@
                     <option value="family_admin">{$i18n.t('app.parentAccess.permissionFamilyAdmin')}</option>
                 </select>
             </div>
-            <div class="parent-access__actions">
-                <button
-                    class="parent-access__icon-action parent-access__icon-action--invite"
-                    id="parent-access-invite"
-                    type="button"
-                    on:click={inviteParent}
-                    disabled={isBusy}
-                    title={$i18n.t('app.parentAccess.inviteButton')}
-                    aria-label={$i18n.t('app.parentAccess.inviteButton')}
-                >
-                    <svg viewBox="0 0 24 24" class="parent-access__icon-svg" aria-hidden="true">
-                        <path d="M3 11.5 20.5 4 14 21l-3.2-6.3L3 11.5Z"></path>
-                        <path d="M10.8 14.7 20.5 4"></path>
-                    </svg>
-                </button>
-            </div>
+            <button
+                class="parent-access__icon-action parent-access__icon-action--invite"
+                id="parent-access-invite"
+                type="button"
+                on:click={inviteParent}
+                disabled={isBusy}
+                title={$i18n.t('app.parentAccess.inviteButton')}
+                aria-label={$i18n.t('app.parentAccess.inviteButton')}
+            >
+                <svg viewBox="0 0 24 24" class="parent-access__icon-svg" aria-hidden="true">
+                    <path d="M3 11.5 20.5 4 14 21l-3.2-6.3L3 11.5Z"></path>
+                    <path d="M10.8 14.7 20.5 4"></path>
+                </svg>
+            </button>
         </div>
 
         <div class="parent-access__list" id="parent-access-list" aria-label={$i18n.t('app.parentAccess.title')}>
@@ -218,69 +216,63 @@
                     <article class="parent-access__row" data-membership-id={membership.id}>
                         <div class="parent-access__row-main">
                             <div class="parent-access__email" title={membership.email}>{membership.email}</div>
-                            <div class="parent-access__meta">
-                                <span class="parent-access__status-tag">{statusLabel(membership.status)}</span>
-                            </div>
+                            <span class="parent-access__status-tag">{statusLabel(membership.status)}</span>
                         </div>
 
                         <div class="parent-access__row-controls">
                             <label class="sr-only" for={`parent-access-permission-${membership.id}`}>
                                 {$i18n.t('app.parentAccess.permissionLabel')} {membership.email}
                             </label>
-                            <div class="parent-access__permission-control parent-access__permission-control--row">
-                                <span class="parent-access__permission-icon" aria-hidden="true" title={permissionLabel(membership.permission)}>
-                                    {#if membership.permission === 'viewer'}
-                                        <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
-                                            <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                    {:else if membership.permission === 'editor'}
-                                        <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
-                                            <path d="m4 20 4.2-1 9.4-9.4-3.2-3.2L5 15.8 4 20Z"></path>
-                                            <path d="m13.9 5 3.2 3.2"></path>
-                                        </svg>
-                                    {:else}
-                                        <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
-                                            <path d="M12 3.5 5.5 6v5.2c0 4.2 2.7 8 6.5 9.3 3.8-1.3 6.5-5.1 6.5-9.3V6L12 3.5Z"></path>
-                                            <path d="M9.5 12.2 11.3 14l3.7-4"></path>
-                                        </svg>
-                                    {/if}
-                                </span>
-                                <select
-                                    id={`parent-access-permission-${membership.id}`}
-                                    class="input parent-access__select"
-                                    bind:value={membership.permission}
-                                    disabled={isBusy || isLastFamilyAdmin(membership)}
-                                    title={permissionLabel(membership.permission)}
-                                    on:change={() => saveMembership(membership)}
-                                >
-                                    <option value="viewer">{$i18n.t('app.parentAccess.permissionViewer')}</option>
-                                    <option value="editor">{$i18n.t('app.parentAccess.permissionEditor')}</option>
-                                    <option value="family_admin">{$i18n.t('app.parentAccess.permissionFamilyAdmin')}</option>
-                                </select>
-                            </div>
+                            <span class="parent-access__permission-icon" aria-hidden="true" title={permissionLabel(membership.permission)}>
+                                {#if membership.permission === 'viewer'}
+                                    <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
+                                        <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                {:else if membership.permission === 'editor'}
+                                    <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
+                                        <path d="m4 20 4.2-1 9.4-9.4-3.2-3.2L5 15.8 4 20Z"></path>
+                                        <path d="m13.9 5 3.2 3.2"></path>
+                                    </svg>
+                                {:else}
+                                    <svg viewBox="0 0 24 24" class="parent-access__icon-svg">
+                                        <path d="M12 3.5 5.5 6v5.2c0 4.2 2.7 8 6.5 9.3 3.8-1.3 6.5-5.1 6.5-9.3V6L12 3.5Z"></path>
+                                        <path d="M9.5 12.2 11.3 14l3.7-4"></path>
+                                    </svg>
+                                {/if}
+                            </span>
+                            <select
+                                id={`parent-access-permission-${membership.id}`}
+                                class="input parent-access__select parent-access__select--row"
+                                bind:value={membership.permission}
+                                disabled={isBusy || isLastFamilyAdmin(membership)}
+                                title={permissionLabel(membership.permission)}
+                                on:change={() => saveMembership(membership)}
+                            >
+                                <option value="viewer">{$i18n.t('app.parentAccess.permissionViewer')}</option>
+                                <option value="editor">{$i18n.t('app.parentAccess.permissionEditor')}</option>
+                                <option value="family_admin">{$i18n.t('app.parentAccess.permissionFamilyAdmin')}</option>
+                            </select>
                         </div>
 
-                        <div class="parent-access__row-actions">
-                            <button
-                                class="parent-access__icon-action parent-access__icon-action--danger"
-                                id={`parent-access-remove-${membership.id}`}
-                                type="button"
-                                on:click={() => deleteMembership(membership)}
-                                disabled={isBusy || cannotRemoveMembership(membership)}
-                                title={`${$i18n.t('app.parentAccess.removeButton')} ${membership.email}`}
-                                aria-label={`${$i18n.t('app.parentAccess.removeButton')} ${membership.email}`}
-                            >
-                                <svg viewBox="0 0 24 24" class="parent-access__icon-svg" aria-hidden="true">
-                                    <path d="M4.5 7h15"></path>
-                                    <path d="M9.5 3.8h5l.7 2.2"></path>
-                                    <path d="M8 10.2v6.5"></path>
-                                    <path d="M12 10.2v6.5"></path>
-                                    <path d="M16 10.2v6.5"></path>
-                                    <path d="M6.3 7 7 19.2c.1.9.8 1.6 1.7 1.6h6.6c.9 0 1.6-.7 1.7-1.6L17.7 7"></path>
-                                </svg>
-                            </button>
-                        </div>
+                        <button
+                            class="parent-access__icon-action parent-access__icon-action--danger"
+                            id={`parent-access-remove-${membership.id}`}
+                            type="button"
+                            on:click={() => deleteMembership(membership)}
+                            disabled={isBusy || cannotRemoveMembership(membership)}
+                            title={`${$i18n.t('app.parentAccess.removeButton')} ${membership.email}`}
+                            aria-label={`${$i18n.t('app.parentAccess.removeButton')} ${membership.email}`}
+                        >
+                            <svg viewBox="0 0 24 24" class="parent-access__icon-svg" aria-hidden="true">
+                                <path d="M4.5 7h15"></path>
+                                <path d="M9.5 3.8h5l.7 2.2"></path>
+                                <path d="M8 10.2v6.5"></path>
+                                <path d="M12 10.2v6.5"></path>
+                                <path d="M16 10.2v6.5"></path>
+                                <path d="M6.3 7 7 19.2c.1.9.8 1.6 1.7 1.6h6.6c.9 0 1.6-.7 1.7-1.6L17.7 7"></path>
+                            </svg>
+                        </button>
                     </article>
                 {/each}
             {/if}
@@ -330,14 +322,10 @@
     }
 
     .parent-access__form {
-        display: grid;
-        row-gap: 0.65rem;
-        column-gap: 0.7rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
         margin-top: 0.85rem;
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas:
-            "email email"
-            "permission action";
         align-items: end;
     }
 
@@ -345,12 +333,14 @@
         min-width: 0;
     }
 
-    .parent-access__field:first-child {
-        grid-area: email;
+    .parent-access__field--email {
+        flex: 1 1 14rem;
+        min-width: 12rem;
     }
 
-    .parent-access__field:last-of-type {
-        grid-area: permission;
+    .parent-access__field--permission {
+        flex: 0 0 auto;
+        min-width: 8.5rem;
     }
 
     .parent-access__input {
@@ -358,12 +348,21 @@
         min-height: 3.15rem;
     }
 
-    .parent-access__actions {
-        display: flex;
-        justify-content: flex-end;
-        grid-area: action;
-        align-self: end;
-        margin-top: 0;
+    .parent-access__select {
+        min-width: 0;
+        width: 100%;
+        padding-left: 0.95rem;
+        padding-right: 2.2rem;
+    }
+
+    .parent-access__select--form {
+        min-height: 3rem;
+        width: 100%;
+    }
+
+    .parent-access__select--row {
+        width: auto;
+        max-width: 10rem;
     }
 
     .parent-access__list {
@@ -380,10 +379,11 @@
     }
 
     .parent-access__row {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
         align-items: center;
-        gap: 0.9rem;
-        padding: 0.95rem 1rem;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.72);
         border: 1px solid rgba(0, 0, 0, 0.08);
@@ -391,7 +391,9 @@
 
     .parent-access__row-main {
         min-width: 0;
-        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
     }
 
     .parent-access__email {
@@ -400,32 +402,24 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-    }
-
-    .parent-access__meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.35rem;
-        font-size: 0.85rem;
-        opacity: 0.85;
-    }
-
-    .parent-access__status-tag {
-        padding: 0.28rem 0.65rem;
-        border-radius: 999px;
-        background: rgba(13, 32, 54, 0.08);
-    }
-
-    .parent-access__permission-control {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
         min-width: 0;
     }
 
-    .parent-access__permission-control--row {
-        flex: 0 0 auto;
+    .parent-access__status-tag {
+        display: inline-block;
+        width: fit-content;
+        padding: 0.18rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(13, 32, 54, 0.08);
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .parent-access__row-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
     }
 
     .parent-access__permission-icon {
@@ -450,30 +444,6 @@
         stroke-linejoin: round;
     }
 
-    .parent-access__row-controls {
-        min-width: 0;
-        flex: 0 0 auto;
-    }
-
-    .parent-access__row-actions {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex: 0 0 auto;
-    }
-
-    .parent-access__select {
-        min-width: 0;
-        width: 11rem;
-        padding-left: 0.95rem;
-        padding-right: 2.2rem;
-    }
-
-    .parent-access__select--form {
-        min-height: 3rem;
-        width: 100%;
-    }
-
     .parent-access__icon-action {
         width: 2.8rem;
         height: 2.8rem;
@@ -485,6 +455,7 @@
         background: rgba(13, 32, 54, 0.08);
         color: #203550;
         cursor: pointer;
+        flex-shrink: 0;
         transition: transform 140ms ease, background-color 140ms ease, box-shadow 140ms ease, color 140ms ease;
     }
 
@@ -503,6 +474,8 @@
     .parent-access__icon-action--invite {
         background: linear-gradient(135deg, #2f6cf2, #3cb7a0);
         color: #fff;
+        flex-shrink: 0;
+        align-self: end;
     }
 
     .parent-access__icon-action--invite:hover:not(:disabled) {
@@ -510,8 +483,8 @@
     }
 
     .parent-access__icon-action--danger {
-        width: 2.7rem;
-        height: 2.7rem;
+        width: 2.4rem;
+        height: 2.4rem;
         background: rgba(230, 57, 70, 0.12);
         color: #8a1823;
     }
@@ -543,22 +516,22 @@
         }
 
         .parent-access__form {
-            row-gap: 0.55rem;
-            column-gap: 0.55rem;
+            gap: 0.55rem;
             margin-top: 0.7rem;
-            grid-template-columns: minmax(0, 1fr) auto;
-            grid-template-areas:
-                "email email"
-                "permission action";
+        }
+
+        .parent-access__field--email {
+            flex: 1 1 100%;
+            min-width: 100%;
+        }
+
+        .parent-access__field--permission {
+            flex: 1 1 auto;
         }
 
         .parent-access__input,
         .parent-access__select--form {
             min-height: 2.9rem;
-        }
-
-        .parent-access__row-actions {
-            justify-content: flex-end;
         }
 
         .parent-access__list {
@@ -567,29 +540,26 @@
         }
 
         .parent-access__row {
-            gap: 0.7rem;
-            padding: 0.8rem 0.85rem;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.5rem;
+            padding: 0.7rem 0.75rem;
+        }
+
+        .parent-access__row-controls {
+            gap: 0.35rem;
         }
 
         .parent-access__email {
             font-size: 0.95rem;
         }
 
-        .parent-access__meta {
-            margin-top: 0.25rem;
-        }
-
-        .parent-access__select {
-            width: 7.5rem;
-        }
-
-        .parent-access__actions {
-            margin-top: 0;
+        .parent-access__select--row {
+            max-width: 8rem;
         }
 
         .parent-access__icon-action--danger {
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 2.4rem;
+            height: 2.4rem;
         }
     }
 </style>
