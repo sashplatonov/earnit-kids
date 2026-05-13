@@ -284,7 +284,6 @@
                 </span>
                 <span class="parent-access__action-tile-copy">
                     <span class="parent-access__action-tile-label">{$i18n.t('app.parentAccess.permissionLabel')}</span>
-                    <span class="parent-access__action-tile-value">{permissionLabel(newPermission)}</span>
                 </span>
             </button>
 
@@ -305,7 +304,6 @@
                 </span>
                 <span class="parent-access__action-tile-copy">
                     <span class="parent-access__action-tile-label">{$i18n.t('app.parentAccess.inviteButton')}</span>
-                    <span class="parent-access__action-tile-value">{permissionLabel(newPermission)}</span>
                 </span>
             </button>
         </div>
@@ -497,11 +495,11 @@
 
     .parent-access__action-tile {
         min-width: 0;
-        min-height: 3.05rem;
+        min-height: 2.72rem;
         display: flex;
         align-items: center;
-        gap: 0.68rem;
-        padding: 0.72rem 0.88rem;
+        gap: 0.58rem;
+        padding: 0.56rem 0.78rem;
         border: 1px solid rgba(0, 0, 0, 0.08);
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.82);
@@ -530,8 +528,8 @@
     }
 
     .parent-access__action-tile-icon {
-        width: 2.08rem;
-        height: 2.08rem;
+        width: 1.92rem;
+        height: 1.92rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -549,21 +547,15 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.1rem;
+        gap: 0;
     }
 
     .parent-access__action-tile-label {
-        font-size: 0.66rem;
-        line-height: 1.1;
+        font-size: 0.72rem;
+        line-height: 1.05;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        opacity: 0.66;
-    }
-
-    .parent-access__action-tile-value {
-        font-size: 0.9rem;
-        font-weight: 600;
-        line-height: 1.18;
+        opacity: 0.78;
     }
 
     .parent-access__list {
@@ -581,7 +573,7 @@
 
     .parent-access__row {
         display: grid;
-        gap: 0.3rem;
+        gap: 0.08rem;
         padding: 0.66rem 0.8rem;
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.74);
@@ -600,7 +592,7 @@
         min-width: 0;
         font-size: 0.9rem;
         font-weight: 600;
-        line-height: 1.28;
+        line-height: 1.1;
         overflow-wrap: anywhere;
         word-break: break-word;
     }
@@ -624,11 +616,11 @@
         display: inline-flex;
         align-items: center;
         width: fit-content;
-        padding: 0.14rem 0.48rem;
+        padding: 0.1rem 0.42rem;
         border-radius: 999px;
         background: rgba(13, 32, 54, 0.08);
-        font-size: 0.7rem;
-        line-height: 1.15;
+        font-size: 0.66rem;
+        line-height: 1;
         white-space: nowrap;
     }
 
@@ -797,23 +789,22 @@
 
         .parent-access__input,
         .parent-access__action-tile {
-            min-height: 2.7rem;
+            min-height: 2.52rem;
         }
 
         .parent-access__action-tile {
-            gap: 0.55rem;
-            padding: 0.62rem 0.72rem;
+            gap: 0.48rem;
+            padding: 0.5rem 0.68rem;
         }
 
         .parent-access__action-tile-icon {
-            width: 1.92rem;
-            height: 1.92rem;
+            width: 1.78rem;
+            height: 1.78rem;
         }
 
-        .parent-access__action-tile-value,
         .parent-access__email {
             font-size: 0.84rem;
-            line-height: 1.22;
+            line-height: 1.08;
         }
 
         .parent-access__list {
@@ -840,7 +831,7 @@
 
         .parent-access__status-tag,
         .parent-access__permission-name {
-            font-size: 0.67rem;
+            font-size: 0.64rem;
         }
 
         .parent-access__picker {
