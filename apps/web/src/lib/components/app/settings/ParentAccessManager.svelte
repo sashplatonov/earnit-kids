@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import {
         addParentMembership,
@@ -18,15 +17,20 @@
     let isBusy = false;
     let newEmail = '';
     let newPermission: MembershipPermission = 'editor';
+    let loadedFamilyId: string | null = null;
+    let loadingFamilyId: string | null = null;
 
     $: familyId = $appStore.familyId;
     $: canManage = $appStore.permission === 'family_admin';
 
-    onMount(() => {
-        if (canManage) {
-            void refreshMemberships();
-        }
-    });
+    $: if (!canManage || !familyId) {
+        memberships = [];
+        loadedFamilyId = null;
+        loadingFamilyId = null;
+    } else if (loadedFamilyId !== familyId && loadingFamilyId !== familyId) {
+        loadingFamilyId = familyId;
+        void refreshMemberships(familyId);
+    }
 
     function permissionLabel(permission: MembershipPermission): string {
         switch (permission) {
@@ -62,9 +66,11 @@
         }
     }
 
-    async function refreshMemberships() {
-        if (!canManage || !familyId) {
+    async function refreshMemberships(targetFamilyId = familyId) {
+        if (!canManage || !targetFamilyId) {
             memberships = [];
+            loadedFamilyId = null;
+            loadingFamilyId = null;
             return;
         }
 
@@ -73,11 +79,14 @@
         const result = await loadParentMemberships();
         if (result.ok) {
             memberships = result.data ?? [];
+            loadedFamilyId = targetFamilyId;
         } else {
             memberships = [];
+            loadedFamilyId = null;
             showToast(errorMessage(result.errorCode, result.error), 'error');
         }
 
+        loadingFamilyId = null;
         isLoading = false;
     }
 
@@ -93,6 +102,7 @@
         if (result.ok) {
             if (result.data) {
                 memberships = [...memberships, result.data];
+                loadedFamilyId = familyId ?? null;
                 newEmail = '';
                 newPermission = 'editor';
                 showToast($i18n.t('app.parentAccess.successAdd'), 'success');
