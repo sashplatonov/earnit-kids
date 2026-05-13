@@ -305,6 +305,7 @@
     .parent-access {
         display: grid;
         gap: 1rem;
+        font-size: 0.95rem;
     }
 
     .parent-access__card {
@@ -325,7 +326,7 @@
 
     .parent-access__eyebrow {
         margin: 0 0 0.25rem;
-        font-size: 0.75rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.12em;
         opacity: 0.72;
@@ -343,10 +344,10 @@
     }
 
     .parent-access__form {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.65rem;
-        margin-top: 0.85rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(10rem, 0.8fr) auto;
+        gap: 0.55rem;
+        margin-top: 0.75rem;
         align-items: end;
     }
 
@@ -355,18 +356,16 @@
     }
 
     .parent-access__field--email {
-        flex: 1 1 14rem;
-        min-width: 12rem;
+        min-width: 0;
     }
 
     .parent-access__field--permission {
-        flex: 0 0 auto;
-        min-width: 8.5rem;
+        min-width: 0;
     }
 
     .parent-access__input {
         width: 100%;
-        min-height: 3.15rem;
+        min-height: 2.95rem;
     }
 
     .parent-access__select {
@@ -377,19 +376,20 @@
     }
 
     .parent-access__select--form {
-        min-height: 3rem;
+        min-height: 2.95rem;
         width: 100%;
     }
 
     .parent-access__select--row {
-        width: auto;
-        max-width: 10rem;
+        width: 100%;
+        min-width: 0;
+        max-width: 11rem;
     }
 
     .parent-access__list {
         display: grid;
-        gap: 0.75rem;
-        margin-top: 1.2rem;
+        gap: 0.55rem;
+        margin-top: 0.95rem;
     }
 
     .parent-access__empty {
@@ -401,10 +401,10 @@
 
     .parent-access__row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-columns: minmax(0, 1fr) minmax(11.5rem, 12.5rem) auto;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
+        gap: 0.6rem;
+        padding: 0.7rem 0.85rem;
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.72);
         border: 1px solid rgba(0, 0, 0, 0.08);
@@ -414,12 +414,13 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.18rem;
     }
 
     .parent-access__email {
-        font-weight: 700;
-        line-height: 1.35;
+        font-size: 0.92rem;
+        font-weight: 600;
+        line-height: 1.3;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -429,23 +430,26 @@
     .parent-access__status-tag {
         display: inline-block;
         width: fit-content;
-        padding: 0.18rem 0.55rem;
+        padding: 0.14rem 0.48rem;
         border-radius: 999px;
         background: rgba(13, 32, 54, 0.08);
-        font-size: 0.8rem;
+        font-size: 0.74rem;
+        line-height: 1.2;
         white-space: nowrap;
     }
 
     .parent-access__row-controls {
-        display: flex;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
         align-items: center;
-        gap: 0.5rem;
-        flex-shrink: 0;
+        gap: 0.45rem;
+        width: 100%;
     }
 
     .parent-access__permission-icon {
-        width: 2.35rem;
-        height: 2.35rem;
+        width: 2.15rem;
+        height: 2.15rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -456,8 +460,8 @@
     }
 
     .parent-access__icon-svg {
-        width: 1.1rem;
-        height: 1.1rem;
+        width: 1rem;
+        height: 1rem;
         fill: none;
         stroke: currentColor;
         stroke-width: 1.8;
@@ -466,8 +470,8 @@
     }
 
     .parent-access__icon-action {
-        width: 2.8rem;
-        height: 2.8rem;
+        width: 2.55rem;
+        height: 2.55rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -496,7 +500,7 @@
         background: linear-gradient(135deg, #2f6cf2, #3cb7a0);
         color: #fff;
         flex-shrink: 0;
-        align-self: end;
+        align-self: stretch;
     }
 
     .parent-access__icon-action--invite:hover:not(:disabled) {
@@ -504,8 +508,8 @@
     }
 
     .parent-access__icon-action--danger {
-        width: 2.4rem;
-        height: 2.4rem;
+        width: 2.2rem;
+        height: 2.2rem;
         background: rgba(230, 57, 70, 0.12);
         color: #8a1823;
     }
@@ -527,60 +531,107 @@
     }
 
     @media (max-width: 900px) {
+        .parent-access {
+            gap: 0.8rem;
+            font-size: 0.9rem;
+        }
+
         .parent-access__header {
             grid-template-columns: 1fr;
-            margin-bottom: 0.8rem;
+            gap: 0.7rem;
+            margin-bottom: 0.55rem;
         }
 
         .parent-access__count {
             justify-self: start;
+            width: 2.2rem;
+            height: 2.2rem;
+            font-size: 0.95rem;
         }
 
         .parent-access__form {
-            gap: 0.55rem;
-            margin-top: 0.7rem;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.45rem;
+            margin-top: 0.55rem;
         }
 
         .parent-access__field--email {
-            flex: 1 1 100%;
-            min-width: 100%;
+            grid-column: 1 / -1;
         }
 
         .parent-access__field--permission {
-            flex: 1 1 auto;
+            min-width: 0;
         }
 
         .parent-access__input,
         .parent-access__select--form {
-            min-height: 2.9rem;
+            min-height: 2.7rem;
         }
 
         .parent-access__list {
-            gap: 0.6rem;
-            margin-top: 0.95rem;
+            gap: 0.45rem;
+            margin-top: 0.75rem;
         }
 
         .parent-access__row {
             grid-template-columns: minmax(0, 1fr) auto;
-            gap: 0.5rem;
-            padding: 0.7rem 0.75rem;
+            grid-template-areas:
+                "main remove"
+                "controls remove";
+            align-items: start;
+            gap: 0.45rem 0.55rem;
+            padding: 0.62rem 0.7rem;
+        }
+
+        .parent-access__row-main {
+            grid-area: main;
+            gap: 0.15rem;
         }
 
         .parent-access__row-controls {
+            grid-area: controls;
+            width: 100%;
+            max-width: 100%;
             gap: 0.35rem;
         }
 
         .parent-access__email {
-            font-size: 0.95rem;
+            font-size: 0.84rem;
+            line-height: 1.22;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .parent-access__select--row {
-            max-width: 8rem;
+            max-width: none;
+            font-size: 0.88rem;
+            min-height: 2.45rem;
+            padding-left: 0.78rem;
+            padding-right: 2rem;
         }
 
         .parent-access__icon-action--danger {
-            width: 2.4rem;
-            height: 2.4rem;
+            grid-area: remove;
+            align-self: center;
+            width: 2.1rem;
+            height: 2.1rem;
+        }
+
+        .parent-access__permission-icon {
+            width: 1.95rem;
+            height: 1.95rem;
+        }
+
+        .parent-access__status-tag {
+            font-size: 0.68rem;
+        }
+
+        .parent-access__icon-action--invite {
+            width: 2.7rem;
+            height: 2.7rem;
         }
     }
 </style>
