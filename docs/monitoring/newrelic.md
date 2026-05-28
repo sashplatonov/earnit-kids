@@ -42,6 +42,8 @@ Notes:
 - keep the license key out of git
 - keep forwarding off until the log volume review says the bot is safe for the free plan
 - keep local decorating off when forwarding is on
+- Quarkus does not expose the servlet-container JMX pool set that powers the built-in APM `Threads` tab, so the image now ships a custom JMX extension under `/opt/newrelic/extensions`.
+- Query custom JVM/thread metrics in New Relic from the `Metric` event with names like `JMX/Runtime/Threads/ThreadCount`.
 
 [↑ Back to top](#top)
 
@@ -72,6 +74,7 @@ docker compose --env-file .env.example --profile db up --build
 Checks:
 
 - backend entity appears in New Relic APM
+- custom thread metrics appear in New Relic `Metric` data after a few scrape intervals
 - logs include the application name and deployment environment
 - `docker compose down` still stops the stack cleanly
 

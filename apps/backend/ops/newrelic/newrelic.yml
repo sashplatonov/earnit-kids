@@ -2,6 +2,7 @@
 # Secrets and rollout toggles are supplied through environment variables.
 
 common: &default_settings
+  extensions.dir: /opt/newrelic/extensions
   application_logging:
     enabled: true
     forwarding:

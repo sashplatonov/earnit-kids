@@ -1,0 +1,32 @@
+name: QuarkusJvmThreading
+version: 1.0
+enabled: true
+
+jmx:
+  - object_name: java.lang:type=Threading
+    root_metric_name: Runtime/Threads
+    metrics:
+      - attributes: ThreadCount, PeakThreadCount, DaemonThreadCount
+        type: simple
+      - attributes: TotalStartedThreadCount
+        type: monotonically_increasing
+
+  - object_name: java.lang:type=ClassLoading
+    root_metric_name: Runtime/Classes
+    metrics:
+      - attributes: LoadedClassCount, UnloadedClassCount
+        type: simple
+      - attributes: TotalLoadedClassCount
+        type: monotonically_increasing
+
+  - object_name: java.lang:type=GarbageCollector,name=*
+    root_metric_name: Runtime/GarbageCollector/{name}
+    metrics:
+      - attributes: CollectionCount, CollectionTime
+        type: monotonically_increasing
+
+  - object_name: java.nio:type=BufferPool,name=*
+    root_metric_name: Runtime/BufferPool/{name}
+    metrics:
+      - attributes: Count, MemoryUsed, TotalCapacity
+        type: simple
