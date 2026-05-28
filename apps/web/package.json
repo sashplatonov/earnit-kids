@@ -16,6 +16,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@newrelic/browser-agent": "^1.315.0",
     "http-proxy": "^1.18.1"
   },
   "devDependencies": {

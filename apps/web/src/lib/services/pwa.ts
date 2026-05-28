@@ -1,4 +1,5 @@
 import { showToast } from '$lib/stores/toasts';
+import { logClientError, logClientInfo } from '$lib/logging/clientLogger';
 
 const MOBILE_QUERY = '(max-width: 900px)';
 const PTR_TRIGGER_DISTANCE = 72;
@@ -286,7 +287,7 @@ function setupServiceWorkerUpdateChecks(registration: ServiceWorkerRegistration)
             await registration.update();
         } catch (error) {
             if (isServiceWorkerUpdateStateError(error)) return;
-            console.log('SW update check failed:', error);
+            logClientError('pwa.sw_update_check_failed', 'SW update check failed', { error });
         }
     };
 
@@ -339,7 +340,7 @@ async function clearLocalhostCaches() {
         const keys = await caches.keys();
         await Promise.all(keys.map((key) => caches.delete(key)));
     } catch (error) {
-        console.log('Cache cleanup failed:', error);
+        logClientError('pwa.cache_cleanup_failed', 'Cache cleanup failed', { error });
     }
 }
 
@@ -352,10 +353,13 @@ async function registerServiceWorker(): Promise<CleanupFn> {
 
     try {
         const registration = await navigator.serviceWorker.register(getServiceWorkerUrl());
+        logClientInfo('pwa.sw_registered', 'Service worker registered', {
+            scope: registration.scope,
+        });
         cleanupFns.push(setupServiceWorkerLifecycle(registration));
         cleanupFns.push(setupServiceWorkerUpdateChecks(registration));
     } catch (error) {
-        console.log('SW registration failed:', error);
+        logClientError('pwa.sw_registration_failed', 'SW registration failed', { error });
     }
 
     return () => {

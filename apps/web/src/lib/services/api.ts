@@ -5,6 +5,7 @@
 
 import { normalizeAuthResponse } from './serverContract';
 import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } from '$lib/types/auth';
+import { logClientError } from '$lib/logging/clientLogger';
 
 // ── CSRF ─────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
             status: res.status,
         };
     } catch (err) {
-        console.error('POST request failed:', url, err);
+        logClientError('api.post_failed', 'POST request failed', { url, error: err });
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',
@@ -147,7 +148,7 @@ async function postBoolean(url: string, body: unknown, errorMsg?: string): Promi
         });
         return res.ok;
     } catch (err) {
-        if (errorMsg) console.error(errorMsg, err);
+        if (errorMsg) logClientError('api.post_boolean_failed', errorMsg, { url, error: err });
         return false;
     }
 }
@@ -167,7 +168,7 @@ async function deleteJsonResult<T = unknown>(url: string): Promise<ApiActionResu
             status: res.status,
         };
     } catch (err) {
-        console.error('DELETE request failed:', url, err);
+        logClientError('api.delete_failed', 'DELETE request failed', { url, error: err });
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',
@@ -190,7 +191,7 @@ async function fetchGet<T = unknown>(url: string): Promise<T | null> {
         const res = await fetchWithCsrf(url);
         return res.ok ? await parseJsonSafe<T>(res) : null;
     } catch (err) {
-        console.error('GET request failed:', url, err);
+        logClientError('api.get_failed', 'GET request failed', { url, error: err });
         return null;
     }
 }
@@ -200,7 +201,7 @@ async function deleteResource(url: string, errorMsg?: string): Promise<boolean> 
         const res = await fetchWithCsrf(url, { method: 'DELETE' });
         return res.ok;
     } catch (err) {
-        if (errorMsg) console.error(errorMsg, err);
+        if (errorMsg) logClientError('api.delete_resource_failed', errorMsg, { url, error: err });
         return false;
     }
 }
@@ -235,7 +236,7 @@ export async function loadDataFromServer(childId?: string | number | null) {
         const res = await fetchWithCsrf(`/api/data${q}`);
         return res.ok ? await parseJsonSafe(res) : null;
     } catch (err) {
-        console.error('Failed to load from server:', err);
+        logClientError('api.load_data_failed', 'Failed to load from server', { error: err, childId });
         return null;
     }
 }
@@ -260,7 +261,7 @@ export async function saveDataToServer(data: unknown, options: { keepalive?: boo
         if (!res.ok) return null;
         return await parseJsonSafe(res);
     } catch (err) {
-        console.error('Failed to save to server:', err);
+        logClientError('api.save_data_failed', 'Failed to save to server', { error: err });
         return null;
     }
 }
@@ -288,7 +289,7 @@ export async function loadParentMemberships(): Promise<ApiActionResult<ParentMem
             status: res.status,
         };
     } catch (err) {
-        console.error('GET request failed:', '/api/parents', err);
+        logClientError('api.parent_memberships_failed', 'GET request failed', { url: '/api/parents', error: err });
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',

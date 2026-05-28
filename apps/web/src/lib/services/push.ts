@@ -3,6 +3,7 @@
  * Supports both Web Push and Capacitor (mobile).
  */
 import { registerPushTokenOnServer, unregisterPushTokenOnServer } from './api';
+import { logClientError } from '$lib/logging/clientLogger';
 
 /** Detect Capacitor runtime */
 function isCapacitor() {
@@ -45,7 +46,7 @@ export async function initWebPush(vapidPublicKey: string): Promise<PushSubscript
         await registerPushTokenOnServer({ token: JSON.stringify(sub), platform: 'web' });
         return sub;
     } catch (err) {
-        console.error('Web Push init failed:', err);
+        logClientError('push.web_init_failed', 'Web Push init failed', { error: err });
         return null;
     }
 }
@@ -67,7 +68,7 @@ export async function initCapacitorPush() {
             void registerPushToken(token.value, 'capacitor');
         });
     } catch (err) {
-        console.error('Capacitor Push init failed:', err);
+        logClientError('push.capacitor_init_failed', 'Capacitor Push init failed', { error: err });
     }
 }
 
