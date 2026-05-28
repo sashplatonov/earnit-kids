@@ -187,6 +187,7 @@ Verification tip:
 - I18n backlog: [docs/i18n-backlog.md](docs/i18n-backlog.md)
 - SvelteKit migration backlog: [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md)
 - Analytics daily quest backlog: [docs/analytics-daily-quest-backlog.md](docs/analytics-daily-quest-backlog.md)
+- New Relic monitoring: [docs/monitoring/newrelic.md](docs/monitoring/newrelic.md)
 - Frontend architecture: [apps/web/docs/ARCHITECTURE.md](apps/web/docs/ARCHITECTURE.md)
 - Backend architecture: [apps/backend/docs/ARCHITECTURE.md](apps/backend/docs/ARCHITECTURE.md)
 

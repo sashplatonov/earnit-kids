@@ -15,7 +15,7 @@ FROM eclipse-temurin:25-jdk
 WORKDIR /work
 
 RUN apt-get update \
-	&& apt-get install -y wget ca-certificates gnupg \
+	&& apt-get install -y wget ca-certificates gnupg unzip \
 	&& install -d /usr/share/postgresql-common/pgdg \
 	&& wget -qO /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
 	&& echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo ${VERSION_CODENAME})-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
@@ -23,14 +23,25 @@ RUN apt-get update \
 	&& apt-get install -y postgresql-client-18 \
 	&& rm -rf /var/lib/apt/lists/*
 
+ARG NEW_RELIC_AGENT_VERSION=9.2.0
+ENV NEW_RELIC_HOME=/opt/newrelic \
+	NEW_RELIC_CONFIG_FILE=/opt/newrelic/newrelic.yml \
+	NEW_RELIC_AGENT_ENABLED=false
+
+RUN mkdir -p /opt/newrelic \
+	&& wget -qO /tmp/newrelic-java.zip "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/${NEW_RELIC_AGENT_VERSION}/newrelic-java.zip" \
+	&& unzip -q /tmp/newrelic-java.zip -d /opt \
+	&& rm -f /tmp/newrelic-java.zip
+
 COPY --from=build /workspace/target/quarkus-app/lib/ ./lib/
 COPY --from=build /workspace/target/quarkus-app/*.jar ./
 COPY --from=build /workspace/target/quarkus-app/app/ ./app/
 COPY --from=build /workspace/target/quarkus-app/quarkus/ ./quarkus/
+COPY apps/backend/ops/newrelic/newrelic.yml /opt/newrelic/newrelic.yml
 
 ENV QUARKUS_HTTP_HOST=0.0.0.0
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 CMD wget -q --spider http://127.0.0.1:8080/q/health/ready || exit 1
 
-CMD ["java", "-jar", "quarkus-run.jar"]
+CMD ["/bin/sh", "-ec", "if [ \"${NEW_RELIC_AGENT_ENABLED:-false}\" = \"true\" ]; then exec java -Dnewrelic.config.file=${NEW_RELIC_CONFIG_FILE} -Dnewrelic.config.license_key=\"${NEW_RELIC_LICENSE_KEY:-}\" -Dnewrelic.config.app_name=\"${NEW_RELIC_APP_NAME:-earnit-kids-backend}\" -Dnewrelic.environment=${DEPLOYMENT_ENV:-development} -Dnewrelic.config.application_logging.forwarding.enabled=${NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED:-false} -Dnewrelic.config.application_logging.forwarding.max_samples_stored=${NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED:-10000} -Dnewrelic.config.application_logging.local_decorating.enabled=${NEW_RELIC_APPLICATION_LOGGING_LOCAL_DECORATING_ENABLED:-false} -javaagent:${NEW_RELIC_HOME}/newrelic.jar -jar quarkus-run.jar; fi; exec java -jar quarkus-run.jar"]

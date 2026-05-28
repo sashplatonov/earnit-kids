@@ -1,0 +1,21 @@
+# New Relic Java agent policy for earnit-kids.
+# Secrets and rollout toggles are supplied through environment variables.
+
+common: &default_settings
+  application_logging:
+    enabled: true
+    forwarding:
+      enabled: false
+      max_samples_stored: 10000
+      log_level_denylist: debug,trace
+    local_decorating:
+      enabled: false
+
+production:
+  <<: *default_settings
+
+development:
+  <<: *default_settings
+
+test:
+  <<: *default_settings
