@@ -19,8 +19,9 @@
         <quarkus.platform.version>3.34.2</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
-        <lombok.version>1.18.38</lombok.version>
+        <lombok.version>1.18.46</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
+        <mockito.version>5.21.0</mockito.version>
         <jacoco.version>0.8.14</jacoco.version>
         <checkstyle.version>10.21.4</checkstyle.version>
         <spotbugs.version>4.9.8.3</spotbugs.version>
@@ -160,11 +161,13 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -224,7 +227,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
                 <configuration>
-                    <argLine>${argLine} --enable-preview</argLine>
+                    <argLine>@{argLine} --enable-preview --enable-native-access=ALL-UNNAMED -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
@@ -243,7 +246,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <argLine>${argLine} --enable-preview</argLine>
+                    <argLine>@{argLine} --enable-preview --enable-native-access=ALL-UNNAMED -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
                     <systemPropertyVariables>
                         <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>

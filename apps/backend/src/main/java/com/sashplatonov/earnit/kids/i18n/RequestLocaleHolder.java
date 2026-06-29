@@ -3,7 +3,8 @@ package com.sashplatonov.earnit.kids.i18n;
 import java.util.Locale;
 
 public final class RequestLocaleHolder {
-    private static final ThreadLocal<Locale> CURRENT_LOCALE = ThreadLocal.withInitial(BackendLocaleSupport::defaultLocale);
+    private static final ThreadLocal<Locale> CURRENT_LOCALE =
+        ThreadLocal.withInitial(BackendLocaleSupport::defaultLocale);
 
     private RequestLocaleHolder() {
     }
@@ -28,4 +29,3 @@ public final class RequestLocaleHolder {
         CURRENT_LOCALE.remove();
     }
 }
-

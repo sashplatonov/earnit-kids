@@ -34,7 +34,11 @@ public class WebSocketNotificationService {
     }
 
     public void register(String connectionId, AuthContext auth) {
-        if (connectionId == null || connectionId.isBlank() || auth == null || auth.familyId() == null || auth.role() == null) {
+        if (connectionId == null
+            || connectionId.isBlank()
+            || auth == null
+            || auth.familyId() == null
+            || auth.role() == null) {
             return;
         }
 
@@ -95,7 +99,9 @@ public class WebSocketNotificationService {
 
     private String encodeMessage(String type, Object data) {
         try {
-            return objectMapper.writeValueAsString(new WebSocketEventResponse(type, data, timeProvider.now().toString()));
+            return objectMapper.writeValueAsString(
+                new WebSocketEventResponse(type, data, timeProvider.now().toString())
+            );
         } catch (JsonProcessingException ex) {
             log.error("Failed to serialize websocket event type={}", type, ex);
             return null;

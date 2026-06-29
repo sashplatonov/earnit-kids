@@ -83,6 +83,11 @@ Frontend component responsibilities:
 - `src/lib/stores/`: app state, tabs, modals, toasts
 - `src/lib/types/`: shared runtime types for session and config
 
+Operational note:
+
+- The normal family dashboard still uses a snapshot save path for everyday edits.
+- Bulk actions and CSV import should be implemented as explicit commands with a refreshed server snapshot, not as a hidden extension of the generic save payload.
+
 ```mermaid
 flowchart LR
 	Route[Route + Server Load]

@@ -5,8 +5,17 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
 import com.sashplatonov.earnit.kids.dto.request.AddParentMembershipRequest;
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
+import com.sashplatonov.earnit.kids.dto.request.BulkActionType;
+import com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest;
+import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
+import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
+import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
+import com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest;
+import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
+import com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest;
+import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateParentMembershipRequest;
@@ -16,10 +25,13 @@ import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
+import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
+import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
+import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.FamilyParentAccessService;
@@ -211,12 +223,12 @@ class FamilyResourceTest {
 
     @Test
     void updateChildThemePost_validTheme_returnsOk() {
-        when(familyService.updateChildTheme("fam-1", 10, "ocean")).thenReturn(OperationResult.success(null));
+        when(familyService.updateChildTheme("fam-1", 10, ChildTheme.ocean)).thenReturn(OperationResult.success(null));
 
         Response response = resource.updateChildThemePost(
             contextWithAuth(adminAuth()),
             10,
-            new UpdateThemeRequest("ocean"));
+            new UpdateThemeRequest(ChildTheme.ocean));
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
@@ -227,10 +239,10 @@ class FamilyResourceTest {
         Response response = resource.updateChildThemePost(
             contextWithAuth(childAuth(10)),
             11,
-            new UpdateThemeRequest("ocean"));
+            new UpdateThemeRequest(ChildTheme.ocean));
 
         assertThat(response.getStatus()).isEqualTo(401);
-        verify(familyService, never()).updateChildTheme(anyString(), anyInt(), anyString());
+        verify(familyService, never()).updateChildTheme(anyString(), anyInt(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -256,6 +268,68 @@ class FamilyResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getEntity()).isEqualTo(payload);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "admin", "childId", 10)));
+    }
+
+    @Test
+    void bulkTaskAction_adminDelegatesToActionServiceAndNotifiesFamily() {
+        BulkTaskActionRequest request = new BulkTaskActionRequest(10, BulkActionType.delete, List.of(1001L, 1002L), null);
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyActionService.bulkTaskAction("fam-1", request)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.bulkTaskAction(contextWithAuth(adminAuth()), request);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).bulkTaskAction("fam-1", request);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "admin", "childId", 10)));
+    }
+
+    @Test
+    void bulkShopItemAction_adminDelegatesToActionServiceAndNotifiesFamily() {
+        BulkShopItemActionRequest request = new BulkShopItemActionRequest(10, BulkActionType.change_group, List.of(2001L, 2002L), "Big rewards");
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyActionService.bulkShopItemAction("fam-1", request)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.bulkShopItemAction(contextWithAuth(adminAuth()), request);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).bulkShopItemAction("fam-1", request);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "admin", "childId", 10)));
+    }
+
+    @Test
+    void importTasks_adminDelegatesToActionServiceAndNotifiesFamily() {
+        ImportTasksRequest request = new ImportTasksRequest(10, List.of(
+            new ImportTaskRowRequest(1, "Clean desk", 10, "Home", null, null, null, null, true)
+        ));
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyActionService.importTasks("fam-1", request)).thenReturn(payload);
+
+        Response response = resource.importTasks(contextWithAuth(adminAuth()), request);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).importTasks("fam-1", request);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "admin", "childId", 10)));
+    }
+
+    @Test
+    void importShopItems_returnsStructuredValidationError() {
+        ImportShopItemsRequest request = new ImportShopItemsRequest(10, List.of(
+            new ImportShopItemRowRequest(1, "", null, null, null, null, null, null)
+        ));
+        ImportValidationErrorResponse errorResponse = ImportValidationErrorResponse.of(
+            "Validation failed",
+            List.of()
+        );
+        when(familyActionService.importShopItems("fam-1", request))
+            .thenThrow(new com.sashplatonov.earnit.kids.exception.ImportValidationException(errorResponse));
+
+        Response response = resource.importShopItems(contextWithAuth(adminAuth()), request);
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getEntity()).isEqualTo(errorResponse);
     }
 
     @Test
@@ -370,15 +444,15 @@ class FamilyResourceTest {
 
     @Test
     void updatePreference_missingKeyOrValidPayload_returnsExpectedStatus() {
-        Response bad = resource.updatePreference(contextWithAuth(adminAuth()), new UpdatePreferenceRequest("", 1));
+        Response bad = resource.updatePreference(contextWithAuth(adminAuth()), new UpdatePreferenceRequest(null, 1));
         assertThat(bad.getStatus()).isEqualTo(400);
 
-        when(familyService.updatePreference("fam-1", "lastSelectedChildId", 10))
+        when(familyService.updatePreference("fam-1", FamilyPreferenceKey.lastSelectedChildId, 10))
             .thenReturn(OperationResult.success(null));
 
         Response ok = resource.updatePreference(
             contextWithAuth(adminAuth()),
-            new UpdatePreferenceRequest("lastSelectedChildId", 10));
+            new UpdatePreferenceRequest(FamilyPreferenceKey.lastSelectedChildId, 10));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
@@ -386,7 +460,7 @@ class FamilyResourceTest {
     void updatePreference_nonAdmin_returnsUnauthorized() {
         Response response = resource.updatePreference(
             contextWithAuth(childAuth(10)),
-            new UpdatePreferenceRequest("lastSelectedChildId", 10));
+            new UpdatePreferenceRequest(FamilyPreferenceKey.lastSelectedChildId, 10));
 
         assertThat(response.getStatus()).isEqualTo(401);
     }
@@ -394,7 +468,12 @@ class FamilyResourceTest {
     @Test
     void listParents_adminDelegatesToService() {
         when(familyParentAccessService.listMemberships("fam-1"))
-            .thenReturn(OperationResult.success(List.of(new ParentMembershipDto(1, "parent@test.com", "editor", "active"))));
+            .thenReturn(OperationResult.success(List.of(new ParentMembershipDto(
+                1,
+                "parent@test.com",
+                FamilyParentMembershipEntity.Permission.editor,
+                MembershipStatus.active
+            ))));
 
         Response response = resource.listParents(contextWithAuth(adminAuth()));
 
@@ -405,7 +484,12 @@ class FamilyResourceTest {
     @Test
     void addParent_adminDelegatesToService() {
         when(familyParentAccessService.addMembership("fam-1", "parent@test.com", "editor", "admin@test.com"))
-            .thenReturn(OperationResult.success(new ParentMembershipDto(1, "parent@test.com", "editor", "active")));
+            .thenReturn(OperationResult.success(new ParentMembershipDto(
+                1,
+                "parent@test.com",
+                FamilyParentMembershipEntity.Permission.editor,
+                MembershipStatus.active
+            )));
 
         Response response = resource.addParent(
             contextWithAuth(adminAuth()),
@@ -418,7 +502,12 @@ class FamilyResourceTest {
     @Test
     void updateParent_adminDelegatesToService() {
         when(familyParentAccessService.updateMembership(7, "viewer", "fam-1"))
-            .thenReturn(OperationResult.success(new ParentMembershipDto(7, "parent@test.com", "viewer", "active")));
+            .thenReturn(OperationResult.success(new ParentMembershipDto(
+                7,
+                "parent@test.com",
+                FamilyParentMembershipEntity.Permission.viewer,
+                MembershipStatus.active
+            )));
 
         Response response = resource.updateParent(
             contextWithAuth(adminAuth()),

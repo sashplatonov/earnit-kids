@@ -1,11 +1,15 @@
 package com.sashplatonov.earnit.kids.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.FriendEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
+import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import io.quarkus.test.junit.QuarkusTest;
@@ -83,7 +87,7 @@ class RepositorySmokeTest {
         assertThat(childRepository.updateBalance(child1.getId(), 123)).isTrue();
         assertThat(childRepository.updateName(child1.getId(), "Kid One Updated")).isTrue();
         assertThat(childRepository.updateSettings(child1.getId(), "Kid One Updated", 5, 500)).isTrue();
-        assertThat(childRepository.updateTheme(child1.getId(), "ocean")).isTrue();
+        assertThat(childRepository.updateTheme(child1.getId(), ChildTheme.ocean)).isTrue();
         assertThat(childRepository.regenerateToken(child1.getId())).isPresent();
 
         assertThat(childRepository.isNicknameTaken(familyDbId, "Kid One Updated", child1.getId())).isFalse();
@@ -93,14 +97,18 @@ class RepositorySmokeTest {
         long taskExternalId = 70001L;
         long itemExternalId = 80001L;
 
-        assertThat(familyDataRepository.upsertTask(familyDbId, child1.getId(), taskExternalId,
-            "Read", 5, "Study", OBJECT_MAPPER.readTree("{\"period\":\"day\"}"), "comment", 100, false, false)).isTrue();
-        assertThat(familyDataRepository.upsertTask(familyDbId, child1.getId(), taskExternalId,
-            "Read updated", 6, "Study", OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), "comment2", 150, true, false)).isTrue();
-        assertThat(familyDataRepository.upsertShopItem(familyDbId, child1.getId(), itemExternalId,
-            "Toy", 7, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false, false)).isTrue();
-        assertThat(familyDataRepository.upsertShopItem(familyDbId, child1.getId(), itemExternalId,
-            "Toy updated", 8, "Fun", OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, true, false)).isTrue();
+        assertThat(familyDataRepository.upsertTask(new TaskUpsertCommand(
+            familyDbId, child1.getId(), taskExternalId, "Read", 5, "Study",
+            OBJECT_MAPPER.readTree("{\"period\":\"day\"}"), "comment", 100, false, false))).isTrue();
+        assertThat(familyDataRepository.upsertTask(new TaskUpsertCommand(
+            familyDbId, child1.getId(), taskExternalId, "Read updated", 6, "Study",
+            OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), "comment2", 150, true, false))).isTrue();
+        assertThat(familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
+            familyDbId, child1.getId(), itemExternalId, "Toy", 7, "Fun",
+            OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false, false))).isTrue();
+        assertThat(familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
+            familyDbId, child1.getId(), itemExternalId, "Toy updated", 8, "Fun",
+            OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, true, false))).isTrue();
 
         assertThat(familyDataRepository.getTasks(child1.getId())).isNotEmpty();
         assertThat(familyDataRepository.getShopItems(child1.getId())).isNotEmpty();
@@ -119,21 +127,21 @@ class RepositorySmokeTest {
         assertThat(storedShopItem.isActive()).isTrue();
         assertThat(storedShopItem.isDeleted()).isFalse();
 
-        assertThat(familyDataRepository.addHistory(familyDbId, child1.getId(), 90001L, "earn",
+        assertThat(familyDataRepository.addHistory(familyDbId, child1.getId(), 90001L, HistoryEntryType.earn,
             5, "Read", 0, taskExternalId, "Study", "Great")).isTrue();
-        assertThat(familyDataRepository.addHistory(familyDbId, child1.getId(), 90002L, "spend",
+        assertThat(familyDataRepository.addHistory(familyDbId, child1.getId(), 90002L, HistoryEntryType.spend,
             3, "Toy", 300, itemExternalId, "Fun", "Bought")).isTrue();
 
         assertThat(familyDataRepository.getHistory(child1.getId(), 10, 0)).isNotEmpty();
         assertThat(familyDataRepository.getHistoryCount(child1.getId())).isGreaterThanOrEqualTo(2);
 
         assertThat(familyDataRepository.createRequest(familyDbId, child1.getId(), 91001L,
-            taskExternalId, "Read", itemExternalId, 5, "shop", 300)).isTrue();
+            taskExternalId, "Read", itemExternalId, 5, PurchaseRequestType.shop, 300)).isTrue();
         assertThat(familyDataRepository.getRequests(familyDbId, 10, 0)).isNotEmpty();
         assertThat(familyDataRepository.getRequestsCount(familyDbId)).isGreaterThanOrEqualTo(1);
 
         int requestId = familyDataRepository.getRequests(familyDbId, 1, 0).getFirst().getId().intValue();
-        assertThat(familyDataRepository.updateRequestStatus(requestId, "approved")).isTrue();
+        assertThat(familyDataRepository.updateRequestStatus(requestId, PurchaseRequestStatus.approved)).isTrue();
 
         assertThat(familyDataRepository.addFriend(child1.getId(), child2.getId())).isTrue();
         assertThat(familyDataRepository.getFriendChildIds(child1.getId())).contains(child2.getId());
@@ -179,7 +187,7 @@ class RepositorySmokeTest {
         assertThat(childRepository.updateBalance(999999, 1)).isFalse();
         assertThat(childRepository.updateName(999999, "x")).isFalse();
         assertThat(childRepository.updateSettings(999999, "x", 1, 1)).isFalse();
-        assertThat(childRepository.updateTheme(999999, "ocean")).isFalse();
+        assertThat(childRepository.updateTheme(999999, ChildTheme.ocean)).isFalse();
         assertThat(childRepository.regenerateToken(999999)).isEmpty();
     }
 }

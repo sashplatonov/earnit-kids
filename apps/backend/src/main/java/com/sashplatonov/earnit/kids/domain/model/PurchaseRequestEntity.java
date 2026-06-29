@@ -2,6 +2,8 @@ package com.sashplatonov.earnit.kids.domain.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -49,12 +51,14 @@ public class PurchaseRequestEntity extends CreatedAtEntity {
     @Column(name = "coins")
     private int coins;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     @Builder.Default
-    private String status = "pending";
+    private PurchaseRequestStatus status = PurchaseRequestStatus.pending;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "request_type")
-    private String requestType;
+    private PurchaseRequestType requestType;
 
     @Column(name = "money_amount")
     private int moneyAmount;

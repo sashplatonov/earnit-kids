@@ -66,10 +66,24 @@ public class SuperAdminService {
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("balance", children.stream().mapToInt(ChildEntity::getBalance).sum());
-        data.put("tasks", familyDataRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList());
-        data.put("shop", familyDataRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList());
-        data.put("history", familyDataRepository.getHistoryForFamily(family.getId(), 100, 0).stream().map(this::toHistoryPayload).toList());
-        data.put("requests", familyDataRepository.getRequests(family.getId(), 100, 0).stream().map(this::toRequestPayload).toList());
+        data.put(
+            "tasks",
+            familyDataRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList()
+        );
+        data.put(
+            "shop",
+            familyDataRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList()
+        );
+        data.put(
+            "history",
+            familyDataRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
+                .map(this::toHistoryPayload)
+                .toList()
+        );
+        data.put(
+            "requests",
+            familyDataRepository.getRequests(family.getId(), 100, 0).stream().map(this::toRequestPayload).toList()
+        );
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("familyId", family.getFamilyId());
@@ -99,12 +113,18 @@ public class SuperAdminService {
 
         FamilyEntity family = familyOpt.get();
         if (isSamePassword(newPassword, family.getAdminPassword())) {
-            return OperationResult.failure("PASSWORD_REUSE", BackendMessages.message("super.newPasswordMustDifferCurrent"));
+            return OperationResult.failure(
+                "PASSWORD_REUSE",
+                BackendMessages.message("super.newPasswordMustDifferCurrent")
+            );
         }
 
         boolean updated = familyRepository.updatePassword(familyId, passwordHasher.hash(newPassword));
         if (!updated) {
-            return OperationResult.failure("PASSWORD_UPDATE_FAILED", BackendMessages.message("auth.passwordUpdateFailed"));
+            return OperationResult.failure(
+                "PASSWORD_UPDATE_FAILED",
+                BackendMessages.message("auth.passwordUpdateFailed")
+            );
         }
         return OperationResult.success(null);
     }
@@ -125,7 +145,10 @@ public class SuperAdminService {
         }
         List<ChildEntity> children = childRepository.getChildren(familyDbId.get());
         if (children.isEmpty()) {
-            return OperationResult.failure("FAMILY_HAS_NO_CHILDREN", BackendMessages.message("super.familyHasNoChildren"));
+            return OperationResult.failure(
+                "FAMILY_HAS_NO_CHILDREN",
+                BackendMessages.message("super.familyHasNoChildren")
+            );
         }
         return familyService.regenerateChildToken(familyId, children.getFirst().getId());
     }
@@ -200,7 +223,10 @@ public class SuperAdminService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("id", item.getExternalId() != null ? item.getExternalId() : item.getId());
         payload.put("timestamp", toIso(item.getCreatedAt()));
-        payload.put("action", firstNonBlank(item.getDescription(), item.getType()));
+        payload.put(
+            "action",
+            firstNonBlank(item.getDescription(), item.getType() != null ? item.getType().name() : null)
+        );
         payload.put("type", item.getType());
         payload.put("amount", item.getAmount());
         payload.put("childId", item.getChildId());
@@ -259,7 +285,8 @@ public class SuperAdminService {
             return true;
         }
         try {
-            if (passwordHasher.isArgon2Hash(storedPassword) && passwordHasher.verify(storedPassword, suppliedPassword)) {
+            if (passwordHasher.isArgon2Hash(storedPassword)
+                && passwordHasher.verify(storedPassword, suppliedPassword)) {
                 return true;
             }
         } catch (Exception ignored) {

@@ -4,8 +4,10 @@
     import { modalStore } from '$lib/stores/modal';
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
+    import { confirmAction } from '$lib/services/confirm';
     import { buildTaskPayload } from '$lib/services/taskPayload';
     import { showToast } from '$lib/stores/toasts';
+    import GroupInput from '../GroupInput.svelte';
 
     const i18n = useI18n();
 
@@ -17,6 +19,13 @@
     $: modalData = $modalStore.data;
     $: isEdit = modalData?.mode === 'edit';
     $: existingTask = isEdit ? (modalData?.task as Record<string, unknown>) : null;
+    $: groupSuggestions = Array.isArray(modalData?.groupSuggestions)
+        ? [...new Set(
+            modalData.groupSuggestions
+                .filter((group): group is string => typeof group === 'string' && group.trim().length > 0)
+                .map((group) => group.trim())
+        )]
+        : [];
 
     let title = '';
     let groupName = '';
@@ -84,7 +93,14 @@
 
     async function deleteTask() {
         if (!existingTask?.id) return;
-        if (!confirm(tTasks('modal.confirmDelete'))) return;
+        const confirmed = await confirmAction({
+            title: tTasks('modal.confirmDeleteTitle'),
+            description: tTasks('modal.confirmDeleteDescription'),
+            confirmLabel: tTasks('modal.delete'),
+            cancelLabel: tTasks('modal.cancel'),
+            tone: 'danger',
+        });
+        if (!confirmed) return;
         appStore.setState({ tasks: $appStore.tasks.filter(t => t.id != existingTask!.id) });
         void scheduleSave();
         showToast(tTasks('modal.deleted'), 'info');
@@ -103,7 +119,12 @@
         </div>
         <div class="form-group">
             <label for="task-group">{tTasks('modal.groupLabel')}</label>
-            <input type="text" class="input" id="task-group" placeholder={tTasks('modal.groupPlaceholder')} bind:value={groupName} />
+            <GroupInput
+                id="task-group"
+                placeholder={tTasks('modal.groupPlaceholder')}
+                suggestions={groupSuggestions}
+                bind:value={groupName}
+            />
         </div>
         <div class="form-group">
             <label for="task-coins">{tTasks('modal.coinsLabel')}</label>

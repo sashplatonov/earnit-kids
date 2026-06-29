@@ -2,6 +2,7 @@
     import { browser } from '$app/environment';
     import { onMount } from 'svelte';
     import CardHeader from '$lib/components/app/CardHeader.svelte';
+    import BulkActionToolbar from '$lib/components/app/BulkActionToolbar.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
@@ -9,8 +10,9 @@
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { buyItem, requestItemWithNote, saveChildGroupOrder } from '$lib/services/api';
+    import { bulkShopAction, buyItem, importShopItems, importTasks, requestItemWithNote, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
+    import { confirmAction } from '$lib/services/confirm';
     import {
         applyGroupOrderToChildren,
         getEffectiveGroupOrder,
@@ -18,6 +20,7 @@
         orderGroups,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
+    import { requestGroupName } from '$lib/services/groupPrompt';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
 
@@ -31,12 +34,19 @@
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
     let selectedGroup = '';
+    let isBulkMode = false;
+    let selectedItemIds: Array<number | string> = [];
     let viewMode: CardViewMode = 'list';
     let groupOrderEditor: { openEditor: () => void } | null = null;
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
+    const loadedChildScope: { value: string } = { value: '' };
 
     function tShop(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`shop.${key}` as MessageKey, variables);
+    }
+
+    function tCsv(kind: 'tasks' | 'shop', key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`${kind}.${key}` as MessageKey, variables);
     }
 
     $: shopItems = $appStore.shopItems;
@@ -54,10 +64,21 @@
     $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('shop', viewRole);
         loadedViewRole.value = viewRole;
+        isBulkMode = false;
+        selectedItemIds = [];
     }
 
     $: if (selectedGroup && groups.length > 0 && !groups.includes(selectedGroup)) {
+        clearBulkSelection();
         setSelectedGroup('', { replace: true });
+    }
+    $: {
+        const nextChildScope = String(resolvedChildId ?? '');
+        if (loadedChildScope.value !== nextChildScope) {
+            isBulkMode = false;
+            selectedItemIds = [];
+            loadedChildScope.value = nextChildScope;
+        }
     }
 
     $: visibleItems = selectedGroup
@@ -157,11 +178,148 @@
     }
 
     function openAddShopItem() {
-        modalStore.open('shop-modal', { mode: 'add' });
+        modalStore.open('shop-modal', { mode: 'add', groupSuggestions: groups });
+    }
+
+    function openCsvImport() {
+        modalStore.open('csv-import-modal', {
+            kind: 'shop',
+            onSubmit: async ({ kind, rows }: { kind: 'tasks' | 'shop'; rows: Array<Record<string, unknown>> }) => {
+                if (resolvedChildId == null) {
+                    return {
+                        ok: false,
+                        error: tShop('toasts.selectChildFirst'),
+                        errorCode: null,
+                        status: 400,
+                    };
+                }
+
+                const result = kind === 'shop'
+                    ? await importShopItems({
+                        childId: resolvedChildId,
+                        rows,
+                    })
+                    : await importTasks({
+                        childId: resolvedChildId,
+                        rows,
+                    });
+
+                if (result.ok && result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                    showToast(tCsv(kind, 'import.success', { count: rows.length }), 'success');
+                }
+
+                return result;
+            },
+        });
     }
 
     function openEditShopItem(item: unknown) {
-        modalStore.open('shop-modal', { mode: 'edit', item });
+        modalStore.open('shop-modal', { mode: 'edit', item, groupSuggestions: groups });
+    }
+
+    function isItemSelected(item: { id: number | string }) {
+        return selectedItemIds.some((id) => String(id) === String(item.id));
+    }
+
+    function clearBulkSelection() {
+        isBulkMode = false;
+        selectedItemIds = [];
+    }
+
+    function toggleBulkMode() {
+        if (isBulkMode) {
+            clearBulkSelection();
+            return;
+        }
+
+        isBulkMode = true;
+        selectedItemIds = [];
+    }
+
+    function selectAllVisibleItems() {
+        if (!isBulkMode) {
+            isBulkMode = true;
+        }
+        selectedItemIds = visibleItems.map((item) => item.id);
+    }
+
+    async function runItemBulkAction(action: 'delete' | 'block' | 'unblock' | 'change_group') {
+        if (resolvedChildId == null) {
+            showToast(tShop('toasts.selectChildFirst'), 'error');
+            return;
+        }
+        if (selectedItemIds.length === 0) {
+            return;
+        }
+
+        if (action === 'delete') {
+            const confirmed = await confirmAction({
+                title: tShop('modal.confirmDeleteTitle'),
+                description: tShop('modal.confirmDeleteDescription'),
+                confirmLabel: tShop('modal.delete'),
+                cancelLabel: tShop('modal.cancel'),
+                tone: 'danger',
+            });
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        if (action === 'change_group') {
+            const groupName = await requestGroupName({
+                title: tShop('bulk.changeGroupTitle'),
+                description: tShop('bulk.changeGroupDescription'),
+                placeholder: tShop('bulk.changeGroupPlaceholder'),
+                confirmLabel: tShop('bulk.changeGroupConfirm'),
+                cancelLabel: tShop('modal.cancel'),
+                suggestions: groups,
+            });
+            if (groupName == null) {
+                return;
+            }
+
+            const result = await bulkShopAction({
+                childId: resolvedChildId,
+                action,
+                itemIds: [...selectedItemIds],
+                groupName,
+            });
+            if (result.ok) {
+                if (result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                }
+                showToast(tShop('toasts.bulkChangedGroup'), 'success');
+                clearBulkSelection();
+            } else {
+                showToast(result.error, 'error');
+            }
+            return;
+        }
+
+        const result = await bulkShopAction({
+            childId: resolvedChildId,
+            action,
+            itemIds: [...selectedItemIds],
+        });
+        if (!result.ok) {
+            showToast(result.error, 'error');
+            return;
+        }
+
+        if (result.data && typeof result.data === 'object') {
+            applyDataSnapshot(result.data as Record<string, unknown>);
+        }
+
+        if (action === 'delete') {
+            showToast(tShop('toasts.bulkDeleted', { count: selectedItemIds.length }), 'success');
+        } else if (action === 'block') {
+            showToast(tShop('toasts.bulkBlocked', { count: selectedItemIds.length }), 'success');
+        } else {
+            showToast(tShop('toasts.bulkUnblocked', { count: selectedItemIds.length }), 'success');
+        }
+
+        clearBulkSelection();
     }
 
     function itemPrice(item: { price?: unknown }) {
@@ -255,6 +413,7 @@
         const resolvedGroup = groups.includes(nextGroup) ? nextGroup : '';
         const currentGroup = readSelectedGroupFromLocation();
 
+        clearBulkSelection();
         selectedGroup = resolvedGroup;
         if (currentGroup === resolvedGroup) {
             return;
@@ -317,14 +476,37 @@
             gridLabel={tShop('section.viewGrid')}
             listLabel={tShop('section.viewList')}
             orderLabel={isAdmin ? $i18n.t('app.groupOrder.configureAdmin') : $i18n.t('app.groupOrder.configureChild')}
+            bulkLabel={isBulkMode ? tShop('bulk.clear') : tShop('bulk.toggle')}
+            importLabel={tShop('section.import')}
+            isBulkMode={isBulkMode}
             hasGroups={groups.length > 1}
             {isEditingGroupOrder}
             {isSavingGroupOrder}
             on:add={openAddShopItem}
+            on:importCsv={openCsvImport}
             on:editOrder={openGroupOrderEditor}
+            on:toggleBulkMode={toggleBulkMode}
             on:viewMode={(event) => setViewMode(event.detail)}
         />
     </div>
+
+    <BulkActionToolbar
+        show={isBulkMode}
+        selectedCount={selectedItemIds.length}
+        selectionLabel={tShop('bulk.selected', { count: selectedItemIds.length })}
+        selectAllLabel={tShop('bulk.selectAll')}
+        deleteLabel={tShop('bulk.delete')}
+        blockLabel={tShop('bulk.block')}
+        unblockLabel={tShop('bulk.unblock')}
+        changeGroupLabel={tShop('bulk.changeGroup')}
+        clearLabel={tShop('bulk.clear')}
+        on:selectAll={selectAllVisibleItems}
+        on:delete={() => void runItemBulkAction('delete')}
+        on:block={() => void runItemBulkAction('block')}
+        on:unblock={() => void runItemBulkAction('unblock')}
+        on:changeGroup={() => void runItemBulkAction('change_group')}
+        on:clear={clearBulkSelection}
+    />
 
     {#if groups.length > 1}
     <nav class="group-nav" id="shop-group-nav">
@@ -376,8 +558,18 @@
     {:else if visibleItems.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={isItemActive(item) && isItemAffordable(item)} class:card--disabled={!isItemActive(item) || !isItemAffordable(item)} class:shop-card--list={viewMode === 'list'}>
+        <div class="card card--shop shop-card" class:card--affordable={isItemActive(item) && isItemAffordable(item)} class:card--disabled={!isItemActive(item) || !isItemAffordable(item)} class:shop-card--list={viewMode === 'list'} class:shop-card--selected={isItemSelected(item)}>
             <div class="card__badge-row">
+                {#if isAdmin && isBulkMode && viewMode !== 'list'}
+                <label class="bulk-select">
+                    <input
+                        type="checkbox"
+                        bind:group={selectedItemIds}
+                        value={item.id}
+                        aria-label={tShop('section.selectAria', { title: String(item.name ?? '') })}
+                    />
+                </label>
+                {/if}
                 <span class="card__badge card__badge--group">{item.groupName ?? tShop('section.noGroup')}</span>
                 {#if formatFrequency(item.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
@@ -387,6 +579,16 @@
                 </span>
             </div>
             <div class="shop-card__layout">
+                {#if isAdmin && isBulkMode && viewMode === 'list'}
+                <label class="shop-card__select-cell bulk-select">
+                    <input
+                        type="checkbox"
+                        bind:group={selectedItemIds}
+                        value={item.id}
+                        aria-label={tShop('section.selectAria', { title: String(item.name ?? '') })}
+                    />
+                </label>
+                {/if}
                 <div class="shop-card__main">
                     <CardHeader
                         title={String(item.name ?? '')}
@@ -461,6 +663,24 @@
         gap: 0.9rem;
     }
 
+    .shop-card--selected {
+        outline: 2px solid rgba(37, 99, 235, 0.28);
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
+    }
+
+    .bulk-select {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bulk-select input {
+        width: 1rem;
+        height: 1rem;
+        accent-color: #2563eb;
+        cursor: pointer;
+    }
+
     .shop-card__side {
         display: flex;
         flex-direction: column;
@@ -492,6 +712,13 @@
     .shop-card--list .shop-card__main {
         flex: 1 1 0;
         min-width: 0;
+    }
+
+    .shop-card__select-cell {
+        display: inline-flex;
+        align-self: center;
+        flex: 0 0 auto;
+        padding-right: 0.1rem;
     }
 
     .shop-card--list .shop-card__side {
@@ -534,13 +761,18 @@
 
         .shop-card--list .shop-card__layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: auto minmax(0, 1fr) auto;
             align-items: stretch;
             gap: 0.48rem;
         }
 
         .shop-card--list .shop-card__main {
             min-width: 0;
+        }
+
+        .shop-card__select-cell {
+            align-self: center;
+            padding-right: 0;
         }
 
         .shop-card--list .shop-card__side {

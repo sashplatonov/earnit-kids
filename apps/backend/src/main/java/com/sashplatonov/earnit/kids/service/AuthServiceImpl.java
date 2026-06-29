@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
+import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
@@ -107,7 +108,8 @@ public final class AuthServiceImpl implements AuthService {
         return choices;
     }
 
-    private OperationResult<AuthPayload> authenticateWithMembership(String email, FamilyParentMembershipEntity membership) {
+    private OperationResult<AuthPayload> authenticateWithMembership(String email,
+                                                                    FamilyParentMembershipEntity membership) {
         var familyOpt = familyRepository.findByDbId(membership.getFamilyId());
         if (familyOpt.isEmpty()) {
             log.info("Authentication failed (family not found for membership): {}", email);
@@ -204,7 +206,10 @@ public final class AuthServiceImpl implements AuthService {
         if (appConfig.emailVerification().enabled() && !family.isVerified()) {
             boolean verified = familyRepository.verifyFamily(family.getFamilyId());
             if (!verified) {
-                log.warn("Google authentication verified email but local verification update failed for familyId={}", family.getFamilyId());
+                log.warn(
+                    "Google authentication verified email but local verification update failed for familyId={}",
+                    family.getFamilyId()
+                );
             }
         }
 
@@ -321,7 +326,7 @@ public final class AuthServiceImpl implements AuthService {
                 .parentAccountId(parent.getId())
                 .familyId(family.getId())
                 .permission(FamilyParentMembershipEntity.Permission.family_admin)
-                .status("active")
+                .status(MembershipStatus.active)
                 .build();
             membershipRepository.persistAndFlush(membership);
 

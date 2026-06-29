@@ -121,7 +121,12 @@ export function logBrowser(
     message: string,
     context?: Record<string, unknown>
 ): void {
-    getNewRelicApi()?.log?.(message, {
+    const api = getNewRelicApi();
+    if (!api?.log && level === 'error' && typeof console !== 'undefined') {
+        console.error(message, { event, ...context });
+    }
+
+    api?.log?.(message, {
         level,
         customAttributes: normalizeAttributes({
             event,

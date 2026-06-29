@@ -15,6 +15,7 @@ import {
     loginParent,
     logout,
     openFamilyApp,
+    requestWithOptionalNote,
     registerParent,
     uniqueEmail,
 } from './helpers';
@@ -41,8 +42,7 @@ test.beforeAll(async ({ browser }) => {
     childLink = await getChildMagicLink(page);
 
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
-    await page.locator('#tasks-section [data-task-action="request"]').first().click();
-    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
+    await requestWithOptionalNote(page, page.locator('#tasks-section [data-task-action="request"]').first(), /Request sent|Заявка отправлена/i);
 
     await logout(page);
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
@@ -51,8 +51,11 @@ test.beforeAll(async ({ browser }) => {
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
     await page.getByRole('link', { name: /Rewards|Награды/i }).click();
     await expect(page.getByRole('heading', { name: REWARD_TITLE })).toBeVisible();
-    await page.locator('#shop-section [data-shop-action="request"]').first().click();
-    await expect(page.getByText(/Purchase request sent|Заявка на покупку отправлена/i)).toBeVisible();
+    await requestWithOptionalNote(
+        page,
+        page.locator('#shop-section [data-shop-action="request"]').first(),
+        /Purchase request sent|Заявка на покупку отправлена/i
+    );
 
     await logout(page);
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);
@@ -60,8 +63,7 @@ test.beforeAll(async ({ browser }) => {
 
     await logout(page);
     await loginChildByMagicLink(page, childLink, TASK_TITLE);
-    await page.locator('#tasks-section [data-task-action="request"]').first().click();
-    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
+    await requestWithOptionalNote(page, page.locator('#tasks-section [data-task-action="request"]').first(), /Request sent|Заявка отправлена/i);
 
     await page.close();
 });
@@ -222,6 +224,89 @@ test.describe('Shop section', () => {
         // Only visible when items have different group names
         // At minimum, shop items list should render
         await expect(page.locator('#shop-list, .cards, .empty-state')).toBeVisible();
+    });
+});
+
+test.describe('CSV import flow', () => {
+    test.beforeEach(async ({ page }) => {
+        await login(page);
+    });
+
+    test('imports a task from csv and refreshes the task list', async ({ page }) => {
+        await page.getByRole('link', { name: /Tasks|Задания/i }).click();
+        await expect(page.locator('#tasks-section')).toBeVisible();
+
+        await page.locator('#tasks-section').getByRole('button', { name: /Import CSV|Импорт CSV/i }).click();
+        const modal = page.locator('#csv-import-modal');
+        await expect(modal).toBeVisible();
+
+        await modal.locator('#csv-import-input').fill('title,coins,groupName\nImported task,12,Home');
+        const importButton = modal.getByRole('button', { name: /Import|Импортировать/i });
+        await importButton.evaluate((button) => (button as HTMLButtonElement).click());
+
+        await expect(page.getByRole('heading', { name: 'Imported task' })).toBeVisible();
+        await expect(page.getByText(/Imported tasks|Импортировано заданий/i)).toBeVisible();
+    });
+
+    test('shows bulk selection checkboxes in row view for tasks', async ({ page }) => {
+        await page.getByRole('link', { name: /Tasks|Задания/i }).click();
+        await expect(page.locator('#tasks-section')).toBeVisible();
+
+        await page.locator('#tasks-section').getByRole('button', { name: /Rows|Строки/i }).click();
+        await page.locator('#tasks-section').getByRole('button', { name: /Select|Выбор/i }).click();
+
+        await expect(page.locator('#tasks-list .task-card--list .task-card__select-cell input[type="checkbox"]').first()).toBeVisible();
+        await expect(page.locator('#tasks-section').getByRole('button', { name: /Select all|Выбрать все/i })).toBeVisible();
+    });
+
+    test('imports a reward from csv and refreshes the shop list', async ({ page }) => {
+        await page.getByRole('link', { name: /Rewards|Награды/i }).click();
+        await expect(page.locator('#shop-section')).toBeVisible();
+
+        await page.locator('#shop-section').getByRole('button', { name: /Import CSV|Импорт CSV/i }).click();
+        const modal = page.locator('#csv-import-modal');
+        await expect(modal).toBeVisible();
+
+        await modal.locator('#csv-import-input').fill('name,price,groupName\nImported reward,25,Fun');
+        const importButton = modal.getByRole('button', { name: /Import|Импортировать/i });
+        await importButton.evaluate((button) => (button as HTMLButtonElement).click());
+
+        await expect(page.getByRole('heading', { name: 'Imported reward' })).toBeVisible();
+        await expect(page.getByText(/Imported rewards|Импортировано наград/i)).toBeVisible();
+    });
+
+    test('imports a reward after switching to rewards inside the task import modal', async ({ page }) => {
+        await page.getByRole('link', { name: /Tasks|Задания/i }).click();
+        await expect(page.locator('#tasks-section')).toBeVisible();
+
+        await page.locator('#tasks-section').getByRole('button', { name: /Import CSV|Импорт CSV/i }).click();
+        const modal = page.locator('#csv-import-modal');
+        await expect(modal).toBeVisible();
+
+        await modal.getByRole('tab', { name: /Rewards|Награды/i }).click();
+        await modal.locator('#csv-import-input').fill(
+            'name,price,groupName,comment\n'
+            + 'Reward from switched modal,25,Fun,"Line 1\nLine 2"'
+        );
+        const importButton = modal.getByRole('button', { name: /Import|Импортировать/i });
+        await importButton.evaluate((button) => (button as HTMLButtonElement).click());
+
+        await expect(page.getByRole('heading', { name: 'Reward from switched modal' })).toBeVisible();
+        await expect(page.getByText(/Imported rewards|Импортировано наград/i)).toBeVisible();
+    });
+
+    test('copies the csv template for rewards', async ({ page, context }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.getByRole('link', { name: /Rewards|Награды/i }).click();
+        await expect(page.locator('#shop-section')).toBeVisible();
+
+        await page.locator('#shop-section').getByRole('button', { name: /Import CSV|Импорт CSV/i }).click();
+        const modal = page.locator('#csv-import-modal');
+        await expect(modal).toBeVisible();
+
+        await modal.getByRole('button', { name: /Copy format|Скопировать формат/i }).click();
+        await expect(modal.getByText(/CSV format copied|Формат CSV скопирован/i)).toBeVisible();
+        await expect(page.evaluate(() => navigator.clipboard.readText())).resolves.toContain('name,price,groupName');
     });
 });
 

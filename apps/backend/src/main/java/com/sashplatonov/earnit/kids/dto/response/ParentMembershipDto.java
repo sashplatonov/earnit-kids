@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.dto.response;
 
+import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
+import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public record ParentMembershipDto(
@@ -8,8 +10,8 @@ public record ParentMembershipDto(
     @Schema(description = "Parent email address")
     String email,
     @Schema(description = "Membership permission")
-    String permission,
+    FamilyParentMembershipEntity.Permission permission,
     @Schema(description = "Membership status")
-    String status
+    MembershipStatus status
 ) {
 }

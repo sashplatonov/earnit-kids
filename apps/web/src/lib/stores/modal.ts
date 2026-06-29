@@ -4,6 +4,7 @@ import { writable } from 'svelte/store';
 export type ModalName =
     | 'task-modal'
     | 'shop-modal'
+    | 'csv-import-modal'
     | 'request-note-modal'
     | 'confirm-modal'
     | 'add-child-modal'

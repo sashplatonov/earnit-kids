@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.repository;
 
+import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
+import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
@@ -80,41 +82,41 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
     }
 
     @Transactional
-    public boolean updateTheme(int childId, String theme) {
+    public boolean updateTheme(int childId, ChildTheme theme) {
         Optional<ChildEntity> opt = findByIdOptional(childId);
         if (opt.isEmpty()) {
             return false;
         }
-        opt.get().setTheme(theme);
+        opt.get().setTheme(theme.name());
         return true;
     }
 
     @Transactional
-    public boolean updateGroupOrder(int childId, String section, boolean personalOrder, String groupOrder) {
+    public boolean updateGroupOrder(int childId, GroupOrderSection section, boolean personalOrder, String groupOrder) {
         Optional<ChildEntity> opt = findByIdOptional(childId);
         if (opt.isEmpty()) {
             return false;
         }
 
         ChildEntity child = opt.get();
-        if ("tasks".equals(section)) {
-            if (personalOrder) {
-                child.setChildTaskGroupOrder(groupOrder);
-            } else {
-                child.setTaskGroupOrder(groupOrder);
+        switch (section) {
+            case tasks -> {
+                if (personalOrder) {
+                    child.setChildTaskGroupOrder(groupOrder);
+                } else {
+                    child.setTaskGroupOrder(groupOrder);
+                }
+                return true;
             }
-            return true;
-        }
-
-        if ("shop".equals(section)) {
-            if (personalOrder) {
-                child.setChildShopGroupOrder(groupOrder);
-            } else {
-                child.setShopGroupOrder(groupOrder);
+            case shop -> {
+                if (personalOrder) {
+                    child.setChildShopGroupOrder(groupOrder);
+                } else {
+                    child.setShopGroupOrder(groupOrder);
+                }
+                return true;
             }
-            return true;
         }
-
         return false;
     }
 

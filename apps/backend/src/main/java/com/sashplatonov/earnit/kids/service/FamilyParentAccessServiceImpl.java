@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service;
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
@@ -111,7 +112,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             .parentAccountId(parent.getId())
             .familyId(familyDbId)
             .permission(permOpt.get())
-            .status("active")
+            .status(MembershipStatus.active)
             .invitedByEmail(invitedByEmail)
             .invitedAt(Instant.now())
             .build();
@@ -246,7 +247,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         return new ParentMembershipDto(
             membership.getId(),
             email,
-            membership.getPermission().name(),
+            membership.getPermission(),
             membership.getStatus()
         );
     }

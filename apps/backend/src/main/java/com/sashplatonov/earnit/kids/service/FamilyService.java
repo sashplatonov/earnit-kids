@@ -1,5 +1,8 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
+import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
+import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
@@ -28,10 +31,10 @@ public interface FamilyService {
     OperationResult<Void> updateChildSettings(String familyId, int childId,
                                                String name, int dailyCoinLimit, int monthlyLimit);
 
-    OperationResult<Void> updateChildTheme(String familyId, int childId, String theme);
+    OperationResult<Void> updateChildTheme(String familyId, int childId, ChildTheme theme);
 
     OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
-                                                String section, List<String> groups,
+                                                GroupOrderSection section, List<String> groups,
                                                 boolean personalOrder);
 
     OperationResult<List<FriendDto>> searchByNickname(String nickname, int excludeChildId);
@@ -50,5 +53,5 @@ public interface FamilyService {
 
     OperationResult<String> regenerateChildToken(String familyId, int childId);
 
-    OperationResult<Void> updatePreference(String familyId, String key, Object value);
+    OperationResult<Void> updatePreference(String familyId, FamilyPreferenceKey key, Object value);
 }

@@ -1,6 +1,10 @@
 package com.sashplatonov.earnit.kids.service;
 
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
+import com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest;
+import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
+import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
+import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 
 public interface FamilyActionService {
@@ -22,4 +26,12 @@ public interface FamilyActionService {
     OperationResult<FamilyDataResponse> deleteHistoryEntry(String familyId, int childId, long historyEntryId);
 
     OperationResult<FamilyDataResponse> adjustBalance(String familyId, int childId, int amount, String description);
+
+    OperationResult<FamilyDataResponse> bulkTaskAction(String familyId, BulkTaskActionRequest request);
+
+    OperationResult<FamilyDataResponse> bulkShopItemAction(String familyId, BulkShopItemActionRequest request);
+
+    FamilyDataResponse importTasks(String familyId, ImportTasksRequest request);
+
+    FamilyDataResponse importShopItems(String familyId, ImportShopItemsRequest request);
 }

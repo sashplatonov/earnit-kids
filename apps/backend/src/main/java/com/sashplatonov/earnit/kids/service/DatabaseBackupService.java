@@ -132,48 +132,78 @@ public class DatabaseBackupService {
             PostgresConnectionDetails connection = PostgresConnectionDetails.fromJdbcUrl(jdbcUrl);
             tempFile = Files.createTempFile("earnit-restore-", ".dump");
             Files.write(tempFile, payload);
-
             tocFile = buildSchemaScopedRestoreList(tempFile);
-
-            DatabaseCommandResult resetSchemaResult = commandRunner.run(buildSchemaResetCommand(connection), password);
-            if (resetSchemaResult.exitCode() != 0) {
-                String stderr = normalizeError(resetSchemaResult.stderr(), BackendMessages.message("backup.schemaResetFailed"));
-                log.error("psql schema reset failed: {}", stderr);
-                return OperationResult.failure(stderr);
-            }
-
-            DatabaseCommandResult restoreResult = commandRunner.run(buildPgRestoreCommand(connection, tempFile, tocFile), password);
-            if (restoreResult.exitCode() != 0) {
-                String stderr = normalizeError(restoreResult.stderr(), BackendMessages.message("backup.pgRestoreFailed"));
-                log.error("pg_restore failed: {}", stderr);
-                return OperationResult.failure(stderr);
+            String restoreError = runRestore(connection, tempFile, tocFile);
+            if (restoreError != null) {
+                return OperationResult.failure(restoreError);
             }
             return OperationResult.success(null);
         } catch (IOException ex) {
             log.error("Backup restore failed", ex);
-            return OperationResult.failure(ex.getMessage().contains("No such file")
-                ? BackendMessages.message("backup.pgCliMissing")
-                : ex.getMessage());
+            return OperationResult.failure(restoreFailureMessage(ex));
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return OperationResult.failure(BackendMessages.message("backup.restoreInterrupted"));
         } catch (IllegalArgumentException ex) {
             return OperationResult.failure(ex.getMessage());
         } finally {
-            if (tempFile != null) {
-                try {
-                    Files.deleteIfExists(tempFile);
-                } catch (IOException ex) {
-                    log.warn("Не удалось удалить временный файл restore: {}", tempFile, ex);
-                }
-            }
-            if (tocFile != null) {
-                try {
-                    Files.deleteIfExists(tocFile);
-                } catch (IOException ex) {
-                    log.warn("Не удалось удалить временный TOC файл restore: {}", tocFile, ex);
-                }
-            }
+            deleteTempFile(tempFile, "Не удалось удалить временный файл restore: {}");
+            deleteTempFile(tocFile, "Не удалось удалить временный TOC файл restore: {}");
+        }
+    }
+
+    private String runRestore(PostgresConnectionDetails connection,
+                              Path tempFile,
+                              Path tocFile) throws IOException, InterruptedException {
+        String resetError = runSchemaReset(connection);
+        if (resetError != null) {
+            return resetError;
+        }
+
+        DatabaseCommandResult restoreResult = commandRunner.run(
+            buildPgRestoreCommand(connection, tempFile, tocFile),
+            password
+        );
+        if (restoreResult.exitCode() == 0) {
+            return null;
+        }
+
+        String stderr = normalizeError(
+            restoreResult.stderr(),
+            BackendMessages.message("backup.pgRestoreFailed")
+        );
+        log.error("pg_restore failed: {}", stderr);
+        return stderr;
+    }
+
+    private String runSchemaReset(PostgresConnectionDetails connection) throws IOException, InterruptedException {
+        DatabaseCommandResult resetSchemaResult = commandRunner.run(buildSchemaResetCommand(connection), password);
+        if (resetSchemaResult.exitCode() == 0) {
+            return null;
+        }
+
+        String stderr = normalizeError(
+            resetSchemaResult.stderr(),
+            BackendMessages.message("backup.schemaResetFailed")
+        );
+        log.error("psql schema reset failed: {}", stderr);
+        return stderr;
+    }
+
+    private String restoreFailureMessage(IOException ex) {
+        return ex.getMessage().contains("No such file")
+            ? BackendMessages.message("backup.pgCliMissing")
+            : ex.getMessage();
+    }
+
+    private void deleteTempFile(Path file, String failureMessage) {
+        if (file == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException ex) {
+            log.warn(failureMessage, file, ex);
         }
     }
 

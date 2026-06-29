@@ -1,7 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const { logClientWarn } = vi.hoisted(() => ({
+    logClientWarn: vi.fn(),
+}));
+
+vi.mock('$lib/logging/clientLogger', () => ({
+    logClientWarn,
+}));
 
 import {
     buildI18nPayload,
+    createTranslationRuntime,
+    getI18nPayloadForPath,
     resolveDomainsForPath,
     resolveLegacyAlias,
     resolveLocaleFromAcceptLanguage,
@@ -11,6 +21,12 @@ import {
 } from '../../src/lib/i18n';
 
 describe('i18n helpers', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllEnvs();
+        logClientWarn.mockClear();
+    });
+
     it('extracts the locale prefix from incoming paths', () => {
         expect(splitLocaleFromPath('/en/app/tasks')).toEqual({ locale: 'en', pathname: '/app/tasks' });
         expect(splitLocaleFromPath('/ru')).toEqual({ locale: 'ru', pathname: '/' });
@@ -60,5 +76,56 @@ describe('i18n helpers', () => {
         expect(translateKey(buildI18nPayload('en', ['tasks']), 'tasks.actions.complete')).toBe('Done!');
         expect(translateKey(buildI18nPayload('en', ['shop']), 'shop.actions.request')).toBe('Request');
         expect(translateKey(buildI18nPayload('en', ['admin']), 'admin.rules.title')).toBe('Rules and goals');
+    });
+
+    it('deduplicates domains and interpolates translated templates', () => {
+        const payload = buildI18nPayload('ru', ['tasks', 'tasks', 'common']);
+
+        expect(payload.domains).toEqual(['tasks', 'common']);
+        expect((payload.messages.tasks as { section?: { import?: string } } | undefined)?.section?.import).toBe('Импорт CSV');
+        expect(translateKey(payload, 'tasks.requestNoteModal.description', { title: 'Wash dishes' }))
+            .toContain('Wash dishes');
+    });
+
+    it('builds a runtime helper set for the current path locale', () => {
+        const runtime = createTranslationRuntime(getI18nPayloadForPath('/app/tasks', 'en'));
+
+        expect(runtime.locale).toBe('en');
+        expect(runtime.domains).toEqual(['common', 'app', 'tasks', 'errors']);
+        expect(runtime.t('tasks.import.title')).toBe('Import tasks from CSV');
+        expect(runtime.href('/app/tasks')).toBe('/en/app/tasks');
+        expect(runtime.swapLocale('/en/app/tasks', 'ru')).toBe('/ru/app/tasks');
+        expect(runtime.formatCoins(2)).toBe('2 coins');
+    });
+
+    it('logs and falls back to english when a locale translation is missing in dev mode', async () => {
+        vi.stubEnv('DEV', true);
+
+        const payload = {
+            locale: 'ru',
+            domains: ['tasks'],
+            messages: {
+                tasks: {
+                    actions: {
+                        complete: undefined,
+                    },
+                },
+            },
+        } as never;
+
+        expect(translateKey(payload, 'tasks.actions.complete')).toBe('Done!');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(logClientWarn).toHaveBeenCalledWith('i18n.missing_translation', 'Missing locale translation', {
+            locale: 'ru',
+            key: 'tasks.actions.complete',
+        });
+
+        expect(() => translateKey({
+            locale: 'ru',
+            domains: ['tasks'],
+            messages: {
+                tasks: {},
+            },
+        } as never, 'tasks.nonexistent.key' as never)).toThrow('Missing English translation for tasks.nonexistent.key');
     });
 });

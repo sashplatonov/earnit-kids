@@ -1,6 +1,7 @@
 <script lang="ts">
     import { browser } from '$app/environment';
     import CardHeader from '$lib/components/app/CardHeader.svelte';
+    import BulkActionToolbar from '$lib/components/app/BulkActionToolbar.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
@@ -8,8 +9,9 @@
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { earnCoins, requestCoinsWithNote, saveChildGroupOrder } from '$lib/services/api';
+    import { bulkTaskAction, earnCoins, importShopItems, importTasks, requestCoinsWithNote, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
+    import { confirmAction } from '$lib/services/confirm';
     import {
         applyGroupOrderToChildren,
         getEffectiveGroupOrder,
@@ -17,6 +19,7 @@
         orderGroups,
         sortItemsByGroup,
     } from '$lib/services/groupOrder';
+    import { requestGroupName } from '$lib/services/groupPrompt';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
 
@@ -28,14 +31,21 @@
     };
 
     let selectedGroup = '';
+    let isBulkMode = false;
+    let selectedTaskIds: Array<number | string> = [];
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
     let viewMode: CardViewMode = 'list';
     let groupOrderEditor: { openEditor: () => void } | null = null;
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
+    const loadedChildScope: { value: string } = { value: '' };
 
     function tTasks(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`tasks.${key}` as MessageKey, variables);
+    }
+
+    function tCsv(kind: 'tasks' | 'shop', key: string, variables?: Record<string, string | number>): string {
+        return $i18n.t(`${kind}.${key}` as MessageKey, variables);
     }
 
     $: tasks = $appStore.tasks;
@@ -52,9 +62,20 @@
     $: if (browser && loadedViewRole.value !== viewRole) {
         viewMode = loadCardViewMode('tasks', viewRole);
         loadedViewRole.value = viewRole;
+        isBulkMode = false;
+        selectedTaskIds = [];
     }
     $: if (selectedGroup && !groups.includes(selectedGroup)) {
+        clearBulkSelection();
         selectedGroup = '';
+    }
+    $: {
+        const nextChildScope = String(resolvedChildId ?? '');
+        if (loadedChildScope.value !== nextChildScope) {
+            isBulkMode = false;
+            selectedTaskIds = [];
+            loadedChildScope.value = nextChildScope;
+        }
     }
 
     $: visibleTasks = selectedGroup
@@ -189,11 +210,157 @@
     }
 
     function openAddTask() {
-        modalStore.open('task-modal', { mode: 'add' });
+        modalStore.open('task-modal', { mode: 'add', groupSuggestions: groups });
+    }
+
+    function openCsvImport() {
+        modalStore.open('csv-import-modal', {
+            kind: 'tasks',
+            onSubmit: async ({ kind, rows }: { kind: 'tasks' | 'shop'; rows: Array<Record<string, unknown>> }) => {
+                if (resolvedChildId == null) {
+                    return {
+                        ok: false,
+                        error: tTasks('toasts.selectChildFirst'),
+                        errorCode: null,
+                        status: 400,
+                    };
+                }
+
+                const result = kind === 'tasks'
+                    ? await importTasks({
+                        childId: resolvedChildId,
+                        rows,
+                    })
+                    : await importShopItems({
+                        childId: resolvedChildId,
+                        rows,
+                    });
+
+                if (result.ok && result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                    showToast(tCsv(kind, 'import.success', { count: rows.length }), 'success');
+                }
+
+                return result;
+            },
+        });
     }
 
     function openEditTask(task: unknown) {
-        modalStore.open('task-modal', { mode: 'edit', task });
+        modalStore.open('task-modal', { mode: 'edit', task, groupSuggestions: groups });
+    }
+
+    function isTaskSelected(task: { id: number | string }) {
+        return selectedTaskIds.some((id) => String(id) === String(task.id));
+    }
+
+    function clearBulkSelection() {
+        isBulkMode = false;
+        selectedTaskIds = [];
+    }
+
+    function toggleBulkMode() {
+        if (isBulkMode) {
+            clearBulkSelection();
+            return;
+        }
+
+        isBulkMode = true;
+        selectedTaskIds = [];
+    }
+
+    function setSelectedGroup(nextGroup: string) {
+        if (selectedGroup === nextGroup) {
+            return;
+        }
+
+        clearBulkSelection();
+        selectedGroup = nextGroup;
+    }
+
+    function selectAllVisibleTasks() {
+        if (!isBulkMode) {
+            isBulkMode = true;
+        }
+        selectedTaskIds = visibleTasks.map((task) => task.id);
+    }
+
+    async function runTaskBulkAction(action: 'delete' | 'block' | 'unblock' | 'change_group') {
+        if (resolvedChildId == null) {
+            showToast(tTasks('toasts.selectChildFirst'), 'error');
+            return;
+        }
+        if (selectedTaskIds.length === 0) {
+            return;
+        }
+
+        if (action === 'delete') {
+            const confirmed = await confirmAction({
+                title: tTasks('modal.confirmDeleteTitle'),
+                description: tTasks('modal.confirmDeleteDescription'),
+                confirmLabel: tTasks('modal.delete'),
+                cancelLabel: tTasks('modal.cancel'),
+                tone: 'danger',
+            });
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        if (action === 'change_group') {
+            const groupName = await requestGroupName({
+                title: tTasks('bulk.changeGroupTitle'),
+                description: tTasks('bulk.changeGroupDescription'),
+                placeholder: tTasks('bulk.changeGroupPlaceholder'),
+                confirmLabel: tTasks('bulk.changeGroupConfirm'),
+                cancelLabel: tTasks('modal.cancel'),
+                suggestions: groups,
+            });
+            if (groupName == null) {
+                return;
+            }
+
+            const result = await bulkTaskAction({
+                childId: resolvedChildId,
+                action,
+                taskIds: [...selectedTaskIds],
+                groupName,
+            });
+            if (result.ok) {
+                if (result.data && typeof result.data === 'object') {
+                    applyDataSnapshot(result.data as Record<string, unknown>);
+                }
+                showToast(tTasks('toasts.bulkChangedGroup'), 'success');
+                clearBulkSelection();
+            } else {
+                showToast(result.error, 'error');
+            }
+            return;
+        }
+
+        const result = await bulkTaskAction({
+            childId: resolvedChildId,
+            action,
+            taskIds: [...selectedTaskIds],
+        });
+        if (!result.ok) {
+            showToast(result.error, 'error');
+            return;
+        }
+
+        if (result.data && typeof result.data === 'object') {
+            applyDataSnapshot(result.data as Record<string, unknown>);
+        }
+
+        if (action === 'delete') {
+            showToast(tTasks('toasts.bulkDeleted', { count: selectedTaskIds.length }), 'success');
+        } else if (action === 'block') {
+            showToast(tTasks('toasts.bulkBlocked', { count: selectedTaskIds.length }), 'success');
+        } else {
+            showToast(tTasks('toasts.bulkUnblocked', { count: selectedTaskIds.length }), 'success');
+        }
+
+        clearBulkSelection();
     }
 
     async function persistGroupOrder(nextOrder: string[]) {
@@ -250,24 +417,47 @@
             gridLabel={tTasks('section.viewGrid')}
             listLabel={tTasks('section.viewList')}
             orderLabel={isAdmin ? $i18n.t('app.groupOrder.configureAdmin') : $i18n.t('app.groupOrder.configureChild')}
+            bulkLabel={isBulkMode ? tTasks('bulk.clear') : tTasks('bulk.toggle')}
+            importLabel={tTasks('section.import')}
+            isBulkMode={isBulkMode}
             hasGroups={groups.length > 1}
             {isEditingGroupOrder}
             {isSavingGroupOrder}
             on:add={openAddTask}
+            on:importCsv={openCsvImport}
             on:editOrder={openGroupOrderEditor}
+            on:toggleBulkMode={toggleBulkMode}
             on:viewMode={(event) => setViewMode(event.detail)}
         />
     </div>
 
+    <BulkActionToolbar
+        show={isBulkMode}
+        selectedCount={selectedTaskIds.length}
+        selectionLabel={tTasks('bulk.selected', { count: selectedTaskIds.length })}
+        selectAllLabel={tTasks('bulk.selectAll')}
+        deleteLabel={tTasks('bulk.delete')}
+        blockLabel={tTasks('bulk.block')}
+        unblockLabel={tTasks('bulk.unblock')}
+        changeGroupLabel={tTasks('bulk.changeGroup')}
+        clearLabel={tTasks('bulk.clear')}
+        on:selectAll={selectAllVisibleTasks}
+        on:delete={() => void runTaskBulkAction('delete')}
+        on:block={() => void runTaskBulkAction('block')}
+        on:unblock={() => void runTaskBulkAction('unblock')}
+        on:changeGroup={() => void runTaskBulkAction('change_group')}
+        on:clear={clearBulkSelection}
+    />
+
     {#if groups.length > 1}
     <nav class="group-nav" id="tasks-group-nav">
         <div class="group-nav__scroll">
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => selectedGroup = ''}>
+            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => setSelectedGroup('')}>
                 {tTasks('section.all')}
             </button>
             {#each groups as group (group)}
             <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
-                on:click={() => selectedGroup = group}>
+                on:click={() => setSelectedGroup(group)}>
                 {group}
             </button>
             {/each}
@@ -311,8 +501,18 @@
     {:else if visibleTasks.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="tasks-list">
         {#each visibleTasks as task (task.id)}
-        <div class="card card--task task-card" class:task-card--list={viewMode === 'list'} class:task-card--inactive={!isTaskActive(task)} class:card--disabled={!isTaskActive(task)}>
+        <div class="card card--task task-card" class:task-card--list={viewMode === 'list'} class:task-card--inactive={!isTaskActive(task)} class:card--disabled={!isTaskActive(task)} class:task-card--selected={isTaskSelected(task)}>
             <div class="card__badge-row">
+                {#if isAdmin && isBulkMode && viewMode !== 'list'}
+                <label class="bulk-select">
+                    <input
+                        type="checkbox"
+                        bind:group={selectedTaskIds}
+                        value={task.id}
+                        aria-label={tTasks('section.selectAria', { title: String(task.title ?? task.name ?? '') })}
+                    />
+                </label>
+                {/if}
                 <span class="card__badge card__badge--group">{task.groupName ?? tTasks('section.noGroup')}</span>
                 {#if formatFrequency(task.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(task.frequency)}</span>
@@ -322,6 +522,16 @@
                 {/if}
             </div>
             <div class="task-card__layout">
+                {#if isAdmin && isBulkMode && viewMode === 'list'}
+                <label class="task-card__select-cell bulk-select">
+                    <input
+                        type="checkbox"
+                        bind:group={selectedTaskIds}
+                        value={task.id}
+                        aria-label={tTasks('section.selectAria', { title: String(task.title ?? task.name ?? '') })}
+                    />
+                </label>
+                {/if}
                 <div class="task-card__main">
                     <CardHeader
                         title={String(task.title ?? task.name ?? '')}
@@ -393,6 +603,24 @@
         gap: 0.9rem;
     }
 
+    .task-card--selected {
+        outline: 2px solid rgba(37, 99, 235, 0.28);
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
+    }
+
+    .bulk-select {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bulk-select input {
+        width: 1rem;
+        height: 1rem;
+        accent-color: #2563eb;
+        cursor: pointer;
+    }
+
     .task-card__side {
         display: flex;
         flex-direction: column;
@@ -420,6 +648,13 @@
     .task-card--list .task-card__main {
         flex: 1 1 0;
         min-width: 0;
+    }
+
+    .task-card__select-cell {
+        display: inline-flex;
+        align-self: center;
+        flex: 0 0 auto;
+        padding-right: 0.1rem;
     }
 
     .task-card--list .task-card__side {
@@ -452,9 +687,14 @@
 
         .task-card--list .task-card__layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: auto minmax(0, 1fr) auto;
             align-items: stretch;
             gap: 0.48rem;
+        }
+
+        .task-card__select-cell {
+            align-self: center;
+            padding-right: 0;
         }
 
         .task-card--list .task-card__side {

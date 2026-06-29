@@ -107,7 +107,7 @@ class DomainModelSanityTest {
             .familyId(1)
             .childId(2)
             .externalId(3L)
-            .type("earn")
+            .type(HistoryEntryType.earn)
             .amount(5)
             .description("Done")
             .moneyAmount(7)
@@ -119,7 +119,7 @@ class DomainModelSanityTest {
         assertThat(history.getFamilyId()).isEqualTo(1);
         assertThat(history.getChildId()).isEqualTo(2);
         assertThat(history.getExternalId()).isEqualTo(3L);
-        assertThat(history.getType()).isEqualTo("earn");
+        assertThat(history.getType()).isEqualTo(HistoryEntryType.earn);
         assertThat(history.getAmount()).isEqualTo(5);
         assertThat(history.getDescription()).isEqualTo("Done");
         assertThat(history.getMoneyAmount()).isEqualTo(7);
@@ -135,11 +135,11 @@ class DomainModelSanityTest {
             .taskName("Task")
             .itemId(5L)
             .coins(6)
-            .requestType("shop")
+            .requestType(PurchaseRequestType.shop)
             .moneyAmount(7)
             .build();
 
-        request.setStatus("approved");
+        request.setStatus(PurchaseRequestStatus.approved);
 
         assertThat(request.getFamilyId()).isEqualTo(1);
         assertThat(request.getChildId()).isEqualTo(2);
@@ -147,9 +147,9 @@ class DomainModelSanityTest {
         assertThat(request.getTaskName()).isEqualTo("Task");
         assertThat(request.getItemId()).isEqualTo(5L);
         assertThat(request.getCoins()).isEqualTo(6);
-        assertThat(request.getRequestType()).isEqualTo("shop");
+        assertThat(request.getRequestType()).isEqualTo(PurchaseRequestType.shop);
         assertThat(request.getMoneyAmount()).isEqualTo(7);
-        assertThat(request.getStatus()).isEqualTo("approved");
+        assertThat(request.getStatus()).isEqualTo(PurchaseRequestStatus.approved);
 
         FriendEntity friend = FriendEntity.builder().childId(10).friendChildId(11).build();
         assertThat(friend.getChildId()).isEqualTo(10);

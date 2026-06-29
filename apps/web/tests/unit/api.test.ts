@@ -13,6 +13,10 @@ import {
     adminGetChildLink,
     adminRegenerateChildLink,
     adminSaveChildSettings,
+    bulkShopAction,
+    bulkTaskAction,
+    importShopItems,
+    importTasks,
     saveChildGroupOrder,
     adminSaveLimits,
     approveRequest,
@@ -472,6 +476,105 @@ describe('fetchWithCsrf', () => {
         expect(url).toBe('/api/children/15/group-order');
         expect(init.method).toBe('POST');
         expect(init.body).toBe(JSON.stringify({ section: 'tasks', groups: ['Дом', 'Учеба'] }));
+    });
+
+    it('posts bulk task actions through the shared JSON POST contract', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ updated: true }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(bulkTaskAction({
+            childId: 15,
+            action: 'change_group',
+            taskIds: [101, 102],
+            groupName: 'Дом',
+        })).resolves.toEqual({
+            ok: true,
+            data: { updated: true },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/tasks/bulk');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({
+            childId: 15,
+            action: 'change_group',
+            taskIds: [101, 102],
+            groupName: 'Дом',
+        }));
+    });
+
+    it('posts bulk shop actions through the shared JSON POST contract', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ updated: true }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(bulkShopAction({
+            childId: 15,
+            action: 'block',
+            itemIds: [201, 202],
+        })).resolves.toEqual({
+            ok: true,
+            data: { updated: true },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/shop/bulk');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({
+            childId: 15,
+            action: 'block',
+            itemIds: [201, 202],
+        }));
+    });
+
+    it('posts task imports and surfaces validation errors', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+            detail: 'Validation failed',
+            errorCode: 'IMPORT_VALIDATION_ERROR',
+            errors: [
+                { row: 2, field: 'title', message: 'Task title is required' },
+            ],
+        }, 400));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(importTasks({
+            childId: 15,
+            rows: [{ rowNumber: 2, title: '', coins: 10 }],
+        })).resolves.toEqual({
+            ok: false,
+            error: 'Validation failed',
+            errorCode: 'IMPORT_VALIDATION_ERROR',
+            status: 400,
+            validationErrors: [{ row: 2, field: 'title', message: 'Task title is required' }],
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/tasks/import');
+        expect(init.method).toBe('POST');
+    });
+
+    it('posts shop imports through the shared validation-aware POST contract', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true, balance: 25 }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(importShopItems({
+            childId: 15,
+            rows: [{ rowNumber: 2, name: 'Tablet time', price: 50 }],
+        })).resolves.toEqual({
+            ok: true,
+            data: { ok: true, balance: 25 },
+        });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/shop/import');
+        expect(init.method).toBe('POST');
     });
 
     it('wraps successful child task requests into ok/data result objects', async () => {

@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
+import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
@@ -59,8 +60,8 @@ class FamilyParentAccessServiceImplTest {
         assertThat(((OperationResult.Success<List<ParentMembershipDto>>) result).value())
             .extracting(ParentMembershipDto::email, ParentMembershipDto::permission)
             .containsExactly(
-                org.assertj.core.groups.Tuple.tuple("alice@test.com", "editor"),
-                org.assertj.core.groups.Tuple.tuple("bob@test.com", "viewer"));
+                org.assertj.core.groups.Tuple.tuple("alice@test.com", FamilyParentMembershipEntity.Permission.editor),
+                org.assertj.core.groups.Tuple.tuple("bob@test.com", FamilyParentMembershipEntity.Permission.viewer));
         verify(parentAccountRepository).findByIdList(List.of(1, 2));
     }
 
@@ -165,8 +166,8 @@ class FamilyParentAccessServiceImplTest {
         ParentMembershipDto dto = ((OperationResult.Success<ParentMembershipDto>) result).value();
         assertThat(dto.id()).isEqualTo(42);
         assertThat(dto.email()).isEqualTo("parent@test.com");
-        assertThat(dto.permission()).isEqualTo("family_admin");
-        assertThat(dto.status()).isEqualTo("active");
+        assertThat(dto.permission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
+        assertThat(dto.status()).isEqualTo(MembershipStatus.active);
     }
 
     @Test
@@ -201,7 +202,7 @@ class FamilyParentAccessServiceImplTest {
         ParentMembershipDto dto = ((OperationResult.Success<ParentMembershipDto>) result).value();
         assertThat(dto.id()).isEqualTo(11);
         assertThat(dto.email()).isEqualTo("parent@test.com");
-        assertThat(dto.permission()).isEqualTo("editor");
+        assertThat(dto.permission()).isEqualTo(FamilyParentMembershipEntity.Permission.editor);
         assertThat(membership.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.editor);
     }
 
@@ -261,7 +262,7 @@ class FamilyParentAccessServiceImplTest {
             .familyId(familyId)
             .parentAccountId(parentId)
             .permission(permission)
-            .status("active")
+            .status(MembershipStatus.active)
             .invitedAt(Instant.parse("2026-05-12T10:00:00Z"))
             .build();
     }

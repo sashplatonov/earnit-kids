@@ -2,18 +2,27 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.sashplatonov.earnit.kids.dto.request.BulkActionType;
+import com.sashplatonov.earnit.kids.dto.request.FrequencyPeriod;
+import com.sashplatonov.earnit.kids.dto.request.ShopItemImportType;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
+import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
+import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
+import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
+import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -29,8 +38,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +58,7 @@ class FamilyActionServiceImplTest {
     @Mock ShopItemRepository shopItemRepository;
     @Mock HistoryRepository historyRepository;
     @Mock PurchaseRequestRepository purchaseRequestRepository;
+    @Mock FamilyDataRepository familyDataRepository;
     @Mock FamilyService familyService;
 
     private FamilyActionServiceImpl service;
@@ -58,6 +73,7 @@ class FamilyActionServiceImplTest {
             shopItemRepository,
             historyRepository,
             purchaseRequestRepository,
+            familyDataRepository,
             familyService,
             TestConfigFactory.timeProvider(FIXED_NOW)
         );
@@ -109,7 +125,7 @@ class FamilyActionServiceImplTest {
 
         ArgumentCaptor<PurchaseRequestEntity> captor = ArgumentCaptor.forClass(PurchaseRequestEntity.class);
         verify(purchaseRequestRepository).persist(captor.capture());
-        assertThat(captor.getValue().getRequestType()).isEqualTo("earn");
+        assertThat(captor.getValue().getRequestType()).isEqualTo(PurchaseRequestType.earn);
         assertThat(captor.getValue().getTaskId()).isEqualTo(3001L);
         assertThat(captor.getValue().getTaskName()).isEqualTo("Убрать комнату");
         assertThat(captor.getValue().getCoins()).isEqualTo(50);
@@ -181,7 +197,7 @@ class FamilyActionServiceImplTest {
 
         ArgumentCaptor<PurchaseRequestEntity> captor = ArgumentCaptor.forClass(PurchaseRequestEntity.class);
         verify(purchaseRequestRepository).persist(captor.capture());
-        assertThat(captor.getValue().getRequestType()).isEqualTo("shop_purchase");
+        assertThat(captor.getValue().getRequestType()).isEqualTo(PurchaseRequestType.shop_purchase);
         assertThat(captor.getValue().getItemId()).isEqualTo(2001L);
         assertThat(captor.getValue().getTaskName()).isEqualTo("PlayStation");
         assertThat(captor.getValue().getCoins()).isEqualTo(50);
@@ -282,8 +298,8 @@ class FamilyActionServiceImplTest {
             .itemId(2001L)
             .taskName("Console")
             .coins(7)
-            .requestType("shop_purchase")
-            .status("pending")
+            .requestType(PurchaseRequestType.shop_purchase)
+            .status(PurchaseRequestStatus.pending)
             .moneyAmount(250)
             .createdAt(requestCreatedAt)
             .build();
@@ -306,11 +322,11 @@ class FamilyActionServiceImplTest {
 
         assertThat(successValue(result)).isEqualTo(payload);
         assertThat(child.getBalance()).isEqualTo(13);
-        assertThat(request.getStatus()).isEqualTo("approved");
+        assertThat(request.getStatus()).isEqualTo(PurchaseRequestStatus.approved);
 
         ArgumentCaptor<HistoryEntryEntity> captor = ArgumentCaptor.forClass(HistoryEntryEntity.class);
         verify(historyRepository).persist(captor.capture());
-        assertThat(captor.getValue().getType()).isEqualTo("spend");
+        assertThat(captor.getValue().getType()).isEqualTo(HistoryEntryType.spend);
         assertThat(captor.getValue().getAmount()).isEqualTo(7);
         assertThat(captor.getValue().getDescription()).isEqualTo("Console");
         assertThat(captor.getValue().getCreatedAt()).isEqualTo(requestCreatedAt);
@@ -328,8 +344,8 @@ class FamilyActionServiceImplTest {
             .taskId(3001L)
             .taskName("Убрать комнату")
             .coins(50)
-            .requestType("earn")
-            .status("pending")
+            .requestType(PurchaseRequestType.earn)
+            .status(PurchaseRequestStatus.pending)
             .moneyAmount(0)
             .createdAt(requestCreatedAt)
             .build();
@@ -352,11 +368,11 @@ class FamilyActionServiceImplTest {
 
         assertThat(successValue(result)).isEqualTo(payload);
         assertThat(child.getBalance()).isEqualTo(50);
-        assertThat(request.getStatus()).isEqualTo("approved");
+        assertThat(request.getStatus()).isEqualTo(PurchaseRequestStatus.approved);
 
         ArgumentCaptor<HistoryEntryEntity> captor = ArgumentCaptor.forClass(HistoryEntryEntity.class);
         verify(historyRepository).persist(captor.capture());
-        assertThat(captor.getValue().getType()).isEqualTo("earn");
+        assertThat(captor.getValue().getType()).isEqualTo(HistoryEntryType.earn);
         assertThat(captor.getValue().getAmount()).isEqualTo(50);
         assertThat(captor.getValue().getDescription()).isEqualTo("Убрать комнату");
         assertThat(captor.getValue().getCreatedAt()).isEqualTo(requestCreatedAt);
@@ -371,7 +387,7 @@ class FamilyActionServiceImplTest {
             .familyId(1)
             .childId(10)
             .externalId(5001L)
-            .type("earn")
+            .type(HistoryEntryType.earn)
             .amount(5)
             .description("Read")
             .createdAt(FIXED_NOW)
@@ -397,10 +413,239 @@ class FamilyActionServiceImplTest {
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
+    @Test
+    void bulkTaskAction_delete_marksSelectedTasksDeleted() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        TaskEntity first = task(10, 1, 3001L, "Убрать комнату", 50);
+        TaskEntity second = task(10, 1, 3002L, "Помыть посуду", 30);
+        io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOfList(first, second);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(taskRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(taskQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.bulkTaskAction(
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest(10, BulkActionType.delete, List.of(3001L, 3002L), null)
+        );
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        assertThat(first.isDeleted()).isTrue();
+        assertThat(second.isDeleted()).isTrue();
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void bulkTaskAction_changeGroup_updatesSelectedTasksGroup() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        TaskEntity first = task(10, 1, 3001L, "Убрать комнату", 50);
+        TaskEntity second = task(10, 1, 3002L, "Помыть посуду", 30);
+        io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOfList(first, second);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(taskRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(taskQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.bulkTaskAction(
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest(10, BulkActionType.change_group, List.of(3001L, 3002L), "Home stuff")
+        );
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        assertThat(first.getGroupName()).isEqualTo("Home stuff");
+        assertThat(second.getGroupName()).isEqualTo("Home stuff");
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void bulkTaskAction_unknownAction_returnsFailureWithoutMutatingEntities() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        TaskEntity first = task(10, 1, 3001L, "Убрать комнату", 50);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+
+        OperationResult<FamilyDataResponse> result = service.bulkTaskAction(
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest(10, null, List.of(3001L), null)
+        );
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(first.isDeleted()).isFalse();
+        assertThat(first.isActive()).isTrue();
+        verify(familyService, never()).loadFamilyData(anyString(), anyInt(), anyBoolean());
+    }
+
+    @Test
+    void bulkShopItemAction_block_marksSelectedItemsInactive() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        ShopItemEntity first = shopItem(10, 1, 2001L, "Console", 7);
+        ShopItemEntity second = shopItem(10, 1, 2002L, "Game", 5);
+        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOfList(first, second);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(itemQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.bulkShopItemAction(
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest(10, BulkActionType.block, List.of(2001L, 2002L), null)
+        );
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        assertThat(first.isActive()).isFalse();
+        assertThat(second.isActive()).isFalse();
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void bulkShopItemAction_changeGroup_updatesSelectedItemsGroup() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        ShopItemEntity first = shopItem(10, 1, 2001L, "Console", 7);
+        ShopItemEntity second = shopItem(10, 1, 2002L, "Game", 5);
+        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOfList(first, second);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(itemQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.bulkShopItemAction(
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest(10, BulkActionType.change_group, List.of(2001L, 2002L), "Big rewards")
+        );
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        assertThat(first.getGroupName()).isEqualTo("Big rewards");
+        assertThat(second.getGroupName()).isEqualTo("Big rewards");
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void importTasks_persistsRowsAndReturnsRefreshedPayload() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+        io.quarkus.hibernate.orm.panache.PanacheQuery emptyTaskQuery = queryOfList();
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(taskRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(emptyTaskQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        FamilyDataResponse result = service.importTasks(
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest(
+                10,
+                List.of(
+                    new com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest(1, "Clean desk", 10, "Home", null, 2, FrequencyPeriod.day, null, true),
+                    new com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest(2, "Read book", 5, null, "Before bed", null, null, 15, false)
+                )
+            )
+        );
+
+        assertThat(result).isEqualTo(payload);
+        verify(familyDataRepository).upsertTask(argThat(command ->
+            command.familyDbId() == 1
+                && command.childId() == 10
+                && command.taskId() == 1L
+                && "Clean desk".equals(command.name())
+                && command.coins() == 10
+                && "Home".equals(command.groupName())
+                && command.frequency() != null
+                && command.comment() == null
+                && command.moneyLimit() == null
+                && command.active()
+                && !command.deleted()
+        ));
+        verify(familyDataRepository).upsertTask(argThat(command ->
+            command.familyDbId() == 1
+                && command.childId() == 10
+                && command.taskId() == 2L
+                && "Read book".equals(command.name())
+                && command.coins() == 5
+                && command.groupName() == null
+                && command.frequency() == null
+                && "Before bed".equals(command.comment())
+                && command.moneyLimit() == 15
+                && !command.active()
+                && !command.deleted()
+        ));
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void importShopItems_rejectsInvalidRowsWithStructuredErrors() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+
+        try {
+            service.importShopItems(
+                "fam-1",
+                new com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest(
+                    10,
+                    List.of(
+                        new com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest(1, "Tablet time", null, null, null, -1, null, true)
+                    )
+                )
+            );
+        } catch (com.sashplatonov.earnit.kids.exception.ImportValidationException exception) {
+            assertThat(exception.response().errors()).anySatisfy(error -> {
+                assertThat(error.row()).isEqualTo(1);
+                assertThat(error.field()).isEqualTo("price");
+            });
+            assertThat(exception.response().errors()).anySatisfy(error -> {
+                assertThat(error.field()).isEqualTo("moneyLimit");
+            });
+            return;
+        }
+
+        throw new AssertionError("Expected ImportValidationException");
+    }
+
+    @Test
+    void importTasks_rejectsEmptyRowsWithStructuredErrors() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+
+        try {
+            service.importTasks(
+                "fam-1",
+                new com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest(10, List.of())
+            );
+        } catch (com.sashplatonov.earnit.kids.exception.ImportValidationException exception) {
+            assertThat(exception.response().errors()).anySatisfy(error -> {
+                assertThat(error.row()).isEqualTo(0);
+                assertThat(error.field()).isEqualTo("rows");
+            });
+            verifyNoInteractions(familyDataRepository);
+            return;
+        }
+
+        throw new AssertionError("Expected ImportValidationException");
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static io.quarkus.hibernate.orm.panache.PanacheQuery queryOf(Object entity) {
+    private static io.quarkus.hibernate.orm.panache.PanacheQuery queryOf(Object... entities) {
         io.quarkus.hibernate.orm.panache.PanacheQuery query = org.mockito.Mockito.mock(io.quarkus.hibernate.orm.panache.PanacheQuery.class);
-        when(query.firstResultOptional()).thenReturn(Optional.ofNullable(entity));
+        when(query.firstResultOptional()).thenReturn(Optional.ofNullable(entities.length > 0 ? entities[0] : null));
+        return query;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static io.quarkus.hibernate.orm.panache.PanacheQuery queryOfList(Object... entities) {
+        io.quarkus.hibernate.orm.panache.PanacheQuery query = org.mockito.Mockito.mock(io.quarkus.hibernate.orm.panache.PanacheQuery.class);
+        when(query.list()).thenReturn(List.of(entities));
         return query;
     }
 

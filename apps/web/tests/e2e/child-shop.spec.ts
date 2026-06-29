@@ -11,6 +11,7 @@ import {
     loginParent,
     logout,
     openFamilyApp,
+    requestWithOptionalNote,
     registerParent,
     uniqueEmail,
 } from './helpers';
@@ -32,8 +33,7 @@ test('parent can register, child can complete task, and reward purchase is appro
 
     await loginChildByMagicLink(page, childLink, taskTitle);
     await expectHeaderBalance(page, 0);
-    await page.locator('#tasks-section [data-task-action="request"]').first().click();
-    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
+    await requestWithOptionalNote(page, page.locator('#tasks-section [data-task-action="request"]').first(), /Request sent|Заявка отправлена/i);
 
     await logout(page);
     await loginParent(page, email, DEFAULT_PARENT_PASSWORD);
@@ -43,8 +43,11 @@ test('parent can register, child can complete task, and reward purchase is appro
     await expectHeaderBalance(page, 50);
     await page.getByRole('link', { name: /Rewards|Награды/i }).click();
     await expect(page.getByRole('heading', { name: rewardTitle })).toBeVisible();
-    await page.locator('#shop-section [data-shop-action="request"]').first().click();
-    await expect(page.getByText(/Purchase request sent|Заявка на покупку отправлена/i)).toBeVisible();
+    await requestWithOptionalNote(
+        page,
+        page.locator('#shop-section [data-shop-action="request"]').first(),
+        /Purchase request sent|Заявка на покупку отправлена/i
+    );
 
     await logout(page);
     await loginParent(page, email, DEFAULT_PARENT_PASSWORD);

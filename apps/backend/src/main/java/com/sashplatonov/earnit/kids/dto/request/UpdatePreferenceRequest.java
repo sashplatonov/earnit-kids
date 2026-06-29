@@ -1,10 +1,10 @@
 package com.sashplatonov.earnit.kids.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record UpdatePreferenceRequest(
-    @NotBlank(message = "{validation.preference.key.required}")
-    String key,
+    @NotNull(message = "{validation.preference.key.required}")
+    FamilyPreferenceKey key,
 
     Object value
 ) { }

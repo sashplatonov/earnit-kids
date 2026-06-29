@@ -487,7 +487,10 @@ public class AuthResource {
 
     private String buildPendingChooserCookie(AuthPayload payload) {
         String raw = payload.email() + "\n" + payload.familyChoices().stream()
-            .map(choice -> choice.familyId() + "|" + choice.familyName() + "|" + choice.permission() + "|" + choice.blocked())
+            .map(choice -> choice.familyId()
+                + "|" + choice.familyName()
+                + "|" + choice.permission()
+                + "|" + choice.blocked())
             .reduce((left, right) -> left + "\n" + right)
             .orElse("");
         String encoded = Base64.getUrlEncoder().withoutPadding()

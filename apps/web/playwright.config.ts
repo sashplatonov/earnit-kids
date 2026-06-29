@@ -3,7 +3,8 @@ import { defineConfig } from '@playwright/test';
 const usePreviewServer = process.env.PLAYWRIGHT_USE_PREVIEW === 'true';
 const baseURL = usePreviewServer
     ? 'http://127.0.0.1:4174'
-    : (process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3001');
+    : (process.env.PLAYWRIGHT_BASE_URL ?? process.env.APP_URL ?? 'http://localhost:5001');
+const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
 export default defineConfig({
     testDir: './tests/e2e',
@@ -17,6 +18,11 @@ export default defineConfig({
         serviceWorkers: 'block',
         // Default to Russian locale for the existing tests; allow override with PLAYWRIGHT_LOCALE
         locale: process.env.PLAYWRIGHT_LOCALE ?? 'ru-RU',
+        ...(chromiumExecutablePath ? {
+            launchOptions: {
+                executablePath: chromiumExecutablePath,
+            },
+        } : {}),
     },
     webServer: usePreviewServer
         ? {

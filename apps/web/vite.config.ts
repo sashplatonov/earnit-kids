@@ -17,6 +17,13 @@ export default defineConfig({
     define: {
         __BUILD_TS__: JSON.stringify(buildTimestamp()),
     },
+    build: {
+        rolldownOptions: {
+            checks: {
+                pluginTimings: false,
+            },
+        },
+    },
     server: {
         port: 4173,
     },

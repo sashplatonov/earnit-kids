@@ -2,6 +2,8 @@ package com.sashplatonov.earnit.kids.domain.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,8 +36,9 @@ public class HistoryEntryEntity extends CreatedAtEntity {
     @Column(name = "external_id")
     private Long externalId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private String type;
+    private HistoryEntryType type;
 
     @Column(name = "amount")
     private int amount;

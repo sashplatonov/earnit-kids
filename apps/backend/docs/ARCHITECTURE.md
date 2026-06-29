@@ -106,6 +106,18 @@ Authorization rules:
 - `editor` can read and write family data but cannot manage parent memberships.
 - `family_admin` can read/write family data and manage parent memberships.
 
+### Bulk actions and import contract
+
+The current dashboard save path remains snapshot-based for everyday edits, but
+bulk actions and CSV import should be modeled as explicit commands instead of
+overloading `POST /api/data`.
+
+- Bulk task/shop actions should accept an explicit action plus a list of entity IDs.
+- Bulk mutations must validate `family_id` and `child_id` before applying any write.
+- Delete flows should continue to use soft-delete semantics where the entity model already supports them.
+- CSV import should validate required columns and return line-level validation errors instead of silently skipping invalid rows.
+- Command endpoints should return a refreshed family snapshot so the web client can rehydrate its store from server truth.
+
 [↩ Back to toc](#table-of-contents)
 
 ## 🧾 API Versioning Strategy

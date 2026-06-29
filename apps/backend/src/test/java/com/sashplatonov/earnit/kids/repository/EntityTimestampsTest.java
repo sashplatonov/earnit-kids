@@ -130,7 +130,7 @@ class EntityTimestampsTest {
             .familyId(familyDbId)
             .childId(childId)
             .externalId(externalId)
-            .type("earn")
+            .type(com.sashplatonov.earnit.kids.domain.model.HistoryEntryType.earn)
             .amount(amount)
             .description(description)
             .createdAt(createdAt)

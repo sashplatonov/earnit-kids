@@ -15,6 +15,7 @@ import {
     loginParent,
     logout,
     openFamilyApp,
+    requestWithOptionalNote,
     registerParent,
     selectChild,
     uniqueEmail,
@@ -43,8 +44,7 @@ test.beforeAll(async ({ browser }) => {
     childLinkA = await getChildMagicLink(page);
 
     await loginChildByMagicLink(page, childLinkA, TASK_TITLE_A);
-    await page.locator('#tasks-section [data-task-action="request"]').first().click();
-    await expect(page.getByText(/Request sent|Заявка отправлена/i)).toBeVisible();
+    await requestWithOptionalNote(page, page.locator('#tasks-section [data-task-action="request"]').first(), /Request sent|Заявка отправлена/i);
 
     await logout(page);
     await loginParent(page, parentEmail, DEFAULT_PARENT_PASSWORD);

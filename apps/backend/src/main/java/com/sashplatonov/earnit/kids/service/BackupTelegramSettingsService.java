@@ -45,20 +45,29 @@ public class BackupTelegramSettingsService {
         return repository.findSettings().map(this::toSnapshot).orElseGet(this::fallbackSnapshot);
     }
 
-    @Transactional
+        @Transactional
     public OperationResult<BackupTelegramSettingsResponse> updateSettings(UpdateBackupTelegramSettingsRequest request) {
         if (request == null) {
-            return OperationResult.failure("BACKUP_SETTINGS_REQUIRED", BackendMessages.message("backup.settingsPayloadRequired"));
+            return OperationResult.failure(
+                "BACKUP_SETTINGS_REQUIRED",
+                BackendMessages.message("backup.settingsPayloadRequired")
+            );
         }
 
         int intervalHours = request.intervalHours();
         if (intervalHours < MIN_INTERVAL_HOURS || intervalHours > MAX_INTERVAL_HOURS) {
-            return OperationResult.failure("BACKUP_INTERVAL_OUT_OF_RANGE", BackendMessages.message("backup.intervalOutOfRange"));
+            return OperationResult.failure(
+                "BACKUP_INTERVAL_OUT_OF_RANGE",
+                BackendMessages.message("backup.intervalOutOfRange")
+            );
         }
 
         int backupRetentionCount = request.backupRetentionCount();
         if (backupRetentionCount < MIN_BACKUP_RETENTION_COUNT || backupRetentionCount > MAX_BACKUP_RETENTION_COUNT) {
-            return OperationResult.failure("BACKUP_RETENTION_OUT_OF_RANGE", BackendMessages.message("backup.retentionOutOfRange"));
+            return OperationResult.failure(
+                "BACKUP_RETENTION_OUT_OF_RANGE",
+                BackendMessages.message("backup.retentionOutOfRange")
+            );
         }
 
         BackupTelegramSettingsEntity entity = ensureEntity();

@@ -1,9 +1,11 @@
 package com.sashplatonov.earnit.kids.repository;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.domain.model.FriendEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
+import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -37,45 +39,35 @@ public class FamilyDataRepository {
     }
 
     @Transactional
-    public boolean upsertTask(int familyDbId, int childId, long taskId, String name,
-                              int coins, String groupName, JsonNode frequency,
-                              String comment, Integer moneyLimit, boolean active, boolean deleted) {
-        var existing = taskRepo.find("childId = ?1 AND taskId = ?2", childId, taskId)
+    public boolean upsertTask(TaskUpsertCommand command) {
+        var existing = taskRepo.find("childId = ?1 AND taskId = ?2", command.childId(), command.taskId())
             .firstResultOptional();
         if (existing.isPresent()) {
             var task = existing.get();
-            task.setName(name);
-            task.setCoins(coins);
-            task.setGroupName(groupName);
-            task.setFrequency(frequency);
-            task.setComment(comment);
-            task.setMoneyLimit(moneyLimit);
-            task.setActive(active);
-            task.setDeleted(deleted);
+            task.setName(command.name());
+            task.setCoins(command.coins());
+            task.setGroupName(command.groupName());
+            task.setFrequency(command.frequency());
+            task.setComment(command.comment());
+            task.setMoneyLimit(command.moneyLimit());
+            task.setActive(command.active());
+            task.setDeleted(command.deleted());
         } else {
             taskRepo.persist(TaskEntity.builder()
-                .familyId(familyDbId)
-                .childId(childId)
-                .taskId(taskId)
-                .name(name)
-                .coins(coins)
-                .groupName(groupName)
-                .frequency(frequency)
-                .comment(comment)
-                .moneyLimit(moneyLimit)
-                .active(active)
-                .deleted(deleted)
+                .familyId(command.familyDbId())
+                .childId(command.childId())
+                .taskId(command.taskId())
+                .name(command.name())
+                .coins(command.coins())
+                .groupName(command.groupName())
+                .frequency(command.frequency())
+                .comment(command.comment())
+                .moneyLimit(command.moneyLimit())
+                .active(command.active())
+                .deleted(command.deleted())
                 .build());
         }
         return true;
-    }
-
-    @Transactional
-    public boolean upsertTask(int familyDbId, int childId, long taskId, String name,
-                              int coins, String groupName, JsonNode frequency,
-                              String comment, Integer moneyLimit, boolean deleted) {
-        return upsertTask(familyDbId, childId, taskId, name, coins, groupName, frequency,
-            comment, moneyLimit, true, deleted);
     }
 
     @Transactional
@@ -103,45 +95,35 @@ public class FamilyDataRepository {
     }
 
     @Transactional
-    public boolean upsertShopItem(int familyDbId, int childId, long itemId, String name,
-                                  int price, String groupName, JsonNode frequency,
-                                  String comment, Integer moneyLimit, boolean active, boolean deleted) {
-        var existing = shopRepo.find("childId = ?1 AND itemId = ?2", childId, itemId)
+    public boolean upsertShopItem(ShopItemUpsertCommand command) {
+        var existing = shopRepo.find("childId = ?1 AND itemId = ?2", command.childId(), command.itemId())
             .firstResultOptional();
         if (existing.isPresent()) {
             var shopItem = existing.get();
-            shopItem.setName(name);
-            shopItem.setPrice(price);
-            shopItem.setGroupName(groupName);
-            shopItem.setFrequency(frequency);
-            shopItem.setComment(comment);
-            shopItem.setMoneyLimit(moneyLimit);
-            shopItem.setActive(active);
-            shopItem.setDeleted(deleted);
+            shopItem.setName(command.name());
+            shopItem.setPrice(command.price());
+            shopItem.setGroupName(command.groupName());
+            shopItem.setFrequency(command.frequency());
+            shopItem.setComment(command.comment());
+            shopItem.setMoneyLimit(command.moneyLimit());
+            shopItem.setActive(command.active());
+            shopItem.setDeleted(command.deleted());
         } else {
             shopRepo.persist(ShopItemEntity.builder()
-                .familyId(familyDbId)
-                .childId(childId)
-                .itemId(itemId)
-                .name(name)
-                .price(price)
-                .groupName(groupName)
-                .frequency(frequency)
-                .comment(comment)
-                .moneyLimit(moneyLimit)
-                .active(active)
-                .deleted(deleted)
+                .familyId(command.familyDbId())
+                .childId(command.childId())
+                .itemId(command.itemId())
+                .name(command.name())
+                .price(command.price())
+                .groupName(command.groupName())
+                .frequency(command.frequency())
+                .comment(command.comment())
+                .moneyLimit(command.moneyLimit())
+                .active(command.active())
+                .deleted(command.deleted())
                 .build());
         }
         return true;
-    }
-
-    @Transactional
-    public boolean upsertShopItem(int familyDbId, int childId, long itemId, String name,
-                                  int price, String groupName, JsonNode frequency,
-                                  String comment, Integer moneyLimit, boolean deleted) {
-        return upsertShopItem(familyDbId, childId, itemId, name, price, groupName, frequency,
-            comment, moneyLimit, true, deleted);
     }
 
     @Transactional
@@ -176,7 +158,7 @@ public class FamilyDataRepository {
     }
 
     @Transactional
-    public boolean addHistory(int familyDbId, int childId, long externalId, String type,
+    public boolean addHistory(int familyDbId, int childId, long externalId, HistoryEntryType type,
                               int amount, String description, int moneyAmount,
                               Long relatedId, String groupName, String comment) {
         historyRepo.persist(HistoryEntryEntity.builder()
@@ -225,7 +207,7 @@ public class FamilyDataRepository {
     @Transactional
     public boolean createRequest(int familyDbId, int childId, long externalId,
                                  Long taskId, String taskName, Long itemId,
-                                 int coins, String requestType, int moneyAmount) {
+                                 int coins, PurchaseRequestType requestType, int moneyAmount) {
         requestRepo.persist(PurchaseRequestEntity.builder()
             .familyId(familyDbId)
             .childId(childId)
@@ -247,7 +229,7 @@ public class FamilyDataRepository {
     }
 
     @Transactional
-    public boolean updateRequestStatus(int requestId, String status) {
+    public boolean updateRequestStatus(int requestId, PurchaseRequestStatus status) {
         return requestRepo.findByIdOptional((long) requestId)
             .map(r -> {
                 r.setStatus(status);

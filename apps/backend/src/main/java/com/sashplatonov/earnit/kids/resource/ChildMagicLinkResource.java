@@ -59,7 +59,13 @@ public class ChildMagicLinkResource {
             case OperationResult.Success<AuthPayload> s -> {
                 AuthPayload payload = s.value();
                 var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId(), payload.isSuperAdmin(), payload.permission());
+                    payload.email(),
+                    payload.role(),
+                    payload.familyId(),
+                    payload.childId(),
+                    payload.isSuperAdmin(),
+                    payload.permission()
+                );
 
                 URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/", request));
 
@@ -71,7 +77,9 @@ public class ChildMagicLinkResource {
                 yield response.build();
             }
             case OperationResult.Failure<AuthPayload> ignored -> Response
-                .seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect("/login.html?error=invalid_token", request)))
+                .seeOther(
+                    URI.create(publicOriginResolver.toAbsoluteRedirect("/login.html?error=invalid_token", request))
+                )
                 .build();
         };
     }

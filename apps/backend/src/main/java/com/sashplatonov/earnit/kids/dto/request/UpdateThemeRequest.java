@@ -1,8 +1,8 @@
 package com.sashplatonov.earnit.kids.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record UpdateThemeRequest(
-    @NotBlank(message = "{validation.theme.required}")
-    String theme
+    @NotNull(message = "{validation.theme.required}")
+    ChildTheme theme
 ) { }

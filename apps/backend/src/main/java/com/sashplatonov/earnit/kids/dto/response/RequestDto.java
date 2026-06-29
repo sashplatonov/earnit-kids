@@ -1,6 +1,8 @@
 package com.sashplatonov.earnit.kids.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record RequestDto(
@@ -15,8 +17,8 @@ public record RequestDto(
     String comment,
     String note,
     int coins,
-    String status,
-    String requestType,
+    PurchaseRequestStatus status,
+    PurchaseRequestType requestType,
     int moneyAmount,
     String createdAt,
     int childId,

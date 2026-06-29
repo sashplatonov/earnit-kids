@@ -47,9 +47,10 @@ public class FamilyParentMembershipEntity extends CreatedAtEntity {
     @Builder.Default
     private Permission permission = Permission.viewer;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private String status = "active";
+    private MembershipStatus status = MembershipStatus.active;
 
     @Column(name = "invited_by_email")
     private String invitedByEmail;

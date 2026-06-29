@@ -24,11 +24,22 @@ type ProblemDetails = {
     detail?: unknown;
     title?: unknown;
     errorCode?: unknown;
+    errors?: Array<{ row?: unknown; field?: unknown; message?: unknown }>;
 };
 
 export type ApiActionResult<T = unknown> =
     | { ok: true; data: T | null }
     | { ok: false; error: string; errorCode: string | null; status: number };
+
+export type ImportValidationError = {
+    row: number;
+    field: string;
+    message: string;
+};
+
+export type ImportActionResult<T = unknown> =
+    | { ok: true; data: T | null }
+    | { ok: false; error: string; errorCode: string | null; status: number; validationErrors?: ImportValidationError[] };
 
 export type AuthActionResult = ApiActionResult<AuthResponseSnapshot>;
 
@@ -81,6 +92,30 @@ function extractProblemCode(payload: unknown): string | null {
     return typeof code === 'string' && code.trim() ? code : null;
 }
 
+function extractValidationErrors(payload: unknown): ImportValidationError[] | undefined {
+    if (!payload || typeof payload !== 'object') {
+        return undefined;
+    }
+
+    const errors = (payload as ProblemDetails).errors;
+    if (!Array.isArray(errors) || errors.length === 0) {
+        return undefined;
+    }
+
+    return errors
+        .map((error) => {
+            const row = typeof error.row === 'number' && Number.isFinite(error.row) ? error.row : Number(error.row ?? 0);
+            const field = typeof error.field === 'string' ? error.field : '';
+            const message = typeof error.message === 'string' ? error.message : '';
+            return {
+                row: Number.isFinite(row) ? row : 0,
+                field,
+                message,
+            };
+        })
+        .filter((error) => error.field || error.message);
+}
+
 async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
     try {
         const res = await fetchWithCsrf(url, {
@@ -99,6 +134,37 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
             error: extractProblemMessage(data),
             errorCode: extractProblemCode(data),
             status: res.status,
+        };
+    } catch (err) {
+        logClientError('api.post_failed', 'POST request failed', { url, error: err });
+        return {
+            ok: false,
+            error: 'Сеть недоступна. Попробуйте еще раз.',
+            errorCode: null,
+            status: 0,
+        };
+    }
+}
+
+async function postJsonResultWithValidation<T = unknown>(url: string, body: unknown): Promise<ImportActionResult<T>> {
+    try {
+        const res = await fetchWithCsrf(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await parseJsonSafe<T | ProblemDetails>(res);
+
+        if (res.ok) {
+            return { ok: true, data: data as T | null };
+        }
+
+        return {
+            ok: false,
+            error: extractProblemMessage(data),
+            errorCode: extractProblemCode(data),
+            status: res.status,
+            validationErrors: extractValidationErrors(data),
         };
     } catch (err) {
         logClientError('api.post_failed', 'POST request failed', { url, error: err });
@@ -333,6 +399,38 @@ export const requestItem = (itemId: unknown) =>
 /** Child: create a purchase request with optional note. */
 export const requestItemWithNote = (itemId: unknown, note?: string | null) =>
     postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request`, { note: note ?? null });
+
+export type BulkAction = 'delete' | 'block' | 'unblock' | 'change_group';
+
+export type BulkTaskActionPayload = {
+    childId: unknown;
+    action: BulkAction;
+    taskIds: Array<number | string>;
+    groupName?: string | null;
+};
+
+export type BulkShopActionPayload = {
+    childId: unknown;
+    action: BulkAction;
+    itemIds: Array<number | string>;
+    groupName?: string | null;
+};
+
+export const bulkTaskAction = (body: BulkTaskActionPayload) =>
+    postJsonResultAfterPendingSave('/api/tasks/bulk', body);
+
+export const bulkShopAction = (body: BulkShopActionPayload) =>
+    postJsonResultAfterPendingSave('/api/shop/bulk', body);
+
+export const importTasks = (body: {
+    childId: unknown;
+    rows: Array<Record<string, unknown>>;
+}) => flushPendingCrudSave().then(() => postJsonResultWithValidation('/api/tasks/import', body));
+
+export const importShopItems = (body: {
+    childId: unknown;
+    rows: Array<Record<string, unknown>>;
+}) => flushPendingCrudSave().then(() => postJsonResultWithValidation('/api/shop/import', body));
 
 // ── Request actions ───────────────────────────────────────────────────────────
 

@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
+import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
+import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -23,6 +26,7 @@ import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
+import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
@@ -30,7 +34,9 @@ import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
+import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 
@@ -53,8 +59,6 @@ import java.util.Set;
 @ApplicationScoped
 @Slf4j
 public final class FamilyServiceImpl implements FamilyService {
-    private static final Set<String> VALID_THEMES = Set.of("mint", "ocean", "sun", "coral", "cosmos");
-    private static final Set<String> VALID_GROUP_ORDER_SECTIONS = Set.of("tasks", "shop");
     private static final int MAX_PAGE_SIZE = 100;
 
     private final FamilyRepository familyRepository;
@@ -108,10 +112,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         List<ChildEntity> children = childRepository.getChildren(familyDbId);
         if (children.isEmpty()) {
-            Boolean adminFlag = adminSession ? Boolean.TRUE : null;
-            return OperationResult.success(new FamilyDataResponse(
-                0, rules, List.of(), List.of(), List.of(), List.of(), List.of(),
-                adminFlag, List.of(), null, null, null, null));
+            return OperationResult.success(emptyFamilyDataResponse(rules, adminSession));
         }
 
         List<ChildEntity> visibleChildren = resolveVisibleChildren(children, adminSession, childId);
@@ -119,54 +120,36 @@ public final class FamilyServiceImpl implements FamilyService {
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
-        Integer preferredChildId = adminSession
-            ? (childId != null ? childId : persistedChildId)
-            : visibleChildren.getFirst().getId();
-        ChildEntity activeChild = preferredChildId != null
-            ? visibleChildren.stream()
-                .filter(c -> Objects.equals(c.getId(), preferredChildId))
-                .findFirst()
-                .orElse(visibleChildren.getFirst())
-            : visibleChildren.getFirst();
-        Integer resolvedLastSelectedChildId = adminSession
-            ? children.stream()
-                .map(ChildEntity::getId)
-                .filter(id -> Objects.equals(id, persistedChildId))
-                .findFirst()
-                .orElse(activeChild.getId())
-            : activeChild.getId();
+        ChildEntity activeChild = resolveActiveChild(visibleChildren, childId, persistedChildId, adminSession);
+        Integer resolvedLastSelectedChildId = resolveLastSelectedChildId(
+            children,
+            activeChild,
+            persistedChildId,
+            adminSession
+        );
 
         List<TaskDto> tasks = loadTasks(activeChild.getId());
-
         List<ShopItemDto> shopItems = loadShopItems(activeChild.getId());
+        List<HistoryEntryDto> history = loadHistory(activeChild.getId(), tasks, shopItems);
+        List<RequestDto> requests = loadRequests(familyDbId, activeChild.getId(), adminSession, tasks, shopItems);
+        List<FriendDto> friends = loadFriends(activeChild.getId());
+        List<ChildDto> childDtos = visibleChildren.stream().map(this::toChildDto).toList();
 
-        List<HistoryEntryDto> history = familyDataRepository.getHistory(activeChild.getId(), 50, 0).stream()
-            .map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems))
-            .toList();
-
-        List<RequestDto> requests = familyDataRepository.getRequests(familyDbId, 50, 0).stream()
-            .filter(request -> adminSession || Objects.equals(request.getChildId(), activeChild.getId()))
-            .map(request -> toRequestDto(
-                request,
-                Objects.equals(request.getChildId(), activeChild.getId()) ? tasks : List.of(),
-                Objects.equals(request.getChildId(), activeChild.getId()) ? shopItems : List.of()
-            ))
-            .toList();
-
-        var friendIds = familyDataRepository.getFriendChildIds(activeChild.getId());
-        List<FriendDto> friends = childRepository.findByChildIds(friendIds).stream()
-            .map(f -> new FriendDto(f.getId(), f.getName(), f.getBalance()))
-            .toList();
-
-        List<ChildDto> childDtos = visibleChildren.stream()
-            .map(this::toChildDto)
-            .toList();
-
-        Boolean adminFlag = adminSession ? Boolean.TRUE : null;
-        return OperationResult.success(
-            new FamilyDataResponse(activeChild.getBalance(), rules, tasks, shopItems, history, requests,
-                friends, adminFlag, childDtos, resolvedLastSelectedChildId, activeChild.getName(),
-                activeChild.getMonthlyLimit(), activeChild.getDailyCoinLimit()));
+        return OperationResult.success(new FamilyDataResponse(
+            activeChild.getBalance(),
+            rules,
+            tasks,
+            shopItems,
+            history,
+            requests,
+            friends,
+            adminSession ? Boolean.TRUE : null,
+            childDtos,
+            resolvedLastSelectedChildId,
+            activeChild.getName(),
+            activeChild.getMonthlyLimit(),
+            activeChild.getDailyCoinLimit()
+        ));
     }
 
     @Override
@@ -246,7 +229,11 @@ public final class FamilyServiceImpl implements FamilyService {
 
         var childOpt = childRepository.findByIdOptional(childId);
         if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), dbIdOpt.get())) {
-            log.warn("deleteChild failed: child not found or family mismatch familyId={} childId={}", familyId, childId);
+            log.warn(
+                "deleteChild failed: child not found or family mismatch familyId={} childId={}",
+                familyId,
+                childId
+            );
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
@@ -293,13 +280,13 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
-    public OperationResult<Void> updateChildTheme(String familyId, int childId, String theme) {
+    public OperationResult<Void> updateChildTheme(String familyId, int childId, ChildTheme theme) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
-        if (!VALID_THEMES.contains(theme)) {
-            return failure("INVALID_THEME", "family.invalidTheme", Map.of("theme", String.valueOf(theme)));
+        if (theme == null) {
+            return failure("INVALID_THEME", "family.invalidTheme", Map.of("theme", "null"));
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
@@ -310,7 +297,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
     @Override
     public OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
-                                                       String section, List<String> groups,
+                                                       GroupOrderSection section, List<String> groups,
                                                        boolean personalOrder) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
@@ -321,21 +308,26 @@ public final class FamilyServiceImpl implements FamilyService {
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
-        String normalizedSection = normalizeGroupOrderSection(section);
-        if (normalizedSection == null) {
+        if (section == null) {
             return failure("INVALID_GROUP_ORDER_SECTION", "family.invalidGroupOrderSection",
-                Map.of("section", String.valueOf(section)));
+                Map.of("section", "null"));
         }
 
         String serializedOrder;
         try {
             serializedOrder = serializeGroupOrder(groups);
         } catch (JsonProcessingException ex) {
-            log.warn("Failed to serialize group order familyId={} childId={} section={}", familyId, childId, normalizedSection, ex);
+            log.warn(
+                "Failed to serialize group order familyId={} childId={} section={}",
+                familyId,
+                childId,
+                section,
+                ex
+            );
             return failure("GROUP_ORDER_SAVE_FAILED", "family.groupOrderSaveFailed");
         }
 
-        childRepository.updateGroupOrder(childId, normalizedSection, personalOrder, serializedOrder);
+        childRepository.updateGroupOrder(childId, section, personalOrder, serializedOrder);
         return OperationResult.success(null);
     }
 
@@ -434,7 +426,9 @@ public final class FamilyServiceImpl implements FamilyService {
         int total = familyDataRepository.getHistoryCount(childId);
         List<TaskDto> tasks = loadTasks(childId);
         List<ShopItemDto> shopItems = loadShopItems(childId);
-        List<HistoryEntryDto> items = rows.stream().map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems)).toList();
+        List<HistoryEntryDto> items = rows.stream()
+            .map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems))
+            .toList();
         return OperationResult.success(new PaginatedHistory(items, total, page, effectiveLimit));
     }
 
@@ -485,8 +479,8 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
-    public OperationResult<Void> updatePreference(String familyId, String key, Object value) {
-        if ("lastSelectedChildId".equals(key)) {
+    public OperationResult<Void> updatePreference(String familyId, FamilyPreferenceKey key, Object value) {
+        if (key == FamilyPreferenceKey.lastSelectedChildId) {
             Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
             if (familyDbIdOpt.isEmpty()) {
                 return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
@@ -532,15 +526,6 @@ public final class FamilyServiceImpl implements FamilyService {
             }
         }
         return null;
-    }
-
-    private String normalizeGroupOrderSection(String section) {
-        if (section == null) {
-            return null;
-        }
-
-        String normalized = section.trim().toLowerCase();
-        return VALID_GROUP_ORDER_SECTIONS.contains(normalized) ? normalized : null;
     }
 
     private String serializeGroupOrder(List<String> groups) throws JsonProcessingException {
@@ -627,7 +612,8 @@ public final class FamilyServiceImpl implements FamilyService {
         }
 
         Integer persistedChildId = familyRepository.getLastSelectedChildId(familyId).orElse(null);
-        if (persistedChildId != null && children.stream().anyMatch(child -> Objects.equals(child.getId(), persistedChildId))) {
+        if (persistedChildId != null
+            && children.stream().anyMatch(child -> Objects.equals(child.getId(), persistedChildId))) {
             return persistedChildId;
         }
 
@@ -710,7 +696,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 continue;
             }
 
-            familyDataRepository.upsertTask(
+            familyDataRepository.upsertTask(new TaskUpsertCommand(
                 familyDbId,
                 selectedChildId,
                 taskId,
@@ -722,7 +708,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 coalesceInt(task.get("moneyLimit"), task.get("money_limit")),
                 defaultBoolean(coalesceFirst(task.get("isActive"), task.get("is_active")), true),
                 defaultBoolean(task.get("isDeleted"), false)
-            );
+            ));
         }
     }
 
@@ -739,7 +725,7 @@ public final class FamilyServiceImpl implements FamilyService {
                 continue;
             }
 
-            familyDataRepository.upsertShopItem(
+            familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
                 familyDbId,
                 selectedChildId,
                 itemId,
@@ -751,8 +737,84 @@ public final class FamilyServiceImpl implements FamilyService {
                 coalesceInt(item.get("moneyLimit"), item.get("money_limit")),
                 defaultBoolean(coalesceFirst(item.get("isActive"), item.get("is_active")), true),
                 defaultBoolean(item.get("isDeleted"), false)
-            );
+            ));
         }
+    }
+
+    private FamilyDataResponse emptyFamilyDataResponse(String rules, boolean adminSession) {
+        return new FamilyDataResponse(
+            0,
+            rules,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            adminSession ? Boolean.TRUE : null,
+            List.of(),
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    private ChildEntity resolveActiveChild(List<ChildEntity> visibleChildren,
+                                           Integer requestedChildId,
+                                           Integer persistedChildId,
+                                           boolean adminSession) {
+        Integer preferredChildId = adminSession
+            ? (requestedChildId != null ? requestedChildId : persistedChildId)
+            : visibleChildren.getFirst().getId();
+        if (preferredChildId == null) {
+            return visibleChildren.getFirst();
+        }
+        return visibleChildren.stream()
+            .filter(child -> Objects.equals(child.getId(), preferredChildId))
+            .findFirst()
+            .orElse(visibleChildren.getFirst());
+    }
+
+    private Integer resolveLastSelectedChildId(List<ChildEntity> children,
+                                               ChildEntity activeChild,
+                                               Integer persistedChildId,
+                                               boolean adminSession) {
+        if (!adminSession) {
+            return activeChild.getId();
+        }
+        return children.stream()
+            .map(ChildEntity::getId)
+            .filter(id -> Objects.equals(id, persistedChildId))
+            .findFirst()
+            .orElse(activeChild.getId());
+    }
+
+    private List<HistoryEntryDto> loadHistory(int childId, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
+        return familyDataRepository.getHistory(childId, 50, 0).stream()
+            .map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems))
+            .toList();
+    }
+
+    private List<RequestDto> loadRequests(int familyDbId,
+                                          int activeChildId,
+                                          boolean adminSession,
+                                          List<TaskDto> tasks,
+                                          List<ShopItemDto> shopItems) {
+        return familyDataRepository.getRequests(familyDbId, 50, 0).stream()
+            .filter(request -> adminSession || Objects.equals(request.getChildId(), activeChildId))
+            .map(request -> toRequestDto(
+                request,
+                Objects.equals(request.getChildId(), activeChildId) ? tasks : List.of(),
+                Objects.equals(request.getChildId(), activeChildId) ? shopItems : List.of()
+            ))
+            .toList();
+    }
+
+    private List<FriendDto> loadFriends(int childId) {
+        var friendIds = familyDataRepository.getFriendChildIds(childId);
+        return childRepository.findByChildIds(friendIds).stream()
+            .map(friend -> new FriendDto(friend.getId(), friend.getName(), friend.getBalance()))
+            .toList();
     }
 
     private List<Map<String, Object>> asMapList(Object rawValue) {
@@ -762,7 +824,10 @@ public final class FamilyServiceImpl implements FamilyService {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object item : collection) {
             if (item instanceof Map<?, ?> map) {
-                result.add(objectMapper.convertValue(map, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { }));
+                result.add(objectMapper.convertValue(
+                    map,
+                    new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { }
+                ));
             }
         }
         return result;
@@ -920,11 +985,11 @@ public final class FamilyServiceImpl implements FamilyService {
 
     private AnalyticsResponse.AnalyticsSummary summarize(List<HistoryEntryEntity> historyEntries) {
         int totalEarned = historyEntries.stream()
-            .filter(entry -> "earn".equals(entry.getType()))
+            .filter(entry -> entry.getType() == HistoryEntryType.earn)
             .mapToInt(HistoryEntryEntity::getAmount)
             .sum();
         int totalSpent = historyEntries.stream()
-            .filter(entry -> "spend".equals(entry.getType()))
+            .filter(entry -> entry.getType() == HistoryEntryType.spend)
             .mapToInt(HistoryEntryEntity::getAmount)
             .sum();
 
@@ -939,7 +1004,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         Map<String, Aggregate> byName = new LinkedHashMap<>();
         historyEntries.stream()
-            .filter(entry -> "earn".equals(entry.getType()))
+            .filter(entry -> entry.getType() == HistoryEntryType.earn)
             .forEach(entry -> {
                 String name = null;
                 if (entry.getRelatedId() != null) {
@@ -967,7 +1032,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         Map<String, Aggregate> byName = new LinkedHashMap<>();
         historyEntries.stream()
-            .filter(entry -> "spend".equals(entry.getType()))
+            .filter(entry -> entry.getType() == HistoryEntryType.spend)
             .forEach(entry -> {
                 String name = null;
                 if (entry.getRelatedId() != null) {
@@ -1009,9 +1074,9 @@ public final class FamilyServiceImpl implements FamilyService {
                 }
                 LocalDate day = entry.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDate();
                 Aggregate aggregate = perDay.computeIfAbsent(day, unused -> new Aggregate());
-                if ("earn".equals(entry.getType())) {
+                if (entry.getType() == HistoryEntryType.earn) {
                     aggregate.earned += entry.getAmount();
-                } else if ("spend".equals(entry.getType())) {
+                } else if (entry.getType() == HistoryEntryType.spend) {
                     aggregate.spent += entry.getAmount();
                 }
             });
@@ -1037,7 +1102,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         List<HistoryEntryEntity> monthlyHistory = queryHistory(familyDbId, childId, lastMonthStart, now)
             .stream()
-            .filter(entry -> "earn".equals(entry.getType()))
+            .filter(entry -> entry.getType() == HistoryEntryType.earn)
             .toList();
 
         Map<Long, Integer> completionCounts = new LinkedHashMap<>();
@@ -1095,13 +1160,31 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private TaskDto toTaskDto(TaskEntity task) {
-        return new TaskDto(task.getTaskId(), task.getName(), task.getCoins(), task.getGroupName(),
-            parseFrequency(task.getFrequency()), task.getComment(), task.getMoneyLimit(), task.isActive(), task.getChildId());
+        return new TaskDto(
+            task.getTaskId(),
+            task.getName(),
+            task.getCoins(),
+            task.getGroupName(),
+            parseFrequency(task.getFrequency()),
+            task.getComment(),
+            task.getMoneyLimit(),
+            task.isActive(),
+            task.getChildId()
+        );
     }
 
     private ShopItemDto toShopItemDto(ShopItemEntity shopItem) {
-        return new ShopItemDto(shopItem.getItemId(), shopItem.getName(), shopItem.getPrice(), shopItem.getGroupName(),
-            parseFrequency(shopItem.getFrequency()), shopItem.getComment(), shopItem.getMoneyLimit(), shopItem.isActive(), shopItem.getChildId());
+        return new ShopItemDto(
+            shopItem.getItemId(),
+            shopItem.getName(),
+            shopItem.getPrice(),
+            shopItem.getGroupName(),
+            parseFrequency(shopItem.getFrequency()),
+            shopItem.getComment(),
+            shopItem.getMoneyLimit(),
+            shopItem.isActive(),
+            shopItem.getChildId()
+        );
     }
 
     private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
@@ -1114,13 +1197,15 @@ public final class FamilyServiceImpl implements FamilyService {
             entry.getChildId());
     }
 
-    private HistoryDetails enrichHistoryDetails(HistoryEntryEntity entry, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
+    private HistoryDetails enrichHistoryDetails(HistoryEntryEntity entry,
+                                                List<TaskDto> tasks,
+                                                List<ShopItemDto> shopItems) {
         if (entry.getRelatedId() == null) {
             return new HistoryDetails(entry.getDescription(), entry.getDescription(), null, null, null, null,
                 entry.getGroupName(), entry.getComment());
         }
 
-        if ("earn".equals(entry.getType())) {
+        if (entry.getType() == HistoryEntryType.earn) {
             TaskDto task = findTaskDto(entry.getFamilyId(), entry.getChildId(), entry.getRelatedId(), tasks);
             if (task != null) {
                 String title = firstNonBlank(entry.getDescription(), task.name());
@@ -1137,8 +1222,13 @@ public final class FamilyServiceImpl implements FamilyService {
             }
         }
 
-        if ("spend".equals(entry.getType())) {
-            ShopItemDto shopItem = findShopItemDto(entry.getFamilyId(), entry.getChildId(), entry.getRelatedId(), shopItems);
+        if (entry.getType() == HistoryEntryType.spend) {
+            ShopItemDto shopItem = findShopItemDto(
+                entry.getFamilyId(),
+                entry.getChildId(),
+                entry.getRelatedId(),
+                shopItems
+            );
             if (shopItem != null) {
                 String title = firstNonBlank(entry.getDescription(), shopItem.name());
                 return new HistoryDetails(
@@ -1168,19 +1258,32 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private boolean isPurchaseRequest(PurchaseRequestEntity request) {
-        return "shop_purchase".equals(request.getRequestType()) || request.getItemId() != null;
+        return (request.getRequestType() != null && request.getRequestType().isPurchase())
+            || request.getItemId() != null;
     }
 
     private RequestDto toRequestDto(PurchaseRequestEntity request, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
         RequestDetails details = enrichRequestDetails(request, tasks, shopItems);
         return new RequestDto(request.getId(), request.getTaskId(), details.taskName(),
             request.getItemId(), details.itemName(), details.title(), details.description(),
-            details.groupName(), details.comment(), request.getNote(), request.getCoins(), request.getStatus(), request.getRequestType(),
+            details.groupName(),
+            details.comment(),
+            request.getNote(),
+            request.getCoins(),
+            request.getStatus(),
+            request.getRequestType(),
             request.getMoneyAmount(), request.getCreatedAt() != null ? request.getCreatedAt().toString() : null,
-            request.getChildId(), details.taskGroup(), details.itemGroup(), details.taskComment(), details.itemComment());
+            request.getChildId(),
+            details.taskGroup(),
+            details.itemGroup(),
+            details.taskComment(),
+            details.itemComment()
+        );
     }
 
-    private RequestDetails enrichRequestDetails(PurchaseRequestEntity request, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
+    private RequestDetails enrichRequestDetails(PurchaseRequestEntity request,
+                                                List<TaskDto> tasks,
+                                                List<ShopItemDto> shopItems) {
         boolean purchase = isPurchaseRequest(request) || request.getItemId() != null;
         Long itemId = request.getItemId() != null ? request.getItemId() : request.getTaskId();
         ShopItemDto shopItem = purchase && itemId != null
@@ -1191,7 +1294,9 @@ public final class FamilyServiceImpl implements FamilyService {
             : null;
 
         String taskName = firstNonBlank(request.getTaskName(), task != null ? task.name() : null);
-        String itemName = purchase ? firstNonBlank(shopItem != null ? shopItem.name() : null, request.getTaskName()) : null;
+        String itemName = purchase
+            ? firstNonBlank(shopItem != null ? shopItem.name() : null, request.getTaskName())
+            : null;
         String title = purchase ? firstNonBlank(itemName, taskName) : taskName;
         String taskComment = task != null ? task.comment() : null;
         String itemComment = shopItem != null ? shopItem.comment() : null;

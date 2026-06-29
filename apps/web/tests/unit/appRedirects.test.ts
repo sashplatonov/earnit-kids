@@ -31,6 +31,27 @@ function localsWith(role: SessionRole) {
 }
 
 describe('authenticated app redirects', () => {
+    it('returns the current session for unauthenticated login requests', async () => {
+        const result = await loginLoad({
+            locals: {
+                locale: 'en',
+                appConfig: {},
+                session: {
+                    authenticated: false,
+                    role: 'child',
+                },
+            },
+            cookies: cookiesWith(null),
+        } as never);
+
+        expect(result).toEqual({
+            session: {
+                authenticated: false,
+                role: 'child',
+            },
+        });
+    });
+
     it('returns a super admin to the saved app section from the root entrypoint', async () => {
         await expect(rootLoad({ locals: localsWith('super_admin'), cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
             status: 302,

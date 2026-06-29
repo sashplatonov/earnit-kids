@@ -15,6 +15,10 @@
     </module>
     <module name="NewlineAtEndOfFile"/>
     <module name="FileTabCharacter"/>
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="TypeName"/>
+        <property name="files" value="[/\\]db[/\\]migration[/\\]V\d+__.*\.java"/>
+    </module>
 
     <!-- Project Java rules are enforced under TreeWalker (below). -->
     <module name="TreeWalker">

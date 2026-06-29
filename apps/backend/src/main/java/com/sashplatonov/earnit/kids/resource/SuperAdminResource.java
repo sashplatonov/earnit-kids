@@ -167,7 +167,8 @@ public class SuperAdminResource {
 
         boolean saved = superAdminService.saveBaseData(payload);
         if (!saved) {
-            return Response.serverError().entity(SimpleResponse.error(BackendMessages.message("super.catalogSaveFailed")))
+            return Response.serverError()
+                .entity(SimpleResponse.error(BackendMessages.message("super.catalogSaveFailed")))
                 .build();
         }
         return Response.ok(SimpleResponse.ok()).build();
@@ -231,7 +232,8 @@ public class SuperAdminResource {
             return Response.serverError().entity(failure.message()).type(MediaType.TEXT_PLAIN).build();
         }
 
-        DatabaseBackupService.BackupArtifact artifact = ((OperationResult.Success<DatabaseBackupService.BackupArtifact>) result).value();
+        DatabaseBackupService.BackupArtifact artifact =
+            ((OperationResult.Success<DatabaseBackupService.BackupArtifact>) result).value();
         return Response.ok(Files.readAllBytes(artifact.path()), MediaType.APPLICATION_OCTET_STREAM)
             .header("Content-Disposition", "attachment; filename=\"" + artifact.filename() + "\"")
             .build();
@@ -284,7 +286,10 @@ public class SuperAdminResource {
         }
 
         return Response.ok(Files.readAllBytes(filePath.get()), MediaType.APPLICATION_OCTET_STREAM)
-            .header("Content-Disposition", "attachment; filename=\"" + java.nio.file.Path.of(filename).getFileName() + "\"")
+            .header(
+                "Content-Disposition",
+                "attachment; filename=\"" + java.nio.file.Path.of(filename).getFileName() + "\""
+            )
             .build();
     }
 
@@ -358,7 +363,8 @@ public class SuperAdminResource {
             return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
         }
 
-        DatabaseBackupService.BackupArtifact artifact = ((OperationResult.Success<DatabaseBackupService.BackupArtifact>) result).value();
+        DatabaseBackupService.BackupArtifact artifact =
+            ((OperationResult.Success<DatabaseBackupService.BackupArtifact>) result).value();
 
         OperationResult<Void> sent = telegramBackupService.sendBackup(artifact.path(), artifact.filename());
         if (sent instanceof OperationResult.Success<?>) {

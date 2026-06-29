@@ -1,11 +1,12 @@
 package com.sashplatonov.earnit.kids.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record HistoryEntryDto(
     Long id,
-    String type,
+    HistoryEntryType type,
     int amount,
     String title,
     String description,

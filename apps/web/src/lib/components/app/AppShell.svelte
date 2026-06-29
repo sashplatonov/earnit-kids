@@ -4,6 +4,9 @@
     import AppNav from './AppNav.svelte';
     import Toast from './Toast.svelte';
     import AddChildModal from './modals/AddChildModal.svelte';
+    import BulkGroupModal from './modals/BulkGroupModal.svelte';
+    import ConfirmModal from './modals/ConfirmModal.svelte';
+    import CsvImportModal from './modals/CsvImportModal.svelte';
     import RequestNoteModal from './modals/RequestNoteModal.svelte';
     import TaskModal from './modals/TaskModal.svelte';
     import ShopModal from './modals/ShopModal.svelte';
@@ -77,6 +80,9 @@
 
     <!-- Modal host -->
     <AddChildModal />
+    <BulkGroupModal />
+    <ConfirmModal />
+    <CsvImportModal />
     <RequestNoteModal />
     <TaskModal />
     <ShopModal />

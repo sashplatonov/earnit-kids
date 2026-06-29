@@ -2,9 +2,14 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
+import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
+import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
+import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
@@ -16,7 +21,9 @@ import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
+import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -38,6 +45,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -122,7 +130,7 @@ class FamilyServiceImplTest {
             .familyId(1)
             .childId(10)
             .externalId(3001L)
-            .type("earn")
+            .type(HistoryEntryType.earn)
             .amount(5)
             .relatedId(1001L)
             .createdAt(FIXED_NOW)
@@ -135,7 +143,7 @@ class FamilyServiceImplTest {
             .taskName("Toy")
             .itemId(2001L)
             .coins(7)
-            .requestType("shop_purchase")
+            .requestType(PurchaseRequestType.shop_purchase)
             .moneyAmount(250)
             .build();
 
@@ -187,14 +195,14 @@ class FamilyServiceImplTest {
             .childId(10)
             .familyId(1)
             .coins(7)
-            .requestType("shop")
+            .requestType(PurchaseRequestType.shop)
             .build();
         PurchaseRequestEntity siblingRequest = PurchaseRequestEntity.builder()
             .id(4002L)
             .childId(11)
             .familyId(1)
             .coins(9)
-            .requestType("earn")
+            .requestType(PurchaseRequestType.earn)
             .build();
 
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
@@ -276,28 +284,28 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void updateChildTheme_unknownOrKnownTheme_returnsExpectedResult() {
+    void updateChildTheme_nullOrKnownTheme_returnsExpectedResult() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
 
-        assertThat(service.updateChildTheme("fam-1", 10, "unknown"))
+        assertThat(service.updateChildTheme("fam-1", 10, null))
             .isInstanceOf(OperationResult.Failure.class);
-        assertThat(service.updateChildTheme("fam-1", 10, "ocean"))
+        assertThat(service.updateChildTheme("fam-1", 10, ChildTheme.ocean))
             .isInstanceOf(OperationResult.Success.class);
     }
 
     @Test
-    void updateChildGroupOrder_unknownOrKnownSection_returnsExpectedResult() {
+    void updateChildGroupOrder_nullOrKnownSection_returnsExpectedResult() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
 
-        assertThat(service.updateChildGroupOrder("fam-1", 10, "unknown", List.of("Дом"), false))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, null, List.of("Дом"), false))
             .isInstanceOf(OperationResult.Failure.class);
 
-        assertThat(service.updateChildGroupOrder("fam-1", 10, "tasks", List.of(" Дом ", "Учеба", "Дом"), false))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.tasks, List.of(" Дом ", "Учеба", "Дом"), false))
             .isInstanceOf(OperationResult.Success.class);
 
-        verify(childRepository).updateGroupOrder(10, "tasks", false, "[\"Дом\",\"Учеба\"]");
+        verify(childRepository).updateGroupOrder(10, GroupOrderSection.tasks, false, "[\"Дом\",\"Учеба\"]");
     }
 
     @Test
@@ -305,13 +313,13 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
 
-        assertThat(service.updateChildGroupOrder("fam-1", 10, "shop", List.of("Хочу", "Потом"), true))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.shop, List.of("Хочу", "Потом"), true))
             .isInstanceOf(OperationResult.Success.class);
-        assertThat(service.updateChildGroupOrder("fam-1", 10, "shop", List.of(), true))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.shop, List.of(), true))
             .isInstanceOf(OperationResult.Success.class);
 
-        verify(childRepository).updateGroupOrder(10, "shop", true, "[\"Хочу\",\"Потом\"]");
-        verify(childRepository).updateGroupOrder(10, "shop", true, null);
+        verify(childRepository).updateGroupOrder(10, GroupOrderSection.shop, true, "[\"Хочу\",\"Потом\"]");
+        verify(childRepository).updateGroupOrder(10, GroupOrderSection.shop, true, null);
     }
 
     @Test
@@ -378,17 +386,17 @@ class FamilyServiceImplTest {
 
         Instant now = FIXED_NOW;
         List<HistoryEntryEntity> current = List.of(
-            HistoryEntryEntity.builder().familyId(1).childId(10).type("earn").amount(5).relatedId(1001L)
+            HistoryEntryEntity.builder().familyId(1).childId(10).type(HistoryEntryType.earn).amount(5).relatedId(1001L)
                 .description("Task 1").createdAt(now.minusSeconds(3600)).build(),
-            HistoryEntryEntity.builder().familyId(1).childId(10).type("spend").amount(3).relatedId(2001L)
+            HistoryEntryEntity.builder().familyId(1).childId(10).type(HistoryEntryType.spend).amount(3).relatedId(2001L)
                 .description("Item 1").createdAt(now.minusSeconds(1800)).build()
         );
         List<HistoryEntryEntity> previous = List.of(
-            HistoryEntryEntity.builder().familyId(1).childId(10).type("earn").amount(2)
+            HistoryEntryEntity.builder().familyId(1).childId(10).type(HistoryEntryType.earn).amount(2)
                 .createdAt(now.minusSeconds(60 * 60 * 24 * 40L)).build()
         );
         List<HistoryEntryEntity> monthly = List.of(
-            HistoryEntryEntity.builder().familyId(1).childId(10).type("earn").amount(4)
+            HistoryEntryEntity.builder().familyId(1).childId(10).type(HistoryEntryType.earn).amount(4)
                 .relatedId(1001L).createdAt(now.minusSeconds(60 * 60 * 24)).build()
         );
 
@@ -425,7 +433,7 @@ class FamilyServiceImplTest {
             .familyId(1)
             .childId(10)
             .externalId(1L)
-            .type("earn")
+            .type(HistoryEntryType.earn)
             .amount(5)
             .relatedId(1001L)
             .createdAt(FIXED_NOW)
@@ -471,7 +479,7 @@ class FamilyServiceImplTest {
             .taskName("Toy")
             .itemId(2001L)
             .coins(7)
-            .requestType("shop_purchase")
+            .requestType(PurchaseRequestType.shop_purchase)
             .moneyAmount(250)
             .build();
 
@@ -520,7 +528,7 @@ class FamilyServiceImplTest {
             .isInstanceOf(OperationResult.Failure.class);
         assertThat(service.updateChildSettings("fam-1", 11, "Alice", 5, 10))
             .isInstanceOf(OperationResult.Failure.class);
-        assertThat(service.updateChildTheme("fam-1", 11, "ocean"))
+        assertThat(service.updateChildTheme("fam-1", 11, ChildTheme.ocean))
             .isInstanceOf(OperationResult.Failure.class);
         assertThat(service.getHistory("fam-1", 11, 1, 20))
             .isInstanceOf(OperationResult.Failure.class);
@@ -532,22 +540,22 @@ class FamilyServiceImplTest {
 
     @Test
     void updatePreference_knownOrUnknownKey_returnsExpectedResult() {
-        assertThat(service.updatePreference("fam-1", "unknown", 1))
+        assertThat(service.updatePreference("fam-1", null, 1))
             .isInstanceOf(OperationResult.Failure.class);
 
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(5)).thenReturn(Optional.of(child(5, 1, "Alice", 0)));
 
-        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", 5))
+        assertThat(service.updatePreference("fam-1", FamilyPreferenceKey.lastSelectedChildId, 5))
             .isInstanceOf(OperationResult.Success.class);
-        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", "5"))
+        assertThat(service.updatePreference("fam-1", FamilyPreferenceKey.lastSelectedChildId, "5"))
             .isInstanceOf(OperationResult.Success.class);
-        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", null))
+        assertThat(service.updatePreference("fam-1", FamilyPreferenceKey.lastSelectedChildId, null))
             .isInstanceOf(OperationResult.Success.class);
         when(childRepository.findByIdOptional(12)).thenReturn(Optional.of(child(12, 2, "Other", 0)));
-        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", 12))
+        assertThat(service.updatePreference("fam-1", FamilyPreferenceKey.lastSelectedChildId, 12))
             .isInstanceOf(OperationResult.Failure.class);
-        assertThat(service.updatePreference("fam-1", "lastSelectedChildId", "bad"))
+        assertThat(service.updatePreference("fam-1", FamilyPreferenceKey.lastSelectedChildId, "bad"))
             .isInstanceOf(OperationResult.Failure.class);
     }
 
@@ -672,21 +680,40 @@ class FamilyServiceImplTest {
         verify(childRepository).updateBalance(10, 42);
         verify(familyDataRepository).markAllTasksDeleted(10);
         verify(familyDataRepository).markAllShopItemsDeleted(10);
-        ArgumentCaptor<JsonNode> taskFrequencyCaptor = ArgumentCaptor.forClass(JsonNode.class);
-        verify(familyDataRepository).upsertTask(
-            eq(1), eq(10), eq(101L), eq("Read"), eq(5), eq("Home"),
-            taskFrequencyCaptor.capture(), eq("Daily"), eq(12), eq(true), eq(false)
-        );
-        assertThat(taskFrequencyCaptor.getValue().get("limit").asInt()).isEqualTo(1);
-        assertThat(taskFrequencyCaptor.getValue().get("period").asText()).isEqualTo("day");
+        ArgumentCaptor<TaskUpsertCommand> taskCommandCaptor = ArgumentCaptor.forClass(TaskUpsertCommand.class);
+        verify(familyDataRepository).upsertTask(taskCommandCaptor.capture());
+        assertThat(taskCommandCaptor.getValue()).satisfies(command -> {
+            assertThat(command.familyDbId()).isEqualTo(1);
+            assertThat(command.childId()).isEqualTo(10);
+            assertThat(command.taskId()).isEqualTo(101L);
+            assertThat(command.name()).isEqualTo("Read");
+            assertThat(command.coins()).isEqualTo(5);
+            assertThat(command.groupName()).isEqualTo("Home");
+            assertThat(command.comment()).isEqualTo("Daily");
+            assertThat(command.moneyLimit()).isEqualTo(12);
+            assertThat(command.active()).isTrue();
+            assertThat(command.deleted()).isFalse();
+            assertThat(command.frequency().get("limit").asInt()).isEqualTo(1);
+            assertThat(command.frequency().get("period").asText()).isEqualTo("day");
+        });
 
-        ArgumentCaptor<JsonNode> shopFrequencyCaptor = ArgumentCaptor.forClass(JsonNode.class);
-        verify(familyDataRepository).upsertShopItem(
-            eq(1), eq(10), eq(201L), eq("Toy"), eq(7), eq("Fun"),
-            shopFrequencyCaptor.capture(), eq("Prize"), eq(30), eq(true), eq(false)
-        );
-        assertThat(shopFrequencyCaptor.getValue().get("limit").asInt()).isEqualTo(2);
-        assertThat(shopFrequencyCaptor.getValue().get("period").asText()).isEqualTo("week");
+        ArgumentCaptor<ShopItemUpsertCommand> shopCommandCaptor =
+            ArgumentCaptor.forClass(ShopItemUpsertCommand.class);
+        verify(familyDataRepository).upsertShopItem(shopCommandCaptor.capture());
+        assertThat(shopCommandCaptor.getValue()).satisfies(command -> {
+            assertThat(command.familyDbId()).isEqualTo(1);
+            assertThat(command.childId()).isEqualTo(10);
+            assertThat(command.itemId()).isEqualTo(201L);
+            assertThat(command.name()).isEqualTo("Toy");
+            assertThat(command.price()).isEqualTo(7);
+            assertThat(command.groupName()).isEqualTo("Fun");
+            assertThat(command.comment()).isEqualTo("Prize");
+            assertThat(command.moneyLimit()).isEqualTo(30);
+            assertThat(command.active()).isTrue();
+            assertThat(command.deleted()).isFalse();
+            assertThat(command.frequency().get("limit").asInt()).isEqualTo(2);
+            assertThat(command.frequency().get("period").asText()).isEqualTo("week");
+        });
 
         verify(familyDataRepository, never()).replaceHistory(eq(1), eq(10), any());
         verify(familyDataRepository, never()).replaceRequests(eq(1), any());
@@ -727,14 +754,32 @@ class FamilyServiceImplTest {
 
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
-        verify(familyDataRepository).upsertTask(
-            eq(1), eq(10), eq(101L), eq("Read"), eq(5), eq("Home"),
-            any(JsonNode.class), eq(null), eq(null), eq(false), eq(true)
-        );
-        verify(familyDataRepository).upsertShopItem(
-            eq(1), eq(10), eq(201L), eq("Toy"), eq(7), eq("Fun"),
-            any(JsonNode.class), eq(null), eq(null), eq(false), eq(true)
-        );
+        verify(familyDataRepository).upsertTask(argThat(command ->
+            command.familyDbId() == 1
+                && command.childId() == 10
+                && command.taskId() == 101L
+                && "Read".equals(command.name())
+                && command.coins() == 5
+                && "Home".equals(command.groupName())
+                && command.frequency() != null
+                && command.comment() == null
+                && command.moneyLimit() == null
+                && !command.active()
+                && command.deleted()
+        ));
+        verify(familyDataRepository).upsertShopItem(argThat(command ->
+            command.familyDbId() == 1
+                && command.childId() == 10
+                && command.itemId() == 201L
+                && "Toy".equals(command.name())
+                && command.price() == 7
+                && "Fun".equals(command.groupName())
+                && command.frequency() != null
+                && command.comment() == null
+                && command.moneyLimit() == null
+                && !command.active()
+                && command.deleted()
+        ));
     }
 
     @Test

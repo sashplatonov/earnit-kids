@@ -4,7 +4,9 @@
     import { modalStore } from '$lib/stores/modal';
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
+    import { confirmAction } from '$lib/services/confirm';
     import { showToast } from '$lib/stores/toasts';
+    import GroupInput from '../GroupInput.svelte';
 
     const i18n = useI18n();
 
@@ -16,6 +18,13 @@
     $: modalData = $modalStore.data;
     $: isEdit = modalData?.mode === 'edit';
     $: existingItem = isEdit ? (modalData?.item as Record<string, unknown>) : null;
+    $: groupSuggestions = Array.isArray(modalData?.groupSuggestions)
+        ? [...new Set(
+            modalData.groupSuggestions
+                .filter((group): group is string => typeof group === 'string' && group.trim().length > 0)
+                .map((group) => group.trim())
+        )]
+        : [];
 
     let title = '';
     let groupName = '';
@@ -89,7 +98,14 @@
 
     async function deleteItem() {
         if (!existingItem?.id) return;
-        if (!confirm(tShop('modal.confirmDelete'))) return;
+        const confirmed = await confirmAction({
+            title: tShop('modal.confirmDeleteTitle'),
+            description: tShop('modal.confirmDeleteDescription'),
+            confirmLabel: tShop('modal.delete'),
+            cancelLabel: tShop('modal.cancel'),
+            tone: 'danger',
+        });
+        if (!confirmed) return;
         appStore.setState({ shopItems: $appStore.shopItems.filter(i => i.id != existingItem!.id) });
         void scheduleSave();
         showToast(tShop('modal.deleted'), 'info');
@@ -108,7 +124,12 @@
         </div>
         <div class="form-group">
             <label for="shop-group">{tShop('modal.groupLabel')}</label>
-            <input type="text" class="input" id="shop-group" placeholder={tShop('modal.groupPlaceholder')} bind:value={groupName} />
+            <GroupInput
+                id="shop-group"
+                placeholder={tShop('modal.groupPlaceholder')}
+                suggestions={groupSuggestions}
+                bind:value={groupName}
+            />
         </div>
         <div class="form-group">
             <label for="shop-price">{tShop('modal.priceLabel')}</label>

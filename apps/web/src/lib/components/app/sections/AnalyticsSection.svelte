@@ -753,6 +753,7 @@
         line-height: 1.25;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-clamp: 2;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -867,13 +868,6 @@
         background: none;
         border: none;
         gap: 0;
-    }
-
-    #analytics-section .analytics-summary-strip__header {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.5rem;
-        align-items: baseline;
     }
 
     #analytics-section .analytics-summary-strip__label {

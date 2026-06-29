@@ -1,6 +1,5 @@
 package com.sashplatonov.earnit.kids.config;
 
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.i18n.BackendLocaleSupport;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleContext;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;

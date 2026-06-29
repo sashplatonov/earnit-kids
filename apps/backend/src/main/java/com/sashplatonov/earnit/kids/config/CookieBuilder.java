@@ -22,10 +22,26 @@ public class CookieBuilder {
     private final JwtService jwtService;
     private final AppConfig appConfig;
 
-    public List<String> buildAuthCookies(String email, String role, String familyId, Integer childId, boolean isSuperAdmin, String permission) {
+    public List<String> buildAuthCookies(String email,
+                                         String role,
+                                         String familyId,
+                                         Integer childId,
+                                         boolean isSuperAdmin,
+                                         String permission) {
         var csrfToken = jwtService.generateCsrfToken();
-        var payload = buildAuthPayload(email, role, familyId, childId, csrfToken, isSuperAdmin, permission);
-        var helperMaxAge = Math.max(appConfig.auth().sessionTtlSeconds(), appConfig.auth().refreshTokenTtlSeconds());
+        var payload = buildAuthPayload(
+            email,
+            role,
+            familyId,
+            childId,
+            csrfToken,
+            isSuperAdmin,
+            permission
+        );
+        var helperMaxAge = Math.max(
+            appConfig.auth().sessionTtlSeconds(),
+            appConfig.auth().refreshTokenTtlSeconds()
+        );
         var roleFlags = buildReadableCookieFlags(helperMaxAge);
 
         var cookies = new ArrayList<String>();

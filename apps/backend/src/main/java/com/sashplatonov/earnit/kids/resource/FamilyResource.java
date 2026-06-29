@@ -5,7 +5,11 @@ import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.AddFriendRequest;
 import com.sashplatonov.earnit.kids.dto.request.AddParentMembershipRequest;
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
+import com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest;
+import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
+import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
+import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateGroupOrderRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
@@ -18,11 +22,13 @@ import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
+import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
+import com.sashplatonov.earnit.kids.exception.ImportValidationException;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
@@ -195,6 +201,94 @@ public class FamilyResource {
     }
 
     @POST
+    @Path("/tasks/bulk")
+    @Operation(summary = "Apply a bulk action to multiple tasks")
+    public Response bulkTaskAction(@Context ContainerRequestContext ctx,
+                                   @RequestBody(required = true, description = "Bulk task action payload")
+                                   @Valid BulkTaskActionRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.bulkTaskAction(auth.familyId(), request);
+        notifyDataUpdated(auth, request.childId(), result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/shop/bulk")
+    @Operation(summary = "Apply a bulk action to multiple shop items")
+    public Response bulkShopItemAction(@Context ContainerRequestContext ctx,
+                                       @RequestBody(required = true, description = "Bulk shop item action payload")
+                                       @Valid BulkShopItemActionRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.bulkShopItemAction(auth.familyId(), request);
+        notifyDataUpdated(auth, request.childId(), result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/tasks/import")
+    @Operation(summary = "Import tasks from CSV rows")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Tasks imported",
+            content = @Content(schema = @Schema(implementation = FamilyDataResponse.class))),
+        @APIResponse(responseCode = "400", description = "Import validation failed",
+            content = @Content(schema = @Schema(implementation = ImportValidationErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response importTasks(@Context ContainerRequestContext ctx,
+                                @RequestBody(required = true, description = "Task CSV import payload")
+                                @Valid ImportTasksRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        try {
+            FamilyDataResponse payload = familyActionService.importTasks(auth.familyId(), request);
+            notifyDataUpdated(auth, request.childId(), OperationResult.success(payload));
+            return Response.ok(payload).build();
+        } catch (ImportValidationException exception) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(exception.response()).build();
+        }
+    }
+
+    @POST
+    @Path("/shop/import")
+    @Operation(summary = "Import shop items from CSV rows")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Shop items imported",
+            content = @Content(schema = @Schema(implementation = FamilyDataResponse.class))),
+        @APIResponse(responseCode = "400", description = "Import validation failed",
+            content = @Content(schema = @Schema(implementation = ImportValidationErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response importShopItems(@Context ContainerRequestContext ctx,
+                                    @RequestBody(required = true, description = "Shop CSV import payload")
+                                    @Valid ImportShopItemsRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        try {
+            FamilyDataResponse payload = familyActionService.importShopItems(auth.familyId(), request);
+            notifyDataUpdated(auth, request.childId(), OperationResult.success(payload));
+            return Response.ok(payload).build();
+        } catch (ImportValidationException exception) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(exception.response()).build();
+        }
+    }
+
+    @POST
     @Path("/shop/{itemId}/request")
     @Operation(summary = "Create a child purchase request immediately in the database")
     public Response requestItemPurchase(@Context ContainerRequestContext ctx,
@@ -226,7 +320,8 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.approveRequest(auth.familyId(), childId, requestId);
+        OperationResult<FamilyDataResponse> result =
+            familyActionService.approveRequest(auth.familyId(), childId, requestId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -242,7 +337,8 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.rejectRequest(auth.familyId(), childId, requestId);
+        OperationResult<FamilyDataResponse> result =
+            familyActionService.rejectRequest(auth.familyId(), childId, requestId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -261,7 +357,8 @@ public class FamilyResource {
         // EXPLAIN: Child sessions may only delete their own requests; ignore client-provided childId.
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
 
-        OperationResult<FamilyDataResponse> result = familyActionService.deleteRequest(auth.familyId(), effectiveChildId, requestId);
+        OperationResult<FamilyDataResponse> result =
+            familyActionService.deleteRequest(auth.familyId(), effectiveChildId, requestId);
         notifyDataUpdated(auth, effectiveChildId, result);
         return toResponse(result);
     }
@@ -280,7 +377,8 @@ public class FamilyResource {
             return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.deleteHistoryEntry(auth.familyId(), childId, historyEntryId);
+        OperationResult<FamilyDataResponse> result =
+            familyActionService.deleteHistoryEntry(auth.familyId(), childId, historyEntryId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -439,7 +537,10 @@ public class FamilyResource {
     public Response updateChildSettingsPost(@Context ContainerRequestContext ctx,
                                             @Parameter(required = true, description = "Child id to update")
                                             @PathParam("childId") int childId,
-                                            @RequestBody(required = true, description = "Updated child settings payload")
+                                            @RequestBody(
+                                                required = true,
+                                                description = "Updated child settings payload"
+                                            )
                                             @Valid UpdateChildSettingsRequest request) {
         return updateChildSettings(ctx, childId, request);
     }
@@ -529,7 +630,8 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        OperationResult<Void> result = familyService.updateNickname(auth.familyId(), auth.childId(), request.nickname());
+        OperationResult<Void> result =
+            familyService.updateNickname(auth.familyId(), auth.childId(), request.nickname());
         notifyChildUpdated(auth.familyId(), auth.childId(), result);
         return toVoidResponse(result);
     }
@@ -747,7 +849,7 @@ public class FamilyResource {
             return unauthorized();
         }
 
-        if (request.key() == null || request.key().isBlank()) {
+        if (request.key() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(ErrorResponse.of(BackendMessages.message("errors.keyRequired"), "BAD_REQUEST", 400))
                 .build();

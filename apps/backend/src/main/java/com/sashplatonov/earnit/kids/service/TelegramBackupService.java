@@ -43,7 +43,10 @@ public class TelegramBackupService {
     public OperationResult<Void> sendBackup(Path file, String filename) {
         TelegramBackupSettingsSnapshot settings = backupTelegramSettingsService.currentSettings();
         if (!settings.configured()) {
-            return OperationResult.failure("TELEGRAM_NOT_CONFIGURED", BackendMessages.message("super.telegramNotConfigured"));
+            return OperationResult.failure(
+                "TELEGRAM_NOT_CONFIGURED",
+                BackendMessages.message("super.telegramNotConfigured")
+            );
         }
 
         var attemptedAt = timeProvider.now();
@@ -68,8 +71,13 @@ public class TelegramBackupService {
             }
             backupTelegramSettingsService.recordFailure(attemptedAt, ex.getMessage());
             log.error("Exception while sending backup to Telegram", ex);
-            return OperationResult.failure("TELEGRAM_SEND_FAILED",
-                BackendMessages.message("backup.sendFailed", java.util.Map.of("reason", String.valueOf(ex.getMessage()))));
+            return OperationResult.failure(
+                "TELEGRAM_SEND_FAILED",
+                BackendMessages.message(
+                    "backup.sendFailed",
+                    java.util.Map.of("reason", String.valueOf(ex.getMessage()))
+                )
+            );
         }
     }
 

@@ -17,13 +17,16 @@ export async function loginParent(
     password = DEFAULT_PARENT_PASSWORD,
     options: LoginOptions = {}
 ) {
-    const destination = options.destination ?? /\/app\/analytics$/;
+    const destination = options.destination ?? /\/(?:[a-z]{2}\/)?app\/[a-z-]+$/;
     const heading = options.heading === undefined ? /EarnIt Kids/i : options.heading;
 
     await page.goto('/login.html');
-    await page.getByPlaceholder(/Email|Email родителя/i).fill(email);
-    await page.getByPlaceholder(/Password|Пароль/i).fill(password);
-    await page.locator('.auth-forms .btn-login').click();
+    const loginPanel = page.locator('[aria-label="Sign-in form"], [aria-label="Форма входа"]');
+    await expect(loginPanel).toBeVisible();
+    await loginPanel.locator('input[autocomplete="username"]').fill(email);
+    await loginPanel.locator('input[autocomplete="current-password"]').fill(password);
+    await loginPanel.getByRole('button', { name: /Sign in|Войти/i }).click();
+
     await expect(page).toHaveURL(destination);
     if (heading !== null) {
         await expect(page.getByRole('heading', { name: heading })).toBeVisible();
@@ -45,17 +48,28 @@ export async function logout(page: Page) {
 export async function registerParent(page: Page, email: string, password = DEFAULT_PARENT_PASSWORD) {
     await page.goto('/login.html');
     await page.getByRole('button', { name: /Register|Регистрация/i }).click();
-    await page.getByPlaceholder(/Parent email|Email родителя/i).fill(email);
-    await page.getByPlaceholder(/Password \(min\. 6\)|Пароль \(мин\. 6\)/i).fill(password);
-    await page.locator('.auth-forms .btn-login').click();
-    await page.waitForFunction(
-        () => document.cookie.includes('app_role=') && document.cookie.includes('csrf_token=')
+    const registerPanel = page.locator('[aria-label="Registration"], [aria-label="Регистрация"]');
+    await expect(registerPanel).toBeVisible();
+    await registerPanel.locator('input[autocomplete="email"]').fill(email);
+    await registerPanel.locator('input[autocomplete="new-password"]').fill(password);
+    const registerResponse = page.waitForResponse(
+        (response) => response.request().method() === 'POST' && /\/api\/register$/.test(response.url())
     );
+    await registerPanel.getByRole('button', { name: /Register family|Зарегистрировать/i }).click();
+    const response = await registerResponse;
+    if (!response.ok()) {
+        throw new Error(`Register failed (${response.status()}): ${await response.text()}`);
+    }
 
-    await page.goto('/app');
+    const loginPanel = page.locator('[aria-label="Sign-in form"], [aria-label="Форма входа"]');
+    if (!(await loginPanel.isVisible().catch(() => false))) {
+        await page.waitForTimeout(3_100);
+        await page.getByRole('button', { name: /Sign in|Войти/i }).first().click();
+    }
+    await expect(loginPanel).toBeVisible({ timeout: 5_000 });
+    await expect(loginPanel.locator('input[autocomplete="username"]')).toHaveValue(email);
 
-    await expect(page).toHaveURL(/\/app\/analytics$/);
-    await expect(page.getByRole('heading', { name: /EarnIt Kids|EarnIt Kids/i })).toBeVisible();
+    await loginParent(page, email, password);
 }
 
 export async function addChild(page: Page, childName: string) {
@@ -147,6 +161,14 @@ export async function loginChildByMagicLink(page: Page, childLink: string, taskT
         }
         await expect(taskHeading).toBeVisible();
     }
+}
+
+export async function requestWithOptionalNote(page: Page, requestButton: Locator, successPattern: RegExp) {
+    await requestButton.click();
+    const modal = page.locator('#request-note-modal');
+    await expect(modal).toBeVisible();
+    await modal.locator('#request-note-skip').click();
+    await expect(page.getByText(successPattern)).toBeVisible();
 }
 
 export async function approveFirstRequest(page: Page) {

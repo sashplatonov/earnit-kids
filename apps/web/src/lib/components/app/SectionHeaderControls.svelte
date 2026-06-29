@@ -11,13 +11,18 @@
     export let gridLabel = '';
     export let listLabel = '';
     export let orderLabel = '';
+    export let bulkLabel = '';
+    export let importLabel = '';
+    export let isBulkMode = false;
     export let hasGroups = false;
     export let isEditingGroupOrder = false;
     export let isSavingGroupOrder = false;
 
     const dispatch = createEventDispatcher<{
         add: void;
+        importCsv: void;
         editOrder: void;
+        toggleBulkMode: void;
         viewMode: CardViewMode;
     }>();
 
@@ -88,6 +93,41 @@
                 <path d="m2.75 16.75 1.25 1.5 1.25-1.5"></path>
             </svg>
             <span class="section-controls__label">{orderLabel}</span>
+        </button>
+        {/if}
+
+        {#if isAdmin}
+        <button
+            class="section-controls__icon-btn section-controls__order-btn"
+            class:section-controls__icon-btn--active={isBulkMode}
+            type="button"
+            aria-label={bulkLabel}
+            aria-pressed={isBulkMode}
+            on:click={() => dispatch('toggleBulkMode')}
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="section-controls__icon">
+                <rect x="4" y="4" width="6" height="6" rx="1.4"></rect>
+                <rect x="14" y="4" width="6" height="6" rx="1.4"></rect>
+                <rect x="4" y="14" width="6" height="6" rx="1.4"></rect>
+                <rect x="14" y="14" width="6" height="6" rx="1.4"></rect>
+            </svg>
+            <span class="section-controls__label">{bulkLabel}</span>
+        </button>
+        {/if}
+
+        {#if isAdmin && importLabel}
+        <button
+            class="section-controls__icon-btn section-controls__order-btn"
+            type="button"
+            aria-label={importLabel}
+            on:click={() => dispatch('importCsv')}
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="section-controls__icon">
+                <path d="M12 4v11"></path>
+                <path d="m8 11 4 4 4-4"></path>
+                <path d="M5 19h14"></path>
+            </svg>
+            <span class="section-controls__label">{importLabel}</span>
         </button>
         {/if}
     </div>

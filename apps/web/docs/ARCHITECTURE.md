@@ -82,6 +82,8 @@ Current convention:
 - Keep browser calls behind the shared service layer.
 - Normalize backend DTO shape once instead of spreading field aliases across components.
 - Preserve the existing `src/lib/services/` layout unless a repo-wide rename to `src/lib/api/` is done in one pass.
+- Keep normal catalog edits on the existing snapshot save path, but model bulk actions and CSV import as explicit command endpoints with server-returned snapshots.
+- Use a shared confirm modal for destructive actions instead of the native `confirm(...)` API.
 
 [↩ Back to toc](#table-of-contents)
 
