@@ -4,5 +4,6 @@ public enum FrequencyPeriod {
     day,
     week,
     month,
-    year
+    year,
+    season
 }

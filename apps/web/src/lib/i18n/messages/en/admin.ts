@@ -101,6 +101,10 @@ export const adminMessages = {
             one: '{limit} time per year',
             other: '{limit} times per year',
         },
+        frequencySeason: {
+            one: '{limit} time per season',
+            other: '{limit} times per season',
+        },
         frequencyFallback: '{limit} times per period',
     },
 } as const;

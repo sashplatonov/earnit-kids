@@ -108,6 +108,7 @@ export const shopMessages = {
 		requiredTitle: 'Required columns',
 		optionalTitle: 'Optional columns',
 		formatTitle: 'CSV format',
+		enumHintsTitle: 'Allowed enum values',
 		inputLabel: 'CSV data',
 		placeholder: 'name,price,groupName\nTablet time,50,Fun',
 		paste: 'Paste from clipboard',
@@ -140,6 +141,10 @@ export const shopMessages = {
 	frequencyYear: {
 		one: '{limit} time per year',
 		other: '{limit} times per year',
+	},
+	frequencySeason: {
+		one: '{limit} time per season',
+		other: '{limit} times per season',
 	},
 	frequencyFallback: '{limit} times per period',
 } as const;

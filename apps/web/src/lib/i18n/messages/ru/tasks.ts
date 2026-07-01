@@ -101,6 +101,7 @@ export const tasksMessages = {
 		requiredTitle: 'Обязательные колонки',
 		optionalTitle: 'Необязательные колонки',
 		formatTitle: 'Формат CSV',
+		enumHintsTitle: 'Допустимые значения enum-полей',
 		inputLabel: 'CSV данные',
 		placeholder: 'title,coins,groupName\nПомыть посуду,10,Дом',
 		paste: 'Вставить из буфера',
@@ -141,6 +142,12 @@ export const tasksMessages = {
 		few: '{limit} раза в год',
 		many: '{limit} раз в год',
 		other: '{limit} раза в год',
+	},
+	frequencySeason: {
+		one: '{limit} раз в сезон',
+		few: '{limit} раза в сезон',
+		many: '{limit} раз в сезон',
+		other: '{limit} раза в сезон',
 	},
 	frequencyFallback: '{limit} раз за период',
 } as const;

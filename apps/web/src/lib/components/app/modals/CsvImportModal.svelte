@@ -177,6 +177,21 @@
     function previewValue(row: { values: Record<string, string> }, columnKey: string): string {
         return row.values[columnKey] ?? row.values[columnKey.trim().toLowerCase()] ?? '';
     }
+
+    function enumFieldHints(activeKind: CsvImportKind): Array<{ key: string; values: string }> {
+        if (activeKind === 'tasks') {
+            return [
+                { key: 'frequencyPeriod', values: 'day, week, month, year, season' },
+                { key: 'isActive', values: 'true, false, 1, 0, yes, no, да, нет' },
+            ];
+        }
+
+        return [
+            { key: 'frequencyPeriod', values: 'day, week, month, year, season' },
+            { key: 'type', values: 'micro, small, large' },
+            { key: 'isActive', values: 'true, false, 1, 0, yes, no, да, нет' },
+        ];
+    }
 </script>
 
 {#if isOpen}
@@ -244,6 +259,14 @@
                     </span>
                 </summary>
                 <pre class="csv-import-modal__format-code">{templateText}</pre>
+                <div class="csv-import-modal__enum-hints">
+                    <div class="csv-import-modal__meta-label">{t(kind, 'import.enumHintsTitle')}</div>
+                    <ul class="csv-import-modal__enum-list">
+                        {#each enumFieldHints(kind) as hint (hint.key)}
+                            <li><code>{hint.key}</code>: {hint.values}</li>
+                        {/each}
+                    </ul>
+                </div>
                 <button class="btn btn--secondary btn--small" type="button" on:click={copyTemplate}>
                     {t(kind, 'import.copyFormat')}
                 </button>
@@ -491,6 +514,23 @@
         letter-spacing: 0.04em;
         color: var(--muted-text, #6b7280);
         margin-bottom: 0.35rem;
+    }
+
+    .csv-import-modal__enum-hints {
+        margin: 0 0 0.6rem;
+    }
+
+    .csv-import-modal__enum-list {
+        margin: 0;
+        padding-left: 1rem;
+        color: var(--muted-text, #4b5563);
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .csv-import-modal__enum-list code {
+        font-family: ui-monospace, SFMono-Regular, SF Mono, Consolas, Liberation Mono, monospace;
+        font-size: 0.8rem;
     }
 
     .csv-import-modal__textarea {

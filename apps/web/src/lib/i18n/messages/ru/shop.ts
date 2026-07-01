@@ -108,6 +108,7 @@ export const shopMessages = {
 		requiredTitle: 'Обязательные колонки',
 		optionalTitle: 'Необязательные колонки',
 		formatTitle: 'Формат CSV',
+		enumHintsTitle: 'Допустимые значения enum-полей',
 		inputLabel: 'CSV данные',
 		placeholder: 'name,price,groupName\nЧас планшета,50,Развлечения',
 		paste: 'Вставить из буфера',
@@ -148,6 +149,12 @@ export const shopMessages = {
 		few: '{limit} раза в год',
 		many: '{limit} раз в год',
 		other: '{limit} раза в год',
+	},
+	frequencySeason: {
+		one: '{limit} раз в сезон',
+		few: '{limit} раза в сезон',
+		many: '{limit} раз в сезон',
+		other: '{limit} раза в сезон',
 	},
 	frequencyFallback: '{limit} раз за период',
 } as const;

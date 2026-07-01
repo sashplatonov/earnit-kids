@@ -59,6 +59,7 @@
             week: 'frequencyWeek',
             month: 'frequencyMonth',
             year: 'frequencyYear',
+            season: 'frequencySeason',
         };
         const limit = Number(frequency.limit);
         const pluralCategory = new Intl.PluralRules($i18n.locale).select(limit);

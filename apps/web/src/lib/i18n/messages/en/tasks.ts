@@ -101,6 +101,7 @@ export const tasksMessages = {
 		requiredTitle: 'Required columns',
 		optionalTitle: 'Optional columns',
 		formatTitle: 'CSV format',
+		enumHintsTitle: 'Allowed enum values',
 		inputLabel: 'CSV data',
 		placeholder: 'title,coins,groupName\nWash dishes,10,Home',
 		paste: 'Paste from clipboard',
@@ -133,6 +134,10 @@ export const tasksMessages = {
 	frequencyYear: {
 		one: '{limit} time per year',
 		other: '{limit} times per year',
+	},
+	frequencySeason: {
+		one: '{limit} time per season',
+		other: '{limit} times per season',
 	},
 	frequencyFallback: '{limit} times per period',
 } as const;

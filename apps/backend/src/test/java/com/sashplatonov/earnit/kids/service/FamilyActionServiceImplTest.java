@@ -581,6 +581,48 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void importShopItems_persistsSeasonFrequencyAndReturnsRefreshedPayload() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+        io.quarkus.hibernate.orm.panache.PanacheQuery emptyShopQuery = queryOfList();
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(emptyShopQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        FamilyDataResponse result = service.importShopItems(
+            "fam-1",
+            new com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest(
+                10,
+                List.of(
+                    new com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest(
+                        1, "Summer goal", 150, "Big rewards", "Once per summer", 1, FrequencyPeriod.season, null, null, true
+                    )
+                )
+            )
+        );
+
+        assertThat(result).isEqualTo(payload);
+        verify(familyDataRepository).upsertShopItem(argThat(command ->
+            command.familyDbId() == 1
+                && command.childId() == 10
+                && command.itemId() == 1L
+                && "Summer goal".equals(command.name())
+                && command.price() == 150
+                && "Big rewards".equals(command.groupName())
+                && command.frequency() != null
+                && "season".equals(command.frequency().get("period").asText())
+                && command.frequency().get("limit").asInt() == 1
+                && "Once per summer".equals(command.comment())
+                && command.moneyLimit() == null
+                && command.active()
+                && !command.deleted()
+        ));
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
     void importShopItems_rejectsInvalidRowsWithStructuredErrors() {
         ChildEntity child = child(10, 1, "Alice", 20);
 

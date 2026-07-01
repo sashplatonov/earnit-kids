@@ -130,6 +130,7 @@
             week: 'frequencyWeek',
             month: 'frequencyMonth',
             year: 'frequencyYear',
+            season: 'frequencySeason',
         };
         const numericLimit = Number(limit);
         const pluralCategory = new Intl.PluralRules($i18n.locale).select(numericLimit);

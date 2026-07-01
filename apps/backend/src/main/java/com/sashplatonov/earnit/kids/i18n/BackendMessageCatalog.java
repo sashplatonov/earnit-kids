@@ -75,7 +75,7 @@ final class BackendMessageCatalog {
 
     private static String normalizePeriod(String period) {
         return switch (period) {
-            case "week", "month", "year" -> period;
+            case "week", "month", "year", "season" -> period;
             default -> "day";
         };
     }

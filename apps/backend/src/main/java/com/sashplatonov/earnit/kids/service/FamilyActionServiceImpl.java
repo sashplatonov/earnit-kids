@@ -882,7 +882,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             .orElse("day");
 
         return switch (period) {
-            case "week", "month", "year" -> period;
+            case "week", "month", "year", "season" -> period;
             default -> "day";
         };
     }
@@ -921,6 +921,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                 .toInstant();
             case "month" -> currentDate.withDayOfMonth(1).atStartOfDay(zoneId).toInstant();
             case "year" -> currentDate.withDayOfYear(1).atStartOfDay(zoneId).toInstant();
+            case "season" -> currentSeasonStart(currentDate, zoneId);
             default -> currentDate.atStartOfDay(zoneId).toInstant();
         };
     }
@@ -936,10 +937,25 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             case "year" -> currentPeriodStart.atZone(ZoneId.systemDefault())
                 .plusYears(1)
                 .toInstant();
+            case "season" -> currentPeriodStart.atZone(ZoneId.systemDefault())
+                .plusMonths(3)
+                .toInstant();
             default -> currentPeriodStart.atZone(ZoneId.systemDefault())
                 .plusDays(1)
                 .toInstant();
         };
+    }
+
+    private Instant currentSeasonStart(LocalDate currentDate, ZoneId zoneId) {
+        int month = currentDate.getMonthValue();
+        LocalDate seasonStart = switch (month) {
+            case 12 -> LocalDate.of(currentDate.getYear(), 12, 1);
+            case 1, 2 -> LocalDate.of(currentDate.getYear() - 1, 12, 1);
+            case 3, 4, 5 -> LocalDate.of(currentDate.getYear(), 3, 1);
+            case 6, 7, 8 -> LocalDate.of(currentDate.getYear(), 6, 1);
+            default -> LocalDate.of(currentDate.getYear(), 9, 1);
+        };
+        return seasonStart.atStartOfDay(zoneId).toInstant();
     }
 
     private String buildTaskLimitReachedMessage(String period, Instant resetAt) {
