@@ -317,7 +317,7 @@ class FamilyResourceTest {
     @Test
     void importShopItems_returnsStructuredValidationError() {
         ImportShopItemsRequest request = new ImportShopItemsRequest(10, List.of(
-            new ImportShopItemRowRequest(1, "", null, null, null, null, null, null)
+            new ImportShopItemRowRequest(1, "", null, null, null, null, null, null, null, null)
         ));
         ImportValidationErrorResponse errorResponse = ImportValidationErrorResponse.of(
             "Validation failed",

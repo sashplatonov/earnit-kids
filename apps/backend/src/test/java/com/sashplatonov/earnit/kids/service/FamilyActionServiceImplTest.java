@@ -593,7 +593,7 @@ class FamilyActionServiceImplTest {
                 new com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest(
                     10,
                     List.of(
-                        new com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest(1, "Tablet time", null, null, null, -1, null, true)
+                        new com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest(1, "Tablet time", null, null, null, 0, null, -1, null, true)
                     )
                 )
             );
@@ -601,6 +601,9 @@ class FamilyActionServiceImplTest {
             assertThat(exception.response().errors()).anySatisfy(error -> {
                 assertThat(error.row()).isEqualTo(1);
                 assertThat(error.field()).isEqualTo("price");
+            });
+            assertThat(exception.response().errors()).anySatisfy(error -> {
+                assertThat(error.field()).isEqualTo("frequencyLimit");
             });
             assertThat(exception.response().errors()).anySatisfy(error -> {
                 assertThat(error.field()).isEqualTo("moneyLimit");

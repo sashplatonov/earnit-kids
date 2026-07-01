@@ -10,6 +10,8 @@ public record ImportShopItemRowRequest(
     @NotNull @Schema(required = true) Integer price,
     @Schema(required = false) String groupName,
     @Schema(required = false) String comment,
+    @Schema(required = false) Integer frequencyLimit,
+    @Schema(required = false) FrequencyPeriod frequencyPeriod,
     @Schema(required = false) Integer moneyLimit,
     @Schema(required = false) ShopItemImportType type,
     @Schema(required = false) Boolean isActive

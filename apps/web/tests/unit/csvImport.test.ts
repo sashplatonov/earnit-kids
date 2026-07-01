@@ -51,8 +51,8 @@ describe('parseCsvImport', () => {
     it('drops unsupported legacy shop type values before submit payload generation', () => {
         const result = parseCsvImport(
             'shop',
-            'name,price,groupName,comment,moneyLimit,type,isActive\n'
-            + 'Королева Настолки,2,Семья,Вечер вместе,,reward,true'
+            'name,price,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,type,isActive\n'
+            + 'Королева Настолки,2,Семья,Вечер вместе,2,week,,reward,true'
         );
 
         expect(result.errors).toHaveLength(0);
@@ -63,10 +63,23 @@ describe('parseCsvImport', () => {
                 price: 2,
                 groupName: 'Семья',
                 comment: 'Вечер вместе',
+                frequencyLimit: 2,
+                frequencyPeriod: 'week',
                 moneyLimit: null,
                 type: null,
                 isActive: true,
             },
+        ]);
+    });
+
+    it('rejects non-positive reward frequency limits', () => {
+        const result = parseCsvImport(
+            'shop',
+            'name,price,frequencyLimit,frequencyPeriod\nTablet time,50,0,day'
+        );
+
+        expect(result.errors).toEqual([
+            { row: 2, field: 'frequencyLimit', message: 'frequencyLimit must be positive' },
         ]);
     });
 
@@ -76,8 +89,8 @@ describe('parseCsvImport', () => {
             + 'Wash dishes,10,,,,,,'
         );
         expect(buildCsvTemplate('shop')).toBe(
-            'name,price,groupName,comment,moneyLimit,type,isActive\n'
-            + 'Tablet time,50,,,,,'
+            'name,price,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,type,isActive\n'
+            + 'Tablet time,50,,,,,,,'
         );
     });
 });

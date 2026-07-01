@@ -479,6 +479,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
 
         long nextItemId = nextShopItemBusinessId(familyDbId, request.childId());
         for (ImportShopItemRowRequest row : rows) {
+            JsonNode frequency = buildFrequencyNode(row.frequencyLimit(), row.frequencyPeriod());
             familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
                 familyDbId,
                 request.childId(),
@@ -486,7 +487,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                 row.name().trim(),
                 row.price(),
                 trimToNull(row.groupName()),
-                null,
+                frequency,
                 trimToNull(row.comment()),
                 row.moneyLimit(),
                 row.isActive() == null || row.isActive(),
@@ -728,6 +729,22 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                         "price",
                         BackendMessages.message("shop.priceRequired")
                     ));
+            }
+            if (row.frequencyLimit() != null || row.frequencyPeriod() != null) {
+                if (row.frequencyLimit() == null || row.frequencyLimit() <= 0) {
+                    errors.add(new ImportValidationErrorItem(
+                        rowNumber,
+                        "frequencyLimit",
+                        BackendMessages.message("tasks.frequencyLimitRequired")
+                    ));
+                }
+                if (!isValidFrequencyPeriod(row.frequencyPeriod())) {
+                    errors.add(new ImportValidationErrorItem(
+                        rowNumber,
+                        "frequencyPeriod",
+                        BackendMessages.message("tasks.frequencyPeriodRequired")
+                    ));
+                }
             }
             if (row.moneyLimit() != null && row.moneyLimit() < 0) {
                 errors.add(new ImportValidationErrorItem(

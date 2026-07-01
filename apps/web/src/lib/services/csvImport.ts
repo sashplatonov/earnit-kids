@@ -58,6 +58,8 @@ const SHOP_COLUMNS: CsvImportColumn[] = [
     { key: 'price', label: 'price', required: true, example: '50' },
     { key: 'groupName', label: 'groupName', required: false },
     { key: 'comment', label: 'comment', required: false },
+    { key: 'frequencyLimit', label: 'frequencyLimit', required: false },
+    { key: 'frequencyPeriod', label: 'frequencyPeriod', required: false },
     { key: 'moneyLimit', label: 'moneyLimit', required: false },
     { key: 'type', label: 'type', required: false },
     { key: 'isActive', label: 'isActive', required: false },
@@ -254,6 +256,7 @@ function parseTaskRow(rowNumber: number, values: Record<string, string>) {
 
 function parseShopRow(rowNumber: number, values: Record<string, string>) {
     const price = parseNumber(values.price ?? '');
+    const frequencyLimit = parseNumber(values.frequencylimit ?? '');
     const moneyLimit = parseNumber(values.moneylimit ?? '');
     const isActive = parseBoolean(values.isactive ?? '');
     return {
@@ -262,6 +265,8 @@ function parseShopRow(rowNumber: number, values: Record<string, string>) {
         price: price == null ? null : Math.trunc(price),
         groupName: values.groupname || null,
         comment: values.comment || null,
+        frequencyLimit: frequencyLimit == null ? null : Math.trunc(frequencyLimit),
+        frequencyPeriod: values.frequencyperiod || null,
         moneyLimit: moneyLimit == null ? null : Math.trunc(moneyLimit),
         type: parseShopType(values.type ?? ''),
         isActive,
@@ -349,6 +354,9 @@ export function parseCsvImport(kind: CsvImportKind, text: string): CsvImportPars
         }
         if (normalized.price == null || normalized.price <= 0) {
             rowErrors.push({ row: rowNumber, field: 'price', message: 'price must be positive' });
+        }
+        if (normalized.frequencyLimit != null && normalized.frequencyLimit <= 0) {
+            rowErrors.push({ row: rowNumber, field: 'frequencyLimit', message: 'frequencyLimit must be positive' });
         }
         if (normalized.moneyLimit != null && normalized.moneyLimit < 0) {
             rowErrors.push({ row: rowNumber, field: 'moneyLimit', message: 'moneyLimit must not be negative' });
