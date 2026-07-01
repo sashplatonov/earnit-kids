@@ -14,6 +14,8 @@ async function createRewardWithGroup(
     group: string,
     price: number,
     comment: string,
+    frequencyLimit?: number,
+    frequencyPeriod?: 'day' | 'week' | 'month' | 'year',
     moneyLimit?: number,
 ) {
     await page.getByRole('link', { name: /Rewards|Награды/i }).click();
@@ -21,6 +23,12 @@ async function createRewardWithGroup(
     await page.locator('#shop-name').fill(title);
     await page.locator('#shop-group').fill(group);
     await page.locator('#shop-price').fill(String(price));
+    if (frequencyLimit != null) {
+        await page.locator('#shop-freq-limit').fill(String(frequencyLimit));
+        if (frequencyPeriod) {
+            await page.locator('#shop-freq-period').selectOption(frequencyPeriod);
+        }
+    }
     if (moneyLimit != null) {
         await page.locator('#shop-money-limit').fill(String(moneyLimit));
     }
@@ -39,7 +47,7 @@ test('shop group filter works, persists after reload, and keeps compact list rea
     await addChild(page, 'Фильтр Ребёнок');
 
     await createRewardWithGroup(page, rewardGames, 'Игры', 20, 'Настольная игра');
-    await createRewardWithGroup(page, rewardBooks, 'Книги', 25, 'Новая книга', 15);
+    await createRewardWithGroup(page, rewardBooks, 'Книги', 25, 'Новая книга', 2, 'week', 15);
 
     const booksTab = page.locator('#shop-group-nav .group-nav__tab').filter({ hasText: 'Книги' });
     await expect(booksTab).toBeVisible();
@@ -65,6 +73,7 @@ test('shop group filter works, persists after reload, and keeps compact list rea
     await expect(listCard.locator('.card__title')).toHaveText(rewardBooks);
     await expect(listCard.locator('.card__compact-meta')).toContainText('Книги');
     await expect(listCard.locator('.card__compact-meta')).toContainText('15');
+    await expect(listCard.locator('.card__meta')).toContainText(/2.*(недел|week)/i);
 
     const metrics = await listCard.evaluate((card) => {
         const rect = card.getBoundingClientRect();

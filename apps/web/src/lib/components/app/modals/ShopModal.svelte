@@ -5,6 +5,7 @@
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { confirmAction } from '$lib/services/confirm';
+    import { buildShopPayload } from '$lib/services/shopPayload';
     import { showToast } from '$lib/stores/toasts';
     import GroupInput from '../GroupInput.svelte';
 
@@ -30,6 +31,8 @@
     let groupName = '';
     let coins = 50;
     let comment = '';
+    let freqLimit = '';
+    let freqPeriod: 'day' | 'week' | 'month' | 'year' = 'week';
     let moneyLimit = '';
     let itemType: 'micro' | 'small' | 'large' = 'small';
     let isActive = true;
@@ -43,11 +46,13 @@
             groupName = (_item.groupName as string) ?? '';
             coins = ((_item.price ?? _item.coins) as number) ?? 50;
             comment = (_item.comment as string) ?? '';
+            freqLimit = String((_item.frequency as Record<string, unknown>)?.limit ?? '');
+            freqPeriod = (((_item.frequency as Record<string, unknown>)?.period as typeof freqPeriod) ?? 'week');
             moneyLimit = String((_item.moneyLimit as number) ?? '');
             itemType = ((_item.type ?? _item.itemType) as typeof itemType) ?? 'small';
             isActive = _item.isActive !== false;
         } else {
-            title = ''; groupName = ''; coins = 50; comment = ''; moneyLimit = ''; itemType = 'small'; isActive = true;
+            title = ''; groupName = ''; coins = 50; comment = ''; freqLimit = ''; freqPeriod = 'week'; moneyLimit = ''; itemType = 'small'; isActive = true;
         }
     }
 
@@ -55,19 +60,18 @@
 
     async function save() {
         if (!title.trim()) { showToast(tShop('modal.enterTitle'), 'error'); return; }
-        const payload = {
-            id: existingItem?.id,
-            name: title.trim(),
-            title: title.trim(),
-            groupName: groupName.trim() || null,
-            price: Number(coins) || 50,
-            coins: Number(coins) || 50,
-            comment: comment.trim() || null,
-            moneyLimit: moneyLimit ? Number(moneyLimit) : null,
-            type: itemType,
+        const payload = buildShopPayload({
+            id: existingItem?.id as number | string | undefined,
+            title,
+            groupName,
+            price: coins,
+            comment,
+            freqLimit,
+            freqPeriod,
+            moneyLimit,
             itemType,
             isActive,
-        };
+        });
 
         if (isEdit) {
             appStore.setState({
@@ -137,10 +141,25 @@
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label for="shop-freq-limit">{tShop('modal.frequencyLabel')}</label>
+                <div class="input-group">
+                    <input type="number" inputmode="numeric" class="input" id="shop-freq-limit"
+                        placeholder={tShop('modal.noLimitPlaceholder')} min="0" bind:value={freqLimit} />
+                    <select class="input" id="shop-freq-period" bind:value={freqPeriod}>
+                        <option value="day">{tShop('modal.periodDay')}</option>
+                        <option value="week">{tShop('modal.periodWeek')}</option>
+                        <option value="month">{tShop('modal.periodMonth')}</option>
+                        <option value="year">{tShop('modal.periodYear')}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
                 <label for="shop-money-limit">{tShop('modal.moneyLimitLabel')}</label>
                 <input type="number" inputmode="numeric" class="input" id="shop-money-limit"
                     placeholder={tShop('modal.noLimitPlaceholder')} min="0" bind:value={moneyLimit} />
             </div>
+        </div>
+        <div class="form-row">
             <div class="form-group">
                 <label for="shop-type">{tShop('modal.typeLabel')}</label>
                 <select class="input" id="shop-type" bind:value={itemType}>
