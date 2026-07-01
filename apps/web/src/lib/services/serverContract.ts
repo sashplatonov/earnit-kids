@@ -58,6 +58,7 @@ export function normalizeTask(task: Record<string, unknown> = {}) {
         moneyLimit: task.moneyLimit ?? task.money_limit ?? null,
         ageMin: task.ageMin ?? task.age_min ?? null,
         ageMax: task.ageMax ?? task.age_max ?? null,
+        lastCompletedAt: task.lastCompletedAt ?? task.last_completed_at ?? null,
     };
 }
 
@@ -78,6 +79,7 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
         frequency: item.frequency ?? null,
         ageMin: item.ageMin ?? item.age_min ?? null,
         ageMax: item.ageMax ?? item.age_max ?? null,
+        lastPurchasedAt: item.lastPurchasedAt ?? item.last_purchased_at ?? null,
     };
 }
 

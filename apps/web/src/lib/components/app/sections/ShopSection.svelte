@@ -360,19 +360,38 @@
             : '';
     }
 
+    function formatLastPurchasedAt(item: { lastPurchasedAt?: unknown }) {
+        if (typeof item.lastPurchasedAt !== 'string' || !item.lastPurchasedAt) {
+            return '';
+        }
+
+        const parsed = new Date(item.lastPurchasedAt);
+        return Number.isNaN(parsed.getTime()) ? '' : $i18n.formatShortDate(parsed);
+    }
+
+    function itemLastPurchasedLabel(item: { lastPurchasedAt?: unknown }) {
+        const date = formatLastPurchasedAt(item);
+        return date ? tShop('section.lastPurchased', { date }) : '';
+    }
+
     function shopCompactChips(item: {
         isActive?: unknown;
         groupName?: string | null;
         frequency?: { limit?: number; period?: string } | null;
         moneyLimit?: number | null;
         price?: unknown;
+        lastPurchasedAt?: unknown;
     }): CardHeaderChip[] {
         const chips: CardHeaderChip[] = [
             { label: item.groupName ?? tShop('section.noGroup'), className: 'card__compact-chip--group' },
         ];
         const frequency = formatFrequency(item.frequency);
+        const lastPurchased = itemLastPurchasedLabel(item);
 
         if (frequency) chips.push({ label: frequency });
+        if (lastPurchased) {
+            chips.push({ label: lastPurchased, className: 'card__compact-chip--shop-history' });
+        }
         chips.push({
             label: availabilityLabel(item),
             className: isItemActive(item) && isItemAffordable(item)
@@ -575,6 +594,9 @@
                 {#if formatFrequency(item.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(item.frequency)}</span>
                 {/if}
+                {#if itemLastPurchasedLabel(item)}
+                <span class="card__badge card__badge--history">{itemLastPurchasedLabel(item)}</span>
+                {/if}
                 <span class:card__status--available={isItemActive(item) && isItemAffordable(item)} class:card__status--locked={!isItemActive(item) || !isItemAffordable(item)} class="card__status">
                     {availabilityLabel(item)}
                 </span>
@@ -753,6 +775,16 @@
         flex: none;
         padding: 0.38rem 0.7rem;
         font-size: 0.82rem;
+    }
+
+    .card__badge--history {
+        background: rgba(251, 191, 36, 0.16);
+        color: #8a6118;
+    }
+
+    :global(.card__compact-chip--shop-history) {
+        background: rgba(251, 191, 36, 0.16);
+        color: #8a6118;
     }
 
     @media (max-width: 640px) {

@@ -134,6 +134,20 @@
             : '';
     }
 
+    function formatLastCompletedAt(task: { lastCompletedAt?: unknown }) {
+        if (typeof task.lastCompletedAt !== 'string' || !task.lastCompletedAt) {
+            return '';
+        }
+
+        const parsed = new Date(task.lastCompletedAt);
+        return Number.isNaN(parsed.getTime()) ? '' : $i18n.formatShortDate(parsed);
+    }
+
+    function taskLastCompletedLabel(task: { lastCompletedAt?: unknown }) {
+        const date = formatLastCompletedAt(task);
+        return date ? tTasks('section.lastCompleted', { date }) : '';
+    }
+
     function taskCompactChips(task: {
         isActive?: unknown;
         groupName?: string | null;
@@ -141,6 +155,7 @@
         moneyLimit?: number | null;
         ageMin?: number | null;
         ageMax?: number | null;
+        lastCompletedAt?: unknown;
     }): CardHeaderChip[] {
         const chips: CardHeaderChip[] = [
             { label: task.groupName ?? tTasks('section.noGroup'), className: 'card__compact-chip--group' },
@@ -148,10 +163,14 @@
         const frequency = formatFrequency(task.frequency);
         const moneyLimit = taskMoneyLimitLabel(task);
         const ageRange = taskAgeRangeLabel(task);
+        const lastCompleted = taskLastCompletedLabel(task);
 
         if (frequency) chips.push({ label: frequency });
         if (moneyLimit) chips.push({ label: moneyLimit });
         if (ageRange) chips.push({ label: ageRange });
+        if (lastCompleted) {
+            chips.push({ label: lastCompleted, className: 'card__compact-chip--task-history' });
+        }
         if (!isTaskActive(task)) {
             chips.push({ label: tTasks('section.blocked'), className: 'card__compact-chip--status card__compact-chip--status-locked' });
         }
@@ -518,6 +537,9 @@
                 {#if formatFrequency(task.frequency)}
                 <span class="card__badge card__badge--type">{formatFrequency(task.frequency)}</span>
                 {/if}
+                {#if taskLastCompletedLabel(task)}
+                <span class="card__badge card__badge--history">{taskLastCompletedLabel(task)}</span>
+                {/if}
                 {#if !isTaskActive(task)}
                 <span class="card__status card__status--locked">{tTasks('section.blocked')}</span>
                 {/if}
@@ -675,6 +697,16 @@
         flex: none;
         padding: 0.38rem 0.7rem;
         font-size: 0.82rem;
+    }
+
+    .card__badge--history {
+        background: rgba(56, 189, 248, 0.14);
+        color: #0f4c81;
+    }
+
+    :global(.card__compact-chip--task-history) {
+        background: rgba(56, 189, 248, 0.14);
+        color: #0f4c81;
     }
 
     .task-card--inactive {

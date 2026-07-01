@@ -12,5 +12,6 @@ public record TaskDto(
     String comment,
     Integer moneyLimit,
     boolean isActive,
-    int childId
+    int childId,
+    String lastCompletedAt
 ) { }

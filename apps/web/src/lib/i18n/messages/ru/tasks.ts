@@ -10,6 +10,7 @@ export const tasksMessages = {
 		all: 'Все',
 		noGroup: 'Без группы',
 		blocked: 'Заблокировано',
+		lastCompleted: 'Последнее выполнение {date}',
 		defaultComment: 'Короткий шаг, который помогает заработать монетки и закрепить привычку.',
 		moneyLimit: 'До {amount} 💶',
 		ageRange: 'Возраст {min}-{max}',

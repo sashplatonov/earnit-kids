@@ -110,6 +110,26 @@ test.describe('Shop section', () => {
         await expect(page.locator('[data-shop-action="edit"]').first()).toBeVisible();
     });
 
+    test('shows last purchase and completion badges in card and row views', async ({ page }) => {
+        await page.getByRole('link', { name: /Tasks|Задания/i }).click();
+        const taskCard = page.locator('#tasks-list .task-card').first();
+        await expect(taskCard.locator('.card__badge--history')).toBeVisible();
+        await expect(taskCard.locator('.card__badge--history')).toContainText(/Last done|Последнее выполнение/i);
+
+        await page.getByRole('button', { name: /Rows|Строки/i }).click();
+        const taskRow = page.locator('#tasks-list .task-card--list').first();
+        await expect(taskRow.locator('.card__compact-meta')).toContainText(/Last done|Последнее выполнение/i);
+
+        await page.getByRole('link', { name: /Rewards|Награды/i }).click();
+        const shopCard = page.locator('#shop-list .shop-card').first();
+        await expect(shopCard.locator('.card__badge--history')).toBeVisible();
+        await expect(shopCard.locator('.card__badge--history')).toContainText(/Last bought|Последняя покупка/i);
+
+        await page.getByRole('button', { name: /Rows|Строки/i }).click();
+        const shopRow = page.locator('#shop-list .shop-card--list').first();
+        await expect(shopRow.locator('.card__compact-meta')).toContainText(/Last bought|Последняя покупка/i);
+    });
+
     test('shop cards reserve space for wrapped top badges', async ({ page }) => {
         const firstShopCard = page.locator('#shop-list .shop-card').first();
         await expect(firstShopCard).toBeVisible();

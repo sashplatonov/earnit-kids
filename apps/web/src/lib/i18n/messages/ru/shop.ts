@@ -10,6 +10,7 @@ export const shopMessages = {
 		all: 'Все',
 		noGroup: 'Без группы',
 		blocked: 'Заблокировано',
+		lastPurchased: 'Последняя покупка {date}',
 		availableAdmin: 'Можно купить',
 		availableChild: 'Можно запросить',
 		missingCoins: 'Еще {amount}',

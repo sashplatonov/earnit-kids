@@ -10,6 +10,7 @@ export const tasksMessages = {
 		all: 'All',
 		noGroup: 'No group',
 		blocked: 'Blocked',
+		lastCompleted: 'Last done {date}',
 		defaultComment: 'A small step that helps earn coins and reinforce the habit.',
 		moneyLimit: 'Up to {amount} 💶',
 		ageRange: 'Ages {min}-{max}',

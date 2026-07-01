@@ -98,6 +98,18 @@ describe('normalizeTask', () => {
         const task = normalizeTask({ name: 'Помочь с готовкой', price: 8 });
         expect(task.coins).toBe(8);
     });
+
+    it('normalizes lastCompletedAt from snake_case', () => {
+        const task = normalizeTask({ name: 'Полить цветы', coins: 5, last_completed_at: '2026-07-01T12:00:00Z' });
+        expect(task.lastCompletedAt).toBe('2026-07-01T12:00:00Z');
+    });
+});
+
+describe('last activity timestamps', () => {
+    it('normalizes lastPurchasedAt from snake_case', () => {
+        const item = normalizeShopItem({ name: 'Поход в кино', price: 50, last_purchased_at: '2026-07-01T10:00:00Z' });
+        expect(item.lastPurchasedAt).toBe('2026-07-01T10:00:00Z');
+    });
 });
 
 describe('normalizeHistoryEntry', () => {

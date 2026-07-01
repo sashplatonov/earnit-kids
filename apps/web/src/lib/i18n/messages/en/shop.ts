@@ -10,6 +10,7 @@ export const shopMessages = {
 		all: 'All',
 		noGroup: 'No group',
 		blocked: 'Blocked',
+		lastPurchased: 'Last bought {date}',
 		availableAdmin: 'Available to buy',
 		availableChild: 'Available to request',
 		missingCoins: '{amount} more',

@@ -12,5 +12,6 @@ public record ShopItemDto(
     String comment,
     Integer moneyLimit,
     boolean isActive,
-    int childId
+    int childId,
+    String lastPurchasedAt
 ) { }

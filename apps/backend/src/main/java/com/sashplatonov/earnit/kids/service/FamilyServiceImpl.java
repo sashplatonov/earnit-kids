@@ -128,8 +128,10 @@ public final class FamilyServiceImpl implements FamilyService {
             adminSession
         );
 
-        List<TaskDto> tasks = loadTasks(activeChild.getId());
-        List<ShopItemDto> shopItems = loadShopItems(activeChild.getId());
+        Map<Long, String> lastCompletedAtByTaskId = loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.earn);
+        Map<Long, String> lastPurchasedAtByItemId = loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.spend);
+        List<TaskDto> tasks = loadTasks(activeChild.getId(), lastCompletedAtByTaskId);
+        List<ShopItemDto> shopItems = loadShopItems(activeChild.getId(), lastPurchasedAtByItemId);
         List<HistoryEntryDto> history = loadHistory(activeChild.getId(), tasks, shopItems);
         List<RequestDto> requests = loadRequests(familyDbId, activeChild.getId(), adminSession, tasks, shopItems);
         List<FriendDto> friends = loadFriends(activeChild.getId());
@@ -1137,11 +1139,23 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private List<TaskDto> loadTasks(int childId) {
-        return familyDataRepository.getTasks(childId).stream().map(this::toTaskDto).toList();
+        return loadTasks(childId, Map.of());
+    }
+
+    private List<TaskDto> loadTasks(int childId, Map<Long, String> lastCompletedAtByTaskId) {
+        return familyDataRepository.getTasks(childId).stream()
+            .map(task -> toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId())))
+            .toList();
     }
 
     private List<ShopItemDto> loadShopItems(int childId) {
-        return familyDataRepository.getShopItems(childId).stream().map(this::toShopItemDto).toList();
+        return loadShopItems(childId, Map.of());
+    }
+
+    private List<ShopItemDto> loadShopItems(int childId, Map<Long, String> lastPurchasedAtByItemId) {
+        return familyDataRepository.getShopItems(childId).stream()
+            .map(shopItem -> toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId())))
+            .toList();
     }
 
     private ChildDto toChildDto(ChildEntity child) {
@@ -1159,7 +1173,7 @@ public final class FamilyServiceImpl implements FamilyService {
         );
     }
 
-    private TaskDto toTaskDto(TaskEntity task) {
+    private TaskDto toTaskDto(TaskEntity task, String lastCompletedAt) {
         return new TaskDto(
             task.getTaskId(),
             task.getName(),
@@ -1169,11 +1183,12 @@ public final class FamilyServiceImpl implements FamilyService {
             task.getComment(),
             task.getMoneyLimit(),
             task.isActive(),
-            task.getChildId()
+            task.getChildId(),
+            lastCompletedAt
         );
     }
 
-    private ShopItemDto toShopItemDto(ShopItemEntity shopItem) {
+    private ShopItemDto toShopItemDto(ShopItemEntity shopItem, String lastPurchasedAt) {
         return new ShopItemDto(
             shopItem.getItemId(),
             shopItem.getName(),
@@ -1183,8 +1198,30 @@ public final class FamilyServiceImpl implements FamilyService {
             shopItem.getComment(),
             shopItem.getMoneyLimit(),
             shopItem.isActive(),
-            shopItem.getChildId()
+            shopItem.getChildId(),
+            lastPurchasedAt
         );
+    }
+
+    private Map<Long, String> loadLatestHistoryTimestamps(int childId, HistoryEntryType type) {
+        Map<Long, String> latestTimestamps = new LinkedHashMap<>();
+        List<HistoryEntryEntity> entries = historyRepository.list(
+            "childId = ?1 AND type = ?2 AND relatedId IS NOT NULL ORDER BY createdAt DESC, id DESC",
+            childId,
+            type
+        );
+        if (entries == null) {
+            return latestTimestamps;
+        }
+
+        for (HistoryEntryEntity entry : entries) {
+            if (entry.getRelatedId() == null || entry.getCreatedAt() == null) {
+                continue;
+            }
+            latestTimestamps.putIfAbsent(entry.getRelatedId(), entry.getCreatedAt().toString());
+        }
+
+        return latestTimestamps;
     }
 
     private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
@@ -1326,7 +1363,7 @@ public final class FamilyServiceImpl implements FamilyService {
             familyDbId,
             childId,
             taskId
-        ).firstResultOptional().map(this::toTaskDto).orElse(null);
+        ).firstResultOptional().map(task -> toTaskDto(task, null)).orElse(null);
     }
 
     private ShopItemDto findShopItemDto(int familyDbId, int childId, Long itemId, List<ShopItemDto> shopItems) {
@@ -1346,7 +1383,7 @@ public final class FamilyServiceImpl implements FamilyService {
             familyDbId,
             childId,
             itemId
-        ).firstResultOptional().map(this::toShopItemDto).orElse(null);
+        ).firstResultOptional().map(shopItem -> toShopItemDto(shopItem, null)).orElse(null);
     }
 
     private record HistoryDetails(

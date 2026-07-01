@@ -13,6 +13,7 @@ export interface Task {
     frequency?: { period?: string; limit?: number } | null;
     ageMin?: number | null;
     ageMax?: number | null;
+    lastCompletedAt?: string | null;
     [key: string]: unknown;
 }
 
@@ -27,6 +28,7 @@ export interface ShopItem {
     frequency?: { period?: string; limit?: number } | null;
     ageMin?: number | null;
     ageMax?: number | null;
+    lastPurchasedAt?: string | null;
     [key: string]: unknown;
 }
 

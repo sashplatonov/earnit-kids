@@ -135,6 +135,15 @@ class FamilyServiceImplTest {
             .relatedId(1001L)
             .createdAt(FIXED_NOW)
             .build();
+        HistoryEntryEntity purchaseHistory = HistoryEntryEntity.builder()
+            .familyId(1)
+            .childId(10)
+            .externalId(3002L)
+            .type(HistoryEntryType.spend)
+            .amount(7)
+            .relatedId(2001L)
+            .createdAt(FIXED_NOW.minus(Duration.ofDays(1)))
+            .build();
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()
             .id(4001L)
             .childId(10)
@@ -150,6 +159,16 @@ class FamilyServiceImplTest {
         when(familyDataRepository.getTasks(10)).thenReturn(List.of(task));
         when(familyDataRepository.getShopItems(10)).thenReturn(List.of(item));
         when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of(history));
+        when(historyRepository.list(
+            "childId = ?1 AND type = ?2 AND relatedId IS NOT NULL ORDER BY createdAt DESC, id DESC",
+            10,
+            HistoryEntryType.earn
+        )).thenReturn(List.of(history));
+        when(historyRepository.list(
+            "childId = ?1 AND type = ?2 AND relatedId IS NOT NULL ORDER BY createdAt DESC, id DESC",
+            10,
+            HistoryEntryType.spend
+        )).thenReturn(List.of(purchaseHistory));
         when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
         when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11));
         when(childRepository.findByChildIds(List.of(11))).thenReturn(List.of(child2));
@@ -178,6 +197,8 @@ class FamilyServiceImplTest {
         assertThat(payload.requests().getFirst().itemName()).isEqualTo("Toy");
         assertThat(payload.requests().getFirst().itemComment()).isEqualTo("Prize");
         assertThat(payload.shop().getFirst().comment()).isEqualTo("Prize");
+        assertThat(payload.tasks().getFirst().lastCompletedAt()).isEqualTo(FIXED_NOW.toString());
+        assertThat(payload.shop().getFirst().lastPurchasedAt()).isEqualTo(FIXED_NOW.minus(Duration.ofDays(1)).toString());
         assertThat(payload.tasks().getFirst().frequency()).isInstanceOf(Map.class);
         assertThat(payload.shop().getFirst().frequency()).isInstanceOf(Map.class);
         assertThat(payload.children().getFirst().taskGroupOrder()).containsExactly("Дом", "Учеба");
