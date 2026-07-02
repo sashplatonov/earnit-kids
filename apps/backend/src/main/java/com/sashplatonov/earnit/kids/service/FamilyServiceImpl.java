@@ -43,7 +43,7 @@ import com.sashplatonov.earnit.kids.util.TimeProvider;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -128,12 +128,25 @@ public final class FamilyServiceImpl implements FamilyService {
             adminSession
         );
 
-        Map<Long, String> lastCompletedAtByTaskId = loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.earn);
-        Map<Long, String> lastPurchasedAtByItemId = loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.spend);
+        Map<Long, String> lastCompletedAtByTaskId = loadLatestHistoryTimestamps(
+            activeChild.getId(),
+            HistoryEntryType.earn
+        );
+        Map<Long, String> lastPurchasedAtByItemId = loadLatestHistoryTimestamps(
+            activeChild.getId(),
+            HistoryEntryType.spend
+        );
         List<TaskDto> tasks = loadTasks(activeChild.getId(), lastCompletedAtByTaskId);
         List<ShopItemDto> shopItems = loadShopItems(activeChild.getId(), lastPurchasedAtByItemId);
-        List<HistoryEntryDto> history = loadHistory(activeChild.getId(), tasks, shopItems);
-        List<RequestDto> requests = loadRequests(familyDbId, activeChild.getId(), adminSession, tasks, shopItems);
+
+        // EXPLAIN: Prebuilt lookup maps for O(1) history/request enrichment
+        Map<Long, TaskDto> taskMap = tasks.stream()
+            .collect(java.util.stream.Collectors.toMap(TaskDto::id, t -> t, (a, b) -> a));
+        Map<Long, ShopItemDto> shopMap = shopItems.stream()
+            .collect(java.util.stream.Collectors.toMap(ShopItemDto::id, s -> s, (a, b) -> a));
+
+        List<HistoryEntryDto> history = loadHistory(activeChild.getId(), taskMap, shopMap);
+        List<RequestDto> requests = loadRequests(familyDbId, activeChild.getId(), adminSession, taskMap, shopMap);
         List<FriendDto> friends = loadFriends(activeChild.getId());
         List<ChildDto> childDtos = visibleChildren.stream().map(this::toChildDto).toList();
 
@@ -390,16 +403,24 @@ public final class FamilyServiceImpl implements FamilyService {
         Instant periodStart = now.minus(periodDuration);
         Instant previousStart = periodStart.minus(periodDuration);
 
-        List<HistoryEntryEntity> currentPeriodHistory = queryHistory(familyDbId, childId, periodStart, now);
-        List<HistoryEntryEntity> previousPeriodHistory = queryHistory(familyDbId, childId, previousStart, periodStart);
+        // EXPLAIN: Use SQL aggregation instead of loading full history rows
+        int[] currentSummary = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
+        int[] previousSummary = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
+
+        var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentSummary[0] - currentSummary[1]);
+        var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousSummary[0] - previousSummary[1]);
+
         List<TaskEntity> tasks = queryTasks(familyDbId, childId);
         List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
 
-        AnalyticsResponse.AnalyticsSummary summary = summarize(currentPeriodHistory);
-        AnalyticsResponse.AnalyticsSummary comparison = summarize(previousPeriodHistory);
-        List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStats(currentPeriodHistory, tasks);
-        List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStats(currentPeriodHistory, items);
-        List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrends(currentPeriodHistory);
+        List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStatsAggregated(
+            historyRepository.topTasksInPeriod(familyDbId, childId, periodStart, now), tasks);
+        List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStatsAggregated(
+            historyRepository.topItemsInPeriod(familyDbId, childId, periodStart, now), items);
+
+        List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrendsAggregated(
+            historyRepository.dailyTrendInPeriod(familyDbId, childId, periodStart, now));
+
         List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
 
         return OperationResult.success(new AnalyticsResponse(
@@ -428,8 +449,12 @@ public final class FamilyServiceImpl implements FamilyService {
         int total = familyDataRepository.getHistoryCount(childId);
         List<TaskDto> tasks = loadTasks(childId);
         List<ShopItemDto> shopItems = loadShopItems(childId);
+        Map<Long, TaskDto> taskMap = tasks.stream()
+            .collect(java.util.stream.Collectors.toMap(TaskDto::id, t -> t, (a, b) -> a));
+        Map<Long, ShopItemDto> shopMap = shopItems.stream()
+            .collect(java.util.stream.Collectors.toMap(ShopItemDto::id, s -> s, (a, b) -> a));
         List<HistoryEntryDto> items = rows.stream()
-            .map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems))
+            .map(historyEntry -> toHistoryDto(historyEntry, taskMap, shopMap))
             .toList();
         return OperationResult.success(new PaginatedHistory(items, total, page, effectiveLimit));
     }
@@ -445,7 +470,7 @@ public final class FamilyServiceImpl implements FamilyService {
         int offset = (page - 1) * effectiveLimit;
         List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, effectiveLimit, offset);
         int total = familyDataRepository.getRequestsCount(familyDbId);
-        List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, List.of(), List.of())).toList();
+        List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, Map.of(), Map.of())).toList();
         return OperationResult.success(new PaginatedRequests(items, total, page, effectiveLimit));
     }
 
@@ -791,23 +816,23 @@ public final class FamilyServiceImpl implements FamilyService {
             .orElse(activeChild.getId());
     }
 
-    private List<HistoryEntryDto> loadHistory(int childId, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
+    private List<HistoryEntryDto> loadHistory(int childId, Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
         return familyDataRepository.getHistory(childId, 50, 0).stream()
-            .map(historyEntry -> toHistoryDto(historyEntry, tasks, shopItems))
+            .map(historyEntry -> toHistoryDto(historyEntry, taskMap, shopMap))
             .toList();
     }
 
     private List<RequestDto> loadRequests(int familyDbId,
                                           int activeChildId,
                                           boolean adminSession,
-                                          List<TaskDto> tasks,
-                                          List<ShopItemDto> shopItems) {
+                                          Map<Long, TaskDto> taskMap,
+                                          Map<Long, ShopItemDto> shopMap) {
         return familyDataRepository.getRequests(familyDbId, 50, 0).stream()
             .filter(request -> adminSession || Objects.equals(request.getChildId(), activeChildId))
             .map(request -> toRequestDto(
                 request,
-                Objects.equals(request.getChildId(), activeChildId) ? tasks : List.of(),
-                Objects.equals(request.getChildId(), activeChildId) ? shopItems : List.of()
+                Objects.equals(request.getChildId(), activeChildId) ? taskMap : Map.of(),
+                Objects.equals(request.getChildId(), activeChildId) ? shopMap : Map.of()
             ))
             .toList();
     }
@@ -985,113 +1010,72 @@ public final class FamilyServiceImpl implements FamilyService {
         return Duration.ofDays(30);
     }
 
-    private AnalyticsResponse.AnalyticsSummary summarize(List<HistoryEntryEntity> historyEntries) {
-        int totalEarned = historyEntries.stream()
-            .filter(entry -> entry.getType() == HistoryEntryType.earn)
-            .mapToInt(HistoryEntryEntity::getAmount)
-            .sum();
-        int totalSpent = historyEntries.stream()
-            .filter(entry -> entry.getType() == HistoryEntryType.spend)
-            .mapToInt(HistoryEntryEntity::getAmount)
-            .sum();
-
-        return new AnalyticsResponse.AnalyticsSummary(totalEarned, totalSpent, totalEarned - totalSpent);
-    }
-
-    private List<AnalyticsResponse.AnalyticsStatItem> buildTopTaskStats(List<HistoryEntryEntity> historyEntries,
-                                                                        List<TaskEntity> tasks) {
+    // EXPLAIN: Build top task stats from SQL-aggregated rows: [relatedId, sumAmount, count]. Falls back to description/fallback name when task is not found by relatedId.
+    private List<AnalyticsResponse.AnalyticsStatItem> buildTopTaskStatsAggregated(
+            List<Object[]> aggregatedRows, List<TaskEntity> tasks) {
         Map<Long, String> namesByTaskId = tasks.stream()
             .collect(java.util.stream.Collectors.toMap(TaskEntity::getTaskId, TaskEntity::getName,
                 (left, right) -> left));
 
-        Map<String, Aggregate> byName = new LinkedHashMap<>();
-        historyEntries.stream()
-            .filter(entry -> entry.getType() == HistoryEntryType.earn)
-            .forEach(entry -> {
-                String name = null;
-                if (entry.getRelatedId() != null) {
-                    name = namesByTaskId.get(entry.getRelatedId());
-                }
+        return aggregatedRows.stream()
+            .map(row -> {
+                Long relatedId = row[0] instanceof Number n ? n.longValue() : null;
+                int coins = ((Number) row[1]).intValue();
+                int count = ((Number) row[2]).intValue();
+                String name = relatedId != null ? namesByTaskId.get(relatedId) : null;
                 if (name == null || name.isBlank()) {
-                    name = entry.getDescription() == null || entry.getDescription().isBlank()
-                        ? BackendMessages.message("analytics.taskFallback")
-                        : entry.getDescription();
+                    name = BackendMessages.message("analytics.taskFallback");
                 }
-
-                Aggregate aggregate = byName.computeIfAbsent(name, unused -> new Aggregate());
-                aggregate.coins += entry.getAmount();
-                aggregate.count += 1;
-            });
-
-        return toTopStats(byName);
+                return new AnalyticsResponse.AnalyticsStatItem(name, coins, count);
+            })
+            .toList();
     }
 
-    private List<AnalyticsResponse.AnalyticsStatItem> buildTopItemStats(List<HistoryEntryEntity> historyEntries,
-                                                                        List<ShopItemEntity> items) {
+    // EXPLAIN: Build top item stats from SQL-aggregated rows: [relatedId, sumAmount, count].
+    private List<AnalyticsResponse.AnalyticsStatItem> buildTopItemStatsAggregated(
+            List<Object[]> aggregatedRows, List<ShopItemEntity> items) {
         Map<Long, String> namesByItemId = items.stream()
             .collect(java.util.stream.Collectors.toMap(ShopItemEntity::getItemId, ShopItemEntity::getName,
                 (left, right) -> left));
 
-        Map<String, Aggregate> byName = new LinkedHashMap<>();
-        historyEntries.stream()
-            .filter(entry -> entry.getType() == HistoryEntryType.spend)
-            .forEach(entry -> {
-                String name = null;
-                if (entry.getRelatedId() != null) {
-                    name = namesByItemId.get(entry.getRelatedId());
-                }
+        return aggregatedRows.stream()
+            .map(row -> {
+                Long relatedId = row[0] instanceof Number n ? n.longValue() : null;
+                int coins = ((Number) row[1]).intValue();
+                int count = ((Number) row[2]).intValue();
+                String name = relatedId != null ? namesByItemId.get(relatedId) : null;
                 if (name == null || name.isBlank()) {
-                    name = entry.getDescription() == null || entry.getDescription().isBlank()
-                        ? BackendMessages.message("analytics.itemFallback")
-                        : entry.getDescription();
+                    name = BackendMessages.message("analytics.itemFallback");
                 }
-
-                Aggregate aggregate = byName.computeIfAbsent(name, unused -> new Aggregate());
-                aggregate.coins += entry.getAmount();
-                aggregate.count += 1;
-            });
-
-        return toTopStats(byName);
-    }
-
-    private List<AnalyticsResponse.AnalyticsStatItem> toTopStats(Map<String, Aggregate> byName) {
-        return byName.entrySet().stream()
-            .sorted(Comparator.comparingInt((Map.Entry<String, Aggregate> entry) -> entry.getValue().coins)
-                .reversed())
-            .map(entry -> new AnalyticsResponse.AnalyticsStatItem(
-                entry.getKey(),
-                entry.getValue().coins,
-                entry.getValue().count
-            ))
+                return new AnalyticsResponse.AnalyticsStatItem(name, coins, count);
+            })
             .toList();
     }
 
-    private List<AnalyticsResponse.AnalyticsTrendPoint> buildTrends(List<HistoryEntryEntity> historyEntries) {
-        Map<LocalDate, Aggregate> perDay = new LinkedHashMap<>();
-        historyEntries.stream()
-            .sorted(Comparator.comparing(HistoryEntryEntity::getCreatedAt))
-            .forEach(entry -> {
-                if (entry.getCreatedAt() == null) {
-                    return;
-                }
-                LocalDate day = entry.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDate();
-                Aggregate aggregate = perDay.computeIfAbsent(day, unused -> new Aggregate());
-                if (entry.getType() == HistoryEntryType.earn) {
-                    aggregate.earned += entry.getAmount();
-                } else if (entry.getType() == HistoryEntryType.spend) {
-                    aggregate.spent += entry.getAmount();
-                }
-            });
+    // EXPLAIN: Build daily trend from SQL-aggregated rows: [date, type, sumAmount].
+    private List<AnalyticsResponse.AnalyticsTrendPoint> buildTrendsAggregated(List<Object[]> dailyRows) {
+        // EXPLAIN: Aggregate by date: each row is [LocalDate, type, sumAmount]
+        var perDay = new LinkedHashMap<LocalDate, AnalyticsResponse.AnalyticsSummary>();
+        for (var row : dailyRows) {
+            LocalDate day = row[0] instanceof java.sql.Date d ? d.toLocalDate()
+                : row[0] instanceof LocalDate ld ? ld : null;
+            if (day == null) continue;
+            String type = (String) row[1];
+            int amount = ((Number) row[2]).intValue();
+            var agg = perDay.computeIfAbsent(day, unused -> new AnalyticsResponse.AnalyticsSummary(0, 0, 0));
+            if ("earn".equals(type)) {
+                perDay.put(day, new AnalyticsResponse.AnalyticsSummary(amount, agg.totalSpent(), amount));
+            } else if ("spend".equals(type)) {
+                perDay.put(day, new AnalyticsResponse.AnalyticsSummary(agg.totalEarned(), amount, agg.totalEarned() - amount));
+            }
+        }
 
-        List<AnalyticsResponse.AnalyticsTrendPoint> trends = new ArrayList<>();
-        perDay.forEach((day, aggregate) -> {
-            trends.add(new AnalyticsResponse.AnalyticsTrendPoint(
-                day.toString(),
-                aggregate.earned,
-                aggregate.spent
-            ));
-        });
-        return trends;
+        return perDay.entrySet().stream()
+            .map(entry -> new AnalyticsResponse.AnalyticsTrendPoint(
+                entry.getKey().toString(),
+                entry.getValue().totalEarned(),
+                entry.getValue().totalSpent()))
+            .toList();
     }
 
     private List<AnalyticsResponse.AnalyticsRecommendation> buildRecommendations(int familyDbId, Integer childId) {
@@ -1204,28 +1188,14 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private Map<Long, String> loadLatestHistoryTimestamps(int childId, HistoryEntryType type) {
+        Map<Long, Instant> aggregated = historyRepository.loadLatestTimestampsByRelatedId(childId, type);
         Map<Long, String> latestTimestamps = new LinkedHashMap<>();
-        List<HistoryEntryEntity> entries = historyRepository.list(
-            "childId = ?1 AND type = ?2 AND relatedId IS NOT NULL ORDER BY createdAt DESC, id DESC",
-            childId,
-            type
-        );
-        if (entries == null) {
-            return latestTimestamps;
-        }
-
-        for (HistoryEntryEntity entry : entries) {
-            if (entry.getRelatedId() == null || entry.getCreatedAt() == null) {
-                continue;
-            }
-            latestTimestamps.putIfAbsent(entry.getRelatedId(), entry.getCreatedAt().toString());
-        }
-
+        aggregated.forEach((id, instant) -> latestTimestamps.put(id, instant.toString()));
         return latestTimestamps;
     }
 
-    private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
-        HistoryDetails details = enrichHistoryDetails(entry, tasks, shopItems);
+    private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+        HistoryDetails details = enrichHistoryDetails(entry, taskMap, shopMap);
         return new HistoryEntryDto(entry.getExternalId(), entry.getType(), entry.getAmount(),
             details.title(),
             details.description(), entry.getMoneyAmount(), entry.getRelatedId(), details.taskId(),
@@ -1235,15 +1205,18 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private HistoryDetails enrichHistoryDetails(HistoryEntryEntity entry,
-                                                List<TaskDto> tasks,
-                                                List<ShopItemDto> shopItems) {
+                                                Map<Long, TaskDto> taskMap,
+                                                Map<Long, ShopItemDto> shopMap) {
         if (entry.getRelatedId() == null) {
             return new HistoryDetails(entry.getDescription(), entry.getDescription(), null, null, null, null,
                 entry.getGroupName(), entry.getComment());
         }
 
         if (entry.getType() == HistoryEntryType.earn) {
-            TaskDto task = findTaskDto(entry.getFamilyId(), entry.getChildId(), entry.getRelatedId(), tasks);
+            TaskDto task = taskMap.get(entry.getRelatedId());
+            if (task == null) {
+                task = findTaskDto(entry.getFamilyId(), entry.getChildId(), entry.getRelatedId());
+            }
             if (task != null) {
                 String title = firstNonBlank(entry.getDescription(), task.name());
                 return new HistoryDetails(
@@ -1260,12 +1233,14 @@ public final class FamilyServiceImpl implements FamilyService {
         }
 
         if (entry.getType() == HistoryEntryType.spend) {
-            ShopItemDto shopItem = findShopItemDto(
-                entry.getFamilyId(),
-                entry.getChildId(),
-                entry.getRelatedId(),
-                shopItems
-            );
+            ShopItemDto shopItem = shopMap.get(entry.getRelatedId());
+            if (shopItem == null) {
+                shopItem = findShopItemDto(
+                    entry.getFamilyId(),
+                    entry.getChildId(),
+                    entry.getRelatedId()
+                );
+            }
             if (shopItem != null) {
                 String title = firstNonBlank(entry.getDescription(), shopItem.name());
                 return new HistoryDetails(
@@ -1299,8 +1274,8 @@ public final class FamilyServiceImpl implements FamilyService {
             || request.getItemId() != null;
     }
 
-    private RequestDto toRequestDto(PurchaseRequestEntity request, List<TaskDto> tasks, List<ShopItemDto> shopItems) {
-        RequestDetails details = enrichRequestDetails(request, tasks, shopItems);
+    private RequestDto toRequestDto(PurchaseRequestEntity request, Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+        RequestDetails details = enrichRequestDetails(request, taskMap, shopMap);
         return new RequestDto(request.getId(), request.getTaskId(), details.taskName(),
             request.getItemId(), details.itemName(), details.title(), details.description(),
             details.groupName(),
@@ -1319,16 +1294,24 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private RequestDetails enrichRequestDetails(PurchaseRequestEntity request,
-                                                List<TaskDto> tasks,
-                                                List<ShopItemDto> shopItems) {
+                                                Map<Long, TaskDto> taskMap,
+                                                Map<Long, ShopItemDto> shopMap) {
         boolean purchase = isPurchaseRequest(request) || request.getItemId() != null;
         Long itemId = request.getItemId() != null ? request.getItemId() : request.getTaskId();
-        ShopItemDto shopItem = purchase && itemId != null
-            ? findShopItemDto(request.getFamilyId(), request.getChildId(), itemId, shopItems)
-            : null;
-        TaskDto task = !purchase && request.getTaskId() != null
-            ? findTaskDto(request.getFamilyId(), request.getChildId(), request.getTaskId(), tasks)
-            : null;
+        ShopItemDto shopItem = null;
+        TaskDto task = null;
+
+        if (purchase && itemId != null) {
+            shopItem = shopMap.get(itemId);
+            if (shopItem == null) {
+                shopItem = findShopItemDto(request.getFamilyId(), request.getChildId(), itemId);
+            }
+        } else if (request.getTaskId() != null) {
+            task = taskMap.get(request.getTaskId());
+            if (task == null) {
+                task = findTaskDto(request.getFamilyId(), request.getChildId(), request.getTaskId());
+            }
+        }
 
         String taskName = firstNonBlank(request.getTaskName(), task != null ? task.name() : null);
         String itemName = purchase
@@ -1346,17 +1329,9 @@ public final class FamilyServiceImpl implements FamilyService {
             taskGroup, itemGroup, taskComment, itemComment);
     }
 
-    private TaskDto findTaskDto(int familyDbId, int childId, Long taskId, List<TaskDto> tasks) {
+    private TaskDto findTaskDto(int familyDbId, int childId, Long taskId) {
         if (taskId == null) {
             return null;
-        }
-        List<TaskDto> availableTasks = tasks.isEmpty() ? loadTasks(childId) : tasks;
-        TaskDto fromLoaded = availableTasks.stream()
-            .filter(candidate -> Objects.equals(candidate.id(), taskId))
-            .findFirst()
-            .orElse(null);
-        if (fromLoaded != null) {
-            return fromLoaded;
         }
         return taskRepository.find(
             "familyId = ?1 AND childId = ?2 AND taskId = ?3 ORDER BY id DESC",
@@ -1366,17 +1341,9 @@ public final class FamilyServiceImpl implements FamilyService {
         ).firstResultOptional().map(task -> toTaskDto(task, null)).orElse(null);
     }
 
-    private ShopItemDto findShopItemDto(int familyDbId, int childId, Long itemId, List<ShopItemDto> shopItems) {
+    private ShopItemDto findShopItemDto(int familyDbId, int childId, Long itemId) {
         if (itemId == null) {
             return null;
-        }
-        List<ShopItemDto> availableShopItems = shopItems.isEmpty() ? loadShopItems(childId) : shopItems;
-        ShopItemDto fromLoaded = availableShopItems.stream()
-            .filter(candidate -> Objects.equals(candidate.id(), itemId))
-            .findFirst()
-            .orElse(null);
-        if (fromLoaded != null) {
-            return fromLoaded;
         }
         return shopItemRepository.find(
             "familyId = ?1 AND childId = ?2 AND itemId = ?3 ORDER BY id DESC",

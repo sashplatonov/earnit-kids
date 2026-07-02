@@ -12,11 +12,37 @@ const listeners = new Map<WsEventType, Set<WsListener>>();
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let stopped = false;
+let refreshInFlight = false;
+let refreshQueued = false;
 
 function clearReconnect() {
     if (reconnectTimer != null) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
+    }
+}
+
+/**
+ * Coalesced refresh — if a refresh is already in flight, queue another one
+ * to run immediately after. Multiple 'update' events during an in-flight
+ * refresh result in at most one additional refresh.
+ */
+async function coalescedRefresh(): Promise<void> {
+    if (refreshInFlight) {
+        refreshQueued = true;
+        return;
+    }
+    refreshInFlight = true;
+    refreshQueued = false;
+    try {
+        await refreshData();
+    } finally {
+        refreshInFlight = false;
+        if (refreshQueued) {
+            refreshQueued = false;
+            // Schedule on microtask to avoid unbounded recursion
+            queueMicrotask(() => { void coalescedRefresh(); });
+        }
     }
 }
 
@@ -51,7 +77,7 @@ async function connect() {
             const parsed = JSON.parse(event.data as string) as { type?: string; payload?: unknown };
             const type = parsed.type ?? 'message';
             emit(type, parsed.payload ?? parsed);
-            if (type === 'update') void refreshData();
+            if (type === 'update') void coalescedRefresh();
         } catch { /* ignore non-JSON */ }
     });
 

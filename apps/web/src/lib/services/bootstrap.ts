@@ -8,10 +8,24 @@ import type { AppState } from '$lib/stores/app';
 import { showToast } from '$lib/stores/toasts';
 import { loadDataFromServer, loadBaseData } from './api';
 import { buildInitialState, normalizeServerData, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from './serverContract';
+import { logClientInfo } from '$lib/logging/clientLogger';
 
 const LAST_CHILD_KEY = 'earnit-last-child-id';
 
+function mark(label: string): number {
+    if (typeof performance === 'undefined') return 0;
+    performance.mark(`bootstrap:${label}`);
+    return performance.now();
+}
+
+function measure(label: string, startMs: number) {
+    if (typeof performance === 'undefined' || startMs === 0) return;
+    const elapsed = Math.round(performance.now() - startMs);
+    logClientInfo('perf.bootstrap', `bootstrap:${label}`, { durationMs: elapsed });
+}
+
 export async function initializeFromServer(): Promise<boolean> {
+    const t0 = mark('initializeFromServer');
     appStore.setState({ isLoading: true });
 
     const data = await loadDataFromServer();
@@ -20,12 +34,17 @@ export async function initializeFromServer(): Promise<boolean> {
         appStore.setState({ isLoading: false });
         return false;
     }
+    measure('loadFamilyData', t0);
 
+    const t1 = mark('loadBaseData');
     const record = data as Record<string, unknown>;
     const isAdmin = record.isAdmin === true || record.isAdmin === 'true' || record.isAdmin === 1;
     const baseData = isAdmin
         ? ((await loadBaseData()) as { tasks: unknown[]; products: unknown[] }) ?? { tasks: [], products: [] }
         : { tasks: [], products: [] };
+    measure('loadBaseData', t1);
+
+    const t2 = mark('buildInitialState');
     const currentPermission = get(appStore).permission;
     const currentFamilyId = get(appStore).familyId;
 
@@ -38,7 +57,9 @@ export async function initializeFromServer(): Promise<boolean> {
     }
     // Keep isLoading true — will be cleared after all data (including child data) is loaded
     appStore.setState({ ...(state as Partial<AppState>), isLoading: true });
+    measure('buildInitialState', t2);
 
+    const t3 = mark('loadChildData');
     const stateRecord = state as Record<string, unknown>;
     // Auto-select child for admin
     if (stateRecord.isAdmin && Array.isArray(stateRecord.children) && stateRecord.children.length > 0) {
@@ -71,15 +92,21 @@ export async function initializeFromServer(): Promise<boolean> {
             }
         }
     }
+    measure('loadChildData', t3);
 
     // All data is now loaded — clear loading flag
     appStore.setState({ isLoading: false });
+    measure('total', t0);
     return true;
 }
 
 export async function refreshData(showSuccess = false): Promise<boolean> {
+    const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
     const ok = await initializeFromServer();
     if (ok && showSuccess) showToast('Данные обновлены', 'success');
+    if (t0 > 0) {
+        logClientInfo('perf.refresh', 'refreshData', { durationMs: Math.round(performance.now() - t0) });
+    }
     return ok;
 }
 
@@ -117,6 +144,7 @@ export async function switchChild(childId: string | number): Promise<void> {
     persistLastChildId(childId);
     appStore.setState({ currentChildId: childId, isLoading: true });
 
+    const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
     const childData = await loadDataFromServer(childId);
     if (childData && typeof childData === 'object') {
         const rec = childData as Record<string, unknown>;
@@ -132,5 +160,8 @@ export async function switchChild(childId: string | number): Promise<void> {
         });
     } else {
         appStore.setState({ isLoading: false });
+    }
+    if (t0 > 0) {
+        logClientInfo('perf.switchChild', 'switchChild', { childId: String(childId), durationMs: Math.round(performance.now() - t0) });
     }
 }

@@ -10,7 +10,7 @@
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { bulkShopAction, buyItem, importShopItems, importTasks, requestItemWithNote, saveChildGroupOrder } from '$lib/services/api';
+    import { bulkShopAction, buyItem, requestItemWithNote, saveChildGroupOrder } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { confirmAction } from '$lib/services/confirm';
     import {
@@ -43,10 +43,6 @@
 
     function tShop(key: string, variables?: Record<string, string | number>): string {
         return $i18n.t(`shop.${key}` as MessageKey, variables);
-    }
-
-    function tCsv(kind: 'tasks' | 'shop', key: string, variables?: Record<string, string | number>): string {
-        return $i18n.t(`${kind}.${key}` as MessageKey, variables);
     }
 
     $: shopItems = $appStore.shopItems;
@@ -180,39 +176,6 @@
 
     function openAddShopItem() {
         modalStore.open('shop-modal', { mode: 'add', groupSuggestions: groups });
-    }
-
-    function openCsvImport() {
-        modalStore.open('csv-import-modal', {
-            kind: 'shop',
-            onSubmit: async ({ kind, rows }: { kind: 'tasks' | 'shop'; rows: Array<Record<string, unknown>> }) => {
-                if (resolvedChildId == null) {
-                    return {
-                        ok: false,
-                        error: tShop('toasts.selectChildFirst'),
-                        errorCode: null,
-                        status: 400,
-                    };
-                }
-
-                const result = kind === 'shop'
-                    ? await importShopItems({
-                        childId: resolvedChildId,
-                        rows,
-                    })
-                    : await importTasks({
-                        childId: resolvedChildId,
-                        rows,
-                    });
-
-                if (result.ok && result.data && typeof result.data === 'object') {
-                    applyDataSnapshot(result.data as Record<string, unknown>);
-                    showToast(tCsv(kind, 'import.success', { count: rows.length }), 'success');
-                }
-
-                return result;
-            },
-        });
     }
 
     function openEditShopItem(item: unknown) {
@@ -475,6 +438,7 @@
     function openGroupOrderEditor() {
         groupOrderEditor?.openEditor();
     }
+
 </script>
 
 <section class="section" id="shop-section">
@@ -497,13 +461,11 @@
             listLabel={tShop('section.viewList')}
             orderLabel={isAdmin ? $i18n.t('app.groupOrder.configureAdmin') : $i18n.t('app.groupOrder.configureChild')}
             bulkLabel={isBulkMode ? tShop('bulk.clear') : tShop('bulk.toggle')}
-            importLabel={tShop('section.import')}
             isBulkMode={isBulkMode}
             hasGroups={groups.length > 1}
             {isEditingGroupOrder}
             {isSavingGroupOrder}
             on:add={openAddShopItem}
-            on:importCsv={openCsvImport}
             on:editOrder={openGroupOrderEditor}
             on:toggleBulkMode={toggleBulkMode}
             on:viewMode={(event) => setViewMode(event.detail)}

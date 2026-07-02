@@ -45,11 +45,18 @@ export const commonMessages = {
         pullToRefresh: 'Pull to refresh',
         offlineBanner: 'You are offline. History stays available and new actions will be sent when the connection returns.',
     },
+    importCsv: 'Import CSV',
+    printPdf: 'Open print view',
+    printCatalog: 'Print cards',
+    printCatalogEmpty: 'There are no task or reward cards to print yet.',
+    printPopupBlocked: 'Allow pop-ups to open the print view.',
+    printError: 'Could not open the print view.',
     errors: {
         generic: 'Something went wrong.',
         unexpectedRoute: 'Unexpected route error',
         routeNotFound: 'Route not found',
         backToHome: 'Back to home',
+        selectChildFirst: 'Select a child first',
     },
     units: {
         unlimited: 'unlimited',

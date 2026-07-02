@@ -48,23 +48,23 @@ public final class AuthServiceImpl implements AuthService {
 
         var parentOpt = parentAccountRepository.findByEmail(email);
         if (parentOpt.isEmpty()) {
-            log.info("Authentication failed (parent account not found): {}", email);
+            log.warn("Authentication failed (parent account not found): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
         }
 
         var parent = parentOpt.get();
         if (parent.isBlocked()) {
-            log.info("Authentication failed (account blocked): {}", email);
+            log.warn("Authentication failed (account blocked): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
         if (appConfig.emailVerification().enabled() && !parent.isVerified()) {
-            log.info("Authentication failed (email not verified): {}", email);
+            log.warn("Authentication failed (email not verified): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.emailNotVerified"));
         }
 
         String storedPassword = parent.getPasswordHash();
         if (!isPasswordValid(email, password, storedPassword)) {
-            log.info("Authentication failed (wrong password): {}", email);
+            log.warn("Authentication failed (wrong password): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.invalidPassword"));
         }
 
@@ -74,7 +74,7 @@ public final class AuthServiceImpl implements AuthService {
     private OperationResult<AuthPayload> resolveMembershipAndAuthenticate(String email, ParentAccountEntity parent) {
         var memberships = membershipRepository.findByParentAccountId(parent.getId());
         if (memberships.isEmpty()) {
-            log.info("Authentication failed (no active memberships): {}", email);
+            log.warn("Authentication failed (no active memberships): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.noActiveMemberships"));
         }
 
@@ -112,13 +112,13 @@ public final class AuthServiceImpl implements AuthService {
                                                                     FamilyParentMembershipEntity membership) {
         var familyOpt = familyRepository.findByDbId(membership.getFamilyId());
         if (familyOpt.isEmpty()) {
-            log.info("Authentication failed (family not found for membership): {}", email);
+            log.warn("Authentication failed (family not found for membership): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
         }
 
         var family = familyOpt.get();
         if (family.isBlocked()) {
-            log.info("Authentication failed (family blocked): {}", email);
+            log.warn("Authentication failed (family blocked): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.familyBlocked"));
         }
 
@@ -141,25 +141,25 @@ public final class AuthServiceImpl implements AuthService {
 
         var identityOpt = googleIdentityVerifier.verify(credential, googleClientId.get());
         if (identityOpt.isEmpty()) {
-            log.info("Google login failed: token verification failed");
+            log.warn("Google login failed: token verification failed");
             return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
         }
 
         GoogleIdentity identity = identityOpt.get();
         if (!identity.emailVerified()) {
-            log.info("Google login failed: email is not verified by provider");
+            log.warn("Google login failed: email is not verified by provider");
             return OperationResult.failure(BackendMessages.message("auth.googleEmailNotVerified"));
         }
 
         var parentOpt = parentAccountRepository.findByEmail(identity.email());
         if (parentOpt.isEmpty()) {
-            log.info("Google login failed: parent account not found for email={}", identity.email());
+            log.warn("Google login failed: parent account not found for email={}", identity.email());
             return OperationResult.failure(BackendMessages.message("auth.googleAccountNotLinked"));
         }
 
         var parent = parentOpt.get();
         if (parent.isBlocked()) {
-            log.info("Google login failed: account blocked for email={}", identity.email());
+            log.warn("Google login failed: account blocked for email={}", identity.email());
             return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
 
@@ -175,16 +175,16 @@ public final class AuthServiceImpl implements AuthService {
 
     private OperationResult<AuthPayload> authenticateFamily(String email, String password, FamilyEntity family) {
         if (family.isBlocked()) {
-            log.info("Authentication failed (account blocked): {}", email);
+            log.warn("Authentication failed (account blocked): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
         if (appConfig.emailVerification().enabled() && !family.isVerified()) {
-            log.info("Authentication failed (email not verified): {}", email);
+            log.warn("Authentication failed (email not verified): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.emailNotVerified"));
         }
         String storedPassword = family.getAdminPassword();
         if (!isPasswordValid(email, password, storedPassword)) {
-            log.info("Authentication failed (wrong password): {}", email);
+            log.warn("Authentication failed (wrong password): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.invalidPassword"));
         }
 
@@ -199,7 +199,7 @@ public final class AuthServiceImpl implements AuthService {
 
     private OperationResult<AuthPayload> authenticateGoogleFamily(String email, FamilyEntity family) {
         if (family.isBlocked()) {
-            log.info("Google authentication failed (account blocked): {}", email);
+            log.warn("Google authentication failed (account blocked): {}", email);
             return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
 
@@ -260,26 +260,26 @@ public final class AuthServiceImpl implements AuthService {
         log.debug("authenticateChild attempt for token present={} (mask)", childToken != null && !childToken.isBlank());
 
         if (childToken == null || childToken.isBlank()) {
-            log.info("Child auth failed: token missing");
+            log.warn("Child auth failed: token missing");
             return OperationResult.failure(BackendMessages.message("auth.tokenMissing"));
         }
 
         var childOpt = childRepository.findByToken(childToken);
         if (childOpt.isEmpty()) {
-            log.info("Child auth failed: token not found");
+            log.warn("Child auth failed: token not found");
             return OperationResult.failure(BackendMessages.message("auth.invalidLink"));
         }
 
         var child = childOpt.get();
         var familyOpt = familyRepository.findByDbId(child.getFamilyDbId());
         if (familyOpt.isEmpty()) {
-            log.info("Child auth failed: family not found for childId={}", child.getId());
+            log.warn("Child auth failed: family not found for childId={}", child.getId());
             return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
         }
 
         var family = familyOpt.get();
         if (family.isBlocked()) {
-            log.info("Child auth failed: account blocked for familyId={}", family.getFamilyId());
+            log.warn("Child auth failed: account blocked for familyId={}", family.getFamilyId());
             return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
 

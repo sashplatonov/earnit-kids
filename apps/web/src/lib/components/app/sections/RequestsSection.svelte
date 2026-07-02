@@ -6,12 +6,13 @@
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
-    import { approveRequest, rejectRequest, deleteRequest } from '$lib/services/api';
-    import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
+    import { approveRequest, rejectRequest, deleteRequest, fetchRequestsFromServer } from '$lib/services/api';
+    import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
     import type { Request } from '$lib/stores/app';
     import { buildRequestCatalog, resolveRequestCard, type RequestDetailsI18n } from './requestDetails';
+    import { normalizeRequest } from '$lib/services/serverContract';
 
     const i18n = useI18n();
     let viewMode: CardViewMode = 'list';
@@ -55,12 +56,20 @@
         .map(r => ({ ...r, ui: resolveRequestCard(r, requestCatalog, requestDetailsI18n) }));
     $: myRequests = requests.map(r => ({ ...r, ui: resolveRequestCard(r, requestCatalog, requestDetailsI18n) }));
 
-    // Polling every 8 s — both admin (new incoming) and child (status updates).
-    // WS refresh already triggers refreshData on 'update' events; this is the fallback.
+    // Polling every 8 s — lightweight requests-only endpoint instead of full `/api/data`.
+    // WS refresh already triggers snapshot refresh on 'update' events; this is the fallback.
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
+    async function pollRequests(): Promise<void> {
+        const res = await fetchRequestsFromServer(1, 50);
+        if (res?.items && Array.isArray(res.items)) {
+            const normalized = (res.items as Record<string, unknown>[]).map(normalizeRequest);
+            appStore.setState({ requests: normalized as unknown as Request[] });
+        }
+    }
+
     onMount(() => {
-        pollTimer = setInterval(() => { void refreshData(); }, 8_000);
+        pollTimer = setInterval(() => { void pollRequests(); }, 8_000);
         const handleDocumentClick = (event: MouseEvent) => {
             const target = event.target;
             if (!(target instanceof Element) || !target.closest('.request-note-tooltip')) {

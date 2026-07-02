@@ -19,6 +19,7 @@ export const tasksMessages = {
 		emptyChildHint: 'Попроси родителя добавить задания.',
 		addTask: 'Добавить задачу',
 		import: 'Импорт CSV',
+		print: 'Печать PDF',
 	},
 	actions: {
 		award: 'Начислить',
@@ -49,6 +50,9 @@ export const tasksMessages = {
 		bulkBlocked: 'Заблокировано заданий: {count}',
 		bulkUnblocked: 'Разблокировано заданий: {count}',
 		bulkChangedGroup: 'Группа заданий изменена',
+		printPopupBlocked: 'Разрешите всплывающее окно, чтобы распечатать PDF.',
+		printError: 'Не удалось открыть PDF.',
+		printLoading: 'Подготавливаем PDF...',
 	},
 	requestNotePrompt: 'Заметка к заявке (необязательно, до 120 символов):',
 	requestNoteModal: {

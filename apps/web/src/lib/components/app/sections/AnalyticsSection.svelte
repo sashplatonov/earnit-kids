@@ -337,7 +337,7 @@
         destroyCharts();
     });
 
-    $: void ($appStore.currentChildId, $appStore.balance, $appStore.tasks, $appStore.shopItems, $i18n.locale, timeframe, loadAndRender());
+    $: void ($appStore.currentChildId, $i18n.locale, timeframe, loadAndRender());
 </script>
 
 <svelte:head>

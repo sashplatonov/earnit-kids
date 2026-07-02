@@ -45,11 +45,18 @@ export const commonMessages = {
         pullToRefresh: 'Потяните для обновления',
         offlineBanner: 'Сейчас оффлайн: история доступна, новые действия отправятся после восстановления сети.',
     },
+    importCsv: 'Импорт CSV',
+    printPdf: 'Открыть для печати',
+    printCatalog: 'Карточки для печати',
+    printCatalogEmpty: 'Пока нет карточек заданий или наград для печати.',
+    printPopupBlocked: 'Разрешите всплывающие окна, чтобы открыть страницу печати.',
+    printError: 'Не удалось открыть страницу печати.',
     errors: {
         generic: 'Что-то пошло не так.',
         unexpectedRoute: 'Неожиданная ошибка маршрута',
         routeNotFound: 'Маршрут не найден',
         backToHome: 'Вернуться на главную',
+        selectChildFirst: 'Сначала выберите ребёнка',
     },
     units: {
         unlimited: '∞',

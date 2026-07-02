@@ -12,7 +12,7 @@
     export let listLabel = '';
     export let orderLabel = '';
     export let bulkLabel = '';
-    export let importLabel = '';
+
     export let isBulkMode = false;
     export let hasGroups = false;
     export let isEditingGroupOrder = false;
@@ -20,7 +20,6 @@
 
     const dispatch = createEventDispatcher<{
         add: void;
-        importCsv: void;
         editOrder: void;
         toggleBulkMode: void;
         viewMode: CardViewMode;
@@ -115,21 +114,6 @@
         </button>
         {/if}
 
-        {#if isAdmin && importLabel}
-        <button
-            class="section-controls__icon-btn section-controls__order-btn"
-            type="button"
-            aria-label={importLabel}
-            on:click={() => dispatch('importCsv')}
-        >
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="section-controls__icon">
-                <path d="M12 4v11"></path>
-                <path d="m8 11 4 4 4-4"></path>
-                <path d="M5 19h14"></path>
-            </svg>
-            <span class="section-controls__label">{importLabel}</span>
-        </button>
-        {/if}
     </div>
 </div>
 

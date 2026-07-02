@@ -10,10 +10,12 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Provider
 @Priority(Priorities.USER)
 @RequiredArgsConstructor(onConstructor_ = @Inject)
+@Slf4j
 public class HttpRequestMetricsFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private static final String START_NANOS = "metrics.startNanos";
@@ -34,6 +36,26 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
         long durationMs = (System.nanoTime() - startNanos) / 1_000_000L;
         Object pathValue = requestContext.getProperty(REQUEST_PATH);
         String path = pathValue == null ? "/" : pathValue.toString();
-        metricsRegistry.record(requestContext.getMethod(), path, responseContext.getStatus(), durationMs);
+
+        // EXPLAIN: Estimate payload size from serialized entity bytes
+        long payloadBytes = -1;
+        var entity = responseContext.getEntity();
+        if (entity instanceof byte[] bytes) {
+            payloadBytes = bytes.length;
+        } else if (entity instanceof String text) {
+            payloadBytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        } else if (entity != null) {
+            // EXPLAIN: Approximate serialized JSON size — rough but useful for trend tracking
+            try {
+                var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                byte[] json = mapper.writeValueAsBytes(entity);
+                payloadBytes = json.length;
+            } catch (Exception ex) {
+                log.warn("Failed to estimate payload size for {} {}", requestContext.getMethod(), path, ex);
+                payloadBytes = -1;
+            }
+        }
+
+        metricsRegistry.record(requestContext.getMethod(), path, responseContext.getStatus(), durationMs, payloadBytes);
     }
 }

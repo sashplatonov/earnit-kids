@@ -20,10 +20,14 @@ public class HttpRequestMetricsRegistry {
     private final ConcurrentMap<String, EndpointMetrics> endpoints = new ConcurrentHashMap<>();
 
     public void record(String method, String path, int status, long durationMs) {
+        record(method, path, status, durationMs, -1);
+    }
+
+    public void record(String method, String path, int status, long durationMs, long payloadBytes) {
         String safeMethod = method == null || method.isBlank() ? "GET" : method.toUpperCase();
         String safePath = path == null || path.isBlank() ? "/" : path;
         endpoints.computeIfAbsent(safeMethod + " " + safePath, key -> new EndpointMetrics(safeMethod, safePath))
-            .record(status, durationMs);
+            .record(status, durationMs, payloadBytes);
     }
 
     public Map<String, Object> snapshot() {
@@ -47,6 +51,10 @@ public class HttpRequestMetricsRegistry {
             endpoint.put("errors", errors);
             endpoint.put("avgDurationMs", count == 0 ? 0 : Math.round((double) duration / count));
             endpoint.put("maxDurationMs", metrics.maxDurationMs.get());
+            long totalBytes = metrics.totalPayloadBytes.sum();
+            endpoint.put("avgPayloadBytes", count == 0 ? 0 : totalBytes / count);
+            endpoint.put("maxPayloadBytes", metrics.maxPayloadBytes.get());
+            endpoint.put("totalPayloadMb", count == 0 ? 0 : Math.round((double) totalBytes / 1_048_576.0 * 100) / 100.0);
             topEndpoints.add(endpoint);
         }
 
@@ -80,19 +88,25 @@ public class HttpRequestMetricsRegistry {
         private final LongAdder errors = new LongAdder();
         private final LongAdder totalDurationMs = new LongAdder();
         private final AtomicLong maxDurationMs = new AtomicLong();
+        private final LongAdder totalPayloadBytes = new LongAdder();
+        private final AtomicLong maxPayloadBytes = new AtomicLong();
 
         private EndpointMetrics(String method, String path) {
             this.method = method;
             this.path = path;
         }
 
-        private void record(int status, long durationMs) {
+        private void record(int status, long durationMs, long payloadBytes) {
             count.increment();
             totalDurationMs.add(Math.max(durationMs, 0));
             if (status >= 400) {
                 errors.increment();
             }
             maxDurationMs.accumulateAndGet(Math.max(durationMs, 0), Math::max);
+            if (payloadBytes >= 0) {
+                totalPayloadBytes.add(payloadBytes);
+                maxPayloadBytes.accumulateAndGet(payloadBytes, Math::max);
+            }
         }
     }
 }

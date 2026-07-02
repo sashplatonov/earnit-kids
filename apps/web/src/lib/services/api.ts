@@ -432,6 +432,22 @@ export const importShopItems = (body: {
     rows: Array<Record<string, unknown>>;
 }) => flushPendingCrudSave().then(() => postJsonResultWithValidation('/api/shop/import', body));
 
+// ── Lightweight polling ───────────────────────────────────────────────────────
+
+/**
+ * Fetch only the requests page (lightweight) instead of the full `/api/data`
+ * snapshot. Used by RequestsSection polling to avoid full reloads.
+ */
+export async function fetchRequestsFromServer(page = 1, limit = 50): Promise<Record<string, unknown> | null> {
+    try {
+        const res = await fetchWithCsrf(`/api/requests?page=${page}&limit=${limit}`);
+        return res.ok ? await parseJsonSafe<Record<string, unknown>>(res) : null;
+    } catch (err) {
+        logClientError('api.fetch_requests_failed', 'Failed to fetch requests', { error: err });
+        return null;
+    }
+}
+
 // ── Request actions ───────────────────────────────────────────────────────────
 
 export const approveRequest = (requestId: unknown, childId?: unknown) =>

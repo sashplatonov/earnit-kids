@@ -19,6 +19,7 @@ export const tasksMessages = {
 		emptyChildHint: 'Ask a parent to add tasks.',
 		addTask: 'Add task',
 		import: 'Import CSV',
+		print: 'Print PDF',
 	},
 	actions: {
 		award: 'Award',
@@ -49,6 +50,9 @@ export const tasksMessages = {
 		bulkBlocked: 'Blocked tasks: {count}',
 		bulkUnblocked: 'Unblocked tasks: {count}',
 		bulkChangedGroup: 'Task group updated',
+		printPopupBlocked: 'Allow pop-ups to print the PDF.',
+		printError: 'Could not open the PDF.',
+		printLoading: 'Preparing PDF...',
 	},
 	requestNotePrompt: 'Optional note for this request (max 120 chars):',
 	requestNoteModal: {

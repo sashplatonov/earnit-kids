@@ -28,9 +28,7 @@ function readStringArray(value: unknown): string[] {
 
 export function normalizeChild(child: Record<string, unknown> = {}) {
     const nickname = (child.nickname ?? child.name ?? '') as string;
-
     return {
-        ...child,
         nickname,
         name: (child.name ?? nickname) as string,
         monthlyLimit: child.monthlyLimit ?? child.monthly_limit ?? 10000,
@@ -40,6 +38,11 @@ export function normalizeChild(child: Record<string, unknown> = {}) {
         shopGroupOrder: readStringArray(child.shopGroupOrder ?? child.shop_group_order),
         childTaskGroupOrder: readStringArray(child.childTaskGroupOrder ?? child.child_task_group_order),
         childShopGroupOrder: readStringArray(child.childShopGroupOrder ?? child.child_shop_group_order),
+        id: (child.id ?? child.childId ?? null) as unknown,
+        balance: (child.balance ?? 0) as number,
+        isPinSet: (child.isPinSet ?? child.is_pin_set ?? false) as boolean,
+        ageMin: (child.ageMin ?? child.age_min ?? null) as number | null,
+        ageMax: (child.ageMax ?? child.age_max ?? null) as number | null,
     };
 }
 
@@ -48,7 +51,7 @@ export function normalizeTask(task: Record<string, unknown> = {}) {
     const coins = (task.coins ?? task.price ?? 0) as number;
     const isActive = task.isActive ?? task.is_active;
     return {
-        ...task,
+        id: (task.id ?? task.taskId ?? null) as unknown,
         name,
         title: name,
         coins,
@@ -59,6 +62,8 @@ export function normalizeTask(task: Record<string, unknown> = {}) {
         ageMin: task.ageMin ?? task.age_min ?? null,
         ageMax: task.ageMax ?? task.age_max ?? null,
         lastCompletedAt: task.lastCompletedAt ?? task.last_completed_at ?? null,
+        childId: (task.childId ?? null) as unknown,
+        frequency: (task.frequency ?? null) as unknown,
     };
 }
 
@@ -67,7 +72,7 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
     const price = (item.price ?? item.coins ?? 0) as number;
     const isActive = item.isActive ?? item.is_active;
     return {
-        ...item,
+        id: (item.id ?? item.itemId ?? null) as unknown,
         name,
         title: name,
         price,
@@ -80,6 +85,7 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
         ageMin: item.ageMin ?? item.age_min ?? null,
         ageMax: item.ageMax ?? item.age_max ?? null,
         lastPurchasedAt: item.lastPurchasedAt ?? item.last_purchased_at ?? null,
+        childId: (item.childId ?? null) as unknown,
     };
 }
 
@@ -100,13 +106,21 @@ export function normalizeHistoryEntry(entry: Record<string, unknown> = {}) {
     const itemId = entry.itemId ?? (entry.type === 'spend' || entry.type === 'purchase' ? relatedId : null);
     const title = (entry.title ?? entry.taskName ?? entry.itemName ?? entry.description ?? null) as string | null;
     return {
-        ...entry,
+        id: (entry.id ?? null) as unknown,
+        type: (entry.type ?? null) as unknown,
+        amount: (entry.amount ?? 0) as number,
+        description: (entry.description ?? null) as string | null,
         title,
         taskId,
         itemId,
         groupName: entry.groupName ?? entry.group ?? null,
         comment: entry.comment ?? null,
+        moneyAmount: (entry.moneyAmount ?? null) as number | null,
+        taskName: (entry.taskName ?? null) as string | null,
+        itemName: (entry.itemName ?? null) as string | null,
+        relatedId,
         createdAt: getCreatedAt(entry),
+        childId: (entry.childId ?? null) as unknown,
     };
 }
 
@@ -115,7 +129,10 @@ export function normalizeRequest(request: Record<string, unknown> = {}) {
     const itemComment = request.itemComment ?? request.description ?? request.comment ?? null;
     const groupName = request.groupName ?? request.taskGroup ?? request.itemGroup ?? request.group ?? null;
     return {
-        ...request,
+        id: (request.id ?? null) as unknown,
+        requestType: (request.requestType ?? request.request_type ?? '') as string,
+        taskId: (request.taskId ?? null) as unknown,
+        itemId: (request.itemId ?? null) as unknown,
         title: request.title ?? request.itemName ?? request.taskName ?? null,
         description: request.description ?? taskComment ?? itemComment ?? null,
         comment: request.comment ?? request.description ?? null,
@@ -126,17 +143,33 @@ export function normalizeRequest(request: Record<string, unknown> = {}) {
         itemGroup: request.itemGroup ?? groupName,
         taskComment,
         itemComment,
+        taskName: (request.taskName ?? null) as string | null,
+        itemName: (request.itemName ?? null) as string | null,
+        coins: (request.coins ?? null) as number | null,
+        moneyAmount: (request.moneyAmount ?? null) as number | null,
+        status: (request.status ?? 'pending') as string,
+        amount: (request.amount ?? null) as number | null,
+        childId: (request.childId ?? null) as unknown,
+        childNickname: (request.childNickname ?? null) as string | null,
     };
 }
 
 export function normalizeServerData(data: Record<string, unknown> = {}) {
     return {
-        ...data,
         tasks: Array.isArray(data.tasks) ? data.tasks.map(normalizeTask) : [],
         shop: Array.isArray(data.shop) ? data.shop.map(normalizeShopItem) : [],
         history: Array.isArray(data.history) ? data.history.map(normalizeHistoryEntry) : [],
         requests: Array.isArray(data.requests) ? data.requests.map(normalizeRequest) : [],
         children: Array.isArray(data.children) ? data.children.map(normalizeChild) : [],
+        balance: (data.balance ?? 0) as number,
+        rules: (data.rules ?? null) as string | null,
+        isAdmin: parseBoolean(data.isAdmin),
+        role: (data.role ?? null) as string | null,
+        permission: data.permission ?? null,
+        familyId: (data.familyId ?? data.family_id ?? null) as string | null,
+        childNickname: (data.childNickname ?? null) as string | null,
+        monthlyLimit: (data.monthlyLimit ?? 10000) as number,
+        dailyCoinLimit: (data.dailyCoinLimit ?? 0) as number,
     };
 }
 

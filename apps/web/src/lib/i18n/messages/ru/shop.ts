@@ -21,6 +21,7 @@ export const shopMessages = {
 		emptyChildHint: 'Скоро появятся призы!',
 		addReward: 'Добавить награду',
 		import: 'Импорт CSV',
+		print: 'Печать PDF',
 	},
 	actions: {
 		buy: 'Купить',
@@ -52,6 +53,9 @@ export const shopMessages = {
 		bulkBlocked: 'Заблокировано товаров: {count}',
 		bulkUnblocked: 'Разблокировано товаров: {count}',
 		bulkChangedGroup: 'Группа товаров изменена',
+		printPopupBlocked: 'Разрешите всплывающее окно, чтобы распечатать PDF.',
+		printError: 'Не удалось открыть PDF.',
+		printLoading: 'Подготавливаем PDF...',
 	},
 	requestNotePrompt: 'Заметка к заявке на покупку (необязательно, до 120 символов):',
 	requestNoteModal: {

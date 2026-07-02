@@ -21,6 +21,7 @@ export const shopMessages = {
 		emptyChildHint: 'Rewards will appear soon!',
 		addReward: 'Add reward',
 		import: 'Import CSV',
+		print: 'Print PDF',
 	},
 	actions: {
 		buy: 'Buy',
@@ -52,6 +53,9 @@ export const shopMessages = {
 		bulkBlocked: 'Blocked rewards: {count}',
 		bulkUnblocked: 'Unblocked rewards: {count}',
 		bulkChangedGroup: 'Reward group updated',
+		printPopupBlocked: 'Allow pop-ups to print the PDF.',
+		printError: 'Could not open the PDF.',
+		printLoading: 'Preparing PDF...',
 	},
 	requestNotePrompt: 'Optional note for this purchase request (max 120 chars):',
 	requestNoteModal: {
