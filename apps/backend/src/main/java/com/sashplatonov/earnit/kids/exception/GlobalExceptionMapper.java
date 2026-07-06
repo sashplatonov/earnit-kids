@@ -28,7 +28,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
     public Response toResponse(Throwable exception) {
         if (exception instanceof WebApplicationException webApplicationException) {
             int status = webApplicationException.getResponse().getStatus();
-            log.warn(
+            log.error(
                 "REST request failed status={} method={} uri={} traceId={} referer={} userAgent={} forwardedFor={} authCookiePresent={}",
                 status,
                 requestMethod(),
