@@ -404,8 +404,8 @@ public final class FamilyServiceImpl implements FamilyService {
         Instant previousStart = periodStart.minus(periodDuration);
 
         // EXPLAIN: Use SQL aggregation instead of loading full history rows
-        int[] currentSummary = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
-        int[] previousSummary = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
+        int[] currentSummary = normalizeSummary(historyRepository.summarizePeriod(familyDbId, childId, periodStart, now));
+        int[] previousSummary = normalizeSummary(historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart));
 
         var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentSummary[0] - currentSummary[1]);
         var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousSummary[0] - previousSummary[1]);
@@ -470,7 +470,17 @@ public final class FamilyServiceImpl implements FamilyService {
         int offset = (page - 1) * effectiveLimit;
         List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, effectiveLimit, offset);
         int total = familyDataRepository.getRequestsCount(familyDbId);
-        List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, Map.of(), Map.of())).toList();
+        Map<Long, TaskDto> taskMap = new LinkedHashMap<>();
+        Map<Long, ShopItemDto> shopMap = new LinkedHashMap<>();
+        rows.stream()
+            .map(PurchaseRequestEntity::getChildId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .forEach(requestChildId -> {
+                loadTasks(requestChildId).forEach(task -> taskMap.putIfAbsent(task.id(), task));
+                loadShopItems(requestChildId).forEach(shopItem -> shopMap.putIfAbsent(shopItem.id(), shopItem));
+            });
+        List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, taskMap, shopMap)).toList();
         return OperationResult.success(new PaginatedRequests(items, total, page, effectiveLimit));
     }
 
@@ -1190,8 +1200,26 @@ public final class FamilyServiceImpl implements FamilyService {
     private Map<Long, String> loadLatestHistoryTimestamps(int childId, HistoryEntryType type) {
         Map<Long, Instant> aggregated = historyRepository.loadLatestTimestampsByRelatedId(childId, type);
         Map<Long, String> latestTimestamps = new LinkedHashMap<>();
-        aggregated.forEach((id, instant) -> latestTimestamps.put(id, instant.toString()));
+        if (aggregated != null && !aggregated.isEmpty()) {
+            aggregated.forEach((id, instant) -> latestTimestamps.put(id, instant.toString()));
+            return latestTimestamps;
+        }
+
+        historyRepository.list(
+            "childId = ?1 AND type = ?2 AND relatedId IS NOT NULL ORDER BY createdAt DESC, id DESC",
+            childId,
+            type
+        ).stream()
+            .filter(entry -> entry.getRelatedId() != null && entry.getCreatedAt() != null)
+            .forEach(entry -> latestTimestamps.putIfAbsent(entry.getRelatedId(), entry.getCreatedAt().toString()));
         return latestTimestamps;
+    }
+
+    private int[] normalizeSummary(int[] summary) {
+        if (summary == null || summary.length < 2) {
+            return new int[]{0, 0};
+        }
+        return summary;
     }
 
     private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
@@ -1333,24 +1361,32 @@ public final class FamilyServiceImpl implements FamilyService {
         if (taskId == null) {
             return null;
         }
-        return taskRepository.find(
+        var query = taskRepository.find(
             "familyId = ?1 AND childId = ?2 AND taskId = ?3 ORDER BY id DESC",
             familyDbId,
             childId,
             taskId
-        ).firstResultOptional().map(task -> toTaskDto(task, null)).orElse(null);
+        );
+        if (query == null) {
+            return null;
+        }
+        return query.firstResultOptional().map(task -> toTaskDto(task, null)).orElse(null);
     }
 
     private ShopItemDto findShopItemDto(int familyDbId, int childId, Long itemId) {
         if (itemId == null) {
             return null;
         }
-        return shopItemRepository.find(
+        var query = shopItemRepository.find(
             "familyId = ?1 AND childId = ?2 AND itemId = ?3 ORDER BY id DESC",
             familyDbId,
             childId,
             itemId
-        ).firstResultOptional().map(shopItem -> toShopItemDto(shopItem, null)).orElse(null);
+        );
+        if (query == null) {
+            return null;
+        }
+        return query.firstResultOptional().map(shopItem -> toShopItemDto(shopItem, null)).orElse(null);
     }
 
     private record HistoryDetails(

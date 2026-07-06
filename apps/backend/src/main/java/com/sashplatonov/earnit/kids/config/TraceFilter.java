@@ -15,6 +15,9 @@ import org.slf4j.MDC;
 @Priority(Priorities.AUTHENTICATION)
 public class TraceFilter implements ContainerRequestFilter, ContainerResponseFilter {
     public static final String TRACE_ID = "traceId";
+    public static final String REQUEST_METHOD = "requestMethod";
+    public static final String REQUEST_PATH = "requestPath";
+    public static final String REQUEST_QUERY = "requestQuery";
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -23,6 +26,17 @@ public class TraceFilter implements ContainerRequestFilter, ContainerResponseFil
             trace = UUID.randomUUID().toString();
         }
         MDC.put(TRACE_ID, trace);
+        MDC.put(REQUEST_METHOD, requestContext.getMethod());
+
+        var uriInfo = requestContext.getUriInfo();
+        String path = uriInfo == null || uriInfo.getPath() == null || uriInfo.getPath().isBlank()
+            ? "/"
+            : "/" + uriInfo.getPath();
+        String query = uriInfo == null ? null : uriInfo.getRequestUri().getRawQuery();
+        MDC.put(REQUEST_PATH, path);
+        if (query != null && !query.isBlank()) {
+            MDC.put(REQUEST_QUERY, query);
+        }
 
         requestContext.setProperty(TRACE_ID, trace);
     }

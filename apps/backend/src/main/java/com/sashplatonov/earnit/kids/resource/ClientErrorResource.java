@@ -21,12 +21,30 @@ public class ClientErrorResource {
     public Response reportClientError(Map<String, Object> payload) {
         String type = safeString(payload.get("type"));
         String message = sanitize(safeString(payload.get("message")));
+        String event = safeString(payload.get("event"));
         String source = safeString(payload.get("source"));
         String href = safeString(payload.get("href"));
+        String path = safeString(payload.get("path"));
+        String search = safeString(payload.get("search"));
+        String traceId = safeString(payload.get("traceId"));
+        String userAgent = safeString(payload.get("userAgent"));
+        String status = safeString(payload.get("status"));
         String buildVersion = safeString(payload.get("buildVersion"));
 
-        log.warn("Client runtime error reported: type={}, message={}, source={}, href={}, buildVersion={}",
-            type, message, source, href, buildVersion);
+        log.warn(
+            "Client runtime error reported: event={}, type={}, status={}, message={}, source={}, href={}, path={}, search={}, traceId={}, userAgent={}, buildVersion={}",
+            event,
+            type,
+            status,
+            message,
+            source,
+            href,
+            path,
+            search,
+            traceId,
+            sanitize(userAgent),
+            buildVersion
+        );
 
         return Response.accepted(SimpleResponse.ok()).build();
     }

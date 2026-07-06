@@ -449,6 +449,22 @@ class FamilyServiceImplTest {
     }
 
     @Test
+    void getAnalyticsData_missingAggregateRows_fallsBackToZeroSummary() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(historyRepository.summarizePeriod(any(Integer.class), any(), any(), any())).thenReturn(null);
+        doReturn(List.of()).when(taskRepository).list(anyString(), any(Object[].class));
+        doReturn(List.of()).when(shopItemRepository).list(anyString(), any(Object[].class));
+
+        OperationResult<AnalyticsResponse> result = service.getAnalyticsData("fam-1", 10, "month");
+
+        AnalyticsResponse payload = successValue(result);
+        assertThat(payload.summary().totalEarned()).isZero();
+        assertThat(payload.summary().totalSpent()).isZero();
+        assertThat(payload.comparison().totalEarned()).isZero();
+        assertThat(payload.comparison().totalSpent()).isZero();
+    }
+
+    @Test
     void getHistory_existingEntries_returnsPaginatedResponse() {
         HistoryEntryEntity history = HistoryEntryEntity.builder()
             .familyId(1)

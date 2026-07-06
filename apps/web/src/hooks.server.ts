@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import {
     DEFAULT_LOCALE,
@@ -65,4 +65,28 @@ export const handle: Handle = async ({ event, resolve }) => {
     });
 
     return response;
+};
+
+export const handleError: HandleServerError = ({ error, event, message, status }) => {
+    console.error('SvelteKit server error', {
+        method: event.request.method,
+        url: event.url.toString(),
+        path: event.url.pathname,
+        search: event.url.search,
+        routeId: event.route.id ?? null,
+        status,
+        message,
+        referer: event.request.headers.get('referer'),
+        userAgent: event.request.headers.get('user-agent'),
+        traceId: event.request.headers.get('x-trace-id'),
+        error: error instanceof Error
+            ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack,
+            }
+            : String(error),
+    });
+
+    return { message };
 };

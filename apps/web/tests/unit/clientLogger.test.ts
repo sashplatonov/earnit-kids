@@ -26,13 +26,28 @@ describe('client logging', () => {
     });
 
     it('forwards direct client logs to New Relic', () => {
+        vi.stubGlobal('window', {
+            location: {
+                href: 'https://example.com/en/app/tasks?child=7',
+                pathname: '/en/app/tasks',
+                search: '?child=7',
+            },
+        });
+        vi.stubGlobal('navigator', { userAgent: 'Vitest Browser' });
+
         logClientInfo('ui.ready', 'App ready', { familyId: 'family-1' });
         logClientWarn('ui.warn', 'Something looks odd');
         logClientError('ui.error', 'Something failed', { error: true });
 
         expect(logBrowser).toHaveBeenNthCalledWith(1, 'info', 'ui.ready', 'App ready', { familyId: 'family-1' });
         expect(logBrowser).toHaveBeenNthCalledWith(2, 'warn', 'ui.warn', 'Something looks odd', undefined);
-        expect(logBrowser).toHaveBeenNthCalledWith(3, 'error', 'ui.error', 'Something failed', { error: true });
+        expect(logBrowser).toHaveBeenNthCalledWith(3, 'error', 'ui.error', 'Something failed', {
+            href: 'https://example.com/en/app/tasks?child=7',
+            path: '/en/app/tasks',
+            search: '?child=7',
+            userAgent: 'Vitest Browser',
+            error: true,
+        });
     });
 
     it('does nothing when no window exists', () => {

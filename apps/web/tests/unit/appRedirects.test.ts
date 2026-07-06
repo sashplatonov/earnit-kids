@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { load as rootLoad } from '../../src/routes/+page.server';
+import { actions as rootActions, load as rootLoad } from '../../src/routes/+page.server';
 import { load as loginLoad } from '../../src/routes/login/+page.server';
 import { load as appLoad } from '../../src/routes/app/+page.server';
 import { LAST_APP_SECTION_COOKIE } from '../../src/lib/app/routes';
@@ -75,6 +75,23 @@ describe('authenticated app redirects', () => {
         await expect(appLoad({ locals: localsWith('super_admin'), cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
             status: 302,
             location: '/en/app/shop',
+        });
+    });
+
+    it('redirects accidental root form posts back to a GET route instead of throwing 405', async () => {
+        await expect(rootActions.default({
+            locals: {
+                locale: 'en',
+                appConfig: {},
+                session: {
+                    authenticated: false,
+                    role: 'child',
+                },
+            },
+            cookies: cookiesWith(null),
+        } as never)).rejects.toMatchObject({
+            status: 303,
+            location: '/en/',
         });
     });
 });

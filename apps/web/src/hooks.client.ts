@@ -25,8 +25,14 @@ type ClientErrorInput = {
 export function handleError({ error, event, message, status }: ClientErrorInput) {
     const context = {
         event: 'sveltekit.client_error',
+        href: event.url.toString(),
         path: event.url.pathname,
+        search: event.url.search,
         status,
+        userAgent: typeof navigator === 'undefined' ? undefined : navigator.userAgent,
+        traceId: typeof document === 'undefined'
+            ? undefined
+            : document.documentElement.getAttribute('data-trace-id') ?? undefined,
     };
 
     logClientError(context.event, message, {

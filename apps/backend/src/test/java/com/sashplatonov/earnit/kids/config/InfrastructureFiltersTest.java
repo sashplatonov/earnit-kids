@@ -76,7 +76,13 @@ class InfrastructureFiltersTest {
         filter.filter(request, response);
 
         verify(request).setProperty("metrics.path", "/");
-        verify(metricsRegistry).record(eq("POST"), eq("/"), eq(503), longThat(durationMs -> durationMs >= 0L));
+        verify(metricsRegistry).record(
+            eq("POST"),
+            eq("/"),
+            eq(503),
+            longThat(durationMs -> durationMs >= 0L),
+            eq(-1L)
+        );
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.exception;
 
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
@@ -15,5 +16,13 @@ class GlobalExceptionMapperTest {
 
         assertThat(response.getStatus()).isEqualTo(500);
         assertThat(String.valueOf(response.getEntity())).contains("INTERNAL_ERROR");
+    }
+
+    @Test
+    void toResponse_notFoundException_preservesNotFoundStatus() {
+        Response response = mapper.toResponse(new NotFoundException("missing"));
+
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(String.valueOf(response.getEntity())).contains("NOT_FOUND");
     }
 }

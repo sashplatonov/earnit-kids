@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { localizePath } from '$lib/i18n';
 import { LAST_APP_SECTION_COOKIE, resolvePreferredAppSection, toAppPath } from '$lib/app/routes';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
     if (locals.session.authenticated) {
@@ -21,4 +21,23 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
         session: locals.session,
         appConfig: locals.appConfig,
     };
+};
+
+export const actions: Actions = {
+    default: async ({ locals, cookies }) => {
+        if (locals.session.authenticated) {
+            const preferredSection = resolvePreferredAppSection(
+                locals.session.role,
+                cookies.get(LAST_APP_SECTION_COOKIE),
+            );
+
+            if (locals.session.role === 'super_admin' && cookies.get(LAST_APP_SECTION_COOKIE) == null) {
+                throw redirect(303, localizePath('/super-admin', locals.locale));
+            }
+
+            throw redirect(303, toAppPath(preferredSection, locals.locale));
+        }
+
+        throw redirect(303, localizePath('/', locals.locale));
+    },
 };
