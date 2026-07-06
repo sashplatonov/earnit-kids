@@ -6,6 +6,7 @@ import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
 import io.quarkus.websockets.next.CloseReason;
 import io.quarkus.websockets.next.HandshakeRequest;
 import io.quarkus.websockets.next.WebSocketConnection;
+import io.vertx.core.http.HttpClosedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,9 +16,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,5 +82,18 @@ class FamilyWebSocketTest {
         familyWebSocket.onClose(connection);
 
         verify(webSocketNotificationService).unregister("conn-1");
+    }
+
+    @Test
+    void onError_unregistersConnectionForClosedSocket() {
+        familyWebSocket.onError(connection, new HttpClosedException("closed"));
+
+        verify(webSocketNotificationService).unregister("conn-1");
+    }
+
+    @Test
+    void isClosedConnection_detectsExpectedDisconnect() {
+        assertThat(familyWebSocket.isClosedConnection(new HttpClosedException("closed"))).isTrue();
+        assertThat(familyWebSocket.isClosedConnection(new RuntimeException("boom"))).isFalse();
     }
 }

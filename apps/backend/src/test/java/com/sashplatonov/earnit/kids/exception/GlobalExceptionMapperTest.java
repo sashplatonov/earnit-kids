@@ -25,4 +25,18 @@ class GlobalExceptionMapperTest {
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(String.valueOf(response.getEntity())).contains("NOT_FOUND");
     }
+
+    @Test
+    void shouldLogAsError_onlyForServerErrors() {
+        assertThat(mapper.shouldLogAsError(404)).isFalse();
+        assertThat(mapper.shouldLogAsError(422)).isFalse();
+        assertThat(mapper.shouldLogAsError(500)).isTrue();
+    }
+
+    @Test
+    void shouldLogAsInfo_onlyForNotFound() {
+        assertThat(mapper.shouldLogAsInfo(404)).isTrue();
+        assertThat(mapper.shouldLogAsInfo(405)).isFalse();
+        assertThat(mapper.shouldLogAsInfo(500)).isFalse();
+    }
 }

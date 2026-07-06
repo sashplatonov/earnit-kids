@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.resource;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.JwtService;
 import com.sashplatonov.earnit.kids.service.WebSocketNotificationService;
+import io.vertx.core.http.HttpClosedException;
 import io.quarkus.websockets.next.CloseReason;
 import io.quarkus.websockets.next.HandshakeRequest;
 import io.quarkus.websockets.next.OnClose;
@@ -54,6 +55,10 @@ public class FamilyWebSocket {
     @OnError
     public void onError(WebSocketConnection connection, Throwable error) {
         webSocketNotificationService.unregister(connection.id());
+        if (isClosedConnection(error)) {
+            log.info("WebSocket disconnected connectionId={}", connection.id());
+            return;
+        }
         log.warn("WebSocket error connectionId={}", connection.id(), error);
     }
 
@@ -113,5 +118,9 @@ public class FamilyWebSocket {
             }
         }
         return null;
+    }
+
+    boolean isClosedConnection(Throwable error) {
+        return error instanceof HttpClosedException;
     }
 }
