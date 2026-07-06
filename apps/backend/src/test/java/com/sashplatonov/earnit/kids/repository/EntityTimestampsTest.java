@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +34,12 @@ class EntityTimestampsTest {
         FamilyEntity family = familyRepository.create(familyId, email, "secret123", true, null)
             .orElseThrow();
 
-        Instant originalCreatedAt = family.getCreatedAt().truncatedTo(ChronoUnit.MICROS);
+        // Flush and reload so createdAt goes through H2 rounding (microsecond precision)
+        entityManager.flush();
+        entityManager.clear();
+        family = familyRepository.findByDbId(family.getId()).orElseThrow();
+
+        Instant originalCreatedAt = family.getCreatedAt();
         assertThat(originalCreatedAt).isNotNull();
         assertThat(family.getUpdatedAt()).isNotNull();
 
