@@ -37,64 +37,31 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
         }
 
         log.error(
-            "Unhandled exception while processing REST request method={} uri={} traceId={} referer={} userAgent={} forwardedFor={} authCookiePresent={}",
-            requestMethod(),
-            requestUri(),
-            header("X-Trace-Id"),
-            header("Referer"),
-            header("User-Agent"),
-            header("X-Forwarded-For"),
-            hasAuthCookie(),
+            "Unhandled exception while processing REST request {}",
+            requestContext(),
             exception
         );
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-            .entity(ErrorResponse.of(BackendMessages.message("errors.internalServerError"), "INTERNAL_ERROR", 500))
+            .entity(ErrorResponse.of(
+                BackendMessages.message("errors.internalServerError"),
+                "INTERNAL_ERROR",
+                500
+            ))
             .build();
     }
 
     void logWebApplicationFailure(int status, Throwable exception) {
         if (shouldLogAsError(status)) {
-            log.error(
-                "REST request failed status={} method={} uri={} traceId={} referer={} userAgent={} forwardedFor={} authCookiePresent={}",
-                status,
-                requestMethod(),
-                requestUri(),
-                header("X-Trace-Id"),
-                header("Referer"),
-                header("User-Agent"),
-                header("X-Forwarded-For"),
-                hasAuthCookie(),
-                exception
-            );
+            log.error("REST request failed status={} {}", status, requestContext(), exception);
             return;
         }
 
         if (shouldLogAsInfo(status)) {
-            log.info(
-                "REST request failed status={} method={} uri={} traceId={} referer={} userAgent={} forwardedFor={} authCookiePresent={}",
-                status,
-                requestMethod(),
-                requestUri(),
-                header("X-Trace-Id"),
-                header("Referer"),
-                header("User-Agent"),
-                header("X-Forwarded-For"),
-                hasAuthCookie()
-            );
+            log.info("REST request failed status={} {}", status, requestContext());
             return;
         }
 
-        log.warn(
-            "REST request failed status={} method={} uri={} traceId={} referer={} userAgent={} forwardedFor={} authCookiePresent={}",
-            status,
-            requestMethod(),
-            requestUri(),
-            header("X-Trace-Id"),
-            header("Referer"),
-            header("User-Agent"),
-            header("X-Forwarded-For"),
-            hasAuthCookie()
-        );
+        log.warn("REST request failed status={} {}", status, requestContext());
     }
 
     private String requestMethod() {
@@ -122,6 +89,16 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
         }
         String cookie = headers.getHeaderString(HttpHeaders.COOKIE);
         return cookie != null && cookie.contains("app_auth=");
+    }
+
+    private String requestContext() {
+        return "method=" + requestMethod()
+            + " uri=" + requestUri()
+            + " traceId=" + header("X-Trace-Id")
+            + " referer=" + header("Referer")
+            + " userAgent=" + header("User-Agent")
+            + " forwardedFor=" + header("X-Forwarded-For")
+            + " authCookiePresent=" + hasAuthCookie();
     }
 
     boolean shouldLogAsError(int status) {

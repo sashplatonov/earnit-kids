@@ -54,7 +54,8 @@ public class HttpRequestMetricsRegistry {
             long totalBytes = metrics.totalPayloadBytes.sum();
             endpoint.put("avgPayloadBytes", count == 0 ? 0 : totalBytes / count);
             endpoint.put("maxPayloadBytes", metrics.maxPayloadBytes.get());
-            endpoint.put("totalPayloadMb", count == 0 ? 0 : Math.round((double) totalBytes / 1_048_576.0 * 100) / 100.0);
+            double payloadMb = count == 0 ? 0 : Math.round((double) totalBytes / 1_048_576.0 * 100) / 100.0;
+            endpoint.put("totalPayloadMb", payloadMb);
             topEndpoints.add(endpoint);
         }
 

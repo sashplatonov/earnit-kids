@@ -18,7 +18,7 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
     @PersistenceContext
     EntityManager entityManager;
 
-    // EXPLAIN: Returns the latest createdAt per relatedId using SQL-level aggregation instead of loading all rows into Java memory.
+    // EXPLAIN: Latest createdAt per relatedId via SQL aggregation instead of loading rows into Java memory.
     public Map<Long, Instant> loadLatestTimestampsByRelatedId(int childId, HistoryEntryType type) {
         var query = entityManager.createQuery(
             "SELECT h.relatedId, MAX(h.createdAt) FROM HistoryEntryEntity h " +
@@ -35,7 +35,7 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
             ));
     }
 
-    // EXPLAIN: Analytics aggregation — aggregate total earned/spent in a time window using SQL SUM. Returns [earnAmount, spendAmount].
+    // EXPLAIN: Analytics aggregation — earned/spent in a time window via SQL SUM. Returns [earn, spend].
     public int[] summarizePeriod(int familyDbId, Integer childId, Instant from, Instant to) {
         var jpql = new StringBuilder(
             "SELECT h.type, COALESCE(SUM(h.amount), 0) FROM HistoryEntryEntity h " +

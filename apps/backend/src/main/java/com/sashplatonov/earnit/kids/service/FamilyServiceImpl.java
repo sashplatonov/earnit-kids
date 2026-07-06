@@ -139,7 +139,17 @@ public final class FamilyServiceImpl implements FamilyService {
         List<TaskDto> tasks = loadTasks(activeChild.getId(), lastCompletedAtByTaskId);
         List<ShopItemDto> shopItems = loadShopItems(activeChild.getId(), lastPurchasedAtByItemId);
 
-        // EXPLAIN: Prebuilt lookup maps for O(1) history/request enrichment
+        return OperationResult.success(buildFamilyDataResponse(
+            activeChild, rules, adminSession, tasks, shopItems,
+            familyDbId, resolvedLastSelectedChildId, visibleChildren
+        ));
+    }
+
+    private FamilyDataResponse buildFamilyDataResponse(
+            ChildEntity activeChild, String rules, boolean adminSession,
+            List<TaskDto> tasks, List<ShopItemDto> shopItems,
+            int familyDbId, Integer resolvedLastSelectedChildId,
+            List<ChildEntity> visibleChildren) {
         Map<Long, TaskDto> taskMap = tasks.stream()
             .collect(java.util.stream.Collectors.toMap(TaskDto::id, t -> t, (a, b) -> a));
         Map<Long, ShopItemDto> shopMap = shopItems.stream()
@@ -150,7 +160,7 @@ public final class FamilyServiceImpl implements FamilyService {
         List<FriendDto> friends = loadFriends(activeChild.getId());
         List<ChildDto> childDtos = visibleChildren.stream().map(this::toChildDto).toList();
 
-        return OperationResult.success(new FamilyDataResponse(
+        return new FamilyDataResponse(
             activeChild.getBalance(),
             rules,
             tasks,
@@ -164,7 +174,7 @@ public final class FamilyServiceImpl implements FamilyService {
             activeChild.getName(),
             activeChild.getMonthlyLimit(),
             activeChild.getDailyCoinLimit()
-        ));
+        );
     }
 
     @Override
@@ -404,11 +414,17 @@ public final class FamilyServiceImpl implements FamilyService {
         Instant previousStart = periodStart.minus(periodDuration);
 
         // EXPLAIN: Use SQL aggregation instead of loading full history rows
-        int[] currentSummary = normalizeSummary(historyRepository.summarizePeriod(familyDbId, childId, periodStart, now));
-        int[] previousSummary = normalizeSummary(historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart));
+        var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
+        var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
 
-        var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentSummary[0] - currentSummary[1]);
-        var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousSummary[0] - previousSummary[1]);
+        int[] currentSummary = normalizeSummary(currentRaw);
+        int[] previousSummary = normalizeSummary(previousRaw);
+
+        int currentNet = currentSummary[0] - currentSummary[1];
+        int previousNet = previousSummary[0] - previousSummary[1];
+
+        var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentNet);
+        var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousNet);
 
         List<TaskEntity> tasks = queryTasks(familyDbId, childId);
         List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
@@ -1020,7 +1036,7 @@ public final class FamilyServiceImpl implements FamilyService {
         return Duration.ofDays(30);
     }
 
-    // EXPLAIN: Build top task stats from SQL-aggregated rows: [relatedId, sumAmount, count]. Falls back to description/fallback name when task is not found by relatedId.
+    // EXPLAIN: Build top task stats from SQL-aggregated rows: [relatedId, sumAmount, count].
     private List<AnalyticsResponse.AnalyticsStatItem> buildTopTaskStatsAggregated(
             List<Object[]> aggregatedRows, List<TaskEntity> tasks) {
         Map<Long, String> namesByTaskId = tasks.stream()
@@ -1069,14 +1085,18 @@ public final class FamilyServiceImpl implements FamilyService {
         for (var row : dailyRows) {
             LocalDate day = row[0] instanceof java.sql.Date d ? d.toLocalDate()
                 : row[0] instanceof LocalDate ld ? ld : null;
-            if (day == null) continue;
+            if (day == null) {
+                continue;
+            }
             String type = (String) row[1];
             int amount = ((Number) row[2]).intValue();
             var agg = perDay.computeIfAbsent(day, unused -> new AnalyticsResponse.AnalyticsSummary(0, 0, 0));
             if ("earn".equals(type)) {
-                perDay.put(day, new AnalyticsResponse.AnalyticsSummary(amount, agg.totalSpent(), amount));
+                var earnedSummary = new AnalyticsResponse.AnalyticsSummary(amount, agg.totalSpent(), amount);
+                perDay.put(day, earnedSummary);
             } else if ("spend".equals(type)) {
-                perDay.put(day, new AnalyticsResponse.AnalyticsSummary(agg.totalEarned(), amount, agg.totalEarned() - amount));
+                int net = agg.totalEarned() - amount;
+                perDay.put(day, new AnalyticsResponse.AnalyticsSummary(agg.totalEarned(), amount, net));
             }
         }
 
@@ -1125,12 +1145,7 @@ public final class FamilyServiceImpl implements FamilyService {
             .toList();
     }
 
-    private static final class Aggregate {
-        private int coins;
-        private int count;
-        private int earned;
-        private int spent;
-    }
+
 
     private List<TaskDto> loadTasks(int childId) {
         return loadTasks(childId, Map.of());
@@ -1222,7 +1237,9 @@ public final class FamilyServiceImpl implements FamilyService {
         return summary;
     }
 
-    private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry, Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+    private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry,
+                                           Map<Long, TaskDto> taskMap,
+                                           Map<Long, ShopItemDto> shopMap) {
         HistoryDetails details = enrichHistoryDetails(entry, taskMap, shopMap);
         return new HistoryEntryDto(entry.getExternalId(), entry.getType(), entry.getAmount(),
             details.title(),
@@ -1302,7 +1319,9 @@ public final class FamilyServiceImpl implements FamilyService {
             || request.getItemId() != null;
     }
 
-    private RequestDto toRequestDto(PurchaseRequestEntity request, Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+    private RequestDto toRequestDto(PurchaseRequestEntity request,
+                                      Map<Long, TaskDto> taskMap,
+                                      Map<Long, ShopItemDto> shopMap) {
         RequestDetails details = enrichRequestDetails(request, taskMap, shopMap);
         return new RequestDto(request.getId(), request.getTaskId(), details.taskName(),
             request.getItemId(), details.itemName(), details.title(), details.description(),
