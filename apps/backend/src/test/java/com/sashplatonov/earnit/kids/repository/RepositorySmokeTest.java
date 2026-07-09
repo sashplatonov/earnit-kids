@@ -29,7 +29,6 @@ class RepositorySmokeTest {
 
     @Inject FamilyRepository familyRepository;
     @Inject ChildRepository childRepository;
-    @Inject FamilyDataRepository familyDataRepository;
     @Inject TaskRepository taskRepository;
     @Inject ShopItemRepository shopItemRepository;
     @Inject HistoryRepository historyRepository;
@@ -99,54 +98,54 @@ class RepositorySmokeTest {
         long taskExternalId = 70001L;
         long itemExternalId = 80001L;
 
-        assertThat(familyDataRepository.upsertTask(new TaskUpsertCommand(
+        assertThat(taskRepository.upsertTask(new TaskUpsertCommand(
             familyDbId, child1.getId(), taskExternalId, "Read", 5, "Study",
             OBJECT_MAPPER.readTree("{\"period\":\"day\"}"), "comment", 100, false, false))).isTrue();
-        assertThat(familyDataRepository.upsertTask(new TaskUpsertCommand(
+        assertThat(taskRepository.upsertTask(new TaskUpsertCommand(
             familyDbId, child1.getId(), taskExternalId, "Read updated", 6, "Study",
             OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), "comment2", 150, true, false))).isTrue();
-        assertThat(familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
+        assertThat(shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
             familyDbId, child1.getId(), itemExternalId, "Toy", 7, "Fun",
             OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false, false))).isTrue();
-        assertThat(familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
+        assertThat(shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
             familyDbId, child1.getId(), itemExternalId, "Toy updated", 8, "Fun",
             OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, true, false))).isTrue();
 
-        assertThat(familyDataRepository.getTasks(child1.getId())).isNotEmpty();
-        assertThat(familyDataRepository.getShopItems(child1.getId())).isNotEmpty();
+        assertThat(taskRepository.getTasks(child1.getId())).isNotEmpty();
+        assertThat(shopItemRepository.getShopItems(child1.getId())).isNotEmpty();
 
-        TaskEntity storedTask = familyDataRepository.getTasks(child1.getId()).stream()
+        TaskEntity storedTask = taskRepository.getTasks(child1.getId()).stream()
             .filter(taskEntity -> taskEntity.getTaskId() == taskExternalId)
             .findFirst()
             .orElseThrow();
         assertThat(storedTask.isActive()).isTrue();
         assertThat(storedTask.isDeleted()).isFalse();
 
-        ShopItemEntity storedShopItem = familyDataRepository.getShopItems(child1.getId()).stream()
+        ShopItemEntity storedShopItem = shopItemRepository.getShopItems(child1.getId()).stream()
             .filter(shopItemEntity -> shopItemEntity.getItemId() == itemExternalId)
             .findFirst()
             .orElseThrow();
         assertThat(storedShopItem.isActive()).isTrue();
         assertThat(storedShopItem.isDeleted()).isFalse();
 
-        assertThat(familyDataRepository.addHistory(familyDbId, child1.getId(), 90001L, HistoryEntryType.earn,
+        assertThat(historyRepository.addHistory(familyDbId, child1.getId(), 90001L, HistoryEntryType.earn,
             5, "Read", 0, taskExternalId, "Study", "Great")).isTrue();
-        assertThat(familyDataRepository.addHistory(familyDbId, child1.getId(), 90002L, HistoryEntryType.spend,
+        assertThat(historyRepository.addHistory(familyDbId, child1.getId(), 90002L, HistoryEntryType.spend,
             3, "Toy", 300, itemExternalId, "Fun", "Bought")).isTrue();
 
-        assertThat(familyDataRepository.getHistory(child1.getId(), 10, 0)).isNotEmpty();
-        assertThat(familyDataRepository.getHistoryCount(child1.getId())).isGreaterThanOrEqualTo(2);
+        assertThat(historyRepository.getHistory(child1.getId(), 10, 0)).isNotEmpty();
+        assertThat(historyRepository.getHistoryCount(child1.getId())).isGreaterThanOrEqualTo(2);
 
-        assertThat(familyDataRepository.createRequest(familyDbId, child1.getId(), 91001L,
+        assertThat(purchaseRequestRepository.createRequest(familyDbId, child1.getId(), 91001L,
             taskExternalId, "Read", itemExternalId, 5, PurchaseRequestType.shop, 300)).isTrue();
-        assertThat(familyDataRepository.getRequests(familyDbId, 10, 0)).isNotEmpty();
-        assertThat(familyDataRepository.getRequestsCount(familyDbId)).isGreaterThanOrEqualTo(1);
+        assertThat(purchaseRequestRepository.getRequests(familyDbId, 10, 0)).isNotEmpty();
+        assertThat(purchaseRequestRepository.getRequestsCount(familyDbId)).isGreaterThanOrEqualTo(1);
 
-        int requestId = familyDataRepository.getRequests(familyDbId, 1, 0).getFirst().getId().intValue();
-        assertThat(familyDataRepository.updateRequestStatus(requestId, PurchaseRequestStatus.approved)).isTrue();
+        int requestId = purchaseRequestRepository.getRequests(familyDbId, 1, 0).getFirst().getId().intValue();
+        assertThat(purchaseRequestRepository.updateRequestStatus(requestId, PurchaseRequestStatus.approved)).isTrue();
 
         Instant paginationTimestamp = Instant.parse("2026-04-22T12:00:00Z");
-        familyDataRepository.replaceHistory(familyDbId, child1.getId(), java.util.List.of(
+        historyRepository.replaceHistory(familyDbId, child1.getId(), java.util.List.of(
             HistoryEntryEntity.builder()
                 .familyId(familyDbId)
                 .childId(child1.getId())
@@ -166,7 +165,7 @@ class RepositorySmokeTest {
                 .createdAt(paginationTimestamp)
                 .build()
         ));
-        familyDataRepository.replaceRequests(familyDbId, java.util.List.of(
+        purchaseRequestRepository.replaceRequests(familyDbId, java.util.List.of(
             PurchaseRequestEntity.builder()
                 .familyId(familyDbId)
                 .childId(child1.getId())
@@ -191,21 +190,21 @@ class RepositorySmokeTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(familyDataRepository.getHistory(child1.getId(), 1, 0))
+        assertThat(historyRepository.getHistory(child1.getId(), 1, 0))
             .extracting(HistoryEntryEntity::getExternalId)
             .containsExactly(92002L);
-        assertThat(familyDataRepository.getHistory(child1.getId(), 1, 1))
+        assertThat(historyRepository.getHistory(child1.getId(), 1, 1))
             .extracting(HistoryEntryEntity::getExternalId)
             .containsExactly(92001L);
-        assertThat(familyDataRepository.getHistory(child1.getId(), 1, 2)).isEmpty();
+        assertThat(historyRepository.getHistory(child1.getId(), 1, 2)).isEmpty();
 
-        assertThat(familyDataRepository.getRequests(familyDbId, 1, 0))
+        assertThat(purchaseRequestRepository.getRequests(familyDbId, 1, 0))
             .extracting(PurchaseRequestEntity::getExternalId)
             .containsExactly(93002L);
-        assertThat(familyDataRepository.getRequests(familyDbId, 1, 1))
+        assertThat(purchaseRequestRepository.getRequests(familyDbId, 1, 1))
             .extracting(PurchaseRequestEntity::getExternalId)
             .containsExactly(93001L);
-        assertThat(familyDataRepository.getRequests(familyDbId, 1, 2)).isEmpty();
+        assertThat(purchaseRequestRepository.getRequests(familyDbId, 1, 2)).isEmpty();
 
         assertThat(indexNamesForTables("HISTORY", "REQUESTS")).contains(
             "IDX_HISTORY_FAMILY_CHILD_TYPE_RELATED_CREATED",
@@ -231,12 +230,12 @@ class RepositorySmokeTest {
             familyDbId, child1.getId(), itemExternalId
         ))).contains("IDX_REQUESTS_FAMILY_CHILD_ITEM_STATUS_CREATED");
 
-        assertThat(familyDataRepository.addFriend(child1.getId(), child2.getId())).isTrue();
-        assertThat(familyDataRepository.getFriendChildIds(child1.getId())).contains(child2.getId());
-        assertThat(familyDataRepository.getFriendChildIds(child2.getId())).contains(child1.getId());
+        assertThat(friendRepository.addFriend(child1.getId(), child2.getId())).isTrue();
+        assertThat(friendRepository.getFriendChildIds(child1.getId())).contains(child2.getId());
+        assertThat(friendRepository.getFriendChildIds(child2.getId())).contains(child1.getId());
 
-        assertThat(familyDataRepository.softDeleteTask(child1.getId(), taskExternalId)).isTrue();
-        assertThat(familyDataRepository.softDeleteShopItem(child1.getId(), itemExternalId)).isTrue();
+        assertThat(taskRepository.softDeleteTask(child1.getId(), taskExternalId)).isTrue();
+        assertThat(shopItemRepository.softDeleteShopItem(child1.getId(), itemExternalId)).isTrue();
 
         // Touch generic repository classes to ensure they are covered too.
         TaskEntity task = taskRepository.listAll().stream().findFirst().orElse(null);

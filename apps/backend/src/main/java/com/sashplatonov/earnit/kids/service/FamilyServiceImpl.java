@@ -26,8 +26,10 @@ import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.FriendRepository;
+import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -50,9 +52,11 @@ public final class FamilyServiceImpl implements FamilyService {
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
-    private final FamilyDataRepository familyDataRepository;
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
+    private final HistoryRepository historyRepository;
+    private final PurchaseRequestRepository purchaseRequestRepository;
+    private final FriendRepository friendRepository;
     private final ObjectMapper objectMapper;
     private final FamilyDashboardQueryService familyDashboardQueryService;
     private final FamilyCommandService familyCommandService;
@@ -61,18 +65,22 @@ public final class FamilyServiceImpl implements FamilyService {
     @Inject
     public FamilyServiceImpl(FamilyRepository familyRepository,
                              ChildRepository childRepository,
-                             FamilyDataRepository familyDataRepository,
                              TaskRepository taskRepository,
                              ShopItemRepository shopItemRepository,
+                             HistoryRepository historyRepository,
+                             PurchaseRequestRepository purchaseRequestRepository,
+                             FriendRepository friendRepository,
                              ObjectMapper objectMapper,
                              FamilyDashboardQueryService familyDashboardQueryService,
                              FamilyCommandService familyCommandService,
                              AnalyticsService analyticsService) {
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
-        this.familyDataRepository = familyDataRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
+        this.historyRepository = historyRepository;
+        this.purchaseRequestRepository = purchaseRequestRepository;
+        this.friendRepository = friendRepository;
         this.objectMapper = objectMapper;
         this.familyDashboardQueryService = familyDashboardQueryService;
         this.familyCommandService = familyCommandService;
@@ -81,10 +89,11 @@ public final class FamilyServiceImpl implements FamilyService {
 
     FamilyServiceImpl(FamilyRepository familyRepository,
                       ChildRepository childRepository,
-                      FamilyDataRepository familyDataRepository,
-                      com.sashplatonov.earnit.kids.repository.HistoryRepository historyRepository,
                       TaskRepository taskRepository,
                       ShopItemRepository shopItemRepository,
+                      HistoryRepository historyRepository,
+                      PurchaseRequestRepository purchaseRequestRepository,
+                      FriendRepository friendRepository,
                       com.sashplatonov.earnit.kids.util.TimeProvider timeProvider,
                       BackendKpiMetrics backendKpiMetrics) {
         ObjectMapper mapper = new ObjectMapper();
@@ -99,8 +108,9 @@ public final class FamilyServiceImpl implements FamilyService {
         FamilyDashboardQueryService familyDashboardQueryService = new FamilyDashboardQueryServiceImpl(
             familyRepository,
             childRepository,
-            familyDataRepository,
             historyRepository,
+            purchaseRequestRepository,
+            friendRepository,
             taskRepository,
             shopItemRepository,
             mapper,
@@ -109,16 +119,19 @@ public final class FamilyServiceImpl implements FamilyService {
 
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
-        this.familyDataRepository = familyDataRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
+        this.historyRepository = historyRepository;
+        this.purchaseRequestRepository = purchaseRequestRepository;
+        this.friendRepository = friendRepository;
         this.objectMapper = mapper;
         this.familyDashboardQueryService = familyDashboardQueryService;
         this.familyCommandService = new FamilyCommandServiceImpl(
             familyRepository,
             childRepository,
-            familyDataRepository,
             familyDashboardQueryService,
+            taskRepository,
+            shopItemRepository,
             analyticsService,
             mapper
         );
@@ -325,7 +338,7 @@ public final class FamilyServiceImpl implements FamilyService {
             return failure("USER_NOT_FOUND", "family.userNotFound");
         }
 
-        boolean saved = familyDataRepository.addFriend(childId, friendChildId);
+        boolean saved = friendRepository.addFriend(childId, friendChildId);
         if (!saved) {
             return failure("FRIEND_ADD_FAILED", "family.friendAddFailed");
         }
@@ -336,7 +349,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
     @Override
     public OperationResult<List<FriendDto>> getFriendsData(int childId) {
-        var friendIds = familyDataRepository.getFriendChildIds(childId);
+        var friendIds = friendRepository.getFriendChildIds(childId);
         List<FriendDto> friends = childRepository.findByChildIds(friendIds).stream()
             .map(friend -> new FriendDto(friend.getId(), friend.getName(), friend.getBalance()))
             .toList();
@@ -360,8 +373,8 @@ public final class FamilyServiceImpl implements FamilyService {
 
         int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
         int offset = (page - 1) * effectiveLimit;
-        List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, effectiveLimit, offset);
-        int total = familyDataRepository.getHistoryCount(childId);
+        List<HistoryEntryEntity> rows = historyRepository.getHistory(childId, effectiveLimit, offset);
+        int total = historyRepository.getHistoryCount(childId);
         List<TaskDto> tasks = loadTasks(childId, Map.of());
         List<ShopItemDto> shopItems = loadShopItems(childId, Map.of());
         Map<Long, TaskDto> taskMap = buildTaskMap(tasks);
@@ -382,8 +395,8 @@ public final class FamilyServiceImpl implements FamilyService {
         int familyDbId = dbIdOpt.get();
         int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
         int offset = (page - 1) * effectiveLimit;
-        List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, effectiveLimit, offset);
-        int total = familyDataRepository.getRequestsCount(familyDbId);
+        List<PurchaseRequestEntity> rows = purchaseRequestRepository.getRequests(familyDbId, effectiveLimit, offset);
+        int total = purchaseRequestRepository.getRequestsCount(familyDbId);
         Map<Long, TaskDto> taskMap = new LinkedHashMap<>();
         Map<Long, ShopItemDto> shopMap = new LinkedHashMap<>();
         rows.stream()
@@ -520,13 +533,13 @@ public final class FamilyServiceImpl implements FamilyService {
     }
 
     private List<TaskDto> loadTasks(int childId, Map<Long, String> lastCompletedAtByTaskId) {
-        return familyDataRepository.getTasks(childId).stream()
+        return taskRepository.getTasks(childId).stream()
             .map(task -> toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId())))
             .toList();
     }
 
     private List<ShopItemDto> loadShopItems(int childId, Map<Long, String> lastPurchasedAtByItemId) {
-        return familyDataRepository.getShopItems(childId).stream()
+        return shopItemRepository.getShopItems(childId).stream()
             .map(shopItem -> toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId())))
             .toList();
     }

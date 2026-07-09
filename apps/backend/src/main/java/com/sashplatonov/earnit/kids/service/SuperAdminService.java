@@ -11,8 +11,11 @@ import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.config.PasswordHasher;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
+import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
+import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -32,7 +35,10 @@ public class SuperAdminService {
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
-    private final FamilyDataRepository familyDataRepository;
+    private final TaskRepository taskRepository;
+    private final ShopItemRepository shopItemRepository;
+    private final HistoryRepository historyRepository;
+    private final PurchaseRequestRepository purchaseRequestRepository;
     private final FamilyService familyService;
     private final BaseDataService baseDataService;
     private final ObjectMapper objectMapper;
@@ -68,21 +74,23 @@ public class SuperAdminService {
         data.put("balance", children.stream().mapToInt(ChildEntity::getBalance).sum());
         data.put(
             "tasks",
-            familyDataRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList()
+            taskRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList()
         );
         data.put(
             "shop",
-            familyDataRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList()
+            shopItemRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList()
         );
         data.put(
             "history",
-            familyDataRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
+            historyRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
                 .map(this::toHistoryPayload)
                 .toList()
         );
         data.put(
             "requests",
-            familyDataRepository.getRequests(family.getId(), 100, 0).stream().map(this::toRequestPayload).toList()
+            purchaseRequestRepository.getRequests(family.getId(), 100, 0).stream()
+                .map(this::toRequestPayload)
+                .toList()
         );
 
         Map<String, Object> payload = new LinkedHashMap<>();
@@ -175,8 +183,8 @@ public class SuperAdminService {
         payload.put("created_at", toIso(family.getCreatedAt()));
         payload.put("last_activity", toIso(family.getLastActivity()));
         payload.put("isBlocked", family.isBlocked());
-        payload.put("tasksCount", familyDataRepository.getTasksForFamily(family.getId()).size());
-        payload.put("shopCount", familyDataRepository.getShopItemsForFamily(family.getId()).size());
+        payload.put("tasksCount", taskRepository.getTasksForFamily(family.getId()).size());
+        payload.put("shopCount", shopItemRepository.getShopItemsForFamily(family.getId()).size());
         payload.put("childrenCount", children.size());
         payload.put("children", children.stream().map(this::toChildSummary).toList());
         return payload;

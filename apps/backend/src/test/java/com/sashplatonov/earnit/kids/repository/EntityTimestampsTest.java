@@ -22,7 +22,7 @@ class EntityTimestampsTest {
 
     @Inject FamilyRepository familyRepository;
     @Inject ChildRepository childRepository;
-    @Inject FamilyDataRepository familyDataRepository;
+    @Inject HistoryRepository historyRepository;
     @Inject EntityManager entityManager;
 
     @Test
@@ -98,14 +98,14 @@ class EntityTimestampsTest {
         Instant oldCreatedAtTwo = Instant.parse("2026-04-11T09:30:00Z");
         Instant newCreatedAt = Instant.parse("2026-04-21T10:45:00Z");
 
-        familyDataRepository.replaceHistory(family.getId(), child.getId(), List.of(
+        historyRepository.replaceHistory(family.getId(), child.getId(), List.of(
             historyEntry(family.getId(), child.getId(), 1001L, 5, "Read", oldCreatedAtOne),
             historyEntry(family.getId(), child.getId(), 1002L, 7, "Math", oldCreatedAtTwo)
         ));
         entityManager.flush();
         entityManager.clear();
 
-        familyDataRepository.replaceHistory(family.getId(), child.getId(), List.of(
+        historyRepository.replaceHistory(family.getId(), child.getId(), List.of(
             historyEntry(family.getId(), child.getId(), 1001L, 5, "Read", oldCreatedAtOne),
             historyEntry(family.getId(), child.getId(), 1002L, 7, "Math", oldCreatedAtTwo),
             historyEntry(family.getId(), child.getId(), 1003L, 9, "Puzzle", newCreatedAt)
@@ -113,7 +113,7 @@ class EntityTimestampsTest {
         entityManager.flush();
         entityManager.clear();
 
-        List<HistoryEntryEntity> history = familyDataRepository.getAllHistoryForFamily(family.getId());
+        List<HistoryEntryEntity> history = historyRepository.getAllHistoryForFamily(family.getId());
         assertThat(history)
             .extracting(HistoryEntryEntity::getExternalId, HistoryEntryEntity::getCreatedAt)
             .containsExactlyInAnyOrder(

@@ -13,9 +13,10 @@ import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.FriendRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
@@ -45,8 +46,9 @@ class FamilyDashboardQueryServiceImplTest {
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
-    @Mock FamilyDataRepository familyDataRepository;
     @Mock HistoryRepository historyRepository;
+    @Mock PurchaseRequestRepository purchaseRequestRepository;
+    @Mock FriendRepository friendRepository;
     @Mock TaskRepository taskRepository;
     @Mock ShopItemRepository shopItemRepository;
 
@@ -61,8 +63,9 @@ class FamilyDashboardQueryServiceImplTest {
         service = new FamilyDashboardQueryServiceImpl(
             familyRepository,
             childRepository,
-            familyDataRepository,
             historyRepository,
+            purchaseRequestRepository,
+            friendRepository,
             taskRepository,
             shopItemRepository,
             OBJECT_MAPPER,
@@ -131,15 +134,15 @@ class FamilyDashboardQueryServiceImplTest {
             .moneyAmount(250)
             .build();
 
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of(task));
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of(item));
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of(history));
+        when(taskRepository.getTasks(10)).thenReturn(List.of(task));
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of(item));
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of(history));
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.earn))
             .thenReturn(java.util.Map.of(1001L, FIXED_NOW));
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.spend))
             .thenReturn(java.util.Map.of(2001L, FIXED_NOW.minus(Duration.ofDays(1))));
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11));
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of(11));
         when(childRepository.findByChildIds(List.of(11))).thenReturn(List.of(child2));
 
         OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", 10, true);
@@ -168,8 +171,8 @@ class FamilyDashboardQueryServiceImplTest {
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Bedtime by 20:30"));
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.earn))
             .thenReturn(java.util.Map.of());
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.spend))
@@ -224,15 +227,15 @@ class FamilyDashboardQueryServiceImplTest {
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Bedtime by 20:30"));
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of(task));
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of(item));
+        when(taskRepository.getTasks(10)).thenReturn(List.of(task));
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of(item));
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.earn))
             .thenReturn(java.util.Map.of(1001L, FIXED_NOW));
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.spend))
             .thenReturn(java.util.Map.of(2001L, FIXED_NOW.minus(Duration.ofDays(1))));
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of(history));
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11));
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of(history));
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of(11));
         when(childRepository.findByChildIds(List.of(11))).thenReturn(List.of(child2));
 
         OperationResult<FamilyDashboardDetailResponse> result = service.loadFamilyDetailData("fam-1", 10, true);
@@ -268,15 +271,15 @@ class FamilyDashboardQueryServiceImplTest {
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Ask before spending"));
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.earn))
             .thenReturn(java.util.Map.of());
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.spend))
             .thenReturn(java.util.Map.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of(ownRequest, siblingRequest));
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of(ownRequest, siblingRequest));
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         OperationResult<FamilyDataResponse> result = service.loadFamilyData("fam-1", 10, false);
 

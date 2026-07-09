@@ -24,7 +24,6 @@ import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.exception.ImportValidationException;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
@@ -71,7 +70,6 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     private final ShopItemRepository shopItemRepository;
     private final HistoryRepository historyRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
-    private final FamilyDataRepository familyDataRepository;
     private final FamilyService familyService;
     private final TimeProvider timeProvider;
 
@@ -452,7 +450,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         long nextTaskId = nextTaskBusinessId(familyDbId, request.childId());
         for (ImportTaskRowRequest row : rows) {
             JsonNode frequency = buildFrequencyNode(row.frequencyLimit(), row.frequencyPeriod());
-            familyDataRepository.upsertTask(new TaskUpsertCommand(
+            taskRepository.upsertTask(new TaskUpsertCommand(
                 familyDbId,
                 request.childId(),
                 nextTaskId++,
@@ -480,7 +478,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         long nextItemId = nextShopItemBusinessId(familyDbId, request.childId());
         for (ImportShopItemRowRequest row : rows) {
             JsonNode frequency = buildFrequencyNode(row.frequencyLimit(), row.frequencyPeriod());
-            familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
+            shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
                 familyDbId,
                 request.childId(),
                 nextItemId++,

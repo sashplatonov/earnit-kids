@@ -18,13 +18,14 @@ import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.FriendRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
-import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
+import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
-import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
+import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -63,10 +64,11 @@ class FamilyServiceImplTest {
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
-    @Mock FamilyDataRepository familyDataRepository;
-    @Mock HistoryRepository historyRepository;
     @Mock TaskRepository taskRepository;
     @Mock ShopItemRepository shopItemRepository;
+    @Mock HistoryRepository historyRepository;
+    @Mock PurchaseRequestRepository purchaseRequestRepository;
+    @Mock FriendRepository friendRepository;
 
     private SimpleMeterRegistry meterRegistry;
     private BackendKpiMetrics backendKpiMetrics;
@@ -79,10 +81,11 @@ class FamilyServiceImplTest {
         service = new FamilyServiceImpl(
             familyRepository,
             childRepository,
-            familyDataRepository,
-            historyRepository,
             taskRepository,
             shopItemRepository,
+            historyRepository,
+            purchaseRequestRepository,
+            friendRepository,
             TestConfigFactory.timeProvider(FIXED_NOW),
             backendKpiMetrics
         );
@@ -209,14 +212,14 @@ class FamilyServiceImplTest {
             .isInstanceOf(OperationResult.Failure.class);
 
         when(childRepository.findByIdOptional(11)).thenReturn(Optional.of(child(11, 2, "Friend", 0)));
-        when(familyDataRepository.addFriend(10, 11)).thenReturn(true);
+        when(friendRepository.addFriend(10, 11)).thenReturn(true);
         assertThat(service.addFriend("fam-1", 10, 11))
             .isInstanceOf(OperationResult.Success.class);
     }
 
     @Test
     void getFriendsData_existingFriends_mapsProfiles() {
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11, 12));
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of(11, 12));
         when(childRepository.findByChildIds(List.of(11, 12))).thenReturn(List.of(child(11, 2, "A", 4)));
 
         OperationResult<List<FriendDto>> result = service.getFriendsData(10);
@@ -309,12 +312,12 @@ class FamilyServiceImplTest {
             .relatedId(1001L)
             .createdAt(FIXED_NOW)
             .build();
-        when(familyDataRepository.getHistory(10, 20, 0)).thenReturn(List.of(history));
-        when(familyDataRepository.getHistoryCount(10)).thenReturn(1);
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of(
+        when(historyRepository.getHistory(10, 20, 0)).thenReturn(List.of(history));
+        when(historyRepository.getHistoryCount(10)).thenReturn(1);
+        when(taskRepository.getTasks(10)).thenReturn(List.of(
             TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5).comment("Pages").build()
         ));
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of(
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of(
             ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(3).comment("Prize").build()
         ));
 
@@ -374,11 +377,11 @@ class FamilyServiceImplTest {
 
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
-        when(familyDataRepository.getHistory(10, 20, 0))
+        when(historyRepository.getHistory(10, 20, 0))
             .thenReturn(List.of(taskHistory1, taskHistory2, itemHistory1, itemHistory2));
-        when(familyDataRepository.getHistoryCount(10)).thenReturn(4);
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistoryCount(10)).thenReturn(4);
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
         when(taskRepository.findByFamilyAndChildAndTaskIds(eq(1), eq(List.of(10)), eq(List.of(1001L, 1002L))))
             .thenReturn(List.of(
                 TaskEntity.builder().familyId(1).childId(10).taskId(1002L).name("Write").coins(7).build(),
@@ -413,13 +416,13 @@ class FamilyServiceImplTest {
             .relatedId(1002L)
             .createdAt(FIXED_NOW.minusSeconds(60))
             .build();
-        when(familyDataRepository.getHistory(10, 20, 20)).thenReturn(List.of(nextHistory));
-        when(familyDataRepository.getHistoryCount(10)).thenReturn(2);
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of(
+        when(historyRepository.getHistory(10, 20, 20)).thenReturn(List.of(nextHistory));
+        when(historyRepository.getHistoryCount(10)).thenReturn(2);
+        when(taskRepository.getTasks(10)).thenReturn(List.of(
             TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5).comment("Pages").build(),
             TaskEntity.builder().taskId(1002L).childId(10).name("Math").coins(7).comment("Numbers").build()
         ));
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
 
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
@@ -456,10 +459,10 @@ class FamilyServiceImplTest {
             .build();
 
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(familyDataRepository.getRequests(1, 20, 0)).thenReturn(List.of(request));
-        when(familyDataRepository.getRequestsCount(1)).thenReturn(1);
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of(
+        when(purchaseRequestRepository.getRequests(1, 20, 0)).thenReturn(List.of(request));
+        when(purchaseRequestRepository.getRequestsCount(1)).thenReturn(1);
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of(
             ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(7)
                 .groupName("Fun").comment("Prize").moneyLimit(250).build()
         ));
@@ -511,13 +514,13 @@ class FamilyServiceImplTest {
             .build();
 
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(familyDataRepository.getRequests(1, 20, 0))
+        when(purchaseRequestRepository.getRequests(1, 20, 0))
             .thenReturn(List.of(taskRequest1, taskRequest2, shopRequest1, shopRequest2));
-        when(familyDataRepository.getRequestsCount(1)).thenReturn(4);
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getTasks(11)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(11)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequestsCount(1)).thenReturn(4);
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(11)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(11)).thenReturn(List.of());
         when(taskRepository.findByFamilyAndChildAndTaskIds(eq(1), eq(List.of(10, 11)), eq(List.of(1001L, 1002L))))
             .thenReturn(List.of(
                 TaskEntity.builder().familyId(1).childId(11).taskId(1002L).name("Write").coins(7).build(),
@@ -544,10 +547,10 @@ class FamilyServiceImplTest {
     @Test
     void getRequests_pageBeyondEnd_returnsEmptyPage() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(familyDataRepository.getRequests(1, 20, 40)).thenReturn(List.of());
-        when(familyDataRepository.getRequestsCount(1)).thenReturn(1);
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 20, 40)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequestsCount(1)).thenReturn(1);
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
 
         OperationResult<PaginatedRequests> result = service.getRequests("fam-1", 3, 20);
 
@@ -628,11 +631,11 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         assertThat(service.saveFamilyData("fam-1", 10, Map.of(), true))
             .isInstanceOf(OperationResult.Success.class);
@@ -645,11 +648,11 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child, sibling));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("balance", 42);
@@ -674,7 +677,7 @@ class FamilyServiceImplTest {
         verify(childRepository).updateBalance(10, 42);
         verify(childRepository, never()).updateBalance(11, 9000);
 
-        verify(familyDataRepository, never()).replaceRequests(eq(1), any());
+        verify(purchaseRequestRepository, never()).replaceRequests(eq(1), any());
     }
 
     @Test
@@ -683,11 +686,11 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         Instant timestamp = FIXED_NOW.minus(Duration.ofHours(1));
         Map<String, Object> payload = new LinkedHashMap<>();
@@ -733,10 +736,10 @@ class FamilyServiceImplTest {
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
         verify(childRepository).updateBalance(10, 42);
-        verify(familyDataRepository).markAllTasksDeleted(10);
-        verify(familyDataRepository).markAllShopItemsDeleted(10);
+        verify(taskRepository).markAllTasksDeleted(10);
+        verify(shopItemRepository).markAllShopItemsDeleted(10);
         ArgumentCaptor<TaskUpsertCommand> taskCommandCaptor = ArgumentCaptor.forClass(TaskUpsertCommand.class);
-        verify(familyDataRepository).upsertTask(taskCommandCaptor.capture());
+        verify(taskRepository).upsertTask(taskCommandCaptor.capture());
         assertThat(taskCommandCaptor.getValue()).satisfies(command -> {
             assertThat(command.familyDbId()).isEqualTo(1);
             assertThat(command.childId()).isEqualTo(10);
@@ -754,7 +757,7 @@ class FamilyServiceImplTest {
 
         ArgumentCaptor<ShopItemUpsertCommand> shopCommandCaptor =
             ArgumentCaptor.forClass(ShopItemUpsertCommand.class);
-        verify(familyDataRepository).upsertShopItem(shopCommandCaptor.capture());
+        verify(shopItemRepository).upsertShopItem(shopCommandCaptor.capture());
         assertThat(shopCommandCaptor.getValue()).satisfies(command -> {
             assertThat(command.familyDbId()).isEqualTo(1);
             assertThat(command.childId()).isEqualTo(10);
@@ -770,8 +773,8 @@ class FamilyServiceImplTest {
             assertThat(command.frequency().get("period").asText()).isEqualTo("week");
         });
 
-        verify(familyDataRepository, never()).replaceHistory(eq(1), eq(10), any());
-        verify(familyDataRepository, never()).replaceRequests(eq(1), any());
+        verify(historyRepository, never()).replaceHistory(eq(1), eq(10), any());
+        verify(purchaseRequestRepository, never()).replaceRequests(eq(1), any());
     }
 
     @Test
@@ -780,11 +783,11 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("children", List.of(Map.of("id", 10, "balance", 42)));
@@ -809,7 +812,7 @@ class FamilyServiceImplTest {
 
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
-        verify(familyDataRepository).upsertTask(argThat(command ->
+        verify(taskRepository).upsertTask(argThat(command ->
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.taskId() == 101L
@@ -822,7 +825,7 @@ class FamilyServiceImplTest {
                 && !command.active()
                 && command.deleted()
         ));
-        verify(familyDataRepository).upsertShopItem(argThat(command ->
+        verify(shopItemRepository).upsertShopItem(argThat(command ->
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.itemId() == 201L
@@ -843,11 +846,11 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Screen time after homework"));
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         assertThat(service.saveFamilyData("fam-1", 10, Map.of("rules", "Screen time after homework"), true))
             .isInstanceOf(OperationResult.Success.class);
@@ -861,11 +864,11 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("children", List.of(Map.of("id", 10, "balance", 10)));
@@ -873,7 +876,7 @@ class FamilyServiceImplTest {
 
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
-        verify(familyDataRepository, never()).replaceHistory(eq(1), eq(10), any());
+        verify(historyRepository, never()).replaceHistory(eq(1), eq(10), any());
     }
 
     @Test
@@ -882,11 +885,11 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
         when(childRepository.getChildren(1)).thenReturn(List.of(child));
-        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
-        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
-        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of());
-        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of());
+        when(taskRepository.getTasks(10)).thenReturn(List.of());
+        when(shopItemRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.getHistory(10, 50, 0)).thenReturn(List.of());
+        when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of());
+        when(friendRepository.getFriendChildIds(10)).thenReturn(List.of());
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("children", List.of(Map.of("id", 10, "balance", 10)));
@@ -894,7 +897,7 @@ class FamilyServiceImplTest {
 
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
-        verify(familyDataRepository, never()).replaceRequests(eq(1), any());
+        verify(purchaseRequestRepository, never()).replaceRequests(eq(1), any());
     }
 
     private static ChildEntity child(int id, int familyDbId, String name, int balance) {

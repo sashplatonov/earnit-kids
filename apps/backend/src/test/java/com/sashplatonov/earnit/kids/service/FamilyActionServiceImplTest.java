@@ -16,7 +16,6 @@ import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
@@ -58,7 +57,6 @@ class FamilyActionServiceImplTest {
     @Mock ShopItemRepository shopItemRepository;
     @Mock HistoryRepository historyRepository;
     @Mock PurchaseRequestRepository purchaseRequestRepository;
-    @Mock FamilyDataRepository familyDataRepository;
     @Mock FamilyService familyService;
 
     private FamilyActionServiceImpl service;
@@ -73,7 +71,6 @@ class FamilyActionServiceImplTest {
             shopItemRepository,
             historyRepository,
             purchaseRequestRepository,
-            familyDataRepository,
             familyService,
             TestConfigFactory.timeProvider(FIXED_NOW)
         );
@@ -551,7 +548,7 @@ class FamilyActionServiceImplTest {
         );
 
         assertThat(result).isEqualTo(payload);
-        verify(familyDataRepository).upsertTask(argThat(command ->
+        verify(taskRepository).upsertTask(argThat(command ->
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.taskId() == 1L
@@ -564,7 +561,7 @@ class FamilyActionServiceImplTest {
                 && command.active()
                 && !command.deleted()
         ));
-        verify(familyDataRepository).upsertTask(argThat(command ->
+        verify(taskRepository).upsertTask(argThat(command ->
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.taskId() == 2L
@@ -604,7 +601,7 @@ class FamilyActionServiceImplTest {
         );
 
         assertThat(result).isEqualTo(payload);
-        verify(familyDataRepository).upsertShopItem(argThat(command ->
+        verify(shopItemRepository).upsertShopItem(argThat(command ->
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.itemId() == 1L
@@ -673,7 +670,7 @@ class FamilyActionServiceImplTest {
                 assertThat(error.row()).isEqualTo(0);
                 assertThat(error.field()).isEqualTo("rows");
             });
-            verifyNoInteractions(familyDataRepository);
+            verifyNoInteractions(taskRepository, shopItemRepository, historyRepository, purchaseRequestRepository);
             return;
         }
 

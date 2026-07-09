@@ -20,9 +20,10 @@ import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.FriendRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -44,8 +45,9 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
-    private final FamilyDataRepository familyDataRepository;
     private final HistoryRepository historyRepository;
+    private final PurchaseRequestRepository purchaseRequestRepository;
+    private final FriendRepository friendRepository;
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
     private final ObjectMapper objectMapper;
@@ -277,7 +279,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
 
     private List<HistoryEntryDto> loadHistory(int familyDbId, int childId,
                                               Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
-        List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, 50, 0);
+        List<HistoryEntryEntity> rows = historyRepository.getHistory(childId, 50, 0);
         hydrateMissingHistoryEntries(familyDbId, childId, rows, taskMap, shopMap);
         return rows.stream()
             .map(historyEntry -> toHistoryDto(historyEntry, taskMap, shopMap))
@@ -289,7 +291,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
                                           boolean adminSession,
                                           Map<Long, TaskDto> taskMap,
                                           Map<Long, ShopItemDto> shopMap) {
-        List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, 50, 0);
+        List<PurchaseRequestEntity> rows = purchaseRequestRepository.getRequests(familyDbId, 50, 0);
         hydrateMissingRequests(familyDbId, rows, taskMap, shopMap);
         return rows.stream()
             .filter(request -> adminSession || Objects.equals(request.getChildId(), activeChildId))
@@ -302,20 +304,20 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
     }
 
     private List<FriendDto> loadFriends(int childId) {
-        var friendIds = familyDataRepository.getFriendChildIds(childId);
+        var friendIds = friendRepository.getFriendChildIds(childId);
         return childRepository.findByChildIds(friendIds).stream()
             .map(friend -> new FriendDto(friend.getId(), friend.getName(), friend.getBalance()))
             .toList();
     }
 
     private List<TaskDto> loadTasks(int childId, Map<Long, String> lastCompletedAtByTaskId) {
-        return familyDataRepository.getTasks(childId).stream()
+        return taskRepository.getTasks(childId).stream()
             .map(task -> toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId())))
             .toList();
     }
 
     private List<ShopItemDto> loadShopItems(int childId, Map<Long, String> lastPurchasedAtByItemId) {
-        return familyDataRepository.getShopItems(childId).stream()
+        return shopItemRepository.getShopItems(childId).stream()
             .map(shopItem -> toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId())))
             .toList();
     }

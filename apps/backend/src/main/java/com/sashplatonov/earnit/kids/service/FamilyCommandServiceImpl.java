@@ -7,9 +7,10 @@ import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
+import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,8 +35,9 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
 
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
-    private final FamilyDataRepository familyDataRepository;
     private final FamilyDashboardQueryService familyDashboardQueryService;
+    private final TaskRepository taskRepository;
+    private final ShopItemRepository shopItemRepository;
     private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
 
@@ -156,7 +158,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
             return;
         }
 
-        familyDataRepository.markAllTasksDeleted(selectedChildId);
+        taskRepository.markAllTasksDeleted(selectedChildId);
         for (Map<String, Object> task : asMapList(payload.get("tasks"))) {
             Long taskId = asLong(task.get("id"));
             String name = asString(task.get("name"));
@@ -164,7 +166,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
                 continue;
             }
 
-            familyDataRepository.upsertTask(new TaskUpsertCommand(
+            taskRepository.upsertTask(new TaskUpsertCommand(
                 familyDbId,
                 selectedChildId,
                 taskId,
@@ -185,7 +187,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
             return;
         }
 
-        familyDataRepository.markAllShopItemsDeleted(selectedChildId);
+        shopItemRepository.markAllShopItemsDeleted(selectedChildId);
         for (Map<String, Object> item : asMapList(payload.get("shop"))) {
             Long itemId = asLong(item.get("id"));
             String name = asString(item.get("name"));
@@ -193,7 +195,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
                 continue;
             }
 
-            familyDataRepository.upsertShopItem(new ShopItemUpsertCommand(
+            shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
                 familyDbId,
                 selectedChildId,
                 itemId,

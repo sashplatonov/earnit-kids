@@ -55,7 +55,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## 1. Улучшение структуры проекта
 
-### `P0` Разделить read-side family dashboard на отдельные сервисы
+### ARC-01. `P0` Разделить read-side family dashboard на отдельные сервисы
 
 - Архитектурное решение:
   - выделить из `FamilyServiceImpl` отдельные роли:
@@ -75,8 +75,9 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - read-path тесты в `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/FamilyServiceImplTest.java` либо остаются зелёными, либо переезжают в более узкие test classes.
   - `./mvnw verify` проходит без падения покрытия и Checkstyle.
 
-### `P0` Убрать god-repository `FamilyDataRepository`
+### ARC-02. `P0` Убрать god-repository `FamilyDataRepository`
 
+- Статус: выполнено. Runtime code переведён на узкие репозитории, `FamilyDataRepository` удалён.
 - Архитектурное решение:
   - оставить repository per aggregate/query purpose, а не один класс, который пишет и читает tasks, shop items, history, requests и friends.
   - `FamilyDataRepository` разрезать на узкие query/command repositories или полностью убрать после переноса методов в существующие `TaskRepository`, `ShopItemRepository`, `HistoryRepository`, `PurchaseRequestRepository`, `FriendRepository`.
@@ -92,7 +93,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - write-методы остаются под явными `@Transactional`.
   - smoke/regression тесты repository слоя проходят.
 
-### `P1` Разрезать крупные resource-классы по bounded API surfaces
+### API-03. `P1` Разрезать крупные resource-классы по bounded API surfaces
 
 - Архитектурное решение:
   - `FamilyResource` разделить на child-scoped/read/write endpoints с общей auth/scope проверкой через helper/service, а не через один длинный resource.
@@ -112,7 +113,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## 2. Оптимизация работы сервиса по скорости и RAM
 
-### `P0` Декомпозировать family snapshot на shell и section-scoped payloads
+### PERF-04. `P0` Декомпозировать family snapshot на shell и section-scoped payloads
 
 - Архитектурное решение:
   - backend должен поддерживать не один тяжёлый `FamilyDataResponse` для всех UI-сценариев, а отдельные read-model paths:
@@ -134,7 +135,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - pagination endpoints обслуживаются без materialization полного family snapshot.
   - build и resource/service regression tests проходят.
 
-### `P1` Убрать лишние hot-path allocations в metrics/logging фильтрах
+### PERF-05. `P1` Убрать лишние hot-path allocations в metrics/logging фильтрах
 
 - Архитектурное решение:
   - перестать создавать `new ObjectMapper()` на каждый response в `HttpRequestMetricsFilter`.
@@ -150,7 +151,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - отключение payload-bytes measurement возможно через config.
   - тесты фильтров и `./mvnw verify` проходят.
 
-### `P1` Включить короткоживущий cache только для стабильных read-heavy данных
+### PERF-06. `P1` Включить короткоживущий cache только для стабильных read-heavy данных
 
 - Архитектурное решение:
   - использовать уже подключенный `quarkus-cache` только для данных с понятной invalidation model:
@@ -171,7 +172,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## 3. Оптимизация работы с БД
 
-### `P0` Убрать family-wide full scans из runtime API
+### DB-07. `P0` Убрать family-wide full scans из runtime API
 
 - Архитектурное решение:
   - запретить использование методов вида `getAllHistoryForFamily()` и `getAllRequestsForFamily()` в runtime-потоках UI, если результат потенциально неограничен.
@@ -187,7 +188,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - read queries используют `range`, `page`, `count`, aggregate queries или explicit limits.
   - H2 test baseline и PostgreSQL-oriented verify остаются зелёными.
 
-### `P1` Перевести тяжёлые write paths на более явные command/update стратегии
+### DB-08. `P1` Перевести тяжёлые write paths на более явные command/update стратегии
 
 - Архитектурное решение:
   - пересмотреть операции `replaceHistory()` и `replaceRequests()`, где сейчас возможны delete-then-insert сценарии.
@@ -202,7 +203,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - сервисные write-path тесты проходят без регрессии observable behavior.
   - транзакционные границы остаются явными.
 
-### `P1` Сделать индексный аудит под реальные query paths и закрепить его миграциями
+### DB-09. `P1` Сделать индексный аудит под реальные query paths и закрепить его миграциями
 
 - Архитектурное решение:
   - после уже существующего `V19__add_composite_indexes.sql` провести второй проход по query paths:
@@ -226,7 +227,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## 4. Улучшение observability
 
-### `P0` Довести trace propagation до стандарта `traceparent` + MDC correlation
+### OBS-10. `P0` Довести trace propagation до стандарта `traceparent` + MDC correlation
 
 - Архитектурное решение:
   - `TraceFilter` должен уметь извлекать trace id из `traceparent`, а `X-Trace-Id` оставить как backward-compatible fallback.
@@ -243,7 +244,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - при отсутствии `traceparent` генерируется новый trace id.
   - в error flow trace id доступен и в log, и в response/client-report path.
 
-### `P1` Заменить ad-hoc observability payloads на typed DTOs и явные operational contracts
+### OBS-11. `P1` Заменить ad-hoc observability payloads на typed DTOs и явные operational contracts
 
 - Архитектурное решение:
   - `Map<String, Object>` в `SystemDashboardService` и `SuperAdminResource` заменить на typed response models.
@@ -259,7 +260,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - resource tests проверяют shape контрактов.
   - operational API остается только под `super_admin`.
 
-### `P1` Добавить slow-request и slow-query operational visibility
+### OBS-12. `P1` Добавить slow-request и slow-query operational visibility
 
 - Архитектурное решение:
   - ввести пороговые warn/error логи для медленных endpoint-ов и тяжелых DB-paths.
@@ -277,7 +278,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## 5. Метрики для New Relic dashboard
 
-### `P0` Перейти от ad-hoc registry к стандартному Micrometer-based metrics pipeline
+### NR-13. `P0` Перейти от ad-hoc registry к стандартному Micrometer-based metrics pipeline
 
 - Архитектурное решение:
   - текущий JVM New Relic agent в `apps/backend/Dockerfile.jvm` оставить для APM/log forwarding.
@@ -300,7 +301,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - New Relic получает метрики через OTLP-configured export path.
   - локальный `docker compose --env-file .env.example config` остаётся валидным.
 
-### `P1` Добавить бизнес-метрики для ключевых backend use cases
+### NR-14. `P1` Добавить бизнес-метрики для ключевых backend use cases
 
 - Архитектурное решение:
   - кроме инфраструктурных JVM/HTTP метрик, добавить counters/timers для доменных сценариев:
@@ -325,7 +326,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
     - snapshot load latency;
     - operational success/failure count for critical admin flows.
 
-### `P1` Завести deployment contract для New Relic metrics отдельно от Browser agent
+### NR-15. `P1` Завести deployment contract для New Relic metrics отдельно от Browser agent
 
 - Архитектурное решение:
   - не смешивать browser config (`VITE_NEW_RELIC_*`) и backend telemetry env vars.
@@ -345,12 +346,23 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## Рекомендуемый порядок выполнения
 
-1. `P0` структура: разрезать `FamilyServiceImpl` и `FamilyDataRepository`.
-2. `P0` runtime path: декомпозировать family snapshot.
-3. `P0` DB/runtime safety: убрать family-wide full scans.
-4. `P0` observability: `traceparent` + MDC correlation.
-5. `P0` metrics: Micrometer-based export path для New Relic.
-6. Затем выполнять `P1` задачи пакетами: resources, cache, typed operational DTOs, business metrics, env/docs hardening.
+Оптимальная очередь для ИИ-агента:
+
+1. `ARC-01` Разрезать `FamilyServiceImpl` на отдельные сервисы для read-side family dashboard.
+2. `ARC-02` Убрать god-repository `FamilyDataRepository`.
+3. `API-03` Разрезать крупные `resource`-классы по bounded API surfaces.
+4. `PERF-04` Декомпозировать family snapshot на shell и section-scoped payloads.
+5. `PERF-05` Убрать лишние hot-path allocations в metrics/logging фильтрах.
+6. `PERF-06` Включить короткоживущий cache только для стабильных read-heavy данных.
+7. `DB-07` Убрать family-wide full scans из runtime API.
+8. `DB-08` Перевести тяжёлые write paths на более явные command/update стратегии.
+9. `DB-09` Сделать индексный аудит под реальные query paths и закрепить его миграциями.
+10. `OBS-10` Довести trace propagation до стандарта `traceparent` + MDC correlation.
+11. `OBS-11` Заменить ad-hoc observability payloads на typed DTOs и явные operational contracts.
+12. `OBS-12` Добавить slow-request и slow-query operational visibility.
+13. `NR-13` Перейти от ad-hoc registry к стандартному Micrometer-based metrics pipeline.
+14. `NR-14` Добавить бизнес-метрики для ключевых backend use cases.
+15. `NR-15` Завести deployment contract для New Relic metrics отдельно от Browser agent.
 
 ## Definition of Done для всего backlog
 

@@ -2,10 +2,14 @@ package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
+import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,10 +17,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEntity, Long> {
 
     @PersistenceContext
     EntityManager entityManager;
+    private final SlowOperationDiagnostics slowOperationDiagnostics;
 
     // EXPLAIN: Latest createdAt per relatedId via SQL aggregation instead of loading rows into Java memory.
     public Map<Long, Instant> loadLatestTimestampsByRelatedId(int childId, HistoryEntryType type) {
@@ -33,6 +39,54 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
                 row -> ((Number) row[0]).longValue(),
                 row -> (Instant) row[1]
             ));
+    }
+
+    public List<HistoryEntryEntity> getHistory(int childId, int limit, int offset) {
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getHistory",
+            () -> find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId)
+                .range(offset, offset + limit - 1)
+                .list(),
+            "childId",
+            String.valueOf(childId),
+            "limit",
+            String.valueOf(limit),
+            "offset",
+            String.valueOf(offset)
+        );
+    }
+
+    public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getHistoryForFamily",
+            () -> find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
+                .range(offset, offset + limit - 1)
+                .list(),
+            "familyDbId",
+            String.valueOf(familyDbId),
+            "limit",
+            String.valueOf(limit),
+            "offset",
+            String.valueOf(offset)
+        );
+    }
+
+    public List<HistoryEntryEntity> getAllHistoryForFamily(int familyDbId) {
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getAllHistoryForFamily",
+            () -> list("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
+    }
+
+    public int getHistoryCount(int childId) {
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getHistoryCount",
+            () -> (int) count("childId = ?1", childId),
+            "childId",
+            String.valueOf(childId)
+        );
     }
 
     // EXPLAIN: Analytics aggregation — earned/spent in a time window via SQL SUM. Returns [earn, spend].
@@ -166,5 +220,38 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
             startInclusive,
             endExclusive
         );
+    }
+
+    @Transactional
+    public boolean addHistory(int familyDbId, int childId, long externalId, HistoryEntryType type,
+                              int amount, String description, int moneyAmount,
+                              Long relatedId, String groupName, String comment) {
+        persist(HistoryEntryEntity.builder()
+            .familyId(familyDbId)
+            .childId(childId)
+            .externalId(externalId)
+            .type(type)
+            .amount(amount)
+            .description(description)
+            .moneyAmount(moneyAmount)
+            .relatedId(relatedId)
+            .groupName(groupName)
+            .comment(comment)
+            .build());
+        return true;
+    }
+
+    @Transactional
+    public void replaceHistory(int familyDbId, int childId, List<HistoryEntryEntity> entries) {
+        delete("familyId = ?1 AND childId = ?2", familyDbId, childId);
+        entries.forEach(this::persist);
+    }
+
+    @Transactional
+    public void upsertHistoryEntry(HistoryEntryEntity entry) {
+        if (entry.getExternalId() != null) {
+            delete("familyId = ?1 AND externalId = ?2", entry.getFamilyId(), entry.getExternalId());
+        }
+        persist(entry);
     }
 }

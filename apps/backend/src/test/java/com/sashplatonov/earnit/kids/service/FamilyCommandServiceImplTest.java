@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
-import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
+import com.sashplatonov.earnit.kids.repository.ShopItemUpsertCommand;
+import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
+import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,9 +39,10 @@ class FamilyCommandServiceImplTest {
 
     @Mock FamilyRepository familyRepository;
     @Mock ChildRepository childRepository;
-    @Mock FamilyDataRepository familyDataRepository;
     @Mock FamilyDashboardQueryService familyDashboardQueryService;
     @Mock AnalyticsService analyticsService;
+    @Mock TaskRepository taskRepository;
+    @Mock ShopItemRepository shopItemRepository;
 
     private FamilyCommandServiceImpl service;
 
@@ -49,8 +51,9 @@ class FamilyCommandServiceImplTest {
         service = new FamilyCommandServiceImpl(
             familyRepository,
             childRepository,
-            familyDataRepository,
             familyDashboardQueryService,
+            taskRepository,
+            shopItemRepository,
             analyticsService,
             new ObjectMapper()
         );
@@ -108,18 +111,18 @@ class FamilyCommandServiceImplTest {
         verify(familyRepository).updateRules("fam-1", "Screen time after homework");
         verify(childRepository).updateBalance(10, 42);
         verify(childRepository).updateBalance(11, 9000);
-        verify(familyDataRepository).markAllTasksDeleted(10);
-        verify(familyDataRepository).markAllShopItemsDeleted(10);
+        verify(taskRepository).markAllTasksDeleted(10);
+        verify(shopItemRepository).markAllShopItemsDeleted(10);
         verify(familyDashboardQueryService).loadFamilyData("fam-1", 10, true);
         verify(analyticsService).invalidateCache("fam-1");
 
         ArgumentCaptor<TaskUpsertCommand> taskCommandCaptor = ArgumentCaptor.forClass(TaskUpsertCommand.class);
-        verify(familyDataRepository).upsertTask(taskCommandCaptor.capture());
+        verify(taskRepository).upsertTask(taskCommandCaptor.capture());
         assertThat(taskCommandCaptor.getValue().name()).isEqualTo("Read");
 
         ArgumentCaptor<ShopItemUpsertCommand> shopCommandCaptor =
             ArgumentCaptor.forClass(ShopItemUpsertCommand.class);
-        verify(familyDataRepository).upsertShopItem(shopCommandCaptor.capture());
+        verify(shopItemRepository).upsertShopItem(shopCommandCaptor.capture());
         assertThat(shopCommandCaptor.getValue().name()).isEqualTo("Toy");
     }
 
