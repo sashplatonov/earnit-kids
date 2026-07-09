@@ -57,6 +57,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### ARC-01. `P0` Разделить read-side family dashboard на отдельные сервисы
 
+- Статус: выполнено. `FamilyServiceImpl` больше не содержит history/requests read-model logic; она вынесена в `FamilyHistoryQueryService`.
 - Архитектурное решение:
   - выделить из `FamilyServiceImpl` отдельные роли:
     - `FamilySnapshotService` для orchestration snapshot;
