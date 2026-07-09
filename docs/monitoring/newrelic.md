@@ -18,6 +18,7 @@ This repo uses one New Relic path split by runtime:
 - browser logs and JS errors sent from the SvelteKit client when browser config is present
 - backend log forwarding disabled by default until volume review is complete
 - backend observability settings are exposed via typed config mappings under `app.performance.*` and `app.observability.*`
+- slow-request and slow-query diagnostics are threshold-driven, not per-request noise
 - readiness probes cover enabled New Relic metrics config before traffic is accepted
 
 [↑ Back to top](#top)
@@ -57,6 +58,8 @@ Backend config mappings:
 
 - `app.performance.http-metrics.payload-estimation-enabled`
 - `app.performance.http-metrics.payload-estimation-max-collection-size`
+- `app.performance.http-metrics.slow-request-threshold-ms`
+- `app.performance.http-metrics.slow-query-threshold-ms`
 - `app.observability.new-relic.agent-enabled`
 - `app.observability.new-relic.metrics.enabled`
 - `app.observability.new-relic.metrics.otlp-metrics-endpoint`
@@ -77,6 +80,9 @@ Notes:
 - Browser logs arrive in the New Relic `Logs` UI and can be filtered by browser app name plus the custom `event` attribute.
 - Metrics export uses the Quarkus Micrometer + OpenTelemetry bridge. When `app.observability.new-relic.metrics.enabled=true`, backend JVM and HTTP server meters are exported to the New Relic OTLP endpoint with the `api-key` header sourced from `app.observability.new-relic.metrics.license-key`.
 - New Relic recommends OTLP/HTTP protobuf for metric ingest.
+- slow-request diagnostics emit only when a request crosses `app.performance.http-metrics.slow-request-threshold-ms` or fails with 5xx status
+- slow-query diagnostics emit only when a DB-backed operation crosses `app.performance.http-metrics.slow-query-threshold-ms` or throws an exception
+- diagnostic log lines include trace and scope context from the active request MDC, so the slow path can be tied back to `traceId`, `familyId`, and `childId`
 
 [↑ Back to top](#top)
 

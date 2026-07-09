@@ -141,11 +141,21 @@ public final class TestConfigFactory {
                     }
 
                     @Override
-                    public int payloadEstimationMaxCollectionSize() {
-                        return 256;
+                            public int payloadEstimationMaxCollectionSize() {
+                                return 256;
+                            }
+
+                            @Override
+                            public int slowRequestThresholdMs() {
+                                return 750;
+                            }
+
+                            @Override
+                            public int slowQueryThresholdMs() {
+                                return 250;
+                            }
+                        };
                     }
-                };
-            }
 
             @Override
             public Observability observability() {

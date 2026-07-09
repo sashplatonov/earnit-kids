@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.repository;
 import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
+import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,13 +19,24 @@ import java.util.Optional;
 public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integer> {
 
     private final SecureTokenGenerator secureTokenGenerator;
+    private final SlowOperationDiagnostics slowOperationDiagnostics;
 
     public List<ChildEntity> getChildren(int familyDbId) {
-        return list("familyDbId = ?1 ORDER BY id ASC", familyDbId);
+        return recordQuery(
+            "child.getChildren",
+            () -> list("familyDbId = ?1 ORDER BY id ASC", familyDbId),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
     }
 
     public Optional<ChildEntity> findByToken(String token) {
-        return find("token = ?1", token).firstResultOptional();
+        return recordQuery(
+            "child.findByToken",
+            () -> find("token = ?1", token).firstResultOptional(),
+            "token",
+            token
+        );
     }
 
     @Transactional
@@ -132,24 +144,53 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
     }
 
     public boolean isNicknameTaken(int familyDbId, String name, Integer excludeChildId) {
-        if (excludeChildId != null) {
-            return count("familyDbId = ?1 AND lower(name) = lower(?2) AND id != ?3",
-                familyDbId, name, excludeChildId) > 0;
-        }
-        return count("familyDbId = ?1 AND lower(name) = lower(?2)", familyDbId, name) > 0;
+        return recordQuery(
+            "child.isNicknameTaken",
+            () -> {
+                if (excludeChildId != null) {
+                    return count("familyDbId = ?1 AND lower(name) = lower(?2) AND id != ?3",
+                        familyDbId, name, excludeChildId) > 0;
+                }
+                return count("familyDbId = ?1 AND lower(name) = lower(?2)", familyDbId, name) > 0;
+            },
+            "familyDbId",
+            String.valueOf(familyDbId),
+            "excludeChildId",
+            String.valueOf(excludeChildId),
+            "name",
+            name
+        );
     }
 
     public List<ChildEntity> searchByNickname(String nameQuery, int excludeChildId) {
-        return find("lower(name) LIKE lower(?1) AND id != ?2",
-                "%" + nameQuery + "%", excludeChildId)
-            .page(0, 20)
-            .list();
+        return recordQuery(
+            "child.searchByNickname",
+            () -> find("lower(name) LIKE lower(?1) AND id != ?2",
+                    "%" + nameQuery + "%", excludeChildId)
+                .page(0, 20)
+                .list(),
+            "excludeChildId",
+            String.valueOf(excludeChildId),
+            "nameQuery",
+            nameQuery
+        );
     }
 
     public List<ChildEntity> findByChildIds(List<Integer> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return List.of();
-        }
-        return find("id IN ?1", ids).list();
+        return recordQuery(
+            "child.findByChildIds",
+            () -> {
+                if (ids == null || ids.isEmpty()) {
+                    return List.of();
+                }
+                return find("id IN ?1", ids).list();
+            },
+            "idsSize",
+            String.valueOf(ids == null ? 0 : ids.size())
+        );
+    }
+
+    private <T> T recordQuery(String operation, java.util.function.Supplier<T> action, String... details) {
+        return slowOperationDiagnostics.recordQuery(operation, action, details);
     }
 }

@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,13 +17,24 @@ import java.util.Optional;
 public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Integer> {
 
     private final TimeProvider timeProvider;
+    private final SlowOperationDiagnostics slowOperationDiagnostics;
 
     public Optional<FamilyEntity> findById(String familyId) {
-        return find("familyId = ?1", familyId).firstResultOptional();
+        return recordQuery(
+            "family.findById",
+            () -> find("familyId = ?1", familyId).firstResultOptional(),
+            "familyId",
+            familyId
+        );
     }
 
     public Optional<FamilyEntity> findByEmail(String email) {
-        return find("email = ?1", email).firstResultOptional();
+        return recordQuery(
+            "family.findByEmail",
+            () -> find("email = ?1", email).firstResultOptional(),
+            "email",
+            email
+        );
     }
 
     @Transactional
@@ -43,21 +55,36 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     public Optional<Integer> getDbId(String familyId) {
-        return find("familyId = ?1", familyId)
-            .firstResultOptional()
-            .map(FamilyEntity::getId);
+        return recordQuery(
+            "family.getDbId",
+            () -> find("familyId = ?1", familyId)
+                .firstResultOptional()
+                .map(FamilyEntity::getId),
+            "familyId",
+            familyId
+        );
     }
 
     public Optional<Integer> getLastSelectedChildId(String familyId) {
-        return find("familyId = ?1", familyId)
-            .firstResultOptional()
-            .map(FamilyEntity::getLastSelectedChildId);
+        return recordQuery(
+            "family.getLastSelectedChildId",
+            () -> find("familyId = ?1", familyId)
+                .firstResultOptional()
+                .map(FamilyEntity::getLastSelectedChildId),
+            "familyId",
+            familyId
+        );
     }
 
     public Optional<String> getRules(String familyId) {
-        return find("familyId = ?1", familyId)
-            .firstResultOptional()
-            .map(FamilyEntity::getRules);
+        return recordQuery(
+            "family.getRules",
+            () -> find("familyId = ?1", familyId)
+                .firstResultOptional()
+                .map(FamilyEntity::getRules),
+            "familyId",
+            familyId
+        );
     }
 
     @Transactional
@@ -111,7 +138,12 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     public Optional<FamilyEntity> findByVerificationToken(String token) {
-        return find("verificationToken = ?1", token).firstResultOptional();
+        return recordQuery(
+            "family.findByVerificationToken",
+            () -> find("verificationToken = ?1", token).firstResultOptional(),
+            "token",
+            token
+        );
     }
 
     @Transactional
@@ -125,8 +157,13 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     public Optional<FamilyEntity> findByResetToken(String token) {
-        return find("resetToken = ?1 AND resetTokenExpiresAt > ?2", token, timeProvider.now())
-            .firstResultOptional();
+        return recordQuery(
+            "family.findByResetToken",
+            () -> find("resetToken = ?1 AND resetTokenExpiresAt > ?2", token, timeProvider.now())
+                .firstResultOptional(),
+            "token",
+            token
+        );
     }
 
     @Transactional
@@ -140,7 +177,12 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     public Optional<FamilyEntity> findByDbId(int dbId) {
-        return findByIdOptional(dbId);
+        return recordQuery(
+            "family.findByDbId",
+            () -> findByIdOptional(dbId),
+            "dbId",
+            String.valueOf(dbId)
+        );
     }
 
     @Transactional
@@ -154,6 +196,15 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     private Optional<FamilyEntity> findByFamilyId(String familyId) {
-        return find("familyId = ?1", familyId).firstResultOptional();
+        return recordQuery(
+            "family.findByFamilyId",
+            () -> find("familyId = ?1", familyId).firstResultOptional(),
+            "familyId",
+            familyId
+        );
+    }
+
+    private <T> T recordQuery(String operation, java.util.function.Supplier<T> action, String... details) {
+        return slowOperationDiagnostics.recordQuery(operation, action, details);
     }
 }

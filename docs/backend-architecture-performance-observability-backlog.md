@@ -80,7 +80,7 @@
 | BAP-09 | P1 | БД | Добавить следующие измеренные composite indexes и проверки query-plan |
 | BAP-10 | P0 | Наблюдаемость | Обновить propagation trace и MDC scope fields |
 | BAP-11 | P1 | Наблюдаемость | Добавить лёгкие readiness checks для критичных runtime dependency ✅ |
-| BAP-12 | P1 | Наблюдаемость | Добавить slow-request и slow-query диагностику без лишнего шума |
+| BAP-12 | P1 | Наблюдаемость | Добавить slow-request и slow-query диагностику без лишнего шума ✅ |
 | BAP-13 | P0 | New Relic | Добавить реальный metrics export path для New Relic dashboards |
 | BAP-14 | P0 | New Relic | Инструментировать ключевые backend business и platform KPI ✅ |
 | BAP-15 | P1 | New Relic | Описать widgets dashboard, NRQL queries и thresholds оповещений |
@@ -394,15 +394,21 @@ Agroal уже покрывает подключение к БД. Дополни�
 - health checks не обращаются к тяжёлым сервисам или внешним сетям на каждый probe;
 - тесты доказывают обе ветки: healthy и degraded readiness.
 
-### BAP-12 - Добавить slow-request и slow-query диагностику без лишнего шума
+### BAP-12 - Добавить slow-request и slow-query диагностику без лишнего шума ✅
 
 Приоритет: P1
 
 Основные файлы:
 
 - `apps/backend/src/main/resources/application.properties`
-- новый `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/SlowRequestLoggingFilter.java` либо переиспользование существующих фильтров
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SlowOperationDiagnostics.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/HttpRequestMetricsRegistry.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/FamilyDataRepository.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/FamilyRepository.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/ChildRepository.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/config/InfrastructureFiltersTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/SlowOperationDiagnosticsTest.java`
 - `docs/monitoring/newrelic.md`
 
 Архитектурное решение:
@@ -525,7 +531,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 
 1. `BAP-03` ✅
 2. `BAP-11` ✅
-3. `BAP-12`
+3. `BAP-12` ✅
 4. `BAP-02`
 5. `BAP-06`
 6. `BAP-08`

@@ -8,6 +8,7 @@ import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
+import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -24,13 +25,24 @@ public class FamilyDataRepository {
     private final HistoryRepository historyRepo;
     private final PurchaseRequestRepository requestRepo;
     private final FriendRepository friendRepo;
+    private final SlowOperationDiagnostics slowOperationDiagnostics;
 
     public List<TaskEntity> getTasks(int childId) {
-        return taskRepo.list("childId = ?1 AND deleted = false ORDER BY id ASC", childId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getTasks",
+            () -> taskRepo.list("childId = ?1 AND deleted = false ORDER BY id ASC", childId),
+            "childId",
+            String.valueOf(childId)
+        );
     }
 
     public List<TaskEntity> getTasksForFamily(int familyDbId) {
-        return taskRepo.list("familyId = ?1 AND deleted = false ORDER BY id ASC", familyDbId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getTasksForFamily",
+            () -> taskRepo.list("familyId = ?1 AND deleted = false ORDER BY id ASC", familyDbId),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
     }
 
     @Transactional
@@ -82,11 +94,21 @@ public class FamilyDataRepository {
     }
 
     public List<ShopItemEntity> getShopItems(int childId) {
-        return shopRepo.list("childId = ?1 AND deleted = false ORDER BY id ASC", childId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getShopItems",
+            () -> shopRepo.list("childId = ?1 AND deleted = false ORDER BY id ASC", childId),
+            "childId",
+            String.valueOf(childId)
+        );
     }
 
     public List<ShopItemEntity> getShopItemsForFamily(int familyDbId) {
-        return shopRepo.list("familyId = ?1 AND deleted = false ORDER BY id ASC", familyDbId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getShopItemsForFamily",
+            () -> shopRepo.list("familyId = ?1 AND deleted = false ORDER BY id ASC", familyDbId),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
     }
 
     @Transactional
@@ -138,23 +160,51 @@ public class FamilyDataRepository {
     }
 
     public List<HistoryEntryEntity> getHistory(int childId, int limit, int offset) {
-        return historyRepo.find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId)
-            .range(offset, offset + limit - 1)
-            .list();
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getHistory",
+            () -> historyRepo.find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId)
+                .range(offset, offset + limit - 1)
+                .list(),
+            "childId",
+            String.valueOf(childId),
+            "limit",
+            String.valueOf(limit),
+            "offset",
+            String.valueOf(offset)
+        );
     }
 
     public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
-        return historyRepo.find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
-            .range(offset, offset + limit - 1)
-            .list();
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getHistoryForFamily",
+            () -> historyRepo.find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
+                .range(offset, offset + limit - 1)
+                .list(),
+            "familyDbId",
+            String.valueOf(familyDbId),
+            "limit",
+            String.valueOf(limit),
+            "offset",
+            String.valueOf(offset)
+        );
     }
 
     public List<HistoryEntryEntity> getAllHistoryForFamily(int familyDbId) {
-        return historyRepo.list("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getAllHistoryForFamily",
+            () -> historyRepo.list("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
     }
 
     public int getHistoryCount(int childId) {
-        return (int) historyRepo.count("childId = ?1", childId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getHistoryCount",
+            () -> (int) historyRepo.count("childId = ?1", childId),
+            "childId",
+            String.valueOf(childId)
+        );
     }
 
     @Transactional
@@ -191,17 +241,36 @@ public class FamilyDataRepository {
     }
 
     public List<PurchaseRequestEntity> getRequests(int familyDbId, int limit, int offset) {
-        return requestRepo.find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
-            .range(offset, offset + limit - 1)
-            .list();
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getRequests",
+            () -> requestRepo.find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
+                .range(offset, offset + limit - 1)
+                .list(),
+            "familyDbId",
+            String.valueOf(familyDbId),
+            "limit",
+            String.valueOf(limit),
+            "offset",
+            String.valueOf(offset)
+        );
     }
 
     public List<PurchaseRequestEntity> getAllRequestsForFamily(int familyDbId) {
-        return requestRepo.list("familyId = ?1", familyDbId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getAllRequestsForFamily",
+            () -> requestRepo.list("familyId = ?1", familyDbId),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
     }
 
     public int getRequestsCount(int familyDbId) {
-        return (int) requestRepo.count("familyId = ?1", familyDbId);
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getRequestsCount",
+            () -> (int) requestRepo.count("familyId = ?1", familyDbId),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
     }
 
     @Transactional
@@ -239,10 +308,15 @@ public class FamilyDataRepository {
     }
 
     public List<Integer> getFriendChildIds(int childId) {
-        return friendRepo.find("childId = ?1", childId)
-            .stream()
-            .map(FriendEntity::getFriendChildId)
-            .toList();
+        return slowOperationDiagnostics.recordQuery(
+            "family-data.getFriendChildIds",
+            () -> friendRepo.find("childId = ?1", childId)
+                .stream()
+                .map(FriendEntity::getFriendChildId)
+                .toList(),
+            "childId",
+            String.valueOf(childId)
+        );
     }
 
     @Transactional

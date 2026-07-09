@@ -1,7 +1,8 @@
 package com.sashplatonov.earnit.kids.config;
 
-import com.sashplatonov.earnit.kids.service.HttpRequestMetricsRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.service.HttpRequestMetricsRegistry;
+import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -50,7 +51,14 @@ class InfrastructureFiltersTest {
     void httpRequestMetricsFilter_storesNormalizedRequestPath() {
         HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
         ObjectMapper objectMapper = mock(ObjectMapper.class);
-        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 256);
+        SlowOperationDiagnostics slowOperationDiagnostics = mock(SlowOperationDiagnostics.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(
+            metricsRegistry,
+            objectMapper,
+            slowOperationDiagnostics,
+            true,
+            256
+        );
         ContainerRequestContext request = mock(ContainerRequestContext.class);
         UriInfo uriInfo = mock(UriInfo.class);
         when(request.getUriInfo()).thenReturn(uriInfo);
@@ -66,7 +74,14 @@ class InfrastructureFiltersTest {
     void httpRequestMetricsFilter_fallsBackForMissingStartAndBlankPath() throws Exception {
         HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
         ObjectMapper objectMapper = mock(ObjectMapper.class);
-        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 256);
+        SlowOperationDiagnostics slowOperationDiagnostics = mock(SlowOperationDiagnostics.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(
+            metricsRegistry,
+            objectMapper,
+            slowOperationDiagnostics,
+            true,
+            256
+        );
         ContainerRequestContext request = mock(ContainerRequestContext.class);
         ContainerResponseContext response = mock(ContainerResponseContext.class);
         UriInfo uriInfo = mock(UriInfo.class);
@@ -92,6 +107,7 @@ class InfrastructureFiltersTest {
             longThat(durationMs -> durationMs >= 0L),
             eq(-1L)
         );
+        verify(slowOperationDiagnostics).recordRequest(eq("POST"), eq("/"), eq(503), longThat(durationMs -> durationMs >= 0L));
         verify(objectMapper, never()).writeValueAsBytes(any());
     }
 
@@ -99,7 +115,14 @@ class InfrastructureFiltersTest {
     void httpRequestMetricsFilter_usesContentLengthWithoutSerializingEntity() throws Exception {
         HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
         ObjectMapper objectMapper = mock(ObjectMapper.class);
-        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 256);
+        SlowOperationDiagnostics slowOperationDiagnostics = mock(SlowOperationDiagnostics.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(
+            metricsRegistry,
+            objectMapper,
+            slowOperationDiagnostics,
+            true,
+            256
+        );
         ContainerRequestContext request = mock(ContainerRequestContext.class);
         ContainerResponseContext response = mock(ContainerResponseContext.class);
         UriInfo uriInfo = mock(UriInfo.class);
@@ -125,6 +148,7 @@ class InfrastructureFiltersTest {
             longThat(durationMs -> durationMs >= 0L),
             eq(42L)
         );
+        verify(slowOperationDiagnostics).recordRequest(eq("GET"), eq("/api/data"), eq(200), longThat(durationMs -> durationMs >= 0L));
         verify(objectMapper, never()).writeValueAsBytes(any());
     }
 
@@ -132,7 +156,14 @@ class InfrastructureFiltersTest {
     void httpRequestMetricsFilter_skipsLargeCollectionsWithoutSerializingEntity() throws Exception {
         HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
         ObjectMapper objectMapper = mock(ObjectMapper.class);
-        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 4);
+        SlowOperationDiagnostics slowOperationDiagnostics = mock(SlowOperationDiagnostics.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(
+            metricsRegistry,
+            objectMapper,
+            slowOperationDiagnostics,
+            true,
+            4
+        );
         ContainerRequestContext request = mock(ContainerRequestContext.class);
         ContainerResponseContext response = mock(ContainerResponseContext.class);
         UriInfo uriInfo = mock(UriInfo.class);
@@ -157,6 +188,7 @@ class InfrastructureFiltersTest {
             longThat(durationMs -> durationMs >= 0L),
             eq(-1L)
         );
+        verify(slowOperationDiagnostics).recordRequest(eq("GET"), eq("/api/data"), eq(200), longThat(durationMs -> durationMs >= 0L));
         verify(objectMapper, never()).writeValueAsBytes(any());
     }
 

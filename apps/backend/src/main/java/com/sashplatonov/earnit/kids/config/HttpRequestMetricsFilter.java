@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.service.HttpRequestMetricsRegistry;
+import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
@@ -31,6 +32,7 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
     private static final String REQUEST_PATH = "metrics.path";
     private final HttpRequestMetricsRegistry metricsRegistry;
     private final ObjectMapper objectMapper;
+    private final SlowOperationDiagnostics slowOperationDiagnostics;
     private final boolean payloadEstimationEnabled;
     private final int maxCollectionSize;
 
@@ -38,6 +40,7 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
     public HttpRequestMetricsFilter(
         HttpRequestMetricsRegistry metricsRegistry,
         ObjectMapper objectMapper,
+        SlowOperationDiagnostics slowOperationDiagnostics,
         @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-enabled", defaultValue = "true")
         boolean payloadEstimationEnabled,
         @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-max-collection-size", defaultValue = "256")
@@ -45,6 +48,7 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
     ) {
         this.metricsRegistry = metricsRegistry;
         this.objectMapper = objectMapper;
+        this.slowOperationDiagnostics = slowOperationDiagnostics;
         this.payloadEstimationEnabled = payloadEstimationEnabled;
         this.maxCollectionSize = maxCollectionSize;
     }
@@ -72,6 +76,13 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
             responseContext.getStatus(),
             durationMs,
             payloadBytes
+        );
+
+        slowOperationDiagnostics.recordRequest(
+            requestContext.getMethod(),
+            path,
+            responseContext.getStatus(),
+            durationMs
         );
     }
 

@@ -74,6 +74,12 @@ public interface AppConfig {
 
             @WithDefault("256")
             int payloadEstimationMaxCollectionSize();
+
+            @WithDefault("750")
+            int slowRequestThresholdMs();
+
+            @WithDefault("250")
+            int slowQueryThresholdMs();
         }
     }
 
