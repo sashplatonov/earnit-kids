@@ -169,7 +169,7 @@ describe('normalizeRequest', () => {
 describe('buildInitialState', () => {
     it('preserves family rules from the backend payload', () => {
         const state = buildInitialState(
-            { isAdmin: true, balance: 12, rules: 'Finish homework first', permission: 'family_admin' },
+            { isAdmin: true, activeChildId: 7, balance: 12, rules: 'Finish homework first', permission: 'family_admin' },
             { tasks: [], products: [] }
         );
 
@@ -177,6 +177,7 @@ describe('buildInitialState', () => {
         expect(state.balance).toBe(12);
         expect(state.isAdmin).toBe(true);
         expect(state.permission).toBe('family_admin');
+        expect(state.currentChildId).toBe(7);
     });
 });
 

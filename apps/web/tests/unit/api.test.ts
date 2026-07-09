@@ -29,6 +29,7 @@ import {
     loadAnalyticsData,
     loadBaseData,
     loadDataFromServer,
+    loadDataDetailsFromServer,
     loadParentMemberships,
     logout,
     registerPushTokenOnServer,
@@ -214,6 +215,19 @@ describe('fetchWithCsrf', () => {
 
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
         expect(url).toBe('/api/parents');
+        expect(init.method ?? 'GET').toBe('GET');
+    });
+
+    it('loads family detail snapshots from the dedicated endpoint', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ history: [{ id: 1 }], requests: [{ id: 2 }], friends: [{ id: 3 }] }));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(loadDataDetailsFromServer(15)).resolves.toEqual({ history: [{ id: 1 }], requests: [{ id: 2 }], friends: [{ id: 3 }] });
+
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/data/details?childId=15');
         expect(init.method ?? 'GET').toBe('GET');
     });
 

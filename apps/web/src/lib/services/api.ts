@@ -307,6 +307,17 @@ export async function loadDataFromServer(childId?: string | number | null) {
     }
 }
 
+export async function loadDataDetailsFromServer(childId?: string | number | null) {
+    const q = childId != null ? `?childId=${encodeURIComponent(childId)}` : '';
+    try {
+        const res = await fetchWithCsrf(`/api/data/details${q}`);
+        return res.ok ? await parseJsonSafe(res) : null;
+    } catch (err) {
+        logClientError('api.load_data_details_failed', 'Failed to load detail data from server', { error: err, childId });
+        return null;
+    }
+}
+
 export async function loadBaseData() {
     try {
         const res = await fetchWithCsrf('/api/base-data');

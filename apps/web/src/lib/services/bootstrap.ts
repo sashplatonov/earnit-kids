@@ -6,7 +6,7 @@ import { get } from 'svelte/store';
 import { appStore } from '$lib/stores/app';
 import type { AppState } from '$lib/stores/app';
 import { showToast } from '$lib/stores/toasts';
-import { loadDataFromServer, loadBaseData } from './api';
+import { loadDataDetailsFromServer, loadDataFromServer, loadBaseData } from './api';
 import { buildInitialState, normalizeServerData, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from './serverContract';
 import { logClientInfo } from '$lib/logging/clientLogger';
 
@@ -61,35 +61,17 @@ export async function initializeFromServer(): Promise<boolean> {
 
     const t3 = mark('loadChildData');
     const stateRecord = state as Record<string, unknown>;
-    // Auto-select child for admin
-    if (stateRecord.isAdmin && Array.isArray(stateRecord.children) && stateRecord.children.length > 0) {
-        const serverChildId = record.lastSelectedChildId;
-        let localChildId: string | null = null;
-        try { localChildId = typeof localStorage !== 'undefined' ? localStorage.getItem(LAST_CHILD_KEY) : null; } catch { /* */ }
-
-        const preferred = serverChildId ?? localChildId;
-        const match = preferred
-            ? (stateRecord.children as Array<{ id: unknown }>).find(c => String(c.id) === String(preferred))
-            : null;
-        const childToSelect = (match ?? stateRecord.children[0]) as { id: unknown };
-
-        if (childToSelect?.id != null) {
-            try { localStorage.setItem(LAST_CHILD_KEY, String(childToSelect.id)); } catch { /* */ }
-            appStore.setState({ currentChildId: childToSelect.id as string });
-            // Load child-specific data
-            const childData = await loadDataFromServer(childToSelect.id as string);
-            if (childData && typeof childData === 'object') {
-                const childRecord = childData as Record<string, unknown>;
-                appStore.setState({
-                    balance: (childRecord.balance as number) ?? 0,
-                    rules: (childRecord.rules as string | null | undefined) ?? null,
-                    tasks: Array.isArray(childRecord.tasks) ? (childRecord.tasks.map(normalizeTask) as unknown as AppState['tasks']) : [],
-                    shopItems: Array.isArray(childRecord.shop) ? (childRecord.shop.map(normalizeShopItem) as unknown as AppState['shopItems']) : [],
-                    history: Array.isArray(childRecord.history) ? (childRecord.history.map(normalizeHistoryEntry) as unknown as AppState['history']) : [],
-                    requests: Array.isArray(childRecord.requests) ? (childRecord.requests.map(normalizeRequest) as unknown as AppState['requests']) : [],
-                    childNickname: (childRecord.childNickname as string) ?? null,
-                });
-            }
+    const selectedChildId = stateRecord.currentChildId ?? null;
+    if (selectedChildId != null) {
+        try { localStorage.setItem(LAST_CHILD_KEY, String(selectedChildId)); } catch { /* */ }
+        const detailData = await loadDataDetailsFromServer(selectedChildId as string | number);
+        if (detailData && typeof detailData === 'object') {
+            const detailRecord = detailData as Record<string, unknown>;
+            appStore.setState({
+                history: Array.isArray(detailRecord.history) ? (detailRecord.history.map(normalizeHistoryEntry) as unknown as AppState['history']) : [],
+                requests: Array.isArray(detailRecord.requests) ? (detailRecord.requests.map(normalizeRequest) as unknown as AppState['requests']) : [],
+                friends: Array.isArray(detailRecord.friends) ? detailRecord.friends as unknown as AppState['friends'] : [],
+            });
         }
     }
     measure('loadChildData', t3);
@@ -145,17 +127,25 @@ export async function switchChild(childId: string | number): Promise<void> {
     appStore.setState({ currentChildId: childId, isLoading: true });
 
     const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
-    const childData = await loadDataFromServer(childId);
-    if (childData && typeof childData === 'object') {
-        const rec = childData as Record<string, unknown>;
+    const childShell = await loadDataFromServer(childId);
+    if (childShell && typeof childShell === 'object') {
+        const rec = childShell as Record<string, unknown>;
         appStore.setState({
             balance: (rec.balance as number) ?? 0,
             rules: (rec.rules as string | null | undefined) ?? null,
             tasks: Array.isArray(rec.tasks) ? (rec.tasks.map(normalizeTask) as unknown as AppState['tasks']) : [],
             shopItems: Array.isArray(rec.shop) ? (rec.shop.map(normalizeShopItem) as unknown as AppState['shopItems']) : [],
+            childNickname: (rec.childNickname as string) ?? null,
+        });
+    }
+
+    const childDetails = await loadDataDetailsFromServer(childId);
+    if (childDetails && typeof childDetails === 'object') {
+        const rec = childDetails as Record<string, unknown>;
+        appStore.setState({
             history: Array.isArray(rec.history) ? (rec.history.map(normalizeHistoryEntry) as unknown as AppState['history']) : [],
             requests: Array.isArray(rec.requests) ? (rec.requests.map(normalizeRequest) as unknown as AppState['requests']) : [],
-            childNickname: (rec.childNickname as string) ?? null,
+            friends: Array.isArray(rec.friends) ? rec.friends as unknown as AppState['friends'] : [],
             isLoading: false,
         });
     } else {

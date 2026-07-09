@@ -10,6 +10,8 @@ import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
@@ -49,24 +51,112 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
     private final ObjectMapper objectMapper;
 
     @Override
+    public OperationResult<FamilyDashboardShellResponse> loadFamilyShellData(String familyId, Integer childId,
+                                                                             boolean adminSession) {
+        Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
+        if (snapshotOpt.isEmpty()) {
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        }
+
+        DashboardSnapshot snapshot = snapshotOpt.get();
+        if (snapshot.activeChild == null) {
+            return OperationResult.success(emptyShellResponse(snapshot.rules, adminSession));
+        }
+
+        return OperationResult.success(new FamilyDashboardShellResponse(
+            snapshot.activeChild.getBalance(),
+            snapshot.rules,
+            snapshot.tasks,
+            snapshot.shopItems,
+            adminSession ? Boolean.TRUE : null,
+            snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
+            snapshot.resolvedLastSelectedChildId,
+            snapshot.activeChild.getId(),
+            snapshot.activeChild.getName(),
+            snapshot.activeChild.getMonthlyLimit(),
+            snapshot.activeChild.getDailyCoinLimit()
+        ));
+    }
+
+    @Override
+    public OperationResult<FamilyDashboardDetailResponse> loadFamilyDetailData(String familyId, Integer childId,
+                                                                              boolean adminSession) {
+        Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
+        if (snapshotOpt.isEmpty()) {
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        }
+
+        DashboardSnapshot snapshot = snapshotOpt.get();
+        if (snapshot.activeChild == null) {
+            return OperationResult.success(new FamilyDashboardDetailResponse(List.of(), List.of(), List.of()));
+        }
+
+        return OperationResult.success(new FamilyDashboardDetailResponse(
+            loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
+            loadRequests(
+                snapshot.familyDbId,
+                snapshot.activeChild.getId(),
+                adminSession,
+                snapshot.taskMap,
+                snapshot.shopMap
+            ),
+            loadFriends(snapshot.activeChild.getId())
+        ));
+    }
+
+    @Override
     public OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession) {
+        Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
+        if (snapshotOpt.isEmpty()) {
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        }
+
+        DashboardSnapshot snapshot = snapshotOpt.get();
+        if (snapshot.activeChild == null) {
+            return OperationResult.success(emptyFamilyDataResponse(snapshot.rules, adminSession));
+        }
+
+        return OperationResult.success(new FamilyDataResponse(
+            snapshot.activeChild.getBalance(),
+            snapshot.rules,
+            snapshot.tasks,
+            snapshot.shopItems,
+            loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
+            loadRequests(
+                snapshot.familyDbId,
+                snapshot.activeChild.getId(),
+                adminSession,
+                snapshot.taskMap,
+                snapshot.shopMap
+            ),
+            loadFriends(snapshot.activeChild.getId()),
+            adminSession ? Boolean.TRUE : null,
+            snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
+            snapshot.resolvedLastSelectedChildId,
+            snapshot.activeChild.getName(),
+            snapshot.activeChild.getMonthlyLimit(),
+            snapshot.activeChild.getDailyCoinLimit()
+        ));
+    }
+
+    private Optional<DashboardSnapshot> loadSnapshot(String familyId, Integer childId, boolean adminSession) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return Optional.empty();
         }
 
         int familyDbId = dbIdOpt.get();
         String rules = familyRepository.getRules(familyId).orElse(null);
         Integer persistedChildId = familyRepository.getLastSelectedChildId(familyId).orElse(null);
-
         List<ChildEntity> children = childRepository.getChildren(familyDbId);
+
         if (children.isEmpty()) {
-            return OperationResult.success(emptyFamilyDataResponse(rules, adminSession));
+            return Optional.of(DashboardSnapshot.empty(familyDbId, rules));
         }
 
         List<ChildEntity> visibleChildren = resolveVisibleChildren(children, adminSession, childId);
         if (visibleChildren.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return Optional.empty();
         }
 
         ChildEntity activeChild = resolveActiveChild(visibleChildren, childId, persistedChildId, adminSession);
@@ -76,65 +166,28 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             persistedChildId,
             adminSession
         );
-
-        Map<Long, String> lastCompletedAtByTaskId = loadLatestHistoryTimestamps(
-            activeChild.getId(),
-            HistoryEntryType.earn
-        );
-        Map<Long, String> lastPurchasedAtByItemId = loadLatestHistoryTimestamps(
-            activeChild.getId(),
-            HistoryEntryType.spend
-        );
+        Map<Long, String> lastCompletedAtByTaskId =
+            loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.earn);
+        Map<Long, String> lastPurchasedAtByItemId =
+            loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.spend);
         List<TaskDto> tasks = loadTasks(activeChild.getId(), lastCompletedAtByTaskId);
         List<ShopItemDto> shopItems = loadShopItems(activeChild.getId(), lastPurchasedAtByItemId);
-
-        return OperationResult.success(buildFamilyDataResponse(
-            activeChild,
-            rules,
-            adminSession,
-            tasks,
-            shopItems,
-            familyDbId,
-            resolvedLastSelectedChildId,
-            visibleChildren
-        ));
-    }
-
-    private FamilyDataResponse buildFamilyDataResponse(
-        ChildEntity activeChild,
-        String rules,
-        boolean adminSession,
-        List<TaskDto> tasks,
-        List<ShopItemDto> shopItems,
-        int familyDbId,
-        Integer resolvedLastSelectedChildId,
-        List<ChildEntity> visibleChildren
-    ) {
         Map<Long, TaskDto> taskMap = tasks.stream()
             .collect(java.util.stream.Collectors.toMap(TaskDto::id, task -> task, (left, right) -> left));
         Map<Long, ShopItemDto> shopMap = shopItems.stream()
             .collect(java.util.stream.Collectors.toMap(ShopItemDto::id, item -> item, (left, right) -> left));
 
-        List<HistoryEntryDto> history = loadHistory(activeChild.getId(), taskMap, shopMap);
-        List<RequestDto> requests = loadRequests(familyDbId, activeChild.getId(), adminSession, taskMap, shopMap);
-        List<FriendDto> friends = loadFriends(activeChild.getId());
-        List<ChildDto> childDtos = visibleChildren.stream().map(this::toChildDto).toList();
-
-        return new FamilyDataResponse(
-            activeChild.getBalance(),
+        return Optional.of(new DashboardSnapshot(
+            familyDbId,
             rules,
+            activeChild,
+            visibleChildren,
+            resolvedLastSelectedChildId,
             tasks,
             shopItems,
-            history,
-            requests,
-            friends,
-            adminSession ? Boolean.TRUE : null,
-            childDtos,
-            resolvedLastSelectedChildId,
-            activeChild.getName(),
-            activeChild.getMonthlyLimit(),
-            activeChild.getDailyCoinLimit()
-        );
+            taskMap,
+            shopMap
+        ));
     }
 
     private FamilyDataResponse emptyFamilyDataResponse(String rules, boolean adminSession) {
@@ -148,6 +201,22 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             List.of(),
             adminSession ? Boolean.TRUE : null,
             List.of(),
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    private FamilyDashboardShellResponse emptyShellResponse(String rules, boolean adminSession) {
+        return new FamilyDashboardShellResponse(
+            0,
+            rules,
+            List.of(),
+            List.of(),
+            adminSession ? Boolean.TRUE : null,
+            List.of(),
+            null,
             null,
             null,
             null,
@@ -426,6 +495,15 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             entry.getGroupName(), entry.getComment());
     }
 
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
     private RequestDto toRequestDto(PurchaseRequestEntity request,
                                     Map<Long, TaskDto> taskMap,
                                     Map<Long, ShopItemDto> shopMap) {
@@ -490,6 +568,11 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             taskGroup, itemGroup, taskComment, itemComment);
     }
 
+    private boolean isPurchaseRequest(PurchaseRequestEntity request) {
+        return (request.getRequestType() != null && request.getRequestType().isPurchase())
+            || request.getItemId() != null;
+    }
+
     private TaskDto findTaskDto(int familyDbId, int childId, Long taskId) {
         if (taskId == null) {
             return null;
@@ -519,25 +602,37 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
         if (query == null) {
             return null;
         }
-        return query.firstResultOptional().map(item -> toShopItemDto(item, null)).orElse(null);
-    }
-
-    private boolean isPurchaseRequest(PurchaseRequestEntity request) {
-        return (request.getRequestType() != null && request.getRequestType().isPurchase())
-            || request.getItemId() != null;
-    }
-
-    private String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value;
-            }
-        }
-        return null;
+        return query.firstResultOptional().map(shopItem -> toShopItemDto(shopItem, null)).orElse(null);
     }
 
     private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
         return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
+    }
+
+    private record DashboardSnapshot(
+        int familyDbId,
+        String rules,
+        ChildEntity activeChild,
+        List<ChildEntity> visibleChildren,
+        Integer resolvedLastSelectedChildId,
+        List<TaskDto> tasks,
+        List<ShopItemDto> shopItems,
+        Map<Long, TaskDto> taskMap,
+        Map<Long, ShopItemDto> shopMap
+    ) {
+        private static DashboardSnapshot empty(int familyDbId, String rules) {
+            return new DashboardSnapshot(
+                familyDbId,
+                rules,
+                null,
+                List.of(),
+                null,
+                List.of(),
+                List.of(),
+                Map.of(),
+                Map.of()
+            );
+        }
     }
 
     private record HistoryDetails(

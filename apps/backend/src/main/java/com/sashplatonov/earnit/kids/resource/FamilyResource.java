@@ -20,6 +20,8 @@ import com.sashplatonov.earnit.kids.dto.request.UpdatePreferenceRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateThemeRequest;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
@@ -92,10 +94,10 @@ public class FamilyResource {
 
     @GET
     @Path("/data")
-    @Operation(summary = "Load the dashboard payload for a family or child session")
+    @Operation(summary = "Load the dashboard shell payload for a family or child session")
     @APIResponses({
-        @APIResponse(responseCode = "200", description = "Dashboard payload returned",
-            content = @Content(schema = @Schema(implementation = FamilyDataResponse.class))),
+        @APIResponse(responseCode = "200", description = "Dashboard shell returned",
+            content = @Content(schema = @Schema(implementation = FamilyDashboardShellResponse.class))),
         @APIResponse(responseCode = "401", description = "Authentication required",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -108,8 +110,32 @@ public class FamilyResource {
         }
 
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
-        OperationResult<FamilyDataResponse> result =
-            familyService.loadFamilyData(auth.familyId(), effectiveChildId, auth.isAdmin());
+        OperationResult<FamilyDashboardShellResponse> result =
+            familyService.loadFamilyShellData(auth.familyId(), effectiveChildId, auth.isAdmin());
+
+        return toResponse(result);
+    }
+
+    @GET
+    @Path("/data/details")
+    @Operation(summary = "Load the heavy dashboard details for a family or child session")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Dashboard details returned",
+            content = @Content(schema = @Schema(implementation = FamilyDashboardDetailResponse.class))),
+        @APIResponse(responseCode = "401", description = "Authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response getFamilyDataDetails(@Context ContainerRequestContext ctx,
+                                         @Parameter(description = "Child id override for admin sessions")
+                                         @QueryParam("childId") Integer childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null) {
+            return unauthorized();
+        }
+
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
+        OperationResult<FamilyDashboardDetailResponse> result =
+            familyService.loadFamilyDetailData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
         return toResponse(result);
     }

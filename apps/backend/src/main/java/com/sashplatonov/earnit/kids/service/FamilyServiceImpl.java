@@ -14,6 +14,8 @@ import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
 import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
@@ -107,6 +109,18 @@ public final class FamilyServiceImpl implements FamilyService {
                       TimeProvider timeProvider) {
         this(familyRepository, childRepository, familyDataRepository, historyRepository,
             taskRepository, shopItemRepository, new ObjectMapper(), timeProvider);
+    }
+
+    @Override
+    public OperationResult<FamilyDashboardShellResponse> loadFamilyShellData(String familyId, Integer childId,
+                                                                             boolean adminSession) {
+        return familyDashboardQueryService.loadFamilyShellData(familyId, childId, adminSession);
+    }
+
+    @Override
+    public OperationResult<FamilyDashboardDetailResponse> loadFamilyDetailData(String familyId, Integer childId,
+                                                                               boolean adminSession) {
+        return familyDashboardQueryService.loadFamilyDetailData(familyId, childId, adminSession);
     }
 
     @Override

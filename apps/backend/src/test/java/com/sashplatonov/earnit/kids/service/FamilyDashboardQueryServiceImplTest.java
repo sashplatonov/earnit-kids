@@ -9,6 +9,8 @@ import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
@@ -150,6 +152,91 @@ class FamilyDashboardQueryServiceImplTest {
         assertThat(payload.requests().getFirst().title()).isEqualTo("Toy");
         assertThat(payload.tasks().getFirst().lastCompletedAt()).isEqualTo(FIXED_NOW.toString());
         assertThat(payload.shop().getFirst().lastPurchasedAt()).isEqualTo(FIXED_NOW.minus(Duration.ofDays(1)).toString());
+    }
+
+    @Test
+    void loadFamilyShellData_existingChildData_omitsHeavyCollections() {
+        ChildEntity child1 = child(10, 1, "Alice", 100);
+        ChildEntity child2 = child(11, 1, "Bob", 50);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Bedtime by 20:30"));
+        when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
+        when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.earn))
+            .thenReturn(java.util.Map.of());
+        when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.spend))
+            .thenReturn(java.util.Map.of());
+
+        OperationResult<FamilyDashboardShellResponse> result = service.loadFamilyShellData("fam-1", 10, true);
+
+        FamilyDashboardShellResponse payload = successValue(result);
+        assertThat(payload.balance()).isEqualTo(100);
+        assertThat(payload.tasks()).isEmpty();
+        assertThat(payload.shop()).isEmpty();
+        assertThat(payload.activeChildId()).isEqualTo(10);
+        assertThat(payload.lastSelectedChildId()).isEqualTo(11);
+        assertThat(payload.children()).hasSize(2);
+    }
+
+    @Test
+    void loadFamilyDetailData_existingChildData_returnsHeavyCollectionsOnly() {
+        ChildEntity child1 = child(10, 1, "Alice", 100);
+        ChildEntity child2 = child(11, 1, "Bob", 50);
+        TaskEntity task = TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5)
+            .frequency(readJson("{\"limit\":1,\"period\":\"day\"}"))
+            .groupName("Reading")
+            .comment("Pages").build();
+        ShopItemEntity item = ShopItemEntity.builder().itemId(2001L).childId(10).name("Toy").price(7)
+            .frequency(readJson("{\"limit\":2,\"period\":\"week\"}"))
+            .groupName("Fun")
+            .moneyLimit(250)
+            .comment("Prize").build();
+        HistoryEntryEntity history = HistoryEntryEntity.builder()
+            .familyId(1)
+            .childId(10)
+            .externalId(3001L)
+            .type(HistoryEntryType.earn)
+            .amount(5)
+            .relatedId(1001L)
+            .createdAt(FIXED_NOW)
+            .build();
+        PurchaseRequestEntity request = PurchaseRequestEntity.builder()
+            .id(4001L)
+            .childId(10)
+            .familyId(1)
+            .taskId(2001L)
+            .taskName("Toy")
+            .itemId(2001L)
+            .coins(7)
+            .requestType(PurchaseRequestType.shop_purchase)
+            .moneyAmount(250)
+            .build();
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Bedtime by 20:30"));
+        when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
+        when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of(task));
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of(item));
+        when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.earn))
+            .thenReturn(java.util.Map.of(1001L, FIXED_NOW));
+        when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.spend))
+            .thenReturn(java.util.Map.of(2001L, FIXED_NOW.minus(Duration.ofDays(1))));
+        when(familyDataRepository.getHistory(10, 50, 0)).thenReturn(List.of(history));
+        when(familyDataRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
+        when(familyDataRepository.getFriendChildIds(10)).thenReturn(List.of(11));
+        when(childRepository.findByChildIds(List.of(11))).thenReturn(List.of(child2));
+
+        OperationResult<FamilyDashboardDetailResponse> result = service.loadFamilyDetailData("fam-1", 10, true);
+
+        FamilyDashboardDetailResponse payload = successValue(result);
+        assertThat(payload.history()).hasSize(1);
+        assertThat(payload.requests()).hasSize(1);
+        assertThat(payload.friends()).hasSize(1);
+        assertThat(payload.history().getFirst().title()).isEqualTo("Read");
+        assertThat(payload.requests().getFirst().title()).isEqualTo("Toy");
     }
 
     @Test

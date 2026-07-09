@@ -4,6 +4,8 @@ import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
 import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
@@ -15,6 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 public interface FamilyService {
+
+    OperationResult<FamilyDashboardShellResponse> loadFamilyShellData(String familyId, Integer childId,
+                                                                      boolean adminSession);
+
+    OperationResult<FamilyDashboardDetailResponse> loadFamilyDetailData(String familyId, Integer childId,
+                                                                        boolean adminSession);
 
     OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession);
 

@@ -23,6 +23,8 @@ import com.sashplatonov.earnit.kids.dto.request.UpdatePreferenceRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateThemeRequest;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
+import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
@@ -87,9 +89,9 @@ class FamilyResourceTest {
 
     @Test
     void getFamilyData_authenticatedUser_returnsPayload() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
-            List.of(), true, List.of(), null, null, null, null);
-        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+        FamilyDashboardShellResponse payload = new FamilyDashboardShellResponse(0, null, List.of(), List.of(),
+            true, List.of(), null, 10, null, null, null);
+        when(familyService.loadFamilyShellData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
         Response response = resource.getFamilyData(contextWithAuth(adminAuth()), 10);
 
@@ -99,14 +101,25 @@ class FamilyResourceTest {
 
     @Test
     void getFamilyData_childSession_ignoresRequestedChildId() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
-            List.of(), false, List.of(), 10, null, null, null);
-        when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
+        FamilyDashboardShellResponse payload = new FamilyDashboardShellResponse(0, null, List.of(), List.of(),
+            null, List.of(), 10, 10, null, null, null);
+        when(familyService.loadFamilyShellData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
 
         Response response = resource.getFamilyData(contextWithAuth(childAuth(10)), 99);
 
         assertThat(response.getStatus()).isEqualTo(200);
-        verify(familyService).loadFamilyData("fam-1", 10, false);
+        verify(familyService).loadFamilyShellData("fam-1", 10, false);
+    }
+
+    @Test
+    void getFamilyDataDetails_authenticatedUser_returnsPayload() {
+        FamilyDashboardDetailResponse payload = new FamilyDashboardDetailResponse(List.of(), List.of(), List.of());
+        when(familyService.loadFamilyDetailData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.getFamilyDataDetails(contextWithAuth(adminAuth()), 10);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getEntity()).isEqualTo(payload);
     }
 
     @Test
@@ -128,9 +141,9 @@ class FamilyResourceTest {
 
     @Test
     void getFamilyData_superAdminSession_canAccessFamilyData() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
-            List.of(), true, List.of(), null, null, null, null);
-        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+        FamilyDashboardShellResponse payload = new FamilyDashboardShellResponse(0, null, List.of(), List.of(),
+            true, List.of(), null, 10, null, null, null);
+        when(familyService.loadFamilyShellData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
         Response response = resource.getFamilyData(contextWithAuth(superAdminAuth()), 10);
 
