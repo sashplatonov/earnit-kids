@@ -76,7 +76,7 @@
 | BAP-05 | P0 | Скорость/RAM | Убрать двойную сериализацию из HTTP metrics collection |
 | BAP-06 | P1 | Скорость/RAM | Добавить short-lived cache и явную invalidation для стабильных read-heavy путей |
 | BAP-07 | P0 | БД | Добавить pagination contracts для history и requests |
-| BAP-08 | P1 | БД | Заменить редкие fallback N+1 чтения батчевой hydration для missing IDs |
+| BAP-08 | P1 | БД | Заменить редкие fallback N+1 чтения батчевой hydration для missing IDs ✅ |
 | BAP-09 | P1 | БД | Добавить следующие измеренные composite indexes и проверки query-plan |
 | BAP-10 | P0 | Наблюдаемость | Обновить propagation trace и MDC scope fields |
 | BAP-11 | P1 | Наблюдаемость | Добавить лёгкие readiness checks для критичных runtime dependency ✅ |
@@ -316,16 +316,20 @@ Base data cache живёт 5 минут и сбрасывается на `saveBa
 - новые тесты покрывают первую страницу, следующую страницу и пустую страницу;
 - DB query plans используют уже существующие или новые composite indexes вместо тяжёлых sort-heavy scan.
 
-### BAP-08 - Заменить редкие fallback N+1 чтения батчевой hydration для missing IDs
+### BAP-08 - Заменить редкие fallback N+1 чтения батчевой hydration для missing IDs ✅
 
 Приоритет: P1
+
+Статус: выполнено 2026-07-09.
 
 Основные файлы:
 
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyDashboardQueryServiceImpl.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/TaskRepository.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/ShopItemRepository.java`
 - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/FamilyServiceImplTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/FamilyDashboardQueryServiceImplTest.java`
 
 Архитектурное решение:
 
@@ -553,7 +557,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 3. `BAP-12` ✅
 4. `BAP-02` ✅
 5. `BAP-06` ✅
-6. `BAP-08`
+6. `BAP-08` ✅
 7. `BAP-09`
 8. `BAP-15`
 

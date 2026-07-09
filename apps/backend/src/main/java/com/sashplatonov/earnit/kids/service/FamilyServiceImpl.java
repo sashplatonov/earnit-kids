@@ -362,12 +362,11 @@ public final class FamilyServiceImpl implements FamilyService {
         int offset = (page - 1) * effectiveLimit;
         List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, effectiveLimit, offset);
         int total = familyDataRepository.getHistoryCount(childId);
-        List<TaskDto> tasks = loadTasks(childId);
-        List<ShopItemDto> shopItems = loadShopItems(childId);
-        Map<Long, TaskDto> taskMap = tasks.stream()
-            .collect(java.util.stream.Collectors.toMap(TaskDto::id, task -> task, (left, right) -> left));
-        Map<Long, ShopItemDto> shopMap = shopItems.stream()
-            .collect(java.util.stream.Collectors.toMap(ShopItemDto::id, item -> item, (left, right) -> left));
+        List<TaskDto> tasks = loadTasks(childId, Map.of());
+        List<ShopItemDto> shopItems = loadShopItems(childId, Map.of());
+        Map<Long, TaskDto> taskMap = buildTaskMap(tasks);
+        Map<Long, ShopItemDto> shopMap = buildShopItemMap(shopItems);
+        hydrateMissingHistoryEntries(dbIdOpt.get(), childId, rows, taskMap, shopMap);
         List<HistoryEntryDto> items = rows.stream()
             .map(historyEntry -> toHistoryDto(historyEntry, taskMap, shopMap))
             .toList();
@@ -392,9 +391,11 @@ public final class FamilyServiceImpl implements FamilyService {
             .filter(Objects::nonNull)
             .distinct()
             .forEach(requestChildId -> {
-                loadTasks(requestChildId).forEach(task -> taskMap.putIfAbsent(task.id(), task));
-                loadShopItems(requestChildId).forEach(shopItem -> shopMap.putIfAbsent(shopItem.id(), shopItem));
+                loadTasks(requestChildId, Map.of()).forEach(task -> taskMap.putIfAbsent(task.id(), task));
+                loadShopItems(requestChildId, Map.of())
+                    .forEach(shopItem -> shopMap.putIfAbsent(shopItem.id(), shopItem));
             });
+        hydrateMissingRequests(familyDbId, rows, taskMap, shopMap);
         List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, taskMap, shopMap)).toList();
         return OperationResult.success(new PaginatedRequests(items, total, page, effectiveLimit));
     }
@@ -518,24 +519,92 @@ public final class FamilyServiceImpl implements FamilyService {
             .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
     }
 
-    private List<TaskDto> loadTasks(int childId) {
-        return loadTasks(childId, Map.of());
-    }
-
     private List<TaskDto> loadTasks(int childId, Map<Long, String> lastCompletedAtByTaskId) {
         return familyDataRepository.getTasks(childId).stream()
             .map(task -> toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId())))
             .toList();
     }
 
-    private List<ShopItemDto> loadShopItems(int childId) {
-        return loadShopItems(childId, Map.of());
-    }
-
     private List<ShopItemDto> loadShopItems(int childId, Map<Long, String> lastPurchasedAtByItemId) {
         return familyDataRepository.getShopItems(childId).stream()
             .map(shopItem -> toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId())))
             .toList();
+    }
+
+    private Map<Long, TaskDto> buildTaskMap(List<TaskDto> tasks) {
+        Map<Long, TaskDto> taskMap = new LinkedHashMap<>();
+        for (TaskDto task : tasks) {
+            taskMap.putIfAbsent(task.id(), task);
+        }
+        return taskMap;
+    }
+
+    private Map<Long, ShopItemDto> buildShopItemMap(List<ShopItemDto> shopItems) {
+        Map<Long, ShopItemDto> shopMap = new LinkedHashMap<>();
+        for (ShopItemDto shopItem : shopItems) {
+            shopMap.putIfAbsent(shopItem.id(), shopItem);
+        }
+        return shopMap;
+    }
+
+    private void hydrateMissingHistoryEntries(int familyDbId, int childId, List<HistoryEntryEntity> rows,
+                                              Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+        List<Long> missingTaskIds = rows.stream()
+            .filter(entry -> entry.getType() == HistoryEntryType.earn && entry.getRelatedId() != null)
+            .map(HistoryEntryEntity::getRelatedId)
+            .filter(relatedId -> !taskMap.containsKey(relatedId))
+            .distinct()
+            .toList();
+        List<Long> missingShopIds = rows.stream()
+            .filter(entry -> entry.getType() == HistoryEntryType.spend && entry.getRelatedId() != null)
+            .map(HistoryEntryEntity::getRelatedId)
+            .filter(relatedId -> !shopMap.containsKey(relatedId))
+            .distinct()
+            .toList();
+
+        if (!missingTaskIds.isEmpty()) {
+            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, List.of(childId), missingTaskIds).stream()
+                .map(task -> toTaskDto(task, null))
+                .forEach(task -> taskMap.putIfAbsent(task.id(), task));
+        }
+        if (!missingShopIds.isEmpty()) {
+            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, List.of(childId), missingShopIds).stream()
+                .map(item -> toShopItemDto(item, null))
+                .forEach(item -> shopMap.putIfAbsent(item.id(), item));
+        }
+    }
+
+    private void hydrateMissingRequests(int familyDbId, List<PurchaseRequestEntity> rows,
+                                        Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+        List<Integer> childIds = rows.stream()
+            .map(PurchaseRequestEntity::getChildId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        List<Long> missingTaskIds = rows.stream()
+            .map(PurchaseRequestEntity::getTaskId)
+            .filter(Objects::nonNull)
+            .filter(taskId -> !taskMap.containsKey(taskId))
+            .distinct()
+            .toList();
+        List<Long> missingShopIds = rows.stream()
+            .map(PurchaseRequestEntity::getItemId)
+            .filter(Objects::nonNull)
+            .filter(itemId -> !shopMap.containsKey(itemId))
+            .distinct()
+            .toList();
+
+        if (!missingTaskIds.isEmpty() && !childIds.isEmpty()) {
+            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, childIds, missingTaskIds).stream()
+                .map(task -> toTaskDto(task, null))
+                .forEach(task -> taskMap.putIfAbsent(task.id(), task));
+        }
+        if (!missingShopIds.isEmpty() && !childIds.isEmpty()) {
+            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, childIds, missingShopIds).stream()
+                .map(item -> toShopItemDto(item, null))
+                .forEach(item -> shopMap.putIfAbsent(item.id(), item));
+        }
     }
 
     private JsonNode parseFrequency(JsonNode rawFrequency) {
@@ -611,9 +680,6 @@ public final class FamilyServiceImpl implements FamilyService {
 
         if (entry.getType() == HistoryEntryType.earn) {
             TaskDto task = taskMap.get(entry.getRelatedId());
-            if (task == null) {
-                task = findTaskDto(entry.getFamilyId(), entry.getChildId(), entry.getRelatedId());
-            }
             if (task != null) {
                 String title = firstNonBlank(entry.getDescription(), task.name());
                 return new HistoryDetails(
@@ -631,13 +697,6 @@ public final class FamilyServiceImpl implements FamilyService {
 
         if (entry.getType() == HistoryEntryType.spend) {
             ShopItemDto shopItem = shopMap.get(entry.getRelatedId());
-            if (shopItem == null) {
-                shopItem = findShopItemDto(
-                    entry.getFamilyId(),
-                    entry.getChildId(),
-                    entry.getRelatedId()
-                );
-            }
             if (shopItem != null) {
                 String title = firstNonBlank(entry.getDescription(), shopItem.name());
                 return new HistoryDetails(
@@ -702,14 +761,8 @@ public final class FamilyServiceImpl implements FamilyService {
 
         if (purchase && itemId != null) {
             shopItem = shopMap.get(itemId);
-            if (shopItem == null) {
-                shopItem = findShopItemDto(request.getFamilyId(), request.getChildId(), itemId);
-            }
         } else if (request.getTaskId() != null) {
             task = taskMap.get(request.getTaskId());
-            if (task == null) {
-                task = findTaskDto(request.getFamilyId(), request.getChildId(), request.getTaskId());
-            }
         }
 
         String taskName = firstNonBlank(request.getTaskName(), task != null ? task.name() : null);
@@ -726,38 +779,6 @@ public final class FamilyServiceImpl implements FamilyService {
 
         return new RequestDetails(title, description, groupName, description, taskName, itemName,
             taskGroup, itemGroup, taskComment, itemComment);
-    }
-
-    private TaskDto findTaskDto(int familyDbId, int childId, Long taskId) {
-        if (taskId == null) {
-            return null;
-        }
-        var query = taskRepository.find(
-            "familyId = ?1 AND childId = ?2 AND taskId = ?3 ORDER BY id DESC",
-            familyDbId,
-            childId,
-            taskId
-        );
-        if (query == null) {
-            return null;
-        }
-        return query.firstResultOptional().map(task -> toTaskDto(task, null)).orElse(null);
-    }
-
-    private ShopItemDto findShopItemDto(int familyDbId, int childId, Long itemId) {
-        if (itemId == null) {
-            return null;
-        }
-        var query = shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 ORDER BY id DESC",
-            familyDbId,
-            childId,
-            itemId
-        );
-        if (query == null) {
-            return null;
-        }
-        return query.firstResultOptional().map(shopItem -> toShopItemDto(shopItem, null)).orElse(null);
     }
 
     private record HistoryDetails(

@@ -96,7 +96,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             }
 
             return OperationResult.success(new FamilyDashboardDetailResponse(
-                loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
+                loadHistory(snapshot.familyDbId, snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
                 loadRequests(
                     snapshot.familyDbId,
                     snapshot.activeChild.getId(),
@@ -127,7 +127,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
                 snapshot.rules,
                 snapshot.tasks,
                 snapshot.shopItems,
-                loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
+                loadHistory(snapshot.familyDbId, snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
                 loadRequests(
                     snapshot.familyDbId,
                     snapshot.activeChild.getId(),
@@ -275,8 +275,11 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             .orElse(activeChild.getId());
     }
 
-    private List<HistoryEntryDto> loadHistory(int childId, Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
-        return familyDataRepository.getHistory(childId, 50, 0).stream()
+    private List<HistoryEntryDto> loadHistory(int familyDbId, int childId,
+                                              Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+        List<HistoryEntryEntity> rows = familyDataRepository.getHistory(childId, 50, 0);
+        hydrateMissingHistoryEntries(familyDbId, childId, rows, taskMap, shopMap);
+        return rows.stream()
             .map(historyEntry -> toHistoryDto(historyEntry, taskMap, shopMap))
             .toList();
     }
@@ -286,7 +289,9 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
                                           boolean adminSession,
                                           Map<Long, TaskDto> taskMap,
                                           Map<Long, ShopItemDto> shopMap) {
-        return familyDataRepository.getRequests(familyDbId, 50, 0).stream()
+        List<PurchaseRequestEntity> rows = familyDataRepository.getRequests(familyDbId, 50, 0);
+        hydrateMissingRequests(familyDbId, rows, taskMap, shopMap);
+        return rows.stream()
             .filter(request -> adminSession || Objects.equals(request.getChildId(), activeChildId))
             .map(request -> toRequestDto(
                 request,
@@ -313,6 +318,82 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
         return familyDataRepository.getShopItems(childId).stream()
             .map(shopItem -> toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId())))
             .toList();
+    }
+
+    private Map<Long, TaskDto> buildTaskMap(List<TaskDto> tasks) {
+        Map<Long, TaskDto> taskMap = new LinkedHashMap<>();
+        for (TaskDto task : tasks) {
+            taskMap.putIfAbsent(task.id(), task);
+        }
+        return taskMap;
+    }
+
+    private Map<Long, ShopItemDto> buildShopItemMap(List<ShopItemDto> shopItems) {
+        Map<Long, ShopItemDto> shopMap = new LinkedHashMap<>();
+        for (ShopItemDto shopItem : shopItems) {
+            shopMap.putIfAbsent(shopItem.id(), shopItem);
+        }
+        return shopMap;
+    }
+
+    private void hydrateMissingHistoryEntries(int familyDbId, int childId, List<HistoryEntryEntity> rows,
+                                              Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+        List<Long> missingTaskIds = rows.stream()
+            .filter(entry -> entry.getType() == HistoryEntryType.earn && entry.getRelatedId() != null)
+            .map(HistoryEntryEntity::getRelatedId)
+            .filter(relatedId -> !taskMap.containsKey(relatedId))
+            .distinct()
+            .toList();
+        List<Long> missingShopIds = rows.stream()
+            .filter(entry -> entry.getType() == HistoryEntryType.spend && entry.getRelatedId() != null)
+            .map(HistoryEntryEntity::getRelatedId)
+            .filter(relatedId -> !shopMap.containsKey(relatedId))
+            .distinct()
+            .toList();
+
+        if (!missingTaskIds.isEmpty()) {
+            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, List.of(childId), missingTaskIds).stream()
+                .map(task -> toTaskDto(task, null))
+                .forEach(task -> taskMap.putIfAbsent(task.id(), task));
+        }
+        if (!missingShopIds.isEmpty()) {
+            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, List.of(childId), missingShopIds).stream()
+                .map(item -> toShopItemDto(item, null))
+                .forEach(item -> shopMap.putIfAbsent(item.id(), item));
+        }
+    }
+
+    private void hydrateMissingRequests(int familyDbId, List<PurchaseRequestEntity> rows,
+                                        Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
+        List<Integer> childIds = rows.stream()
+            .map(PurchaseRequestEntity::getChildId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        List<Long> missingTaskIds = rows.stream()
+            .map(PurchaseRequestEntity::getTaskId)
+            .filter(Objects::nonNull)
+            .filter(taskId -> !taskMap.containsKey(taskId))
+            .distinct()
+            .toList();
+        List<Long> missingShopIds = rows.stream()
+            .map(PurchaseRequestEntity::getItemId)
+            .filter(Objects::nonNull)
+            .filter(itemId -> !shopMap.containsKey(itemId))
+            .distinct()
+            .toList();
+
+        if (!missingTaskIds.isEmpty() && !childIds.isEmpty()) {
+            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, childIds, missingTaskIds).stream()
+                .map(task -> toTaskDto(task, null))
+                .forEach(task -> taskMap.putIfAbsent(task.id(), task));
+        }
+        if (!missingShopIds.isEmpty() && !childIds.isEmpty()) {
+            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, childIds, missingShopIds).stream()
+                .map(item -> toShopItemDto(item, null))
+                .forEach(item -> shopMap.putIfAbsent(item.id(), item));
+        }
     }
 
     private Map<Long, String> loadLatestHistoryTimestamps(int childId, HistoryEntryType type) {
@@ -460,9 +541,6 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
 
         if (entry.getType() == HistoryEntryType.earn) {
             TaskDto task = taskMap.get(entry.getRelatedId());
-            if (task == null) {
-                task = findTaskDto(entry.getFamilyId(), entry.getChildId(), entry.getRelatedId());
-            }
             if (task != null) {
                 String title = firstNonBlank(entry.getDescription(), task.name());
                 return new HistoryDetails(
@@ -480,9 +558,6 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
 
         if (entry.getType() == HistoryEntryType.spend) {
             ShopItemDto shopItem = shopMap.get(entry.getRelatedId());
-            if (shopItem == null) {
-                shopItem = findShopItemDto(entry.getFamilyId(), entry.getChildId(), entry.getRelatedId());
-            }
             if (shopItem != null) {
                 String title = firstNonBlank(entry.getDescription(), shopItem.name());
                 return new HistoryDetails(
@@ -549,14 +624,8 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
 
         if (purchase && itemId != null) {
             shopItem = shopMap.get(itemId);
-            if (shopItem == null) {
-                shopItem = findShopItemDto(request.getFamilyId(), request.getChildId(), itemId);
-            }
         } else if (request.getTaskId() != null) {
             task = taskMap.get(request.getTaskId());
-            if (task == null) {
-                task = findTaskDto(request.getFamilyId(), request.getChildId(), request.getTaskId());
-            }
         }
 
         String taskName = firstNonBlank(request.getTaskName(), task != null ? task.name() : null);
@@ -578,38 +647,6 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
     private boolean isPurchaseRequest(PurchaseRequestEntity request) {
         return (request.getRequestType() != null && request.getRequestType().isPurchase())
             || request.getItemId() != null;
-    }
-
-    private TaskDto findTaskDto(int familyDbId, int childId, Long taskId) {
-        if (taskId == null) {
-            return null;
-        }
-        var query = taskRepository.find(
-            "familyId = ?1 AND childId = ?2 AND taskId = ?3 ORDER BY id DESC",
-            familyDbId,
-            childId,
-            taskId
-        );
-        if (query == null) {
-            return null;
-        }
-        return query.firstResultOptional().map(task -> toTaskDto(task, null)).orElse(null);
-    }
-
-    private ShopItemDto findShopItemDto(int familyDbId, int childId, Long itemId) {
-        if (itemId == null) {
-            return null;
-        }
-        var query = shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 ORDER BY id DESC",
-            familyDbId,
-            childId,
-            itemId
-        );
-        if (query == null) {
-            return null;
-        }
-        return query.firstResultOptional().map(shopItem -> toShopItemDto(shopItem, null)).orElse(null);
     }
 
     private static <T> OperationResult<T> failure(String errorCode, String messageKey) {

@@ -51,6 +51,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -333,6 +334,75 @@ class FamilyServiceImplTest {
     }
 
     @Test
+    void getHistory_missingArchivedRelatedIdsUsesSingleBatchLookupPerEntityType() {
+        HistoryEntryEntity taskHistory1 = HistoryEntryEntity.builder()
+            .familyId(1)
+            .childId(10)
+            .externalId(1L)
+            .type(HistoryEntryType.earn)
+            .amount(5)
+            .relatedId(1001L)
+            .createdAt(FIXED_NOW)
+            .build();
+        HistoryEntryEntity taskHistory2 = HistoryEntryEntity.builder()
+            .familyId(1)
+            .childId(10)
+            .externalId(2L)
+            .type(HistoryEntryType.earn)
+            .amount(7)
+            .relatedId(1002L)
+            .createdAt(FIXED_NOW.minusSeconds(60))
+            .build();
+        HistoryEntryEntity itemHistory1 = HistoryEntryEntity.builder()
+            .familyId(1)
+            .childId(10)
+            .externalId(3L)
+            .type(HistoryEntryType.spend)
+            .amount(3)
+            .relatedId(2001L)
+            .createdAt(FIXED_NOW.minusSeconds(120))
+            .build();
+        HistoryEntryEntity itemHistory2 = HistoryEntryEntity.builder()
+            .familyId(1)
+            .childId(10)
+            .externalId(4L)
+            .type(HistoryEntryType.spend)
+            .amount(4)
+            .relatedId(2002L)
+            .createdAt(FIXED_NOW.minusSeconds(180))
+            .build();
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
+        when(familyDataRepository.getHistory(10, 20, 0))
+            .thenReturn(List.of(taskHistory1, taskHistory2, itemHistory1, itemHistory2));
+        when(familyDataRepository.getHistoryCount(10)).thenReturn(4);
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(taskRepository.findByFamilyAndChildAndTaskIds(eq(1), eq(List.of(10)), eq(List.of(1001L, 1002L))))
+            .thenReturn(List.of(
+                TaskEntity.builder().familyId(1).childId(10).taskId(1002L).name("Write").coins(7).build(),
+                TaskEntity.builder().familyId(1).childId(10).taskId(1001L).name("Read").coins(5).build()
+            ));
+        when(shopItemRepository.findByFamilyAndChildAndItemIds(eq(1), eq(List.of(10)), eq(List.of(2001L, 2002L))))
+            .thenReturn(List.of(
+                ShopItemEntity.builder().familyId(1).childId(10).itemId(2002L).name("Game").price(4).build(),
+                ShopItemEntity.builder().familyId(1).childId(10).itemId(2001L).name("Toy").price(3).build()
+            ));
+
+        OperationResult<PaginatedHistory> result = service.getHistory("fam-1", 10, 1, 20);
+
+        PaginatedHistory payload = successValue(result);
+        assertThat(payload.items()).hasSize(4);
+        assertThat(payload.items().get(0).taskName()).isEqualTo("Read");
+        assertThat(payload.items().get(2).itemName()).isEqualTo("Toy");
+        verify(taskRepository, times(1))
+            .findByFamilyAndChildAndTaskIds(eq(1), eq(List.of(10)), eq(List.of(1001L, 1002L)));
+        verify(shopItemRepository, times(1))
+            .findByFamilyAndChildAndItemIds(eq(1), eq(List.of(10)), eq(List.of(2001L, 2002L)));
+    }
+
+    @Test
     void getHistory_secondPage_returnsNextSlice() {
         HistoryEntryEntity nextHistory = HistoryEntryEntity.builder()
             .familyId(1)
@@ -403,6 +473,72 @@ class FamilyServiceImplTest {
         assertThat(payload.items().getFirst().description()).isEqualTo("Prize");
         assertThat(payload.items().getFirst().groupName()).isEqualTo("Fun");
         assertThat(payload.items().getFirst().itemComment()).isEqualTo("Prize");
+    }
+
+    @Test
+    void getRequests_missingArchivedRelatedIdsUsesSingleBatchLookupPerEntityType() {
+        PurchaseRequestEntity taskRequest1 = PurchaseRequestEntity.builder()
+            .id(10L)
+            .familyId(1)
+            .childId(10)
+            .taskId(1001L)
+            .coins(5)
+            .requestType(PurchaseRequestType.earn)
+            .build();
+        PurchaseRequestEntity taskRequest2 = PurchaseRequestEntity.builder()
+            .id(11L)
+            .familyId(1)
+            .childId(11)
+            .taskId(1002L)
+            .coins(7)
+            .requestType(PurchaseRequestType.earn)
+            .build();
+        PurchaseRequestEntity shopRequest1 = PurchaseRequestEntity.builder()
+            .id(12L)
+            .familyId(1)
+            .childId(10)
+            .itemId(2001L)
+            .coins(3)
+            .requestType(PurchaseRequestType.shop_purchase)
+            .build();
+        PurchaseRequestEntity shopRequest2 = PurchaseRequestEntity.builder()
+            .id(13L)
+            .familyId(1)
+            .childId(11)
+            .itemId(2002L)
+            .coins(4)
+            .requestType(PurchaseRequestType.shop_purchase)
+            .build();
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyDataRepository.getRequests(1, 20, 0))
+            .thenReturn(List.of(taskRequest1, taskRequest2, shopRequest1, shopRequest2));
+        when(familyDataRepository.getRequestsCount(1)).thenReturn(4);
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getTasks(11)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(11)).thenReturn(List.of());
+        when(taskRepository.findByFamilyAndChildAndTaskIds(eq(1), eq(List.of(10, 11)), eq(List.of(1001L, 1002L))))
+            .thenReturn(List.of(
+                TaskEntity.builder().familyId(1).childId(11).taskId(1002L).name("Write").coins(7).build(),
+                TaskEntity.builder().familyId(1).childId(10).taskId(1001L).name("Read").coins(5).build()
+            ));
+        when(shopItemRepository.findByFamilyAndChildAndItemIds(eq(1), eq(List.of(10, 11)), eq(List.of(2001L, 2002L))))
+            .thenReturn(List.of(
+                ShopItemEntity.builder().familyId(1).childId(11).itemId(2002L).name("Game").price(4).build(),
+                ShopItemEntity.builder().familyId(1).childId(10).itemId(2001L).name("Toy").price(3).build()
+            ));
+
+        OperationResult<PaginatedRequests> result = service.getRequests("fam-1", 1, 20);
+
+        PaginatedRequests payload = successValue(result);
+        assertThat(payload.items()).hasSize(4);
+        assertThat(payload.items().get(0).taskName()).isEqualTo("Read");
+        assertThat(payload.items().get(2).itemName()).isEqualTo("Toy");
+        verify(taskRepository, times(1))
+            .findByFamilyAndChildAndTaskIds(eq(1), eq(List.of(10, 11)), eq(List.of(1001L, 1002L)));
+        verify(shopItemRepository, times(1))
+            .findByFamilyAndChildAndItemIds(eq(1), eq(List.of(10, 11)), eq(List.of(2001L, 2002L)));
     }
 
     @Test
