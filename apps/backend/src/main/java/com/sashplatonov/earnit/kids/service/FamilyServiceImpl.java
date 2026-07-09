@@ -28,11 +28,9 @@ import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyDataRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
-import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
-import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -64,36 +62,33 @@ public final class FamilyServiceImpl implements FamilyService {
     public FamilyServiceImpl(FamilyRepository familyRepository,
                              ChildRepository childRepository,
                              FamilyDataRepository familyDataRepository,
-                             HistoryRepository historyRepository,
                              TaskRepository taskRepository,
                              ShopItemRepository shopItemRepository,
                              ObjectMapper objectMapper,
-                             TimeProvider timeProvider,
-                             BackendKpiMetrics backendKpiMetrics) {
+                             FamilyDashboardQueryService familyDashboardQueryService,
+                             FamilyCommandService familyCommandService,
+                             AnalyticsService analyticsService) {
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
         this.familyDataRepository = familyDataRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
         this.objectMapper = objectMapper;
-        this.familyDashboardQueryService = new FamilyDashboardQueryServiceImpl(
-            familyRepository,
-            childRepository,
-            familyDataRepository,
-            historyRepository,
-            taskRepository,
-            shopItemRepository,
-            objectMapper,
-            backendKpiMetrics
-        );
-        this.familyCommandService = new FamilyCommandServiceImpl(
-            familyRepository,
-            childRepository,
-            familyDataRepository,
-            familyDashboardQueryService,
-            objectMapper
-        );
-        this.analyticsService = new AnalyticsServiceImpl(
+        this.familyDashboardQueryService = familyDashboardQueryService;
+        this.familyCommandService = familyCommandService;
+        this.analyticsService = analyticsService;
+    }
+
+    FamilyServiceImpl(FamilyRepository familyRepository,
+                      ChildRepository childRepository,
+                      FamilyDataRepository familyDataRepository,
+                      com.sashplatonov.earnit.kids.repository.HistoryRepository historyRepository,
+                      TaskRepository taskRepository,
+                      ShopItemRepository shopItemRepository,
+                      com.sashplatonov.earnit.kids.util.TimeProvider timeProvider,
+                      BackendKpiMetrics backendKpiMetrics) {
+        ObjectMapper mapper = new ObjectMapper();
+        AnalyticsService analyticsService = new AnalyticsServiceImpl(
             familyRepository,
             historyRepository,
             taskRepository,
@@ -101,18 +96,33 @@ public final class FamilyServiceImpl implements FamilyService {
             timeProvider,
             backendKpiMetrics
         );
-    }
+        FamilyDashboardQueryService familyDashboardQueryService = new FamilyDashboardQueryServiceImpl(
+            familyRepository,
+            childRepository,
+            familyDataRepository,
+            historyRepository,
+            taskRepository,
+            shopItemRepository,
+            mapper,
+            backendKpiMetrics
+        );
 
-    FamilyServiceImpl(FamilyRepository familyRepository,
-                      ChildRepository childRepository,
-                      FamilyDataRepository familyDataRepository,
-                      HistoryRepository historyRepository,
-                      TaskRepository taskRepository,
-                      ShopItemRepository shopItemRepository,
-                      TimeProvider timeProvider,
-                      BackendKpiMetrics backendKpiMetrics) {
-        this(familyRepository, childRepository, familyDataRepository, historyRepository,
-            taskRepository, shopItemRepository, new ObjectMapper(), timeProvider, backendKpiMetrics);
+        this.familyRepository = familyRepository;
+        this.childRepository = childRepository;
+        this.familyDataRepository = familyDataRepository;
+        this.taskRepository = taskRepository;
+        this.shopItemRepository = shopItemRepository;
+        this.objectMapper = mapper;
+        this.familyDashboardQueryService = familyDashboardQueryService;
+        this.familyCommandService = new FamilyCommandServiceImpl(
+            familyRepository,
+            childRepository,
+            familyDataRepository,
+            familyDashboardQueryService,
+            analyticsService,
+            mapper
+        );
+        this.analyticsService = analyticsService;
     }
 
     @Override
@@ -167,6 +177,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         ChildEntity child = childOpt.get();
         log.info("Child created childId={} familyId={}", child.getId(), familyId);
+        invalidateAnalyticsCache(familyId);
         return OperationResult.success(new ChildInfo(child.getId(), child.getName(), child.getToken()));
     }
 
@@ -190,6 +201,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
         childRepository.deleteChild(childId);
         log.info("Child deleted childId={} familyId={}", childId, familyId);
+        invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }
 
@@ -212,6 +224,7 @@ public final class FamilyServiceImpl implements FamilyService {
         }
 
         childRepository.updateName(childId, newName);
+        invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }
 
@@ -227,6 +240,7 @@ public final class FamilyServiceImpl implements FamilyService {
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit);
+        invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }
 
@@ -243,6 +257,7 @@ public final class FamilyServiceImpl implements FamilyService {
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         childRepository.updateTheme(childId, theme);
+        invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }
 
@@ -279,6 +294,7 @@ public final class FamilyServiceImpl implements FamilyService {
         }
 
         childRepository.updateGroupOrder(childId, section, personalOrder, serializedOrder);
+        invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }
 
@@ -314,6 +330,7 @@ public final class FamilyServiceImpl implements FamilyService {
             return failure("FRIEND_ADD_FAILED", "family.friendAddFailed");
         }
 
+        invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }
 
@@ -433,6 +450,7 @@ public final class FamilyServiceImpl implements FamilyService {
             }
 
             familyRepository.updateLastSelectedChild(familyId, childId);
+            invalidateAnalyticsCache(familyId);
             return OperationResult.success(null);
         }
         return failure("UNKNOWN_SETTING", "family.unknownSetting", Map.of("key", String.valueOf(key)));
@@ -461,6 +479,10 @@ public final class FamilyServiceImpl implements FamilyService {
             }
         }
         return null;
+    }
+
+    private void invalidateAnalyticsCache(String familyId) {
+        analyticsService.invalidateCache(familyId);
     }
 
     private String serializeGroupOrder(List<String> groups) throws JsonProcessingException {

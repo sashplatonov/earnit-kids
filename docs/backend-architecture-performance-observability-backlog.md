@@ -251,21 +251,31 @@ HTTP metrics не должны становиться bottleneck на hot path, 
 - тесты HTTP metrics по-прежнему покрывают счётчики запросов и поведение payload-size;
 - большие response paths не требуют второй полной сериализации объекта только ради telemetry.
 
-### BAP-06 - Добавить short-lived cache и явную invalidation для стабильных read-heavy путей
+### BAP-06 - Добавить short-lived cache и явную invalidation для стабильных read-heavy путей ✅
 
 Приоритет: P1
+
+Статус: выполнено 2026-07-09.
 
 Основные файлы:
 
 - `apps/backend/pom.xml`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/BaseDataService.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AnalyticsService.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AnalyticsServiceImpl.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AnalyticsCacheEntry.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyCommandServiceImpl.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
 - `apps/backend/src/main/resources/application.properties`
 - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/BaseDataServiceTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/AnalyticsServiceImplTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/FamilyCommandServiceImplTest.java`
 
 Архитектурное решение:
 
 Кешировать только те данные, которые стабильны, часто читаются и имеют понятную модель invalidation. Хорошие кандидаты: base data, analytics slices с коротким TTL и почти неизменяемые catalog metadata. Не кешировать mutable dashboard state без явного scope key.
+
+Base data cache живёт 5 минут и сбрасывается на `saveBaseData`, analytics cache живёт 60 секунд, ключ включает `familyId`, `childId` и `timeframe`, а любая mutation-операция через `FamilyServiceImpl` или `saveFamilyData` очищает analytics cache до следующего read hit.
 
 Критерии проверки:
 
@@ -273,6 +283,8 @@ HTTP metrics не должны становиться bottleneck на hot path, 
 - cache key включает family и child scope, если данные scoped;
 - тесты доказывают, что записи всё ещё видны свежими там, где нужна немедленная consistency;
 - cache не добавлен в mutable request или balance mutation paths.
+
+[Наверх](#top)
 
 [Наверх](#top)
 
@@ -540,7 +552,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 2. `BAP-11` ✅
 3. `BAP-12` ✅
 4. `BAP-02` ✅
-5. `BAP-06`
+5. `BAP-06` ✅
 6. `BAP-08`
 7. `BAP-09`
 8. `BAP-15`

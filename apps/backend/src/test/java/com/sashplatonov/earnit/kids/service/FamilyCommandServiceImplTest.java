@@ -40,6 +40,7 @@ class FamilyCommandServiceImplTest {
     @Mock ChildRepository childRepository;
     @Mock FamilyDataRepository familyDataRepository;
     @Mock FamilyDashboardQueryService familyDashboardQueryService;
+    @Mock AnalyticsService analyticsService;
 
     private FamilyCommandServiceImpl service;
 
@@ -50,6 +51,7 @@ class FamilyCommandServiceImplTest {
             childRepository,
             familyDataRepository,
             familyDashboardQueryService,
+            analyticsService,
             new ObjectMapper()
         );
     }
@@ -109,6 +111,7 @@ class FamilyCommandServiceImplTest {
         verify(familyDataRepository).markAllTasksDeleted(10);
         verify(familyDataRepository).markAllShopItemsDeleted(10);
         verify(familyDashboardQueryService).loadFamilyData("fam-1", 10, true);
+        verify(analyticsService).invalidateCache("fam-1");
 
         ArgumentCaptor<TaskUpsertCommand> taskCommandCaptor = ArgumentCaptor.forClass(TaskUpsertCommand.class);
         verify(familyDataRepository).upsertTask(taskCommandCaptor.capture());

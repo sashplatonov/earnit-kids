@@ -14,7 +14,7 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import lombok.RequiredArgsConstructor;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -22,12 +22,15 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @ApplicationScoped
-@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class AnalyticsServiceImpl implements AnalyticsService {
+    private static final Duration DEFAULT_CACHE_TTL = Duration.ofSeconds(60);
 
     private final FamilyRepository familyRepository;
     private final HistoryRepository historyRepository;
@@ -35,56 +38,67 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final ShopItemRepository shopItemRepository;
     private final TimeProvider timeProvider;
     private final BackendKpiMetrics backendKpiMetrics;
+    private final Duration analyticsCacheTtl;
+    private final ConcurrentMap<String, AnalyticsCacheEntry> analyticsCache = new ConcurrentHashMap<>();
+
+    @Inject
+    public AnalyticsServiceImpl(FamilyRepository familyRepository,
+                                HistoryRepository historyRepository,
+                                TaskRepository taskRepository,
+                                ShopItemRepository shopItemRepository,
+                                TimeProvider timeProvider,
+                                BackendKpiMetrics backendKpiMetrics,
+                                @ConfigProperty(name = "app.performance.cache.analytics-ttl")
+                                Duration analyticsCacheTtl) {
+        this.familyRepository = familyRepository;
+        this.historyRepository = historyRepository;
+        this.taskRepository = taskRepository;
+        this.shopItemRepository = shopItemRepository;
+        this.timeProvider = timeProvider;
+        this.backendKpiMetrics = backendKpiMetrics;
+        this.analyticsCacheTtl = analyticsCacheTtl == null ? DEFAULT_CACHE_TTL : analyticsCacheTtl;
+    }
+
+    AnalyticsServiceImpl(FamilyRepository familyRepository,
+                         HistoryRepository historyRepository,
+                         TaskRepository taskRepository,
+                         ShopItemRepository shopItemRepository,
+                         TimeProvider timeProvider,
+                         BackendKpiMetrics backendKpiMetrics) {
+        this(familyRepository, historyRepository, taskRepository, shopItemRepository, timeProvider,
+            backendKpiMetrics, DEFAULT_CACHE_TTL);
+    }
 
     @Override
     public OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe) {
         return backendKpiMetrics.recordResult("analytics", "get_data", () -> {
+            String cacheKey = cacheKey(familyId, childId, timeframe);
+            AnalyticsCacheEntry cached = analyticsCache.get(cacheKey);
+            if (cached != null && !isExpired(cached)) {
+                return OperationResult.success(cached.payload());
+            }
+
             Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
             if (familyDbIdOpt.isEmpty()) {
                 return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
             int familyDbId = familyDbIdOpt.get();
-            Duration periodDuration = resolveTimeframeDuration(timeframe);
             Instant now = timeProvider.now();
-            Instant periodStart = now.minus(periodDuration);
-            Instant previousStart = periodStart.minus(periodDuration);
-
-            // EXPLAIN: Use SQL aggregation instead of loading full history rows.
-            var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
-            var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
-
-            int[] currentSummary = normalizeSummary(currentRaw);
-            int[] previousSummary = normalizeSummary(previousRaw);
-
-            int currentNet = currentSummary[0] - currentSummary[1];
-            int previousNet = previousSummary[0] - previousSummary[1];
-
-            var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentNet);
-            var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousNet);
-
-            List<TaskEntity> tasks = queryTasks(familyDbId, childId);
-            List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
-
-            List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStatsAggregated(
-                historyRepository.topTasksInPeriod(familyDbId, childId, periodStart, now), tasks);
-            List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStatsAggregated(
-                historyRepository.topItemsInPeriod(familyDbId, childId, periodStart, now), items);
-
-            List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrendsAggregated(
-                historyRepository.dailyTrendInPeriod(familyDbId, childId, periodStart, now));
-
-            List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
-
-            return OperationResult.success(new AnalyticsResponse(
-                summary,
-                topTasks,
-                topItems,
-                trends,
-                comparison,
-                recommendations
-            ));
+            AnalyticsResponse response = buildAnalyticsResponse(familyDbId, childId, timeframe, now);
+            analyticsCache.put(cacheKey, new AnalyticsCacheEntry(now, response));
+            return OperationResult.success(response);
         });
+    }
+
+    @Override
+    public void invalidateCache(String familyId) {
+        if (familyId == null || familyId.isBlank()) {
+            analyticsCache.clear();
+            return;
+        }
+        String prefix = familyId + "|";
+        analyticsCache.keySet().removeIf(key -> key.startsWith(prefix));
     }
 
     private List<TaskEntity> queryTasks(int familyDbId, Integer childId) {
@@ -109,6 +123,47 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             return Duration.ofDays(365);
         }
         return Duration.ofDays(30);
+    }
+
+    private AnalyticsResponse buildAnalyticsResponse(int familyDbId, Integer childId, String timeframe, Instant now) {
+        Duration periodDuration = resolveTimeframeDuration(timeframe);
+        Instant periodStart = now.minus(periodDuration);
+        Instant previousStart = periodStart.minus(periodDuration);
+
+        // EXPLAIN: Use SQL aggregation instead of loading full history rows.
+        var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
+        var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
+
+        int[] currentSummary = normalizeSummary(currentRaw);
+        int[] previousSummary = normalizeSummary(previousRaw);
+
+        int currentNet = currentSummary[0] - currentSummary[1];
+        int previousNet = previousSummary[0] - previousSummary[1];
+
+        var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentNet);
+        var comparison = new AnalyticsResponse.AnalyticsSummary(
+            previousSummary[0],
+            previousSummary[1],
+            previousNet
+        );
+
+        List<TaskEntity> tasks = queryTasks(familyDbId, childId);
+        List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
+
+        List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStatsAggregated(
+            historyRepository.topTasksInPeriod(familyDbId, childId, periodStart, now),
+            tasks
+        );
+        List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStatsAggregated(
+            historyRepository.topItemsInPeriod(familyDbId, childId, periodStart, now),
+            items
+        );
+        List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrendsAggregated(
+            historyRepository.dailyTrendInPeriod(familyDbId, childId, periodStart, now)
+        );
+        List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
+
+        return new AnalyticsResponse(summary, topTasks, topItems, trends, comparison, recommendations);
     }
 
     private int[] normalizeSummary(int[] summary) {
@@ -239,5 +294,16 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
         return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
+    }
+
+    private boolean isExpired(AnalyticsCacheEntry cached) {
+        if (analyticsCacheTtl.isZero() || analyticsCacheTtl.isNegative()) {
+            return true;
+        }
+        return Duration.between(cached.cachedAt(), timeProvider.now()).compareTo(analyticsCacheTtl) >= 0;
+    }
+
+    private String cacheKey(String familyId, Integer childId, String timeframe) {
+        return familyId + "|" + String.valueOf(childId) + "|" + String.valueOf(timeframe).toLowerCase(Locale.ROOT);
     }
 }

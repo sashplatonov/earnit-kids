@@ -29,6 +29,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -147,6 +149,37 @@ class AnalyticsServiceImplTest {
         assertThat(payload.summary().totalSpent()).isZero();
         assertThat(payload.comparison().totalEarned()).isZero();
         assertThat(payload.comparison().totalSpent()).isZero();
+    }
+
+    @Test
+    void getAnalyticsData_reusesCacheUntilTargetFamilyInvalidation() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getDbId("fam-2")).thenReturn(Optional.of(2));
+        when(historyRepository.summarizePeriod(anyInt(), any(), any(), any())).thenReturn(new int[]{5, 3});
+        when(historyRepository.topTasksInPeriod(anyInt(), any(), any(), any())).thenReturn(List.of());
+        when(historyRepository.topItemsInPeriod(anyInt(), any(), any(), any())).thenReturn(List.of());
+        when(historyRepository.dailyTrendInPeriod(anyInt(), any(), any(), any())).thenReturn(List.of());
+        doReturn(List.of()).when(taskRepository).list(anyString(), any(Object[].class));
+        doReturn(List.of()).when(shopItemRepository).list(anyString(), any(Object[].class));
+
+        OperationResult<AnalyticsResponse> first = service.getAnalyticsData("fam-1", null, "month");
+        OperationResult<AnalyticsResponse> second = service.getAnalyticsData("fam-1", null, "month");
+        OperationResult<AnalyticsResponse> otherFamily = service.getAnalyticsData("fam-2", null, "month");
+
+        assertThat(first).isInstanceOf(OperationResult.Success.class);
+        assertThat(second).isInstanceOf(OperationResult.Success.class);
+        assertThat(otherFamily).isInstanceOf(OperationResult.Success.class);
+        verify(historyRepository, times(4)).summarizePeriod(anyInt(), any(), any(), any());
+        verify(historyRepository, times(2)).topTasksInPeriod(anyInt(), any(), any(), any());
+        verify(historyRepository, times(2)).topItemsInPeriod(anyInt(), any(), any(), any());
+        verify(historyRepository, times(2)).dailyTrendInPeriod(anyInt(), any(), any(), any());
+        verify(taskRepository, times(4)).list(anyString(), any(Object[].class));
+        verify(shopItemRepository, times(2)).list(anyString(), any(Object[].class));
+
+        service.invalidateCache("fam-1");
+        service.getAnalyticsData("fam-1", null, "month");
+        service.getAnalyticsData("fam-2", null, "month");
+        verify(historyRepository, times(6)).summarizePeriod(anyInt(), any(), any(), any());
     }
 
     private static <T> T successValue(OperationResult<T> result) {

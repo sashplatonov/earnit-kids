@@ -2,15 +2,19 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -19,21 +23,33 @@ import java.util.Map;
 public class BaseDataService {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
     private static final Map<String, Object> EMPTY_BASE_DATA = Map.of("tasks", List.of(), "products", List.of());
+    private static final Duration DEFAULT_CACHE_TTL = Duration.ofMinutes(5);
 
     private final ObjectMapper objectMapper;
     private final Path baseDataFilePath;
+    private final TimeProvider timeProvider;
+    private final Duration cacheTtl;
     private Map<String, Object> baseData = EMPTY_BASE_DATA;
     private volatile boolean initialized;
+    private volatile Instant cacheLoadedAt;
     private final Object baseDataLock = new Object();
 
     @Inject
-    public BaseDataService(ObjectMapper objectMapper) {
-        this(objectMapper, resolveBaseDataFilePath());
+    public BaseDataService(ObjectMapper objectMapper,
+                           TimeProvider timeProvider,
+                           @ConfigProperty(name = "app.performance.cache.base-data-ttl") Duration cacheTtl) {
+        this(objectMapper, resolveBaseDataFilePath(), timeProvider, cacheTtl);
     }
 
     BaseDataService(ObjectMapper objectMapper, Path baseDataFilePath) {
+        this(objectMapper, baseDataFilePath, Instant::now, DEFAULT_CACHE_TTL);
+    }
+
+    BaseDataService(ObjectMapper objectMapper, Path baseDataFilePath, TimeProvider timeProvider, Duration cacheTtl) {
         this.objectMapper = objectMapper;
         this.baseDataFilePath = baseDataFilePath;
+        this.timeProvider = timeProvider;
+        this.cacheTtl = cacheTtl == null ? DEFAULT_CACHE_TTL : cacheTtl;
     }
 
     @PostConstruct
@@ -42,6 +58,7 @@ public class BaseDataService {
         synchronized (baseDataLock) {
             baseData = loaded;
             initialized = true;
+            cacheLoadedAt = timeProvider.now();
         }
     }
 
@@ -50,6 +67,9 @@ public class BaseDataService {
             initialize();
         }
         synchronized (baseDataLock) {
+            if (isCacheExpired()) {
+                initialize();
+            }
             return baseData;
         }
     }
@@ -63,13 +83,22 @@ public class BaseDataService {
                     Files.createDirectories(parent);
                 }
                 objectMapper.writerWithDefaultPrettyPrinter().writeValue(baseDataFilePath.toFile(), normalized);
+                invalidateCache();
                 baseData = normalized;
                 initialized = true;
+                cacheLoadedAt = timeProvider.now();
                 return true;
             } catch (IOException ex) {
                 log.error("Failed to persist base data to {}", baseDataFilePath, ex);
                 return false;
             }
+        }
+    }
+
+    void invalidateCache() {
+        synchronized (baseDataLock) {
+            initialized = false;
+            cacheLoadedAt = null;
         }
     }
 
@@ -113,6 +142,16 @@ public class BaseDataService {
         normalized.putIfAbsent("tasks", List.of());
         normalized.putIfAbsent("products", List.of());
         return normalized;
+    }
+
+    private boolean isCacheExpired() {
+        if (!initialized || cacheLoadedAt == null) {
+            return true;
+        }
+        if (cacheTtl.isZero() || cacheTtl.isNegative()) {
+            return true;
+        }
+        return Duration.between(cacheLoadedAt, timeProvider.now()).compareTo(cacheTtl) >= 0;
     }
 
     private static Path resolveBaseDataFilePath() {

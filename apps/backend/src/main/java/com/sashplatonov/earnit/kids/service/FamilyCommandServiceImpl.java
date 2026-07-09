@@ -36,6 +36,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
     private final ChildRepository childRepository;
     private final FamilyDataRepository familyDataRepository;
     private final FamilyDashboardQueryService familyDashboardQueryService;
+    private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -70,6 +71,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
         syncTasks(familyDbId, selectedChildId, payload);
         syncShopItems(familyDbId, selectedChildId, payload);
         familyRepository.updateLastActivity(familyId);
+        analyticsService.invalidateCache(familyId);
 
         return familyDashboardQueryService.loadFamilyData(familyId, selectedChildId, adminSession);
     }
