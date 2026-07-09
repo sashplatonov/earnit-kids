@@ -70,20 +70,21 @@ class FamilyResourceTest {
     @Mock FamilyParentAccessService familyParentAccessService;
 
     private FamilyResource resource;
+    private FamilyReadResource readResource;
 
     @BeforeEach
     void setUp() {
         resource = new FamilyResource(
             familyActionService,
             familyService,
-            baseDataService,
             webSocketNotificationService,
             familyParentAccessService);
+        readResource = new FamilyReadResource(familyService, baseDataService);
     }
 
     @Test
     void getFamilyData_missingAuthContext_returnsUnauthorized() {
-        Response response = resource.getFamilyData(contextWithAuth(null), null);
+        Response response = readResource.getFamilyData(contextWithAuth(null), null);
         assertThat(response.getStatus()).isEqualTo(401);
     }
 
@@ -93,7 +94,7 @@ class FamilyResourceTest {
             true, List.of(), null, 10, null, null, null);
         when(familyService.loadFamilyShellData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.getFamilyData(contextWithAuth(adminAuth()), 10);
+        Response response = readResource.getFamilyData(contextWithAuth(adminAuth()), 10);
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getEntity()).isEqualTo(payload);
@@ -105,7 +106,7 @@ class FamilyResourceTest {
             null, List.of(), 10, 10, null, null, null);
         when(familyService.loadFamilyShellData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.getFamilyData(contextWithAuth(childAuth(10)), 99);
+        Response response = readResource.getFamilyData(contextWithAuth(childAuth(10)), 99);
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).loadFamilyShellData("fam-1", 10, false);
@@ -116,7 +117,7 @@ class FamilyResourceTest {
         FamilyDashboardDetailResponse payload = new FamilyDashboardDetailResponse(List.of(), List.of(), List.of());
         when(familyService.loadFamilyDetailData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.getFamilyDataDetails(contextWithAuth(adminAuth()), 10);
+        Response response = readResource.getFamilyDataDetails(contextWithAuth(adminAuth()), 10);
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getEntity()).isEqualTo(payload);
@@ -145,7 +146,7 @@ class FamilyResourceTest {
             true, List.of(), null, 10, null, null, null);
         when(familyService.loadFamilyShellData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.getFamilyData(contextWithAuth(superAdminAuth()), 10);
+        Response response = readResource.getFamilyData(contextWithAuth(superAdminAuth()), 10);
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getEntity()).isEqualTo(payload);
@@ -153,11 +154,11 @@ class FamilyResourceTest {
 
     @Test
     void getBaseData_missingAuthContext_returnsUnauthorized() {
-        Response unauthorized = resource.getBaseData(contextWithAuth(null));
+        Response unauthorized = readResource.getBaseData(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
         when(baseDataService.getBaseData()).thenReturn(Map.of("tasks", List.of(), "products", List.of()));
-        Response ok = resource.getBaseData(contextWithAuth(adminAuth()));
+        Response ok = readResource.getBaseData(contextWithAuth(adminAuth()));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
@@ -415,7 +416,7 @@ class FamilyResourceTest {
                 new AnalyticsResponse.AnalyticsSummary(0, 0, 0),
                 List.of())));
 
-        Response response = resource.getAnalytics(contextWithAuth(childAuth(10)), "week", 999);
+        Response response = readResource.getAnalytics(contextWithAuth(childAuth(10)), "week", 999);
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).getAnalyticsData("fam-1", 10, "week");
@@ -427,8 +428,8 @@ class FamilyResourceTest {
             .thenReturn(OperationResult.success(new PaginatedHistory(List.of(), 0, 2, 15)));
         when(familyService.getRequests("fam-1", 2, 15)).thenReturn(OperationResult.success(new PaginatedRequests(List.of(), 0, 2, 15)));
 
-        Response history = resource.getHistory(contextWithAuth(childAuth(10)), 99, 2, 15);
-        Response requests = resource.getRequests(contextWithAuth(adminAuth()), 2, 15);
+        Response history = readResource.getHistory(contextWithAuth(childAuth(10)), 99, 2, 15);
+        Response requests = readResource.getRequests(contextWithAuth(adminAuth()), 2, 15);
 
         assertThat(history.getStatus()).isEqualTo(200);
         assertThat(requests.getStatus()).isEqualTo(200);
@@ -437,7 +438,7 @@ class FamilyResourceTest {
 
     @Test
     void getRequests_childSession_returnsUnauthorized() {
-        Response response = resource.getRequests(contextWithAuth(childAuth(10)), 1, 20);
+        Response response = readResource.getRequests(contextWithAuth(childAuth(10)), 1, 20);
 
         assertThat(response.getStatus()).isEqualTo(401);
     }

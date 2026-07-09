@@ -32,14 +32,13 @@ class SuperAdminResourceTest {
     @Mock SystemDashboardService systemDashboardService;
 
     private SuperAdminResource resource;
+    private SystemDashboardResource systemDashboardResource;
 
     @BeforeEach
     void setUp() {
         RequestLocaleHolder.set("en");
-        resource = new SuperAdminResource(
-            superAdminService,
-            systemDashboardService
-        );
+        resource = new SuperAdminResource(superAdminService);
+        systemDashboardResource = new SystemDashboardResource(systemDashboardService);
     }
 
     @AfterEach
@@ -208,22 +207,22 @@ class SuperAdminResourceTest {
     void getSystemOverview_superAdmin_returnsPayload() {
         when(systemDashboardService.getOverview()).thenReturn(Map.of("process", Map.of("uptimeSec", 100L)));
 
-        Response response = resource.getSystemOverview(contextWithAuth(superAdminAuth()));
+        Response response = systemDashboardResource.getSystemOverview(contextWithAuth(superAdminAuth()));
 
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test
     void getSystemOverview_requiresSuperAdmin() {
-        assertThat(resource.getSystemOverview(contextWithAuth(null)).getStatus()).isEqualTo(401);
-        assertThat(resource.getSystemOverview(contextWithAuth(adminAuth())).getStatus()).isEqualTo(403);
+        assertThat(systemDashboardResource.getSystemOverview(contextWithAuth(null)).getStatus()).isEqualTo(401);
+        assertThat(systemDashboardResource.getSystemOverview(contextWithAuth(adminAuth())).getStatus()).isEqualTo(403);
     }
 
     @Test
     void getDatabaseHealth_superAdmin_returnsPayload() {
         when(systemDashboardService.getDbHealth()).thenReturn(Map.of("db", Map.of("connected", true)));
 
-        Response response = resource.getDatabaseHealth(contextWithAuth(superAdminAuth()));
+        Response response = systemDashboardResource.getDatabaseHealth(contextWithAuth(superAdminAuth()));
 
         assertThat(response.getStatus()).isEqualTo(200);
     }
@@ -232,7 +231,7 @@ class SuperAdminResourceTest {
     void getHttpMetrics_superAdmin_returnsPayload() {
         when(systemDashboardService.getHttpMetrics()).thenReturn(Map.of("routes", List.of()));
 
-        Response response = resource.getHttpMetrics(contextWithAuth(superAdminAuth()));
+        Response response = systemDashboardResource.getHttpMetrics(contextWithAuth(superAdminAuth()));
 
         assertThat(response.getStatus()).isEqualTo(200);
     }
@@ -241,7 +240,7 @@ class SuperAdminResourceTest {
     void getLogs_superAdmin_forwardslevelAndLimit() {
         when(systemDashboardService.getLogs("error", 50)).thenReturn(Map.of("logs", List.of()));
 
-        Response response = resource.getLogs(contextWithAuth(superAdminAuth()), "error", 50);
+        Response response = systemDashboardResource.getLogs(contextWithAuth(superAdminAuth()), "error", 50);
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(systemDashboardService).getLogs("error", 50);
@@ -251,7 +250,7 @@ class SuperAdminResourceTest {
     void getLogs_nullParams_usesDefaults() {
         when(systemDashboardService.getLogs("all", 100)).thenReturn(Map.of("logs", List.of()));
 
-        Response response = resource.getLogs(contextWithAuth(superAdminAuth()), null, null);
+        Response response = systemDashboardResource.getLogs(contextWithAuth(superAdminAuth()), null, null);
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(systemDashboardService).getLogs("all", 100);

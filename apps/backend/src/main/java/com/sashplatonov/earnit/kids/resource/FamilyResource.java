@@ -18,21 +18,15 @@ import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateParentMembershipRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdatePreferenceRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateThemeRequest;
-import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
-import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
-import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
-import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
-import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.exception.ImportValidationException;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
-import com.sashplatonov.earnit.kids.service.BaseDataService;
 import com.sashplatonov.earnit.kids.service.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.FamilyService;
@@ -51,7 +45,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -70,74 +63,23 @@ import java.util.Objects;
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Tag(name = "Family", description = "Family dashboard, children, history, and analytics endpoints")
+@Tag(name = "Family", description = "Family mutations and child-management endpoints")
 public class FamilyResource {
 
     private final FamilyActionService familyActionService;
     private final FamilyService familyService;
-    private final BaseDataService baseDataService;
     private final WebSocketNotificationService webSocketNotificationService;
     private final FamilyParentAccessService familyParentAccessService;
 
     @Inject
     public FamilyResource(FamilyActionService familyActionService,
                           FamilyService familyService,
-                          BaseDataService baseDataService,
                           WebSocketNotificationService webSocketNotificationService,
                           FamilyParentAccessService familyParentAccessService) {
         this.familyActionService = familyActionService;
         this.familyService = familyService;
-        this.baseDataService = baseDataService;
         this.webSocketNotificationService = webSocketNotificationService;
         this.familyParentAccessService = familyParentAccessService;
-    }
-
-    @GET
-    @Path("/data")
-    @Operation(summary = "Load the dashboard shell payload for a family or child session")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Dashboard shell returned",
-            content = @Content(schema = @Schema(implementation = FamilyDashboardShellResponse.class))),
-        @APIResponse(responseCode = "401", description = "Authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response getFamilyData(@Context ContainerRequestContext ctx,
-                                  @Parameter(description = "Child id override for admin sessions")
-                                  @QueryParam("childId") Integer childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null) {
-            return unauthorized();
-        }
-
-        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
-        OperationResult<FamilyDashboardShellResponse> result =
-            familyService.loadFamilyShellData(auth.familyId(), effectiveChildId, auth.isAdmin());
-
-        return toResponse(result);
-    }
-
-    @GET
-    @Path("/data/details")
-    @Operation(summary = "Load the heavy dashboard details for a family or child session")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Dashboard details returned",
-            content = @Content(schema = @Schema(implementation = FamilyDashboardDetailResponse.class))),
-        @APIResponse(responseCode = "401", description = "Authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response getFamilyDataDetails(@Context ContainerRequestContext ctx,
-                                         @Parameter(description = "Child id override for admin sessions")
-                                         @QueryParam("childId") Integer childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null) {
-            return unauthorized();
-        }
-
-        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
-        OperationResult<FamilyDashboardDetailResponse> result =
-            familyService.loadFamilyDetailData(auth.familyId(), effectiveChildId, auth.isAdmin());
-
-        return toResponse(result);
     }
 
     @POST
@@ -430,22 +372,6 @@ public class FamilyResource {
         return toResponse(result);
     }
 
-    @GET
-    @Path("/base-data")
-    @Operation(summary = "Load the static task and reward catalog")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Base catalog returned"),
-        @APIResponse(responseCode = "401", description = "Authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response getBaseData(@Context ContainerRequestContext ctx) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null) {
-            return unauthorized();
-        }
-
-        return Response.ok(baseDataService.getBaseData()).build();
-    }
 
     @POST
     @Path("/children")
@@ -726,28 +652,6 @@ public class FamilyResource {
         return toResponse(familyService.getFriendsData(auth.childId()));
     }
 
-    @GET
-    @Path("/analytics")
-    @Operation(summary = "Load analytics for the family or selected child")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Analytics snapshot returned",
-            content = @Content(schema = @Schema(implementation = AnalyticsResponse.class))),
-        @APIResponse(responseCode = "401", description = "Authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response getAnalytics(@Context ContainerRequestContext ctx,
-                                 @Parameter(description = "Requested analytics window", example = "month")
-                                 @QueryParam("timeframe") @DefaultValue("month") String timeframe,
-                                 @Parameter(description = "Optional child id override for admin sessions")
-                                 @QueryParam("childId") Integer childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null) {
-            return unauthorized();
-        }
-
-        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
-        return toResponse(familyService.getAnalyticsData(auth.familyId(), effectiveChildId, timeframe));
-    }
 
     @GET
     @Path("/children/{childId}/link")
@@ -803,57 +707,6 @@ public class FamilyResource {
                 Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ErrorResponse.of(f.message(), "TOKEN_REGENERATION_FAILED", 500)).build();
         };
-    }
-
-    @GET
-    @Path("/history")
-    @Operation(summary = "List history entries for a child")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "History page returned",
-            content = @Content(schema = @Schema(implementation = PaginatedHistory.class))),
-        @APIResponse(responseCode = "401", description = "Authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response getHistory(@Context ContainerRequestContext ctx,
-                               @Parameter(description = "Optional child id override for admin sessions")
-                               @QueryParam("childId") Integer childId,
-                               @Parameter(description = "Page number", example = "1")
-                               @QueryParam("page") @DefaultValue("1") int page,
-                               @Parameter(description = "Page size", example = "20")
-                               @QueryParam("limit") @DefaultValue("20") int limit) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null) {
-            return unauthorized();
-        }
-
-        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
-        if (effectiveChildId == null) {
-            return badRequest(BackendMessages.message("errors.childIdRequired"));
-        }
-
-        return toResponse(familyService.getHistory(auth.familyId(), effectiveChildId, page, limit));
-    }
-
-    @GET
-    @Path("/requests")
-    @Operation(summary = "List purchase and task approval requests for the family")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Requests page returned",
-            content = @Content(schema = @Schema(implementation = PaginatedRequests.class))),
-        @APIResponse(responseCode = "401", description = "Authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response getRequests(@Context ContainerRequestContext ctx,
-                                @Parameter(description = "Page number", example = "1")
-                                @QueryParam("page") @DefaultValue("1") int page,
-                                @Parameter(description = "Page size", example = "20")
-                                @QueryParam("limit") @DefaultValue("20") int limit) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
-            return unauthorized();
-        }
-
-        return toResponse(familyService.getRequests(auth.familyId(), page, limit));
     }
 
     @POST

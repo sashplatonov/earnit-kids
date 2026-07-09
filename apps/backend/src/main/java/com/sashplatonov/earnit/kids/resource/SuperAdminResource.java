@@ -8,7 +8,6 @@ import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.SuperAdminService;
-import com.sashplatonov.earnit.kids.service.SystemDashboardService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -17,7 +16,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -34,7 +32,6 @@ import java.util.Map;
 public class SuperAdminResource {
 
     private final SuperAdminService superAdminService;
-    private final SystemDashboardService systemDashboardService;
 
     @GET
     @Path("/families")
@@ -160,50 +157,6 @@ public class SuperAdminResource {
                 .build();
         }
         return Response.ok(SimpleResponse.ok()).build();
-    }
-
-    @GET
-    @Path("/system/overview")
-    public Response getSystemOverview(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-        return Response.ok(systemDashboardService.getOverview()).build();
-    }
-
-    @GET
-    @Path("/system/db")
-    public Response getDatabaseHealth(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-        return Response.ok(systemDashboardService.getDbHealth()).build();
-    }
-
-    @GET
-    @Path("/system/http-metrics")
-    public Response getHttpMetrics(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-        return Response.ok(systemDashboardService.getHttpMetrics()).build();
-    }
-
-    @GET
-    @Path("/system/logs")
-    public Response getLogs(@Context ContainerRequestContext ctx,
-                            @QueryParam("level") String level,
-                            @QueryParam("limit") Integer limit) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-        int resolvedLimit = limit == null ? 100 : Math.max(1, Math.min(limit, 500));
-        String resolvedLevel = level == null || level.isBlank() ? "all" : level;
-        return Response.ok(systemDashboardService.getLogs(resolvedLevel, resolvedLimit)).build();
     }
 
     private Response toTokenResponse(OperationResult<String> result) {
