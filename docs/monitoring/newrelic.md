@@ -20,6 +20,7 @@ This repo uses one New Relic path split by runtime:
 - backend observability settings are exposed via typed config mappings under `app.performance.*` and `app.observability.*`
 - slow-request and slow-query diagnostics are threshold-driven, not per-request noise
 - readiness probes cover enabled New Relic metrics config before traffic is accepted
+- the backend dashboard contract lives in [newrelic-dashboard.md](newrelic-dashboard.md)
 
 [↑ Back to top](#top)
 
@@ -126,5 +127,10 @@ Checks:
 - custom thread metrics appear in New Relic `Metric` data after a few scrape intervals
 - logs include the application name and deployment environment
 - `docker compose down` still stops the stack cleanly
+
+## 📋 Dashboard Contract <a name="dashboard-contract"></a>
+
+For the widget definitions, NRQL examples, and alert thresholds, see
+[newrelic-dashboard.md](newrelic-dashboard.md).
 
 [↑ Back to top](#top)

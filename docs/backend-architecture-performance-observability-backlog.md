@@ -77,13 +77,13 @@
 | BAP-06 | P1 | Скорость/RAM | Добавить short-lived cache и явную invalidation для стабильных read-heavy путей |
 | BAP-07 | P0 | БД | Добавить pagination contracts для history и requests |
 | BAP-08 | P1 | БД | Заменить редкие fallback N+1 чтения батчевой hydration для missing IDs ✅ |
-| BAP-09 | P1 | БД | Добавить следующие измеренные composite indexes и проверки query-plan |
+| BAP-09 | P1 | БД | Добавить следующие измеренные composite indexes и проверки query-plan ✅ |
 | BAP-10 | P0 | Наблюдаемость | Обновить propagation trace и MDC scope fields |
 | BAP-11 | P1 | Наблюдаемость | Добавить лёгкие readiness checks для критичных runtime dependency ✅ |
 | BAP-12 | P1 | Наблюдаемость | Добавить slow-request и slow-query диагностику без лишнего шума ✅ |
 | BAP-13 | P0 | New Relic | Добавить реальный metrics export path для New Relic dashboards |
 | BAP-14 | P0 | New Relic | Инструментировать ключевые backend business и platform KPI ✅ |
-| BAP-15 | P1 | New Relic | Описать widgets dashboard, NRQL queries и thresholds оповещений |
+| BAP-15 | P1 | New Relic | Описать widgets dashboard, NRQL queries и thresholds оповещений ✅ |
 
 [Наверх](#top)
 
@@ -341,15 +341,21 @@ Base data cache живёт 5 минут и сбрасывается на `saveBa
 - поведение ответа остаётся тем же для названий archived task или shop item;
 - тесты проверяют archived fallback path, а не только happy path с in-memory lookup maps.
 
-### BAP-09 - Добавить следующие измеренные composite indexes и проверки query-plan
+### BAP-09 - Добавить следующие измеренные composite indexes и проверки query-plan ✅
 
 Приоритет: P1
 
+Статус: выполнено 2026-07-09.
+
 Основные файлы:
 
-- новый `apps/backend/src/main/resources/db/migration/V20__add_history_request_paging_indexes.sql`
+- новый `apps/backend/src/main/resources/db/migration/V21__add_history_request_query_indexes.sql`
 - mirrored H2-safe migration files в `apps/backend/src/test/resources/db/migration/`, только если репозиторий по-прежнему требует явного дублирования для test migrations
 - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/repository/RepositorySmokeTest.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AnalyticsServiceImpl.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/HistoryRepository.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/PurchaseRequestRepository.java`
 - `apps/backend/docs/ARCHITECTURE.md`
 
 Архитектурное решение:
@@ -505,9 +511,11 @@ Agroal уже покрывает подключение к БД. Дополни�
 - ни одна метрика не использует raw email, token, free-text message или неограниченные path fragments в качестве tag;
 - тесты или узкие smoke checks подтверждают, что метрики срабатывают на success и failure path хотя бы для одного ключевого сервиса.
 
-### BAP-15 - Описать widgets dashboard, NRQL queries и alert thresholds
+### BAP-15 - Описать widgets dashboard, NRQL queries и alert thresholds ✅
 
 Приоритет: P1
+
+Статус: выполнено 2026-07-09.
 
 Основные файлы:
 
@@ -548,7 +556,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 5. `BAP-10` ✅
 6. `BAP-13` ✅
 7. `BAP-14` ✅
-8. все `P1` items после свежих измерений
+8. все `P1` items после свежих измерений ✅
 
 Оптимальная очередь `P1` после свежих измерений для ИИ-агента:
 
@@ -558,7 +566,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 4. `BAP-02` ✅
 5. `BAP-06` ✅
 6. `BAP-08` ✅
-7. `BAP-09`
-8. `BAP-15`
+7. `BAP-09` ✅
+8. `BAP-15` ✅
 
 [Наверх](#top)

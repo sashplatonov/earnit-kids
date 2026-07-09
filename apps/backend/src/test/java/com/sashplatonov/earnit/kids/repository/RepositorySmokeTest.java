@@ -207,6 +207,30 @@ class RepositorySmokeTest {
             .containsExactly(93001L);
         assertThat(familyDataRepository.getRequests(familyDbId, 1, 2)).isEmpty();
 
+        assertThat(indexNamesForTables("HISTORY", "REQUESTS")).contains(
+            "IDX_HISTORY_FAMILY_CHILD_TYPE_RELATED_CREATED",
+            "IDX_REQUESTS_FAMILY_CHILD_TASK_STATUS_CREATED",
+            "IDX_REQUESTS_FAMILY_CHILD_ITEM_STATUS_CREATED"
+        );
+        assertThat(explainPlan(String.format(
+            "SELECT id FROM EARNIT_KIDS.history WHERE family_id = %d AND child_id = %d AND type = 'earn' " +
+                "AND related_id = %d AND created_at >= TIMESTAMP '2026-04-22 00:00:00' " +
+                "AND created_at < TIMESTAMP '2026-04-23 00:00:00'",
+            familyDbId, child1.getId(), taskExternalId
+        ))).contains("IDX_HISTORY_FAMILY_CHILD_TYPE_RELATED_CREATED");
+        assertThat(explainPlan(String.format(
+            "SELECT id FROM EARNIT_KIDS.requests WHERE family_id = %d AND child_id = %d AND task_id = %d " +
+                "AND status = 'pending' AND created_at >= TIMESTAMP '2026-04-22 00:00:00' " +
+                "AND created_at < TIMESTAMP '2026-04-23 00:00:00'",
+            familyDbId, child1.getId(), taskExternalId
+        ))).contains("IDX_REQUESTS_FAMILY_CHILD_TASK_STATUS_CREATED");
+        assertThat(explainPlan(String.format(
+            "SELECT id FROM EARNIT_KIDS.requests WHERE family_id = %d AND child_id = %d AND item_id = %d " +
+                "AND status = 'pending' AND created_at >= TIMESTAMP '2026-04-22 00:00:00' " +
+                "AND created_at < TIMESTAMP '2026-04-23 00:00:00'",
+            familyDbId, child1.getId(), itemExternalId
+        ))).contains("IDX_REQUESTS_FAMILY_CHILD_ITEM_STATUS_CREATED");
+
         assertThat(familyDataRepository.addFriend(child1.getId(), child2.getId())).isTrue();
         assertThat(familyDataRepository.getFriendChildIds(child1.getId())).contains(child2.getId());
         assertThat(familyDataRepository.getFriendChildIds(child2.getId())).contains(child1.getId());
@@ -253,5 +277,21 @@ class RepositorySmokeTest {
         assertThat(childRepository.updateSettings(999999, "x", 1, 1)).isFalse();
         assertThat(childRepository.updateTheme(999999, ChildTheme.ocean)).isFalse();
         assertThat(childRepository.regenerateToken(999999)).isEmpty();
+    }
+
+    private java.util.List<String> indexNamesForTables(String firstTable, String secondTable) {
+        java.util.List<?> rows = entityManager.createNativeQuery(
+                "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES " +
+                    "WHERE UPPER(TABLE_SCHEMA) = 'EARNIT_KIDS' " +
+                    "AND UPPER(TABLE_NAME) IN (?1, ?2) ORDER BY INDEX_NAME")
+            .setParameter(1, firstTable)
+            .setParameter(2, secondTable)
+            .getResultList();
+        return rows.stream().map(String::valueOf).toList();
+    }
+
+    private String explainPlan(String sql) {
+        java.util.List<?> rows = entityManager.createNativeQuery("EXPLAIN " + sql).getResultList();
+        return rows.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining("\n"));
     }
 }

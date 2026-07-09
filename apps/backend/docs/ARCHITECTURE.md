@@ -75,6 +75,11 @@ Migration model:
 - Test-specific H2 migrations live in `src/test/resources/db/migration/`.
 - Add new sequential migrations instead of modifying merged migration history.
 
+Composite indexes are added only for measured repository predicates. The current
+set covers child/family paging, analytics windows, and pending-request limit
+checks; when adding a new index, keep the predicate shape and the expected
+query plan documented together.
+
 [↩ Back to toc](#table-of-contents)
 
 ## 🔐 Authentication and Authorization
