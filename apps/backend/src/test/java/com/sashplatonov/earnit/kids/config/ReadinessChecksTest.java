@@ -3,39 +3,11 @@ package com.sashplatonov.earnit.kids.config;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ReadinessChecksTest {
-
-    @TempDir
-    Path tempDir;
-
-    @Test
-    void backupDirectoryReadiness_isUpWhenDirectoryExistsAndWritable() throws Exception {
-        Path backupDir = Files.createDirectories(tempDir.resolve("backups"));
-        BackupDirectoryReadinessCheck check = new BackupDirectoryReadinessCheck(backupDir.toString());
-
-        HealthCheckResponse response = check.call();
-
-        assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.UP);
-    }
-
-    @Test
-    void backupDirectoryReadiness_isDownWhenDirectoryMissing() {
-        BackupDirectoryReadinessCheck check = new BackupDirectoryReadinessCheck(
-            tempDir.resolve("missing").toString()
-        );
-
-        HealthCheckResponse response = check.call();
-
-        assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
-    }
 
     @Test
     void newRelicMetricsReadiness_isUpWhenMetricsDisabled() {

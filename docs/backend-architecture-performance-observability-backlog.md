@@ -377,7 +377,6 @@ HTTP metrics не должны становиться bottleneck на hot path, 
 
 Основные файлы:
 
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/BackupDirectoryReadinessCheck.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/NewRelicMetricsReadinessCheck.java`
 - новые health checks в `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/`
 - `apps/backend/src/main/resources/application.properties`
@@ -387,7 +386,7 @@ HTTP metrics не должны становиться bottleneck на hot path, 
 
 Архитектурное решение:
 
-Agroal уже покрывает подключение к БД. Дополнительные readiness checks должны быть нацелены на backend-specific зависимости, которые могут тихо сломаться, например доступность backup directory или обязательная runtime-конфигурация для включённых интеграций. Проверки должны быть быстрыми и без side effects.
+Agroal уже покрывает подключение к БД. Дополнительные readiness checks должны быть нацелены на backend-specific зависимости, которые могут тихо сломаться, например обязательная runtime-конфигурация для включённых интеграций. Проверки должны быть быстрыми и без side effects.
 
 Критерии проверки:
 
@@ -458,8 +457,6 @@ Agroal уже покрывает подключение к БД. Дополни�
 
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/DatabaseBackupService.java`
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/BackupTelegramScheduler.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/FamilyWebSocket.java`
 
@@ -470,7 +467,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 - latency загрузки dashboard;
 - latency загрузки analytics;
 - количество auth success и auth failure;
-- длительность DB backup и количество backup failure;
+- длительность критичных admin flows и количество operational failures;
 - количество active sessions WebSocket или fan-out notification.
 
 Критерии проверки:

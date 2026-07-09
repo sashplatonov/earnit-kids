@@ -18,7 +18,7 @@
 
 - Authentication, cookies, CSRF, and role scope
 - Parent, child, and super-admin API flows
-- Catalog, history, requests, analytics, and backup operations
+- Catalog, history, requests, analytics, and super-admin operations
 - Flyway migrations and database integration
 
 [↩ Back to toc](#table-of-contents)

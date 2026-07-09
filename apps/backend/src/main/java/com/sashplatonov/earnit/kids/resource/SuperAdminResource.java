@@ -4,15 +4,9 @@ import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
-import com.sashplatonov.earnit.kids.dto.request.UpdateBackupTelegramSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
-import com.sashplatonov.earnit.kids.dto.response.BackupHistoryItemResponse;
-import com.sashplatonov.earnit.kids.dto.response.BackupTelegramSettingsResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
-import com.sashplatonov.earnit.kids.service.BackupTelegramSettingsService;
-import com.sashplatonov.earnit.kids.service.DatabaseBackupService;
-import com.sashplatonov.earnit.kids.service.TelegramBackupService;
 import com.sashplatonov.earnit.kids.service.SuperAdminService;
 import com.sashplatonov.earnit.kids.service.SystemDashboardService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -31,10 +25,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @Path("/api/super")
@@ -44,9 +35,6 @@ public class SuperAdminResource {
 
     private final SuperAdminService superAdminService;
     private final SystemDashboardService systemDashboardService;
-    private final DatabaseBackupService databaseBackupService;
-    private final BackupTelegramSettingsService backupTelegramSettingsService;
-    private final TelegramBackupService telegramBackupService;
 
     @GET
     @Path("/families")
@@ -216,165 +204,6 @@ public class SuperAdminResource {
         int resolvedLimit = limit == null ? 100 : Math.max(1, Math.min(limit, 500));
         String resolvedLevel = level == null || level.isBlank() ? "all" : level;
         return Response.ok(systemDashboardService.getLogs(resolvedLevel, resolvedLimit)).build();
-    }
-
-    @GET
-    @Path("/db-backup")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response backupDatabase(@Context ContainerRequestContext ctx) throws IOException {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        OperationResult<DatabaseBackupService.BackupArtifact> result = databaseBackupService.createBackup();
-        if (result instanceof OperationResult.Failure<DatabaseBackupService.BackupArtifact> failure) {
-            return Response.serverError().entity(failure.message()).type(MediaType.TEXT_PLAIN).build();
-        }
-
-        DatabaseBackupService.BackupArtifact artifact =
-            ((OperationResult.Success<DatabaseBackupService.BackupArtifact>) result).value();
-        return Response.ok(Files.readAllBytes(artifact.path()), MediaType.APPLICATION_OCTET_STREAM)
-            .header("Content-Disposition", "attachment; filename=\"" + artifact.filename() + "\"")
-            .build();
-    }
-
-    @POST
-    @Path("/db-restore")
-    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
-    public Response restoreDatabase(@Context ContainerRequestContext ctx, byte[] payload) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        OperationResult<Void> result = databaseBackupService.restoreBackup(payload);
-        if (result instanceof OperationResult.Failure<Void> failure) {
-            return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
-        }
-        return Response.ok(SimpleResponse.ok()).build();
-    }
-
-    @GET
-    @Path("/db-backup/history")
-    public Response getBackupHistory(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        List<BackupHistoryItemResponse> backups = databaseBackupService.listBackups();
-        return Response.ok(Map.of("backups", backups)).build();
-    }
-
-    @GET
-    @Path("/db-backup/history/{filename}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadBackupFromHistory(@Context ContainerRequestContext ctx,
-                                              @PathParam("filename") String filename) throws IOException {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        var filePath = databaseBackupService.getBackupFilePath(filename);
-        if (filePath.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                .entity(SimpleResponse.error(BackendMessages.message("backup.fileNotFound")))
-                .type(MediaType.APPLICATION_JSON)
-                .build();
-        }
-
-        return Response.ok(Files.readAllBytes(filePath.get()), MediaType.APPLICATION_OCTET_STREAM)
-            .header(
-                "Content-Disposition",
-                "attachment; filename=\"" + java.nio.file.Path.of(filename).getFileName() + "\""
-            )
-            .build();
-    }
-
-    @POST
-    @Path("/db-restore/history/{filename}")
-    public Response restoreDatabaseFromHistory(@Context ContainerRequestContext ctx,
-                                               @PathParam("filename") String filename) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        OperationResult<Void> result = databaseBackupService.restoreBackup(filename);
-        if (result instanceof OperationResult.Failure<Void> failure) {
-            return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
-        }
-        return Response.ok(SimpleResponse.ok()).build();
-    }
-
-    @GET
-    @Path("/db-backup/telegram-settings")
-    public Response getBackupTelegramSettings(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        BackupTelegramSettingsResponse payload = backupTelegramSettingsService.getSettings();
-        return Response.ok(payload).build();
-    }
-
-    @POST
-    @Path("/db-backup/telegram-settings")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateBackupTelegramSettings(@Context ContainerRequestContext ctx,
-                                                 @Valid UpdateBackupTelegramSettingsRequest request) {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        OperationResult<BackupTelegramSettingsResponse> result = backupTelegramSettingsService.updateSettings(request);
-        if (result instanceof OperationResult.Success<BackupTelegramSettingsResponse> success) {
-            return Response.ok(success.value()).build();
-        }
-
-        OperationResult.Failure<BackupTelegramSettingsResponse> failure =
-            (OperationResult.Failure<BackupTelegramSettingsResponse>) result;
-        return Response.status(Response.Status.BAD_REQUEST)
-            .entity(ErrorResponse.of(failure.message(), "BACKUP_TELEGRAM_SETTINGS_INVALID", 400))
-            .build();
-    }
-
-    @POST
-    @Path("/db-backup/send-telegram")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response sendBackupToTelegram(@Context ContainerRequestContext ctx) throws IOException {
-        Response authFailure = requireSuperAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
-
-        if (!telegramBackupService.isConfigured()) {
-            return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                .entity(SimpleResponse.error(BackendMessages.message("super.telegramNotConfigured")))
-                .build();
-        }
-
-        OperationResult<DatabaseBackupService.BackupArtifact> result = databaseBackupService.createBackup();
-        if (result instanceof OperationResult.Failure<DatabaseBackupService.BackupArtifact> failure) {
-            return Response.serverError().entity(SimpleResponse.error(failure.message())).build();
-        }
-
-        DatabaseBackupService.BackupArtifact artifact =
-            ((OperationResult.Success<DatabaseBackupService.BackupArtifact>) result).value();
-
-        OperationResult<Void> sent = telegramBackupService.sendBackup(artifact.path(), artifact.filename());
-        if (sent instanceof OperationResult.Success<?>) {
-            return Response.ok(SimpleResponse.ok()).build();
-        } else {
-            OperationResult.Failure<Void> f = (OperationResult.Failure<Void>) sent;
-            return Response.status(Response.Status.BAD_GATEWAY)
-                .entity(SimpleResponse.error(f.message()))
-                .build();
-        }
     }
 
     private Response toTokenResponse(OperationResult<String> result) {

@@ -61,7 +61,7 @@ Deliver a production-safe i18n migration for the SvelteKit coin shop with these 
 - Public SEO and copy: `apps/web/src/routes/+page.svelte`, `apps/web/src/routes/about/+page.svelte`, `apps/web/src/routes/faq/+page.svelte`, `apps/web/src/routes/features/[slug]/+page.svelte`, `apps/web/src/routes/blog/+page.svelte`, `apps/web/src/routes/blog/[slug]/+page.svelte`, `apps/web/src/routes/login/+page.svelte`, `apps/web/src/routes/verify/+page.svelte`, `apps/web/src/routes/reset-password/+page.svelte`.
 - Authenticated UI and shop flow: `apps/web/src/lib/components/app/**/*`, `apps/web/src/lib/app/routes.ts`, `apps/web/src/lib/services/api.ts`, `apps/web/src/lib/components/app/sections/analyticsViewModel.ts`.
 - Blog content loader: `apps/web/src/lib/server/blog.ts`, `apps/web/data/blog/*`.
-- Backend user-facing messages: `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`, `FamilyServiceImpl.java`, `FamilyActionServiceImpl.java`, `SuperAdminService.java`, `SuperAdminCredentialsService.java`, `BackupTelegramSettingsService.java`, `TelegramBackupService.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/AuthResource.java`, `FamilyResource.java`, `SuperAdminResource.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/exception/ConstraintViolationExceptionMapper.java`.
+- Backend user-facing messages: `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`, `FamilyServiceImpl.java`, `FamilyActionServiceImpl.java`, `SuperAdminService.java`, `SuperAdminCredentialsService.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/AuthResource.java`, `FamilyResource.java`, `SuperAdminResource.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/exception/ConstraintViolationExceptionMapper.java`.
 - Backend cookie and request context surfaces: `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/CookieBuilder.java`, `apps/web/src/lib/server/proxy.ts`.
 
 [↑ Back to top](#top)
@@ -450,7 +450,7 @@ Depends on: I18N-01, I18N-03, I18N-04
 
 Can run with: I18N-07, I18N-10
 
-Primary files and surfaces: `apps/web/src/lib/server/proxy.ts`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`, `FamilyServiceImpl.java`, `FamilyActionServiceImpl.java`, `SuperAdminService.java`, `SuperAdminCredentialsService.java`, `BackupTelegramSettingsService.java`, `TelegramBackupService.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/AuthResource.java`, `FamilyResource.java`, `SuperAdminResource.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/exception/ConstraintViolationExceptionMapper.java`.
+Primary files and surfaces: `apps/web/src/lib/server/proxy.ts`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`, `FamilyServiceImpl.java`, `FamilyActionServiceImpl.java`, `SuperAdminService.java`, `SuperAdminCredentialsService.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/AuthResource.java`, `FamilyResource.java`, `SuperAdminResource.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/exception/ConstraintViolationExceptionMapper.java`.
 
 Description: remove mixed-language and hardcoded backend messages so frontend users receive locale-correct responses from the server layer too.
 
@@ -535,7 +535,7 @@ Depends on: I18N-13, I18N-14
 
 Can run with: I18N-15
 
-Primary files and surfaces: auth verification and password-reset flows in `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`, async notifications in `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java`, operational alerts in `TelegramBackupService.java`, and any future email template or sender layer discovered during implementation.
+Primary files and surfaces: auth verification and password-reset flows in `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`, async notifications in `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java`, and any future email template or sender layer discovered during implementation.
 
 Description: cover the async surfaces where language must be decided at event time, not from whatever locale the browser currently happens to use.
 

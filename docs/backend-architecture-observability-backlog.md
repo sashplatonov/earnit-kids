@@ -308,14 +308,14 @@ export PATH="$JAVA_HOME/bin:$PATH"
     - family snapshot load;
     - task complete / reward purchase approve/reject;
     - websocket notify fan-out;
-    - backup create/restore.
+    - critical admin and maintenance flows.
   - метрики ставить в service layer, не в resource layer.
 - Пути к файлам:
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/DatabaseBackupService.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java`
 - Критерии проверки:
   - каждая метрика имеет понятное имя, low-cardinality tags и owner use case.
   - в коде нет familyId/email/token в metric tags.
@@ -323,7 +323,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
     - request rate/error rate/p95 latency;
     - login failure rate;
     - snapshot load latency;
-    - backup success/failure count.
+    - operational success/failure count for critical admin flows.
 
 ### `P1` Завести deployment contract для New Relic metrics отдельно от Browser agent
 

@@ -42,7 +42,7 @@ The approved domain groups are:
 | `analytics` | achievements, charts, streaks, stats explanations |
 | `tasks` | task list, task editor, completion, request flows |
 | `admin` | parent-side family management, rules, limits, settings |
-| `superadmin` | super-admin panel, backup tooling, family inspection, operational UI |
+| `superadmin` | super-admin panel, family inspection, operational UI |
 | `backend` | server-generated user-facing errors and response details |
 | `blog` | blog list, article shell, article metadata, empty states |
 | `email` | verification, recovery, and future outbound message templates |
@@ -75,9 +75,9 @@ Each hotspot below is assigned to its target domain group and extraction status.
 | Transactional family action backend messages | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java`, exception mappers | `backend`, `tasks`, `shop.parent`, `shop.child`, `history` | limit windows, balance errors, request status | extracted |
 | Backend analytics recommendation labels | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java` | `backend`, `analytics` | recommendation headings, stale-task nudges, fallback labels | extracted |
 | Family management backend responses | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`, `resource/FamilyResource.java` | `backend`, `admin`, `tasks`, `shop.parent`, `shop.child`, `history` | validation errors, child settings, search/add friend results | extracted |
-| Super-admin backend responses | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SuperAdminService.java`, `SuperAdminCredentialsService.java`, `BackupTelegramSettingsService.java`, `TelegramBackupService.java`, `DatabaseBackupService.java`, `resource/SuperAdminResource.java`, `resource/PushResource.java`, `resource/WsTokenResource.java` | `superadmin`, `backend` | backup status, validation, password update, operational feedback | extracted |
-| Super-admin UI | `apps/web/src/routes/super-admin/+page.svelte` | `superadmin` | dashboard labels, tabs, action copy, database/backup forms | extracted |
-| Email and async notifications | future outbound templates and async capture surfaces | `email`, `backend` | verification, reset, backup alerts | pending |
+| Super-admin backend responses | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SuperAdminService.java`, `SuperAdminCredentialsService.java`, `resource/SuperAdminResource.java`, `resource/PushResource.java`, `resource/WsTokenResource.java` | `superadmin`, `backend` | family inspection, password update, operational feedback | extracted |
+| Super-admin UI | `apps/web/src/routes/super-admin/+page.svelte` | `superadmin` | dashboard labels, tabs, family actions, database/system status | extracted |
+| Email and async notifications | future outbound templates and async capture surfaces | `email`, `backend` | verification and reset flows | pending |
 
 [↩ Back to toc](#table-of-contents)
 
@@ -141,7 +141,7 @@ The following values must never be moved into dictionaries:
 Sequencing notes for the remaining backlog:
 
 1. Keep extracting remaining authenticated section strings into their target domains without collapsing everything into `app`.
-2. Keep routing newly touched backend request/admin/backup messages through `BackendMessages` so regressions do not reintroduce hardcoded copy.
+2. Keep routing newly touched backend request/admin messages through `BackendMessages` so regressions do not reintroduce hardcoded copy.
 3. Introduce `email` domain templates before localizing outbound mail and async notification jobs.
 
 [↑ Back to top](#top)

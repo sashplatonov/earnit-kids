@@ -14,7 +14,6 @@
     type TabId = 'dashboard' | 'families' | 'catalog-tasks' | 'catalog-products' | 'database' | 'system';
     type CatalogType = 'tasks' | 'products';
     type StatusTone = 'success' | 'error' | 'info' | '';
-    type ResponsePayload = { success?: boolean; error?: string; detail?: string };
 
     type FamilyDetail = {
         familyId: string;
@@ -99,23 +98,6 @@
     let dbStatus = '';
     let dbStatusType: StatusTone = '';
     let dbChecking = false;
-    let telegramScheduleMode: 'on' | 'off' = 'off';
-    let telegramChatId = '';
-    let telegramIntervalHours = '24';
-    let telegramBackupRetentionCount = '20';
-    let telegramBotToken = '';
-    let telegramHasBotToken = false;
-    let telegramConfigured = false;
-    let telegramLastAttemptAt: string | null = null;
-    let telegramLastSentAt: string | null = null;
-    let telegramLastError: string | null = null;
-    let telegramSettingsLoading = false;
-    let backupHistoryLoading = false;
-    let telegramSettingsSaving = false;
-    let telegramBackupSending = false;
-    let telegramSettingsStatus = '';
-    let telegramSettingsStatusType: StatusTone = '';
-    let backupHistory: Array<{ filename: string; sizeBytes: number; createdAt: string | null }> = [];
 
     let systemInfo: SystemInfo = {};
     let familyPassword = '';
@@ -130,8 +112,6 @@
 
         void loadFamilies();
         void loadSystem();
-        void loadTelegramBackupSettings();
-        void loadBackupHistory();
     });
 
     onDestroy(() => {
@@ -160,6 +140,22 @@
     function parseNumber(value: unknown): number {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function messageFromPayload(payload: unknown, fallback: string): string {
+        if (payload && typeof payload === 'object') {
+            const detail = 'detail' in payload ? payload.detail : undefined;
+            if (typeof detail === 'string' && detail.trim()) {
+                return detail;
+            }
+
+            const error = 'error' in payload ? payload.error : undefined;
+            if (typeof error === 'string' && error.trim()) {
+                return error;
+            }
+        }
+
+        return fallback;
     }
 
     function formatShortDate(value: unknown): string {
@@ -215,22 +211,6 @@
         }
 
         return `${children.slice(0, 2).join(', ')} +${children.length - 2}`;
-    }
-
-    function messageFromPayload(payload: unknown, fallback: string): string {
-        if (payload && typeof payload === 'object') {
-            const detail = 'detail' in payload ? payload.detail : undefined;
-            if (typeof detail === 'string' && detail.trim()) {
-                return detail;
-            }
-
-            const error = 'error' in payload ? payload.error : undefined;
-            if (typeof error === 'string' && error.trim()) {
-                return error;
-            }
-        }
-
-        return fallback;
     }
 
     function resetFamilyPasswordState() {
@@ -471,248 +451,6 @@
             dbStatusType = 'error';
         } finally {
             dbChecking = false;
-        }
-    }
-
-    function applyTelegramBackupSettings(payload: unknown) {
-        if (!payload || typeof payload !== 'object') {
-            telegramScheduleMode = 'off';
-            telegramChatId = '';
-            telegramIntervalHours = '24';
-            telegramBackupRetentionCount = '20';
-            telegramHasBotToken = false;
-            telegramConfigured = false;
-            telegramLastAttemptAt = null;
-            telegramLastSentAt = null;
-            telegramLastError = null;
-            return;
-        }
-
-        const record = payload as Record<string, unknown>;
-        telegramScheduleMode = record.enabled === true ? 'on' : 'off';
-        telegramChatId = typeof record.chatId === 'string' ? record.chatId : '';
-        telegramIntervalHours = String(parseNumber(record.intervalHours) || 24);
-        telegramBackupRetentionCount = String(parseNumber(record.backupRetentionCount) || 20);
-        telegramHasBotToken = record.hasBotToken === true;
-        telegramConfigured = record.configured === true;
-        telegramLastAttemptAt = typeof record.lastAttemptAt === 'string' ? record.lastAttemptAt : null;
-        telegramLastSentAt = typeof record.lastSentAt === 'string' ? record.lastSentAt : null;
-        telegramLastError = typeof record.lastError === 'string' ? record.lastError : null;
-    }
-
-    async function loadBackupHistory() {
-        backupHistoryLoading = true;
-
-        try {
-            const res = await fetchWithCsrf('/api/super/db-backup/history');
-            const payload = await res.json().catch(() => null) as { backups?: Array<{ filename?: string; sizeBytes?: number; createdAt?: string | null }> } | null;
-            if (res.ok) {
-                backupHistory = (payload?.backups ?? []).map((item) => ({
-                    filename: String(item.filename ?? ''),
-                    sizeBytes: parseNumber(item.sizeBytes),
-                    createdAt: typeof item.createdAt === 'string' ? item.createdAt : null,
-                }));
-                return;
-            }
-
-            telegramSettingsStatus = messageFromPayload(payload, $i18n.t('superadmin.database.loadSettingsError'));
-            telegramSettingsStatusType = 'error';
-        } catch {
-            telegramSettingsStatus = $i18n.t('superadmin.states.networkUnavailable');
-            telegramSettingsStatusType = 'error';
-        } finally {
-            backupHistoryLoading = false;
-        }
-    }
-
-    async function loadTelegramBackupSettings() {
-        telegramSettingsLoading = true;
-
-        try {
-            const res = await fetchWithCsrf('/api/super/db-backup/telegram-settings');
-            const payload = await res.json().catch(() => null);
-            if (res.ok) {
-                applyTelegramBackupSettings(payload);
-                return;
-            }
-
-            telegramSettingsStatus = messageFromPayload(payload, $i18n.t('superadmin.database.loadSettingsError'));
-            telegramSettingsStatusType = 'error';
-        } catch {
-            telegramSettingsStatus = $i18n.t('superadmin.states.networkUnavailable');
-            telegramSettingsStatusType = 'error';
-        } finally {
-            telegramSettingsLoading = false;
-        }
-    }
-
-    async function saveTelegramBackupSettings() {
-        const intervalHours = parseInt(telegramIntervalHours, 10) || 0;
-        const backupRetentionCount = parseInt(telegramBackupRetentionCount, 10) || 0;
-        if (intervalHours < 1 || intervalHours > 720) {
-            telegramSettingsStatus = $i18n.t('superadmin.database.intervalError');
-            telegramSettingsStatusType = 'error';
-            return;
-        }
-        if (backupRetentionCount < 1 || backupRetentionCount > 500) {
-            telegramSettingsStatus = $i18n.t('superadmin.states.errorPrefix', { message: '1..500' });
-            telegramSettingsStatusType = 'error';
-            return;
-        }
-
-        telegramSettingsSaving = true;
-        telegramSettingsStatus = $i18n.t('superadmin.database.settingsSaving');
-        telegramSettingsStatusType = 'info';
-
-        try {
-            const body: Record<string, unknown> = {
-                enabled: telegramScheduleMode === 'on',
-                chatId: telegramChatId,
-                intervalHours,
-                backupRetentionCount,
-            };
-            if (telegramBotToken !== '') {
-                body.botToken = telegramBotToken;
-            }
-
-            const res = await fetchWithCsrf('/api/super/db-backup/telegram-settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-            const payload = await res.json().catch(() => null);
-
-            if (res.ok) {
-                applyTelegramBackupSettings(payload);
-                telegramBotToken = '';
-                telegramSettingsStatus = $i18n.t('superadmin.database.settingsSaved');
-                telegramSettingsStatusType = 'success';
-                return;
-            }
-
-            telegramSettingsStatus = messageFromPayload(payload, $i18n.t('superadmin.database.settingsSaveError'));
-            telegramSettingsStatusType = 'error';
-        } catch {
-            telegramSettingsStatus = $i18n.t('superadmin.states.networkUnavailable');
-            telegramSettingsStatusType = 'error';
-        } finally {
-            telegramSettingsSaving = false;
-        }
-    }
-
-    function formatFileSize(sizeBytes: number): string {
-        if (sizeBytes < 1024) {
-            return `${sizeBytes} B`;
-        }
-        if (sizeBytes < 1024 * 1024) {
-            return `${(sizeBytes / 1024).toFixed(1)} KB`;
-        }
-        return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
-    }
-
-    async function restoreBackupFromHistory(filename: string) {
-        if (!confirm($i18n.t('superadmin.database.backupRestoreConfirm', { filename }))) {
-            return;
-        }
-
-        dbStatus = $i18n.t('superadmin.database.restoreInProgress');
-        dbStatusType = 'info';
-
-        try {
-            const res = await fetchWithCsrf(`/api/super/db-restore/history/${encodeURIComponent(filename)}`, {
-                method: 'POST',
-            });
-            const payload = await res.json().catch(() => ({})) as ResponsePayload;
-            if (res.ok && payload.success) {
-                dbStatus = $i18n.t('superadmin.database.backupRestoreSuccess');
-                dbStatusType = 'success';
-                setTimeout(() => location.reload(), 2000);
-                return;
-            }
-            dbStatus = $i18n.t('superadmin.states.errorPrefix', {
-                message: messageFromPayload(payload, $i18n.t('superadmin.states.unknown')),
-            });
-            dbStatusType = 'error';
-        } catch {
-            dbStatus = $i18n.t('superadmin.database.connectionError');
-            dbStatusType = 'error';
-        }
-    }
-
-    async function sendBackupToTelegram() {
-        telegramBackupSending = true;
-        telegramSettingsStatus = $i18n.t('superadmin.database.backupSending');
-        telegramSettingsStatusType = 'info';
-
-        try {
-            const res = await fetchWithCsrf('/api/super/db-backup/send-telegram', {
-                method: 'POST',
-            });
-            const payload = await res.json().catch(() => null);
-
-            if (res.ok) {
-                await loadTelegramBackupSettings();
-                await loadBackupHistory();
-                telegramSettingsStatus = $i18n.t('superadmin.database.backupSent');
-                telegramSettingsStatusType = 'success';
-                return;
-            }
-
-            telegramSettingsStatus = messageFromPayload(payload, $i18n.t('superadmin.database.backupSendError'));
-            telegramSettingsStatusType = 'error';
-        } catch {
-            telegramSettingsStatus = $i18n.t('superadmin.states.networkUnavailable');
-            telegramSettingsStatusType = 'error';
-        } finally {
-            telegramBackupSending = false;
-        }
-    }
-
-    function triggerBackup() {
-        window.location.href = '/api/super/db-backup';
-    }
-
-    function triggerRestoreClick() {
-        document.getElementById('pg-restore-input')?.click();
-    }
-
-    async function handleRestoreChange(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) {
-            return;
-        }
-
-        input.value = '';
-        if (!confirm($i18n.t('superadmin.database.restoreConfirm'))) {
-            return;
-        }
-
-        dbStatus = $i18n.t('superadmin.database.restoreInProgress');
-        dbStatusType = 'info';
-
-        try {
-            const res = await fetchWithCsrf('/api/super/db-restore', {
-                method: 'POST',
-                body: file,
-                headers: { 'Content-Type': 'application/octet-stream' },
-            });
-            const payload = await res.json().catch(() => ({})) as ResponsePayload;
-
-            if (res.ok && payload.success) {
-                dbStatus = $i18n.t('superadmin.database.restoreSuccess');
-                dbStatusType = 'success';
-                setTimeout(() => location.reload(), 2000);
-                return;
-            }
-
-            dbStatus = $i18n.t('superadmin.states.errorPrefix', {
-                message: messageFromPayload(payload, $i18n.t('superadmin.states.unknown')),
-            });
-            dbStatusType = 'error';
-        } catch {
-            dbStatus = $i18n.t('superadmin.database.connectionError');
-            dbStatusType = 'error';
         }
     }
 
@@ -1226,129 +964,15 @@
                     <span class="db-oneblock__title">{$i18n.t('superadmin.database.title')}</span>
                 </div>
 
-                <!-- Download + Restore row -->
-                <div class="db-oneblock__actions">
-                    <div class="db-oneblock__action">
-                        <span class="db-oneblock__action-title">{$i18n.t('superadmin.database.backupValue')}</span>
-                        <span class="db-oneblock__action-desc">{$i18n.t('superadmin.database.backupDescription')}</span>
-                        <button id="pg-backup-btn" class="btn btn--primary btn--small" type="button" on:click={triggerBackup}>{$i18n.t('superadmin.actions.downloadBackup')}</button>
-                    </div>
-                    <div class="db-oneblock__action">
-                        <span class="db-oneblock__action-title">{$i18n.t('superadmin.database.restoreValue')}</span>
-                        <span class="db-oneblock__action-desc">{$i18n.t('superadmin.database.restoreDescription')}</span>
-                        <button id="pg-restore-btn" class="btn btn--success btn--small" type="button" on:click={triggerRestoreClick}>{$i18n.t('superadmin.actions.uploadFile')}</button>
-                        <input type="file" id="pg-restore-input" hidden accept=".dump" on:change={handleRestoreChange} />
-                    </div>
-                </div>
-
-                <!-- Telegram -->
-                {#if telegramSettingsLoading}
-                <div class="db-oneblock__loading">{$i18n.t('superadmin.database.loadingTelegram')}</div>
-                {:else}
                 <div class="db-oneblock__section">
-                    <span class="db-oneblock__section-title">{$i18n.t('superadmin.database.telegramHeading')}</span>
-                    <div class="db-oneblock__tg-form">
-                        <div class="db-oneblock__tg-field">
-                            <label for="backup-telegram-enabled">{$i18n.t('superadmin.database.schedule')}</label>
-                            <select id="backup-telegram-enabled" bind:value={telegramScheduleMode}>
-                                <option value="off">{$i18n.t('superadmin.database.scheduleOff')}</option>
-                                <option value="on">{$i18n.t('superadmin.database.scheduleOn')}</option>
-                            </select>
-                        </div>
-                        <div class="db-oneblock__tg-field">
-                            <label for="backup-telegram-chat-id">Chat ID</label>
-                            <input id="backup-telegram-chat-id" type="text" bind:value={telegramChatId} placeholder="-1001234567890" autocomplete="off" />
-                        </div>
-                        <div class="db-oneblock__tg-field db-oneblock__tg-field--narrow">
-                            <label for="backup-telegram-interval">{$i18n.t('superadmin.database.intervalHours')}</label>
-                            <input id="backup-telegram-interval" type="number" min="1" max="720" bind:value={telegramIntervalHours} />
-                        </div>
-                        <div class="db-oneblock__tg-field db-oneblock__tg-field--narrow">
-                            <label for="backup-retention-count">{$i18n.t('superadmin.database.retentionCount')}</label>
-                            <input id="backup-retention-count" type="number" min="1" max="500" bind:value={telegramBackupRetentionCount} />
-                        </div>
-                        <div class="db-oneblock__tg-field db-oneblock__tg-field--wide">
-                            <label for="backup-telegram-token">Bot token</label>
-                            <input id="backup-telegram-token" type="password" bind:value={telegramBotToken}
-                                placeholder={telegramHasBotToken ? $i18n.t('superadmin.database.botTokenPlaceholderSaved') : $i18n.t('superadmin.database.botTokenPlaceholderNew')}
-                                autocomplete="new-password" />
-                        </div>
-                    </div>
-                    <div class="db-oneblock__tg-status">
-                        <span class="db-oneblock__dot" class:db-oneblock__dot--ok={telegramConfigured} class:db-oneblock__dot--off={!telegramConfigured}></span>
-                        {#if telegramHasBotToken}
-                        <span>{$i18n.t('superadmin.database.tokenSaved')}</span>
-                        {:else}
-                        <span>{$i18n.t('superadmin.database.tokenMissing')}</span>
-                        {/if}
-                        {#if telegramConfigured}
-                        <span>{$i18n.t('superadmin.database.sendingAvailable')}</span>
-                        {:else}
-                        <span>{$i18n.t('superadmin.database.sendingNeedsCredentials')}</span>
-                        {/if}
-                        <span class="db-oneblock__sep"></span>
-                        <span>{$i18n.t('superadmin.database.state')}: {telegramScheduleMode === 'on' ? $i18n.t('superadmin.database.stateOn') : $i18n.t('superadmin.database.stateOff')}</span>
-                        {#if telegramLastSentAt}
-                        <span class="db-oneblock__sep"></span>
-                        <span>{$i18n.t('superadmin.database.lastSent')}: {formatDateTime(telegramLastSentAt)}</span>
-                        {/if}
-                        {#if telegramLastError}
-                        <span class="db-oneblock__sep"></span>
-                        <span style="color: var(--color-danger-dark, #dc2626);">{$i18n.t('superadmin.database.lastError')}: {telegramLastError}</span>
-                        {/if}
-                    </div>
-                    <div class="db-oneblock__tg-actions">
-                        <button class="btn btn--ghost btn--small" type="button" disabled={telegramSettingsSaving || telegramBackupSending} on:click={loadTelegramBackupSettings}>{$i18n.t('superadmin.states.refresh')}</button>
-                        <button class="btn btn--primary btn--small" type="button" disabled={telegramSettingsSaving || telegramBackupSending} on:click={saveTelegramBackupSettings}>
-                            {telegramSettingsSaving ? $i18n.t('superadmin.actions.saving') : $i18n.t('superadmin.actions.save')}
-                        </button>
-                        <button class="btn btn--success btn--small" type="button" disabled={telegramSettingsSaving || telegramBackupSending || !telegramConfigured} on:click={sendBackupToTelegram}>
-                            {telegramBackupSending ? $i18n.t('superadmin.actions.sending') : $i18n.t('superadmin.actions.sendNow')}
-                        </button>
-                    </div>
-                    {#if telegramSettingsStatus}
-                    <div class="status-callout"
-                        class:status-callout--success={telegramSettingsStatusType === 'success'}
-                        class:status-callout--error={telegramSettingsStatusType === 'error'}
-                        class:status-callout--info={telegramSettingsStatusType === 'info'}
-                        role="status">
-                        {telegramSettingsStatus}
-                    </div>
-                    {/if}
-                </div>
-                {/if}
-
-                <!-- Backup History -->
-                <div class="db-oneblock__section">
-                    <span class="db-oneblock__section-title">{$i18n.t('superadmin.database.backupHistoryHeading')}</span>
-                    {#if backupHistoryLoading}
-                    <div class="db-oneblock__loading">{$i18n.t('superadmin.database.loadingBackups')}</div>
-                    {:else if backupHistory.length === 0}
-                    <p class="db-oneblock__empty">{$i18n.t('superadmin.database.backupHistoryEmpty')}</p>
-                    {:else}
-                    <div class="db-oneblock__history">
-                        {#each backupHistory as item (item.filename)}
-                        <div class="db-oneblock__h-item">
-                            <div class="db-oneblock__h-info">
-                                <span class="db-oneblock__h-name">{item.filename}</span>
-                                <span class="db-oneblock__h-meta">{formatDateTime(item.createdAt)} · {formatFileSize(item.sizeBytes)}</span>
-                            </div>
-                            <div class="db-oneblock__h-actions">
-                                <a class="btn btn--ghost btn--small" download href={`/api/super/db-backup/history/${encodeURIComponent(item.filename)}`}>
-                                    {$i18n.t('superadmin.database.backupDownloadAction')}
-                                </a>
-                                <button class="btn btn--danger btn--small" type="button" on:click={() => restoreBackupFromHistory(item.filename)}>
-                                    {$i18n.t('superadmin.database.backupRestoreAction')}
-                                </button>
-                            </div>
-                        </div>
-                        {/each}
-                    </div>
-                    {/if}
+                    <span class="db-oneblock__section-title">{$i18n.t('superadmin.database.statusLabel')}</span>
+                    <button class="btn btn--primary btn--small" type="button" disabled={dbChecking} on:click={checkDbStatus}>
+                        {dbChecking ? $i18n.t('superadmin.database.checkingStatus') : $i18n.t('superadmin.database.statusValue')}
+                    </button>
                 </div>
 
                 {#if dbChecking}
-                <div class="db-oneblock__loading" id="db-panel-state">{$i18n.t('superadmin.database.checkingStatus')}</div>
+                    <div class="db-oneblock__loading" id="db-panel-state">{$i18n.t('superadmin.database.checkingStatus')}</div>
                 {/if}
                 {#if dbStatus}
                 <div class="status-callout"

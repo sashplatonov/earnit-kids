@@ -18,7 +18,7 @@ This repo uses one New Relic path split by runtime:
 - browser logs and JS errors sent from the SvelteKit client when browser config is present
 - backend log forwarding disabled by default until volume review is complete
 - backend observability settings are exposed via typed config mappings under `app.performance.*` and `app.observability.*`
-- readiness probes cover backup directory availability and enabled New Relic metrics config before traffic is accepted
+- readiness probes cover enabled New Relic metrics config before traffic is accepted
 
 [↑ Back to top](#top)
 
@@ -57,7 +57,6 @@ Backend config mappings:
 
 - `app.performance.http-metrics.payload-estimation-enabled`
 - `app.performance.http-metrics.payload-estimation-max-collection-size`
-- `app.backup.dir`
 - `app.observability.new-relic.agent-enabled`
 - `app.observability.new-relic.metrics.enabled`
 - `app.observability.new-relic.metrics.otlp-metrics-endpoint`

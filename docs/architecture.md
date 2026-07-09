@@ -18,7 +18,7 @@ EarnIt Kids sits between three primary actors and one data system.
 
 - Parent users manage children, balances, tasks, requests, and limits.
 - Child users complete tasks, request purchases, and review their own history.
-- Super-admin users inspect families, backups, and system health.
+- Super-admin users inspect families and system health.
 - PostgreSQL stores the source of truth for family, child, catalog, history, request, and token data.
 
 ```mermaid
@@ -44,7 +44,7 @@ flowchart LR
 The deployed system is intentionally split into a thin web edge and a stateful backend API.
 
 - `apps/web/`: public pages, authenticated shell, same-origin `/api/*` proxy, `/healthz`, blog rendering, static verification assets
-- `apps/backend/`: auth, session cookies, family dashboard payloads, transactional task/shop/request endpoints, backup tooling, OpenAPI
+- `apps/backend/`: auth, session cookies, family dashboard payloads, transactional task/shop/request endpoints, operational APIs, OpenAPI
 - `postgres`: primary relational store for runtime state and migrations
 - `mobile/`: Capacitor packaging around the web runtime; not a separate backend client contract
 
