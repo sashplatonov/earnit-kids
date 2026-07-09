@@ -69,6 +69,9 @@ public final class FamilyServiceImpl implements FamilyService {
     private final ShopItemRepository shopItemRepository;
     private final ObjectMapper objectMapper;
     private final TimeProvider timeProvider;
+    private final FamilyDashboardQueryService familyDashboardQueryService;
+    private final FamilyCommandService familyCommandService;
+    private final AnalyticsService analyticsService;
 
     @Inject
     public FamilyServiceImpl(FamilyRepository familyRepository,
@@ -87,6 +90,29 @@ public final class FamilyServiceImpl implements FamilyService {
         this.shopItemRepository = shopItemRepository;
         this.objectMapper = objectMapper;
         this.timeProvider = timeProvider;
+        this.familyDashboardQueryService = new FamilyDashboardQueryServiceImpl(
+            familyRepository,
+            childRepository,
+            familyDataRepository,
+            historyRepository,
+            taskRepository,
+            shopItemRepository,
+            objectMapper
+        );
+        this.familyCommandService = new FamilyCommandServiceImpl(
+            familyRepository,
+            childRepository,
+            familyDataRepository,
+            familyDashboardQueryService,
+            objectMapper
+        );
+        this.analyticsService = new AnalyticsServiceImpl(
+            familyRepository,
+            historyRepository,
+            taskRepository,
+            shopItemRepository,
+            timeProvider
+        );
     }
 
     FamilyServiceImpl(FamilyRepository familyRepository,
@@ -102,47 +128,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
     @Override
     public OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
-        int familyDbId = dbIdOpt.get();
-        String rules = familyRepository.getRules(familyId).orElse(null);
-        Integer persistedChildId = familyRepository.getLastSelectedChildId(familyId).orElse(null);
-
-        List<ChildEntity> children = childRepository.getChildren(familyDbId);
-        if (children.isEmpty()) {
-            return OperationResult.success(emptyFamilyDataResponse(rules, adminSession));
-        }
-
-        List<ChildEntity> visibleChildren = resolveVisibleChildren(children, adminSession, childId);
-        if (visibleChildren.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
-        }
-
-        ChildEntity activeChild = resolveActiveChild(visibleChildren, childId, persistedChildId, adminSession);
-        Integer resolvedLastSelectedChildId = resolveLastSelectedChildId(
-            children,
-            activeChild,
-            persistedChildId,
-            adminSession
-        );
-
-        Map<Long, String> lastCompletedAtByTaskId = loadLatestHistoryTimestamps(
-            activeChild.getId(),
-            HistoryEntryType.earn
-        );
-        Map<Long, String> lastPurchasedAtByItemId = loadLatestHistoryTimestamps(
-            activeChild.getId(),
-            HistoryEntryType.spend
-        );
-        List<TaskDto> tasks = loadTasks(activeChild.getId(), lastCompletedAtByTaskId);
-        List<ShopItemDto> shopItems = loadShopItems(activeChild.getId(), lastPurchasedAtByItemId);
-
-        return OperationResult.success(buildFamilyDataResponse(
-            activeChild, rules, adminSession, tasks, shopItems,
-            familyDbId, resolvedLastSelectedChildId, visibleChildren
-        ));
+        return familyDashboardQueryService.loadFamilyData(familyId, childId, adminSession);
     }
 
     private FamilyDataResponse buildFamilyDataResponse(
@@ -182,36 +168,7 @@ public final class FamilyServiceImpl implements FamilyService {
     public OperationResult<FamilyDataResponse> saveFamilyData(String familyId, Integer childId,
                                                               Map<String, Object> payload,
                                                               boolean adminSession) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
-
-        int familyDbId = dbIdOpt.get();
-        List<ChildEntity> children = childRepository.getChildren(familyDbId);
-        if (children.isEmpty()) {
-            return loadFamilyData(familyId, childId, adminSession);
-        }
-
-        List<ChildEntity> accessibleChildren = resolveVisibleChildren(children, adminSession, childId);
-        if (accessibleChildren.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
-        }
-
-        Integer selectedChildId = resolveSelectedChildId(familyId, childId, payload, accessibleChildren, adminSession);
-        if (selectedChildId != null
-            && accessibleChildren.stream().noneMatch(child -> Objects.equals(child.getId(), selectedChildId))) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
-        }
-
-        syncFamilyRules(familyId, payload, adminSession);
-
-        syncBalances(familyDbId, selectedChildId, payload, accessibleChildren);
-        syncTasks(familyDbId, selectedChildId, payload);
-        syncShopItems(familyDbId, selectedChildId, payload);
-        familyRepository.updateLastActivity(familyId);
-
-        return loadFamilyData(familyId, selectedChildId, adminSession);
+        return familyCommandService.saveFamilyData(familyId, childId, payload, adminSession);
     }
 
     @Override
@@ -402,51 +359,7 @@ public final class FamilyServiceImpl implements FamilyService {
 
     @Override
     public OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe) {
-        Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
-        if (familyDbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
-
-        int familyDbId = familyDbIdOpt.get();
-        Duration periodDuration = resolveTimeframeDuration(timeframe);
-        Instant now = timeProvider.now();
-        Instant periodStart = now.minus(periodDuration);
-        Instant previousStart = periodStart.minus(periodDuration);
-
-        // EXPLAIN: Use SQL aggregation instead of loading full history rows
-        var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
-        var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
-
-        int[] currentSummary = normalizeSummary(currentRaw);
-        int[] previousSummary = normalizeSummary(previousRaw);
-
-        int currentNet = currentSummary[0] - currentSummary[1];
-        int previousNet = previousSummary[0] - previousSummary[1];
-
-        var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentNet);
-        var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousNet);
-
-        List<TaskEntity> tasks = queryTasks(familyDbId, childId);
-        List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
-
-        List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStatsAggregated(
-            historyRepository.topTasksInPeriod(familyDbId, childId, periodStart, now), tasks);
-        List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStatsAggregated(
-            historyRepository.topItemsInPeriod(familyDbId, childId, periodStart, now), items);
-
-        List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrendsAggregated(
-            historyRepository.dailyTrendInPeriod(familyDbId, childId, periodStart, now));
-
-        List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
-
-        return OperationResult.success(new AnalyticsResponse(
-            summary,
-            topTasks,
-            topItems,
-            trends,
-            comparison,
-            recommendations
-        ));
+        return analyticsService.getAnalyticsData(familyId, childId, timeframe);
     }
 
     @Override
