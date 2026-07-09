@@ -40,7 +40,7 @@
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java` смешивает process stats, DB ping, парсинг логов и snapshot HTTP-метрик в одном сервисе;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java` считает payload на response path через injected `ObjectMapper`, предпочитает `Content-Length` и избегает полной сериализации для больших ответов;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java` уже кладёт `traceId` в MDC, но propagation trace по-прежнему завязан на custom header и не покрывает более богатые поля request scope;
-- wiring New Relic runtime уже есть в `.env.example`, `docker-compose.yml`, `docker-compose.native.yml` и `docs/monitoring/newrelic.md`, а backend metrics export path и KPI instrumentation теперь добавлены.
+- wiring New Relic runtime уже есть в `.env.example`, `docker-compose.yml`, `docker-compose.native.yml` и `docs/monitoring/newrelic.md`, а backend metrics export path, KPI instrumentation и typed config mappings теперь добавлены.
 
 [Наверх](#top)
 
@@ -71,7 +71,7 @@
 | --- | --- | --- | --- |
 | BAP-01 | P0 | Структура | Разделить `FamilyServiceImpl` на обязанности query, command и analytics |
 | BAP-02 | P1 | Структура | Декомпозировать `SystemDashboardService` на узкие сервисы за стабильным фасадом |
-| BAP-03 | P1 | Структура | Ввести типизированные config mappings для performance и observability настроек |
+| BAP-03 | P1 | Структура | Ввести типизированные config mappings для performance и observability настроек ✅ |
 | BAP-04 | P0 | Скорость/RAM | Разделить shell payload dashboard и тяжёлые child detail payloads |
 | BAP-05 | P0 | Скорость/RAM | Убрать двойную сериализацию из HTTP metrics collection |
 | BAP-06 | P1 | Скорость/RAM | Добавить short-lived cache и явную invalidation для стабильных read-heavy путей |
@@ -154,11 +154,16 @@
 
 Приоритет: P1
 
+Статус: выполнено 2026-07-09.
+
 Основные файлы:
 
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/AppConfig.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/config/InfrastructureFiltersTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/config/NewRelicMetricsExportSmokeTest.java`
 - `apps/backend/src/main/resources/application.properties`
-- новый `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/PerformanceConfig.java`
-- новый `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/ObservabilityConfig.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/AppConfig.java`
 - `.env.example`
 - `docs/monitoring/newrelic.md`
 
@@ -515,5 +520,16 @@ Agroal уже покрывает подключение к БД. Дополни�
 6. `BAP-13` ✅
 7. `BAP-14` ✅
 8. все `P1` items после свежих измерений
+
+Оптимальная очередь `P1` после свежих измерений для ИИ-агента:
+
+1. `BAP-03` ✅
+2. `BAP-11`
+3. `BAP-12`
+4. `BAP-02`
+5. `BAP-06`
+6. `BAP-08`
+7. `BAP-09`
+8. `BAP-15`
 
 [Наверх](#top)

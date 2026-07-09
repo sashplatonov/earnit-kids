@@ -10,6 +10,7 @@ import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static java.util.Map.entry;
 
 @QuarkusTest
 @TestProfile(NewRelicMetricsExportSmokeTest.NewRelicMetricsEnabledProfile.class)
@@ -23,6 +24,29 @@ class NewRelicMetricsExportSmokeTest {
 
     @Test
     void startup_enablesMicrometerAndOtlpMetrics() {
+        assertThat(config.getValue("app.performance.http-metrics.payload-estimation-enabled", Boolean.class))
+            .isTrue();
+        assertThat(
+            config.getValue("app.performance.http-metrics.payload-estimation-max-collection-size", Integer.class)
+        ).isEqualTo(256);
+        assertThat(config.getValue("app.observability.new-relic.agent-enabled", Boolean.class)).isFalse();
+        assertThat(config.getValue("app.observability.new-relic.metrics.enabled", Boolean.class)).isTrue();
+        assertThat(config.getValue("app.observability.new-relic.metrics.otlp-metrics-endpoint", String.class))
+            .isEqualTo("http://127.0.0.1:4318");
+        assertThat(config.getValue("app.observability.new-relic.metrics.otlp-metrics-protocol", String.class))
+            .isEqualTo("http/protobuf");
+        assertThat(config.getValue("app.observability.new-relic.metrics.license-key", String.class))
+            .isEqualTo("test-license");
+        assertThat(config.getValue("app.observability.new-relic.logging.forwarding-enabled", Boolean.class))
+            .isFalse();
+        assertThat(
+            config.getValue(
+                "app.observability.new-relic.logging.forwarding-max-samples-stored",
+                Integer.class
+            )
+        ).isEqualTo(10000);
+        assertThat(config.getValue("app.observability.new-relic.logging.local-decorating-enabled", Boolean.class))
+            .isFalse();
         assertThat(config.getValue("quarkus.otel.metrics.enabled", Boolean.class)).isTrue();
         assertThat(config.getValue("quarkus.otel.exporter.otlp.metrics.endpoint", String.class))
             .isEqualTo("http://127.0.0.1:4318");
@@ -32,15 +56,21 @@ class NewRelicMetricsExportSmokeTest {
     public static class NewRelicMetricsEnabledProfile implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
-            return Map.of(
-                "quarkus.otel.metrics.enabled", "true",
-                "quarkus.otel.exporter.otlp.metrics.endpoint", "http://127.0.0.1:4318",
-                "quarkus.otel.exporter.otlp.metrics.protocol", "http/protobuf",
-                "quarkus.otel.exporter.otlp.metrics.headers", "api-key=test-license",
-                "quarkus.otel.traces.exporter", "none",
-                "quarkus.otel.logs.exporter", "none",
-                "quarkus.otel.logs.handler.enabled", "false",
-                "quarkus.otel.metric.export.interval", "24h"
+            return Map.ofEntries(
+                entry("app.performance.http-metrics.payload-estimation-enabled", "true"),
+                entry("app.performance.http-metrics.payload-estimation-max-collection-size", "256"),
+                entry("app.observability.new-relic.agent-enabled", "false"),
+                entry("app.observability.new-relic.metrics.enabled", "true"),
+                entry("app.observability.new-relic.metrics.otlp-metrics-endpoint", "http://127.0.0.1:4318"),
+                entry("app.observability.new-relic.metrics.otlp-metrics-protocol", "http/protobuf"),
+                entry("app.observability.new-relic.metrics.license-key", "test-license"),
+                entry("app.observability.new-relic.logging.forwarding-enabled", "false"),
+                entry("app.observability.new-relic.logging.forwarding-max-samples-stored", "10000"),
+                entry("app.observability.new-relic.logging.local-decorating-enabled", "false"),
+                entry("quarkus.otel.traces.exporter", "none"),
+                entry("quarkus.otel.logs.exporter", "none"),
+                entry("quarkus.otel.logs.handler.enabled", "false"),
+                entry("quarkus.otel.metric.export.interval", "24h")
             );
         }
     }

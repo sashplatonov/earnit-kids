@@ -131,6 +131,76 @@ public final class TestConfigFactory {
                     }
                 };
             }
+
+            @Override
+            public Performance performance() {
+                return () -> new Performance.HttpMetrics() {
+                    @Override
+                    public boolean payloadEstimationEnabled() {
+                        return true;
+                    }
+
+                    @Override
+                    public int payloadEstimationMaxCollectionSize() {
+                        return 256;
+                    }
+                };
+            }
+
+            @Override
+            public Observability observability() {
+                return () -> new Observability.NewRelic() {
+                    @Override
+                    public boolean agentEnabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public Metrics metrics() {
+                        return new Metrics() {
+                            @Override
+                            public boolean enabled() {
+                                return false;
+                            }
+
+                            @Override
+                            public String otlpMetricsEndpoint() {
+                                return "otlp.nr-data.net";
+                            }
+
+                            @Override
+                            public String otlpMetricsProtocol() {
+                                return "http/protobuf";
+                            }
+
+                            @Override
+                            public Optional<String> licenseKey() {
+                                return Optional.empty();
+                            }
+                        };
+                    }
+
+                    @Override
+                    public Logging logging() {
+                        return new Logging() {
+                            @Override
+                            public boolean forwardingEnabled() {
+                                return false;
+                            }
+
+                            @Override
+                            public int forwardingMaxSamplesStored() {
+                                return 10000;
+                            }
+
+                            @Override
+                            public boolean localDecoratingEnabled() {
+                                return false;
+                            }
+                        };
+                    }
+                };
+            }
         };
     }
 

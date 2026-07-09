@@ -17,6 +17,7 @@ This repo uses one New Relic path split by runtime:
 - structured JSON logs on stdout
 - browser logs and JS errors sent from the SvelteKit client when browser config is present
 - backend log forwarding disabled by default until volume review is complete
+- backend observability settings are exposed via typed config mappings under `app.performance.*` and `app.observability.*`
 
 [↑ Back to top](#top)
 
@@ -34,6 +35,8 @@ This repo uses one New Relic path split by runtime:
 
 Runtime:
 
+- `HTTP_METRICS_PAYLOAD_ESTIMATION_ENABLED=true`
+- `HTTP_METRICS_PAYLOAD_ESTIMATION_MAX_COLLECTION_SIZE=256`
 - `NEW_RELIC_LICENSE_KEY`
 - `NEW_RELIC_APP_NAME=earnit-kids-backend`
 - `NEW_RELIC_AGENT_ENABLED=false`
@@ -49,6 +52,19 @@ Runtime:
 - `VITE_NEW_RELIC_BROWSER_INIT=` copied from the Browser app `NREUM.init` snippet
 - `VITE_NEW_RELIC_BROWSER_LOADER_CONFIG=` copied from the Browser app `NREUM.loader_config` snippet
 
+Backend config mappings:
+
+- `app.performance.http-metrics.payload-estimation-enabled`
+- `app.performance.http-metrics.payload-estimation-max-collection-size`
+- `app.observability.new-relic.agent-enabled`
+- `app.observability.new-relic.metrics.enabled`
+- `app.observability.new-relic.metrics.otlp-metrics-endpoint`
+- `app.observability.new-relic.metrics.otlp-metrics-protocol`
+- `app.observability.new-relic.metrics.license-key`
+- `app.observability.new-relic.logging.forwarding-enabled`
+- `app.observability.new-relic.logging.forwarding-max-samples-stored`
+- `app.observability.new-relic.logging.local-decorating-enabled`
+
 Notes:
 
 - keep the license key out of git
@@ -58,7 +74,7 @@ Notes:
 - Quarkus does not expose the servlet-container JMX pool set that powers the built-in APM `Threads` tab, so the image now ships a custom JMX extension under `/opt/newrelic/extensions`.
 - Query custom JVM/thread metrics in New Relic from the `Metric` event with names like `JMX/Runtime/Threads/ThreadCount`.
 - Browser logs arrive in the New Relic `Logs` UI and can be filtered by browser app name plus the custom `event` attribute.
-- Metrics export uses the Quarkus Micrometer + OpenTelemetry bridge. When `NEW_RELIC_METRICS_ENABLED=true`, backend JVM and HTTP server meters are exported to the New Relic OTLP endpoint with the `api-key` header sourced from `NEW_RELIC_LICENSE_KEY`.
+- Metrics export uses the Quarkus Micrometer + OpenTelemetry bridge. When `app.observability.new-relic.metrics.enabled=true`, backend JVM and HTTP server meters are exported to the New Relic OTLP endpoint with the `api-key` header sourced from `app.observability.new-relic.metrics.license-key`.
 - New Relic recommends OTLP/HTTP protobuf for metric ingest.
 
 [↑ Back to top](#top)

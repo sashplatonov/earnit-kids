@@ -10,6 +10,10 @@ public interface AppConfig {
 
     Auth auth();
 
+    Performance performance();
+
+    Observability observability();
+
     @WithDefault("false")
     boolean production();
 
@@ -57,5 +61,60 @@ public interface AppConfig {
         Optional<String> clientSecret();
 
         Optional<String> redirectUri();
+    }
+
+    interface Performance {
+
+        HttpMetrics httpMetrics();
+
+        interface HttpMetrics {
+
+            @WithDefault("true")
+            boolean payloadEstimationEnabled();
+
+            @WithDefault("256")
+            int payloadEstimationMaxCollectionSize();
+        }
+    }
+
+    interface Observability {
+
+        NewRelic newRelic();
+
+        interface NewRelic {
+
+            @WithDefault("false")
+            boolean agentEnabled();
+
+            Metrics metrics();
+
+            Logging logging();
+
+            interface Metrics {
+
+                @WithDefault("false")
+                boolean enabled();
+
+                @WithDefault("otlp.nr-data.net")
+                String otlpMetricsEndpoint();
+
+                @WithDefault("http/protobuf")
+                String otlpMetricsProtocol();
+
+                Optional<String> licenseKey();
+            }
+
+            interface Logging {
+
+                @WithDefault("false")
+                boolean forwardingEnabled();
+
+                @WithDefault("10000")
+                int forwardingMaxSamplesStored();
+
+                @WithDefault("false")
+                boolean localDecoratingEnabled();
+            }
+        }
     }
 }

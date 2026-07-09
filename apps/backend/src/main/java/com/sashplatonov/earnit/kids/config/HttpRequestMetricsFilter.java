@@ -38,9 +38,9 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
     public HttpRequestMetricsFilter(
         HttpRequestMetricsRegistry metricsRegistry,
         ObjectMapper objectMapper,
-        @ConfigProperty(name = "app.http-metrics.payload-estimation-enabled", defaultValue = "true")
+        @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-enabled", defaultValue = "true")
         boolean payloadEstimationEnabled,
-        @ConfigProperty(name = "app.http-metrics.payload-estimation-max-collection-size", defaultValue = "256")
+        @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-max-collection-size", defaultValue = "256")
         int maxCollectionSize
     ) {
         this.metricsRegistry = metricsRegistry;
