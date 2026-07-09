@@ -36,7 +36,7 @@
 
 Этот backlog опирается на текущее состояние репозитория:
 
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java` по-прежнему концентрирует загрузку dashboard, сбор analytics, enrichment DTO и часть поверхности performance-risk;
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java` уже стал тонким фасадом, а загрузка dashboard, analytics и orchestration записи разнесены по узким сервисам;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java` смешивает process stats, DB ping, парсинг логов и snapshot HTTP-метрик в одном сервисе;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java` оценивает размер payload на response path и сейчас создаёт новый `ObjectMapper` на каждый request для нетривиальных entity;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java` уже кладёт `traceId` в MDC, но propagation trace по-прежнему завязан на custom header и не покрывает более богатые поля request scope;
@@ -93,6 +93,8 @@
 ### BAP-01 - Разделить `FamilyServiceImpl` на query, command и analytics обязанности
 
 Приоритет: P0
+
+Статус: выполнено 2026-07-09.
 
 Основные файлы:
 
@@ -493,7 +495,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 
 Рекомендуемый порядок выполнения:
 
-1. `BAP-01`
+1. `BAP-01` ✅
 2. `BAP-04`
 3. `BAP-05`
 4. `BAP-07`
