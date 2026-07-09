@@ -79,7 +79,7 @@
 | BAP-08 | P1 | БД | Заменить редкие fallback N+1 чтения батчевой hydration для missing IDs |
 | BAP-09 | P1 | БД | Добавить следующие измеренные composite indexes и проверки query-plan |
 | BAP-10 | P0 | Наблюдаемость | Обновить propagation trace и MDC scope fields |
-| BAP-11 | P1 | Наблюдаемость | Добавить лёгкие readiness checks для критичных runtime dependency |
+| BAP-11 | P1 | Наблюдаемость | Добавить лёгкие readiness checks для критичных runtime dependency ✅ |
 | BAP-12 | P1 | Наблюдаемость | Добавить slow-request и slow-query диагностику без лишнего шума |
 | BAP-13 | P0 | New Relic | Добавить реальный metrics export path для New Relic dashboards |
 | BAP-14 | P0 | New Relic | Инструментировать ключевые backend business и platform KPI ✅ |
@@ -371,15 +371,18 @@ HTTP metrics не должны становиться bottleneck на hot path, 
 - MDC всегда очищается после response;
 - логи для request-scoped операций включают `traceId` и стабильные scope identifiers без утечки секретов или high-cardinality данных.
 
-### BAP-11 - Добавить лёгкие readiness checks для критичных runtime dependency
+### BAP-11 - Добавить лёгкие readiness checks для критичных runtime dependency ✅
 
 Приоритет: P1
 
 Основные файлы:
 
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/BackupDirectoryReadinessCheck.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/NewRelicMetricsReadinessCheck.java`
 - новые health checks в `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/`
 - `apps/backend/src/main/resources/application.properties`
 - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/config/InfrastructureFiltersTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/config/ReadinessChecksTest.java`
 - `docs/monitoring/newrelic.md`
 
 Архитектурное решение:
@@ -524,7 +527,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 Оптимальная очередь `P1` после свежих измерений для ИИ-агента:
 
 1. `BAP-03` ✅
-2. `BAP-11`
+2. `BAP-11` ✅
 3. `BAP-12`
 4. `BAP-02`
 5. `BAP-06`
