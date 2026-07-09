@@ -126,18 +126,25 @@
 - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/FamilyServiceImplTest.java` либо заменён более узкими тестами, либо сведен к поведению фасада;
 - `JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify` проходит в `apps/backend`.
 
-### BAP-02 - Декомпозировать `SystemDashboardService` на узкие сервисы за стабильным фасадом
+### BAP-02 - Декомпозировать `SystemDashboardService` на узкие сервисы за стабильным фасадом ✅
 
 Приоритет: P1
+
+Статус: выполнено 2026-07-09.
 
 Основные файлы:
 
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java`
-- новый `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemOverviewService.java`
-- новый `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/DatabaseHealthService.java`
-- новый `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/ApplicationLogService.java`
-- новый `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/HttpMetricsSnapshotService.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemOverviewService.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/DatabaseHealthService.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/ApplicationLogService.java`
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/HttpMetricsSnapshotService.java`
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/SuperAdminResource.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/SystemDashboardServiceTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/SystemOverviewServiceTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/DatabaseHealthServiceTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/HttpMetricsSnapshotServiceTest.java`
+- `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/ApplicationLogServiceTest.java`
 
 Архитектурное решение:
 
@@ -532,7 +539,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 1. `BAP-03` ✅
 2. `BAP-11` ✅
 3. `BAP-12` ✅
-4. `BAP-02`
+4. `BAP-02` ✅
 5. `BAP-06`
 6. `BAP-08`
 7. `BAP-09`
