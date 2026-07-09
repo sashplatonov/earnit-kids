@@ -2,6 +2,8 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.quarkus.cache.CacheInvalidateAll;
+import io.quarkus.cache.CacheResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -62,6 +64,7 @@ public class BaseDataService {
         }
     }
 
+    @CacheResult(cacheName = "base-data")
     public Map<String, Object> getBaseData() {
         if (!initialized) {
             initialize();
@@ -74,6 +77,7 @@ public class BaseDataService {
         }
     }
 
+    @CacheInvalidateAll(cacheName = "base-data")
     public boolean saveBaseData(Map<String, Object> updatedBaseData) {
         Map<String, Object> normalized = normalizeBaseData(updatedBaseData);
         synchronized (baseDataLock) {

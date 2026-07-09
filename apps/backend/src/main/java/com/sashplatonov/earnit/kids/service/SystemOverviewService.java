@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.service;
 
 import com.sashplatonov.earnit.kids.util.TimeProvider;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class SystemOverviewService {
 
     private final TimeProvider timeProvider;
 
+    @CacheResult(cacheName = "system-overview")
     public Map<String, Object> getOverview() {
         Runtime runtime = Runtime.getRuntime();
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();

@@ -162,18 +162,21 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### PERF-06. `P1` Включить короткоживущий cache только для стабильных read-heavy данных
 
+- Статус: выполнено. `BaseDataService` и `SystemOverviewService` используют `quarkus-cache` с коротким TTL и явной invalidation для base data.
+
 - Архитектурное решение:
   - использовать уже подключенный `quarkus-cache` только для данных с понятной invalidation model:
     - base data;
-    - system dashboard static metadata;
-    - возможно analytics aggregates с очень коротким TTL.
+    - system dashboard overview snapshot.
   - не кешировать child/family mutable state без scope key и invalidation strategy.
 - Пути к файлам:
   - `apps/backend/pom.xml`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/BaseDataService.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemOverviewService.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
   - `apps/backend/src/main/resources/baseData.json`
+  - `apps/backend/src/main/resources/application.properties`
 - Критерии проверки:
   - для каждого cached метода зафиксированы TTL и invalidation trigger.
   - mutable family snapshot не попадает в cache без явной архитектурной причины.
