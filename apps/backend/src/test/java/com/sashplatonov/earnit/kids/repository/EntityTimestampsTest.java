@@ -113,7 +113,7 @@ class EntityTimestampsTest {
         entityManager.flush();
         entityManager.clear();
 
-        List<HistoryEntryEntity> history = historyRepository.getAllHistoryForFamily(family.getId());
+        List<HistoryEntryEntity> history = historyRepository.getHistoryForFamily(family.getId(), 10, 0);
         assertThat(history)
             .extracting(HistoryEntryEntity::getExternalId, HistoryEntryEntity::getCreatedAt)
             .containsExactlyInAnyOrder(

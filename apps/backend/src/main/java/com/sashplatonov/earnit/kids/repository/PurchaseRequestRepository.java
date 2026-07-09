@@ -71,15 +71,6 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
         );
     }
 
-    public List<PurchaseRequestEntity> getAllRequestsForFamily(int familyDbId) {
-        return slowOperationDiagnostics.recordQuery(
-            "family-data.getAllRequestsForFamily",
-            () -> list("familyId = ?1", familyDbId),
-            "familyDbId",
-            String.valueOf(familyDbId)
-        );
-    }
-
     public int getRequestsCount(int familyDbId) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getRequestsCount",

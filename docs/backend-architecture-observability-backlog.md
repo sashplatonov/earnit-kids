@@ -186,6 +186,8 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### DB-07. `P0` Убрать family-wide full scans из runtime API
 
+- Статус: выполнено. `HistoryRepository` и `PurchaseRequestRepository` больше не expose unbounded family-wide load методы; runtime paths используют bounded reads.
+
 - Архитектурное решение:
   - запретить использование методов вида `getAllHistoryForFamily()` и `getAllRequestsForFamily()` в runtime-потоках UI, если результат потенциально неограничен.
   - для UI read paths использовать pagination, aggregates и projections вместо full-row list loads.

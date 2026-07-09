@@ -71,15 +71,6 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         );
     }
 
-    public List<HistoryEntryEntity> getAllHistoryForFamily(int familyDbId) {
-        return slowOperationDiagnostics.recordQuery(
-            "family-data.getAllHistoryForFamily",
-            () -> list("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId),
-            "familyDbId",
-            String.valueOf(familyDbId)
-        );
-    }
-
     public int getHistoryCount(int childId) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getHistoryCount",
