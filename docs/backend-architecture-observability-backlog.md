@@ -96,7 +96,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### API-03. `P1` Разрезать крупные resource-классы по bounded API surfaces
 
-- Статус: выполнено частично. `FamilyResource` разделён на read/write resources, публичные пути сохранены.
+- Статус: выполнено. `FamilyResource`, `SuperAdminResource` и `AuthResource` разрезаны на bounded resources, публичные пути сохранены.
 - Архитектурное решение:
   - `FamilyResource` разделить на child-scoped/read/write endpoints с общей auth/scope проверкой через helper/service, а не через один длинный resource.
   - `SuperAdminResource` разделить минимум на `SystemDashboardResource`, `CatalogAdminResource`, `BackupAdminResource`.
@@ -117,6 +117,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### PERF-04. `P0` Декомпозировать family snapshot на shell и section-scoped payloads
 
+- Статус: выполнено. `FamilyDashboardQueryServiceImpl` теперь собирает shell, detail и full payloads через отдельные scope/catalog секции.
 - Архитектурное решение:
   - backend должен поддерживать не один тяжёлый `FamilyDataResponse` для всех UI-сценариев, а отдельные read-model paths:
     - shell/session data;

@@ -57,29 +57,18 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
     public OperationResult<FamilyDashboardShellResponse> loadFamilyShellData(String familyId, Integer childId,
                                                                              boolean adminSession) {
         return backendKpiMetrics.recordResult("dashboard", "shell", () -> {
-            Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
-            if (snapshotOpt.isEmpty()) {
+            Optional<FamilyScope> scopeOpt = loadFamilyScope(familyId, childId, adminSession);
+            if (scopeOpt.isEmpty()) {
                 return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
-            DashboardSnapshot snapshot = snapshotOpt.get();
-            if (snapshot.activeChild == null) {
-                return OperationResult.success(emptyShellResponse(snapshot.rules, adminSession));
+            FamilyScope scope = scopeOpt.get();
+            if (scope.activeChild() == null) {
+                return OperationResult.success(emptyShellResponse(scope.rules(), adminSession));
             }
 
-            return OperationResult.success(new FamilyDashboardShellResponse(
-                snapshot.activeChild.getBalance(),
-                snapshot.rules,
-                snapshot.tasks,
-                snapshot.shopItems,
-                adminSession ? Boolean.TRUE : null,
-                snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
-                snapshot.resolvedLastSelectedChildId,
-                snapshot.activeChild.getId(),
-                snapshot.activeChild.getName(),
-                snapshot.activeChild.getMonthlyLimit(),
-                snapshot.activeChild.getDailyCoinLimit()
-            ));
+            CatalogContext catalog = loadCatalogContext(scope.activeChild().getId());
+            return OperationResult.success(buildShellResponse(scope, catalog, adminSession));
         });
     }
 
@@ -87,68 +76,40 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
     public OperationResult<FamilyDashboardDetailResponse> loadFamilyDetailData(String familyId, Integer childId,
                                                                               boolean adminSession) {
         return backendKpiMetrics.recordResult("dashboard", "detail", () -> {
-            Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
-            if (snapshotOpt.isEmpty()) {
+            Optional<FamilyScope> scopeOpt = loadFamilyScope(familyId, childId, adminSession);
+            if (scopeOpt.isEmpty()) {
                 return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
-            DashboardSnapshot snapshot = snapshotOpt.get();
-            if (snapshot.activeChild == null) {
+            FamilyScope scope = scopeOpt.get();
+            if (scope.activeChild() == null) {
                 return OperationResult.success(new FamilyDashboardDetailResponse(List.of(), List.of(), List.of()));
             }
 
-            return OperationResult.success(new FamilyDashboardDetailResponse(
-                loadHistory(snapshot.familyDbId, snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
-                loadRequests(
-                    snapshot.familyDbId,
-                    snapshot.activeChild.getId(),
-                    adminSession,
-                    snapshot.taskMap,
-                    snapshot.shopMap
-                ),
-                loadFriends(snapshot.activeChild.getId())
-            ));
+            CatalogContext catalog = loadCatalogContext(scope.activeChild().getId());
+            return OperationResult.success(buildDetailResponse(scope, catalog, adminSession));
         });
     }
 
     @Override
     public OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession) {
         return backendKpiMetrics.recordResult("dashboard", "full", () -> {
-            Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
-            if (snapshotOpt.isEmpty()) {
+            Optional<FamilyScope> scopeOpt = loadFamilyScope(familyId, childId, adminSession);
+            if (scopeOpt.isEmpty()) {
                 return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
-            DashboardSnapshot snapshot = snapshotOpt.get();
-            if (snapshot.activeChild == null) {
-                return OperationResult.success(emptyFamilyDataResponse(snapshot.rules, adminSession));
+            FamilyScope scope = scopeOpt.get();
+            if (scope.activeChild() == null) {
+                return OperationResult.success(emptyFamilyDataResponse(scope.rules(), adminSession));
             }
 
-            return OperationResult.success(new FamilyDataResponse(
-                snapshot.activeChild.getBalance(),
-                snapshot.rules,
-                snapshot.tasks,
-                snapshot.shopItems,
-                loadHistory(snapshot.familyDbId, snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
-                loadRequests(
-                    snapshot.familyDbId,
-                    snapshot.activeChild.getId(),
-                    adminSession,
-                    snapshot.taskMap,
-                    snapshot.shopMap
-                ),
-                loadFriends(snapshot.activeChild.getId()),
-                adminSession ? Boolean.TRUE : null,
-                snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
-                snapshot.resolvedLastSelectedChildId,
-                snapshot.activeChild.getName(),
-                snapshot.activeChild.getMonthlyLimit(),
-                snapshot.activeChild.getDailyCoinLimit()
-            ));
+            CatalogContext catalog = loadCatalogContext(scope.activeChild().getId());
+            return OperationResult.success(buildFamilyDataResponse(scope, catalog, adminSession));
         });
     }
 
-    private Optional<DashboardSnapshot> loadSnapshot(String familyId, Integer childId, boolean adminSession) {
+    private Optional<FamilyScope> loadFamilyScope(String familyId, Integer childId, boolean adminSession) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return Optional.empty();
@@ -160,7 +121,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
         List<ChildEntity> children = childRepository.getChildren(familyDbId);
 
         if (children.isEmpty()) {
-            return Optional.of(DashboardSnapshot.empty(familyDbId, rules));
+            return Optional.of(FamilyScope.empty(familyDbId, rules));
         }
 
         List<ChildEntity> visibleChildren = resolveVisibleChildren(children, adminSession, childId);
@@ -175,28 +136,83 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             persistedChildId,
             adminSession
         );
-        Map<Long, String> lastCompletedAtByTaskId =
-            loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.earn);
-        Map<Long, String> lastPurchasedAtByItemId =
-            loadLatestHistoryTimestamps(activeChild.getId(), HistoryEntryType.spend);
-        List<TaskDto> tasks = loadTasks(activeChild.getId(), lastCompletedAtByTaskId);
-        List<ShopItemDto> shopItems = loadShopItems(activeChild.getId(), lastPurchasedAtByItemId);
-        Map<Long, TaskDto> taskMap = tasks.stream()
-            .collect(java.util.stream.Collectors.toMap(TaskDto::id, task -> task, (left, right) -> left));
-        Map<Long, ShopItemDto> shopMap = shopItems.stream()
-            .collect(java.util.stream.Collectors.toMap(ShopItemDto::id, item -> item, (left, right) -> left));
-
-        return Optional.of(new DashboardSnapshot(
+        return Optional.of(new FamilyScope(
             familyDbId,
             rules,
             activeChild,
             visibleChildren,
-            resolvedLastSelectedChildId,
-            tasks,
-            shopItems,
-            taskMap,
-            shopMap
+            resolvedLastSelectedChildId
         ));
+    }
+
+    private CatalogContext loadCatalogContext(int childId) {
+        Map<Long, String> lastCompletedAtByTaskId =
+            loadLatestHistoryTimestamps(childId, HistoryEntryType.earn);
+        Map<Long, String> lastPurchasedAtByItemId =
+            loadLatestHistoryTimestamps(childId, HistoryEntryType.spend);
+        List<TaskDto> tasks = loadTasks(childId, lastCompletedAtByTaskId);
+        List<ShopItemDto> shopItems = loadShopItems(childId, lastPurchasedAtByItemId);
+        Map<Long, TaskDto> taskMap = tasks.stream()
+            .collect(java.util.stream.Collectors.toMap(TaskDto::id, task -> task, (left, right) -> left));
+        Map<Long, ShopItemDto> shopMap = shopItems.stream()
+            .collect(java.util.stream.Collectors.toMap(ShopItemDto::id, item -> item, (left, right) -> left));
+        return new CatalogContext(tasks, shopItems, taskMap, shopMap);
+    }
+
+    private FamilyDashboardShellResponse buildShellResponse(FamilyScope scope,
+                                                             CatalogContext catalog,
+                                                             boolean adminSession) {
+        return new FamilyDashboardShellResponse(
+            scope.activeChild().getBalance(),
+            scope.rules(),
+            catalog.tasks(),
+            catalog.shopItems(),
+            adminSession ? Boolean.TRUE : null,
+            scope.visibleChildren().stream().map(this::toChildDto).toList(),
+            scope.resolvedLastSelectedChildId(),
+            scope.activeChild().getId(),
+            scope.activeChild().getName(),
+            scope.activeChild().getMonthlyLimit(),
+            scope.activeChild().getDailyCoinLimit()
+        );
+    }
+
+    private FamilyDashboardDetailResponse buildDetailResponse(FamilyScope scope,
+                                                               CatalogContext catalog,
+                                                               boolean adminSession) {
+        return new FamilyDashboardDetailResponse(
+            loadHistory(scope.familyDbId(), scope.activeChild().getId(), catalog.taskMap(), catalog.shopMap()),
+            loadRequests(
+                scope.familyDbId(),
+                scope.activeChild().getId(),
+                adminSession,
+                catalog.taskMap(),
+                catalog.shopMap()
+            ),
+            loadFriends(scope.activeChild().getId())
+        );
+    }
+
+    private FamilyDataResponse buildFamilyDataResponse(FamilyScope scope,
+                                                        CatalogContext catalog,
+                                                        boolean adminSession) {
+        FamilyDashboardShellResponse shell = buildShellResponse(scope, catalog, adminSession);
+        FamilyDashboardDetailResponse detail = buildDetailResponse(scope, catalog, adminSession);
+        return new FamilyDataResponse(
+            shell.balance(),
+            shell.rules(),
+            shell.tasks(),
+            shell.shop(),
+            detail.history(),
+            detail.requests(),
+            detail.friends(),
+            shell.isAdmin(),
+            shell.children(),
+            shell.lastSelectedChildId(),
+            shell.childNickname(),
+            shell.monthlyLimit(),
+            shell.dailyCoinLimit()
+        );
     }
 
     private FamilyDataResponse emptyFamilyDataResponse(String rules, boolean adminSession) {
@@ -655,31 +671,30 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
         return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 
-    private record DashboardSnapshot(
+    private record FamilyScope(
         int familyDbId,
         String rules,
         ChildEntity activeChild,
         List<ChildEntity> visibleChildren,
-        Integer resolvedLastSelectedChildId,
-        List<TaskDto> tasks,
-        List<ShopItemDto> shopItems,
-        Map<Long, TaskDto> taskMap,
-        Map<Long, ShopItemDto> shopMap
+        Integer resolvedLastSelectedChildId
     ) {
-        private static DashboardSnapshot empty(int familyDbId, String rules) {
-            return new DashboardSnapshot(
+        private static FamilyScope empty(int familyDbId, String rules) {
+            return new FamilyScope(
                 familyDbId,
                 rules,
                 null,
                 List.of(),
-                null,
-                List.of(),
-                List.of(),
-                Map.of(),
-                Map.of()
+                null
             );
         }
     }
+
+    private record CatalogContext(
+        List<TaskDto> tasks,
+        List<ShopItemDto> shopItems,
+        Map<Long, TaskDto> taskMap,
+        Map<Long, ShopItemDto> shopMap
+    ) { }
 
     private record HistoryDetails(
         String title,

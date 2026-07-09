@@ -47,12 +47,14 @@ class AuthResourceTest {
     @Mock CookieBuilder cookieBuilder;
 
     private AuthResource resource;
+    private AuthRecoveryResource recoveryResource;
     private AppConfig appConfig;
 
     @BeforeEach
     void setUp() {
         appConfig = TestConfigFactory.appConfig(false, null, true, true);
         resource = new AuthResource(authService, cookieBuilder, appConfig);
+        recoveryResource = new AuthRecoveryResource(authService);
     }
 
     @Test
@@ -196,7 +198,7 @@ class AuthResourceTest {
 
     @Test
     void forgotPassword_anyEmail_returnsOk() {
-        Response response = resource.forgotPassword(new ForgotPasswordRequest("a@test.com"));
+        Response response = recoveryResource.forgotPassword(new ForgotPasswordRequest("a@test.com"));
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(authService).forgotPassword("a@test.com");
@@ -205,10 +207,10 @@ class AuthResourceTest {
     @Test
     void changePassword_missingAdminContext_returnsUnauthorized() {
         ChangePasswordRequest request = new ChangePasswordRequest("1", "2");
-        Response unauthorized = resource.changePassword(contextWithAuth(null), request);
+        Response unauthorized = recoveryResource.changePassword(contextWithAuth(null), request);
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        Response childUnauthorized = resource.changePassword(contextWithAuth(childAuth(10)), request);
+        Response childUnauthorized = recoveryResource.changePassword(contextWithAuth(childAuth(10)), request);
         assertThat(childUnauthorized.getStatus()).isEqualTo(401);
     }
 
@@ -217,12 +219,12 @@ class AuthResourceTest {
         when(authService.changeAdminPassword("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.success(null));
 
-        Response ok = resource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
+        Response ok = recoveryResource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
         assertThat(ok.getStatus()).isEqualTo(200);
 
         when(authService.changeAdminPassword("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.failure("bad"));
-        Response bad = resource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
+        Response bad = recoveryResource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
         assertThat(bad.getStatus()).isEqualTo(400);
     }
 
@@ -233,8 +235,8 @@ class AuthResourceTest {
         when(authService.verifyEmail("a@test.com", "token"))
             .thenReturn(OperationResult.success(null));
 
-        Response reset = resource.resetPassword(new ResetPasswordRequest("a@test.com", "token", "newpass"));
-        Response verify = resource.verifyEmail(new VerifyEmailRequest("a@test.com", "token"));
+        Response reset = recoveryResource.resetPassword(new ResetPasswordRequest("a@test.com", "token", "newpass"));
+        Response verify = recoveryResource.verifyEmail(new VerifyEmailRequest("a@test.com", "token"));
 
         assertThat(reset.getStatus()).isEqualTo(200);
         assertThat(verify.getStatus()).isEqualTo(200);
@@ -289,15 +291,15 @@ class AuthResourceTest {
             "google-client-id",
             "google-client-secret");
         JwtService jwtService = testJwtService();
-        resource = new AuthResource(
+        AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,
             cookieBuilder,
             config,
             new GoogleOAuthService(config, new ObjectMapper()),
             jwtService,
-            "https://app.example.com");
+            java.util.Optional.of("https://app.example.com"));
 
-        Response response = resource.loginGoogleUrl(null, "/en/app");
+        Response response = googleResource.loginGoogleUrl(null, "/en/app");
 
         assertThat(response.getStatus()).isEqualTo(200);
         List<?> cookies = response.getHeaders().get("Set-Cookie");
@@ -313,7 +315,7 @@ class AuthResourceTest {
 
     @Test
     void loginGoogleUrl_prefersExplicitRedirectUriEnv() {
-        resource = new AuthResource(
+        AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,
             cookieBuilder,
             TestConfigFactory.appConfig(
@@ -341,9 +343,9 @@ class AuthResourceTest {
                     7776000),
                 new ObjectMapper()),
             testJwtService(),
-            "https://app.example.com");
+            java.util.Optional.of("https://app.example.com"));
 
-        Response response = resource.loginGoogleUrl(null, "/en/app");
+        Response response = googleResource.loginGoogleUrl(null, "/en/app");
 
         Map<?, ?> payload = (Map<?, ?>) response.getEntity();
         assertThat(String.valueOf(payload.get("url")))
@@ -362,13 +364,13 @@ class AuthResourceTest {
             "google-client-secret");
         GoogleOAuthService googleOAuthService = mock(GoogleOAuthService.class);
         JwtService jwtService = testJwtService();
-        resource = new AuthResource(
+        AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,
             cookieBuilder,
             config,
             googleOAuthService,
             jwtService,
-            "https://app.example.com");
+            java.util.Optional.of("https://app.example.com"));
 
         String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/app"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
@@ -376,7 +378,7 @@ class AuthResourceTest {
         when(authService.authenticateAdminWithGoogle("google-id-token"))
             .thenReturn(OperationResult.failure("Account is blocked"));
 
-        Response response = resource.loginGoogleCallback(
+        Response response = googleResource.loginGoogleCallback(
             null,
             "valid-code",
             state,
@@ -399,13 +401,13 @@ class AuthResourceTest {
             "google-client-secret");
         GoogleOAuthService googleOAuthService = mock(GoogleOAuthService.class);
         JwtService jwtService = testJwtService();
-        resource = new AuthResource(
+        AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,
             cookieBuilder,
             config,
             googleOAuthService,
             jwtService,
-            "https://app.example.com");
+            java.util.Optional.of("https://app.example.com"));
 
         String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/app"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
@@ -413,7 +415,7 @@ class AuthResourceTest {
         when(authService.authenticateAdminWithGoogle("google-id-token"))
             .thenReturn(OperationResult.failure("No family account is linked to this Google email yet"));
 
-        Response response = resource.loginGoogleCallback(
+        Response response = googleResource.loginGoogleCallback(
             null,
             "valid-code",
             state,
@@ -436,13 +438,13 @@ class AuthResourceTest {
             "google-client-secret");
         GoogleOAuthService googleOAuthService = mock(GoogleOAuthService.class);
         JwtService jwtService = testJwtService();
-        resource = new AuthResource(
+        AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,
             cookieBuilder,
             config,
             googleOAuthService,
             jwtService,
-            "https://app.example.com");
+            java.util.Optional.of("https://app.example.com"));
 
         String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/ru/app"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
@@ -463,7 +465,7 @@ class AuthResourceTest {
                 true
             )));
 
-        Response response = resource.loginGoogleCallback(
+        Response response = googleResource.loginGoogleCallback(
             null,
             "valid-code",
             state,
@@ -484,15 +486,15 @@ class AuthResourceTest {
             true,
             "google-client-id",
             "google-client-secret");
-        resource = new AuthResource(
+        AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,
             cookieBuilder,
             config,
             mock(GoogleOAuthService.class),
             testJwtService(),
-            (String) null);
+            java.util.Optional.empty());
 
-        Response response = resource.loginGoogleCallback(
+        Response response = googleResource.loginGoogleCallback(
             null,
             "invalid",
             "state",
