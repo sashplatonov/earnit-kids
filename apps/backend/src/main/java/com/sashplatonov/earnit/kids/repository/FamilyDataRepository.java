@@ -191,7 +191,7 @@ public class FamilyDataRepository {
     }
 
     public List<PurchaseRequestEntity> getRequests(int familyDbId, int limit, int offset) {
-        return requestRepo.find("familyId = ?1 ORDER BY createdAt DESC", familyDbId)
+        return requestRepo.find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
             .range(offset, offset + limit - 1)
             .list();
     }

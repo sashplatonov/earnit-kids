@@ -38,7 +38,7 @@
 
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java` уже стал тонким фасадом, а dashboard shell/detail, analytics и orchestration записи разнесены по узким сервисам;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java` смешивает process stats, DB ping, парсинг логов и snapshot HTTP-метрик в одном сервисе;
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java` оценивает размер payload на response path и сейчас создаёт новый `ObjectMapper` на каждый request для нетривиальных entity;
+- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java` считает payload на response path через injected `ObjectMapper`, предпочитает `Content-Length` и избегает полной сериализации для больших ответов;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java` уже кладёт `traceId` в MDC, но propagation trace по-прежнему завязан на custom header и не покрывает более богатые поля request scope;
 - wiring New Relic runtime уже есть в `.env.example`, `docker-compose.yml`, `docker-compose.native.yml` и `docs/monitoring/newrelic.md`, но business metrics пока не экспортируются как полноценные сигналы dashboard.
 
@@ -56,7 +56,7 @@
 <a id="current-repo-signals"></a>
 ## Сигналы текущего состояния
 
-- `FamilyServiceImpl.loadFamilyData(...)` всё ещё собирает большой snapshot и всегда тащит данные history и requests для активного child path.
+- `FamilyServiceImpl.loadFamilyData(...)` всё ещё собирает большой snapshot и всегда тащит данные history и requests для активного child path, а отдельные history/requests endpoints уже paginated.
 - `FamilyServiceImpl.getAnalyticsData(...)` уже использует aggregation helpers, но сервис остаётся владельцем слишком большого числа read models и cache candidates.
 - `HistoryRepository` уже содержит aggregate JPQL, а `V19__add_composite_indexes.sql` уже добавил несколько составных индексов, поэтому следующий проход по БД должен расширять уже измеренные query paths, а не начинаться с нуля.
 - `HttpRequestMetricsRegistry` живёт в памяти и полезен для super-admin dashboard, но это не долговечный telemetry pipeline.
@@ -214,6 +214,8 @@
 
 Приоритет: P0
 
+Статус: выполнено 2026-07-09.
+
 Основные файлы:
 
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java`
@@ -268,6 +270,8 @@ HTTP metrics не должны становиться bottleneck на hot path, 
 ### BAP-07 - Добавить pagination contracts для history и requests
 
 Приоритет: P0
+
+Статус: выполнено 2026-07-09.
 
 Основные файлы:
 
@@ -499,8 +503,8 @@ Agroal уже покрывает подключение к БД. Дополни�
 
 1. `BAP-01` ✅
 2. `BAP-04` ✅
-3. `BAP-05`
-4. `BAP-07`
+3. `BAP-05` ✅
+4. `BAP-07` ✅
 5. `BAP-10`
 6. `BAP-13`
 7. `BAP-14`

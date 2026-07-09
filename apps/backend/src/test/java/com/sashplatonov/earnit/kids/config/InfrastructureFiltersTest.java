@@ -1,14 +1,18 @@
 package com.sashplatonov.earnit.kids.config;
 
 import com.sashplatonov.earnit.kids.service.HttpRequestMetricsRegistry;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,7 +49,8 @@ class InfrastructureFiltersTest {
     @Test
     void httpRequestMetricsFilter_storesNormalizedRequestPath() {
         HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
-        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry);
+        ObjectMapper objectMapper = mock(ObjectMapper.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 256);
         ContainerRequestContext request = mock(ContainerRequestContext.class);
         UriInfo uriInfo = mock(UriInfo.class);
         when(request.getUriInfo()).thenReturn(uriInfo);
@@ -58,12 +63,14 @@ class InfrastructureFiltersTest {
     }
 
     @Test
-    void httpRequestMetricsFilter_fallsBackForMissingStartAndBlankPath() {
+    void httpRequestMetricsFilter_fallsBackForMissingStartAndBlankPath() throws Exception {
         HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
-        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry);
+        ObjectMapper objectMapper = mock(ObjectMapper.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 256);
         ContainerRequestContext request = mock(ContainerRequestContext.class);
         ContainerResponseContext response = mock(ContainerResponseContext.class);
         UriInfo uriInfo = mock(UriInfo.class);
+        MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
 
         when(request.getUriInfo()).thenReturn(uriInfo);
         when(uriInfo.getPath()).thenReturn("   ");
@@ -71,6 +78,8 @@ class InfrastructureFiltersTest {
         when(request.getProperty("metrics.startNanos")).thenReturn("invalid");
         when(request.getProperty("metrics.path")).thenReturn(null);
         when(response.getStatus()).thenReturn(503);
+        when(response.getHeaders()).thenReturn(headers);
+        when(response.getEntity()).thenReturn(null);
 
         filter.filter(request);
         filter.filter(request, response);
@@ -83,6 +92,72 @@ class InfrastructureFiltersTest {
             longThat(durationMs -> durationMs >= 0L),
             eq(-1L)
         );
+        verify(objectMapper, never()).writeValueAsBytes(any());
+    }
+
+    @Test
+    void httpRequestMetricsFilter_usesContentLengthWithoutSerializingEntity() throws Exception {
+        HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
+        ObjectMapper objectMapper = mock(ObjectMapper.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 256);
+        ContainerRequestContext request = mock(ContainerRequestContext.class);
+        ContainerResponseContext response = mock(ContainerResponseContext.class);
+        UriInfo uriInfo = mock(UriInfo.class);
+        MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
+
+        headers.add(HttpHeaders.CONTENT_LENGTH, "42");
+        when(request.getUriInfo()).thenReturn(uriInfo);
+        when(uriInfo.getPath()).thenReturn("api/data");
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getProperty("metrics.path")).thenReturn("/api/data");
+        when(response.getHeaders()).thenReturn(headers);
+        when(response.getEntity()).thenReturn(Map.of("hello", "world"));
+        when(response.getStatus()).thenReturn(200);
+        when(response.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
+
+        filter.filter(request);
+        filter.filter(request, response);
+
+        verify(metricsRegistry).record(
+            eq("GET"),
+            eq("/api/data"),
+            eq(200),
+            longThat(durationMs -> durationMs >= 0L),
+            eq(42L)
+        );
+        verify(objectMapper, never()).writeValueAsBytes(any());
+    }
+
+    @Test
+    void httpRequestMetricsFilter_skipsLargeCollectionsWithoutSerializingEntity() throws Exception {
+        HttpRequestMetricsRegistry metricsRegistry = mock(HttpRequestMetricsRegistry.class);
+        ObjectMapper objectMapper = mock(ObjectMapper.class);
+        HttpRequestMetricsFilter filter = new HttpRequestMetricsFilter(metricsRegistry, objectMapper, true, 4);
+        ContainerRequestContext request = mock(ContainerRequestContext.class);
+        ContainerResponseContext response = mock(ContainerResponseContext.class);
+        UriInfo uriInfo = mock(UriInfo.class);
+        MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
+
+        when(request.getUriInfo()).thenReturn(uriInfo);
+        when(uriInfo.getPath()).thenReturn("api/data");
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getProperty("metrics.path")).thenReturn("/api/data");
+        when(response.getHeaders()).thenReturn(headers);
+        when(response.getEntity()).thenReturn(List.of(1, 2, 3, 4, 5));
+        when(response.getStatus()).thenReturn(200);
+        when(response.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
+
+        filter.filter(request);
+        filter.filter(request, response);
+
+        verify(metricsRegistry).record(
+            eq("GET"),
+            eq("/api/data"),
+            eq(200),
+            longThat(durationMs -> durationMs >= 0L),
+            eq(-1L)
+        );
+        verify(objectMapper, never()).writeValueAsBytes(any());
     }
 
     @Test

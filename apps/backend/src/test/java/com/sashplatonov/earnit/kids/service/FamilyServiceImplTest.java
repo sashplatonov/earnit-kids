@@ -327,6 +327,38 @@ class FamilyServiceImplTest {
     }
 
     @Test
+    void getHistory_secondPage_returnsNextSlice() {
+        HistoryEntryEntity nextHistory = HistoryEntryEntity.builder()
+            .familyId(1)
+            .childId(10)
+            .externalId(2L)
+            .type(HistoryEntryType.earn)
+            .amount(7)
+            .relatedId(1002L)
+            .createdAt(FIXED_NOW.minusSeconds(60))
+            .build();
+        when(familyDataRepository.getHistory(10, 20, 20)).thenReturn(List.of(nextHistory));
+        when(familyDataRepository.getHistoryCount(10)).thenReturn(2);
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of(
+            TaskEntity.builder().taskId(1001L).childId(10).name("Read").coins(5).comment("Pages").build(),
+            TaskEntity.builder().taskId(1002L).childId(10).name("Math").coins(7).comment("Numbers").build()
+        ));
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
+
+        OperationResult<PaginatedHistory> result = service.getHistory("fam-1", 10, 2, 20);
+
+        PaginatedHistory payload = successValue(result);
+        assertThat(payload.page()).isEqualTo(2);
+        assertThat(payload.limit()).isEqualTo(20);
+        assertThat(payload.total()).isEqualTo(2);
+        assertThat(payload.items()).hasSize(1);
+        assertThat(payload.items().getFirst().description()).isEqualTo("Math");
+    }
+
+    @Test
     void getRequests_missingFamily_returnsFailure() {
         when(familyRepository.getDbId("missing")).thenReturn(Optional.empty());
         assertThat(service.getRequests("missing", 1, 20))
@@ -365,6 +397,23 @@ class FamilyServiceImplTest {
         assertThat(payload.items().getFirst().description()).isEqualTo("Prize");
         assertThat(payload.items().getFirst().groupName()).isEqualTo("Fun");
         assertThat(payload.items().getFirst().itemComment()).isEqualTo("Prize");
+    }
+
+    @Test
+    void getRequests_pageBeyondEnd_returnsEmptyPage() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyDataRepository.getRequests(1, 20, 40)).thenReturn(List.of());
+        when(familyDataRepository.getRequestsCount(1)).thenReturn(1);
+        when(familyDataRepository.getTasks(10)).thenReturn(List.of());
+        when(familyDataRepository.getShopItems(10)).thenReturn(List.of());
+
+        OperationResult<PaginatedRequests> result = service.getRequests("fam-1", 3, 20);
+
+        PaginatedRequests payload = successValue(result);
+        assertThat(payload.page()).isEqualTo(3);
+        assertThat(payload.limit()).isEqualTo(20);
+        assertThat(payload.total()).isEqualTo(1);
+        assertThat(payload.items()).isEmpty();
     }
 
     @Test

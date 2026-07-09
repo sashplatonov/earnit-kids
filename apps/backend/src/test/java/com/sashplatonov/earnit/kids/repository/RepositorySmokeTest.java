@@ -14,6 +14,7 @@ import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 
@@ -34,6 +35,7 @@ class RepositorySmokeTest {
     @Inject HistoryRepository historyRepository;
     @Inject PurchaseRequestRepository purchaseRequestRepository;
     @Inject FriendRepository friendRepository;
+    @Inject EntityManager entityManager;
 
     @Test
     @Transactional
@@ -142,6 +144,68 @@ class RepositorySmokeTest {
 
         int requestId = familyDataRepository.getRequests(familyDbId, 1, 0).getFirst().getId().intValue();
         assertThat(familyDataRepository.updateRequestStatus(requestId, PurchaseRequestStatus.approved)).isTrue();
+
+        Instant paginationTimestamp = Instant.parse("2026-04-22T12:00:00Z");
+        familyDataRepository.replaceHistory(familyDbId, child1.getId(), java.util.List.of(
+            HistoryEntryEntity.builder()
+                .familyId(familyDbId)
+                .childId(child1.getId())
+                .externalId(92001L)
+                .type(HistoryEntryType.earn)
+                .amount(2)
+                .description("First")
+                .createdAt(paginationTimestamp)
+                .build(),
+            HistoryEntryEntity.builder()
+                .familyId(familyDbId)
+                .childId(child1.getId())
+                .externalId(92002L)
+                .type(HistoryEntryType.earn)
+                .amount(3)
+                .description("Second")
+                .createdAt(paginationTimestamp)
+                .build()
+        ));
+        familyDataRepository.replaceRequests(familyDbId, java.util.List.of(
+            PurchaseRequestEntity.builder()
+                .familyId(familyDbId)
+                .childId(child1.getId())
+                .externalId(93001L)
+                .taskId(taskExternalId)
+                .taskName("Read")
+                .coins(5)
+                .requestType(PurchaseRequestType.earn)
+                .createdAt(paginationTimestamp)
+                .build(),
+            PurchaseRequestEntity.builder()
+                .familyId(familyDbId)
+                .childId(child1.getId())
+                .externalId(93002L)
+                .itemId(itemExternalId)
+                .taskName("Toy")
+                .coins(7)
+                .requestType(PurchaseRequestType.shop_purchase)
+                .createdAt(paginationTimestamp)
+                .build()
+        ));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(familyDataRepository.getHistory(child1.getId(), 1, 0))
+            .extracting(HistoryEntryEntity::getExternalId)
+            .containsExactly(92002L);
+        assertThat(familyDataRepository.getHistory(child1.getId(), 1, 1))
+            .extracting(HistoryEntryEntity::getExternalId)
+            .containsExactly(92001L);
+        assertThat(familyDataRepository.getHistory(child1.getId(), 1, 2)).isEmpty();
+
+        assertThat(familyDataRepository.getRequests(familyDbId, 1, 0))
+            .extracting(PurchaseRequestEntity::getExternalId)
+            .containsExactly(93002L);
+        assertThat(familyDataRepository.getRequests(familyDbId, 1, 1))
+            .extracting(PurchaseRequestEntity::getExternalId)
+            .containsExactly(93001L);
+        assertThat(familyDataRepository.getRequests(familyDbId, 1, 2)).isEmpty();
 
         assertThat(familyDataRepository.addFriend(child1.getId(), child2.getId())).isTrue();
         assertThat(familyDataRepository.getFriendChildIds(child1.getId())).contains(child2.getId());
