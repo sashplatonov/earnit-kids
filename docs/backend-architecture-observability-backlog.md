@@ -140,15 +140,21 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### PERF-05. `P1` Убрать лишние hot-path allocations в metrics/logging фильтрах
 
+- Статус: выполнено. `HttpRequestMetricsFilter` использует общий `HttpResponsePayloadEstimator`, а trace/log formatting на горячем пути переведён на более дешёвые сборки строк.
+
 - Архитектурное решение:
-  - перестать создавать `new ObjectMapper()` на каждый response в `HttpRequestMetricsFilter`.
-  - вынести payload-size estimation в переиспользуемый bean и отключаемую конфигурацию.
-  - не сериализовать большие DTO только ради приблизительной оценки размера ответа.
+  - payload-size estimation вынесена в переиспользуемый `HttpResponsePayloadEstimator`.
+  - `HttpRequestMetricsFilter` больше не держит JSON-оценку и использует общий bean на response path.
+  - `TraceFilter` и `SlowOperationDiagnostics` переведены на более дешёвую сборку trace/log строк без `split`, `replace`, `LinkedHashMap` и `StringJoiner` в hot path.
 - Пути к файлам:
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/HttpRequestMetricsRegistry.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/HttpResponsePayloadEstimator.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SlowOperationDiagnostics.java`
   - `apps/backend/src/main/resources/application.properties`
   - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/config/InfrastructureFiltersTest.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/HttpResponsePayloadEstimatorTest.java`
 - Критерии проверки:
   - в request filter нет per-request `ObjectMapper` allocation.
   - отключение payload-bytes measurement возможно через config.

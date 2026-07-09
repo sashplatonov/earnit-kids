@@ -8,7 +8,7 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
-import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.MDC;
 
 @Provider
@@ -22,6 +22,7 @@ public class TraceFilter implements ContainerRequestFilter, ContainerResponseFil
     private static final String TRACEPARENT_VERSION = "00";
     private static final String TRACEPARENT_ACCEPTED_PROPERTY = "tracefilter.traceparentAccepted";
     private static final String SPAN_ID_PROPERTY = "tracefilter.spanId";
+    private static final char[] HEX = "0123456789abcdef".toCharArray();
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -78,7 +79,7 @@ public class TraceFilter implements ContainerRequestFilter, ContainerResponseFil
 
         String trace = requestContext.getHeaderString("X-Trace-Id");
         if (trace == null || trace.isBlank()) {
-            return UUID.randomUUID().toString().replace("-", "");
+            return randomHexId(32);
         }
         return trace.trim();
     }
@@ -88,13 +89,17 @@ public class TraceFilter implements ContainerRequestFilter, ContainerResponseFil
     }
 
     private String parseTraceparentTraceId(String traceparent) {
-        String[] parts = traceparent.split("-");
-        if (parts.length != 4 || !TRACEPARENT_VERSION.equals(parts[0])) {
+        if (traceparent.length() != 55
+            || traceparent.charAt(2) != '-'
+            || traceparent.charAt(35) != '-'
+            || traceparent.charAt(52) != '-'
+            || traceparent.charAt(0) != '0'
+            || traceparent.charAt(1) != '0') {
             return null;
         }
-        String traceId = parts[1];
-        String spanId = parts[2];
-        String flags = parts[3];
+        String traceId = traceparent.substring(3, 35);
+        String spanId = traceparent.substring(36, 52);
+        String flags = traceparent.substring(53, 55);
         if (!isHex(traceId, 32) || !isHex(spanId, 16) || !isHex(flags, 2)) {
             return null;
         }
@@ -118,11 +123,27 @@ public class TraceFilter implements ContainerRequestFilter, ContainerResponseFil
     }
 
     private String randomSpanId() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        return randomHexId(16);
     }
 
     private String responseSpanId(ContainerRequestContext requestContext) {
         Object spanId = requestContext.getProperty(SPAN_ID_PROPERTY);
         return spanId instanceof String value && !value.isBlank() ? value : randomSpanId();
+    }
+
+    private String randomHexId(int length) {
+        char[] chars = new char[length];
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        fillHex(chars, 0, length / 2, random.nextLong());
+        fillHex(chars, length / 2, length - (length / 2), random.nextLong());
+        return new String(chars);
+    }
+
+    private void fillHex(char[] target, int offset, int count, long seed) {
+        for (int index = 0; index < count; index++) {
+            int shift = 60 - (index * 4);
+            int nibble = (int) ((seed >>> shift) & 0x0f);
+            target[offset + index] = HEX[nibble];
+        }
     }
 }

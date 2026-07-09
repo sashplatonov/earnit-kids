@@ -10,9 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.StringJoiner;
 import java.util.function.Supplier;
 
 @ApplicationScoped
@@ -70,54 +67,69 @@ public class SlowOperationDiagnostics {
     }
 
     public String describeRequest(String kind, String method, String path, int status, long durationMs) {
-        var fields = baseFields(durationMs);
-        fields.put("kind", kind);
-        fields.put("method", safe(method, "GET"));
-        fields.put("path", safe(path, "/"));
-        fields.put("status", String.valueOf(status));
-        fields.put("thresholdMs", String.valueOf(slowRequestThresholdMs()));
-        return describe(REQUEST_KIND, fields);
+        StringBuilder builder = baseBuilder(REQUEST_KIND);
+        appendField(builder, "kind", kind);
+        appendField(builder, "traceId", mdcOrDefault(TraceFilter.TRACE_ID, "-"));
+        appendField(builder, "requestMethod", mdcOrDefault(TraceFilter.REQUEST_METHOD, "-"));
+        appendField(builder, "requestPath", mdcOrDefault(TraceFilter.REQUEST_PATH, "-"));
+        appendField(builder, "requestQuery", mdcOrDefault(TraceFilter.REQUEST_QUERY, "-"));
+        appendField(builder, "role", mdcOrDefault(AuthFilter.MDC_ROLE, "-"));
+        appendField(builder, "familyId", mdcOrDefault(AuthFilter.MDC_FAMILY_ID, "-"));
+        appendField(builder, "childId", mdcOrDefault(AuthFilter.MDC_CHILD_ID, "-"));
+        appendField(builder, "permission", mdcOrDefault(AuthFilter.MDC_PERMISSION, "-"));
+        appendField(builder, "durationMs", String.valueOf(Math.max(durationMs, 0)));
+        appendField(builder, "method", safe(method, "GET"));
+        appendField(builder, "path", safe(path, "/"));
+        appendField(builder, "status", String.valueOf(status));
+        appendField(builder, "thresholdMs", String.valueOf(slowRequestThresholdMs()));
+        return stripTrailingSpace(builder);
     }
 
     public String describeQuery(String kind, String operation, long durationMs, String... details) {
-        var fields = baseFields(durationMs);
-        fields.put("kind", kind);
-        fields.put("operation", safe(operation, "-"));
-        fields.put("thresholdMs", String.valueOf(slowQueryThresholdMs()));
-        addDetails(fields, details);
-        return describe(QUERY_KIND, fields);
+        return describeQueryLike(kind, operation, durationMs, details);
     }
 
-    private Map<String, String> baseFields(long durationMs) {
-        var fields = new LinkedHashMap<String, String>();
-        fields.put("traceId", mdcOrDefault(TraceFilter.TRACE_ID, "-"));
-        fields.put("requestMethod", mdcOrDefault(TraceFilter.REQUEST_METHOD, "-"));
-        fields.put("requestPath", mdcOrDefault(TraceFilter.REQUEST_PATH, "-"));
-        fields.put("requestQuery", mdcOrDefault(TraceFilter.REQUEST_QUERY, "-"));
-        fields.put("role", mdcOrDefault(AuthFilter.MDC_ROLE, "-"));
-        fields.put("familyId", mdcOrDefault(AuthFilter.MDC_FAMILY_ID, "-"));
-        fields.put("childId", mdcOrDefault(AuthFilter.MDC_CHILD_ID, "-"));
-        fields.put("permission", mdcOrDefault(AuthFilter.MDC_PERMISSION, "-"));
-        fields.put("durationMs", String.valueOf(Math.max(durationMs, 0)));
-        return fields;
-    }
-
-    private void addDetails(Map<String, String> fields, String... details) {
+    private String describeQueryLike(String kind, String operation, long durationMs, String... details) {
+        StringBuilder builder = baseBuilder(QUERY_KIND);
+        appendField(builder, "kind", kind);
+        appendField(builder, "operation", safe(operation, "-"));
+        appendField(builder, "traceId", mdcOrDefault(TraceFilter.TRACE_ID, "-"));
+        appendField(builder, "requestMethod", mdcOrDefault(TraceFilter.REQUEST_METHOD, "-"));
+        appendField(builder, "requestPath", mdcOrDefault(TraceFilter.REQUEST_PATH, "-"));
+        appendField(builder, "requestQuery", mdcOrDefault(TraceFilter.REQUEST_QUERY, "-"));
+        appendField(builder, "role", mdcOrDefault(AuthFilter.MDC_ROLE, "-"));
+        appendField(builder, "familyId", mdcOrDefault(AuthFilter.MDC_FAMILY_ID, "-"));
+        appendField(builder, "childId", mdcOrDefault(AuthFilter.MDC_CHILD_ID, "-"));
+        appendField(builder, "permission", mdcOrDefault(AuthFilter.MDC_PERMISSION, "-"));
+        appendField(builder, "durationMs", String.valueOf(Math.max(durationMs, 0)));
+        appendField(builder, "thresholdMs", String.valueOf(slowQueryThresholdMs()));
         if (details == null || details.length == 0) {
-            return;
+            return stripTrailingSpace(builder);
         }
 
         for (int index = 0; index < details.length; index += 2) {
             String key = safe(details[index], "detail" + index);
             String value = index + 1 < details.length ? safe(details[index + 1], "-") : "-";
-            fields.put(key, value);
+            appendField(builder, key, value);
         }
+        return stripTrailingSpace(builder);
     }
 
-    private String describe(String label, Map<String, String> fields) {
-        var joiner = new StringJoiner(" ", label + " ", "");
-        fields.forEach((key, value) -> joiner.add(key + "=" + value));
-        return joiner.toString();
+    private StringBuilder baseBuilder(String label) {
+        StringBuilder builder = new StringBuilder(192);
+        builder.append(label).append(' ');
+        return builder;
+    }
+
+    private void appendField(StringBuilder builder, String key, String value) {
+        builder.append(key).append('=').append(value).append(' ');
+    }
+
+    private String stripTrailingSpace(StringBuilder builder) {
+        int length = builder.length();
+        return length > 0 && builder.charAt(length - 1) == ' '
+            ? builder.substring(0, length - 1)
+            : builder.toString();
     }
 
     private String mdcOrDefault(String key, String fallback) {
