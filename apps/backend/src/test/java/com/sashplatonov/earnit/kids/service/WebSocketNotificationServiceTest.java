@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.quarkus.websockets.next.OpenConnections;
 import io.quarkus.websockets.next.WebSocketConnection;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,14 +35,19 @@ class WebSocketNotificationServiceTest {
     @Mock WebSocketConnection adminConnection;
     @Mock WebSocketConnection childConnection;
 
+    private SimpleMeterRegistry meterRegistry;
+    private BackendKpiMetrics backendKpiMetrics;
     private WebSocketNotificationService service;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        backendKpiMetrics = new BackendKpiMetrics(meterRegistry);
         service = new WebSocketNotificationService(
             openConnections,
             new ObjectMapper(),
-            TestConfigFactory.timeProvider(FIXED_NOW));
+            TestConfigFactory.timeProvider(FIXED_NOW),
+            backendKpiMetrics);
 
         when(adminConnection.isOpen()).thenReturn(true);
         when(childConnection.isOpen()).thenReturn(true);
@@ -64,6 +70,10 @@ class WebSocketNotificationServiceTest {
         assertThat(adminPayload.getValue()).contains("\"by\":\"admin\"");
         assertThat(adminPayload.getValue()).contains("2026-04-16T12:00:00Z");
         assertThat(childPayload.getValue()).contains("\"type\":\"DATA_UPDATED\"");
+        assertThat(meterRegistry.find("earnit.backend.websocket.active.sessions").gauge()).isNotNull();
+        assertThat(meterRegistry.find("earnit.backend.websocket.notification.count")
+            .tags("service", "websocket", "operation", "family", "outcome", "sent")
+            .counter()).isNotNull();
     }
 
     @Test

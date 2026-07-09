@@ -34,54 +34,57 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
     private final TimeProvider timeProvider;
+    private final BackendKpiMetrics backendKpiMetrics;
 
     @Override
     public OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe) {
-        Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
-        if (familyDbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
+        return backendKpiMetrics.recordResult("analytics", "get_data", () -> {
+            Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
+            if (familyDbIdOpt.isEmpty()) {
+                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            }
 
-        int familyDbId = familyDbIdOpt.get();
-        Duration periodDuration = resolveTimeframeDuration(timeframe);
-        Instant now = timeProvider.now();
-        Instant periodStart = now.minus(periodDuration);
-        Instant previousStart = periodStart.minus(periodDuration);
+            int familyDbId = familyDbIdOpt.get();
+            Duration periodDuration = resolveTimeframeDuration(timeframe);
+            Instant now = timeProvider.now();
+            Instant periodStart = now.minus(periodDuration);
+            Instant previousStart = periodStart.minus(periodDuration);
 
-        // EXPLAIN: Use SQL aggregation instead of loading full history rows.
-        var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
-        var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
+            // EXPLAIN: Use SQL aggregation instead of loading full history rows.
+            var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
+            var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
 
-        int[] currentSummary = normalizeSummary(currentRaw);
-        int[] previousSummary = normalizeSummary(previousRaw);
+            int[] currentSummary = normalizeSummary(currentRaw);
+            int[] previousSummary = normalizeSummary(previousRaw);
 
-        int currentNet = currentSummary[0] - currentSummary[1];
-        int previousNet = previousSummary[0] - previousSummary[1];
+            int currentNet = currentSummary[0] - currentSummary[1];
+            int previousNet = previousSummary[0] - previousSummary[1];
 
-        var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentNet);
-        var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousNet);
+            var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentNet);
+            var comparison = new AnalyticsResponse.AnalyticsSummary(previousSummary[0], previousSummary[1], previousNet);
 
-        List<TaskEntity> tasks = queryTasks(familyDbId, childId);
-        List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
+            List<TaskEntity> tasks = queryTasks(familyDbId, childId);
+            List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
 
-        List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStatsAggregated(
-            historyRepository.topTasksInPeriod(familyDbId, childId, periodStart, now), tasks);
-        List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStatsAggregated(
-            historyRepository.topItemsInPeriod(familyDbId, childId, periodStart, now), items);
+            List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStatsAggregated(
+                historyRepository.topTasksInPeriod(familyDbId, childId, periodStart, now), tasks);
+            List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStatsAggregated(
+                historyRepository.topItemsInPeriod(familyDbId, childId, periodStart, now), items);
 
-        List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrendsAggregated(
-            historyRepository.dailyTrendInPeriod(familyDbId, childId, periodStart, now));
+            List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrendsAggregated(
+                historyRepository.dailyTrendInPeriod(familyDbId, childId, periodStart, now));
 
-        List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
+            List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
 
-        return OperationResult.success(new AnalyticsResponse(
-            summary,
-            topTasks,
-            topItems,
-            trends,
-            comparison,
-            recommendations
-        ));
+            return OperationResult.success(new AnalyticsResponse(
+                summary,
+                topTasks,
+                topItems,
+                trends,
+                comparison,
+                recommendations
+            ));
+        });
     }
 
     private List<TaskEntity> queryTasks(int familyDbId, Integer childId) {

@@ -15,6 +15,7 @@ import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +58,8 @@ class AuthServiceImplTest {
     @Mock FamilyParentMembershipRepository membershipRepository;
     @Mock GoogleIdentityVerifier googleIdentityVerifier;
 
+    private SimpleMeterRegistry meterRegistry;
+    private BackendKpiMetrics backendKpiMetrics;
     AuthServiceImpl authService;
     PasswordHasher passwordHasher;
 
@@ -64,6 +67,8 @@ class AuthServiceImplTest {
     void setUp() {
         RequestLocaleHolder.set("en");
         passwordHasher = new PasswordHasher();
+        meterRegistry = new SimpleMeterRegistry();
+        backendKpiMetrics = new BackendKpiMetrics(meterRegistry);
         authService = createAuthService(TestConfigFactory.appConfig(false, "admin@test.com", false, true));
     }
 
@@ -582,7 +587,8 @@ class AuthServiceImplTest {
             passwordHasher,
             TOKEN_GENERATOR,
             TestConfigFactory.timeProvider(FIXED_NOW),
-            googleIdentityVerifier
+            googleIdentityVerifier,
+            backendKpiMetrics
         );
     }
 

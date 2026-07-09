@@ -11,6 +11,7 @@ import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,16 +41,21 @@ class AnalyticsServiceImplTest {
     @Mock TaskRepository taskRepository;
     @Mock ShopItemRepository shopItemRepository;
 
+    private SimpleMeterRegistry meterRegistry;
+    private BackendKpiMetrics backendKpiMetrics;
     private AnalyticsServiceImpl service;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        backendKpiMetrics = new BackendKpiMetrics(meterRegistry);
         service = new AnalyticsServiceImpl(
             familyRepository,
             historyRepository,
             taskRepository,
             shopItemRepository,
-            TestConfigFactory.timeProvider(FIXED_NOW)
+            TestConfigFactory.timeProvider(FIXED_NOW),
+            backendKpiMetrics
         );
     }
 
@@ -60,6 +66,12 @@ class AnalyticsServiceImplTest {
         OperationResult<AnalyticsResponse> result = service.getAnalyticsData("missing", null, "month");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(meterRegistry.find("earnit.backend.service.operation.count")
+            .tags("service", "analytics", "operation", "get_data", "outcome", "failure")
+            .counter()).isNotNull();
+        assertThat(meterRegistry.find("earnit.backend.service.operation.duration")
+            .tags("service", "analytics", "operation", "get_data", "outcome", "failure")
+            .timer()).isNotNull();
     }
 
     @Test
@@ -116,6 +128,9 @@ class AnalyticsServiceImplTest {
         assertThat(payload.topTasks()).isNotNull();
         assertThat(payload.trends()).isNotNull();
         assertThat(payload.recommendations()).hasSizeLessThanOrEqualTo(3);
+        assertThat(meterRegistry.find("earnit.backend.service.operation.count")
+            .tags("service", "analytics", "operation", "get_data", "outcome", "success")
+            .counter()).isNotNull();
     }
 
     @Test

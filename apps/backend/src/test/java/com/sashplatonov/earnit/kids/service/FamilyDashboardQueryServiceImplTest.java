@@ -20,6 +20,7 @@ import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,10 +50,14 @@ class FamilyDashboardQueryServiceImplTest {
     @Mock TaskRepository taskRepository;
     @Mock ShopItemRepository shopItemRepository;
 
+    private SimpleMeterRegistry meterRegistry;
+    private BackendKpiMetrics backendKpiMetrics;
     private FamilyDashboardQueryServiceImpl service;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        backendKpiMetrics = new BackendKpiMetrics(meterRegistry);
         service = new FamilyDashboardQueryServiceImpl(
             familyRepository,
             childRepository,
@@ -60,7 +65,8 @@ class FamilyDashboardQueryServiceImplTest {
             historyRepository,
             taskRepository,
             shopItemRepository,
-            OBJECT_MAPPER
+            OBJECT_MAPPER,
+            backendKpiMetrics
         );
     }
 

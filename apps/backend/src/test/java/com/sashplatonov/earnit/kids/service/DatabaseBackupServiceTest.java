@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.dto.response.BackupHistoryItemResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.Test;
@@ -35,10 +36,14 @@ class DatabaseBackupServiceTest {
     @TempDir
     Path tempDir;
 
+    private SimpleMeterRegistry meterRegistry;
+    private BackendKpiMetrics backendKpiMetrics;
     private DatabaseBackupService service;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        backendKpiMetrics = new BackendKpiMetrics(meterRegistry);
         service = new DatabaseBackupService(
             "jdbc:postgresql://db:5432/earnit_kids",
             "earnit",
@@ -47,7 +52,8 @@ class DatabaseBackupServiceTest {
             tempDir.toString(),
             TestConfigFactory.timeProvider(FIXED_NOW),
             commandRunner,
-            backupTelegramSettingsService
+            backupTelegramSettingsService,
+            backendKpiMetrics
         );
     }
 
@@ -91,7 +97,8 @@ class DatabaseBackupServiceTest {
             tempDir.toString(),
             () -> FIXED_NOW.plusSeconds(counter.incrementAndGet()),
             commandRunner,
-            backupTelegramSettingsService
+            backupTelegramSettingsService,
+            backendKpiMetrics
         );
 
         when(backupTelegramSettingsService.currentSettings())
@@ -212,7 +219,8 @@ class DatabaseBackupServiceTest {
             tempDir.resolve("nonexistent").toString(),
             TestConfigFactory.timeProvider(FIXED_NOW),
             commandRunner,
-            backupTelegramSettingsService
+            backupTelegramSettingsService,
+            backendKpiMetrics
         );
 
         assertThat(serviceWithMissingDir.listBackups()).isEmpty();
@@ -327,7 +335,8 @@ class DatabaseBackupServiceTest {
             tempDir.toString(),
             TestConfigFactory.timeProvider(FIXED_NOW),
             commandRunner,
-            backupTelegramSettingsService
+            backupTelegramSettingsService,
+            backendKpiMetrics
         );
 
         var backupsAfterRedeploy = recreatedService.listBackups();
@@ -368,7 +377,8 @@ class DatabaseBackupServiceTest {
             tempDir.toString(),
             () -> FIXED_NOW.plusSeconds(counter.incrementAndGet()),
             commandRunner,
-            backupTelegramSettingsService
+            backupTelegramSettingsService,
+            backendKpiMetrics
         );
 
         when(backupTelegramSettingsService.currentSettings())

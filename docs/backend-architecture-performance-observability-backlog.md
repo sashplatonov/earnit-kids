@@ -40,7 +40,7 @@
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java` смешивает process stats, DB ping, парсинг логов и snapshot HTTP-метрик в одном сервисе;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java` считает payload на response path через injected `ObjectMapper`, предпочитает `Content-Length` и избегает полной сериализации для больших ответов;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java` уже кладёт `traceId` в MDC, но propagation trace по-прежнему завязан на custom header и не покрывает более богатые поля request scope;
-- wiring New Relic runtime уже есть в `.env.example`, `docker-compose.yml`, `docker-compose.native.yml` и `docs/monitoring/newrelic.md`, а backend metrics export path теперь добавлен; следующий шаг - instrument business KPI.
+- wiring New Relic runtime уже есть в `.env.example`, `docker-compose.yml`, `docker-compose.native.yml` и `docs/monitoring/newrelic.md`, а backend metrics export path и KPI instrumentation теперь добавлены.
 
 [Наверх](#top)
 
@@ -82,7 +82,7 @@
 | BAP-11 | P1 | Наблюдаемость | Добавить лёгкие readiness checks для критичных runtime dependency |
 | BAP-12 | P1 | Наблюдаемость | Добавить slow-request и slow-query диагностику без лишнего шума |
 | BAP-13 | P0 | New Relic | Добавить реальный metrics export path для New Relic dashboards |
-| BAP-14 | P0 | New Relic | Инструментировать ключевые backend business и platform KPI |
+| BAP-14 | P0 | New Relic | Инструментировать ключевые backend business и platform KPI ✅ |
 | BAP-15 | P1 | New Relic | Описать widgets dashboard, NRQL queries и thresholds оповещений |
 
 [Наверх](#top)
@@ -444,6 +444,8 @@ Agroal уже покрывает подключение к БД. Дополни�
 
 Приоритет: P0
 
+Статус: выполнено 2026-07-09.
+
 Основные файлы:
 
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
@@ -511,7 +513,7 @@ Agroal уже покрывает подключение к БД. Дополни�
 4. `BAP-07` ✅
 5. `BAP-10` ✅
 6. `BAP-13` ✅
-7. `BAP-14`
+7. `BAP-14` ✅
 8. все `P1` items после свежих измерений
 
 [Наверх](#top)

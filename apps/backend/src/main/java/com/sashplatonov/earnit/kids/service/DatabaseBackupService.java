@@ -34,6 +34,7 @@ public class DatabaseBackupService {
     private final TimeProvider timeProvider;
     private final DatabaseCommandRunner commandRunner;
     private final BackupTelegramSettingsService backupTelegramSettingsService;
+    private final BackendKpiMetrics backendKpiMetrics;
 
     @Inject
     public DatabaseBackupService(
@@ -44,7 +45,8 @@ public class DatabaseBackupService {
         @ConfigProperty(name = "app.backup.dir", defaultValue = "data/backups") String backupDir,
         TimeProvider timeProvider,
         DatabaseCommandRunner commandRunner,
-        BackupTelegramSettingsService backupTelegramSettingsService
+        BackupTelegramSettingsService backupTelegramSettingsService,
+        BackendKpiMetrics backendKpiMetrics
     ) {
         this.jdbcUrl = jdbcUrl;
         this.username = username;
@@ -54,9 +56,57 @@ public class DatabaseBackupService {
         this.timeProvider = timeProvider;
         this.commandRunner = commandRunner;
         this.backupTelegramSettingsService = backupTelegramSettingsService;
+        this.backendKpiMetrics = backendKpiMetrics;
     }
 
     public OperationResult<BackupArtifact> createBackup() {
+        return backendKpiMetrics.recordResult("backup", "create", this::createBackupInternal);
+    }
+
+    public List<BackupHistoryItemResponse> listBackups() {
+        try {
+            if (!Files.exists(backupDir)) {
+                return List.of();
+            }
+            try (Stream<Path> files = Files.list(backupDir)) {
+                return files
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".dump"))
+                    .sorted(Comparator.comparing(this::safeLastModified).reversed())
+                    .map(this::toHistoryItem)
+                    .toList();
+            }
+        } catch (IOException ex) {
+            log.error("Failed to list backups", ex);
+            return List.of();
+        }
+    }
+
+    public OperationResult<Void> restoreBackup(String filename) {
+        return backendKpiMetrics.recordResult("backup", "restore_file", () -> restoreBackupByFilenameInternal(filename));
+    }
+
+    public OperationResult<Void> restoreBackup(byte[] payload) {
+        return backendKpiMetrics.recordResult("backup", "restore_bytes", () -> restoreBackupPayloadInternal(payload));
+    }
+
+    private OperationResult<Void> restoreBackupByFilenameInternal(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return OperationResult.failure(BackendMessages.message("backup.fileNotFound"));
+        }
+        Path backupFile = resolveBackupFile(filename);
+        if (!Files.isRegularFile(backupFile)) {
+            return OperationResult.failure(BackendMessages.message("backup.fileNotFound"));
+        }
+        try {
+            return restoreBackupPayloadInternal(Files.readAllBytes(backupFile));
+        } catch (IOException ex) {
+            log.error("Backup restore from file failed", ex);
+            return OperationResult.failure(ex.getMessage());
+        }
+    }
+
+    private OperationResult<BackupArtifact> createBackupInternal() {
         try {
             PostgresConnectionDetails connection = PostgresConnectionDetails.fromJdbcUrl(jdbcUrl);
             Files.createDirectories(backupDir);
@@ -86,42 +136,7 @@ public class DatabaseBackupService {
         }
     }
 
-    public List<BackupHistoryItemResponse> listBackups() {
-        try {
-            if (!Files.exists(backupDir)) {
-                return List.of();
-            }
-            try (Stream<Path> files = Files.list(backupDir)) {
-                return files
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().endsWith(".dump"))
-                    .sorted(Comparator.comparing(this::safeLastModified).reversed())
-                    .map(this::toHistoryItem)
-                    .toList();
-            }
-        } catch (IOException ex) {
-            log.error("Failed to list backups", ex);
-            return List.of();
-        }
-    }
-
-    public OperationResult<Void> restoreBackup(String filename) {
-        if (filename == null || filename.isBlank()) {
-            return OperationResult.failure(BackendMessages.message("backup.fileNotFound"));
-        }
-        Path backupFile = resolveBackupFile(filename);
-        if (!Files.isRegularFile(backupFile)) {
-            return OperationResult.failure(BackendMessages.message("backup.fileNotFound"));
-        }
-        try {
-            return restoreBackup(Files.readAllBytes(backupFile));
-        } catch (IOException ex) {
-            log.error("Backup restore from file failed", ex);
-            return OperationResult.failure(ex.getMessage());
-        }
-    }
-
-    public OperationResult<Void> restoreBackup(byte[] payload) {
+    private OperationResult<Void> restoreBackupPayloadInternal(byte[] payload) {
         if (payload == null || payload.length == 0) {
             return OperationResult.failure(BackendMessages.message("backup.emptyFile"));
         }

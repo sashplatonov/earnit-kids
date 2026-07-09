@@ -49,94 +49,101 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
     private final ObjectMapper objectMapper;
+    private final BackendKpiMetrics backendKpiMetrics;
 
     @Override
     public OperationResult<FamilyDashboardShellResponse> loadFamilyShellData(String familyId, Integer childId,
                                                                              boolean adminSession) {
-        Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
-        if (snapshotOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
+        return backendKpiMetrics.recordResult("dashboard", "shell", () -> {
+            Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
+            if (snapshotOpt.isEmpty()) {
+                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            }
 
-        DashboardSnapshot snapshot = snapshotOpt.get();
-        if (snapshot.activeChild == null) {
-            return OperationResult.success(emptyShellResponse(snapshot.rules, adminSession));
-        }
+            DashboardSnapshot snapshot = snapshotOpt.get();
+            if (snapshot.activeChild == null) {
+                return OperationResult.success(emptyShellResponse(snapshot.rules, adminSession));
+            }
 
-        return OperationResult.success(new FamilyDashboardShellResponse(
-            snapshot.activeChild.getBalance(),
-            snapshot.rules,
-            snapshot.tasks,
-            snapshot.shopItems,
-            adminSession ? Boolean.TRUE : null,
-            snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
-            snapshot.resolvedLastSelectedChildId,
-            snapshot.activeChild.getId(),
-            snapshot.activeChild.getName(),
-            snapshot.activeChild.getMonthlyLimit(),
-            snapshot.activeChild.getDailyCoinLimit()
-        ));
+            return OperationResult.success(new FamilyDashboardShellResponse(
+                snapshot.activeChild.getBalance(),
+                snapshot.rules,
+                snapshot.tasks,
+                snapshot.shopItems,
+                adminSession ? Boolean.TRUE : null,
+                snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
+                snapshot.resolvedLastSelectedChildId,
+                snapshot.activeChild.getId(),
+                snapshot.activeChild.getName(),
+                snapshot.activeChild.getMonthlyLimit(),
+                snapshot.activeChild.getDailyCoinLimit()
+            ));
+        });
     }
 
     @Override
     public OperationResult<FamilyDashboardDetailResponse> loadFamilyDetailData(String familyId, Integer childId,
                                                                               boolean adminSession) {
-        Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
-        if (snapshotOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
+        return backendKpiMetrics.recordResult("dashboard", "detail", () -> {
+            Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
+            if (snapshotOpt.isEmpty()) {
+                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            }
 
-        DashboardSnapshot snapshot = snapshotOpt.get();
-        if (snapshot.activeChild == null) {
-            return OperationResult.success(new FamilyDashboardDetailResponse(List.of(), List.of(), List.of()));
-        }
+            DashboardSnapshot snapshot = snapshotOpt.get();
+            if (snapshot.activeChild == null) {
+                return OperationResult.success(new FamilyDashboardDetailResponse(List.of(), List.of(), List.of()));
+            }
 
-        return OperationResult.success(new FamilyDashboardDetailResponse(
-            loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
-            loadRequests(
-                snapshot.familyDbId,
-                snapshot.activeChild.getId(),
-                adminSession,
-                snapshot.taskMap,
-                snapshot.shopMap
-            ),
-            loadFriends(snapshot.activeChild.getId())
-        ));
+            return OperationResult.success(new FamilyDashboardDetailResponse(
+                loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
+                loadRequests(
+                    snapshot.familyDbId,
+                    snapshot.activeChild.getId(),
+                    adminSession,
+                    snapshot.taskMap,
+                    snapshot.shopMap
+                ),
+                loadFriends(snapshot.activeChild.getId())
+            ));
+        });
     }
 
     @Override
     public OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean adminSession) {
-        Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
-        if (snapshotOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
+        return backendKpiMetrics.recordResult("dashboard", "full", () -> {
+            Optional<DashboardSnapshot> snapshotOpt = loadSnapshot(familyId, childId, adminSession);
+            if (snapshotOpt.isEmpty()) {
+                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            }
 
-        DashboardSnapshot snapshot = snapshotOpt.get();
-        if (snapshot.activeChild == null) {
-            return OperationResult.success(emptyFamilyDataResponse(snapshot.rules, adminSession));
-        }
+            DashboardSnapshot snapshot = snapshotOpt.get();
+            if (snapshot.activeChild == null) {
+                return OperationResult.success(emptyFamilyDataResponse(snapshot.rules, adminSession));
+            }
 
-        return OperationResult.success(new FamilyDataResponse(
-            snapshot.activeChild.getBalance(),
-            snapshot.rules,
-            snapshot.tasks,
-            snapshot.shopItems,
-            loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
-            loadRequests(
-                snapshot.familyDbId,
-                snapshot.activeChild.getId(),
-                adminSession,
-                snapshot.taskMap,
-                snapshot.shopMap
-            ),
-            loadFriends(snapshot.activeChild.getId()),
-            adminSession ? Boolean.TRUE : null,
-            snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
-            snapshot.resolvedLastSelectedChildId,
-            snapshot.activeChild.getName(),
-            snapshot.activeChild.getMonthlyLimit(),
-            snapshot.activeChild.getDailyCoinLimit()
-        ));
+            return OperationResult.success(new FamilyDataResponse(
+                snapshot.activeChild.getBalance(),
+                snapshot.rules,
+                snapshot.tasks,
+                snapshot.shopItems,
+                loadHistory(snapshot.activeChild.getId(), snapshot.taskMap, snapshot.shopMap),
+                loadRequests(
+                    snapshot.familyDbId,
+                    snapshot.activeChild.getId(),
+                    adminSession,
+                    snapshot.taskMap,
+                    snapshot.shopMap
+                ),
+                loadFriends(snapshot.activeChild.getId()),
+                adminSession ? Boolean.TRUE : null,
+                snapshot.visibleChildren.stream().map(this::toChildDto).toList(),
+                snapshot.resolvedLastSelectedChildId,
+                snapshot.activeChild.getName(),
+                snapshot.activeChild.getMonthlyLimit(),
+                snapshot.activeChild.getDailyCoinLimit()
+            ));
+        });
     }
 
     private Optional<DashboardSnapshot> loadSnapshot(String familyId, Integer childId, boolean adminSession) {

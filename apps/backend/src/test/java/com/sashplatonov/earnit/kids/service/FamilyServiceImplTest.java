@@ -27,6 +27,7 @@ import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,10 +67,14 @@ class FamilyServiceImplTest {
     @Mock TaskRepository taskRepository;
     @Mock ShopItemRepository shopItemRepository;
 
+    private SimpleMeterRegistry meterRegistry;
+    private BackendKpiMetrics backendKpiMetrics;
     private FamilyServiceImpl service;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        backendKpiMetrics = new BackendKpiMetrics(meterRegistry);
         service = new FamilyServiceImpl(
             familyRepository,
             childRepository,
@@ -77,7 +82,8 @@ class FamilyServiceImplTest {
             historyRepository,
             taskRepository,
             shopItemRepository,
-            TestConfigFactory.timeProvider(FIXED_NOW)
+            TestConfigFactory.timeProvider(FIXED_NOW),
+            backendKpiMetrics
         );
     }
 

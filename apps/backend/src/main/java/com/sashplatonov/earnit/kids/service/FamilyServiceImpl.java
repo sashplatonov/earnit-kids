@@ -68,7 +68,8 @@ public final class FamilyServiceImpl implements FamilyService {
                              TaskRepository taskRepository,
                              ShopItemRepository shopItemRepository,
                              ObjectMapper objectMapper,
-                             TimeProvider timeProvider) {
+                             TimeProvider timeProvider,
+                             BackendKpiMetrics backendKpiMetrics) {
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
         this.familyDataRepository = familyDataRepository;
@@ -82,7 +83,8 @@ public final class FamilyServiceImpl implements FamilyService {
             historyRepository,
             taskRepository,
             shopItemRepository,
-            objectMapper
+            objectMapper,
+            backendKpiMetrics
         );
         this.familyCommandService = new FamilyCommandServiceImpl(
             familyRepository,
@@ -96,7 +98,8 @@ public final class FamilyServiceImpl implements FamilyService {
             historyRepository,
             taskRepository,
             shopItemRepository,
-            timeProvider
+            timeProvider,
+            backendKpiMetrics
         );
     }
 
@@ -106,9 +109,10 @@ public final class FamilyServiceImpl implements FamilyService {
                       HistoryRepository historyRepository,
                       TaskRepository taskRepository,
                       ShopItemRepository shopItemRepository,
-                      TimeProvider timeProvider) {
+                      TimeProvider timeProvider,
+                      BackendKpiMetrics backendKpiMetrics) {
         this(familyRepository, childRepository, familyDataRepository, historyRepository,
-            taskRepository, shopItemRepository, new ObjectMapper(), timeProvider);
+            taskRepository, shopItemRepository, new ObjectMapper(), timeProvider, backendKpiMetrics);
     }
 
     @Override
