@@ -47,6 +47,10 @@ services:
       APP_URL: ${APP_URL:-http://localhost:5001}
       GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-http://localhost:5001/api/login-google/callback}
       JWT_SECRET: ${JWT_SECRET}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+      NEW_RELIC_METRICS_ENABLED: ${NEW_RELIC_METRICS_ENABLED:-false}
+      NEW_RELIC_OTLP_METRICS_ENDPOINT: ${NEW_RELIC_OTLP_METRICS_ENDPOINT:-https://otlp.nr-data.net}
+      NEW_RELIC_OTLP_METRICS_PROTOCOL: ${NEW_RELIC_OTLP_METRICS_PROTOCOL:-http/protobuf}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
       APP_BACKUP_DIR: /work/data/backups
     volumes:

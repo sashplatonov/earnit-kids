@@ -1,12 +1,15 @@
 package com.sashplatonov.earnit.kids.config;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,6 +25,11 @@ class AuthFilterTest {
     void setUp() {
         jwtService = mock(JwtService.class);
         filter = new AuthFilter(jwtService);
+    }
+
+    @AfterEach
+    void tearDown() {
+        MDC.clear();
     }
 
     @Test
@@ -64,6 +72,7 @@ class AuthFilterTest {
             "familyId", "fam-1",
             "childId", 10,
             "role", "child",
+            "permission", "child",
             "email", "c@test.com",
             "csrfToken", "payload-csrf"
         );
@@ -84,16 +93,21 @@ class AuthFilterTest {
                 && "c@test.com".equals(auth.email())
                 && "cookie-csrf".equals(auth.csrfToken())));
         verify(context).setProperty(AuthFilter.AUTH_REFRESHED_PAYLOAD_PROPERTY, payload);
+        assertThat(MDC.get(AuthFilter.MDC_FAMILY_ID)).isEqualTo("fam-1");
+        assertThat(MDC.get(AuthFilter.MDC_CHILD_ID)).isEqualTo("10");
+        assertThat(MDC.get(AuthFilter.MDC_ROLE)).isEqualTo("child");
+        assertThat(MDC.get(AuthFilter.MDC_PERMISSION)).isEqualTo("child");
     }
 
     @Test
-    void filter_validToken_populatesAuthContext() {
+    void filter_validToken_populatesAuthContextAndScopeMdc() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getHeaderString("Cookie")).thenReturn("app_auth=good; csrf_token=cookie-csrf");
         when(jwtService.verifyToken("good")).thenReturn(Optional.of(Map.of(
             "familyId", "fam-1",
             "childId", 10,
             "role", "child",
+            "permission", "family_admin",
             "email", "c@test.com",
             "csrfToken", "payload-csrf"
         )));
@@ -108,8 +122,13 @@ class AuthFilterTest {
                 return "fam-1".equals(auth.familyId())
                     && Integer.valueOf(10).equals(auth.childId())
                     && "child".equals(auth.role())
+                    && "family_admin".equals(auth.permission())
                     && "c@test.com".equals(auth.email())
                     && "cookie-csrf".equals(auth.csrfToken());
             }));
+        assertThat(MDC.get(AuthFilter.MDC_FAMILY_ID)).isEqualTo("fam-1");
+        assertThat(MDC.get(AuthFilter.MDC_CHILD_ID)).isEqualTo("10");
+        assertThat(MDC.get(AuthFilter.MDC_ROLE)).isEqualTo("child");
+        assertThat(MDC.get(AuthFilter.MDC_PERMISSION)).isEqualTo("family_admin");
     }
 }

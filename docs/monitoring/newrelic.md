@@ -12,6 +12,7 @@
 This repo uses one New Relic path split by runtime:
 
 - JVM agent inside `apps/backend`
+- OTLP metrics export from Quarkus Micrometer to New Relic
 - Browser agent inside `apps/web`
 - structured JSON logs on stdout
 - browser logs and JS errors sent from the SvelteKit client when browser config is present
@@ -22,6 +23,7 @@ This repo uses one New Relic path split by runtime:
 ## 🎯 Scope <a name="scope"></a>
 
 - Backend APM and JVM telemetry for `earnit-kids-backend`
+- Backend metrics export to New Relic dashboards through OTLP/HTTP
 - Browser page views, JS errors, and client-side logs for the web app
 - Logs-in-context from the Quarkus container stdout stream
 - no second log pipeline by default
@@ -35,6 +37,9 @@ Runtime:
 - `NEW_RELIC_LICENSE_KEY`
 - `NEW_RELIC_APP_NAME=earnit-kids-backend`
 - `NEW_RELIC_AGENT_ENABLED=false`
+- `NEW_RELIC_METRICS_ENABLED=false`
+- `NEW_RELIC_OTLP_METRICS_ENDPOINT=https://otlp.nr-data.net`
+- `NEW_RELIC_OTLP_METRICS_PROTOCOL=http/protobuf`
 - `DEPLOYMENT_ENV=development`
 - `NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED=false`
 - `NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED=10000`
@@ -53,6 +58,8 @@ Notes:
 - Quarkus does not expose the servlet-container JMX pool set that powers the built-in APM `Threads` tab, so the image now ships a custom JMX extension under `/opt/newrelic/extensions`.
 - Query custom JVM/thread metrics in New Relic from the `Metric` event with names like `JMX/Runtime/Threads/ThreadCount`.
 - Browser logs arrive in the New Relic `Logs` UI and can be filtered by browser app name plus the custom `event` attribute.
+- Metrics export uses the Quarkus Micrometer + OpenTelemetry bridge. When `NEW_RELIC_METRICS_ENABLED=true`, backend JVM and HTTP server meters are exported to the New Relic OTLP endpoint with the `api-key` header sourced from `NEW_RELIC_LICENSE_KEY`.
+- New Relic recommends OTLP/HTTP protobuf for metric ingest.
 
 [↑ Back to top](#top)
 
@@ -68,7 +75,11 @@ Notes:
 3. frontend browser config present with `VITE_NEW_RELIC_BROWSER_ENABLED=true`
    - Browser page views, JS errors, and client logs enabled
    - configure from the Browser app copy/paste snippet before building the web image
-4. `NEW_RELIC_AGENT_ENABLED=true` with forwarding on
+4. backend metrics export enabled with `NEW_RELIC_METRICS_ENABLED=true`
+   - Micrometer JVM and HTTP server meters are exported to New Relic dashboards over OTLP/HTTP
+   - keep `NEW_RELIC_LICENSE_KEY` set so the exporter can send the `api-key` header
+   - point the metrics exporter at the New Relic OTLP endpoint before rollout
+5. `NEW_RELIC_AGENT_ENABLED=true` with forwarding on
    - only after log volume review
    - keep `debug,trace` denied
    - keep the sample cap explicit
@@ -86,6 +97,7 @@ docker compose --env-file .env.example --profile db up --build
 Checks:
 
 - backend entity appears in New Relic APM
+- metrics arrive in New Relic `Metric` data when `NEW_RELIC_METRICS_ENABLED=true`
 - browser entity appears in New Relic Browser after opening the web app
 - frontend logs appear in New Relic `Logs`
 - custom thread metrics appear in New Relic `Metric` data after a few scrape intervals

@@ -40,7 +40,7 @@
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java` смешивает process stats, DB ping, парсинг логов и snapshot HTTP-метрик в одном сервисе;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java` считает payload на response path через injected `ObjectMapper`, предпочитает `Content-Length` и избегает полной сериализации для больших ответов;
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java` уже кладёт `traceId` в MDC, но propagation trace по-прежнему завязан на custom header и не покрывает более богатые поля request scope;
-- wiring New Relic runtime уже есть в `.env.example`, `docker-compose.yml`, `docker-compose.native.yml` и `docs/monitoring/newrelic.md`, но business metrics пока не экспортируются как полноценные сигналы dashboard.
+- wiring New Relic runtime уже есть в `.env.example`, `docker-compose.yml`, `docker-compose.native.yml` и `docs/monitoring/newrelic.md`, а backend metrics export path теперь добавлен; следующий шаг - instrument business KPI.
 
 [Наверх](#top)
 
@@ -344,6 +344,8 @@ HTTP metrics не должны становиться bottleneck на hot path, 
 
 Приоритет: P0
 
+Статус: выполнено 2026-07-09.
+
 Основные файлы:
 
 - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java`
@@ -415,6 +417,8 @@ Agroal уже покрывает подключение к БД. Дополни�
 ### BAP-13 - Добавить реальный metrics export path для New Relic dashboards
 
 Приоритет: P0
+
+Статус: выполнено 2026-07-09.
 
 Основные файлы:
 
@@ -505,8 +509,8 @@ Agroal уже покрывает подключение к БД. Дополни�
 2. `BAP-04` ✅
 3. `BAP-05` ✅
 4. `BAP-07` ✅
-5. `BAP-10`
-6. `BAP-13`
+5. `BAP-10` ✅
+6. `BAP-13` ✅
 7. `BAP-14`
 8. все `P1` items после свежих измерений
 

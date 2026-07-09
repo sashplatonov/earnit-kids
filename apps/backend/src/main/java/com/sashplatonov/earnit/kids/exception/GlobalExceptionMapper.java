@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.exception;
 
+import com.sashplatonov.earnit.kids.config.AuthFilter;
+import com.sashplatonov.earnit.kids.config.TraceFilter;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.ws.rs.WebApplicationException;
@@ -11,6 +13,7 @@ import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 
 @Provider
 @Slf4j
@@ -65,22 +68,20 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
     }
 
     private String requestMethod() {
-        return request == null ? "-" : request.getMethod();
+        return mdcOrDefault(TraceFilter.REQUEST_METHOD, request == null ? "-" : request.getMethod());
     }
 
     private String requestUri() {
-        return uriInfo == null || uriInfo.getRequestUri() == null ? "-" : uriInfo.getRequestUri().toString();
+        return mdcOrDefault(
+            TraceFilter.REQUEST_PATH,
+            uriInfo == null || uriInfo.getPath() == null || uriInfo.getPath().isBlank()
+                ? "-"
+                : "/" + uriInfo.getPath()
+        );
     }
 
-    private String header(String name) {
-        if (headers == null) {
-            return "-";
-        }
-        String value = headers.getHeaderString(name);
-        if (value == null || value.isBlank()) {
-            return "-";
-        }
-        return value.length() > 256 ? value.substring(0, 256) + "..." : value;
+    private String requestQuery() {
+        return mdcOrDefault(TraceFilter.REQUEST_QUERY, "-");
     }
 
     private boolean hasAuthCookie() {
@@ -94,11 +95,32 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
     private String requestContext() {
         return "method=" + requestMethod()
             + " uri=" + requestUri()
-            + " traceId=" + header("X-Trace-Id")
+            + " query=" + requestQuery()
+            + " traceId=" + mdcOrDefault(TraceFilter.TRACE_ID, header("X-Trace-Id"))
+            + " role=" + mdcOrDefault(AuthFilter.MDC_ROLE, "-")
+            + " familyId=" + mdcOrDefault(AuthFilter.MDC_FAMILY_ID, "-")
+            + " childId=" + mdcOrDefault(AuthFilter.MDC_CHILD_ID, "-")
+            + " permission=" + mdcOrDefault(AuthFilter.MDC_PERMISSION, "-")
             + " referer=" + header("Referer")
             + " userAgent=" + header("User-Agent")
             + " forwardedFor=" + header("X-Forwarded-For")
             + " authCookiePresent=" + hasAuthCookie();
+    }
+
+    private String header(String name) {
+        if (headers == null) {
+            return "-";
+        }
+        String value = headers.getHeaderString(name);
+        if (value == null || value.isBlank()) {
+            return "-";
+        }
+        return value.length() > 256 ? value.substring(0, 256) + "..." : value;
+    }
+
+    private String mdcOrDefault(String key, String fallback) {
+        String value = MDC.get(key);
+        return value == null || value.isBlank() ? fallback : value;
     }
 
     boolean shouldLogAsError(int status) {

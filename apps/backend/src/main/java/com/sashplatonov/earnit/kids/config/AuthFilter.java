@@ -8,6 +8,7 @@ import jakarta.ws.rs.ext.Provider;
 import lombok.RequiredArgsConstructor;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +18,10 @@ import java.util.Optional;
 public class AuthFilter implements ContainerRequestFilter {
     public static final String AUTH_CONTEXT_PROPERTY = "auth.context";
     public static final String AUTH_REFRESHED_PAYLOAD_PROPERTY = "auth.refreshed-payload";
+    public static final String MDC_FAMILY_ID = "familyId";
+    public static final String MDC_CHILD_ID = "childId";
+    public static final String MDC_ROLE = "role";
+    public static final String MDC_PERMISSION = "permission";
 
     private final JwtService jwtService;
 
@@ -53,6 +58,7 @@ public class AuthFilter implements ContainerRequestFilter {
 
         var ctx = AuthContext.fromPayload(resolvedPayload, cookieCsrf);
         requestContext.setProperty(AUTH_CONTEXT_PROPERTY, ctx);
+        putScopeMdc(ctx);
         if (refreshedFromRefreshToken) {
             requestContext.setProperty(AUTH_REFRESHED_PAYLOAD_PROPERTY, resolvedPayload);
         }
@@ -76,5 +82,20 @@ public class AuthFilter implements ContainerRequestFilter {
             }
         }
         return null;
+    }
+
+    private void putScopeMdc(AuthContext ctx) {
+        if (ctx.familyId() != null && !ctx.familyId().isBlank()) {
+            MDC.put(MDC_FAMILY_ID, ctx.familyId());
+        }
+        if (ctx.childId() != null) {
+            MDC.put(MDC_CHILD_ID, String.valueOf(ctx.childId()));
+        }
+        if (ctx.role() != null && !ctx.role().isBlank()) {
+            MDC.put(MDC_ROLE, ctx.role());
+        }
+        if (ctx.permission() != null && !ctx.permission().isBlank()) {
+            MDC.put(MDC_PERMISSION, ctx.permission());
+        }
     }
 }
