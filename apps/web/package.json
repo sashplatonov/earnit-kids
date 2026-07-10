@@ -16,27 +16,27 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@newrelic/browser-agent": "^1.315.0",
+    "@newrelic/browser-agent": "^1.318.0",
     "http-proxy": "^1.18.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.59.1",
-    "@sveltejs/adapter-node": "^5.5.4",
+    "@playwright/test": "^1.61.1",
+    "@sveltejs/adapter-node": "^5.5.7",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.57.1",
-    "@types/node": "^24.9.0",
-    "@vitest/coverage-v8": "^4.1.4",
+    "@sveltejs/kit": "^2.69.2",
+    "@types/node": "^26.1.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.2.0",
-    "eslint-plugin-svelte": "^3.17.0",
+    "eslint-plugin-svelte": "^3.20.0",
     "front-matter": "^4.0.2",
-    "globals": "^17.5.0",
-    "marked": "^18.0.1",
-    "svelte": "^5.0.0-next.272",
-    "svelte-check": "^4.4.6",
+    "globals": "^17.7.0",
+    "marked": "^18.0.6",
+    "svelte": "^5.56.4",
+    "svelte-check": "^4.7.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.8",
-    "vitest": "^4.1.4"
+    "typescript-eslint": "^8.63.0",
+    "vite": "^8.1.4",
+    "vitest": "^4.1.10"
   }
 }
