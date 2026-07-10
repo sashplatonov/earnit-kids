@@ -12,6 +12,7 @@
 
 - Baseline снят `2026-07-10` на текущем состоянии рабочей копии.
 - `FamilyActionServiceImpl.java` — `1171` строк, `13` public и `49` private/protected методов; смешаны task/item actions, request workflow, bulk actions, CSV import, balance/history и frequency-limit policy.
+- После `SRP-02` `FamilyActionServiceImpl.java` уменьшился до `166` строк и стал thin facade; основная логика вынесена в `FamilyActionBalanceService`, `FamilyActionRequestService`, `FamilyActionBulkService`, `FamilyActionImportService`, `FamilyActionSupportService`, `FamilyActionFrequencyService` и `FamilyActionHistoryFactory`.
 - `FamilyResource.java` — `913` строк, `33` endpoint-метода и `10` private/protected методов; смешаны family commands, task/item actions, imports, child settings, friends/tokens и parent membership management.
 - `FamilyDashboardQueryServiceImpl.java` — `722` строки, `3` public и `37` private/protected методов; смешаны scope loading, shell/detail/full payload assembly, data hydration и DTO mapping.
 - `AuthServiceImpl.java` — `515` строк, `9` public и `12` private/protected методов; смешаны admin/family/child auth, Google auth, family selection, password lifecycle, email verification и legacy password rehash.
@@ -110,6 +111,10 @@
 - Есть стартовый список классов, которые реально идут в рефакторинг первой волной.
 
 ### SRP-02 — Split `FamilyActionServiceImpl`
+
+**Status**
+
+`Done`. `FamilyActionServiceImpl` теперь только оркестрирует вызовы и metrics wrapper-ы; доменная логика распределена по отдельным service-классам.
 
 **Goal**
 
