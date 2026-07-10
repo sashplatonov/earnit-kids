@@ -13,13 +13,13 @@ COPY apps/backend/mvnw ./mvnw
 COPY apps/backend/pom.xml ./pom.xml
 
 RUN --mount=type=cache,target=/root/.m2,sharing=locked \
-	sh ./mvnw -B -ntp -DskipTests dependency:go-offline
+	sh ./mvnw -B -ntp -Dmaven.test.skip=true dependency:go-offline
 
 COPY apps/backend/config ./config
 COPY apps/backend/src ./src
 
 RUN --mount=type=cache,target=/root/.m2,sharing=locked \
-	sh ./mvnw -B -ntp -DskipTests -Dcheckstyle.skip=true package
+	sh ./mvnw -B -ntp -Dmaven.test.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true -Djacoco.skip=true package
 
 FROM eclipse-temurin:25-jre-jammy
 WORKDIR /work

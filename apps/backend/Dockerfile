@@ -19,7 +19,7 @@ COPY apps/backend/config ./config
 COPY apps/backend/src ./src
 
 RUN --mount=type=cache,target=/root/.m2,sharing=locked \
-	sh ./mvnw -B -ntp -Dmaven.test.skip=true -Dnative -Dquarkus.native.native-image-xmx=${JAVA_XMX} package
+	sh ./mvnw -B -ntp -Dmaven.test.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true -Djacoco.skip=true -Dnative -Dquarkus.native.native-image-xmx=${JAVA_XMX} package
 
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
 WORKDIR /work/

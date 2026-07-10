@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  verify-backend:
     runs-on: ubuntu-latest
 
     defaults:
@@ -42,6 +42,36 @@ jobs:
             apps/backend/target/spotbugs.xml
             apps/backend/target/spotbugsXml.xml
           if-no-files-found: ignore
+
+  verify-web:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
 
   security-backend:
     runs-on: ubuntu-latest
