@@ -30,7 +30,7 @@
   - `apps/backend/ops/newrelic/newrelic.yml`
   - `.env.example`
   - `docs/monitoring/newrelic.md`
-- При этом backend пока не использует стандартный metrics pipeline Quarkus/Micrometer и держит HTTP-метрики в ad-hoc in-memory registry.
+- Backend metrics уже идут через Quarkus/Micrometer/OTLP, а `HttpRequestMetricsRegistry` оставлен только как transitional admin snapshot для `/api/super/system/http-metrics`.
 
 ## Базовые правила выполнения
 
@@ -312,6 +312,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### NR-13. `P0` Перейти от ad-hoc registry к стандартному Micrometer-based metrics pipeline
 
+- Статус: выполнено. HTTP/runtime metrics теперь идут через Micrometer/OTLP, а ad-hoc registry остался только как transitional admin view.
 - Архитектурное решение:
   - текущий JVM New Relic agent в `apps/backend/Dockerfile.jvm` оставить для APM/log forwarding.
   - application metrics перевести на стандартный Quarkus путь через Micrometer.
@@ -328,6 +329,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - `docker-compose.yml`
   - `docker-compose.native.yml`
   - `docs/monitoring/newrelic.md`
+  - `docs/monitoring/newrelic-dashboard.md`
 - Критерии проверки:
   - backend публикует стандартные HTTP/JVM/application metrics через Micrometer pipeline.
   - New Relic получает метрики через OTLP-configured export path.
@@ -335,6 +337,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### NR-14. `P1` Добавить бизнес-метрики для ключевых backend use cases
 
+- Статус: выполнено. `auth`, `dashboard`, `family_action`, `admin`, and `websocket` use cases now emit Micrometer-backed KPI timers and counters.
 - Архитектурное решение:
   - кроме инфраструктурных JVM/HTTP метрик, добавить counters/timers для доменных сценариев:
     - login success/failure;
@@ -344,11 +347,13 @@ export PATH="$JAVA_HOME/bin:$PATH"
     - critical admin and maintenance flows.
   - метрики ставить в service layer, не в resource layer.
 - Пути к файлам:
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/BackendKpiMetrics.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyDashboardQueryServiceImpl.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SuperAdminService.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/WebSocketNotificationService.java`
+  - `docs/monitoring/newrelic-dashboard.md`
 - Критерии проверки:
   - каждая метрика имеет понятное имя, low-cardinality tags и owner use case.
   - в коде нет familyId/email/token в metric tags.
@@ -360,6 +365,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### NR-15. `P1` Завести deployment contract для New Relic metrics отдельно от Browser agent
 
+- Статус: выполнено. Backend telemetry env vars теперь отражены отдельно от browser agent vars в env examples, compose и monitoring docs.
 - Архитектурное решение:
   - не смешивать browser config (`VITE_NEW_RELIC_*`) и backend telemetry env vars.
   - backend metrics export contract документировать отдельно: OTLP endpoint, auth header/api key, enable flags, environment labels.

@@ -46,127 +46,140 @@ public class SuperAdminService {
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final FamilyService familyService;
     private final BaseDataService baseDataService;
+    private final BackendKpiMetrics backendKpiMetrics;
     private final ObjectMapper objectMapper;
     private final PasswordHasher passwordHasher;
 
     public SuperAdminFamiliesResponse getFamilies() {
-        return familyRepository.listAll().stream()
-            .sorted(Comparator.comparing(FamilyEntity::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-            .map(this::toFamilySummary)
-            .collect(java.util.stream.Collectors.collectingAndThen(
-                java.util.stream.Collectors.toList(),
-                SuperAdminFamiliesResponse::new
-            ));
-    }
-
-    public SuperAdminFamilyDetailsResponse getFamilyDetails(String familyId) {
-        Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
-        if (familyOpt.isEmpty()) {
-            return null;
-        }
-
-        FamilyEntity family = familyOpt.get();
-        List<ChildEntity> children = childRepository.getChildren(family.getId());
-
-        return new SuperAdminFamilyDetailsResponse(
-            family.getFamilyId(),
-            new SuperAdminFamilyDetailsResponse.FamilyInfo(
-                family.getFamilyId(),
-                family.getEmail(),
-                toIso(family.getCreatedAt()),
-                toIso(family.getLastActivity()),
-                family.isBlocked(),
-                children.size(),
-                children.stream().map(this::toChildSummary).toList(),
-                children.stream().map(ChildEntity::getMonthlyLimit).findFirst().orElse(0)
-            ),
-            new SuperAdminFamilyDetailsResponse.FamilyData(
-                children.stream().mapToInt(ChildEntity::getBalance).sum(),
-                taskRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList(),
-                shopItemRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList(),
-                historyRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
-                    .map(this::toHistoryPayload)
-                    .toList(),
-                purchaseRequestRepository.getRequests(family.getId(), 100, 0).stream()
-                    .map(this::toRequestPayload)
-                    .toList()
-            )
+        return backendKpiMetrics.recordValue("admin", "families", () ->
+            familyRepository.listAll().stream()
+                .sorted(Comparator.comparing(FamilyEntity::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::toFamilySummary)
+                .collect(java.util.stream.Collectors.collectingAndThen(
+                    java.util.stream.Collectors.toList(),
+                    SuperAdminFamiliesResponse::new
+                ))
         );
     }
 
+    public SuperAdminFamilyDetailsResponse getFamilyDetails(String familyId) {
+        return backendKpiMetrics.recordValue("admin", "family_details", () -> {
+            Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
+            if (familyOpt.isEmpty()) {
+                return null;
+            }
+
+            FamilyEntity family = familyOpt.get();
+            List<ChildEntity> children = childRepository.getChildren(family.getId());
+
+            return new SuperAdminFamilyDetailsResponse(
+                family.getFamilyId(),
+                new SuperAdminFamilyDetailsResponse.FamilyInfo(
+                    family.getFamilyId(),
+                    family.getEmail(),
+                    toIso(family.getCreatedAt()),
+                    toIso(family.getLastActivity()),
+                    family.isBlocked(),
+                    children.size(),
+                    children.stream().map(this::toChildSummary).toList(),
+                    children.stream().map(ChildEntity::getMonthlyLimit).findFirst().orElse(0)
+                ),
+                new SuperAdminFamilyDetailsResponse.FamilyData(
+                    children.stream().mapToInt(ChildEntity::getBalance).sum(),
+                    taskRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList(),
+                    shopItemRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList(),
+                    historyRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
+                        .map(this::toHistoryPayload)
+                        .toList(),
+                    purchaseRequestRepository.getRequests(family.getId(), 100, 0).stream()
+                        .map(this::toRequestPayload)
+                        .toList()
+                )
+            );
+        });
+    }
+
     public Map<String, Object> getBaseData() {
-        return baseDataService.getBaseData();
+        return backendKpiMetrics.recordValue("admin", "base_data", baseDataService::getBaseData);
     }
 
     public boolean saveBaseData(Map<String, Object> payload) {
-        return baseDataService.saveBaseData(payload);
+        return backendKpiMetrics.recordValue("admin", "save_base_data", () -> baseDataService.saveBaseData(payload));
     }
 
     @Transactional
     public OperationResult<Void> setFamilyPassword(String familyId, String newPassword) {
-        if (!isValidPassword(newPassword)) {
-            return OperationResult.failure("WEAK_PASSWORD", BackendMessages.message("auth.weakPassword"));
-        }
+        return backendKpiMetrics.recordResult("admin", "set_family_password", () -> {
+            if (!isValidPassword(newPassword)) {
+                return OperationResult.failure("WEAK_PASSWORD", BackendMessages.message("auth.weakPassword"));
+            }
 
-        Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
-        if (familyOpt.isEmpty()) {
-            return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
-        }
+            Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
+            if (familyOpt.isEmpty()) {
+                return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
+            }
 
-        FamilyEntity family = familyOpt.get();
-        if (isSamePassword(newPassword, family.getAdminPassword())) {
-            return OperationResult.failure(
-                "PASSWORD_REUSE",
-                BackendMessages.message("super.newPasswordMustDifferCurrent")
-            );
-        }
+            FamilyEntity family = familyOpt.get();
+            if (isSamePassword(newPassword, family.getAdminPassword())) {
+                return OperationResult.failure(
+                    "PASSWORD_REUSE",
+                    BackendMessages.message("super.newPasswordMustDifferCurrent")
+                );
+            }
 
-        boolean updated = familyRepository.updatePassword(familyId, passwordHasher.hash(newPassword));
-        if (!updated) {
-            return OperationResult.failure(
-                "PASSWORD_UPDATE_FAILED",
-                BackendMessages.message("auth.passwordUpdateFailed")
-            );
-        }
-        return OperationResult.success(null);
+            boolean updated = familyRepository.updatePassword(familyId, passwordHasher.hash(newPassword));
+            if (!updated) {
+                return OperationResult.failure(
+                    "PASSWORD_UPDATE_FAILED",
+                    BackendMessages.message("auth.passwordUpdateFailed")
+                );
+            }
+            return OperationResult.success(null);
+        });
     }
 
     @Transactional
     public boolean setFamilyBlocked(String familyId, boolean blocked) {
-        boolean updated = familyRepository.setBlocked(familyId, blocked);
-        if (updated) {
-            familyRepository.updateLastActivity(familyId);
-        }
-        return updated;
+        return backendKpiMetrics.recordValue("admin", "set_family_blocked", () -> {
+            boolean updated = familyRepository.setBlocked(familyId, blocked);
+            if (updated) {
+                familyRepository.updateLastActivity(familyId);
+            }
+            return updated;
+        });
     }
 
     public OperationResult<String> regenerateFamilyToken(String familyId) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
-        }
-        List<ChildEntity> children = childRepository.getChildren(familyDbId.get());
-        if (children.isEmpty()) {
-            return OperationResult.failure(
-                "FAMILY_HAS_NO_CHILDREN",
-                BackendMessages.message("super.familyHasNoChildren")
-            );
-        }
-        return familyService.regenerateChildToken(familyId, children.getFirst().getId());
+        return backendKpiMetrics.recordResult("admin", "regenerate_family_token", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
+            }
+            List<ChildEntity> children = childRepository.getChildren(familyDbId.get());
+            if (children.isEmpty()) {
+                return OperationResult.failure(
+                    "FAMILY_HAS_NO_CHILDREN",
+                    BackendMessages.message("super.familyHasNoChildren")
+                );
+            }
+            return familyService.regenerateChildToken(familyId, children.getFirst().getId());
+        });
     }
 
     public OperationResult<String> regenerateChildToken(int childId) {
-        Optional<ChildEntity> child = childRepository.findByIdOptional(childId);
-        if (child.isEmpty()) {
-            return OperationResult.failure("CHILD_NOT_FOUND", BackendMessages.message("family.childNotFound"));
-        }
+        return backendKpiMetrics.recordResult("admin", "regenerate_child_token", () -> {
+            Optional<ChildEntity> child = childRepository.findByIdOptional(childId);
+            if (child.isEmpty()) {
+                return OperationResult.failure("CHILD_NOT_FOUND", BackendMessages.message("family.childNotFound"));
+            }
 
-        Optional<FamilyEntity> family = familyRepository.findByDbId(child.get().getFamilyDbId());
-        if (family.isEmpty()) {
-            return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
-        }
+            Optional<FamilyEntity> family = familyRepository.findByDbId(child.get().getFamilyDbId());
+            if (family.isEmpty()) {
+                return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
+            }
 
-        return familyService.regenerateChildToken(family.get().getFamilyId(), childId);
+            return familyService.regenerateChildToken(family.get().getFamilyId(), childId);
+        });
     }
 
     private SuperAdminFamiliesResponse.FamilySummary toFamilySummary(FamilyEntity family) {

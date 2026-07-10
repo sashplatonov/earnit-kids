@@ -1,7 +1,12 @@
 package com.sashplatonov.earnit.kids.service;
 
 import com.sashplatonov.earnit.kids.dto.response.HttpMetricsResponse;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -12,11 +17,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class HttpRequestMetricsRegistry {
+    private static final String HTTP_REQUEST_DURATION_METRIC = "earnit.backend.http.request.duration";
+    private static final String HTTP_REQUEST_COUNT_METRIC = "earnit.backend.http.request.count";
+    private static final String HTTP_REQUEST_ERROR_METRIC = "earnit.backend.http.request.errors";
+    private static final String HTTP_RESPONSE_PAYLOAD_METRIC = "earnit.backend.http.response.payload.bytes";
+    private static final String TAG_METHOD = "method";
+    private static final String TAG_ROUTE = "route";
+    private static final String TAG_STATUS = "status";
 
     private final ConcurrentMap<String, EndpointMetrics> endpoints = new ConcurrentHashMap<>();
+    private final MeterRegistry meterRegistry;
 
     public void record(String method, String path, int status, long durationMs) {
         record(method, path, status, durationMs, -1);
@@ -27,6 +42,7 @@ public class HttpRequestMetricsRegistry {
         String safePath = path == null || path.isBlank() ? "/" : path;
         endpoints.computeIfAbsent(safeMethod + " " + safePath, key -> new EndpointMetrics(safeMethod, safePath))
             .record(status, durationMs, payloadBytes);
+        recordMicrometerMetrics(safeMethod, safePath, status, durationMs, payloadBytes);
     }
 
     public HttpMetricsResponse snapshot() {
@@ -80,6 +96,76 @@ public class HttpRequestMetricsRegistry {
         return BigDecimal.valueOf(value)
             .setScale(1, RoundingMode.HALF_UP)
             .doubleValue();
+    }
+
+    private void recordMicrometerMetrics(String method, String path, int status, long durationMs, long payloadBytes) {
+        String route = normalizeRoute(path);
+        String statusClass = status >= 100 ? (status / 100) + "xx" : "unknown";
+
+        Timer.builder(HTTP_REQUEST_DURATION_METRIC)
+            .tag(TAG_METHOD, method)
+            .tag(TAG_ROUTE, route)
+            .tag(TAG_STATUS, statusClass)
+            .register(meterRegistry)
+            .record(Math.max(durationMs, 0), TimeUnit.MILLISECONDS);
+
+        meterRegistry.counter(HTTP_REQUEST_COUNT_METRIC, TAG_METHOD, method, TAG_ROUTE, route, TAG_STATUS, statusClass)
+            .increment();
+
+        if (status >= 400) {
+            meterRegistry.counter(HTTP_REQUEST_ERROR_METRIC, TAG_METHOD, method, TAG_ROUTE, route, TAG_STATUS, statusClass)
+                .increment();
+        }
+
+        if (payloadBytes >= 0) {
+            DistributionSummary.builder(HTTP_RESPONSE_PAYLOAD_METRIC)
+                .tag(TAG_METHOD, method)
+                .tag(TAG_ROUTE, route)
+                .register(meterRegistry)
+                .record(payloadBytes);
+        }
+    }
+
+    private String normalizeRoute(String path) {
+        if (path == null || path.isBlank()) {
+            return "/";
+        }
+
+        StringBuilder builder = new StringBuilder(path.length());
+        String[] segments = path.split("/");
+        for (String segment : segments) {
+            if (segment.isBlank()) {
+                continue;
+            }
+            builder.append('/');
+            builder.append(isHighCardinalitySegment(segment) ? "{id}" : segment);
+        }
+        return builder.length() == 0 ? "/" : builder.toString();
+    }
+
+    private boolean isHighCardinalitySegment(String segment) {
+        if (segment.length() >= 24 || isAllDigits(segment)) {
+            return true;
+        }
+        boolean hasDigit = false;
+        boolean hasLetter = false;
+        boolean hasDash = false;
+        for (int index = 0; index < segment.length(); index++) {
+            char value = segment.charAt(index);
+            hasDigit = hasDigit || Character.isDigit(value);
+            hasLetter = hasLetter || Character.isLetter(value);
+            hasDash = hasDash || value == '-';
+        }
+        return (hasDigit && hasLetter) || (hasDash && segment.length() >= 8);
+    }
+
+    private boolean isAllDigits(String value) {
+        for (int index = 0; index < value.length(); index++) {
+            if (!Character.isDigit(value.charAt(index))) {
+                return false;
+            }
+        }
+        return !value.isEmpty();
     }
 
     private static final class EndpointMetrics {

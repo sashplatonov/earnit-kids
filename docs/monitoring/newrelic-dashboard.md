@@ -14,10 +14,14 @@
 
 ## 🧭 Scope <a name="scope"></a>
 
-This document describes the minimum backend dashboard contract for New Relic after `BAP-13` and `BAP-14`.
+This document describes the minimum backend dashboard contract for New Relic after `NR-13` and `NR-14`.
 
 It only references metrics that the backend already emits through Micrometer/OTLP:
 
+- `earnit.backend.http.request.duration`
+- `earnit.backend.http.request.count`
+- `earnit.backend.http.request.errors`
+- `earnit.backend.http.response.payload.bytes`
 - `earnit.backend.service.operation.duration`
 - `earnit.backend.service.operation.count`
 - `earnit.backend.websocket.active.sessions`
@@ -26,6 +30,9 @@ It only references metrics that the backend already emits through Micrometer/OTL
 
 Labels are intentionally low-cardinality:
 
+- `method`
+- `route`
+- `status`
 - `service`
 - `operation`
 - `outcome`
@@ -38,7 +45,7 @@ Labels are intentionally low-cardinality:
 
 Purpose:
 
-- show whether `shell`, `detail`, `full`, and `get_data` calls stay within expected latency
+- show whether dashboard, auth, admin, and family-action use cases stay within expected latency
 - separate success and failure paths
 
 Suggested chart:
@@ -50,7 +57,7 @@ Suggested chart:
 
 Purpose:
 
-- track whether `auth`, `dashboard`, `analytics`, and `websocket` traffic is healthy
+- track whether `auth`, `dashboard`, `analytics`, `family_action`, `admin`, and `websocket` traffic is healthy
 - make failure spikes visible before users report them
 
 Suggested chart:
@@ -87,6 +94,13 @@ Suggested chart:
 ### Latency widgets
 
 ```nrql
+SELECT percentile(earnit.backend.http.request.duration, 95)
+FROM Metric
+FACET method, route, status
+TIMESERIES
+```
+
+```nrql
 SELECT percentile(earnit.backend.service.operation.duration, 95)
 FROM Metric
 WHERE service = 'dashboard'
@@ -111,6 +125,20 @@ TIMESERIES
 ```
 
 ### Volume and failure widgets
+
+```nrql
+SELECT rate(sum(earnit.backend.http.request.count), 1 minute)
+FROM Metric
+FACET method, route, status
+TIMESERIES
+```
+
+```nrql
+SELECT rate(sum(earnit.backend.http.request.errors), 1 minute)
+FROM Metric
+FACET method, route, status
+TIMESERIES
+```
 
 ```nrql
 SELECT rate(sum(earnit.backend.service.operation.count), 1 minute)
@@ -160,9 +188,12 @@ Use these as rollout-safe starting points. Tighten them only after a stable burn
 
 | Signal | Warning | Page |
 | --- | --- | --- |
+| HTTP request p95 latency | above 800 ms for 10 minutes | above 1500 ms for 5 minutes |
 | `dashboard` p95 latency | above 800 ms for 10 minutes | above 1500 ms for 5 minutes |
 | `analytics` p95 latency | above 1200 ms for 10 minutes | above 2500 ms for 5 minutes |
+| `family_action` failure rate | above 5% for 15 minutes | above 10% for 10 minutes |
 | `auth` failure rate | above 5% for 15 minutes | above 10% for 10 minutes |
+| `admin` failure rate | above 5% for 15 minutes | above 10% for 10 minutes |
 | `websocket` notification failure rate | above 1% for 15 minutes | above 5% for 10 minutes |
 | `websocket` active sessions | below expected floor during active hours for 30 minutes | only page when paired with notification failures |
 | `jvm.memory.used` | above 80% of expected heap envelope for 15 minutes | above 90% for 10 minutes |
@@ -172,6 +203,8 @@ Operational notes:
 - `outcome = 'failure'` should be the primary alert facet for counter widgets.
 - `service = 'dashboard'` should include `shell`, `detail`, and `full` operations.
 - `service = 'auth'` should include all auth entrypoints, but alerts should usually group by outcome first and operation second.
+- `service = 'family_action'` should include task, item, approval, import, and balance operations.
+- `service = 'admin'` should include family settings, token regeneration, and base-data maintenance flows.
 - keep warning thresholds in place during rollout before enabling the tighter page thresholds.
 
 [↩ Back to toc](#top)
@@ -185,6 +218,6 @@ Recommended rollout sequence:
 3. start with warning-only thresholds
 4. promote to page thresholds after the baseline is stable
 
-This dashboard contract should not introduce any new metric names. If the backend KPI set changes, update the docs in the same change.
+This dashboard contract should stay aligned with the backend KPI set. If metric names or tags change, update the docs in the same change.
 
 [↩ Back to toc](#top)

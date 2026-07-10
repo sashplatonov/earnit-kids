@@ -62,15 +62,21 @@ public class WebSocketNotificationService {
     }
 
     public void notifyFamily(String familyId, String type, Object data) {
-        send("family", type, data, session -> Objects.equals(session.familyId(), familyId));
+        backendKpiMetrics.recordVoid("websocket", "notify_family", () ->
+            send("family", type, data, session -> Objects.equals(session.familyId(), familyId))
+        );
     }
 
     public void notifyAdmins(String familyId, String type, Object data) {
-        send("admins", type, data, session -> Objects.equals(session.familyId(), familyId) && session.isAdmin());
+        backendKpiMetrics.recordVoid("websocket", "notify_admins", () ->
+            send("admins", type, data, session -> Objects.equals(session.familyId(), familyId) && session.isAdmin())
+        );
     }
 
     public void broadcast(String type, Object data) {
-        send("broadcast", type, data, session -> true);
+        backendKpiMetrics.recordVoid("websocket", "broadcast", () ->
+            send("broadcast", type, data, session -> true)
+        );
     }
 
     private void send(String scope, String type, Object data, Predicate<WebSocketSessionInfo> filter) {

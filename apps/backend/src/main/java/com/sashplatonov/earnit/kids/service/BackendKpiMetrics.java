@@ -57,6 +57,19 @@ public class BackendKpiMetrics {
         }
     }
 
+    public <T> T recordValue(String service, String operation, Supplier<T> action) {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        String outcome = OUTCOME_SUCCESS;
+        try {
+            return action.get();
+        } catch (RuntimeException ex) {
+            outcome = OUTCOME_FAILURE;
+            throw ex;
+        } finally {
+            recordOutcome(service, operation, outcome, sample);
+        }
+    }
+
     public void increment(String metricName, String service, String operation, String outcome) {
         Counter.builder(metricName)
             .tag(TAG_SERVICE, service)

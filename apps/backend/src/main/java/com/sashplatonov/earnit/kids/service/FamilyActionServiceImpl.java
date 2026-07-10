@@ -72,28 +72,31 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final FamilyService familyService;
     private final TimeProvider timeProvider;
+    private final BackendKpiMetrics backendKpiMetrics;
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> completeTask(String familyId, int childId, long taskId) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "complete_task", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
 
-        Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+            Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
+            if (child.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        Optional<TaskEntity> task = findActiveTask(familyDbId.get(), childId, taskId);
-        if (task.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("tasks.notFound"));
-        }
+            Optional<TaskEntity> task = findActiveTask(familyDbId.get(), childId, taskId);
+            if (task.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("tasks.notFound"));
+            }
 
-        child.get().setBalance(child.get().getBalance() + task.get().getCoins());
-        historyRepository.persist(buildTaskHistory(familyDbId.get(), childId, task.get()));
-        return familyService.loadFamilyData(familyId, childId, true);
+            child.get().setBalance(child.get().getBalance() + task.get().getCoins());
+            historyRepository.persist(buildTaskHistory(familyDbId.get(), childId, task.get()));
+            return familyService.loadFamilyData(familyId, childId, true);
+        });
     }
 
     @Override
@@ -102,68 +105,72 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                                                                      int childId,
                                                                      long taskId,
                                                                      String note) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "request_task_completion", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
 
-        Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+            Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
+            if (child.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        Optional<TaskEntity> task = findActiveTask(familyDbId.get(), childId, taskId);
-        if (task.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("tasks.notFound"));
-        }
+            Optional<TaskEntity> task = findActiveTask(familyDbId.get(), childId, taskId);
+            if (task.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("tasks.notFound"));
+            }
 
-        String taskLimitError = validateTaskRequestLimit(
-            familyDbId.get(),
-            childId,
-            task.get()
-        );
-        if (taskLimitError != null) {
-            return OperationResult.failure("TASK_REQUEST_LIMIT_REACHED", taskLimitError);
-        }
+            String taskLimitError = validateTaskRequestLimit(
+                familyDbId.get(),
+                childId,
+                task.get()
+            );
+            if (taskLimitError != null) {
+                return OperationResult.failure("TASK_REQUEST_LIMIT_REACHED", taskLimitError);
+            }
 
-        OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
-        if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
-            return OperationResult.failure(failure.errorCode(), failure.message());
-        }
+            OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
+            if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
+                return OperationResult.failure(failure.errorCode(), failure.message());
+            }
 
-        String normalizedNote = normalizedNoteResult instanceof OperationResult.Success<String> success
-            ? success.value()
-            : null;
+            String normalizedNote = normalizedNoteResult instanceof OperationResult.Success<String> success
+                ? success.value()
+                : null;
 
-        purchaseRequestRepository.persist(buildTaskRequest(familyDbId.get(), childId, task.get(), normalizedNote));
-        return familyService.loadFamilyData(familyId, childId, false);
+            purchaseRequestRepository.persist(buildTaskRequest(familyDbId.get(), childId, task.get(), normalizedNote));
+            return familyService.loadFamilyData(familyId, childId, false);
+        });
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> purchaseItem(String familyId, int childId, long itemId) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "purchase_item", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
 
-        Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+            Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
+            if (child.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        Optional<ShopItemEntity> item = findActiveItem(familyDbId.get(), childId, itemId);
-        if (item.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
-        }
+            Optional<ShopItemEntity> item = findActiveItem(familyDbId.get(), childId, itemId);
+            if (item.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
+            }
 
-        if (child.get().getBalance() < item.get().getPrice()) {
-            return OperationResult.failure(BackendMessages.message("balance.insufficient"));
-        }
+            if (child.get().getBalance() < item.get().getPrice()) {
+                return OperationResult.failure(BackendMessages.message("balance.insufficient"));
+            }
 
-        child.get().setBalance(child.get().getBalance() - item.get().getPrice());
-        historyRepository.persist(buildShopHistory(familyDbId.get(), childId, item.get()));
-        return familyService.loadFamilyData(familyId, childId, true);
+            child.get().setBalance(child.get().getBalance() - item.get().getPrice());
+            historyRepository.persist(buildShopHistory(familyDbId.get(), childId, item.get()));
+            return familyService.loadFamilyData(familyId, childId, true);
+        });
     }
 
     @Override
@@ -172,154 +179,164 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                                                                    int childId,
                                                                    long itemId,
                                                                    String note) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "request_item_purchase", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
 
-        Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+            Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
+            if (child.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        Optional<ShopItemEntity> item = findActiveItem(familyDbId.get(), childId, itemId);
-        if (item.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
-        }
+            Optional<ShopItemEntity> item = findActiveItem(familyDbId.get(), childId, itemId);
+            if (item.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
+            }
 
-        String itemLimitError = validateItemRequestLimit(
-            familyDbId.get(),
-            childId,
-            item.get()
-        );
-        if (itemLimitError != null) {
-            return OperationResult.failure("ITEM_REQUEST_LIMIT_REACHED", itemLimitError);
-        }
+            String itemLimitError = validateItemRequestLimit(
+                familyDbId.get(),
+                childId,
+                item.get()
+            );
+            if (itemLimitError != null) {
+                return OperationResult.failure("ITEM_REQUEST_LIMIT_REACHED", itemLimitError);
+            }
 
-        OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
-        if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
-            return OperationResult.failure(failure.errorCode(), failure.message());
-        }
+            OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
+            if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
+                return OperationResult.failure(failure.errorCode(), failure.message());
+            }
 
-        String normalizedNote = normalizedNoteResult instanceof OperationResult.Success<String> success
-            ? success.value()
-            : null;
+            String normalizedNote = normalizedNoteResult instanceof OperationResult.Success<String> success
+                ? success.value()
+                : null;
 
-        purchaseRequestRepository.persist(buildPurchaseRequest(familyDbId.get(), childId, item.get(), normalizedNote));
-        return familyService.loadFamilyData(familyId, childId, false);
+            purchaseRequestRepository.persist(buildPurchaseRequest(familyDbId.get(), childId, item.get(), normalizedNote));
+            return familyService.loadFamilyData(familyId, childId, false);
+        });
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> approveRequest(String familyId, Integer currentChildId, long requestId) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
-
-        Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
-        if (request.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("requests.notFound"));
-        }
-        if (!isPending(request.get())) {
-            return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
-        }
-
-        Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), request.get().getChildId());
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
-
-        if (isPurchaseRequest(request.get())) {
-            if (child.get().getBalance() < request.get().getCoins()) {
-                return OperationResult.failure(BackendMessages.message("balance.insufficient"));
+        return backendKpiMetrics.recordResult("family_action", "approve_request", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
             }
-            child.get().setBalance(child.get().getBalance() - request.get().getCoins());
-        } else {
-            child.get().setBalance(child.get().getBalance() + request.get().getCoins());
-        }
 
-        historyRepository.persist(buildRequestHistory(familyDbId.get(), request.get()));
-        request.get().setStatus(PurchaseRequestStatus.approved);
-        int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
-        return familyService.loadFamilyData(familyId, responseChildId, true);
+            Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
+            if (request.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("requests.notFound"));
+            }
+            if (!isPending(request.get())) {
+                return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
+            }
+
+            Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), request.get().getChildId());
+            if (child.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
+
+            if (isPurchaseRequest(request.get())) {
+                if (child.get().getBalance() < request.get().getCoins()) {
+                    return OperationResult.failure(BackendMessages.message("balance.insufficient"));
+                }
+                child.get().setBalance(child.get().getBalance() - request.get().getCoins());
+            } else {
+                child.get().setBalance(child.get().getBalance() + request.get().getCoins());
+            }
+
+            historyRepository.persist(buildRequestHistory(familyDbId.get(), request.get()));
+            request.get().setStatus(PurchaseRequestStatus.approved);
+            int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
+            return familyService.loadFamilyData(familyId, responseChildId, true);
+        });
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> rejectRequest(String familyId, Integer currentChildId, long requestId) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "reject_request", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
 
-        Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
-        if (request.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("requests.notFound"));
-        }
-        if (!isPending(request.get())) {
-            return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
-        }
+            Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
+            if (request.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("requests.notFound"));
+            }
+            if (!isPending(request.get())) {
+                return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
+            }
 
-        request.get().setStatus(PurchaseRequestStatus.rejected);
-        int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
-        return familyService.loadFamilyData(familyId, responseChildId, true);
+            request.get().setStatus(PurchaseRequestStatus.rejected);
+            int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
+            return familyService.loadFamilyData(familyId, responseChildId, true);
+        });
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> deleteRequest(String familyId, Integer currentChildId, long requestId) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
-
-        Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
-        if (request.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("requests.notFound"));
-        }
-
-        // EXPLAIN: Child sessions can only delete their own requests, and only while not approved yet.
-        // EXPLAIN: `currentChildId` historically served as a *response childId hint* for admin sessions,
-        // EXPLAIN: so we only apply child-only rules when it is clear the caller is the request owner.
-        boolean isChildDeletingOwnRequest = currentChildId != null
-            && Objects.equals(request.get().getChildId(), currentChildId);
-        if (isChildDeletingOwnRequest) {
-            // EXPLAIN: Not yet approved => allow deleting pending or rejected.
-            if (request.get().getStatus() == PurchaseRequestStatus.approved) {
-                return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
+        return backendKpiMetrics.recordResult("family_action", "delete_request", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
             }
-        }
 
-        int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
-        purchaseRequestRepository.delete(request.get());
-        return familyService.loadFamilyData(familyId, responseChildId, true);
+            Optional<PurchaseRequestEntity> request = findFamilyRequest(familyDbId.get(), requestId);
+            if (request.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("requests.notFound"));
+            }
+
+            // EXPLAIN: Child sessions can only delete their own requests, and only while not approved yet.
+            // EXPLAIN: `currentChildId` historically served as a *response childId hint* for admin sessions,
+            // EXPLAIN: so we only apply child-only rules when it is clear the caller is the request owner.
+            boolean isChildDeletingOwnRequest = currentChildId != null
+                && Objects.equals(request.get().getChildId(), currentChildId);
+            if (isChildDeletingOwnRequest) {
+                // EXPLAIN: Not yet approved => allow deleting pending or rejected.
+                if (request.get().getStatus() == PurchaseRequestStatus.approved) {
+                    return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
+                }
+            }
+
+            int responseChildId = resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
+            purchaseRequestRepository.delete(request.get());
+            return familyService.loadFamilyData(familyId, responseChildId, true);
+        });
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> deleteHistoryEntry(String familyId, int childId, long historyEntryId) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "delete_history_entry", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
 
-        Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+            Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
+            if (child.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        Optional<HistoryEntryEntity> historyEntry = findHistoryEntry(familyDbId.get(), childId, historyEntryId);
-        if (historyEntry.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("history.entryNotFound"));
-        }
+            Optional<HistoryEntryEntity> historyEntry = findHistoryEntry(familyDbId.get(), childId, historyEntryId);
+            if (historyEntry.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("history.entryNotFound"));
+            }
 
-        int delta = historyEntry.get().getType() == HistoryEntryType.earn
-            ? -historyEntry.get().getAmount()
-            : historyEntry.get().getAmount();
-        child.get().setBalance(child.get().getBalance() + delta);
-        historyRepository.delete(historyEntry.get());
-        return familyService.loadFamilyData(familyId, childId, true);
+            int delta = historyEntry.get().getType() == HistoryEntryType.earn
+                ? -historyEntry.get().getAmount()
+                : historyEntry.get().getAmount();
+            child.get().setBalance(child.get().getBalance() + delta);
+            historyRepository.delete(historyEntry.get());
+            return familyService.loadFamilyData(familyId, childId, true);
+        });
     }
 
     @Override
@@ -328,172 +345,182 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                                                              int childId,
                                                              int amount,
                                                              String description) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
-        if (amount == 0) {
-            return OperationResult.failure(BackendMessages.message("balance.amountZero"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "adjust_balance", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
+            if (amount == 0) {
+                return OperationResult.failure(BackendMessages.message("balance.amountZero"));
+            }
 
-        Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+            Optional<ChildEntity> child = findFamilyChild(familyDbId.get(), childId);
+            if (child.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        child.get().setBalance(child.get().getBalance() + amount);
-        historyRepository.persist(buildAdjustmentHistory(familyDbId.get(), childId, amount, description));
-        return familyService.loadFamilyData(familyId, childId, true);
+            child.get().setBalance(child.get().getBalance() + amount);
+            historyRepository.persist(buildAdjustmentHistory(familyDbId.get(), childId, amount, description));
+            return familyService.loadFamilyData(familyId, childId, true);
+        });
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> bulkTaskAction(String familyId, BulkTaskActionRequest request) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
-        if (findFamilyChild(familyDbId.get(), request.childId()).isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "bulk_task_action", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
+            if (findFamilyChild(familyDbId.get(), request.childId()).isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        LinkedHashSet<Long> taskIds = normalizedIds(request.taskIds());
-        if (taskIds.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("tasks.notFound"));
-        }
+            LinkedHashSet<Long> taskIds = normalizedIds(request.taskIds());
+            if (taskIds.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("tasks.notFound"));
+            }
 
-        BulkActionType action = request.action();
-        if (action == null) {
-            return unknownBulkAction(null);
-        }
+            BulkActionType action = request.action();
+            if (action == null) {
+                return unknownBulkAction(null);
+            }
 
-        Map<Long, TaskEntity> tasksByBusinessId = selectedEntitiesByBusinessId(
-            findTaskEntities(familyDbId.get(), request.childId()),
-            taskIds,
-            TaskEntity::getTaskId
-        );
-        if (tasksByBusinessId.size() != taskIds.size()) {
-            return OperationResult.failure(BackendMessages.message("tasks.notFound"));
-        }
+            Map<Long, TaskEntity> tasksByBusinessId = selectedEntitiesByBusinessId(
+                findTaskEntities(familyDbId.get(), request.childId()),
+                taskIds,
+                TaskEntity::getTaskId
+            );
+            if (tasksByBusinessId.size() != taskIds.size()) {
+                return OperationResult.failure(BackendMessages.message("tasks.notFound"));
+            }
 
-        String actionError = applyBulkAction(
-            action,
-            request.groupName(),
-            tasksByBusinessId.values(),
-            BackendMessages.message("tasks.groupNameRequired"),
-            task -> task.setDeleted(true),
-            task -> task.setActive(false),
-            task -> task.setActive(true),
-            TaskEntity::setGroupName
-        );
-        if (actionError != null) {
-            return OperationResult.failure(actionError);
-        }
+            String actionError = applyBulkAction(
+                action,
+                request.groupName(),
+                tasksByBusinessId.values(),
+                BackendMessages.message("tasks.groupNameRequired"),
+                task -> task.setDeleted(true),
+                task -> task.setActive(false),
+                task -> task.setActive(true),
+                TaskEntity::setGroupName
+            );
+            if (actionError != null) {
+                return OperationResult.failure(actionError);
+            }
 
-        return familyService.loadFamilyData(familyId, request.childId(), true);
+            return familyService.loadFamilyData(familyId, request.childId(), true);
+        });
     }
 
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> bulkShopItemAction(String familyId, BulkShopItemActionRequest request) {
-        Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
-        if (findFamilyChild(familyDbId.get(), request.childId()).isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
+        return backendKpiMetrics.recordResult("family_action", "bulk_shop_item_action", () -> {
+            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
+            if (familyDbId.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+            }
+            if (findFamilyChild(familyDbId.get(), request.childId()).isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+            }
 
-        LinkedHashSet<Long> itemIds = normalizedIds(request.itemIds());
-        if (itemIds.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
-        }
+            LinkedHashSet<Long> itemIds = normalizedIds(request.itemIds());
+            if (itemIds.isEmpty()) {
+                return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
+            }
 
-        BulkActionType action = request.action();
-        if (action == null) {
-            return unknownBulkAction(null);
-        }
+            BulkActionType action = request.action();
+            if (action == null) {
+                return unknownBulkAction(null);
+            }
 
-        Map<Long, ShopItemEntity> itemsByBusinessId = selectedEntitiesByBusinessId(
-            findShopItemEntities(familyDbId.get(), request.childId()),
-            itemIds,
-            ShopItemEntity::getItemId
-        );
-        if (itemsByBusinessId.size() != itemIds.size()) {
-            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
-        }
+            Map<Long, ShopItemEntity> itemsByBusinessId = selectedEntitiesByBusinessId(
+                findShopItemEntities(familyDbId.get(), request.childId()),
+                itemIds,
+                ShopItemEntity::getItemId
+            );
+            if (itemsByBusinessId.size() != itemIds.size()) {
+                return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
+            }
 
-        String actionError = applyBulkAction(
-            action,
-            request.groupName(),
-            itemsByBusinessId.values(),
-            BackendMessages.message("shop.groupNameRequired"),
-            item -> item.setDeleted(true),
-            item -> item.setActive(false),
-            item -> item.setActive(true),
-            ShopItemEntity::setGroupName
-        );
-        if (actionError != null) {
-            return OperationResult.failure(actionError);
-        }
+            String actionError = applyBulkAction(
+                action,
+                request.groupName(),
+                itemsByBusinessId.values(),
+                BackendMessages.message("shop.groupNameRequired"),
+                item -> item.setDeleted(true),
+                item -> item.setActive(false),
+                item -> item.setActive(true),
+                ShopItemEntity::setGroupName
+            );
+            if (actionError != null) {
+                return OperationResult.failure(actionError);
+            }
 
-        return familyService.loadFamilyData(familyId, request.childId(), true);
+            return familyService.loadFamilyData(familyId, request.childId(), true);
+        });
     }
 
     @Override
     @Transactional
     public FamilyDataResponse importTasks(String familyId, ImportTasksRequest request) {
-        int familyDbId = requireImportFamilyDbId(familyId);
-        requireImportChild(familyDbId, request.childId());
-        List<ImportTaskRowRequest> rows = validatedImportRows(request.rows(), this::validateTaskImportRows);
+        return backendKpiMetrics.recordValue("family_action", "import_tasks", () -> {
+            int familyDbId = requireImportFamilyDbId(familyId);
+            requireImportChild(familyDbId, request.childId());
+            List<ImportTaskRowRequest> rows = validatedImportRows(request.rows(), this::validateTaskImportRows);
 
-        long nextTaskId = nextTaskBusinessId(familyDbId, request.childId());
-        for (ImportTaskRowRequest row : rows) {
-            JsonNode frequency = buildFrequencyNode(row.frequencyLimit(), row.frequencyPeriod());
-            taskRepository.upsertTask(new TaskUpsertCommand(
-                familyDbId,
-                request.childId(),
-                nextTaskId++,
-                row.title().trim(),
-                row.coins(),
-                trimToNull(row.groupName()),
-                frequency,
-                trimToNull(row.comment()),
-                row.moneyLimit(),
-                row.isActive() == null || row.isActive(),
-                false
-            ));
-        }
+            long nextTaskId = nextTaskBusinessId(familyDbId, request.childId());
+            for (ImportTaskRowRequest row : rows) {
+                JsonNode frequency = buildFrequencyNode(row.frequencyLimit(), row.frequencyPeriod());
+                taskRepository.upsertTask(new TaskUpsertCommand(
+                    familyDbId,
+                    request.childId(),
+                    nextTaskId++,
+                    row.title().trim(),
+                    row.coins(),
+                    trimToNull(row.groupName()),
+                    frequency,
+                    trimToNull(row.comment()),
+                    row.moneyLimit(),
+                    row.isActive() == null || row.isActive(),
+                    false
+                ));
+            }
 
-        return loadRefreshedFamilyData(familyId, request.childId(), true);
+            return loadRefreshedFamilyData(familyId, request.childId(), true);
+        });
     }
 
     @Override
     @Transactional
     public FamilyDataResponse importShopItems(String familyId, ImportShopItemsRequest request) {
-        int familyDbId = requireImportFamilyDbId(familyId);
-        requireImportChild(familyDbId, request.childId());
-        List<ImportShopItemRowRequest> rows = validatedImportRows(request.rows(), this::validateShopImportRows);
+        return backendKpiMetrics.recordValue("family_action", "import_shop_items", () -> {
+            int familyDbId = requireImportFamilyDbId(familyId);
+            requireImportChild(familyDbId, request.childId());
+            List<ImportShopItemRowRequest> rows = validatedImportRows(request.rows(), this::validateShopImportRows);
 
-        long nextItemId = nextShopItemBusinessId(familyDbId, request.childId());
-        for (ImportShopItemRowRequest row : rows) {
-            JsonNode frequency = buildFrequencyNode(row.frequencyLimit(), row.frequencyPeriod());
-            shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
-                familyDbId,
-                request.childId(),
-                nextItemId++,
-                row.name().trim(),
-                row.price(),
-                trimToNull(row.groupName()),
-                frequency,
-                trimToNull(row.comment()),
-                row.moneyLimit(),
-                row.isActive() == null || row.isActive(),
-                false
-            ));
-        }
+            long nextItemId = nextShopItemBusinessId(familyDbId, request.childId());
+            for (ImportShopItemRowRequest row : rows) {
+                JsonNode frequency = buildFrequencyNode(row.frequencyLimit(), row.frequencyPeriod());
+                shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
+                    familyDbId,
+                    request.childId(),
+                    nextItemId++,
+                    row.name().trim(),
+                    row.price(),
+                    trimToNull(row.groupName()),
+                    frequency,
+                    trimToNull(row.comment()),
+                    row.moneyLimit(),
+                    row.isActive() == null || row.isActive(),
+                    false
+                ));
+            }
 
-        return loadRefreshedFamilyData(familyId, request.childId(), true);
+            return loadRefreshedFamilyData(familyId, request.childId(), true);
+        });
     }
 
     private FamilyDataResponse loadRefreshedFamilyData(String familyId, Integer childId, boolean isAdmin) {

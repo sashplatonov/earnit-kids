@@ -25,6 +25,7 @@ import com.sashplatonov.earnit.kids.repository.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,10 +61,12 @@ class FamilyActionServiceImplTest {
     @Mock FamilyService familyService;
 
     private FamilyActionServiceImpl service;
+    private BackendKpiMetrics backendKpiMetrics;
 
     @BeforeEach
     void setUp() {
         RequestLocaleHolder.set("en");
+        backendKpiMetrics = new BackendKpiMetrics(new SimpleMeterRegistry());
         service = new FamilyActionServiceImpl(
             familyRepository,
             childRepository,
@@ -72,7 +75,8 @@ class FamilyActionServiceImplTest {
             historyRepository,
             purchaseRequestRepository,
             familyService,
-            TestConfigFactory.timeProvider(FIXED_NOW)
+            TestConfigFactory.timeProvider(FIXED_NOW),
+            backendKpiMetrics
         );
     }
 

@@ -50,6 +50,8 @@ class NewRelicMetricsExportSmokeTest {
         assertThat(config.getValue("quarkus.otel.metrics.enabled", Boolean.class)).isTrue();
         assertThat(config.getValue("quarkus.otel.exporter.otlp.metrics.endpoint", String.class))
             .isEqualTo("http://127.0.0.1:4318");
+        assertThat(config.getValue("quarkus.micrometer.binder.jvm", Boolean.class)).isTrue();
+        assertThat(config.getValue("quarkus.micrometer.binder.http-server.enabled", Boolean.class)).isTrue();
         assertThat(meterRegistry.find("jvm.memory.used").meter()).isNotNull();
     }
 
