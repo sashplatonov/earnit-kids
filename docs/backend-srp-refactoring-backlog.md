@@ -13,7 +13,8 @@
 - Baseline снят `2026-07-10` на текущем состоянии рабочей копии.
 - `FamilyActionServiceImpl.java` — `1171` строк, `13` public и `49` private/protected методов; смешаны task/item actions, request workflow, bulk actions, CSV import, balance/history и frequency-limit policy.
 - После `SRP-02` `FamilyActionServiceImpl.java` уменьшился до `166` строк и стал thin facade; основная логика вынесена в `FamilyActionBalanceService`, `FamilyActionRequestService`, `FamilyActionBulkService`, `FamilyActionImportService`, `FamilyActionSupportService`, `FamilyActionFrequencyService` и `FamilyActionHistoryFactory`.
-- `FamilyResource.java` — `913` строк, `33` endpoint-метода и `10` private/protected методов; смешаны family commands, task/item actions, imports, child settings, friends/tokens и parent membership management.
+- После `SRP-03` `FamilyResource.java` уменьшился до `351` строк и оставил только command/import/request endpoints; child settings вынесены в `FamilyChildSettingsResource`, friends в `FamilySocialResource`, parent/membership access в `FamilyParentAccessResource`.
+- `FamilyResource.java` — `351` строка, `14` public endpoint-методов и `4` private/protected метода; теперь это command/import hotspot, а не смешанный family-access resource.
 - `FamilyDashboardQueryServiceImpl.java` — `722` строки, `3` public и `37` private/protected методов; смешаны scope loading, shell/detail/full payload assembly, data hydration и DTO mapping.
 - `AuthServiceImpl.java` — `515` строк, `9` public и `12` private/protected методов; смешаны admin/family/child auth, Google auth, family selection, password lifecycle, email verification и legacy password rehash.
 - В production source всего `13441` строк Java; четыре выбранных hotspot-а занимают `3321` строку (`24.7%`) этого объёма.
@@ -152,6 +153,10 @@
 - Все entrypoint методы по-прежнему проходят backend verify gate.
 
 ### SRP-03 — Split `FamilyResource`
+
+**Status**
+
+`Done`. Write surface разделён на command/import/resource slices без изменения route contract.
 
 **Goal**
 

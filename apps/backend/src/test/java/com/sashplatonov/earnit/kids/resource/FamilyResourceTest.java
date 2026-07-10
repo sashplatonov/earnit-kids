@@ -71,6 +71,9 @@ class FamilyResourceTest {
 
     private FamilyResource resource;
     private FamilyReadResource readResource;
+    private FamilyChildSettingsResource childResource;
+    private FamilySocialResource socialResource;
+    private FamilyParentAccessResource parentResource;
 
     @BeforeEach
     void setUp() {
@@ -80,6 +83,9 @@ class FamilyResourceTest {
             webSocketNotificationService,
             familyParentAccessService);
         readResource = new FamilyReadResource(familyService, baseDataService);
+        childResource = new FamilyChildSettingsResource(familyService, webSocketNotificationService, familyParentAccessService);
+        socialResource = new FamilySocialResource(familyService, webSocketNotificationService, familyParentAccessService);
+        parentResource = new FamilyParentAccessResource(familyService, webSocketNotificationService, familyParentAccessService);
     }
 
     @Test
@@ -164,23 +170,23 @@ class FamilyResourceTest {
 
     @Test
     void createChild_nonAdminOrServiceFailure_returnsExpectedStatus() {
-        Response unauthorized = resource.createChild(contextWithAuth(childAuth(10)), new CreateChildRequest("Kid"));
+        Response unauthorized = childResource.createChild(contextWithAuth(childAuth(10)), new CreateChildRequest("Kid"));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
         when(familyService.createChild("fam-1", "Kid")).thenReturn(OperationResult.failure("bad"));
-        Response bad = resource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
+        Response bad = childResource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
         assertThat(bad.getStatus()).isEqualTo(400);
 
         ChildInfo info = new ChildInfo(1, "Kid", "token");
         when(familyService.createChild("fam-1", "Kid")).thenReturn(OperationResult.success(info));
-        Response created = resource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
+        Response created = childResource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
         assertThat(created.getStatus()).isEqualTo(201);
     }
 
     @Test
     void deleteChild_adminUser_returnsOk() {
         when(familyService.deleteChild("fam-1", 10)).thenReturn(OperationResult.success(null));
-        Response response = resource.deleteChild(contextWithAuth(adminAuth()), 10);
+        Response response = childResource.deleteChild(contextWithAuth(adminAuth()), 10);
         assertThat(response.getStatus()).isEqualTo(200);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_DELETED"), eq(Map.of("childId", 10)));
     }
@@ -190,7 +196,7 @@ class FamilyResourceTest {
         ChildInfo info = new ChildInfo(77, "Kid", "token");
         when(familyService.createChild("fam-1", "Kid")).thenReturn(OperationResult.success(info));
 
-        Response response = resource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
+        Response response = childResource.createChild(contextWithAuth(adminAuth()), new CreateChildRequest("Kid"));
 
         assertThat(response.getStatus()).isEqualTo(201);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 77)));
@@ -200,7 +206,7 @@ class FamilyResourceTest {
     void getChildLink_adminReturnsTokenPayload() {
         when(familyService.getChildLoginLink("fam-1", 10)).thenReturn(OperationResult.success("child-token"));
 
-        Response response = resource.getChildLink(contextWithAuth(adminAuth()), 10);
+        Response response = parentResource.getChildLink(contextWithAuth(adminAuth()), 10);
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getEntity()).isEqualTo(new TokenResponse("child-token"));
@@ -210,7 +216,7 @@ class FamilyResourceTest {
     void updateOwnNickname_childContext_delegatesToService() {
         when(familyService.updateNickname("fam-1", 10, "Alice")).thenReturn(OperationResult.success(null));
 
-        Response response = resource.updateOwnNickname(
+        Response response = childResource.updateOwnNickname(
             contextWithAuth(childAuth(10)),
             new UpdateOwnNicknameRequest("Alice"));
 
@@ -224,7 +230,7 @@ class FamilyResourceTest {
         when(familyService.updateChildSettings("fam-1", 10, "Nick", 11, 22))
             .thenReturn(OperationResult.success(null));
 
-        Response response = resource.updateChildSettingsPost(
+        Response response = childResource.updateChildSettingsPost(
             contextWithAuth(adminAuth()),
             10,
             new UpdateChildSettingsRequest("Nick", 11, 22)
@@ -239,7 +245,7 @@ class FamilyResourceTest {
     void updateChildThemePost_validTheme_returnsOk() {
         when(familyService.updateChildTheme("fam-1", 10, ChildTheme.ocean)).thenReturn(OperationResult.success(null));
 
-        Response response = resource.updateChildThemePost(
+        Response response = childResource.updateChildThemePost(
             contextWithAuth(adminAuth()),
             10,
             new UpdateThemeRequest(ChildTheme.ocean));
@@ -250,7 +256,7 @@ class FamilyResourceTest {
 
     @Test
     void updateChildTheme_childCannotUpdateAnotherChild() {
-        Response response = resource.updateChildThemePost(
+        Response response = childResource.updateChildThemePost(
             contextWithAuth(childAuth(10)),
             11,
             new UpdateThemeRequest(ChildTheme.ocean));
@@ -377,22 +383,22 @@ class FamilyResourceTest {
 
     @Test
     void searchUser_nonChildOrChildSession_returnsExpectedStatus() {
-        Response unauthorized = resource.searchUser(contextWithAuth(adminAuth()), "Alice");
+        Response unauthorized = socialResource.searchUser(contextWithAuth(adminAuth()), "Alice");
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
         when(familyService.searchByNickname("Alice", 10))
             .thenReturn(OperationResult.success(List.of(new FriendDto(11, "Alice", 10))));
-        Response ok = resource.searchUser(contextWithAuth(childAuth(10)), "Alice");
+        Response ok = socialResource.searchUser(contextWithAuth(childAuth(10)), "Alice");
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
     @Test
     void addFriend_invalidOrValidRequest_returnsExpectedStatus() {
-        Response bad = resource.addFriend(contextWithAuth(childAuth(10)), new AddFriendRequest(0));
+        Response bad = socialResource.addFriend(contextWithAuth(childAuth(10)), new AddFriendRequest(0));
         assertThat(bad.getStatus()).isEqualTo(400);
 
         when(familyService.addFriend("fam-1", 10, 11)).thenReturn(OperationResult.success(null));
-        Response ok = resource.addFriend(contextWithAuth(childAuth(10)), new AddFriendRequest(11));
+        Response ok = socialResource.addFriend(contextWithAuth(childAuth(10)), new AddFriendRequest(11));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
@@ -400,7 +406,7 @@ class FamilyResourceTest {
     void getFriendsList_childSession_returnsData() {
         when(familyService.getFriendsData(10)).thenReturn(OperationResult.success(List.of(new FriendDto(11, "A", 2))));
 
-        Response response = resource.getFriendsList(contextWithAuth(childAuth(10)));
+        Response response = socialResource.getFriendsList(contextWithAuth(childAuth(10)));
 
         assertThat(response.getStatus()).isEqualTo(200);
     }
@@ -458,13 +464,13 @@ class FamilyResourceTest {
 
     @Test
     void updatePreference_missingKeyOrValidPayload_returnsExpectedStatus() {
-        Response bad = resource.updatePreference(contextWithAuth(adminAuth()), new UpdatePreferenceRequest(null, 1));
+        Response bad = parentResource.updatePreference(contextWithAuth(adminAuth()), new UpdatePreferenceRequest(null, 1));
         assertThat(bad.getStatus()).isEqualTo(400);
 
         when(familyService.updatePreference("fam-1", FamilyPreferenceKey.lastSelectedChildId, 10))
             .thenReturn(OperationResult.success(null));
 
-        Response ok = resource.updatePreference(
+        Response ok = parentResource.updatePreference(
             contextWithAuth(adminAuth()),
             new UpdatePreferenceRequest(FamilyPreferenceKey.lastSelectedChildId, 10));
         assertThat(ok.getStatus()).isEqualTo(200);
@@ -472,7 +478,7 @@ class FamilyResourceTest {
 
     @Test
     void updatePreference_nonAdmin_returnsUnauthorized() {
-        Response response = resource.updatePreference(
+        Response response = parentResource.updatePreference(
             contextWithAuth(childAuth(10)),
             new UpdatePreferenceRequest(FamilyPreferenceKey.lastSelectedChildId, 10));
 
@@ -489,7 +495,7 @@ class FamilyResourceTest {
                 MembershipStatus.active
             ))));
 
-        Response response = resource.listParents(contextWithAuth(adminAuth()));
+        Response response = parentResource.listParents(contextWithAuth(adminAuth()));
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyParentAccessService).listMemberships("fam-1");
@@ -505,7 +511,7 @@ class FamilyResourceTest {
                 MembershipStatus.active
             )));
 
-        Response response = resource.addParent(
+        Response response = parentResource.addParent(
             contextWithAuth(adminAuth()),
             new AddParentMembershipRequest("parent@test.com", "editor"));
 
@@ -523,7 +529,7 @@ class FamilyResourceTest {
                 MembershipStatus.active
             )));
 
-        Response response = resource.updateParent(
+        Response response = parentResource.updateParent(
             contextWithAuth(adminAuth()),
             7,
             new UpdateParentMembershipRequest("viewer"));
@@ -536,7 +542,7 @@ class FamilyResourceTest {
     void removeParent_adminDelegatesToService() {
         when(familyParentAccessService.removeMembership(7, "fam-1", "admin@test.com")).thenReturn(OperationResult.success(null));
 
-        Response response = resource.removeParent(contextWithAuth(adminAuth()), 7);
+        Response response = parentResource.removeParent(contextWithAuth(adminAuth()), 7);
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyParentAccessService).removeMembership(7, "fam-1", "admin@test.com");
