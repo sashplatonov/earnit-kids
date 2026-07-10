@@ -1,7 +1,7 @@
 package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
-import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
+import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnostics;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import com.sashplatonov.earnit.kids.repository.command.ShopItemUpsertCommand;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class ShopItemRepository implements PanacheRepositoryBase<ShopItemEntity, Long> {

@@ -23,6 +23,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.sashplatonov.earnit.kids.repository.command.ShopItemUpsertCommand;
+import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
 @QuarkusTest
 class RepositorySmokeTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

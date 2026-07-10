@@ -1,7 +1,7 @@
 package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
-import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
+import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnostics;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class TaskRepository implements PanacheRepositoryBase<TaskEntity, Long> {

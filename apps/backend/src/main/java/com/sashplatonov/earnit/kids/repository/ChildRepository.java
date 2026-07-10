@@ -3,7 +3,7 @@ package com.sashplatonov.earnit.kids.repository;
 import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
-import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
+import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnostics;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;

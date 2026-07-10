@@ -2,7 +2,7 @@ package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
-import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
+import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnostics;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

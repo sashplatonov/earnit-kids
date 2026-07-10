@@ -1,7 +1,7 @@
 package com.sashplatonov.earnit.kids.support;
 
 import com.sashplatonov.earnit.kids.config.AppConfig;
-import com.sashplatonov.earnit.kids.config.JwtCompatibilityConfig;
+import com.sashplatonov.earnit.kids.config.auth.JwtCompatibilityConfig;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 
 import java.time.Instant;

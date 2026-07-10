@@ -3,7 +3,7 @@ package com.sashplatonov.earnit.kids.repository;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
-import com.sashplatonov.earnit.kids.service.SlowOperationDiagnostics;
+import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnostics;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

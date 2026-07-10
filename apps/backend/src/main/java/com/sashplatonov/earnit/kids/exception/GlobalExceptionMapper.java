@@ -1,7 +1,7 @@
 package com.sashplatonov.earnit.kids.exception;
 
-import com.sashplatonov.earnit.kids.config.AuthFilter;
-import com.sashplatonov.earnit.kids.config.TraceFilter;
+import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
+import com.sashplatonov.earnit.kids.config.observability.TraceFilter;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.ws.rs.WebApplicationException;
