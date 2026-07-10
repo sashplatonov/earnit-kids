@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,14 +31,15 @@ class ApplicationLogServiceTest {
             TestConfigFactory.timeProvider(Instant.parse("2026-04-16T12:02:00Z"))
         );
 
-        List<Map<String, Object>> logs = service.readLogs(logFile, "all", 10);
+        List<com.sashplatonov.earnit.kids.dto.response.ApplicationLogsResponse.ApplicationLogEntry> logs =
+            service.readLogs(logFile, "all", 10);
 
         assertThat(logs).hasSize(3);
-        assertThat(logs.get(0)).containsEntry("level", "error");
-        assertThat(String.valueOf(logs.get(0).get("msg"))).doesNotContain("token=abc");
-        assertThat(logs.get(1)).containsEntry("level", "warn");
-        assertThat(String.valueOf(logs.get(1).get("msg"))).doesNotContain("password=secret");
-        assertThat(logs.get(2)).containsEntry("level", "info");
+        assertThat(logs.get(0).level()).isEqualTo("error");
+        assertThat(logs.get(0).msg()).doesNotContain("token=abc");
+        assertThat(logs.get(1).level()).isEqualTo("warn");
+        assertThat(logs.get(1).msg()).doesNotContain("password=secret");
+        assertThat(logs.get(2).level()).isEqualTo("info");
     }
 
     @Test
@@ -49,9 +49,8 @@ class ApplicationLogServiceTest {
             TestConfigFactory.timeProvider(Instant.parse("2026-04-16T12:02:00Z"))
         );
 
-        Map<String, Object> payload = service.getLogs("all", 10);
+        com.sashplatonov.earnit.kids.dto.response.ApplicationLogsResponse payload = service.getLogs("all", 10);
 
-        assertThat(payload).containsKey("logs");
-        assertThat((List<?>) payload.get("logs")).isEmpty();
+        assertThat(payload.logs()).isEmpty();
     }
 }

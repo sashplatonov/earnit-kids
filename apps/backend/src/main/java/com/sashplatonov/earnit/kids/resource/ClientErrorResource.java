@@ -8,6 +8,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 
 import java.util.Map;
 
@@ -26,7 +27,7 @@ public class ClientErrorResource {
         String href = safeString(payload.get("href"));
         String path = safeString(payload.get("path"));
         String search = safeString(payload.get("search"));
-        String traceId = safeString(payload.get("traceId"));
+        String traceId = firstNonBlank(safeString(payload.get("traceId")), MDC.get("traceId"));
         String userAgent = safeString(payload.get("userAgent"));
         String status = safeString(payload.get("status"));
         String buildVersion = safeString(payload.get("buildVersion"));
@@ -57,5 +58,9 @@ public class ClientErrorResource {
         return value
             .replaceAll("(?i)(password|token|authorization)=\\S+", "$1=***")
             .replaceAll("(?i)bearer\\s+[A-Za-z0-9._-]+", "Bearer ***");
+    }
+
+    private String firstNonBlank(String primary, String fallback) {
+        return primary == null || primary.isBlank() ? fallback : primary;
     }
 }

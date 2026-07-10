@@ -1,14 +1,13 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.dto.response.HttpMetricsResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,8 +29,8 @@ public class HttpRequestMetricsRegistry {
             .record(status, durationMs, payloadBytes);
     }
 
-    public Map<String, Object> snapshot() {
-        List<Map<String, Object>> topEndpoints = new ArrayList<>();
+    public HttpMetricsResponse snapshot() {
+        List<HttpMetricsResponse.HttpEndpointMetrics> topEndpoints = new ArrayList<>();
         long totalRequests = 0;
         long errorsTotal = 0;
         long totalDuration = 0;
@@ -44,36 +43,37 @@ public class HttpRequestMetricsRegistry {
             errorsTotal += errors;
             totalDuration += duration;
 
-            Map<String, Object> endpoint = new LinkedHashMap<>();
-            endpoint.put("method", metrics.method);
-            endpoint.put("path", metrics.path);
-            endpoint.put("count", count);
-            endpoint.put("errors", errors);
-            endpoint.put("avgDurationMs", count == 0 ? 0 : Math.round((double) duration / count));
-            endpoint.put("maxDurationMs", metrics.maxDurationMs.get());
+            long avgDurationMs = count == 0 ? 0 : Math.round((double) duration / count);
             long totalBytes = metrics.totalPayloadBytes.sum();
-            endpoint.put("avgPayloadBytes", count == 0 ? 0 : totalBytes / count);
-            endpoint.put("maxPayloadBytes", metrics.maxPayloadBytes.get());
+            long avgPayloadBytes = count == 0 ? 0 : totalBytes / count;
             double payloadMb = count == 0 ? 0 : Math.round((double) totalBytes / 1_048_576.0 * 100) / 100.0;
-            endpoint.put("totalPayloadMb", payloadMb);
-            topEndpoints.add(endpoint);
+            topEndpoints.add(new HttpMetricsResponse.HttpEndpointMetrics(
+                metrics.method,
+                metrics.path,
+                count,
+                errors,
+                avgDurationMs,
+                metrics.maxDurationMs.get(),
+                avgPayloadBytes,
+                metrics.maxPayloadBytes.get(),
+                payloadMb
+            ));
         }
 
         topEndpoints.sort(Comparator
-            .comparingLong((Map<String, Object> row) -> (Long) row.get("count"))
+            .comparingLong(HttpMetricsResponse.HttpEndpointMetrics::count)
             .reversed()
-            .thenComparing(row -> String.valueOf(row.get("path"))));
+            .thenComparing(HttpMetricsResponse.HttpEndpointMetrics::path));
 
-        Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("totalRequests", totalRequests);
-        summary.put("errorsTotal", errorsTotal);
-        summary.put("errorRatePct", totalRequests == 0 ? 0 : round(((double) errorsTotal / totalRequests) * 100));
-        summary.put("avgDurationMs", totalRequests == 0 ? 0 : Math.round((double) totalDuration / totalRequests));
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("summary", summary);
-        payload.put("topEndpoints", topEndpoints);
-        return payload;
+        return new HttpMetricsResponse(
+            new HttpMetricsResponse.HttpMetricsSummary(
+                totalRequests,
+                errorsTotal,
+                totalRequests == 0 ? 0 : round(((double) errorsTotal / totalRequests) * 100),
+                totalRequests == 0 ? 0 : Math.round((double) totalDuration / totalRequests)
+            ),
+            topEndpoints
+        );
     }
 
     private double round(double value) {

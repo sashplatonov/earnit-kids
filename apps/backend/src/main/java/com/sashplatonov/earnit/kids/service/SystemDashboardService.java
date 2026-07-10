@@ -1,10 +1,12 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.dto.response.ApplicationLogsResponse;
+import com.sashplatonov.earnit.kids.dto.response.DatabaseHealthResponse;
+import com.sashplatonov.earnit.kids.dto.response.HttpMetricsResponse;
+import com.sashplatonov.earnit.kids.dto.response.SystemOverviewResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Map;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
@@ -15,19 +17,19 @@ public class SystemDashboardService {
     private final HttpMetricsSnapshotService httpMetricsSnapshotService;
     private final ApplicationLogService applicationLogService;
 
-    public Map<String, Object> getOverview() {
+    public SystemOverviewResponse getOverview() {
         return systemOverviewService.getOverview();
     }
 
-    public Map<String, Object> getDbHealth() {
+    public DatabaseHealthResponse getDbHealth() {
         return databaseHealthService.getDbHealth();
     }
 
-    public Map<String, Object> getHttpMetrics() {
+    public HttpMetricsResponse getHttpMetrics() {
         return httpMetricsSnapshotService.getHttpMetrics();
     }
 
-    public Map<String, Object> getLogs(String level, int limit) {
+    public ApplicationLogsResponse getLogs(String level, int limit) {
         return applicationLogService.getLogs(level, limit);
     }
 }

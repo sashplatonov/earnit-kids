@@ -3,6 +3,8 @@ package com.sashplatonov.earnit.kids.resource;
 import com.sashplatonov.earnit.kids.config.AuthContext;
 import com.sashplatonov.earnit.kids.config.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
+import com.sashplatonov.earnit.kids.dto.response.ApplicationLogsResponse;
+import com.sashplatonov.earnit.kids.dto.response.DatabaseHealthResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import com.sashplatonov.earnit.kids.service.SuperAdminService;
@@ -18,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -53,15 +54,29 @@ class SuperAdminResourceTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void getFamilies_superAdmin_returnsPayload() {
-        when(superAdminService.getFamilies()).thenReturn(List.of(Map.of("id", "fam-1")));
+        when(superAdminService.getFamilies()).thenReturn(
+            new com.sashplatonov.earnit.kids.dto.response.SuperAdminFamiliesResponse(
+                List.of(new com.sashplatonov.earnit.kids.dto.response.SuperAdminFamiliesResponse.FamilySummary(
+                    "fam-1",
+                    "a@test.com",
+                    "2026-07-09T00:00:00Z",
+                    "2026-07-09T00:00:00Z",
+                    false,
+                    1,
+                    1,
+                    1,
+                    List.of()
+                ))
+            )
+        );
 
         Response response = resource.getFamilies(contextWithAuth(superAdminAuth()));
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat((Map<String, Object>) response.getEntity())
-            .containsEntry("families", List.of(Map.of("id", "fam-1")));
+        assertThat(((com.sashplatonov.earnit.kids.dto.response.SuperAdminFamiliesResponse) response.getEntity())
+            .families())
+            .hasSize(1);
     }
 
     @Test
@@ -75,7 +90,28 @@ class SuperAdminResourceTest {
 
     @Test
     void getFamilyDetails_superAdmin_returnsData() {
-        when(superAdminService.getFamilyDetails("fam-1")).thenReturn(Map.of("id", "fam-1", "email", "a@test.com"));
+        when(superAdminService.getFamilyDetails("fam-1")).thenReturn(
+            new com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse(
+                "fam-1",
+                new com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse.FamilyInfo(
+                    "fam-1",
+                    "a@test.com",
+                    "2026-07-09T00:00:00Z",
+                    "2026-07-09T00:00:00Z",
+                    false,
+                    1,
+                    List.of(),
+                    1000
+                ),
+                new com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse.FamilyData(
+                    0,
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of()
+                )
+            )
+        );
 
         Response response = resource.getFamilyDetails(contextWithAuth(superAdminAuth()), "fam-1");
 
@@ -122,7 +158,8 @@ class SuperAdminResourceTest {
         Response response = resource.regenerateFamilyToken(contextWithAuth(superAdminAuth()), "fam-1");
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getEntity()).isEqualTo(Map.of("success", true, "token", "new-token"));
+        assertThat(((com.sashplatonov.earnit.kids.dto.response.TokenResponse) response.getEntity()).token())
+            .isEqualTo("new-token");
     }
 
     @Test
@@ -141,7 +178,8 @@ class SuperAdminResourceTest {
         Response response = resource.regenerateChildToken(contextWithAuth(superAdminAuth()), 10);
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getEntity()).isEqualTo(Map.of("success", true, "token", "token-10"));
+        assertThat(((com.sashplatonov.earnit.kids.dto.response.TokenResponse) response.getEntity()).token())
+            .isEqualTo("token-10");
     }
 
     @Test
@@ -173,7 +211,7 @@ class SuperAdminResourceTest {
 
     @Test
     void getBaseData_superAdmin_returnsData() {
-        when(superAdminService.getBaseData()).thenReturn(Map.of("tasks", List.of(), "products", List.of()));
+        when(superAdminService.getBaseData()).thenReturn(java.util.Map.of("tasks", List.of(), "products", List.of()));
 
         Response response = resource.getBaseData(contextWithAuth(superAdminAuth()));
 
@@ -187,25 +225,29 @@ class SuperAdminResourceTest {
 
     @Test
     void saveBaseData_success_returnsOk() {
-        when(superAdminService.saveBaseData(Map.of("tasks", List.of()))).thenReturn(true);
+        when(superAdminService.saveBaseData(java.util.Map.of("tasks", List.of()))).thenReturn(true);
 
-        Response response = resource.saveBaseData(contextWithAuth(superAdminAuth()), Map.of("tasks", List.of()));
+        Response response = resource.saveBaseData(contextWithAuth(superAdminAuth()), java.util.Map.of("tasks", List.of()));
 
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test
     void saveBaseData_failure_returns500() {
-        when(superAdminService.saveBaseData(Map.of())).thenReturn(false);
+        when(superAdminService.saveBaseData(java.util.Map.of())).thenReturn(false);
 
-        Response response = resource.saveBaseData(contextWithAuth(superAdminAuth()), Map.of());
+        Response response = resource.saveBaseData(contextWithAuth(superAdminAuth()), java.util.Map.of());
 
         assertThat(response.getStatus()).isEqualTo(500);
     }
 
     @Test
     void getSystemOverview_superAdmin_returnsPayload() {
-        when(systemDashboardService.getOverview()).thenReturn(Map.of("process", Map.of("uptimeSec", 100L)));
+        when(systemDashboardService.getOverview()).thenReturn(new com.sashplatonov.earnit.kids.dto.response.SystemOverviewResponse(
+            new com.sashplatonov.earnit.kids.dto.response.SystemOverviewResponse.ProcessStats(100L, 50L, 100L),
+            new com.sashplatonov.earnit.kids.dto.response.SystemOverviewResponse.OperatingSystemStats(1.0, 1.0, 1.0, 8),
+            "2026-07-09T00:00:00Z"
+        ));
 
         Response response = systemDashboardResource.getSystemOverview(contextWithAuth(superAdminAuth()));
 
@@ -220,7 +262,9 @@ class SuperAdminResourceTest {
 
     @Test
     void getDatabaseHealth_superAdmin_returnsPayload() {
-        when(systemDashboardService.getDbHealth()).thenReturn(Map.of("db", Map.of("connected", true)));
+        when(systemDashboardService.getDbHealth()).thenReturn(
+            new DatabaseHealthResponse(new DatabaseHealthResponse.DbHealth(true, 1L, null))
+        );
 
         Response response = systemDashboardResource.getDatabaseHealth(contextWithAuth(superAdminAuth()));
 
@@ -229,7 +273,12 @@ class SuperAdminResourceTest {
 
     @Test
     void getHttpMetrics_superAdmin_returnsPayload() {
-        when(systemDashboardService.getHttpMetrics()).thenReturn(Map.of("routes", List.of()));
+        when(systemDashboardService.getHttpMetrics()).thenReturn(
+            new com.sashplatonov.earnit.kids.dto.response.HttpMetricsResponse(
+                new com.sashplatonov.earnit.kids.dto.response.HttpMetricsResponse.HttpMetricsSummary(1L, 0L, 0.0, 1L),
+                List.of()
+            )
+        );
 
         Response response = systemDashboardResource.getHttpMetrics(contextWithAuth(superAdminAuth()));
 
@@ -238,7 +287,7 @@ class SuperAdminResourceTest {
 
     @Test
     void getLogs_superAdmin_forwardslevelAndLimit() {
-        when(systemDashboardService.getLogs("error", 50)).thenReturn(Map.of("logs", List.of()));
+        when(systemDashboardService.getLogs("error", 50)).thenReturn(new ApplicationLogsResponse(List.of()));
 
         Response response = systemDashboardResource.getLogs(contextWithAuth(superAdminAuth()), "error", 50);
 
@@ -248,7 +297,7 @@ class SuperAdminResourceTest {
 
     @Test
     void getLogs_nullParams_usesDefaults() {
-        when(systemDashboardService.getLogs("all", 100)).thenReturn(Map.of("logs", List.of()));
+        when(systemDashboardService.getLogs("all", 100)).thenReturn(new ApplicationLogsResponse(List.of()));
 
         Response response = systemDashboardResource.getLogs(contextWithAuth(superAdminAuth()), null, null);
 

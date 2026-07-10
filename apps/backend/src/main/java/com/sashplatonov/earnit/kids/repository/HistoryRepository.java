@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -234,15 +237,80 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
 
     @Transactional
     public void replaceHistory(int familyDbId, int childId, List<HistoryEntryEntity> entries) {
-        delete("familyId = ?1 AND childId = ?2", familyDbId, childId);
-        entries.forEach(this::persist);
+        List<HistoryEntryEntity> existingEntries = list("familyId = ?1 AND childId = ?2", familyDbId, childId);
+        if (entries.isEmpty()) {
+            delete("familyId = ?1 AND childId = ?2", familyDbId, childId);
+            return;
+        }
+
+        Map<Long, HistoryEntryEntity> existingByExternalId = existingEntries.stream()
+            .filter(entry -> entry.getExternalId() != null)
+            .collect(Collectors.toMap(
+                HistoryEntryEntity::getExternalId,
+                entry -> entry,
+                (left, right) -> left,
+                HashMap::new
+            ));
+        Set<Long> incomingExternalIds = entries.stream()
+            .map(HistoryEntryEntity::getExternalId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        for (HistoryEntryEntity existing : existingEntries) {
+            Long externalId = existing.getExternalId();
+            if (externalId == null || !incomingExternalIds.contains(externalId)) {
+                deleteById(existing.getId());
+            }
+        }
+
+        for (HistoryEntryEntity entry : entries) {
+            Long externalId = entry.getExternalId();
+            if (externalId == null) {
+                persist(entry);
+                continue;
+            }
+
+            HistoryEntryEntity current = existingByExternalId.get(externalId);
+            if (current == null) {
+                persist(entry);
+                continue;
+            }
+
+            copyHistoryEntry(entry, current);
+        }
     }
 
     @Transactional
     public void upsertHistoryEntry(HistoryEntryEntity entry) {
-        if (entry.getExternalId() != null) {
-            delete("familyId = ?1 AND externalId = ?2", entry.getFamilyId(), entry.getExternalId());
+        if (entry.getExternalId() == null) {
+            persist(entry);
+            return;
         }
-        persist(entry);
+
+        List<HistoryEntryEntity> existingEntries = list(
+            "familyId = ?1 AND childId = ?2 AND externalId = ?3",
+            entry.getFamilyId(),
+            entry.getChildId(),
+            entry.getExternalId()
+        );
+        if (existingEntries.isEmpty()) {
+            persist(entry);
+            return;
+        }
+
+        copyHistoryEntry(entry, existingEntries.getFirst());
+    }
+
+    private void copyHistoryEntry(HistoryEntryEntity source, HistoryEntryEntity target) {
+        target.setFamilyId(source.getFamilyId());
+        target.setChildId(source.getChildId());
+        target.setExternalId(source.getExternalId());
+        target.setType(source.getType());
+        target.setAmount(source.getAmount());
+        target.setDescription(source.getDescription());
+        target.setMoneyAmount(source.getMoneyAmount());
+        target.setRelatedId(source.getRelatedId());
+        target.setGroupName(source.getGroupName());
+        target.setComment(source.getComment());
     }
 }

@@ -16,6 +16,12 @@ import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
+import com.sashplatonov.earnit.kids.dto.response.RequestDto;
+import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
+import com.sashplatonov.earnit.kids.dto.response.SuperAdminFamiliesResponse;
+import com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse;
+import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -24,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,14 +49,17 @@ public class SuperAdminService {
     private final ObjectMapper objectMapper;
     private final PasswordHasher passwordHasher;
 
-    public List<Map<String, Object>> getFamilies() {
+    public SuperAdminFamiliesResponse getFamilies() {
         return familyRepository.listAll().stream()
             .sorted(Comparator.comparing(FamilyEntity::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
             .map(this::toFamilySummary)
-            .toList();
+            .collect(java.util.stream.Collectors.collectingAndThen(
+                java.util.stream.Collectors.toList(),
+                SuperAdminFamiliesResponse::new
+            ));
     }
 
-    public Map<String, Object> getFamilyDetails(String familyId) {
+    public SuperAdminFamilyDetailsResponse getFamilyDetails(String familyId) {
         Optional<FamilyEntity> familyOpt = familyRepository.findById(familyId);
         if (familyOpt.isEmpty()) {
             return null;
@@ -60,44 +68,30 @@ public class SuperAdminService {
         FamilyEntity family = familyOpt.get();
         List<ChildEntity> children = childRepository.getChildren(family.getId());
 
-        Map<String, Object> familyInfo = new LinkedHashMap<>();
-        familyInfo.put("id", family.getFamilyId());
-        familyInfo.put("email", family.getEmail());
-        familyInfo.put("created_at", toIso(family.getCreatedAt()));
-        familyInfo.put("last_activity", toIso(family.getLastActivity()));
-        familyInfo.put("isBlocked", family.isBlocked());
-        familyInfo.put("childrenCount", children.size());
-        familyInfo.put("children", children.stream().map(this::toChildSummary).toList());
-        familyInfo.put("monthly_limit", children.stream().map(ChildEntity::getMonthlyLimit).findFirst().orElse(0));
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("balance", children.stream().mapToInt(ChildEntity::getBalance).sum());
-        data.put(
-            "tasks",
-            taskRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList()
+        return new SuperAdminFamilyDetailsResponse(
+            family.getFamilyId(),
+            new SuperAdminFamilyDetailsResponse.FamilyInfo(
+                family.getFamilyId(),
+                family.getEmail(),
+                toIso(family.getCreatedAt()),
+                toIso(family.getLastActivity()),
+                family.isBlocked(),
+                children.size(),
+                children.stream().map(this::toChildSummary).toList(),
+                children.stream().map(ChildEntity::getMonthlyLimit).findFirst().orElse(0)
+            ),
+            new SuperAdminFamilyDetailsResponse.FamilyData(
+                children.stream().mapToInt(ChildEntity::getBalance).sum(),
+                taskRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList(),
+                shopItemRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList(),
+                historyRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
+                    .map(this::toHistoryPayload)
+                    .toList(),
+                purchaseRequestRepository.getRequests(family.getId(), 100, 0).stream()
+                    .map(this::toRequestPayload)
+                    .toList()
+            )
         );
-        data.put(
-            "shop",
-            shopItemRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList()
-        );
-        data.put(
-            "history",
-            historyRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
-                .map(this::toHistoryPayload)
-                .toList()
-        );
-        data.put(
-            "requests",
-            purchaseRequestRepository.getRequests(family.getId(), 100, 0).stream()
-                .map(this::toRequestPayload)
-                .toList()
-        );
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("familyId", family.getFamilyId());
-        payload.put("familyInfo", familyInfo);
-        payload.put("data", data);
-        return payload;
     }
 
     public Map<String, Object> getBaseData() {
@@ -175,85 +169,106 @@ public class SuperAdminService {
         return familyService.regenerateChildToken(family.get().getFamilyId(), childId);
     }
 
-    private Map<String, Object> toFamilySummary(FamilyEntity family) {
+    private SuperAdminFamiliesResponse.FamilySummary toFamilySummary(FamilyEntity family) {
         List<ChildEntity> children = childRepository.getChildren(family.getId());
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("id", family.getFamilyId());
-        payload.put("email", family.getEmail());
-        payload.put("created_at", toIso(family.getCreatedAt()));
-        payload.put("last_activity", toIso(family.getLastActivity()));
-        payload.put("isBlocked", family.isBlocked());
-        payload.put("tasksCount", taskRepository.getTasksForFamily(family.getId()).size());
-        payload.put("shopCount", shopItemRepository.getShopItemsForFamily(family.getId()).size());
-        payload.put("childrenCount", children.size());
-        payload.put("children", children.stream().map(this::toChildSummary).toList());
-        return payload;
-    }
-
-    private Map<String, Object> toChildSummary(ChildEntity child) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("id", child.getId());
-        payload.put("name", child.getName());
-        payload.put("balance", child.getBalance());
-        payload.put("token", child.getToken());
-        payload.put("monthly_limit", child.getMonthlyLimit());
-        payload.put("daily_coin_limit", child.getDailyCoinLimit());
-        return payload;
-    }
-
-    private Map<String, Object> toTaskPayload(TaskEntity task) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("id", task.getTaskId());
-        payload.put("name", task.getName());
-        payload.put("coins", task.getCoins());
-        payload.put("group", task.getGroupName());
-        payload.put("frequency", parseFrequency(task.getFrequency()));
-        payload.put("money_limit", task.getMoneyLimit());
-        payload.put("comment", task.getComment());
-        payload.put("childId", task.getChildId());
-        return payload;
-    }
-
-    private Map<String, Object> toShopPayload(ShopItemEntity item) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("id", item.getItemId());
-        payload.put("name", item.getName());
-        payload.put("price", item.getPrice());
-        payload.put("group", item.getGroupName());
-        payload.put("frequency", parseFrequency(item.getFrequency()));
-        payload.put("money_limit", item.getMoneyLimit());
-        payload.put("comment", item.getComment());
-        payload.put("childId", item.getChildId());
-        return payload;
-    }
-
-    private Map<String, Object> toHistoryPayload(HistoryEntryEntity item) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("id", item.getExternalId() != null ? item.getExternalId() : item.getId());
-        payload.put("timestamp", toIso(item.getCreatedAt()));
-        payload.put(
-            "action",
-            firstNonBlank(item.getDescription(), item.getType() != null ? item.getType().name() : null)
+        return new SuperAdminFamiliesResponse.FamilySummary(
+            family.getFamilyId(),
+            family.getEmail(),
+            toIso(family.getCreatedAt()),
+            toIso(family.getLastActivity()),
+            family.isBlocked(),
+            taskRepository.getTasksForFamily(family.getId()).size(),
+            shopItemRepository.getShopItemsForFamily(family.getId()).size(),
+            children.size(),
+            children.stream().map(this::toChildSummary).toList()
         );
-        payload.put("type", item.getType());
-        payload.put("amount", item.getAmount());
-        payload.put("childId", item.getChildId());
-        return payload;
     }
 
-    private Map<String, Object> toRequestPayload(PurchaseRequestEntity item) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("id", item.getExternalId() != null ? item.getExternalId() : item.getId());
-        payload.put("taskId", item.getTaskId());
-        payload.put("taskName", item.getTaskName());
-        payload.put("itemId", item.getItemId());
-        payload.put("coins", item.getCoins());
-        payload.put("status", item.getStatus());
-        payload.put("requestType", item.getRequestType());
-        payload.put("moneyAmount", item.getMoneyAmount());
-        payload.put("createdAt", toIso(item.getCreatedAt()));
-        payload.put("childId", item.getChildId());
-        return payload;
+    private SuperAdminFamiliesResponse.ChildSummary toChildSummary(ChildEntity child) {
+        return new SuperAdminFamiliesResponse.ChildSummary(
+            child.getId(),
+            child.getName(),
+            child.getBalance(),
+            child.getToken(),
+            child.getMonthlyLimit(),
+            child.getDailyCoinLimit()
+        );
+    }
+
+    private TaskDto toTaskPayload(TaskEntity task) {
+        return new TaskDto(
+            task.getTaskId(),
+            task.getName(),
+            task.getCoins(),
+            task.getGroupName(),
+            parseFrequency(task.getFrequency()),
+            task.getComment(),
+            task.getMoneyLimit(),
+            !task.isDeleted(),
+            task.getChildId(),
+            null
+        );
+    }
+
+    private ShopItemDto toShopPayload(ShopItemEntity item) {
+        return new ShopItemDto(
+            item.getItemId(),
+            item.getName(),
+            item.getPrice(),
+            item.getGroupName(),
+            parseFrequency(item.getFrequency()),
+            item.getComment(),
+            item.getMoneyLimit(),
+            !item.isDeleted(),
+            item.getChildId(),
+            null
+        );
+    }
+
+    private HistoryEntryDto toHistoryPayload(HistoryEntryEntity item) {
+        String action = firstNonBlank(item.getDescription(), item.getType() != null ? item.getType().name() : null);
+        return new HistoryEntryDto(
+            item.getExternalId() != null ? item.getExternalId() : item.getId(),
+            item.getType(),
+            item.getAmount(),
+            action,
+            item.getDescription(),
+            item.getMoneyAmount(),
+            item.getRelatedId(),
+            null,
+            null,
+            null,
+            null,
+            item.getGroupName(),
+            item.getComment(),
+            toIso(item.getCreatedAt()),
+            item.getChildId()
+        );
+    }
+
+    private RequestDto toRequestPayload(PurchaseRequestEntity item) {
+        return new RequestDto(
+            item.getExternalId() != null ? item.getExternalId() : item.getId(),
+            item.getTaskId(),
+            item.getTaskName(),
+            item.getItemId(),
+            null,
+            item.getTaskName(),
+            null,
+            null,
+            item.getNote(),
+            null,
+            item.getCoins(),
+            item.getStatus(),
+            item.getRequestType(),
+            item.getMoneyAmount(),
+            toIso(item.getCreatedAt()),
+            item.getChildId(),
+            null,
+            null,
+            null,
+            null
+        );
     }
 
     private Object parseFrequency(JsonNode rawFrequency) {

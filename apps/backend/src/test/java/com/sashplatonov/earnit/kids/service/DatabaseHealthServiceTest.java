@@ -6,7 +6,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -25,11 +24,10 @@ class DatabaseHealthServiceTest {
 
         DatabaseHealthService service = new DatabaseHealthService(dataSource);
 
-        Map<String, Object> payload = service.getDbHealth();
+        var payload = service.getDbHealth();
 
-        Map<?, ?> db = (Map<?, ?>) payload.get("db");
-        assertThat(db.get("connected")).isEqualTo(true);
-        assertThat((Long) db.get("pingMs")).isGreaterThanOrEqualTo(0L);
+        assertThat(payload.db().connected()).isTrue();
+        assertThat(payload.db().pingMs()).isGreaterThanOrEqualTo(0L);
     }
 
     @Test
@@ -39,10 +37,9 @@ class DatabaseHealthServiceTest {
 
         DatabaseHealthService service = new DatabaseHealthService(dataSource);
 
-        Map<String, Object> payload = service.getDbHealth();
+        var payload = service.getDbHealth();
 
-        Map<?, ?> db = (Map<?, ?>) payload.get("db");
-        assertThat(db.get("connected")).isEqualTo(false);
-        assertThat(db.get("lastError")).isEqualTo("db down");
+        assertThat(payload.db().connected()).isFalse();
+        assertThat(payload.db().lastError()).isEqualTo("db down");
     }
 }

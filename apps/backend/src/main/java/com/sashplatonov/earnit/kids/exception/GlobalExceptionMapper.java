@@ -35,7 +35,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
             return webApplicationException.getResponse().hasEntity()
                 ? webApplicationException.getResponse()
                 : Response.status(status)
-                    .entity(ErrorResponse.of(statusDetail(status), statusCode(status), status))
+                    .entity(ErrorResponse.of(statusDetail(status), statusCode(status), status, traceId()))
                     .build();
         }
 
@@ -48,7 +48,8 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
             .entity(ErrorResponse.of(
                 BackendMessages.message("errors.internalServerError"),
                 "INTERNAL_ERROR",
-                500
+                500,
+                traceId()
             ))
             .build();
     }
@@ -96,7 +97,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
         return "method=" + requestMethod()
             + " uri=" + requestUri()
             + " query=" + requestQuery()
-            + " traceId=" + mdcOrDefault(TraceFilter.TRACE_ID, header("X-Trace-Id"))
+            + " traceId=" + traceId()
             + " role=" + mdcOrDefault(AuthFilter.MDC_ROLE, "-")
             + " familyId=" + mdcOrDefault(AuthFilter.MDC_FAMILY_ID, "-")
             + " childId=" + mdcOrDefault(AuthFilter.MDC_CHILD_ID, "-")
@@ -121,6 +122,10 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
     private String mdcOrDefault(String key, String fallback) {
         String value = MDC.get(key);
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String traceId() {
+        return mdcOrDefault(TraceFilter.TRACE_ID, header("X-Trace-Id"));
     }
 
     boolean shouldLogAsError(int status) {

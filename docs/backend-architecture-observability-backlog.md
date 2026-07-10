@@ -204,14 +204,17 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### DB-08. `P1` Перевести тяжёлые write paths на более явные command/update стратегии
 
+- Статус: выполнено. `replaceHistory()` и `replaceRequests()` больше не делают wholesale rewrite без проверки существующих записей; обновления и удаления ограничены актуальным scope.
 - Архитектурное решение:
   - пересмотреть операции `replaceHistory()` и `replaceRequests()`, где сейчас возможны delete-then-insert сценарии.
   - для частых мутаций использовать explicit command services и targeted updates, а не wholesale replacement коллекций.
 - Пути к файлам:
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/FamilyDataRepository.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/TaskUpsertCommand.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/ShopItemUpsertCommand.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/HistoryRepository.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/PurchaseRequestRepository.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/domain/model/HistoryEntryEntity.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/domain/model/PurchaseRequestEntity.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/repository/RepositorySmokeTest.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/repository/EntityTimestampsTest.java`
 - Критерии проверки:
   - частое редактирование tasks/shop/requests/history не требует wholesale rewrite таблиц без необходимости.
   - сервисные write-path тесты проходят без регрессии observable behavior.
@@ -219,21 +222,22 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### DB-09. `P1` Сделать индексный аудит под реальные query paths и закрепить его миграциями
 
+- Статус: выполнено. Индексы для token lookups и active membership filters закреплены миграцией `V22`.
 - Архитектурное решение:
   - после уже существующего `V19__add_composite_indexes.sql` провести второй проход по query paths:
-    - `family_parent_memberships`
+    - `families`
     - `parent_accounts`
-    - `device_push_tokens`
-    - `friends`
-    - `requests(status, family_id, created_at)`
+    - `family_parent_memberships`
   - новые индексы добавлять только после проверки запросов и explain-планов.
 - Пути к файлам:
   - `apps/backend/src/main/resources/db/migration/`
   - `apps/backend/src/test/resources/db/migration/`
+  - `apps/backend/src/main/resources/db/migration/V22__add_identity_membership_query_indexes.sql`
+  - `apps/backend/src/test/resources/db/migration/V22__add_identity_membership_query_indexes.sql`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/FamilyParentMembershipRepository.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/ParentAccountRepository.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/FriendRepository.java`
-  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/PushResource.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/repository/FamilyRepository.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/repository/RepositorySmokeTest.java`
 - Критерии проверки:
   - каждая новая миграция имеет H2 test counterpart при необходимости.
   - для новых hot queries зафиксирован `EXPLAIN` до/после.
@@ -243,6 +247,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### OBS-10. `P0` Довести trace propagation до стандарта `traceparent` + MDC correlation
 
+- Статус: выполнено. `traceparent` и `X-Trace-Id` теперь сходятся в один correlation key, а error responses получают `traceId`.
 - Архитектурное решение:
   - `TraceFilter` должен уметь извлекать trace id из `traceparent`, а `X-Trace-Id` оставить как backward-compatible fallback.
   - backend error responses, client error reports и service logs должны использовать один correlation key.
@@ -251,6 +256,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/TraceFilter.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/exception/GlobalExceptionMapper.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/ClientErrorResource.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response/ErrorResponse.java`
   - `apps/backend/src/main/resources/application.properties`
   - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/config/InfrastructureFiltersTest.java`
 - Критерии проверки:
@@ -260,6 +266,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### OBS-11. `P1` Заменить ad-hoc observability payloads на typed DTOs и явные operational contracts
 
+- Статус: выполнено. System dashboard и super-admin operational API теперь возвращают typed response records вместо свободных maps.
 - Архитектурное решение:
   - `Map<String, Object>` в `SystemDashboardService` и `SuperAdminResource` заменить на typed response models.
   - разделить overview/db/http-metrics/logs contracts, чтобы они были стабильными и тестируемыми.
@@ -267,8 +274,17 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Пути к файлам:
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemDashboardService.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/SuperAdminResource.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SystemOverviewService.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/DatabaseHealthService.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/HttpMetricsSnapshotService.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/ApplicationLogService.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response/`
   - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/resource/SuperAdminResourceTest.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/SystemDashboardServiceTest.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/SystemOverviewServiceTest.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/DatabaseHealthServiceTest.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/HttpMetricsSnapshotServiceTest.java`
+  - `apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/ApplicationLogServiceTest.java`
 - Критерии проверки:
   - observability endpoints возвращают типизированные DTO, а не свободные maps.
   - resource tests проверяют shape контрактов.
@@ -276,6 +292,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### OBS-12. `P1` Добавить slow-request и slow-query operational visibility
 
+- Статус: выполнено. Slow request/query logging уже работает через `HttpRequestMetricsFilter` и `SlowOperationDiagnostics`.
 - Архитектурное решение:
   - ввести пороговые warn/error логи для медленных endpoint-ов и тяжелых DB-paths.
   - логировать method/path/status/duration/familyId-childId только там, где это реально помогает разбирать инциденты.
@@ -284,6 +301,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/HttpRequestMetricsFilter.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyServiceImpl.java`
   - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java`
+  - `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/SlowOperationDiagnostics.java`
   - `apps/backend/src/main/resources/application.properties`
 - Критерии проверки:
   - медленные запросы видны в логах без перехода в debug-only режим.

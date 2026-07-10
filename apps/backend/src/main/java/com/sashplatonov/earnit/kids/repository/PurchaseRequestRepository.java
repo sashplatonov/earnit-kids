@@ -12,6 +12,11 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
@@ -100,8 +105,47 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
 
     @Transactional
     public void replaceRequests(int familyDbId, List<PurchaseRequestEntity> entries) {
-        delete("familyId = ?1", familyDbId);
-        entries.forEach(this::persist);
+        List<PurchaseRequestEntity> existingEntries = list("familyId = ?1", familyDbId);
+        if (entries.isEmpty()) {
+            delete("familyId = ?1", familyDbId);
+            return;
+        }
+
+        Map<Long, PurchaseRequestEntity> existingByExternalId = existingEntries.stream()
+            .filter(entry -> entry.getExternalId() != null)
+            .collect(Collectors.toMap(
+                PurchaseRequestEntity::getExternalId,
+                entry -> entry,
+                (left, right) -> left,
+                HashMap::new
+            ));
+        Set<Long> incomingExternalIds = entries.stream()
+            .map(PurchaseRequestEntity::getExternalId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        for (PurchaseRequestEntity existing : existingEntries) {
+            Long externalId = existing.getExternalId();
+            if (externalId == null || !incomingExternalIds.contains(externalId)) {
+                deleteById(existing.getId());
+            }
+        }
+
+        for (PurchaseRequestEntity entry : entries) {
+            Long externalId = entry.getExternalId();
+            if (externalId == null) {
+                persist(entry);
+                continue;
+            }
+
+            PurchaseRequestEntity current = existingByExternalId.get(externalId);
+            if (current == null) {
+                persist(entry);
+                continue;
+            }
+
+            copyPurchaseRequest(entry, current);
+        }
     }
 
     @Transactional
@@ -112,5 +156,19 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
                 return true;
             })
             .orElse(false);
+    }
+
+    private void copyPurchaseRequest(PurchaseRequestEntity source, PurchaseRequestEntity target) {
+        target.setFamilyId(source.getFamilyId());
+        target.setChildId(source.getChildId());
+        target.setExternalId(source.getExternalId());
+        target.setTaskId(source.getTaskId());
+        target.setTaskName(source.getTaskName());
+        target.setItemId(source.getItemId());
+        target.setCoins(source.getCoins());
+        target.setStatus(source.getStatus());
+        target.setRequestType(source.getRequestType());
+        target.setMoneyAmount(source.getMoneyAmount());
+        target.setNote(source.getNote());
     }
 }

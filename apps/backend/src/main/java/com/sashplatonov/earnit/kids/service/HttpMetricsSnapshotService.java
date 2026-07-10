@@ -1,10 +1,9 @@
 package com.sashplatonov.earnit.kids.service;
 
+import com.sashplatonov.earnit.kids.dto.response.HttpMetricsResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Map;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
@@ -12,7 +11,7 @@ public class HttpMetricsSnapshotService {
 
     private final HttpRequestMetricsRegistry metricsRegistry;
 
-    public Map<String, Object> getHttpMetrics() {
+    public HttpMetricsResponse getHttpMetrics() {
         return metricsRegistry.snapshot();
     }
 }

@@ -211,6 +211,18 @@ class RepositorySmokeTest {
             "IDX_REQUESTS_FAMILY_CHILD_TASK_STATUS_CREATED",
             "IDX_REQUESTS_FAMILY_CHILD_ITEM_STATUS_CREATED"
         );
+        assertThat(indexNamesForTable("FAMILIES")).contains(
+            "IDX_FAMILIES_VERIFICATION_TOKEN",
+            "IDX_FAMILIES_RESET_TOKEN_EXPIRES_AT"
+        );
+        assertThat(indexNamesForTable("PARENT_ACCOUNTS")).contains(
+            "IDX_PARENT_ACCOUNTS_VERIFICATION_TOKEN",
+            "IDX_PARENT_ACCOUNTS_RESET_TOKEN_EXPIRES_AT"
+        );
+        assertThat(indexNamesForTable("FAMILY_PARENT_MEMBERSHIPS")).contains(
+            "IDX_MEMBERSHIPS_PARENT_STATUS_FAMILY",
+            "IDX_MEMBERSHIPS_FAMILY_STATUS_PERMISSION"
+        );
         assertThat(explainPlan(String.format(
             "SELECT id FROM EARNIT_KIDS.history WHERE family_id = %d AND child_id = %d AND type = 'earn' " +
                 "AND related_id = %d AND created_at >= TIMESTAMP '2026-04-22 00:00:00' " +
@@ -285,6 +297,16 @@ class RepositorySmokeTest {
                     "AND UPPER(TABLE_NAME) IN (?1, ?2) ORDER BY INDEX_NAME")
             .setParameter(1, firstTable)
             .setParameter(2, secondTable)
+            .getResultList();
+        return rows.stream().map(String::valueOf).toList();
+    }
+
+    private java.util.List<String> indexNamesForTable(String table) {
+        java.util.List<?> rows = entityManager.createNativeQuery(
+                "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES " +
+                    "WHERE UPPER(TABLE_SCHEMA) = 'EARNIT_KIDS' " +
+                    "AND UPPER(TABLE_NAME) = ?1 ORDER BY INDEX_NAME")
+            .setParameter(1, table)
             .getResultList();
         return rows.stream().map(String::valueOf).toList();
     }

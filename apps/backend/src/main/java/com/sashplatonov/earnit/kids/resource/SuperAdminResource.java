@@ -6,6 +6,8 @@ import com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse;
+import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.SuperAdminService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -23,7 +25,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Path("/api/super")
@@ -40,10 +41,7 @@ public class SuperAdminResource {
         if (authFailure != null) {
             return authFailure;
         }
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("families", superAdminService.getFamilies());
-        return Response.ok(payload).build();
+        return Response.ok(superAdminService.getFamilies()).build();
     }
 
     @GET
@@ -55,7 +53,7 @@ public class SuperAdminResource {
             return authFailure;
         }
 
-        Map<String, Object> payload = superAdminService.getFamilyDetails(familyId);
+        SuperAdminFamilyDetailsResponse payload = superAdminService.getFamilyDetails(familyId);
         if (payload == null) {
             return Response.status(Response.Status.NOT_FOUND)
                 .entity(ErrorResponse.of(BackendMessages.message("family.familyNotFound"), "NOT_FOUND", 404))
@@ -166,10 +164,7 @@ public class SuperAdminResource {
                 .build();
         }
 
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("success", true);
-        payload.put("token", ((OperationResult.Success<String>) result).value());
-        return Response.ok(payload).build();
+        return Response.ok(new TokenResponse(((OperationResult.Success<String>) result).value())).build();
     }
 
     private Response toVoidResponse(OperationResult<Void> result, String errorCode) {

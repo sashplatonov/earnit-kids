@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.dto.response.ApplicationLogsResponse;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -14,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,28 +30,25 @@ public class ApplicationLogService {
     private final ObjectMapper objectMapper;
     private final TimeProvider timeProvider;
 
-    public Map<String, Object> getLogs(String level, int limit) {
-        List<Map<String, Object>> logs = resolveLogFile()
+    public ApplicationLogsResponse getLogs(String level, int limit) {
+        List<ApplicationLogsResponse.ApplicationLogEntry> logs = resolveLogFile()
             .map(path -> readLogs(path, level, limit))
             .orElse(List.of());
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("logs", logs);
-        return payload;
+        return new ApplicationLogsResponse(logs);
     }
 
-    List<Map<String, Object>> readLogs(Path logFile, String level, int limit) {
+    List<ApplicationLogsResponse.ApplicationLogEntry> readLogs(Path logFile, String level, int limit) {
         try {
             String raw = readTail(logFile);
             String[] lines = raw.split("\\R");
-            List<Map<String, Object>> entries = new ArrayList<>();
+            List<ApplicationLogsResponse.ApplicationLogEntry> entries = new ArrayList<>();
             for (int i = lines.length - 1; i >= 0 && entries.size() < limit; i--) {
                 String line = lines[i].trim();
                 if (line.isEmpty()) {
                     continue;
                 }
-                Map<String, Object> parsed = parseLogLine(line);
-                String parsedLevel = String.valueOf(parsed.getOrDefault("level", "info"));
+                ApplicationLogsResponse.ApplicationLogEntry parsed = parseLogLine(line);
+                String parsedLevel = parsed.level();
                 if (!"all".equalsIgnoreCase(level) && !parsedLevel.equalsIgnoreCase(level)) {
                     continue;
                 }
@@ -84,24 +81,24 @@ public class ApplicationLogService {
         }
     }
 
-    private Map<String, Object> parseLogLine(String line) {
+    private ApplicationLogsResponse.ApplicationLogEntry parseLogLine(String line) {
         try {
-            Map<String, Object> json = objectMapper.readValue(line, MAP_TYPE);
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("ts", json.getOrDefault("ts", json.get("timestamp")));
-            payload.put("level", String.valueOf(json.getOrDefault("level", "info")).toLowerCase());
-            payload.put("msg", sanitize(String.valueOf(json.getOrDefault("msg", json.getOrDefault("message", line)))));
-            payload.put("module", json.getOrDefault("module", json.getOrDefault("logger", "app")));
-            payload.put("reqId", json.getOrDefault("reqId", json.getOrDefault("requestId", "-")));
-            return payload;
+            java.util.Map<String, Object> json = objectMapper.readValue(line, MAP_TYPE);
+            return new ApplicationLogsResponse.ApplicationLogEntry(
+                stringOrNull(json.containsKey("ts") ? json.get("ts") : json.get("timestamp")),
+                stringOrDefault(json.get("level"), "info").toLowerCase(),
+                sanitize(stringOrDefault(json.containsKey("msg") ? json.get("msg") : json.get("message"), line)),
+                stringOrDefault(json.containsKey("module") ? json.get("module") : json.get("logger"), "app"),
+                stringOrDefault(json.containsKey("reqId") ? json.get("reqId") : json.get("requestId"), "-")
+            );
         } catch (IOException ex) {
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("ts", timeProvider.now().toString());
-            payload.put("level", inferLevel(line));
-            payload.put("msg", sanitize(line));
-            payload.put("module", "app");
-            payload.put("reqId", "-");
-            return payload;
+            return new ApplicationLogsResponse.ApplicationLogEntry(
+                timeProvider.now().toString(),
+                inferLevel(line),
+                sanitize(line),
+                "app",
+                "-"
+            );
         }
     }
 
@@ -123,5 +120,21 @@ public class ApplicationLogService {
         return message
             .replaceAll("(?i)(password|token|authorization)=\\S+", "$1=***")
             .replaceAll("(?i)bearer\\s+[A-Za-z0-9._-]+", "Bearer ***");
+    }
+
+    private String stringOrDefault(Object value, String fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        String stringValue = String.valueOf(value);
+        return stringValue.isBlank() ? fallback : stringValue;
+    }
+
+    private String stringOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String stringValue = String.valueOf(value);
+        return stringValue.isBlank() ? null : stringValue;
     }
 }
