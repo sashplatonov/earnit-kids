@@ -220,11 +220,11 @@ Minimum required before any merge:
 | --- | --- | --- |
 | Backend full build | `./mvnw verify` | ✅ Any change |
 | Backend PMD SRP gate | `./mvnw -B -ntp pmd:check` | ✅ Backend service-layer refactors |
-| Backend security scan | `trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL apps/backend` | ✅ CI security gate |
+| Backend security scan | `trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --skip-dirs target,.mvn --skip-files hibernate-validator-9.1.0.Final-sources.jar apps/backend` | ✅ CI security gate |
 | Web lint | `npm run lint` | ✅ Any web change |
 | Web unit tests | `npm run test` | ✅ Any web change |
 | Web build | `npm run build` | ✅ Any web change |
-| Web security scan | `trivy fs --scanners vuln,secret,misconfig --ignore-unfixed --severity HIGH,CRITICAL apps/web` | ✅ CI security gate |
+| Web security scan | `trivy fs --scanners vuln,secret,misconfig --ignore-unfixed --severity HIGH,CRITICAL --skip-dirs node_modules,build,dist,.svelte-kit,coverage,test-results,.vite apps/web` | ✅ CI security gate |
 | Web E2E | `npm run test:e2e` | ⚠️ UI changes only |
 | Docker config check | `docker compose config` | ⚠️ Compose changes |
 

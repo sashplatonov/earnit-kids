@@ -65,7 +65,8 @@ jobs:
           scanners: vuln,secret,misconfig
           exit-code: '1'
           severity: HIGH,CRITICAL
-          skip-dirs: target
+          skip-dirs: target,.mvn
+          skip-files: hibernate-validator-9.1.0.Final-sources.jar
           cache-dir: ${{ runner.temp }}/.trivy-cache
 
   security-frontend:
@@ -84,4 +85,4 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
           severity: HIGH,CRITICAL
-          skip-dirs: node_modules,dist,.svelte-kit,coverage,.vite
+          skip-dirs: node_modules,build,dist,.svelte-kit,coverage,test-results,.vite

@@ -1,29 +1,35 @@
-FROM eclipse-temurin:25-jdk AS build
+# syntax=docker/dockerfile:1.7
+
+FROM eclipse-temurin:25-jdk-jammy AS build
 WORKDIR /workspace
 
-RUN apt-get update && apt-get install -y wget ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+	apt-get update \
+	&& apt-get install -y --no-install-recommends wget ca-certificates unzip \
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY apps/backend/.mvn/ .mvn/
 COPY apps/backend/mvnw ./mvnw
 COPY apps/backend/pom.xml ./pom.xml
+
+RUN --mount=type=cache,target=/root/.m2,sharing=locked \
+	sh ./mvnw -B -ntp -DskipTests dependency:go-offline
+
 COPY apps/backend/config ./config
 COPY apps/backend/src ./src
 
-RUN sh ./mvnw -DskipTests -Dcheckstyle.skip=true package
+RUN --mount=type=cache,target=/root/.m2,sharing=locked \
+	sh ./mvnw -B -ntp -DskipTests -Dcheckstyle.skip=true package
 
-FROM eclipse-temurin:25-jdk
+FROM eclipse-temurin:25-jre-jammy
 WORKDIR /work
 
-RUN apt-get update \
-	&& apt-get install -y wget ca-certificates gnupg unzip \
-	&& install -d /usr/share/postgresql-common/pgdg \
-	&& wget -qO /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-	&& echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo ${VERSION_CODENAME})-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-	&& apt-get update \
-	&& apt-get install -y postgresql-client-18 \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+	apt-get update \
+	&& apt-get install -y --no-install-recommends wget ca-certificates unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
-ARG NEW_RELIC_AGENT_VERSION=9.2.0
+ARG NEW_RELIC_AGENT_VERSION=9.3.0
 ENV NEW_RELIC_HOME=/opt/newrelic \
 	NEW_RELIC_CONFIG_FILE=/opt/newrelic/newrelic.yml \
 	NEW_RELIC_AGENT_ENABLED=false
@@ -32,6 +38,8 @@ RUN mkdir -p /opt/newrelic \
 	&& wget -qO /tmp/newrelic-java.zip "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/${NEW_RELIC_AGENT_VERSION}/newrelic-java.zip" \
 	&& unzip -q /tmp/newrelic-java.zip -d /opt \
 	&& rm -f /tmp/newrelic-java.zip
+
+USER 185
 
 COPY --from=build /workspace/target/quarkus-app/lib/ ./lib/
 COPY --from=build /workspace/target/quarkus-app/*.jar ./

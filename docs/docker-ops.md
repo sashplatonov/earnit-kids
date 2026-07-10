@@ -21,8 +21,8 @@ EarnIt Kids uses Docker Compose to run the full stack locally. The stack consist
 
 | Service | Role | Image Base |
 | --- | --- | --- |
-| `web` | SvelteKit SSR frontend | `node:23-alpine` via `apps/web/Dockerfile` |
-| `backend` | Quarkus REST API | JVM (`Dockerfile.jvm`) or Native (`Dockerfile`) |
+| `web` | SvelteKit SSR frontend | `node:24-alpine` via `apps/web/Dockerfile` |
+| `backend` | Quarkus REST API | JVM (`eclipse-temurin:25-jre-jammy`) or Native (`quay.io/quarkus/ubi9-quarkus-micro-image:2.0`) |
 | `db` | PostgreSQL 18 | `postgres:18-alpine` (profile-gated) |
 
 [↩ Back to toc](#table-of-contents)
