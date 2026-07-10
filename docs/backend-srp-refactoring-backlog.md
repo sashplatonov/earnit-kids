@@ -10,14 +10,18 @@
 
 ## Current Repo Signals
 
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java` — `1171` строк; в одном классе смешаны task completion, request approval/reject, bulk actions, CSV import, balance adjustments, history building, frequency-limit validation.
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/FamilyResource.java` — `913` строк; один resource держит family save, task/item actions, imports, child settings, friends, token regeneration, parent membership management.
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyDashboardQueryServiceImpl.java` — `722` строки; один query service одновременно грузит scope, собирает shell/detail/full payloads, гидрирует history/requests, маппит DTO.
-- `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java` — `515` строк; один service держит admin/family/child auth, Google auth, family selection, password reset/change, email verification, password rehash.
+- Baseline снят `2026-07-10` на текущем состоянии рабочей копии.
+- `FamilyActionServiceImpl.java` — `1171` строк, `13` public и `49` private/protected методов; смешаны task/item actions, request workflow, bulk actions, CSV import, balance/history и frequency-limit policy.
+- `FamilyResource.java` — `913` строк, `33` endpoint-метода и `10` private/protected методов; смешаны family commands, task/item actions, imports, child settings, friends/tokens и parent membership management.
+- `FamilyDashboardQueryServiceImpl.java` — `722` строки, `3` public и `37` private/protected методов; смешаны scope loading, shell/detail/full payload assembly, data hydration и DTO mapping.
+- `AuthServiceImpl.java` — `515` строк, `9` public и `12` private/protected методов; смешаны admin/family/child auth, Google auth, family selection, password lifecycle, email verification и legacy password rehash.
+- В production source всего `13441` строк Java; четыре выбранных hotspot-а занимают `3321` строку (`24.7%`) этого объёма.
 - `apps/backend/pom.xml` уже включает `JaCoCo`, `Checkstyle`, `SpotBugs`, но PMD отсутствует.
 - `apps/backend/config/checkstyle.xml` уже ограничивает `MethodLength` (`60`) и `ParameterNumber` (`10`), но не ограничивает размер класса, число методов и cyclomatic complexity.
 - `apps/backend/pom.xml` запускает SpotBugs в `verify`, но сейчас там `failOnError=false`, поэтому часть quality-сигналов не режет сборку.
 - `.github/workflows/quality.yml` запускает только backend `./mvnw -B -ntp verify`, значит все новые quality rules должны входить именно в Maven lifecycle без отдельного ручного шага.
+- Текущий `apps/backend ./mvnw -B -ntp verify` проходит: Checkstyle сообщает `0` violations, unit tests проходят; в тестовом логе остаются ожидаемые предупреждения о недоступном OTLP collector `127.0.0.1:4318`/`localhost:4317`.
+- Effective POM подтверждает активные JaCoCo, Checkstyle и SpotBugs; PMD plugin отсутствует, SpotBugs остаётся в report-only режиме через `failOnError=false`.
 
 ## Assumptions
 
@@ -62,40 +66,47 @@
 
 ### SRP-01 — Baseline and hotspot inventory
 
+**Status**
+
+`Done` для анализа и фиксации baseline. Рефакторинг классов и усиление quality gates остаются отдельными задачами `SRP-02`–`SRP-08`.
+
 **Goal**
 
 Зафиксировать измеримый baseline до рефакторинга, чтобы дальнейшие изменения были привязаны к фактам, а не к субъективному ощущению, что класс “слишком большой”.
 
 **Architecture / how to analyze**
 
-- Считать отдельно:
-- размер файла в строках
-- число публичных endpoint/service entrypoint methods
-- набор обязанностей внутри класса
-- внешние зависимости класса по слоям
-- Для каждого hotspot-класса составлять mini responsibility map:
-- входные use-case методы
-- orchestration logic
-- validation logic
-- mapping/DTO assembly
-- persistence access helpers
-- utility/date/format helpers
-- Признаком SRP-нарушения считать не только размер, но и смешение разных change vectors в одном файле.
+- Считать отдельно размер файла в строках, число public entrypoint-методов и число private/protected методов.
+- Для каждого hotspot-класса составлять responsibility map по change vectors, а не считать нарушением только большой LOC.
+
+**Baseline result**
+
+| Class | LOC | Public / endpoint methods | Private / protected methods | Responsibility map | First-wave task |
+|---|---:|---:|---:|---|---|
+| `FamilyActionServiceImpl` | 1171 | 13 | 49 | task/item actions; request workflow; bulk actions; imports; balance/history; frequency-limit policy | `SRP-02` |
+| `FamilyResource` | 913 | 33 endpoints | 10 | family commands; task/item actions; imports; child settings; friends/tokens; parent access | `SRP-03` |
+| `FamilyDashboardQueryServiceImpl` | 722 | 3 | 37 | scope loading; data hydration; shell/detail/full assembly; DTO mapping | `SRP-04` |
+| `AuthServiceImpl` | 515 | 9 | 12 | admin/family/child auth; Google auth; family selection; password lifecycle; email verification; password rehash | `SRP-05` |
+
+Первой волной в рефакторинг идут все четыре класса: каждый находится среди крупнейших backend-файлов и содержит несколько независимых направлений изменений, подтверждённых отдельными группами методов и зависимостей.
 
 **Expected artifacts**
 
-- Обновлённый этот backlog с подтверждёнными hotspot-ами.
-- При необходимости отдельный working note в PR/commit description с baseline-метриками.
+- Обновлённый этот backlog с датой, метриками и responsibility map.
+- Повторяемые команды ниже, достаточные для пересъёма baseline после каждой волны.
 
 **Verification**
 
 1. `cd apps/backend && find src/main/java -name '*.java' -print0 | xargs -0 wc -l | sort -nr | head -n 20`
-2. `cd apps/backend && rg -n "^[[:space:]]*public .*\\(" src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java src/main/java/com/sashplatonov/earnit/kids/service/FamilyDashboardQueryServiceImpl.java src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java src/main/java/com/sashplatonov/earnit/kids/resource/FamilyResource.java`
-3. `cd apps/backend && ./mvnw verify`
+2. `cd apps/backend && for f in src/main/java/com/sashplatonov/earnit/kids/service/FamilyActionServiceImpl.java src/main/java/com/sashplatonov/earnit/kids/resource/FamilyResource.java src/main/java/com/sashplatonov/earnit/kids/service/FamilyDashboardQueryServiceImpl.java src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java; do printf '%s: ' "$f"; printf 'public='; rg -c '^\\s*public .*\\(' "$f"; printf 'private/protected='; rg -c '^\\s*(private|protected) .*\\(' "$f"; done`
+3. `cd apps/backend && ./mvnw -B -ntp -q help:effective-pom -Doutput=target/effective-pom.xml && rg -n "maven-checkstyle|spotbugs|jacoco|pmd|failOnError" target/effective-pom.xml`
+4. `cd apps/backend && ./mvnw -B -ntp verify`
 
 **Done when**
 
 - Для каждого кандидата явно зафиксировано, какие ответственности в нём смешаны.
+- Для каждого кандидата зафиксированы LOC и method counts.
+- Текущее состояние `verify`, Checkstyle, SpotBugs и наличие PMD подтверждено фактическим запуском/образом effective POM.
 - Есть стартовый список классов, которые реально идут в рефакторинг первой волной.
 
 ### SRP-02 — Split `FamilyActionServiceImpl`
