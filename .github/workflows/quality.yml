@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.5.0
         with:
           distribution: temurin
           java-version: '25'
@@ -31,7 +34,7 @@ jobs:
 
       - name: Upload SpotBugs reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: spotbugs-reports
           path: |
@@ -39,3 +42,46 @@ jobs:
             apps/backend/target/spotbugs.xml
             apps/backend/target/spotbugsXml.xml
           if-no-files-found: ignore
+
+  security-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+
+      - name: Cache Trivy DB
+        continue-on-error: true
+        uses: actions/cache@v6.1.0
+        with:
+          path: ${{ runner.temp }}/.trivy-cache
+          key: trivy-db
+
+      - name: Run backend security scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: apps/backend
+          scanners: vuln,secret,misconfig
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          skip-dirs: target
+          cache-dir: ${{ runner.temp }}/.trivy-cache
+
+  security-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+
+      - name: Run frontend security scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: apps/web
+          scanners: vuln,secret,misconfig
+          ignore-unfixed: true
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          skip-dirs: node_modules,dist,.svelte-kit,coverage,.vite
