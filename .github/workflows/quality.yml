@@ -32,6 +32,54 @@ jobs:
       - name: Verify
         run: ./mvnw -B -ntp verify
 
+      - name: Backend test summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          reports_dir = Path("target/surefire-reports")
+          report_files = sorted(reports_dir.glob("TEST-*.xml"))
+
+          summary_path = Path(__import__("os").environ["GITHUB_STEP_SUMMARY"])
+          lines = ["## Backend Test Report", "Summary", ""]
+
+          if not report_files:
+            lines.append("⚪ No Surefire XML reports found.")
+            summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            raise SystemExit(0)
+
+          test_files = len(report_files)
+          tests = failures = errors = skipped = 0
+
+          for report_file in report_files:
+            suite = ET.parse(report_file).getroot()
+            tests += int(suite.attrib.get("tests", 0))
+            failures += int(suite.attrib.get("failures", 0))
+            errors += int(suite.attrib.get("errors", 0))
+            skipped += int(suite.attrib.get("skipped", 0))
+
+          passed = tests - failures - errors - skipped
+          file_status = "✅" if failures == 0 and errors == 0 else "❌"
+          test_status = "✅" if failures == 0 and errors == 0 else "❌"
+          failure_status = "✅" if failures == 0 else "❌"
+          error_status = "✅" if errors == 0 else "❌"
+          skipped_status = "✅" if skipped == 0 else "⚠️"
+
+          lines.extend(
+            [
+              f"- **Test Files**: {file_status} **{test_files} suites**",
+              f"- **Test Results**: {test_status} **{passed} passed** · {tests} total",
+              f"- **Failures**: {failure_status} **{failures}**",
+              f"- **Errors**: {error_status} **{errors}**",
+              f"- **Skipped**: {skipped_status} **{skipped}**",
+            ]
+          )
+
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+
       - name: Upload SpotBugs reports
         if: always()
         uses: actions/upload-artifact@v7.0.1
@@ -91,12 +139,77 @@ jobs:
         with:
           scan-type: fs
           scan-ref: apps/backend
+          format: json
+          output: trivy-backend-report.json
           scanners: vuln,secret,misconfig
           exit-code: '1'
           severity: HIGH,CRITICAL
           skip-dirs: target,.mvn
           skip-files: hibernate-validator-9.1.0.Final-sources.jar
           cache-dir: ${{ runner.temp }}/.trivy-cache
+
+      - name: Backend security summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from collections import Counter
+          from pathlib import Path
+
+          report_path = Path("trivy-backend-report.json")
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          lines = ["## Backend Security Report", "Summary", ""]
+
+          if not report_path.exists():
+            lines.append("⚪ No Trivy JSON report found.")
+            summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            raise SystemExit(0)
+
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          vuln = Counter()
+          misconfig = Counter()
+          secrets = Counter()
+          targets = []
+
+          for result in report.get("Results", []):
+            target = result.get("Target", "unknown")
+            targets.append(target)
+            for item in result.get("Vulnerabilities", []) or []:
+              vuln[item.get("Severity", "UNKNOWN")] += 1
+            for item in result.get("Misconfigurations", []) or []:
+              misconfig[item.get("Severity", "UNKNOWN")] += 1
+            for item in result.get("Secrets", []) or []:
+              secrets[item.get("Severity", "UNKNOWN")] += 1
+
+          total_vuln = sum(vuln.values())
+          total_misconfig = sum(misconfig.values())
+          total_secrets = sum(secrets.values())
+          clean = total_vuln == 0 and total_misconfig == 0 and total_secrets == 0
+          overall = "✅ Clean" if clean else "❌ Findings detected"
+          vuln_status = "✅" if total_vuln == 0 else "❌"
+          misconfig_status = "✅" if total_misconfig == 0 else "❌"
+          secret_status = "✅" if total_secrets == 0 else "❌"
+
+          lines.extend(
+            [
+              f"- **Overall**: {overall}",
+              f"- **Targets**: 📦 **{len(targets)}**",
+              f"- **Vulnerabilities**: {vuln_status} **{total_vuln}**",
+              f"- **Misconfigurations**: {misconfig_status} **{total_misconfig}**",
+              f"- **Secrets**: {secret_status} **{total_secrets}**",
+            ]
+          )
+
+          if total_vuln:
+            lines.append(f"- **Vulnerability severities**: 🔶 HIGH {vuln.get('HIGH', 0)} · 🔴 CRITICAL {vuln.get('CRITICAL', 0)}")
+          if total_misconfig:
+            lines.append(f"- **Misconfiguration severities**: 🔶 HIGH {misconfig.get('HIGH', 0)} · 🔴 CRITICAL {misconfig.get('CRITICAL', 0)}")
+          if total_secrets:
+            lines.append(f"- **Secret severities**: 🔶 HIGH {secrets.get('HIGH', 0)} · 🔴 CRITICAL {secrets.get('CRITICAL', 0)}")
+
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
 
   security-frontend:
     runs-on: ubuntu-latest
@@ -110,8 +223,73 @@ jobs:
         with:
           scan-type: fs
           scan-ref: apps/web
+          format: json
+          output: trivy-frontend-report.json
           scanners: vuln,secret,misconfig
           ignore-unfixed: true
           exit-code: '1'
           severity: HIGH,CRITICAL
           skip-dirs: node_modules,build,dist,.svelte-kit,coverage,test-results,.vite
+
+      - name: Frontend security summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from collections import Counter
+          from pathlib import Path
+
+          report_path = Path("trivy-frontend-report.json")
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          lines = ["## Frontend Security Report", "Summary", ""]
+
+          if not report_path.exists():
+            lines.append("⚪ No Trivy JSON report found.")
+            summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            raise SystemExit(0)
+
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          vuln = Counter()
+          misconfig = Counter()
+          secrets = Counter()
+          targets = []
+
+          for result in report.get("Results", []):
+            target = result.get("Target", "unknown")
+            targets.append(target)
+            for item in result.get("Vulnerabilities", []) or []:
+              vuln[item.get("Severity", "UNKNOWN")] += 1
+            for item in result.get("Misconfigurations", []) or []:
+              misconfig[item.get("Severity", "UNKNOWN")] += 1
+            for item in result.get("Secrets", []) or []:
+              secrets[item.get("Severity", "UNKNOWN")] += 1
+
+          total_vuln = sum(vuln.values())
+          total_misconfig = sum(misconfig.values())
+          total_secrets = sum(secrets.values())
+          clean = total_vuln == 0 and total_misconfig == 0 and total_secrets == 0
+          overall = "✅ Clean" if clean else "❌ Findings detected"
+          vuln_status = "✅" if total_vuln == 0 else "❌"
+          misconfig_status = "✅" if total_misconfig == 0 else "❌"
+          secret_status = "✅" if total_secrets == 0 else "❌"
+
+          lines.extend(
+            [
+              f"- **Overall**: {overall}",
+              f"- **Targets**: 📦 **{len(targets)}**",
+              f"- **Vulnerabilities**: {vuln_status} **{total_vuln}**",
+              f"- **Misconfigurations**: {misconfig_status} **{total_misconfig}**",
+              f"- **Secrets**: {secret_status} **{total_secrets}**",
+            ]
+          )
+
+          if total_vuln:
+            lines.append(f"- **Vulnerability severities**: 🔶 HIGH {vuln.get('HIGH', 0)} · 🔴 CRITICAL {vuln.get('CRITICAL', 0)}")
+          if total_misconfig:
+            lines.append(f"- **Misconfiguration severities**: 🔶 HIGH {misconfig.get('HIGH', 0)} · 🔴 CRITICAL {misconfig.get('CRITICAL', 0)}")
+          if total_secrets:
+            lines.append(f"- **Secret severities**: 🔶 HIGH {secrets.get('HIGH', 0)} · 🔴 CRITICAL {secrets.get('CRITICAL', 0)}")
+
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
