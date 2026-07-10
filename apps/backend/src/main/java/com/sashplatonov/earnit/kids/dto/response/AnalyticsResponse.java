@@ -10,6 +10,12 @@ public record AnalyticsResponse(
     AnalyticsSummary comparison,
     List<AnalyticsRecommendation> recommendations
 ) {
+    public AnalyticsResponse {
+        topTasks = topTasks == null ? List.of() : List.copyOf(topTasks);
+        topItems = topItems == null ? List.of() : List.copyOf(topItems);
+        trends = trends == null ? List.of() : List.copyOf(trends);
+        recommendations = recommendations == null ? List.of() : List.copyOf(recommendations);
+    }
 
     public record AnalyticsSummary(int totalEarned, int totalSpent, int netChange) { }
 

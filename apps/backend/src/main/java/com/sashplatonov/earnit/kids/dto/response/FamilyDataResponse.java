@@ -19,4 +19,13 @@ public record FamilyDataResponse(
     String childNickname,
     Integer monthlyLimit,
     Integer dailyCoinLimit
-) { }
+) {
+    public FamilyDataResponse {
+        tasks = tasks == null ? List.of() : List.copyOf(tasks);
+        shop = shop == null ? List.of() : List.copyOf(shop);
+        history = history == null ? List.of() : List.copyOf(history);
+        requests = requests == null ? List.of() : List.copyOf(requests);
+        friends = friends == null ? List.of() : List.copyOf(friends);
+        children = children == null ? List.of() : List.copyOf(children);
+    }
+}

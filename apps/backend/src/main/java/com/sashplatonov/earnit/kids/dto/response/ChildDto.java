@@ -13,4 +13,11 @@ public record ChildDto(
     List<String> shopGroupOrder,
     List<String> childTaskGroupOrder,
     List<String> childShopGroupOrder
-) { }
+) {
+    public ChildDto {
+        taskGroupOrder = taskGroupOrder == null ? List.of() : List.copyOf(taskGroupOrder);
+        shopGroupOrder = shopGroupOrder == null ? List.of() : List.copyOf(shopGroupOrder);
+        childTaskGroupOrder = childTaskGroupOrder == null ? List.of() : List.copyOf(childTaskGroupOrder);
+        childShopGroupOrder = childShopGroupOrder == null ? List.of() : List.copyOf(childShopGroupOrder);
+    }
+}

@@ -7,4 +7,8 @@ public record PaginatedHistory(
     int total,
     int page,
     int limit
-) { }
+) {
+    public PaginatedHistory {
+        items = items == null ? List.of() : List.copyOf(items);
+    }
+}

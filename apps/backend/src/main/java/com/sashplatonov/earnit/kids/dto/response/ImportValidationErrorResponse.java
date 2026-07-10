@@ -14,6 +14,10 @@ public record ImportValidationErrorResponse(
     String errorCode,
     List<ImportValidationErrorItem> errors
 ) {
+    public ImportValidationErrorResponse {
+        errors = errors == null ? List.of() : List.copyOf(errors);
+    }
+
     public static ImportValidationErrorResponse of(String detail, List<ImportValidationErrorItem> errors) {
         return new ImportValidationErrorResponse(
             "urn:earnit-kids:problem:IMPORT_VALIDATION_ERROR",
@@ -21,7 +25,7 @@ public record ImportValidationErrorResponse(
             400,
             detail,
             "IMPORT_VALIDATION_ERROR",
-            List.copyOf(errors)
+            errors == null ? List.of() : List.copyOf(errors)
         );
     }
 }

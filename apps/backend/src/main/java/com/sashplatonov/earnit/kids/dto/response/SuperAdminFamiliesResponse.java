@@ -8,6 +8,10 @@ import java.util.List;
 public record SuperAdminFamiliesResponse(
     List<FamilySummary> families
 ) {
+    public SuperAdminFamiliesResponse {
+        families = families == null ? List.of() : List.copyOf(families);
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record FamilySummary(
         String id,
@@ -19,7 +23,11 @@ public record SuperAdminFamiliesResponse(
         int shopCount,
         int childrenCount,
         List<ChildSummary> children
-    ) { }
+    ) {
+        public FamilySummary {
+            children = children == null ? List.of() : List.copyOf(children);
+        }
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ChildSummary(

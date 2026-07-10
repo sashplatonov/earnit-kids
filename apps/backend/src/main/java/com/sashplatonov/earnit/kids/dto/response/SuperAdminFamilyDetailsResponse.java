@@ -20,7 +20,11 @@ public record SuperAdminFamilyDetailsResponse(
         int childrenCount,
         List<SuperAdminFamiliesResponse.ChildSummary> children,
         int monthlyLimit
-    ) { }
+    ) {
+        public FamilyInfo {
+            children = children == null ? List.of() : List.copyOf(children);
+        }
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record FamilyData(
@@ -29,5 +33,12 @@ public record SuperAdminFamilyDetailsResponse(
         List<ShopItemDto> shop,
         List<HistoryEntryDto> history,
         List<RequestDto> requests
-    ) { }
+    ) {
+        public FamilyData {
+            tasks = tasks == null ? List.of() : List.copyOf(tasks);
+            shop = shop == null ? List.of() : List.copyOf(shop);
+            history = history == null ? List.of() : List.copyOf(history);
+            requests = requests == null ? List.of() : List.copyOf(requests);
+        }
+    }
 }

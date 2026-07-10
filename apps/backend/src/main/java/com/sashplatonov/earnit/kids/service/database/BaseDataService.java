@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +74,7 @@ public class BaseDataService {
             if (isCacheExpired()) {
                 initialize();
             }
-            return baseData;
+            return Map.copyOf(baseData);
         }
     }
 
@@ -142,10 +143,11 @@ public class BaseDataService {
             return EMPTY_BASE_DATA;
         }
 
-        Map<String, Object> normalized = objectMapper.convertValue(rawBaseData, MAP_TYPE);
+        Map<String, Object> normalized = new HashMap<>(objectMapper.convertValue(rawBaseData, MAP_TYPE));
         normalized.putIfAbsent("tasks", List.of());
         normalized.putIfAbsent("products", List.of());
-        return normalized;
+        normalized.replaceAll((key, value) -> value instanceof List<?> list ? List.copyOf(list) : value);
+        return Map.copyOf(normalized);
     }
 
     private boolean isCacheExpired() {

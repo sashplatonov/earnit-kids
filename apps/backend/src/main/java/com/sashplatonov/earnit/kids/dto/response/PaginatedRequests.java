@@ -7,4 +7,8 @@ public record PaginatedRequests(
     int total,
     int page,
     int limit
-) { }
+) {
+    public PaginatedRequests {
+        items = items == null ? List.of() : List.copyOf(items);
+    }
+}

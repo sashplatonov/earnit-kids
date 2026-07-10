@@ -10,4 +10,8 @@ import java.util.List;
 public record ImportTasksRequest(
     @Schema(required = true) int childId,
     @NotEmpty @NotNull @Schema(required = true) List<@Valid ImportTaskRowRequest> rows
-) { }
+) {
+    public ImportTasksRequest {
+        rows = rows == null ? List.of() : List.copyOf(rows);
+    }
+}

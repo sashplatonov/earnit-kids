@@ -11,4 +11,8 @@ public record BulkTaskActionRequest(
     @NotNull @Schema(required = true) BulkActionType action,
     @NotEmpty @NotNull @Schema(required = true) List<Long> taskIds,
     @Schema(required = false) String groupName
-) { }
+) {
+    public BulkTaskActionRequest {
+        taskIds = taskIds == null ? List.of() : List.copyOf(taskIds);
+    }
+}

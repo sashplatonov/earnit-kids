@@ -10,4 +10,8 @@ import java.util.List;
 public record ImportShopItemsRequest(
     @Schema(required = true) int childId,
     @NotEmpty @NotNull @Schema(required = true) List<@Valid ImportShopItemRowRequest> rows
-) { }
+) {
+    public ImportShopItemsRequest {
+        rows = rows == null ? List.of() : List.copyOf(rows);
+    }
+}

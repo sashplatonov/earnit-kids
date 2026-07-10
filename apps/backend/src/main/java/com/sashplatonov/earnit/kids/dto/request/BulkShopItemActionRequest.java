@@ -11,4 +11,8 @@ public record BulkShopItemActionRequest(
     @NotNull @Schema(required = true) BulkActionType action,
     @NotEmpty @NotNull @Schema(required = true) List<Long> itemIds,
     @Schema(required = false) String groupName
-) { }
+) {
+    public BulkShopItemActionRequest {
+        itemIds = itemIds == null ? List.of() : List.copyOf(itemIds);
+    }
+}

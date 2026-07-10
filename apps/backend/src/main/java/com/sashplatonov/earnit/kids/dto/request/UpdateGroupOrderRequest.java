@@ -9,4 +9,8 @@ public record UpdateGroupOrderRequest(
     GroupOrderSection section,
 
     List<String> groups
-) { }
+) {
+    public UpdateGroupOrderRequest {
+        groups = groups == null ? List.of() : List.copyOf(groups);
+    }
+}

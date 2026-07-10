@@ -9,6 +9,10 @@ public record HttpMetricsResponse(
     HttpMetricsSummary summary,
     List<HttpEndpointMetrics> topEndpoints
 ) {
+    public HttpMetricsResponse {
+        topEndpoints = topEndpoints == null ? List.of() : List.copyOf(topEndpoints);
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record HttpMetricsSummary(
         long totalRequests,

@@ -14,6 +14,10 @@ public record AuthResponse(
     boolean selectionRequired,
     List<FamilyChoice> familyChoices
 ) {
+    public AuthResponse {
+        familyChoices = familyChoices == null ? List.of() : List.copyOf(familyChoices);
+    }
+
     public record FamilyChoice(
         String familyId,
         String familyName,

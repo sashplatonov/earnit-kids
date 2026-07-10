@@ -17,4 +17,10 @@ public record FamilyDashboardShellResponse(
     String childNickname,
     Integer monthlyLimit,
     Integer dailyCoinLimit
-) { }
+) {
+    public FamilyDashboardShellResponse {
+        tasks = tasks == null ? List.of() : List.copyOf(tasks);
+        shop = shop == null ? List.of() : List.copyOf(shop);
+        children = children == null ? List.of() : List.copyOf(children);
+    }
+}

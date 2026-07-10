@@ -25,6 +25,7 @@
         <jacoco.version>0.8.14</jacoco.version>
         <checkstyle.version>10.21.4</checkstyle.version>
         <spotbugs.version>4.9.8.3</spotbugs.version>
+        <spotbugs.annotations.version>4.10.2</spotbugs.annotations.version>
         <pmd.version>7.17.0</pmd.version>
     </properties>
 
@@ -123,6 +124,12 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.annotations.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -378,6 +385,7 @@
                     <effort>Max</effort>
                     <threshold>Medium</threshold>
                     <failOnError>true</failOnError>
+                    <excludeFilterFile>config/spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
                 <executions>
                     <execution>

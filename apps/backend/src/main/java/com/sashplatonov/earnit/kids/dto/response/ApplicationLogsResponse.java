@@ -8,6 +8,10 @@ import java.util.List;
 public record ApplicationLogsResponse(
     List<ApplicationLogEntry> logs
 ) {
+    public ApplicationLogsResponse {
+        logs = logs == null ? List.of() : List.copyOf(logs);
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ApplicationLogEntry(
         String ts,

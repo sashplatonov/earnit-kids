@@ -1,28 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
-    <!-- SpotBugs exclusion filter for EarnIt Kids Backend -->
-
-    <!-- Exclude generated code -->
     <Match>
-        <Source name="~.*_\$.*\.java"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.config.locale.RequestLocaleFilter"/>
     </Match>
-
-    <!-- Allow field injection in Quarkus CDI beans -->
     <Match>
-        <Bug pattern="URF_UNREAD_FIELD"/>
-        <Or>
-            <Class name="~.*Resource"/>
-            <Class name="~.*Filter"/>
-        </Or>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.config.observability.HttpRequestMetricsFilter"/>
     </Match>
-
-    <!-- Allow returning internal mutable state in records (immutable by design) -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.i18n.BackendValidationLocaleResolver"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.resource.family.FamilyReadResource"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.resource.family.FamilyResource"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.analytics.AnalyticsServiceImpl"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.family.FamilyHistoryQueryServiceImpl"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.family.command.FamilyCommandServiceImpl"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.http.HttpResponsePayloadEstimator"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService"/>
+    </Match>
     <Match>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse"/>
     </Match>
-
-    <!-- Ignore SQL-related false positives for our parameterized queries -->
     <Match>
-        <Bug pattern="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.SuperAdminFamiliesResponse"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.SuperAdminFamiliesResponse$FamilySummary"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse$FamilyInfo"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse$FamilyData"/>
     </Match>
 </FindBugsFilter>

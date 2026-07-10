@@ -13,6 +13,10 @@ public record AuthPayload(
     List<FamilyChoice> familyChoices,
     boolean selectionRequired
 ) {
+    public AuthPayload {
+        familyChoices = familyChoices == null ? List.of() : List.copyOf(familyChoices);
+    }
+
     public record FamilyChoice(
         String familyId,
         String familyName,
