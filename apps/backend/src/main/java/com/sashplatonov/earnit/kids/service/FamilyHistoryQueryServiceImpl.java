@@ -1,13 +1,10 @@
 package com.sashplatonov.earnit.kids.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
-import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
-import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
@@ -24,7 +21,6 @@ import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,7 +29,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 @ApplicationScoped
-@Slf4j
 public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQueryService {
     private static final int MAX_PAGE_SIZE = 100;
 
@@ -43,6 +38,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
     private final ShopItemRepository shopItemRepository;
     private final HistoryRepository historyRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
+    private final FamilyDashboardMapper mapper;
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -52,6 +48,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
                                          ShopItemRepository shopItemRepository,
                                          HistoryRepository historyRepository,
                                          PurchaseRequestRepository purchaseRequestRepository,
+                                         FamilyDashboardMapper mapper,
                                          ObjectMapper objectMapper) {
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
@@ -59,6 +56,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         this.shopItemRepository = shopItemRepository;
         this.historyRepository = historyRepository;
         this.purchaseRequestRepository = purchaseRequestRepository;
+        this.mapper = mapper;
         this.objectMapper = objectMapper;
     }
 
@@ -126,13 +124,13 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
 
     private List<TaskDto> loadTasks(int childId, Map<Long, String> lastCompletedAtByTaskId) {
         return taskRepository.getTasks(childId).stream()
-            .map(task -> toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId())))
+            .map(task -> mapper.toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId()), objectMapper))
             .toList();
     }
 
     private List<ShopItemDto> loadShopItems(int childId, Map<Long, String> lastPurchasedAtByItemId) {
         return shopItemRepository.getShopItems(childId).stream()
-            .map(shopItem -> toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId())))
+            .map(shopItem -> mapper.toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId()), objectMapper))
             .toList();
     }
 
@@ -169,12 +167,12 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
 
         if (!missingTaskIds.isEmpty()) {
             taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, List.of(childId), missingTaskIds).stream()
-                .map(task -> toTaskDto(task, null))
+                .map(task -> mapper.toTaskDto(task, null, objectMapper))
                 .forEach(task -> taskMap.putIfAbsent(task.id(), task));
         }
         if (!missingShopIds.isEmpty()) {
             shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, List.of(childId), missingShopIds).stream()
-                .map(item -> toShopItemDto(item, null))
+                .map(item -> mapper.toShopItemDto(item, null, objectMapper))
                 .forEach(item -> shopMap.putIfAbsent(item.id(), item));
         }
     }
@@ -202,71 +200,21 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
 
         if (!missingTaskIds.isEmpty() && !childIds.isEmpty()) {
             taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, childIds, missingTaskIds).stream()
-                .map(task -> toTaskDto(task, null))
+                .map(task -> mapper.toTaskDto(task, null, objectMapper))
                 .forEach(task -> taskMap.putIfAbsent(task.id(), task));
         }
         if (!missingShopIds.isEmpty() && !childIds.isEmpty()) {
             shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, childIds, missingShopIds).stream()
-                .map(item -> toShopItemDto(item, null))
+                .map(item -> mapper.toShopItemDto(item, null, objectMapper))
                 .forEach(item -> shopMap.putIfAbsent(item.id(), item));
         }
-    }
-
-    private JsonNode parseFrequency(JsonNode rawFrequency) {
-        if (rawFrequency == null || rawFrequency.isNull()) {
-            return null;
-        }
-
-        if (rawFrequency.isTextual()) {
-            String value = rawFrequency.asText();
-            if (value == null || value.isBlank()) {
-                return null;
-            }
-            try {
-                return objectMapper.readTree(value);
-            } catch (Exception ex) {
-                log.debug("Failed to parse stored frequency JSON text node: {}", value, ex);
-                return rawFrequency;
-            }
-        }
-
-        return rawFrequency;
-    }
-
-    private TaskDto toTaskDto(TaskEntity task, String lastCompletedAt) {
-        return new TaskDto(
-            task.getTaskId(),
-            task.getName(),
-            task.getCoins(),
-            task.getGroupName(),
-            parseFrequency(task.getFrequency()),
-            task.getComment(),
-            task.getMoneyLimit(),
-            task.isActive(),
-            task.getChildId(),
-            lastCompletedAt
-        );
-    }
-
-    private ShopItemDto toShopItemDto(ShopItemEntity shopItem, String lastPurchasedAt) {
-        return new ShopItemDto(
-            shopItem.getItemId(),
-            shopItem.getName(),
-            shopItem.getPrice(),
-            shopItem.getGroupName(),
-            parseFrequency(shopItem.getFrequency()),
-            shopItem.getComment(),
-            shopItem.getMoneyLimit(),
-            shopItem.isActive(),
-            shopItem.getChildId(),
-            lastPurchasedAt
-        );
     }
 
     private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry,
                                          Map<Long, TaskDto> taskMap,
                                          Map<Long, ShopItemDto> shopMap) {
-        HistoryDetails details = enrichHistoryDetails(entry, taskMap, shopMap);
+        FamilyRelatedDetailsResolver.HistoryDetails details =
+            FamilyRelatedDetailsResolver.resolveHistoryDetails(entry, taskMap, shopMap, mapper);
         return new HistoryEntryDto(entry.getExternalId(), entry.getType(), entry.getAmount(),
             details.title(),
             details.description(), entry.getMoneyAmount(), entry.getRelatedId(), details.taskId(),
@@ -275,70 +223,11 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
             entry.getChildId());
     }
 
-    private HistoryDetails enrichHistoryDetails(HistoryEntryEntity entry,
-                                                Map<Long, TaskDto> taskMap,
-                                                Map<Long, ShopItemDto> shopMap) {
-        if (entry.getRelatedId() == null) {
-            return new HistoryDetails(entry.getDescription(), entry.getDescription(), null, null, null, null,
-                entry.getGroupName(), entry.getComment());
-        }
-
-        if (entry.getType() == HistoryEntryType.earn) {
-            TaskDto task = taskMap.get(entry.getRelatedId());
-            if (task != null) {
-                String title = firstNonBlank(entry.getDescription(), task.name());
-                return new HistoryDetails(
-                    title,
-                    title,
-                    task.id(),
-                    task.name(),
-                    null,
-                    null,
-                    firstNonBlank(entry.getGroupName(), task.groupName()),
-                    firstNonBlank(entry.getComment(), task.comment())
-                );
-            }
-        }
-
-        if (entry.getType() == HistoryEntryType.spend) {
-            ShopItemDto shopItem = shopMap.get(entry.getRelatedId());
-            if (shopItem != null) {
-                String title = firstNonBlank(entry.getDescription(), shopItem.name());
-                return new HistoryDetails(
-                    title,
-                    title,
-                    null,
-                    null,
-                    shopItem.id(),
-                    shopItem.name(),
-                    firstNonBlank(entry.getGroupName(), shopItem.groupName()),
-                    firstNonBlank(entry.getComment(), shopItem.comment())
-                );
-            }
-        }
-
-        return new HistoryDetails(entry.getDescription(), entry.getDescription(), null, null, null, null,
-            entry.getGroupName(), entry.getComment());
-    }
-
-    private String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-    private boolean isPurchaseRequest(PurchaseRequestEntity request) {
-        return (request.getRequestType() != null && request.getRequestType().isPurchase())
-            || request.getItemId() != null;
-    }
-
     private RequestDto toRequestDto(PurchaseRequestEntity request,
                                     Map<Long, TaskDto> taskMap,
                                     Map<Long, ShopItemDto> shopMap) {
-        RequestDetails details = enrichRequestDetails(request, taskMap, shopMap);
+        FamilyRelatedDetailsResolver.RequestDetails details =
+            FamilyRelatedDetailsResolver.resolveRequestDetails(request, taskMap, shopMap, mapper);
         return new RequestDto(request.getId(), request.getTaskId(), details.taskName(),
             request.getItemId(), details.itemName(), details.title(), details.description(),
             details.groupName(),
@@ -355,58 +244,4 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
             details.itemComment()
         );
     }
-
-    private RequestDetails enrichRequestDetails(PurchaseRequestEntity request,
-                                                Map<Long, TaskDto> taskMap,
-                                                Map<Long, ShopItemDto> shopMap) {
-        boolean purchase = isPurchaseRequest(request) || request.getItemId() != null;
-        Long itemId = request.getItemId() != null ? request.getItemId() : request.getTaskId();
-        ShopItemDto shopItem = null;
-        TaskDto task = null;
-
-        if (purchase && itemId != null) {
-            shopItem = shopMap.get(itemId);
-        } else if (request.getTaskId() != null) {
-            task = taskMap.get(request.getTaskId());
-        }
-
-        String taskName = firstNonBlank(request.getTaskName(), task != null ? task.name() : null);
-        String itemName = purchase
-            ? firstNonBlank(shopItem != null ? shopItem.name() : null, request.getTaskName())
-            : null;
-        String title = purchase ? firstNonBlank(itemName, taskName) : taskName;
-        String taskComment = task != null ? task.comment() : null;
-        String itemComment = shopItem != null ? shopItem.comment() : null;
-        String taskGroup = task != null ? task.groupName() : null;
-        String itemGroup = shopItem != null ? shopItem.groupName() : null;
-        String description = purchase ? itemComment : taskComment;
-        String groupName = purchase ? itemGroup : taskGroup;
-
-        return new RequestDetails(title, description, groupName, description, taskName, itemName,
-            taskGroup, itemGroup, taskComment, itemComment);
-    }
-
-    private record HistoryDetails(
-        String title,
-        String description,
-        Long taskId,
-        String taskName,
-        Long itemId,
-        String itemName,
-        String groupName,
-        String comment
-    ) { }
-
-    private record RequestDetails(
-        String title,
-        String description,
-        String groupName,
-        String comment,
-        String taskName,
-        String itemName,
-        String taskGroup,
-        String itemGroup,
-        String taskComment,
-        String itemComment
-    ) { }
 }

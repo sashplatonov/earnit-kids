@@ -69,6 +69,8 @@ cd apps/backend
 ./mvnw compile -DskipTests
 ```
 
+`./mvnw verify` now also runs PMD for the SRP facade classes and fails on SpotBugs violations. For a quicker lint-only check of the new SRP rules, run `./mvnw -B -ntp pmd:check`.
+
 ### Test Structure
 
 ```
@@ -217,6 +219,7 @@ Minimum required before any merge:
 | Gate | Command | Required For |
 | --- | --- | --- |
 | Backend full build | `./mvnw verify` | ✅ Any change |
+| Backend PMD SRP gate | `./mvnw -B -ntp pmd:check` | ✅ Backend service-layer refactors |
 | Web lint | `npm run lint` | ✅ Any web change |
 | Web unit tests | `npm run test` | ✅ Any web change |
 | Web build | `npm run build` | ✅ Any web change |

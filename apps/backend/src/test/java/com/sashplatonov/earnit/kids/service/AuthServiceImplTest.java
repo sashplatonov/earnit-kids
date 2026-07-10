@@ -61,6 +61,11 @@ class AuthServiceImplTest {
     private SimpleMeterRegistry meterRegistry;
     private BackendKpiMetrics backendKpiMetrics;
     AuthServiceImpl authService;
+    AuthSupportService supportService;
+    AuthMembershipService membershipService;
+    AuthAdminAuthService adminAuthService;
+    AuthChildAuthService childAuthService;
+    AuthLifecycleService lifecycleService;
     PasswordHasher passwordHasher;
 
     @BeforeEach
@@ -578,16 +583,37 @@ class AuthServiceImplTest {
     }
 
     private AuthServiceImpl createAuthService(AppConfig config) {
-        return new AuthServiceImpl(
-            familyRepository,
-            childRepository,
-            parentAccountRepository,
-            membershipRepository,
+        supportService = new AuthSupportService(
             config,
             passwordHasher,
+            parentAccountRepository,
             TOKEN_GENERATOR,
-            TestConfigFactory.timeProvider(FIXED_NOW),
+            TestConfigFactory.timeProvider(FIXED_NOW)
+        );
+        membershipService = new AuthMembershipService(
+            familyRepository,
+            parentAccountRepository,
+            membershipRepository,
+            supportService
+        );
+        adminAuthService = new AuthAdminAuthService(
+            parentAccountRepository,
             googleIdentityVerifier,
+            supportService,
+            membershipService
+        );
+        childAuthService = new AuthChildAuthService(childRepository, familyRepository);
+        lifecycleService = new AuthLifecycleService(
+            familyRepository,
+            parentAccountRepository,
+            membershipRepository,
+            supportService
+        );
+        return new AuthServiceImpl(
+            adminAuthService,
+            childAuthService,
+            lifecycleService,
+            membershipService,
             backendKpiMetrics
         );
     }

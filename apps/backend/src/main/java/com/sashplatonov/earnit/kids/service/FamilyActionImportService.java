@@ -110,58 +110,14 @@ final class FamilyActionImportService {
         LinkedHashMap<String, Integer> seenTitles = new LinkedHashMap<>();
         for (ImportTaskRowRequest row : rows) {
             int rowNumber = row.rowNumber() > 0 ? row.rowNumber() : 0;
-            String title = trimToNull(row.title());
+            String title = validateImportTitle(row.title(), rowNumber, seenTitles, errors);
             if (title == null) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "title",
-                    BackendMessages.message("tasks.titleRequired")
-                ));
                 continue;
             }
-            String duplicateKey = title.toLowerCase();
-            if (seenTitles.containsKey(duplicateKey)) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "title",
-                    BackendMessages.message("errors.duplicateRow")
-                ));
-                continue;
-            }
-            seenTitles.put(duplicateKey, rowNumber);
 
-            if (row.coins() == null || row.coins() <= 0) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "coins",
-                    BackendMessages.message("tasks.coinsRequired")
-                ));
-            }
-
-            if (row.frequencyLimit() != null || row.frequencyPeriod() != null) {
-                if (row.frequencyLimit() == null || row.frequencyLimit() <= 0) {
-                    errors.add(new ImportValidationErrorItem(
-                        rowNumber,
-                        "frequencyLimit",
-                        BackendMessages.message("tasks.frequencyLimitRequired")
-                    ));
-                }
-                if (!isValidFrequencyPeriod(row.frequencyPeriod())) {
-                    errors.add(new ImportValidationErrorItem(
-                        rowNumber,
-                        "frequencyPeriod",
-                        BackendMessages.message("tasks.frequencyPeriodRequired")
-                    ));
-                }
-            }
-
-            if (row.moneyLimit() != null && row.moneyLimit() < 0) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "moneyLimit",
-                    BackendMessages.message("errors.positiveNumberRequired")
-                ));
-            }
+            validatePositiveCoins(row.coins(), rowNumber, "tasks.coinsRequired", errors);
+            validateFrequencyRow(row.frequencyLimit(), row.frequencyPeriod(), rowNumber, errors);
+            validateNonNegativeMoneyLimit(row.moneyLimit(), rowNumber, errors);
         }
     }
 
@@ -169,61 +125,95 @@ final class FamilyActionImportService {
         LinkedHashMap<String, Integer> seenNames = new LinkedHashMap<>();
         for (ImportShopItemRowRequest row : rows) {
             int rowNumber = row.rowNumber() > 0 ? row.rowNumber() : 0;
-            String name = trimToNull(row.name());
+            String name = validateImportTitle(row.name(), rowNumber, seenNames, errors);
             if (name == null) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "name",
-                    BackendMessages.message("shop.nameRequired")
-                ));
                 continue;
             }
-            String duplicateKey = name.toLowerCase();
-            if (seenNames.containsKey(duplicateKey)) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "name",
-                    BackendMessages.message("errors.duplicateRow")
-                ));
-                continue;
-            }
-            seenNames.put(duplicateKey, rowNumber);
 
-            if (row.price() == null || row.price() <= 0) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "price",
-                    BackendMessages.message("shop.priceRequired")
-                ));
-            }
-            if (row.frequencyLimit() != null || row.frequencyPeriod() != null) {
-                if (row.frequencyLimit() == null || row.frequencyLimit() <= 0) {
-                    errors.add(new ImportValidationErrorItem(
-                        rowNumber,
-                        "frequencyLimit",
-                        BackendMessages.message("tasks.frequencyLimitRequired")
-                    ));
-                }
-                if (!isValidFrequencyPeriod(row.frequencyPeriod())) {
-                    errors.add(new ImportValidationErrorItem(
-                        rowNumber,
-                        "frequencyPeriod",
-                        BackendMessages.message("tasks.frequencyPeriodRequired")
-                    ));
-                }
-            }
-            if (row.moneyLimit() != null && row.moneyLimit() < 0) {
-                errors.add(new ImportValidationErrorItem(
-                    rowNumber,
-                    "moneyLimit",
-                    BackendMessages.message("errors.positiveNumberRequired")
-                ));
-            }
+            validatePositivePrice(row.price(), rowNumber, errors);
+            validateFrequencyRow(row.frequencyLimit(), row.frequencyPeriod(), rowNumber, errors);
+            validateNonNegativeMoneyLimit(row.moneyLimit(), rowNumber, errors);
         }
     }
 
-    private boolean isValidFrequencyPeriod(FrequencyPeriod period) {
-        return period != null;
+    private String validateImportTitle(String rawTitle,
+                                       int rowNumber,
+                                       LinkedHashMap<String, Integer> seenValues,
+                                       List<ImportValidationErrorItem> errors) {
+        String title = trimToNull(rawTitle);
+        if (title == null) {
+            errors.add(new ImportValidationErrorItem(
+                rowNumber,
+                "title",
+                BackendMessages.message("tasks.titleRequired")
+            ));
+            return null;
+        }
+
+        String duplicateKey = title.toLowerCase();
+        if (seenValues.containsKey(duplicateKey)) {
+            errors.add(new ImportValidationErrorItem(
+                rowNumber,
+                "title",
+                BackendMessages.message("errors.duplicateRow")
+            ));
+            return null;
+        }
+        seenValues.put(duplicateKey, rowNumber);
+        return title;
+    }
+
+    private void validatePositiveCoins(Integer coins, int rowNumber, String messageKey,
+                                       List<ImportValidationErrorItem> errors) {
+        if (coins == null || coins <= 0) {
+            errors.add(new ImportValidationErrorItem(
+                rowNumber,
+                "coins",
+                BackendMessages.message(messageKey)
+            ));
+        }
+    }
+
+    private void validatePositivePrice(Integer price, int rowNumber, List<ImportValidationErrorItem> errors) {
+        if (price == null || price <= 0) {
+            errors.add(new ImportValidationErrorItem(
+                rowNumber,
+                "price",
+                BackendMessages.message("shop.priceRequired")
+            ));
+        }
+    }
+
+    private void validateFrequencyRow(Integer limit, FrequencyPeriod period, int rowNumber,
+                                      List<ImportValidationErrorItem> errors) {
+        if (limit == null && period == null) {
+            return;
+        }
+        if (limit == null || limit <= 0) {
+            errors.add(new ImportValidationErrorItem(
+                rowNumber,
+                "frequencyLimit",
+                BackendMessages.message("tasks.frequencyLimitRequired")
+            ));
+        }
+        if (period == null) {
+            errors.add(new ImportValidationErrorItem(
+                rowNumber,
+                "frequencyPeriod",
+                BackendMessages.message("tasks.frequencyPeriodRequired")
+            ));
+        }
+    }
+
+    private void validateNonNegativeMoneyLimit(Integer moneyLimit, int rowNumber,
+                                               List<ImportValidationErrorItem> errors) {
+        if (moneyLimit != null && moneyLimit < 0) {
+            errors.add(new ImportValidationErrorItem(
+                rowNumber,
+                "moneyLimit",
+                BackendMessages.message("errors.positiveNumberRequired")
+            ));
+        }
     }
 
     private String trimToNull(String value) {

@@ -25,7 +25,7 @@
         <jacoco.version>0.8.14</jacoco.version>
         <checkstyle.version>10.21.4</checkstyle.version>
         <spotbugs.version>4.9.8.3</spotbugs.version>
-        <pmd.version>7.10.0</pmd.version>
+        <pmd.version>7.17.0</pmd.version>
     </properties>
 
     <dependencyManagement>
@@ -333,6 +333,42 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- PMD -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.28.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-core</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-java</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <includes>
+                        <include>**/service/**/*.java</include>
+                    </includes>
+                    <rulesets>
+                        <ruleset>config/pmd/backend-srp-ruleset.xml</ruleset>
+                    </rulesets>
+                    <failOnViolation>true</failOnViolation>
+                    <printFailingErrors>true</printFailingErrors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- SpotBugs -->
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
@@ -342,7 +378,7 @@
                     <excludeFilterFile>config/spotbugs-exclude.xml</excludeFilterFile>
                     <effort>Max</effort>
                     <threshold>Medium</threshold>
-                    <failOnError>false</failOnError>
+                    <failOnError>true</failOnError>
                 </configuration>
                 <executions>
                     <execution>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="EarnIt Kids Backend SRP Rules"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
+                             https://pmd.github.io/pmd/pmd-7.0.0.xsd">
+    <description>Backend SRP guardrails for service-layer refactors.</description>
+
+    <rule ref="category/java/design.xml/GodClass"/>
+
+    <rule ref="category/java/design.xml/TooManyFields">
+        <properties>
+            <property name="maxfields" value="14"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <property name="maxmethods" value="30"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="classReportLevel" value="60"/>
+            <property name="methodReportLevel" value="15"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/NPathComplexity">
+        <properties>
+            <property name="reportLevel" value="200"/>
+        </properties>
+    </rule>
+</ruleset>

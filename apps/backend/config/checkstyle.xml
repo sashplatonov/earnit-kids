@@ -4,15 +4,18 @@
     "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <!-- Checkstyle configuration for EarnIt Kids Backend (Google style, relaxed). -->
-<module name="Checker">
-    <property name="severity" value="warning"/>
-    <property name="fileExtensions" value="java"/>
+    <module name="Checker">
+        <property name="severity" value="warning"/>
+        <property name="fileExtensions" value="java"/>
 
-    <!-- File-level checks -->
-    <module name="LineLength">
-        <property name="max" value="120"/>
-        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
-    </module>
+        <!-- File-level checks -->
+        <module name="FileLength">
+            <property name="max" value="450"/>
+        </module>
+        <module name="LineLength">
+            <property name="max" value="120"/>
+            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+        </module>
     <module name="NewlineAtEndOfFile"/>
     <module name="FileTabCharacter"/>
     <module name="SuppressionSingleFilter">
@@ -77,6 +80,12 @@
         </module>
         <module name="ParameterNumber">
             <property name="max" value="10"/>
+        </module>
+        <module name="MethodCount">
+            <property name="maxTotal" value="20"/>
+        </module>
+        <module name="CyclomaticComplexity">
+            <property name="max" value="12"/>
         </module>
 
         <!-- Coding hygiene -->

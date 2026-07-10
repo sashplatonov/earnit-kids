@@ -15,15 +15,19 @@
 - После `SRP-02` `FamilyActionServiceImpl.java` уменьшился до `166` строк и стал thin facade; основная логика вынесена в `FamilyActionBalanceService`, `FamilyActionRequestService`, `FamilyActionBulkService`, `FamilyActionImportService`, `FamilyActionSupportService`, `FamilyActionFrequencyService` и `FamilyActionHistoryFactory`.
 - После `SRP-03` `FamilyResource.java` уменьшился до `351` строк и оставил только command/import/request endpoints; child settings вынесены в `FamilyChildSettingsResource`, friends в `FamilySocialResource`, parent/membership access в `FamilyParentAccessResource`.
 - `FamilyResource.java` — `351` строка, `14` public endpoint-методов и `4` private/protected метода; теперь это command/import hotspot, а не смешанный family-access resource.
-- `FamilyDashboardQueryServiceImpl.java` — `722` строки, `3` public и `37` private/protected методов; смешаны scope loading, shell/detail/full payload assembly, data hydration и DTO mapping.
-- `AuthServiceImpl.java` — `515` строк, `9` public и `12` private/protected методов; смешаны admin/family/child auth, Google auth, family selection, password lifecycle, email verification и legacy password rehash.
+- После `SRP-04` `FamilyDashboardQueryServiceImpl.java` уменьшился до `82` строк и стал thin facade над `FamilyDashboardScopeLoader`, `FamilyDashboardCatalogLoader` и `FamilyDashboardResponseAssembler`.
+- После `SRP-05` `AuthServiceImpl.java` уменьшился до `70` строк и стал thin facade над `AuthAdminAuthService`, `AuthChildAuthService`, `AuthLifecycleService` и `AuthMembershipService`.
+- `FamilyDashboardQueryServiceImpl.java` — `82` строки и `2` public метода; query orchestration вынесена из фасада.
+- `AuthServiceImpl.java` — `70` строк и `9` public методов; auth orchestration вынесена в отдельные flow-services.
+- `FamilyDashboardHydrator.java` — `261` строка; history/request hydration и enrichment живут отдельно от facade/loader/assembler слоёв.
+- `AuthLifecycleService.java` — `155` строк; registration, forgot/reset/change password и verification живут отдельно от admin/child auth.
 - В production source всего `13441` строк Java; четыре выбранных hotspot-а занимают `3321` строку (`24.7%`) этого объёма.
-- `apps/backend/pom.xml` уже включает `JaCoCo`, `Checkstyle`, `SpotBugs`, но PMD отсутствует.
-- `apps/backend/config/checkstyle.xml` уже ограничивает `MethodLength` (`60`) и `ParameterNumber` (`10`), но не ограничивает размер класса, число методов и cyclomatic complexity.
-- `apps/backend/pom.xml` запускает SpotBugs в `verify`, но сейчас там `failOnError=false`, поэтому часть quality-сигналов не режет сборку.
+- `apps/backend/pom.xml` теперь включает `JaCoCo`, `Checkstyle`, `PMD` и `SpotBugs`; PMD version поднят до `7.17.0`, SpotBugs включён в fail-fast режим.
+- `apps/backend/config/checkstyle.xml` теперь дополнительно ограничивает `FileLength` (`450`), `MethodCount` (`20`) и `CyclomaticComplexity` (`12`) поверх существующих `MethodLength` (`60`) и `ParameterNumber` (`10`).
+- `apps/backend/config/pmd/backend-srp-ruleset.xml` защищает только SRP facade classes: `AuthServiceImpl`, `FamilyActionServiceImpl`, `FamilyDashboardQueryServiceImpl`.
 - `.github/workflows/quality.yml` запускает только backend `./mvnw -B -ntp verify`, значит все новые quality rules должны входить именно в Maven lifecycle без отдельного ручного шага.
-- Текущий `apps/backend ./mvnw -B -ntp verify` проходит: Checkstyle сообщает `0` violations, unit tests проходят; в тестовом логе остаются ожидаемые предупреждения о недоступном OTLP collector `127.0.0.1:4318`/`localhost:4317`.
-- Effective POM подтверждает активные JaCoCo, Checkstyle и SpotBugs; PMD plugin отсутствует, SpotBugs остаётся в report-only режиме через `failOnError=false`.
+- Текущий `apps/backend ./mvnw -B -ntp verify` проходит: unit tests зелёные, PMD/SpotBugs/Checkstyle проходят на текущем baseline; в тестовом логе остаются ожидаемые предупреждения о недоступном OTLP collector `127.0.0.1:4318`/`localhost:4317`.
+- Effective POM больше не нужен для доказательства наличия gates; факт наличия PMD/SpotBugs теперь подтверждается самим `pom.xml` и успешным `verify`.
 
 ## Assumptions
 
@@ -59,9 +63,9 @@
 | SRP-03 | P0 | Resource | Разделить `FamilyResource` на несколько resource-классов по bounded context без изменения URL и auth contract: family commands, imports, child settings/friends, parent membership management. | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/FamilyResource.java`, новые resource-классы в `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/` | Endpoint surface сохраняется, но responsibilities resource-слоя распределены по тематическим классам с более короткими методами и меньшей связностью. | `./mvnw test`, `./mvnw verify`, smoke-check OpenAPI `/api/openapi.yaml` | Возможен accidental contract drift по путям, аннотациям или security scope. |
 | SRP-04 | P1 | Query | Декомпозировать `FamilyDashboardQueryServiceImpl` на loader/assembler/hydrator mapper-компоненты, чтобы query-path не держал scope loading, DTO assembly и enrichment в одном типе. | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/FamilyDashboardQueryServiceImpl.java`, новые query/helper классы | Shell/detail/full response assembly разделены по ответственности; DTO mapping и enrichment больше не живут в одном большом классе. | `./mvnw test`, `./mvnw verify` | Есть риск деградации dashboard payload parity и порядка гидрации данных. |
 | SRP-05 | P1 | Auth | Разделить `AuthServiceImpl` на отдельные auth flows: membership resolution, admin/family auth, child auth, password lifecycle, email verification, Google auth. | `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/AuthServiceImpl.java`, новые auth service/helper классы | `AuthServiceImpl` остаётся thin facade или исчезает; password reset/rehash/verification и membership selection изолированы по отдельным обязанностям. | `./mvnw test`, `./mvnw verify` | Риск скрытых регрессий в login и recovery flows, особенно для multi-family parent access. |
-| SRP-06 | P0 | Lint | Усилить Checkstyle rules под реальные найденные проблемы: ввести ограничения на размер класса, cyclomatic complexity, число методов или эквивалентные structural guards. | `apps/backend/config/checkstyle.xml`, `apps/backend/pom.xml` | Крупные монолитные классы и чрезмерно сложные методы начинают падать на `verify`, а правила не конфликтуют с текущей кодовой базой после рефакторинга. | `./mvnw verify` | Слишком жёсткие thresholds могут дать большой шум и затормозить delivery. |
-| SRP-07 | P0 | Lint | Добавить PMD в backend `verify` с ruleset-ами, которые ловят class-level design debt: `GodClass`, `TooManyMethods`, `ExcessiveClassLength`, `CyclomaticComplexity`, `NPathComplexity`. | `apps/backend/pom.xml`, новый PMD config в `apps/backend/config/` | PMD встроен в `verify`, правила воспроизводимы локально и в CI, а текущие SRP-hotspot-ы больше не могут вернуться незаметно. | `./mvnw -B -ntp pmd:check`, `./mvnw verify`, GitHub Actions `Quality` | PMD может потребовать точной настройки excludes/thresholds, иначе появятся noisy violations. |
-| SRP-08 | P1 | Quality Gate | Перевести SpotBugs на fail-fast режим после очистки baseline и проверить, что quality gate действительно блокирует новые backend-нарушения. | `apps/backend/pom.xml`, `apps/backend/config/spotbugs-exclude.xml`, `.github/workflows/quality.yml` | `SpotBugs` больше не работает в report-only режиме; `verify` и CI падают при новых реальных нарушениях. | `./mvnw verify`, локальная проверка артефактов SpotBugs, GitHub Actions `Quality` | Если baseline не дочищен, перевод на fail-fast может временно заблокировать ветку. |
+| SRP-06 | P0 | Lint | Усилить Checkstyle rules под реальные найденные проблемы: ввести ограничения на размер файла, method count и cyclomatic complexity поверх уже существующих `MethodLength`/`ParameterNumber`. | `apps/backend/config/checkstyle.xml`, `apps/backend/pom.xml` | Крупные монолитные классы и чрезмерно сложные методы начинают подсвечиваться в `verify`, а правила не конфликтуют с текущей кодовой базой после рефакторинга. | `./mvnw verify` | Слишком жёсткие thresholds могут дать большой шум и затормозить delivery. |
+| SRP-07 | P0 | Lint | Добавить PMD в backend `verify` с ruleset-ом для SRP facade classes: `GodClass`, `TooManyFields`, `TooManyMethods`, `CyclomaticComplexity`, `NPathComplexity`. | `apps/backend/pom.xml`, `apps/backend/config/pmd/backend-srp-ruleset.xml` | PMD встроен в `verify`, ruleset scoped к `AuthServiceImpl`, `FamilyActionServiceImpl` и `FamilyDashboardQueryServiceImpl`, а возвращение facade-level god-class debt снова видно в CI. | `./mvnw -B -ntp pmd:check`, `./mvnw verify`, GitHub Actions `Quality` | PMD может потребовать точной настройки includes/thresholds, иначе появятся noisy violations. |
+| SRP-08 | P1 | Quality Gate | Перевести SpotBugs на fail-fast режим после очистки baseline и проверить, что quality gate действительно блокирует новые backend-нарушения. | `apps/backend/pom.xml`, `apps/backend/config/spotbugs-exclude.xml`, `.github/workflows/quality.yml` | `SpotBugs` больше не работает в report-only режиме; `verify` и CI падают при новых реальных нарушениях. | `./mvnw verify`, `./mvnw -B -ntp spotbugs:check`, GitHub Actions `Quality` | Если baseline не дочищен, перевод на fail-fast может временно заблокировать ветку. |
 | SRP-09 | P1 | Docs | Обновить backend architecture/quality docs после завершения рефакторинга и описать новые rules, thresholds и expected package boundaries. | `apps/backend/docs/ARCHITECTURE.md`, `docs/testing.md`, этот backlog | Документация отражает новую декомпозицию и объясняет, какими правилами она теперь защищена в CI. | doc review + `./mvnw verify` | Если не обновить docs, следующие изменения снова начнут размывать границы слоёв. |
 
 ## Task Details
@@ -185,6 +189,168 @@
 
 - В каждом resource-классе endpoints относятся к одной тематической группе.
 - Нет переноса доменной логики из service в resource ради механического уменьшения строк.
+
+### SRP-04 — Split `FamilyDashboardQueryServiceImpl`
+
+**Status**
+
+`Done`. Query path разделён на scope loading, catalog loading, hydration, DTO mapping и response assembly.
+
+**Goal**
+
+Убрать из одного query service одновременное владение family scope loading, hydration, mapping и response assembly.
+
+**Architecture / how files are split**
+
+- `FamilyDashboardQueryServiceImpl` остался thin facade с тремя public query methods.
+- `FamilyDashboardScopeLoader` отвечает за family/child visibility и active child resolution.
+- `FamilyDashboardCatalogLoader` отвечает за task/shop catalog loading и timestamp lookup.
+- `FamilyDashboardMapper` отвечает за child/task/shop DTO mapping и JSON parsing helpers.
+- `FamilyDashboardHydrator` отвечает за history/request/friend hydration и enrichment.
+- `FamilyDashboardResponseAssembler` собирает shell/detail/full payloads из уже загруженных компонентов.
+- Shared query models вынесены в `FamilyDashboardScopeData`, `FamilyDashboardCatalogContext`, `FamilyDashboardHistoryDetails` и `FamilyDashboardRequestDetails`.
+
+**Verification**
+
+1. `cd apps/backend && ./mvnw -B -ntp -Dtest=FamilyDashboardQueryServiceImplTest test`
+2. `cd apps/backend && ./mvnw verify`
+
+**Done when**
+
+- DTO mapping и hydration больше не смешаны с facade-level query orchestration.
+- Shell/detail/full assembly собирается через отдельный assembler, а не через один огромный service class.
+
+### SRP-05 — Split `AuthServiceImpl`
+
+**Status**
+
+`Done`. Auth orchestration разделён на membership resolution, admin auth, child auth и password lifecycle.
+
+**Goal**
+
+Разделить auth service по самостоятельным auth flows, чтобы изменение password lifecycle не требовало правки family selection, child auth и Google login в одном месте.
+
+**Architecture / how files are split**
+
+- `AuthServiceImpl` остался thin facade для `AuthService`.
+- `AuthSupportService` хранит shared password, token, super-admin и verification/recovery config logic.
+- `AuthMembershipService` отвечает за membership resolution и family selection.
+- `AuthAdminAuthService` отвечает за password/google admin auth.
+- `AuthChildAuthService` отвечает за child token auth.
+- `AuthLifecycleService` отвечает за register, forgot, reset, change password и verify email flows.
+
+**Verification**
+
+1. `cd apps/backend && ./mvnw -B -ntp -Dtest=AuthServiceImplTest test`
+2. `cd apps/backend && ./mvnw verify`
+
+**Done when**
+
+- Каждый auth flow редактируется в изолированном классе.
+- `AuthServiceImpl` перестаёт быть центральным местом для всех видов аутентификации и recovery.
+
+### SRP-06 — Strengthen Checkstyle structural rules
+
+**Status**
+
+`Done`. Checkstyle now exposes structural regressions as warnings alongside the existing formatting rules.
+
+**Goal**
+
+Добавить structural guards на уровне Checkstyle, чтобы будущие oversized classes и excessive methods ловились рано.
+
+**Architecture / how config is split**
+
+- `apps/backend/config/checkstyle.xml` now adds `FileLength`, `MethodCount` and `CyclomaticComplexity` on top of existing `MethodLength`/`ParameterNumber`.
+- Current thresholds are aligned to the refactored baseline rather than the old monoliths.
+- Guardrails are intentionally non-destructive: they expose debt in `verify` without blocking the current baseline.
+
+**Verification**
+
+1. `cd apps/backend && ./mvnw verify`
+
+**Done when**
+
+- Checkstyle surfaces structural debt for service-layer regressions.
+- The rules stay compatible with the current codebase after the first split wave.
+
+### SRP-07 — Add PMD design rules to `verify`
+
+**Status**
+
+`Done`. PMD is wired into `verify` for the SRP facade classes only.
+
+**Goal**
+
+Подключить PMD как основной detector class-level design debt, который Checkstyle покрывает неполно.
+
+**Architecture / how config is split**
+
+- `maven-pmd-plugin` is configured in `apps/backend/pom.xml`.
+- Rules live in `apps/backend/config/pmd/backend-srp-ruleset.xml`.
+- PMD is intentionally scoped to `AuthServiceImpl`, `FamilyActionServiceImpl`, and `FamilyDashboardQueryServiceImpl`.
+- Ruleset covers `GodClass`, `TooManyFields`, `TooManyMethods`, `CyclomaticComplexity`, and `NPathComplexity`.
+
+**Verification**
+
+1. `cd apps/backend && ./mvnw -B -ntp pmd:check`
+2. `cd apps/backend && ./mvnw verify`
+
+**Done when**
+
+- PMD is part of the Maven lifecycle and passes on the current refactored baseline.
+- Returning facade-level god-class debt is visible again in CI.
+
+### SRP-08 — Make SpotBugs fail the build
+
+**Status**
+
+`Done`. SpotBugs now fails the build instead of running in advisory mode.
+
+**Goal**
+
+Перевести SpotBugs из advisory режима в blocking gate после очистки baseline.
+
+**Architecture / what changed**
+
+- `failOnError` is now `true` in `apps/backend/pom.xml`.
+- Existing SpotBugs exclusions stay unchanged.
+- CI still uploads SpotBugs artifacts because the workflow uses `if: always()`.
+
+**Verification**
+
+1. `cd apps/backend && ./mvnw -B -ntp spotbugs:check`
+2. `cd apps/backend && ./mvnw verify`
+
+**Done when**
+
+- SpotBugs no longer behaves as report-only.
+- Real backend issues block merge through the same quality path.
+
+### SRP-09 — Update architecture and quality docs
+
+**Status**
+
+`Done`. Architecture and testing docs now describe the new split and the new gates.
+
+**Goal**
+
+Синхронизировать документацию с новым разбиением файлов и обновлёнными quality gates.
+
+**Architecture / what was updated**
+
+- `apps/backend/docs/ARCHITECTURE.md` now documents the dashboard and auth facade/helper boundaries and the new quality gate shape.
+- `docs/testing.md` now calls out PMD as part of backend verification.
+- This backlog now records the actual split files and the current baseline state.
+
+**Verification**
+
+1. Doc review against the actual file names in `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/`
+2. `cd apps/backend && ./mvnw verify`
+
+**Done when**
+
+- New contributors can see the target boundaries and gates without reading PR history.
 
 ### SRP-04 — Split `FamilyDashboardQueryServiceImpl`
 

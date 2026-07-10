@@ -60,15 +60,34 @@ class FamilyDashboardQueryServiceImplTest {
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
         backendKpiMetrics = new BackendKpiMetrics(meterRegistry);
-        service = new FamilyDashboardQueryServiceImpl(
-            familyRepository,
-            childRepository,
+        FamilyDashboardMapper mapper = FamilyDashboardMapper.INSTANCE;
+        FamilyDashboardScopeLoader scopeLoader = new FamilyDashboardScopeLoader(familyRepository, childRepository);
+        FamilyDashboardCatalogLoader catalogLoader = new FamilyDashboardCatalogLoader(
+            historyRepository,
+            taskRepository,
+            shopItemRepository,
+            mapper,
+            OBJECT_MAPPER
+        );
+        FamilyDashboardHydrator hydrator = new FamilyDashboardHydrator(
             historyRepository,
             purchaseRequestRepository,
             friendRepository,
+            childRepository,
             taskRepository,
             shopItemRepository,
-            OBJECT_MAPPER,
+            mapper,
+            OBJECT_MAPPER
+        );
+        FamilyDashboardResponseAssembler responseAssembler = new FamilyDashboardResponseAssembler(
+            hydrator,
+            mapper,
+            OBJECT_MAPPER
+        );
+        service = new FamilyDashboardQueryServiceImpl(
+            scopeLoader,
+            catalogLoader,
+            responseAssembler,
             backendKpiMetrics
         );
     }

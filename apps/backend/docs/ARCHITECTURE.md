@@ -54,6 +54,12 @@ Practical rules:
 - Keep persistence mutations behind service methods rather than resource classes.
 - Keep OpenAPI annotations updated when public endpoint behavior changes.
 
+Current split notes:
+
+- Dashboard query uses a thin facade plus `FamilyDashboardScopeLoader`, `FamilyDashboardCatalogLoader`, `FamilyDashboardHydrator`, `FamilyDashboardMapper`, and `FamilyDashboardResponseAssembler`.
+- Auth uses a thin facade plus `AuthSupportService`, `AuthMembershipService`, `AuthAdminAuthService`, `AuthChildAuthService`, and `AuthLifecycleService`.
+- File size, method count, and cyclomatic complexity guardrails now live in Checkstyle, while class-level design debt checks are enforced through PMD for the refactored facade classes.
+
 [↩ Back to toc](#table-of-contents)
 
 ## 🗄️ Database Overview
@@ -159,6 +165,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 Failure modes to watch:
 
 - `test` passing without `verify` is not sufficient because static analysis runs later.
+- `verify` now includes Checkstyle, PMD, JaCoCo, and SpotBugs. PMD is scoped to the SRP facade classes, and SpotBugs runs in fail-fast mode.
 - If a frontend payload changes, verify the backend DTO names before assuming data corruption.
 - After migration work, validate both PostgreSQL migrations and the H2 test baseline.
 
