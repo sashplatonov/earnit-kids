@@ -17,6 +17,8 @@ public interface FamilyActionService {
 
     OperationResult<FamilyDataResponse> requestItemPurchase(String familyId, int childId, long itemId, String note);
 
+    OperationResult<FamilyDataResponse> setRewardGoal(String familyId, int childId, Long itemId);
+
     OperationResult<FamilyDataResponse> approveRequest(String familyId, Integer currentChildId, long requestId);
 
     OperationResult<FamilyDataResponse> rejectRequest(String familyId, Integer currentChildId, long requestId);

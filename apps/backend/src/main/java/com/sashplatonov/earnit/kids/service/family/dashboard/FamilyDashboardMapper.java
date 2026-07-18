@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
+import com.sashplatonov.earnit.kids.dto.response.TaskPeriodProgressDto;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -27,7 +28,13 @@ public interface FamilyDashboardMapper {
     @Mapping(target = "id", source = "task.taskId")
     @Mapping(target = "isActive", source = "task.active")
     @Mapping(target = "lastCompletedAt", source = "lastCompletedAt")
-    TaskDto toTaskDto(TaskEntity task, String lastCompletedAt, @Context ObjectMapper objectMapper);
+    @Mapping(target = "periodProgress", source = "periodProgress")
+    TaskDto toTaskDto(TaskEntity task, String lastCompletedAt, TaskPeriodProgressDto periodProgress,
+                      @Context ObjectMapper objectMapper);
+
+    default TaskDto toTaskDto(TaskEntity task, String lastCompletedAt, ObjectMapper objectMapper) {
+        return toTaskDto(task, lastCompletedAt, null, objectMapper);
+    }
 
     @Mapping(target = "id", source = "shopItem.itemId")
     @Mapping(target = "isActive", source = "shopItem.active")

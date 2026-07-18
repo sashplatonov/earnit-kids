@@ -1,12 +1,12 @@
 package com.sashplatonov.earnit.kids.service.family.command;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.command.ShopItemUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.repository.command.TaskContentCommand;
 import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
 
 import java.util.LinkedHashSet;
@@ -91,14 +91,24 @@ final class FamilyCommandMutationService {
                 familyDbId,
                 selectedChildId,
                 taskId,
-                name,
-                payloadService.defaultInt(task.get("coins"), 0),
-                payloadService.firstNonBlank(
-                    payloadService.asString(task.get("groupName")),
-                    payloadService.asString(task.get("group"))
+                new TaskContentCommand(
+                    name,
+                    payloadService.defaultInt(task.get("coins"), 0),
+                    payloadService.firstNonBlank(
+                        payloadService.asString(task.get("groupName")),
+                        payloadService.asString(task.get("group"))
+                    ),
+                    payloadService.asString(task.get("comment")),
+                    payloadService.firstNonBlank(
+                        payloadService.asString(task.get("cueWhen")),
+                        payloadService.asString(task.get("cue_when"))
+                    ),
+                    payloadService.firstNonBlank(
+                        payloadService.asString(task.get("cueAction")),
+                        payloadService.asString(task.get("cue_action"))
+                    )
                 ),
                 payloadService.serializeFrequency(task.get("frequency")),
-                payloadService.asString(task.get("comment")),
                 payloadService.coalesceInt(task.get("moneyLimit"), task.get("money_limit")),
                 payloadService.defaultBoolean(
                     payloadService.coalesceFirst(task.get("isActive"), task.get("is_active")),
@@ -142,5 +152,14 @@ final class FamilyCommandMutationService {
                 payloadService.defaultBoolean(item.get("isDeleted"), false)
             ));
         }
+        clearInvalidRewardGoal(familyDbId, selectedChildId);
+    }
+
+    private void clearInvalidRewardGoal(int familyDbId, int childId) {
+        childRepository.findByIdOptional(childId)
+            .map(ChildEntity::getRewardGoalItemId)
+            .filter(Objects::nonNull)
+            .filter(itemId -> !shopItemRepository.isActiveItem(familyDbId, childId, itemId))
+            .ifPresent(itemId -> childRepository.updateRewardGoal(childId, null));
     }
 }

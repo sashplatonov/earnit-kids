@@ -157,13 +157,16 @@
         align-items: center;
         min-width: 0;
         max-width: 100%;
-        padding: 0.14rem 0.45rem;
+        padding: var(--catalog-chip-padding-block) var(--catalog-chip-padding-inline);
+        min-height: 1.65rem;
         border-radius: 999px;
         background: rgba(116, 134, 170, 0.12);
         color: #44526b;
         font-size: 0.68rem;
         font-weight: 700;
         line-height: 1.15;
+        overflow-wrap: anywhere;
+        word-break: normal;
     }
 
     /* Highlighted child name chip for requests list (row) view */

@@ -9,6 +9,8 @@ describe('buildTaskPayload', () => {
             groupName: 'Дом',
             coins: 15,
             comment: 'Перед ужином',
+            cueWhen: '  после школы ',
+            cueAction: ' убрать игрушки  ',
             freqLimit: '2',
             freqPeriod: 'week',
         });
@@ -20,6 +22,8 @@ describe('buildTaskPayload', () => {
             groupName: 'Дом',
             coins: 15,
             comment: 'Перед ужином',
+            cueWhen: 'после школы',
+            cueAction: 'убрать игрушки',
             frequency: { limit: 2, period: 'week' },
         });
     });

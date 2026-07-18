@@ -7,6 +7,8 @@ import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnosti
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class PurchaseRequestRepository implements PanacheRepositoryBase<PurchaseRequestEntity, Long> {
+    @PersistenceContext
+    EntityManager entityManager;
     private final SlowOperationDiagnostics slowOperationDiagnostics;
 
     public long countPendingTaskRequestsInWindow(
@@ -40,6 +44,31 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
             startInclusive,
             endExclusive
         );
+    }
+
+    public Map<Long, Long> countPendingTaskRequestsInWindowByTask(
+        int familyDbId,
+        int childId,
+        Instant startInclusive,
+        Instant endExclusive
+    ) {
+        var query = entityManager.createQuery(
+            "SELECT r.taskId, COUNT(r.id) FROM PurchaseRequestEntity r " +
+                "WHERE r.familyId = ?1 AND r.childId = ?2 AND r.status = ?3 " +
+                "AND r.taskId IS NOT NULL AND r.createdAt >= ?4 AND r.createdAt < ?5 " +
+                "GROUP BY r.taskId",
+            Object[].class
+        );
+        query.setParameter(1, familyDbId);
+        query.setParameter(2, childId);
+        query.setParameter(3, PurchaseRequestStatus.pending);
+        query.setParameter(4, startInclusive);
+        query.setParameter(5, endExclusive);
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : query.getResultList()) {
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return counts;
     }
 
     public long countPendingItemRequestsInWindow(

@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service.family.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.dto.request.FrequencyPeriod;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -12,7 +13,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Optional;
 
-final class FrequencyWindowService {
+@ApplicationScoped
+public class FrequencyWindowService {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DateTimeFormatter PERIOD_RESET_FORMATTER = DateTimeFormatter.ofPattern("dd.MM HH:mm");
@@ -53,8 +55,17 @@ final class FrequencyWindowService {
         return period != null;
     }
 
-    Instant currentPeriodStart(Instant currentInstant, String period) {
-        ZoneId zoneId = ZoneId.systemDefault();
+    public Optional<FrequencyWindow> resolveCurrentWindow(JsonNode rawFrequency, Instant now, ZoneId zoneId) {
+        Integer limit = extractFrequencyLimit(rawFrequency);
+        if (limit == null) {
+            return Optional.empty();
+        }
+        String period = extractFrequencyPeriod(rawFrequency);
+        Instant start = currentPeriodStart(now, period, zoneId);
+        return Optional.of(new FrequencyWindow(period, limit, start, nextPeriodStart(start, period, zoneId), zoneId));
+    }
+
+    Instant currentPeriodStart(Instant currentInstant, String period, ZoneId zoneId) {
         LocalDate currentDate = currentInstant.atZone(zoneId).toLocalDate();
 
         return switch (period) {
@@ -69,18 +80,18 @@ final class FrequencyWindowService {
         };
     }
 
-    Instant nextPeriodStart(Instant currentPeriodStart, String period) {
+    Instant nextPeriodStart(Instant currentPeriodStart, String period, ZoneId zoneId) {
         return switch (period) {
-            case "week" -> currentPeriodStart.atZone(ZoneId.systemDefault()).plusWeeks(1).toInstant();
-            case "month" -> currentPeriodStart.atZone(ZoneId.systemDefault()).plusMonths(1).toInstant();
-            case "year" -> currentPeriodStart.atZone(ZoneId.systemDefault()).plusYears(1).toInstant();
-            case "season" -> currentPeriodStart.atZone(ZoneId.systemDefault()).plusMonths(3).toInstant();
-            default -> currentPeriodStart.atZone(ZoneId.systemDefault()).plusDays(1).toInstant();
+            case "week" -> currentPeriodStart.atZone(zoneId).plusWeeks(1).toInstant();
+            case "month" -> currentPeriodStart.atZone(zoneId).plusMonths(1).toInstant();
+            case "year" -> currentPeriodStart.atZone(zoneId).plusYears(1).toInstant();
+            case "season" -> currentPeriodStart.atZone(zoneId).plusMonths(3).toInstant();
+            default -> currentPeriodStart.atZone(zoneId).plusDays(1).toInstant();
         };
     }
 
-    String formatResetAt(Instant resetAt, String period) {
-        var zonedResetAt = resetAt.atZone(ZoneId.systemDefault());
+    String formatResetAt(Instant resetAt, String period, ZoneId zoneId) {
+        var zonedResetAt = resetAt.atZone(zoneId);
         if ("day".equals(period)) {
             return zonedResetAt.format(DateTimeFormatter.ofPattern("HH:mm"));
         }

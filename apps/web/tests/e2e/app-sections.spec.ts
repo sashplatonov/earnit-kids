@@ -19,6 +19,7 @@ import {
     registerParent,
     uniqueEmail,
 } from './helpers';
+import { assertCatalogCardLayout } from './cardLayoutAssertions';
 
 const CHILD_NAME = 'Разделы Ребёнок';
 const TASK_TITLE = 'Собрать рюкзак для школы';
@@ -102,6 +103,7 @@ test.describe('Shop section', () => {
         expect(firstPrice).toBeTruthy();
         // Price should be a number
         expect(parseInt(firstPrice ?? '')).toBeGreaterThan(0);
+        await assertCatalogCardLayout(shopList.locator('.shop-card').first());
     });
 
     test('admin can see add, buy, and edit buttons', async ({ page }) => {
@@ -113,6 +115,7 @@ test.describe('Shop section', () => {
     test('shows last purchase and completion badges in card and row views', async ({ page }) => {
         await page.getByRole('link', { name: /Tasks|Задания/i }).click();
         const taskCard = page.locator('#tasks-list .task-card').first();
+        await assertCatalogCardLayout(taskCard);
         await expect(taskCard.locator('.card__badge--history')).toBeVisible();
         await expect(taskCard.locator('.card__badge--history')).toContainText(/Last done|Последнее выполнение/i);
 

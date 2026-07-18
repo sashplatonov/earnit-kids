@@ -71,6 +71,16 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
     }
 
     @Transactional
+    public boolean updateRewardGoal(int childId, Long itemId) {
+        Optional<ChildEntity> opt = findByIdOptional(childId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        opt.get().setRewardGoalItemId(itemId);
+        return true;
+    }
+
+    @Transactional
     public boolean updateName(int childId, String name) {
         Optional<ChildEntity> opt = findByIdOptional(childId);
         if (opt.isEmpty()) {

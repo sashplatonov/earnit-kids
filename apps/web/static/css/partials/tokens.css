@@ -59,6 +59,29 @@
     --touch-stack-gap: clamp(0.6rem, 0.45vw, 0.95rem);
     --touch-target-height: clamp(44px, 3vw, 52px);
 
+    /* Catalog UI contract: Tasks and Shop share these semantic values. */
+    --catalog-control-height: var(--touch-target-height);
+    --catalog-icon-button-size: var(--touch-target-height);
+    --catalog-card-gap: clamp(0.75rem, 1.1vw, 1.25rem);
+    --catalog-card-padding: clamp(0.8rem, 1.2vw, 1.15rem);
+    --catalog-chip-gap: 0.4rem;
+    --catalog-chip-padding-block: 0.3rem;
+    --catalog-chip-padding-inline: 0.58rem;
+    --catalog-action-min-width: 7.5rem;
+    --catalog-progress-track: color-mix(in oklch, var(--color-primary) 12%, white);
+    --catalog-progress-fill: var(--gradient-success);
+    --catalog-status-available-bg: color-mix(in oklch, var(--color-success) 16%, white);
+    --catalog-status-available-text: oklch(0.36 0.08 155);
+    --catalog-status-pending-bg: color-mix(in oklch, var(--color-secondary) 16%, white);
+    --catalog-status-pending-text: oklch(0.36 0.07 220);
+    --catalog-status-locked-bg: color-mix(in oklch, var(--color-danger) 12%, white);
+    --catalog-status-locked-text: oklch(0.38 0.1 28);
+    --catalog-surface-radius: clamp(1rem, 1.5vw, 1.35rem);
+    --catalog-surface-border: color-mix(in oklch, var(--color-primary) 18%, transparent);
+    --catalog-surface-shadow: 0 12px 32px rgba(88, 72, 58, 0.08);
+    --catalog-header-surface: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 7%, white), color-mix(in oklch, var(--color-secondary) 7%, white));
+    --catalog-selected-surface: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 14%, white), color-mix(in oklch, var(--color-secondary) 12%, white));
+
     --gradient-primary: linear-gradient(135deg, oklch(0.72 0.11 72) 0%, var(--color-primary) 55%, oklch(0.6 0.11 24) 100%);
     --gradient-warm-cta: linear-gradient(135deg, oklch(0.8 0.11 76) 0%, oklch(0.69 0.12 44) 55%, oklch(0.62 0.11 24) 100%);
     --gradient-admin-header: linear-gradient(135deg, oklch(0.33 0.02 48) 0%, oklch(0.44 0.03 34) 100%);

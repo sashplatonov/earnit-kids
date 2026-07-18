@@ -154,7 +154,8 @@
         justify-content: center;
         gap: 0.38rem;
         border: 0;
-        min-height: 2.3rem;
+        min-width: var(--catalog-icon-button-size);
+        min-height: var(--catalog-control-height);
         padding: 0.56rem 0.86rem;
         border-radius: 999px;
         background: transparent;
@@ -240,9 +241,10 @@
         }
 
         .section-controls__icon-btn {
-            width: 2.22rem;
-            height: 2.22rem;
-            min-height: 2.22rem;
+            width: var(--catalog-icon-button-size);
+            height: var(--catalog-icon-button-size);
+            min-width: var(--catalog-icon-button-size);
+            min-height: var(--catalog-icon-button-size);
             padding: 0;
         }
 

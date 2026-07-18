@@ -6,17 +6,12 @@ import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
+import com.sashplatonov.earnit.kids.dto.request.RewardGoalRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
 import com.sashplatonov.earnit.kids.exception.ImportValidationException;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
-import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyRepository;
-import com.sashplatonov.earnit.kids.repository.HistoryRepository;
-import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
-import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
-import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.service.family.action.FamilyActionService;
 import com.sashplatonov.earnit.kids.service.family.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
@@ -24,6 +19,7 @@ import com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationServi
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
@@ -250,6 +246,32 @@ public class FamilyResource extends FamilyResourceSupport {
             auth.childId(),
             itemId,
             payload != null ? payload.note() : null
+        );
+        notifyDataUpdated(auth, auth.childId(), result);
+        return toResponse(result);
+    }
+
+    @POST
+    @Path("/shop/reward-goal")
+    @Operation(summary = "Select or clear the authenticated child's reward goal")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Reward goal updated",
+            content = @Content(schema = @Schema(implementation = FamilyDataResponse.class))),
+        @APIResponse(responseCode = "400", description = "Reward item is invalid",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Child authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response setRewardGoal(@Context ContainerRequestContext ctx,
+                                  @RequestBody(required = true, description = "Reward item ID, or null to clear")
+                                  @Valid @NotNull RewardGoalRequest request) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isChild()) {
+            return unauthorized();
+        }
+
+        OperationResult<FamilyDataResponse> result = familyActionService.setRewardGoal(
+            auth.familyId(), auth.childId(), request.itemId()
         );
         notifyDataUpdated(auth, auth.childId(), result);
         return toResponse(result);

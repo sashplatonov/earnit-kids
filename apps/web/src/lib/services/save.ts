@@ -13,8 +13,11 @@ let saveInFlight: Promise<boolean> = Promise.resolve(false);
 
 function buildPayload(): Record<string, unknown> {
     const s = get(appStore);
+    const selectedChild = s.children.find((child) => String(child.id) === String(s.currentChildId))
+        ?? s.children[0]
+        ?? null;
     return {
-        childId: s.currentChildId,
+        childId: selectedChild?.id ?? s.currentChildId,
         balance: s.balance,
         rules: s.rules,
         tasks: s.tasks,
@@ -34,6 +37,9 @@ function applyServerResponse(data: unknown): void {
     if (Array.isArray(normalized.shop)) partial.shopItems = (normalized.shop as unknown as AppState['shopItems']);
     if (Array.isArray(normalized.history)) partial.history = (normalized.history as unknown as AppState['history']);
     if (Array.isArray(normalized.requests)) partial.requests = (normalized.requests as unknown as AppState['requests']);
+    if (Array.isArray((data as Record<string, unknown>).children)) {
+        partial.children = (normalized.children as unknown as AppState['children']);
+    }
     if ('rules' in normalized) partial.rules = (normalized.rules as string | null | undefined) ?? null;
     if (typeof (data as Record<string, unknown>).balance === 'number') {
         partial.balance = (data as Record<string, unknown>).balance as number;

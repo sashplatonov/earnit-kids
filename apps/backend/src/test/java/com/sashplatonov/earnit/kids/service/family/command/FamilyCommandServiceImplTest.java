@@ -95,6 +95,8 @@ class FamilyCommandServiceImplTest {
             "group", "Home",
             "frequency", Map.of("limit", 1, "period", "day"),
             "comment", "Daily",
+            "cue_when", "after dinner",
+            "cue_action", "read ten pages",
             "money_limit", 12
         )));
         commandPayload.put("shop", List.of(Map.of(
@@ -120,7 +122,9 @@ class FamilyCommandServiceImplTest {
 
         ArgumentCaptor<TaskUpsertCommand> taskCommandCaptor = ArgumentCaptor.forClass(TaskUpsertCommand.class);
         verify(taskRepository).upsertTask(taskCommandCaptor.capture());
-        assertThat(taskCommandCaptor.getValue().name()).isEqualTo("Read");
+        assertThat(taskCommandCaptor.getValue().content().name()).isEqualTo("Read");
+        assertThat(taskCommandCaptor.getValue().content().cueWhen()).isEqualTo("after dinner");
+        assertThat(taskCommandCaptor.getValue().content().cueAction()).isEqualTo("read ten pages");
 
         ArgumentCaptor<ShopItemUpsertCommand> shopCommandCaptor =
             ArgumentCaptor.forClass(ShopItemUpsertCommand.class);
@@ -161,6 +165,24 @@ class FamilyCommandServiceImplTest {
         verify(familyRepository, never()).updateRules(anyString(), any());
         verify(childRepository).updateBalance(10, 42);
         verify(childRepository, never()).updateBalance(11, 9000);
+    }
+
+    @Test
+    void saveFamilyData_deletedGoalItem_clearsRewardGoal() {
+        ChildEntity child = child(10, 1, "Alice", 10);
+        child.setRewardGoalItemId(201L);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.getChildren(1)).thenReturn(List.of(child));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.isActiveItem(1, 10, 201L)).thenReturn(false);
+        when(familyDashboardQueryService.loadFamilyData(anyString(), any(), anyBoolean()))
+            .thenReturn(OperationResult.success(new FamilyDataResponse(0, null, List.of(), List.of(), List.of(),
+                List.of(), List.of(), false, List.of(), null, null, null, null)));
+
+        assertThat(service.saveFamilyData("fam-1", 10, Map.of("shop", List.of()), false))
+            .isInstanceOf(OperationResult.Success.class);
+
+        verify(childRepository).updateRewardGoal(10, null);
     }
 
     private static ChildEntity child(int id, int familyDbId, String name, int balance) {

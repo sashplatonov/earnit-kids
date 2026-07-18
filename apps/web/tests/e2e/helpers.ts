@@ -61,6 +61,16 @@ export async function registerParent(page: Page, email: string, password = DEFAU
         throw new Error(`Register failed (${response.status()}): ${await response.text()}`);
     }
 
+    await page.goto('/app');
+    await page.waitForURL(/\/(?:[a-z]{2}\/)?app\/[a-z-]+$/, { timeout: 3_500 }).catch(() => undefined);
+    const appNavigation = page.getByRole('navigation', { name: /Main navigation|Основная навигация/i });
+    await appNavigation.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => undefined);
+    if (/\/(?:[a-z]{2}\/)?app(?:\/[a-z-]+)?$/.test(new URL(page.url()).pathname)
+        || await appNavigation.isVisible().catch(() => false)) {
+        await expect(page.getByRole('heading', { name: /EarnIt Kids/i })).toBeVisible();
+        return;
+    }
+
     const loginPanel = page.locator('[aria-label="Sign-in form"], [aria-label="Форма входа"]');
     if (!(await loginPanel.isVisible().catch(() => false))) {
         await page.waitForTimeout(3_100);
@@ -139,7 +149,9 @@ export async function getChildMagicLink(page: Page) {
     await openSettings(page);
     const input = page.locator('#settings-child-link-input-inline');
     await expect(input).toHaveValue(/\/login-child\//);
-    return input.inputValue();
+    const value = await input.inputValue();
+    const url = new URL(value, page.url());
+    return `${url.pathname}${url.search}${url.hash}`;
 }
 
 export async function loginChildByMagicLink(page: Page, childLink: string, taskTitle?: string) {

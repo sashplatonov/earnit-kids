@@ -24,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sashplatonov.earnit.kids.repository.command.ShopItemUpsertCommand;
+import com.sashplatonov.earnit.kids.repository.command.TaskContentCommand;
 import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
 @QuarkusTest
 class RepositorySmokeTest {
@@ -101,11 +102,14 @@ class RepositorySmokeTest {
         long itemExternalId = 80001L;
 
         assertThat(taskRepository.upsertTask(new TaskUpsertCommand(
-            familyDbId, child1.getId(), taskExternalId, "Read", 5, "Study",
-            OBJECT_MAPPER.readTree("{\"period\":\"day\"}"), "comment", 100, false, false))).isTrue();
+            familyDbId, child1.getId(), taskExternalId,
+            new TaskContentCommand("Read", 5, "Study", "comment", "after breakfast", "read ten pages"),
+            OBJECT_MAPPER.readTree("{\"period\":\"day\"}"),
+            100, false, false))).isTrue();
         assertThat(taskRepository.upsertTask(new TaskUpsertCommand(
-            familyDbId, child1.getId(), taskExternalId, "Read updated", 6, "Study",
-            OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), "comment2", 150, true, false))).isTrue();
+            familyDbId, child1.getId(), taskExternalId,
+            new TaskContentCommand("Read updated", 6, "Study", "comment2", "after dinner", "pack the book"),
+            OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), 150, true, false))).isTrue();
         assertThat(shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
             familyDbId, child1.getId(), itemExternalId, "Toy", 7, "Fun",
             OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false, false))).isTrue();
@@ -120,6 +124,8 @@ class RepositorySmokeTest {
             .filter(taskEntity -> taskEntity.getTaskId() == taskExternalId)
             .findFirst()
             .orElseThrow();
+        assertThat(storedTask.getCueWhen()).isEqualTo("after dinner");
+        assertThat(storedTask.getCueAction()).isEqualTo("pack the book");
         assertThat(storedTask.isActive()).isTrue();
         assertThat(storedTask.isDeleted()).isFalse();
 

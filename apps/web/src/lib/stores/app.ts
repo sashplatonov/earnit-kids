@@ -9,12 +9,26 @@ export interface Task {
     isActive?: boolean;
     groupName?: string | null;
     comment?: string | null;
+    cueWhen?: string | null;
+    cueAction?: string | null;
     moneyLimit?: number | null;
     frequency?: { period?: string; limit?: number } | null;
     ageMin?: number | null;
     ageMax?: number | null;
     lastCompletedAt?: string | null;
+    periodProgress?: TaskPeriodProgress | null;
     [key: string]: unknown;
+}
+
+export interface TaskPeriodProgress {
+    period: string;
+    completed: number;
+    pending: number;
+    limit: number;
+    remaining: number;
+    available: boolean;
+    windowStart: string;
+    resetAt: string;
 }
 
 export interface ShopItem {
@@ -87,6 +101,7 @@ export interface Child {
     id: number | string;
     nickname: string;
     balance: number;
+    rewardGoalItemId?: number | string | null;
     monthlyLimit?: number;
     dailyCoinLimit?: number;
     isPinSet?: boolean;

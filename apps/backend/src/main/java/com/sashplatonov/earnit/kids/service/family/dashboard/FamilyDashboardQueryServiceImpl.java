@@ -35,7 +35,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
                 return OperationResult.success(responseAssembler.emptyShellResponse(scope.rules(), adminSession));
             }
 
-            FamilyDashboardCatalogContext catalog = catalogLoader.loadCatalogContext(scope.activeChild().getId());
+            FamilyDashboardCatalogContext catalog = catalogLoader.loadCatalogContext(scope.familyDbId(), scope.activeChild().getId());
             return OperationResult.success(responseAssembler.buildShellResponse(scope, catalog, adminSession));
         });
     }
@@ -54,7 +54,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
                 return OperationResult.success(new FamilyDashboardDetailResponse(List.of(), List.of(), List.of()));
             }
 
-            FamilyDashboardCatalogContext catalog = catalogLoader.loadCatalogContext(scope.activeChild().getId());
+            FamilyDashboardCatalogContext catalog = catalogLoader.loadCatalogContext(scope.familyDbId(), scope.activeChild().getId());
             return OperationResult.success(responseAssembler.buildDetailResponse(scope, catalog, adminSession));
         });
     }
@@ -72,7 +72,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
                 return OperationResult.success(responseAssembler.emptyFamilyDataResponse(scope.rules(), adminSession));
             }
 
-            FamilyDashboardCatalogContext catalog = catalogLoader.loadCatalogContext(scope.activeChild().getId());
+            FamilyDashboardCatalogContext catalog = catalogLoader.loadCatalogContext(scope.familyDbId(), scope.activeChild().getId());
             return OperationResult.success(responseAssembler.buildFamilyDataResponse(scope, catalog, adminSession));
         });
     }

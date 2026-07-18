@@ -6,11 +6,8 @@ public record TaskUpsertCommand(
     int familyDbId,
     int childId,
     long taskId,
-    String name,
-    int coins,
-    String groupName,
+    TaskContentCommand content,
     JsonNode frequency,
-    String comment,
     Integer moneyLimit,
     boolean active,
     boolean deleted

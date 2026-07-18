@@ -56,6 +56,12 @@ public class TaskEntity extends CreatedAtEntity {
     @Column(name = "comment")
     private String comment;
 
+    @Column(name = "cue_when")
+    private String cueWhen;
+
+    @Column(name = "cue_action")
+    private String cueAction;
+
     @Column(name = "money_limit")
     private Integer moneyLimit;
 

@@ -19,6 +19,8 @@ import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.service.family.action.FrequencyWindowService;
+import com.sashplatonov.earnit.kids.service.observability.BackendKpiMetrics;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -36,9 +38,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
-import com.sashplatonov.earnit.kids.service.observability.BackendKpiMetrics;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class FamilyDashboardQueryServiceImplTest {
@@ -67,6 +70,10 @@ class FamilyDashboardQueryServiceImplTest {
             historyRepository,
             taskRepository,
             shopItemRepository,
+            purchaseRequestRepository,
+            familyRepository,
+            () -> FIXED_NOW,
+            new FrequencyWindowService(),
             mapper,
             OBJECT_MAPPER
         );
@@ -112,6 +119,7 @@ class FamilyDashboardQueryServiceImplTest {
         child1.setChildShopGroupOrder("[\"Выходные\",\"Призы\"]");
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getRules("fam-1")).thenReturn(Optional.of("Bedtime by 20:30"));
+        when(familyRepository.getTimezone(1)).thenReturn(Optional.of("Europe/Belgrade"));
         when(familyRepository.getLastSelectedChildId("fam-1")).thenReturn(Optional.of(11));
         when(childRepository.getChildren(1)).thenReturn(List.of(child1, child2));
 
@@ -161,6 +169,10 @@ class FamilyDashboardQueryServiceImplTest {
             .thenReturn(java.util.Map.of(1001L, FIXED_NOW));
         when(historyRepository.loadLatestTimestampsByRelatedId(10, HistoryEntryType.spend))
             .thenReturn(java.util.Map.of(2001L, FIXED_NOW.minus(Duration.ofDays(1))));
+        when(historyRepository.countTaskEarnsInWindowByTask(anyInt(), anyInt(), any(), any()))
+            .thenReturn(java.util.Map.of(1001L, 0L));
+        when(purchaseRequestRepository.countPendingTaskRequestsInWindowByTask(anyInt(), anyInt(), any(), any()))
+            .thenReturn(java.util.Map.of(1001L, 1L));
         when(purchaseRequestRepository.getRequests(1, 50, 0)).thenReturn(List.of(request));
         when(friendRepository.getFriendChildIds(10)).thenReturn(List.of(11));
         when(childRepository.findByChildIds(List.of(11))).thenReturn(List.of(child2));
@@ -180,6 +192,9 @@ class FamilyDashboardQueryServiceImplTest {
         assertThat(payload.history().getFirst().title()).isEqualTo("Read");
         assertThat(payload.requests().getFirst().title()).isEqualTo("Toy");
         assertThat(payload.tasks().getFirst().lastCompletedAt()).isEqualTo(FIXED_NOW.toString());
+        assertThat(payload.tasks().getFirst().periodProgress().completed()).isZero();
+        assertThat(payload.tasks().getFirst().periodProgress().pending()).isEqualTo(1);
+        assertThat(payload.tasks().getFirst().periodProgress().available()).isFalse();
         assertThat(payload.shop().getFirst().lastPurchasedAt()).isEqualTo(FIXED_NOW.minus(Duration.ofDays(1)).toString());
     }
 

@@ -58,6 +58,10 @@ final class FamilyActionSupportService {
             .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
     }
 
+    void clearRewardGoal(int childId) {
+        childRepository.updateRewardGoal(childId, null);
+    }
+
     Optional<TaskEntity> findActiveTask(int familyDbId, int childId, long taskId) {
         return taskRepository.find(
             "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",

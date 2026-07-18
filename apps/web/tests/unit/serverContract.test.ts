@@ -89,6 +89,45 @@ describe('normalizeTask', () => {
         expect(task.coins).toBe(15);
     });
 
+    it('normalizes if-then cue aliases', () => {
+        const task = normalizeTask({ name: 'Read', cue_when: 'after dinner', cue_action: 'read ten pages' });
+
+        expect(task.cueWhen).toBe('after dinner');
+        expect(task.cueAction).toBe('read ten pages');
+    });
+
+    it('normalizes additive period progress without breaking legacy tasks', () => {
+        const task = normalizeTask({
+            name: 'Убрать комнату',
+            coins: 20,
+            period_progress: {
+                period: 'day',
+                completed: 1,
+                pending: 1,
+                limit: 2,
+                remaining: 0,
+                available: false,
+                window_start: '2026-07-18T00:00:00Z',
+                reset_at: '2026-07-19T00:00:00Z',
+            },
+        });
+
+        expect(task.periodProgress).toEqual({
+            period: 'day',
+            completed: 1,
+            pending: 1,
+            limit: 2,
+            remaining: 0,
+            available: false,
+            windowStart: '2026-07-18T00:00:00Z',
+            resetAt: '2026-07-19T00:00:00Z',
+        });
+    });
+
+    it('keeps progress nullable for legacy task payloads', () => {
+        expect(normalizeTask({ name: 'Читать', coins: 10 }).periodProgress).toBeNull();
+    });
+
     it('maps title -> name when name is absent', () => {
         const task = normalizeTask({ title: 'Полить цветы', coins: 5 });
         expect(task.name).toBe('Полить цветы');

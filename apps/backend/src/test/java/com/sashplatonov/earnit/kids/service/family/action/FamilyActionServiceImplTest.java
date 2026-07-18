@@ -78,6 +78,7 @@ class FamilyActionServiceImplTest {
             purchaseRequestRepository,
             familyService,
             TestConfigFactory.timeProvider(FIXED_NOW),
+            new FrequencyWindowService(),
             backendKpiMetrics
         );
     }
@@ -133,6 +134,41 @@ class FamilyActionServiceImplTest {
         assertThat(captor.getValue().getTaskName()).isEqualTo("Убрать комнату");
         assertThat(captor.getValue().getCoins()).isEqualTo(50);
         verify(familyService).loadFamilyData("fam-1", 10, false);
+    }
+
+    @Test
+    void setRewardGoal_activeOwnedItem_persistsAndReturnsChildSnapshot() {
+        ChildEntity child = child(10, 1, "Alice", 0);
+        ShopItemEntity item = shopItem(10, 1, 2001L, "Console", 7);
+        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
+        FamilyDataResponse payload = emptyPayload(false, 10);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find(
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
+            1, 10, 2001L
+        )).thenReturn(itemQuery);
+        when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.setRewardGoal("fam-1", 10, 2001L);
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        verify(childRepository).updateRewardGoal(10, 2001L);
+    }
+
+    @Test
+    void setRewardGoal_itemOutsideChildScope_returnsFailureWithoutMutation() {
+        ChildEntity child = child(10, 1, "Alice", 0);
+        io.quarkus.hibernate.orm.panache.PanacheQuery emptyItemQuery = queryOf();
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find(
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
+            1, 10, 999L
+        )).thenReturn(emptyItemQuery);
+
+        assertThat(service.setRewardGoal("fam-1", 10, 999L)).isInstanceOf(OperationResult.Failure.class);
+        verify(childRepository, never()).updateRewardGoal(10, 999L);
     }
 
     @Test
@@ -486,6 +522,7 @@ class FamilyActionServiceImplTest {
     @Test
     void bulkShopItemAction_block_marksSelectedItemsInactive() {
         ChildEntity child = child(10, 1, "Alice", 20);
+        child.setRewardGoalItemId(2001L);
         ShopItemEntity first = shopItem(10, 1, 2001L, "Console", 7);
         ShopItemEntity second = shopItem(10, 1, 2002L, "Game", 5);
         io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOfList(first, second);
@@ -504,6 +541,7 @@ class FamilyActionServiceImplTest {
         assertThat(successValue(result)).isEqualTo(payload);
         assertThat(first.isActive()).isFalse();
         assertThat(second.isActive()).isFalse();
+        verify(childRepository).updateRewardGoal(10, null);
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
@@ -558,11 +596,11 @@ class FamilyActionServiceImplTest {
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.taskId() == 1L
-                && "Clean desk".equals(command.name())
-                && command.coins() == 10
-                && "Home".equals(command.groupName())
+                && "Clean desk".equals(command.content().name())
+                && command.content().coins() == 10
+                && "Home".equals(command.content().groupName())
                 && command.frequency() != null
-                && command.comment() == null
+                && command.content().comment() == null
                 && command.moneyLimit() == null
                 && command.active()
                 && !command.deleted()
@@ -571,11 +609,11 @@ class FamilyActionServiceImplTest {
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.taskId() == 2L
-                && "Read book".equals(command.name())
-                && command.coins() == 5
-                && command.groupName() == null
+                && "Read book".equals(command.content().name())
+                && command.content().coins() == 5
+                && command.content().groupName() == null
                 && command.frequency() == null
-                && "Before bed".equals(command.comment())
+                && "Before bed".equals(command.content().comment())
                 && command.moneyLimit() == 15
                 && !command.active()
                 && !command.deleted()

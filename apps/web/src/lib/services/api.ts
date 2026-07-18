@@ -60,12 +60,17 @@ async function parseJsonSafe<T = unknown>(res: Response): Promise<T | null> {
 }
 
 async function postJson<T = unknown>(url: string, body: unknown): Promise<T | null> {
-    const res = await fetchWithCsrf(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    });
-    return parseJsonSafe<T>(res);
+    try {
+        const res = await fetchWithCsrf(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        return res.ok ? parseJsonSafe<T>(res) : null;
+    } catch (err) {
+        logClientError('api.post_failed', 'POST request failed', { url, error: err });
+        return null;
+    }
 }
 
 function extractProblemMessage(payload: unknown): string {
@@ -196,13 +201,28 @@ async function flushPendingCrudSave(): Promise<void> {
 }
 
 async function postJsonAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<T | null> {
-    await flushPendingCrudSave();
-    return postJson<T>(url, body);
+    try {
+        await flushPendingCrudSave();
+        return postJson<T>(url, body);
+    } catch (err) {
+        logClientError('api.pending_save_failed', 'Pending save failed before POST request', { url, error: err });
+        return null;
+    }
 }
 
 async function postJsonResultAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
-    await flushPendingCrudSave();
-    return postJsonResult<T>(url, body);
+    try {
+        await flushPendingCrudSave();
+        return postJsonResult<T>(url, body);
+    } catch (err) {
+        logClientError('api.pending_save_failed', 'Pending save failed before POST request', { url, error: err });
+        return {
+            ok: false,
+            error: 'Не удалось сохранить последние изменения. Попробуйте еще раз.',
+            errorCode: null,
+            status: 0,
+        };
+    }
 }
 
 async function postBoolean(url: string, body: unknown, errorMsg?: string): Promise<boolean> {
@@ -410,6 +430,9 @@ export const requestItem = (itemId: unknown) =>
 /** Child: create a purchase request with optional note. */
 export const requestItemWithNote = (itemId: unknown, note?: string | null) =>
     postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request`, { note: note ?? null });
+
+export const setRewardGoal = (itemId: number | string | null) =>
+    postJsonResult('/api/shop/reward-goal', { itemId });
 
 export type BulkAction = 'delete' | 'block' | 'unblock' | 'change_group';
 

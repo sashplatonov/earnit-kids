@@ -31,7 +31,8 @@ final class FamilyActionBulkService {
         if (familyDbId.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
-        if (supportService.findFamilyChild(familyDbId.get(), request.childId()).isEmpty()) {
+        var child = supportService.findFamilyChild(familyDbId.get(), request.childId());
+        if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
@@ -67,7 +68,6 @@ final class FamilyActionBulkService {
         if (actionError != null) {
             return OperationResult.failure(actionError);
         }
-
         return supportService.loadFamilyData(familyId, request.childId(), true);
     }
 
@@ -76,7 +76,8 @@ final class FamilyActionBulkService {
         if (familyDbId.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
-        if (supportService.findFamilyChild(familyDbId.get(), request.childId()).isEmpty()) {
+        var child = supportService.findFamilyChild(familyDbId.get(), request.childId());
+        if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
@@ -111,6 +112,11 @@ final class FamilyActionBulkService {
         );
         if (actionError != null) {
             return OperationResult.failure(actionError);
+        }
+        if ((action == BulkActionType.delete || action == BulkActionType.block)
+            && child.map(entity -> entity.getRewardGoalItemId() != null && itemIds.contains(entity.getRewardGoalItemId()))
+                .orElse(false)) {
+            supportService.clearRewardGoal(request.childId());
         }
 
         return supportService.loadFamilyData(familyId, request.childId(), true);

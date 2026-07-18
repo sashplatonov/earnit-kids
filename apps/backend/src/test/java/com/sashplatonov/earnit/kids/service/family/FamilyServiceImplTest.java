@@ -745,10 +745,10 @@ class FamilyServiceImplTest {
             assertThat(command.familyDbId()).isEqualTo(1);
             assertThat(command.childId()).isEqualTo(10);
             assertThat(command.taskId()).isEqualTo(101L);
-            assertThat(command.name()).isEqualTo("Read");
-            assertThat(command.coins()).isEqualTo(5);
-            assertThat(command.groupName()).isEqualTo("Home");
-            assertThat(command.comment()).isEqualTo("Daily");
+            assertThat(command.content().name()).isEqualTo("Read");
+            assertThat(command.content().coins()).isEqualTo(5);
+            assertThat(command.content().groupName()).isEqualTo("Home");
+            assertThat(command.content().comment()).isEqualTo("Daily");
             assertThat(command.moneyLimit()).isEqualTo(12);
             assertThat(command.active()).isTrue();
             assertThat(command.deleted()).isFalse();
@@ -817,11 +817,11 @@ class FamilyServiceImplTest {
             command.familyDbId() == 1
                 && command.childId() == 10
                 && command.taskId() == 101L
-                && "Read".equals(command.name())
-                && command.coins() == 5
-                && "Home".equals(command.groupName())
+                && "Read".equals(command.content().name())
+                && command.content().coins() == 5
+                && "Home".equals(command.content().groupName())
                 && command.frequency() != null
-                && command.comment() == null
+                && command.content().comment() == null
                 && command.moneyLimit() == null
                 && !command.active()
                 && command.deleted()

@@ -475,6 +475,27 @@ describe('fetchWithCsrf', () => {
         expect(callOrder).toEqual(['flush', 'fetch']);
     });
 
+    it('does not treat rejected admin actions as successful payloads', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ detail: 'Task limit reached' }, 400));
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(earnCoins(101, 15)).resolves.toBeNull();
+    });
+
+    it('returns a recoverable failure when pending save flushing fails', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        vi.mocked(flushPendingSave).mockRejectedValue(new Error('save failed'));
+        const fetchMock = vi.fn();
+
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(requestCoins(101)).resolves.toMatchObject({ ok: false, status: 0 });
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it('wraps group-order saves into the shared ok/data action result contract', async () => {
         const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
 

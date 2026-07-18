@@ -219,9 +219,12 @@ public class SuperAdminService {
             task.getGroupName(),
             parseFrequency(task.getFrequency()),
             task.getComment(),
+            task.getCueWhen(),
+            task.getCueAction(),
             task.getMoneyLimit(),
             !task.isDeleted(),
             task.getChildId(),
+            null,
             null
         );
     }

@@ -40,6 +40,7 @@ export function normalizeChild(child: Record<string, unknown> = {}) {
         childShopGroupOrder: readStringArray(child.childShopGroupOrder ?? child.child_shop_group_order),
         id: (child.id ?? child.childId ?? null) as unknown,
         balance: (child.balance ?? 0) as number,
+        rewardGoalItemId: (child.rewardGoalItemId ?? child.reward_goal_item_id ?? null) as number | string | null,
         isPinSet: (child.isPinSet ?? child.is_pin_set ?? false) as boolean,
         ageMin: (child.ageMin ?? child.age_min ?? null) as number | null,
         ageMax: (child.ageMax ?? child.age_max ?? null) as number | null,
@@ -58,12 +59,46 @@ export function normalizeTask(task: Record<string, unknown> = {}) {
         isActive: isActive == null ? true : parseBoolean(isActive),
         groupName: task.groupName ?? task.group ?? null,
         comment: task.comment ?? null,
+        cueWhen: task.cueWhen ?? task.cue_when ?? null,
+        cueAction: task.cueAction ?? task.cue_action ?? null,
         moneyLimit: task.moneyLimit ?? task.money_limit ?? null,
         ageMin: task.ageMin ?? task.age_min ?? null,
         ageMax: task.ageMax ?? task.age_max ?? null,
         lastCompletedAt: task.lastCompletedAt ?? task.last_completed_at ?? null,
         childId: (task.childId ?? null) as unknown,
         frequency: (task.frequency ?? null) as unknown,
+        periodProgress: normalizeTaskPeriodProgress(task.periodProgress ?? task.period_progress),
+    };
+}
+
+function normalizeTaskPeriodProgress(value: unknown) {
+    if (!value || typeof value !== 'object') {
+        return null;
+    }
+    const progress = value as Record<string, unknown>;
+    const period = typeof progress.period === 'string' ? progress.period : '';
+    const windowStart = typeof progress.windowStart === 'string'
+        ? progress.windowStart
+        : typeof progress.window_start === 'string' ? progress.window_start : '';
+    const resetAt = typeof progress.resetAt === 'string'
+        ? progress.resetAt
+        : typeof progress.reset_at === 'string' ? progress.reset_at : '';
+    if (!period || !windowStart || !resetAt) {
+        return null;
+    }
+    const limit = Number(progress.limit ?? 0);
+    const completed = Number(progress.completed ?? 0);
+    const pending = Number(progress.pending ?? 0);
+    const remaining = Number(progress.remaining ?? Math.max(0, limit - completed - pending));
+    return {
+        period,
+        completed: Number.isFinite(completed) ? Math.max(0, completed) : 0,
+        pending: Number.isFinite(pending) ? Math.max(0, pending) : 0,
+        limit: Number.isFinite(limit) ? Math.max(0, limit) : 0,
+        remaining: Number.isFinite(remaining) ? Math.max(0, remaining) : 0,
+        available: progress.available !== false,
+        windowStart,
+        resetAt,
     };
 }
 

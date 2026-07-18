@@ -56,11 +56,13 @@ public class TaskRepository implements PanacheRepositoryBase<TaskEntity, Long> {
             .firstResultOptional();
         if (existing.isPresent()) {
             TaskEntity task = existing.get();
-            task.setName(command.name());
-            task.setCoins(command.coins());
-            task.setGroupName(command.groupName());
+            task.setName(command.content().name());
+            task.setCoins(command.content().coins());
+            task.setGroupName(command.content().groupName());
             task.setFrequency(command.frequency());
-            task.setComment(command.comment());
+            task.setComment(command.content().comment());
+            task.setCueWhen(command.content().cueWhen());
+            task.setCueAction(command.content().cueAction());
             task.setMoneyLimit(command.moneyLimit());
             task.setActive(command.active());
             task.setDeleted(command.deleted());
@@ -69,11 +71,13 @@ public class TaskRepository implements PanacheRepositoryBase<TaskEntity, Long> {
                 .familyId(command.familyDbId())
                 .childId(command.childId())
                 .taskId(command.taskId())
-                .name(command.name())
-                .coins(command.coins())
-                .groupName(command.groupName())
+                .name(command.content().name())
+                .coins(command.content().coins())
+                .groupName(command.content().groupName())
                 .frequency(command.frequency())
-                .comment(command.comment())
+                .comment(command.content().comment())
+                .cueWhen(command.content().cueWhen())
+                .cueAction(command.content().cueAction())
                 .moneyLimit(command.moneyLimit())
                 .active(command.active())
                 .deleted(command.deleted())

@@ -16,6 +16,7 @@ import com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
+import com.sashplatonov.earnit.kids.dto.request.RewardGoalRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateParentMembershipRequest;
@@ -144,6 +145,27 @@ class FamilyResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyService).saveFamilyData("fam-1", 10, body, false);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
+    }
+
+    @Test
+    void setRewardGoal_childSession_usesAuthenticatedChild() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), false, List.of(), null, null, null, null);
+        when(familyActionService.setRewardGoal("fam-1", 10, 2001L))
+            .thenReturn(OperationResult.success(payload));
+
+        Response response = resource.setRewardGoal(contextWithAuth(childAuth(10)), new RewardGoalRequest(2001L));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).setRewardGoal("fam-1", 10, 2001L);
+    }
+
+    @Test
+    void setRewardGoal_adminSession_returnsUnauthorized() {
+        Response response = resource.setRewardGoal(contextWithAuth(adminAuth()), new RewardGoalRequest(2001L));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(familyActionService, never()).setRewardGoal(anyString(), anyInt(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

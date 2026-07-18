@@ -1,6 +1,13 @@
 <script lang="ts">
     import { browser } from '$app/environment';
+    import { onMount } from 'svelte';
     import CardHeader from '$lib/components/app/CardHeader.svelte';
+    import TodaySummary from '$lib/components/app/catalog/TodaySummary.svelte';
+    import CatalogActionFeedback from '$lib/components/app/catalog/CatalogActionFeedback.svelte';
+    import CatalogGroupNav from '$lib/components/app/catalog/CatalogGroupNav.svelte';
+    import CatalogProgress from '$lib/components/app/catalog/CatalogProgress.svelte';
+    import CatalogSectionHeader from '$lib/components/app/catalog/CatalogSectionHeader.svelte';
+    import CatalogCard from '$lib/components/app/catalog/CatalogCard.svelte';
     import BulkActionToolbar from '$lib/components/app/BulkActionToolbar.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
@@ -22,6 +29,10 @@
     import { requestGroupName } from '$lib/services/groupPrompt';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
+    import { buildTodayTaskSummary } from '$lib/services/todayTaskViewModel';
+    import { recordCatalogEvent } from '$lib/services/catalogTelemetry';
+    import { readCatalogViewState, writeCatalogViewState } from '$lib/services/catalogViewState';
+    import { buildTaskCatalogItemViewModel } from '$lib/services/catalogItemViewModel';
 
     const i18n = useI18n();
 
@@ -37,6 +48,8 @@
     let isSavingGroupOrder = false;
     let viewMode: CardViewMode = 'list';
     let groupOrderEditor: { openEditor: () => void } | null = null;
+    let pendingTaskIds: string[] = [];
+    let taskFeedback: Record<string, { status: 'pending' | 'success' | 'error'; message: string }> = {};
     const loadedViewRole: { value: CardViewRole | null } = { value: null };
     const loadedChildScope: { value: string } = { value: '' };
 
@@ -61,15 +74,15 @@
         isBulkMode = false;
         selectedTaskIds = [];
     }
-    $: if (selectedGroup && !groups.includes(selectedGroup)) {
-        clearBulkSelection();
-        selectedGroup = '';
+    $: if (selectedGroup && groups.length > 0 && !groups.includes(selectedGroup)) {
+        setSelectedGroup('', { replace: true });
     }
     $: {
         const nextChildScope = String(resolvedChildId ?? '');
         if (loadedChildScope.value !== nextChildScope) {
             isBulkMode = false;
             selectedTaskIds = [];
+            taskFeedback = {};
             loadedChildScope.value = nextChildScope;
         }
     }
@@ -91,6 +104,23 @@
                   return 0;
               })
         : sortItemsByGroup(tasks, groups, (task) => normalizeGroupLabel(task.groupName));
+    $: todaySummary = buildTodayTaskSummary(tasks);
+    $: rewardGoal = $appStore.shopItems.find((item) => String(item.id) === String(currentChild?.rewardGoalItemId)) ?? null;
+
+    onMount(() => {
+        const applyLocation = () => {
+            const state = readCatalogViewState(new URL(window.location.href), viewMode);
+            const resolvedGroup = groups.length === 0 || groups.includes(state.group) ? state.group : '';
+            selectedGroup = resolvedGroup;
+            viewMode = state.view;
+            if (state.group !== resolvedGroup) {
+                history.replaceState(history.state, '', writeCatalogViewState(new URL(window.location.href), { group: resolvedGroup }));
+            }
+        };
+        applyLocation();
+        window.addEventListener('popstate', applyLocation);
+        return () => window.removeEventListener('popstate', applyLocation);
+    });
 
     function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
         const limit = frequency?.limit;
@@ -178,6 +208,10 @@
         return task.isActive !== false;
     }
 
+    function taskActionKey(taskId: unknown) {
+        return `${String(resolvedChildId ?? '')}:${String(taskId)}`;
+    }
+
     function requestNote(options: { title: string; description: string; placeholder: string; saveLabel: string; skipLabel: string }) {
         return new Promise<string>((resolve) => {
             modalStore.open('request-note-modal', {
@@ -189,13 +223,25 @@
     }
 
     async function handleEarn(taskId: unknown) {
+        const taskKey = taskActionKey(taskId);
+        const feedbackKey = String(taskId);
+        if (pendingTaskIds.includes(taskKey)) return;
         const childId = resolvedChildId;
+        const actionScope = String(childId ?? '');
         const task = tasks.find((entry) => entry.id == taskId);
         if (!task) return;
+        pendingTaskIds = [...pendingTaskIds, taskKey];
+        recordCatalogEvent({ name: 'task_action', surface: 'tasks', result: 'started' });
+        taskFeedback = { ...taskFeedback, [feedbackKey]: { status: 'pending', message: tTasks('feedback.pending') } };
+        const finish = (status: 'success' | 'error', message: string) => {
+            pendingTaskIds = pendingTaskIds.filter((id) => id !== taskKey);
+            if (String(resolvedChildId ?? '') !== actionScope) return;
+            taskFeedback = { ...taskFeedback, [feedbackKey]: { status, message } };
+        };
         if (isAdmin) {
             const res = await earnCoins(taskId, childId) as Record<string, unknown> | null;
             if (res) {
-                applyDataSnapshot(res);
+                if (String(resolvedChildId ?? '') === actionScope) applyDataSnapshot(res);
                 showToast(
                     tTasks('toasts.awarded', {
                         amount: $i18n.formatNumber(Number(task.coins ?? 0)),
@@ -203,6 +249,12 @@
                     }),
                     'success'
                 );
+                finish('success', tTasks('feedback.success'));
+                recordCatalogEvent({ name: 'task_action', surface: 'tasks', result: 'success' });
+            } else {
+                finish('error', tTasks('feedback.error'));
+                showToast(tTasks('feedback.error'), 'error');
+                recordCatalogEvent({ name: 'task_action', surface: 'tasks', result: 'error' });
             }
         } else {
             const note = await requestNote({
@@ -214,19 +266,30 @@
             });
             const result = await requestCoinsWithNote(taskId, note);
             if (result.ok) {
-                if (result.data && typeof result.data === 'object') {
+                if (String(resolvedChildId ?? '') === actionScope && result.data && typeof result.data === 'object') {
                     applyDataSnapshot(result.data as Record<string, unknown>);
                 }
                 showToast(tTasks('toasts.requestSent'), 'success');
+                finish('success', tTasks('feedback.success'));
+                recordCatalogEvent({ name: 'task_action', surface: 'tasks', result: 'success' });
                 return;
             }
 
             showToast(result.error, 'error');
+            finish('error', tTasks('feedback.error'));
+            recordCatalogEvent({ name: 'task_action', surface: 'tasks', result: 'error' });
         }
     }
 
     function openAddTask() {
         modalStore.open('task-modal', { mode: 'add', groupSuggestions: groups });
+    }
+
+    function openTaskFromToday(taskId: number | string) {
+        const card = document.querySelector<HTMLElement>(`[data-task-id="${String(taskId)}"]`);
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        card?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        card?.focus({ preventScroll: true });
     }
 
     function openEditTask(task: unknown) {
@@ -252,13 +315,20 @@
         selectedTaskIds = [];
     }
 
-    function setSelectedGroup(nextGroup: string) {
-        if (selectedGroup === nextGroup) {
+    function setSelectedGroup(nextGroup: string, options?: { replace?: boolean }) {
+        const resolvedGroup = groups.includes(nextGroup) ? nextGroup : '';
+        const currentGroup = browser ? readCatalogViewState(new URL(window.location.href), viewMode).group : selectedGroup;
+        if (selectedGroup === resolvedGroup && currentGroup === resolvedGroup) {
             return;
         }
 
         clearBulkSelection();
-        selectedGroup = nextGroup;
+        selectedGroup = resolvedGroup;
+        if (browser) {
+            const url = writeCatalogViewState(new URL(window.location.href), { group: resolvedGroup });
+            if (options?.replace) history.replaceState(history.state, '', url);
+            else history.pushState(history.state, '', url);
+        }
     }
 
     function selectAllVisibleTasks() {
@@ -374,6 +444,15 @@
     function setViewMode(nextMode: CardViewMode) {
         viewMode = nextMode;
         saveCardViewMode('tasks', viewRole, nextMode);
+        if (browser) history.replaceState(history.state, '', writeCatalogViewState(new URL(window.location.href), { view: nextMode }));
+    }
+
+    function formatProgressReset(resetAt: string): string {
+        const parsed = new Date(resetAt);
+        if (Number.isNaN(parsed.getTime())) return '';
+        return tTasks('progress.resets', {
+            date: $i18n.formatDate(parsed, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        });
     }
 
     function openGroupOrderEditor() {
@@ -383,15 +462,7 @@
 </script>
 
 <section class="section" id="tasks-section">
-    <div class="section__header">
-        <div class="section__header-titles">
-            <h2>
-                <span class="gamified-icon icon-tasks" aria-hidden="true"
-                    style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></span>
-                {tTasks('section.title')}
-            </h2>
-            <p class="section__subtitle">{tTasks('section.subtitle')}</p>
-        </div>
+    <CatalogSectionHeader title={tTasks('section.title')} subtitle={tTasks('section.subtitle')} iconClass="icon-tasks">
         <SectionHeaderControls
             {isAdmin}
             addLabel={tTasks('section.add')}
@@ -411,7 +482,7 @@
             on:toggleBulkMode={toggleBulkMode}
             on:viewMode={(event) => setViewMode(event.detail)}
         />
-    </div>
+    </CatalogSectionHeader>
 
     <BulkActionToolbar
         show={isBulkMode}
@@ -431,21 +502,30 @@
         on:clear={clearBulkSelection}
     />
 
-    {#if groups.length > 1}
-    <nav class="group-nav" id="tasks-group-nav">
-        <div class="group-nav__scroll">
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => setSelectedGroup('')}>
-                {tTasks('section.all')}
-            </button>
-            {#each groups as group (group)}
-            <button class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
-                on:click={() => setSelectedGroup(group)}>
-                {group}
-            </button>
-            {/each}
-        </div>
-    </nav>
+    <TodaySummary
+        summary={todaySummary}
+        title={tTasks('today.title')}
+        progressLabel={tTasks('today.progress', { completed: todaySummary.completedCount, available: todaySummary.limitCount })}
+        emptyProgressLabel={tTasks('today.emptyProgress')}
+        availableLabel={tTasks('today.available')}
+        nextLabel={tTasks('today.next')}
+        nextActionLabel={tTasks('today.open')}
+        onNext={(task) => openTaskFromToday(task.id)}
+        rewardGoal={rewardGoal}
+        rewardGoalSelected={currentChild?.rewardGoalItemId != null}
+        balance={$appStore.balance}
+        goalLabel={tTasks('today.goal')}
+        goalReadyLabel={tTasks('today.goalReady')}
+        goalMissingLabel={(amount) => tTasks('today.goalMissing', { amount: $i18n.formatNumber(amount) })}
+        goalEmptyLabel={tTasks(isAdmin ? 'today.goalEmptyAdmin' : 'today.goalEmpty')}
+        goalStaleLabel={tTasks('today.goalStale')}
+        formatNumber={(value) => $i18n.formatNumber(value)}
+    />
 
+    <CatalogGroupNav id="tasks-group-nav" {groups} selected={selectedGroup} allLabel={tTasks('section.all')}
+        ariaLabel={tTasks('section.groupAria')} onSelect={setSelectedGroup} />
+
+    {#if groups.length > 1}
     <GroupOrderEditor
         bind:this={groupOrderEditor}
         bind:isOpen={isEditingGroupOrder}
@@ -483,7 +563,10 @@
     {:else if visibleTasks.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="tasks-list">
         {#each visibleTasks as task (task.id)}
-        <div class="card card--task task-card" class:task-card--list={viewMode === 'list'} class:task-card--inactive={!isTaskActive(task)} class:card--disabled={!isTaskActive(task)} class:task-card--selected={isTaskSelected(task)}>
+        {@const catalogItem = buildTaskCatalogItemViewModel(task)}
+        <CatalogCard kind="task" view={viewMode} disabled={!catalogItem.active} selected={isTaskSelected(task)}
+            additionalClass={!catalogItem.active ? 'task-card--inactive' : ''} let:classes>
+        <article class={classes} data-task-id={String(task.id)} tabindex="-1">
             <div class="card__badge-row">
                 {#if isAdmin && isBulkMode && viewMode !== 'list'}
                 <label class="bulk-select">
@@ -519,8 +602,8 @@
                 {/if}
                 <div class="task-card__main">
                     <CardHeader
-                        title={String(task.title ?? task.name ?? '')}
-                        amount={String(task.coins ?? 0)}
+                        title={catalogItem.title}
+                        amount={String(catalogItem.amount)}
                         amountClass="task-coins"
                         compactChips={taskCompactChips(task)}
                     />
@@ -528,6 +611,20 @@
                     <p class="card__comment">{task.comment}</p>
                     {:else}
                     <p class="card__comment">{tTasks('section.defaultComment')}</p>
+                    {/if}
+                    {#if task.cueWhen && task.cueAction}
+                    <p class="task-card__cue">{tTasks('section.cueSentence', { when: task.cueWhen, action: task.cueAction })}</p>
+                    {/if}
+                    {#if catalogItem.progress}
+                    {@const progressResetLabel = formatProgressReset(catalogItem.progress.resetAt)}
+                    <CatalogProgress
+                        label={tTasks('progress.label')}
+                        detail={tTasks('progress.count', { completed: catalogItem.progress.completed, limit: catalogItem.progress.limit })}
+                        hint={`${tTasks('progress.summary', { remaining: catalogItem.progress.remaining, pending: catalogItem.progress.pending })}${progressResetLabel ? ` · ${progressResetLabel}` : ''}`}
+                        value={catalogItem.progress.completed}
+                        max={catalogItem.progress.limit}
+                        tone={catalogItem.progress.pending > 0 ? 'pending' : (catalogItem.progress.available ? 'available' : 'complete')}
+                    />
                     {/if}
                 </div>
                 <div class="task-card__side">
@@ -539,23 +636,29 @@
                         <span class="card__meta-item">{tTasks('section.ageRange', { min: task.ageMin ?? 0, max: task.ageMax ?? 18 })}</span>
                         {/if}
                     </div>
-                    <div class="card__actions">
-                        {#if isAdmin}
-                        <button class="btn btn--primary btn--small" data-task-action="award" disabled={!isTaskActive(task)} on:click={() => handleEarn(task.id)}>
-                            {tTasks('actions.award')}
-                        </button>
-                        <button class="btn btn--secondary btn--small admin-only" data-task-action="edit" on:click={() => openEditTask(task)}>
-                            {tTasks('actions.edit')}
-                        </button>
-                        {:else}
-                        <button class="btn btn--primary" data-task-action="request" disabled={!isTaskActive(task)} on:click={() => handleEarn(task.id)}>
-                            {tTasks('actions.complete')}
-                        </button>
-                        {/if}
+                    <div class="card__action-area">
+                        <div class="card__actions">
+                            {#if isAdmin}
+                            <button class="btn btn--primary btn--small" data-task-action="award" disabled={!isTaskActive(task) || pendingTaskIds.includes(taskActionKey(task.id))} on:click={() => handleEarn(task.id)}>
+                                {tTasks('actions.award')}
+                            </button>
+                            <button class="btn btn--secondary btn--small admin-only" data-task-action="edit" on:click={() => openEditTask(task)}>
+                                {tTasks('actions.edit')}
+                            </button>
+                            {:else}
+                            <button class="btn btn--primary" data-task-action="request" disabled={!isTaskActive(task) || pendingTaskIds.includes(taskActionKey(task.id))} on:click={() => handleEarn(task.id)}>
+                                {tTasks('actions.complete')}
+                            </button>
+                            {/if}
+                        </div>
+                        <CatalogActionFeedback status={pendingTaskIds.includes(taskActionKey(task.id)) ? 'pending' : taskFeedback[String(task.id)]?.status ?? 'idle'}
+                            message={pendingTaskIds.includes(taskActionKey(task.id)) ? tTasks('feedback.pending') : taskFeedback[String(task.id)]?.message ?? ''}
+                            retryLabel={tTasks('feedback.retry')} onRetry={() => void handleEarn(task.id)} />
                     </div>
                 </div>
             </div>
-        </div>
+        </article>
+        </CatalogCard>
         {/each}
     </div>
     {:else}
@@ -586,6 +689,19 @@
         display: flex;
         flex-direction: column;
         gap: 0.9rem;
+    }
+
+    .card__action-area {
+        display: grid;
+        min-width: 0;
+    }
+
+    .task-card__cue {
+        margin: 0.55rem 0 0;
+        overflow-wrap: anywhere;
+        color: var(--color-text-muted);
+        font-size: var(--text-sm);
+        line-height: var(--line-height-normal);
     }
 
     .task-card--selected {
@@ -681,9 +797,9 @@
         }
 
         .task-card--list .task-card__layout {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr) auto;
-            align-items: stretch;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
             gap: 0.48rem;
         }
 
@@ -693,29 +809,27 @@
         }
 
         .task-card--list .task-card__side {
-            width: auto;
+            width: 100%;
             min-width: 0;
-            justify-content: stretch;
-            align-self: stretch;
+            display: block;
+            flex: 1 0 100%;
         }
 
         .task-card--list .card__actions {
-            width: auto;
-            height: 100%;
-            min-height: 3.15rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: stretch;
-            gap: 0.24rem;
+            width: 100%;
+            min-height: var(--catalog-control-height);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(7.5rem, 100%), 1fr));
+            gap: 0.4rem;
         }
 
         .task-card--list .card__actions .btn {
-            flex: 1 1 0;
-            min-width: 3.6rem;
-            min-height: 0;
-            padding: 0.2rem 0.42rem;
-            font-size: 0.68rem;
-            line-height: 1.05;
+            min-width: 0;
+            min-height: var(--catalog-control-height);
+            padding: 0.45rem 0.55rem;
+            font-size: var(--text-xs);
+            line-height: 1.15;
+            white-space: normal;
         }
     }
 

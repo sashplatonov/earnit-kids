@@ -12,7 +12,8 @@ public record ChildDto(
     List<String> taskGroupOrder,
     List<String> shopGroupOrder,
     List<String> childTaskGroupOrder,
-    List<String> childShopGroupOrder
+    List<String> childShopGroupOrder,
+    Long rewardGoalItemId
 ) {
     public ChildDto {
         taskGroupOrder = taskGroupOrder == null ? List.of() : List.copyOf(taskGroupOrder);

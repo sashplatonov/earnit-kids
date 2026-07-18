@@ -436,11 +436,13 @@ p,
 }
 
 .task-card {
-    height: 312px;
+    min-height: 312px;
+    height: auto;
 }
 
 .shop-card {
-    height: 332px;
+    min-height: 332px;
+    height: auto;
 }
 
 .task-card .card__badge-row {
@@ -612,6 +614,49 @@ p,
     flex: 1;
     min-width: 0;
     white-space: nowrap;
+}
+
+/* Catalog cards share a stable anatomy across Tasks and Shop. */
+.task-card,
+.shop-card {
+    min-width: 0;
+    gap: var(--catalog-card-gap);
+}
+
+.task-card .card__actions .btn,
+.shop-card .card__actions .btn {
+    min-width: min(100%, var(--catalog-action-min-width));
+    min-height: var(--catalog-control-height);
+}
+
+.task-card .card__actions,
+.shop-card .card__actions {
+    flex-wrap: wrap;
+}
+
+.task-card .card__badge-row,
+.shop-card .card__badge-row,
+.task-card .card__compact-meta,
+.shop-card .card__compact-meta {
+    gap: var(--catalog-chip-gap);
+}
+
+.task-card .card__badge,
+.shop-card .card__badge,
+.task-card .card__status,
+.shop-card .card__status {
+    max-width: 100%;
+    min-height: 1.65rem;
+    padding-block: var(--catalog-chip-padding-block);
+    padding-inline: var(--catalog-chip-padding-inline);
+    line-height: 1.15;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.task-card .card__badge--group,
+.shop-card .card__badge--group {
+    max-width: 100%;
 }
 
 .card__actions--spaced {
@@ -2582,7 +2627,8 @@ dialog.modal[open]::backdrop {
     color: #425a7d;
     font-size: 0.85rem;
     font-weight: 600;
-    padding: 0.4rem 1rem;
+    min-height: var(--catalog-control-height);
+    padding: 0.55rem 1rem;
     border-radius: 99px;
     cursor: pointer;
     transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;

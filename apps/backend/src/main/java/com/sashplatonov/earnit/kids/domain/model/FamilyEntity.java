@@ -62,6 +62,10 @@ public class FamilyEntity extends CreatedAtEntity {
     @Column(name = "rules")
     private String rules;
 
+    @Column(name = "timezone", nullable = false)
+    @Builder.Default
+    private String timezone = "UTC";
+
     @CreationTimestamp
     @Column(name = "last_activity")
     private Instant lastActivity;

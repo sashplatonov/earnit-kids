@@ -33,6 +33,7 @@ import com.sashplatonov.earnit.kids.service.analytics.AnalyticsService;
 import com.sashplatonov.earnit.kids.service.analytics.AnalyticsServiceImpl;
 import com.sashplatonov.earnit.kids.service.family.command.FamilyCommandService;
 import com.sashplatonov.earnit.kids.service.family.command.FamilyCommandServiceImpl;
+import com.sashplatonov.earnit.kids.service.family.action.FrequencyWindowService;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardCatalogLoader;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardHydrator;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
@@ -111,6 +112,10 @@ public final class FamilyServiceImpl implements FamilyService {
             historyRepository,
             taskRepository,
             shopItemRepository,
+            purchaseRequestRepository,
+            familyRepository,
+            timeProvider,
+            new FrequencyWindowService(),
             dashboardMapper,
             mapper
         );

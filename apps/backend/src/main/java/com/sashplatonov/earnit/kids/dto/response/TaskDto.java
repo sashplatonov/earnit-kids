@@ -10,8 +10,11 @@ public record TaskDto(
     String groupName,
     Object frequency,
     String comment,
+    String cueWhen,
+    String cueAction,
     Integer moneyLimit,
     boolean isActive,
     int childId,
-    String lastCompletedAt
+    String lastCompletedAt,
+    TaskPeriodProgressDto periodProgress
 ) { }

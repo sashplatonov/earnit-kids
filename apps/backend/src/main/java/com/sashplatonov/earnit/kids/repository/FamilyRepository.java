@@ -87,6 +87,15 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
         );
     }
 
+    public Optional<String> getTimezone(int familyDbId) {
+        return recordQuery(
+            "family.getTimezone",
+            () -> findByIdOptional(familyDbId).map(FamilyEntity::getTimezone),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
+    }
+
     @Transactional
     public boolean updatePassword(String familyId, String newPassword) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);

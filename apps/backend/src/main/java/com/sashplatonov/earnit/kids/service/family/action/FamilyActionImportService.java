@@ -12,6 +12,7 @@ import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.command.ShopItemUpsertCommand;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.repository.command.TaskContentCommand;
 import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
 import com.sashplatonov.earnit.kids.dto.request.FrequencyPeriod;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
@@ -50,11 +51,15 @@ final class FamilyActionImportService {
                 familyDbId,
                 request.childId(),
                 nextTaskId++,
-                row.title().trim(),
-                row.coins(),
-                trimToNull(row.groupName()),
+                new TaskContentCommand(
+                    row.title().trim(),
+                    row.coins(),
+                    trimToNull(row.groupName()),
+                    trimToNull(row.comment()),
+                    null,
+                    null
+                ),
                 frequency,
-                trimToNull(row.comment()),
                 row.moneyLimit(),
                 row.isActive() == null || row.isActive(),
                 false
@@ -90,7 +95,10 @@ final class FamilyActionImportService {
         return supportService.loadRefreshedFamilyData(familyId, request.childId(), true);
     }
 
-    private <T> List<T> validatedImportRows(List<T> rows, BiConsumer<List<T>, List<ImportValidationErrorItem>> validator) {
+    private <T> List<T> validatedImportRows(
+        List<T> rows,
+        BiConsumer<List<T>, List<ImportValidationErrorItem>> validator
+    ) {
         List<ImportValidationErrorItem> errors = new ArrayList<>();
         if (rows == null || rows.isEmpty()) {
             errors.add(new ImportValidationErrorItem(0, "rows", BackendMessages.message("errors.rowsRequired")));

@@ -113,6 +113,7 @@ export function applyDataSnapshot(data: Record<string, unknown>): void {
     if (Array.isArray(normalized.shop)) partial.shopItems = (normalized.shop as unknown as AppState['shopItems']);
     if (Array.isArray(normalized.history)) partial.history = (normalized.history as unknown as AppState['history']);
     if (Array.isArray(normalized.requests)) partial.requests = (normalized.requests as unknown as AppState['requests']);
+    if (Array.isArray(data.children)) partial.children = (normalized.children as unknown as AppState['children']);
     // Preserve current child if server doesn't override it
     if (!partial.tasks?.length) partial.tasks = current.tasks;
     if (Object.keys(partial).length > 0) appStore.setState(partial);

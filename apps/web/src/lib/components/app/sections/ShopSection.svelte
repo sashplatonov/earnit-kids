@@ -5,12 +5,17 @@
     import BulkActionToolbar from '$lib/components/app/BulkActionToolbar.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
+    import CatalogActionFeedback from '$lib/components/app/catalog/CatalogActionFeedback.svelte';
+    import CatalogGroupNav from '$lib/components/app/catalog/CatalogGroupNav.svelte';
+    import CatalogSectionHeader from '$lib/components/app/catalog/CatalogSectionHeader.svelte';
+    import CatalogCard from '$lib/components/app/catalog/CatalogCard.svelte';
+    import RewardGoalProgress from '$lib/components/app/catalog/RewardGoalProgress.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { modalStore } from '$lib/stores/modal';
-    import { bulkShopAction, buyItem, requestItemWithNote, saveChildGroupOrder } from '$lib/services/api';
+    import { bulkShopAction, buyItem, requestItemWithNote, saveChildGroupOrder, setRewardGoal } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { confirmAction } from '$lib/services/confirm';
     import {
@@ -23,6 +28,9 @@
     import { requestGroupName } from '$lib/services/groupPrompt';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';
+    import { recordCatalogEvent } from '$lib/services/catalogTelemetry';
+    import { readCatalogViewState, writeCatalogViewState } from '$lib/services/catalogViewState';
+    import { buildShopCatalogItemViewModel } from '$lib/services/catalogItemViewModel';
 
     const i18n = useI18n();
 
@@ -33,6 +41,9 @@
 
     let isEditingGroupOrder = false;
     let isSavingGroupOrder = false;
+    let isSavingRewardGoal = false;
+    let pendingItemIds: string[] = [];
+    let itemFeedback: Record<string, { status: 'pending' | 'success' | 'error'; message: string }> = {};
     let selectedGroup = '';
     let isBulkMode = false;
     let selectedItemIds: Array<number | string> = [];
@@ -73,6 +84,7 @@
         if (loadedChildScope.value !== nextChildScope) {
             isBulkMode = false;
             selectedItemIds = [];
+            itemFeedback = {};
             loadedChildScope.value = nextChildScope;
         }
     }
@@ -94,12 +106,17 @@
                   return 0;
               })
         : sortItemsByGroup(shopItems, groups, (item) => normalizeGroupLabel(item.groupName));
+    $: rewardGoal = shopItems.find((item) => String(item.id) === String(currentChild?.rewardGoalItemId)) ?? null;
 
     onMount(() => {
-        selectedGroup = readSelectedGroupFromLocation();
+        const initialState = readCatalogViewState(new URL(window.location.href), viewMode);
+        selectedGroup = initialState.group;
+        viewMode = initialState.view;
 
         const handlePopState = () => {
-            selectedGroup = readSelectedGroupFromLocation();
+            const nextState = readCatalogViewState(new URL(window.location.href), viewMode);
+            selectedGroup = nextState.group;
+            viewMode = nextState.view;
         };
 
         window.addEventListener('popstate', handlePopState);
@@ -111,6 +128,10 @@
 
     function missingCoins(price: number) {
         return Math.max(price - balance, 0);
+    }
+
+    function itemActionKey(itemId: unknown) {
+        return `${String(resolvedChildId ?? '')}:${String(itemId)}`;
     }
 
     function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
@@ -140,18 +161,38 @@
     }
 
     async function handleBuy(itemId: unknown) {
+        const itemKey = itemActionKey(itemId);
+        const feedbackKey = String(itemId);
+        if (pendingItemIds.includes(itemKey)) return;
         const childId = resolvedChildId;
+        const actionScope = String(childId ?? '');
         const item = shopItems.find((entry) => entry.id == itemId);
         if (!item) return;
+        pendingItemIds = [...pendingItemIds, itemKey];
+        recordCatalogEvent({ name: 'shop_action', surface: 'shop', result: 'started' });
+        itemFeedback = { ...itemFeedback, [feedbackKey]: { status: 'pending', message: tShop('feedback.pending') } };
+        const finish = (status: 'success' | 'error', message: string) => {
+            pendingItemIds = pendingItemIds.filter((id) => id !== itemKey);
+            if (String(resolvedChildId ?? '') !== actionScope) return;
+            itemFeedback = { ...itemFeedback, [feedbackKey]: { status, message } };
+        };
         if (isAdmin) {
             if (balance < (item.price as number)) {
                 showToast(tShop('toasts.notEnoughCoins'), 'error');
+                finish('error', tShop('feedback.error'));
+                recordCatalogEvent({ name: 'shop_action', surface: 'shop', result: 'error' });
                 return;
             }
             const res = await buyItem(itemId, childId) as Record<string, unknown> | null;
             if (res) {
-                applyDataSnapshot(res);
+                if (String(resolvedChildId ?? '') === actionScope) applyDataSnapshot(res);
                 showToast(tShop('toasts.bought', { name: item.name }), 'success');
+                finish('success', tShop('feedback.success'));
+                recordCatalogEvent({ name: 'shop_action', surface: 'shop', result: 'success' });
+            } else {
+                finish('error', tShop('feedback.error'));
+                showToast(tShop('feedback.error'), 'error');
+                recordCatalogEvent({ name: 'shop_action', surface: 'shop', result: 'error' });
             }
         } else {
             const note = await requestNote({
@@ -163,14 +204,18 @@
             });
             const result = await requestItemWithNote(itemId, note);
             if (result.ok) {
-                if (result.data && typeof result.data === 'object') {
+                if (String(resolvedChildId ?? '') === actionScope && result.data && typeof result.data === 'object') {
                     applyDataSnapshot(result.data as Record<string, unknown>);
                 }
                 showToast(tShop('toasts.requestSent'), 'success');
+                finish('success', tShop('feedback.success'));
+                recordCatalogEvent({ name: 'shop_action', surface: 'shop', result: 'success' });
                 return;
             }
 
             showToast(result.error, 'error');
+            finish('error', tShop('feedback.error'));
+            recordCatalogEvent({ name: 'shop_action', surface: 'shop', result: 'error' });
         }
     }
 
@@ -290,6 +335,42 @@
         return Number(item.price ?? 0);
     }
 
+    function isRewardGoal(item: { id: number | string }) {
+        return currentChild?.rewardGoalItemId != null && String(currentChild.rewardGoalItemId) === String(item.id);
+    }
+
+    async function toggleRewardGoal(item: { id: number | string }) {
+        if (resolvedChildId == null || isSavingRewardGoal) return;
+        const goalScope = String(resolvedChildId);
+        const previousId = currentChild?.rewardGoalItemId ?? null;
+        const nextId = isRewardGoal(item) ? null : item.id;
+        isSavingRewardGoal = true;
+        appStore.update((state) => ({
+            ...state,
+            children: state.children.map((child) => String(child.id) === String(resolvedChildId)
+                ? { ...child, rewardGoalItemId: nextId }
+                : child),
+        }));
+        recordCatalogEvent({ name: 'reward_goal_action', surface: 'shop', result: 'started' });
+        const result = await setRewardGoal(nextId);
+        if (result.ok) {
+            if (String(resolvedChildId ?? '') === goalScope && result.data && typeof result.data === 'object') {
+                applyDataSnapshot(result.data as Record<string, unknown>);
+            }
+            recordCatalogEvent({ name: 'reward_goal_action', surface: 'shop', result: 'success' });
+        } else {
+            appStore.update((state) => ({
+                ...state,
+                children: state.children.map((child) => String(child.id) === goalScope
+                    ? { ...child, rewardGoalItemId: previousId }
+                    : child),
+            }));
+            showToast(result.error || tShop('toasts.goalSaveFailed'), 'error');
+            recordCatalogEvent({ name: 'reward_goal_action', surface: 'shop', result: 'error' });
+        }
+        isSavingRewardGoal = false;
+    }
+
     function isItemActive(item: { isActive?: unknown }) {
         return item.isActive !== false;
     }
@@ -370,7 +451,7 @@
             return '';
         }
 
-        return new URL(window.location.href).searchParams.get('group') ?? '';
+        return readCatalogViewState(new URL(window.location.href), viewMode).group;
     }
 
     function syncSelectedGroupUrl(nextGroup: string, replace = false) {
@@ -378,12 +459,7 @@
             return;
         }
 
-        const url = new URL(window.location.href);
-        if (nextGroup) {
-            url.searchParams.set('group', nextGroup);
-        } else {
-            url.searchParams.delete('group');
-        }
+        const url = writeCatalogViewState(new URL(window.location.href), { group: nextGroup });
 
         if (replace) {
             history.replaceState(history.state, '', url);
@@ -433,24 +509,21 @@
     function setViewMode(nextMode: CardViewMode) {
         viewMode = nextMode;
         saveCardViewMode('shop', viewRole, nextMode);
+        if (browser) history.replaceState(history.state, '', writeCatalogViewState(new URL(window.location.href), { view: nextMode }));
     }
 
     function openGroupOrderEditor() {
         groupOrderEditor?.openEditor();
     }
 
+    function clearRewardGoal() {
+        if (currentChild?.rewardGoalItemId != null) void toggleRewardGoal({ id: currentChild.rewardGoalItemId });
+    }
+
 </script>
 
 <section class="section" id="shop-section">
-    <div class="section__header">
-        <div class="section__header-titles">
-            <h2>
-                <span class="gamified-icon icon-shop" aria-hidden="true"
-                    style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></span>
-                {tShop('section.title')}
-            </h2>
-            <p class="section__subtitle">{tShop('section.subtitle')}</p>
-        </div>
+    <CatalogSectionHeader title={tShop('section.title')} subtitle={tShop('section.subtitle')} iconClass="icon-shop">
         <SectionHeaderControls
             {isAdmin}
             addLabel={tShop('section.add')}
@@ -470,7 +543,14 @@
             on:toggleBulkMode={toggleBulkMode}
             on:viewMode={(event) => setViewMode(event.detail)}
         />
-    </div>
+    </CatalogSectionHeader>
+
+    <RewardGoalProgress item={rewardGoal} {balance} label={tShop('goal.label')} clearLabel={tShop('goal.clear')}
+        staleLabel={tShop('goal.stale')} onClear={isAdmin ? null : clearRewardGoal} disabled={isSavingRewardGoal}
+        stale={currentChild?.rewardGoalItemId != null && !rewardGoal} emptyLabel={tShop('goal.empty')}
+        missingLabel={(amount) => tShop('goal.missing', { amount: $i18n.formatNumber(amount) })}
+        readyLabel={tShop('goal.ready')}
+        formatNumber={(value) => $i18n.formatNumber(value)} />
 
     <BulkActionToolbar
         show={isBulkMode}
@@ -490,19 +570,10 @@
         on:clear={clearBulkSelection}
     />
 
-    {#if groups.length > 1}
-    <nav class="group-nav" id="shop-group-nav">
-        <div class="group-nav__scroll">
-            <button type="button" class="group-nav__tab" class:group-nav__tab--active={selectedGroup === ''} on:click={() => setSelectedGroup('')}>
-                {tShop('section.all')}
-            </button>
-            {#each groups as group (group)}
-            <button type="button" class="group-nav__tab" class:group-nav__tab--active={selectedGroup === group}
-                on:click={() => setSelectedGroup(group)}>{group}</button>
-            {/each}
-        </div>
-    </nav>
+    <CatalogGroupNav id="shop-group-nav" {groups} selected={selectedGroup} allLabel={tShop('section.all')}
+        ariaLabel={tShop('section.groupAria')} onSelect={setSelectedGroup} />
 
+    {#if groups.length > 1}
     <GroupOrderEditor
         bind:this={groupOrderEditor}
         bind:isOpen={isEditingGroupOrder}
@@ -540,7 +611,10 @@
     {:else if visibleItems.length > 0}
     <div class="cards" class:cards--list={viewMode === 'list'} id="shop-list">
         {#each visibleItems as item (item.id)}
-        <div class="card card--shop shop-card" class:card--affordable={isItemActive(item) && isItemAffordable(item)} class:card--disabled={!isItemActive(item) || !isItemAffordable(item)} class:shop-card--list={viewMode === 'list'} class:shop-card--selected={isItemSelected(item)}>
+        {@const catalogItem = buildShopCatalogItemViewModel(item, balance)}
+        <CatalogCard kind="shop" view={viewMode} disabled={!catalogItem.active || !catalogItem.affordable} selected={isItemSelected(item)}
+            additionalClass={catalogItem.active && catalogItem.affordable ? 'card--affordable' : ''} let:classes>
+        <article class={classes}>
             <div class="card__badge-row">
                 {#if isAdmin && isBulkMode && viewMode !== 'list'}
                 <label class="bulk-select">
@@ -576,8 +650,8 @@
                 {/if}
                 <div class="shop-card__main">
                     <CardHeader
-                        title={String(item.name ?? '')}
-                        amount={String(item.price ?? 0)}
+                        title={catalogItem.title}
+                        amount={String(catalogItem.amount)}
                         amountClass="item-coins"
                         amountNote={shopMoneyPriceLabel(item)}
                         compactChips={shopCompactChips(item)}
@@ -597,25 +671,40 @@
                     {#if shopMoneyPriceLabel(item)}
                     <span class="shop-card__money-price">{shopMoneyPriceLabel(item)}</span>
                     {/if}
-                    <div class="card__actions">
-                        {#if isAdmin}
-                        <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item) || !isItemActive(item)}
-                            on:click={() => handleBuy(item.id)}>
-                            {tShop('actions.buy')}
-                        </button>
-                        <button class="btn btn--secondary btn--small admin-only" data-shop-action="edit" on:click={() => openEditShopItem(item)}>
-                            {tShop('actions.edit')}
-                        </button>
-                        {:else}
-                        <button class="btn btn--primary" data-shop-action="request" disabled={balance < itemPrice(item) || !isItemActive(item)}
-                            on:click={() => handleBuy(item.id)}>
-                            {tShop('actions.request')}
-                        </button>
-                        {/if}
+                    <div class="card__action-area">
+                        <div class="card__actions">
+                            {#if !isAdmin}
+                            <button class="btn btn--secondary btn--small card__goal-toggle" type="button"
+                                aria-pressed={isRewardGoal(item)}
+                                disabled={isSavingRewardGoal || !isItemActive(item)}
+                                data-shop-action="goal"
+                                on:click={() => void toggleRewardGoal(item)}>
+                                {isRewardGoal(item) ? tShop('actions.clearGoal') : tShop('actions.setGoal')}
+                            </button>
+                            {/if}
+                            {#if isAdmin}
+                            <button class="btn btn--primary btn--small admin-only" data-shop-action="buy" disabled={balance < itemPrice(item) || !isItemActive(item) || pendingItemIds.includes(itemActionKey(item.id))}
+                                on:click={() => handleBuy(item.id)}>
+                                {tShop('actions.buy')}
+                            </button>
+                            <button class="btn btn--secondary btn--small admin-only" data-shop-action="edit" on:click={() => openEditShopItem(item)}>
+                                {tShop('actions.edit')}
+                            </button>
+                            {:else}
+                            <button class="btn btn--primary" data-shop-action="request" disabled={balance < itemPrice(item) || !isItemActive(item) || pendingItemIds.includes(itemActionKey(item.id))}
+                                on:click={() => handleBuy(item.id)}>
+                                {tShop('actions.request')}
+                            </button>
+                            {/if}
+                        </div>
+                        <CatalogActionFeedback status={pendingItemIds.includes(itemActionKey(item.id)) ? 'pending' : itemFeedback[String(item.id)]?.status ?? 'idle'}
+                            message={pendingItemIds.includes(itemActionKey(item.id)) ? tShop('feedback.pending') : itemFeedback[String(item.id)]?.message ?? ''}
+                            retryLabel={tShop('feedback.retry')} onRetry={() => void handleBuy(item.id)} />
                     </div>
                 </div>
             </div>
-        </div>
+        </article>
+        </CatalogCard>
         {/each}
     </div>
     {:else}
@@ -646,6 +735,11 @@
         display: flex;
         flex-direction: column;
         gap: 0.9rem;
+    }
+
+    .card__action-area {
+        display: grid;
+        min-width: 0;
     }
 
     .shop-card--selected {
@@ -755,9 +849,9 @@
         }
 
         .shop-card--list .shop-card__layout {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr) auto;
-            align-items: stretch;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
             gap: 0.48rem;
         }
 
@@ -771,15 +865,10 @@
         }
 
         .shop-card--list .shop-card__side {
-            width: auto;
+            width: 100%;
             min-width: 0;
-            display: flex;
-            flex-direction: row;
-            align-items: stretch;
-            align-self: stretch;
-            justify-content: stretch;
-            flex-wrap: nowrap;
-            gap: 0;
+            display: block;
+            flex: 1 0 100%;
         }
 
         .shop-card--list .shop-card__money-price {
@@ -787,24 +876,20 @@
         }
 
         .shop-card--list .card__actions {
-            width: auto;
-            height: 100%;
-            min-height: 3.15rem;
-            display: flex;
-            flex: 0 0 auto;
-            flex-direction: column;
-            justify-content: stretch;
-            gap: 0.24rem;
+            width: 100%;
+            min-height: var(--catalog-control-height);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(7.5rem, 100%), 1fr));
+            gap: 0.4rem;
         }
 
         .shop-card--list .card__actions .btn {
-            flex: 1 1 0;
-            min-width: 3.6rem;
-            min-height: 0;
-            padding: 0.2rem 0.42rem;
-            font-size: 0.68rem;
-            line-height: 1.05;
-            white-space: nowrap;
+            min-width: 0;
+            min-height: var(--catalog-control-height);
+            padding: 0.45rem 0.55rem;
+            font-size: var(--text-xs);
+            line-height: 1.15;
+            white-space: normal;
         }
     }
 

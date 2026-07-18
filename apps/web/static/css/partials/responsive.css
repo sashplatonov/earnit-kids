@@ -69,6 +69,21 @@ html {
         margin-bottom: 0;
     }
 
+    .nav__child-switcher .child-menu-btn {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        min-height: 52px;
+        padding: 0.4rem 0.5rem;
+        overflow: hidden;
+    }
+
+    .nav__child-switcher .child-menu-btn__icon {
+        flex: 0 0 1.6rem;
+        width: 1.6rem;
+        min-width: 1.6rem;
+    }
+
     .nav__more-wrapper {
         flex: 0 0 64px;
     }
@@ -605,7 +620,19 @@ html {
     .btn,
     .card__actions .btn,
     .section__buttons .btn {
-        min-height: 44px;
+        min-height: var(--catalog-control-height);
+    }
+
+    .task-card,
+    .shop-card {
+        height: auto;
+        min-height: 0;
+        padding: var(--catalog-card-padding);
+    }
+
+    .task-card .card__actions .btn,
+    .shop-card .card__actions .btn {
+        min-height: var(--catalog-control-height);
     }
 
     .toast-container {

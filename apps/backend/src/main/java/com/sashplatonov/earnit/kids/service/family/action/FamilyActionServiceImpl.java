@@ -26,6 +26,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     private final FamilyActionRequestService requestService;
     private final FamilyActionBulkService bulkService;
     private final FamilyActionImportService importService;
+    private final FamilyActionRewardGoalService rewardGoalService;
     private final BackendKpiMetrics backendKpiMetrics;
 
     @Inject
@@ -37,6 +38,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                                    PurchaseRequestRepository purchaseRequestRepository,
                                    FamilyService familyService,
                                    TimeProvider timeProvider,
+                                   FrequencyWindowService frequencyWindowService,
                                    BackendKpiMetrics backendKpiMetrics) {
         FamilyActionSupportService supportService = new FamilyActionSupportService(
             familyRepository,
@@ -51,7 +53,9 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         FamilyActionFrequencyService frequencyService = new FamilyActionFrequencyService(
             purchaseRequestRepository,
             historyRepository,
-            timeProvider
+            familyRepository,
+            timeProvider,
+            frequencyWindowService
         );
         this.balanceService = new FamilyActionBalanceService(supportService, historyFactory, historyRepository);
         this.requestService = new FamilyActionRequestService(
@@ -63,6 +67,7 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         );
         this.bulkService = new FamilyActionBulkService(supportService);
         this.importService = new FamilyActionImportService(supportService, frequencyService, taskRepository, shopItemRepository);
+        this.rewardGoalService = new FamilyActionRewardGoalService(supportService, childRepository);
         this.backendKpiMetrics = backendKpiMetrics;
     }
 
@@ -98,6 +103,13 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                                                                    String note) {
         return backendKpiMetrics.recordResult("family_action", "request_item_purchase",
             () -> requestService.requestItemPurchase(familyId, childId, itemId, note));
+    }
+
+    @Override
+    @Transactional
+    public OperationResult<FamilyDataResponse> setRewardGoal(String familyId, int childId, Long itemId) {
+        return backendKpiMetrics.recordResult("family_action", "set_reward_goal",
+            () -> rewardGoalService.setRewardGoal(familyId, childId, itemId));
     }
 
     @Override

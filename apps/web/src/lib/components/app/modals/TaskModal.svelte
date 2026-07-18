@@ -31,6 +31,10 @@
     let groupName = '';
     let coins = 10;
     let comment = '';
+    let cueWhen = '';
+    let cueAction = '';
+    let showCue = false;
+    let cueError = '';
     let freqLimit = '';
     let freqPeriod: 'day' | 'week' | 'month' | 'year' = 'week';
     let isActive = true;
@@ -41,11 +45,15 @@
             groupName = (existingTask.groupName as string) ?? '';
             coins = (existingTask.coins as number) ?? 10;
             comment = (existingTask.comment as string) ?? '';
+            cueWhen = (existingTask.cueWhen as string) ?? '';
+            cueAction = (existingTask.cueAction as string) ?? '';
+            showCue = Boolean(cueWhen || cueAction);
+            cueError = '';
             freqLimit = String((existingTask.frequency as Record<string, unknown>)?.limit ?? '');
             freqPeriod = ((existingTask.frequency as Record<string, unknown>)?.period as typeof freqPeriod) ?? 'week';
             isActive = existingTask.isActive !== false;
         } else {
-            title = ''; groupName = ''; coins = 10; comment = ''; freqLimit = ''; freqPeriod = 'week'; isActive = true;
+            title = ''; groupName = ''; coins = 10; comment = ''; cueWhen = ''; cueAction = ''; showCue = false; cueError = ''; freqLimit = ''; freqPeriod = 'week'; isActive = true;
         }
     }
 
@@ -53,12 +61,20 @@
 
     async function save() {
         if (!title.trim()) { showToast(tTasks('modal.enterTitle'), 'error'); return; }
+        if (showCue && (!cueWhen.trim() || !cueAction.trim())) {
+            cueError = tTasks('modal.cueIncomplete');
+            document.getElementById(!cueWhen.trim() ? 'task-cue-when' : 'task-cue-action')?.focus();
+            return;
+        }
+        cueError = '';
         const payload = buildTaskPayload({
             id: existingTask?.id as number | string | undefined,
             title,
             groupName,
             coins,
             comment,
+            cueWhen: showCue ? cueWhen : '',
+            cueAction: showCue ? cueAction : '',
             freqLimit,
             freqPeriod,
             isActive,
@@ -134,6 +150,22 @@
             <label for="task-comment">{tTasks('modal.commentLabel')}</label>
             <textarea class="input textarea" id="task-comment" placeholder={tTasks('modal.commentPlaceholder')} bind:value={comment}></textarea>
         </div>
+        <div class="form-group task-cue-toggle">
+            <label><input type="checkbox" name="task-cue-enabled" bind:checked={showCue} /> {tTasks('modal.cueToggle')}</label>
+        </div>
+        {#if showCue}
+        <div class="form-group task-cue-fields">
+            <label for="task-cue-when">{tTasks('modal.cueWhen')}</label>
+            <input class="input" id="task-cue-when" name="task-cue-when" autocomplete="off" maxlength="240"
+                aria-invalid={cueError ? 'true' : undefined} aria-describedby={cueError ? 'task-cue-error' : undefined}
+                placeholder={tTasks('modal.cueWhenPlaceholder')} bind:value={cueWhen} />
+            <label for="task-cue-action">{tTasks('modal.cueAction')}</label>
+            <input class="input" id="task-cue-action" name="task-cue-action" autocomplete="off" maxlength="240"
+                aria-invalid={cueError ? 'true' : undefined} aria-describedby={cueError ? 'task-cue-error' : undefined}
+                placeholder={tTasks('modal.cueActionPlaceholder')} bind:value={cueAction} />
+            {#if cueError}<p id="task-cue-error" class="form-error" role="alert">{cueError}</p>{/if}
+        </div>
+        {/if}
         <div class="form-group">
             <label for="task-freq-limit">{tTasks('modal.frequencyLabel')}</label>
             <div class="input-group">

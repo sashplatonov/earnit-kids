@@ -7,63 +7,66 @@ import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.request.FrequencyPeriod;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 
 import java.time.Instant;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 
 final class FamilyActionFrequencyService {
 
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final HistoryRepository historyRepository;
+    private final FamilyRepository familyRepository;
     private final TimeProvider timeProvider;
     private final FrequencyWindowService frequencyWindowService;
 
     FamilyActionFrequencyService(PurchaseRequestRepository purchaseRequestRepository,
                                  HistoryRepository historyRepository,
-                                 TimeProvider timeProvider) {
+                                 FamilyRepository familyRepository,
+                                 TimeProvider timeProvider,
+                                 FrequencyWindowService frequencyWindowService) {
         this.purchaseRequestRepository = purchaseRequestRepository;
         this.historyRepository = historyRepository;
+        this.familyRepository = familyRepository;
         this.timeProvider = timeProvider;
-        this.frequencyWindowService = new FrequencyWindowService();
+        this.frequencyWindowService = frequencyWindowService;
     }
 
     String validateTaskRequestLimit(int familyDbId, int childId, TaskEntity task) {
-        Integer limit = frequencyWindowService.extractFrequencyLimit(task.getFrequency());
-        if (limit == null) {
+        ZoneId zoneId = zoneId(familyDbId);
+        var window = frequencyWindowService.resolveCurrentWindow(task.getFrequency(), now(), zoneId);
+        if (window.isEmpty()) {
             return null;
         }
-
-        String period = frequencyWindowService.extractFrequencyPeriod(task.getFrequency());
-        Instant windowStart = frequencyWindowService.currentPeriodStart(now(), period);
-        Instant windowEnd = frequencyWindowService.nextPeriodStart(windowStart, period);
+        FrequencyWindow currentWindow = window.get();
         long usedCount = purchaseRequestRepository.countPendingTaskRequestsInWindow(
-            familyDbId, childId, task.getTaskId(), windowStart, windowEnd
+            familyDbId, childId, task.getTaskId(), currentWindow.start(), currentWindow.end()
         ) + historyRepository.countTaskEarnsInWindow(
-            familyDbId, childId, task.getTaskId(), windowStart, windowEnd
+            familyDbId, childId, task.getTaskId(), currentWindow.start(), currentWindow.end()
         );
 
-        return usedCount >= limit ? BackendMessages.taskLimitReached(period,
-            frequencyWindowService.formatResetAt(windowEnd, period)) : null;
+        return usedCount >= currentWindow.limit() ? BackendMessages.taskLimitReached(currentWindow.period(),
+            frequencyWindowService.formatResetAt(currentWindow.end(), currentWindow.period(), zoneId)) : null;
     }
 
     String validateItemRequestLimit(int familyDbId, int childId, ShopItemEntity item) {
-        Integer limit = frequencyWindowService.extractFrequencyLimit(item.getFrequency());
-        if (limit == null) {
+        ZoneId zoneId = zoneId(familyDbId);
+        var window = frequencyWindowService.resolveCurrentWindow(item.getFrequency(), now(), zoneId);
+        if (window.isEmpty()) {
             return null;
         }
-
-        String period = frequencyWindowService.extractFrequencyPeriod(item.getFrequency());
-        Instant windowStart = frequencyWindowService.currentPeriodStart(now(), period);
-        Instant windowEnd = frequencyWindowService.nextPeriodStart(windowStart, period);
+        FrequencyWindow currentWindow = window.get();
         long usedCount = purchaseRequestRepository.countPendingItemRequestsInWindow(
-            familyDbId, childId, item.getItemId(), windowStart, windowEnd
+            familyDbId, childId, item.getItemId(), currentWindow.start(), currentWindow.end()
         ) + historyRepository.countShopPurchasesInWindow(
-            familyDbId, childId, item.getItemId(), windowStart, windowEnd
+            familyDbId, childId, item.getItemId(), currentWindow.start(), currentWindow.end()
         );
 
-        return usedCount >= limit ? BackendMessages.itemLimitReached(period,
-            frequencyWindowService.formatResetAt(windowEnd, period)) : null;
+        return usedCount >= currentWindow.limit() ? BackendMessages.itemLimitReached(currentWindow.period(),
+            frequencyWindowService.formatResetAt(currentWindow.end(), currentWindow.period(), zoneId)) : null;
     }
 
     JsonNode buildFrequencyNode(Integer limit, FrequencyPeriod period) {
@@ -77,5 +80,13 @@ final class FamilyActionFrequencyService {
 
     private Instant now() {
         return timeProvider.now();
+    }
+
+    private ZoneId zoneId(int familyDbId) {
+        try {
+            return ZoneId.of(familyRepository.getTimezone(familyDbId).orElse("UTC"));
+        } catch (DateTimeException ignored) {
+            return ZoneId.of("UTC");
+        }
     }
 }
