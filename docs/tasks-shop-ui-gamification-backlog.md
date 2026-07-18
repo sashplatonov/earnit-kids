@@ -42,7 +42,7 @@ Success is reached when:
 - The primary action aligns to the same card column in both grid and row views; secondary/admin actions remain visually subordinate.
 - Card regions never overlap at supported viewports or text scales, and every visible chip remains legible without clipped or colliding text.
 - All interactive targets are at least `44 × 44 px` on touch devices, with at least `8 px` between adjacent targets.
-- The child sees a truthful, server-derived "Today" summary and per-task period progress; the UI does not infer completion from the limited history list.
+- The child sees a truthful, server-derived compact "Today" summary; cards stay focused on task content and actions without embedded progress bars.
 - Completion feedback is visible within `100 ms`, the request state remains explicit until the server responds, and no layout shift is introduced.
 - The interface works at `320`, `375`, `390`, `768`, `1024`, and `1440 px`, in portrait and mobile landscape, with no horizontal page scroll.
 - Keyboard navigation, screen-reader labels/live regions, `200%` text zoom, and `prefers-reduced-motion` are covered by acceptance tests.
@@ -97,7 +97,7 @@ These findings guide product hypotheses; they do not guarantee a psychological o
 
 | Research handle | Product implication | Guardrail |
 | --- | --- | --- |
-| Progress monitoring improves goal attainment, especially when progress is recorded and physically visible ([Harkin et al., 2016](https://pubmed.ncbi.nlm.nih.gov/26479070/)). | Show a small, concrete today counter and per-task progress immediately after an approved completion. | Progress must come from server truth and remain readable without animation or color. |
+| Progress monitoring improves goal attainment, especially when progress is recorded and physically visible ([Harkin et al., 2016](https://pubmed.ncbi.nlm.nih.gov/26479070/)). | Show one small, concrete Today summary after an approved completion. | Progress must come from server truth and must not inflate individual cards. |
 | Immediate rewards are more strongly associated with persistence than delayed rewards ([Woolley & Fishbach, 2017](https://journals.sagepub.com/doi/abs/10.1177/0146167216676480)). | Give immediate acknowledgment, state change, and visible movement toward a chosen reward after the action/request. | Do not fabricate coin credit before approval; distinguish "request sent" from "coins earned". |
 | If-then implementation intentions have a medium-to-large positive effect on goal attainment across 94 tests ([Gollwitzer & Sheeran, 2006](https://www.socmot.uni-konstanz.de/publications/implementation-intentions-and-goal-achievement-meta-analysis-effects-and-processes)). | Let the child/parent phrase an optional cue as "After/when …, I will …" and surface it on the task card. | Optional, editable, private to the family, and never required to complete a task. |
 | Expected tangible rewards can undermine intrinsic motivation, with stronger concerns for children, while positive feedback can help ([Deci, Koestner, & Ryan, 1999](https://pubmed.ncbi.nlm.nih.gov/10589297/)). | Emphasize competence, choice, and concrete positive feedback; treat coins as one feedback channel, not the identity of the habit. | No controlling copy, shame, competition, reward inflation, or celebration proportional only to coin value. |
@@ -266,7 +266,7 @@ Do not optimize solely for taps, time-in-app, coin issuance, or streak length. I
 **Change:**
 
 - Add semantic catalog tokens described in AD-02.
-- Create shared `CatalogSectionHeader`, `CatalogGroupNav`, `CatalogCard`, `CatalogProgress`, and `CatalogActionFeedback` primitives.
+- Create shared `CatalogSectionHeader`, `CatalogGroupNav`, `CatalogCard`, and `CatalogActionFeedback` primitives.
 - Convert `CardHeader` into a slot/prop-driven part of the catalog card or narrow it to title/amount only; remove cross-feature `:global(.task-card--list)` selector coupling.
 - Keep SVG icons decorative with `aria-hidden`; interactive icon buttons retain text labels or accessible names.
 
@@ -279,7 +279,6 @@ Do not optimize solely for taps, time-in-app, coin issuance, or streak length. I
 - `apps/web/src/lib/components/app/catalog/CatalogSectionHeader.svelte` (new)
 - `apps/web/src/lib/components/app/catalog/CatalogGroupNav.svelte` (new)
 - `apps/web/src/lib/components/app/catalog/CatalogCard.svelte` (new)
-- `apps/web/src/lib/components/app/catalog/CatalogProgress.svelte` (new)
 - `apps/web/src/lib/components/app/catalog/CatalogActionFeedback.svelte` (new)
 
 **Acceptance criteria:**
@@ -435,7 +434,7 @@ Do not optimize solely for taps, time-in-app, coin issuance, or streak length. I
 - Add a compact Today summary above Tasks for child mode: completed count, achievable count, earned coins after approval, and one suggested next task.
 - Default child sorting to: available daily tasks → other available tasks → requested/pending → completed for current window → blocked.
 - Keep the full list and existing group filters visible; the recommendation is a shortcut, not a lock-in.
-- Show per-task `completed / limit`, remaining count, and reset label from the backend contract.
+- Keep period progress in the compact Today aggregate; do not place progress bars inside task cards.
 - Use neutral copy when no task is completed and recovery copy when all current tasks are unavailable.
 - Parent mode receives a compact preview/status row without displacing management controls.
 
@@ -443,7 +442,6 @@ Do not optimize solely for taps, time-in-app, coin issuance, or streak length. I
 
 - `apps/web/src/lib/components/app/sections/TasksSection.svelte`
 - `apps/web/src/lib/components/app/catalog/TodaySummary.svelte` (new)
-- `apps/web/src/lib/components/app/catalog/CatalogProgress.svelte`
 - `apps/web/src/lib/services/todayTaskViewModel.ts` (new)
 - `apps/web/src/lib/i18n/messages/en/tasks.ts`
 - `apps/web/src/lib/i18n/messages/ru/tasks.ts`
@@ -473,7 +471,6 @@ Do not optimize solely for taps, time-in-app, coin issuance, or streak length. I
 **Files:**
 
 - `apps/web/src/lib/components/app/catalog/CatalogActionFeedback.svelte`
-- `apps/web/src/lib/components/app/catalog/CatalogProgress.svelte`
 - `apps/web/src/lib/components/app/sections/TasksSection.svelte`
 - `apps/web/src/lib/components/app/sections/ShopSection.svelte`
 - `apps/web/static/css/partials/animations.css`

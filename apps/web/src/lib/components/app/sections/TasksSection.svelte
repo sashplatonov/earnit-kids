@@ -5,7 +5,6 @@
     import TodaySummary from '$lib/components/app/catalog/TodaySummary.svelte';
     import CatalogActionFeedback from '$lib/components/app/catalog/CatalogActionFeedback.svelte';
     import CatalogGroupNav from '$lib/components/app/catalog/CatalogGroupNav.svelte';
-    import CatalogProgress from '$lib/components/app/catalog/CatalogProgress.svelte';
     import CatalogSectionHeader from '$lib/components/app/catalog/CatalogSectionHeader.svelte';
     import CatalogCard from '$lib/components/app/catalog/CatalogCard.svelte';
     import BulkActionToolbar from '$lib/components/app/BulkActionToolbar.svelte';
@@ -447,14 +446,6 @@
         if (browser) history.replaceState(history.state, '', writeCatalogViewState(new URL(window.location.href), { view: nextMode }));
     }
 
-    function formatProgressReset(resetAt: string): string {
-        const parsed = new Date(resetAt);
-        if (Number.isNaN(parsed.getTime())) return '';
-        return tTasks('progress.resets', {
-            date: $i18n.formatDate(parsed, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
-        });
-    }
-
     function openGroupOrderEditor() {
         groupOrderEditor?.openEditor();
     }
@@ -615,17 +606,6 @@
                     {#if task.cueWhen && task.cueAction}
                     <p class="task-card__cue">{tTasks('section.cueSentence', { when: task.cueWhen, action: task.cueAction })}</p>
                     {/if}
-                    {#if catalogItem.progress}
-                    {@const progressResetLabel = formatProgressReset(catalogItem.progress.resetAt)}
-                    <CatalogProgress
-                        label={tTasks('progress.label')}
-                        detail={tTasks('progress.count', { completed: catalogItem.progress.completed, limit: catalogItem.progress.limit })}
-                        hint={`${tTasks('progress.summary', { remaining: catalogItem.progress.remaining, pending: catalogItem.progress.pending })}${progressResetLabel ? ` · ${progressResetLabel}` : ''}`}
-                        value={catalogItem.progress.completed}
-                        max={catalogItem.progress.limit}
-                        tone={catalogItem.progress.pending > 0 ? 'pending' : (catalogItem.progress.available ? 'available' : 'complete')}
-                    />
-                    {/if}
                 </div>
                 <div class="task-card__side">
                     <div class="card__meta">
@@ -729,6 +709,7 @@
     }
 
     .task-card--list {
+        min-height: 0;
         height: auto;
         padding: 0.4rem 0.75rem;
     }
@@ -741,7 +722,7 @@
 
     .task-card--list .task-card__layout {
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         gap: 0.5rem 0.75rem;
     }
@@ -773,6 +754,8 @@
 
     .task-card--list .card__actions .btn {
         flex: none;
+        min-width: 0;
+        min-height: var(--catalog-control-height);
         padding: 0.38rem 0.7rem;
         font-size: 0.82rem;
     }

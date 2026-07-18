@@ -111,3 +111,38 @@ export async function assertCatalogCardLayout(card: Locator): Promise<void> {
         }
     }
 }
+
+export async function assertDesktopCatalogRow(card: Locator): Promise<void> {
+    const layout = await card.evaluate((element) => {
+        const content = element.querySelector('.task-card__layout, .shop-card__layout');
+        return {
+            height: element.getBoundingClientRect().height,
+            minHeight: getComputedStyle(element).minHeight,
+            flexWrap: content instanceof HTMLElement ? getComputedStyle(content).flexWrap : '',
+            progressBars: element.querySelectorAll('.catalog-progress').length,
+        };
+    });
+
+    expect(layout.minHeight).toBe('0px');
+    expect(layout.flexWrap).toBe('nowrap');
+    expect(layout.height, 'list card should remain a compact desktop row').toBeLessThanOrEqual(110);
+    expect(layout.progressBars, 'list card should not contain progress bars').toBe(0);
+}
+
+export async function assertCatalogGroupLayout(groupNav: Locator, mobile: boolean): Promise<void> {
+    const layout = await groupNav.locator('.catalog-group-nav__scroll').evaluate((element, isMobile) => {
+        if (!isMobile) element.style.width = '260px';
+        const styles = getComputedStyle(element);
+        const result = {
+            flexWrap: styles.flexWrap,
+            overflowX: styles.overflowX,
+            clientHeight: element.clientHeight,
+        };
+        if (!isMobile) element.style.removeProperty('width');
+        return result;
+    }, mobile);
+
+    expect(layout.flexWrap).toBe(mobile ? 'nowrap' : 'wrap');
+    if (mobile) expect(layout.overflowX).toBe('auto');
+    else expect(layout.clientHeight, 'desktop groups should wrap into multiple rows when constrained').toBeGreaterThan(50);
+}

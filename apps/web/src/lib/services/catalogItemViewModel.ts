@@ -1,11 +1,10 @@
-import type { ShopItem, Task, TaskPeriodProgress } from '$lib/stores/app';
+import type { ShopItem, Task } from '$lib/stores/app';
 
 export interface TaskCatalogItemViewModel {
     id: number | string;
     title: string;
     amount: number;
     active: boolean;
-    progress: TaskPeriodProgress | null;
 }
 
 export interface ShopCatalogItemViewModel {
@@ -28,7 +27,6 @@ export function buildTaskCatalogItemViewModel(task: Task): TaskCatalogItemViewMo
         title: String(task.title ?? task.name ?? ''),
         amount: toNonNegativeNumber(task.coins),
         active: task.isActive !== false,
-        progress: task.periodProgress ?? null,
     };
 }
 

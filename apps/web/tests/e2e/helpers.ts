@@ -118,26 +118,48 @@ export async function selectChild(page: Page, childName: string) {
     await expect(activeName).toHaveText(childName);
 }
 
-export async function createTask(page: Page, title: string, reward: number, comment: string) {
+export async function createTask(page: Page, title: string, reward: number, comment: string, group = 'Дом') {
     await page.getByRole('link', { name: /Tasks|Задания/i }).click();
     await page.locator('#add-task-btn').click();
     await page.locator('#task-name').fill(title);
-    await page.locator('#task-group').fill('Дом');
+    await selectOrCreateGroup(page, '#task-group', group);
     await page.locator('#task-coins').fill(String(reward));
     await page.locator('#task-comment').fill(comment);
     await page.locator('#task-save').click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }
 
-export async function createReward(page: Page, title: string, price: number, comment: string) {
+export async function createReward(page: Page, title: string, price: number, comment: string, group = 'Игры') {
     await page.getByRole('link', { name: /Rewards|Награды/i }).click();
     await page.locator('#add-shop-btn').click();
     await page.locator('#shop-name').fill(title);
-    await page.locator('#shop-group').fill('Игры');
+    await selectOrCreateGroup(page, '#shop-group', group);
     await page.locator('#shop-price').fill(String(price));
     await page.locator('#shop-comment').fill(comment);
     await page.locator('#shop-save').click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
+}
+
+async function selectOrCreateGroup(page: Page, selector: string, group: string) {
+    const field = page.locator(selector);
+    if ((await field.evaluate((element) => element.tagName)) === 'INPUT') {
+        await field.fill(group);
+        return;
+    }
+
+    const options = await field.locator('option').evaluateAll((elements) =>
+        elements.map((element) => (element as HTMLOptionElement).value)
+    );
+    if (options.includes(group)) {
+        await field.selectOption(group);
+        return;
+    }
+
+    const groupInput = field.locator('xpath=..');
+    await groupInput.locator('.group-input-add-btn').click();
+    const addRow = page.locator('.group-input-add-row:visible');
+    await addRow.locator('.group-input-add-field').fill(group);
+    await addRow.locator('.btn--primary').click();
 }
 
 export async function openSettings(page: Page) {

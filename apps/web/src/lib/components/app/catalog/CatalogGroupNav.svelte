@@ -32,6 +32,7 @@
     }
 
     .catalog-group-nav::after {
+        display: none;
         position: absolute;
         top: 0;
         right: 0;
@@ -44,19 +45,17 @@
 
     .catalog-group-nav__scroll {
         display: flex;
+        flex-wrap: wrap;
         gap: var(--catalog-chip-gap);
-        overflow-x: auto;
-        padding: 0.15rem 2rem 0.4rem 0.1rem;
-        scrollbar-width: thin;
-        scroll-snap-type: x proximity;
-        overscroll-behavior-inline: contain;
+        overflow: visible;
+        padding: 0.15rem 0.1rem 0.4rem;
     }
 
     .catalog-group-nav__tab {
         display: inline-flex;
         flex: 0 0 auto;
         align-items: center;
-        max-width: min(18rem, 78vw);
+        max-width: min(18rem, 100%);
         min-height: var(--catalog-control-height);
         padding: 0.55rem 0.95rem;
         overflow: hidden;
@@ -90,5 +89,24 @@
     .catalog-group-nav__tab:focus-visible {
         outline: 3px solid var(--ds-focus-ring, rgba(59, 130, 246, 0.6));
         outline-offset: 2px;
+    }
+
+    @media (max-width: 640px) {
+        .catalog-group-nav::after {
+            display: block;
+        }
+
+        .catalog-group-nav__scroll {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-right: 2rem;
+            scrollbar-width: thin;
+            scroll-snap-type: x proximity;
+            overscroll-behavior-inline: contain;
+        }
+
+        .catalog-group-nav__tab {
+            max-width: min(18rem, 78vw);
+        }
     }
 </style>

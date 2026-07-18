@@ -23,12 +23,6 @@ export const tasksMessages = {
 		import: 'Import CSV',
 		print: 'Print PDF',
 	},
-	progress: {
-		label: 'This period',
-		count: '{completed} of {limit}',
-		summary: '{remaining} left · {pending} pending',
-		resets: 'Resets {date}',
-	},
 	actions: {
 		award: 'Award',
 		edit: 'Edit',

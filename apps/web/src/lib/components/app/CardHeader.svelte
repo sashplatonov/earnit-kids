@@ -195,6 +195,46 @@
         color: #8a3f2f;
     }
 
+    /* Tasks and Shop list mode is a real desktop row, not a compressed card. */
+    :global(.task-card--list) .card__header,
+    :global(.shop-card--list) .card__header {
+        align-items: center;
+    }
+
+    :global(.task-card--list) .card__header-main,
+    :global(.shop-card--list) .card__header-main {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    :global(.task-card--list) .card__title,
+    :global(.shop-card--list) .card__title {
+        display: block;
+        min-width: 5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        word-break: normal;
+    }
+
+    :global(.task-card--list) .card__compact-meta,
+    :global(.shop-card--list) .card__compact-meta {
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        min-width: 0;
+        margin-top: 0;
+        overflow: visible;
+    }
+
+    :global(.task-card--list) .card__compact-chip,
+    :global(.shop-card--list) .card__compact-chip {
+        flex: 0 0 auto;
+        overflow: visible;
+        white-space: nowrap;
+    }
+
     @media (max-width: 640px) {
         :global(.task-card--list) .card__header,
         :global(.shop-card--list) .card__header,

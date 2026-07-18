@@ -35,7 +35,7 @@
     {/if}
 </section>
 {:else}
-<section class="reward-goal reward-goal--stale" aria-label={stale ? staleLabel : emptyLabel}>
+<section class:reward-goal--compact={compact} class="reward-goal reward-goal--stale" aria-label={stale ? staleLabel : emptyLabel}>
     <span>{stale ? staleLabel : emptyLabel}</span>
     {#if stale && onClear}
     <button type="button" class="reward-goal__clear" {disabled} on:click={onClear}>{clearLabel}</button>
@@ -123,11 +123,16 @@
     }
 
     .reward-goal--compact {
-        grid-column: 1 / -1;
-        width: 100%;
-        margin-top: 0.8rem;
-        margin-bottom: 0;
-        padding: 0.65rem 0.8rem;
+        grid-column: auto;
+        width: auto;
+        margin: 0;
+        padding: 0.45rem 0.6rem;
+        gap: 0.28rem 0.55rem;
+        border-radius: var(--radius-md);
+    }
+
+    .reward-goal--compact .reward-goal__progress {
+        height: 0.35rem;
     }
 
     .reward-goal--stale {

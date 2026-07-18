@@ -771,6 +771,7 @@
     }
 
     .shop-card--list {
+        min-height: 0;
         height: auto;
         padding: 0.4rem 0.75rem;
     }
@@ -783,7 +784,7 @@
 
     .shop-card--list .shop-card__layout {
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         gap: 0.5rem 0.75rem;
     }
@@ -829,6 +830,8 @@
 
     .shop-card--list .card__actions .btn {
         flex: none;
+        min-width: 0;
+        min-height: var(--catalog-control-height);
         padding: 0.38rem 0.7rem;
         font-size: 0.82rem;
     }
