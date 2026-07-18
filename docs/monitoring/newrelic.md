@@ -80,6 +80,7 @@ Notes:
 - Query custom JVM/thread metrics in New Relic from the `Metric` event with names like `JMX/Runtime/Threads/ThreadCount`.
 - Browser logs arrive in the New Relic `Logs` UI and can be filtered by browser app name plus the custom `event` attribute.
 - Metrics export uses the Quarkus Micrometer + OpenTelemetry bridge. When `app.observability.new-relic.metrics.enabled=true`, backend JVM and HTTP server meters are exported to the New Relic OTLP endpoint with the `api-key` header sourced from `app.observability.new-relic.metrics.license-key`.
+- Quarkus trace and log exporters are intentionally disabled: the New Relic Java agent owns APM traces and application-log forwarding. This prevents the OpenTelemetry SDK from falling back to a nonexistent collector at `localhost:4317` while preserving the separate OTLP metrics pipeline.
 - New Relic recommends OTLP/HTTP protobuf for metric ingest.
 - slow-request diagnostics emit only when a request crosses `app.performance.http-metrics.slow-request-threshold-ms` or fails with 5xx status
 - slow-query diagnostics emit only when a DB-backed operation crosses `app.performance.http-metrics.slow-query-threshold-ms` or throws an exception

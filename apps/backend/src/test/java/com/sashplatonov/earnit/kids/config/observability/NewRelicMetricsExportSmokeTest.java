@@ -50,6 +50,9 @@ class NewRelicMetricsExportSmokeTest {
         assertThat(config.getValue("quarkus.otel.metrics.enabled", Boolean.class)).isTrue();
         assertThat(config.getValue("quarkus.otel.exporter.otlp.metrics.endpoint", String.class))
             .isEqualTo("http://127.0.0.1:4318");
+        assertThat(config.getValue("quarkus.otel.traces.exporter", String.class)).isEqualTo("none");
+        assertThat(config.getValue("quarkus.otel.logs.exporter", String.class)).isEqualTo("none");
+        assertThat(config.getValue("quarkus.otel.logs.handler.enabled", Boolean.class)).isFalse();
         assertThat(config.getValue("quarkus.micrometer.binder.jvm", Boolean.class)).isTrue();
         assertThat(config.getValue("quarkus.micrometer.binder.http-server.enabled", Boolean.class)).isTrue();
         assertThat(meterRegistry.find("jvm.memory.used").meter()).isNotNull();
@@ -69,9 +72,6 @@ class NewRelicMetricsExportSmokeTest {
                 entry("app.observability.new-relic.logging.forwarding-enabled", "false"),
                 entry("app.observability.new-relic.logging.forwarding-max-samples-stored", "10000"),
                 entry("app.observability.new-relic.logging.local-decorating-enabled", "false"),
-                entry("quarkus.otel.traces.exporter", "none"),
-                entry("quarkus.otel.logs.exporter", "none"),
-                entry("quarkus.otel.logs.handler.enabled", "false"),
                 entry("quarkus.otel.metric.export.interval", "24h")
             );
         }
