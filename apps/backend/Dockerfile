@@ -21,10 +21,13 @@ COPY apps/backend/src ./src
 RUN --mount=type=cache,target=/root/.m2,sharing=locked \
 	sh ./mvnw -B -ntp -Dmaven.test.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true -Djacoco.skip=true -Dnative -Dquarkus.native.native-image-xmx=${JAVA_XMX} package
 
+RUN mkdir -p /workspace/runtime-data/catalog
+
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
 WORKDIR /work/
 
 COPY --from=build /workspace/target/*-runner /work/application
+COPY --from=build --chown=185:0 --chmod=0770 /workspace/runtime-data/ /work/data/
 
 EXPOSE 8080
 

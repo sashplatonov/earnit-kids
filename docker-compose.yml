@@ -1,5 +1,8 @@
 services:
   web:
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -36,6 +39,11 @@ services:
       - edge
 
   backend:
+    read_only: true
+    tmpfs:
+      # Argon2/JNA extracts a native library during legacy Flyway migrations.
+      - /tmp:rw,exec,nosuid,nodev,mode=1777
+      - /opt/newrelic/logs:uid=185,gid=0,mode=0770
     build:
       context: .
       dockerfile: apps/backend/Dockerfile.jvm
@@ -50,7 +58,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
-      APP_BACKUP_DIR: /work/data/backups
+      DATA_DIR: /work/data/catalog
       DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:-development}
       NEW_RELIC_METRICS_ENABLED: ${NEW_RELIC_METRICS_ENABLED:-false}
       NEW_RELIC_OTLP_METRICS_ENDPOINT: ${NEW_RELIC_OTLP_METRICS_ENDPOINT:-https://otlp.nr-data.net}
@@ -62,7 +70,7 @@ services:
       NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED: ${NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED:-10000}
       NEW_RELIC_APPLICATION_LOGGING_LOCAL_DECORATING_ENABLED: ${NEW_RELIC_APPLICATION_LOGGING_LOCAL_DECORATING_ENABLED:-false}
     volumes:
-      - earnit_kids_backups:/work/data/backups
+      - earnit_kids_base_data:/work/data/catalog
     expose:
       - "${BACKEND_INTERNAL_PORT}"
     healthcheck:
@@ -78,6 +86,10 @@ services:
       - dokploy-ipv6
 
   db:
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+      - /var/run/postgresql
     profiles:
       - db
     image: postgres:18-alpine
@@ -87,7 +99,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - earnit_kids_postgres_data:/var/lib/postgresql/data
+      - earnit_kids_postgres_data:/var/lib/postgresql
     # Host port mapping for Postgres is controlled via .env variables:
     #   DB_HOST_PORT (host) and DB_INTERNAL_PORT (container)
     ports:
@@ -103,7 +115,7 @@ services:
 
 volumes:
   earnit_kids_postgres_data:
-  earnit_kids_backups:
+  earnit_kids_base_data:
 
 networks:
   backend:

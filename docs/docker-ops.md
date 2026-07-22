@@ -140,6 +140,25 @@ docker compose up -d web
 docker compose exec db psql -U postgres -d earnit_kids
 ```
 
+### Verify PostgreSQL 18 storage after the mount-path fix
+
+PostgreSQL 18 stores its cluster under `/var/lib/postgresql/18/docker`, so the
+Compose volume is mounted at `/var/lib/postgresql`. The previous nested mount at
+`/var/lib/postgresql/data` could leave the active cluster in an anonymous volume.
+
+Before replacing an existing local database container, take a logical backup.
+After startup, confirm that the expected data is present and that the named volume
+contains the active cluster:
+
+```bash
+docker compose --profile db exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\\dt"'
+docker compose --profile db exec db test -f /var/lib/postgresql/18/docker/PG_VERSION
+```
+
+> ⚠️ Do not delete the old container or run `docker compose down -v` until this
+> check passes. If the expected data exists only in the old container, export it
+> with `pg_dump` before recreating the service.
+
 ### Verify healthchecks
 
 ```bash

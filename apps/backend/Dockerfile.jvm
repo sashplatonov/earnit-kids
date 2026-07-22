@@ -37,7 +37,10 @@ ENV NEW_RELIC_HOME=/opt/newrelic \
 RUN mkdir -p /opt/newrelic \
 	&& wget -qO /tmp/newrelic-java.zip "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/${NEW_RELIC_AGENT_VERSION}/newrelic-java.zip" \
 	&& unzip -q /tmp/newrelic-java.zip -d /opt \
-	&& rm -f /tmp/newrelic-java.zip
+	&& rm -f /tmp/newrelic-java.zip \
+	&& mkdir -p /work/data/catalog \
+	&& chown -R 185:0 /work/data \
+	&& chmod -R g=u /work/data
 
 USER 185
 

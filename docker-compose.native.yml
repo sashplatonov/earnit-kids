@@ -1,5 +1,8 @@
 services:
   web:
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -33,6 +36,9 @@ services:
       - edge
 
   backend:
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
@@ -52,9 +58,9 @@ services:
       NEW_RELIC_OTLP_METRICS_ENDPOINT: ${NEW_RELIC_OTLP_METRICS_ENDPOINT:-https://otlp.nr-data.net}
       NEW_RELIC_OTLP_METRICS_PROTOCOL: ${NEW_RELIC_OTLP_METRICS_PROTOCOL:-http/protobuf}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
-      APP_BACKUP_DIR: /work/data/backups
+      DATA_DIR: /work/data/catalog
     volumes:
-      - earnit_kids_backups:/work/data/backups
+      - earnit_kids_base_data:/work/data/catalog
     expose:
       - "${BACKEND_INTERNAL_PORT}"
     restart: unless-stopped
@@ -64,6 +70,10 @@ services:
       - dokploy-ipv6
 
   db:
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+      - /var/run/postgresql
     profiles:
       - db
     image: postgres:18-alpine
@@ -73,7 +83,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - earnit_kids_postgres_data:/var/lib/postgresql/data
+      - earnit_kids_postgres_data:/var/lib/postgresql
     ports:
       - "${DB_HOST_PORT}:${DB_INTERNAL_PORT}"
     healthcheck:
@@ -87,7 +97,7 @@ services:
 
 volumes:
   earnit_kids_postgres_data:
-  earnit_kids_backups:
+  earnit_kids_base_data:
 
 networks:
   backend:
