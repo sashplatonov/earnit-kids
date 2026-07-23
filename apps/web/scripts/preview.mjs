@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import process from 'node:process';
 import { gzip } from 'node:zlib';
-import httpProxy from 'http-proxy';
+import httpProxy from 'http-proxy-3';
 import { handler } from '../build/handler.js';
 import { buildProxyReferer, resolveProxyContext } from './proxy-context.mjs';
 
@@ -225,3 +225,25 @@ server.on('upgrade', (req, socket, head) => {
 server.listen(Number(process.env.PORT), process.env.HOST, () => {
     console.log(`web edge listening on ${process.env.HOST}:${process.env.PORT}`);
 });
+
+let shuttingDown = false;
+
+function shutdown(signal) {
+    if (shuttingDown) {
+        return;
+    }
+
+    shuttingDown = true;
+    console.log(`web edge received ${signal}; shutting down`);
+
+    server.close((error) => {
+        if (error) {
+            console.error('Web edge shutdown failed', { error: error.message });
+            process.exitCode = 1;
+        }
+    });
+    server.closeIdleConnections();
+}
+
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));
