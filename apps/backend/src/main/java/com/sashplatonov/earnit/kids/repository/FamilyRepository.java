@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.repository;
 
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.repository.cache.FamilyDbIdCache;
 import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnostics;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
@@ -18,6 +19,7 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
 
     private final TimeProvider timeProvider;
     private final SlowOperationDiagnostics slowOperationDiagnostics;
+    private final FamilyDbIdCache familyDbIdCache;
 
     public Optional<FamilyEntity> findById(String familyId) {
         return recordQuery(
@@ -55,7 +57,12 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     public Optional<Integer> getDbId(String familyId) {
-        return recordQuery(
+        Optional<Integer> cached = familyDbIdCache.get(familyId);
+        if (cached.isPresent()) {
+            return cached;
+        }
+
+        Optional<Integer> loaded = recordQuery(
             "family.getDbId",
             () -> find("familyId = ?1", familyId)
                 .firstResultOptional()
@@ -63,6 +70,8 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
             "familyId",
             familyId
         );
+        loaded.ifPresent(familyDbId -> familyDbIdCache.put(familyId, familyDbId));
+        return loaded;
     }
 
     public Optional<Integer> getLastSelectedChildId(String familyId) {

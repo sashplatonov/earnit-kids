@@ -143,6 +143,34 @@ class RepositorySmokeTest {
 
         assertThat(historyRepository.getHistory(child1.getId(), 10, 0)).isNotEmpty();
         assertThat(historyRepository.getHistoryCount(child1.getId())).isGreaterThanOrEqualTo(2);
+        Instant analyticsEnd = Instant.parse("2100-01-01T00:00:00Z");
+        assertThat(historyRepository.summarizePeriod(
+            familyDbId,
+            child1.getId(),
+            Instant.EPOCH,
+            analyticsEnd
+        )).satisfies(summary -> {
+            assertThat(summary.earned()).isEqualTo(5);
+            assertThat(summary.spent()).isEqualTo(3);
+        });
+        assertThat(historyRepository.topTasksInPeriod(
+            familyDbId,
+            child1.getId(),
+            Instant.EPOCH,
+            analyticsEnd
+        )).singleElement().satisfies(row -> assertThat(row.relatedId()).isEqualTo(taskExternalId));
+        assertThat(historyRepository.topItemsInPeriod(
+            familyDbId,
+            child1.getId(),
+            Instant.EPOCH,
+            analyticsEnd
+        )).singleElement().satisfies(row -> assertThat(row.relatedId()).isEqualTo(itemExternalId));
+        assertThat(historyRepository.dailyTrendInPeriod(
+            familyDbId,
+            child1.getId(),
+            Instant.EPOCH,
+            analyticsEnd
+        )).extracting(row -> row.type()).containsExactlyInAnyOrder(HistoryEntryType.earn, HistoryEntryType.spend);
 
         assertThat(purchaseRequestRepository.createRequest(familyDbId, child1.getId(), 91001L,
             taskExternalId, "Read", itemExternalId, 5, PurchaseRequestType.shop, 300)).isTrue();

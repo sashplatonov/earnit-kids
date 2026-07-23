@@ -10,6 +10,10 @@ import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.repository.projection.HistoryDailyAggregate;
+import com.sashplatonov.earnit.kids.repository.projection.HistoryPeriodSummary;
+import com.sashplatonov.earnit.kids.repository.projection.HistoryRankedAggregate;
+import com.sashplatonov.earnit.kids.service.observability.BackendKpiMetrics;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,13 +26,11 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.sashplatonov.earnit.kids.service.observability.BackendKpiMetrics;
 @ApplicationScoped
 public class AnalyticsServiceImpl implements AnalyticsService {
     private static final Duration DEFAULT_CACHE_TTL = Duration.ofSeconds(60);
@@ -73,7 +75,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Override
     public OperationResult<AnalyticsResponse> getAnalyticsData(String familyId, Integer childId, String timeframe) {
         return backendKpiMetrics.recordResult("analytics", "get_data", () -> {
-            String cacheKey = cacheKey(familyId, childId, timeframe);
+            AnalyticsTimeframe resolvedTimeframe = AnalyticsTimeframe.from(timeframe);
+            String cacheKey = cacheKey(familyId, childId, resolvedTimeframe);
             AnalyticsCacheEntry cached = analyticsCache.get(cacheKey);
             if (cached != null && !isExpired(cached)) {
                 return OperationResult.success(cached.payload());
@@ -86,7 +89,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
             int familyDbId = familyDbIdOpt.get();
             Instant now = timeProvider.now();
-            AnalyticsResponse response = buildAnalyticsResponse(familyDbId, childId, timeframe, now);
+            AnalyticsResponse response = buildAnalyticsResponse(familyDbId, childId, resolvedTimeframe, now);
             analyticsCache.put(cacheKey, new AnalyticsCacheEntry(now, response));
             return OperationResult.success(response);
         });
@@ -116,18 +119,13 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return shopItemRepository.list("familyId = ?1 AND deleted = false", familyDbId);
     }
 
-    private Duration resolveTimeframeDuration(String timeframe) {
-        if ("week".equalsIgnoreCase(timeframe)) {
-            return Duration.ofDays(7);
-        }
-        if ("year".equalsIgnoreCase(timeframe)) {
-            return Duration.ofDays(365);
-        }
-        return Duration.ofDays(30);
-    }
-
-    private AnalyticsResponse buildAnalyticsResponse(int familyDbId, Integer childId, String timeframe, Instant now) {
-        Duration periodDuration = resolveTimeframeDuration(timeframe);
+    private AnalyticsResponse buildAnalyticsResponse(
+        int familyDbId,
+        Integer childId,
+        AnalyticsTimeframe timeframe,
+        Instant now
+    ) {
+        Duration periodDuration = timeframe.duration();
         Instant periodStart = now.minus(periodDuration);
         Instant previousStart = periodStart.minus(periodDuration);
 
@@ -135,17 +133,18 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
         var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
 
-        int[] currentSummary = normalizeSummary(currentRaw);
-        int[] previousSummary = normalizeSummary(previousRaw);
+        HistoryPeriodSummary currentSummary = normalizeSummary(currentRaw);
+        HistoryPeriodSummary previousSummary = normalizeSummary(previousRaw);
 
-        int currentNet = currentSummary[0] - currentSummary[1];
-        int previousNet = previousSummary[0] - previousSummary[1];
-
-        var summary = new AnalyticsResponse.AnalyticsSummary(currentSummary[0], currentSummary[1], currentNet);
+        var summary = new AnalyticsResponse.AnalyticsSummary(
+            currentSummary.earned(),
+            currentSummary.spent(),
+            currentSummary.net()
+        );
         var comparison = new AnalyticsResponse.AnalyticsSummary(
-            previousSummary[0],
-            previousSummary[1],
-            previousNet
+            previousSummary.earned(),
+            previousSummary.spent(),
+            previousSummary.net()
         );
 
         List<TaskEntity> tasks = queryTasks(familyDbId, childId);
@@ -167,26 +166,22 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return new AnalyticsResponse(summary, topTasks, topItems, trends, comparison, recommendations);
     }
 
-    private int[] normalizeSummary(int[] summary) {
-        if (summary == null || summary.length < 2) {
-            return new int[]{0, 0};
-        }
-        return summary;
+    private HistoryPeriodSummary normalizeSummary(HistoryPeriodSummary summary) {
+        return summary == null ? HistoryPeriodSummary.EMPTY : summary;
     }
 
-    // EXPLAIN: Build top task stats from SQL-aggregated rows: [relatedId, sumAmount, count].
+    // EXPLAIN: Build top task stats from typed SQL aggregates without leaking ORM row shapes.
     private List<AnalyticsResponse.AnalyticsStatItem> buildTopTaskStatsAggregated(
-            List<Object[]> aggregatedRows, List<TaskEntity> tasks) {
+            List<HistoryRankedAggregate> aggregatedRows, List<TaskEntity> tasks) {
         Map<Long, String> namesByTaskId = tasks.stream()
             .collect(java.util.stream.Collectors.toMap(TaskEntity::getTaskId, TaskEntity::getName,
                 (left, right) -> left));
 
         return aggregatedRows.stream()
             .map(row -> {
-                Long relatedId = row[0] instanceof Number n ? n.longValue() : null;
-                int coins = ((Number) row[1]).intValue();
-                int count = ((Number) row[2]).intValue();
-                String name = relatedId != null ? namesByTaskId.get(relatedId) : null;
+                int coins = Math.toIntExact(row.amount());
+                int count = Math.toIntExact(row.count());
+                String name = namesByTaskId.get(row.relatedId());
                 if (name == null || name.isBlank()) {
                     name = BackendMessages.message("analytics.taskFallback");
                 }
@@ -195,19 +190,18 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             .toList();
     }
 
-    // EXPLAIN: Build top item stats from SQL-aggregated rows: [relatedId, sumAmount, count].
+    // EXPLAIN: Build top item stats from typed SQL aggregates without leaking ORM row shapes.
     private List<AnalyticsResponse.AnalyticsStatItem> buildTopItemStatsAggregated(
-            List<Object[]> aggregatedRows, List<ShopItemEntity> items) {
+            List<HistoryRankedAggregate> aggregatedRows, List<ShopItemEntity> items) {
         Map<Long, String> namesByItemId = items.stream()
             .collect(java.util.stream.Collectors.toMap(ShopItemEntity::getItemId, ShopItemEntity::getName,
                 (left, right) -> left));
 
         return aggregatedRows.stream()
             .map(row -> {
-                Long relatedId = row[0] instanceof Number n ? n.longValue() : null;
-                int coins = ((Number) row[1]).intValue();
-                int count = ((Number) row[2]).intValue();
-                String name = relatedId != null ? namesByItemId.get(relatedId) : null;
+                int coins = Math.toIntExact(row.amount());
+                int count = Math.toIntExact(row.count());
+                String name = namesByItemId.get(row.relatedId());
                 if (name == null || name.isBlank()) {
                     name = BackendMessages.message("analytics.itemFallback");
                 }
@@ -216,25 +210,27 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             .toList();
     }
 
-    // EXPLAIN: Build daily trend from SQL-aggregated rows: [date, type, sumAmount].
-    private List<AnalyticsResponse.AnalyticsTrendPoint> buildTrendsAggregated(List<Object[]> dailyRows) {
+    // EXPLAIN: Build daily trends from typed SQL aggregates without depending on row ordering.
+    private List<AnalyticsResponse.AnalyticsTrendPoint> buildTrendsAggregated(
+        List<HistoryDailyAggregate> dailyRows
+    ) {
         var perDay = new LinkedHashMap<LocalDate, AnalyticsResponse.AnalyticsSummary>();
         for (var row : dailyRows) {
-            LocalDate day = row[0] instanceof java.sql.Date d ? d.toLocalDate()
-                : row[0] instanceof LocalDate ld ? ld : null;
-            if (day == null) {
-                continue;
-            }
-            String type = (String) row[1];
-            int amount = ((Number) row[2]).intValue();
+            LocalDate day = row.date();
+            int amount = Math.toIntExact(row.amount());
             var agg = perDay.computeIfAbsent(day, unused -> new AnalyticsResponse.AnalyticsSummary(0, 0, 0));
-            if ("earn".equals(type)) {
-                var earnedSummary = new AnalyticsResponse.AnalyticsSummary(amount, agg.totalSpent(), amount);
-                perDay.put(day, earnedSummary);
-            } else if ("spend".equals(type)) {
-                int net = agg.totalEarned() - amount;
-                perDay.put(day, new AnalyticsResponse.AnalyticsSummary(agg.totalEarned(), amount, net));
+            int earned = agg.totalEarned();
+            int spent = agg.totalSpent();
+            if (row.type() == HistoryEntryType.earn) {
+                earned = Math.addExact(earned, amount);
+            } else if (row.type() == HistoryEntryType.spend) {
+                spent = Math.addExact(spent, amount);
             }
+            perDay.put(day, new AnalyticsResponse.AnalyticsSummary(
+                earned,
+                spent,
+                Math.subtractExact(earned, spent)
+            ));
         }
 
         return perDay.entrySet().stream()
@@ -304,7 +300,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return Duration.between(cached.cachedAt(), timeProvider.now()).compareTo(analyticsCacheTtl) >= 0;
     }
 
-    private String cacheKey(String familyId, Integer childId, String timeframe) {
-        return familyId + "|" + String.valueOf(childId) + "|" + String.valueOf(timeframe).toLowerCase(Locale.ROOT);
+    private String cacheKey(String familyId, Integer childId, AnalyticsTimeframe timeframe) {
+        return familyId + "|" + String.valueOf(childId) + "|" + timeframe.cacheKey();
     }
 }

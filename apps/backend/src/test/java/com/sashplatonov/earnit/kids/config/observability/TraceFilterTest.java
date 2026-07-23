@@ -96,4 +96,19 @@ class TraceFilterTest {
         assertThat(headers.containsKey(TraceFilter.TRACEPARENT)).isFalse();
         assertThat(MDC.get(TraceFilter.TRACE_ID)).isNull();
     }
+
+    @Test
+    void filter_normalizesPathThatAlreadyStartsWithSlash() throws Exception {
+        ContainerRequestContext request = mock(ContainerRequestContext.class);
+        UriInfo uriInfo = mock(UriInfo.class);
+
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getUriInfo()).thenReturn(uriInfo);
+        when(uriInfo.getPath()).thenReturn("//api/analytics");
+        when(uriInfo.getRequestUri()).thenReturn(new URI("http://localhost/api/analytics"));
+
+        filter.filter(request);
+
+        assertThat(MDC.get(TraceFilter.REQUEST_PATH)).isEqualTo("/api/analytics");
+    }
 }

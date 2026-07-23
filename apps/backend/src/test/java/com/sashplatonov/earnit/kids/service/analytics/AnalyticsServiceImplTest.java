@@ -9,6 +9,9 @@ import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.repository.projection.HistoryDailyAggregate;
+import com.sashplatonov.earnit.kids.repository.projection.HistoryPeriodSummary;
+import com.sashplatonov.earnit.kids.repository.projection.HistoryRankedAggregate;
 import com.sashplatonov.earnit.kids.support.TestConfigFactory;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -21,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -99,14 +103,15 @@ class AnalyticsServiceImplTest {
 
         doReturn(current).doReturn(previous).doReturn(monthly)
             .when(historyRepository).list(anyString(), any(Object[].class));
-        when(historyRepository.summarizePeriod(anyInt(), any(), any(), any())).thenReturn(new int[]{5, 3});
-        List<Object[]> topTasks = List.<Object[]>of(new Object[]{1001L, 5, 1});
-        List<Object[]> topItems = List.<Object[]>of(new Object[]{2001L, 3, 1});
+        when(historyRepository.summarizePeriod(anyInt(), any(), any(), any()))
+            .thenReturn(new HistoryPeriodSummary(5, 3));
+        List<HistoryRankedAggregate> topTasks = List.of(new HistoryRankedAggregate(1001L, 5, 1));
+        List<HistoryRankedAggregate> topItems = List.of(new HistoryRankedAggregate(2001L, 3, 1));
         when(historyRepository.topTasksInPeriod(anyInt(), any(), any(), any())).thenReturn(topTasks);
         when(historyRepository.topItemsInPeriod(anyInt(), any(), any(), any())).thenReturn(topItems);
         when(historyRepository.dailyTrendInPeriod(anyInt(), any(), any(), any())).thenReturn(List.of(
-            new Object[]{java.sql.Date.valueOf("2026-04-15"), "earn", 5},
-            new Object[]{java.sql.Date.valueOf("2026-04-15"), "spend", 3}
+            new HistoryDailyAggregate(LocalDate.parse("2026-04-15"), HistoryEntryType.spend, 3),
+            new HistoryDailyAggregate(LocalDate.parse("2026-04-15"), HistoryEntryType.earn, 5)
         ));
 
         List<TaskEntity> tasks = List.of(
@@ -129,7 +134,10 @@ class AnalyticsServiceImplTest {
         assertThat(payload.summary().totalEarned()).isGreaterThanOrEqualTo(0);
         assertThat(payload.summary().totalSpent()).isGreaterThanOrEqualTo(0);
         assertThat(payload.topTasks()).isNotNull();
-        assertThat(payload.trends()).isNotNull();
+        assertThat(payload.trends()).singleElement().satisfies(trend -> {
+            assertThat(trend.earned()).isEqualTo(5);
+            assertThat(trend.spent()).isEqualTo(3);
+        });
         assertThat(payload.recommendations()).hasSizeLessThanOrEqualTo(3);
         assertThat(meterRegistry.find("earnit.backend.service.operation.count")
             .tags("service", "analytics", "operation", "get_data", "outcome", "success")
@@ -156,7 +164,8 @@ class AnalyticsServiceImplTest {
     void getAnalyticsData_reusesCacheUntilTargetFamilyInvalidation() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(familyRepository.getDbId("fam-2")).thenReturn(Optional.of(2));
-        when(historyRepository.summarizePeriod(anyInt(), any(), any(), any())).thenReturn(new int[]{5, 3});
+        when(historyRepository.summarizePeriod(anyInt(), any(), any(), any()))
+            .thenReturn(new HistoryPeriodSummary(5, 3));
         when(historyRepository.topTasksInPeriod(anyInt(), any(), any(), any())).thenReturn(List.of());
         when(historyRepository.topItemsInPeriod(anyInt(), any(), any(), any())).thenReturn(List.of());
         when(historyRepository.dailyTrendInPeriod(anyInt(), any(), any(), any())).thenReturn(List.of());
@@ -165,10 +174,15 @@ class AnalyticsServiceImplTest {
 
         OperationResult<AnalyticsResponse> first = service.getAnalyticsData("fam-1", null, "month");
         OperationResult<AnalyticsResponse> second = service.getAnalyticsData("fam-1", null, "month");
+        OperationResult<AnalyticsResponse> normalizedCase = service.getAnalyticsData("fam-1", null, " MONTH ");
+        OperationResult<AnalyticsResponse> unknownDefaultsToMonth =
+            service.getAnalyticsData("fam-1", null, "arbitrary");
         OperationResult<AnalyticsResponse> otherFamily = service.getAnalyticsData("fam-2", null, "month");
 
         assertThat(first).isInstanceOf(OperationResult.Success.class);
         assertThat(second).isInstanceOf(OperationResult.Success.class);
+        assertThat(normalizedCase).isInstanceOf(OperationResult.Success.class);
+        assertThat(unknownDefaultsToMonth).isInstanceOf(OperationResult.Success.class);
         assertThat(otherFamily).isInstanceOf(OperationResult.Success.class);
         verify(historyRepository, times(4)).summarizePeriod(anyInt(), any(), any(), any());
         verify(historyRepository, times(2)).topTasksInPeriod(anyInt(), any(), any(), any());

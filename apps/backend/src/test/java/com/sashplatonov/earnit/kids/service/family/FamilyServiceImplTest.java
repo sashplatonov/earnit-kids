@@ -21,6 +21,7 @@ import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.FriendRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
+import com.sashplatonov.earnit.kids.repository.projection.HistoryPeriodSummary;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
@@ -289,7 +290,8 @@ class FamilyServiceImplTest {
     @Test
     void getAnalyticsData_missingAggregateRows_fallsBackToZeroSummary() {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(historyRepository.summarizePeriod(any(Integer.class), any(), any(), any())).thenReturn(null);
+        when(historyRepository.summarizePeriod(any(Integer.class), any(), any(), any()))
+            .thenReturn(HistoryPeriodSummary.EMPTY);
         doReturn(List.of()).when(taskRepository).list(anyString(), any(Object[].class));
         doReturn(List.of()).when(shopItemRepository).list(anyString(), any(Object[].class));
 

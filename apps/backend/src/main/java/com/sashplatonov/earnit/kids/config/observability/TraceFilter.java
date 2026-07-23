@@ -35,9 +35,7 @@ public class TraceFilter implements ContainerRequestFilter, ContainerResponseFil
         MDC.put(REQUEST_METHOD, requestContext.getMethod());
 
         var uriInfo = requestContext.getUriInfo();
-        String path = uriInfo == null || uriInfo.getPath() == null || uriInfo.getPath().isBlank()
-            ? "/"
-            : "/" + uriInfo.getPath();
+        String path = RequestPathNormalizer.normalize(uriInfo == null ? null : uriInfo.getPath());
         String query = uriInfo == null || uriInfo.getRequestUri() == null
             ? null
             : uriInfo.getRequestUri().getRawQuery();

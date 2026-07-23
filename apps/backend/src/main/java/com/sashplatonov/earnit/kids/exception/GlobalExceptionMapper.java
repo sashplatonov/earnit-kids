@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.exception;
 
 import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
+import com.sashplatonov.earnit.kids.config.observability.RequestPathNormalizer;
 import com.sashplatonov.earnit.kids.config.observability.TraceFilter;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
@@ -77,7 +78,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
             TraceFilter.REQUEST_PATH,
             uriInfo == null || uriInfo.getPath() == null || uriInfo.getPath().isBlank()
                 ? "-"
-                : "/" + uriInfo.getPath()
+                : RequestPathNormalizer.normalize(uriInfo.getPath())
         );
     }
 
