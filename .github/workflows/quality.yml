@@ -2,9 +2,19 @@ name: Quality
 
 on:
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   push:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -12,6 +22,7 @@ permissions:
 jobs:
   verify-backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     defaults:
       run:
@@ -81,7 +92,7 @@ jobs:
           PY
 
       - name: Upload SpotBugs reports
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v7.0.1
         with:
           name: spotbugs-reports
@@ -90,9 +101,12 @@ jobs:
             apps/backend/target/spotbugs.xml
             apps/backend/target/spotbugsXml.xml
           if-no-files-found: ignore
+          retention-days: 3
+          compression-level: 9
 
   verify-web:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     defaults:
       run:
@@ -120,19 +134,13 @@ jobs:
       - name: Build
         run: npm run build
 
-  security-backend:
+  security:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-
-      - name: Cache Trivy DB
-        continue-on-error: true
-        uses: actions/cache@v6.1.0
-        with:
-          path: ${{ runner.temp }}/.trivy-cache
-          key: trivy-db
 
       - name: Run backend security scan
         uses: aquasecurity/trivy-action@v0.36.0
@@ -211,14 +219,8 @@ jobs:
           summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
 
-  security-frontend:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.0
-
       - name: Run frontend security scan
+        if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -230,6 +232,9 @@ jobs:
           exit-code: '1'
           severity: HIGH,CRITICAL
           skip-dirs: node_modules,build,dist,.svelte-kit,coverage,test-results,.vite
+          cache-dir: ${{ runner.temp }}/.trivy-cache
+          cache: 'false'
+          skip-setup-trivy: true
 
       - name: Frontend security summary
         if: always()
