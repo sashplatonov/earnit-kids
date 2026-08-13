@@ -48,6 +48,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -645,7 +646,7 @@ class FamilyServiceImplTest {
     }
 
     @Test
-    void saveFamilyData_childSession_ignoresSiblingPayloadAndDoesNotReplaceRequests() {
+    void saveFamilyData_ignoresClientBalancesAndDoesNotReplaceRequests() {
         ChildEntity child = child(10, 1, "Alice", 10);
         ChildEntity sibling = child(11, 1, "Bob", 15);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
@@ -677,8 +678,7 @@ class FamilyServiceImplTest {
             .isInstanceOf(OperationResult.Success.class);
 
         verify(familyRepository, never()).updateRules(anyString(), any());
-        verify(childRepository).updateBalance(10, 42);
-        verify(childRepository, never()).updateBalance(11, 9000);
+        verify(childRepository, never()).updateBalance(anyInt(), anyInt());
 
         verify(purchaseRequestRepository, never()).replaceRequests(eq(1), any());
     }
@@ -738,7 +738,7 @@ class FamilyServiceImplTest {
 
         assertThat(service.saveFamilyData("fam-1", 10, payload, true)).isInstanceOf(OperationResult.Success.class);
 
-        verify(childRepository).updateBalance(10, 42);
+        verify(childRepository, never()).updateBalance(anyInt(), anyInt());
         verify(taskRepository).markAllTasksDeleted(10);
         verify(shopItemRepository).markAllShopItemsDeleted(10);
         ArgumentCaptor<TaskUpsertCommand> taskCommandCaptor = ArgumentCaptor.forClass(TaskUpsertCommand.class);

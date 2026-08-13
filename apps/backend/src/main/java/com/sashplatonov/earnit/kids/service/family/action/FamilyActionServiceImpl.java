@@ -19,6 +19,7 @@ import jakarta.transaction.Transactional;
 
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.service.observability.BackendKpiMetrics;
+import com.sashplatonov.earnit.kids.service.event.ApplicationEventPublisher;
 @ApplicationScoped
 public class FamilyActionServiceImpl implements FamilyActionService {
 
@@ -28,6 +29,20 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     private final FamilyActionImportService importService;
     private final FamilyActionRewardGoalService rewardGoalService;
     private final BackendKpiMetrics backendKpiMetrics;
+
+    public FamilyActionServiceImpl(FamilyRepository familyRepository,
+                                   ChildRepository childRepository,
+                                   TaskRepository taskRepository,
+                                   ShopItemRepository shopItemRepository,
+                                   HistoryRepository historyRepository,
+                                   PurchaseRequestRepository purchaseRequestRepository,
+                                   FamilyService familyService,
+                                   TimeProvider timeProvider,
+                                   FrequencyWindowService frequencyWindowService,
+                                   BackendKpiMetrics backendKpiMetrics) {
+        this(familyRepository, childRepository, taskRepository, shopItemRepository, historyRepository,
+            purchaseRequestRepository, familyService, timeProvider, frequencyWindowService, backendKpiMetrics, null);
+    }
 
     @Inject
     public FamilyActionServiceImpl(FamilyRepository familyRepository,
@@ -39,7 +54,8 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                                    FamilyService familyService,
                                    TimeProvider timeProvider,
                                    FrequencyWindowService frequencyWindowService,
-                                   BackendKpiMetrics backendKpiMetrics) {
+                                   BackendKpiMetrics backendKpiMetrics,
+                                   ApplicationEventPublisher eventPublisher) {
         FamilyActionSupportService supportService = new FamilyActionSupportService(
             familyRepository,
             childRepository,
@@ -57,13 +73,14 @@ public class FamilyActionServiceImpl implements FamilyActionService {
             timeProvider,
             frequencyWindowService
         );
-        this.balanceService = new FamilyActionBalanceService(supportService, historyFactory, historyRepository);
+        this.balanceService = new FamilyActionBalanceService(supportService, historyFactory, historyRepository, eventPublisher);
         this.requestService = new FamilyActionRequestService(
             supportService,
             historyFactory,
             frequencyService,
             purchaseRequestRepository,
-            historyRepository
+            historyRepository,
+            eventPublisher
         );
         this.bulkService = new FamilyActionBulkService(supportService);
         this.importService = new FamilyActionImportService(supportService, frequencyService, taskRepository, shopItemRepository);

@@ -18,13 +18,11 @@ function buildPayload(): Record<string, unknown> {
         ?? null;
     return {
         childId: selectedChild?.id ?? s.currentChildId,
-        balance: s.balance,
         rules: s.rules,
         tasks: s.tasks,
         shop: s.shopItems,
         history: s.history,
         requests: s.requests,
-        children: s.children,
     };
 }
 

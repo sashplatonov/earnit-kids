@@ -9,6 +9,8 @@ import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.service.event.ApplicationEventPublisher;
+import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventType;
 
 import java.util.Optional;
 
@@ -17,13 +19,22 @@ final class FamilyActionBalanceService {
     private final FamilyActionSupportService supportService;
     private final FamilyActionHistoryFactory historyFactory;
     private final HistoryRepository historyRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     FamilyActionBalanceService(FamilyActionSupportService supportService,
                                FamilyActionHistoryFactory historyFactory,
                                HistoryRepository historyRepository) {
+        this(supportService, historyFactory, historyRepository, null);
+    }
+
+    FamilyActionBalanceService(FamilyActionSupportService supportService,
+                               FamilyActionHistoryFactory historyFactory,
+                               HistoryRepository historyRepository,
+                               ApplicationEventPublisher eventPublisher) {
         this.supportService = supportService;
         this.historyFactory = historyFactory;
         this.historyRepository = historyRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     OperationResult<FamilyDataResponse> completeTask(String familyId, int childId, long taskId) {
@@ -32,7 +43,7 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
-        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -44,6 +55,7 @@ final class FamilyActionBalanceService {
 
         child.get().setBalance(child.get().getBalance() + task.get().getCoins());
         historyRepository.persist(historyFactory.buildTaskHistory(familyDbId.get(), childId, task.get()));
+        publish(ApplicationOutboxEventType.TASK_APPROVED, familyDbId.get(), childId, null, task.get().getCoins(), child.get().getBalance());
         return supportService.loadFamilyData(familyId, childId, true);
     }
 
@@ -53,7 +65,7 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
-        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -69,6 +81,7 @@ final class FamilyActionBalanceService {
 
         child.get().setBalance(child.get().getBalance() - item.get().getPrice());
         historyRepository.persist(historyFactory.buildShopHistory(familyDbId.get(), childId, item.get()));
+        publish(ApplicationOutboxEventType.REWARD_PURCHASED, familyDbId.get(), childId, null, -item.get().getPrice(), child.get().getBalance());
         return supportService.loadFamilyData(familyId, childId, true);
     }
 
@@ -78,7 +91,7 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
-        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -108,13 +121,21 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("balance.amountZero"));
         }
 
-        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
         child.get().setBalance(child.get().getBalance() + amount);
         historyRepository.persist(historyFactory.buildAdjustmentHistory(familyDbId.get(), childId, amount, description));
+        publish(ApplicationOutboxEventType.BALANCE_ADJUSTED, familyDbId.get(), childId, null, amount, child.get().getBalance());
         return supportService.loadFamilyData(familyId, childId, true);
+    }
+
+    private void publish(ApplicationOutboxEventType type, int familyId, int childId, Long requestId,
+                         int delta, Integer balance) {
+        if (eventPublisher != null) {
+            eventPublisher.publish(type, familyId, childId, requestId, delta, balance, historyFactory.now());
+        }
     }
 }

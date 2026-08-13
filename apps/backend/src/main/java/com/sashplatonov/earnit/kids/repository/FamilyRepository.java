@@ -74,6 +74,10 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
         return loaded;
     }
 
+    public Optional<String> findFamilyIdByDbId(Integer familyDbId) {
+        return findByIdOptional(familyDbId).map(FamilyEntity::getFamilyId);
+    }
+
     public Optional<Integer> getLastSelectedChildId(String familyId) {
         return recordQuery(
             "family.getLastSelectedChildId",

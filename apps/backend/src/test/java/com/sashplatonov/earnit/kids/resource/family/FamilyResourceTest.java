@@ -131,20 +131,13 @@ class FamilyResourceTest {
     }
 
     @Test
-    void saveFamilyData_childSession_ignoresBodyChildIdAndUsesAuthChildId() {
-        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
-            List.of(), false, List.of(), null, null, null, null);
-        when(familyService.saveFamilyData(
-            anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean()))
-            .thenReturn(OperationResult.success(payload));
-
+    void saveFamilyData_childSession_isUnauthorized() {
         Map<String, Object> body = Map.of("foo", "bar", "childId", 99);
 
         Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), body);
 
-        assertThat(response.getStatus()).isEqualTo(200);
-        verify(familyService).saveFamilyData("fam-1", 10, body, false);
-        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(familyService, never()).saveFamilyData(anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean());
     }
 
     @Test
@@ -293,7 +286,7 @@ class FamilyResourceTest {
             anyString(), anyInt(), org.mockito.ArgumentMatchers.anyMap(), org.mockito.ArgumentMatchers.anyBoolean()))
             .thenReturn(OperationResult.failure("boom"));
 
-        Response response = resource.saveFamilyData(contextWithAuth(childAuth(10)), Map.of());
+        Response response = resource.saveFamilyData(contextWithAuth(adminAuth()), Map.of("childId", 10));
 
         assertThat(response.getStatus()).isEqualTo(400);
         verify(webSocketNotificationService, never()).notifyFamily(anyString(), anyString(), org.mockito.ArgumentMatchers.any());

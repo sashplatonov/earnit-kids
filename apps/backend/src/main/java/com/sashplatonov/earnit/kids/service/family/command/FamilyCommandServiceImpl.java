@@ -47,12 +47,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
         this.analyticsService = analyticsService;
         this.selectionService = new FamilyCommandSelectionService(familyRepository, payloadService);
         this.mutationService = new FamilyCommandMutationService(
-            familyRepository,
-            childRepository,
-            taskRepository,
-            shopItemRepository,
-            payloadService
-        );
+            familyRepository, childRepository, taskRepository, shopItemRepository, payloadService);
     }
 
     @Override
@@ -89,7 +84,6 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
         }
 
         mutationService.syncFamilyRules(familyId, payload, adminSession);
-        mutationService.syncBalances(familyDbId, selectedChildId, payload, accessibleChildren);
         mutationService.syncTasks(familyDbId, selectedChildId, payload);
         mutationService.syncShopItems(familyDbId, selectedChildId, payload);
         familyRepository.updateLastActivity(familyId);

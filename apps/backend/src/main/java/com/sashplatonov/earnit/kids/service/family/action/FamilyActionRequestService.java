@@ -11,30 +11,33 @@ import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.service.event.ApplicationEventPublisher;
+import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventType;
 
 import java.util.Objects;
 import java.util.Optional;
 
 final class FamilyActionRequestService {
 
-    private static final int MAX_REQUEST_NOTE_LENGTH = 120;
-
     private final FamilyActionSupportService supportService;
     private final FamilyActionHistoryFactory historyFactory;
     private final FamilyActionFrequencyService frequencyService;
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final HistoryRepository historyRepository;
+    private final FamilyActionEventSupport eventSupport;
 
     FamilyActionRequestService(FamilyActionSupportService supportService,
                                FamilyActionHistoryFactory historyFactory,
                                FamilyActionFrequencyService frequencyService,
                                PurchaseRequestRepository purchaseRequestRepository,
-                               HistoryRepository historyRepository) {
+                               HistoryRepository historyRepository,
+                               ApplicationEventPublisher eventPublisher) {
         this.supportService = supportService;
         this.historyFactory = historyFactory;
         this.frequencyService = frequencyService;
         this.purchaseRequestRepository = purchaseRequestRepository;
         this.historyRepository = historyRepository;
+        this.eventSupport = new FamilyActionEventSupport(eventPublisher);
     }
 
     OperationResult<FamilyDataResponse> requestTaskCompletion(String familyId,
@@ -61,7 +64,7 @@ final class FamilyActionRequestService {
             return OperationResult.failure("TASK_REQUEST_LIMIT_REACHED", taskLimitError);
         }
 
-        OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
+        OperationResult<String> normalizedNoteResult = FamilyActionRequestSupport.normalizeNote(note);
         if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
             return OperationResult.failure(failure.errorCode(), failure.message());
         }
@@ -70,7 +73,10 @@ final class FamilyActionRequestService {
             ? success.value()
             : null;
 
-        purchaseRequestRepository.persist(buildTaskRequest(familyDbId.get(), childId, task.get(), normalizedNote));
+        PurchaseRequestEntity request = buildTaskRequest(familyDbId.get(), childId, task.get(), normalizedNote);
+        purchaseRequestRepository.persist(request);
+        purchaseRequestRepository.flush();
+        publish(ApplicationOutboxEventType.TASK_REQUEST_CREATED, request, 0, null);
         return supportService.loadFamilyData(familyId, childId, false);
     }
 
@@ -98,7 +104,7 @@ final class FamilyActionRequestService {
             return OperationResult.failure("ITEM_REQUEST_LIMIT_REACHED", itemLimitError);
         }
 
-        OperationResult<String> normalizedNoteResult = validateAndNormalizeRequestNote(note);
+        OperationResult<String> normalizedNoteResult = FamilyActionRequestSupport.normalizeNote(note);
         if (normalizedNoteResult instanceof OperationResult.Failure<String> failure) {
             return OperationResult.failure(failure.errorCode(), failure.message());
         }
@@ -107,7 +113,10 @@ final class FamilyActionRequestService {
             ? success.value()
             : null;
 
-        purchaseRequestRepository.persist(buildPurchaseRequest(familyDbId.get(), childId, item.get(), normalizedNote));
+        PurchaseRequestEntity request = buildPurchaseRequest(familyDbId.get(), childId, item.get(), normalizedNote);
+        purchaseRequestRepository.persist(request);
+        purchaseRequestRepository.flush();
+        publish(ApplicationOutboxEventType.REWARD_REQUEST_CREATED, request, 0, null);
         return supportService.loadFamilyData(familyId, childId, false);
     }
 
@@ -117,15 +126,15 @@ final class FamilyActionRequestService {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
-        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequest(familyDbId.get(), requestId);
+        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequestForUpdate(familyDbId.get(), requestId);
         if (request.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
-        if (!isPending(request.get())) {
+        if (!FamilyActionRequestSupport.isPending(request.get())) {
             return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
         }
 
-        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), request.get().getChildId());
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), request.get().getChildId());
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -137,7 +146,7 @@ final class FamilyActionRequestService {
             ? Optional.empty()
             : supportService.findActiveTask(familyDbId.get(), request.get().getChildId(), request.get().getTaskId());
 
-        if (isPurchaseRequest(request.get())) {
+        if (FamilyActionRequestSupport.isPurchase(request.get())) {
             if (child.get().getBalance() < request.get().getCoins()) {
                 return OperationResult.failure(BackendMessages.message("balance.insufficient"));
             }
@@ -148,6 +157,11 @@ final class FamilyActionRequestService {
 
         historyRepository.persist(historyFactory.buildRequestHistory(familyDbId.get(), request.get(), item, task));
         request.get().setStatus(PurchaseRequestStatus.approved);
+        publish(FamilyActionRequestSupport.isPurchase(request.get())
+                ? ApplicationOutboxEventType.REWARD_APPROVED : ApplicationOutboxEventType.TASK_APPROVED,
+            request.get(), FamilyActionRequestSupport.isPurchase(request.get())
+                ? -request.get().getCoins() : request.get().getCoins(),
+            child.get().getBalance());
         int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
         return supportService.loadFamilyData(familyId, responseChildId, true);
     }
@@ -158,15 +172,18 @@ final class FamilyActionRequestService {
             return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
         }
 
-        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequest(familyDbId.get(), requestId);
+        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequestForUpdate(familyDbId.get(), requestId);
         if (request.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
-        if (!isPending(request.get())) {
+        if (!FamilyActionRequestSupport.isPending(request.get())) {
             return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
         }
 
         request.get().setStatus(PurchaseRequestStatus.rejected);
+        publish(FamilyActionRequestSupport.isPurchase(request.get())
+                ? ApplicationOutboxEventType.REWARD_REJECTED : ApplicationOutboxEventType.TASK_REJECTED,
+            request.get(), 0, null);
         int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
         return supportService.loadFamilyData(familyId, responseChildId, true);
     }
@@ -226,32 +243,8 @@ final class FamilyActionRequestService {
             .build();
     }
 
-    private OperationResult<String> validateAndNormalizeRequestNote(String note) {
-        if (note == null) {
-            return OperationResult.success(null);
-        }
-
-        String trimmed = note.trim();
-        if (trimmed.isEmpty()) {
-            return OperationResult.success(null);
-        }
-
-        if (trimmed.contains("\n") || trimmed.contains("\r")) {
-            return OperationResult.failure("REQUEST_NOTE_INVALID", BackendMessages.message("requests.noteInvalid"));
-        }
-
-        if (trimmed.length() > MAX_REQUEST_NOTE_LENGTH) {
-            return OperationResult.failure("REQUEST_NOTE_TOO_LONG", BackendMessages.message("requests.noteTooLong"));
-        }
-
-        return OperationResult.success(trimmed);
-    }
-
-    private boolean isPending(PurchaseRequestEntity request) {
-        return request.getStatus() == null || request.getStatus() == PurchaseRequestStatus.pending;
-    }
-
-    private boolean isPurchaseRequest(PurchaseRequestEntity request) {
-        return request.getRequestType() != null && request.getRequestType().isPurchase();
+    private void publish(ApplicationOutboxEventType type, PurchaseRequestEntity request, int delta, Integer balance) {
+        eventSupport.publish(type, request.getFamilyId(), request.getChildId(), request.getId(), delta, balance,
+            historyFactory.now());
     }
 }

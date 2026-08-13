@@ -69,13 +69,13 @@ public class FamilyResource extends FamilyResourceSupport {
                                    @RequestBody(required = true, description = "Client-side dashboard payload")
                                    java.util.Map<String, Object> payload) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null) {
+        if (auth == null || !auth.canEditFamilyData()) {
             return unauthorized();
         }
 
         var effectivePayload = payload == null ? java.util.Map.<String, Object>of() : payload;
         Integer requestedChildId = effectivePayload.get("childId") instanceof Number n ? n.intValue() : null;
-        Integer childId = auth.isChild() ? auth.childId() : requestedChildId;
+        Integer childId = requestedChildId;
         OperationResult<FamilyDataResponse> result =
             familyService.saveFamilyData(auth.familyId(), childId, effectivePayload, auth.isAdmin());
         notifyDataUpdated(auth, childId, result);

@@ -9,6 +9,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -112,6 +113,12 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
             "familyDbId",
             String.valueOf(familyDbId)
         );
+    }
+
+    public java.util.Optional<PurchaseRequestEntity> findByIdForUpdate(long requestId) {
+        return find("id = ?1", requestId)
+            .withLock(LockModeType.PESSIMISTIC_WRITE)
+            .firstResultOptional();
     }
 
     @Transactional

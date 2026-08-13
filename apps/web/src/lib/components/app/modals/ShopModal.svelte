@@ -58,7 +58,20 @@
 
     function close() { modalStore.close(); }
 
+    function hasStaleTelegramChildContext(): boolean {
+        const childId = modalData?.telegramChildId;
+        return childId != null && String(childId) !== String($appStore.currentChildId);
+    }
+
+    function requireCurrentTelegramChildContext(): boolean {
+        if (!hasStaleTelegramChildContext()) return true;
+        showToast('The selected child changed. Reopen the reward to continue.', 'error');
+        close();
+        return false;
+    }
+
     async function save() {
+        if (!requireCurrentTelegramChildContext()) return;
         if (!title.trim()) { showToast(tShop('modal.enterTitle'), 'error'); return; }
         const payload = buildShopPayload({
             id: existingItem?.id as number | string | undefined,
@@ -87,6 +100,7 @@
     }
 
     async function toggleItemActive() {
+        if (!requireCurrentTelegramChildContext()) return;
         if (!existingItem?.id) return;
         const nextActive = !isActive;
         appStore.setState({
@@ -101,6 +115,7 @@
     }
 
     async function deleteItem() {
+        if (!requireCurrentTelegramChildContext()) return;
         if (!existingItem?.id) return;
         const confirmed = await confirmAction({
             title: tShop('modal.confirmDeleteTitle'),

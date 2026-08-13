@@ -21,6 +21,21 @@ EarnIt Kids sits between three primary actors and one data system.
 - Super-admin users inspect families and system health.
 - PostgreSQL stores the source of truth for family, child, catalog, history, request, and token data.
 
+### Family action consistency
+
+Request decisions use a single `PENDING -> APPROVED | REJECTED` state machine.
+The approving or rejecting transaction locks the request row before checking its
+current state, then locks the affected child row before applying any balance
+delta. A concurrent decision therefore observes the terminal result and returns
+the existing already-processed response instead of repeating side effects.
+
+Every balance mutation is an atomic signed delta under the child row lock. The
+matching history entry is persisted in the same transaction, and the response
+is read back only after the transaction has committed. Web, Mini App, and bot
+callers must reconcile from that server snapshot after success, a stale-action
+response, resume, or a `DATA_UPDATED` signal; no channel maintains an
+independent balance or request source of truth.
+
 ```mermaid
 flowchart LR
 	Parent[Parent User]

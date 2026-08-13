@@ -107,6 +107,7 @@ class ReadinessChecksTest {
             public Google google() {
                 return base.google();
             }
+
         };
     }
 }

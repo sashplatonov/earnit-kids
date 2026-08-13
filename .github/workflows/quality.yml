@@ -43,6 +43,9 @@ jobs:
       - name: Verify
         run: ./mvnw -B -ntp verify
 
+      - name: Telegram cross-channel contract
+        run: ./mvnw -B -ntp -Dtest=TelegramCrossChannelIntegrationTest test
+
       - name: Backend test summary
         if: always()
         run: |
@@ -127,6 +130,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Telegram Mini App tests
+        run: npm run test -- --run
 
       - name: Test
         run: npm run test
