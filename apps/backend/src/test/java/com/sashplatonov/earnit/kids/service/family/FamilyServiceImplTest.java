@@ -588,7 +588,7 @@ class FamilyServiceImplTest {
 
         assertThat(service.updateNickname("fam-1", 11, "Alice"))
             .isInstanceOf(OperationResult.Failure.class);
-        assertThat(service.updateChildSettings("fam-1", 11, "Alice", 5, 10))
+        assertThat(service.updateChildSettings("fam-1", 11, "Alice", 5, 10, 20))
             .isInstanceOf(OperationResult.Failure.class);
         assertThat(service.updateChildTheme("fam-1", 11, ChildTheme.ocean))
             .isInstanceOf(OperationResult.Failure.class);

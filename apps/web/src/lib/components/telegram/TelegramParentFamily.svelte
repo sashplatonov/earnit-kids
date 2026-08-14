@@ -19,6 +19,7 @@
     import TelegramMyAccount from './TelegramMyAccount.svelte';
     import TelegramEmailSettings from './TelegramEmailSettings.svelte';
     import TelegramParents from './TelegramParents.svelte';
+    import TelegramLimits from './TelegramLimits.svelte';
 
     const i18n = useI18n();
 
@@ -28,6 +29,8 @@
     let myAccountOpen = false;
     let emailSettingsOpen = false;
     let parentsOpen = false;
+    let limitsOpen = false;
+    let limitsChild: Child | null = null;
     let link = '';
     let linkBusy = false;
     let linkError = '';
@@ -198,6 +201,7 @@
 <TelegramMyAccount open={myAccountOpen} on:close={() => myAccountOpen = false} on:openEmail={() => { myAccountOpen = false; emailSettingsOpen = true; }} />
 <TelegramEmailSettings open={emailSettingsOpen} on:close={() => emailSettingsOpen = false} />
 <TelegramParents open={parentsOpen} on:close={() => parentsOpen = false} />
+<TelegramLimits open={limitsOpen} child={limitsChild} on:close={() => limitsOpen = false} on:saved={() => { if (manageChild) void loadTelegram(manageChild.id); }} />
 
 {#if manageChild}
     <div class="sheet-backdrop" role="presentation" on:click={() => manageChild = null}></div>
@@ -206,7 +210,7 @@
 
         <div class="settings">
             <div class="setting"><span class="setting-icon"><TelegramIcon name="send" size={20} label={$i18n.t('app.telegram.family.telegram')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.telegram')}</span><span class="setting-meta">{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></span><span class="manage-badge" class:badge-active={telegram?.linked}>{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></div>
-            <div class="setting"><span class="setting-icon"><TelegramIcon name="gauge" size={20} label={$i18n.t('app.telegram.family.limits')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.limits')}</span><span class="setting-meta">{$i18n.t('app.telegram.family.limitsMeta')}</span></span></div>
+            <button class="setting" type="button" on:click={() => { limitsChild = manageChild; limitsOpen = true; }}><span class="setting-icon"><TelegramIcon name="gauge" size={20} label={$i18n.t('app.telegram.family.limits')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.limits')}</span><span class="setting-meta">{$i18n.t('app.telegram.family.limitsMeta')}</span></span><TelegramIcon name="arrowRight" size={18} label="Open" /></button>
         </div>
 
         {#if inviteView}

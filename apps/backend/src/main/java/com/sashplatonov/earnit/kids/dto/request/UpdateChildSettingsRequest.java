@@ -19,5 +19,9 @@ public record UpdateChildSettingsRequest(
     @NotNull(message = "{validation.monthly.limit.required}")
     @Min(value = 0, message = "{validation.monthly.limit.min}")
     @JsonAlias("monthly_limit")
-    Integer monthlyLimit
+    Integer monthlyLimit,
+
+    @Min(value = 0, message = "{validation.daily.reward.limit.min}")
+    @JsonAlias("daily_reward_limit")
+    Integer dailyRewardLimit
 ) { }

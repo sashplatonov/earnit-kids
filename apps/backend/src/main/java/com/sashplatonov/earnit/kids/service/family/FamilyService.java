@@ -42,7 +42,8 @@ public interface FamilyService {
     OperationResult<Void> updateNickname(String familyId, int childId, String newName);
 
     OperationResult<Void> updateChildSettings(String familyId, int childId,
-                                               String name, int dailyCoinLimit, int monthlyLimit);
+                                               String name, int dailyCoinLimit, int monthlyLimit,
+                                               int dailyRewardLimit);
 
     OperationResult<Void> updateChildTheme(String familyId, int childId, ChildTheme theme);
 

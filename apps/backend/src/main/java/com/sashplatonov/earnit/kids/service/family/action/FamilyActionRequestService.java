@@ -156,6 +156,12 @@ final class FamilyActionRequestService {
             : supportService.findActiveTask(familyDbId.get(), request.get().getChildId(), request.get().getTaskId());
 
         if (FamilyActionRequestSupport.isPurchase(request.get())) {
+            long rewardLimit = child.get().getDailyRewardLimit();
+            if (rewardLimit > 0
+                && supportService.dailyRewardSpend(request.get().getChildId(),
+                    historyFactory.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS)) + request.get().getCoins() > rewardLimit) {
+                return OperationResult.failure(BackendMessages.message("balance.rewardLimitReached"));
+            }
             if (child.get().getBalance() < request.get().getCoins()) {
                 return OperationResult.failure(BackendMessages.message("balance.insufficient"));
             }

@@ -242,17 +242,17 @@ class FamilyResourceTest {
 
     @Test
     void updateChildSettingsPost_validRequest_delegatesToService() {
-        when(familyService.updateChildSettings("fam-1", 10, "Nick", 11, 22))
+        when(familyService.updateChildSettings("fam-1", 10, "Nick", 11, 22, 33))
             .thenReturn(OperationResult.success(null));
 
         Response response = childResource.updateChildSettingsPost(
             contextWithAuth(adminAuth()),
             10,
-            new UpdateChildSettingsRequest("Nick", 11, 22)
+            new UpdateChildSettingsRequest("Nick", 11, 22, 33)
         );
 
         assertThat(response.getStatus()).isEqualTo(200);
-        verify(familyService).updateChildSettings("fam-1", 10, "Nick", 11, 22);
+        verify(familyService).updateChildSettings("fam-1", 10, "Nick", 11, 22, 33);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("CHILD_UPDATED"), eq(Map.of("childId", 10)));
     }
 

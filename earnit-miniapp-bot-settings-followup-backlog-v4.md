@@ -1125,7 +1125,7 @@ Keep compact.
 
 ---
 
-# SFX-013 - Child coin earning and reward spending limits with quick steppers
+# SFX-013 ✅ - Child coin earning and reward spending limits with quick steppers
 
 **Priority:** P0  
 **Channel:** Mini App, enforced across Mini App + Bot
@@ -1340,7 +1340,7 @@ Use the canonical semantic graphics listed at the beginning of this backlog.
 11. SFX-006 - Mini App-native Task/Reward forms
 12. SFX-009 - parent email management
 13. SFX-010 - parent invites
-14. SFX-013 - limits with ±1/±5 steppers
+14. SFX-013 ✅ - limits with ±1/±5 steppers
 15. SFX-011 - dual CSV import + format/copy
 16. SFX-012 - Task/Reward group submenu
 17. SFX-016 - regression/integration tests

@@ -107,6 +107,7 @@ export interface Child {
     status?: 'ACTIVE' | 'INACTIVE' | string | null;
     monthlyLimit?: number;
     dailyCoinLimit?: number;
+    dailyRewardLimit?: number;
     isPinSet?: boolean;
     ageMin?: number | null;
     ageMax?: number | null;

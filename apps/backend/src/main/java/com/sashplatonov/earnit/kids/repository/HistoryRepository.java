@@ -65,6 +65,19 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         );
     }
 
+    // EXPLAIN: Sum of reward spending (spend history) since a day boundary,
+    // EXPLAIN: used to enforce the child's daily reward-spend limit.
+    public long sumRewardSpendSince(int childId, Instant since) {
+        var query = entityManager.createQuery(
+            "SELECT COALESCE(SUM(ABS(h.amount)), 0) FROM HistoryEntryEntity h " +
+            "WHERE h.childId = ?1 AND h.type = ?2 AND h.createdAt >= ?3",
+            Long.class);
+        query.setParameter(1, childId);
+        query.setParameter(2, HistoryEntryType.spend);
+        query.setParameter(3, since);
+        return query.getSingleResult();
+    }
+
     public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getHistoryForFamily",

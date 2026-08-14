@@ -85,6 +85,13 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("balance.insufficient"));
         }
 
+        long rewardLimit = child.get().getDailyRewardLimit();
+        if (rewardLimit > 0
+            && supportService.dailyRewardSpend(childId,
+                historyFactory.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS)) + item.get().getPrice() > rewardLimit) {
+            return OperationResult.failure(BackendMessages.message("balance.rewardLimitReached"));
+        }
+
         child.get().setBalance(child.get().getBalance() - item.get().getPrice());
         historyRepository.persist(historyFactory.buildShopHistory(familyDbId.get(), childId, item.get()));
         publish(ApplicationOutboxEventType.REWARD_PURCHASED, familyDbId.get(), childId, null, -item.get().getPrice(), child.get().getBalance());

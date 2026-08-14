@@ -68,6 +68,10 @@ final class FamilyActionSupportService {
             .equals(child.getStatus());
     }
 
+    long dailyRewardSpend(int childId, java.time.Instant since) {
+        return historyRepository.sumRewardSpendSince(childId, since);
+    }
+
     void clearRewardGoal(int childId) {
         childRepository.updateRewardGoal(childId, null);
     }

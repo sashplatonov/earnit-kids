@@ -118,7 +118,8 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
     }
 
     @Transactional
-    public boolean updateSettings(int childId, String name, int dailyCoinLimit, int monthlyLimit) {
+    public boolean updateSettings(int childId, String name, int dailyCoinLimit, int monthlyLimit,
+                                  int dailyRewardLimit) {
         Optional<ChildEntity> opt = findByIdOptional(childId);
         if (opt.isEmpty()) {
             return false;
@@ -127,6 +128,7 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
         e.setName(name);
         e.setDailyCoinLimit(dailyCoinLimit);
         e.setMonthlyLimit(monthlyLimit);
+        e.setDailyRewardLimit(dailyRewardLimit);
         return true;
     }
 

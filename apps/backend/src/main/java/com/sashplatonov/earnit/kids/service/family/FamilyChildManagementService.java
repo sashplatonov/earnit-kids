@@ -107,7 +107,7 @@ class FamilyChildManagementService {
 
     OperationResult<Void> updateChildSettings(String familyId, int childId,
                                               String name, int dailyCoinLimit,
-                                              int monthlyLimit) {
+                                              int monthlyLimit, int dailyRewardLimit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
@@ -115,7 +115,7 @@ class FamilyChildManagementService {
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
-        childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit);
+        childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit, dailyRewardLimit);
         invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }

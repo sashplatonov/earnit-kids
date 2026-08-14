@@ -8,6 +8,7 @@ public record ChildDto(
     int balance,
     int monthlyLimit,
     int dailyCoinLimit,
+    int dailyRewardLimit,
     String theme,
     List<String> taskGroupOrder,
     List<String> shopGroupOrder,
@@ -36,7 +37,7 @@ public record ChildDto(
                     List<String> childTaskGroupOrder,
                     List<String> childShopGroupOrder,
                     Long rewardGoalItemId) {
-        this(id, name, balance, monthlyLimit, dailyCoinLimit, theme, taskGroupOrder, shopGroupOrder,
+        this(id, name, balance, monthlyLimit, dailyCoinLimit, 0, theme, taskGroupOrder, shopGroupOrder,
             childTaskGroupOrder, childShopGroupOrder, rewardGoalItemId, "ACTIVE");
     }
 }

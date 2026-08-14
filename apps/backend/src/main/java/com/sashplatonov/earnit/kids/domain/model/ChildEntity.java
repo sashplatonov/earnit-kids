@@ -49,6 +49,10 @@ public class ChildEntity extends CreatedAtEntity {
     @Builder.Default
     private int dailyCoinLimit = 0;
 
+    @Column(name = "daily_reward_limit")
+    @Builder.Default
+    private int dailyRewardLimit = 0;
+
     @Column(name = "theme")
     @Builder.Default
     private String theme = "ocean";

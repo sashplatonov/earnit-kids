@@ -237,8 +237,9 @@ public final class FamilyServiceImpl implements FamilyService {
     @Override
     public OperationResult<Void> updateChildSettings(String familyId, int childId,
                                                       String name, int dailyCoinLimit,
-                                                      int monthlyLimit) {
-        return familyChildManagementService.updateChildSettings(familyId, childId, name, dailyCoinLimit, monthlyLimit);
+                                                      int monthlyLimit, int dailyRewardLimit) {
+        return familyChildManagementService.updateChildSettings(
+            familyId, childId, name, dailyCoinLimit, monthlyLimit, dailyRewardLimit);
     }
 
     @Override

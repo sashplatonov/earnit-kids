@@ -90,7 +90,7 @@ class RepositorySmokeTest {
         assertThat(childRepository.findByToken(child1.getToken())).isPresent();
         assertThat(childRepository.updateBalance(child1.getId(), 123)).isTrue();
         assertThat(childRepository.updateName(child1.getId(), "Kid One Updated")).isTrue();
-        assertThat(childRepository.updateSettings(child1.getId(), "Kid One Updated", 5, 500)).isTrue();
+        assertThat(childRepository.updateSettings(child1.getId(), "Kid One Updated", 5, 500, 50)).isTrue();
         assertThat(childRepository.updateTheme(child1.getId(), ChildTheme.ocean)).isTrue();
         assertThat(childRepository.regenerateToken(child1.getId())).isPresent();
 
@@ -321,7 +321,7 @@ class RepositorySmokeTest {
 
         assertThat(childRepository.updateBalance(999999, 1)).isFalse();
         assertThat(childRepository.updateName(999999, "x")).isFalse();
-        assertThat(childRepository.updateSettings(999999, "x", 1, 1)).isFalse();
+        assertThat(childRepository.updateSettings(999999, "x", 1, 1, 1)).isFalse();
         assertThat(childRepository.updateTheme(999999, ChildTheme.ocean)).isFalse();
         assertThat(childRepository.regenerateToken(999999)).isEmpty();
     }

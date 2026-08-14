@@ -33,6 +33,7 @@ export function normalizeChild(child: Record<string, unknown> = {}) {
         name: (child.name ?? nickname) as string,
         monthlyLimit: child.monthlyLimit ?? child.monthly_limit ?? 10000,
         dailyCoinLimit: child.dailyCoinLimit ?? child.daily_coin_limit ?? 0,
+        dailyRewardLimit: child.dailyRewardLimit ?? child.daily_reward_limit ?? 0,
         theme: (child.theme ?? null) as string | null,
         taskGroupOrder: readStringArray(child.taskGroupOrder ?? child.task_group_order),
         shopGroupOrder: readStringArray(child.shopGroupOrder ?? child.shop_group_order),
