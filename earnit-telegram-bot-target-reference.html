@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EarnIt Kids Telegram Bot Target Reference</title>
+<style>
+:root{--bg:#0e1621;--panel:#182533;--panel2:#202f3d;--text:#f2f5f7;--muted:#9fb0bd;--green:#2f7d43;--red:#8a3034;--blue:#2e6f9e;--line:#2a3a47}
+*{box-sizing:border-box}body{margin:0;background:#0a1017;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1080px;margin:20px auto;padding:0 12px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}.toolbar button{border:0;border-radius:999px;background:#1d2b38;color:#fff;padding:9px 13px;cursor:pointer}.toolbar button.active{background:#3976a5}
+.phone{width:360px;height:650px;margin:0 auto;background:var(--bg);border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45);position:relative}
+.head{height:54px;background:#17212b;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #24313d}.back{font-size:24px;margin-right:10px}.head .grow{flex:1}.head b{font-size:15px}.head small{display:block;color:var(--muted);font-size:11px}
+.chat{padding:12px 10px 90px;height:596px;overflow:auto}.bubble{background:var(--panel);border-radius:16px 16px 16px 5px;padding:12px;margin-bottom:8px;max-width:94%}.title{font-weight:750}.muted{color:var(--muted);font-size:12px}.line{margin:5px 0}.kbd{display:grid;gap:6px;margin:7px 0 14px}.row2{grid-template-columns:1fr 1fr}.row1{grid-template-columns:1fr}.btn{min-height:42px;border-radius:9px;background:var(--panel2);display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 10px;font-weight:650;font-size:13px;border:1px solid var(--line)}.btn.ok{background:var(--green)}.btn.no{background:var(--red)}.btn.app{background:#263a4b}.btn.warn{background:#5a4523}
+.screen{display:none}.screen.active{display:block}
+.div{height:1px;background:var(--line);margin:9px 0}
+.note{font-size:11px;color:#bfd0da;margin-top:6px}
+.composer{position:absolute;left:0;right:0;bottom:0;height:58px;background:#17212b;border-top:1px solid #24313d;display:flex;align-items:center;padding:0 12px;color:#738795}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="toolbar">
+<button data-s="p-home" class="active">Parent Home</button>
+<button data-s="p-request">Parent Request</button>
+<button data-s="p-coins">Parent Coins</button>
+<button data-s="p-recent">Parent Recent</button>
+<button data-s="p-switch">Switch Child</button>
+<button data-s="c-home">Child Home</button>
+<button data-s="c-tasks">Child Tasks</button>
+<button data-s="c-rewards">Child Rewards</button>
+</div>
+
+<div class="phone">
+<div class="head"><div class="back">‹</div><div class="grow"><b>EarnIt Kids</b><small>бот</small></div><div>⋮</div></div>
+<div class="chat">
+
+<section id="p-home" class="screen active">
+<div class="bubble">
+  <div class="title">👧 Aliska</div>
+  <div class="line">🪙 22 монеты</div>
+  <div class="div"></div>
+  <div>🎯 Требуют внимания: 2</div>
+</div>
+<div class="kbd row2">
+  <div class="btn">🎯 Запросы</div><div class="btn">🪙 Монеты</div>
+  <div class="btn">📜 Последние</div><div class="btn">🔄 Сменить ребёнка</div>
+</div>
+<div class="kbd row1"><div class="btn app">📱 Открыть приложение</div></div>
+</section>
+
+<section id="p-request" class="screen">
+<div class="bubble">
+  <div class="title">👧 Aliska выполнила:</div>
+  <div class="line">☀️ Утренний старт</div>
+  <div class="line">🪙 +1 монета</div>
+</div>
+<div class="kbd row2"><div class="btn ok">👍 Одобрить</div><div class="btn no">👎 Отклонить</div></div>
+<div class="note">После решения это же сообщение редактируется, кнопки исчезают.</div>
+</section>
+
+<section id="p-coins" class="screen">
+<div class="bubble">
+  <div class="title">👧 Aliska</div>
+  <div class="line">🪙 Баланс: 22</div>
+  <div class="div"></div>
+  <div class="muted">Добавить монеты</div>
+</div>
+<div class="kbd row2">
+  <div class="btn">➕ +1</div><div class="btn">➕ +2</div>
+  <div class="btn">➕ +5</div><div class="btn">➕ +10</div>
+</div>
+<div class="bubble"><div class="muted">Снять монеты</div></div>
+<div class="kbd row2">
+  <div class="btn">➖ -1</div><div class="btn">➖ -2</div>
+  <div class="btn warn">➖ -5</div><div class="btn warn">➖ -10</div>
+</div>
+<div class="kbd row1"><div class="btn">🔢 Другая сумма</div><div class="btn">🏠 Главное меню</div></div>
+</section>
+
+<section id="p-recent" class="screen">
+<div class="bubble">
+  <div class="title">📜 Последние события · Aliska</div>
+  <div class="div"></div>
+  <div class="line">☀️ +1 · Утренний старт</div><div class="muted">Сегодня, 08:32</div>
+  <div class="line">📖 +2 · Книжная искра</div><div class="muted">Вчера, 18:40</div>
+  <div class="line">🎁 -2 · Королева настолки</div><div class="muted">13 августа, 20:15</div>
+</div>
+<div class="kbd row1"><div class="btn app">📱 Полная история</div><div class="btn">🏠 Главное меню</div></div>
+</section>
+
+<section id="p-switch" class="screen">
+<div class="bubble"><div class="title">🔄 Выберите ребёнка</div></div>
+<div class="kbd row1">
+  <div class="btn">👧 Aliska · 22</div>
+  <div class="btn">👧 Lizka · 5</div>
+  <div class="btn">🏠 Главное меню</div>
+</div>
+</section>
+
+<section id="c-home" class="screen">
+<div class="bubble">
+  <div class="title">👋 Aliska</div>
+  <div class="line">🪙 22 монеты</div>
+</div>
+<div class="kbd row1">
+  <div class="btn">✅ Мои задания</div>
+  <div class="btn">🎁 Награды</div>
+  <div class="btn">📜 Последние</div>
+  <div class="btn app">📱 Открыть приложение</div>
+</div>
+</section>
+
+<section id="c-tasks" class="screen">
+<div class="bubble">
+  <div class="title">✅ Мои задания</div>
+  <div class="div"></div>
+  <div class="line">☀️ Утренний старт · 🪙 +1</div>
+  <div class="line">📖 Книжная искра - 15 минут · 🪙 +2</div>
+  <div class="line">✏️ Красивые 5 строк · 🪙 +1</div>
+</div>
+<div class="kbd row1">
+  <div class="btn">✅ Готово: Утренний старт</div>
+  <div class="btn">✅ Готово: Книжная искра</div>
+  <div class="btn">✅ Готово: Красивые 5 строк</div>
+  <div class="btn app">📱 Все задания</div>
+  <div class="btn">🏠 Главное меню</div>
+</div>
+</section>
+
+<section id="c-rewards" class="screen">
+<div class="bubble">
+  <div class="title">🎁 Награды</div>
+  <div class="line">🪙 Баланс: 22</div>
+  <div class="div"></div>
+  <div class="line">🎲 Королева настолки · 2</div>
+  <div class="line">👨‍👧 20 минут только со мной · 4</div>
+  <div class="div"></div>
+  <div class="muted">🧪 Следующая цель</div>
+  <div class="line">Домашняя лаборатория · 30</div>
+  <div class="muted">Не хватает 8 монет</div>
+</div>
+<div class="kbd row1">
+  <div class="btn">🎁 Получить: Королева настолки</div>
+  <div class="btn">🎁 Получить: 20 минут только со мной</div>
+  <div class="btn app">📱 Все награды</div>
+  <div class="btn">🏠 Главное меню</div>
+</div>
+</section>
+
+</div>
+<div class="composer">Сообщение</div>
+</div>
+</div>
+
+<script>
+function show(id){
+ document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
+ document.querySelectorAll('.toolbar button').forEach(x=>x.classList.toggle('active',x.dataset.s===id));
+}
+document.querySelectorAll('.toolbar button').forEach(b=>b.onclick=()=>show(b.dataset.s));
+</script>
+</body>
+</html>
