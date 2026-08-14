@@ -92,6 +92,12 @@ public final class TelegramCopy {
         return TelegramBotEmoji.REQUESTS + " Запрос " + index + " из " + total;
     }
 
+    // EXPLAIN: Full queue screen text for one pending request.
+    public static String requestQueueText(String childName, String title, int coins, int index, int total) {
+        return requestQueue(index, total) + "\n\n" + TelegramBotEmoji.CHILD + " " + childName + "\n\n"
+            + title + "\n" + TelegramBotEmoji.COINS + " +" + coins + " " + moneta(coins);
+    }
+
     // EXPLAIN: One pending request detail inside the queue.
     public static String requestDetail(String childName, String title, int coins) {
         return TelegramBotEmoji.CHILD + " " + childName + "\n\n"

@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
+import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -122,23 +123,32 @@ public class TelegramMenuBuilder {
             ? List.of(parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view)) : backToMain();
     }
 
-    public List<TelegramBotApiClient.InlineButton> parentRequests(TelegramQuickActionResponse view) {
-        List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        view.requests().stream()
-            .filter(request -> request.status() == PurchaseRequestStatus.pending)
-            .limit(5)
-            .forEach(request -> {
-                String label = request.title() == null ? "Request" : request.title();
-                buttons.add(callback(TelegramBotEmoji.APPROVE + " " + label, "parent.request.approve."
-                    + request.childId() + "." + request.id()));
-                buttons.add(callback(TelegramBotEmoji.REJECT + " Reject", "parent.request.reject."
-                    + request.childId() + "." + request.id()));
-            });
-        if (buttons.isEmpty()) {
-            buttons.add(callback(TelegramBotEmoji.SUCCESS + " No pending requests", "noop"));
+    // EXPLAIN: One pending request at a time; auto-advances or ends after decision.
+    public List<TelegramBotApiClient.InlineButton> parentRequestQueue(TelegramQuickActionResponse view,
+                                                                        String currentRequestId) {
+        List<RequestDto> pending = TelegramMenuFlow.pendingRequests(view);
+        int index = TelegramMenuFlow.nextQueueIndex(pending, currentRequestId);
+        if (index >= pending.size()) {
+            return List.of();
         }
-        buttons.add(parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view));
+        RequestDto request = pending.get(index);
+        int total = pending.size();
+        String target = request.childId() + "." + request.id() + ".queue";
+        List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
+        buttons.add(callback(TelegramCopy.APPROVE, "parent.request.approve." + target, "queue-row-1"));
+        buttons.add(callback(TelegramCopy.REJECT, "parent.request.reject." + target, "queue-row-1"));
+        if (index + 1 < total) {
+            buttons.add(navigation(TelegramCopy.NEXT, "requests-next-" + request.id(), "queue-row-2"));
+        }
+        buttons.add(parentNavigation(TelegramCopy.HOME, "main", view, "queue-row-3"));
         return List.copyOf(buttons);
+    }
+
+    public List<TelegramBotApiClient.InlineButton> parentRequestsEmpty(TelegramQuickActionResponse view,
+                                                                        String miniAppUrl) {
+        return List.of(
+            parentNavigation(TelegramCopy.HOME, "main", view),
+            webApp(TelegramCopy.OPEN_APP, miniAppUrl));
     }
 
     public List<TelegramBotApiClient.InlineButton> recent(TelegramQuickActionResponse view) {

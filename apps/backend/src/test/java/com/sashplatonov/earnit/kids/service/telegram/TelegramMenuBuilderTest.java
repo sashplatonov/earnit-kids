@@ -106,7 +106,7 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
-    void parentRequestsShowsBoundedApprovalActions() {
+    void parentRequestQueueProcessesOnePendingRequestAtATime() {
         RequestDto request = new RequestDto(
             19L, 7L, "Homework", null, null, "Homework", null, null, null, null,
             20, PurchaseRequestStatus.pending, PurchaseRequestType.earn, 0, "2026-08-13T12:00:00Z",
@@ -114,9 +114,49 @@ class TelegramMenuBuilderTest {
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
             "family", "parent", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(request), List.of());
 
-        assertThat(menuBuilder().parentRequests(view))
+        assertThat(menuBuilder().parentRequestQueue(view, null))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("👍 Homework", "👎 Reject", "⬅️ Back");
+            .containsExactly("👍 Одобрить", "👎 Отклонить", "🏠 Главное меню");
+        assertThat(menuBuilder().parentRequestQueue(view, null))
+            .extracting(TelegramBotApiClient.InlineButton::callbackData)
+            .contains("parent.request.approve.1.19.queue", "parent.request.reject.1.19.queue");
+        assertThat(TelegramMenuFlow.navigationText("requests-child-1", view))
+            .isEqualTo("🎯 Запрос 1 из 1\n\n👧 Alex\n\nHomework\n🪙 +20 монет");
+    }
+
+    @Test
+    void parentRequestQueueShowsNextWhenMorePendingExist() {
+        RequestDto first = new RequestDto(
+            19L, 7L, "Homework", null, null, "Homework", null, null, null, null,
+            20, PurchaseRequestStatus.pending, PurchaseRequestType.earn, 0, "2026-08-13T12:00:00Z",
+            1, null, null, null, null);
+        RequestDto second = new RequestDto(
+            20L, null, null, 9L, "Movie night", "Movie night", null, null, null, null,
+            30, PurchaseRequestStatus.pending, PurchaseRequestType.shop_purchase, 0,
+            "2026-08-13T13:00:00Z", 1, null, null, null, null);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 1, "Alex", 42, List.of(), List.of(), List.of(),
+            List.of(first, second), List.of());
+
+        assertThat(menuBuilder().parentRequestQueue(view, null))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("👍 Одобрить", "👎 Отклонить", "➡️ Следующий", "🏠 Главное меню");
+        assertThat(TelegramMenuFlow.navigationText("requests-child-1", view))
+            .isEqualTo("🎯 Запрос 1 из 2\n\n👧 Alex\n\nHomework\n🪙 +20 монет");
+        assertThat(TelegramMenuFlow.navigationText("requests-next-19-child-1", view))
+            .isEqualTo("🎯 Запрос 2 из 2\n\n👧 Alex\n\nMovie night\n🪙 +30 монет");
+    }
+
+    @Test
+    void parentRequestsEmptyStateHasHomeAndMiniAppOnly() {
+        TelegramQuickActionResponse view = view();
+
+        assertThat(menuBuilder().parentRequestQueue(view, null)).isEmpty();
+        assertThat(menuBuilder().parentRequestsEmpty(view, "https://example.test/telegram"))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("🏠 Главное меню", "📱 Открыть приложение");
+        assertThat(TelegramMenuFlow.navigationText("requests-child-1", view))
+            .isEqualTo("✅ Нет запросов, ожидающих решения");
     }
 
     @Test

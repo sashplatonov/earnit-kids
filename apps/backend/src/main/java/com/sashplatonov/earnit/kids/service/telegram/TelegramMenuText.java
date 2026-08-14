@@ -1,6 +1,9 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
+import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
+
+import java.util.List;
 
 final class TelegramMenuText {
     private TelegramMenuText() {
@@ -10,14 +13,36 @@ final class TelegramMenuText {
         if (action.startsWith("child-")) {
             return TelegramMenuFlow.homeText(view);
         }
-        return switch (baseAction(action)) {
+        String base = baseAction(action);
+        if (base.startsWith("requests-next-")) {
+            return requestsQueueText(base, view);
+        }
+        return switch (base) {
             case "child" -> TelegramCopy.chooseChildTitle();
             case "tasks", "rewards" -> catalogText(action, view);
-            case "requests", "coins" -> parentText(baseAction(action), view);
+            case "requests" -> requestsQueueText("requests", view);
+            case "coins" -> parentText("coins", view);
             case "recent" -> "Recent · " + view.childName();
             case "main" -> TelegramMenuFlow.homeText(view);
             default -> unknownText(action, view);
         };
+    }
+
+    // EXPLAIN: One pending request at a time with a bounded queue header.
+    private static String requestsQueueText(String action, TelegramQuickActionResponse view) {
+        if (!"parent".equals(view.role())) {
+            return TelegramMenuFlow.homeText(view);
+        }
+        String currentId = action.startsWith("requests-next-")
+            ? action.substring("requests-next-".length()) : null;
+        List<RequestDto> pending = TelegramMenuFlow.pendingRequests(view);
+        int index = TelegramMenuFlow.nextQueueIndex(pending, currentId);
+        if (index >= pending.size()) {
+            return TelegramCopy.emptyRequests();
+        }
+        RequestDto request = pending.get(index);
+        return TelegramCopy.requestQueueText(view.childName(), TelegramMenuFlow.requestTitle(request),
+            request.coins(), index + 1, pending.size());
     }
 
     private static String catalogText(String action, TelegramQuickActionResponse view) {

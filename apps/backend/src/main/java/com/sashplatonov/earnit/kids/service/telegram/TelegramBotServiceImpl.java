@@ -151,7 +151,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                     .ifPresent(rewardId -> quickActionReward(telegramUserId, rewardId, callback));
             } else if (data.startsWith("parent.request.")) {
                 TelegramParentRequestHandler.handle(telegramUserId, data, callback,
-                    quickActions, apiClient, menuBuilder);
+                    quickActions, apiClient, menuBuilder, config.miniAppUrl().orElse(""));
             } else if (data.startsWith("mutate.")) {
                 callbacks.consumeMutation(data.substring("mutate.".length()), telegramUserId);
             }

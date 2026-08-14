@@ -17,11 +17,18 @@ final class TelegramParentRequestHandler {
                        JsonNode callback,
                        TelegramQuickActionService quickActions,
                        TelegramBotApiClient apiClient,
-                       TelegramMenuBuilder menuBuilder) throws Exception {
+                       TelegramMenuBuilder menuBuilder,
+                       String miniAppUrl) throws Exception {
         String[] parts = data.split("\\.", -1);
-        if (parts.length != 5 || (!"approve".equals(parts[2]) && !"reject".equals(parts[2]))) {
+        if (parts.length != 5 && parts.length != 6) {
             return;
         }
+        if (!"approve".equals(parts[2]) && !"reject".equals(parts[2])) {
+            return;
+        }
+        // EXPLAIN: A ".queue" suffix means the decision came from the bounded
+        // EXPLAIN: Requests queue, so the message auto-advances to the next item.
+        boolean queueContext = parts.length == 6 && "queue".equals(parts[5]);
         int childId = Integer.parseInt(parts[3]);
         long requestId = Long.parseLong(parts[4]);
         boolean approved = "approve".equals(parts[2]);
@@ -29,7 +36,7 @@ final class TelegramParentRequestHandler {
             ? quickActions.approveRequest(telegramUserId, childId, requestId)
             : quickActions.rejectRequest(telegramUserId, childId, requestId);
         editResult(callback, result, approved, requestId, childId, telegramUserId,
-            quickActions, apiClient, menuBuilder);
+            quickActions, apiClient, menuBuilder, miniAppUrl, queueContext);
     }
 
     private static void editResult(JsonNode callback,
@@ -40,16 +47,23 @@ final class TelegramParentRequestHandler {
                                    long telegramUserId,
                                    TelegramQuickActionService quickActions,
                                    TelegramBotApiClient apiClient,
-                                   TelegramMenuBuilder menuBuilder) throws Exception {
+                                   TelegramMenuBuilder menuBuilder,
+                                   String miniAppUrl,
+                                   boolean queueContext) throws Exception {
         long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
         long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
             return;
         }
         // EXPLAIN: One callback completes the decision; the same message is
-        // EXPLAIN: edited to a terminal resolved state and decision buttons disappear.
+        // EXPLAIN: edited and decision buttons disappear (terminal or next queue item).
         if (result instanceof OperationResult.Success<TelegramQuickActionResponse> success) {
-            apiClient.editMessageText(chatId, messageId, decisionText(success.value(), approved, requestId), List.of());
+            if (queueContext) {
+                editQueueAdvance(callback, success.value(), apiClient, menuBuilder, miniAppUrl);
+            } else {
+                apiClient.editMessageText(chatId, messageId,
+                    decisionText(success.value(), approved, requestId), List.of());
+            }
             return;
         }
         TelegramQuickActionResponse view = quickActions.load(telegramUserId, childId).orElse(null);
@@ -59,6 +73,37 @@ final class TelegramParentRequestHandler {
         }
         apiClient.editMessageText(chatId, messageId, TelegramCopy.error(),
             view == null ? menuBuilder.backToMain() : menuBuilder.backToMain(view));
+    }
+
+    // EXPLAIN: After a queue decision, auto-advance to the next pending request
+    // EXPLAIN: or render the completion state when the queue is exhausted.
+    private static void editQueueAdvance(JsonNode callback,
+                                         TelegramQuickActionResponse view,
+                                         TelegramBotApiClient apiClient,
+                                         TelegramMenuBuilder menuBuilder,
+                                         String miniAppUrl) throws Exception {
+        long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
+        long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
+        if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
+            return;
+        }
+        List<TelegramBotApiClient.InlineButton> queue = menuBuilder.parentRequestQueue(view, null);
+        if (!queue.isEmpty()) {
+            apiClient.editMessageText(chatId, messageId, queueTextFor(view), queue);
+            return;
+        }
+        apiClient.editMessageText(chatId, messageId, TelegramCopy.emptyRequests(),
+            menuBuilder.parentRequestsEmpty(view, miniAppUrl));
+    }
+
+    private static String queueTextFor(TelegramQuickActionResponse view) {
+        List<RequestDto> pending = TelegramMenuFlow.pendingRequests(view);
+        if (pending.isEmpty()) {
+            return TelegramCopy.emptyRequests();
+        }
+        RequestDto request = pending.get(0);
+        return TelegramCopy.requestQueueText(view.childName(), TelegramMenuFlow.requestTitle(request),
+            request.coins(), 1, pending.size());
     }
 
     private static boolean isStale(TelegramQuickActionResponse view, long requestId) {

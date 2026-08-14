@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 
 import java.util.List;
@@ -34,9 +35,37 @@ final class TelegramMenuFlow {
     }
 
     static int pendingCount(TelegramQuickActionResponse view) {
-        return (int) view.requests().stream()
+        return pendingRequests(view).size();
+    }
+
+    // EXPLAIN: Pending requests only; resolved items never re-enter the queue.
+    static List<RequestDto> pendingRequests(
+            TelegramQuickActionResponse view) {
+        return view.requests().stream()
             .filter(request -> request.status() == PurchaseRequestStatus.pending)
-            .count();
+            .toList();
+    }
+
+    // EXPLAIN: Human-readable request title without backend terminology.
+    static String requestTitle(RequestDto request) {
+        return request.title() != null ? request.title()
+            : request.taskName() != null ? request.taskName()
+            : request.itemName() != null ? request.itemName() : "Запрос";
+    }
+
+    // EXPLAIN: Queue offset after the request identified by currentRequestId;
+    // EXPLAIN: null or unknown means start of the queue.
+    static int nextQueueIndex(List<RequestDto> pending,
+                              String currentRequestId) {
+        if (currentRequestId == null) {
+            return 0;
+        }
+        for (int i = 0; i < pending.size(); i++) {
+            if (Long.toString(pending.get(i).id()).equals(currentRequestId)) {
+                return i + 1;
+            }
+        }
+        return 0;
     }
 
     static String navigationText(String action, TelegramQuickActionResponse view) {
@@ -50,12 +79,19 @@ final class TelegramMenuFlow {
         if (isChildSelection(action)) {
             return mainMenu(view, miniAppUrl, menuBuilder);
         }
-        return switch (baseAction(action)) {
+        String base = baseAction(action);
+        if (base.startsWith("requests-next-")) {
+            String currentId = base.substring("requests-next-".length());
+            List<TelegramBotApiClient.InlineButton> queue = menuBuilder.parentRequestQueue(view, currentId);
+            return queue.isEmpty() ? menuBuilder.parentRequestsEmpty(view, miniAppUrl) : queue;
+        }
+        return switch (base) {
             case "child" -> childMenu(view, menuBuilder);
             case "tasks", "rewards" -> childCatalogMenu(action, view, miniAppUrl, menuBuilder);
             case "requests" -> requestsMenu(view, miniAppUrl, menuBuilder);
             case "recent" -> menuBuilder.recent(view);
             case "coins" -> coinsMenu(view, miniAppUrl, menuBuilder);
+            case "main" -> mainMenu(view, miniAppUrl, menuBuilder);
             default -> unknownMenu(action, view, miniAppUrl, menuBuilder);
         };
     }
@@ -79,8 +115,11 @@ final class TelegramMenuFlow {
     private static List<TelegramBotApiClient.InlineButton> requestsMenu(TelegramQuickActionResponse view,
                                                                           String miniAppUrl,
                                                                           TelegramMenuBuilder menuBuilder) {
-        return "parent".equals(view.role()) ? menuBuilder.parentRequests(view)
-            : mainMenu(view, miniAppUrl, menuBuilder);
+        if (!"parent".equals(view.role())) {
+            return mainMenu(view, miniAppUrl, menuBuilder);
+        }
+        List<TelegramBotApiClient.InlineButton> queue = menuBuilder.parentRequestQueue(view, null);
+        return queue.isEmpty() ? menuBuilder.parentRequestsEmpty(view, miniAppUrl) : queue;
     }
 
     private static List<TelegramBotApiClient.InlineButton> coinsMenu(TelegramQuickActionResponse view,

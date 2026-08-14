@@ -207,6 +207,7 @@ Keyboard:
 
 # BUX-003 - Reduce Requests screen to a bounded decision queue
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** BUX-002
 

@@ -49,7 +49,8 @@ class TelegramEmojiCoverageTest {
         buttons.addAll(builder.childMain(child, MINI_APP));
         buttons.addAll(builder.childTasks(child, MINI_APP));
         buttons.addAll(builder.childRewards(child, MINI_APP));
-        buttons.addAll(builder.parentRequests(parent));
+        buttons.addAll(builder.parentRequestQueue(parent, null));
+        buttons.addAll(builder.parentRequestsEmpty(parent, MINI_APP));
         buttons.addAll(builder.recent(parent));
         buttons.addAll(builder.recent(child));
         buttons.addAll(builder.backToMain());

@@ -324,7 +324,6 @@ class TelegramBotServiceImplTest {
                 Instant.parse("2026-08-13T12:00:00Z"))));
         when(quickActions.load(77L, 2)).thenReturn(Optional.of(view));
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
-        when(menuBuilder.parentRequests(view)).thenReturn(List.of());
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -335,7 +334,8 @@ class TelegramBotServiceImplTest {
             """));
 
         verify(quickActions).load(77L, 2);
-        verify(apiClient).editMessageText(44L, 19L, "Requests · Sam", List.of());
+        verify(apiClient).editMessageText(44L, 19L,
+            "✅ Нет запросов, ожидающих решения", List.of());
     }
 
     @Test
@@ -477,6 +477,71 @@ class TelegramBotServiceImplTest {
         verify(apiClient).editMessageText(44L, 19L,
             "✅ Одобрено\n\nHomework\n🪙 +1 монета\nБаланс: 62", List.of());
         verify(apiClient).answerCallbackQuery("callback");
+    }
+
+    @Test
+    void queueDecisionAutoAdvancesToTheNextPendingRequest() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        RequestDto pending = new RequestDto(20L, null, null, 9L, "Movie night", "Movie night",
+            null, null, null, null, 30, PurchaseRequestStatus.pending, PurchaseRequestType.shop_purchase, 0,
+            "2026-08-13T13:00:00Z", 3, null, null, null, null);
+        RequestDto resolved = new RequestDto(19L, 7L, "Homework", null, null, "Homework",
+            null, null, null, null, 20, PurchaseRequestStatus.approved, PurchaseRequestType.earn, 0,
+            "2026-08-13T12:00:00Z", 3, null, null, null, null);
+        TelegramQuickActionResponse after = new TelegramQuickActionResponse(
+            "family", "parent", 3, "Alex", 62, List.of(), List.of(), List.of(),
+            List.of(pending, resolved), List.of());
+        when(identities.recordWebhookUpdate(30L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(quickActions.approveRequest(77L, 3, 19L)).thenReturn(OperationResult.success(after));
+        List<TelegramBotApiClient.InlineButton> next = List.of(
+            TelegramBotApiClient.InlineButton.callback("👍 Одобрить", "nav.signed"));
+        when(menuBuilder.parentRequestQueue(after, null)).thenReturn(next);
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":30,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"parent.request.approve.3.19.queue","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L,
+            "🎯 Запрос 1 из 1\n\n👧 Alex\n\nMovie night\n🪙 +30 монет", next);
+    }
+
+    @Test
+    void lastQueueDecisionRendersCompletionState() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse after = new TelegramQuickActionResponse(
+            "family", "parent", 3, "Alex", 62, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(31L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(quickActions.rejectRequest(77L, 3, 19L)).thenReturn(OperationResult.success(after));
+        List<TelegramBotApiClient.InlineButton> emptyButtons = List.of(
+            TelegramBotApiClient.InlineButton.callback("🏠 Главное меню", "nav.signed"));
+        when(menuBuilder.parentRequestQueue(after, null)).thenReturn(List.of());
+        when(menuBuilder.parentRequestsEmpty(after, "https://example.test/telegram")).thenReturn(emptyButtons);
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":31,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"parent.request.reject.3.19.queue","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L,
+            "✅ Нет запросов, ожидающих решения", emptyButtons);
     }
 
     @Test
