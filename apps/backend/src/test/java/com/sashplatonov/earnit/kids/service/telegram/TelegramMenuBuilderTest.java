@@ -174,15 +174,24 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
-    void parentCoinsRequiresConfirmationForFixedDeltas() {
+    void parentCoinsIsAQuickActionWithProtectedHighRemovals() {
         TelegramQuickActionResponse view = view();
 
-        assertThat(menuBuilder().parentCoins(view))
+        List<TelegramBotApiClient.InlineButton> coins =
+            menuBuilder().parentCoins(view, "https://example.test/telegram");
+        assertThat(coins)
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("➕ 1", "➕ 2", "➕ 5", "➕ 10", "➖ 1", "➖ 2", "➖ 5", "➖ 10", "⬅️ Back");
+            .containsExactly("➕ +1", "➕ +2", "➕ +5", "➕ +10",
+                "➖ -1", "➖ -2", "➖ -5", "➖ -10", "🔢 Другая сумма", "🏠 Главное меню");
+        assertThat(coins)
+            .filteredOn(button -> button.text().equals("🔢 Другая сумма"))
+            .extracting(TelegramBotApiClient.InlineButton::url)
+            .containsExactly("https://example.test/telegram?context=coins");
         assertThat(menuBuilder().parentCoinConfirmation(view, -10))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("👍 Confirm", "⬅️ Cancel");
+            .containsExactly("👍 Подтвердить", "🏠 Главное меню");
+        assertThat(TelegramMenuFlow.navigationText("coins-confirm-remove-10-child-1", view))
+            .isEqualTo("Снять 10 монет с Alex?");
     }
 
     @Test

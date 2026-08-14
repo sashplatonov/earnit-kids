@@ -21,7 +21,7 @@ final class TelegramMenuText {
             case "child" -> TelegramCopy.chooseChildTitle();
             case "tasks", "rewards" -> catalogText(action, view);
             case "requests" -> requestsQueueText("requests", view);
-            case "coins" -> parentText("coins", view);
+            case "coins" -> coinsText(view);
             case "recent" -> "Recent · " + view.childName();
             case "main" -> TelegramMenuFlow.homeText(view);
             default -> unknownText(action, view);
@@ -53,12 +53,11 @@ final class TelegramMenuText {
             : "Rewards · " + view.childName();
     }
 
-    private static String parentText(String action, TelegramQuickActionResponse view) {
+    private static String coinsText(TelegramQuickActionResponse view) {
         if (!"parent".equals(view.role())) {
             return TelegramMenuFlow.homeText(view);
         }
-        return "requests".equals(action) ? "Requests · " + view.childName()
-            : "Coins · " + view.childName();
+        return TelegramCopy.parentCoins(view.childName(), view.balance());
     }
 
     private static String unknownText(String action, TelegramQuickActionResponse view) {
@@ -66,8 +65,7 @@ final class TelegramMenuText {
             return TelegramMenuFlow.homeText(view);
         }
         int delta = TelegramMenuFlow.coinDelta(action);
-        String operation = delta > 0 ? "Add " + delta : "Remove " + Math.abs(delta);
-        return operation + " coins for " + view.childName() + "?";
+        return TelegramCopy.coinConfirmText(view.childName(), delta);
     }
 
     private static String baseAction(String action) {

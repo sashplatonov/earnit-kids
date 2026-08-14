@@ -15,7 +15,8 @@ final class TelegramCoinAdjustmentHandler {
                        JsonNode callback,
                        TelegramQuickActionService quickActions,
                        TelegramBotApiClient apiClient,
-                       TelegramMenuBuilder menuBuilder) {
+                       TelegramMenuBuilder menuBuilder,
+                       String miniAppUrl) {
         int childId = TelegramMenuFlow.coinChildId(action);
         int delta = TelegramMenuFlow.coinDelta(action.replace("apply", "confirm"));
         OperationResult<TelegramQuickActionResponse> result =
@@ -25,17 +26,18 @@ final class TelegramCoinAdjustmentHandler {
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
             return;
         }
-        List<TelegramBotApiClient.InlineButton> buttons = menuBuilder.backToMain();
+        List<TelegramBotApiClient.InlineButton> buttons;
         String text;
+        // EXPLAIN: Fixed adjustments edit the same message, keep the quick-action
+        // EXPLAIN: keyboard for another action, and refetch the real balance.
         if (result instanceof OperationResult.Success<TelegramQuickActionResponse> success) {
-            text = TelegramBotEmoji.DONE + " Balance updated · " + success.value().balance() + " " + TelegramBotEmoji.COINS;
+            TelegramQuickActionResponse view = success.value();
+            text = TelegramCopy.coinApplied(delta, view.balance());
+            buttons = menuBuilder.parentCoins(view, miniAppUrl);
         } else {
             TelegramQuickActionResponse snapshot = quickActions.load(telegramUserId, childId).orElse(null);
-            text = "Could not update balance. Current value was not changed.";
-            if (snapshot != null) {
-                text = "Balance update failed. Current balance: " + snapshot.balance() + " " + TelegramBotEmoji.COINS;
-                buttons = menuBuilder.coinRetry(snapshot, delta);
-            }
+            text = TelegramCopy.error();
+            buttons = snapshot != null ? menuBuilder.coinRetry(snapshot, delta) : menuBuilder.backToMain();
         }
         try {
             apiClient.editMessageText(chatId, messageId, text, buttons);

@@ -353,7 +353,8 @@ class TelegramBotServiceImplTest {
             new TelegramCallbackService.VerifiedCallback("coins-apply-remove-10-child-2", 77L,
                 Instant.parse("2026-08-13T12:00:00Z"))));
         when(quickActions.adjustBalance(77L, 2, -10)).thenReturn(OperationResult.success(view));
-        when(menuBuilder.backToMain()).thenReturn(List.of());
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(menuBuilder.parentCoins(view, "https://example.test/telegram")).thenReturn(List.of());
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -364,7 +365,7 @@ class TelegramBotServiceImplTest {
             """));
 
         verify(quickActions).adjustBalance(77L, 2, -10);
-        verify(apiClient).editMessageText(44L, 19L, "✅ Balance updated · 2 🪙", List.of());
+        verify(apiClient).editMessageText(44L, 19L, "✅ Снято 10 монет\n🪙 2 монеты", List.of());
     }
 
     @Test
@@ -393,7 +394,7 @@ class TelegramBotServiceImplTest {
             "message":{"chat":{"id":44},"message_id":19}}}
             """));
 
-        verify(apiClient).editMessageText(44L, 19L, "Remove 10 coins for Sam?", List.of());
+        verify(apiClient).editMessageText(44L, 19L, "Снять 10 монет с Sam?", List.of());
     }
 
     @Test

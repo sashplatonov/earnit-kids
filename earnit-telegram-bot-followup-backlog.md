@@ -270,6 +270,7 @@ Keyboard:
 
 # BUX-004 - Rebuild Parent Coins as a true quick action
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** BUX-001
 

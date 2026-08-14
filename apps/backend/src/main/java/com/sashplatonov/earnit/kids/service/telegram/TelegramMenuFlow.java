@@ -125,7 +125,7 @@ final class TelegramMenuFlow {
     private static List<TelegramBotApiClient.InlineButton> coinsMenu(TelegramQuickActionResponse view,
                                                                        String miniAppUrl,
                                                                        TelegramMenuBuilder menuBuilder) {
-        return "parent".equals(view.role()) ? menuBuilder.parentCoins(view)
+        return "parent".equals(view.role()) ? menuBuilder.parentCoins(view, miniAppUrl)
             : mainMenu(view, miniAppUrl, menuBuilder);
     }
 

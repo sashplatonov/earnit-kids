@@ -138,7 +138,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                     .ifPresent(verified -> {
                         if (verified.action().startsWith("coins-apply-")) {
                             TelegramCoinAdjustmentHandler.handle(telegramUserId, verified.action(), callback,
-                                quickActions, apiClient, menuBuilder);
+                                quickActions, apiClient, menuBuilder, config.miniAppUrl().orElse(""));
                         } else {
                             navigate(callback, verified);
                         }

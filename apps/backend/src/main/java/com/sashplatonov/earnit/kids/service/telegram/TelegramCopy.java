@@ -82,6 +82,14 @@ public final class TelegramCopy {
             + moneta(Math.abs(delta)) + "\n" + coinsLine(balance);
     }
 
+    // EXPLAIN: Confirmation prompt protecting high negative adjustments.
+    public static String coinConfirmText(String childName, int delta) {
+        int amount = Math.abs(delta);
+        String verb = delta > 0 ? "Добавить" : "Снять";
+        String preposition = delta > 0 ? " для " : " с ";
+        return verb + " " + amount + " " + moneta(amount) + preposition + childName + "?";
+    }
+
     // EXPLAIN: Child greeting Home.
     public static String childHome(String childName, int balance) {
         return TelegramBotEmoji.GREETING + " " + childName + "\n" + coinsLine(balance);
