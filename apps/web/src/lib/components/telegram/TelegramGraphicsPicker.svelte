@@ -39,9 +39,12 @@
     }
 
     $: normalizedQuery = query.trim().toLowerCase();
-    const recentGraphics = loadRecent()
-        .map((key) => SEMANTIC_GRAPHICS.find((graphic) => graphic.key === key))
-        .filter((graphic): graphic is SemanticGraphic => graphic !== undefined);
+    let recentGraphics: SemanticGraphic[] = [];
+    $: if (open) {
+        recentGraphics = loadRecent()
+            .map((key) => SEMANTIC_GRAPHICS.find((graphic) => graphic.key === key))
+            .filter((graphic): graphic is SemanticGraphic => graphic !== undefined);
+    }
     $: filteredRecent = normalizedQuery
         ? recentGraphics.filter((graphic) => graphic.label.toLowerCase().includes(normalizedQuery))
         : recentGraphics;

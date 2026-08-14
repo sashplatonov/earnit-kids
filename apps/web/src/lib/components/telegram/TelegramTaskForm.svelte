@@ -84,7 +84,7 @@
         <button class="field" id="task-graphic" type="button" on:click={() => graphicOpen = true}>
             <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphic.label} /></span>
             <span class="grow">{currentGraphic.label}</span>
-            <TelegramIcon name="chevronDown" size={18} label="Open" />
+            <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
         </button>
 
         <label for="task-coins">{$i18n.t('app.telegram.taskForm.coinsLabel')}</label>

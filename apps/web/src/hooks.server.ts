@@ -37,6 +37,12 @@ export const handle: Handle = async ({ event, resolve }) => {
         throw redirect(302, `${localizePath('/', DEFAULT_LOCALE)}${event.url.search}`);
     }
 
+    // EXPLAIN: The Mini App is Russian-only; serve it under the canonical /ru
+    // EXPLAIN: prefix even when a request carries another locale in the path.
+    if (isTelegramMiniApp && localeFromPath && localeFromPath !== 'ru') {
+        throw redirect(302, `${localizePath(internalPath, 'ru')}${event.url.search}`);
+    }
+
     const legacyAliasTarget = resolveLegacyAlias(internalPath);
     if (legacyAliasTarget) {
         throw redirect(302, `${localizePath(legacyAliasTarget, resolvedLocale)}${event.url.search}`);

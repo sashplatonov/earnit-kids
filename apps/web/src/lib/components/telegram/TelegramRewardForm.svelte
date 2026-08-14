@@ -79,7 +79,7 @@
         <button class="field" id="reward-graphic" type="button" on:click={() => graphicOpen = true}>
             <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphic.label} /></span>
             <span class="grow">{currentGraphic.label}</span>
-            <TelegramIcon name="chevronDown" size={18} label="Open" />
+            <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
         </button>
 
         <label for="reward-price">{$i18n.t('app.telegram.rewardForm.priceLabel')}</label>

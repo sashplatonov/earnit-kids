@@ -50,23 +50,18 @@ export const SEMANTIC_GRAPHICS: readonly SemanticGraphic[] = [
     { key: 'utensils', label: 'Еда', category: 'routine' },
     { key: 'droplet', label: 'Вода', category: 'routine' },
     // Учёба
-    { key: 'book', label: 'Книга', category: 'learning' },
     { key: 'book', label: 'Чтение', category: 'learning' },
     { key: 'pencil', label: 'Письмо', category: 'learning' },
     { key: 'pencilLine', label: 'Карандаш', category: 'learning' },
     { key: 'calculator', label: 'Математика', category: 'learning' },
-    { key: 'calculator', label: 'Калькулятор', category: 'learning' },
     { key: 'school', label: 'Школа', category: 'learning' },
     { key: 'languages', label: 'Язык', category: 'learning' },
     { key: 'music', label: 'Музыка', category: 'learning' },
     { key: 'flask', label: 'Наука', category: 'learning' },
-    { key: 'flask', label: 'Лаборатория', category: 'learning' },
     // Дом
     { key: 'home', label: 'Дом', category: 'home' },
     { key: 'sparkles', label: 'Уборка', category: 'home' },
     { key: 'box', label: 'Порядок', category: 'home' },
-    { key: 'box', label: 'Коробка / вещи', category: 'home' },
-    { key: 'bed', label: 'Кровать', category: 'home' },
     { key: 'cookingPot', label: 'Посуда', category: 'home' },
     { key: 'table', label: 'Стол', category: 'home' },
     { key: 'sprout', label: 'Растения', category: 'home' },
@@ -75,9 +70,7 @@ export const SEMANTIC_GRAPHICS: readonly SemanticGraphic[] = [
     { key: 'dumbbell', label: 'Спорт', category: 'activity' },
     { key: 'footprints', label: 'Бег', category: 'activity' },
     { key: 'bike', label: 'Велосипед', category: 'activity' },
-    { key: 'footprints', label: 'Прогулка', category: 'activity' },
     { key: 'volleyball', label: 'Мяч', category: 'activity' },
-    { key: 'music', label: 'Танцы', category: 'activity' },
     // Награды и досуг
     { key: 'gift', label: 'Подарок', category: 'fun' },
     { key: 'dice', label: 'Настольная игра', category: 'fun' },
@@ -95,7 +88,7 @@ export const SEMANTIC_GRAPHICS: readonly SemanticGraphic[] = [
     // Монеты и прогресс
     { key: 'coin', label: 'Монета', category: 'money' },
     { key: 'piggy', label: 'Копилка', category: 'money' },
-    { key: 'medal', label: 'Награда', category: 'money' },
+    { key: 'award', label: 'Награда', category: 'money' },
     { key: 'trophy', label: 'Кубок', category: 'money' },
     { key: 'medal', label: 'Медаль', category: 'money' }
 ] as const;
