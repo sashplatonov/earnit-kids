@@ -11,6 +11,8 @@
     import TelegramRequestList from './TelegramRequestList.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
 
+    // EXPLAIN: Bot deep links (history/coins) open the exact home sub-context.
+    export let initialContext = '';
     let showAll = false;
     let fullHistoryLoaded = false;
     let history: HistoryEntry[] = [];
@@ -68,7 +70,16 @@
     }
 
     onMount(() => {
-        void loadHistory(true);
+        if (initialContext === 'history') {
+            showFullHistory = true;
+            fullHistoryLoaded = true;
+            void loadHistory(true);
+        } else if (initialContext === 'coins') {
+            coinSheetOpen = true;
+            void loadHistory(true);
+        } else {
+            void loadHistory(true);
+        }
     });
 </script>
 

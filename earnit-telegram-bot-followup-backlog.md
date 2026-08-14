@@ -728,6 +728,7 @@ NEXT = ➡️
 
 # BUX-013 - Add exact Mini App deep links from Bot
 
+**Status:** ✅ Implemented  
 **Priority:** P1  
 **Depends on:** BUX-001, BUX-007
 

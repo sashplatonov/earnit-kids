@@ -9,18 +9,27 @@
     import TelegramParentHeader from './TelegramParentHeader.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    let view: 'home' | 'tasks' | 'rewards' | 'family' = 'home';
+    // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
+    const context = new URLSearchParams(window.location.search).get('context') ?? '';
+    let view: 'home' | 'tasks' | 'rewards' | 'family' = tabForContext(context);
     let loading = true;
     let error = '';
     $: pending = $appStore.requests.filter((request) => request.status === 'pending');
     const tabs = ['home', 'tasks', 'rewards', 'family'] as const;
+
+    function tabForContext(value: string): 'home' | 'tasks' | 'rewards' | 'family' {
+        if (value === 'tasks') return 'tasks';
+        if (value === 'rewards') return 'rewards';
+        if (value === 'family') return 'family';
+        return 'home';
+    }
 
     onMount(async () => {
         loading = true;
         error = '';
         const ok = await initializeFromServer();
         if (!ok) error = 'Could not load your family. Try again.';
-        else view = 'home';
+        else view = tabForContext(context);
         loading = false;
     });
 
@@ -61,7 +70,7 @@
         {:else if error}
             <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}><TelegramIcon name="refresh" size={18} label="Retry" />Retry</button></section>
         {:else if view === 'home'}
-            <TelegramParentHome />
+            <TelegramParentHome initialContext={context} />
         {:else if view === 'tasks'}
             <TelegramParentTasks />
         {:else if view === 'rewards'}

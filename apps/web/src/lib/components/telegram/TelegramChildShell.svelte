@@ -10,17 +10,31 @@
     import { loadTelegramHistory } from '$lib/services/telegramActivity';
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
+    // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
+    const context = new URLSearchParams(window.location.search).get('context') ?? '';
     let loading = true;
     let error = '';
     let refreshing = false;
-    let view: 'today' | 'rewards' | 'activity' = 'today';
+    let view: 'today' | 'rewards' | 'activity' = tabForContext(context);
     let history: HistoryEntry[] = [];
     let historyPage = 0;
     let historyHasMore = false;
     let historyLoading = false;
     let historyError = '';
     const tabs = ['today', 'rewards', 'activity'] as const;
-    onMount(async () => { const ok = await initializeFromServer(); loading = false; if (!ok) error = 'Could not load your workspace. Try again.'; });
+
+    function tabForContext(value: string): 'today' | 'rewards' | 'activity' {
+        if (value === 'rewards') return 'rewards';
+        if (value === 'activity' || value === 'history') return 'activity';
+        return 'today';
+    }
+
+    onMount(async () => {
+        const ok = await initializeFromServer();
+        loading = false;
+        view = tabForContext(context);
+        if (!ok) error = 'Could not load your workspace. Try again.';
+    });
     async function retry() { refreshing = true; error = ''; const ok = await refreshData(); refreshing = false; if (!ok) error = 'Could not refresh your workspace.'; }
     function onVisibility() { if (document.visibilityState === 'visible' && !loading && !refreshing) void refreshData(); }
     async function loadHistory(reset = false) {
