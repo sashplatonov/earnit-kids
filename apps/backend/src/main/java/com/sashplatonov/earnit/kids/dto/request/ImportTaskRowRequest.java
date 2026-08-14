@@ -13,5 +13,6 @@ public record ImportTaskRowRequest(
     @Schema(required = false) Integer frequencyLimit,
     @Schema(required = false) FrequencyPeriod frequencyPeriod,
     @Schema(required = false) Integer moneyLimit,
+    @Schema(required = false) String icon,
     @Schema(required = false) Boolean isActive
 ) { }

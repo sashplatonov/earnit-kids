@@ -126,7 +126,7 @@ public class FamilyChildSettingsResource extends FamilyResourceSupport {
 
         OperationResult<Void> result = familyService.updateChildSettings(
             auth.familyId(), childId, request.name(), request.dailyCoinLimit(), request.monthlyLimit(),
-            request.dailyRewardLimit() == null ? 0 : request.dailyRewardLimit());
+            request.dailyRewardLimit());
         notifyChildUpdated(auth.familyId(), childId, result);
         return toVoidResponse(result);
     }

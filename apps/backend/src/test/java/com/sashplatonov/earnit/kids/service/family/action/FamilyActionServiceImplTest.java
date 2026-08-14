@@ -112,6 +112,35 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void purchaseItem_whenDailyRewardLimitReached_returnsFailure() {
+        ChildEntity child = child(10, 1, "Alice", 50);
+        child.setDailyRewardLimit(10);
+        ShopItemEntity item = shopItem(10, 1, 2001L, "Console", 7);
+        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getTimezone(1)).thenReturn(Optional.of("UTC"));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(shopItemRepository.find(
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
+            1,
+            10,
+            2001L
+        )).thenReturn(itemQuery);
+        when(historyRepository.sumRewardSpendSince(org.mockito.ArgumentMatchers.eq(10),
+            org.mockito.ArgumentMatchers.any(Instant.class))).thenReturn(5L);
+
+        OperationResult<FamilyDataResponse> result = service.purchaseItem("fam-1", 10, 2001L);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        OperationResult.Failure<FamilyDataResponse> failure = (OperationResult.Failure<FamilyDataResponse>) result;
+        assertThat(failure.message()).contains("reward");
+        assertThat(child.getBalance()).isEqualTo(50);
+        verify(historyRepository, never()).persist(org.mockito.ArgumentMatchers.<HistoryEntryEntity>any());
+        verify(familyService, never()).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
     void requestTaskCompletion_persistsPendingEarnRequest() {
         ChildEntity child = child(10, 1, "Alice", 0);
         TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
@@ -590,8 +619,8 @@ class FamilyActionServiceImplTest {
             new com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest(
                 10,
                 List.of(
-                    new com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest(1, "Clean desk", 10, "Home", null, 2, FrequencyPeriod.day, null, true),
-                    new com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest(2, "Read book", 5, null, "Before bed", null, null, 15, false)
+                    new com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest(1, "Clean desk", 10, "Home", null, 2, FrequencyPeriod.day, null, null, true),
+                    new com.sashplatonov.earnit.kids.dto.request.ImportTaskRowRequest(2, "Read book", 5, null, "Before bed", null, null, 15, null, false)
                 )
             )
         );
@@ -643,7 +672,7 @@ class FamilyActionServiceImplTest {
                 10,
                 List.of(
                     new com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest(
-                        1, "Summer goal", 150, "Big rewards", "Once per summer", 1, FrequencyPeriod.season, null, null, true
+                        1, "Summer goal", 150, "Big rewards", "Once per summer", 1, FrequencyPeriod.season, null, null, null, true
                     )
                 )
             )
@@ -681,7 +710,7 @@ class FamilyActionServiceImplTest {
                 new com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest(
                     10,
                     List.of(
-                        new com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest(1, "Tablet time", null, null, null, 0, null, -1, null, true)
+                        new com.sashplatonov.earnit.kids.dto.request.ImportShopItemRowRequest(1, "Tablet time", null, null, null, 0, null, -1, null, null, true)
                     )
                 )
             );

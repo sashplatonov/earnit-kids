@@ -57,7 +57,8 @@ final class FamilyActionImportService {
                     trimToNull(row.groupName()),
                     trimToNull(row.comment()),
                     null,
-                    null
+                    null,
+                    trimToNull(row.icon())
                 ),
                 frequency,
                 row.moneyLimit(),
@@ -88,7 +89,8 @@ final class FamilyActionImportService {
                 trimToNull(row.comment()),
                 row.moneyLimit(),
                 row.isActive() == null || row.isActive(),
-                false
+                false,
+                trimToNull(row.icon())
             ));
         }
 

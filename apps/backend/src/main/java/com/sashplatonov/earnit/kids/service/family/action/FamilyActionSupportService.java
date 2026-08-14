@@ -18,6 +18,9 @@ import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +73,18 @@ final class FamilyActionSupportService {
 
     long dailyRewardSpend(int childId, java.time.Instant since) {
         return historyRepository.sumRewardSpendSince(childId, since);
+    }
+
+    // EXPLAIN: Resolve the start of the family's local day so daily reward limits
+    // EXPLAIN: reset at midnight in the family timezone, not UTC.
+    Instant startOfFamilyDay(int familyDbId, Instant now) {
+        ZoneId zoneId;
+        try {
+            zoneId = ZoneId.of(familyRepository.getTimezone(familyDbId).orElse("UTC"));
+        } catch (DateTimeException ignored) {
+            zoneId = ZoneId.of("UTC");
+        }
+        return now.atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant();
     }
 
     void clearRewardGoal(int childId) {

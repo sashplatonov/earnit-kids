@@ -336,7 +336,7 @@ class FamilyResourceTest {
     @Test
     void importTasks_adminDelegatesToActionServiceAndNotifiesFamily() {
         ImportTasksRequest request = new ImportTasksRequest(10, List.of(
-            new ImportTaskRowRequest(1, "Clean desk", 10, "Home", null, null, null, null, true)
+            new ImportTaskRowRequest(1, "Clean desk", 10, "Home", null, null, null, null, null, true)
         ));
         FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
             List.of(), true, List.of(), 10, null, null, null);
@@ -352,7 +352,7 @@ class FamilyResourceTest {
     @Test
     void importShopItems_returnsStructuredValidationError() {
         ImportShopItemsRequest request = new ImportShopItemsRequest(10, List.of(
-            new ImportShopItemRowRequest(1, "", null, null, null, null, null, null, null, null)
+            new ImportShopItemRowRequest(1, "", null, null, null, null, null, null, null, null, null)
         ));
         ImportValidationErrorResponse errorResponse = ImportValidationErrorResponse.of(
             "Validation failed",

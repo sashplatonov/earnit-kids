@@ -94,6 +94,7 @@ public class FamilyNotificationServiceImpl implements FamilyNotificationService 
             if (!PARENT_DEFAULTS.containsKey(key)) {
                 return failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
             }
+            childId = null;
         } else if (SCOPE_CHILD.equals(scope)) {
             if (!CHILD_DEFAULTS.containsKey(key)) {
                 return failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));

@@ -88,7 +88,7 @@ final class FamilyActionBalanceService {
         long rewardLimit = child.get().getDailyRewardLimit();
         if (rewardLimit > 0
             && supportService.dailyRewardSpend(childId,
-                historyFactory.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS)) + item.get().getPrice() > rewardLimit) {
+                supportService.startOfFamilyDay(familyDbId.get(), historyFactory.now())) + item.get().getPrice() > rewardLimit) {
             return OperationResult.failure(BackendMessages.message("balance.rewardLimitReached"));
         }
 

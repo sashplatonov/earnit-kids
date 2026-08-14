@@ -50,6 +50,7 @@ const TASK_COLUMNS: CsvImportColumn[] = [
     { key: 'frequencyLimit', label: 'frequencyLimit', required: false },
     { key: 'frequencyPeriod', label: 'frequencyPeriod', required: false },
     { key: 'moneyLimit', label: 'moneyLimit', required: false },
+    { key: 'icon', label: 'icon', required: false },
     { key: 'isActive', label: 'isActive', required: false },
 ];
 
@@ -62,6 +63,7 @@ const SHOP_COLUMNS: CsvImportColumn[] = [
     { key: 'frequencyPeriod', label: 'frequencyPeriod', required: false },
     { key: 'moneyLimit', label: 'moneyLimit', required: false },
     { key: 'type', label: 'type', required: false },
+    { key: 'icon', label: 'icon', required: false },
     { key: 'isActive', label: 'isActive', required: false },
 ];
 
@@ -287,6 +289,7 @@ function parseTaskRow(rowNumber: number, values: Record<string, string>) {
         frequencyLimit: frequencyLimit == null ? null : Math.trunc(frequencyLimit),
         frequencyPeriod: parseFrequencyPeriod(values.frequencyperiod ?? ''),
         moneyLimit: moneyLimit == null ? null : Math.trunc(moneyLimit),
+        icon: values.icon || null,
         isActive,
     };
 
@@ -308,6 +311,7 @@ function parseShopRow(rowNumber: number, values: Record<string, string>) {
         frequencyPeriod: parseFrequencyPeriod(values.frequencyperiod ?? ''),
         moneyLimit: moneyLimit == null ? null : Math.trunc(moneyLimit),
         type: parseShopType(values.type ?? ''),
+        icon: values.icon || null,
         isActive,
     };
 }

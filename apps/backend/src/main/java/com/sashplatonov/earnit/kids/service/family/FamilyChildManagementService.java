@@ -107,15 +107,19 @@ class FamilyChildManagementService {
 
     OperationResult<Void> updateChildSettings(String familyId, int childId,
                                               String name, int dailyCoinLimit,
-                                              int monthlyLimit, int dailyRewardLimit) {
+                                              int monthlyLimit, Integer dailyRewardLimit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
-        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+        Optional<ChildEntity> existing = findFamilyChild(dbIdOpt.get(), childId);
+        if (existing.isEmpty()) {
             return failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
-        childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit, dailyRewardLimit);
+        // EXPLAIN: A missing daily_reward_limit means "keep the current value",
+        // EXPLAIN: so older clients that do not send it cannot reset the limit.
+        int resolvedRewardLimit = dailyRewardLimit != null ? dailyRewardLimit : existing.get().getDailyRewardLimit();
+        childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit, resolvedRewardLimit);
         invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }

@@ -43,7 +43,7 @@ public interface FamilyService {
 
     OperationResult<Void> updateChildSettings(String familyId, int childId,
                                                String name, int dailyCoinLimit, int monthlyLimit,
-                                               int dailyRewardLimit);
+                                               Integer dailyRewardLimit);
 
     OperationResult<Void> updateChildTheme(String familyId, int childId, ChildTheme theme);
 

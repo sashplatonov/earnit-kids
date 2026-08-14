@@ -67,6 +67,7 @@ describe('parseCsvImport', () => {
                 frequencyPeriod: 'week',
                 moneyLimit: null,
                 type: null,
+                icon: null,
                 isActive: true,
             },
         ]);
@@ -102,8 +103,8 @@ describe('parseCsvImport', () => {
     it('recovers an unquoted comma inside a task comment', () => {
         const result = parseCsvImport(
             'tasks',
-            'title,coins,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,isActive\n'
-            + 'Task,5,Health,Did it in the morning, without reminders,1,DAY,,true'
+            'title,coins,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,icon,isActive\n'
+            + 'Task,5,Health,Did it in the morning, without reminders,1,DAY,,,true'
         );
 
         expect(result.errors).toHaveLength(0);
@@ -117,12 +118,12 @@ describe('parseCsvImport', () => {
 
     it('builds a copyable csv template with header and sample row', () => {
         expect(buildCsvTemplate('tasks')).toBe(
-            'title,coins,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,isActive\n'
-            + 'Wash dishes,10,,,,,,'
+            'title,coins,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,icon,isActive\n'
+            + 'Wash dishes,10,,,,,,,'
         );
         expect(buildCsvTemplate('shop')).toBe(
-            'name,price,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,type,isActive\n'
-            + 'Tablet time,50,,,,,,,'
+            'name,price,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,type,icon,isActive\n'
+            + 'Tablet time,50,,,,,,,,'
         );
     });
 });

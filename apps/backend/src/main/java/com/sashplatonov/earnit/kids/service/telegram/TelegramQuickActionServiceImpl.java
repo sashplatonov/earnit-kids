@@ -41,9 +41,7 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
                 }
                 Optional<FamilyDataResponse> overview = familyData(familyId, selectedChildId, true);
                 return overview.flatMap(data -> {
-                    Integer childId = selectedChildId != null ? selectedChildId : data.lastSelectedChildId();
-                    Integer resolvedChildId = childId == null && !data.children().isEmpty()
-                        ? data.children().getFirst().id() : childId;
+                    Integer resolvedChildId = resolveChildId(selectedChildId, data);
                     return resolvedChildId == null ? Optional.empty() :
                         familyData(familyId, resolvedChildId, true)
                             .map(value -> response(familyId, identity.role(), resolvedChildId, value));
@@ -128,6 +126,21 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
 
     private boolean isParent(TelegramIdentityService.TelegramIdentity identity) {
         return "parent".equals(identity.role());
+    }
+
+    // EXPLAIN: Only resolve to a child that is still visible/active in the
+    // EXPLAIN: overview, so a just-deactivated child cannot leave the bot home
+    // EXPLAIN: screen pointing at an inactive id while showing another child.
+    private Integer resolveChildId(Integer selectedChildId, FamilyDataResponse data) {
+        if (selectedChildId != null && data.children().stream()
+            .anyMatch(child -> child.id() == selectedChildId)) {
+            return selectedChildId;
+        }
+        if (data.lastSelectedChildId() != null && data.children().stream()
+            .anyMatch(child -> child.id() == data.lastSelectedChildId())) {
+            return data.lastSelectedChildId();
+        }
+        return data.children().isEmpty() ? null : data.children().getFirst().id();
     }
 
     private TelegramQuickActionResponse response(String familyId, String role, int childId,
