@@ -18,15 +18,17 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
 
     await page.goto('/telegram');
     await expect(page.getByRole('heading', { name: 'Hi, Mia!' })).toBeVisible();
-    const taskTab = page.getByRole('tab', { name: 'Tasks' });
+    const taskTab = page.getByRole('tab', { name: 'Today' });
     await expect(taskTab).toHaveAttribute('aria-selected', 'true');
     await taskTab.press('End');
     await expect(page.getByRole('tab', { name: 'Activity' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tabpanel', { name: 'Activity' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Tasks' }).click();
+    await page.getByRole('tab', { name: 'Today' }).click();
     await expect(page.getByRole('heading', { name: 'Tasks · Today' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Rewards' }).click();
     await expect(page.getByRole('heading', { name: 'Rewards' })).toBeVisible();
-    await page.getByRole('button', { name: 'Request' }).first().click();
+    await page.getByRole('tab', { name: 'Today' }).click();
+    await page.getByRole('button', { name: 'Done' }).first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('button', { name: 'Send request' }).click();
     await expect(page.getByRole('status')).toContainText('Request sent');

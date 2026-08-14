@@ -328,7 +328,7 @@ git commit -m "feat(web): Redesign Telegram parent workspace"
 
 ## TUX-006: Redesign the child Mini App for immediate action
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** TUX-004
 

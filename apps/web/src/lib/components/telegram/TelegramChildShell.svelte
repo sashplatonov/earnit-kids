@@ -14,13 +14,13 @@
     let loading = true;
     let error = '';
     let refreshing = false;
-    let view: 'tasks' | 'activity' = 'tasks';
+    let view: 'today' | 'rewards' | 'activity' = 'today';
     let history: HistoryEntry[] = [];
     let historyPage = 0;
     let historyHasMore = false;
     let historyLoading = false;
     let historyError = '';
-    const tabs = ['tasks', 'activity'] as const;
+    const tabs = ['today', 'rewards', 'activity'] as const;
     onMount(async () => { const ok = await initializeFromServer(); loading = false; if (!ok) error = 'Could not load your workspace. Try again.'; });
     async function retry() { refreshing = true; error = ''; const ok = await refreshData(); refreshing = false; if (!ok) error = 'Could not refresh your workspace.'; }
     function onVisibility() { if (document.visibilityState === 'visible' && !loading && !refreshing) void refreshData(); }
@@ -58,11 +58,14 @@
     {:else}
         <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} />
         <div class="tabs" aria-label="Child workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
-            <button aria-controls="child-panel-tasks" aria-selected={view === 'tasks'} class:active={view === 'tasks'} id="child-tab-tasks" role="tab" tabindex={view === 'tasks' ? 0 : -1} type="button" on:click={() => selectView('tasks')}><TelegramIcon name="task" size={20} label="Tasks" /><span>Tasks</span></button>
+            <button aria-controls="child-panel-today" aria-selected={view === 'today'} class:active={view === 'today'} id="child-tab-today" role="tab" tabindex={view === 'today' ? 0 : -1} type="button" on:click={() => selectView('today')}><TelegramIcon name="task" size={20} label="Today" /><span>Today</span></button>
+            <button aria-controls="child-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="child-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>
             <button aria-controls="child-panel-activity" aria-selected={view === 'activity'} class:active={view === 'activity'} id="child-tab-activity" role="tab" tabindex={view === 'activity' ? 0 : -1} type="button" on:click={() => selectView('activity')}><TelegramIcon name="activity" size={20} label="Activity" /><span>Activity</span></button>
         </div>
-        {#if view === 'tasks'}
-            <div aria-labelledby="child-tab-tasks" id="child-panel-tasks" role="tabpanel" tabindex="0"><TelegramChildTasks /><TelegramChildRewards /></div>
+        {#if view === 'today'}
+            <div aria-labelledby="child-tab-today" id="child-panel-today" role="tabpanel" tabindex="0"><TelegramChildTasks /></div>
+        {:else if view === 'rewards'}
+            <div aria-labelledby="child-tab-rewards" id="child-panel-rewards" role="tabpanel" tabindex="0"><TelegramChildRewards /></div>
         {:else}
             <div aria-labelledby="child-tab-activity" id="child-panel-activity" role="tabpanel" tabindex="0"><TelegramRequestList requests={$appStore.requests} /><TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} /></div>
         {/if}

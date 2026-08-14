@@ -3,6 +3,7 @@
 </script>
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import TelegramIcon from './TelegramIcon.svelte';
     export let items: CatalogItem[] = [];
     export let kind: 'task' | 'reward' = 'task';
     export let pendingIds: Array<number | string> = [];
@@ -17,13 +18,13 @@
 {:else if !grouped}
     <div class="catalog" aria-label={kind === 'task' ? 'Available tasks' : 'Available rewards'}>
         {#each items as item (item.id)}
-            <article><div><h3>{item.title}</h3><p>{kind === 'task' ? '+' : '−'}{item.amount} 🪙</p></div><button type="button" disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}>{isPending(item.id) ? 'Pending' : item.available ? 'Request' : item.disabledReason ?? 'Unavailable'}</button></article>
+            <article><div><h3>{item.title}</h3><p>{kind === 'task' ? '+' : '−'}{item.amount} 🪙</p></div><button type="button" aria-label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}><TelegramIcon name={isPending(item.id) ? 'refresh' : kind === 'task' ? 'done' : 'requestReward'} size={18} label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} /><span>{isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'}</span></button></article>
         {/each}
     </div>
 {:else}
     <div class="groups" aria-label={kind === 'task' ? 'Grouped tasks' : 'Grouped rewards'}>
         {#each groups as group (group)}
-            <details open><summary>{group}</summary><div class="catalog">{#each items.filter((item) => item.group?.trim() === group) as item (item.id)}<article><div><h3>{item.title}</h3><p>{kind === 'task' ? '+' : '−'}{item.amount} 🪙</p></div><button type="button" disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}>{isPending(item.id) ? 'Pending' : item.available ? 'Request' : item.disabledReason ?? 'Unavailable'}</button></article>{/each}</div></details>
+            <details open><summary>{group}</summary><div class="catalog">{#each items.filter((item) => item.group?.trim() === group) as item (item.id)}<article><div><h3>{item.title}</h3><p>{kind === 'task' ? '+' : '−'}{item.amount} 🪙</p></div><button type="button" aria-label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}><TelegramIcon name={isPending(item.id) ? 'refresh' : kind === 'task' ? 'done' : 'requestReward'} size={18} label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} /><span>{isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'}</span></button></article>{/each}</div></details>
         {/each}
     </div>
 {/if}
