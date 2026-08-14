@@ -1,0 +1,103 @@
+<script lang="ts">
+    import TelegramIcon from './TelegramIcon.svelte';
+    import { loadGroupUsage, rankGroups, recordGroupUsage, type GroupUsageKind } from './telegramGroupUsage';
+
+    export let groups: string[] = [];
+    export let selected = '';
+    export let kind: GroupUsageKind = 'tasks';
+    export let allLabel = 'Все';
+    export let moreLabel = 'Ещё';
+    export let allGroupsTitle = 'Все группы';
+    export let onSelect: (group: string) => void = () => {};
+
+    const MAX_RANKED = 3;
+
+    let ranked: string[] = [];
+    let moreOpen = false;
+
+    // Recompute ranking at a stable boundary (screen entry / data refresh),
+    // never immediately after a tap, so the submenu does not visibly jump.
+    $: if (moreOpen === false) {
+        ranked = rankGroups(groups, loadGroupUsage(kind));
+    }
+
+    $: visible = ranked.slice(0, MAX_RANKED);
+    $: hidden = ranked.slice(MAX_RANKED);
+
+    function choose(group: string) {
+        recordGroupUsage(kind, group);
+        moreOpen = false;
+        onSelect(group);
+    }
+
+    function chooseAll() {
+        recordGroupUsage(kind, '');
+        moreOpen = false;
+        onSelect('');
+    }
+
+    $: hasHidden = hidden.length > 0;
+</script>
+
+{#if groups.length > 1}
+    <div class="group-subnav" role="group" aria-label={allGroupsTitle}>
+        <div class="subnav-row">
+            <button
+                type="button"
+                class="chip"
+                class:active={selected === ''}
+                aria-pressed={selected === ''}
+                on:click={chooseAll}
+            >{allLabel}</button>
+            {#each visible as group (group)}
+                <button
+                    type="button"
+                    class="chip"
+                    class:active={selected === group}
+                    aria-pressed={selected === group}
+                    on:click={() => choose(group)}
+                >{group}</button>
+            {/each}
+            {#if hasHidden}
+                <button
+                    type="button"
+                    class="chip chip--more"
+                    aria-haspopup="dialog"
+                    aria-expanded={moreOpen}
+                    on:click={() => moreOpen = true}
+                >{moreLabel}<TelegramIcon name="chevronDown" size={14} label={moreLabel} /></button>
+            {/if}
+        </div>
+    </div>
+
+    {#if moreOpen}
+        <div class="sheet-backdrop" role="presentation" on:click={() => moreOpen = false}></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="group-subnav-title" tabindex="-1">
+            <h2 id="group-subnav-title">{allGroupsTitle}</h2>
+            <div class="flat">
+                <button type="button" class="sheet-item" class:active={selected === ''} on:click={chooseAll}>{allLabel}</button>
+                {#each ranked as group (group)}
+                    <button type="button" class="sheet-item" class:active={selected === group} on:click={() => choose(group)}>{group}</button>
+                {/each}
+            </div>
+            <button class="close" type="button" on:click={() => moreOpen = false}>{moreLabel}</button>
+        </div>
+    {/if}
+{/if}
+
+<style>
+    .group-subnav { margin: .15rem 0 .6rem; }
+    .subnav-row { display: flex; gap: .4rem; overflow-x: auto; padding: .1rem 0 .35rem; scrollbar-width: none; }
+    .subnav-row::-webkit-scrollbar { display: none; }
+    .chip { display: inline-flex; align-items: center; gap: .15rem; flex: 0 0 auto; min-height: 2.15rem; padding: 0 .75rem; border: 1px solid #dfe4ee; border-radius: 999px; background: #fff; color: #66718a; font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; touch-action: manipulation; }
+    .chip.active { border-color: #b9c7ef; background: #eef2ff; color: #2854ba; }
+    .chip--more { color: #3867d6; }
+    .sheet-backdrop { position: fixed; inset: 0; z-index: 40; background: rgb(15 24 45 / 35%); }
+    .sheet { position: fixed; inset: auto 0 0; z-index: 41; padding: 1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius: 1.1rem 1.1rem 0 0; background: #fff; box-shadow: 0 -1rem 3rem rgb(27 39 73 / 18%); }
+    h2 { margin: 0 0 .75rem; color: #18243d; font-size: 1.15rem; }
+    .flat { display: grid; gap: .25rem; max-height: 45vh; overflow-y: auto; }
+    .sheet-item { display: flex; align-items: center; min-height: 2.75rem; padding: 0 .6rem; border: 0; border-bottom: 1px solid #edf0f5; border-radius: 0; background: #fff; color: #18243d; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+    .sheet-item:last-child { border-bottom: 0; }
+    .sheet-item.active { color: #2854ba; }
+    .close { width: 100%; min-height: 2.75rem; margin-top: .6rem; border: 1px solid #dfe4ee; border-radius: .7rem; background: #fff; color: #33415f; font: inherit; cursor: pointer; }
+</style>

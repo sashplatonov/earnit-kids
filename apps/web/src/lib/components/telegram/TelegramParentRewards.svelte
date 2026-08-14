@@ -8,12 +8,17 @@
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRewardForm from './TelegramRewardForm.svelte';
+    import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
     import { formatLastUsedTime } from './telegramLastUsed';
 
     const i18n = useI18n();
 
     $: groups = [...new Set($appStore.shopItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
+    let selectedGroup = '';
+    $: filteredItems = selectedGroup
+        ? $appStore.shopItems.filter((item) => item.groupName === selectedGroup)
+        : $appStore.shopItems;
     $: canEdit = $appStore.permission !== 'viewer';
     let groupMessage = '';
     let groupEditorOpen = false;
@@ -81,8 +86,20 @@
     {#if !$appStore.shopItems.length}
         <p class="muted">{$i18n.t('app.telegram.rewards.noRewards')}</p>
     {:else}
+        <TelegramGroupSubnav
+            {groups}
+            selected={selectedGroup}
+            kind="shop"
+            allLabel={$i18n.t('app.telegram.groupSubnav.all')}
+            moreLabel={$i18n.t('app.telegram.groupSubnav.more')}
+            allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')}
+            onSelect={(group) => selectedGroup = group}
+        />
+        {#if selectedGroup && !filteredItems.length}
+            <p class="muted empty-group">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>
+        {:else}
         <div class="list" aria-label={$i18n.t('app.telegram.rewards.title')}>
-            {#each $appStore.shopItems as item (item.id)}
+            {#each filteredItems as item (item.id)}
                 <div class:archived={item.isActive === false} class="row">
                     <button class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(item.name) })} on:click={() => edit(item)}>
                         <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span>
@@ -107,6 +124,7 @@
                 </div>
             {/each}
         </div>
+        {/if}
     {/if}
 
     {#if canEdit}
@@ -128,6 +146,7 @@
     .add { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .list { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
+    .empty-group { padding:1rem 0; text-align:center; }
     .row { display:flex; align-items:center; gap:.25rem; min-height:3.5rem; border-bottom:1px solid #edf0f5; }
     .row:last-child { border-bottom:0; }
     .row.archived { opacity:.6; }

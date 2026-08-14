@@ -1016,7 +1016,7 @@ No success modal.
 
 ---
 
-# SFX-012 - Add frequency-ranked task/reward group submenu above bottom navigation
+# SFX-012 ✅ - Add frequency-ranked task/reward group submenu above bottom navigation
 
 **Priority:** P0  
 **Channel:** Mini App
@@ -1342,7 +1342,7 @@ Use the canonical semantic graphics listed at the beginning of this backlog.
 13. SFX-010 - parent invites
 14. SFX-013 ✅ - limits with ±1/±5 steppers
 15. SFX-011 ✅ - dual CSV import + format/copy
-16. SFX-012 - Task/Reward group submenu
+16. SFX-012 ✅ - Task/Reward group submenu
 17. SFX-016 - regression/integration tests
 
 ---

@@ -510,6 +510,12 @@ export const appMessages = {
             saved: 'Saved',
             error: 'Could not save the limits. Try again.',
         },
+        groupSubnav: {
+            all: 'All',
+            more: 'More',
+            allGroups: 'All groups',
+            emptyGroup: 'Nothing in this group yet',
+        },
         import: {
             title: 'Import from CSV',
             whatToImport: 'What to import?',

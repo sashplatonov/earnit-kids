@@ -8,12 +8,17 @@
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramTaskForm from './TelegramTaskForm.svelte';
+    import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
     import { formatLastUsedTime } from './telegramLastUsed';
 
     const i18n = useI18n();
 
     $: groups = [...new Set($appStore.tasks.map((task) => task.groupName).filter((group): group is string => Boolean(group)))];
+    let selectedGroup = '';
+    $: filteredTasks = selectedGroup
+        ? $appStore.tasks.filter((task) => task.groupName === selectedGroup)
+        : $appStore.tasks;
     $: canEdit = $appStore.permission !== 'viewer';
     let groupMessage = '';
     let groupEditorOpen = false;
@@ -81,8 +86,20 @@
     {#if !$appStore.tasks.length}
         <p class="muted">{$i18n.t('app.telegram.tasks.noTasks')}</p>
     {:else}
+        <TelegramGroupSubnav
+            {groups}
+            selected={selectedGroup}
+            kind="tasks"
+            allLabel={$i18n.t('app.telegram.groupSubnav.all')}
+            moreLabel={$i18n.t('app.telegram.groupSubnav.more')}
+            allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')}
+            onSelect={(group) => selectedGroup = group}
+        />
+        {#if selectedGroup && !filteredTasks.length}
+            <p class="muted empty-group">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>
+        {:else}
         <div class="list" aria-label={$i18n.t('app.telegram.tasks.title')}>
-            {#each $appStore.tasks as task (task.id)}
+            {#each filteredTasks as task (task.id)}
                 <div class:archived={task.isActive === false} class="row">
                     <button class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} on:click={() => edit(task)}>
                         <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
@@ -107,6 +124,7 @@
                 </div>
             {/each}
         </div>
+        {/if}
     {/if}
 
     {#if canEdit}
@@ -128,6 +146,7 @@
     .add { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .list { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
+    .empty-group { padding:1rem 0; text-align:center; }
     .row { display:flex; align-items:center; gap:.25rem; min-height:3.5rem; border-bottom:1px solid #edf0f5; }
     .row:last-child { border-bottom:0; }
     .row.archived { opacity:.6; }

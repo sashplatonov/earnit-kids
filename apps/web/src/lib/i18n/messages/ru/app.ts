@@ -510,6 +510,12 @@ export const appMessages = {
             saved: 'Сохранено',
             error: 'Не удалось сохранить лимиты. Попробуйте ещё раз.',
         },
+        groupSubnav: {
+            all: 'Все',
+            more: 'Ещё',
+            allGroups: 'Все группы',
+            emptyGroup: 'В этой группе пока ничего нет',
+        },
         import: {
             title: 'Импорт из CSV',
             whatToImport: 'Что импортировать?',

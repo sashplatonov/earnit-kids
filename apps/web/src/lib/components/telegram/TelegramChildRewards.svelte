@@ -5,6 +5,7 @@
     import { useI18n } from '$lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramGroupedCatalog, { type CatalogItem } from './TelegramGroupedCatalog.svelte';
+    import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRequestSheet from './TelegramRequestSheet.svelte';
     import TelegramActionStatus from './TelegramActionStatus.svelte';
@@ -12,6 +13,7 @@
 
     const i18n = useI18n();
 
+    let selectedGroup = '';
     let selected: CatalogItem | null = null;
     let busy = false;
     let status: 'idle' | 'pending' | 'success' | 'error' | 'stale' = 'idle';
@@ -22,7 +24,9 @@
     $: goalPercent = nextGoal && nextGoal.price > 0 ? Math.min(100, Math.round(($appStore.balance / nextGoal.price) * 100)) : 0;
     $: goalMissing = nextGoal ? Math.max(0, nextGoal.price - $appStore.balance) : 0;
     $: pendingIds = $appStore.requests.filter((request) => (request.requestType === 'shop_purchase' || request.itemId != null) && request.status === 'pending').map((request) => request.itemId).filter((id): id is string | number => id != null);
-    $: items = affordable.map((item): CatalogItem => ({ id: item.id, title: item.name, amount: item.price, group: item.groupName, available: true }));
+    $: allItems = affordable.map((item): CatalogItem => ({ id: item.id, title: item.name, amount: item.price, group: item.groupName, available: true }));
+    $: groups = [...new Set(allItems.map((item) => item.group?.trim()).filter((group): group is string => Boolean(group)))];
+    $: items = selectedGroup ? allItems.filter((item) => item.group?.trim() === selectedGroup) : allItems;
     async function submit(note: string | null) {
         if (!selected || busy) return;
         busy = true; status = 'pending'; message = $i18n.t('app.telegram.childTasks.sendingRequest');
@@ -34,7 +38,7 @@
     }
 </script>
 
-<section aria-labelledby="child-rewards-title"><div class="heading"><h2 id="child-rewards-title">{$i18n.t('app.telegram.childRewards.rewardsTitle')}</h2><span>{$i18n.t('app.telegram.childRewards.spendYourCoins')}</span></div>{#if !affordable.length && !nextGoal}<p class="empty">{$i18n.t('app.telegram.childRewards.noRewards')}</p>{:else}<TelegramGroupedCatalog kind="reward" items={items} {pendingIds} on:request={(event) => { selected = event.detail; status = 'idle'; }} />{/if}{#if nextGoal}<div class="goal" aria-label={$i18n.t('app.telegram.childRewards.nextGoal')}><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: nextGoal.name, group: nextGoal.groupName })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span><div class="goal-text"><span class="goal-title">{stripLeadingEmoji(nextGoal.name)}</span><div class="goal-track" role="progressbar" aria-valuemin="0" aria-valuemax={nextGoal.price} aria-valuenow={$appStore.balance} aria-label={nextGoal.name}><span style={`width: ${goalPercent}%`}></span></div><span class="goal-meta"><TelegramCoin size={13} />{nextGoal.price} · {$i18n.t('app.telegram.childRewards.moreToGo', { count: goalMissing })}</span></div></div>{/if}<TelegramActionStatus state={status} message={message} /></section>
+<section aria-labelledby="child-rewards-title"><div class="heading"><h2 id="child-rewards-title">{$i18n.t('app.telegram.childRewards.rewardsTitle')}</h2><span>{$i18n.t('app.telegram.childRewards.spendYourCoins')}</span></div>{#if !affordable.length && !nextGoal}<p class="empty">{$i18n.t('app.telegram.childRewards.noRewards')}</p>{:else}<TelegramGroupSubnav {groups} selected={selectedGroup} kind="shop" allLabel={$i18n.t('app.telegram.groupSubnav.all')} moreLabel={$i18n.t('app.telegram.groupSubnav.more')} allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')} onSelect={(group) => selectedGroup = group} />{#if selectedGroup && !items.length}<p class="empty">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>{:else}<TelegramGroupedCatalog kind="reward" items={items} {pendingIds} on:request={(event) => { selected = event.detail; status = 'idle'; }} />{/if}{/if}{#if nextGoal}<div class="goal" aria-label={$i18n.t('app.telegram.childRewards.nextGoal')}><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: nextGoal.name, group: nextGoal.groupName })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span><div class="goal-text"><span class="goal-title">{stripLeadingEmoji(nextGoal.name)}</span><div class="goal-track" role="progressbar" aria-valuemin="0" aria-valuemax={nextGoal.price} aria-valuenow={$appStore.balance} aria-label={nextGoal.name}><span style={`width: ${goalPercent}%`}></span></div><span class="goal-meta"><TelegramCoin size={13} />{nextGoal.price} · {$i18n.t('app.telegram.childRewards.moreToGo', { count: goalMissing })}</span></div></div>{/if}<TelegramActionStatus state={status} message={message} /></section>
 <TelegramRequestSheet open={selected !== null} title={selected?.title ?? ''} actionLabel={$i18n.t('app.telegram.childRewards.askForReward')} bind:busy on:close={() => selected = null} on:submit={(event) => submit(event.detail)} />
 
 <style>
