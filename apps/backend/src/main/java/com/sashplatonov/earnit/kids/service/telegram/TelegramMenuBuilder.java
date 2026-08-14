@@ -132,13 +132,14 @@ public class TelegramMenuBuilder {
         return affordable > 3 || view.rewards().size() > 4;
     }
 
+    // EXPLAIN: Navigation is shallow; the only return control is Главное меню.
     public List<TelegramBotApiClient.InlineButton> backToMain() {
-        return List.of(navigation(TelegramBotEmoji.BACK + " Back", "main"));
+        return List.of(navigation(TelegramCopy.HOME, "main"));
     }
 
     public List<TelegramBotApiClient.InlineButton> backToMain(TelegramQuickActionResponse view) {
         return "parent".equals(view.role())
-            ? List.of(parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view)) : backToMain();
+            ? List.of(parentNavigation(TelegramCopy.HOME, "main", view)) : backToMain();
     }
 
     // EXPLAIN: One pending request at a time; auto-advances or ends after decision.
