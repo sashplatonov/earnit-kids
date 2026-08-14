@@ -74,7 +74,7 @@ export function getTelegramEntityIcon(input: EntityIconInput): TelegramIconName 
     const title = stripLeadingEmoji(input.title ?? '');
     const group = stripLeadingEmoji(input.group ?? '');
     const semantic = input.semantic?.trim().toLowerCase() ?? '';
-    if (semantic && semantic in telegramIconMap) return semantic as TelegramIconName;
+    if (semantic && Object.hasOwn(telegramIconMap, semantic)) return semantic as TelegramIconName;
     for (const rule of TITLE_ICON_RULES) {
         if (rule.test.test(title)) return rule.icon;
     }

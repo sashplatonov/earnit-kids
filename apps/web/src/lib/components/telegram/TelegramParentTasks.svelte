@@ -15,9 +15,26 @@
     let groupEditorOpen = false;
     let groupSaving = false;
     let openMenuId: string | number | null = null;
+    let menuTrigger: HTMLButtonElement | null = null;
+    function toggleMenu(id: string | number, button: HTMLButtonElement) {
+        if (openMenuId === id) closeMenu(true);
+        else { menuTrigger = button; openMenuId = id; }
+    }
+    function closeMenu(restoreFocus = false) {
+        openMenuId = null;
+        if (restoreFocus && menuTrigger?.isConnected) menuTrigger.focus();
+        menuTrigger = null;
+    }
+    function handleWindowKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape' && openMenuId != null) {
+            event.preventDefault();
+            closeMenu(true);
+        }
+    }
     function add() { modalStore.open('task-modal', { mode: 'add', groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
-    function edit(task: unknown) { openMenuId = null; modalStore.open('task-modal', { mode: 'edit', task, groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
+    function edit(task: unknown) { closeMenu(); modalStore.open('task-modal', { mode: 'edit', task, groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
     function toggleArchive(task: Task) {
+        closeMenu(true);
         const nextActive = task.isActive === false;
         appStore.setState({
             tasks: $appStore.tasks.map((item) => item.id == task.id ? ({ ...item, isActive: nextActive } as typeof item) : item),
@@ -25,6 +42,7 @@
         void scheduleSave();
     }
     async function remove(task: Task) {
+        closeMenu();
         const confirmed = await confirmAction({
             title: 'Delete task?',
             description: `"${stripLeadingEmoji(task.name)}" will be removed.`,
@@ -46,7 +64,7 @@
     }
 </script>
 
-<svelte:window on:click={() => openMenuId = null} />
+<svelte:window on:click={() => openMenuId = null} on:keydown={handleWindowKeydown} />
 
 <div class="tasks">
     <div class="page-header">
@@ -69,7 +87,7 @@
                     </button>
                     {#if canEdit}
                         <div class="menu-wrap">
-                            <button class="more" type="button" aria-label={`Actions for ${stripLeadingEmoji(task.name)}`} aria-haspopup="menu" aria-expanded={openMenuId === task.id} on:click|stopPropagation={() => openMenuId = openMenuId === task.id ? null : task.id}><TelegramIcon name="more" size={20} label="More actions" /></button>
+                            <button class="more" type="button" aria-label={`Actions for ${stripLeadingEmoji(task.name)}`} aria-haspopup="menu" aria-expanded={openMenuId === task.id} on:click|stopPropagation={(event) => toggleMenu(task.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label="More actions" /></button>
                             {#if openMenuId === task.id}
                                 <div class="menu" role="menu" aria-label={`Actions for ${stripLeadingEmoji(task.name)}`}>
                                     <button role="menuitem" type="button" on:click={() => edit(task)}><TelegramIcon name="edit" size={16} label="Edit" /><span>Edit</span></button>

@@ -46,7 +46,7 @@
     }
 </script>
 
-<main class="parent-workspace">
+<main class="parent-workspace" aria-label="Parent workspace">
     <TelegramParentHeader />
 
     <div class="tabs" aria-label="Parent workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>

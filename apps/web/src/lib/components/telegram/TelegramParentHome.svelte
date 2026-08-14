@@ -12,6 +12,7 @@
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
 
     let showAll = false;
+    let fullHistoryLoaded = false;
     let history: HistoryEntry[] = [];
     let historyLoading = false;
     let historyHasMore = false;
@@ -42,7 +43,10 @@
 
     function toggleHistory() {
         showFullHistory = !showFullHistory;
-        if (showFullHistory) void loadHistory(true);
+        if (showFullHistory && !fullHistoryLoaded) {
+            fullHistoryLoaded = true;
+            void loadHistory(true);
+        }
     }
 
     async function adjustCoins(event: CustomEvent<{ amount: number; note: string | null }>) {
@@ -73,8 +77,8 @@
         <div class="section-heading"><h2 id="parent-home-title">Needs attention</h2><span class="count">{pending.length}</span></div>
     {/if}
     <TelegramRequestList requests={visibleRequests} canDecide childId={$appStore.currentChildId} showHeading={false} emptyText={pending.length ? '' : 'Nothing needs attention right now.'} />
-    {#if pending.length > 2 && !showAll}
-        <button class="see-all" type="button" on:click={() => showAll = true}><span>All requests ({pending.length})</span><TelegramIcon name="arrowRight" size={18} label="All requests" /></button>
+    {#if pending.length > 2}
+        <button class="see-all" type="button" on:click={() => showAll = !showAll}><span>{showAll ? 'Show fewer' : `All requests (${pending.length})`}</span><TelegramIcon name="arrowRight" size={18} label={showAll ? 'Show fewer requests' : 'All requests'} /></button>
     {/if}
 
     <h2 class="section-title">Quick actions</h2>

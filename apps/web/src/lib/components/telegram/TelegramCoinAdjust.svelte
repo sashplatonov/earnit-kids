@@ -6,9 +6,11 @@
     export let busy = false;
     export let error = '';
     const dispatch = createEventDispatcher<{ adjust: { amount: number; note: string | null }; close: void }>();
+    const MAX_ADJUST = 1_000_000;
     let amount = '';
     let note = '';
-    $: if (!open) { amount = ''; note = ''; }
+    let localError = '';
+    $: if (!open) { amount = ''; note = ''; localError = ''; }
     function manageFocus(node: HTMLInputElement) {
         const target = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         void tick().then(() => node.focus());
@@ -23,8 +25,11 @@
     }
     function submit() {
         if (busy) return;
-        const value = Number.parseInt(amount, 10);
-        if (!Number.isFinite(value) || value === 0) return;
+        const value = Number(amount);
+        if (!amount.trim()) { localError = 'Enter an amount.'; return; }
+        if (!Number.isInteger(value) || value === 0) { localError = 'Enter a non-zero whole number.'; return; }
+        if (Math.abs(value) > MAX_ADJUST) { localError = `Amount cannot exceed ${MAX_ADJUST.toLocaleString()}.`; return; }
+        localError = '';
         dispatch('adjust', { amount: value, note: note.trim() || null });
     }
     function handleKeydown(event: KeyboardEvent) {
@@ -41,11 +46,11 @@
         <h2 id="coin-adjust-title">Adjust coins</h2>
         <div class="amount-row">
             <TelegramCoin size={20} />
-            <input id="coin-amount" type="number" inputmode="numeric" bind:value={amount} placeholder="e.g. +10 or -5" aria-label="Coin amount" use:manageFocus on:keydown={(event) => { if (event.key === 'Enter') submit(); }} />
+            <input id="coin-amount" type="number" inputmode="numeric" bind:value={amount} placeholder="e.g. +10 or -5" aria-label="Coin amount" aria-invalid={localError ? 'true' : undefined} aria-describedby={localError ? 'coin-adjust-error' : undefined} use:manageFocus on:keydown={(event) => { if (event.key === 'Enter') submit(); }} />
         </div>
         <label for="coin-note">Note (optional)</label>
         <input id="coin-note" type="text" maxlength="80" bind:value={note} placeholder="Why?" />
-        {#if error}<p class="error" role="alert">{error}</p>{/if}
+        {#if localError || error}<p id="coin-adjust-error" class="error" role="alert">{localError || error}</p>{/if}
         <div class="actions">
             <button type="button" on:click={close} disabled={busy}><TelegramIcon name="back" size={18} label="Cancel" />Cancel</button>
             <button class="primary" type="button" on:click={submit} disabled={busy}><TelegramIcon name="coinAdjustment" size={18} label={busy ? 'Saving…' : 'Save'} />{busy ? 'Saving…' : 'Save'}</button>

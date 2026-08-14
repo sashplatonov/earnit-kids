@@ -52,7 +52,7 @@
 
 <svelte:window on:visibilitychange={onVisibility} />
 <main class="child-workspace" aria-labelledby="child-workspace-title">
-    <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} />
+    <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} loading={loading || Boolean(error)} />
     <div class="tabs" aria-label="Child workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
         <button aria-controls="child-panel-today" aria-selected={view === 'today'} class:active={view === 'today'} id="child-tab-today" role="tab" tabindex={view === 'today' ? 0 : -1} type="button" on:click={() => selectView('today')}><TelegramIcon name="task" size={20} label="Today" /><span>Today</span></button>
         <button aria-controls="child-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="child-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>

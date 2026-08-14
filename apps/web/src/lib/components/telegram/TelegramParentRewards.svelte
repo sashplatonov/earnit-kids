@@ -15,9 +15,26 @@
     let groupEditorOpen = false;
     let groupSaving = false;
     let openMenuId: string | number | null = null;
+    let menuTrigger: HTMLButtonElement | null = null;
+    function toggleMenu(id: string | number, button: HTMLButtonElement) {
+        if (openMenuId === id) closeMenu(true);
+        else { menuTrigger = button; openMenuId = id; }
+    }
+    function closeMenu(restoreFocus = false) {
+        openMenuId = null;
+        if (restoreFocus && menuTrigger?.isConnected) menuTrigger.focus();
+        menuTrigger = null;
+    }
+    function handleWindowKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape' && openMenuId != null) {
+            event.preventDefault();
+            closeMenu(true);
+        }
+    }
     function add() { modalStore.open('shop-modal', { mode: 'add', groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
-    function edit(item: unknown) { openMenuId = null; modalStore.open('shop-modal', { mode: 'edit', item, groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
+    function edit(item: unknown) { closeMenu(); modalStore.open('shop-modal', { mode: 'edit', item, groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
     function toggleArchive(item: ShopItem) {
+        closeMenu(true);
         const nextActive = item.isActive === false;
         appStore.setState({
             shopItems: $appStore.shopItems.map((entry) => entry.id == item.id ? ({ ...entry, isActive: nextActive } as typeof entry) : entry),
@@ -25,6 +42,7 @@
         void scheduleSave();
     }
     async function remove(item: ShopItem) {
+        closeMenu();
         const confirmed = await confirmAction({
             title: 'Delete reward?',
             description: `"${stripLeadingEmoji(item.name)}" will be removed.`,
@@ -46,7 +64,7 @@
     }
 </script>
 
-<svelte:window on:click={() => openMenuId = null} />
+<svelte:window on:click={() => openMenuId = null} on:keydown={handleWindowKeydown} />
 
 <div class="rewards">
     <div class="page-header">
@@ -69,7 +87,7 @@
                     </button>
                     {#if canEdit}
                         <div class="menu-wrap">
-                            <button class="more" type="button" aria-label={`Actions for ${stripLeadingEmoji(item.name)}`} aria-haspopup="menu" aria-expanded={openMenuId === item.id} on:click|stopPropagation={() => openMenuId = openMenuId === item.id ? null : item.id}><TelegramIcon name="more" size={20} label="More actions" /></button>
+                            <button class="more" type="button" aria-label={`Actions for ${stripLeadingEmoji(item.name)}`} aria-haspopup="menu" aria-expanded={openMenuId === item.id} on:click|stopPropagation={(event) => toggleMenu(item.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label="More actions" /></button>
                             {#if openMenuId === item.id}
                                 <div class="menu" role="menu" aria-label={`Actions for ${stripLeadingEmoji(item.name)}`}>
                                     <button role="menuitem" type="button" on:click={() => edit(item)}><TelegramIcon name="edit" size={16} label="Edit" /><span>Edit</span></button>

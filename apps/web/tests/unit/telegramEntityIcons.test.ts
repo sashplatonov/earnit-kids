@@ -54,6 +54,11 @@ describe('getTelegramEntityIcon', () => {
     it('honors an explicit semantic override', () => {
         expect(icon({ kind: 'task', title: 'Anything', semantic: 'sun' })).toBe('sun');
     });
+    it('ignores prototype-chain keys as semantic overrides', () => {
+        expect(icon({ kind: 'task', title: 'x', semantic: 'constructor' })).toBe('task');
+        expect(icon({ kind: 'task', title: 'x', semantic: 'toString' })).toBe('task');
+        expect(icon({ kind: 'reward', title: 'x', semantic: 'hasOwnProperty' })).toBe('reward');
+    });
     it('strips emoji before matching', () => {
         expect(icon({ kind: 'task', title: '☀️ Утренний старт' })).toBe('sun');
     });

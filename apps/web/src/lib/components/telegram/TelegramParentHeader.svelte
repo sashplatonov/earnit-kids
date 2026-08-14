@@ -28,7 +28,7 @@
     <button
         class="child-select"
         type="button"
-        aria-haspopup="listbox"
+        aria-haspopup="dialog"
         aria-expanded={open}
         aria-label="Switch child"
         disabled={switching || childCount === 0}
