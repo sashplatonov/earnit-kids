@@ -32,13 +32,37 @@ const TITLE_ICON_RULES: ReadonlyArray<{ test: RegExp; icon: TelegramIconName }> 
     { test: /настольн|board ?game|dice/i, icon: 'dice' },
     { test: /книг|чтени|почитат|read|book/i, icon: 'book' },
     { test: /письм|писат|красив|почерк|записк|write|handwriting/i, icon: 'pencil' },
+    { test: /математик|счит|пример|таблиц|math|count/i, icon: 'calculator' },
     { test: /стол|рабочее место|desk/i, icon: 'desk' },
     { test: /разобрат|вещ|зон|organiz|tidy/i, icon: 'box' },
-    { test: /умыт|одет|причес|утро|утрен|morning|sunrise|проснул|зарядк|routine|wash|dress/i, icon: 'sun' },
+    { test: /сон|спать|кроват|bed|sleep/i, icon: 'bed' },
+    { test: /вечер|закат|ночн|evening/i, icon: 'moon' },
+    { test: /умыт|одет|причес|утро|утрен|morning|sunrise|проснул|зарядк|routine|wash|dress/i, icon: 'sunrise' },
+    { test: /зуб|teeth|tooth/i, icon: 'brush' },
+    { test: /душ|гигиен|ванн|shower|bath/i, icon: 'shower' },
+    { test: /одежд|футболк|shirt|clothes/i, icon: 'shirt' },
+    { test: /морожен|ice ?cream/i, icon: 'iceCream' },
+    { test: /десерт|торт|сладк|cake|dessert/i, icon: 'cake' },
+    { test: /завтрак|обед|ужин|перекус|еда|готовк|food|eat|breakfast|lunch|dinner|cook/i, icon: 'utensils' },
+    { test: /вод|полит? ?цвет|drink|water/i, icon: 'droplet' },
+    { test: /школ|урок|домашк|school/i, icon: 'school' },
+    { test: /язык|англ|немецк|language|english/i, icon: 'languages' },
+    { test: /музык|петь|пою|пени|гитар|пианин|music|sing/i, icon: 'music' },
     { test: /убор|мыт|прибра|убра|чист|clean|brush|sparkl/i, icon: 'sparkles' },
     { test: /лаборатор|наук|эксперимент|science|lab/i, icon: 'flask' },
     { test: /наград|подар|reward|gift/i, icon: 'gift' },
     { test: /мам|пап|семь|родител|family|parent/i, icon: 'users' },
+    { test: /конструктор|лего|lego|blocks/i, icon: 'blocks' },
+    { test: /рисован|рисова|творч|краск|рису|draw|art|paint/i, icon: 'palette' },
+    { test: /кино|мульт|фильм|film|movie/i, icon: 'film' },
+    { test: /компьютер|видеоигр|приставк|game/i, icon: 'gamepad' },
+    { test: /велосипед|самокат|bike|cycle/i, icon: 'bike' },
+    { test: /бег|пробежк|run|jog/i, icon: 'footprints' },
+    { test: /парк|tree|park/i, icon: 'treePine' },
+    { test: /прогул|гуля|walk/i, icon: 'footprints' },
+    { test: /поездк|машин|car|trip|travel/i, icon: 'car' },
+    { test: /копил|накоп|piggy|save up/i, icon: 'piggy' },
+    { test: /кубок|медал|достиж|trophy|medal/i, icon: 'trophy' },
     { test: /дом|home|house|комнат/i, icon: 'home' },
     { test: /игр|play/i, icon: 'dice' },
     { test: /спорт|физ|здоров|sport|exercise/i, icon: 'activity' },
@@ -73,7 +97,7 @@ function fallbackIcon(kind: EntityKind): TelegramIconName {
 export function getTelegramEntityIcon(input: EntityIconInput): TelegramIconName {
     const title = stripLeadingEmoji(input.title ?? '');
     const group = stripLeadingEmoji(input.group ?? '');
-    const semantic = input.semantic?.trim().toLowerCase() ?? '';
+    const semantic = input.semantic?.trim() ?? '';
     if (semantic && Object.hasOwn(telegramIconMap, semantic)) return semantic as TelegramIconName;
     for (const rule of TITLE_ICON_RULES) {
         if (rule.test.test(title)) return rule.icon;

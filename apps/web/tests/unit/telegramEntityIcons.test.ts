@@ -20,9 +20,9 @@ describe('stripLeadingEmoji', () => {
 });
 
 describe('getTelegramEntityIcon', () => {
-    it('maps morning tasks to sun', () => {
-        expect(icon({ kind: 'task', title: 'Умыться и одеться', group: 'Утро' })).toBe('sun');
-        expect(icon({ kind: 'task', title: 'Morning routine', group: 'Morning' })).toBe('sun');
+    it('maps morning tasks to sunrise', () => {
+        expect(icon({ kind: 'task', title: 'Умыться и одеться', group: 'Утро' })).toBe('sunrise');
+        expect(icon({ kind: 'task', title: 'Morning routine', group: 'Morning' })).toBe('sunrise');
     });
     it('maps reading and study to book', () => {
         expect(icon({ kind: 'task', title: 'Книжная искра — 15 минут', group: 'Учёба' })).toBe('book');
@@ -60,6 +60,14 @@ describe('getTelegramEntityIcon', () => {
         expect(icon({ kind: 'reward', title: 'x', semantic: 'hasOwnProperty' })).toBe('reward');
     });
     it('strips emoji before matching', () => {
-        expect(icon({ kind: 'task', title: '☀️ Утренний старт' })).toBe('sun');
+        expect(icon({ kind: 'task', title: '☀️ Утренний старт' })).toBe('sunrise');
+    });
+    it('maps extended semantic library entries', () => {
+        expect(icon({ kind: 'task', title: 'Почистить зубы' })).toBe('brush');
+        expect(icon({ kind: 'task', title: 'Принять душ' })).toBe('shower');
+        expect(icon({ kind: 'task', title: 'Сделать уроки по математике' })).toBe('calculator');
+        expect(icon({ kind: 'reward', title: 'Прогулка в парке' })).toBe('treePine');
+        expect(icon({ kind: 'reward', title: 'Мороженое после ужина' })).toBe('iceCream');
+        expect(icon({ kind: 'reward', title: 'Поездка на машине' })).toBe('car');
     });
 });

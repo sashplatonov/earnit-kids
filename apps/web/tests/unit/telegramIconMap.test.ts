@@ -10,4 +10,17 @@ describe('telegram icon vocabulary', () => {
             'history', 'child', 'remove', 'home'
         ]));
     });
+
+    it('covers every canonical semantic graphic', () => {
+        expect(Object.keys(telegramIconMap)).toEqual(expect.arrayContaining([
+            'sunrise', 'moon', 'bed', 'shower', 'shirt', 'utensils', 'droplet',
+            'pencilLine', 'calculator', 'school', 'languages', 'music', 'table',
+            'sprout', 'paw', 'dumbbell', 'bike', 'footprints', 'film', 'gamepad',
+            'palette', 'penTool', 'blocks', 'treePine', 'trees', 'iceCream',
+            'cake', 'car', 'piggy', 'medal', 'award', 'trophy', 'star', 'target',
+            'calendar', 'clock', 'volleyball', 'brush', 'cookingPot', 'bath',
+            'circleDot', 'questionMark', 'upload', 'mail', 'gauge', 'pause',
+            'play', 'send', 'key', 'eye', 'copy', 'file', 'unlink'
+        ]));
+    });
 });
