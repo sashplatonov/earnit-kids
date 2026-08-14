@@ -719,7 +719,7 @@ Invite/token must be:
 
 ---
 
-# SFX-009 - Parent "My Account": nest email actions inside Email settings
+# SFX-009 ✅ - Parent "My Account": nest email actions inside Email settings
 
 **Priority:** P0  
 **Channel:** Mini App

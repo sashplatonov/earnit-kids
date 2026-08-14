@@ -16,12 +16,16 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRolesAccess from './TelegramRolesAccess.svelte';
     import TelegramNotifications from './TelegramNotifications.svelte';
+    import TelegramMyAccount from './TelegramMyAccount.svelte';
+    import TelegramEmailSettings from './TelegramEmailSettings.svelte';
 
     const i18n = useI18n();
 
     let inviteOpen = false;
     let rolesOpen = false;
     let notificationsOpen = false;
+    let myAccountOpen = false;
+    let emailSettingsOpen = false;
     let link = '';
     let linkBusy = false;
     let linkError = '';
@@ -182,11 +186,14 @@
         <button class="setting" type="button" on:click={() => rolesOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.family.rolesAndAccess')} /></span><span class="grow">{$i18n.t('app.telegram.family.rolesAndAccess')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => inviteOpen = true}><span class="setting-icon"><TelegramIcon name="link" size={20} label={$i18n.t('app.telegram.family.invitations')} /></span><span class="grow">{$i18n.t('app.telegram.family.invitations')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
     </div>
 </div>
 
 <TelegramRolesAccess open={rolesOpen} on:close={() => rolesOpen = false} />
 <TelegramNotifications open={notificationsOpen} on:close={() => notificationsOpen = false} />
+<TelegramMyAccount open={myAccountOpen} on:close={() => myAccountOpen = false} on:openEmail={() => { myAccountOpen = false; emailSettingsOpen = true; }} />
+<TelegramEmailSettings open={emailSettingsOpen} on:close={() => emailSettingsOpen = false} />
 
 {#if manageChild}
     <div class="sheet-backdrop" role="presentation" on:click={() => manageChild = null}></div>

@@ -120,6 +120,16 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     @Transactional
+    public boolean updateEmail(String familyId, String newEmail) {
+        Optional<FamilyEntity> opt = findByFamilyId(familyId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        opt.get().setEmail(newEmail);
+        return true;
+    }
+
+    @Transactional
     public boolean updateLastActivity(String familyId) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
         if (opt.isEmpty()) {

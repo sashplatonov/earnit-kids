@@ -477,6 +477,34 @@ export async function setFamilyNotificationPreference(
     return result.ok;
 }
 
+// ── Parent account (My Account) ───────────────────────────────────────────────
+
+export type AccountConnection = {
+    email: string;
+    emailLinked: boolean;
+    telegramLinked: boolean;
+};
+
+/** Load the parent account connection overview (email + telegram). */
+export async function getAccountConnection(): Promise<AccountConnection | null> {
+    return fetchGet<AccountConnection>('/api/account');
+}
+
+/** Change the parent email address. */
+export async function changeAccountEmail(newEmail: string): Promise<ApiActionResult<void>> {
+    return postJsonResult<void>('/api/account/email', { newEmail });
+}
+
+/** Unlink email login (requires a linked Telegram account). */
+export async function unlinkAccountEmail(): Promise<ApiActionResult<void>> {
+    return postJsonResult<void>('/api/account/email/unlink', {});
+}
+
+/** Change the parent password using the current password. */
+export async function changePassword(oldPassword: string, newPassword: string): Promise<ApiActionResult<void>> {
+    return postJsonResult<void>('/api/change-password', { oldPassword, newPassword });
+}
+
 // ── Task actions ──────────────────────────────────────────────────────────────
 
 export const earnCoins = (taskId: unknown, childId?: unknown) =>

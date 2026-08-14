@@ -84,4 +84,8 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
         <Class name="com.sashplatonov.earnit.kids.resource.family.FamilyNotificationResource"/>
     </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.resource.account.AccountResource"/>
+    </Match>
 </FindBugsFilter>

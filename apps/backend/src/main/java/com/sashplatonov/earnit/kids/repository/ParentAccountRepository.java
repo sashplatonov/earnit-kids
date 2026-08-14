@@ -30,4 +30,24 @@ public class ParentAccountRepository implements PanacheRepositoryBase<ParentAcco
     public Optional<ParentAccountEntity> findByIdForUpdate(Integer id) {
         return find("id = ?1", id).withLock(LockModeType.PESSIMISTIC_WRITE).firstResultOptional();
     }
+
+    @jakarta.transaction.Transactional
+    public boolean changeEmail(String currentEmail, String newEmail) {
+        Optional<ParentAccountEntity> existing = findByEmail(currentEmail);
+        if (existing.isEmpty()) {
+            return false;
+        }
+        existing.get().setEmail(newEmail);
+        return true;
+    }
+
+    @jakarta.transaction.Transactional
+    public boolean disablePasswordLogin(String email, String unusableHash) {
+        Optional<ParentAccountEntity> existing = findByEmail(email);
+        if (existing.isEmpty()) {
+            return false;
+        }
+        existing.get().setPasswordHash(unusableHash);
+        return true;
+    }
 }
