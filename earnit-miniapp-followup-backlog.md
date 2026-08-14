@@ -48,6 +48,8 @@ Correct the current Mini App implementation so it actually matches the intended 
 
 # NUX-001 - Rebuild Parent Home composition
 
+**Status:** ✅ Done
+
 **Priority:** P0  
 **Depends on:** -
 

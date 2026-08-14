@@ -63,7 +63,7 @@
         </div>
         <div aria-labelledby={`parent-tab-${view}`} id={`parent-panel-${view}`} role="tabpanel" tabindex="0">
             {#if view === 'home'}
-                <TelegramParentHome on:navigate={(event) => selectView(event.detail)} />
+                <TelegramParentHome />
             {:else if view === 'tasks'}
                 <TelegramParentTasks />
             {:else if view === 'rewards'}

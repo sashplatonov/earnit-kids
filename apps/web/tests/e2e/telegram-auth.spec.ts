@@ -26,7 +26,7 @@ test('the Telegram SDK loaded at the public root starts the Mini App auth flow',
 
     await page.goto('/?tgWebAppStartParam=sdk-pairing-token');
 
-    await expect(page.getByRole('heading', { name: 'Family space' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
 });
 
 test('a Telegram Main Mini App launch from the public root is handed off to the auth gate', async ({ page }) => {
@@ -50,7 +50,7 @@ test('a Telegram Main Mini App launch from the public root is handed off to the 
     await page.goto('/?tgWebAppStartParam=opaque-pairing-token');
 
     await expect(page).toHaveURL(/\/en\/telegram\?tgWebAppStartParam=opaque-pairing-token$/);
-    await expect(page.getByRole('heading', { name: 'Family space' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
 });
 
 test('non-Telegram browser gets a compact handoff state', async ({ page }) => {
@@ -109,7 +109,7 @@ test('Telegram Mini App completes a one-time parent link before exchanging its s
 
     await page.goto('/telegram');
 
-    await expect(page.getByRole('heading', { name: 'Family space' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
 });
 
 test('a consumed pairing token still opens the Mini App for its now-linked Telegram user', async ({ page }) => {
@@ -136,5 +136,5 @@ test('a consumed pairing token still opens the Mini App for its now-linked Teleg
 
     await page.goto('/telegram');
 
-    await expect(page.getByRole('heading', { name: 'Family space' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
 });

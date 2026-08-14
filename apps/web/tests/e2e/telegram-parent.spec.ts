@@ -45,6 +45,11 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         contentType: 'application/json',
         body: JSON.stringify({ requests: [{ id: 15, taskName: 'Read', coins: 20, status: 'pending' }], history: [], friends: [] }),
     }));
+    await page.route('**/api/history?**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ items: [], total: 0, page: 1, limit: 10 }),
+    }));
 
     await page.goto('/telegram');
 
