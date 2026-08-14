@@ -93,11 +93,23 @@ export function buildCsvTemplate(kind: CsvImportKind, separator: ',' | ';' = ','
 }
 
 function normalizeHeader(header: string): string {
-    return header.trim().toLowerCase();
+    return normalizeCsvToken(header).toLowerCase();
 }
 
 function trimCell(value: string): string {
     return value.trim();
+}
+
+/** Accept values copied from Markdown tables or formatted notes, e.g. **"true"**. */
+function normalizeCsvToken(value: string): string {
+    let normalized = value.trim().replace(/^\uFEFF/, '');
+    if (normalized.startsWith('**') && normalized.endsWith('**')) {
+        normalized = normalized.slice(2, -2).trim();
+    }
+    if (normalized.length >= 2 && normalized.startsWith('"') && normalized.endsWith('"')) {
+        normalized = normalized.slice(1, -1).trim();
+    }
+    return normalized;
 }
 
 function splitCsvLine(line: string, separator: ',' | ';'): string[] {
@@ -207,14 +219,19 @@ function parseNumber(value: string): number | null {
 }
 
 function parseBoolean(value: string): boolean | null {
-    if (!value) {
+    const normalized = normalizeCsvToken(value).toLowerCase();
+    if (!normalized) {
         return null;
     }
 
-    const normalized = value.trim().toLowerCase();
     if (['1', 'true', 'yes', 'y', 'да'].includes(normalized)) return true;
     if (['0', 'false', 'no', 'n', 'нет'].includes(normalized)) return false;
     return null;
+}
+
+function parseFrequencyPeriod(value: string): string | null {
+    const normalized = normalizeCsvToken(value).toLowerCase();
+    return ['day', 'week', 'month', 'year', 'season'].includes(normalized) ? normalized : null;
 }
 
 function parseShopType(value: string): string | null {
@@ -233,6 +250,28 @@ function buildRowValues(headers: string[], cells: string[]): Record<string, stri
     }, {});
 }
 
+function alignCsvCells(kind: CsvImportKind, headers: string[], cells: string[], separator: ',' | ';'): string[] {
+    const expectedColumnCount = CSV_IMPORT_SCHEMAS[kind].columns.length;
+    if (cells.length <= expectedColumnCount) {
+        return cells;
+    }
+
+    // Recover common hand-written CSV where only the free-text comment contains
+    // an unquoted separator. Quoted CSV is unaffected because it already yields
+    // the expected number of cells.
+    const commentIndex = headers.findIndex((header) => normalizeHeader(header) === 'comment');
+    if (commentIndex < 0) {
+        return cells;
+    }
+
+    const overflow = cells.length - expectedColumnCount;
+    return [
+        ...cells.slice(0, commentIndex),
+        cells.slice(commentIndex, commentIndex + overflow + 1).join(`${separator} `),
+        ...cells.slice(commentIndex + overflow + 1),
+    ];
+}
+
 function parseTaskRow(rowNumber: number, values: Record<string, string>) {
     const title = values.title ?? '';
     const coins = parseNumber(values.coins ?? '');
@@ -246,7 +285,7 @@ function parseTaskRow(rowNumber: number, values: Record<string, string>) {
         groupName: values.groupname || null,
         comment: values.comment || null,
         frequencyLimit: frequencyLimit == null ? null : Math.trunc(frequencyLimit),
-        frequencyPeriod: values.frequencyperiod || null,
+        frequencyPeriod: parseFrequencyPeriod(values.frequencyperiod ?? ''),
         moneyLimit: moneyLimit == null ? null : Math.trunc(moneyLimit),
         isActive,
     };
@@ -266,7 +305,7 @@ function parseShopRow(rowNumber: number, values: Record<string, string>) {
         groupName: values.groupname || null,
         comment: values.comment || null,
         frequencyLimit: frequencyLimit == null ? null : Math.trunc(frequencyLimit),
-        frequencyPeriod: values.frequencyperiod || null,
+        frequencyPeriod: parseFrequencyPeriod(values.frequencyperiod ?? ''),
         moneyLimit: moneyLimit == null ? null : Math.trunc(moneyLimit),
         type: parseShopType(values.type ?? ''),
         isActive,
@@ -309,7 +348,7 @@ export function parseCsvImport(kind: CsvImportKind, text: string): CsvImportPars
 
     for (let recordIndex = 1; recordIndex < records.length; recordIndex += 1) {
         const record = records[recordIndex];
-        const rawCells = splitCsvLine(record.text, separator);
+        const rawCells = alignCsvCells(kind, headers, splitCsvLine(record.text, separator), separator);
         const values = buildRowValues(headers, rawCells);
         const rowNumber = record.lineNumber;
         const rowErrors: CsvImportValidationError[] = [];

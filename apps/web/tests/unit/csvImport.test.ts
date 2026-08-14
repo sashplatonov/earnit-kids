@@ -83,6 +83,38 @@ describe('parseCsvImport', () => {
         ]);
     });
 
+    it('accepts markdown formatting around shop headers and values and normalizes enum case', () => {
+        const result = parseCsvImport(
+            'shop',
+            '"name","price","groupName","comment","frequencyLimit","frequencyPeriod","moneyLimit","type",**"isActive"**\n'
+            + '"Reward","2","Family","A reward","1","DAY","","",**"true"**'
+        );
+
+        expect(result.errors).toHaveLength(0);
+        expect(result.normalizedRows[0]).toMatchObject({
+            name: 'Reward',
+            price: 2,
+            frequencyPeriod: 'day',
+            isActive: true,
+        });
+    });
+
+    it('recovers an unquoted comma inside a task comment', () => {
+        const result = parseCsvImport(
+            'tasks',
+            'title,coins,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,isActive\n'
+            + 'Task,5,Health,Did it in the morning, without reminders,1,DAY,,true'
+        );
+
+        expect(result.errors).toHaveLength(0);
+        expect(result.normalizedRows[0]).toMatchObject({
+            comment: 'Did it in the morning, without reminders',
+            frequencyLimit: 1,
+            frequencyPeriod: 'day',
+            isActive: true,
+        });
+    });
+
     it('builds a copyable csv template with header and sample row', () => {
         expect(buildCsvTemplate('tasks')).toBe(
             'title,coins,groupName,comment,frequencyLimit,frequencyPeriod,moneyLimit,isActive\n'
