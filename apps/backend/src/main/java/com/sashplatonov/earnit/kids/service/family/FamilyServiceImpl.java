@@ -7,6 +7,7 @@ import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
 import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
+import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
@@ -216,6 +217,16 @@ public final class FamilyServiceImpl implements FamilyService {
     @Override
     public OperationResult<Void> deleteChild(String familyId, int childId) {
         return familyChildManagementService.deleteChild(familyId, childId);
+    }
+
+    @Override
+    public OperationResult<Void> setChildActive(String familyId, int childId, boolean active) {
+        return familyChildManagementService.setChildActive(familyId, childId, active);
+    }
+
+    @Override
+    public OperationResult<List<ChildDto>> listInactiveChildren(String familyId) {
+        return familyChildManagementService.listInactiveChildren(familyId);
     }
 
     @Override

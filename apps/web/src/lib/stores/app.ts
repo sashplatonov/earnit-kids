@@ -102,6 +102,7 @@ export interface Child {
     nickname: string;
     balance: number;
     rewardGoalItemId?: number | string | null;
+    status?: 'ACTIVE' | 'INACTIVE' | string | null;
     monthlyLimit?: number;
     dailyCoinLimit?: number;
     isPinSet?: boolean;

@@ -1,0 +1,6 @@
+ALTER TABLE children ADD COLUMN IF NOT EXISTS status VARCHAR(16);
+UPDATE children SET status = 'ACTIVE' WHERE status IS NULL;
+ALTER TABLE children ALTER COLUMN status SET NOT NULL;
+ALTER TABLE children ALTER COLUMN status SET DEFAULT 'ACTIVE';
+
+CREATE INDEX IF NOT EXISTS idx_children_status ON children(status);

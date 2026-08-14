@@ -31,6 +31,26 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
         );
     }
 
+    public List<ChildEntity> getActiveChildren(int familyDbId) {
+        return recordQuery(
+            "child.getActiveChildren",
+            () -> list("familyDbId = ?1 AND status = ?2 ORDER BY id ASC", familyDbId,
+                com.sashplatonov.earnit.kids.domain.model.ChildStatus.ACTIVE.name()),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
+    }
+
+    public List<ChildEntity> getInactiveChildren(int familyDbId) {
+        return recordQuery(
+            "child.getInactiveChildren",
+            () -> list("familyDbId = ?1 AND status = ?2 ORDER BY id ASC", familyDbId,
+                com.sashplatonov.earnit.kids.domain.model.ChildStatus.INACTIVE.name()),
+            "familyDbId",
+            String.valueOf(familyDbId)
+        );
+    }
+
     public Optional<ChildEntity> findByToken(String token) {
         return recordQuery(
             "child.findByToken",
@@ -117,6 +137,16 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
             return false;
         }
         opt.get().setTheme(theme.name());
+        return true;
+    }
+
+    @Transactional
+    public boolean updateStatus(int childId, String status) {
+        Optional<ChildEntity> opt = findByIdOptional(childId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        opt.get().setStatus(status);
         return true;
     }
 

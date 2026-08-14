@@ -47,6 +47,9 @@ final class FamilyActionBalanceService {
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
+        if (supportService.isInactive(child.get())) {
+            return OperationResult.failure(BackendMessages.message("family.childInactive"));
+        }
 
         Optional<TaskEntity> task = supportService.findActiveTask(familyDbId.get(), childId, taskId);
         if (task.isEmpty()) {
@@ -68,6 +71,9 @@ final class FamilyActionBalanceService {
         Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+        }
+        if (supportService.isInactive(child.get())) {
+            return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
         Optional<ShopItemEntity> item = supportService.findActiveItem(familyDbId.get(), childId, itemId);
@@ -124,6 +130,9 @@ final class FamilyActionBalanceService {
         Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+        }
+        if (supportService.isInactive(child.get())) {
+            return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
         child.get().setBalance(child.get().getBalance() + amount);

@@ -263,4 +263,74 @@ public class FamilyChildSettingsResource extends FamilyResourceSupport {
         notifyChildDeleted(auth.familyId(), childId, result);
         return toVoidResponse(result);
     }
+
+    @POST
+    @Path("/children/{childId}/deactivate")
+    @Operation(summary = "Deactivate a child profile without deleting data")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Child deactivated",
+            content = @Content(schema = @Schema(implementation = com.sashplatonov.earnit.kids.dto.response.SimpleResponse.class))),
+        @APIResponse(responseCode = "400", description = "Deactivation failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response deactivateChild(@Context ContainerRequestContext ctx,
+                                    @Parameter(required = true, description = "Child id to deactivate")
+                                    @PathParam("childId") int childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        OperationResult<Void> result = familyService.setChildActive(auth.familyId(), childId, false);
+        notifyChildUpdated(auth.familyId(), childId, result);
+        return toVoidResponse(result);
+    }
+
+    @POST
+    @Path("/children/{childId}/reactivate")
+    @Operation(summary = "Reactivate a previously deactivated child profile")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Child reactivated",
+            content = @Content(schema = @Schema(implementation = com.sashplatonov.earnit.kids.dto.response.SimpleResponse.class))),
+        @APIResponse(responseCode = "400", description = "Reactivation failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response reactivateChild(@Context ContainerRequestContext ctx,
+                                    @Parameter(required = true, description = "Child id to reactivate")
+                                    @PathParam("childId") int childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        OperationResult<Void> result = familyService.setChildActive(auth.familyId(), childId, true);
+        notifyChildUpdated(auth.familyId(), childId, result);
+        return toVoidResponse(result);
+    }
+
+    @GET
+    @Path("/children/inactive")
+    @Operation(summary = "List inactive child profiles for the family")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Inactive children listed",
+            content = @Content(schema = @Schema(implementation = com.sashplatonov.earnit.kids.dto.response.ChildDto.class))),
+        @APIResponse(responseCode = "400", description = "Listing failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response listInactiveChildren(@Context ContainerRequestContext ctx) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return unauthorized();
+        }
+
+        OperationResult<List<com.sashplatonov.earnit.kids.dto.response.ChildDto>> result =
+            familyService.listInactiveChildren(auth.familyId());
+        return toResponse(result);
+    }
 }

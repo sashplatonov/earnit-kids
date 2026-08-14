@@ -97,7 +97,7 @@ Selected bottom-navigation item:
 
 ---
 
-# SFX-001 - Add child deactivation/reactivation
+# SFX-001 ✅ - Add child deactivation/reactivation
 
 **Priority:** P0  
 **Channels:** Mini App + Bot filtering

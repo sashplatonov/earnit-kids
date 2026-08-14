@@ -63,6 +63,11 @@ final class FamilyActionSupportService {
             .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
     }
 
+    boolean isInactive(ChildEntity child) {
+        return !com.sashplatonov.earnit.kids.domain.model.ChildStatus.ACTIVE.name()
+            .equals(child.getStatus());
+    }
+
     void clearRewardGoal(int childId) {
         childRepository.updateRewardGoal(childId, null);
     }

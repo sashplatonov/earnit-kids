@@ -8,6 +8,7 @@ import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
+import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
@@ -33,6 +34,10 @@ public interface FamilyService {
     OperationResult<ChildInfo> createChild(String familyId, String childName);
 
     OperationResult<Void> deleteChild(String familyId, int childId);
+
+    OperationResult<Void> setChildActive(String familyId, int childId, boolean active);
+
+    OperationResult<List<ChildDto>> listInactiveChildren(String familyId);
 
     OperationResult<Void> updateNickname(String familyId, int childId, String newName);
 

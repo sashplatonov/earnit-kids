@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { appStore } from '$lib/stores/app';
+    import { onMount } from 'svelte';
+    import { appStore, type Child } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { switchChild } from '$lib/services/bootstrap';
-    import { adminGetChildLink } from '$lib/services/api';
+    import { switchChild, refreshData } from '$lib/services/bootstrap';
+    import { adminGetChildLink, adminGetInactiveChildren, adminSetChildActive } from '$lib/services/api';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 
@@ -14,6 +15,15 @@
     let linkError = '';
     let switching = false;
     let switchError = '';
+    let inactiveChildren: Child[] = [];
+    let manageChild: Child | null = null;
+    let confirmChild: Child | null = null;
+    let statusBusy = false;
+    let statusError = '';
+
+    onMount(() => {
+        void loadInactive();
+    });
 
     async function select(id: string | number) {
         if ($appStore.currentChildId == id) return;
@@ -37,6 +47,25 @@
         if (result) link = result.link;
         else linkError = $i18n.t('app.telegram.family.linkError');
     }
+
+    async function loadInactive() {
+        inactiveChildren = await adminGetInactiveChildren();
+    }
+
+    async function applyStatus(child: Child, active: boolean) {
+        statusBusy = true;
+        statusError = '';
+        const ok = await adminSetChildActive(child.id, active);
+        if (ok) {
+            await refreshData();
+            await loadInactive();
+            manageChild = null;
+            confirmChild = null;
+        } else {
+            statusError = $i18n.t('app.telegram.family.statusError');
+        }
+        statusBusy = false;
+    }
 </script>
 
 <div class="family">
@@ -48,11 +77,14 @@
     {:else}
         <div class="flat">
             {#each $appStore.children as child (child.id)}
-                <button class:current={$appStore.currentChildId == child.id} class="childrow" type="button" disabled={switching} on:click={() => select(child.id)} aria-pressed={$appStore.currentChildId == child.id}>
-                    <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
-                    <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge"><TelegramIcon name="checkCircle" size={12} label={$i18n.t('app.telegram.family.currentChild')} />{$i18n.t('app.telegram.family.currentChild')}</span>{/if}</span>
-                    <span class="balance"><TelegramCoin size={14} />{child.balance}</span>
-                </button>
+                <div class="childrow-wrap">
+                    <button class:current={$appStore.currentChildId == child.id} class="childrow" type="button" disabled={switching} on:click={() => select(child.id)} aria-pressed={$appStore.currentChildId == child.id}>
+                        <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
+                        <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge"><TelegramIcon name="checkCircle" size={12} label={$i18n.t('app.telegram.family.currentChild')} />{$i18n.t('app.telegram.family.currentChild')}</span>{/if}</span>
+                        <span class="balance"><TelegramCoin size={14} />{child.balance}</span>
+                    </button>
+                    <button class="childrow-more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: child.nickname })} on:click={() => { statusError = ''; manageChild = child; }}><TelegramIcon name="more" size={18} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
+                </div>
             {/each}
         </div>
     {/if}
@@ -69,6 +101,19 @@
     {/if}
     {#if switchError}<p class="error" role="alert">{switchError}</p>{/if}
 
+    {#if inactiveChildren.length}
+        <h2 class="section-title">{$i18n.t('app.telegram.family.inactiveChildren')} · {inactiveChildren.length}</h2>
+        <div class="flat">
+            {#each inactiveChildren as child (child.id)}
+                <div class="inactive-row">
+                    <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
+                    <span class="grow"><span class="name">{child.nickname}</span></span>
+                    <button class="reactivate" type="button" disabled={statusBusy} on:click={() => applyStatus(child, true)}>{$i18n.t('app.telegram.family.reactivate')}</button>
+                </div>
+            {/each}
+        </div>
+    {/if}
+
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
         <div class="setting"><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.family.rolesAndAccess')} /></span><span class="grow">{$i18n.t('app.telegram.family.rolesAndAccess')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></div>
@@ -76,6 +121,32 @@
         <div class="setting"><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></div>
     </div>
 </div>
+
+{#if manageChild}
+    <div class="sheet-backdrop" role="presentation" on:click={() => manageChild = null}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="child-manage-title" tabindex="-1">
+        <h2 id="child-manage-title">{manageChild.nickname}</h2>
+        <div class="manage-status"><span class="manage-label">{$i18n.t('app.telegram.family.status')}</span><span class:badge-active={manageChild.status !== 'INACTIVE'} class="manage-badge">{manageChild.status === 'INACTIVE' ? $i18n.t('app.telegram.family.inactive') : $i18n.t('app.telegram.family.active')}</span></div>
+        {#if manageChild.status !== 'INACTIVE'}
+            <p class="manage-meta">{$i18n.t('app.telegram.family.visibleInAppAndBot')}</p>
+            <button class="deactivate" type="button" on:click={() => { statusError = ''; confirmChild = manageChild; }}><TelegramIcon name="pause" size={18} label={$i18n.t('app.telegram.family.deactivate')} />{$i18n.t('app.telegram.family.deactivate')}</button>
+        {:else}
+            <button class="reactivate-full" type="button" disabled={statusBusy} on:click={() => manageChild && applyStatus(manageChild, true)}><TelegramIcon name="play" size={18} label={$i18n.t('app.telegram.family.reactivate')} />{$i18n.t('app.telegram.family.reactivate')}</button>
+        {/if}
+        {#if statusError}<p class="error" role="alert">{statusError}</p>{/if}
+        <button class="close" type="button" on:click={() => manageChild = null}>{$i18n.t('app.telegram.header.close')}</button>
+    </div>
+{/if}
+
+{#if confirmChild}
+    <div class="sheet-backdrop" role="presentation" on:click={() => confirmChild = null}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="child-confirm-title" tabindex="-1">
+        <h2 id="child-confirm-title">{$i18n.t('app.telegram.family.deactivateTitle', { name: confirmChild.nickname })}</h2>
+        <p class="confirm-meta">{$i18n.t('app.telegram.family.deactivateDescription')}</p>
+        <button class="deactivate" type="button" disabled={statusBusy} on:click={() => confirmChild && applyStatus(confirmChild, false)}>{$i18n.t('app.telegram.family.deactivateConfirm')}</button>
+        <button class="close" type="button" disabled={statusBusy} on:click={() => confirmChild = null}>{$i18n.t('app.telegram.family.cancel')}</button>
+    </div>
+{/if}
 
 <style>
     .family { width:100%; }
@@ -106,4 +177,28 @@
     .setting .grow { font-weight:600; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
+    .childrow-wrap { display:flex; align-items:center; border-bottom:1px solid #edf0f5; }
+    .childrow-wrap:last-child { border-bottom:0; }
+    .childrow-wrap .childrow { flex:1; min-width:0; border-bottom:0; }
+    .childrow-more { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border:0; background:transparent; color:#66718a; cursor:pointer; }
+    .inactive-row { display:flex; align-items:center; gap:.6rem; min-height:3.25rem; padding:.4rem 0; border-bottom:1px solid #edf0f5; }
+    .inactive-row:last-child { border-bottom:0; }
+    .inactive-row .avatar { opacity:.55; }
+    .reactivate { min-height:2.25rem; padding:.3rem .7rem; border:1px solid #3867d6; border-radius:.6rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; }
+    .reactivate:disabled { cursor:wait; opacity:.6; }
+    .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
+    .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
+    .sheet h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
+    .manage-status { display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.6rem 0; border-bottom:1px solid #edf0f5; }
+    .manage-label { color:#33415f; font-weight:600; }
+    .manage-badge { padding:.2rem .55rem; border-radius:999px; background:#f1f3f7; color:#66718a; font-size:.78rem; font-weight:700; }
+    .manage-badge.badge-active { background:#eaf7ef; color:#17884b; }
+    .manage-meta { margin:.5rem 0; color:#66718a; font-size:.85rem; line-height:1.4; }
+    .confirm-meta { margin:.25rem 0 .9rem; color:#66718a; font-size:.9rem; line-height:1.45; }
+    .deactivate { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.5rem; padding:.55rem .7rem; border:0; border-radius:.7rem; background:#fff0f1; color:#c63c42; font:inherit; font-weight:700; cursor:pointer; }
+    .deactivate:disabled { cursor:wait; opacity:.6; }
+    .reactivate-full { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.5rem; padding:.55rem .7rem; border:1px solid #3867d6; border-radius:.7rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; }
+    .reactivate-full:disabled { cursor:wait; opacity:.6; }
+    .close { width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .close:disabled { cursor:wait; opacity:.6; }
 </style>

@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.service.family.dashboard;
 
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
+import com.sashplatonov.earnit.kids.domain.model.ChildStatus;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,12 +35,12 @@ public class FamilyDashboardScopeLoader {
 
         List<ChildEntity> visibleChildren = resolveVisibleChildren(children, adminSession, childId);
         if (visibleChildren.isEmpty()) {
-            return Optional.empty();
+            return Optional.of(FamilyDashboardScopeData.empty(familyDbId, rules));
         }
 
         ChildEntity activeChild = resolveActiveChild(visibleChildren, childId, persistedChildId, adminSession);
         Integer resolvedLastSelectedChildId = resolveLastSelectedChildId(
-            children,
+            visibleChildren,
             activeChild,
             persistedChildId,
             adminSession
@@ -57,7 +58,10 @@ public class FamilyDashboardScopeLoader {
                                                      boolean adminSession,
                                                      Integer childId) {
         if (adminSession) {
-            return children;
+            // EXPLAIN: Inactive children are hidden from normal parent selectors.
+            return children.stream()
+                .filter(child -> ChildStatus.ACTIVE.name().equals(child.getStatus()))
+                .toList();
         }
         if (childId == null) {
             return List.of();

@@ -53,6 +53,9 @@ final class FamilyActionRequestService {
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
+        if (supportService.isInactive(child.get())) {
+            return OperationResult.failure(BackendMessages.message("family.childInactive"));
+        }
 
         Optional<TaskEntity> task = supportService.findActiveTask(familyDbId.get(), childId, taskId);
         if (task.isEmpty()) {
@@ -92,6 +95,9 @@ final class FamilyActionRequestService {
         Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+        }
+        if (supportService.isInactive(child.get())) {
+            return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
         Optional<ShopItemEntity> item = supportService.findActiveItem(familyDbId.get(), childId, itemId);
@@ -137,6 +143,9 @@ final class FamilyActionRequestService {
         Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), request.get().getChildId());
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
+        }
+        if (supportService.isInactive(child.get())) {
+            return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
         Optional<ShopItemEntity> item = request.get().getItemId() == null

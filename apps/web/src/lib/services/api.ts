@@ -3,8 +3,9 @@
  * Preserves: CSRF cookie, credentials: same-origin, same endpoint paths.
  */
 
-import { normalizeAuthResponse } from './serverContract';
+import { normalizeAuthResponse, normalizeChild } from './serverContract';
 import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } from '$lib/types/auth';
+import type { Child } from '$lib/stores/app';
 import { logClientError } from '$lib/logging/clientLogger';
 
 // ── CSRF ─────────────────────────────────────────────────────────────────────
@@ -567,6 +568,18 @@ export const adminAddChild = (name: string) =>
 /** Delete a child profile. */
 export const adminDeleteChild = (childId: unknown) =>
     deleteResource(`/api/children/${encodeURIComponent(String(childId))}`, 'Delete child failed');
+
+/** Deactivate or reactivate a child profile without deleting data. */
+export const adminSetChildActive = (childId: unknown, active: boolean) =>
+    postJson(`/api/children/${encodeURIComponent(String(childId))}/${active ? 'reactivate' : 'deactivate'}`, {});
+
+/** List inactive child profiles for the current family. */
+export async function adminGetInactiveChildren(): Promise<Child[]> {
+    const payload = await fetchGet<{ id: number | string; status?: string; [key: string]: unknown }[] | null>(
+        '/api/children/inactive'
+    );
+    return (payload ?? []).map((child) => normalizeChild(child) as unknown as Child);
+}
 
 /** Get the current login link/token for a child. */
 export async function adminGetChildLink(childId: unknown) {

@@ -3,12 +3,15 @@ package com.sashplatonov.earnit.kids.service.family;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
+import com.sashplatonov.earnit.kids.domain.model.ChildStatus;
 import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
+import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -190,6 +193,34 @@ class FamilyChildManagementService {
             return failure("TOKEN_GENERATION_FAILED", "family.tokenGenerationFailed");
         }
         return OperationResult.success(newToken.get());
+    }
+
+    OperationResult<Void> setChildActive(String familyId, int childId, boolean active) {
+        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        if (dbIdOpt.isEmpty()) {
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        }
+        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+        }
+
+        ChildStatus status = active ? ChildStatus.ACTIVE : ChildStatus.INACTIVE;
+        childRepository.updateStatus(childId, status.name());
+        log.info("Child status updated childId={} familyId={} status={}", childId, familyId, status);
+        invalidateAnalyticsCache(familyId);
+        return OperationResult.success(null);
+    }
+
+    OperationResult<List<ChildDto>> listInactiveChildren(String familyId) {
+        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        if (dbIdOpt.isEmpty()) {
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        }
+
+        List<ChildDto> children = childRepository.getInactiveChildren(dbIdOpt.get()).stream()
+            .map(child -> FamilyDashboardMapper.INSTANCE.toChildDto(child, objectMapper))
+            .toList();
+        return OperationResult.success(children);
     }
 
     private void invalidateAnalyticsCache(String familyId) {

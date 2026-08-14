@@ -67,4 +67,8 @@ public class ChildEntity extends CreatedAtEntity {
 
     @Column(name = "reward_goal_item_id")
     private Long rewardGoalItemId;
+
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private String status = ChildStatus.ACTIVE.name();
 }
