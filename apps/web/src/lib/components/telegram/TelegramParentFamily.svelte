@@ -91,7 +91,7 @@
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .invite { margin-top:.6rem; padding:.7rem; border:1px solid #e6e9f0; border-radius:.75rem; background:#fff; }
     .invite .muted { margin:0 0 .5rem; color:#66718a; font-size:.85rem; line-height:1.4; }
-    .invite button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.5rem; padding:.45rem .7rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; cursor:pointer; }
+    .invite button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.75rem; padding:.45rem .7rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; cursor:pointer; }
     .invite button:disabled { cursor:wait; opacity:.6; }
     .invite label { display:block; margin-top:.6rem; font-size:.85rem; color:#33415f; }
     .invite input { box-sizing:border-box; width:100%; min-height:2.5rem; margin-top:.25rem; padding:.5rem; border:1px solid #dfe4ee; border-radius:.6rem; font:inherit; }

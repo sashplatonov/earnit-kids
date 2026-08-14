@@ -28,7 +28,7 @@ const parentData = {
     requests: [],
 };
 
-async function openParent(page: import('@playwright/test').Page, data: unknown = parentData) {
+async function openParent(page: import('@playwright/test').Page, data: unknown = parentData, details?: unknown, historyItems: unknown[] = []) {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.addInitScript(() => {
         (window as Window & { Telegram?: unknown }).Telegram = { WebApp: { initData: 'signed-init-data', ready: () => {}, expand: () => {} } };
@@ -36,10 +36,37 @@ async function openParent(page: import('@playwright/test').Page, data: unknown =
     await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ role: 'parent', familyId: 'family-1' }) }));
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) }));
-    await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
-    await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total: 0, page: 1, limit: 10 }) }));
+    await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(details ?? { requests: [], history: [], friends: [] }) }));
+    await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: historyItems, total: historyItems.length, page: 1, limit: 10 }) }));
     await page.goto('/telegram');
 }
+
+test('screenshot parent home zero requests at 375x667', async ({ page }) => {
+    const history = [
+        { id: 31, type: 'task_completed', title: 'Утренний старт', amount: 1, createdAt: '2026-08-14T08:32:00Z' },
+        { id: 32, type: 'task_completed', title: 'Красивые 5 строк', amount: 1, createdAt: '2026-08-13T18:40:00Z' },
+        { id: 33, type: 'task_completed', title: 'Книжная искра', amount: 2, createdAt: '2026-08-13T17:05:00Z' },
+    ];
+    await openParent(page, parentData, undefined, history);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: 'tmp/shot-parent-home-zero.png', fullPage: false });
+    await expect(page.getByText('Nothing needs attention right now.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add coins' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'History' })).toBeVisible();
+    await expect(page.getByText('Утренний старт')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
+test('screenshot parent home pending requests at 375x667', async ({ page }) => {
+    const pendingDetails = { requests: [{ id: 21, requestType: 'task_completion', taskName: 'Утренний старт', childNickname: 'Aliska', coins: 1, status: 'pending' }], history: [], friends: [] };
+    await openParent(page, parentData, pendingDetails);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: 'tmp/shot-parent-home-pending.png', fullPage: false });
+    await expect(page.getByRole('heading', { name: 'Needs attention' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Approve request' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reject request' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
 
 test('screenshot parent tasks at 375x667', async ({ page }) => {
     await openParent(page);

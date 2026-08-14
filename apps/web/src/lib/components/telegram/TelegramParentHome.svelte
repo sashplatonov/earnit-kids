@@ -114,8 +114,8 @@
     .section-title { margin:0; color:#18243d; font-size:1rem; }
     .count { display:inline-grid; place-items:center; min-width:1.6rem; height:1.6rem; padding:0 .45rem; border-radius:999px; background:#eef0ff; color:#5b63e9; font-size:.82rem; font-weight:800; }
     .see-all, .small-link, .load-more, .quick-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border-radius:.7rem; font:inherit; cursor:pointer; }
-    .see-all, .load-more { min-height:2.5rem; padding:.5rem .8rem; border:1px solid #dfe4ee; background:#fff; color:#33415f; }
-    .small-link { min-height:2.25rem; padding:.25rem .4rem; border:0; background:transparent; color:#3867d6; font-weight:700; font-size:.85rem; }
+    .see-all, .load-more { min-height:2.75rem; padding:.5rem .8rem; border:1px solid #dfe4ee; background:#fff; color:#33415f; }
+    .small-link { min-height:2.75rem; padding:.35rem .4rem; border:0; background:transparent; color:#3867d6; font-weight:700; font-size:.85rem; }
     .quick-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.6rem; }
     .quick-actions button { min-height:3rem; padding:.55rem .7rem; border:1px solid #3867d6; background:#fff; color:#3867d6; font-weight:700; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
@@ -130,6 +130,6 @@
     .entity-icon { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; color:#5b63e9; }
     .state-error { display:flex; align-items:center; gap:.55rem; padding:.6rem .75rem; border-radius:.8rem; background:#fff0f0; color:#a33b3b; }
     .state-error p { margin:0; flex:1; font-size:.9rem; }
-    .state-error button { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; padding:.4rem .7rem; border:1px solid #f3cfd2; border-radius:.6rem; background:#fff; color:#a33b3b; font:inherit; cursor:pointer; }
+    .state-error button { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.4rem .7rem; border:1px solid #f3cfd2; border-radius:.6rem; background:#fff; color:#a33b3b; font:inherit; cursor:pointer; }
     .muted { color:#66718a; }
 </style>

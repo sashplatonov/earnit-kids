@@ -536,6 +536,8 @@ Examples:
 
 # NUX-010 - Visual regression and screenshot acceptance
 
+**Status:** ✅ Done
+
 **Priority:** P1  
 **Depends on:** NUX-001..NUX-009
 

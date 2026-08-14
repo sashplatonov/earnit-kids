@@ -61,7 +61,7 @@
 
 <style>
     .parent-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
-    .child-select { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; padding:.3rem .6rem; border:0; background:transparent; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
+    .child-select { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.3rem .6rem; border:0; background:transparent; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
     .child-select:disabled { cursor:default; opacity:.6; }
     .child-name { max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .balance { display:inline-flex; align-items:center; gap:.35rem; padding:.45rem .65rem; border-radius:999px; background:#fff4c2; color:#573d00; font-weight:700; white-space:nowrap; }

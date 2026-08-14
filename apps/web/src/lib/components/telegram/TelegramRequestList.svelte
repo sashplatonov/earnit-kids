@@ -58,7 +58,7 @@
     .meta { margin:.15rem 0 0; color:#66718a; font-size:.8rem; }
     .amount { display:flex; align-items:center; gap:.25rem; margin:.25rem 0 0; color:#18243d; font-weight:750; font-size:.85rem; }
     .decision-actions { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-top:.6rem; }
-    .decision-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.5rem; border-radius:.7rem; font:inherit; font-weight:700; cursor:pointer; }
+    .decision-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.75rem; border-radius:.7rem; font:inherit; font-weight:700; cursor:pointer; }
     .decision-actions button:disabled { cursor:wait; opacity:.6; }
     .approve { border:1px solid #cce9d8; background:#eaf7ef; color:#17884b; }
     .reject { border:1px solid #f3cfd2; background:#fff0f1; color:#c63c42; }
@@ -66,7 +66,7 @@
     .state-empty { display:flex; align-items:center; gap:.55rem; padding:.6rem .75rem; border-radius:.8rem; background:#eaf7ef; color:#275d3b; font-size:.9rem; }
     .state-error { display:flex; align-items:center; gap:.55rem; padding:.6rem .75rem; border-radius:.8rem; background:#fff0f0; color:#a33b3b; }
     .state-error p { margin:0; flex:1; }
-    .state-error button { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; padding:.4rem .7rem; border:1px solid #f3cfd2; border-radius:.6rem; background:#fff; color:#a33b3b; font:inherit; cursor:pointer; }
+    .state-error button { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.4rem .7rem; border:1px solid #f3cfd2; border-radius:.6rem; background:#fff; color:#a33b3b; font:inherit; cursor:pointer; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
 </style>
