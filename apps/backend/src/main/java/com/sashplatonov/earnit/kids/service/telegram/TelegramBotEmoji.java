@@ -15,6 +15,7 @@ public final class TelegramBotEmoji {
     public static final String ADD = "➕";
     public static final String REMOVE = "➖";
     public static final String WAITING = "⏳";
+    public static final String REFRESH = "🔄";
 
     private TelegramBotEmoji() {
     }

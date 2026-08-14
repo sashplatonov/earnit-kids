@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 
+import java.util.List;
+
 final class TelegramCoinAdjustmentHandler {
     private TelegramCoinAdjustmentHandler() {
     }
@@ -23,11 +25,20 @@ final class TelegramCoinAdjustmentHandler {
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
             return;
         }
-        String text = result instanceof OperationResult.Success<TelegramQuickActionResponse> success
-            ? "✅ Balance updated · " + success.value().balance() + " 🪙"
-            : "Could not update balance. Refresh and try again.";
+        List<TelegramBotApiClient.InlineButton> buttons = menuBuilder.backToMain();
+        String text;
+        if (result instanceof OperationResult.Success<TelegramQuickActionResponse> success) {
+            text = TelegramBotEmoji.DONE + " Balance updated · " + success.value().balance() + " " + TelegramBotEmoji.COINS;
+        } else {
+            TelegramQuickActionResponse snapshot = quickActions.load(telegramUserId, childId).orElse(null);
+            text = "Could not update balance. Current value was not changed.";
+            if (snapshot != null) {
+                text = "Balance update failed. Current balance: " + snapshot.balance() + " " + TelegramBotEmoji.COINS;
+                buttons = menuBuilder.coinRetry(snapshot, delta);
+            }
+        }
         try {
-            apiClient.editMessageText(chatId, messageId, text, menuBuilder.backToMain());
+            apiClient.editMessageText(chatId, messageId, text, buttons);
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }

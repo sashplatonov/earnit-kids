@@ -30,8 +30,8 @@ final class TelegramMenuFlow {
         }
         return switch (baseAction(action)) {
             case "child" -> "Choose a child";
-            case "catalog" -> "Child · " + view.childName();
-            case "balance" -> "Balance · " + view.childName();
+            case "catalog" -> parentOrChildText(view);
+            case "balance" -> parentOrChildText(view);
             case "tasks" -> "Tasks · " + view.childName();
             case "rewards" -> "Rewards · " + view.childName();
             case "requests" -> "Requests · " + view.childName();
@@ -58,7 +58,7 @@ final class TelegramMenuFlow {
         return switch (baseAction(action)) {
             case "child" -> "parent".equals(view.role())
                 ? menuBuilder.parentChildPicker(view) : menuBuilder.backToMain();
-            case "catalog" -> menuBuilder.parentChildCatalog(view);
+            case "catalog" -> mainMenu(view, miniAppUrl, menuBuilder);
             case "balance" -> menuBuilder.balance(view);
             case "tasks", "rewards" -> catalogMenu(action, view, miniAppUrl, menuBuilder);
             case "requests" -> "parent".equals(view.role())

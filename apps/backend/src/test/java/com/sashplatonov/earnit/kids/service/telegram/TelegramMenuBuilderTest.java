@@ -16,17 +16,17 @@ import static org.mockito.Mockito.when;
 
 class TelegramMenuBuilderTest {
     @Test
-    void parentMainHasSixBoundedActions() {
+    void parentMainHasFiveBoundedActions() {
         TelegramQuickActionResponse view = view();
 
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
-            .hasSize(6)
+            .hasSize(5)
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("👧 Alex", "Requests", "🪙 Balance · 42", "Coins", "Recent", "📱 Open Mini App");
+            .containsExactly("Requests", "🪙 Coins", "📜 Recent", "🔄 Switch child", "📱 Open Mini App");
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
-            .contains("nav.catalog-child-1.signed", "nav.requests-child-1.signed",
-                "nav.coins-child-1.signed", "nav.recent-child-1.signed");
+            .contains("nav.requests-child-1.signed", "nav.coins-child-1.signed",
+                "nav.recent-child-1.signed", "nav.child-child-1.signed");
     }
 
     @Test
@@ -92,7 +92,7 @@ class TelegramMenuBuilderTest {
 
         assertThat(menuBuilder().parentCoins(view))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("➕ 5", "➕ 10", "➖ 5", "➖ 10", "⬅️ Back");
+            .containsExactly("➕ 1", "➕ 2", "➕ 5", "➕ 10", "➖ 1", "➖ 2", "➖ 5", "➖ 10", "⬅️ Back");
         assertThat(menuBuilder().parentCoinConfirmation(view, -10))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("👍 Confirm", "⬅️ Cancel");

@@ -96,7 +96,7 @@ git commit -m "feat(telegram): Add semantic control mappings"
 
 ## TUX-002: Reduce the parent Bot to a decision inbox
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** TUX-001, TUX-004
 

@@ -19,11 +19,10 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view, String miniAppUrl) {
         return List.of(
-            parentNavigation(TelegramBotEmoji.CHILD + " " + view.childName(), "catalog", view),
             parentNavigation("Requests", "requests", view),
-            parentNavigation(TelegramBotEmoji.COINS + " Balance · " + view.balance(), "balance", view),
-            parentNavigation("Coins", "coins", view),
-            parentNavigation("Recent", "recent", view),
+            parentNavigation(TelegramBotEmoji.COINS + " Coins", "coins", view),
+            parentNavigation(TelegramBotEmoji.RECENT + " Recent", "recent", view),
+            parentNavigation(TelegramBotEmoji.SWITCH + " Switch child", "child", view),
             webApp(TelegramBotEmoji.OPEN_APP + " Open Mini App", miniAppUrl)
         );
     }
@@ -68,8 +67,12 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentCoins(TelegramQuickActionResponse view) {
         return List.of(
-            navigation(TelegramBotEmoji.ADD + " 5", "coins-confirm-add-5-child-" + view.childId()),
-            navigation(TelegramBotEmoji.ADD + " 10", "coins-confirm-add-10-child-" + view.childId()),
+            navigation(TelegramBotEmoji.ADD + " 1", "coins-apply-add-1-child-" + view.childId()),
+            navigation(TelegramBotEmoji.ADD + " 2", "coins-apply-add-2-child-" + view.childId()),
+            navigation(TelegramBotEmoji.ADD + " 5", "coins-apply-add-5-child-" + view.childId()),
+            navigation(TelegramBotEmoji.ADD + " 10", "coins-apply-add-10-child-" + view.childId()),
+            navigation(TelegramBotEmoji.REMOVE + " 1", "coins-apply-remove-1-child-" + view.childId()),
+            navigation(TelegramBotEmoji.REMOVE + " 2", "coins-apply-remove-2-child-" + view.childId()),
             navigation(TelegramBotEmoji.REMOVE + " 5", "coins-confirm-remove-5-child-" + view.childId()),
             navigation(TelegramBotEmoji.REMOVE + " 10", "coins-confirm-remove-10-child-" + view.childId()),
             parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view)
@@ -84,6 +87,14 @@ public class TelegramMenuBuilder {
         return List.of(
             navigation(TelegramBotEmoji.APPROVE + " Confirm", "coins-apply-" + direction + "-" + amount + target),
             parentNavigation(TelegramBotEmoji.BACK + " Cancel", "coins", view));
+    }
+
+    public List<TelegramBotApiClient.InlineButton> coinRetry(TelegramQuickActionResponse view, int delta) {
+        String direction = delta > 0 ? "add" : "remove";
+        int amount = Math.abs(delta);
+        return List.of(
+            navigation(TelegramBotEmoji.REFRESH + " Retry", "coins-apply-" + direction + "-" + amount + "-child-" + view.childId()),
+            parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view));
     }
 
     public List<TelegramBotApiClient.InlineButton> childMain(TelegramQuickActionResponse view,
