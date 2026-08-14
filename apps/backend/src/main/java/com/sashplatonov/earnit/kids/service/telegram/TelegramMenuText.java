@@ -38,13 +38,13 @@ final class TelegramMenuText {
         }
         String currentId = action.startsWith("requests-next-")
             ? action.substring("requests-next-".length()) : null;
-        List<RequestDto> pending = TelegramMenuFlow.pendingRequests(view);
-        int index = TelegramMenuFlow.nextQueueIndex(pending, currentId);
+        List<RequestDto> pending = TelegramViewSupport.pendingRequests(view);
+        int index = TelegramViewSupport.nextQueueIndex(pending, currentId);
         if (index >= pending.size()) {
             return TelegramCopy.emptyRequests();
         }
         RequestDto request = pending.get(index);
-        return TelegramCopy.requestQueueText(view.childName(), TelegramMenuFlow.requestTitle(request),
+        return TelegramCopy.requestQueueText(view.childName(), TelegramViewSupport.requestTitle(request),
             request.coins(), index + 1, pending.size());
     }
 
@@ -57,7 +57,7 @@ final class TelegramMenuText {
 
     // EXPLAIN: Short action list: available then pending, capped at five.
     private static String tasksText(TelegramQuickActionResponse view) {
-        List<TaskDto> tasks = TelegramMenuFlow.orderedTasks(view);
+        List<TaskDto> tasks = TelegramViewSupport.orderedTasks(view);
         if (tasks.isEmpty()) {
             return TelegramCopy.emptyTasks();
         }

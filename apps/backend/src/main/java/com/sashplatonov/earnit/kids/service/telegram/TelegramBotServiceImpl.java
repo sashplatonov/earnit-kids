@@ -143,12 +143,8 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                             navigate(callback, verified);
                         }
                     });
-            } else if (data.startsWith("task.request.")) {
-                TelegramActionIdParser.parse(data, "task.request.")
-                    .ifPresent(taskId -> quickActionTask(telegramUserId, taskId, callback));
-            } else if (data.startsWith("reward.request.")) {
-                TelegramActionIdParser.parse(data, "reward.request.")
-                    .ifPresent(rewardId -> quickActionReward(telegramUserId, rewardId, callback));
+            } else if (data.startsWith("task.request.") || data.startsWith("reward.request.")) {
+                handleChildQuickAction(data, telegramUserId, callback);
             } else if (data.startsWith("parent.request.")) {
                 TelegramParentRequestHandler.handle(telegramUserId, data, callback,
                     quickActions, apiClient, menuBuilder, config.miniAppUrl().orElse(""));
@@ -168,66 +164,17 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         }
     }
 
-    private void quickActionTask(long telegramUserId, long taskId, JsonNode callback) {
+    private void handleChildQuickAction(String data, long telegramUserId, JsonNode callback) {
         if (quickActions == null || menuBuilder == null) {
             return;
         }
-        quickActions.load(telegramUserId, null).ifPresent(view -> {
-            String taskName = view.tasks().stream()
-                .filter(task -> task.id() == taskId).map(task -> task.name()).findFirst().orElse(null);
-            OperationResult<TelegramQuickActionResponse> result =
-                quickActions.requestTask(telegramUserId, view.childId(), taskId);
-            editTaskRequestResult(callback, result, taskName, "task.request." + taskId);
-        });
-    }
-
-    private void quickActionReward(long telegramUserId, long rewardId, JsonNode callback) {
-        if (quickActions == null || menuBuilder == null) {
-            return;
-        }
-        quickActions.load(telegramUserId, null).ifPresent(view -> {
-            OperationResult<TelegramQuickActionResponse> result =
-                quickActions.requestReward(telegramUserId, view.childId(), rewardId);
-            editRewardRequestResult(callback, result, "reward.request." + rewardId);
-        });
-    }
-
-    private void editRewardRequestResult(JsonNode callback,
-                                         OperationResult<TelegramQuickActionResponse> result,
-                                         String retryData) {
-        long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
-        long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
-        if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
-            return;
-        }
-        String text = result instanceof OperationResult.Success<TelegramQuickActionResponse>
-            ? TelegramCopy.rewardWaiting() : TelegramCopy.error();
-        List<TelegramBotApiClient.InlineButton> buttons = result instanceof OperationResult.Success<TelegramQuickActionResponse>
-            ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);
-        try {
-            apiClient.editMessageText(chatId, messageId, text, buttons);
-        } catch (Exception exception) {
-            throw new IllegalStateException(exception);
-        }
-    }
-
-    private void editTaskRequestResult(JsonNode callback,
-                                       OperationResult<TelegramQuickActionResponse> result,
-                                       String taskName,
-                                       String retryData) {
-        long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
-        long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
-        if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
-            return;
-        }
-        String text = result instanceof OperationResult.Success<TelegramQuickActionResponse>
-            ? TelegramCopy.waiting(taskName == null ? "Задание" : taskName) : TelegramCopy.error();
-        List<TelegramBotApiClient.InlineButton> buttons = result instanceof OperationResult.Success<TelegramQuickActionResponse>
-            ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);
-        try {
-            apiClient.editMessageText(chatId, messageId, text, buttons);
-        } catch (Exception exception) {
-            throw new IllegalStateException(exception);
+        TelegramChildActionHandler childActions = new TelegramChildActionHandler(quickActions, apiClient, menuBuilder);
+        if (data.startsWith("task.request.")) {
+            TelegramActionIdParser.parse(data, "task.request.")
+                .ifPresent(taskId -> childActions.task(telegramUserId, taskId, callback));
+        } else {
+            TelegramActionIdParser.parse(data, "reward.request.")
+                .ifPresent(rewardId -> childActions.reward(telegramUserId, rewardId, callback));
         }
     }
 

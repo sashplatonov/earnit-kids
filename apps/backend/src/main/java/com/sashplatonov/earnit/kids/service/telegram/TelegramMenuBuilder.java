@@ -112,8 +112,8 @@ public class TelegramMenuBuilder {
     public List<TelegramBotApiClient.InlineButton> childTasks(TelegramQuickActionResponse view,
                                                                String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        Set<Long> pending = TelegramMenuFlow.pendingTaskIds(view);
-        TelegramMenuFlow.orderedTasks(view).stream()
+        Set<Long> pending = TelegramViewSupport.pendingTaskIds(view);
+        TelegramViewSupport.orderedTasks(view).stream()
             .filter(task -> !pending.contains(task.id()))
             .forEach(task -> buttons.add(callback(TelegramCopy.doneTask(task.name()), "task.request." + task.id())));
         if (view.tasks().size() > 5) {
@@ -159,8 +159,8 @@ public class TelegramMenuBuilder {
     // EXPLAIN: One pending request at a time; auto-advances or ends after decision.
     public List<TelegramBotApiClient.InlineButton> parentRequestQueue(TelegramQuickActionResponse view,
                                                                         String currentRequestId) {
-        List<RequestDto> pending = TelegramMenuFlow.pendingRequests(view);
-        int index = TelegramMenuFlow.nextQueueIndex(pending, currentRequestId);
+        List<RequestDto> pending = TelegramViewSupport.pendingRequests(view);
+        int index = TelegramViewSupport.nextQueueIndex(pending, currentRequestId);
         if (index >= pending.size()) {
             return List.of();
         }

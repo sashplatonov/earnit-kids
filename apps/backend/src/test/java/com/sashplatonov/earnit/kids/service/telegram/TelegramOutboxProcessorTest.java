@@ -31,8 +31,10 @@ class TelegramOutboxProcessorTest {
     private final PurchaseRequestRepository requests = mock(PurchaseRequestRepository.class);
     private final ShopItemRepository shopItems = mock(ShopItemRepository.class);
     private final TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+    private final TelegramNotificationComposer composer =
+        new TelegramNotificationComposer(children, requests, shopItems, callbacks);
     private final TelegramOutboxProcessor processor = new TelegramOutboxProcessor(
-        planner, deliveries, events, api, config, children, requests, shopItems, callbacks);
+        planner, deliveries, events, api, config, composer);
 
     @Test
     void successfulDeliveryIsTerminalAndUsesServerBalance() throws Exception {

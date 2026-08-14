@@ -98,12 +98,12 @@ final class TelegramParentRequestHandler {
     }
 
     private static String queueTextFor(TelegramQuickActionResponse view) {
-        List<RequestDto> pending = TelegramMenuFlow.pendingRequests(view);
+        List<RequestDto> pending = TelegramViewSupport.pendingRequests(view);
         if (pending.isEmpty()) {
             return TelegramCopy.emptyRequests();
         }
         RequestDto request = pending.get(0);
-        return TelegramCopy.requestQueueText(view.childName(), TelegramMenuFlow.requestTitle(request),
+        return TelegramCopy.requestQueueText(view.childName(), TelegramViewSupport.requestTitle(request),
             request.coins(), 1, pending.size());
     }
 

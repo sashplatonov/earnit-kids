@@ -1,15 +1,8 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
-import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
-import com.sashplatonov.earnit.kids.dto.response.RequestDto;
-import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 final class TelegramMenuFlow {
     private TelegramMenuFlow() {
@@ -36,60 +29,7 @@ final class TelegramMenuFlow {
     static String homeText(TelegramQuickActionResponse view) {
         return "child".equals(view.role())
             ? TelegramCopy.childHome(view.childName(), view.balance())
-            : TelegramCopy.parentHome(view.childName(), view.balance(), pendingCount(view));
-    }
-
-    static int pendingCount(TelegramQuickActionResponse view) {
-        return pendingRequests(view).size();
-    }
-
-    // EXPLAIN: Pending requests only; resolved items never re-enter the queue.
-    static List<RequestDto> pendingRequests(
-            TelegramQuickActionResponse view) {
-        return view.requests().stream()
-            .filter(request -> request.status() == PurchaseRequestStatus.pending)
-            .toList();
-    }
-
-    // EXPLAIN: Human-readable request title without backend terminology.
-    static String requestTitle(RequestDto request) {
-        return request.title() != null ? request.title()
-            : request.taskName() != null ? request.taskName()
-            : request.itemName() != null ? request.itemName() : "Запрос";
-    }
-
-    // EXPLAIN: Queue offset after the request identified by currentRequestId;
-    // EXPLAIN: null or unknown means start of the queue.
-    static int nextQueueIndex(List<RequestDto> pending,
-                              String currentRequestId) {
-        if (currentRequestId == null) {
-            return 0;
-        }
-        for (int i = 0; i < pending.size(); i++) {
-            if (Long.toString(pending.get(i).id()).equals(currentRequestId)) {
-                return i + 1;
-            }
-        }
-        return 0;
-    }
-
-    // EXPLAIN: Task ids that already have a pending request; those must not get
-    // EXPLAIN: an active Done action (replay safety).
-    static Set<Long> pendingTaskIds(TelegramQuickActionResponse view) {
-        return view.requests().stream()
-            .filter(request -> request.status() == PurchaseRequestStatus.pending)
-            .map(RequestDto::taskId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-    }
-
-    // EXPLAIN: Up to five actionable tasks, Available first then Pending.
-    static List<TaskDto> orderedTasks(TelegramQuickActionResponse view) {
-        Set<Long> pending = pendingTaskIds(view);
-        return view.tasks().stream()
-            .sorted(Comparator.comparing((TaskDto task) -> pending.contains(task.id())))
-            .limit(5)
-            .toList();
+            : TelegramCopy.parentHome(view.childName(), view.balance(), TelegramViewSupport.pendingCount(view));
     }
 
     static String navigationText(String action, TelegramQuickActionResponse view) {

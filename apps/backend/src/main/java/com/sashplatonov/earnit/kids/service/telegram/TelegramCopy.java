@@ -106,12 +106,6 @@ public final class TelegramCopy {
             + title + "\n" + TelegramBotEmoji.COINS + " +" + coins + " " + moneta(coins);
     }
 
-    // EXPLAIN: One pending request detail inside the queue.
-    public static String requestDetail(String childName, String title, int coins) {
-        return TelegramBotEmoji.CHILD + " " + childName + "\n\n"
-            + title + "\n" + TelegramBotEmoji.COINS + " +" + coins + " " + moneta(coins);
-    }
-
     // EXPLAIN: Pending request body used on the approval notification.
     public static String requestNotification(String childName, String title, int coins, boolean task) {
         String lead = task ? " выполнила:" : " хочет награду:";
@@ -190,10 +184,6 @@ public final class TelegramCopy {
 
     public static String emptyRecent() {
         return TelegramBotEmoji.SUCCESS + " Пока нет событий";
-    }
-
-    public static String noChildren() {
-        return TelegramBotEmoji.INFO + " Детей пока нет — добавьте в приложении";
     }
 
     // EXPLAIN: Helpers.
