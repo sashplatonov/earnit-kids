@@ -31,7 +31,7 @@ class TelegramMenuBuilderTest {
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
             .contains("nav.requests-child-1.signed", "nav.coins-child-1.signed",
-                "nav.recent-child-1.signed", "nav.child-child-1.signed");
+                "nav.recent-child-1.signed", "nav.switch-child-1.signed");
         assertThat(TelegramMenuFlow.homeText(view))
             .isEqualTo("👧 Alex\n🪙 42 монеты\n\n✅ Сейчас ничего не требует внимания");
     }

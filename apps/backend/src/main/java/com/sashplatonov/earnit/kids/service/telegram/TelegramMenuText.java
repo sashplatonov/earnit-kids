@@ -21,7 +21,7 @@ final class TelegramMenuText {
             return requestsQueueText(base, view);
         }
         return switch (base) {
-            case "child" -> TelegramCopy.chooseChildTitle();
+            case "child", "switch" -> TelegramCopy.chooseChildTitle();
             case "tasks", "rewards" -> catalogText(action, view);
             case "requests" -> requestsQueueText("requests", view);
             case "coins" -> coinsText(view);

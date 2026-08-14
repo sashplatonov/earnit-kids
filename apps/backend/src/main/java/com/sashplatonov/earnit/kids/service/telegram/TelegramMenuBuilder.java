@@ -24,7 +24,7 @@ public class TelegramMenuBuilder {
             parentNavigation(TelegramCopy.REQUESTS, "requests", view, "home-row-1"),
             parentNavigation(TelegramCopy.COINS, "coins", view, "home-row-1"),
             parentNavigation(TelegramCopy.RECENT, "recent", view, "home-row-2"),
-            parentNavigation(TelegramCopy.SWITCH_CHILD, "child", view, "home-row-2"),
+            parentNavigation(TelegramCopy.SWITCH_CHILD, "switch", view, "home-row-2"),
             webApp(TelegramCopy.OPEN_APP, miniAppUrl, "home-row-3")
         );
     }

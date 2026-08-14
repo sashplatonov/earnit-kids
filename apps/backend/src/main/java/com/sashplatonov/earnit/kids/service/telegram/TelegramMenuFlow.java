@@ -110,7 +110,7 @@ final class TelegramMenuFlow {
             return queue.isEmpty() ? menuBuilder.parentRequestsEmpty(view, miniAppUrl) : queue;
         }
         return switch (base) {
-            case "child" -> childMenu(view, menuBuilder);
+            case "child", "switch" -> childMenu(view, menuBuilder);
             case "tasks", "rewards" -> childCatalogMenu(action, view, miniAppUrl, menuBuilder);
             case "requests" -> requestsMenu(view, miniAppUrl, menuBuilder);
             case "recent" -> menuBuilder.recent(view, miniAppUrl);
