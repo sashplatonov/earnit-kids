@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { adminGetChildLink } from '$lib/services/api';
+    import TelegramIcon from './TelegramIcon.svelte';
     let link = '';
     let error = '';
     async function createLink() {
@@ -15,7 +16,7 @@
 
 <section class="panel" aria-labelledby="invite-title">
     <h2 id="invite-title">Invite child</h2><p class="muted">Create a secure child sign-in link. Telegram linking is completed after the child opens it.</p>
-    <button type="button" on:click={createLink}>Create invite link</button>
+    <button type="button" on:click={createLink}><TelegramIcon name="add" size={18} label="Create invite link" />Create invite link</button>
     {#if link}<label for="child-invite-link">Invite link</label><input id="child-invite-link" readonly value={link} on:focus={(event) => event.currentTarget.select()} />{/if}
     {#if error}<p class="error" role="alert">{error}</p>{/if}
 </section>

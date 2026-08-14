@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { switchChild } from '$lib/services/bootstrap';
+    import TelegramIcon from './TelegramIcon.svelte';
     let switching = false;
     let error = '';
     async function select(id: string | number) {
@@ -17,7 +18,7 @@
     <div class="children" role="listbox" aria-label="Choose child">
         {#each $appStore.children as child (child.id)}
             <button class:selected={$appStore.currentChildId == child.id} type="button" role="option" aria-selected={$appStore.currentChildId == child.id} disabled={switching} on:click={() => select(child.id)}>
-                <span>{child.nickname}</span><span>{child.balance} 🪙</span>
+                <span><TelegramIcon name="childSwitch" size={18} label={`Switch to ${child.nickname}`} />{child.nickname}</span><span>{child.balance} 🪙</span>
             </button>
         {/each}
     </div>

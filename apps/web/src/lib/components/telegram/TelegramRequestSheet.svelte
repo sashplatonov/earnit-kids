@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import TelegramIcon from './TelegramIcon.svelte';
     export let open = false;
     export let title = '';
     export let actionLabel = 'Send request';
@@ -16,8 +17,8 @@
         <label for="request-note">Optional note</label>
         <textarea id="request-note" maxlength="240" bind:value={note} placeholder="Add a note for your parent"></textarea>
         <div class="actions">
-            <button type="button" on:click={() => dispatch('close')} disabled={busy}>Cancel</button>
-            <button class="primary" type="button" on:click={() => dispatch('submit', note.trim() || null)} disabled={busy}>{busy ? 'Sending…' : actionLabel}</button>
+            <button type="button" on:click={() => dispatch('close')} disabled={busy}><TelegramIcon name="back" size={18} label="Cancel" />Cancel</button>
+            <button class="primary" type="button" on:click={() => dispatch('submit', note.trim() || null)} disabled={busy}><TelegramIcon name="request" size={18} label={busy ? 'Sending request' : actionLabel} />{busy ? 'Sending…' : actionLabel}</button>
         </div>
     </div>
 {/if}

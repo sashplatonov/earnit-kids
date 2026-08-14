@@ -4,6 +4,7 @@
     import TaskModal from '$lib/components/app/modals/TaskModal.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import { saveChildGroupOrder } from '$lib/services/api';
+    import TelegramIcon from './TelegramIcon.svelte';
     $: groups = [...new Set($appStore.tasks.map((task) => task.groupName).filter((group): group is string => Boolean(group)))];
     $: canEdit = $appStore.permission !== 'viewer';
     let groupMessage = '';
@@ -22,9 +23,9 @@
 </script>
 
 <section class="panel" aria-labelledby="tasks-title">
-    <div class="section-heading"><div><p class="eyebrow">Manage catalog</p><h2 id="tasks-title">Tasks</h2></div>{#if canEdit}<button class="primary" type="button" on:click={add}>Add task</button>{/if}</div>
-    {#if !$appStore.tasks.length}<p class="muted">No tasks for this child yet.</p>{:else}<div class="items">{#each $appStore.tasks as task (task.id)}<article class:archived={task.isActive === false}><div><h3>{task.name}</h3><p>{task.coins} 🪙 · {task.groupName || 'Ungrouped'}</p></div>{#if canEdit}<button type="button" aria-label={`Edit ${task.name}`} on:click={() => edit(task)}>Edit</button>{/if}</article>{/each}</div>{/if}
-    {#if canEdit}<details class="groups"><summary>Manage groups</summary><p>{groups.length ? groups.join(' · ') : 'No named groups yet.'}</p><button type="button" on:click={() => groupEditorOpen = true}>Reorder groups</button>{#if groupMessage}<span role="status">{groupMessage}</span>{/if}</details>{/if}
+    <div class="section-heading"><div><p class="eyebrow">Manage catalog</p><h2 id="tasks-title">Tasks</h2></div>{#if canEdit}<button class="primary" type="button" on:click={add}><TelegramIcon name="add" size={18} label="Add task" />Add task</button>{/if}</div>
+    {#if !$appStore.tasks.length}<p class="muted">No tasks for this child yet.</p>{:else}<div class="items">{#each $appStore.tasks as task (task.id)}<article class:archived={task.isActive === false}><div><h3>{task.name}</h3><p>{task.coins} 🪙 · {task.groupName || 'Ungrouped'}</p></div>{#if canEdit}<button type="button" aria-label={`Edit ${task.name}`} on:click={() => edit(task)}><TelegramIcon name="edit" size={18} label={`Edit ${task.name}`} />Edit</button>{/if}</article>{/each}</div>{/if}
+    {#if canEdit}<details class="groups"><summary>Manage groups</summary><p>{groups.length ? groups.join(' · ') : 'No named groups yet.'}</p><button type="button" on:click={() => groupEditorOpen = true}><TelegramIcon name="edit" size={18} label="Reorder groups" />Reorder groups</button>{#if groupMessage}<span role="status">{groupMessage}</span>{/if}</details>{/if}
 </section>
 <TaskModal />
 <GroupOrderEditor bind:isOpen={groupEditorOpen} isAdmin={canEdit} isSaving={groupSaving} {groups} title="Task groups" descriptionAdmin="Drag groups into the order your child sees." descriptionChild="" on:save={saveGroups} />
