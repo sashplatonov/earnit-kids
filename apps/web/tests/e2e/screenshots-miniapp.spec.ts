@@ -60,3 +60,13 @@ test('screenshot parent rewards at 375x667', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Edit Выбрать настольную игру на вечер' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
+
+test('screenshot parent family at 375x667', async ({ page }) => {
+    await openParent(page);
+    await page.getByRole('tab', { name: 'Family' }).click();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: 'tmp/shot-parent-family.png', fullPage: false });
+    await expect(page.getByRole('heading', { name: 'Family', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add child' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});

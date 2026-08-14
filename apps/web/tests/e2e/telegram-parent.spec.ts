@@ -59,7 +59,8 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('tab', { name: 'Family' })).toBeVisible();
     await page.getByRole('tab', { name: 'Tasks' }).press('End');
     await expect(page.getByRole('tab', { name: 'Family' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Selected child' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Family', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add child' })).toBeVisible();
     await page.getByRole('tab', { name: 'Home' }).click();
     await page.getByRole('button', { name: 'Approve request' }).click();
     await expect(page.getByRole('alert')).toContainText('This request could not be updated. Try again.');

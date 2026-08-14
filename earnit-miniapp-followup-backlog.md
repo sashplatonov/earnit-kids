@@ -318,6 +318,8 @@ getTelegramActionIcon(...)
 
 # NUX-005 - Rebuild Parent Family screen
 
+**Status:** ✅ Done
+
 **Priority:** P0  
 **Depends on:** NUX-004
 

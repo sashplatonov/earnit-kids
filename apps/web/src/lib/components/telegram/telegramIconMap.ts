@@ -4,6 +4,7 @@ import {
     ArrowLeft,
     ArrowRight,
     BookOpen,
+    Bell,
     Castle,
     Check,
     ChevronDown,
@@ -17,6 +18,7 @@ import {
     Heart,
     History,
     House,
+    Link,
     Minus,
     MoreHorizontal,
     Package,
@@ -26,6 +28,7 @@ import {
     SlidersHorizontal,
     Smartphone,
     Sparkles,
+    Shield,
     Sun,
     Table,
     Tag,
@@ -83,7 +86,10 @@ export const telegramIconMap = {
     desk: Table,
     addChild: UserRoundPlus,
     chevronDown: ChevronDown,
-    more: MoreHorizontal
+    more: MoreHorizontal,
+    shield: Shield,
+    link: Link,
+    bell: Bell
 } as const;
 
 export type TelegramIconName = keyof typeof telegramIconMap;

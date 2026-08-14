@@ -2,11 +2,10 @@
     import { onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
     import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
-    import TelegramChildPicker from './TelegramChildPicker.svelte';
     import TelegramParentHome from './TelegramParentHome.svelte';
     import TelegramParentTasks from './TelegramParentTasks.svelte';
     import TelegramParentRewards from './TelegramParentRewards.svelte';
-    import TelegramChildInvite from './TelegramChildInvite.svelte';
+    import TelegramParentFamily from './TelegramParentFamily.svelte';
     import TelegramParentHeader from './TelegramParentHeader.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 
@@ -69,8 +68,7 @@
             {:else if view === 'rewards'}
                 <TelegramParentRewards />
             {:else}
-                <TelegramChildPicker />
-                <TelegramChildInvite />
+                <TelegramParentFamily />
             {/if}
         </div>
     {/if}
