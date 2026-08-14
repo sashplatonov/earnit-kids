@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, tick } from 'svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     export let open = false;
     export let title = '';
@@ -8,16 +8,34 @@
     const dispatch = createEventDispatcher<{ submit: string | null; close: void }>();
     let note = '';
     $: if (!open) note = '';
+    function manageFocus(node: HTMLTextAreaElement) {
+        const target = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        void tick().then(() => node.focus());
+        return {
+            destroy() {
+                if (target?.isConnected) target.focus();
+            },
+        };
+    }
+    function close() {
+        if (!busy) dispatch('close');
+    }
+    function handleKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            close();
+        }
+    }
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={() => dispatch('close')}></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="request-sheet-title" tabindex="-1">
+    <div class="sheet-backdrop" role="presentation" on:click={close}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="request-sheet-title" tabindex="-1" on:keydown={handleKeydown}>
         <h2 id="request-sheet-title">Request {title}</h2>
         <label for="request-note">Optional note</label>
-        <textarea id="request-note" maxlength="240" bind:value={note} placeholder="Add a note for your parent"></textarea>
+        <textarea id="request-note" maxlength="240" bind:value={note} placeholder="Add a note for your parent" use:manageFocus></textarea>
         <div class="actions">
-            <button type="button" on:click={() => dispatch('close')} disabled={busy}><TelegramIcon name="back" size={18} label="Cancel" />Cancel</button>
+            <button type="button" on:click={close} disabled={busy}><TelegramIcon name="back" size={18} label="Cancel" />Cancel</button>
             <button class="primary" type="button" on:click={() => dispatch('submit', note.trim() || null)} disabled={busy}><TelegramIcon name="request" size={18} label={busy ? 'Sending request' : actionLabel} />{busy ? 'Sending…' : actionLabel}</button>
         </div>
     </div>

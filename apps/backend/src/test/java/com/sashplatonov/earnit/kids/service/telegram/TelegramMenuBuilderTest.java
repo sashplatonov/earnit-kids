@@ -46,6 +46,27 @@ class TelegramMenuBuilderTest {
             "https://example.test/telegram", menuBuilder()))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🎯 Requests (0)", "🪙 Coins", "📜 Recent", "🔄 Switch child", "📱 Open Mini App");
+        assertThat(TelegramMenuFlow.navigationText("tasks-child-1", view))
+            .isEqualTo("EarnIt Kids · Alex\nBalance: 42 🪙");
+    }
+
+    @Test
+    void childCannotOpenParentCoinControlsFromSignedNavigation() {
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(), List.of());
+
+        assertThat(TelegramMenuFlow.navigationMenu("coins-child-1", view,
+            "https://example.test/telegram", menuBuilder()))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("✅ Tasks", "🎁 Rewards", "📜 Recent", "📱 Open Mini App");
+        assertThat(TelegramMenuFlow.navigationText("coins-child-1", view))
+            .isEqualTo("EarnIt Kids · Alex\nBalance: 42 🪙");
+        assertThat(TelegramMenuFlow.navigationMenu("coins-confirm-remove-10-child-1", view,
+            "https://example.test/telegram", menuBuilder()))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("✅ Tasks", "🎁 Rewards", "📜 Recent", "📱 Open Mini App");
+        assertThat(TelegramMenuFlow.navigationText("coins-confirm-remove-10-child-1", view))
+            .isEqualTo("EarnIt Kids · Alex\nBalance: 42 🪙");
     }
 
     @Test

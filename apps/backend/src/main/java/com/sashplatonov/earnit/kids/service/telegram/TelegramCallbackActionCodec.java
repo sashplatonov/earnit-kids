@@ -55,7 +55,7 @@ final class TelegramCallbackActionCodec {
 
     private static boolean isCompactBase(char base) {
         return switch (base) {
-            case 'm', 'c', 't', 'r', 'q', 'b', 'o', 'e', 'h', 'n' -> true;
+            case 'm', 't', 'r', 'q', 'o', 'e', 'h', 'n' -> true;
             default -> false;
         };
     }

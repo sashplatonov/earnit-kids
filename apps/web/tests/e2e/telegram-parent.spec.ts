@@ -17,11 +17,6 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         contentType: 'application/json',
         body: JSON.stringify({ role: 'parent', familyId: 'family-1' }),
     }));
-    await page.route('**/api/data/details**', (route) => route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ requests: [], history: [], friends: [] }),
-    }));
     await page.route('**/api/base-data', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -33,12 +28,22 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         body: JSON.stringify({
             isAdmin: true,
             balance: 42,
-            currentChildId: 10,
+            childId: 10,
             children: [{ id: 10, nickname: 'Alex', balance: 42 }, { id: 11, nickname: 'Sam', balance: 8 }],
             tasks: [{ id: 1, name: 'Read', coins: 20, isActive: true }],
             shop: [{ id: 2, name: 'Game', price: 50, isActive: true }],
             requests: [],
         }),
+    }));
+    await page.route('**/api/requests/15/approve**', (route) => route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({ detail: 'Already resolved' }),
+    }));
+    await page.route('**/api/data/details**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ requests: [{ id: 15, taskName: 'Read', coins: 20, status: 'pending' }], history: [], friends: [] }),
     }));
 
     await page.goto('/telegram');
@@ -50,6 +55,9 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await page.getByRole('tab', { name: 'Tasks' }).press('End');
     await expect(page.getByRole('tab', { name: 'Family' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('heading', { name: 'Selected child' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Home' }).click();
+    await page.getByRole('button', { name: 'Approve request' }).click();
+    await expect(page.getByRole('alert')).toContainText('This request could not be updated. Try again.');
     const mobileNav = await page.getByRole('tablist').evaluate((node) => {
         const style = getComputedStyle(node);
         const rect = node.getBoundingClientRect();

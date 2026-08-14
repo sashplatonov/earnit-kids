@@ -30,6 +30,11 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await page.getByRole('tab', { name: 'Today' }).click();
     await page.getByRole('button', { name: 'Done' }).first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.locator('#request-note')).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Done' }).first()).toBeFocused();
+    await page.getByRole('button', { name: 'Done' }).first().click();
     await page.getByRole('button', { name: 'Send request' }).click();
     await expect(page.getByRole('status')).toContainText('Request sent');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();

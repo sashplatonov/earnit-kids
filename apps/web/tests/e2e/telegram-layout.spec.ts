@@ -16,6 +16,10 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     await page.goto('/telegram');
     await expect(page.locator('summary').filter({ hasText: 'Home' })).toBeVisible();
     await expect(page.locator('summary').filter({ hasText: 'School' })).toBeVisible();
+    expect(await page.getByRole('tablist').evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        return Math.round(rect.height) < 80 && Math.round(window.innerHeight - rect.bottom) === 0;
+    })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     for (const button of await page.locator('button').all()) expect(await button.evaluate((node) => Math.min(node.getBoundingClientRect().width, node.getBoundingClientRect().height) >= 44)).toBeTruthy();
 });
