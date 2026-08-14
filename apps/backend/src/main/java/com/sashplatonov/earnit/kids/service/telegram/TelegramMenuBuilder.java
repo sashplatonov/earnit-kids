@@ -100,7 +100,6 @@ public class TelegramMenuBuilder {
     public List<TelegramBotApiClient.InlineButton> childMain(TelegramQuickActionResponse view,
                                                               String miniAppUrl) {
         return List.of(
-            navigation(TelegramBotEmoji.COINS + " Balance · " + view.balance(), "balance"),
             navigation(TelegramBotEmoji.DONE + " Tasks", "tasks"),
             navigation(TelegramBotEmoji.REWARD + " Rewards", "rewards"),
             navigation(TelegramBotEmoji.RECENT + " Recent", "recent"),
@@ -123,10 +122,13 @@ public class TelegramMenuBuilder {
     public List<TelegramBotApiClient.InlineButton> childRewards(TelegramQuickActionResponse view,
                                                                   String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        view.rewards().stream().limit(5).forEach(reward ->
+        view.rewards().stream().filter(reward -> reward.price() <= view.balance()).limit(3).forEach(reward ->
             buttons.add(callback(TelegramBotEmoji.REWARD + " Get " + reward.name() + " · " + reward.price() + " " + TelegramBotEmoji.COINS,
                 "reward.request." + reward.id())));
-        if (view.rewards().size() > 5) {
+        view.rewards().stream().filter(reward -> reward.price() > view.balance()).min(java.util.Comparator.comparingInt(reward -> reward.price() - view.balance())).ifPresent(reward ->
+            buttons.add(callback(TelegramBotEmoji.WAITING + " Next goal: " + reward.name() + " · " + reward.price() + " " + TelegramBotEmoji.COINS, "noop")));
+        if (view.rewards().stream().filter(reward -> reward.price() <= view.balance()).count() > 3
+            || view.rewards().size() > 4) {
             buttons.add(webApp(TelegramBotEmoji.OPEN_APP + " More rewards → Mini App", miniAppUrl));
         }
         buttons.add(navigation(TelegramBotEmoji.BACK + " Back", "main"));

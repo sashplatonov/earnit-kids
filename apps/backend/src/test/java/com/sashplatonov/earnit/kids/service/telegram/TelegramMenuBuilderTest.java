@@ -44,6 +44,15 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
+    void childMainContainsOnlyShortActionCompanionEntries() {
+        assertThat(menuBuilder().childMain(new TelegramQuickActionResponse(
+            "family", "child", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(), List.of()),
+            "https://example.test/telegram"))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("✅ Tasks", "🎁 Rewards", "📜 Recent", "📱 Open Mini App");
+    }
+
+    @Test
     void childTasksCapsRowsAndAddsMiniAppForMore() {
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
             "family", "child", 1, "Alex", 42, List.of(),

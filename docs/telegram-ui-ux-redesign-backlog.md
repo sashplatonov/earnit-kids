@@ -155,7 +155,7 @@ git commit -m "feat(telegram): Focus parent bot on decisions"
 
 ## TUX-003: Make the child Bot a short action companion
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** TUX-001, TUX-002, TUX-004
 
