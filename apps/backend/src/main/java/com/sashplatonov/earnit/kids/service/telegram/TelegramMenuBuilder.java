@@ -72,6 +72,20 @@ public class TelegramMenuBuilder {
             parentNavigation(TelegramCopy.HOME, "main", view, "confirm-row-2"));
     }
 
+    // EXPLAIN: Generic error keyboard: retry re-triggers the same safe action.
+    public List<TelegramBotApiClient.InlineButton> parentRequestRetry(TelegramQuickActionResponse view,
+                                                                       String retryData) {
+        return List.of(
+            callback(TelegramCopy.RETRY, retryData),
+            parentNavigation(TelegramCopy.HOME, "main", view));
+    }
+
+    public List<TelegramBotApiClient.InlineButton> childRetry(String retryData) {
+        return List.of(
+            callback(TelegramCopy.RETRY, retryData),
+            navigation(TelegramCopy.HOME, "main"));
+    }
+
     public List<TelegramBotApiClient.InlineButton> coinRetry(TelegramQuickActionResponse view, int delta) {
         String direction = delta > 0 ? "add" : "remove";
         int amount = Math.abs(delta);

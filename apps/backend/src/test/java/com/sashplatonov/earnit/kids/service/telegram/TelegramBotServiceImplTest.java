@@ -428,6 +428,35 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
+    void failedTaskRequestShowsErrorWithRetryAndHome() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 3, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(40L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
+        when(quickActions.requestTask(77L, 3, 5L)).thenReturn(OperationResult.failure("LIMIT", "reached"));
+        List<TelegramBotApiClient.InlineButton> retry = List.of(
+            TelegramBotApiClient.InlineButton.callback("🔄 Повторить", "task.request.5"));
+        when(menuBuilder.childRetry("task.request.5")).thenReturn(retry);
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":40,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"task.request.5","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L,
+            "⚠️ Не удалось выполнить действие\nПопробуйте ещё раз", retry);
+    }
+
+    @Test
     void rewardRequestEditsTheCardToWaitingState() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);

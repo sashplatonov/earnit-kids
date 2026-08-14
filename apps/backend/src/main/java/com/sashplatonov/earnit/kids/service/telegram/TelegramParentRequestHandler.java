@@ -36,7 +36,7 @@ final class TelegramParentRequestHandler {
             ? quickActions.approveRequest(telegramUserId, childId, requestId)
             : quickActions.rejectRequest(telegramUserId, childId, requestId);
         editResult(callback, result, approved, requestId, childId, telegramUserId,
-            quickActions, apiClient, menuBuilder, miniAppUrl, queueContext);
+            quickActions, apiClient, menuBuilder, miniAppUrl, queueContext, data);
     }
 
     private static void editResult(JsonNode callback,
@@ -49,7 +49,8 @@ final class TelegramParentRequestHandler {
                                    TelegramBotApiClient apiClient,
                                    TelegramMenuBuilder menuBuilder,
                                    String miniAppUrl,
-                                   boolean queueContext) throws Exception {
+                                   boolean queueContext,
+                                   String retryData) throws Exception {
         long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
         long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
@@ -72,7 +73,7 @@ final class TelegramParentRequestHandler {
             return;
         }
         apiClient.editMessageText(chatId, messageId, TelegramCopy.error(),
-            view == null ? menuBuilder.backToMain() : menuBuilder.backToMain(view));
+            view == null ? menuBuilder.backToMain() : menuBuilder.parentRequestRetry(view, retryData));
     }
 
     // EXPLAIN: After a queue decision, auto-advance to the next pending request

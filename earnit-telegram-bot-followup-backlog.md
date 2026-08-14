@@ -753,6 +753,7 @@ NEXT = ➡️
 
 # BUX-014 - Bot empty/error/stale states
 
+**Status:** ✅ Implemented  
 **Priority:** P1  
 **Depends on:** BUX-002..BUX-010
 

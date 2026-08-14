@@ -177,7 +177,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 .filter(task -> task.id() == taskId).map(task -> task.name()).findFirst().orElse(null);
             OperationResult<TelegramQuickActionResponse> result =
                 quickActions.requestTask(telegramUserId, view.childId(), taskId);
-            editTaskRequestResult(callback, result, taskName);
+            editTaskRequestResult(callback, result, taskName, "task.request." + taskId);
         });
     }
 
@@ -188,11 +188,13 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         quickActions.load(telegramUserId, null).ifPresent(view -> {
             OperationResult<TelegramQuickActionResponse> result =
                 quickActions.requestReward(telegramUserId, view.childId(), rewardId);
-            editRewardRequestResult(callback, result);
+            editRewardRequestResult(callback, result, "reward.request." + rewardId);
         });
     }
 
-    private void editRewardRequestResult(JsonNode callback, OperationResult<TelegramQuickActionResponse> result) {
+    private void editRewardRequestResult(JsonNode callback,
+                                         OperationResult<TelegramQuickActionResponse> result,
+                                         String retryData) {
         long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
         long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
@@ -200,8 +202,10 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         }
         String text = result instanceof OperationResult.Success<TelegramQuickActionResponse>
             ? TelegramCopy.rewardWaiting() : TelegramCopy.error();
+        List<TelegramBotApiClient.InlineButton> buttons = result instanceof OperationResult.Success<TelegramQuickActionResponse>
+            ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);
         try {
-            apiClient.editMessageText(chatId, messageId, text, menuBuilder.backToMain());
+            apiClient.editMessageText(chatId, messageId, text, buttons);
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }
@@ -209,7 +213,8 @@ public class TelegramBotServiceImpl implements TelegramBotService {
 
     private void editTaskRequestResult(JsonNode callback,
                                        OperationResult<TelegramQuickActionResponse> result,
-                                       String taskName) {
+                                       String taskName,
+                                       String retryData) {
         long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
         long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
@@ -217,8 +222,10 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         }
         String text = result instanceof OperationResult.Success<TelegramQuickActionResponse>
             ? TelegramCopy.waiting(taskName == null ? "Задание" : taskName) : TelegramCopy.error();
+        List<TelegramBotApiClient.InlineButton> buttons = result instanceof OperationResult.Success<TelegramQuickActionResponse>
+            ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);
         try {
-            apiClient.editMessageText(chatId, messageId, text, menuBuilder.backToMain());
+            apiClient.editMessageText(chatId, messageId, text, buttons);
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }
