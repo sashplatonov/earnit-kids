@@ -63,11 +63,9 @@ final class TelegramCallbackActionCodec {
     private static String compactBase(String base) {
         return switch (base) {
             case "main" -> "m";
-            case "catalog" -> "c";
             case "tasks" -> "t";
             case "rewards" -> "r";
             case "requests" -> "q";
-            case "balance" -> "b";
             case "coins" -> "o";
             case "recent" -> "e";
             case "child" -> "h";
@@ -79,11 +77,9 @@ final class TelegramCallbackActionCodec {
     private static String expandBase(String base) {
         return switch (base) {
             case "m" -> "main";
-            case "c" -> "catalog";
             case "t" -> "tasks";
             case "r" -> "rewards";
             case "q" -> "requests";
-            case "b" -> "balance";
             case "o" -> "coins";
             case "e" -> "recent";
             case "h" -> "child";

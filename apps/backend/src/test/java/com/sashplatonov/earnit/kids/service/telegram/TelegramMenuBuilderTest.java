@@ -30,20 +30,6 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
-    void parentChildCatalogExposesReadOnlyTasksAndRewards() {
-        assertThat(menuBuilder().parentChildCatalog(view()))
-            .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("✅ Tasks", "🎁 Rewards", "🔄 Switch child", "⬅️ Back");
-    }
-
-    @Test
-    void balanceShowsTheCurrentChildAmount() {
-        assertThat(menuBuilder().balance(view()))
-            .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🪙 Balance · 42", "⬅️ Back");
-    }
-
-    @Test
     void childMainContainsOnlyShortActionCompanionEntries() {
         assertThat(menuBuilder().childMain(new TelegramQuickActionResponse(
             "family", "child", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(), List.of()),
@@ -53,7 +39,7 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
-    void signedLegacyParentCatalogNavigationReturnsToDecisionHome() {
+    void parentTaskNavigationStaysOnDecisionHome() {
         TelegramQuickActionResponse view = view();
 
         assertThat(TelegramMenuFlow.navigationMenu("tasks-child-1", view,
@@ -115,20 +101,6 @@ class TelegramMenuBuilderTest {
         assertThat(menuBuilder().parentCoinConfirmation(view, -10))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("👍 Confirm", "⬅️ Cancel");
-    }
-
-    @Test
-    void childRequestsOffersRetryOnlyForRejectedTask() {
-        RequestDto rejected = new RequestDto(
-            19L, 7L, "Homework", null, null, "Homework", null, null, null, null,
-            20, PurchaseRequestStatus.rejected, PurchaseRequestType.earn, 0, "2026-08-13T12:00:00Z",
-            1, null, null, null, null);
-        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
-            "family", "child", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(rejected), List.of());
-
-        assertThat(menuBuilder().childRequests(view))
-            .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("👎 Not approved · Homework", "🔄 Try again", "⬅️ Back");
     }
 
     @Test

@@ -41,30 +41,6 @@ public class TelegramMenuBuilder {
         return List.of(webApp(TelegramBotEmoji.ADD + " Add child → Mini App", miniAppUrl));
     }
 
-    public List<TelegramBotApiClient.InlineButton> balance(TelegramQuickActionResponse view) {
-        TelegramBotApiClient.InlineButton back = "parent".equals(view.role())
-            ? parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view) : navigation(TelegramBotEmoji.BACK + " Back", "main");
-        return List.of(callback(TelegramBotEmoji.COINS + " Balance · " + view.balance(), "noop"), back);
-    }
-
-    public List<TelegramBotApiClient.InlineButton> parentChildCatalog(TelegramQuickActionResponse view) {
-        return List.of(
-            parentNavigation(TelegramBotEmoji.DONE + " Tasks", "tasks", view),
-            parentNavigation(TelegramBotEmoji.REWARD + " Rewards", "rewards", view),
-            parentNavigation(TelegramBotEmoji.SWITCH + " Switch child", "child", view),
-            parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view));
-    }
-
-    public List<TelegramBotApiClient.InlineButton> parentTasks(TelegramQuickActionResponse view) {
-        return readOnlyCatalog(view.tasks().stream().limit(5)
-            .map(task -> TelegramBotEmoji.DONE + " " + task.name() + " · " + task.coins() + " coins").toList(), view);
-    }
-
-    public List<TelegramBotApiClient.InlineButton> parentRewards(TelegramQuickActionResponse view) {
-        return readOnlyCatalog(view.rewards().stream().limit(5)
-            .map(reward -> TelegramBotEmoji.REWARD + " " + reward.name() + " · " + reward.price() + " coins").toList(), view);
-    }
-
     public List<TelegramBotApiClient.InlineButton> parentCoins(TelegramQuickActionResponse view) {
         return List.of(
             navigation(TelegramBotEmoji.ADD + " 1", "coins-apply-add-1-child-" + view.childId()),
@@ -163,26 +139,6 @@ public class TelegramMenuBuilder {
         return List.copyOf(buttons);
     }
 
-    public List<TelegramBotApiClient.InlineButton> childRequests(TelegramQuickActionResponse view) {
-        List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        view.requests().stream().limit(5).forEach(request -> {
-            String label = request.title() == null ? "Request" : request.title();
-            if (request.status() == PurchaseRequestStatus.rejected && request.taskId() != null) {
-                buttons.add(callback(TelegramBotEmoji.REJECT + " Not approved · " + label, "noop"));
-                buttons.add(callback(TelegramBotEmoji.SWITCH + " Try again", "task.request." + request.taskId()));
-            } else {
-                String status = request.status() == PurchaseRequestStatus.approved ? TelegramBotEmoji.DONE : TelegramBotEmoji.WAITING;
-                buttons.add(callback(status + " " + label, "noop"));
-            }
-        });
-        if (buttons.isEmpty()) {
-            buttons.add(callback("No recent requests", "noop"));
-        }
-        buttons.add("parent".equals(view.role())
-            ? parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view) : navigation(TelegramBotEmoji.BACK + " Back", "main"));
-        return List.copyOf(buttons);
-    }
-
     public List<TelegramBotApiClient.InlineButton> recent(TelegramQuickActionResponse view) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.history().stream().limit(5).forEach(entry -> {
@@ -204,17 +160,6 @@ public class TelegramMenuBuilder {
 
     private long pendingRequestCount(TelegramQuickActionResponse view) {
         return view.requests().stream().filter(request -> request.status() == PurchaseRequestStatus.pending).count();
-    }
-
-    private List<TelegramBotApiClient.InlineButton> readOnlyCatalog(List<String> labels,
-                                                                      TelegramQuickActionResponse view) {
-        List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        labels.forEach(label -> buttons.add(callback(label, "noop")));
-        if (buttons.isEmpty()) {
-            buttons.add(callback("No active entries", "noop"));
-        }
-        buttons.add(parentNavigation(TelegramBotEmoji.BACK + " Back", "catalog", view));
-        return List.copyOf(buttons);
     }
 
     private TelegramBotApiClient.InlineButton navigation(String text, String action) {

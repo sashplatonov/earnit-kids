@@ -30,8 +30,6 @@ final class TelegramMenuFlow {
         }
         return switch (baseAction(action)) {
             case "child" -> "Choose a child";
-            case "catalog" -> parentOrChildText(view);
-            case "balance" -> parentOrChildText(view);
             case "tasks" -> "Tasks · " + view.childName();
             case "rewards" -> "Rewards · " + view.childName();
             case "requests" -> "Requests · " + view.childName();
@@ -58,29 +56,17 @@ final class TelegramMenuFlow {
         return switch (baseAction(action)) {
             case "child" -> "parent".equals(view.role())
                 ? menuBuilder.parentChildPicker(view) : menuBuilder.backToMain();
-            case "catalog" -> mainMenu(view, miniAppUrl, menuBuilder);
-            case "balance" -> menuBuilder.balance(view);
             case "tasks", "rewards" -> "parent".equals(view.role())
-                ? mainMenu(view, miniAppUrl, menuBuilder) : catalogMenu(action, view, miniAppUrl, menuBuilder);
+                ? mainMenu(view, miniAppUrl, menuBuilder) : "tasks".equals(baseAction(action))
+                    ? menuBuilder.childTasks(view, miniAppUrl) : menuBuilder.childRewards(view, miniAppUrl);
             case "requests" -> "parent".equals(view.role())
-                ? menuBuilder.parentRequests(view) : menuBuilder.childRequests(view);
+                ? menuBuilder.parentRequests(view) : mainMenu(view, miniAppUrl, menuBuilder);
             case "recent" -> menuBuilder.recent(view);
             case "coins" -> menuBuilder.parentCoins(view);
             default -> action.startsWith("coins-confirm-")
                 ? menuBuilder.parentCoinConfirmation(view, coinDelta(action))
                 : mainMenu(view, miniAppUrl, menuBuilder);
         };
-    }
-
-    private static List<TelegramBotApiClient.InlineButton> catalogMenu(String action,
-                                                                         TelegramQuickActionResponse view,
-                                                                         String miniAppUrl,
-                                                                         TelegramMenuBuilder menuBuilder) {
-        boolean tasks = "tasks".equals(baseAction(action));
-        if ("parent".equals(view.role())) {
-            return tasks ? menuBuilder.parentTasks(view) : menuBuilder.parentRewards(view);
-        }
-        return tasks ? menuBuilder.childTasks(view, miniAppUrl) : menuBuilder.childRewards(view, miniAppUrl);
     }
 
     private static String baseAction(String action) {

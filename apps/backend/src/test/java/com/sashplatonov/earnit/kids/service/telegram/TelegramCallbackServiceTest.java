@@ -45,7 +45,7 @@ class TelegramCallbackServiceTest {
             mock(TelegramIdentityRepository.class), mock(TelegramCallbackActionRepository.class),
             () -> Instant.ofEpochSecond(1_000L), mock(TelegramIdentityService.class));
 
-        String data = service.signNavigation("catalog-child-1234567890");
+        String data = service.signNavigation("tasks-child-1234567890");
 
         assertThat(data.getBytes(StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(64);
         assertThat(service.verifyNavigation(data, 42L)).isPresent();
@@ -56,9 +56,9 @@ class TelegramCallbackServiceTest {
             new TelegramCallbackService.VerifiedCallback(
                 "coins-confirm-remove-10-child-1234567890", 42L, Instant.ofEpochSecond(1_000L)));
 
-        String childData = service.signNavigation("catalog-child-42");
+        String childData = service.signNavigation("tasks-child-42");
         assertThat(service.verifyNavigation(childData, 42L)).contains(
-            new TelegramCallbackService.VerifiedCallback("catalog-child-42", 42L,
+            new TelegramCallbackService.VerifiedCallback("tasks-child-42", 42L,
                 Instant.ofEpochSecond(1_000L)));
     }
     @Test
@@ -71,7 +71,7 @@ class TelegramCallbackServiceTest {
             mock(TelegramIdentityRepository.class), mock(TelegramCallbackActionRepository.class),
             () -> Instant.ofEpochSecond(1000),
             mock(TelegramIdentityService.class));
-        String canonical = "nav.balance.900.1";
+        String canonical = "nav.recent.900.1";
         String callback = canonical + "." + signature(canonical, "callback-secret");
 
         assertThat(service.verifyNavigation(callback, 77L)).isPresent();
@@ -88,7 +88,7 @@ class TelegramCallbackServiceTest {
             mock(TelegramIdentityRepository.class), mock(TelegramCallbackActionRepository.class),
             () -> Instant.ofEpochSecond(1000),
             mock(TelegramIdentityService.class));
-        String canonical = "nav.balance.600.1";
+        String canonical = "nav.recent.600.1";
 
         assertThat(service.verifyNavigation(canonical + "." + signature(canonical, "callback-secret"), 77L)).isEmpty();
     }
