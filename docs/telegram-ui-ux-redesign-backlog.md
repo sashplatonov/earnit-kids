@@ -389,7 +389,7 @@ git commit -m "feat(web): Redesign Telegram child workspace"
 
 ## TUX-007: Validate boundaries and staged Telegram release
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P2  
 **Depends on:** TUX-002--TUX-006
 

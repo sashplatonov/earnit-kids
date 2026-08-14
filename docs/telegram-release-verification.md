@@ -9,11 +9,17 @@ docker compose config --quiet
 docker compose -f docker-compose.native.yml config --quiet
 cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw -Dtest=TelegramCrossChannelIntegrationTest verify
 cd apps/web && npm run lint && npm run test -- --run && npm run build
+cd apps/web && npm run test:e2e -- telegram-auth.spec.ts telegram-parent.spec.ts telegram-child.spec.ts telegram-activity.spec.ts telegram-consistency.spec.ts telegram-layout.spec.ts --workers=1
 ```
 
 The local tests use a mocked Telegram transport and browser routes. They prove
 server reconciliation and mobile geometry, not BotFather configuration or a
 physical Telegram client.
+
+The current role contracts are intentionally narrow: Parent Mini App tabs are
+Home, Tasks, Rewards, and Family; Child tabs are Today, Rewards, and Activity.
+Bot menus are bounded quick actions and every Mini App control must resolve
+through the shared SVG vocabulary; Bot buttons use the shared emoji vocabulary.
 
 ## Remote CI and deployment evidence
 

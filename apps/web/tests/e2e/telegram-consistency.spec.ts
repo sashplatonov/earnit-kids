@@ -20,7 +20,7 @@ test('Mini App reconciles stale child action from the server snapshot', async ({
     await page.route('**/api/tasks/1/request', (route) => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ errorCode: 'STALE_STATE', detail: 'Task already requested' }) }));
 
     await page.goto('/telegram');
-    await page.getByRole('button', { name: 'Request' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
     const loadsBeforeSubmit = familyDataLoads;
     await page.getByRole('button', { name: 'Send request' }).click();
     await expect(page.getByRole('alert')).toContainText('changed');
