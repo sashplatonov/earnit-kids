@@ -198,6 +198,8 @@ Current Tasks still retains the old composition:
 
 # NUX-003 - Replace Parent Rewards with a true compact list
 
+**Status:** ✅ Done
+
 **Priority:** P0  
 **Depends on:** NUX-004
 
