@@ -109,20 +109,27 @@ public class TelegramMenuBuilder {
         return List.copyOf(buttons);
     }
 
+    // EXPLAIN: Only requestable rewards get a claim button; the nearest goal is
+    // EXPLAIN: motivation in the message body, never an active button.
     public List<TelegramBotApiClient.InlineButton> childRewards(TelegramQuickActionResponse view,
                                                                   String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        view.rewards().stream().filter(reward -> reward.price() <= view.balance()).limit(3).forEach(reward ->
-            buttons.add(callback(TelegramBotEmoji.REWARD + " Get " + reward.name() + " · " + reward.price() + " coins",
+        view.rewards().stream()
+            .filter(reward -> reward.price() <= view.balance())
+            .limit(3)
+            .forEach(reward -> buttons.add(callback(TelegramCopy.getReward(reward.name()),
                 "reward.request." + reward.id())));
-        view.rewards().stream().filter(reward -> reward.price() > view.balance()).min(java.util.Comparator.comparingInt(reward -> reward.price() - view.balance())).ifPresent(reward ->
-            buttons.add(callback(TelegramBotEmoji.WAITING + " Next goal: " + reward.name() + " · " + reward.price() + " coins", "noop")));
-        if (view.rewards().stream().filter(reward -> reward.price() <= view.balance()).count() > 3
-            || view.rewards().size() > 4) {
-            buttons.add(webApp(TelegramBotEmoji.OPEN_APP + " More rewards → Mini App", miniAppUrl));
+        if (hasMoreRewards(view)) {
+            buttons.add(webApp(TelegramCopy.ALL_REWARDS, TelegramDeepLink.rewards(miniAppUrl)));
         }
-        buttons.add(navigation(TelegramBotEmoji.BACK + " Back", "main"));
+        buttons.add(navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
+    }
+
+    private boolean hasMoreRewards(TelegramQuickActionResponse view) {
+        long affordable = view.rewards().stream()
+            .filter(reward -> reward.price() <= view.balance()).count();
+        return affordable > 3 || view.rewards().size() > 4;
     }
 
     public List<TelegramBotApiClient.InlineButton> backToMain() {

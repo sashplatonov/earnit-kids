@@ -540,6 +540,7 @@ After Done:
 
 # BUX-009 - Make Child Rewards bounded and motivating
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** BUX-007
 

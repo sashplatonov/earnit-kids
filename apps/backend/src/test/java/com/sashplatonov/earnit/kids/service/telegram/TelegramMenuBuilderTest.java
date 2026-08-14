@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service.telegram;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
+import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
@@ -220,6 +221,34 @@ class TelegramMenuBuilderTest {
             .containsExactly("👍 Подтвердить", "🏠 Главное меню");
         assertThat(TelegramMenuFlow.navigationText("coins-confirm-remove-10-child-1", view))
             .isEqualTo("Снять 10 монет с Alex?");
+    }
+
+    @Test
+    void childRewardsShowsClaimButtonsAndGoalInBody() {
+        ShopItemDto affordable = new ShopItemDto(1, "Королева настолки", 2, null, null, null, null, true, 1, null);
+        ShopItemDto goal = new ShopItemDto(2, "Домашняя лаборатория", 30, null, null, null, null, true, 1, null);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 1, "Alex", 22, List.of(), List.of(), List.of(affordable, goal),
+            List.of(), List.of());
+
+        assertThat(menuBuilder().childRewards(view, "https://example.test/telegram"))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("🎁 Получить: Королева настолки", "🏠 Главное меню");
+        assertThat(TelegramMenuFlow.navigationText("rewards-child-1", view))
+            .isEqualTo("🎁 Награды\n🪙 Баланс: 22\n\n🎁 Королева настолки · 2\n\n"
+                + "ℹ️ Следующая цель:\nДомашняя лаборатория · 30\nНе хватает 8 монет");
+    }
+
+    @Test
+    void childRewardsEmptyStateWhenNothingAvailable() {
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 1, "Alex", 2, List.of(), List.of(), List.of(), List.of(), List.of());
+
+        assertThat(menuBuilder().childRewards(view, "https://example.test/telegram"))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("🏠 Главное меню");
+        assertThat(TelegramMenuFlow.navigationText("rewards-child-1", view))
+            .isEqualTo("🎁 Сейчас нет доступных наград");
     }
 
     @Test

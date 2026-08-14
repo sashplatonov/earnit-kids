@@ -1,9 +1,11 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
+import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 
+import java.util.Comparator;
 import java.util.List;
 
 final class TelegramMenuText {
@@ -50,8 +52,7 @@ final class TelegramMenuText {
         if ("parent".equals(view.role())) {
             return TelegramMenuFlow.homeText(view);
         }
-        return "tasks".equals(baseAction(action)) ? tasksText(view)
-            : "Rewards · " + view.childName();
+        return "tasks".equals(baseAction(action)) ? tasksText(view) : rewardsText(view);
     }
 
     // EXPLAIN: Short action list: available then pending, capped at five.
@@ -65,6 +66,33 @@ final class TelegramMenuText {
             builder.append("\n\n").append(TelegramBotEmoji.TASK_DONE).append(" ").append(task.name())
                 .append("\n").append(TelegramBotEmoji.COINS).append(" +").append(task.coins());
         }
+        return builder.toString();
+    }
+
+    // EXPLAIN: Up to three affordable rewards plus exactly one nearest goal as
+    // EXPLAIN: motivation; the goal is never rendered as an active button.
+    private static String rewardsText(TelegramQuickActionResponse view) {
+        List<ShopItemDto> affordable = view.rewards().stream()
+            .filter(reward -> reward.price() <= view.balance())
+            .limit(3)
+            .toList();
+        boolean hasUnavailable = view.rewards().stream().anyMatch(reward -> reward.price() > view.balance());
+        if (affordable.isEmpty() && !hasUnavailable) {
+            return TelegramCopy.emptyRewards();
+        }
+        StringBuilder builder = new StringBuilder(TelegramCopy.REWARDS)
+            .append("\n").append(TelegramBotEmoji.COINS).append(" Баланс: ").append(view.balance());
+        for (ShopItemDto reward : affordable) {
+            builder.append("\n\n").append(TelegramBotEmoji.REWARDS).append(" ").append(reward.name())
+                .append(" · ").append(reward.price());
+        }
+        view.rewards().stream()
+            .filter(reward -> reward.price() > view.balance())
+            .min(Comparator.comparingInt(reward -> reward.price() - view.balance()))
+            .ifPresent(goal -> builder.append("\n\n").append(TelegramBotEmoji.INFO).append(" Следующая цель:\n")
+                .append(goal.name()).append(" · ").append(goal.price()).append("\n")
+                .append("Не хватает ").append(goal.price() - view.balance()).append(" ")
+                .append(TelegramCopy.moneta(goal.price() - view.balance())));
         return builder.toString();
     }
 
