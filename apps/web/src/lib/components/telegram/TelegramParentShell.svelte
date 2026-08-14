@@ -49,29 +49,27 @@
 <main class="parent-workspace">
     <TelegramParentHeader />
 
-    {#if loading}
-        <p class="state" role="status">Loading your family…</p>
-    {:else if error}
-        <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}><TelegramIcon name="refresh" size={18} label="Retry" />Retry</button></section>
-    {:else}
-        <div class="tabs" aria-label="Parent workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
-            <button aria-controls="parent-panel-home" aria-selected={view === 'home'} class:active={view === 'home'} id="parent-tab-home" role="tab" tabindex={view === 'home' ? 0 : -1} type="button" on:click={() => selectView('home')}><TelegramIcon name="home" size={20} label="Home" /><span>Home</span>{pending.length ? ` (${pending.length})` : ''}</button>
-            <button aria-controls="parent-panel-tasks" aria-selected={view === 'tasks'} class:active={view === 'tasks'} id="parent-tab-tasks" role="tab" tabindex={view === 'tasks' ? 0 : -1} type="button" on:click={() => selectView('tasks')}><TelegramIcon name="task" size={20} label="Tasks" /><span>Tasks</span></button>
-            <button aria-controls="parent-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="parent-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>
-            <button aria-controls="parent-panel-family" aria-selected={view === 'family'} class:active={view === 'family'} id="parent-tab-family" role="tab" tabindex={view === 'family' ? 0 : -1} type="button" on:click={() => selectView('family')}><TelegramIcon name="family" size={20} label="Family" /><span>Family</span></button>
-        </div>
-        <div aria-labelledby={`parent-tab-${view}`} id={`parent-panel-${view}`} role="tabpanel" tabindex="0">
-            {#if view === 'home'}
-                <TelegramParentHome />
-            {:else if view === 'tasks'}
-                <TelegramParentTasks />
-            {:else if view === 'rewards'}
-                <TelegramParentRewards />
-            {:else}
-                <TelegramParentFamily />
-            {/if}
-        </div>
-    {/if}
+    <div class="tabs" aria-label="Parent workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
+        <button aria-controls="parent-panel-home" aria-selected={view === 'home'} class:active={view === 'home'} id="parent-tab-home" role="tab" tabindex={view === 'home' ? 0 : -1} type="button" on:click={() => selectView('home')}><TelegramIcon name="home" size={20} label="Home" /><span>Home</span>{pending.length ? ` (${pending.length})` : ''}</button>
+        <button aria-controls="parent-panel-tasks" aria-selected={view === 'tasks'} class:active={view === 'tasks'} id="parent-tab-tasks" role="tab" tabindex={view === 'tasks' ? 0 : -1} type="button" on:click={() => selectView('tasks')}><TelegramIcon name="task" size={20} label="Tasks" /><span>Tasks</span></button>
+        <button aria-controls="parent-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="parent-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>
+        <button aria-controls="parent-panel-family" aria-selected={view === 'family'} class:active={view === 'family'} id="parent-tab-family" role="tab" tabindex={view === 'family' ? 0 : -1} type="button" on:click={() => selectView('family')}><TelegramIcon name="family" size={20} label="Family" /><span>Family</span></button>
+    </div>
+    <div aria-labelledby={`parent-tab-${view}`} id={`parent-panel-${view}`} role="tabpanel" tabindex="0">
+        {#if loading}
+            <p class="state" role="status">Loading your family…</p>
+        {:else if error}
+            <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}><TelegramIcon name="refresh" size={18} label="Retry" />Retry</button></section>
+        {:else if view === 'home'}
+            <TelegramParentHome />
+        {:else if view === 'tasks'}
+            <TelegramParentTasks />
+        {:else if view === 'rewards'}
+            <TelegramParentRewards />
+        {:else}
+            <TelegramParentFamily />
+        {/if}
+    </div>
 </main>
 
 <style>

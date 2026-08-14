@@ -501,6 +501,8 @@ Exactly:
 
 # NUX-009 - Empty, loading and error state density
 
+**Status:** ✅ Done
+
 **Priority:** P1  
 **Depends on:** NUX-001
 

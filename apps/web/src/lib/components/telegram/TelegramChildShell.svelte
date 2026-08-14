@@ -53,23 +53,26 @@
 
 <svelte:window on:visibilitychange={onVisibility} />
 <main class="child-workspace" aria-labelledby="child-workspace-title">
-    {#if loading}<p class="state" role="status">Loading your tasks…</p>
-    {:else if error}<section class="state" role="alert"><p>{error}</p><button type="button" on:click={retry} disabled={refreshing}><TelegramIcon name="refresh" size={18} label={refreshing ? 'Refreshing workspace' : 'Retry'} />{refreshing ? 'Refreshing…' : 'Retry'}</button></section>
-    {:else}
-        <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} />
-        <div class="tabs" aria-label="Child workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
-            <button aria-controls="child-panel-today" aria-selected={view === 'today'} class:active={view === 'today'} id="child-tab-today" role="tab" tabindex={view === 'today' ? 0 : -1} type="button" on:click={() => selectView('today')}><TelegramIcon name="task" size={20} label="Today" /><span>Today</span></button>
-            <button aria-controls="child-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="child-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>
-            <button aria-controls="child-panel-activity" aria-selected={view === 'activity'} class:active={view === 'activity'} id="child-tab-activity" role="tab" tabindex={view === 'activity' ? 0 : -1} type="button" on:click={() => selectView('activity')}><TelegramIcon name="activity" size={20} label="Activity" /><span>Activity</span></button>
-        </div>
-        {#if view === 'today'}
-            <div aria-labelledby="child-tab-today" id="child-panel-today" role="tabpanel" tabindex="0"><TelegramChildTasks /></div>
+    <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} />
+    <div class="tabs" aria-label="Child workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
+        <button aria-controls="child-panel-today" aria-selected={view === 'today'} class:active={view === 'today'} id="child-tab-today" role="tab" tabindex={view === 'today' ? 0 : -1} type="button" on:click={() => selectView('today')}><TelegramIcon name="task" size={20} label="Today" /><span>Today</span></button>
+        <button aria-controls="child-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="child-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>
+        <button aria-controls="child-panel-activity" aria-selected={view === 'activity'} class:active={view === 'activity'} id="child-tab-activity" role="tab" tabindex={view === 'activity' ? 0 : -1} type="button" on:click={() => selectView('activity')}><TelegramIcon name="activity" size={20} label="Activity" /><span>Activity</span></button>
+    </div>
+    <div aria-labelledby={`child-tab-${view}`} id={`child-panel-${view}`} role="tabpanel" tabindex="0">
+        {#if loading}
+            <p class="state" role="status">Loading your tasks…</p>
+        {:else if error}
+            <section class="state" role="alert"><p>{error}</p><button type="button" on:click={retry} disabled={refreshing}><TelegramIcon name="refresh" size={18} label={refreshing ? 'Refreshing workspace' : 'Retry'} />{refreshing ? 'Refreshing…' : 'Retry'}</button></section>
+        {:else if view === 'today'}
+            <TelegramChildTasks />
         {:else if view === 'rewards'}
-            <div aria-labelledby="child-tab-rewards" id="child-panel-rewards" role="tabpanel" tabindex="0"><TelegramChildRewards /></div>
+            <TelegramChildRewards />
         {:else}
-            <div aria-labelledby="child-tab-activity" id="child-panel-activity" role="tabpanel" tabindex="0"><TelegramRequestList requests={$appStore.requests} /><TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} /></div>
+            <TelegramRequestList requests={$appStore.requests} />
+            <TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />
         {/if}
-    {/if}
+    </div>
 </main>
 
 <style>
