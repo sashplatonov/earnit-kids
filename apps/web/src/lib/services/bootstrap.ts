@@ -119,16 +119,20 @@ export function applyDataSnapshot(data: Record<string, unknown>): void {
     if (Object.keys(partial).length > 0) appStore.setState(partial);
 }
 
+let latestChildSwitchRequest = 0;
+
 /**
  * Switch the active child (admin only) — loads child-specific data and
  * persists the selection to localStorage so it survives page reloads.
  */
 export async function switchChild(childId: string | number): Promise<void> {
+    const requestId = ++latestChildSwitchRequest;
     persistLastChildId(childId);
     appStore.setState({ currentChildId: childId, isLoading: true });
 
     const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
     const childShell = await loadDataFromServer(childId);
+    if (requestId !== latestChildSwitchRequest) return;
     if (childShell && typeof childShell === 'object') {
         const rec = childShell as Record<string, unknown>;
         appStore.setState({
@@ -141,6 +145,7 @@ export async function switchChild(childId: string | number): Promise<void> {
     }
 
     const childDetails = await loadDataDetailsFromServer(childId);
+    if (requestId !== latestChildSwitchRequest) return;
     if (childDetails && typeof childDetails === 'object') {
         const rec = childDetails as Record<string, unknown>;
         appStore.setState({

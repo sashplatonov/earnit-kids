@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -68,6 +69,10 @@ class FamilyActionServiceImplTest {
     @BeforeEach
     void setUp() {
         RequestLocaleHolder.set("en");
+        lenient().when(childRepository.findByIdForUpdate(org.mockito.ArgumentMatchers.anyInt()))
+            .thenAnswer(invocation -> childRepository.findByIdOptional(invocation.getArgument(0)));
+        lenient().when(purchaseRequestRepository.findByIdForUpdate(org.mockito.ArgumentMatchers.anyLong()))
+            .thenAnswer(invocation -> purchaseRequestRepository.findByIdOptional(invocation.getArgument(0)));
         backendKpiMetrics = new BackendKpiMetrics(new SimpleMeterRegistry());
         service = new FamilyActionServiceImpl(
             familyRepository,

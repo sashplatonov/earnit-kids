@@ -1,0 +1,438 @@
+package com.sashplatonov.earnit.kids.service.telegram;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sashplatonov.earnit.kids.config.TelegramConfig;
+import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
+import com.sashplatonov.earnit.kids.dto.response.ChildDto;
+import com.sashplatonov.earnit.kids.dto.response.RequestDto;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
+import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.util.OperationResult;
+import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class TelegramBotServiceImplTest {
+    @Test
+    void startSendsOnlyTheMiniAppEntryKeyboard() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(10L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        var service = service(identities, apiClient, callbacks, config);
+
+        service.handleUpdate(new ObjectMapper().readTree(
+            "{\"update_id\":10,\"message\":{\"chat\":{\"id\":44},\"text\":\"/start abc\"}}"));
+
+        verify(apiClient).sendMessage(44L, "Open EarnIt Kids to continue.",
+            List.of(new TelegramBotApiClient.InlineButton("Open Mini App", "https://example.test/telegram")));
+    }
+
+    @Test
+    void duplicateUpdateDoesNotCallTelegramApi() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(11L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(false);
+        var service = service(identities, apiClient, callbacks, config);
+
+        service.handleUpdate(new ObjectMapper().readTree(
+            "{\"update_id\":11,\"message\":{\"chat\":{\"id\":44},\"text\":\"/start\"}}"));
+
+        verify(apiClient, never()).sendMessage(any(Long.class), any(String.class), any());
+    }
+
+    @Test
+    void malformedQuickActionStillAcknowledgesTheCallback() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(24L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        TelegramBotServiceImpl service = service(identities, apiClient, callbacks, config);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":24,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"task.request.invalid","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).answerCallbackQuery("callback");
+    }
+
+    @Test
+    void stagedRolloutDoesNotProcessAnUnflaggedFamilyWebhookCallback() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramFeatureGate featureGate = mock(TelegramFeatureGate.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        when(identities.recordWebhookUpdate(25L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(
+            new TelegramIdentityService.TelegramIdentity(1, 4, null, 77L, "parent")));
+        when(families.findFamilyIdByDbId(4)).thenReturn(Optional.of("not-in-rollout"));
+        when(featureGate.isBotEnabled("not-in-rollout")).thenReturn(false);
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            mock(TelegramQuickActionService.class), mock(TelegramMenuBuilder.class), featureGate, families);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":25,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(callbacks, never()).verifyNavigation("nav.signed", 77L);
+        verify(apiClient).answerCallbackQuery("callback");
+    }
+
+    @Test
+    void apiFailureDoesNotEscapeWebhookHandler() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(12L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        org.mockito.Mockito.doThrow(new IllegalStateException("transport down"))
+            .when(apiClient).sendMessage(any(Long.class), any(String.class), any());
+        var service = service(identities, apiClient, callbacks, config);
+
+        service.handleUpdate(new ObjectMapper().readTree(
+            "{\"update_id\":12,\"message\":{\"chat\":{\"id\":44},\"text\":\"/start\"}}"));
+    }
+
+    @Test
+    void signedNavigationEditsTheOriginatingMenu() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 3, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(13L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(callbacks.verifyNavigation("nav.signed", 77L)).thenReturn(Optional.of(
+            new TelegramCallbackService.VerifiedCallback("tasks", 77L, Instant.parse("2026-08-13T12:00:00Z"))));
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
+        when(menuBuilder.childTasks(view, "https://example.test/telegram")).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":13,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L, "Tasks · Alex", List.of());
+        verify(apiClient).answerCallbackQuery("callback");
+    }
+
+    @Test
+    void parentStartShowsChildPickerWhenMultipleChildrenExist() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 1, "Alex", 20,
+            List.of(
+                new ChildDto(1, "Alex", 20, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of(), null),
+                new ChildDto(2, "Sam", 12, 100, 0, "forest", List.of(), List.of(), List.of(), List.of(), null)),
+            List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(16L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
+        List<TelegramBotApiClient.InlineButton> picker = List.of(
+            TelegramBotApiClient.InlineButton.callback("👧 Alex", "nav.signed"));
+        when(menuBuilder.parentChildPicker(view)).thenReturn(picker);
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":16,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
+            """));
+
+        verify(apiClient).sendMessage(44L, "Choose a child", picker);
+    }
+
+    @Test
+    void parentStartWithNoChildrenOffersAddChildMiniApp() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(19L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(
+            new TelegramIdentityService.TelegramIdentity(1, 2, null, 77L, "parent")));
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(quickActions.load(77L, null)).thenReturn(Optional.empty());
+        List<TelegramBotApiClient.InlineButton> addChild = List.of(
+            TelegramBotApiClient.InlineButton.webApp("Add child → Mini App", "https://example.test/telegram"));
+        when(menuBuilder.parentNoChildren("https://example.test/telegram")).thenReturn(addChild);
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":19,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
+            """));
+
+        verify(apiClient).sendMessage(44L, "No children yet", addChild);
+    }
+
+    @Test
+    void childSelectionReloadsTheSelectedChildBeforeEditingMenu() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 2, "Sam", 12, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(17L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(callbacks.verifyNavigation("nav.signed", 77L)).thenReturn(Optional.of(
+            new TelegramCallbackService.VerifiedCallback("child-2", 77L,
+                Instant.parse("2026-08-13T12:00:00Z"))));
+        when(quickActions.load(77L, 2)).thenReturn(Optional.of(view));
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(menuBuilder.parentMain(view, "https://example.test/telegram")).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":17,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(quickActions).load(77L, 2);
+        verify(apiClient).editMessageText(44L, 19L,
+            "EarnIt Kids · Sam\nBalance: 12 🪙", List.of());
+    }
+
+    @Test
+    void parentNavigationKeepsTheCallbackChildScope() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 2, "Sam", 12, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(23L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(callbacks.verifyNavigation("nav.signed", 77L)).thenReturn(Optional.of(
+            new TelegramCallbackService.VerifiedCallback("requests-child-2", 77L,
+                Instant.parse("2026-08-13T12:00:00Z"))));
+        when(quickActions.load(77L, 2)).thenReturn(Optional.of(view));
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(menuBuilder.parentRequests(view)).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":23,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(quickActions).load(77L, 2);
+        verify(apiClient).editMessageText(44L, 19L, "Requests · Sam", List.of());
+    }
+
+    @Test
+    void confirmedCoinAdjustmentUsesSelectedChildAndDelta() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 2, "Sam", 2, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(18L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(callbacks.verifyNavigation("nav.signed", 77L)).thenReturn(Optional.of(
+            new TelegramCallbackService.VerifiedCallback("coins-apply-remove-10-child-2", 77L,
+                Instant.parse("2026-08-13T12:00:00Z"))));
+        when(quickActions.adjustBalance(77L, 2, -10)).thenReturn(OperationResult.success(view));
+        when(menuBuilder.backToMain()).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":18,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(quickActions).adjustBalance(77L, 2, -10);
+        verify(apiClient).editMessageText(44L, 19L, "✅ Balance updated · 2 🪙", List.of());
+    }
+
+    @Test
+    void coinConfirmationNamesOperationAndSelectedChild() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 2, "Sam", 12, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(20L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(callbacks.verifyNavigation("nav.signed", 77L)).thenReturn(Optional.of(
+            new TelegramCallbackService.VerifiedCallback("coins-confirm-remove-10-child-2", 77L,
+                Instant.parse("2026-08-13T12:00:00Z"))));
+        when(quickActions.load(77L, 2)).thenReturn(Optional.of(view));
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(menuBuilder.parentCoinConfirmation(view, -10)).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":20,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L, "Remove 10 coins for Sam?", List.of());
+    }
+
+    @Test
+    void taskRequestEditsTheCardToWaitingState() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 3, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(14L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
+        when(quickActions.requestTask(77L, 3, 3_000_000_000L)).thenReturn(OperationResult.success(view));
+        when(menuBuilder.backToMain()).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":14,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"task.request.3000000000","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L, "⏳ Waiting for parent", List.of());
+        verify(apiClient).answerCallbackQuery("callback");
+    }
+
+    @Test
+    void rewardRequestEditsTheCardToWaitingState() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 3, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(22L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
+        when(quickActions.requestReward(77L, 3, 8_000_000_000L)).thenReturn(OperationResult.success(view));
+        when(menuBuilder.backToMain()).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":22,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"reward.request.8000000000","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(quickActions).requestReward(77L, 3, 8_000_000_000L);
+        verify(apiClient).editMessageText(44L, 19L, "⏳ Reward request sent to parent", List.of());
+    }
+
+    @Test
+    void parentApprovalEditsRequestCardWithUpdatedBalance() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 3, "Alex", 62, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(15L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(quickActions.approveRequest(77L, 3, 19L)).thenReturn(OperationResult.success(view));
+        when(menuBuilder.backToMain()).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":15,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"parent.request.approve.3.19","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L, "✅ Approved by you · Balance: 62 🪙", List.of());
+        verify(apiClient).answerCallbackQuery("callback");
+    }
+
+    @Test
+    void staleParentApprovalShowsAlreadyApprovedWithoutDecisionButtons() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        RequestDto request = new RequestDto(19L, 7L, "Homework", null, null, "Homework", null, null, null, null,
+            20, PurchaseRequestStatus.approved, PurchaseRequestType.earn, 0, "2026-08-13T12:00:00Z",
+            3, null, null, null, null);
+        TelegramQuickActionResponse refreshed = new TelegramQuickActionResponse(
+            "family", "parent", 3, "Alex", 62, List.of(), List.of(), List.of(), List.of(request), List.of());
+        when(identities.recordWebhookUpdate(21L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(quickActions.approveRequest(77L, 3, 19L)).thenReturn(OperationResult.failure("already", "processed"));
+        when(quickActions.load(77L, 3)).thenReturn(Optional.of(refreshed));
+        when(menuBuilder.backToMain()).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":21,"callback_query":{"id":"callback","from":{"id":77},
+            "data":"parent.request.approve.3.19","message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(apiClient).editMessageText(44L, 19L, "Already approved", List.of());
+    }
+
+    private TelegramBotServiceImpl service(TelegramIdentityService identities,
+                                           TelegramBotApiClient apiClient,
+                                           TelegramCallbackService callbacks,
+                                           TelegramConfig config) {
+        return new TelegramBotServiceImpl(identities, apiClient, callbacks, config,
+            () -> Instant.parse("2026-08-13T12:00:00Z"));
+    }
+}

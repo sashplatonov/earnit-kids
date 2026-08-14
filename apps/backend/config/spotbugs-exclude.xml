@@ -41,6 +41,10 @@
         <Class name="com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService"/>
     </Match>
     <Match>
+        <Bug pattern="EI_EXPOSE_REP2,BX_UNBOXING_IMMEDIATELY_REBOXED"/>
+        <Class name="com.sashplatonov.earnit.kids.service.telegram.TelegramQuickActionServiceImpl"/>
+    </Match>
+    <Match>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
         <Class name="com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse"/>
     </Match>

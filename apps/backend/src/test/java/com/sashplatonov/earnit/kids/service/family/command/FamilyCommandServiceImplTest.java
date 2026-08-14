@@ -70,7 +70,7 @@ class FamilyCommandServiceImplTest {
     }
 
     @Test
-    void saveFamilyData_existingFamily_persistsRulesBalancesAndCollections() {
+    void saveFamilyData_existingFamily_persistsRulesAndCollectionsButNotClientBalance() {
         ChildEntity child = child(10, 1, "Alice", 10);
         ChildEntity sibling = child(11, 1, "Bob", 15);
         FamilyDataResponse payload = new FamilyDataResponse(10, null, List.of(), List.of(), List.of(), List.of(),
@@ -113,8 +113,7 @@ class FamilyCommandServiceImplTest {
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         verify(familyRepository).updateRules("fam-1", "Screen time after homework");
-        verify(childRepository).updateBalance(10, 42);
-        verify(childRepository).updateBalance(11, 9000);
+        verify(childRepository, never()).updateBalance(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt());
         verify(taskRepository).markAllTasksDeleted(10);
         verify(shopItemRepository).markAllShopItemsDeleted(10);
         verify(familyDashboardQueryService).loadFamilyData("fam-1", 10, true);
@@ -133,7 +132,7 @@ class FamilyCommandServiceImplTest {
     }
 
     @Test
-    void saveFamilyData_childSession_ignoresSiblingPayloadAndDoesNotReplaceRequests() {
+    void saveFamilyData_ignoresClientBalances() {
         ChildEntity child = child(10, 1, "Alice", 10);
         ChildEntity sibling = child(11, 1, "Bob", 15);
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
@@ -163,8 +162,7 @@ class FamilyCommandServiceImplTest {
             .isInstanceOf(OperationResult.Success.class);
 
         verify(familyRepository, never()).updateRules(anyString(), any());
-        verify(childRepository).updateBalance(10, 42);
-        verify(childRepository, never()).updateBalance(11, 9000);
+        verify(childRepository, never()).updateBalance(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt());
     }
 
     @Test

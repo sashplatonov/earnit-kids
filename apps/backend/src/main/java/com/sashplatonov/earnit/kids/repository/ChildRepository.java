@@ -9,6 +9,7 @@ import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -37,6 +38,12 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
             "token",
             token
         );
+    }
+
+    public Optional<ChildEntity> findByIdForUpdate(int childId) {
+        return find("id = ?1", childId)
+            .withLock(LockModeType.PESSIMISTIC_WRITE)
+            .firstResultOptional();
     }
 
     @Transactional

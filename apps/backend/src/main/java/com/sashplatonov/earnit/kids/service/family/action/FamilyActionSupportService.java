@@ -58,6 +58,11 @@ final class FamilyActionSupportService {
             .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
     }
 
+    Optional<ChildEntity> findFamilyChildForUpdate(int familyDbId, int childId) {
+        return childRepository.findByIdForUpdate(childId)
+            .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
+    }
+
     void clearRewardGoal(int childId) {
         childRepository.updateRewardGoal(childId, null);
     }
@@ -82,6 +87,11 @@ final class FamilyActionSupportService {
 
     Optional<PurchaseRequestEntity> findFamilyRequest(int familyDbId, long requestId) {
         return purchaseRequestRepository.findByIdOptional(requestId)
+            .filter(request -> request.getFamilyId() == familyDbId);
+    }
+
+    Optional<PurchaseRequestEntity> findFamilyRequestForUpdate(int familyDbId, long requestId) {
+        return purchaseRequestRepository.findByIdForUpdate(requestId)
             .filter(request -> request.getFamilyId() == familyDbId);
     }
 

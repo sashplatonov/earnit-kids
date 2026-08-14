@@ -86,6 +86,20 @@ Notes:
 - slow-query diagnostics emit only when a DB-backed operation crosses `app.performance.http-metrics.slow-query-threshold-ms` or throws an exception
 - diagnostic log lines include trace and scope context from the active request MDC, so the slow path can be tied back to `traceId`, `familyId`, and `childId`
 
+### Telegram rollout and alerts
+
+Telegram capabilities are independently controlled by `ENABLE_TELEGRAM_MINI_APP`,
+`ENABLE_TELEGRAM_BOT`, and `ENABLE_TELEGRAM_NOTIFICATIONS`. During staged rollout,
+set `TELEGRAM_ROLLOUT_FAMILY_ID` to the allow-listed family; an empty value allows
+all families only when the capability flag is explicitly enabled. Disabling
+notifications preserves the application outbox event and records terminal
+`SKIPPED_DISABLED` deliveries.
+
+The `earnit.telegram.events` metric is tagged by event and outcome. Alert on
+authentication rejects, callback failures, retry exhaustion, and increasing
+delivery age; dashboard panels must use aggregate counts and never expose
+Telegram IDs, callback payloads, notes, or task/reward text.
+
 [↑ Back to top](#top)
 
 ## 🚀 Runtime Modes <a name="runtime-modes"></a>

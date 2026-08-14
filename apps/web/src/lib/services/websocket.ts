@@ -77,7 +77,7 @@ async function connect() {
             const parsed = JSON.parse(event.data as string) as { type?: string; payload?: unknown };
             const type = parsed.type ?? 'message';
             emit(type, parsed.payload ?? parsed);
-            if (type === 'update') void coalescedRefresh();
+            if (type === 'update' || type === 'DATA_UPDATED') void coalescedRefresh();
         } catch { /* ignore non-JSON */ }
     });
 

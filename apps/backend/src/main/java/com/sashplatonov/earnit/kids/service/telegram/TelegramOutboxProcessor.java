@@ -1,0 +1,133 @@
+package com.sashplatonov.earnit.kids.service.telegram;
+
+import com.sashplatonov.earnit.kids.config.TelegramConfig;
+import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventEntity;
+import com.sashplatonov.earnit.kids.domain.model.TelegramDeliveryEntity;
+import com.sashplatonov.earnit.kids.repository.ApplicationOutboxEventRepository;
+import com.sashplatonov.earnit.kids.repository.TelegramDeliveryRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+import jakarta.inject.Inject;
+import io.quarkus.scheduler.Scheduled;
+
+import java.time.Instant;
+import java.util.List;
+
+@ApplicationScoped
+public class TelegramOutboxProcessor {
+    private static final long DELIVERY_CLAIM_LEASE_SECONDS = 60;
+    @Inject private TelegramDeliveryPlanner planner;
+    @Inject private TelegramDeliveryRepository deliveries;
+    @Inject private ApplicationOutboxEventRepository events;
+    @Inject private TelegramBotApiClient api;
+    @Inject private TelegramConfig config;
+    @Inject private TelegramObservability observability;
+
+    TelegramOutboxProcessor() {
+    }
+
+    TelegramOutboxProcessor(TelegramDeliveryPlanner planner,
+                            TelegramDeliveryRepository deliveries,
+                            ApplicationOutboxEventRepository events,
+                            TelegramBotApiClient api,
+                            TelegramConfig config,
+                            TelegramObservability observability) {
+        this.planner = planner;
+        this.deliveries = deliveries;
+        this.events = events;
+        this.api = api;
+        this.config = config;
+        this.observability = observability;
+    }
+
+    public TelegramOutboxProcessor(TelegramDeliveryPlanner planner,
+                                   TelegramDeliveryRepository deliveries,
+                                   ApplicationOutboxEventRepository events,
+                                   TelegramBotApiClient api,
+                                   TelegramConfig config) {
+        this(planner, deliveries, events, api, config, null);
+    }
+
+    @Scheduled(every = "{app.telegram.outbox-poll-interval}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    void scheduled() {
+        if (config.outboxEnabled()) {
+            process(Instant.now());
+        }
+    }
+
+    @Transactional
+    public int process(Instant now) {
+        planner.planDueEvents(now);
+        int sent = 0;
+        Instant expiredClaimBefore = now.minusSeconds(DELIVERY_CLAIM_LEASE_SECONDS);
+        for (TelegramDeliveryEntity delivery : deliveries.findDue(now, expiredClaimBefore)) {
+            if ("SKIPPED_DISABLED".equals(delivery.getStatus())) continue;
+            delivery.setClaimedAt(now);
+            ApplicationOutboxEventEntity event = events.findById(delivery.getEventId());
+            if (event == null) {
+                terminal(delivery, "MISSING_EVENT", now);
+                continue;
+            }
+            try {
+                delivery.setMessageId(api.sendMessage(delivery.getChatId(), text(event), List.of()));
+                delivery.setStatus("SENT");
+                if (observability != null) observability.outbox("sent");
+                delivery.setSentAt(now);
+                delivery.setTerminalAt(now);
+                delivery.setAttemptCount(delivery.getAttemptCount() + 1);
+                markEventComplete(event, now);
+                sent++;
+            } catch (Exception failure) {
+                delivery.setAttemptCount(delivery.getAttemptCount() + 1);
+                delivery.setLastError(failure.getClass().getSimpleName());
+                if (delivery.getAttemptCount() >= config.outboxMaxAttempts()) {
+                    if (observability != null) observability.outbox("failed");
+                    terminal(delivery, "FAILED", now);
+                    markEventComplete(event, now);
+                } else {
+                    if (observability != null) observability.outbox("retried");
+                    delivery.setClaimedAt(null);
+                    delivery.setNextAttemptAt(now.plusSeconds(1L << Math.min(6, delivery.getAttemptCount())));
+                }
+            }
+        }
+        return sent;
+    }
+
+    private String text(ApplicationOutboxEventEntity event) {
+        String action = switch (event.getEventType()) {
+            case TASK_REQUEST_CREATED -> "New task request";
+            case REWARD_REQUEST_CREATED -> "New reward request";
+            case TASK_APPROVED -> "✅ Task approved";
+            case TASK_REJECTED -> "❌ Task rejected";
+            case REWARD_PURCHASED -> "🎁 Reward purchased";
+            case REWARD_APPROVED -> "🎁 Reward approved";
+            case REWARD_REJECTED -> "❌ Reward rejected";
+            case BALANCE_ADJUSTED -> "🪙 Parent adjusted balance";
+        };
+        if (event.getResultingBalance() == null || event.getCoinDelta() == 0) {
+            return action;
+        }
+        return action + "\n" + (event.getCoinDelta() > 0 ? "+" : "") + event.getCoinDelta()
+            + " 🪙\nBalance: " + event.getResultingBalance() + " 🪙";
+    }
+
+    private void terminal(TelegramDeliveryEntity delivery, String status, Instant now) {
+        delivery.setStatus(status);
+        delivery.setTerminalAt(now);
+        delivery.setClaimedAt(null);
+    }
+
+    private void markEventComplete(ApplicationOutboxEventEntity event, Instant now) {
+        if (events.findById(event.getId()) != null
+            && deliveries.findByEvent(event.getId()).stream().allMatch(this::isTerminal)) {
+            event.setPlanningStatus("COMPLETE");
+            event.setPlanningCompletedAt(now);
+        }
+    }
+
+    private boolean isTerminal(TelegramDeliveryEntity delivery) {
+        return "SENT".equals(delivery.getStatus()) || "SKIPPED".equals(delivery.getStatus())
+            || "SKIPPED_DISABLED".equals(delivery.getStatus()) || "FAILED".equals(delivery.getStatus());
+    }
+}

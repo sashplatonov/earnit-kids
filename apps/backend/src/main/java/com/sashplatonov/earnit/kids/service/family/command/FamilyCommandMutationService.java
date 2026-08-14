@@ -9,11 +9,8 @@ import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.repository.command.TaskContentCommand;
 import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
 
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -45,33 +42,6 @@ final class FamilyCommandMutationService {
         }
 
         familyRepository.updateRules(familyId, payloadService.asNullableString(payload.get("rules")));
-    }
-
-    void syncBalances(int familyDbId, Integer selectedChildId,
-                      Map<String, Object> payload,
-                      List<ChildEntity> children) {
-        if (selectedChildId != null) {
-            Integer currentBalance = payloadService.asInteger(payload.get("balance"));
-            if (currentBalance != null) {
-                childRepository.updateBalance(selectedChildId, currentBalance);
-            }
-        }
-
-        Set<Integer> allowedChildIds = children.stream()
-            .map(ChildEntity::getId)
-            .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-
-        for (Map<String, Object> childPayload : payloadService.asMapList(payload.get("children"))) {
-            Integer childId = payloadService.asInteger(childPayload.get("id"));
-            Integer balance = payloadService.asInteger(childPayload.get("balance"));
-            if (childId == null
-                || balance == null
-                || !allowedChildIds.contains(childId)
-                || Objects.equals(childId, selectedChildId)) {
-                continue;
-            }
-            childRepository.updateBalance(childId, balance);
-        }
     }
 
     void syncTasks(int familyDbId, Integer selectedChildId, Map<String, Object> payload) {

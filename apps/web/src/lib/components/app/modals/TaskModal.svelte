@@ -59,7 +59,20 @@
 
     function close() { modalStore.close(); }
 
+    function hasStaleTelegramChildContext(): boolean {
+        const childId = modalData?.telegramChildId;
+        return childId != null && String(childId) !== String($appStore.currentChildId);
+    }
+
+    function requireCurrentTelegramChildContext(): boolean {
+        if (!hasStaleTelegramChildContext()) return true;
+        showToast('The selected child changed. Reopen the task to continue.', 'error');
+        close();
+        return false;
+    }
+
     async function save() {
+        if (!requireCurrentTelegramChildContext()) return;
         if (!title.trim()) { showToast(tTasks('modal.enterTitle'), 'error'); return; }
         if (showCue && (!cueWhen.trim() || !cueAction.trim())) {
             cueError = tTasks('modal.cueIncomplete');
@@ -94,6 +107,7 @@
     }
 
     async function toggleTaskActive() {
+        if (!requireCurrentTelegramChildContext()) return;
         if (!existingTask?.id) return;
         const nextActive = !isActive;
         appStore.setState({
@@ -108,6 +122,7 @@
     }
 
     async function deleteTask() {
+        if (!requireCurrentTelegramChildContext()) return;
         if (!existingTask?.id) return;
         const confirmed = await confirmAction({
             title: tTasks('modal.confirmDeleteTitle'),
