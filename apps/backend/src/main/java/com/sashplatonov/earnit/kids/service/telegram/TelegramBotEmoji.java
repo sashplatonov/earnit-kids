@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.service.telegram;
 
 public final class TelegramBotEmoji {
     public static final String HOME = "🏠";
+    public static final String REQUEST = "🎯";
     public static final String APPROVE = "👍";
     public static final String REJECT = "👎";
     public static final String DONE = "✅";

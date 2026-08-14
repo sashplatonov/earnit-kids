@@ -60,7 +60,8 @@ final class TelegramMenuFlow {
                 ? menuBuilder.parentChildPicker(view) : menuBuilder.backToMain();
             case "catalog" -> mainMenu(view, miniAppUrl, menuBuilder);
             case "balance" -> menuBuilder.balance(view);
-            case "tasks", "rewards" -> catalogMenu(action, view, miniAppUrl, menuBuilder);
+            case "tasks", "rewards" -> "parent".equals(view.role())
+                ? mainMenu(view, miniAppUrl, menuBuilder) : catalogMenu(action, view, miniAppUrl, menuBuilder);
             case "requests" -> "parent".equals(view.role())
                 ? menuBuilder.parentRequests(view) : menuBuilder.childRequests(view);
             case "recent" -> menuBuilder.recent(view);

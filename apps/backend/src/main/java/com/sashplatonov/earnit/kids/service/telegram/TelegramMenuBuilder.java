@@ -19,7 +19,7 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view, String miniAppUrl) {
         return List.of(
-            parentNavigation("Requests", "requests", view),
+            parentNavigation(TelegramBotEmoji.REQUEST + " Requests (" + pendingRequestCount(view) + ")", "requests", view),
             parentNavigation(TelegramBotEmoji.COINS + " Coins", "coins", view),
             parentNavigation(TelegramBotEmoji.RECENT + " Recent", "recent", view),
             parentNavigation(TelegramBotEmoji.SWITCH + " Switch child", "child", view),
@@ -30,7 +30,7 @@ public class TelegramMenuBuilder {
     public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.children().stream().limit(10).forEach(child ->
-            buttons.add(navigation(TelegramBotEmoji.CHILD + " " + child.name() + " · " + child.balance() + " " + TelegramBotEmoji.COINS, "child-" + child.id())));
+            buttons.add(navigation(TelegramBotEmoji.CHILD + " " + child.name() + " · " + child.balance() + " coins", "child-" + child.id())));
         if (buttons.isEmpty()) {
             buttons.add(callback(TelegramBotEmoji.ADD + " Add child → Mini App", "noop"));
         }
@@ -57,12 +57,12 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentTasks(TelegramQuickActionResponse view) {
         return readOnlyCatalog(view.tasks().stream().limit(5)
-            .map(task -> TelegramBotEmoji.DONE + " " + task.name() + " · " + task.coins() + " " + TelegramBotEmoji.COINS).toList(), view);
+            .map(task -> TelegramBotEmoji.DONE + " " + task.name() + " · " + task.coins() + " coins").toList(), view);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentRewards(TelegramQuickActionResponse view) {
         return readOnlyCatalog(view.rewards().stream().limit(5)
-            .map(reward -> TelegramBotEmoji.REWARD + " " + reward.name() + " · " + reward.price() + " " + TelegramBotEmoji.COINS).toList(), view);
+            .map(reward -> TelegramBotEmoji.REWARD + " " + reward.name() + " · " + reward.price() + " coins").toList(), view);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentCoins(TelegramQuickActionResponse view) {
@@ -123,10 +123,10 @@ public class TelegramMenuBuilder {
                                                                   String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.rewards().stream().filter(reward -> reward.price() <= view.balance()).limit(3).forEach(reward ->
-            buttons.add(callback(TelegramBotEmoji.REWARD + " Get " + reward.name() + " · " + reward.price() + " " + TelegramBotEmoji.COINS,
+            buttons.add(callback(TelegramBotEmoji.REWARD + " Get " + reward.name() + " · " + reward.price() + " coins",
                 "reward.request." + reward.id())));
         view.rewards().stream().filter(reward -> reward.price() > view.balance()).min(java.util.Comparator.comparingInt(reward -> reward.price() - view.balance())).ifPresent(reward ->
-            buttons.add(callback(TelegramBotEmoji.WAITING + " Next goal: " + reward.name() + " · " + reward.price() + " " + TelegramBotEmoji.COINS, "noop")));
+            buttons.add(callback(TelegramBotEmoji.WAITING + " Next goal: " + reward.name() + " · " + reward.price() + " coins", "noop")));
         if (view.rewards().stream().filter(reward -> reward.price() <= view.balance()).count() > 3
             || view.rewards().size() > 4) {
             buttons.add(webApp(TelegramBotEmoji.OPEN_APP + " More rewards → Mini App", miniAppUrl));
@@ -200,6 +200,10 @@ public class TelegramMenuBuilder {
 
     private TelegramBotApiClient.InlineButton callback(String text, String data) {
         return TelegramBotApiClient.InlineButton.callback(text, data);
+    }
+
+    private long pendingRequestCount(TelegramQuickActionResponse view) {
+        return view.requests().stream().filter(request -> request.status() == PurchaseRequestStatus.pending).count();
     }
 
     private List<TelegramBotApiClient.InlineButton> readOnlyCatalog(List<String> labels,

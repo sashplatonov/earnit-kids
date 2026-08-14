@@ -22,7 +22,7 @@ class TelegramMenuBuilderTest {
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .hasSize(5)
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("Requests", "🪙 Coins", "📜 Recent", "🔄 Switch child", "📱 Open Mini App");
+            .containsExactly("🎯 Requests (0)", "🪙 Coins", "📜 Recent", "🔄 Switch child", "📱 Open Mini App");
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
             .contains("nav.requests-child-1.signed", "nav.coins-child-1.signed",
@@ -50,6 +50,16 @@ class TelegramMenuBuilderTest {
             "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("✅ Tasks", "🎁 Rewards", "📜 Recent", "📱 Open Mini App");
+    }
+
+    @Test
+    void signedLegacyParentCatalogNavigationReturnsToDecisionHome() {
+        TelegramQuickActionResponse view = view();
+
+        assertThat(TelegramMenuFlow.navigationMenu("tasks-child-1", view,
+            "https://example.test/telegram", menuBuilder()))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("🎯 Requests (0)", "🪙 Coins", "📜 Recent", "🔄 Switch child", "📱 Open Mini App");
     }
 
     @Test
@@ -92,7 +102,7 @@ class TelegramMenuBuilderTest {
 
         assertThat(menuBuilder().parentChildPicker(view))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("👧 Alex · 42 🪙", "👧 Sam · 18 🪙");
+            .containsExactly("👧 Alex · 42 coins", "👧 Sam · 18 coins");
     }
 
     @Test
