@@ -1327,19 +1327,19 @@ Use the canonical semantic graphics listed at the beginning of this backlog.
 
 # Recommended implementation order
 
-1. SFX-015 - restore/canonicalize Mini App graphics
-2. SFX-003 - selected bottom-nav styling
-3. SFX-004 - Russian localization
-4. SFX-001 - deactivate/reactivate child
-5. SFX-007 - child Telegram-only settings
-6. SFX-008 - child Telegram invite binding
-7. SFX-014 - Bot child selection
-8. SFX-002 - last completion/use date-time
-9. SFX-005 - Roles and Notifications entry points
-10. SFX-005A - Parent/Child notification settings
-11. SFX-006 - Mini App-native Task/Reward forms
-12. SFX-009 - parent email management
-13. SFX-010 - parent invites
+1. SFX-015 ✅ - restore/canonicalize Mini App graphics
+2. SFX-003 ✅ - selected bottom-nav styling
+3. SFX-004 ✅ - Russian localization
+4. SFX-001 ✅ - deactivate/reactivate child
+5. SFX-007 ✅ - child Telegram-only settings
+6. SFX-008 ✅ - child Telegram invite binding
+7. SFX-014 ✅ - Bot child selection
+8. SFX-002 ✅ - last completion/use date-time
+9. SFX-005 ✅ - Roles and Notifications entry points
+10. SFX-005A ✅ - Parent/Child notification settings
+11. SFX-006 ✅ - Mini App-native Task/Reward forms
+12. SFX-009 ✅ - parent email management
+13. SFX-010 ✅ - parent invites
 14. SFX-013 ✅ - limits with ±1/±5 steppers
 15. SFX-011 ✅ - dual CSV import + format/copy
 16. SFX-012 ✅ - Task/Reward group submenu
