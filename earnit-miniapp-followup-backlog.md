@@ -416,6 +416,8 @@ Do not show both `Family space` and `Tasks/Rewards/Family`.
 
 # NUX-007 - Revalidate Child Mini App against the same visual target
 
+**Status:** ✅ Done
+
 **Priority:** P1  
 **Depends on:** NUX-004
 

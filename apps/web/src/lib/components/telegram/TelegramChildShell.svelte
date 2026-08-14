@@ -6,7 +6,6 @@
     import TelegramChildTasks from './TelegramChildTasks.svelte';
     import TelegramChildRewards from './TelegramChildRewards.svelte';
     import TelegramActionStatus from './TelegramActionStatus.svelte';
-    import TelegramRequestList from './TelegramRequestList.svelte';
     import TelegramHistoryList from './TelegramHistoryList.svelte';
     import { loadTelegramHistory } from '$lib/services/telegramActivity';
     import type { HistoryEntry } from '$lib/stores/app';
@@ -69,7 +68,6 @@
         {:else if view === 'rewards'}
             <TelegramChildRewards />
         {:else}
-            <TelegramRequestList requests={$appStore.requests} />
             <TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />
         {/if}
     </div>

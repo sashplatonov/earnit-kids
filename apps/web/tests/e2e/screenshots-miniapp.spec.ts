@@ -70,3 +70,53 @@ test('screenshot parent family at 375x667', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Add child' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
+
+const childData = {
+    isAdmin: false,
+    balance: 22,
+    childNickname: 'Aliska',
+    childId: 10,
+    tasks: [
+        { id: 1, name: 'Утренний старт', coins: 1, groupName: 'Утро', isActive: true, periodProgress: { period: 'day', completed: 0, pending: 0, limit: 1, remaining: 1, available: true } },
+        { id: 2, name: 'Книжная искра — 15 минут', coins: 2, groupName: 'Учёба', isActive: true, periodProgress: { period: 'day', completed: 1, pending: 0, limit: 1, remaining: 0, available: false } },
+        { id: 3, name: 'Красивые 5 строк', coins: 1, groupName: 'Учёба', isActive: true, periodProgress: { period: 'day', completed: 0, pending: 0, limit: 1, remaining: 1, available: true } },
+    ],
+    shop: [
+        { id: 11, name: 'Королева настолки', price: 2, groupName: 'Игры', isActive: true },
+        { id: 12, name: '20 минут только со мной', price: 4, groupName: 'Семья', isActive: true },
+        { id: 13, name: 'Домашняя лаборатория', price: 30, groupName: 'Учёба', isActive: true },
+    ],
+    requests: [],
+};
+
+async function openChild(page: import('@playwright/test').Page, data: unknown = childData) {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.addInitScript(() => {
+        (window as Window & { Telegram?: unknown }).Telegram = { WebApp: { initData: 'signed-child-data', ready: () => {}, expand: () => {} } };
+    });
+    await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ role: 'child', familyId: 'family-1' }) }));
+    await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
+    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) }));
+    await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
+    await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total: 0, page: 1, limit: 20 }) }));
+    await page.goto('/telegram');
+}
+
+test('screenshot child today at 375x667', async ({ page }) => {
+    await openChild(page);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: 'tmp/shot-child-today.png', fullPage: false });
+    await expect(page.getByRole('heading', { name: 'Tasks · Today' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Done' }).first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
+test('screenshot child rewards at 375x667', async ({ page }) => {
+    await openChild(page);
+    await page.getByRole('tab', { name: 'Rewards' }).click();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: 'tmp/shot-child-rewards.png', fullPage: false });
+    await expect(page.getByRole('heading', { name: 'Rewards' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Get reward' }).first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
