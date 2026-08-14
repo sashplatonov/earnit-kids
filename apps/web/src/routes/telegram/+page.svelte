@@ -6,6 +6,7 @@
         initializeTelegramWebApp,
     } from '$lib/services/telegram';
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
+    import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
 
     type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram';
     let state: State = 'loading';
@@ -100,7 +101,7 @@
                 <p class="telegram-hint">For a child account, ask a parent to send an invitation.</p>
             {:else}
                 <p>{message || 'Could not resolve your Telegram role. Try again.'}</p>
-                <button type="button" on:click={() => void authenticate()}>Try again</button>
+                <TelegramActionButton icon="refresh" label="Try again" on:click={() => void authenticate()} />
             {/if}
         </div>
     </main>
@@ -141,8 +142,7 @@
         line-height: 1.5;
     }
 
-    .telegram-action,
-    button {
+    .telegram-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;

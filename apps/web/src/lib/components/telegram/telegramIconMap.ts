@@ -28,6 +28,7 @@ export const telegramIconMap = {
     requestReward: Gift,
     coinAdjustment: CircleDollarSign,
     childSwitch: RefreshCw,
+    refresh: RefreshCw,
     openApp: Smartphone,
     back: ArrowLeft,
     filter: SlidersHorizontal,

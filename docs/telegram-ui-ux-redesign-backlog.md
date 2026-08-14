@@ -208,7 +208,7 @@ git commit -m "feat(telegram): Bound child bot quick actions"
 
 ## TUX-004: Build the compact role-aware Mini App foundation
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** TUX-001
 
