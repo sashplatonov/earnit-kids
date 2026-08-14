@@ -18,6 +18,7 @@ import {
     History,
     House,
     Minus,
+    MoreHorizontal,
     Package,
     Pencil,
     Plus,
@@ -81,7 +82,8 @@ export const telegramIconMap = {
     box: Package,
     desk: Table,
     addChild: UserRoundPlus,
-    chevronDown: ChevronDown
+    chevronDown: ChevronDown,
+    more: MoreHorizontal
 } as const;
 
 export type TelegramIconName = keyof typeof telegramIconMap;

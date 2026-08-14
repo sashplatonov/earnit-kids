@@ -138,6 +138,8 @@ Then show useful next content immediately:
 
 # NUX-002 - Replace Parent Tasks with a true compact list
 
+**Status:** ✅ Done
+
 **Priority:** P0  
 **Depends on:** NUX-004
 
