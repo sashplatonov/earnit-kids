@@ -8,6 +8,7 @@ public record TaskDto(
     String name,
     int coins,
     String groupName,
+    String icon,
     Object frequency,
     String comment,
     String cueWhen,
@@ -17,4 +18,13 @@ public record TaskDto(
     int childId,
     String lastCompletedAt,
     TaskPeriodProgressDto periodProgress
-) { }
+) {
+    // EXPLAIN: Convenience constructor preserving the pre-icon call signature.
+    public TaskDto(long id, String name, int coins, String groupName, Object frequency,
+                   String comment, String cueWhen, String cueAction, Integer moneyLimit,
+                   boolean isActive, int childId, String lastCompletedAt,
+                   TaskPeriodProgressDto periodProgress) {
+        this(id, name, coins, groupName, null, frequency, comment, cueWhen, cueAction,
+            moneyLimit, isActive, childId, lastCompletedAt, periodProgress);
+    }
+}

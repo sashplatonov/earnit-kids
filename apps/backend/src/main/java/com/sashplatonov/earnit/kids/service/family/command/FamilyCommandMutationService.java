@@ -76,6 +76,10 @@ final class FamilyCommandMutationService {
                     payloadService.firstNonBlank(
                         payloadService.asString(task.get("cueAction")),
                         payloadService.asString(task.get("cue_action"))
+                    ),
+                    payloadService.firstNonBlank(
+                        payloadService.asString(task.get("icon")),
+                        payloadService.asString(task.get("graphic"))
                     )
                 ),
                 payloadService.serializeFrequency(task.get("frequency")),
@@ -119,7 +123,11 @@ final class FamilyCommandMutationService {
                     payloadService.coalesceFirst(item.get("isActive"), item.get("is_active")),
                     true
                 ),
-                payloadService.defaultBoolean(item.get("isDeleted"), false)
+                payloadService.defaultBoolean(item.get("isDeleted"), false),
+                payloadService.firstNonBlank(
+                    payloadService.asString(item.get("icon")),
+                    payloadService.asString(item.get("graphic"))
+                )
             ));
         }
         clearInvalidRewardGoal(familyDbId, selectedChildId);

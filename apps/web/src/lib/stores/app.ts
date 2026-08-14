@@ -8,6 +8,7 @@ export interface Task {
     coins: number;
     isActive?: boolean;
     groupName?: string | null;
+    icon?: string | null;
     comment?: string | null;
     cueWhen?: string | null;
     cueAction?: string | null;
@@ -37,6 +38,7 @@ export interface ShopItem {
     price: number;
     isActive?: boolean;
     groupName?: string | null;
+    icon?: string | null;
     comment?: string | null;
     moneyLimit?: number | null;
     frequency?: { period?: string; limit?: number } | null;

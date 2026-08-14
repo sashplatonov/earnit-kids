@@ -8,6 +8,7 @@ export interface TaskPayloadInput {
     cueAction?: string;
     freqLimit: string;
     freqPeriod: 'day' | 'week' | 'month' | 'year';
+    icon?: string | null;
     isActive?: boolean;
 }
 
@@ -20,6 +21,7 @@ export interface TaskPayload {
     comment: string | null;
     cueWhen?: string | null;
     cueAction?: string | null;
+    icon?: string | null;
     frequency: { limit: number; period: 'day' | 'week' | 'month' | 'year' } | null;
     /**
      * Optional because the backend defaults tasks to active when the field is absent.
@@ -38,6 +40,7 @@ export function buildTaskPayload(input: TaskPayloadInput): TaskPayload {
         groupName: input.groupName.trim() || null,
         coins: Number(input.coins) || 10,
         comment: input.comment.trim() || null,
+        icon: input.icon?.trim() || null,
         frequency: input.freqLimit
             ? { limit: Number(input.freqLimit), period: input.freqPeriod }
             : null,

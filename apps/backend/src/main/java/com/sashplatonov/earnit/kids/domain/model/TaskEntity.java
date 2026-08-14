@@ -49,6 +49,9 @@ public class TaskEntity extends CreatedAtEntity {
     @Column(name = "group_name")
     private String groupName;
 
+    @Column(name = "icon")
+    private String icon;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "frequency", columnDefinition = "jsonb")
     private JsonNode frequency;

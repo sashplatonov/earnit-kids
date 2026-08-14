@@ -24,8 +24,23 @@ describe('buildTaskPayload', () => {
             comment: 'Перед ужином',
             cueWhen: 'после школы',
             cueAction: 'убрать игрушки',
+            icon: null,
             frequency: { limit: 2, period: 'week' },
         });
+    });
+
+    it('keeps the semantic icon key when provided', () => {
+        const payload = buildTaskPayload({
+            id: 5,
+            title: 'Утренний старт',
+            groupName: 'Утро',
+            coins: 1,
+            comment: '',
+            freqLimit: '',
+            freqPeriod: 'day',
+            icon: 'sunrise',
+        });
+        expect(payload.icon).toBe('sunrise');
     });
 
     it('removes optional fields when they are blank', () => {
@@ -45,6 +60,7 @@ describe('buildTaskPayload', () => {
             groupName: null,
             coins: 10,
             comment: null,
+            icon: null,
             frequency: null,
         });
     });

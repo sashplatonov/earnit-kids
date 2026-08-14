@@ -27,7 +27,24 @@ describe('buildShopPayload', () => {
             moneyLimit: 1500,
             type: 'large',
             itemType: 'large',
+            icon: null,
         });
+    });
+
+    it('keeps the semantic icon key when provided', () => {
+        const payload = buildShopPayload({
+            id: 8,
+            title: 'Настольная игра',
+            groupName: 'Семья',
+            price: 30,
+            comment: '',
+            freqLimit: '',
+            freqPeriod: 'week',
+            moneyLimit: '',
+            itemType: 'micro',
+            icon: 'dice',
+        });
+        expect(payload.icon).toBe('dice');
     });
 
     it('removes optional shop limits when they are blank', () => {
@@ -54,6 +71,7 @@ describe('buildShopPayload', () => {
             moneyLimit: null,
             type: 'small',
             itemType: 'small',
+            icon: null,
         });
     });
 });

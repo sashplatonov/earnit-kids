@@ -68,6 +68,7 @@ public class ShopItemRepository implements PanacheRepositoryBase<ShopItemEntity,
             shopItem.setName(command.name());
             shopItem.setPrice(command.price());
             shopItem.setGroupName(command.groupName());
+            shopItem.setIcon(command.icon());
             shopItem.setFrequency(command.frequency());
             shopItem.setComment(command.comment());
             shopItem.setMoneyLimit(command.moneyLimit());
@@ -81,6 +82,7 @@ public class ShopItemRepository implements PanacheRepositoryBase<ShopItemEntity,
                 .name(command.name())
                 .price(command.price())
                 .groupName(command.groupName())
+                .icon(command.icon())
                 .frequency(command.frequency())
                 .comment(command.comment())
                 .moneyLimit(command.moneyLimit())

@@ -1,14 +1,13 @@
 <script lang="ts">
     import { appStore, type Task } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { modalStore } from '$lib/stores/modal';
-    import TaskModal from '$lib/components/app/modals/TaskModal.svelte';
     import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import { saveChildGroupOrder } from '$lib/services/api';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
+    import TelegramTaskForm from './TelegramTaskForm.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
     import { formatLastUsedTime } from './telegramLastUsed';
 
@@ -21,6 +20,8 @@
     let groupSaving = false;
     let openMenuId: string | number | null = null;
     let menuTrigger: HTMLButtonElement | null = null;
+    let formOpen = false;
+    let editingTask: Task | null = null;
     function toggleMenu(id: string | number, button: HTMLButtonElement) {
         if (openMenuId === id) closeMenu(true);
         else { menuTrigger = button; openMenuId = id; }
@@ -36,8 +37,8 @@
             closeMenu(true);
         }
     }
-    function add() { modalStore.open('task-modal', { mode: 'add', groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
-    function edit(task: unknown) { closeMenu(); modalStore.open('task-modal', { mode: 'edit', task, groupSuggestions: groups, telegramChildId: $appStore.currentChildId }); }
+    function add() { editingTask = null; formOpen = true; }
+    function edit(task: unknown) { closeMenu(); editingTask = task as Task; formOpen = true; }
     function toggleArchive(task: Task) {
         closeMenu(true);
         const nextActive = task.isActive === false;
@@ -84,7 +85,7 @@
             {#each $appStore.tasks as task (task.id)}
                 <div class:archived={task.isActive === false} class="row">
                     <button class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} on:click={() => edit(task)}>
-                        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
+                        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
                         <span class="entity-text">
                             <span class="title">{stripLeadingEmoji(task.name)}</span>
                             <span class="meta"><TelegramCoin size={13} />{task.coins} · {stripLeadingEmoji(task.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>
@@ -117,7 +118,7 @@
         </details>
     {/if}
 </div>
-<TaskModal />
+<TelegramTaskForm open={formOpen} task={editingTask} groupSuggestions={groups} on:close={() => formOpen = false} />
 <GroupOrderEditor bind:isOpen={groupEditorOpen} isAdmin={canEdit} isSaving={groupSaving} {groups} title={$i18n.t('app.telegram.tasks.taskGroups')} descriptionAdmin={$i18n.t('app.telegram.tasks.dragHint')} descriptionChild="" on:save={saveGroups} />
 
 <style>

@@ -414,7 +414,7 @@ If there is only one configurable role/context, skip this extra level and open t
 
 ---
 
-# SFX-006 - Replace website Task/Reward forms with Mini App-native forms
+# SFX-006 ✅ - Replace website Task/Reward forms with Mini App-native forms
 
 **Priority:** P0  
 **Channel:** Mini App

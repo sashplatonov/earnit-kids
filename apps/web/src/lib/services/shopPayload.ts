@@ -8,6 +8,7 @@ export interface ShopPayloadInput {
     freqPeriod: 'day' | 'week' | 'month' | 'year';
     moneyLimit: string;
     itemType: 'micro' | 'small' | 'large';
+    icon?: string | null;
     isActive?: boolean;
 }
 
@@ -23,6 +24,7 @@ export interface ShopPayload {
     moneyLimit: number | null;
     type: 'micro' | 'small' | 'large';
     itemType: 'micro' | 'small' | 'large';
+    icon?: string | null;
     isActive?: boolean;
 }
 
@@ -41,6 +43,7 @@ export function buildShopPayload(input: ShopPayloadInput): ShopPayload {
             ? { limit: Number(input.freqLimit), period: input.freqPeriod }
             : null,
         moneyLimit: input.moneyLimit ? Number(input.moneyLimit) : null,
+        icon: input.icon?.trim() || null,
         type: input.itemType,
         itemType: input.itemType,
     };

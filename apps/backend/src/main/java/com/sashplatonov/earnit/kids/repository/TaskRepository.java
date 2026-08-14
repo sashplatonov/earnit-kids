@@ -59,6 +59,7 @@ public class TaskRepository implements PanacheRepositoryBase<TaskEntity, Long> {
             task.setName(command.content().name());
             task.setCoins(command.content().coins());
             task.setGroupName(command.content().groupName());
+            task.setIcon(command.content().icon());
             task.setFrequency(command.frequency());
             task.setComment(command.content().comment());
             task.setCueWhen(command.content().cueWhen());
@@ -74,6 +75,7 @@ public class TaskRepository implements PanacheRepositoryBase<TaskEntity, Long> {
                 .name(command.content().name())
                 .coins(command.content().coins())
                 .groupName(command.content().groupName())
+                .icon(command.content().icon())
                 .frequency(command.frequency())
                 .comment(command.content().comment())
                 .cueWhen(command.content().cueWhen())
