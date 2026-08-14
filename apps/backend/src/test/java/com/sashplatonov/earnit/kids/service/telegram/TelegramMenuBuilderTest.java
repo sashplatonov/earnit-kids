@@ -170,6 +170,9 @@ class TelegramMenuBuilderTest {
         assertThat(menuBuilder().parentRequestQueue(view, null))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("👍 Одобрить", "👎 Отклонить", "➡️ Следующий", "🏠 Главное меню");
+        assertThat(menuBuilder().parentRequestQueue(view, null))
+            .extracting(TelegramBotApiClient.InlineButton::callbackData)
+            .contains("nav.requests-next-19-child-1.signed");
         assertThat(TelegramMenuFlow.navigationText("requests-child-1", view))
             .isEqualTo("🎯 Запрос 1 из 2\n\n👧 Alex\n\nHomework\n🪙 +20 монет");
         assertThat(TelegramMenuFlow.navigationText("requests-next-19-child-1", view))

@@ -171,7 +171,7 @@ public class TelegramMenuBuilder {
         buttons.add(callback(TelegramCopy.APPROVE, "parent.request.approve." + target, "queue-row-1"));
         buttons.add(callback(TelegramCopy.REJECT, "parent.request.reject." + target, "queue-row-1"));
         if (index + 1 < total) {
-            buttons.add(navigation(TelegramCopy.NEXT, "requests-next-" + request.id(), "queue-row-2"));
+            buttons.add(parentNavigation(TelegramCopy.NEXT, "requests-next-" + request.id(), view, "queue-row-2"));
         }
         buttons.add(parentNavigation(TelegramCopy.HOME, "main", view, "queue-row-3"));
         return List.copyOf(buttons);
