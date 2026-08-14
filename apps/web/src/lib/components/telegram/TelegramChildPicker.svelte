@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { switchChild } from '$lib/services/bootstrap';
+    import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     let switching = false;
     let error = '';
@@ -18,7 +19,7 @@
     <div class="children" role="listbox" aria-label="Choose child">
         {#each $appStore.children as child (child.id)}
             <button class:selected={$appStore.currentChildId == child.id} type="button" role="option" aria-selected={$appStore.currentChildId == child.id} disabled={switching} on:click={() => select(child.id)}>
-                <span><TelegramIcon name="childSwitch" size={18} label={`Switch to ${child.nickname}`} />{child.nickname}</span><span>{child.balance} 🪙</span>
+                <span><TelegramIcon name="childSwitch" size={18} label={`Switch to ${child.nickname}`} />{child.nickname}</span><span class="child-balance"><TelegramCoin size={16} />{child.balance}</span>
             </button>
         {/each}
     </div>
@@ -32,5 +33,6 @@
     .children { display: grid; gap: .5rem; }
     button { display: flex; justify-content: space-between; min-height: 2.75rem; padding: .7rem .8rem; border: 1px solid #dfe4ee; border-radius: .7rem; background: #fff; color: #33415f; font: inherit; text-align: left; }
     button.selected { border-color: #3867d6; box-shadow: inset 3px 0 #3867d6; }
+    .child-balance { display:inline-flex; align-items:center; gap:.3rem; }
     .muted { color: #66718a; }.error { color: #a33b3b; }
 </style>

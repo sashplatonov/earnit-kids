@@ -7,6 +7,7 @@
     } from '$lib/services/telegram';
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
     import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
+    import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
 
     type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram';
     let state: State = 'loading';
@@ -87,7 +88,7 @@
 {:else}
     <main class="telegram-page" aria-live="polite">
         <div class="telegram-card">
-            <div class="telegram-mark" aria-hidden="true">🪙</div>
+            <div class="telegram-mark" aria-hidden="true"><TelegramCoin size={44} /></div>
             <h1>EarnIt Kids</h1>
             {#if state === 'loading'}
                 <p>Checking your Telegram session…</p>
@@ -127,7 +128,8 @@
     }
 
     .telegram-mark {
-        font-size: 2.5rem;
+        display: grid;
+        place-items: center;
     }
 
     h1 {
