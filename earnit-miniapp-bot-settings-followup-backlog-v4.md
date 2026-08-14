@@ -823,7 +823,7 @@ This keeps account settings compact and groups related operations correctly.
 
 ---
 
-# SFX-010 - Invite another parent by Email or Telegram
+# SFX-010 ✅ - Invite another parent by Email or Telegram
 
 **Priority:** P0  
 **Channel:** Mini App
