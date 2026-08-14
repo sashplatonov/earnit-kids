@@ -21,8 +21,17 @@ Record the workflow URL, commit SHA, Compose config result, migration result,
 and deployment health checks for the exact revision. A green local run is not
 remote CI evidence. Keep bot secrets in the deployment secret store.
 
+When the bot capability is enabled, backend startup registers the public
+`/api/telegram/webhook` endpoint derived from `TELEGRAM_MINI_APP_URL` and
+reconciles it every `TELEGRAM_WEBHOOK_REGISTRATION_INTERVAL` (five minutes by
+default). Confirm the deployment log reports successful registration before
+testing `/start`; it must not print the bot token or webhook secret.
+
 ## Staged Telegram client checklist
 
+- In BotFather, set the bot's Main Mini App URL to `https://your-domain/telegram`.
+  Set `TELEGRAM_MINI_APP_URL` to the same HTTPS URL. A `startapp` deep link opens
+  the BotFather URL, so it must reach the `/telegram` authentication gate.
 - Enable Mini App, bot, and notifications independently for the allow-listed family.
 - Verify parent link, child invite, revoke, expiry, and re-link conflict handling.
 - Verify child task/reward requests, parent approve/reject, balance adjustment,

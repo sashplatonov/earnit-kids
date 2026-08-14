@@ -44,6 +44,13 @@ public class TelegramBotApiClient {
         call("answerCallbackQuery", Map.of("callback_query_id", callbackQueryId));
     }
 
+    public void registerWebhook(URI webhookUrl, String secret) throws Exception {
+        call("setWebhook", Map.of(
+            "url", webhookUrl.toString(),
+            "secret_token", secret,
+            "allowed_updates", List.of("message", "callback_query")));
+    }
+
     private com.fasterxml.jackson.databind.JsonNode call(String method, Object payload) throws Exception {
         String token = config.botToken().orElseThrow();
         String body = jsonWriter.writeValueAsString(payload);
@@ -57,8 +64,9 @@ public class TelegramBotApiClient {
         com.fasterxml.jackson.databind.JsonNode result = jsonReader.readTree(response.body());
         if (response.statusCode() < 200 || response.statusCode() >= 300
             || !result.path("ok").asBoolean(false)) {
-            throw new IllegalStateException(
-                "Telegram API request failed: " + response.statusCode());
+            throw new TelegramApiException(response.statusCode(),
+                result.path("description").asText("unknown error"),
+                result.path("parameters").path("retry_after").asInt(0));
         }
         return result;
     }
@@ -71,8 +79,8 @@ public class TelegramBotApiClient {
             payload.put("message_id", messageId);
         }
         payload.put("text", text);
-        payload.put("reply_markup", Map.of("inline_keyboard", List.of(buttons.stream()
-            .map(this::buttonPayload).toList())));
+        payload.put("reply_markup", Map.of("inline_keyboard", buttons.stream()
+            .map(button -> List.of(buttonPayload(button))).toList()));
         return payload;
     }
 

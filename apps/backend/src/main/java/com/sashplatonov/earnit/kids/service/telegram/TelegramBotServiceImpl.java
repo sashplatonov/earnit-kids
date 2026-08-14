@@ -9,12 +9,14 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.jboss.logging.Logger;
 
 import java.util.List;
 
 @ApplicationScoped
 public class TelegramBotServiceImpl implements TelegramBotService {
     private static final String START_TEXT = "Open EarnIt Kids to continue.";
+    private static final Logger LOG = Logger.getLogger(TelegramBotServiceImpl.class);
     @Inject private TelegramIdentityService identities;
     @Inject private TelegramBotApiClient apiClient;
     @Inject private TelegramCallbackService callbacks;
@@ -76,14 +78,10 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         if (!identities.recordWebhookUpdate(updateId, timeProvider.now())) {
             return;
         }
-        try {
-            if (update.has("message")) {
-                handleMessage(update.get("message"));
-            } else if (update.has("callback_query")) {
-                handleCallback(update.get("callback_query"));
-            }
-        } catch (Exception ignored) {
-            return;
+        if (update.has("message")) {
+            TelegramWebhookExecution.run("message", () -> handleMessage(update.get("message")));
+        } else if (update.has("callback_query")) {
+            TelegramWebhookExecution.run("callback", () -> handleCallback(update.get("callback_query")));
         }
     }
 
@@ -91,7 +89,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         String text = message.path("text").asText("");
         long chatId = message.path("chat").path("id").asLong(Long.MIN_VALUE);
         long telegramUserId = message.path("from").path("id").asLong(Long.MIN_VALUE);
-        if (chatId == Long.MIN_VALUE || !text.equals("/start") && !text.startsWith("/start ")) {
+        if (chatId == Long.MIN_VALUE || !TelegramMenuFlow.isStartCommand(text)) {
             return;
         }
         if (!isEnabledForFamily(telegramUserId)) {
@@ -158,7 +156,15 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 callbacks.consumeMutation(data.substring("mutate.".length()), telegramUserId);
             }
         } finally {
+            acknowledgeCallback(callbackId);
+        }
+    }
+
+    private void acknowledgeCallback(String callbackId) {
+        try {
             apiClient.answerCallbackQuery(callbackId);
+        } catch (Exception exception) {
+            LOG.warn("Telegram callback acknowledgement failed", exception);
         }
     }
 
@@ -236,13 +242,14 @@ public class TelegramBotServiceImpl implements TelegramBotService {
     }
 
     private boolean isEnabledForFamily(long telegramUserId) {
-        if (featureGate == null || families == null) {
+        if (featureGate == null) {
             return true;
         }
         return identities.findActiveByTelegramUserId(telegramUserId)
             .flatMap(identity -> families.findFamilyIdByDbId(identity.familyId()))
             .map(featureGate::isBotEnabled)
-            .orElse(false);
+            // EXPLAIN: Unlinked users receive generic /start entry without family data.
+            .orElse(true);
     }
 
 }

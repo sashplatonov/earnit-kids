@@ -239,8 +239,6 @@ jobs:
           severity: HIGH,CRITICAL
           skip-dirs: node_modules,build,dist,.svelte-kit,coverage,test-results,.vite
           cache-dir: ${{ runner.temp }}/.trivy-cache
-          cache: 'false'
-          skip-setup-trivy: true
 
       - name: Frontend security summary
         if: always()

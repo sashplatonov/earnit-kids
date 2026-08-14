@@ -118,7 +118,7 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
         return families.findFamilyIdByDbId(familyDbId);
     }
 
-    private Optional<FamilyDataResponse> familyData(String familyId, int childId, boolean parent) {
+    private Optional<FamilyDataResponse> familyData(String familyId, Integer childId, boolean parent) {
         OperationResult<FamilyDataResponse> result = familyService.loadFamilyData(familyId, childId, parent);
         if (result instanceof OperationResult.Success<FamilyDataResponse> success) {
             return Optional.of(success.value());

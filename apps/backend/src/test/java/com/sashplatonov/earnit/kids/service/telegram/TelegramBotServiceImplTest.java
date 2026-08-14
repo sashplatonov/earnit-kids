@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -72,6 +73,26 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
+    void callbackFailurePropagatesSoTelegramCanRetryTheWebhook() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(28L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(callbacks.verifyNavigation("nav.signed", 77L)).thenThrow(new IllegalStateException("transport down"));
+        var service = service(identities, apiClient, callbacks, config);
+
+        assertThatThrownBy(() -> service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":28,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """)))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("Telegram callback processing failed");
+
+        verify(apiClient).answerCallbackQuery("callback");
+    }
+
+    @Test
     void stagedRolloutDoesNotProcessAnUnflaggedFamilyWebhookCallback() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
@@ -98,7 +119,61 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
-    void apiFailureDoesNotEscapeWebhookHandler() throws Exception {
+    void unlinkedStartStillSendsTheMiniAppEntryKeyboard() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramFeatureGate featureGate = mock(TelegramFeatureGate.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        when(identities.recordWebhookUpdate(26L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.empty());
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            null, null, featureGate, families);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":26,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
+            """));
+
+        verify(apiClient).sendMessage(44L, "Open EarnIt Kids to continue.",
+            List.of(new TelegramBotApiClient.InlineButton("Open Mini App", "https://example.test/telegram")));
+    }
+
+    @Test
+    void linkedStartSendsMenuWhenTheFamilyIsInTheBotRollout() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramFeatureGate featureGate = mock(TelegramFeatureGate.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 3, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(27L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(
+            new TelegramIdentityService.TelegramIdentity(1, 4, 3, 77L, "child")));
+        when(families.findFamilyIdByDbId(4)).thenReturn(Optional.of("family"));
+        when(featureGate.isBotEnabled("family")).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
+        when(menuBuilder.childMain(view, "https://example.test/telegram")).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder, featureGate, families);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":27,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
+            """));
+
+        verify(apiClient).sendMessage(44L, "EarnIt Kids · Alex\nBalance: 20 🪙", List.of());
+    }
+
+    @Test
+    void startFailurePropagatesSoTelegramCanRetryTheWebhook() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
@@ -109,8 +184,10 @@ class TelegramBotServiceImplTest {
             .when(apiClient).sendMessage(any(Long.class), any(String.class), any());
         var service = service(identities, apiClient, callbacks, config);
 
-        service.handleUpdate(new ObjectMapper().readTree(
-            "{\"update_id\":12,\"message\":{\"chat\":{\"id\":44},\"text\":\"/start\"}}"));
+        assertThatThrownBy(() -> service.handleUpdate(new ObjectMapper().readTree(
+            "{\"update_id\":12,\"message\":{\"chat\":{\"id\":44},\"text\":\"/start\"}}")))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("Telegram message processing failed");
     }
 
     @Test

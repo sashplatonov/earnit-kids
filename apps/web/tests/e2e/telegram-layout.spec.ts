@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { preserveTelegramFixture } from './telegramSdkFixture';
+
+test.beforeEach(async ({ page }) => {
+    await preserveTelegramFixture(page);
+});
 
 test('child Mini App keeps safe mobile geometry with multiple groups', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });

@@ -15,11 +15,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.HexFormat;
 
 @ApplicationScoped
 public class TelegramCallbackService {
+    private static final int CALLBACK_SIGNATURE_BYTES = 16;
     @Inject private TelegramConfig config;
     @Inject private TelegramIdentityRepository identities;
     @Inject private TelegramCallbackActionRepository callbacks;
@@ -58,7 +60,8 @@ public class TelegramCallbackService {
             if (!matches(canonical, parts[4])) {
                 return Optional.empty();
             }
-            return Optional.of(new VerifiedCallback(parts[1], telegramUserId, Instant.ofEpochSecond(issuedAt)));
+            return Optional.of(new VerifiedCallback(TelegramCallbackActionCodec.expand(parts[1]), telegramUserId,
+                Instant.ofEpochSecond(issuedAt)));
         } catch (RuntimeException exception) {
             return Optional.empty();
         }
@@ -69,9 +72,9 @@ public class TelegramCallbackService {
             throw new IllegalArgumentException("Invalid navigation action");
         }
         long issuedAt = timeProvider.currentEpochSecond();
-        String canonical = String.join(".", "nav", action, Long.toString(issuedAt),
+        String canonical = String.join(".", "nav", TelegramCallbackActionCodec.compact(action), Long.toString(issuedAt),
             Integer.toString(config.callbackMenuVersion()));
-        return canonical + "." + signature(canonical);
+        return canonical + "." + encodedSignature(canonical, CALLBACK_SIGNATURE_BYTES);
     }
 
     public Optional<TelegramIdentityService.MutationCallback> consumeMutation(String token, long telegramUserId) {
@@ -104,7 +107,9 @@ public class TelegramCallbackService {
         try {
             byte[] expected = Base64.getUrlDecoder().decode(signature(canonical));
             byte[] actual = Base64.getUrlDecoder().decode(encodedSignature);
-            return MessageDigest.isEqual(expected, actual);
+            return MessageDigest.isEqual(expected, actual)
+                || actual.length == CALLBACK_SIGNATURE_BYTES
+                && MessageDigest.isEqual(Arrays.copyOf(expected, CALLBACK_SIGNATURE_BYTES), actual);
         } catch (IllegalArgumentException exception) {
             return false;
         }
@@ -121,6 +126,12 @@ public class TelegramCallbackService {
         } catch (GeneralSecurityException exception) {
             throw new IllegalStateException("HMAC SHA-256 is unavailable", exception);
         }
+    }
+
+    private String encodedSignature(String canonical, int bytes) {
+        byte[] fullSignature = Base64.getUrlDecoder().decode(signature(canonical));
+        return Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(Arrays.copyOf(fullSignature, bytes));
     }
 
     public record VerifiedCallback(String action, long telegramUserId, Instant issuedAt) { }

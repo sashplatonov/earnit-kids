@@ -27,6 +27,7 @@ describe('proxyToBackend', () => {
                 'X-Forwarded-Host': '127.0.0.1:3001',
                 'X-Forwarded-Port': '3001',
                 'X-Forwarded-Proto': 'http',
+                'X-Telegram-Bot-Api-Secret-Token': 'telegram-secret',
             },
             body: JSON.stringify({ email: 'parent@example.com', password: 'secret123' }),
         });
@@ -59,5 +60,6 @@ describe('proxyToBackend', () => {
         expect(headers.get('x-forwarded-port')).toBe('3001');
         expect(headers.get('x-forwarded-proto')).toBe('http');
         expect(headers.get('cookie')).toBe('app_role=admin');
+        expect(headers.get('x-telegram-bot-api-secret-token')).toBe('telegram-secret');
     });
 });

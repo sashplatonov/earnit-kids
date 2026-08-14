@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { preserveTelegramFixture } from './telegramSdkFixture';
+
+test.beforeEach(async ({ page }) => {
+    await preserveTelegramFixture(page);
+});
 
 test('Mini App reconciles stale child action from the server snapshot', async ({ page }) => {
     let familyDataLoads = 0;

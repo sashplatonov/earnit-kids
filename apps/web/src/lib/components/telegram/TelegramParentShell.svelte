@@ -8,7 +8,6 @@
     import TelegramParentRewards from './TelegramParentRewards.svelte';
     import TelegramCatalogEditor from './TelegramCatalogEditor.svelte';
     import TelegramChildInvite from './TelegramChildInvite.svelte';
-    import TelegramLinkSettings from './TelegramLinkSettings.svelte';
     import TelegramRequestList from './TelegramRequestList.svelte';
     import TelegramHistoryList from './TelegramHistoryList.svelte';
     import { loadTelegramHistory, loadTelegramRequests, type TelegramPage } from '$lib/services/telegramActivity';
@@ -77,7 +76,7 @@
 
 <main class="parent-workspace" aria-labelledby="telegram-parent-title">
     <header class="workspace-header">
-        <div><p class="eyebrow">Telegram Mini App</p><h1 id="telegram-parent-title">Family space</h1></div>
+        <div><h1 id="telegram-parent-title">Family space</h1></div>
         <span class="balance" aria-label="Selected child balance">{$appStore.balance} 🪙</span>
     </header>
 
@@ -87,11 +86,11 @@
         <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}>Retry</button></section>
     {:else}
         <div class="tabs" aria-label="Parent workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
-            <button aria-controls="parent-panel-requests" aria-selected={view === 'requests'} class:active={view === 'requests'} id="parent-tab-requests" role="tab" tabindex={view === 'requests' ? 0 : -1} type="button" on:click={() => selectView('requests')}>Requests {pending.length ? `(${pending.length})` : ''}</button>
-            <button aria-controls="parent-panel-tasks" aria-selected={view === 'tasks'} class:active={view === 'tasks'} id="parent-tab-tasks" role="tab" tabindex={view === 'tasks' ? 0 : -1} type="button" on:click={() => selectView('tasks')}>Tasks</button>
-            <button aria-controls="parent-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="parent-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}>Rewards</button>
-            <button aria-controls="parent-panel-activity" aria-selected={view === 'activity'} class:active={view === 'activity'} id="parent-tab-activity" role="tab" tabindex={view === 'activity' ? 0 : -1} type="button" on:click={() => selectView('activity')}>Activity</button>
-            <button aria-controls="parent-panel-child" aria-selected={view === 'child'} class:active={view === 'child'} id="parent-tab-child" role="tab" tabindex={view === 'child' ? 0 : -1} type="button" on:click={() => selectView('child')}>Child</button>
+            <button aria-controls="parent-panel-requests" aria-selected={view === 'requests'} class:active={view === 'requests'} id="parent-tab-requests" role="tab" tabindex={view === 'requests' ? 0 : -1} type="button" on:click={() => selectView('requests')}><span class="tab-icon" aria-hidden="true">📬</span><span>Requests</span>{pending.length ? ` (${pending.length})` : ''}</button>
+            <button aria-controls="parent-panel-tasks" aria-selected={view === 'tasks'} class:active={view === 'tasks'} id="parent-tab-tasks" role="tab" tabindex={view === 'tasks' ? 0 : -1} type="button" on:click={() => selectView('tasks')}><span class="tab-icon" aria-hidden="true">✅</span><span>Tasks</span></button>
+            <button aria-controls="parent-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="parent-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><span class="tab-icon" aria-hidden="true">🎁</span><span>Rewards</span></button>
+            <button aria-controls="parent-panel-activity" aria-selected={view === 'activity'} class:active={view === 'activity'} id="parent-tab-activity" role="tab" tabindex={view === 'activity' ? 0 : -1} type="button" on:click={() => selectView('activity')}><span class="tab-icon" aria-hidden="true">🕘</span><span>Activity</span></button>
+            <button aria-controls="parent-panel-child" aria-selected={view === 'child'} class:active={view === 'child'} id="parent-tab-child" role="tab" tabindex={view === 'child' ? 0 : -1} type="button" on:click={() => selectView('child')}><span class="tab-icon" aria-hidden="true">👧</span><span>Child</span></button>
         </div>
         <div aria-labelledby={`parent-tab-${view}`} id={`parent-panel-${view}`} role="tabpanel" tabindex="0">
             {#if view === 'requests'}
@@ -106,23 +105,30 @@
             {:else}
                 <TelegramChildPicker />
                 <TelegramChildInvite />
-                <TelegramLinkSettings />
             {/if}
         </div>
     {/if}
 </main>
 
 <style>
-    .parent-workspace { max-width: 42rem; margin: 0 auto; padding: .5rem 0 2rem; }
-    .workspace-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-    .eyebrow { margin: 0; color: #66718a; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
-    h1 { margin: .2rem 0 0; font-size: clamp(1.35rem, 6vw, 2rem); color: #18243d; }
+    .parent-workspace { width: 100%; max-width: 48rem; margin: 0 auto; padding: .75rem 1rem 2rem; }
+    .workspace-header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+    h1 { margin: .15rem 0 0; font-size: clamp(1.25rem, 5vw, 1.75rem); color: #18243d; }
     .balance { padding: .55rem .75rem; border-radius: 999px; background: #fff4c2; color: #573d00; font-weight: 700; white-space: nowrap; }
-    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; margin-bottom: 1rem; }
+    .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .25rem; margin-bottom: .75rem; }
     button { min-height: 2.75rem; border: 1px solid #dfe4ee; border-radius: .75rem; background: #fff; color: #33415f; font: inherit; cursor: pointer; }
     button:focus-visible { outline: 3px solid #80aaff; outline-offset: 2px; }
     .tabs button.active { border-color: #3867d6; background: #3867d6; color: #fff; }
+    .tabs button { display: inline-flex; align-items: center; justify-content: center; gap: .2rem; padding-inline: .25rem; white-space: nowrap; }
+    .tab-icon { font-size: 1rem; line-height: 1; }
     .state { padding: 2rem 1rem; text-align: center; color: #5c6780; }
     .state--error { color: #a33b3b; }
-    @media (max-width: 340px) { .tabs { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px) {
+        .parent-workspace { padding: .65rem .75rem calc(5.75rem + env(safe-area-inset-bottom)); }
+        .tabs { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 0; padding: .4rem .35rem calc(.4rem + env(safe-area-inset-bottom)); border-top: 1px solid #dfe4ee; background: rgb(255 255 255 / 96%); box-shadow: 0 -8px 24px rgb(24 36 61 / 8%); }
+        .tabs button { min-height: 3.25rem; flex-direction: column; gap: .2rem; border: 0; border-radius: .65rem; font-size: .68rem; }
+        .tabs button.active { background: #edf2ff; color: #2854ba; }
+        .tab-icon { font-size: 1.2rem; }
+    }
+    @media (max-width: 340px) { .tabs button { font-size: .61rem; } }
 </style>

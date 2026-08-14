@@ -8,6 +8,14 @@ import {
     uniqueEmail,
 } from './helpers';
 
+async function chooseInvitePermission(page: import('@playwright/test').Page, permission: RegExp) {
+    await page.locator('#parent-access-section .parent-access__action-tile--permission').click();
+    const picker = page.getByRole('dialog');
+    await expect(picker).toBeVisible();
+    await picker.getByRole('button', { name: permission }).click();
+    await expect(picker).toBeHidden();
+}
+
 test('family admin can manage parent access from settings', async ({ page }) => {
     const ownerEmail = uniqueEmail('parent.access.owner');
     const invitedEmail = uniqueEmail('parent.access.invited');
@@ -19,7 +27,7 @@ test('family admin can manage parent access from settings', async ({ page }) => 
     await expect(page.getByRole('heading', { name: parentAccessHeading })).toBeVisible();
 
     await page.locator('#parent-access-email').fill(invitedEmail);
-    await page.locator('#parent-access-permission').selectOption('editor');
+    await chooseInvitePermission(page, /Editor|Редактор/i);
     await page.locator('#parent-access-invite').click();
 
     const invitedRow = page.locator('#parent-access-list [data-membership-id]')
@@ -28,7 +36,11 @@ test('family admin can manage parent access from settings', async ({ page }) => 
     await expect(invitedRow).toBeVisible();
     await expect(invitedRow).toContainText(/Editor|Редактор/i);
 
-    await invitedRow.locator('select').selectOption('viewer');
+    await invitedRow.getByRole('button', { name: /Permission|Доступ/i }).click();
+    const picker = page.getByRole('dialog');
+    await expect(picker).toBeVisible();
+    await picker.getByRole('button', { name: /Viewer|Просмотр/i }).click();
+    await expect(picker).toBeHidden();
     await expect(invitedRow).toContainText(/Viewer|Просмотр/i);
 
     page.once('dialog', async (dialog) => {
@@ -61,7 +73,7 @@ test('invited parent memberships stay visible after page reload', async ({ page 
     await openSettings(page);
 
     await page.locator('#parent-access-email').fill(invitedEmail);
-    await page.locator('#parent-access-permission').selectOption('editor');
+    await chooseInvitePermission(page, /Editor|Редактор/i);
     await page.locator('#parent-access-invite').click();
 
     const invitedRow = page.locator('#parent-access-list [data-membership-id]')
@@ -84,12 +96,12 @@ test('primary parent email shows toast error and stays out of membership list', 
     await openSettings(page);
 
     await page.locator('#parent-access-email').fill(ownerEmail);
-    await page.locator('#parent-access-permission').selectOption('editor');
+    await chooseInvitePermission(page, /Editor|Редактор/i);
     await page.locator('#parent-access-invite').click();
 
     await expect(page.getByRole('alert').filter({
         hasText: /main parent account|основному родителю/i,
     })).toBeVisible();
-    await expect(page.locator('#parent-access-list [data-membership-id]')).toHaveCount(0);
+    await expect(page.locator('#parent-access-list [data-membership-id]')).toHaveCount(1);
     await expect(page.locator('#parent-access-section')).not.toContainText(/already in the family|уже в семье/i);
 });

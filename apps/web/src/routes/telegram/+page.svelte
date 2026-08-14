@@ -1,6 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { exchangeTelegramInitData, initializeTelegramWebApp } from '$lib/services/telegram';
+    import {
+        completeTelegramAccountLink,
+        exchangeTelegramInitData,
+        initializeTelegramWebApp,
+    } from '$lib/services/telegram';
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
 
     type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram';
@@ -34,6 +38,13 @@
         }
         state = 'loading';
         try {
+            const pairingToken = telegram.initDataUnsafe?.start_param
+                ?? new URLSearchParams(window.location.search).get('tgWebAppStartParam');
+            let pairingFailed = false;
+            if (pairingToken) {
+                const pairing = await completeTelegramAccountLink(pairingToken, telegram.initData);
+                pairingFailed = !pairing.ok;
+            }
             const response = await exchangeTelegramInitData(telegram.initData);
             if (response.ok) {
                 state = 'ready';
@@ -48,10 +59,13 @@
             const code = await errorCode(response);
             state = response.status === 404
                 ? 'unavailable'
-                : code === 'TELEGRAM_IDENTITY_UNLINKED' ? 'unlinked' : 'retry';
+                : pairingFailed ? 'retry'
+                    : code === 'TELEGRAM_IDENTITY_UNLINKED' ? 'unlinked' : 'retry';
             message = response.status === 404
                 ? 'Telegram access is not enabled for this environment yet.'
-                : 'We could not verify this Telegram session.';
+                : pairingFailed
+                    ? 'We could not link this Telegram account. Return to Settings and try again.'
+                    : 'We could not verify this Telegram session.';
         } catch {
             state = 'retry';
             message = 'Network error. Try again.';
@@ -67,28 +81,30 @@
     <title>EarnIt Kids · Telegram</title>
 </svelte:head>
 
-<main class="telegram-page" aria-live="polite">
-    <div class="telegram-card">
-        <div class="telegram-mark" aria-hidden="true">🪙</div>
-        <h1>EarnIt Kids</h1>
-        {#if state === 'loading'}
-            <p>Checking your Telegram session…</p>
-        {:else if state === 'non-telegram'}
-            <p>Open this page inside Telegram to continue.</p>
-        {:else if state === 'unavailable'}
-            <p>{message}</p>
-        {:else if state === 'unlinked'}
-            <p>This Telegram account is not linked to a family yet.</p>
-            <a class="telegram-action" href="/login">Sign in as a parent to link it</a>
-            <p class="telegram-hint">For a child account, ask a parent to send an invitation.</p>
-        {:else if state === 'ready'}
-            {#if verifiedRole}<TelegramRoleResolver role={verifiedRole} />{:else}<p>Could not resolve your Telegram role. Try again.</p>{/if}
-        {:else}
-            <p>{message}</p>
-            <button type="button" on:click={() => void authenticate()}>Try again</button>
-        {/if}
-    </div>
-</main>
+{#if state === 'ready' && verifiedRole}
+    <TelegramRoleResolver role={verifiedRole} />
+{:else}
+    <main class="telegram-page" aria-live="polite">
+        <div class="telegram-card">
+            <div class="telegram-mark" aria-hidden="true">🪙</div>
+            <h1>EarnIt Kids</h1>
+            {#if state === 'loading'}
+                <p>Checking your Telegram session…</p>
+            {:else if state === 'non-telegram'}
+                <p>Open this page inside Telegram to continue.</p>
+            {:else if state === 'unavailable'}
+                <p>{message}</p>
+            {:else if state === 'unlinked'}
+                <p>This Telegram account is not linked to a family yet.</p>
+                <a class="telegram-action" href="/login">Sign in as a parent to link it</a>
+                <p class="telegram-hint">For a child account, ask a parent to send an invitation.</p>
+            {:else}
+                <p>{message || 'Could not resolve your Telegram role. Try again.'}</p>
+                <button type="button" on:click={() => void authenticate()}>Try again</button>
+            {/if}
+        </div>
+    </main>
+{/if}
 
 <style>
     .telegram-page {

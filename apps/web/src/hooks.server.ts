@@ -32,7 +32,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     event.locals.locale = resolvedLocale;
 
     if (event.url.pathname === '/') {
-        throw redirect(302, localizePath('/', DEFAULT_LOCALE));
+        throw redirect(302, `${localizePath('/', DEFAULT_LOCALE)}${event.url.search}`);
     }
 
     const legacyAliasTarget = resolveLegacyAlias(internalPath);

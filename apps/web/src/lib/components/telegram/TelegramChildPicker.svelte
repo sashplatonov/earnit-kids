@@ -26,7 +26,7 @@
 </section>
 
 <style>
-    .panel { padding: 1rem; border: 1px solid #dfe4ee; border-radius: 1rem; background: #fff; margin-bottom: .75rem; }
+    .panel { width: 100%; margin-bottom: 1rem; }
     h2 { margin: 0 0 .75rem; font-size: 1.05rem; color: #18243d; }
     .children { display: grid; gap: .5rem; }
     button { display: flex; justify-content: space-between; min-height: 2.75rem; padding: .7rem .8rem; border: 1px solid #dfe4ee; border-radius: .7rem; background: #fff; color: #33415f; font: inherit; text-align: left; }

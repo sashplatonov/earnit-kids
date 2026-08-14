@@ -151,6 +151,36 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
     }
 }
 
+async function putJsonResult<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
+    try {
+        const res = await fetchWithCsrf(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await parseJsonSafe<T | ProblemDetails>(res);
+
+        if (res.ok) {
+            return { ok: true, data: data as T | null };
+        }
+
+        return {
+            ok: false,
+            error: extractProblemMessage(data),
+            errorCode: extractProblemCode(data),
+            status: res.status,
+        };
+    } catch (err) {
+        logClientError('api.put_failed', 'PUT request failed', { url, error: err });
+        return {
+            ok: false,
+            error: 'Сеть недоступна. Попробуйте еще раз.',
+            errorCode: null,
+            status: 0,
+        };
+    }
+}
+
 async function postJsonResultWithValidation<T = unknown>(url: string, body: unknown): Promise<ImportActionResult<T>> {
     try {
         const res = await fetchWithCsrf(url, {
@@ -371,6 +401,24 @@ export const loginWithEmail = (email: string, password: string) =>
 export const selectFamily = (email: string, familyId: string) =>
     postAuthJson('/api/select-family', { email, familyId });
 
+export type TelegramAccountConnection = {
+    email: string;
+    emailConnected: boolean;
+    telegramConnected: boolean;
+    miniAppUrl: string | null;
+};
+
+type TelegramLinkLaunch = { launchUrl: string };
+
+export const getTelegramAccountConnection = () =>
+    fetchGet<TelegramAccountConnection>('/api/telegram/account-connection');
+
+export const startTelegramAccountLink = () =>
+    postJsonResult<TelegramLinkLaunch>('/api/telegram/account-connection/start', {});
+
+export const unlinkTelegramAccount = () =>
+    deleteJsonResult<void>('/api/telegram/account-connection');
+
 export async function loadParentMemberships(): Promise<ApiActionResult<ParentMembership[]>> {
     try {
         const res = await fetchWithCsrf('/api/parents');
@@ -400,7 +448,7 @@ export const addParentMembership = (body: { email: string; permission: Membershi
     postJsonResult<ParentMembership>('/api/parents', body);
 
 export const updateParentMembership = (membershipId: number, body: { permission: MembershipPermission }) =>
-    postJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}`, body);
+    putJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}`, body);
 
 export async function removeParentMembership(membershipId: number): Promise<ApiActionResult<void>> {
     return deleteJsonResult<void>(`/api/parents/${encodeURIComponent(String(membershipId))}`);

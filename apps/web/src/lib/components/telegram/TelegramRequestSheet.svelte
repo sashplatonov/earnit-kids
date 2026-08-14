@@ -23,7 +23,7 @@
 {/if}
 
 <style>
-    .sheet-backdrop { position:fixed; inset:0; z-index:10; background:rgb(15 24 45 / 35%); }
-    .sheet { position:fixed; inset:auto 0 0; z-index:11; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
+    .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
+    .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
     h2 { margin:0 0 1rem; color:#18243d; font-size:1.2rem; } label { display:block; margin-bottom:.4rem; color:#33415f; font-weight:600; } textarea { box-sizing:border-box; width:100%; min-height:5rem; padding:.7rem; border:1px solid #cfd6e4; border-radius:.7rem; font:inherit; resize:vertical; } .actions { display:flex; justify-content:flex-end; gap:.6rem; margin-top:1rem; } button { min-height:2.75rem; padding:.6rem .85rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; } button.primary { border-color:#3867d6; background:#3867d6; color:#fff; }
 </style>

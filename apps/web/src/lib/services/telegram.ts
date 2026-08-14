@@ -2,6 +2,7 @@ import { fetchWithCsrf } from './api';
 
 type TelegramWebApp = {
     initData?: string;
+    initDataUnsafe?: { start_param?: string };
     ready?: () => void;
     expand?: () => void;
 };
@@ -28,5 +29,13 @@ export async function exchangeTelegramInitData(initData: string): Promise<Respon
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData }),
+    });
+}
+
+export async function completeTelegramAccountLink(token: string, initData: string): Promise<Response> {
+    return fetchWithCsrf('/api/telegram/account-connection/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, initData }),
     });
 }

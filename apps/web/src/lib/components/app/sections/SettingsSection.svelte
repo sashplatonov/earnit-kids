@@ -12,6 +12,7 @@
     } from '$lib/services/api';
     import { showToast } from '$lib/stores/toasts';
     import ParentAccessManager from '$lib/components/app/settings/ParentAccessManager.svelte';
+    import TelegramAccountConnections from '$lib/components/app/settings/TelegramAccountConnections.svelte';
 
     const i18n = useI18n();
     const THEME_KEYS = ['mint', 'ocean', 'sun', 'coral', 'cosmos'] as const;
@@ -225,6 +226,10 @@
                     <button class="btn btn--secondary" id="settings-save-password-btn"
                         style="width: 100%;" on:click={changePassword}>{tAdmin('settings.updatePassword')}</button>
                 </div>
+            </div>
+
+            <div class="card settings-card">
+                <TelegramAccountConnections />
             </div>
 
             {#if canManageParentAccess}

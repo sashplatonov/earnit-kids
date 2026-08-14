@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { preserveTelegramFixture } from './telegramSdkFixture';
+
+test.beforeEach(async ({ page }) => {
+    await preserveTelegramFixture(page);
+});
 
 test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
@@ -45,5 +50,12 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await page.getByRole('tab', { name: 'Tasks' }).press('End');
     await expect(page.getByRole('tab', { name: 'Child' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('heading', { name: 'Selected child' })).toBeVisible();
+    const mobileNav = await page.getByRole('tablist').evaluate((node) => {
+        const style = getComputedStyle(node);
+        const rect = node.getBoundingClientRect();
+        return { position: style.position, bottom: Math.round(window.innerHeight - rect.bottom), width: Math.round(rect.width) };
+    });
+    expect(mobileNav).toEqual({ position: 'fixed', bottom: 0, width: 320 });
+    expect(await page.locator('.parent-workspace').evaluate((node) => node.getBoundingClientRect().width)).toBeGreaterThan(300);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });

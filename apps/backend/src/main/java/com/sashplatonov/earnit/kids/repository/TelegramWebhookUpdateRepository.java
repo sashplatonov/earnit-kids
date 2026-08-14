@@ -21,7 +21,7 @@ public class TelegramWebhookUpdateRepository implements PanacheRepositoryBase<Te
             throw new IllegalStateException("Database schema name is invalid");
         }
         String query = "MERGE INTO " + schema + ".telegram_webhook_updates AS target "
-            + "USING (VALUES (?1, ?2)) AS source(update_id, received_at) "
+            + "USING (VALUES (?1, CAST(?2 AS TIMESTAMP WITH TIME ZONE))) AS source(update_id, received_at) "
             + "ON target.update_id = source.update_id "
             + "WHEN NOT MATCHED THEN INSERT (update_id, received_at) "
             + "VALUES (source.update_id, source.received_at)";

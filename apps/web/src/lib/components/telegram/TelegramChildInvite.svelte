@@ -21,5 +21,5 @@
 </section>
 
 <style>
-    .panel { padding:1rem; border:1px solid #dfe4ee; border-radius:1rem; background:#fff; margin-bottom:.75rem; } h2 { margin:0 0 .5rem; color:#18243d; font-size:1.05rem; } .muted { color:#66718a; line-height:1.45; } button { min-height:2.75rem; padding:.6rem .8rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; cursor:pointer; } label { display:block; margin-top:.75rem; font-size:.85rem; color:#33415f; } input { box-sizing:border-box; width:100%; min-height:2.75rem; margin-top:.25rem; padding:.6rem; border:1px solid #dfe4ee; border-radius:.6rem; font:inherit; } .error { color:#a33b3b; }
+    .panel { width:100%; margin-bottom:1rem; } h2 { margin:0 0 .5rem; color:#18243d; font-size:1.05rem; } .muted { color:#66718a; line-height:1.45; } button { min-height:2.75rem; padding:.6rem .8rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; cursor:pointer; } label { display:block; margin-top:.75rem; font-size:.85rem; color:#33415f; } input { box-sizing:border-box; width:100%; min-height:2.75rem; margin-top:.25rem; padding:.6rem; border:1px solid #dfe4ee; border-radius:.6rem; font:inherit; } .error { color:#a33b3b; }
 </style>

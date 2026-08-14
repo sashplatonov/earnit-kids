@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { preserveTelegramFixture } from './telegramSdkFixture';
+
+test.beforeEach(async ({ page }) => {
+    await preserveTelegramFixture(page);
+});
 
 test('child activity shows own requests and bounded history on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
@@ -11,7 +16,7 @@ test('child activity shows own requests and bounded history on mobile', async ({
     await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ id: 3, title: 'Read', amount: 20, createdAt: '2026-08-13T10:00:00Z' }], total: 1, page: 1, limit: 20 }) }));
 
     await page.goto('/telegram');
-    await page.getByRole('button', { name: 'Activity' }).click();
+    await page.getByRole('tab', { name: 'Activity' }).click();
     await expect(page.getByRole('heading', { name: 'Requests' })).toBeVisible();
     await expect(page.getByText('Read')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();

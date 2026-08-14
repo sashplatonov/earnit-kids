@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
     import PublicTopNav from '$lib/components/PublicTopNav.svelte';
     import { useI18n } from '$lib/i18n/context';
+    import { initializeTelegramWebApp } from '$lib/services/telegram';
     import type { PageData } from './$types';
 
     export let data: PageData;
@@ -8,6 +10,18 @@
     const i18n = useI18n();
 
     $: alternates = $i18n.alternates('/');
+
+    onMount(() => {
+        const telegram = initializeTelegramWebApp();
+        if (!telegram?.initData) {
+            return;
+        }
+
+        // Telegram opens the BotFather Main Mini App URL for `startapp` links.
+        // Keep the launch parameters while routing every Telegram session through
+        // the dedicated gate that completes pairing and exchanges initData.
+        window.location.replace(`${$i18n.href('/telegram')}${window.location.search}`);
+    });
 </script>
 
 <svelte:head>

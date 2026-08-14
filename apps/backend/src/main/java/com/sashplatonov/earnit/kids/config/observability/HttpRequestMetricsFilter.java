@@ -37,7 +37,7 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
     public void filter(ContainerRequestContext requestContext) {
         requestContext.setProperty(START_NANOS, System.nanoTime());
         String path = requestContext.getUriInfo().getPath();
-        requestContext.setProperty(REQUEST_PATH, path == null || path.isBlank() ? "/" : "/" + path);
+        requestContext.setProperty(REQUEST_PATH, RequestPathNormalizer.normalize(path));
     }
 
     @Override

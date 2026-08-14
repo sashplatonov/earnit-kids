@@ -34,6 +34,33 @@ class TelegramCallbackServiceTest {
         assertThat(service.verifyNavigation(data, 42L)).contains(
             new TelegramCallbackService.VerifiedCallback("tasks", 42L, Instant.ofEpochSecond(1_000L)));
     }
+
+    @Test
+    void signedNavigationFitsTelegramCallbackDataLimit() {
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(config.callbackSigningSecret()).thenReturn(Optional.of("callback-secret"));
+        when(config.callbackMenuVersion()).thenReturn(1);
+        when(config.callbackTtlSeconds()).thenReturn(300);
+        TelegramCallbackService service = new TelegramCallbackService(config,
+            mock(TelegramIdentityRepository.class), mock(TelegramCallbackActionRepository.class),
+            () -> Instant.ofEpochSecond(1_000L), mock(TelegramIdentityService.class));
+
+        String data = service.signNavigation("catalog-child-1234567890");
+
+        assertThat(data.getBytes(StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(64);
+        assertThat(service.verifyNavigation(data, 42L)).isPresent();
+
+        String coinData = service.signNavigation("coins-confirm-remove-10-child-1234567890");
+        assertThat(coinData.getBytes(StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(64);
+        assertThat(service.verifyNavigation(coinData, 42L)).contains(
+            new TelegramCallbackService.VerifiedCallback(
+                "coins-confirm-remove-10-child-1234567890", 42L, Instant.ofEpochSecond(1_000L)));
+
+        String childData = service.signNavigation("catalog-child-42");
+        assertThat(service.verifyNavigation(childData, 42L)).contains(
+            new TelegramCallbackService.VerifiedCallback("catalog-child-42", 42L,
+                Instant.ofEpochSecond(1_000L)));
+    }
     @Test
     void verifiesSignedVersionedNavigationCallback() throws Exception {
         TelegramConfig config = mock(TelegramConfig.class);

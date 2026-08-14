@@ -281,7 +281,7 @@ describe('fetchWithCsrf', () => {
 
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
         expect(url).toBe('/api/parents/11');
-        expect(init.method).toBe('POST');
+        expect(init.method).toBe('PUT');
         expect(init.body).toBe(JSON.stringify({ permission: 'viewer' }));
     });
 

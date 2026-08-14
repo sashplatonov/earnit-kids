@@ -8,6 +8,10 @@ final class TelegramMenuFlow {
     private TelegramMenuFlow() {
     }
 
+    static boolean isStartCommand(String text) {
+        return text.equals("/start") || text.startsWith("/start ");
+    }
+
     static String startText(TelegramQuickActionResponse view) {
         return view.children().size() > 1 && "parent".equals(view.role())
             ? "Choose a child" : parentOrChildText(view);

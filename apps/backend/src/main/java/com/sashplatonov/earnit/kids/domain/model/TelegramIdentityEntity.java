@@ -24,6 +24,7 @@ import java.time.Instant;
 public class TelegramIdentityEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
     @Column(name = "family_id") private Integer familyId;
+    @Column(name = "parent_account_id") private Integer parentAccountId;
     @Column(name = "child_id") private Integer childId;
     @Column(name = "telegram_user_id", nullable = false) private Long telegramUserId;
     @Column(nullable = false) private String role;
