@@ -372,6 +372,8 @@ Current Family still behaves like the previous Child screen:
 
 # NUX-006 - Normalize Parent header and balance context
 
+**Status:** ✅ Done
+
 **Priority:** P0  
 **Depends on:** NUX-001, NUX-004
 

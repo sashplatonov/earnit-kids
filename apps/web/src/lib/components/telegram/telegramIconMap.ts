@@ -6,6 +6,7 @@ import {
     BookOpen,
     Castle,
     Check,
+    ChevronDown,
     CircleCheck,
     CircleDollarSign,
     ClipboardList,
@@ -79,7 +80,8 @@ export const telegramIconMap = {
     alert: TriangleAlert,
     box: Package,
     desk: Table,
-    addChild: UserRoundPlus
+    addChild: UserRoundPlus,
+    chevronDown: ChevronDown
 } as const;
 
 export type TelegramIconName = keyof typeof telegramIconMap;

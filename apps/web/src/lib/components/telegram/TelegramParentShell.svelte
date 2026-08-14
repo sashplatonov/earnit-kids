@@ -7,7 +7,7 @@
     import TelegramParentTasks from './TelegramParentTasks.svelte';
     import TelegramParentRewards from './TelegramParentRewards.svelte';
     import TelegramChildInvite from './TelegramChildInvite.svelte';
-    import TelegramCoin from './TelegramCoin.svelte';
+    import TelegramParentHeader from './TelegramParentHeader.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 
     let view: 'home' | 'tasks' | 'rewards' | 'family' = 'home';
@@ -47,11 +47,8 @@
     }
 </script>
 
-<main class="parent-workspace" aria-labelledby="telegram-parent-title">
-    <header class="workspace-header">
-        <div><h1 id="telegram-parent-title">Family space</h1></div>
-        <span class="balance" aria-label="Selected child balance"><TelegramCoin size={16} />{$appStore.balance}</span>
-    </header>
+<main class="parent-workspace">
+    <TelegramParentHeader />
 
     {#if loading}
         <p class="state" role="status">Loading your family…</p>
@@ -81,9 +78,6 @@
 
 <style>
     .parent-workspace { width: 100%; max-width: 48rem; margin: 0 auto; padding: calc(.75rem + env(safe-area-inset-top)) 1rem 2rem; }
-    .workspace-header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .75rem; }
-    h1 { margin: .15rem 0 0; font-size: clamp(1.25rem, 5vw, 1.75rem); color: #18243d; }
-    .balance { display:inline-flex; align-items:center; gap:.35rem; padding: .55rem .75rem; border-radius: 999px; background: #fff4c2; color: #573d00; font-weight: 700; white-space: nowrap; }
     .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .25rem; margin-bottom: .75rem; }
     button { min-height: 2.75rem; border: 1px solid #dfe4ee; border-radius: .75rem; background: #fff; color: #33415f; font: inherit; cursor: pointer; }
     button:focus-visible { outline: 3px solid #80aaff; outline-offset: 2px; }

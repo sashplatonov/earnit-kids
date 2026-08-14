@@ -48,7 +48,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
 
     await page.goto('/telegram');
 
-    await expect(page.getByRole('heading', { name: 'Family space' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Tasks' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Rewards' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Family' })).toBeVisible();
