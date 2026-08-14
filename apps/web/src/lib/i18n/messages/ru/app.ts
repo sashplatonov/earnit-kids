@@ -250,6 +250,8 @@ export const appMessages = {
             dragHint: 'Перетащите группы в нужном для ребёнка порядке.',
             cancel: 'Отмена',
             task: 'Задание',
+            lastCompleted: 'Последнее: {when}',
+            neverCompleted: 'Ещё не выполнялось',
         },
         rewards: {
             title: 'Награды',
@@ -259,6 +261,8 @@ export const appMessages = {
             deleteTitle: 'Удалить награду?',
             rewardGroups: 'Группы наград',
             reward: 'Награда',
+            lastUsed: 'Последнее: {when}',
+            neverUsed: 'Ещё не использовалось',
         },
         childTasks: {
             tasksToday: 'Задания · Сегодня',

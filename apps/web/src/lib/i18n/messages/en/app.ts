@@ -250,6 +250,8 @@ export const appMessages = {
             dragHint: 'Drag groups into the order your child sees.',
             cancel: 'Cancel',
             task: 'Task',
+            lastCompleted: 'Last: {when}',
+            neverCompleted: 'Never completed',
         },
         rewards: {
             title: 'Rewards',
@@ -259,6 +261,8 @@ export const appMessages = {
             deleteTitle: 'Delete reward?',
             rewardGroups: 'Reward groups',
             reward: 'Reward',
+            lastUsed: 'Last: {when}',
+            neverUsed: 'Never used',
         },
         childTasks: {
             tasksToday: 'Tasks · Today',

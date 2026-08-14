@@ -164,7 +164,7 @@ Do not delete the child record.
 
 ---
 
-# SFX-002 - Show last completion/use date and time
+# SFX-002 ✅ - Show last completion/use date and time
 
 **Priority:** P0  
 **Channels:** Mini App + Bot
