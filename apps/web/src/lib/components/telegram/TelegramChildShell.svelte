@@ -54,7 +54,7 @@
 <svelte:window on:visibilitychange={onVisibility} />
 <main class="child-workspace" aria-labelledby="child-workspace-title">
     {#if loading}<p class="state" role="status">Loading your tasks…</p>
-    {:else if error}<section class="state" role="alert"><p>{error}</p><button type="button" on:click={retry} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Retry'}</button></section>
+    {:else if error}<section class="state" role="alert"><p>{error}</p><button type="button" on:click={retry} disabled={refreshing}><TelegramIcon name="refresh" size={18} label={refreshing ? 'Refreshing workspace' : 'Retry'} />{refreshing ? 'Refreshing…' : 'Retry'}</button></section>
     {:else}
         <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} />
         <div class="tabs" aria-label="Child workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>

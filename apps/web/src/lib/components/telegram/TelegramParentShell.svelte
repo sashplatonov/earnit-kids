@@ -55,7 +55,7 @@
     {#if loading}
         <p class="state" role="status">Loading your family…</p>
     {:else if error}
-        <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}>Retry</button></section>
+        <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}><TelegramIcon name="refresh" size={18} label="Retry" />Retry</button></section>
     {:else}
         <div class="tabs" aria-label="Parent workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
             <button aria-controls="parent-panel-home" aria-selected={view === 'home'} class:active={view === 'home'} id="parent-tab-home" role="tab" tabindex={view === 'home' ? 0 : -1} type="button" on:click={() => selectView('home')}><TelegramIcon name="home" size={20} label="Home" /><span>Home</span>{pending.length ? ` (${pending.length})` : ''}</button>
