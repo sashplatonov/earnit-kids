@@ -2,9 +2,14 @@ package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
+import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 final class TelegramMenuFlow {
     private TelegramMenuFlow() {
@@ -66,6 +71,25 @@ final class TelegramMenuFlow {
             }
         }
         return 0;
+    }
+
+    // EXPLAIN: Task ids that already have a pending request; those must not get
+    // EXPLAIN: an active Done action (replay safety).
+    static Set<Long> pendingTaskIds(TelegramQuickActionResponse view) {
+        return view.requests().stream()
+            .filter(request -> request.status() == PurchaseRequestStatus.pending)
+            .map(RequestDto::taskId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
+
+    // EXPLAIN: Up to five actionable tasks, Available first then Pending.
+    static List<TaskDto> orderedTasks(TelegramQuickActionResponse view) {
+        Set<Long> pending = pendingTaskIds(view);
+        return view.tasks().stream()
+            .sorted(Comparator.comparing((TaskDto task) -> pending.contains(task.id())))
+            .limit(5)
+            .toList();
     }
 
     static String navigationText(String action, TelegramQuickActionResponse view) {

@@ -173,9 +173,11 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             return;
         }
         quickActions.load(telegramUserId, null).ifPresent(view -> {
+            String taskName = view.tasks().stream()
+                .filter(task -> task.id() == taskId).map(task -> task.name()).findFirst().orElse(null);
             OperationResult<TelegramQuickActionResponse> result =
                 quickActions.requestTask(telegramUserId, view.childId(), taskId);
-            editTaskRequestResult(callback, result);
+            editTaskRequestResult(callback, result, taskName);
         });
     }
 
@@ -197,7 +199,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             return;
         }
         String text = result instanceof OperationResult.Success<TelegramQuickActionResponse>
-            ? "⏳ Reward request sent to parent" : "Could not request this reward. Refresh and try again.";
+            ? TelegramCopy.rewardWaiting() : TelegramCopy.error();
         try {
             apiClient.editMessageText(chatId, messageId, text, menuBuilder.backToMain());
         } catch (Exception exception) {
@@ -205,14 +207,16 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         }
     }
 
-    private void editTaskRequestResult(JsonNode callback, OperationResult<TelegramQuickActionResponse> result) {
+    private void editTaskRequestResult(JsonNode callback,
+                                       OperationResult<TelegramQuickActionResponse> result,
+                                       String taskName) {
         long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
         long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
             return;
         }
         String text = result instanceof OperationResult.Success<TelegramQuickActionResponse>
-            ? "⏳ Waiting for parent" : "Could not submit this task. Refresh and try again.";
+            ? TelegramCopy.waiting(taskName == null ? "Задание" : taskName) : TelegramCopy.error();
         try {
             apiClient.editMessageText(chatId, messageId, text, menuBuilder.backToMain());
         } catch (Exception exception) {

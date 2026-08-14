@@ -2,12 +2,12 @@ package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
-import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @ApplicationScoped
 public class TelegramMenuBuilder {
@@ -93,15 +93,19 @@ public class TelegramMenuBuilder {
         );
     }
 
+    // EXPLAIN: Action-first: Done buttons only for available (non-pending)
+    // EXPLAIN: tasks, capped at five; more opens the Child Mini App Today.
     public List<TelegramBotApiClient.InlineButton> childTasks(TelegramQuickActionResponse view,
                                                                String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        view.tasks().stream().limit(5).forEach(task ->
-            buttons.add(callback(TelegramBotEmoji.DONE + " Done: " + task.name(), "task.request." + task.id())));
+        Set<Long> pending = TelegramMenuFlow.pendingTaskIds(view);
+        TelegramMenuFlow.orderedTasks(view).stream()
+            .filter(task -> !pending.contains(task.id()))
+            .forEach(task -> buttons.add(callback(TelegramCopy.doneTask(task.name()), "task.request." + task.id())));
         if (view.tasks().size() > 5) {
-            buttons.add(webApp(TelegramBotEmoji.OPEN_APP + " More tasks → Mini App", miniAppUrl));
+            buttons.add(webApp(TelegramCopy.ALL_TASKS, TelegramDeepLink.tasks(miniAppUrl)));
         }
-        buttons.add(navigation(TelegramBotEmoji.BACK + " Back", "main"));
+        buttons.add(navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
     }
 

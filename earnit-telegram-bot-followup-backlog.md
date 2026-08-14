@@ -482,6 +482,7 @@ No:
 
 # BUX-008 - Make Child Tasks action-first and capped
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** BUX-007
 

@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service.telegram;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
+import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
@@ -108,7 +109,28 @@ class TelegramMenuBuilderTest {
         assertThat(menuBuilder().childTasks(view, "https://example.test/telegram"))
             .hasSize(7)
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .contains("📱 More tasks → Mini App");
+            .containsExactly("✅ Готово: Task 1", "✅ Готово: Task 2", "✅ Готово: Task 3",
+                "✅ Готово: Task 4", "✅ Готово: Task 5", "📱 Все задания", "🏠 Главное меню");
+    }
+
+    @Test
+    void pendingTaskDoesNotExposeAnActiveDoneAction() {
+        TaskDto available = new TaskDto(
+            1L, "Утренний старт", 1, null, null, null, null, null, null, true, 1, null, null);
+        TaskDto pendingTask = new TaskDto(
+            2L, "Книжная искра", 2, null, null, null, null, null, null, true, 1, null, null);
+        RequestDto pending = new RequestDto(19L, 2L, "Книжная искра", null, null, "Книжная искра",
+            null, null, null, null, 2, PurchaseRequestStatus.pending, PurchaseRequestType.earn, 0,
+            "2026-08-13T12:00:00Z", 1, null, null, null, null);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 1, "Alex", 42, List.of(), List.of(available, pendingTask),
+            List.of(), List.of(pending), List.of());
+
+        assertThat(menuBuilder().childTasks(view, "https://example.test/telegram"))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("✅ Готово: Утренний старт", "🏠 Главное меню");
+        assertThat(TelegramMenuFlow.navigationText("tasks-child-1", view))
+            .isEqualTo("✅ Мои задания\n\n☀️ Утренний старт\n🪙 +1\n\n☀️ Книжная искра\n🪙 +2");
     }
 
     @Test

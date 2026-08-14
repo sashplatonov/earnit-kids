@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
+import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 
 import java.util.List;
@@ -49,8 +50,22 @@ final class TelegramMenuText {
         if ("parent".equals(view.role())) {
             return TelegramMenuFlow.homeText(view);
         }
-        return "tasks".equals(baseAction(action)) ? "Tasks · " + view.childName()
+        return "tasks".equals(baseAction(action)) ? tasksText(view)
             : "Rewards · " + view.childName();
+    }
+
+    // EXPLAIN: Short action list: available then pending, capped at five.
+    private static String tasksText(TelegramQuickActionResponse view) {
+        List<TaskDto> tasks = TelegramMenuFlow.orderedTasks(view);
+        if (tasks.isEmpty()) {
+            return TelegramCopy.emptyTasks();
+        }
+        StringBuilder builder = new StringBuilder(TelegramCopy.MY_TASKS);
+        for (TaskDto task : tasks) {
+            builder.append("\n\n").append(TelegramBotEmoji.TASK_DONE).append(" ").append(task.name())
+                .append("\n").append(TelegramBotEmoji.COINS).append(" +").append(task.coins());
+        }
+        return builder.toString();
     }
 
     private static String coinsText(TelegramQuickActionResponse view) {

@@ -215,7 +215,7 @@ class TelegramBotServiceImplTest {
             "message":{"chat":{"id":44},"message_id":19}}}
             """));
 
-        verify(apiClient).editMessageText(44L, 19L, "Tasks · Alex", List.of());
+        verify(apiClient).editMessageText(44L, 19L, "✅ На сегодня активных заданий нет", List.of());
         verify(apiClient).answerCallbackQuery("callback");
     }
 
@@ -406,7 +406,10 @@ class TelegramBotServiceImplTest {
         TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
         TelegramConfig config = mock(TelegramConfig.class);
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
-            "family", "child", 3, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of());
+            "family", "child", 3, "Alex", 20, List.of(),
+            List.of(new com.sashplatonov.earnit.kids.dto.response.TaskDto(
+                3_000_000_000L, "Утренний старт", 1, null, null, null, null, null, null, true, 3, null, null)),
+            List.of(), List.of(), List.of());
         when(identities.recordWebhookUpdate(14L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
         when(quickActions.requestTask(77L, 3, 3_000_000_000L)).thenReturn(OperationResult.success(view));
@@ -420,7 +423,7 @@ class TelegramBotServiceImplTest {
             "data":"task.request.3000000000","message":{"chat":{"id":44},"message_id":19}}}
             """));
 
-        verify(apiClient).editMessageText(44L, 19L, "⏳ Waiting for parent", List.of());
+        verify(apiClient).editMessageText(44L, 19L, "⏳ Утренний старт\nЖдём решения родителя", List.of());
         verify(apiClient).answerCallbackQuery("callback");
     }
 
@@ -448,7 +451,7 @@ class TelegramBotServiceImplTest {
             """));
 
         verify(quickActions).requestReward(77L, 3, 8_000_000_000L);
-        verify(apiClient).editMessageText(44L, 19L, "⏳ Reward request sent to parent", List.of());
+        verify(apiClient).editMessageText(44L, 19L, "⏳ Заявка отправлена родителю", List.of());
     }
 
     @Test
