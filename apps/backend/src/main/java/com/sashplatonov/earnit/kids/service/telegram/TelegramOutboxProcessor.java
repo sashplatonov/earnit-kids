@@ -33,6 +33,7 @@ public class TelegramOutboxProcessor {
     @Inject private ChildRepository children;
     @Inject private PurchaseRequestRepository requests;
     @Inject private ShopItemRepository shopItems;
+    @Inject private TelegramCallbackService callbacks;
 
     TelegramOutboxProcessor() {
     }
@@ -45,7 +46,8 @@ public class TelegramOutboxProcessor {
                             TelegramObservability observability,
                             ChildRepository children,
                             PurchaseRequestRepository requests,
-                            ShopItemRepository shopItems) {
+                            ShopItemRepository shopItems,
+                            TelegramCallbackService callbacks) {
         this.planner = planner;
         this.deliveries = deliveries;
         this.events = events;
@@ -55,6 +57,7 @@ public class TelegramOutboxProcessor {
         this.children = children;
         this.requests = requests;
         this.shopItems = shopItems;
+        this.callbacks = callbacks;
     }
 
     public TelegramOutboxProcessor(TelegramDeliveryPlanner planner,
@@ -64,8 +67,9 @@ public class TelegramOutboxProcessor {
                                    TelegramConfig config,
                                    ChildRepository children,
                                    PurchaseRequestRepository requests,
-                                   ShopItemRepository shopItems) {
-        this(planner, deliveries, events, api, config, null, children, requests, shopItems);
+                                   ShopItemRepository shopItems,
+                                   TelegramCallbackService callbacks) {
+        this(planner, deliveries, events, api, config, null, children, requests, shopItems, callbacks);
     }
 
     @Scheduled(every = "{app.telegram.outbox-poll-interval}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
@@ -116,15 +120,37 @@ public class TelegramOutboxProcessor {
     }
 
     // EXPLAIN: Request-created notifications carry one-callback approve/reject
-    // EXPLAIN: buttons so a parent can decide directly from the notification.
+    // EXPLAIN: buttons so a parent can decide directly from the notification;
+    // EXPLAIN: child outcome notifications carry role navigation controls.
     private List<TelegramBotApiClient.InlineButton> notificationButtons(ApplicationOutboxEventEntity event) {
-        if (!isRequestEvent(event.getEventType()) || event.getRequestId() == null) {
+        if (isRequestEvent(event.getEventType())) {
+            if (event.getRequestId() == null) {
+                return List.of();
+            }
+            String target = event.getChildId() + "." + event.getRequestId();
+            return List.of(
+                TelegramBotApiClient.InlineButton.callback(TelegramCopy.APPROVE, "parent.request.approve." + target),
+                TelegramBotApiClient.InlineButton.callback(TelegramCopy.REJECT, "parent.request.reject." + target));
+        }
+        return childOutcomeButtons(event.getEventType());
+    }
+
+    // EXPLAIN: Child outcome feedback points to the next action without a menu.
+    private List<TelegramBotApiClient.InlineButton> childOutcomeButtons(ApplicationOutboxEventType type) {
+        if (callbacks == null) {
             return List.of();
         }
-        String target = event.getChildId() + "." + event.getRequestId();
-        return List.of(
-            TelegramBotApiClient.InlineButton.callback(TelegramCopy.APPROVE, "parent.request.approve." + target),
-            TelegramBotApiClient.InlineButton.callback(TelegramCopy.REJECT, "parent.request.reject." + target));
+        return switch (type) {
+            case TASK_APPROVED -> List.of(nav(TelegramCopy.MY_TASKS, "tasks"), nav(TelegramCopy.REWARDS, "rewards"));
+            case REWARD_APPROVED -> List.of(nav(TelegramCopy.MY_TASKS, "tasks"), nav(TelegramCopy.REWARDS, "rewards"));
+            case TASK_REJECTED -> List.of(nav(TelegramCopy.MY_TASKS, "tasks"), nav(TelegramCopy.HOME, "main"));
+            case REWARD_REJECTED -> List.of(nav(TelegramCopy.REWARDS, "rewards"), nav(TelegramCopy.HOME, "main"));
+            default -> List.of();
+        };
+    }
+
+    private TelegramBotApiClient.InlineButton nav(String label, String action) {
+        return TelegramBotApiClient.InlineButton.callback(label, callbacks.signNavigation(action));
     }
 
     private boolean isRequestEvent(ApplicationOutboxEventType type) {
@@ -132,20 +158,39 @@ public class TelegramOutboxProcessor {
             || type == ApplicationOutboxEventType.REWARD_REQUEST_CREATED;
     }
 
-    // EXPLAIN: Rich Russian notification text for request-created events; other
-    // EXPLAIN: events keep the generic balance-aware copy.
+    // EXPLAIN: Rich Russian notification text: request-created events name the
+    // EXPLAIN: child and the request; child outcome events explain the decision.
     private String notificationText(ApplicationOutboxEventEntity event) {
-        if (!isRequestEvent(event.getEventType())) {
-            return text(event);
+        ApplicationOutboxEventType type = event.getEventType();
+        if (isRequestEvent(type)) {
+            Optional<PurchaseRequestEntity> request = request(event);
+            Optional<ChildEntity> child = child(event.getChildId());
+            if (request.isEmpty() || child.isEmpty()) {
+                return text(event);
+            }
+            boolean task = type == ApplicationOutboxEventType.TASK_REQUEST_CREATED;
+            return TelegramCopy.requestNotification(child.get().getName(), title(request.get()),
+                request.get().getCoins(), task);
         }
+        return childOutcomeText(event);
+    }
+
+    private String childOutcomeText(ApplicationOutboxEventEntity event) {
         Optional<PurchaseRequestEntity> request = request(event);
-        Optional<ChildEntity> child = child(event.getChildId());
-        if (request.isEmpty() || child.isEmpty()) {
+        String title = request.map(this::title).orElse(null);
+        if (title == null) {
             return text(event);
         }
-        boolean task = event.getEventType() == ApplicationOutboxEventType.TASK_REQUEST_CREATED;
-        return TelegramCopy.requestNotification(child.get().getName(), title(request.get()),
-            request.get().getCoins(), task);
+        int delta = event.getCoinDelta();
+        Integer balance = event.getResultingBalance();
+        return switch (event.getEventType()) {
+            case TASK_APPROVED -> TelegramCopy.childTaskApproved(title, delta,
+                balance == null ? 0 : balance);
+            case REWARD_APPROVED -> TelegramCopy.childRewardApproved(title);
+            case TASK_REJECTED -> TelegramCopy.childTaskRejected(title);
+            case REWARD_REJECTED -> TelegramCopy.childRewardRejected(title);
+            default -> text(event);
+        };
     }
 
     private Optional<PurchaseRequestEntity> request(ApplicationOutboxEventEntity event) {

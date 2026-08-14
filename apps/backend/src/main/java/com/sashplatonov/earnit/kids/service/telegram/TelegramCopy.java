@@ -156,23 +156,23 @@ public final class TelegramCopy {
 
     // EXPLAIN: Child task approved feedback.
     public static String childTaskApproved(String title, int delta, int balance) {
-        return TelegramBotEmoji.SUCCESS + " " + title + " одобрен\n\n"
+        return TelegramBotEmoji.CELEBRATE + " " + title + " одобрен\n\n"
             + TelegramBotEmoji.COINS + " +" + delta + " " + moneta(delta) + "\nБаланс: " + balance;
     }
 
     // EXPLAIN: Child reward approved feedback.
     public static String childRewardApproved(String title) {
-        return TelegramBotEmoji.SUCCESS + " Награда одобрена\n\n" + title;
+        return TelegramBotEmoji.CELEBRATE + " Награда одобрена\n\n" + title;
     }
 
     // EXPLAIN: Child task rejected feedback.
     public static String childTaskRejected(String title) {
-        return TelegramBotEmoji.REJECT + " " + title + " не одобрен";
+        return TelegramBotEmoji.DECLINE + " " + title + " не одобрен";
     }
 
     // EXPLAIN: Child reward rejected feedback.
     public static String childRewardRejected(String title) {
-        return TelegramBotEmoji.REJECT + " Награда не одобрена\n\n" + title;
+        return TelegramBotEmoji.DECLINE + " Награда не одобрена\n\n" + title;
     }
 
     // EXPLAIN: Empty / informational states.

@@ -30,8 +30,9 @@ class TelegramOutboxProcessorTest {
     private final ChildRepository children = mock(ChildRepository.class);
     private final PurchaseRequestRepository requests = mock(PurchaseRequestRepository.class);
     private final ShopItemRepository shopItems = mock(ShopItemRepository.class);
+    private final TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
     private final TelegramOutboxProcessor processor = new TelegramOutboxProcessor(
-        planner, deliveries, events, api, config, children, requests, shopItems);
+        planner, deliveries, events, api, config, children, requests, shopItems, callbacks);
 
     @Test
     void successfulDeliveryIsTerminalAndUsesServerBalance() throws Exception {
@@ -41,14 +42,22 @@ class TelegramOutboxProcessorTest {
             .nextAttemptAt(now).build();
         ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
             .id(8L).eventType(ApplicationOutboxEventType.TASK_APPROVED).familyId(1).childId(2)
-            .coinDelta(20).resultingBalance(145).createdAt(now).build();
+            .requestId(8L).coinDelta(20).resultingBalance(145).createdAt(now).build();
         when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
         when(events.findById(8L)).thenReturn(event);
         when(config.outboxMaxAttempts()).thenReturn(5);
+        when(requests.findByIdOptional(8L)).thenReturn(Optional.of(
+            PurchaseRequestEntity.builder().id(8L).taskName("Утренний старт").coins(20).build()));
+        when(callbacks.signNavigation(anyString())).thenAnswer(invocation ->
+            "nav." + invocation.getArgument(0, String.class) + ".signed");
 
         assertThat(processor.process(now)).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo("SENT");
-        verify(api).sendMessage(77L, "✅ Task approved\n+20 🪙\nBalance: 145 🪙", List.of());
+        verify(api).sendMessage(77L,
+            "🎉 Утренний старт одобрен\n\n🪙 +20 монет\nБаланс: 145",
+            List.of(
+                TelegramBotApiClient.InlineButton.callback("✅ Мои задания", "nav.tasks.signed"),
+                TelegramBotApiClient.InlineButton.callback("🎁 Награды", "nav.rewards.signed")));
     }
 
     @Test

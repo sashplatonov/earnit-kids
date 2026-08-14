@@ -589,6 +589,7 @@ Rules:
 
 # BUX-010 - Improve Child approval/rejection feedback
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** BUX-008, BUX-009
 
