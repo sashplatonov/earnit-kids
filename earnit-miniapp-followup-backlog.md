@@ -462,6 +462,8 @@ However, because the shared design system changes in NUX-004 affect both roles, 
 
 # NUX-008 - Bottom navigation cleanup
 
+**Status:** ✅ Done
+
 **Priority:** P1  
 **Depends on:** NUX-001, NUX-005
 

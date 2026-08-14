@@ -85,9 +85,9 @@
     .state--error { color: #a33b3b; }
     @media (max-width: 700px) {
         .parent-workspace { padding: calc(.65rem + env(safe-area-inset-top)) .75rem calc(5.75rem + env(safe-area-inset-bottom)); }
-        .tabs { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: .4rem .35rem calc(.4rem + env(safe-area-inset-bottom)); border-top: 1px solid #dfe4ee; background: rgb(255 255 255 / 96%); box-shadow: 0 -8px 24px rgb(24 36 61 / 8%); }
-        .tabs button { min-height: 3.25rem; flex-direction: column; gap: .2rem; border: 0; border-radius: .65rem; font-size: .68rem; }
-        .tabs button.active { background: #edf2ff; color: #2854ba; }
+        .tabs { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: .3rem .35rem calc(.3rem + env(safe-area-inset-bottom)); border-top: 1px solid #dfe4ee; background: rgb(255 255 255 / 96%); box-shadow: 0 -8px 24px rgb(24 36 61 / 8%); }
+        .tabs button { min-height: 3rem; flex-direction: column; gap: .2rem; border: 0; border-radius: .65rem; font-size: .68rem; }
+        .tabs button.active { color: #2854ba; font-weight: 750; }
     }
     @media (max-width: 340px) { .tabs button { font-size: .61rem; } }
 </style>
