@@ -267,7 +267,7 @@ git commit -m "feat(web): Add Telegram Mini App design system"
 
 ## TUX-005: Redesign the parent Mini App as a decision workspace
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** TUX-004
 

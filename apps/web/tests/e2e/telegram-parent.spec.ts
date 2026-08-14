@@ -46,9 +46,9 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('heading', { name: 'Family space' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Tasks' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Rewards' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Child' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Family' })).toBeVisible();
     await page.getByRole('tab', { name: 'Tasks' }).press('End');
-    await expect(page.getByRole('tab', { name: 'Child' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: 'Family' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('heading', { name: 'Selected child' })).toBeVisible();
     const mobileNav = await page.getByRole('tablist').evaluate((node) => {
         const style = getComputedStyle(node);

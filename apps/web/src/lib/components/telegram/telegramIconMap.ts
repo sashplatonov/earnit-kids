@@ -1,6 +1,7 @@
 import {
     Activity,
     Archive,
+    ArrowRight,
     ArrowLeft,
     Check,
     CircleDollarSign,
@@ -45,7 +46,8 @@ export const telegramIconMap = {
     history: History,
     child: UserRound,
     remove: Minus,
-    home: House
+    home: House,
+    arrowRight: ArrowRight
 } as const;
 
 export type TelegramIconName = keyof typeof telegramIconMap;
