@@ -44,6 +44,7 @@
         error = '';
         saved = false;
         const ok = await adminSaveLimits(child.id, {
+            name: child.nickname,
             dailyCoinLimit: effectiveLimit(earningEnabled, earningMax),
             monthlyLimit: child.monthlyLimit ?? 10000,
             dailyRewardLimit: effectiveLimit(rewardEnabled, rewardMax),

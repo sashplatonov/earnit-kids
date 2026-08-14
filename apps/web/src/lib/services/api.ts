@@ -644,7 +644,7 @@ export async function adminRegenerateChildLink(childId: unknown) {
 }
 
 /** Save child spending/coin limits. Maps to POST /api/children/{id}/settings. */
-export const adminSaveLimits = (childId: unknown, limits: { dailyCoinLimit?: number; monthlyLimit?: number; dailyRewardLimit?: number }) =>
+export const adminSaveLimits = (childId: unknown, limits: { name: string; dailyCoinLimit?: number; monthlyLimit?: number; dailyRewardLimit?: number }) =>
     postJson(`/api/children/${encodeURIComponent(String(childId))}/settings`, limits);
 
 export const saveChildGroupOrder = (childId: unknown, section: 'tasks' | 'shop', groups: string[]) =>

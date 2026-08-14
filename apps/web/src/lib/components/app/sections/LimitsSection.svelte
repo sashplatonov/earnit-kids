@@ -13,6 +13,7 @@
 
     $: isAdmin = $appStore.isAdmin;
     $: currentChildId = $appStore.currentChildId;
+    $: childName = $appStore.childNickname ?? '';
 
     let monthlyLimit = $appStore.monthlyLimit;
     let dailyCoinLimit = $appStore.dailyCoinLimit;
@@ -20,7 +21,7 @@
     $: { monthlyLimit = $appStore.monthlyLimit; dailyCoinLimit = $appStore.dailyCoinLimit; }
 
     async function saveLimits() {
-        const ok = await adminSaveLimits(currentChildId, { monthlyLimit, dailyCoinLimit });
+        const ok = await adminSaveLimits(currentChildId, { name: childName, monthlyLimit, dailyCoinLimit });
         if (ok) {
             appStore.setState({ monthlyLimit, dailyCoinLimit });
             showToast(tAdmin('limits.savedToast'), 'success');
