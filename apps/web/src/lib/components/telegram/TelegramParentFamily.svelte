@@ -1,9 +1,12 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
+    import { useI18n } from '$lib/i18n/context';
     import { switchChild } from '$lib/services/bootstrap';
     import { adminGetChildLink } from '$lib/services/api';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
+
+    const i18n = useI18n();
 
     let inviteOpen = false;
     let link = '';
@@ -18,13 +21,13 @@
         switchError = '';
         await switchChild(id);
         switching = false;
-        if ($appStore.currentChildId != id) switchError = 'Could not switch child. Try again.';
+        if ($appStore.currentChildId != id) switchError = $i18n.t('app.telegram.family.switchError');
     }
 
     async function createLink() {
         const id = $appStore.currentChildId;
         if (id == null) {
-            linkError = 'Choose a child first.';
+            linkError = $i18n.t('app.telegram.family.chooseChildFirst');
             return;
         }
         linkBusy = true;
@@ -32,45 +35,45 @@
         const result = await adminGetChildLink(id);
         linkBusy = false;
         if (result) link = result.link;
-        else linkError = 'Could not create an invite. Try again.';
+        else linkError = $i18n.t('app.telegram.family.linkError');
     }
 </script>
 
 <div class="family">
-    <h1 id="family-title">Family</h1>
+    <h1 id="family-title">{$i18n.t('app.telegram.family.title')}</h1>
 
-    <h2 class="section-title">Children</h2>
+    <h2 class="section-title">{$i18n.t('app.telegram.family.children')}</h2>
     {#if !$appStore.children.length}
-        <p class="muted">No children yet.</p>
+        <p class="muted">{$i18n.t('app.telegram.family.noChildren')}</p>
     {:else}
         <div class="flat">
             {#each $appStore.children as child (child.id)}
                 <button class:current={$appStore.currentChildId == child.id} class="childrow" type="button" disabled={switching} on:click={() => select(child.id)} aria-pressed={$appStore.currentChildId == child.id}>
                     <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
-                    <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge"><TelegramIcon name="checkCircle" size={12} label="Current child" />Current child</span>{/if}</span>
+                    <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge"><TelegramIcon name="checkCircle" size={12} label={$i18n.t('app.telegram.family.currentChild')} />{$i18n.t('app.telegram.family.currentChild')}</span>{/if}</span>
                     <span class="balance"><TelegramCoin size={14} />{child.balance}</span>
                 </button>
             {/each}
         </div>
     {/if}
 
-    <button class="add-child" type="button" aria-expanded={inviteOpen} on:click={() => inviteOpen = !inviteOpen}><TelegramIcon name="addChild" size={20} label="Add child" /><span>Add child</span></button>
+    <button class="add-child" type="button" aria-expanded={inviteOpen} on:click={() => inviteOpen = !inviteOpen}><TelegramIcon name="addChild" size={20} label={$i18n.t('app.telegram.family.addChild')} /><span>{$i18n.t('app.telegram.family.addChild')}</span></button>
 
     {#if inviteOpen}
         <div class="invite">
-            <p class="muted">Create a sign-in link for this child.</p>
-            <button type="button" on:click={createLink} disabled={linkBusy}><TelegramIcon name="link" size={18} label="Create invite link" />{linkBusy ? 'Creating…' : 'Create invite link'}</button>
-            {#if link}<label for="family-invite-link">Invite link</label><input id="family-invite-link" readonly value={link} on:focus={(event) => event.currentTarget.select()} />{/if}
+            <p class="muted">{$i18n.t('app.telegram.family.createLinkHint')}</p>
+            <button type="button" on:click={createLink} disabled={linkBusy}><TelegramIcon name="link" size={18} label={$i18n.t('app.telegram.family.createLink')} />{linkBusy ? $i18n.t('app.telegram.family.creating') : $i18n.t('app.telegram.family.createLink')}</button>
+            {#if link}<label for="family-invite-link">{$i18n.t('app.telegram.family.inviteLink')}</label><input id="family-invite-link" readonly value={link} on:focus={(event) => event.currentTarget.select()} />{/if}
             {#if linkError}<p class="error" role="alert">{linkError}</p>{/if}
         </div>
     {/if}
     {#if switchError}<p class="error" role="alert">{switchError}</p>{/if}
 
-    <h2 class="section-title">Family settings</h2>
+    <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
-        <div class="setting"><span class="setting-icon"><TelegramIcon name="shield" size={20} label="Roles and access" /></span><span class="grow">Roles and access</span><TelegramIcon name="arrowRight" size={18} label="Open" /></div>
-        <button class="setting" type="button" on:click={() => inviteOpen = true}><span class="setting-icon"><TelegramIcon name="link" size={20} label="Invitations" /></span><span class="grow">Invitations</span><TelegramIcon name="arrowRight" size={18} label="Open" /></button>
-        <div class="setting"><span class="setting-icon"><TelegramIcon name="bell" size={20} label="Notifications" /></span><span class="grow">Notifications</span><TelegramIcon name="arrowRight" size={18} label="Open" /></div>
+        <div class="setting"><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.family.rolesAndAccess')} /></span><span class="grow">{$i18n.t('app.telegram.family.rolesAndAccess')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></div>
+        <button class="setting" type="button" on:click={() => inviteOpen = true}><span class="setting-icon"><TelegramIcon name="link" size={20} label={$i18n.t('app.telegram.family.invitations')} /></span><span class="grow">{$i18n.t('app.telegram.family.invitations')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <div class="setting"><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></div>
     </div>
 </div>
 

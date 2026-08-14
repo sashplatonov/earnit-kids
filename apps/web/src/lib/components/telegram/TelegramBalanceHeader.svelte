@@ -1,5 +1,9 @@
 <script lang="ts">
+    import { useI18n } from '$lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
+
+    const i18n = useI18n();
+
     export let nickname: string | null = null;
     export let balance = 0;
     export let headingId: string | undefined = undefined;
@@ -8,11 +12,11 @@
 
 <header class="balance-header">
     {#if loading}
-        <h1 id={headingId} class="loading-title">Loading…</h1>
+        <h1 id={headingId} class="loading-title">{$i18n.t('app.telegram.balanceHeader.loading')}</h1>
         <span class="skeleton skeleton--pill" aria-hidden="true"></span>
     {:else}
-        <div><h1 id={headingId}>Hi{nickname ? `, ${nickname}` : ''}!</h1></div>
-        <strong class="balance-pill" aria-label={`Balance: ${balance} coins`}><TelegramCoin size={16} label="Coins" />{balance}</strong>
+        <div><h1 id={headingId}>{nickname ? $i18n.t('app.telegram.balanceHeader.helloName', { nickname }) : $i18n.t('app.telegram.balanceHeader.hello')}</h1></div>
+        <strong class="balance-pill" aria-label={$i18n.t('app.telegram.balanceHeader.balance', { balance })}><TelegramCoin size={16} label={$i18n.t('app.telegram.balanceHeader.coins')} />{balance}</strong>
     {/if}
 </header>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { useI18n } from '$lib/i18n/context';
     import {
         completeTelegramAccountLink,
         exchangeTelegramInitData,
@@ -8,6 +9,8 @@
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
     import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
     import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
+
+    const i18n = useI18n();
 
     type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram';
     let state: State = 'loading';
@@ -35,7 +38,7 @@
         }
         if (!telegram.initData) {
             state = 'retry';
-            message = 'Open this page from the Telegram Mini App menu.';
+            message = $i18n.t('app.telegram.entry.openFromMenu');
             return;
         }
         state = 'loading';
@@ -64,13 +67,13 @@
                 : pairingFailed ? 'retry'
                     : code === 'TELEGRAM_IDENTITY_UNLINKED' ? 'unlinked' : 'retry';
             message = response.status === 404
-                ? 'Telegram access is not enabled for this environment yet.'
+                ? $i18n.t('app.telegram.entry.unavailable')
                 : pairingFailed
-                    ? 'We could not link this Telegram account. Return to Settings and try again.'
-                    : 'We could not verify this Telegram session.';
+                    ? $i18n.t('app.telegram.entry.linkingError')
+                    : $i18n.t('app.telegram.entry.verifyError');
         } catch {
             state = 'retry';
-            message = 'Network error. Try again.';
+            message = $i18n.t('app.telegram.entry.networkError');
         }
     }
 
@@ -91,18 +94,18 @@
             <div class="telegram-mark" aria-hidden="true"><TelegramCoin size={44} /></div>
             <h1>EarnIt Kids</h1>
             {#if state === 'loading'}
-                <p>Checking your Telegram session…</p>
+                <p>{$i18n.t('app.telegram.entry.checkingSession')}</p>
             {:else if state === 'non-telegram'}
-                <p>Open this page inside Telegram to continue.</p>
+                <p>{$i18n.t('app.telegram.entry.openInsideTelegram')}</p>
             {:else if state === 'unavailable'}
                 <p>{message}</p>
             {:else if state === 'unlinked'}
-                <p>This Telegram account is not linked to a family yet.</p>
-                <a class="telegram-action" href="/login">Sign in as a parent to link it</a>
-                <p class="telegram-hint">For a child account, ask a parent to send an invitation.</p>
+                <p>{$i18n.t('app.telegram.entry.unlinked')}</p>
+                <a class="telegram-action" href="/login">{$i18n.t('app.telegram.entry.signInLink')}</a>
+                <p class="telegram-hint">{$i18n.t('app.telegram.entry.childHint')}</p>
             {:else}
-                <p>{message || 'Could not resolve your Telegram role. Try again.'}</p>
-                <TelegramActionButton icon="refresh" label="Try again" on:click={() => void authenticate()} />
+                <p>{message || $i18n.t('app.telegram.entry.resolveError')}</p>
+                <TelegramActionButton icon="refresh" label={$i18n.t('app.telegram.entry.tryAgain')} on:click={() => void authenticate()} />
             {/if}
         </div>
     </main>

@@ -1,10 +1,14 @@
 <script lang="ts">
     import type { Request } from '$lib/stores/app';
+    import { useI18n } from '$lib/i18n/context';
     import { approveRequest, rejectRequest } from '$lib/services/api';
     import { refreshData } from '$lib/services/bootstrap';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
+
+    const i18n = useI18n();
+
     export let requests: Request[] = [];
     export let canDecide = false;
     export let childId: string | number | null = null;
@@ -12,35 +16,39 @@
     export let error = '';
     export let onRetry: () => void = () => {};
     export let showHeading = true;
-    export let headingText = 'Requests';
-    export let emptyText = 'No requests yet.';
+    export let headingText = '';
+    export let emptyText = '';
     let busy: string | number | null = null;
     let decisionError = '';
+
+    $: resolvedHeading = headingText || $i18n.t('app.telegram.requests.requests');
+    $: resolvedEmpty = emptyText || $i18n.t('app.telegram.requests.noRequests');
+
     async function decide(id: string | number, action: 'approve' | 'reject') {
         busy = id;
         decisionError = '';
         const result = action === 'approve' ? await approveRequest(id, childId) : await rejectRequest(id, childId);
-        if (result == null) decisionError = 'This request could not be updated. Try again.';
+        if (result == null) decisionError = $i18n.t('app.telegram.requests.updateError');
         const refreshed = await refreshData();
-        if (!refreshed && result != null) decisionError = 'The decision was saved, but the latest requests could not be loaded.';
+        if (!refreshed && result != null) decisionError = $i18n.t('app.telegram.requests.savedButRefreshFailed');
         busy = null;
     }
     function requestKind(request: Request): 'task' | 'reward' {
         return request.requestType === 'shop_purchase' ? 'reward' : 'task';
     }
     function requestMeta(request: Request): string {
-        const who = request.childNickname || 'Child';
-        const what = request.requestType === 'shop_purchase' ? 'Reward request' : 'Task request';
+        const who = request.childNickname || $i18n.t('app.telegram.requests.child');
+        const what = request.requestType === 'shop_purchase' ? $i18n.t('app.telegram.requests.rewardRequest') : $i18n.t('app.telegram.requests.taskRequest');
         return `${who} · ${what}`;
     }
 </script>
 
 <section class="panel" aria-labelledby="telegram-requests-title">
-    {#if showHeading}<div class="heading"><h2 id="telegram-requests-title">{headingText}</h2></div>{/if}
-    {#if loading}<p class="muted" role="status">Loading requests…</p>
-    {:else if error}<div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label="Error" /><p>{error}</p><button type="button" on:click={onRetry}><TelegramIcon name="refresh" size={18} label="Retry" />Retry</button></div>
-    {:else if !requests.length}<div class="state-empty"><TelegramIcon name="checkCircle" size={18} label="All clear" /><span>{emptyText}</span></div>
-    {:else}<div class="items">{#each requests as request (request.id)}<article class:decision={canDecide && request.status === 'pending'}><div class="request-top"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label="Request" /></span><div class="entity-text"><h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || 'Request')}</h3><p class="meta">{requestMeta(request)}</p><p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p></div></div>{#if canDecide && request.status === 'pending'}<div class="decision-actions"><button class="approve" type="button" aria-label="Approve request" disabled={busy === request.id} on:click={() => decide(request.id, 'approve')}><TelegramIcon name="approve" size={18} label="Approve" /><span>Approve</span></button><button class="reject" type="button" aria-label="Reject request" disabled={busy === request.id} on:click={() => decide(request.id, 'reject')}><TelegramIcon name="reject" size={18} label="Reject" /><span>Reject</span></button></div>{/if}</article>{/each}</div>{/if}
+    {#if showHeading}<div class="heading"><h2 id="telegram-requests-title">{resolvedHeading}</h2></div>{/if}
+    {#if loading}<p class="muted" role="status">{$i18n.t('app.telegram.requests.loading')}</p>
+    {:else if error}<div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label={$i18n.t('app.telegram.home.error')} /><p>{error}</p><button type="button" on:click={onRetry}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></div>
+    {:else if !requests.length}<div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.requests.allClear')} /><span>{resolvedEmpty}</span></div>
+    {:else}<div class="items">{#each requests as request (request.id)}<article class:decision={canDecide && request.status === 'pending'}><div class="request-top"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={$i18n.t('app.telegram.requests.request')} /></span><div class="entity-text"><h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || $i18n.t('app.telegram.requests.request'))}</h3><p class="meta">{requestMeta(request)}</p><p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p></div></div>{#if canDecide && request.status === 'pending'}<div class="decision-actions"><button class="approve" type="button" aria-label={$i18n.t('app.telegram.requests.approveRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'approve')}><TelegramIcon name="approve" size={18} label={$i18n.t('app.telegram.requests.approve')} /><span>{$i18n.t('app.telegram.requests.approve')}</span></button><button class="reject" type="button" aria-label={$i18n.t('app.telegram.requests.rejectRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'reject')}><TelegramIcon name="reject" size={18} label={$i18n.t('app.telegram.requests.reject')} /><span>{$i18n.t('app.telegram.requests.reject')}</span></button></div>{/if}</article>{/each}</div>{/if}
     {#if decisionError}<p class="error" role="alert">{decisionError}</p>{/if}
 </section>
 

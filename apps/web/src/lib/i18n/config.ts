@@ -179,6 +179,10 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'superadmin', 'errors'];
     }
 
+    if (internalPath === '/telegram' || internalPath.startsWith('/telegram/')) {
+        return ['common', 'app', 'tasks', 'shop', 'admin', 'errors'];
+    }
+
     if (internalPath.startsWith('/app')) {
         return ['common', 'app', 'errors'];
     }

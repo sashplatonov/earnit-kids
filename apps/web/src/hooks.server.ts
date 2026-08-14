@@ -27,7 +27,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     const { locale: localeFromPath, pathname: internalPath } = splitLocaleFromPath(event.url.pathname);
     const cookieLocale = normalizeLocale(event.cookies.get(LOCALE_COOKIE_NAME));
     const headerLocale = resolveLocaleFromAcceptLanguage(event.request.headers.get('accept-language'));
-    const resolvedLocale = localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
+    // EXPLAIN: The Telegram Mini App is a Russian-only product surface.
+    const isTelegramMiniApp = internalPath === '/telegram' || internalPath.startsWith('/telegram/');
+    const resolvedLocale = isTelegramMiniApp ? 'ru' : localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
 
     event.locals.locale = resolvedLocale;
 

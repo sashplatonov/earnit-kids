@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
+    import { useI18n } from '$lib/i18n/context';
     import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
     import TelegramBalanceHeader from './TelegramBalanceHeader.svelte';
     import TelegramChildTasks from './TelegramChildTasks.svelte';
@@ -10,6 +11,9 @@
     import { loadTelegramHistory } from '$lib/services/telegramActivity';
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
+
+    const i18n = useI18n();
+
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = new URLSearchParams(window.location.search).get('context') ?? '';
     let loading = true;
@@ -33,9 +37,9 @@
         const ok = await initializeFromServer();
         loading = false;
         view = tabForContext(context);
-        if (!ok) error = 'Could not load your workspace. Try again.';
+        if (!ok) error = $i18n.t('app.telegram.childShell.loadError');
     });
-    async function retry() { refreshing = true; error = ''; const ok = await refreshData(); refreshing = false; if (!ok) error = 'Could not refresh your workspace.'; }
+    async function retry() { refreshing = true; error = ''; const ok = await refreshData(); refreshing = false; if (!ok) error = $i18n.t('app.telegram.childShell.refreshError'); }
     function onVisibility() { if (document.visibilityState === 'visible' && !loading && !refreshing) void refreshData(); }
     async function loadHistory(reset = false) {
         if (historyLoading || $appStore.currentChildId == null) return;
@@ -43,7 +47,7 @@
         try {
             const page = await loadTelegramHistory($appStore.currentChildId, reset ? 1 : historyPage + 1, 20);
             history = reset ? page.items : [...history, ...page.items]; historyPage = page.page; historyHasMore = page.items.length === page.limit;
-        } catch { historyError = 'Activity could not be loaded.'; }
+        } catch { historyError = $i18n.t('app.telegram.childShell.activityError'); }
         historyLoading = false;
     }
     function selectView(next: typeof tabs[number]) {
@@ -67,16 +71,16 @@
 <svelte:window on:visibilitychange={onVisibility} />
 <main class="child-workspace" aria-labelledby="child-workspace-title">
     <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} loading={loading || Boolean(error)} />
-    <div class="tabs" aria-label="Child workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
-        <button aria-controls="child-panel-today" aria-selected={view === 'today'} class:active={view === 'today'} id="child-tab-today" role="tab" tabindex={view === 'today' ? 0 : -1} type="button" on:click={() => selectView('today')}><TelegramIcon name="task" size={20} label="Today" /><span>Today</span></button>
-        <button aria-controls="child-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="child-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>
-        <button aria-controls="child-panel-activity" aria-selected={view === 'activity'} class:active={view === 'activity'} id="child-tab-activity" role="tab" tabindex={view === 'activity' ? 0 : -1} type="button" on:click={() => selectView('activity')}><TelegramIcon name="activity" size={20} label="Activity" /><span>Activity</span></button>
+    <div class="tabs" aria-label={$i18n.t('app.telegram.childShell.workspace')} role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
+        <button aria-controls="child-panel-today" aria-selected={view === 'today'} class:active={view === 'today'} id="child-tab-today" role="tab" tabindex={view === 'today' ? 0 : -1} type="button" on:click={() => selectView('today')}><TelegramIcon name="task" size={20} label={$i18n.t('app.telegram.childShell.today')} /><span>{$i18n.t('app.telegram.childShell.today')}</span></button>
+        <button aria-controls="child-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="child-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label={$i18n.t('app.telegram.childShell.rewards')} /><span>{$i18n.t('app.telegram.childShell.rewards')}</span></button>
+        <button aria-controls="child-panel-activity" aria-selected={view === 'activity'} class:active={view === 'activity'} id="child-tab-activity" role="tab" tabindex={view === 'activity' ? 0 : -1} type="button" on:click={() => selectView('activity')}><TelegramIcon name="activity" size={20} label={$i18n.t('app.telegram.childShell.activity')} /><span>{$i18n.t('app.telegram.childShell.activity')}</span></button>
     </div>
     <div aria-labelledby={`child-tab-${view}`} id={`child-panel-${view}`} role="tabpanel" tabindex="0">
         {#if loading}
-            <p class="state" role="status">Loading your tasks…</p>
+            <p class="state" role="status">{$i18n.t('app.telegram.childShell.loading')}</p>
         {:else if error}
-            <section class="state" role="alert"><p>{error}</p><button type="button" on:click={retry} disabled={refreshing}><TelegramIcon name="refresh" size={18} label={refreshing ? 'Refreshing workspace' : 'Retry'} />{refreshing ? 'Refreshing…' : 'Retry'}</button></section>
+            <section class="state" role="alert"><p>{error}</p><button type="button" on:click={retry} disabled={refreshing}><TelegramIcon name="refresh" size={18} label={refreshing ? $i18n.t('app.telegram.childShell.refreshingWorkspace') : $i18n.t('app.telegram.childShell.retry')} />{refreshing ? $i18n.t('app.telegram.childShell.refreshing') : $i18n.t('app.telegram.childShell.retry')}</button></section>
         {:else if view === 'today'}
             <TelegramChildTasks />
         {:else if view === 'rewards'}

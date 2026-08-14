@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
+    import { useI18n } from '$lib/i18n/context';
     import { adminAwardCoins } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { loadTelegramHistory } from '$lib/services/telegramActivity';
@@ -10,6 +11,8 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRequestList from './TelegramRequestList.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
+
+    const i18n = useI18n();
 
     // EXPLAIN: Bot deep links (history/coins) open the exact home sub-context.
     export let initialContext = '';
@@ -38,7 +41,7 @@
             historyPage = page.page;
             historyHasMore = page.items.length === page.limit;
         } catch {
-            historyError = 'Activity could not be loaded.';
+            historyError = $i18n.t('app.telegram.childShell.activityError');
         }
         historyLoading = false;
     }
@@ -54,7 +57,7 @@
     async function adjustCoins(event: CustomEvent<{ amount: number; note: string | null }>) {
         const childId = $appStore.currentChildId;
         if (childId == null) {
-            coinError = 'Choose a child first.';
+            coinError = $i18n.t('app.telegram.family.chooseChildFirst');
             return;
         }
         coinBusy = true;
@@ -65,7 +68,7 @@
             applyDataSnapshot(result as Record<string, unknown>);
             coinSheetOpen = false;
         } else {
-            coinError = 'Coins could not be adjusted. Try again.';
+            coinError = $i18n.t('app.telegram.home.coinError');
         }
     }
 
@@ -85,38 +88,38 @@
 
 <section class="home" aria-labelledby="parent-home-title">
     {#if pending.length}
-        <div class="section-heading"><h2 id="parent-home-title">Needs attention</h2><span class="count">{pending.length}</span></div>
+        <div class="section-heading"><h2 id="parent-home-title">{$i18n.t('app.telegram.home.needsAttention')}</h2><span class="count">{pending.length}</span></div>
     {/if}
-    <TelegramRequestList requests={visibleRequests} canDecide childId={$appStore.currentChildId} showHeading={false} emptyText={pending.length ? '' : 'Nothing needs attention right now.'} />
+    <TelegramRequestList requests={visibleRequests} canDecide childId={$appStore.currentChildId} showHeading={false} emptyText={pending.length ? '' : $i18n.t('app.telegram.home.nothingNeedsAttention')} />
     {#if pending.length > 2}
-        <button class="see-all" type="button" on:click={() => showAll = !showAll}><span>{showAll ? 'Show fewer' : `All requests (${pending.length})`}</span><TelegramIcon name="arrowRight" size={18} label={showAll ? 'Show fewer requests' : 'All requests'} /></button>
+        <button class="see-all" type="button" on:click={() => showAll = !showAll}><span>{showAll ? $i18n.t('app.telegram.home.showFewer') : $i18n.t('app.telegram.home.allRequests', { count: pending.length })}</span><TelegramIcon name="arrowRight" size={18} label={showAll ? $i18n.t('app.telegram.home.showFewerRequests') : $i18n.t('app.telegram.home.allRequestsAria')} /></button>
     {/if}
 
-    <h2 class="section-title">Quick actions</h2>
-    <div class="quick-actions" aria-label="Quick actions">
-        <button type="button" on:click={() => coinSheetOpen = true}><TelegramIcon name="coinAdjustment" size={20} label="Add coins" /><span>Add coins</span></button>
-        <button type="button" on:click={toggleHistory}><TelegramIcon name="history" size={20} label="History" /><span>History</span></button>
+    <h2 class="section-title">{$i18n.t('app.telegram.home.quickActions')}</h2>
+    <div class="quick-actions" aria-label={$i18n.t('app.telegram.home.quickActions')}>
+        <button type="button" on:click={() => coinSheetOpen = true}><TelegramIcon name="coinAdjustment" size={20} label={$i18n.t('app.telegram.home.addCoins')} /><span>{$i18n.t('app.telegram.home.addCoins')}</span></button>
+        <button type="button" on:click={toggleHistory}><TelegramIcon name="history" size={20} label={$i18n.t('app.telegram.home.history')} /><span>{$i18n.t('app.telegram.home.history')}</span></button>
     </div>
 
     <div class="section-heading">
-        {#if showFullHistory}<h2 class="section-title">History</h2>{:else}<h2 class="section-title">Recent activity</h2>{/if}
-        {#if history.length}<button class="small-link" type="button" on:click={toggleHistory}>{showFullHistory ? 'Show recent' : 'View all'}</button>{/if}
+        {#if showFullHistory}<h2 class="section-title">{$i18n.t('app.telegram.home.history')}</h2>{:else}<h2 class="section-title">{$i18n.t('app.telegram.home.recentActivity')}</h2>{/if}
+        {#if history.length}<button class="small-link" type="button" on:click={toggleHistory}>{showFullHistory ? $i18n.t('app.telegram.home.showRecent') : $i18n.t('app.telegram.home.viewAll')}</button>{/if}
     </div>
 
     {#if historyLoading && !history.length}
-        <p class="muted" role="status">Loading activity…</p>
+        <p class="muted" role="status">{$i18n.t('app.telegram.home.loadingActivity')}</p>
     {:else if historyError}
-        <div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label="Error" /><p>{historyError}</p><button type="button" on:click={() => loadHistory(true)}><TelegramIcon name="refresh" size={18} label="Retry" />Retry</button></div>
+        <div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label={$i18n.t('app.telegram.home.error')} /><p>{historyError}</p><button type="button" on:click={() => loadHistory(true)}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></div>
     {:else if !history.length}
-        <p class="muted">No activity yet.</p>
+        <p class="muted">{$i18n.t('app.telegram.home.noActivity')}</p>
     {:else}
-        <div class="activity" aria-label="Recent activity">
+        <div class="activity" aria-label={$i18n.t('app.telegram.home.recentActivity')}>
             {#each history as entry (entry.id)}
-                <div class="a"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: entry.type === 'purchase' || entry.type === 'spend' ? 'reward' : 'task', title: entry.description || entry.title || entry.taskName || entry.itemName || '', group: entry.groupName })} size={18} label="Activity" /></span><span class="grow"><span class="title">{stripLeadingEmoji(entry.description || entry.title || entry.taskName || entry.itemName || 'Activity')}</span><span class="meta">{entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : 'Recently'}</span></span><strong class:spend={entry.amount < 0}><TelegramCoin size={13} />{entry.amount > 0 ? '+' : ''}{entry.amount}</strong></div>
+                <div class="a"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: entry.type === 'purchase' || entry.type === 'spend' ? 'reward' : 'task', title: entry.description || entry.title || entry.taskName || entry.itemName || '', group: entry.groupName })} size={18} label={$i18n.t('app.telegram.home.activity')} /></span><span class="grow"><span class="title">{stripLeadingEmoji(entry.description || entry.title || entry.taskName || entry.itemName || $i18n.t('app.telegram.home.activity'))}</span><span class="meta">{entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : $i18n.t('app.telegram.home.recently')}</span></span><strong class:spend={entry.amount < 0}><TelegramCoin size={13} />{entry.amount > 0 ? '+' : ''}{entry.amount}</strong></div>
             {/each}
         </div>
         {#if showFullHistory && historyHasMore}
-            <button class="load-more" type="button" on:click={() => loadHistory()} disabled={historyLoading}>{historyLoading ? 'Loading…' : 'Load more'}</button>
+            <button class="load-more" type="button" on:click={() => loadHistory()} disabled={historyLoading}>{historyLoading ? $i18n.t('app.telegram.home.loading') : $i18n.t('app.telegram.home.loadMore')}</button>
         {/if}
     {/if}
 </section>

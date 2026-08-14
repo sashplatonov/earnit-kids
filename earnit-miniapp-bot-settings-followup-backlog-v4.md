@@ -236,7 +236,7 @@ Do not use:
 
 ---
 
-# SFX-004 - Localize all Mini App UI to Russian
+# SFX-004 ✅ - Localize all Mini App UI to Russian
 
 **Priority:** P0  
 **Channel:** Mini App

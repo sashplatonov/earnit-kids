@@ -1,8 +1,11 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
+    import { useI18n } from '$lib/i18n/context';
     import { switchChild } from '$lib/services/bootstrap';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
+
+    const i18n = useI18n();
 
     let open = false;
     let switching = false;
@@ -20,7 +23,7 @@
         await switchChild(id);
         switching = false;
         open = false;
-        if ($appStore.currentChildId != id) error = 'Could not switch child. Try again.';
+        if ($appStore.currentChildId != id) error = $i18n.t('app.telegram.family.switchError');
     }
 </script>
 
@@ -30,32 +33,32 @@
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label="Switch child"
+        aria-label={$i18n.t('app.telegram.header.switchChild')}
         disabled={switching || childCount === 0}
         on:click={() => open = !open}
     >
-        <TelegramIcon name="child" size={18} label="Child" />
-        <span class="child-name">{current?.nickname ?? 'Child'}</span>
-        <TelegramIcon name="chevronDown" size={16} label="Open child list" />
+        <TelegramIcon name="child" size={18} label={$i18n.t('app.telegram.header.child')} />
+        <span class="child-name">{current?.nickname ?? $i18n.t('app.telegram.header.child')}</span>
+        <TelegramIcon name="chevronDown" size={16} label={$i18n.t('app.telegram.header.openChildList')} />
     </button>
-    <span class="balance" aria-label={`Balance: ${$appStore.balance} coins`}><TelegramCoin size={16} label="Coins" />{$appStore.balance}</span>
+    <span class="balance" aria-label={$i18n.t('app.telegram.header.balance', { balance: $appStore.balance })}><TelegramCoin size={16} label={$i18n.t('app.telegram.header.coins')} />{$appStore.balance}</span>
 </header>
 
 {#if open}
     <div class="sheet-backdrop" role="presentation" on:click={() => open = false}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="child-switch-title" tabindex="-1">
-        <h2 id="child-switch-title">Switch child</h2>
-        <div class="children" role="listbox" aria-label="Children">
+        <h2 id="child-switch-title">{$i18n.t('app.telegram.header.switchChild')}</h2>
+        <div class="children" role="listbox" aria-label={$i18n.t('app.telegram.header.children')}>
             {#each $appStore.children as child (child.id)}
                 <button class:current={$appStore.currentChildId == child.id} type="button" role="option" aria-selected={$appStore.currentChildId == child.id} disabled={switching} on:click={() => select(child.id)}>
                     <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
-                    <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge">Current child</span>{/if}</span>
+                    <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge">{$i18n.t('app.telegram.family.currentChild')}</span>{/if}</span>
                     <span class="child-balance"><TelegramCoin size={14} />{child.balance}</span>
                 </button>
             {/each}
         </div>
         {#if error}<p class="error" role="alert">{error}</p>{/if}
-        <button class="close" type="button" on:click={() => open = false} disabled={switching}>Close</button>
+        <button class="close" type="button" on:click={() => open = false} disabled={switching}>{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 

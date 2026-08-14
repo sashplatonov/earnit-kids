@@ -1,7 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher, tick } from 'svelte';
+    import { useI18n } from '$lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
+
+    const i18n = useI18n();
+
     export let open = false;
     export let busy = false;
     export let error = '';
@@ -26,9 +30,9 @@
     function submit() {
         if (busy) return;
         const value = Number(amount);
-        if (!amount.trim()) { localError = 'Enter an amount.'; return; }
-        if (!Number.isInteger(value) || value === 0) { localError = 'Enter a non-zero whole number.'; return; }
-        if (Math.abs(value) > MAX_ADJUST) { localError = `Amount cannot exceed ${MAX_ADJUST.toLocaleString()}.`; return; }
+        if (!amount.trim()) { localError = $i18n.t('app.telegram.coinAdjust.enterAmount'); return; }
+        if (!Number.isInteger(value) || value === 0) { localError = $i18n.t('app.telegram.coinAdjust.nonZeroWhole'); return; }
+        if (Math.abs(value) > MAX_ADJUST) { localError = $i18n.t('app.telegram.coinAdjust.amountTooBig', { max: MAX_ADJUST.toLocaleString() }); return; }
         localError = '';
         dispatch('adjust', { amount: value, note: note.trim() || null });
     }
@@ -43,17 +47,17 @@
 {#if open}
     <div class="sheet-backdrop" role="presentation" on:click={close}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="coin-adjust-title" tabindex="-1" on:keydown={handleKeydown}>
-        <h2 id="coin-adjust-title">Adjust coins</h2>
+        <h2 id="coin-adjust-title">{$i18n.t('app.telegram.coinAdjust.title')}</h2>
         <div class="amount-row">
             <TelegramCoin size={20} />
-            <input id="coin-amount" type="number" inputmode="numeric" bind:value={amount} placeholder="e.g. +10 or -5" aria-label="Coin amount" aria-invalid={localError ? 'true' : undefined} aria-describedby={localError ? 'coin-adjust-error' : undefined} use:manageFocus on:keydown={(event) => { if (event.key === 'Enter') submit(); }} />
+            <input id="coin-amount" type="number" inputmode="numeric" bind:value={amount} placeholder={$i18n.t('app.telegram.coinAdjust.amountPlaceholder')} aria-label={$i18n.t('app.telegram.coinAdjust.amountAria')} aria-invalid={localError ? 'true' : undefined} aria-describedby={localError ? 'coin-adjust-error' : undefined} use:manageFocus on:keydown={(event) => { if (event.key === 'Enter') submit(); }} />
         </div>
-        <label for="coin-note">Note (optional)</label>
-        <input id="coin-note" type="text" maxlength="80" bind:value={note} placeholder="Why?" />
+        <label for="coin-note">{$i18n.t('app.telegram.coinAdjust.noteLabel')}</label>
+        <input id="coin-note" type="text" maxlength="80" bind:value={note} placeholder={$i18n.t('app.telegram.coinAdjust.notePlaceholder')} />
         {#if localError || error}<p id="coin-adjust-error" class="error" role="alert">{localError || error}</p>{/if}
         <div class="actions">
-            <button type="button" on:click={close} disabled={busy}><TelegramIcon name="back" size={18} label="Cancel" />Cancel</button>
-            <button class="primary" type="button" on:click={submit} disabled={busy}><TelegramIcon name="coinAdjustment" size={18} label={busy ? 'Saving…' : 'Save'} />{busy ? 'Saving…' : 'Save'}</button>
+            <button type="button" on:click={close} disabled={busy}><TelegramIcon name="back" size={18} label={$i18n.t('app.telegram.coinAdjust.cancel')} />{$i18n.t('app.telegram.coinAdjust.cancel')}</button>
+            <button class="primary" type="button" on:click={submit} disabled={busy}><TelegramIcon name="coinAdjustment" size={18} label={busy ? $i18n.t('app.telegram.coinAdjust.saving') : $i18n.t('app.telegram.coinAdjust.save')} />{busy ? $i18n.t('app.telegram.coinAdjust.saving') : $i18n.t('app.telegram.coinAdjust.save')}</button>
         </div>
     </div>
 {/if}

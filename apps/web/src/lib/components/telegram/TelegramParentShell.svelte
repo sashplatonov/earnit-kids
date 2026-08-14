@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
+    import { useI18n } from '$lib/i18n/context';
     import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
     import TelegramParentHome from './TelegramParentHome.svelte';
     import TelegramParentTasks from './TelegramParentTasks.svelte';
@@ -8,6 +9,8 @@
     import TelegramParentFamily from './TelegramParentFamily.svelte';
     import TelegramParentHeader from './TelegramParentHeader.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
+
+    const i18n = useI18n();
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = new URLSearchParams(window.location.search).get('context') ?? '';
@@ -28,7 +31,7 @@
         loading = true;
         error = '';
         const ok = await initializeFromServer();
-        if (!ok) error = 'Could not load your family. Try again.';
+        if (!ok) error = $i18n.t('app.telegram.shell.loadError');
         else view = tabForContext(context);
         loading = false;
     });
@@ -36,7 +39,7 @@
     async function retry() {
         const ok = await refreshData();
         if (ok) { error = ''; view = 'home'; }
-        else error = 'Could not refresh your family. Try again.';
+        else error = $i18n.t('app.telegram.shell.refreshError');
     }
     function selectView(next: typeof tabs[number]) {
         view = next;
@@ -55,20 +58,20 @@
     }
 </script>
 
-<main class="parent-workspace" aria-label="Parent workspace">
+<main class="parent-workspace" aria-label={$i18n.t('app.telegram.shell.workspace')}>
     <TelegramParentHeader />
 
-    <div class="tabs" aria-label="Parent workspace" role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
-        <button aria-controls="parent-panel-home" aria-selected={view === 'home'} class:active={view === 'home'} id="parent-tab-home" role="tab" tabindex={view === 'home' ? 0 : -1} type="button" on:click={() => selectView('home')}><TelegramIcon name="home" size={20} label="Home" /><span>Home</span>{pending.length ? ` (${pending.length})` : ''}</button>
-        <button aria-controls="parent-panel-tasks" aria-selected={view === 'tasks'} class:active={view === 'tasks'} id="parent-tab-tasks" role="tab" tabindex={view === 'tasks' ? 0 : -1} type="button" on:click={() => selectView('tasks')}><TelegramIcon name="task" size={20} label="Tasks" /><span>Tasks</span></button>
-        <button aria-controls="parent-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="parent-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label="Rewards" /><span>Rewards</span></button>
-        <button aria-controls="parent-panel-family" aria-selected={view === 'family'} class:active={view === 'family'} id="parent-tab-family" role="tab" tabindex={view === 'family' ? 0 : -1} type="button" on:click={() => selectView('family')}><TelegramIcon name="family" size={20} label="Family" /><span>Family</span></button>
+    <div class="tabs" aria-label={$i18n.t('app.telegram.shell.workspace')} role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
+        <button aria-controls="parent-panel-home" aria-selected={view === 'home'} class:active={view === 'home'} id="parent-tab-home" role="tab" tabindex={view === 'home' ? 0 : -1} type="button" on:click={() => selectView('home')}><TelegramIcon name="home" size={20} label={$i18n.t('app.telegram.shell.home')} /><span>{$i18n.t('app.telegram.shell.home')}</span>{pending.length ? ` (${pending.length})` : ''}</button>
+        <button aria-controls="parent-panel-tasks" aria-selected={view === 'tasks'} class:active={view === 'tasks'} id="parent-tab-tasks" role="tab" tabindex={view === 'tasks' ? 0 : -1} type="button" on:click={() => selectView('tasks')}><TelegramIcon name="task" size={20} label={$i18n.t('app.telegram.shell.tasks')} /><span>{$i18n.t('app.telegram.shell.tasks')}</span></button>
+        <button aria-controls="parent-panel-rewards" aria-selected={view === 'rewards'} class:active={view === 'rewards'} id="parent-tab-rewards" role="tab" tabindex={view === 'rewards' ? 0 : -1} type="button" on:click={() => selectView('rewards')}><TelegramIcon name="reward" size={20} label={$i18n.t('app.telegram.shell.rewards')} /><span>{$i18n.t('app.telegram.shell.rewards')}</span></button>
+        <button aria-controls="parent-panel-family" aria-selected={view === 'family'} class:active={view === 'family'} id="parent-tab-family" role="tab" tabindex={view === 'family' ? 0 : -1} type="button" on:click={() => selectView('family')}><TelegramIcon name="family" size={20} label={$i18n.t('app.telegram.shell.family')} /><span>{$i18n.t('app.telegram.shell.family')}</span></button>
     </div>
     <div aria-labelledby={`parent-tab-${view}`} id={`parent-panel-${view}`} role="tabpanel" tabindex="0">
         {#if loading}
-            <p class="state" role="status">Loading your family…</p>
+            <p class="state" role="status">{$i18n.t('app.telegram.shell.loading')}</p>
         {:else if error}
-            <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}><TelegramIcon name="refresh" size={18} label="Retry" />Retry</button></section>
+            <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></section>
         {:else if view === 'home'}
             <TelegramParentHome initialContext={context} />
         {:else if view === 'tasks'}

@@ -3,9 +3,13 @@
 </script>
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import { useI18n } from '$lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
+
+    const i18n = useI18n();
+
     export let items: CatalogItem[] = [];
     export let kind: 'task' | 'reward' = 'task';
     export let pendingIds: Array<number | string> = [];
@@ -13,20 +17,29 @@
     $: groups = [...new Set(items.map((item) => item.group?.trim()).filter((group): group is string => Boolean(group)))];
     $: grouped = groups.length > 1;
     const isPending = (id: number | string) => pendingIds.some((pendingId) => String(pendingId) === String(id));
+    const entityLabel = () => kind === 'task' ? $i18n.t('app.telegram.catalog.task') : $i18n.t('app.telegram.catalog.reward');
+    const actionLabel = (item: CatalogItem) => isPending(item.id)
+        ? $i18n.t('app.telegram.catalog.pending')
+        : item.available
+            ? kind === 'task' ? $i18n.t('app.telegram.catalog.done') : $i18n.t('app.telegram.catalog.getReward')
+            : item.disabledReason ?? $i18n.t('app.telegram.catalog.unavailable');
+    const actionIcon = (item: CatalogItem) => isPending(item.id)
+        ? 'refresh'
+        : kind === 'task' ? 'done' : 'requestReward';
 </script>
 
 {#if !items.length}
-    <p class="empty">No {kind === 'task' ? 'tasks' : 'rewards'} available right now.</p>
+    <p class="empty">{kind === 'task' ? $i18n.t('app.telegram.catalog.noTasks') : $i18n.t('app.telegram.catalog.noRewards')}</p>
 {:else if !grouped}
-    <div class="catalog" aria-label={kind === 'task' ? 'Available tasks' : 'Available rewards'}>
+    <div class="catalog" aria-label={kind === 'task' ? $i18n.t('app.telegram.catalog.availableTasks') : $i18n.t('app.telegram.catalog.availableRewards')}>
         {#each items as item (item.id)}
-            <article><div class="entity-main"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: item.title, group: item.group })} size={20} label={kind === 'task' ? 'Task' : 'Reward'} /></span><div class="entity-text"><h3>{stripLeadingEmoji(item.title)}</h3><p><TelegramCoin size={13} />{kind === 'task' ? '+' : '−'}{item.amount}</p></div></div><button type="button" aria-label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}><TelegramIcon name={isPending(item.id) ? 'refresh' : kind === 'task' ? 'done' : 'requestReward'} size={18} label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} /><span>{isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'}</span></button></article>
+            <article><div class="entity-main"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: item.title, group: item.group })} size={20} label={entityLabel()} /></span><div class="entity-text"><h3>{stripLeadingEmoji(item.title)}</h3><p><TelegramCoin size={13} />{kind === 'task' ? '+' : '−'}{item.amount}</p></div></div><button type="button" aria-label={actionLabel(item)} disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}><TelegramIcon name={actionIcon(item)} size={18} label={actionLabel(item)} /><span>{actionLabel(item)}</span></button></article>
         {/each}
     </div>
 {:else}
-    <div class="groups" aria-label={kind === 'task' ? 'Grouped tasks' : 'Grouped rewards'}>
+    <div class="groups" aria-label={kind === 'task' ? $i18n.t('app.telegram.catalog.groupedTasks') : $i18n.t('app.telegram.catalog.groupedRewards')}>
         {#each groups as group (group)}
-            <details open><summary>{stripLeadingEmoji(group)}</summary><div class="catalog">{#each items.filter((item) => item.group?.trim() === group) as item (item.id)}<article><div class="entity-main"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: item.title, group: item.group })} size={20} label={kind === 'task' ? 'Task' : 'Reward'} /></span><div class="entity-text"><h3>{stripLeadingEmoji(item.title)}</h3><p><TelegramCoin size={13} />{kind === 'task' ? '+' : '−'}{item.amount}</p></div></div><button type="button" aria-label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}><TelegramIcon name={isPending(item.id) ? 'refresh' : kind === 'task' ? 'done' : 'requestReward'} size={18} label={isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'} /><span>{isPending(item.id) ? 'Pending' : item.available ? kind === 'task' ? 'Done' : 'Get reward' : item.disabledReason ?? 'Unavailable'}</span></button></article>{/each}</div></details>
+            <details open><summary>{stripLeadingEmoji(group)}</summary><div class="catalog">{#each items.filter((item) => item.group?.trim() === group) as item (item.id)}<article><div class="entity-main"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: item.title, group: item.group })} size={20} label={entityLabel()} /></span><div class="entity-text"><h3>{stripLeadingEmoji(item.title)}</h3><p><TelegramCoin size={13} />{kind === 'task' ? '+' : '−'}{item.amount}</p></div></div><button type="button" aria-label={actionLabel(item)} disabled={!item.available || isPending(item.id)} on:click={() => dispatch('request', item)}><TelegramIcon name={actionIcon(item)} size={18} label={actionLabel(item)} /><span>{actionLabel(item)}</span></button></article>{/each}</div></details>
         {/each}
     </div>
 {/if}
