@@ -1222,7 +1222,7 @@ Enforce limits in shared business logic so Mini App, Bot and direct API paths ca
 
 ---
 
-# SFX-014 - Fix Bot child selection and wording
+# SFX-014 ✅ - Fix Bot child selection and wording
 
 **Priority:** P0  
 **Channel:** Bot

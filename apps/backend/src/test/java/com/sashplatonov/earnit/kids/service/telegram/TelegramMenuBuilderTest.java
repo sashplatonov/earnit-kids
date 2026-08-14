@@ -27,7 +27,7 @@ class TelegramMenuBuilderTest {
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .hasSize(5)
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "🔄 Сменить ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
             .contains("nav.requests-child-1.signed", "nav.coins-child-1.signed",
@@ -52,7 +52,7 @@ class TelegramMenuBuilderTest {
             .isEqualTo("👧 Alex\n🪙 42 монеты\n\n🎯 Требуют внимания: 1");
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "🔄 Сменить ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
     }
 
     @Test
@@ -74,7 +74,7 @@ class TelegramMenuBuilderTest {
         assertThat(TelegramMenuFlow.navigationMenu("tasks-child-1", view,
             "https://example.test/telegram", menuBuilder()))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "🔄 Сменить ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
         assertThat(TelegramMenuFlow.navigationText("tasks-child-1", view))
             .isEqualTo("👧 Alex\n🪙 42 монеты\n\n✅ Сейчас ничего не требует внимания");
     }
@@ -258,7 +258,7 @@ class TelegramMenuBuilderTest {
     void parentNoChildrenOffersOnlyMiniAppEntry() {
         assertThat(menuBuilder().parentNoChildren("https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("➕ Add child → Mini App");
+            .containsExactly("➕ Добавить ребёнка → Mini App");
     }
 
     @Test

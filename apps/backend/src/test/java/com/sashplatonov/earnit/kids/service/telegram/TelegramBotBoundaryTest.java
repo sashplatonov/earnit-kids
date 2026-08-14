@@ -36,10 +36,10 @@ class TelegramBotBoundaryTest {
 
         assertThat(TelegramMenuFlow.navigationMenu("tasks-child-1", parent, MINI_APP, builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "🔄 Сменить ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
         assertThat(TelegramMenuFlow.navigationMenu("rewards-child-1", parent, MINI_APP, builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "🔄 Сменить ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
     }
 
     @Test
@@ -49,7 +49,7 @@ class TelegramBotBoundaryTest {
 
         assertThat(TelegramMenuFlow.navigationMenu("balance-child-1", parent, MINI_APP, builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "🔄 Сменить ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
         assertThat(TelegramMenuFlow.navigationMenu("switch-child-1", parent, MINI_APP, builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("👧 Aliska · 22", "🏠 Главное меню");

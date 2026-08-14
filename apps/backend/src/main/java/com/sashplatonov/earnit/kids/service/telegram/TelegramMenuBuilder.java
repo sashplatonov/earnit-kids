@@ -34,14 +34,14 @@ public class TelegramMenuBuilder {
         view.children().stream().limit(10).forEach(child ->
             buttons.add(navigation(TelegramCopy.chooseChild(child.name(), child.balance()), "child-" + child.id())));
         if (buttons.isEmpty()) {
-            buttons.add(callback(TelegramBotEmoji.ADD + " Add child → Mini App", "noop"));
+            buttons.add(callback(TelegramCopy.ADD_CHILD_MINI_APP, "noop"));
         }
         buttons.add(navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentNoChildren(String miniAppUrl) {
-        return List.of(webApp(TelegramBotEmoji.ADD + " Add child → Mini App", miniAppUrl));
+        return List.of(webApp(TelegramCopy.ADD_CHILD_MINI_APP, miniAppUrl));
     }
 
     public List<TelegramBotApiClient.InlineButton> parentCoins(TelegramQuickActionResponse view,

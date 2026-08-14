@@ -17,7 +17,8 @@ public final class TelegramCopy {
     public static final String REQUESTS = TelegramBotEmoji.REQUESTS + " Запросы";
     public static final String COINS = TelegramBotEmoji.COINS + " Монеты";
     public static final String RECENT = TelegramBotEmoji.RECENT + " Последние";
-    public static final String SWITCH_CHILD = TelegramBotEmoji.SWITCH + " Сменить ребёнка";
+    public static final String SWITCH_CHILD = TelegramBotEmoji.CHILD + " Выбрать ребёнка";
+    public static final String ADD_CHILD_MINI_APP = TelegramBotEmoji.ADD + " Добавить ребёнка → Mini App";
     public static final String OPEN_APP = TelegramBotEmoji.MINI_APP + " Открыть приложение";
     public static final String APPROVE = TelegramBotEmoji.APPROVE + " Одобрить";
     public static final String REJECT = TelegramBotEmoji.REJECT + " Отклонить";
@@ -51,9 +52,9 @@ public final class TelegramCopy {
         return TelegramBotEmoji.CHILD + " " + childName + " · " + balance;
     }
 
-    // EXPLAIN: Title of the flat switch-child picker screen.
+    // EXPLAIN: Title of the flat child picker screen.
     public static String chooseChildTitle() {
-        return TelegramBotEmoji.SWITCH + " Выберите ребёнка";
+        return TelegramBotEmoji.CHILD + " Кого показывать?";
     }
 
     // EXPLAIN: Message templates.
