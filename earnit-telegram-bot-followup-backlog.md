@@ -55,6 +55,7 @@ The Bot must not become a duplicate Mini App.
 
 # BUX-001 - Rebuild Parent Bot Home as a compact decision menu
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** -
 

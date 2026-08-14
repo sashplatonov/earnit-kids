@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 
 import java.util.List;
@@ -12,16 +13,30 @@ final class TelegramMenuFlow {
         return text.equals("/start") || text.startsWith("/start ");
     }
 
+    // EXPLAIN: /start always renders the role home. Parent Home is a decision
+    // EXPLAIN: inbox for the current child; the child picker is a direct action only.
     static String startText(TelegramQuickActionResponse view) {
-        return view.children().size() > 1 && "parent".equals(view.role())
-            ? "Choose a child" : parentOrChildText(view);
+        return homeText(view);
     }
 
     static List<TelegramBotApiClient.InlineButton> startMenu(TelegramQuickActionResponse view,
                                                               String miniAppUrl,
                                                               TelegramMenuBuilder menuBuilder) {
-        return view.children().size() > 1 && "parent".equals(view.role())
-            ? menuBuilder.parentChildPicker(view) : mainMenu(view, miniAppUrl, menuBuilder);
+        return mainMenu(view, miniAppUrl, menuBuilder);
+    }
+
+    // EXPLAIN: Role home text: parent sees child + balance + pending attention,
+    // EXPLAIN: child sees a greeting + balance.
+    static String homeText(TelegramQuickActionResponse view) {
+        return "child".equals(view.role())
+            ? TelegramCopy.childHome(view.childName(), view.balance())
+            : TelegramCopy.parentHome(view.childName(), view.balance(), pendingCount(view));
+    }
+
+    static int pendingCount(TelegramQuickActionResponse view) {
+        return (int) view.requests().stream()
+            .filter(request -> request.status() == PurchaseRequestStatus.pending)
+            .count();
     }
 
     static String navigationText(String action, TelegramQuickActionResponse view) {
@@ -127,9 +142,5 @@ final class TelegramMenuFlow {
                                                                       TelegramMenuBuilder menuBuilder) {
         return "child".equals(view.role()) ? menuBuilder.childMain(view, miniAppUrl)
             : menuBuilder.parentMain(view, miniAppUrl);
-    }
-
-    static String parentOrChildText(TelegramQuickActionResponse view) {
-        return "EarnIt Kids · " + view.childName() + "\nBalance: " + view.balance() + " 🪙";
     }
 }

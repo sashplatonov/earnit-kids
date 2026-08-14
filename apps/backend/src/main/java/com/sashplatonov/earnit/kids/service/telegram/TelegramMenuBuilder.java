@@ -18,12 +18,13 @@ public class TelegramMenuBuilder {
     }
 
     public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view, String miniAppUrl) {
+        // EXPLAIN: Decision menu: two-column grid, Mini App is always the last row.
         return List.of(
-            parentNavigation(TelegramBotEmoji.REQUEST + " Requests (" + pendingRequestCount(view) + ")", "requests", view),
-            parentNavigation(TelegramBotEmoji.COINS + " Coins", "coins", view),
-            parentNavigation(TelegramBotEmoji.RECENT + " Recent", "recent", view),
-            parentNavigation(TelegramBotEmoji.SWITCH + " Switch child", "child", view),
-            webApp(TelegramBotEmoji.OPEN_APP + " Open Mini App", miniAppUrl)
+            parentNavigation(TelegramCopy.REQUESTS, "requests", view, "home-row-1"),
+            parentNavigation(TelegramCopy.COINS, "coins", view, "home-row-1"),
+            parentNavigation(TelegramCopy.RECENT, "recent", view, "home-row-2"),
+            parentNavigation(TelegramCopy.SWITCH_CHILD, "child", view, "home-row-2"),
+            webApp(TelegramCopy.OPEN_APP, miniAppUrl, "home-row-3")
         );
     }
 
@@ -158,12 +159,16 @@ public class TelegramMenuBuilder {
         return TelegramBotApiClient.InlineButton.callback(text, data);
     }
 
-    private long pendingRequestCount(TelegramQuickActionResponse view) {
-        return view.requests().stream().filter(request -> request.status() == PurchaseRequestStatus.pending).count();
+    private TelegramBotApiClient.InlineButton callback(String text, String data, String rowId) {
+        return TelegramBotApiClient.InlineButton.callback(text, data, rowId);
     }
 
     private TelegramBotApiClient.InlineButton navigation(String text, String action) {
         return callback(text, callbacks.signNavigation(action));
+    }
+
+    private TelegramBotApiClient.InlineButton navigation(String text, String action, String rowId) {
+        return callback(text, callbacks.signNavigation(action), rowId);
     }
 
     private TelegramBotApiClient.InlineButton parentNavigation(String text,
@@ -172,7 +177,18 @@ public class TelegramMenuBuilder {
         return navigation(text, action + "-child-" + view.childId());
     }
 
+    private TelegramBotApiClient.InlineButton parentNavigation(String text,
+                                                                 String action,
+                                                                 TelegramQuickActionResponse view,
+                                                                 String rowId) {
+        return navigation(text, action + "-child-" + view.childId(), rowId);
+    }
+
     private TelegramBotApiClient.InlineButton webApp(String text, String url) {
         return TelegramBotApiClient.InlineButton.webApp(text, url);
+    }
+
+    private TelegramBotApiClient.InlineButton webApp(String text, String url, String rowId) {
+        return TelegramBotApiClient.InlineButton.webApp(text, url, rowId);
     }
 }

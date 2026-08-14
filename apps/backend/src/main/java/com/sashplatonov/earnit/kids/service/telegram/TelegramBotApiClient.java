@@ -79,9 +79,35 @@ public class TelegramBotApiClient {
             payload.put("message_id", messageId);
         }
         payload.put("text", text);
-        payload.put("reply_markup", Map.of("inline_keyboard", buttons.stream()
-            .map(button -> List.of(buttonPayload(button))).toList()));
+        payload.put("reply_markup", Map.of("inline_keyboard", keyboardRows(buttons)));
         return payload;
+    }
+
+    // EXPLAIN: Adjacent buttons sharing a non-null rowId render on one Telegram
+    // EXPLAIN: keyboard row (2-column grids); null rowId renders a full-width row.
+    private List<List<Map<String, Object>>> keyboardRows(List<InlineButton> buttons) {
+        List<List<Map<String, Object>>> rows = new java.util.ArrayList<>();
+        List<InlineButton> current = new java.util.ArrayList<>();
+        for (InlineButton button : buttons) {
+            if (button.rowId() == null) {
+                flushRow(current, rows);
+                current = new java.util.ArrayList<>();
+                rows.add(List.of(buttonPayload(button)));
+            } else if (current.isEmpty() || button.rowId().equals(current.get(0).rowId())) {
+                current.add(button);
+            } else {
+                flushRow(current, rows);
+                current = new java.util.ArrayList<>(List.of(button));
+            }
+        }
+        flushRow(current, rows);
+        return rows;
+    }
+
+    private void flushRow(List<InlineButton> current, List<List<Map<String, Object>>> rows) {
+        if (!current.isEmpty()) {
+            rows.add(current.stream().map(this::buttonPayload).toList());
+        }
     }
 
     private Map<String, Object> buttonPayload(InlineButton button) {
@@ -91,17 +117,25 @@ public class TelegramBotApiClient {
         return Map.of("text", button.text(), "web_app", Map.of("url", button.url()));
     }
 
-    public record InlineButton(String text, String url, String callbackData) {
+    public record InlineButton(String text, String url, String callbackData, String rowId) {
         public InlineButton(String text, String url) {
-            this(text, url, null);
+            this(text, url, null, null);
         }
 
         public static InlineButton callback(String text, String data) {
-            return new InlineButton(text, null, data);
+            return new InlineButton(text, null, data, null);
+        }
+
+        public static InlineButton callback(String text, String data, String rowId) {
+            return new InlineButton(text, null, data, rowId);
         }
 
         public static InlineButton webApp(String text, String url) {
-            return new InlineButton(text, url, null);
+            return new InlineButton(text, url, null, null);
+        }
+
+        public static InlineButton webApp(String text, String url, String rowId) {
+            return new InlineButton(text, url, null, rowId);
         }
     }
 }

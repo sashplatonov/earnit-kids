@@ -169,7 +169,7 @@ class TelegramBotServiceImplTest {
             {"update_id":27,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
             """));
 
-        verify(apiClient).sendMessage(44L, "EarnIt Kids · Alex\nBalance: 20 🪙", List.of());
+        verify(apiClient).sendMessage(44L, "👋 Alex\n🪙 20 монет", List.of());
     }
 
     @Test
@@ -220,7 +220,7 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
-    void parentStartShowsChildPickerWhenMultipleChildrenExist() throws Exception {
+    void parentStartShowsParentHomeDecisionMenu() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
@@ -236,9 +236,9 @@ class TelegramBotServiceImplTest {
         when(identities.recordWebhookUpdate(16L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
         when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
-        List<TelegramBotApiClient.InlineButton> picker = List.of(
-            TelegramBotApiClient.InlineButton.callback("👧 Alex", "nav.signed"));
-        when(menuBuilder.parentChildPicker(view)).thenReturn(picker);
+        List<TelegramBotApiClient.InlineButton> main = List.of(
+            TelegramBotApiClient.InlineButton.callback("🎯 Запросы", "nav.signed"));
+        when(menuBuilder.parentMain(view, "https://example.test/telegram")).thenReturn(main);
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -247,7 +247,7 @@ class TelegramBotServiceImplTest {
             {"update_id":16,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
             """));
 
-        verify(apiClient).sendMessage(44L, "Choose a child", picker);
+        verify(apiClient).sendMessage(44L, "👧 Alex\n🪙 20 монет\n\n✅ Сейчас ничего не требует внимания", main);
     }
 
     @Test
@@ -305,7 +305,7 @@ class TelegramBotServiceImplTest {
 
         verify(quickActions).load(77L, 2);
         verify(apiClient).editMessageText(44L, 19L,
-            "EarnIt Kids · Sam\nBalance: 12 🪙", List.of());
+            "👧 Sam\n🪙 12 монет\n\n✅ Сейчас ничего не требует внимания", List.of());
     }
 
     @Test
