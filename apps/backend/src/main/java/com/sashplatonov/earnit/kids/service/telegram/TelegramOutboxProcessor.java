@@ -98,18 +98,18 @@ public class TelegramOutboxProcessor {
         String action = switch (event.getEventType()) {
             case TASK_REQUEST_CREATED -> "New task request";
             case REWARD_REQUEST_CREATED -> "New reward request";
-            case TASK_APPROVED -> "✅ Task approved";
-            case TASK_REJECTED -> "❌ Task rejected";
-            case REWARD_PURCHASED -> "🎁 Reward purchased";
-            case REWARD_APPROVED -> "🎁 Reward approved";
-            case REWARD_REJECTED -> "❌ Reward rejected";
-            case BALANCE_ADJUSTED -> "🪙 Parent adjusted balance";
+            case TASK_APPROVED -> TelegramBotEmoji.DONE + " Task approved";
+            case TASK_REJECTED -> TelegramBotEmoji.REJECT + " Task rejected";
+            case REWARD_PURCHASED -> TelegramBotEmoji.REWARD + " Reward purchased";
+            case REWARD_APPROVED -> TelegramBotEmoji.REWARD + " Reward approved";
+            case REWARD_REJECTED -> TelegramBotEmoji.REJECT + " Reward rejected";
+            case BALANCE_ADJUSTED -> TelegramBotEmoji.COINS + " Parent adjusted balance";
         };
         if (event.getResultingBalance() == null || event.getCoinDelta() == 0) {
             return action;
         }
         return action + "\n" + (event.getCoinDelta() > 0 ? "+" : "") + event.getCoinDelta()
-            + " 🪙\nBalance: " + event.getResultingBalance() + " 🪙";
+            + " " + TelegramBotEmoji.COINS + "\nBalance: " + event.getResultingBalance() + " " + TelegramBotEmoji.COINS;
     }
 
     private void terminal(TelegramDeliveryEntity delivery, String status, Instant now) {

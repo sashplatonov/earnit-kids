@@ -19,60 +19,60 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view, String miniAppUrl) {
         return List.of(
-            parentNavigation("Child · " + view.childName(), "catalog", view),
+            parentNavigation(TelegramBotEmoji.CHILD + " " + view.childName(), "catalog", view),
             parentNavigation("Requests", "requests", view),
-            parentNavigation("Balance · " + view.balance() + " 🪙", "balance", view),
+            parentNavigation(TelegramBotEmoji.COINS + " Balance · " + view.balance(), "balance", view),
             parentNavigation("Coins", "coins", view),
             parentNavigation("Recent", "recent", view),
-            webApp("Open Mini App", miniAppUrl)
+            webApp(TelegramBotEmoji.OPEN_APP + " Open Mini App", miniAppUrl)
         );
     }
 
     public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.children().stream().limit(10).forEach(child ->
-            buttons.add(navigation("👧 " + child.name() + " · " + child.balance() + " 🪙", "child-" + child.id())));
+            buttons.add(navigation(TelegramBotEmoji.CHILD + " " + child.name() + " · " + child.balance() + " " + TelegramBotEmoji.COINS, "child-" + child.id())));
         if (buttons.isEmpty()) {
-            buttons.add(callback("Add child → Mini App", "noop"));
+            buttons.add(callback(TelegramBotEmoji.ADD + " Add child → Mini App", "noop"));
         }
         return List.copyOf(buttons);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentNoChildren(String miniAppUrl) {
-        return List.of(webApp("Add child → Mini App", miniAppUrl));
+        return List.of(webApp(TelegramBotEmoji.ADD + " Add child → Mini App", miniAppUrl));
     }
 
     public List<TelegramBotApiClient.InlineButton> balance(TelegramQuickActionResponse view) {
         TelegramBotApiClient.InlineButton back = "parent".equals(view.role())
-            ? parentNavigation("← Back", "main", view) : navigation("← Back", "main");
-        return List.of(callback("Balance · " + view.balance() + " 🪙", "noop"), back);
+            ? parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view) : navigation(TelegramBotEmoji.BACK + " Back", "main");
+        return List.of(callback(TelegramBotEmoji.COINS + " Balance · " + view.balance(), "noop"), back);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentChildCatalog(TelegramQuickActionResponse view) {
         return List.of(
-            parentNavigation("Tasks", "tasks", view),
-            parentNavigation("Rewards", "rewards", view),
-            parentNavigation("Switch child", "child", view),
-            parentNavigation("← Back", "main", view));
+            parentNavigation(TelegramBotEmoji.DONE + " Tasks", "tasks", view),
+            parentNavigation(TelegramBotEmoji.REWARD + " Rewards", "rewards", view),
+            parentNavigation(TelegramBotEmoji.SWITCH + " Switch child", "child", view),
+            parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view));
     }
 
     public List<TelegramBotApiClient.InlineButton> parentTasks(TelegramQuickActionResponse view) {
         return readOnlyCatalog(view.tasks().stream().limit(5)
-            .map(task -> "✅ " + task.name() + " · " + task.coins() + " 🪙").toList(), view);
+            .map(task -> TelegramBotEmoji.DONE + " " + task.name() + " · " + task.coins() + " " + TelegramBotEmoji.COINS).toList(), view);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentRewards(TelegramQuickActionResponse view) {
         return readOnlyCatalog(view.rewards().stream().limit(5)
-            .map(reward -> "🎁 " + reward.name() + " · " + reward.price() + " 🪙").toList(), view);
+            .map(reward -> TelegramBotEmoji.REWARD + " " + reward.name() + " · " + reward.price() + " " + TelegramBotEmoji.COINS).toList(), view);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentCoins(TelegramQuickActionResponse view) {
         return List.of(
-            navigation("+5 🪙", "coins-confirm-add-5-child-" + view.childId()),
-            navigation("+10 🪙", "coins-confirm-add-10-child-" + view.childId()),
-            navigation("−5 🪙", "coins-confirm-remove-5-child-" + view.childId()),
-            navigation("−10 🪙", "coins-confirm-remove-10-child-" + view.childId()),
-            parentNavigation("← Back", "main", view)
+            navigation(TelegramBotEmoji.ADD + " 5", "coins-confirm-add-5-child-" + view.childId()),
+            navigation(TelegramBotEmoji.ADD + " 10", "coins-confirm-add-10-child-" + view.childId()),
+            navigation(TelegramBotEmoji.REMOVE + " 5", "coins-confirm-remove-5-child-" + view.childId()),
+            navigation(TelegramBotEmoji.REMOVE + " 10", "coins-confirm-remove-10-child-" + view.childId()),
+            parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view)
         );
     }
 
@@ -82,19 +82,18 @@ public class TelegramMenuBuilder {
         int amount = Math.abs(delta);
         String target = "-child-" + view.childId();
         return List.of(
-            navigation("Confirm", "coins-apply-" + direction + "-" + amount + target),
-            parentNavigation("Cancel", "coins", view));
+            navigation(TelegramBotEmoji.APPROVE + " Confirm", "coins-apply-" + direction + "-" + amount + target),
+            parentNavigation(TelegramBotEmoji.BACK + " Cancel", "coins", view));
     }
 
     public List<TelegramBotApiClient.InlineButton> childMain(TelegramQuickActionResponse view,
                                                               String miniAppUrl) {
         return List.of(
-            navigation("Balance · " + view.balance() + " 🪙", "balance"),
-            navigation("Tasks", "tasks"),
-            navigation("Rewards", "rewards"),
-            navigation("Requests", "requests"),
-            navigation("Recent", "recent"),
-            webApp("Open Mini App", miniAppUrl)
+            navigation(TelegramBotEmoji.COINS + " Balance · " + view.balance(), "balance"),
+            navigation(TelegramBotEmoji.DONE + " Tasks", "tasks"),
+            navigation(TelegramBotEmoji.REWARD + " Rewards", "rewards"),
+            navigation(TelegramBotEmoji.RECENT + " Recent", "recent"),
+            webApp(TelegramBotEmoji.OPEN_APP + " Open Mini App", miniAppUrl)
         );
     }
 
@@ -102,11 +101,11 @@ public class TelegramMenuBuilder {
                                                                String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.tasks().stream().limit(5).forEach(task ->
-            buttons.add(callback("✅ I did it · " + task.name(), "task.request." + task.id())));
+            buttons.add(callback(TelegramBotEmoji.DONE + " Done: " + task.name(), "task.request." + task.id())));
         if (view.tasks().size() > 5) {
-            buttons.add(webApp("More tasks → Mini App", miniAppUrl));
+            buttons.add(webApp(TelegramBotEmoji.OPEN_APP + " More tasks → Mini App", miniAppUrl));
         }
-        buttons.add(navigation("← Back", "main"));
+        buttons.add(navigation(TelegramBotEmoji.BACK + " Back", "main"));
         return List.copyOf(buttons);
     }
 
@@ -114,22 +113,22 @@ public class TelegramMenuBuilder {
                                                                   String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.rewards().stream().limit(5).forEach(reward ->
-            buttons.add(callback("🎁 " + reward.name() + " · " + reward.price() + " 🪙",
+            buttons.add(callback(TelegramBotEmoji.REWARD + " Get " + reward.name() + " · " + reward.price() + " " + TelegramBotEmoji.COINS,
                 "reward.request." + reward.id())));
         if (view.rewards().size() > 5) {
-            buttons.add(webApp("More rewards → Mini App", miniAppUrl));
+            buttons.add(webApp(TelegramBotEmoji.OPEN_APP + " More rewards → Mini App", miniAppUrl));
         }
-        buttons.add(navigation("← Back", "main"));
+        buttons.add(navigation(TelegramBotEmoji.BACK + " Back", "main"));
         return List.copyOf(buttons);
     }
 
     public List<TelegramBotApiClient.InlineButton> backToMain() {
-        return List.of(navigation("← Back", "main"));
+        return List.of(navigation(TelegramBotEmoji.BACK + " Back", "main"));
     }
 
     public List<TelegramBotApiClient.InlineButton> backToMain(TelegramQuickActionResponse view) {
         return "parent".equals(view.role())
-            ? List.of(parentNavigation("← Back", "main", view)) : backToMain();
+            ? List.of(parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view)) : backToMain();
     }
 
     public List<TelegramBotApiClient.InlineButton> parentRequests(TelegramQuickActionResponse view) {
@@ -139,15 +138,15 @@ public class TelegramMenuBuilder {
             .limit(5)
             .forEach(request -> {
                 String label = request.title() == null ? "Request" : request.title();
-                buttons.add(callback("✅ " + label, "parent.request.approve."
+                buttons.add(callback(TelegramBotEmoji.APPROVE + " " + label, "parent.request.approve."
                     + request.childId() + "." + request.id()));
-                buttons.add(callback("❌ Reject", "parent.request.reject."
+                buttons.add(callback(TelegramBotEmoji.REJECT + " Reject", "parent.request.reject."
                     + request.childId() + "." + request.id()));
             });
         if (buttons.isEmpty()) {
             buttons.add(callback("No pending requests", "noop"));
         }
-        buttons.add(parentNavigation("← Back", "main", view));
+        buttons.add(parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view));
         return List.copyOf(buttons);
     }
 
@@ -156,10 +155,10 @@ public class TelegramMenuBuilder {
         view.requests().stream().limit(5).forEach(request -> {
             String label = request.title() == null ? "Request" : request.title();
             if (request.status() == PurchaseRequestStatus.rejected && request.taskId() != null) {
-                buttons.add(callback("❌ Not approved · " + label, "noop"));
-                buttons.add(callback("🔄 Try again", "task.request." + request.taskId()));
+                buttons.add(callback(TelegramBotEmoji.REJECT + " Not approved · " + label, "noop"));
+                buttons.add(callback(TelegramBotEmoji.SWITCH + " Try again", "task.request." + request.taskId()));
             } else {
-                String status = request.status() == PurchaseRequestStatus.approved ? "✅" : "⏳";
+                String status = request.status() == PurchaseRequestStatus.approved ? TelegramBotEmoji.DONE : TelegramBotEmoji.WAITING;
                 buttons.add(callback(status + " " + label, "noop"));
             }
         });
@@ -167,7 +166,7 @@ public class TelegramMenuBuilder {
             buttons.add(callback("No recent requests", "noop"));
         }
         buttons.add("parent".equals(view.role())
-            ? parentNavigation("← Back", "main", view) : navigation("← Back", "main"));
+            ? parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view) : navigation(TelegramBotEmoji.BACK + " Back", "main"));
         return List.copyOf(buttons);
     }
 
@@ -176,13 +175,13 @@ public class TelegramMenuBuilder {
         view.history().stream().limit(5).forEach(entry -> {
             String title = entry.title() == null ? "Operation" : entry.title();
             String amount = entry.amount() >= 0 ? "+" + entry.amount() : Integer.toString(entry.amount());
-            buttons.add(callback(amount + " 🪙 · " + title, "noop"));
+            buttons.add(callback(amount + " " + TelegramBotEmoji.COINS + " · " + title, "noop"));
         });
         if (buttons.isEmpty()) {
             buttons.add(callback("No recent operations", "noop"));
         }
         buttons.add("parent".equals(view.role())
-            ? parentNavigation("← Back", "main", view) : navigation("← Back", "main"));
+            ? parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view) : navigation(TelegramBotEmoji.BACK + " Back", "main"));
         return List.copyOf(buttons);
     }
 
@@ -197,7 +196,7 @@ public class TelegramMenuBuilder {
         if (buttons.isEmpty()) {
             buttons.add(callback("No active entries", "noop"));
         }
-        buttons.add(parentNavigation("← Back", "catalog", view));
+        buttons.add(parentNavigation(TelegramBotEmoji.BACK + " Back", "catalog", view));
         return List.copyOf(buttons);
     }
 

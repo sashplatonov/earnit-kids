@@ -1,0 +1,50 @@
+import {
+    Activity,
+    Archive,
+    ArrowLeft,
+    Check,
+    CircleDollarSign,
+    ClipboardList,
+    Gift,
+    History,
+    House,
+    Minus,
+    Pencil,
+    Plus,
+    RefreshCw,
+    SlidersHorizontal,
+    Smartphone,
+    Tag,
+    Trash2,
+    UserRound,
+    UsersRound,
+    X
+} from '@lucide/svelte';
+
+export const telegramIconMap = {
+    approve: Check,
+    reject: X,
+    done: Check,
+    requestReward: Gift,
+    coinAdjustment: CircleDollarSign,
+    childSwitch: RefreshCw,
+    openApp: Smartphone,
+    back: ArrowLeft,
+    filter: SlidersHorizontal,
+    add: Plus,
+    edit: Pencil,
+    archive: Archive,
+    delete: Trash2,
+    task: ClipboardList,
+    reward: Gift,
+    request: Tag,
+    activity: Activity,
+    family: UsersRound,
+    balance: CircleDollarSign,
+    history: History,
+    child: UserRound,
+    remove: Minus,
+    home: House
+} as const;
+
+export type TelegramIconName = keyof typeof telegramIconMap;
