@@ -136,7 +136,7 @@ class TelegramMenuBuilderTest {
         TelegramQuickActionResponse empty = view();
         assertThat(menuBuilder().recent(empty))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("No recent operations", "⬅️ Back");
+            .containsExactly("✅ No recent operations", "⬅️ Back");
     }
 
     private TelegramQuickActionResponse view() {

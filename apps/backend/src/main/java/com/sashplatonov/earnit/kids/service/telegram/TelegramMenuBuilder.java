@@ -133,7 +133,7 @@ public class TelegramMenuBuilder {
                     + request.childId() + "." + request.id()));
             });
         if (buttons.isEmpty()) {
-            buttons.add(callback("No pending requests", "noop"));
+            buttons.add(callback(TelegramBotEmoji.SUCCESS + " No pending requests", "noop"));
         }
         buttons.add(parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view));
         return List.copyOf(buttons);
@@ -147,7 +147,7 @@ public class TelegramMenuBuilder {
             buttons.add(callback(amount + " " + TelegramBotEmoji.COINS + " · " + title, "noop"));
         });
         if (buttons.isEmpty()) {
-            buttons.add(callback("No recent operations", "noop"));
+            buttons.add(callback(TelegramBotEmoji.SUCCESS + " No recent operations", "noop"));
         }
         buttons.add("parent".equals(view.role())
             ? parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view) : navigation(TelegramBotEmoji.BACK + " Back", "main"));
