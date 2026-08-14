@@ -86,7 +86,7 @@
     .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .25rem; margin-bottom: .75rem; }
     button { min-height: 2.75rem; border: 1px solid #dfe4ee; border-radius: .75rem; background: #fff; color: #33415f; font: inherit; cursor: pointer; }
     button:focus-visible { outline: 3px solid #80aaff; outline-offset: 2px; }
-    .tabs button.active { border-color: #3867d6; background: #3867d6; color: #fff; }
+    .tabs button.active { border-color: #b9c0ff; background: #fff; color: #2854ba; font-weight: 750; }
     .tabs button { display: inline-flex; align-items: center; justify-content: center; gap: .2rem; padding-inline: .25rem; white-space: nowrap; }
     .state { padding: 2rem 1rem; text-align: center; color: #5c6780; }
     .state--error { color: #a33b3b; }

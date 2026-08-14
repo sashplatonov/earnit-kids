@@ -216,7 +216,7 @@ Never used:
 
 ---
 
-# SFX-003 - Fix selected bottom navigation state
+# SFX-003 ✅ - Fix selected bottom navigation state
 
 **Priority:** P0  
 **Channel:** Mini App
