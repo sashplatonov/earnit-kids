@@ -1287,7 +1287,7 @@ Use the canonical semantic graphics listed at the beginning of this backlog.
 
 ---
 
-# SFX-016 - Regression and integration tests
+# SFX-016 ✅ - Regression and integration tests
 
 **Priority:** P1  
 **Depends on:** SFX-001..SFX-015
@@ -1343,7 +1343,7 @@ Use the canonical semantic graphics listed at the beginning of this backlog.
 14. SFX-013 ✅ - limits with ±1/±5 steppers
 15. SFX-011 ✅ - dual CSV import + format/copy
 16. SFX-012 ✅ - Task/Reward group submenu
-17. SFX-016 - regression/integration tests
+17. SFX-016 ✅ - regression/integration tests
 
 ---
 

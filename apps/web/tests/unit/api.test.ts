@@ -44,6 +44,16 @@ import {
     updateParentMembership,
     unregisterPushTokenOnServer,
     updateOwnNickname,
+    adminSetChildActive,
+    adminGetInactiveChildren,
+    adminGetChildTelegram,
+    adminCreateChildTelegramInvite,
+    adminUnlinkChildTelegram,
+    getFamilyNotificationSettings,
+    setFamilyNotificationPreference,
+    getAccountConnection,
+    changeAccountEmail,
+    unlinkAccountEmail,
 } from '../../src/lib/services/api';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -700,5 +710,119 @@ describe('fetchWithCsrf', () => {
 
         await expect(addFriend(22)).resolves.toBe(false);
         expect(errorSpy).toHaveBeenCalled();
+    });
+
+    it('posts child deactivate/reactivate through the child status endpoint', async () => {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(jsonResponse({ ok: true }))
+            .mockResolvedValueOnce(jsonResponse({ ok: true }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await adminSetChildActive(15, false);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/children/15/deactivate');
+
+        await adminSetChildActive(15, true);
+        expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/children/15/reactivate');
+    });
+
+    it('loads inactive children from the dedicated endpoint and normalizes them', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse([{ id: 15, nickname: 'Маша', status: 'INACTIVE' }]));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        const children = await adminGetInactiveChildren();
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/children/inactive');
+        expect(children).toHaveLength(1);
+        expect(children[0]?.id).toBe(15);
+    });
+
+    it('loads child Telegram connection status', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ childId: 15, linked: true, telegramUserId: 42 }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(adminGetChildTelegram(15)).resolves.toEqual({ childId: 15, linked: true, telegramUserId: 42 });
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/children/15/telegram');
+    });
+
+    it('creates a child Telegram invite returning the launch url', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ launchUrl: 'https://t.me/bot?startapp=abc' }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(adminCreateChildTelegramInvite(15)).resolves.toEqual({ launchUrl: 'https://t.me/bot?startapp=abc' });
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/children/15/telegram/invite');
+    });
+
+    it('returns null when the child Telegram invite is rejected', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ error: 'denied' }, 400));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(adminCreateChildTelegramInvite(15)).resolves.toBeNull();
+    });
+
+    it('unlinks the child Telegram account through the unlink endpoint', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true, data: null }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(adminUnlinkChildTelegram(15)).resolves.toBe(true);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/children/15/telegram/unlink');
+    });
+
+    it('loads family notification settings for role-aware notifications', async () => {
+        const payload = { parent: [{ key: 'taskMarkedDone', enabled: true }], children: [] };
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse(payload));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(getFamilyNotificationSettings()).resolves.toEqual(payload);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/family/notifications');
+    });
+
+    it('updates a family notification preference through PUT', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true, data: null }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(setFamilyNotificationPreference('child', 15, 'taskApproved', true)).resolves.toBe(true);
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/family/notifications');
+        expect(init.method).toBe('PUT');
+        expect(init.body).toBe(JSON.stringify({ scope: 'child', childId: 15, key: 'taskApproved', enabled: true }));
+    });
+
+    it('loads the parent account connection overview', async () => {
+        const payload = { email: 'p@example.com', emailLinked: true, telegramLinked: false };
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse(payload));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(getAccountConnection()).resolves.toEqual(payload);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/account');
+    });
+
+    it('changes the parent email through the account email endpoint', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true, data: null }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await changeAccountEmail('new@example.com');
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/account/email');
+        expect(init.body).toBe(JSON.stringify({ newEmail: 'new@example.com' }));
+    });
+
+    it('unlinks email login through the account unlink endpoint', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true, data: null }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await unlinkAccountEmail();
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/account/email/unlink');
+        expect(init.body).toBe(JSON.stringify({}));
     });
 });

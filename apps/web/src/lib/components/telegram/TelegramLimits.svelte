@@ -4,6 +4,7 @@
     import { adminSaveLimits } from '$lib/services/api';
     import { refreshData } from '$lib/services/bootstrap';
     import TelegramIcon from './TelegramIcon.svelte';
+    import { MAX_CHILD_LIMIT as MAX_LIMIT, stepLimit, effectiveLimit } from './telegramLimits';
 
     export let open = false;
     export let child: Child | null = null;
@@ -11,7 +12,6 @@
     export let onSaved: () => void = () => {};
 
     const i18n = useI18n();
-    const MAX_LIMIT = 10000;
 
     let earningEnabled = false;
     let earningMax = 0;
@@ -30,16 +30,12 @@
         saved = false;
     }
 
-    function clamp(value: number): number {
-        return Math.max(0, Math.min(MAX_LIMIT, Math.round(value)));
-    }
-
     function stepEarning(delta: number) {
-        earningMax = clamp(earningMax + delta);
+        earningMax = stepLimit(earningMax, delta);
     }
 
     function stepReward(delta: number) {
-        rewardMax = clamp(rewardMax + delta);
+        rewardMax = stepLimit(rewardMax, delta);
     }
 
     async function save() {
@@ -48,9 +44,9 @@
         error = '';
         saved = false;
         const ok = await adminSaveLimits(child.id, {
-            dailyCoinLimit: earningEnabled ? earningMax : 0,
+            dailyCoinLimit: effectiveLimit(earningEnabled, earningMax),
             monthlyLimit: child.monthlyLimit ?? 10000,
-            dailyRewardLimit: rewardEnabled ? rewardMax : 0,
+            dailyRewardLimit: effectiveLimit(rewardEnabled, rewardMax),
         });
         busy = false;
         if (ok) {
