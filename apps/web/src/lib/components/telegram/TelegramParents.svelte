@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import {
         addParentMembership,
@@ -23,12 +22,9 @@
     let inviteLink = '';
     let copied = false;
 
-    onMount(() => {
-        void reload();
-    });
+    $: if (open) void reload();
 
     async function reload() {
-        if (!open) return;
         loading = true;
         error = '';
         const result = await loadParentMemberships();

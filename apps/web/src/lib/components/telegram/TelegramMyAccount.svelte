@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import { getAccountConnection, type AccountConnection } from '$lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -14,13 +13,11 @@
     let loading = false;
     let error = '';
 
-    onMount(() => {
-        void reload();
-    });
+    $: if (open) void reload();
 
     async function reload() {
-        if (!open) return;
         loading = true;
+        error = '';
         account = await getAccountConnection();
         if (!account) error = $i18n.t('app.telegram.emailSettings.error');
         loading = false;

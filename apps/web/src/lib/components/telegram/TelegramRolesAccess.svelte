@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { loadParentMemberships } from '$lib/services/api';
@@ -15,12 +14,9 @@
     let loading = false;
     let error = '';
 
-    onMount(() => {
-        void reload();
-    });
+    $: if (open) void reload();
 
     async function reload() {
-        if (!open) return;
         loading = true;
         error = '';
         const result = await loadParentMemberships();

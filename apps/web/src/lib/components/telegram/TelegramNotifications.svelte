@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import {
         getFamilyNotificationSettings,
@@ -18,12 +17,9 @@
     let loading = false;
     let error = '';
 
-    onMount(() => {
-        void reload();
-    });
+    $: if (open) void reload();
 
     async function reload() {
-        if (!open) return;
         loading = true;
         error = '';
         settings = await getFamilyNotificationSettings();
