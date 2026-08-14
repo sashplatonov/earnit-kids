@@ -135,6 +135,7 @@ Keyboard remains compact.
 
 # BUX-002 - Make Parent approval notification-first
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** BUX-001
 

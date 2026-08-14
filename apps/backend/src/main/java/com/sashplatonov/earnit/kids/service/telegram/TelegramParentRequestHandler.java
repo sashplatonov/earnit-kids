@@ -1,9 +1,12 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+
+import java.util.List;
 
 final class TelegramParentRequestHandler {
     private TelegramParentRequestHandler() {
@@ -43,36 +46,41 @@ final class TelegramParentRequestHandler {
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
             return;
         }
-        TelegramQuickActionResponse currentView = result instanceof OperationResult.Success<TelegramQuickActionResponse> success
-            ? success.value() : quickActions.load(telegramUserId, childId).orElse(null);
-        apiClient.editMessageText(chatId, messageId,
-            decisionText(result, approved, requestId, childId, telegramUserId, quickActions),
-            currentView == null ? menuBuilder.backToMain() : menuBuilder.backToMain(currentView));
+        // EXPLAIN: One callback completes the decision; the same message is
+        // EXPLAIN: edited to a terminal resolved state and decision buttons disappear.
+        if (result instanceof OperationResult.Success<TelegramQuickActionResponse> success) {
+            apiClient.editMessageText(chatId, messageId, decisionText(success.value(), approved, requestId), List.of());
+            return;
+        }
+        TelegramQuickActionResponse view = quickActions.load(telegramUserId, childId).orElse(null);
+        if (isStale(view, requestId)) {
+            apiClient.editMessageText(chatId, messageId, TelegramCopy.stale(), List.of());
+            return;
+        }
+        apiClient.editMessageText(chatId, messageId, TelegramCopy.error(),
+            view == null ? menuBuilder.backToMain() : menuBuilder.backToMain(view));
     }
 
-    private static String decisionText(OperationResult<TelegramQuickActionResponse> result,
-                                       boolean approved,
-                                       long requestId,
-                                       int childId,
-                                       long telegramUserId,
-                                       TelegramQuickActionService quickActions) {
-        if (!(result instanceof OperationResult.Success<TelegramQuickActionResponse> success)) {
-            var refreshed = quickActions.load(telegramUserId, childId);
-            if (refreshed.isPresent()) {
-                var request = refreshed.get().requests().stream()
-                    .filter(value -> value.id() == requestId).findFirst();
-                if (request.isPresent() && request.get().status() == PurchaseRequestStatus.approved) {
-                    return "Already approved";
-                }
-                if (request.isPresent() && request.get().status() == PurchaseRequestStatus.rejected) {
-                    return "Already rejected";
-                }
-            }
-            return "Request already processed or unavailable. Refresh the list.";
-        }
+    private static boolean isStale(TelegramQuickActionResponse view, long requestId) {
+        return view != null && view.requests().stream()
+            .filter(value -> value.id() == requestId)
+            .anyMatch(value -> value.status() == PurchaseRequestStatus.approved
+                || value.status() == PurchaseRequestStatus.rejected);
+    }
+
+    private static String decisionText(TelegramQuickActionResponse view, boolean approved, long requestId) {
         if (!approved) {
-            return "❌ Rejected by you · Request " + requestId;
+            return TelegramCopy.parentRejected();
         }
-        return "✅ Approved by you · Balance: " + success.value().balance() + " 🪙";
+        var request = view.requests().stream().filter(value -> value.id() == requestId).findFirst();
+        String title = request.map(TelegramParentRequestHandler::title).orElse(null);
+        int delta = request.map(value -> value.coins()).orElse(0);
+        return TelegramCopy.parentApproved(title == null ? "Запрос" : title, delta, view.balance());
+    }
+
+    private static String title(RequestDto request) {
+        return request.title() != null ? request.title()
+            : request.taskName() != null ? request.taskName()
+            : request.itemName();
     }
 }

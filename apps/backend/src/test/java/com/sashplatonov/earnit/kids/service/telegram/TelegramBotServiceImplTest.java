@@ -451,18 +451,20 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
-    void parentApprovalEditsRequestCardWithUpdatedBalance() throws Exception {
+    void parentApprovalEditsNotificationToTerminalResolvedState() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
         TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
         TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
         TelegramConfig config = mock(TelegramConfig.class);
+        RequestDto request = new RequestDto(19L, 7L, "Homework", null, null, "Homework", null, null, null, null,
+            1, PurchaseRequestStatus.approved, PurchaseRequestType.earn, 0, "2026-08-13T12:00:00Z",
+            3, null, null, null, null);
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
-            "family", "parent", 3, "Alex", 62, List.of(), List.of(), List.of(), List.of(), List.of());
+            "family", "parent", 3, "Alex", 62, List.of(), List.of(), List.of(), List.of(request), List.of());
         when(identities.recordWebhookUpdate(15L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(quickActions.approveRequest(77L, 3, 19L)).thenReturn(OperationResult.success(view));
-        when(menuBuilder.backToMain()).thenReturn(List.of());
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -472,12 +474,13 @@ class TelegramBotServiceImplTest {
             "data":"parent.request.approve.3.19","message":{"chat":{"id":44},"message_id":19}}}
             """));
 
-        verify(apiClient).editMessageText(44L, 19L, "✅ Approved by you · Balance: 62 🪙", List.of());
+        verify(apiClient).editMessageText(44L, 19L,
+            "✅ Одобрено\n\nHomework\n🪙 +1 монета\nБаланс: 62", List.of());
         verify(apiClient).answerCallbackQuery("callback");
     }
 
     @Test
-    void staleParentApprovalShowsAlreadyApprovedWithoutDecisionButtons() throws Exception {
+    void staleParentApprovalShowsStaleStateWithoutDecisionButtons() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
@@ -492,7 +495,6 @@ class TelegramBotServiceImplTest {
         when(identities.recordWebhookUpdate(21L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(quickActions.approveRequest(77L, 3, 19L)).thenReturn(OperationResult.failure("already", "processed"));
         when(quickActions.load(77L, 3)).thenReturn(Optional.of(refreshed));
-        when(menuBuilder.backToMain()).thenReturn(List.of());
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -502,7 +504,7 @@ class TelegramBotServiceImplTest {
             "data":"parent.request.approve.3.19","message":{"chat":{"id":44},"message_id":19}}}
             """));
 
-        verify(apiClient).editMessageText(44L, 19L, "Already approved", List.of());
+        verify(apiClient).editMessageText(44L, 19L, "ℹ️ Этот запрос уже обработан", List.of());
     }
 
     private TelegramBotServiceImpl service(TelegramIdentityService identities,

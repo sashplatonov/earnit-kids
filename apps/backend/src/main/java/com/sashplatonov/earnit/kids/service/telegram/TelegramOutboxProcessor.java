@@ -2,8 +2,15 @@ package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.config.TelegramConfig;
 import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventEntity;
+import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventType;
+import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TelegramDeliveryEntity;
 import com.sashplatonov.earnit.kids.repository.ApplicationOutboxEventRepository;
+import com.sashplatonov.earnit.kids.repository.ChildRepository;
+import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
+import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramDeliveryRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -12,6 +19,7 @@ import io.quarkus.scheduler.Scheduled;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 public class TelegramOutboxProcessor {
@@ -22,6 +30,9 @@ public class TelegramOutboxProcessor {
     @Inject private TelegramBotApiClient api;
     @Inject private TelegramConfig config;
     @Inject private TelegramObservability observability;
+    @Inject private ChildRepository children;
+    @Inject private PurchaseRequestRepository requests;
+    @Inject private ShopItemRepository shopItems;
 
     TelegramOutboxProcessor() {
     }
@@ -31,21 +42,30 @@ public class TelegramOutboxProcessor {
                             ApplicationOutboxEventRepository events,
                             TelegramBotApiClient api,
                             TelegramConfig config,
-                            TelegramObservability observability) {
+                            TelegramObservability observability,
+                            ChildRepository children,
+                            PurchaseRequestRepository requests,
+                            ShopItemRepository shopItems) {
         this.planner = planner;
         this.deliveries = deliveries;
         this.events = events;
         this.api = api;
         this.config = config;
         this.observability = observability;
+        this.children = children;
+        this.requests = requests;
+        this.shopItems = shopItems;
     }
 
     public TelegramOutboxProcessor(TelegramDeliveryPlanner planner,
                                    TelegramDeliveryRepository deliveries,
                                    ApplicationOutboxEventRepository events,
                                    TelegramBotApiClient api,
-                                   TelegramConfig config) {
-        this(planner, deliveries, events, api, config, null);
+                                   TelegramConfig config,
+                                   ChildRepository children,
+                                   PurchaseRequestRepository requests,
+                                   ShopItemRepository shopItems) {
+        this(planner, deliveries, events, api, config, null, children, requests, shopItems);
     }
 
     @Scheduled(every = "{app.telegram.outbox-poll-interval}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
@@ -69,7 +89,8 @@ public class TelegramOutboxProcessor {
                 continue;
             }
             try {
-                delivery.setMessageId(api.sendMessage(delivery.getChatId(), text(event), List.of()));
+                delivery.setMessageId(api.sendMessage(delivery.getChatId(),
+                    notificationText(event), notificationButtons(event)));
                 delivery.setStatus("SENT");
                 if (observability != null) observability.outbox("sent");
                 delivery.setSentAt(now);
@@ -92,6 +113,65 @@ public class TelegramOutboxProcessor {
             }
         }
         return sent;
+    }
+
+    // EXPLAIN: Request-created notifications carry one-callback approve/reject
+    // EXPLAIN: buttons so a parent can decide directly from the notification.
+    private List<TelegramBotApiClient.InlineButton> notificationButtons(ApplicationOutboxEventEntity event) {
+        if (!isRequestEvent(event.getEventType()) || event.getRequestId() == null) {
+            return List.of();
+        }
+        String target = event.getChildId() + "." + event.getRequestId();
+        return List.of(
+            TelegramBotApiClient.InlineButton.callback(TelegramCopy.APPROVE, "parent.request.approve." + target),
+            TelegramBotApiClient.InlineButton.callback(TelegramCopy.REJECT, "parent.request.reject." + target));
+    }
+
+    private boolean isRequestEvent(ApplicationOutboxEventType type) {
+        return type == ApplicationOutboxEventType.TASK_REQUEST_CREATED
+            || type == ApplicationOutboxEventType.REWARD_REQUEST_CREATED;
+    }
+
+    // EXPLAIN: Rich Russian notification text for request-created events; other
+    // EXPLAIN: events keep the generic balance-aware copy.
+    private String notificationText(ApplicationOutboxEventEntity event) {
+        if (!isRequestEvent(event.getEventType())) {
+            return text(event);
+        }
+        Optional<PurchaseRequestEntity> request = request(event);
+        Optional<ChildEntity> child = child(event.getChildId());
+        if (request.isEmpty() || child.isEmpty()) {
+            return text(event);
+        }
+        boolean task = event.getEventType() == ApplicationOutboxEventType.TASK_REQUEST_CREATED;
+        return TelegramCopy.requestNotification(child.get().getName(), title(request.get()),
+            request.get().getCoins(), task);
+    }
+
+    private Optional<PurchaseRequestEntity> request(ApplicationOutboxEventEntity event) {
+        if (event.getRequestId() == null) {
+            return Optional.empty();
+        }
+        return requests.findByIdOptional(event.getRequestId());
+    }
+
+    private Optional<ChildEntity> child(Integer childId) {
+        if (childId == null) {
+            return Optional.empty();
+        }
+        return children.findByIdOptional(childId);
+    }
+
+    private String title(PurchaseRequestEntity request) {
+        if (request.getTaskName() != null) {
+            return request.getTaskName();
+        }
+        if (request.getItemId() != null) {
+            return shopItems.findByIdOptional(request.getItemId())
+                .map(ShopItemEntity::getName)
+                .orElse(null);
+        }
+        return null;
     }
 
     private String text(ApplicationOutboxEventEntity event) {
