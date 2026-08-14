@@ -258,7 +258,7 @@ Use centralized localization keys.
 
 ---
 
-# SFX-005 - Make Roles and Notifications functional
+# SFX-005 ✅ - Make Roles and Notifications functional
 
 **Priority:** P0  
 **Channel:** Mini App
@@ -301,7 +301,7 @@ Do not show unsupported controls.
 
 ---
 
-# SFX-005A - Define separate Parent and Child notification settings
+# SFX-005A ✅ - Define separate Parent and Child notification settings
 
 **Priority:** P0  
 **Channel:** Mini App  

@@ -455,6 +455,28 @@ export async function removeParentMembership(membershipId: number): Promise<ApiA
     return deleteJsonResult<void>(`/api/parents/${encodeURIComponent(String(membershipId))}`);
 }
 
+// ── Family notification settings ──────────────────────────────────────────────
+
+export type NotificationPreference = { key: string; enabled: boolean };
+export type ChildNotificationSettings = { childId: number; childName: string; preferences: NotificationPreference[] };
+export type FamilyNotificationSettings = { parent: NotificationPreference[]; children: ChildNotificationSettings[] };
+
+/** Load role-aware notification settings for the current family. */
+export async function getFamilyNotificationSettings(): Promise<FamilyNotificationSettings | null> {
+    return fetchGet<FamilyNotificationSettings>('/api/family/notifications');
+}
+
+/** Update a single role-aware notification preference. */
+export async function setFamilyNotificationPreference(
+    scope: string,
+    childId: number | null,
+    key: string,
+    enabled: boolean,
+): Promise<boolean> {
+    const result = await putJsonResult<void>('/api/family/notifications', { scope, childId, key, enabled });
+    return result.ok;
+}
+
 // ── Task actions ──────────────────────────────────────────────────────────────
 
 export const earnCoins = (taskId: unknown, childId?: unknown) =>

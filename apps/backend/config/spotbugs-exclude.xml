@@ -72,4 +72,16 @@
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
         <Class name="com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse$FamilyData"/>
     </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.ChildNotificationSettingsDto"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.dto.response.FamilyNotificationSettingsResponse"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.resource.family.FamilyNotificationResource"/>
+    </Match>
 </FindBugsFilter>

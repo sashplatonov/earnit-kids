@@ -14,10 +14,14 @@
     } from '$lib/services/api';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
+    import TelegramRolesAccess from './TelegramRolesAccess.svelte';
+    import TelegramNotifications from './TelegramNotifications.svelte';
 
     const i18n = useI18n();
 
     let inviteOpen = false;
+    let rolesOpen = false;
+    let notificationsOpen = false;
     let link = '';
     let linkBusy = false;
     let linkError = '';
@@ -175,11 +179,14 @@
 
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
-        <div class="setting"><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.family.rolesAndAccess')} /></span><span class="grow">{$i18n.t('app.telegram.family.rolesAndAccess')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></div>
+        <button class="setting" type="button" on:click={() => rolesOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.family.rolesAndAccess')} /></span><span class="grow">{$i18n.t('app.telegram.family.rolesAndAccess')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => inviteOpen = true}><span class="setting-icon"><TelegramIcon name="link" size={20} label={$i18n.t('app.telegram.family.invitations')} /></span><span class="grow">{$i18n.t('app.telegram.family.invitations')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <div class="setting"><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></div>
+        <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
     </div>
 </div>
+
+<TelegramRolesAccess open={rolesOpen} on:close={() => rolesOpen = false} />
+<TelegramNotifications open={notificationsOpen} on:close={() => notificationsOpen = false} />
 
 {#if manageChild}
     <div class="sheet-backdrop" role="presentation" on:click={() => manageChild = null}></div>
