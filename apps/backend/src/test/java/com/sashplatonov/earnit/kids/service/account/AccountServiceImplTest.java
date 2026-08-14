@@ -65,6 +65,20 @@ class AccountServiceImplTest {
     }
 
     @Test
+    void connection_reportsEmailUnlinkedWhenFamilyEmailMissing() {
+        FamilyEntity telegramOnly = FamilyEntity.builder().id(1).familyId("family-1").email(null).adminPassword("hash").build();
+        when(families.findById("family-1")).thenReturn(Optional.of(telegramOnly));
+        when(telegramConnections.connection("family-1", "parent@example.test"))
+            .thenReturn(OperationResult.failure("TG_ERROR", "tg.error"));
+
+        OperationResult<AccountConnectionResponse> result = service.connection("family-1", "parent@example.test");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        var value = ((OperationResult.Success<AccountConnectionResponse>) result).value();
+        assertThat(value.emailLinked()).isFalse();
+    }
+
+    @Test
     void changeEmail_rejectsBlankAndInvalidValues() {
         assertThat(service.changeEmail("family-1", "a@b.c", "")).isInstanceOf(OperationResult.Failure.class);
         assertThat(service.changeEmail("family-1", "a@b.c", "   ")).isInstanceOf(OperationResult.Failure.class);
@@ -91,13 +105,28 @@ class AccountServiceImplTest {
     void changeEmail_updatesFamilyAndParentWhenFree() {
         when(families.findByEmail("new@example.test")).thenReturn(Optional.empty());
         when(parents.findByEmail("new@example.test")).thenReturn(Optional.empty());
+        when(parents.findByEmail("parent@example.test")).thenReturn(Optional.of(org.mockito.Mockito.mock(
+            com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.class)));
         when(families.updateEmail("family-1", "new@example.test")).thenReturn(true);
+        when(parents.changeEmail("parent@example.test", "new@example.test")).thenReturn(true);
 
         OperationResult<Void> result = service.changeEmail("family-1", "parent@example.test", "new@example.test");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         verify(families).updateEmail("family-1", "new@example.test");
         verify(parents).changeEmail("parent@example.test", "new@example.test");
+    }
+
+    @Test
+    void changeEmail_failsWhenParentAccountMissing() {
+        when(families.findByEmail("new@example.test")).thenReturn(Optional.empty());
+        when(parents.findByEmail("new@example.test")).thenReturn(Optional.empty());
+        when(parents.findByEmail("parent@example.test")).thenReturn(Optional.empty());
+
+        OperationResult<Void> result = service.changeEmail("family-1", "parent@example.test", "new@example.test");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        verify(families, never()).updateEmail(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -116,6 +145,10 @@ class AccountServiceImplTest {
         when(telegramConnections.connection("family-1", "parent@example.test"))
             .thenReturn(OperationResult.success(
                 new TelegramAccountConnectionResponse("parent@example.test", true, true, "url")));
+        when(parents.findByEmail("parent@example.test")).thenReturn(Optional.of(org.mockito.Mockito.mock(
+            com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.class)));
+        when(families.updatePassword("family-1", "unusable-hash")).thenReturn(true);
+        when(parents.disablePasswordLogin("parent@example.test", "unusable-hash")).thenReturn(true);
         when(tokens.generateHexToken(32)).thenReturn("unusable-hash");
 
         OperationResult<Void> result = service.unlinkEmail("family-1", "parent@example.test");

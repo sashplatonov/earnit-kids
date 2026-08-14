@@ -11,6 +11,7 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -36,11 +37,13 @@ public class AccountServiceImpl implements AccountService {
         if (family.isEmpty()) {
             return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
+        boolean emailLinked = family.get().getEmail() != null && !family.get().getEmail().isBlank();
         return OperationResult.success(new AccountConnectionResponse(
-            family.get().getEmail(), true, telegramLinked));
+            family.get().getEmail(), emailLinked, telegramLinked));
     }
 
     @Override
+    @Transactional
     public OperationResult<Void> changeEmail(String familyId, String currentEmail, String newEmail) {
         if (newEmail == null || newEmail.isBlank() || newEmail.length() > 254) {
             return failure("INVALID_EMAIL", "auth.emailInvalid");
@@ -52,16 +55,22 @@ public class AccountServiceImpl implements AccountService {
         if (families.findByEmail(normalized).isPresent() || parents.findByEmail(normalized).isPresent()) {
             return failure("EMAIL_TAKEN", "auth.emailRegistered");
         }
+        if (parents.findByEmail(currentEmail).isEmpty()) {
+            return failure("ACCOUNT_NOT_FOUND", "auth.accountNotFound");
+        }
 
         boolean familyUpdated = families.updateEmail(familyId, normalized);
         if (!familyUpdated) {
             return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
-        parents.changeEmail(currentEmail, normalized);
+        if (!parents.changeEmail(currentEmail, normalized)) {
+            return failure("ACCOUNT_NOT_FOUND", "auth.accountNotFound");
+        }
         return OperationResult.success(null);
     }
 
     @Override
+    @Transactional
     public OperationResult<Void> unlinkEmail(String familyId, String email) {
         OperationResult<TelegramAccountConnectionResponse> telegram = telegramConnections.connection(familyId, email);
         boolean telegramLinked = telegram instanceof OperationResult.Success<TelegramAccountConnectionResponse> success
@@ -69,10 +78,17 @@ public class AccountServiceImpl implements AccountService {
         if (!telegramLinked) {
             return failure("EMAIL_UNLINK_REQUIRES_TELEGRAM", "account.emailUnlinkRequiresTelegram");
         }
+        if (parents.findByEmail(email).isEmpty()) {
+            return failure("ACCOUNT_NOT_FOUND", "auth.accountNotFound");
+        }
 
         String unusable = tokens.generateHexToken(32);
-        families.updatePassword(familyId, unusable);
-        parents.disablePasswordLogin(email, unusable);
+        if (!families.updatePassword(familyId, unusable)) {
+            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        }
+        if (!parents.disablePasswordLogin(email, unusable)) {
+            return failure("ACCOUNT_NOT_FOUND", "auth.accountNotFound");
+        }
         return OperationResult.success(null);
     }
 
