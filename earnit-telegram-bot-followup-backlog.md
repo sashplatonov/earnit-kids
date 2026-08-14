@@ -427,6 +427,7 @@ After selection, immediately render Parent Home for that child.
 
 # BUX-007 - Rebuild Child Bot Home around first-need actions
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** -
 

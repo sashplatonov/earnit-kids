@@ -81,13 +81,15 @@ public class TelegramMenuBuilder {
             parentNavigation(TelegramCopy.HOME, "main", view, "retry-row-2"));
     }
 
+    // EXPLAIN: Child Home is a short action companion: tasks, rewards, recent
+    // EXPLAIN: and the Mini App. No parent-only controls are reachable here.
     public List<TelegramBotApiClient.InlineButton> childMain(TelegramQuickActionResponse view,
                                                               String miniAppUrl) {
         return List.of(
-            navigation(TelegramBotEmoji.DONE + " Tasks", "tasks"),
-            navigation(TelegramBotEmoji.REWARD + " Rewards", "rewards"),
-            navigation(TelegramBotEmoji.RECENT + " Recent", "recent"),
-            webApp(TelegramBotEmoji.OPEN_APP + " Open Mini App", miniAppUrl)
+            navigation(TelegramCopy.MY_TASKS, "tasks"),
+            navigation(TelegramCopy.REWARDS, "rewards"),
+            navigation(TelegramCopy.RECENT, "recent"),
+            webApp(TelegramCopy.OPEN_APP, miniAppUrl)
         );
     }
 
