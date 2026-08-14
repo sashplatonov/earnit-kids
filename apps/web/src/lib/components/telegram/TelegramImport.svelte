@@ -51,6 +51,40 @@
     $: invalidRowCount = parsed ? parsed.rows.length - validRowCount : 0;
     $: headerIssueCount = parsed ? parsed.errors.filter((e) => e.row === 0).length : 0;
     $: errorCount = invalidRowCount + headerIssueCount;
+    $: allErrors = dedupeErrors([...serverErrors, ...(parsed?.errors ?? [])]);
+
+    function dedupeErrors(errors: CsvImportValidationError[]): CsvImportValidationError[] {
+        const seen: Record<string, boolean> = {};
+        const result: CsvImportValidationError[] = [];
+        for (const item of errors) {
+            const key = `${item.row}-${item.field}-${item.message}`;
+            if (!seen[key]) {
+                seen[key] = true;
+                result.push(item);
+            }
+        }
+        return result;
+    }
+
+    function translateError(message: string): string {
+        if (message === 'CSV is empty') return $i18n.t('app.telegram.import.errorCsvEmpty');
+        if (message.startsWith('Missing required column:')) {
+            return $i18n.t('app.telegram.import.errorMissingColumn', {
+                field: message.replace('Missing required column:', '').trim(),
+            });
+        }
+        switch (message) {
+            case 'title is required': return $i18n.t('app.telegram.import.errorTitleRequired');
+            case 'name is required': return $i18n.t('app.telegram.import.errorNameRequired');
+            case 'coins must be positive': return $i18n.t('app.telegram.import.errorCoinsPositive');
+            case 'price must be positive': return $i18n.t('app.telegram.import.errorPricePositive');
+            case 'frequencyLimit must be positive': return $i18n.t('app.telegram.import.errorFrequencyPositive');
+            case 'moneyLimit must not be negative': return $i18n.t('app.telegram.import.errorMoneyNegative');
+            case 'duplicate title': return $i18n.t('app.telegram.import.errorDuplicateTitle');
+            case 'duplicate name': return $i18n.t('app.telegram.import.errorDuplicateName');
+            default: return message;
+        }
+    }
 
     const FIELD_KEYS: Record<string, string> = {
         title: 'app.telegram.import.fieldTitle',
@@ -62,6 +96,7 @@
         frequencyLimit: 'app.telegram.import.fieldFrequencyLimit',
         frequencyPeriod: 'app.telegram.import.fieldFrequencyPeriod',
         moneyLimit: 'app.telegram.import.fieldMoneyLimit',
+        icon: 'app.telegram.import.fieldIcon',
         isActive: 'app.telegram.import.fieldIsActive',
         type: 'app.telegram.import.fieldType',
     };
@@ -93,6 +128,7 @@
                 | 'app.telegram.import.fieldFrequencyLimit'
                 | 'app.telegram.import.fieldFrequencyPeriod'
                 | 'app.telegram.import.fieldMoneyLimit'
+                | 'app.telegram.import.fieldIcon'
                 | 'app.telegram.import.fieldIsActive'
                 | 'app.telegram.import.fieldType'
                 | undefined;
@@ -220,11 +256,11 @@
                         <button class="linkish" type="button" on:click={() => showErrors = !showErrors}>{$i18n.t('app.telegram.import.viewErrors')}</button>
                     {/if}
                 </div>
-                {#if showErrors && (parsed.errors.length > 0 || serverErrors.length > 0)}
+                {#if showErrors && allErrors.length > 0}
                     <div class="errors-block">
                         <p class="errors-title">{$i18n.t('app.telegram.import.errorsTitle')}</p>
-                        {#each [...serverErrors, ...parsed.errors] as item (item.row + '-' + item.field + '-' + item.message)}
-                            <p class="error-line">Строка {item.row}: {item.field} — {item.message}</p>
+                        {#each allErrors as item (item.row + '-' + item.field + '-' + item.message)}
+                            <p class="error-line">Строка {item.row}: {item.field} — {translateError(item.message)}</p>
                         {/each}
                     </div>
                 {/if}
@@ -237,7 +273,7 @@
             {#if error}<p class="error" role="alert">{error}</p>{/if}
             {#if imported}<p class="saved" role="status">{$i18n.t('app.telegram.import.importSuccess', { count: readyCount })}</p>{/if}
 
-            <button class="primary" type="button" disabled={busy || readyCount === 0 || errorCount > 0} on:click={runImport}>
+            <button class="primary" type="button" disabled={busy || readyCount === 0} on:click={runImport}>
                 {busy
                     ? $i18n.t('app.telegram.import.importing')
                     : $i18n.t('app.telegram.import.importButton', { count: readyCount })}
