@@ -601,7 +601,7 @@ No website form reuse in visible UX.
 
 ---
 
-# SFX-007 - Child settings: Telegram linkage only
+# SFX-007 ✅ - Child settings: Telegram linkage only
 
 **Priority:** P0  
 **Channel:** Mini App
@@ -654,7 +654,7 @@ Telegram
 
 ---
 
-# SFX-008 - Child invite must link the child's Telegram account
+# SFX-008 ✅ - Child invite must link the child's Telegram account
 
 **Priority:** P0  
 **Channels:** Mini App + Telegram

@@ -600,6 +600,33 @@ export const adminSaveLimits = (childId: unknown, limits: { dailyCoinLimit?: num
 export const saveChildGroupOrder = (childId: unknown, section: 'tasks' | 'shop', groups: string[]) =>
     postJsonResult(`/api/children/${encodeURIComponent(String(childId))}/group-order`, { section, groups });
 
+// ── Child Telegram linkage ────────────────────────────────────────────────────
+
+export type ChildTelegramConnection = {
+    childId: number;
+    linked: boolean;
+    telegramUserId?: number | null;
+};
+
+/** Get the Telegram linkage status of a child profile. */
+export async function adminGetChildTelegram(childId: unknown): Promise<ChildTelegramConnection | null> {
+    return fetchGet<ChildTelegramConnection>(`/api/children/${encodeURIComponent(String(childId))}/telegram`);
+}
+
+/** Create a single-use invite that binds the child's Telegram account. */
+export async function adminCreateChildTelegramInvite(childId: unknown): Promise<{ launchUrl: string } | null> {
+    const result = await postJsonResult<{ launchUrl: string }>(
+        `/api/children/${encodeURIComponent(String(childId))}/telegram/invite`, {});
+    return result.ok ? result.data : null;
+}
+
+/** Unlink the child's Telegram account. */
+export async function adminUnlinkChildTelegram(childId: unknown): Promise<boolean> {
+    const result = await postJsonResult<void>(
+        `/api/children/${encodeURIComponent(String(childId))}/telegram/unlink`, {});
+    return result.ok;
+}
+
 // ── Push registration ─────────────────────────────────────────────────────────
 
 export const registerPushTokenOnServer = (payload: unknown) =>
