@@ -1,12 +1,15 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
+import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
+import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -202,11 +205,31 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
-    void recentIsBoundedAndHasEmptyState() {
+    void recentIsAPreviewWithFullHistoryDeepLink() {
         TelegramQuickActionResponse empty = view();
-        assertThat(menuBuilder().recent(empty))
+        assertThat(menuBuilder().recent(empty, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("✅ No recent operations", "⬅️ Back");
+            .containsExactly("📱 Полная история", "🏠 Главное меню");
+        assertThat(TelegramRecent.format(empty, Instant.parse("2026-08-14T10:00:00Z")))
+            .isEqualTo("📜 Последние события · Alex\n\n✅ Пока нет событий");
+    }
+
+    @Test
+    void recentRowsArePresentationSafeAndRelative() {
+        HistoryEntryDto earn = new HistoryEntryDto(1L, HistoryEntryType.earn, 1,
+            "Утренний старт", null, 0, null, 7L, "Утренний старт", null, null, null, null,
+            "2026-08-14T06:00:00Z", 1);
+        HistoryEntryDto spend = new HistoryEntryDto(2L, HistoryEntryType.spend, -2,
+            null, null, 0, null, null, null, 9L, "Королева настолки", null, null,
+            "2026-08-12T20:15:00Z", 1);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(),
+            List.of(earn, spend));
+
+        assertThat(TelegramRecent.format(view, Instant.parse("2026-08-14T10:00:00Z")))
+            .isEqualTo("📜 Последние события · Alex\n\n"
+                + "☀️ +1 · Утренний старт\nСегодня, 06:00\n\n"
+                + "🎁 -2 · Королева настолки\n12 августа, 20:15");
     }
 
     private TelegramQuickActionResponse view() {

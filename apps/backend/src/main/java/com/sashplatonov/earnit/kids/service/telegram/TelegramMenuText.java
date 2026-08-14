@@ -22,7 +22,7 @@ final class TelegramMenuText {
             case "tasks", "rewards" -> catalogText(action, view);
             case "requests" -> requestsQueueText("requests", view);
             case "coins" -> coinsText(view);
-            case "recent" -> "Recent · " + view.childName();
+            case "recent" -> TelegramRecent.format(view, java.time.Instant.now());
             case "main" -> TelegramMenuFlow.homeText(view);
             default -> unknownText(action, view);
         };

@@ -328,6 +328,7 @@ Keep keyboard available for another quick action.
 
 # BUX-005 - Simplify Parent Recent
 
+**Status:** ✅ Implemented  
 **Priority:** P1  
 **Depends on:** BUX-001
 

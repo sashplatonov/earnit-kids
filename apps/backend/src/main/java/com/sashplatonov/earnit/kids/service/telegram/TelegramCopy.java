@@ -188,6 +188,10 @@ public final class TelegramCopy {
         return TelegramBotEmoji.REWARDS + " Сейчас нет доступных наград";
     }
 
+    public static String emptyRecent() {
+        return TelegramBotEmoji.SUCCESS + " Пока нет событий";
+    }
+
     public static String noChildren() {
         return TelegramBotEmoji.INFO + " Детей пока нет — добавьте в приложении";
     }

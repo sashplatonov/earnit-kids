@@ -89,7 +89,7 @@ final class TelegramMenuFlow {
             case "child" -> childMenu(view, menuBuilder);
             case "tasks", "rewards" -> childCatalogMenu(action, view, miniAppUrl, menuBuilder);
             case "requests" -> requestsMenu(view, miniAppUrl, menuBuilder);
-            case "recent" -> menuBuilder.recent(view);
+            case "recent" -> menuBuilder.recent(view, miniAppUrl);
             case "coins" -> coinsMenu(view, miniAppUrl, menuBuilder);
             case "main" -> mainMenu(view, miniAppUrl, menuBuilder);
             default -> unknownMenu(action, view, miniAppUrl, menuBuilder);

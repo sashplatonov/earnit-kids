@@ -156,18 +156,17 @@ public class TelegramMenuBuilder {
             webApp(TelegramCopy.OPEN_APP, miniAppUrl));
     }
 
-    public List<TelegramBotApiClient.InlineButton> recent(TelegramQuickActionResponse view) {
+    // EXPLAIN: Recent stays a preview; the rows live in the message body and the
+    // EXPLAIN: full history opens as a Mini App deep link instead of paginating.
+    public List<TelegramBotApiClient.InlineButton> recent(TelegramQuickActionResponse view,
+                                                            String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        view.history().stream().limit(5).forEach(entry -> {
-            String title = entry.title() == null ? "Operation" : entry.title();
-            String amount = entry.amount() >= 0 ? "+" + entry.amount() : Integer.toString(entry.amount());
-            buttons.add(callback(amount + " " + TelegramBotEmoji.COINS + " · " + title, "noop"));
-        });
-        if (buttons.isEmpty()) {
-            buttons.add(callback(TelegramBotEmoji.SUCCESS + " No recent operations", "noop"));
+        if ("parent".equals(view.role())) {
+            buttons.add(webApp(TelegramCopy.FULL_HISTORY, TelegramDeepLink.history(miniAppUrl)));
         }
         buttons.add("parent".equals(view.role())
-            ? parentNavigation(TelegramBotEmoji.BACK + " Back", "main", view) : navigation(TelegramBotEmoji.BACK + " Back", "main"));
+            ? parentNavigation(TelegramCopy.HOME, "main", view)
+            : navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
     }
 
