@@ -371,6 +371,7 @@ Keyboard:
 
 # BUX-006 - Flatten Parent child switching
 
+**Status:** ✅ Implemented  
 **Priority:** P0  
 **Depends on:** BUX-001
 

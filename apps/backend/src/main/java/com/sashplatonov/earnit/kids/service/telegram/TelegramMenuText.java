@@ -11,7 +11,7 @@ final class TelegramMenuText {
             return TelegramMenuFlow.homeText(view);
         }
         return switch (baseAction(action)) {
-            case "child" -> "Choose a child";
+            case "child" -> TelegramCopy.chooseChildTitle();
             case "tasks", "rewards" -> catalogText(action, view);
             case "requests", "coins" -> parentText(baseAction(action), view);
             case "recent" -> "Recent · " + view.childName();

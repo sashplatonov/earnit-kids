@@ -51,6 +51,11 @@ public final class TelegramCopy {
         return TelegramBotEmoji.CHILD + " " + childName + " · " + balance;
     }
 
+    // EXPLAIN: Title of the flat switch-child picker screen.
+    public static String chooseChildTitle() {
+        return TelegramBotEmoji.SWITCH + " Выберите ребёнка";
+    }
+
     // EXPLAIN: Message templates.
 
     // EXPLAIN: Parent Home decision menu.

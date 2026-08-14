@@ -31,10 +31,11 @@ public class TelegramMenuBuilder {
     public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.children().stream().limit(10).forEach(child ->
-            buttons.add(navigation(TelegramBotEmoji.CHILD + " " + child.name() + " · " + child.balance() + " coins", "child-" + child.id())));
+            buttons.add(navigation(TelegramCopy.chooseChild(child.name(), child.balance()), "child-" + child.id())));
         if (buttons.isEmpty()) {
             buttons.add(callback(TelegramBotEmoji.ADD + " Add child → Mini App", "noop"));
         }
+        buttons.add(navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
     }
 

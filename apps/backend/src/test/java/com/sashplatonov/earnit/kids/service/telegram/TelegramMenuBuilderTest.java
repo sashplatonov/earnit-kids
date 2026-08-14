@@ -130,7 +130,7 @@ class TelegramMenuBuilderTest {
 
         assertThat(menuBuilder().parentChildPicker(view))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("👧 Alex · 42 coins", "👧 Sam · 18 coins");
+            .containsExactly("👧 Alex · 42", "👧 Sam · 18", "🏠 Главное меню");
     }
 
     @Test
