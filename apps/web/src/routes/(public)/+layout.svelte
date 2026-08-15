@@ -11,6 +11,8 @@
 
     const i18n = useI18n();
 
+    $: appConfig = data.appConfig;
+    $: telegramUrl = appConfig?.telegramMiniAppUrl;
     $: pathname = $page.url.pathname;
     $: trackPublicPageView(pathname);
 </script>
@@ -22,4 +24,11 @@
         <slot />
     </main>
     <PublicSiteFooter />
+
+    {#if telegramUrl}
+        <a class="public-mobile-cta" href={telegramUrl} rel="external noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg>
+            {$i18n.t('public.cta.openTelegram')}
+        </a>
+    {/if}
 </div>

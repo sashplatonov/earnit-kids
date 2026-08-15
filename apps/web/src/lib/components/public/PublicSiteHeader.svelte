@@ -46,7 +46,7 @@
 <header class="public-site-header" aria-label={$i18n.t('public.shell.siteAria')}>
     <div class="public-header-row">
         <a class="public-site-brand" href="/">
-            <span class="public-site-brand-dot" aria-hidden="true"></span>
+            <img class="public-brand-icon" src="/img/public/app-icon.png" alt="" width="38" height="38" />
             {$i18n.t('common.brand.name')}
         </a>
 
@@ -58,6 +58,7 @@
 
         {#if telegramUrl}
             <a class="public-cta-link" href={telegramUrl} rel="external noopener" on:click={() => trackCta('header')}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg>
                 {$i18n.t('public.cta.openTelegram')}
             </a>
         {/if}
@@ -85,6 +86,7 @@
             {/each}
             {#if telegramUrl}
                 <a class="public-cta-link" href={telegramUrl} rel="external noopener" on:click={() => { closeMenu(); trackCta('mobile_menu'); }}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg>
                     {$i18n.t('public.cta.openTelegram')}
                 </a>
             {/if}
@@ -121,11 +123,20 @@
         color: #1c2534;
     }
 
-    .public-site-brand-dot {
-        width: .625rem;
-        height: .625rem;
-        border-radius: 50%;
-        background: #275fd6;
+    .public-brand-icon {
+        width: 2.375rem;
+        height: 2.375rem;
+        border-radius: .75rem;
+    }
+
+    .public-cta-link svg {
+        width: 1.125rem;
+        height: 1.125rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
     }
 
     .public-top-nav {

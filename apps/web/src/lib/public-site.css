@@ -92,6 +92,41 @@
     margin: 0 auto;
 }
 
+/* Fixed mobile CTA (Telegram), matching the reference bottom bar */
+.public-shell :global(.public-mobile-cta) {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    position: fixed;
+    left: .5rem;
+    right: .5rem;
+    bottom: max(.5rem, env(safe-area-inset-bottom));
+    z-index: 50;
+    min-height: 3rem;
+    border-radius: .875rem;
+    background: var(--public-blue);
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 10px 30px rgb(29 79 185 / 25%);
+}
+
+.public-shell :global(.public-mobile-cta svg) {
+    width: 1.125rem;
+    height: 1.125rem;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@media (max-width: 640px) {
+    .public-shell :global(.public-mobile-cta) {
+        display: inline-flex;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .public-shell * {
         scroll-behavior: auto !important;

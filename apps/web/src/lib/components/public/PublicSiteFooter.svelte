@@ -7,7 +7,7 @@
 <footer class="public-site-footer">
     <div class="public-footer-row">
         <div class="public-footer-brand">
-            <span class="public-site-brand-dot" aria-hidden="true"></span>
+            <img class="public-footer-brand-icon" src="/img/public/app-icon.png" alt="" width="30" height="30" />
             {$i18n.t('common.brand.name')}
         </div>
         <div>{$i18n.t('public.shell.footerTagline')}</div>
@@ -40,11 +40,10 @@
         font-weight: 800;
     }
 
-    .public-footer-brand :global(.public-site-brand-dot) {
-        width: .5rem;
-        height: .5rem;
-        border-radius: 50%;
-        background: #275fd6;
+    .public-footer-brand-icon {
+        width: 1.875rem;
+        height: 1.875rem;
+        border-radius: .5625rem;
     }
 
     @media (max-width: 640px) {

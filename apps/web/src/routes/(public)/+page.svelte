@@ -45,22 +45,28 @@
 <section class="public-hero">
     <div class="container public-hero-grid">
         <div class="public-hero-copy">
-            <p class="public-eyebrow">{content.hero.eyebrow}</p>
+            <p class="public-eyebrow">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.5-4 2.5-6 6-6s5.5 2 6 6M14 15c3 0 5 1.5 6 4"/></svg>
+                {content.hero.eyebrow}
+            </p>
             <h1>{content.hero.title}</h1>
             <p class="public-lead">{content.hero.text}</p>
             <div class="public-hero-actions">
                 {#if telegramUrl}
                     <PublicButton href={telegramUrl} variant="primary" rel="external noopener">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg>
                         {$i18n.t('public.cta.openTelegram')}
                     </PublicButton>
                 {/if}
                 <PublicButton href="/how" variant="secondary">
                     {content.hero.secondaryCta}
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
                 </PublicButton>
             </div>
             <p class="public-note">{content.hero.note}</p>
         </div>
         <aside class="public-hero-card" aria-label="Пример дня ребёнка">
+            <img class="public-hero-app-icon" src={content.exampleCard.appIcon} alt="Иконка EarnIt Kids" width="126" height="126" />
             <h3>{content.exampleCard.title}</h3>
             <p class="public-muted-copy">{content.exampleCard.text}</p>
             <div class="public-metric-row">
@@ -85,6 +91,15 @@
     <div class="public-grid-3">
         {#each content.changesSection.cards as card (card.title)}
             <article class="public-card">
+                <div class="public-icon-box" aria-hidden="true">
+                    {#if card.icon === 'coins'}
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9h4a2 2 0 1 1 0 4h-2a2 2 0 1 0 0 4h4"/></svg>
+                    {:else if card.icon === 'gift'}
+                        <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M7 8c-3 0-3-4-1-4 3 0 5 4 5 4M17 8c3 0 3-4 1-4-3 0-5 4-5 4"/></svg>
+                    {:else}
+                        <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h1M12 8h4M8 12h1M12 12h4M8 16h1M12 16h4"/></svg>
+                    {/if}
+                </div>
                 <h3>{card.title}</h3>
                 <p>{card.description}</p>
             </article>
@@ -136,6 +151,7 @@
         </div>
         {#if telegramUrl}
             <PublicButton href={telegramUrl} variant="primary" rel="external noopener">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg>
                 {$i18n.t('public.cta.openTelegram')}
             </PublicButton>
         {/if}
@@ -168,6 +184,27 @@
         white-space: nowrap;
     }
 
+    .public-eyebrow svg {
+        width: 1rem;
+        height: 1rem;
+        min-width: 1rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.1;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .public-hero-actions :global(svg) {
+        width: 1.125rem;
+        height: 1.125rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
     .public-lead {
         font-size: clamp(1.125rem, 2vw, 1.3125rem);
         color: var(--public-muted);
@@ -194,6 +231,35 @@
         border-radius: 1.4375rem;
         padding: 1.25rem;
         box-shadow: var(--public-shadow);
+    }
+
+    .public-hero-app-icon {
+        width: 6.75rem;
+        height: 6.75rem;
+        border-radius: 1.625rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 10px 25px rgb(39 95 214 / 15%);
+    }
+
+    .public-icon-box {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: .6875rem;
+        background: var(--public-blue-soft);
+        display: grid;
+        place-items: center;
+        color: var(--public-blue);
+        margin-bottom: .75rem;
+    }
+
+    .public-icon-box svg {
+        width: 1.3125rem;
+        height: 1.3125rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
     }
 
     .public-hero-card h3 {

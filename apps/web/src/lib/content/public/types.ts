@@ -5,6 +5,8 @@
 export interface PublicCard {
     title: string;
     description: string;
+    /** Optional semantic icon name for the card's icon-box (e.g. 'list', 'coins', 'gift'). */
+    icon?: string;
 }
 
 export interface PublicStep {
