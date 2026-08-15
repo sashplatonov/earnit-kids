@@ -127,7 +127,7 @@
 <TelegramCoinAdjust open={coinSheetOpen} busy={coinBusy} error={coinError} on:adjust={adjustCoins} on:close={() => { coinSheetOpen = false; coinError = ''; }} />
 
 <style>
-    .home { display:grid; gap:.9rem; }
+    .home { display:grid; grid-template-columns:minmax(0,1fr); gap:.9rem; }
     .section-heading { display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
     .section-title { margin:0; color:#18243d; font-size:1rem; }
     .count { display:inline-grid; place-items:center; min-width:1.6rem; height:1.6rem; padding:0 .45rem; border-radius:999px; background:#eef0ff; color:#5b63e9; font-size:.82rem; font-weight:800; }

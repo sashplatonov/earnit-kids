@@ -291,7 +291,7 @@
     .sheet { position:fixed; inset:auto 0 0; z-index:41; max-height:84vh; overflow-y:auto; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
     .sheet-subtitle { margin:0 0 .5rem; color:#4d5870; font-size:.85rem; }
-    .mode-list { display:grid; gap:.5rem; }
+    .mode-list { display:grid; grid-template-columns:minmax(0,1fr); gap:.5rem; }
     .mode { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3rem; padding:.35rem .6rem; border:1px solid #e6e9f0; border-radius:.8rem; background:#fff; font:inherit; color:#18243d; cursor:pointer; }
     .mode:active { background:#f4f6fb; }
     .grow { flex:1; min-width:0; font-weight:600; text-align:left; }

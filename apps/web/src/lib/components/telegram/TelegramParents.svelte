@@ -134,7 +134,7 @@
     .setting-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
     .manage-badge { padding:.2rem .55rem; border-radius:999px; background:#f1f3f7; color:#66718a; font-size:.78rem; font-weight:700; white-space:nowrap; }
     .badge-active { background:#eaf7ef; color:#17884b; }
-    .choice { display:grid; gap:.6rem; }
+    .choice { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
     .choice button { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3rem; padding:.5rem .7rem; border:1px solid #dfe4ee; border-radius:.75rem; background:#fff; color:#33415f; font:inherit; font-weight:700; cursor:pointer; }
     label { display:block; margin:.6rem 0 .3rem; color:#33415f; font-weight:600; font-size:.85rem; }
     .input { box-sizing:border-box; width:100%; min-height:2.75rem; padding:.6rem .7rem; border:1px solid #cfd6e4; border-radius:.7rem; font:inherit; }

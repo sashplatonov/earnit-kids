@@ -72,7 +72,7 @@
     .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
     .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
-    .children { display:grid; gap:.5rem; }
+    .children { display:grid; grid-template-columns:minmax(0,1fr); gap:.5rem; }
     .children button { display:flex; align-items:center; gap:.6rem; width:100%; min-height:2.75rem; padding:.55rem .7rem; border:1px solid #dfe4ee; border-radius:.75rem; background:#fff; color:#33415f; font:inherit; text-align:left; }
     .children button.current { border-color:#3867d6; background:#f2f5ff; }
     .avatar { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:50%; background:#eef0ff; color:#5b63e9; font-weight:800; }

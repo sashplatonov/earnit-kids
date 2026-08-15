@@ -56,7 +56,7 @@
     .panel { width:100%; }
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
-    .items { display:grid; gap:.6rem; }
+    .items { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
     article { padding:.75rem; border:1px solid #e5e9f1; border-radius:.9rem; background:#fff; }
     article.decision { border-color:#dfe4ee; box-shadow:0 1px 3px rgb(24 36 61 / 6%); }
     .request-top { display:flex; align-items:flex-start; gap:.6rem; }

@@ -324,5 +324,5 @@
     .telegram-actions .reactivate-full, .telegram-actions .deactivate { margin-top:0; }
     .invite-block { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #edf0f5; }
     .invite-block .manage-meta { margin-top:.5rem; }
-    .invite-actions { display:grid; gap:.6rem; }
+    .invite-actions { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
 </style>
