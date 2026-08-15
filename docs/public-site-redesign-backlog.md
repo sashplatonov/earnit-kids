@@ -262,7 +262,7 @@ Epic сам по себе не является implementation task. Комми�
 | 2 | PUB-02B | P1 | PUB-02A | Public origin + URL/CTA config |
 | 3 | PUB-02C | P1 | PUB-02A | UI shell + navigation + a11y |
 | 4 | PUB-02D | P1 | PUB-02A | Typed RU content + UI labels + ownership |
-| 5 | PUB-03 | P1 | PUB-02A..PUB-02D | Главная |
+| 5 | PUB-03 | P1 | PUB-02A..PUB-02D | ✅ Главная |
 | 6 | PUB-04A | P1 | PUB-02A..PUB-02D | `/how` |
 | 7 | PUB-04B | P1 | PUB-02A..PUB-02D | `/parents` |
 | 8 | PUB-05A | P1 | PUB-02A..PUB-02D | `/tasks` |
