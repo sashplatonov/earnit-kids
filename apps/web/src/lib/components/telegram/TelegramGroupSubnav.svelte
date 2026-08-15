@@ -26,7 +26,9 @@
     }
 
     $: visible = ranked.slice(0, MAX_RANKED);
-    $: hidden = ranked.slice(MAX_RANKED);
+    // The "Ещё" sheet shows the remaining groups in canonical/default order
+    // (the order passed in `groups`), not in usage-ranked order.
+    $: hidden = groups.filter((group) => !visible.includes(group));
 
     function choose(group: string) {
         recordGroupUsage(kind, group);
@@ -80,7 +82,7 @@
             <h2 id="group-subnav-title">{allGroupsTitle}</h2>
             <div class="flat">
                 <button type="button" class="sheet-item" class:active={selected === ''} on:click={chooseAll}>{allLabel}</button>
-                {#each ranked as group (group)}
+                {#each groups as group (group)}
                     <button type="button" class="sheet-item" class:active={selected === group} on:click={() => choose(group)}>{group}</button>
                 {/each}
             </div>

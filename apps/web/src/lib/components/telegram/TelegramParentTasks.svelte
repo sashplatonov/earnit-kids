@@ -4,6 +4,7 @@
     import { saveChildGroupOrder } from '$lib/services/api';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';
+    import { orderGroups } from '$lib/services/groupOrder';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramTaskForm from './TelegramTaskForm.svelte';
@@ -14,8 +15,9 @@
 
     const i18n = useI18n();
 
-    $: groups = [...new Set($appStore.tasks.map((task) => task.groupName).filter((group): group is string => Boolean(group)))];
+    $: rawGroups = [...new Set($appStore.tasks.map((task) => task.groupName).filter((group): group is string => Boolean(group)))];
     $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
+    $: groups = orderGroups(rawGroups, currentChild?.taskGroupOrder);
     $: hiddenGroups = currentChild?.hiddenTaskGroupOrder ?? [];
     let selectedGroup = '';
     $: filteredTasks = selectedGroup

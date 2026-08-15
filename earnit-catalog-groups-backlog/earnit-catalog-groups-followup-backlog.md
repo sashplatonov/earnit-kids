@@ -430,6 +430,7 @@ Target:
 
 **Priority:** P1  
 **Depends on:** GRP-001, GRP-002
+**Status:** ✅ Done
 
 Existing catalog filter behavior:
 
