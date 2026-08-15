@@ -15,6 +15,7 @@
     $: appConfig = data.appConfig;
     $: telegramUrl = appConfig.telegramMiniAppUrl;
     $: canonicalUrl = getPublicSiteUrl(appConfig.publicOrigin, '/');
+    $: ogImageUrl = getPublicSiteUrl(appConfig.publicOrigin, '/img/og-image.png');
 
     onMount(() => {
         const telegram = initializeTelegramWebApp();
@@ -36,7 +37,9 @@
     <meta property="og:title" content={content.meta.title} />
     <meta property="og:description" content={content.meta.description} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content="/img/og-image.png" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 </svelte:head>
 
 <section class="public-hero">

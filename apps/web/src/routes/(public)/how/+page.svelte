@@ -12,6 +12,7 @@
     const i18n = useI18n();
     $: appConfig = data.appConfig;
     $: canonicalUrl = getPublicSiteUrl(appConfig.publicOrigin, '/how');
+    $: ogImageUrl = getPublicSiteUrl(appConfig.publicOrigin, '/img/og-image.png');
 
     // Simple carousel state
     let activeIndex = 0;
@@ -27,6 +28,12 @@
     <title>{content.meta.title}</title>
     <meta name="description" content={content.meta.description} />
     <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:title" content={content.meta.title} />
+    <meta property="og:description" content={content.meta.description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 </svelte:head>
 
 <div class="public-page">
