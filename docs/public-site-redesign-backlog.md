@@ -405,7 +405,7 @@ super-admin GET /    → /super-admin
 
 # PUB-02B: Public origin, URL resolver и CTA config
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Завершено  
 **Приоритет:** P1  
 **Зависит от:** PUB-02A
 

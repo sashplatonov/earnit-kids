@@ -19,10 +19,12 @@ function parsePort(rawValue: string | undefined, fallbackValue: number): number 
 export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     const backendOrigin = env.BACKEND_ORIGIN || env.BACKEND_URL || DEFAULT_BACKEND_ORIGIN;
     const publicOrigin = env.APP_URL || env.FRONTEND_URL || env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN;
+    const rawTelegramMiniAppUrl = env.PUBLIC_TELEGRAM_MINI_APP_URL || env.TELEGRAM_MINI_APP_URL || '';
 
     return {
         backendOrigin: trimTrailingSlashes(backendOrigin),
         publicOrigin: trimTrailingSlashes(publicOrigin),
+        telegramMiniAppUrl: rawTelegramMiniAppUrl.trim() ? trimTrailingSlashes(rawTelegramMiniAppUrl.trim()) : null,
         sessionPath: env.SESSION_PATH || DEFAULT_SESSION_PATH,
         wsPath: env.WS_PATH || DEFAULT_WS_PATH,
         devPort: parsePort(env.DEV_PORT, DEFAULT_DEV_PORT),

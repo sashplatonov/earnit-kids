@@ -7,6 +7,7 @@ describe('loadAppConfig', () => {
 
         expect(config.backendOrigin).toBe('http://localhost:8080');
         expect(config.publicOrigin).toBe('http://localhost:3000');
+        expect(config.telegramMiniAppUrl).toBeNull();
         expect(config.sessionPath).toBe('/api/page-data/session');
         expect(config.wsPath).toBe('/ws');
         expect(config.devPort).toBe(4173);
@@ -49,5 +50,32 @@ describe('loadAppConfig', () => {
         } as NodeJS.ProcessEnv);
 
         expect(config.publicOrigin).toBe('http://localhost:5001');
+    });
+
+    it('reads the Telegram Mini App URL from env and trims trailing slashes', () => {
+        const config = loadAppConfig({
+            APP_URL: 'http://localhost:3000',
+            PUBLIC_TELEGRAM_MINI_APP_URL: 'https://t.me/earnit_bot?startapp=home///',
+        } as NodeJS.ProcessEnv);
+
+        expect(config.telegramMiniAppUrl).toBe('https://t.me/earnit_bot?startapp=home');
+    });
+
+    it('falls back to TELEGRAM_MINI_APP_URL when PUBLIC_TELEGRAM_MINI_APP_URL is unset', () => {
+        const config = loadAppConfig({
+            APP_URL: 'http://localhost:3000',
+            TELEGRAM_MINI_APP_URL: 'https://t.me/earnit_bot?startapp=home',
+        } as NodeJS.ProcessEnv);
+
+        expect(config.telegramMiniAppUrl).toBe('https://t.me/earnit_bot?startapp=home');
+    });
+
+    it('returns null for telegramMiniAppUrl when env is empty or whitespace', () => {
+        const config = loadAppConfig({
+            APP_URL: 'http://localhost:3000',
+            PUBLIC_TELEGRAM_MINI_APP_URL: '   ',
+        } as NodeJS.ProcessEnv);
+
+        expect(config.telegramMiniAppUrl).toBeNull();
     });
 });
