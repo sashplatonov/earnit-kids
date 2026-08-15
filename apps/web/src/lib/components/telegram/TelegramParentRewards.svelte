@@ -10,6 +10,7 @@
     import TelegramRewardForm from './TelegramRewardForm.svelte';
     import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';
     import TelegramGroupManager from './TelegramGroupManager.svelte';
+    import TelegramParentCatalog from './TelegramParentCatalog.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
     import { formatLastUsedTime } from './telegramLastUsed';
 
@@ -20,6 +21,7 @@
     $: groups = orderGroups(rawGroups, currentChild?.shopGroupOrder);
     $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
     let selectedGroup = '';
+    let catalogOpen = false;
     $: filteredItems = selectedGroup
         ? $appStore.shopItems.filter((item) => item.groupName === selectedGroup)
         : $appStore.shopItems;
@@ -104,10 +106,15 @@
 <div class="rewards">
     <div class="page-header">
         <h1 id="rewards-title">{$i18n.t('app.telegram.rewards.title')}</h1>
-        {#if canEdit}<button class="add" type="button" on:click={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.rewards.addReward')} /><span>{$i18n.t('app.telegram.rewards.add')}</span></button>{/if}
+        <div class="header-actions">
+            {#if canEdit}<button class="add" type="button" on:click={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.rewards.addReward')} /><span>{$i18n.t('app.telegram.rewards.add')}</span></button>{/if}
+            <button class="catalog" type="button" on:click={() => catalogOpen = true}><TelegramIcon name="gift" size={18} label={$i18n.t('app.telegram.readyCatalog.catalogRewards')} /><span>{$i18n.t('app.telegram.readyCatalog.catalogRewards')}</span></button>
+        </div>
     </div>
 
-    {#if !$appStore.shopItems.length}
+    {#if catalogOpen}
+        <TelegramParentCatalog kind="reward" onBack={() => catalogOpen = false} />
+    {:else if !$appStore.shopItems.length}
         <p class="muted">{$i18n.t('app.telegram.rewards.noRewards')}</p>
     {:else}
         <TelegramGroupSubnav
@@ -151,7 +158,7 @@
         {/if}
     {/if}
 
-    {#if canEdit}
+    {#if !catalogOpen && canEdit}
         <button class="groups" type="button" on:click={() => groupEditorOpen = true}>
             <TelegramIcon name="filter" size={16} label={$i18n.t('app.telegram.tasks.manageGroups')} />
             <span>{$i18n.t('app.telegram.tasks.manageGroups')}</span>
@@ -166,7 +173,9 @@
     .rewards { width:100%; }
     .page-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.45rem; }
     h1 { margin:0; color:#18243d; font-size:1.35rem; }
+    .header-actions { display:flex; align-items:center; gap:.25rem; }
     .add { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
+    .catalog { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .list { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
     .empty-group { padding:1rem 0; text-align:center; }

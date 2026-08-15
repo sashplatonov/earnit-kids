@@ -453,6 +453,7 @@ Rules:
 
 **Priority:** P0  
 **Channel:** Parent Mini App
+**Status:** ✅ Done
 
 ## Goal
 
@@ -510,6 +511,7 @@ Do not call catalog items "магазин" in parent UI. "Магазин" is the
 
 **Priority:** P0  
 **Depends on:** CAT-001
+**Status:** ✅ Done
 
 ## Header
 
@@ -606,6 +608,7 @@ The button becomes non-destructive and does not duplicate.
 # CAT-002A - Catalog group submenu must match the main Mini App pattern
 
 **Priority:** P0  
+**Status:** ✅ Done
 **Depends on:** CAT-002, CAT-003, existing Mini App group submenu behavior
 
 The ready catalog must use the **same group-navigation principle as the main Tasks/Rewards Mini App screens**.
@@ -732,6 +735,7 @@ Use the established Mini App style:
 # CAT-002B - Catalog filters must fit without horizontal scrolling and use SVG graphics
 
 **Priority:** P0  
+**Status:** ✅ Done
 **Depends on:** CAT-002, CAT-003
 
 Catalog filters are separate from the group submenu.
@@ -886,6 +890,7 @@ Do not place group chips immediately under search.
 # CAT-003 - Ready Reward Catalog screen
 
 **Priority:** P0  
+**Status:** ✅ Done
 **Depends on:** CAT-001
 
 Same interaction model as Task catalog.
@@ -928,6 +933,7 @@ Do not make purchase-based Rewards dominate the catalog.
 
 # CAT-004 - Bulk selection and quick add
 
+**Status:** ✅ Done
 **Priority:** P0  
 **Depends on:** CAT-002, CAT-003
 
@@ -973,6 +979,7 @@ Rewards use the same pattern.
 
 # CAT-005 - Duplicate detection and safe copying
 
+**Status:** ✅ Done
 **Priority:** P0  
 **Backend + Mini App**
 
@@ -1023,6 +1030,7 @@ only if backed by deterministic known mapping.
 
 # CAT-006 - Add preview-before-bulk-import summary
 
+**Status:** ✅ Done
 **Priority:** P1  
 **Depends on:** CAT-004
 
@@ -1047,7 +1055,8 @@ For small single-item add, do not show confirmation.
 
 ---
 
-# CAT-007 - Group mapping when adding catalog items
+# CAT-007 - Group mapping when a
+**Status:** ✅ Donedding catalog items
 
 **Priority:** P0  
 **Depends on:** GRP-001, GRP-002
@@ -1485,6 +1494,7 @@ The following tables are the required initial reference content. Values are star
 | 🎯 Получить бюджет на небольшую самостоятельную покупку | 20 | Выбор и привилегии | 1 раз в месяц |
 
 
+**Status:** ✅ Done
 # CAT-011 - Catalog age handling
 
 **Priority:** P1
@@ -1509,6 +1519,7 @@ Parent can always search and view the full catalog.
 
 ---
 
+**Status:** ✅ Done
 # CAT-012 - Search, filters and zero states
 
 **Priority:** P1  
@@ -1563,6 +1574,7 @@ bulkCount
 Do not send Task/Reward free text as analytics payload.
 
 ---
+**Status:** ✅ Done
 
 # CAT-014 - Catalog administration boundary
 
