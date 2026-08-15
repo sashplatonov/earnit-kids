@@ -22,6 +22,9 @@ export const commonMessages = {
         management: 'Управление',
         admin: 'Админ',
         sections: 'Разделы',
+        how: 'Как работает',
+        rewards: 'Награды',
+        parents: 'Для родителей',
     },
     actions: {
         login: 'Войти',

@@ -1,4 +1,16 @@
 export const publicMessages = {
+    shell: {
+        siteAria: 'Публичный сайт EarnIt Kids',
+        mainAria: 'Основное содержание',
+        skipToContent: 'К содержанию',
+        menuButton: 'Меню',
+        closeMenu: 'Закрыть меню',
+        footerTagline: 'Задания, монеты и награды — без записок и бесконечных напоминаний.',
+    },
+    cta: {
+        openTelegram: 'Открыть EarnIt Kids в Telegram',
+        openTelegramHint: 'Откроется в Telegram',
+    },
     home: {
         metaTitle: 'EarnIt Kids | Семейные задания и награды',
         metaDescription: 'Помогает детям выполнять полезные задания, копить монеты и выбирать награды в понятном семейном потоке.',

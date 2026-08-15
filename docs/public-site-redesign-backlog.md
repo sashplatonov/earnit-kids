@@ -456,7 +456,7 @@ getPublicSiteUrl(path?: string): string
 
 # PUB-02C: UI shell, navigation и accessibility foundation
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Завершено  
 **Приоритет:** P1  
 **Зависит от:** PUB-02A
 
