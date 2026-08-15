@@ -272,7 +272,7 @@ Epic сам по себе не является implementation task. Комми�
 | 12 | PUB-07B | P1 | PUB-07A | ✅ Sitemap + environment indexing + 404 |
 | 13 | PUB-08 | P1 | PUB-02B, PUB-02C | ✅ Sharing из Mini App |
 | 14 | PUB-09 | P1 | PUB-03..PUB-07B | ✅ Permanent redirects |
-| 15 | PUB-11A | P1 | PUB-03..PUB-09 | Functional E2E + progressive enhancement |
+| 15 | PUB-11A | P1 | PUB-03..PUB-09 | ✅ Functional E2E + progressive enhancement |
 | 16 | PUB-11B | P1 | PUB-11A | Responsive + accessibility + content stress |
 | 17 | PUB-11C | P1 | PUB-11A | Visual regression + performance |
 | 18 | PUB-10 | P1 | PUB-11A..PUB-11C | Cutover + archive legacy |
@@ -1279,7 +1279,7 @@ PUB-10 Cutover блокируется, пока все три implementation tas
 
 # PUB-11A: Functional E2E + progressive enhancement
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Выполнено  
 **Приоритет:** P1  
 **Зависит от:** PUB-03..PUB-09
 
