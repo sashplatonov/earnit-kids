@@ -61,6 +61,24 @@ class TelegramCallbackServiceTest {
             new TelegramCallbackService.VerifiedCallback("tasks-child-42", 42L,
                 Instant.ofEpochSecond(1_000L)));
     }
+
+    @Test
+    void signedNavigationRoundTripsForNonCompactedChildScopedActions() {
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(config.callbackSigningSecret()).thenReturn(Optional.of("callback-secret"));
+        when(config.callbackMenuVersion()).thenReturn(1);
+        when(config.callbackTtlSeconds()).thenReturn(300);
+        TelegramCallbackService service = new TelegramCallbackService(config,
+            mock(TelegramIdentityRepository.class), mock(TelegramCallbackActionRepository.class),
+            () -> Instant.ofEpochSecond(1_000L), mock(TelegramIdentityService.class));
+
+        assertThat(service.verifyNavigation(service.signNavigation("switch-child-7"), 42L)).contains(
+            new TelegramCallbackService.VerifiedCallback("switch-child-7", 42L,
+                Instant.ofEpochSecond(1_000L)));
+        assertThat(service.verifyNavigation(service.signNavigation("requests-next-19-child-7"), 42L)).contains(
+            new TelegramCallbackService.VerifiedCallback("requests-next-19-child-7", 42L,
+                Instant.ofEpochSecond(1_000L)));
+    }
     @Test
     void verifiesSignedVersionedNavigationCallback() throws Exception {
         TelegramConfig config = mock(TelegramConfig.class);
