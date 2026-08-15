@@ -137,6 +137,34 @@ function normalizeBaseData(baseData: Record<string, unknown> = {}) {
     };
 }
 
+function normalizeCatalogTemplate(item: Record<string, unknown>): Record<string, unknown> {
+    return {
+        id: item.id ?? null,
+        title: item.title ?? item.name ?? '',
+        comment: item.comment ?? null,
+        coins: item.coins ?? null,
+        price: item.price ?? null,
+        groupKey: item.groupKey ?? item.group_key ?? null,
+        groupName: item.groupName ?? item.group_name ?? item.group ?? null,
+        semanticGraphicKey: item.semanticGraphicKey ?? item.semantic_graphic_key ?? null,
+        frequencyLimit: item.frequencyLimit ?? item.frequency_limit ?? null,
+        frequencyPeriod: item.frequencyPeriod ?? item.frequency_period ?? null,
+        minAge: item.minAge ?? item.min_age ?? null,
+        maxAge: item.maxAge ?? item.max_age ?? null,
+        difficulty: item.difficulty ?? null,
+        tags: Array.isArray(item.tags) ? item.tags : [],
+        active: item.active !== false,
+        sortOrder: item.sortOrder ?? item.sort_order ?? 0,
+    };
+}
+
+function normalizeCatalog(catalog: Record<string, unknown> = {}) {
+    return {
+        tasks: Array.isArray(catalog.tasks) ? catalog.tasks.map(normalizeCatalogTemplate) : [],
+        rewards: Array.isArray(catalog.rewards) ? catalog.rewards.map(normalizeCatalogTemplate) : [],
+    };
+}
+
 function getCreatedAt(entity: Record<string, unknown>): string | null {
     return (entity.createdAt ?? entity.created_at ?? entity.timestamp ?? entity.date ?? null) as string | null;
 }
@@ -250,6 +278,7 @@ export function normalizeAuthResponse(data: Record<string, unknown> = {}): AuthR
 export function buildInitialState(data: Record<string, unknown>, baseData: Record<string, unknown>): Record<string, unknown> {
     const normalized = normalizeServerData(data) as Record<string, unknown>;
     const normalizedBaseData = normalizeBaseData(baseData);
+    const normalizedCatalog = normalizeCatalog(baseData.catalog as Record<string, unknown> | undefined);
     const role = typeof normalized.role === 'string' ? normalized.role : null;
     const isAdmin = parseBoolean(normalized.isAdmin) || role === 'admin' || role === 'parent' || role === 'super_admin';
     return {
@@ -257,6 +286,7 @@ export function buildInitialState(data: Record<string, unknown>, baseData: Recor
         role: role ?? (isAdmin ? 'admin' : null),
         permission: normalizePermission(normalized.permission),
         baseData: normalizedBaseData,
+        catalog: normalizedCatalog,
         isLoading: false,
         familyId: normalized.familyId ?? null,
         currentChildId: normalized.activeChildId ?? null,

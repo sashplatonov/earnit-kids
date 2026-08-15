@@ -1080,6 +1080,7 @@ Recommended behavior:
 
 **Priority:** P0  
 **Backend/read model**
+**Status:** ✅ Done
 
 Suggested Task template:
 
@@ -1130,6 +1131,7 @@ Do not encode catalog content directly inside frontend components.
 
 **Priority:** P0  
 **Depends on:** CAT-008
+**Status:** ✅ Done
 
 Seed a practical starter catalog.
 
@@ -1213,6 +1215,7 @@ Every seeded item must pass the quality gate in this backlog.
 
 **Priority:** P0  
 **Depends on:** CAT-008
+**Status:** ✅ Done
 
 Recommended initial size:
 
@@ -1288,6 +1291,7 @@ Do not let purchase Rewards become the majority.
 
 **Priority:** P0  
 **Depends on:** CAT-008, CAT-009, CAT-010
+**Status:** ✅ Done
 
 The catalog must include enough useful content for each age filter.
 

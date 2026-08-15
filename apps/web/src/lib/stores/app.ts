@@ -138,9 +138,48 @@ export interface AppState {
     monthlyLimit: number;
     dailyCoinLimit: number;
     baseData: { tasks: Task[]; products: ShopItem[] };
+    catalog: { tasks: CatalogTaskTemplate[]; rewards: CatalogRewardTemplate[] };
     children: Child[];
     currentChildId: string | number | null;
     isLoading: boolean;
+}
+
+export interface CatalogTaskTemplate {
+    id: string;
+    title: string;
+    comment?: string | null;
+    coins: number;
+    groupKey: string;
+    groupName: string;
+    semanticGraphicKey?: string | null;
+    frequencyLimit?: number | null;
+    frequencyPeriod?: string | null;
+    minAge?: number | null;
+    maxAge?: number | null;
+    difficulty?: string | null;
+    tags?: string[];
+    active?: boolean;
+    sortOrder?: number;
+    [key: string]: unknown;
+}
+
+export interface CatalogRewardTemplate {
+    id: string;
+    title: string;
+    comment?: string | null;
+    price: number;
+    groupKey: string;
+    groupName: string;
+    semanticGraphicKey?: string | null;
+    frequencyLimit?: number | null;
+    frequencyPeriod?: string | null;
+    minAge?: number | null;
+    maxAge?: number | null;
+    difficulty?: string | null;
+    tags?: string[];
+    active?: boolean;
+    sortOrder?: number;
+    [key: string]: unknown;
 }
 
 const initialState: AppState = {
@@ -160,6 +199,7 @@ const initialState: AppState = {
     monthlyLimit: 10000,
     dailyCoinLimit: 0,
     baseData: { tasks: [], products: [] },
+    catalog: { tasks: [], rewards: [] },
     children: [],
     currentChildId: null,
     isLoading: true,

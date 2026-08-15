@@ -869,5 +869,2633 @@
             },
             "money_limit": 1500
         }
-    ]
+    ],
+    "catalog": {
+        "tasks": [
+            {
+                "id": "ct-6-8-1",
+                "title": "🌅 Умыться, одеться и причесаться",
+                "comment": "",
+                "groupKey": "morning",
+                "groupName": "Утро и вечер",
+                "semanticGraphicKey": "sunrise",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "morning"
+                ],
+                "active": true,
+                "sortOrder": 1,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-2",
+                "title": "🪥 Почистить зубы утром и вечером",
+                "comment": "",
+                "groupKey": "morning",
+                "groupName": "Утро и вечер",
+                "semanticGraphicKey": "sunrise",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "morning"
+                ],
+                "active": true,
+                "sortOrder": 2,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-3",
+                "title": "🛏️ Заправить кровать утром",
+                "comment": "",
+                "groupKey": "morning",
+                "groupName": "Утро и вечер",
+                "semanticGraphicKey": "sunrise",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "morning"
+                ],
+                "active": true,
+                "sortOrder": 3,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-4",
+                "title": "🎒 Собрать вещи на завтра вместе со списком",
+                "comment": "",
+                "groupKey": "independence",
+                "groupName": "Самостоятельность",
+                "semanticGraphicKey": "box",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "independence"
+                ],
+                "active": true,
+                "sortOrder": 4,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-5",
+                "title": "👕 Убрать свою одежду на место",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 5,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-6",
+                "title": "🧸 Убрать игрушки после игры",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 6,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-7",
+                "title": "🧽 Убрать свой стол или рабочее место",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 7,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-8",
+                "title": "🍽️ Убрать за собой посуду после еды",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 8,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-9",
+                "title": "🌱 Полить одно домашнее растение",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 9,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-10",
+                "title": "📖 Почитать книгу 10 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 10,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-11",
+                "title": "🔤 Повторить буквы или слова 10 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 11,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-12",
+                "title": "🔢 Позаниматься математикой 10 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 12,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-13",
+                "title": "✍️ Написать 5 аккуратных строк",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 13,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-14",
+                "title": "🇷🇸 Выучить 1-3 слова по-сербски",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 14,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-15",
+                "title": "🎨 Порисовать или сделать поделку 15 минут",
+                "comment": "",
+                "groupKey": "creativity",
+                "groupName": "Творчество",
+                "semanticGraphicKey": "palette",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "creativity"
+                ],
+                "active": true,
+                "sortOrder": 15,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-16",
+                "title": "🧘 Сделать зарядку или растяжку 5 минут",
+                "comment": "",
+                "groupKey": "health",
+                "groupName": "Движение и здоровье",
+                "semanticGraphicKey": "dumbbell",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "health"
+                ],
+                "active": true,
+                "sortOrder": 16,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-17",
+                "title": "🚶 Погулять на улице 20 минут",
+                "comment": "",
+                "groupKey": "health",
+                "groupName": "Движение и здоровье",
+                "semanticGraphicKey": "dumbbell",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "health"
+                ],
+                "active": true,
+                "sortOrder": 17,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-18",
+                "title": "💧 Выпить стакан воды утром",
+                "comment": "",
+                "groupKey": "habits",
+                "groupName": "Полезные привычки",
+                "semanticGraphicKey": "sparkles",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "habits"
+                ],
+                "active": true,
+                "sortOrder": 18,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-19",
+                "title": "🗣️ Сказать словами, что чувствуешь",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 19,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-20",
+                "title": "🤝 Попросить прощения и помочь исправить ошибку",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 20,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-21",
+                "title": "⏱️ Помогать по дому 10 минут",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 21,
+                "coins": 2
+            },
+            {
+                "id": "ct-6-8-22",
+                "title": "📚 Прочитать короткую историю и рассказать, что произошло",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 22,
+                "coins": 3
+            },
+            {
+                "id": "ct-6-8-23",
+                "title": "👟 Самостоятельно подготовиться к прогулке",
+                "comment": "",
+                "groupKey": "independence",
+                "groupName": "Самостоятельность",
+                "semanticGraphicKey": "box",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "independence"
+                ],
+                "active": true,
+                "sortOrder": 23,
+                "coins": 1
+            },
+            {
+                "id": "ct-6-8-24",
+                "title": "🧺 Разобрать одну небольшую зону со своими вещами",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 24,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-1",
+                "title": "🌅 Собраться утром без повторных напоминаний",
+                "comment": "",
+                "groupKey": "morning",
+                "groupName": "Утро и вечер",
+                "semanticGraphicKey": "sunrise",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "morning"
+                ],
+                "active": true,
+                "sortOrder": 1,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-2",
+                "title": "🪥 Почистить зубы утром и вечером",
+                "comment": "",
+                "groupKey": "morning",
+                "groupName": "Утро и вечер",
+                "semanticGraphicKey": "sunrise",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "morning"
+                ],
+                "active": true,
+                "sortOrder": 2,
+                "coins": 1
+            },
+            {
+                "id": "ct-9-11-3",
+                "title": "🎒 Самостоятельно проверить школьный рюкзак",
+                "comment": "",
+                "groupKey": "independence",
+                "groupName": "Самостоятельность",
+                "semanticGraphicKey": "box",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "independence"
+                ],
+                "active": true,
+                "sortOrder": 3,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-4",
+                "title": "🛏️ Заправить кровать утром",
+                "comment": "",
+                "groupKey": "morning",
+                "groupName": "Утро и вечер",
+                "semanticGraphicKey": "sunrise",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "morning"
+                ],
+                "active": true,
+                "sortOrder": 4,
+                "coins": 1
+            },
+            {
+                "id": "ct-9-11-5",
+                "title": "👕 Разобрать одежду после прогулки или школы",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 5,
+                "coins": 1
+            },
+            {
+                "id": "ct-9-11-6",
+                "title": "🧽 Убрать свой стол или рабочее место",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 6,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-7",
+                "title": "🍽️ Убрать за собой посуду и протереть место после еды",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 7,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-8",
+                "title": "🧺 Разобрать одну зону со своими вещами",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 8,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-9",
+                "title": "⏱️ Помогать по дому 15 минут",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 9,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-10",
+                "title": "🗑️ Вынести мусор",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 10,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-11",
+                "title": "📖 Почитать книгу 20 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 11,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-12",
+                "title": "📚 Прочитать главу и рассказать, что произошло",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "advanced",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 12,
+                "coins": 4
+            },
+            {
+                "id": "ct-9-11-13",
+                "title": "🔢 Позаниматься математикой 15 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 13,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-14",
+                "title": "✍️ Сделать письменное задание аккуратно без спешки",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 14,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-15",
+                "title": "🇷🇸 Выучить 3-5 слов по-сербски",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 15,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-16",
+                "title": "🧠 Повторить школьную тему 15 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 16,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-17",
+                "title": "🧘 Сделать зарядку или растяжку 7 минут",
+                "comment": "",
+                "groupKey": "health",
+                "groupName": "Движение и здоровье",
+                "semanticGraphicKey": "dumbbell",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "health"
+                ],
+                "active": true,
+                "sortOrder": 17,
+                "coins": 2
+            },
+            {
+                "id": "ct-9-11-18",
+                "title": "🚶 Погулять или активно подвигаться 30 минут",
+                "comment": "",
+                "groupKey": "health",
+                "groupName": "Движение и здоровье",
+                "semanticGraphicKey": "dumbbell",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "health"
+                ],
+                "active": true,
+                "sortOrder": 18,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-19",
+                "title": "🗣️ Сказать словами, что чувствуешь и чего хочешь",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 19,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-20",
+                "title": "🧯 Остановиться и успокоиться, когда злюсь",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "advanced",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 20,
+                "coins": 4
+            },
+            {
+                "id": "ct-9-11-21",
+                "title": "🪄 Признать ошибку и помочь всё исправить",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "advanced",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 21,
+                "coins": 4
+            },
+            {
+                "id": "ct-9-11-22",
+                "title": "🤝 Решить спор словами без крика и драки",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "advanced",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 22,
+                "coins": 4
+            },
+            {
+                "id": "ct-9-11-23",
+                "title": "📵 Провести 30 минут без телефона или планшета",
+                "comment": "",
+                "groupKey": "habits",
+                "groupName": "Полезные привычки",
+                "semanticGraphicKey": "sparkles",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "habits"
+                ],
+                "active": true,
+                "sortOrder": 23,
+                "coins": 3
+            },
+            {
+                "id": "ct-9-11-24",
+                "title": "💧 Выпить достаточно воды в течение дня",
+                "comment": "",
+                "groupKey": "habits",
+                "groupName": "Полезные привычки",
+                "semanticGraphicKey": "sparkles",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "habits"
+                ],
+                "active": true,
+                "sortOrder": 24,
+                "coins": 2
+            },
+            {
+                "id": "ct-12-14-1",
+                "title": "🌅 Собраться утром и выйти вовремя без напоминаний",
+                "comment": "",
+                "groupKey": "morning",
+                "groupName": "Утро и вечер",
+                "semanticGraphicKey": "sunrise",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "morning"
+                ],
+                "active": true,
+                "sortOrder": 1,
+                "coins": 3
+            },
+            {
+                "id": "ct-12-14-2",
+                "title": "🎒 Самостоятельно подготовить всё для школы на завтра",
+                "comment": "",
+                "groupKey": "independence",
+                "groupName": "Самостоятельность",
+                "semanticGraphicKey": "box",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "independence"
+                ],
+                "active": true,
+                "sortOrder": 2,
+                "coins": 3
+            },
+            {
+                "id": "ct-12-14-3",
+                "title": "🛏️ Поддерживать порядок в своей комнате 15 минут",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 3,
+                "coins": 3
+            },
+            {
+                "id": "ct-12-14-4",
+                "title": "👕 Разобрать чистую одежду и убрать её по местам",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 4,
+                "coins": 3
+            },
+            {
+                "id": "ct-12-14-5",
+                "title": "🧺 Разобрать одну зону со своими вещами",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 5,
+                "coins": 3
+            },
+            {
+                "id": "ct-12-14-6",
+                "title": "⏱️ Помогать по дому 20 минут",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 6,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-7",
+                "title": "🍽️ Помочь накрыть на стол и убрать после еды",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 7,
+                "coins": 3
+            },
+            {
+                "id": "ct-12-14-8",
+                "title": "🗑️ Вынести мусор без напоминания",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "simple",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 8,
+                "coins": 2
+            },
+            {
+                "id": "ct-12-14-9",
+                "title": "🧹 Пропылесосить одну комнату",
+                "comment": "",
+                "groupKey": "home",
+                "groupName": "Дом и порядок",
+                "semanticGraphicKey": "home",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "home"
+                ],
+                "active": true,
+                "sortOrder": 9,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-10",
+                "title": "📖 Почитать книгу 25 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 10,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-11",
+                "title": "📚 Прочитать главу и кратко пересказать главное",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 3,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 11,
+                "coins": 5
+            },
+            {
+                "id": "ct-12-14-12",
+                "title": "🔢 Позаниматься математикой 20 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 12,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-13",
+                "title": "🧠 Повторить сложную школьную тему 20 минут",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 13,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-14",
+                "title": "🇷🇸 Выучить 5 новых слов по-сербски",
+                "comment": "",
+                "groupKey": "study",
+                "groupName": "Учёба",
+                "semanticGraphicKey": "book",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "study"
+                ],
+                "active": true,
+                "sortOrder": 14,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-15",
+                "title": "📝 Спланировать домашние задания и отметить выполненное",
+                "comment": "",
+                "groupKey": "independence",
+                "groupName": "Самостоятельность",
+                "semanticGraphicKey": "box",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "independence"
+                ],
+                "active": true,
+                "sortOrder": 15,
+                "coins": 3
+            },
+            {
+                "id": "ct-12-14-16",
+                "title": "📵 Провести 1 час без телефона или соцсетей",
+                "comment": "",
+                "groupKey": "habits",
+                "groupName": "Полезные привычки",
+                "semanticGraphicKey": "sparkles",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "habits"
+                ],
+                "active": true,
+                "sortOrder": 16,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-17",
+                "title": "🧘 Сделать тренировку, зарядку или растяжку 15 минут",
+                "comment": "",
+                "groupKey": "health",
+                "groupName": "Движение и здоровье",
+                "semanticGraphicKey": "dumbbell",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "health"
+                ],
+                "active": true,
+                "sortOrder": 17,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-18",
+                "title": "🚶 Погулять или активно подвигаться 45 минут",
+                "comment": "",
+                "groupKey": "health",
+                "groupName": "Движение и здоровье",
+                "semanticGraphicKey": "dumbbell",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "health"
+                ],
+                "active": true,
+                "sortOrder": 18,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-19",
+                "title": "🗣️ Спокойно объяснить, что не устраивает и чего хочешь",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 19,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-20",
+                "title": "🧯 Взять паузу и успокоиться вместо крика",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 20,
+                "coins": 5
+            },
+            {
+                "id": "ct-12-14-21",
+                "title": "🪄 Признать свою ошибку и предложить, как её исправить",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 21,
+                "coins": 5
+            },
+            {
+                "id": "ct-12-14-22",
+                "title": "🤝 Договориться о спорном вопросе без оскорблений",
+                "comment": "",
+                "groupKey": "emotions",
+                "groupName": "Общение и эмоции",
+                "semanticGraphicKey": "heart",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "emotions"
+                ],
+                "active": true,
+                "sortOrder": 22,
+                "coins": 5
+            },
+            {
+                "id": "ct-12-14-23",
+                "title": "💳 Записать свои расходы за день",
+                "comment": "",
+                "groupKey": "independence",
+                "groupName": "Самостоятельность",
+                "semanticGraphicKey": "box",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "independence"
+                ],
+                "active": true,
+                "sortOrder": 23,
+                "coins": 4
+            },
+            {
+                "id": "ct-12-14-24",
+                "title": "🍳 Приготовить простой завтрак или перекус",
+                "comment": "",
+                "groupKey": "independence",
+                "groupName": "Самостоятельность",
+                "semanticGraphicKey": "box",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "independence"
+                ],
+                "active": true,
+                "sortOrder": 24,
+                "coins": 5
+            }
+        ],
+        "rewards": [
+            {
+                "id": "cr-6-8-1",
+                "title": "🎲 Выбрать настольную игру на вечер",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 1,
+                "price": 4
+            },
+            {
+                "id": "cr-6-8-2",
+                "title": "🧸 Поиграть с мамой или папой 20 минут",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 2,
+                "price": 5
+            },
+            {
+                "id": "cr-6-8-3",
+                "title": "🏰 Построить крепость из подушек и поиграть",
+                "comment": "",
+                "groupKey": "creativity",
+                "groupName": "Творчество и игры",
+                "semanticGraphicKey": "palette",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "creativity"
+                ],
+                "active": true,
+                "sortOrder": 3,
+                "price": 5
+            },
+            {
+                "id": "cr-6-8-4",
+                "title": "🧁 Приготовить простой десерт вместе с родителем",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 4,
+                "price": 6
+            },
+            {
+                "id": "cr-6-8-5",
+                "title": "🚶 Выбрать маршрут прогулки",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 5,
+                "price": 3
+            },
+            {
+                "id": "cr-6-8-6",
+                "title": "🍽️ Выбрать ужин из вариантов",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 6,
+                "price": 4
+            },
+            {
+                "id": "cr-6-8-7",
+                "title": "🎬 Выбрать семейный мультфильм или фильм",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 7,
+                "price": 5
+            },
+            {
+                "id": "cr-6-8-8",
+                "title": "🎵 Выбрать музыку в машине",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 8,
+                "price": 2
+            },
+            {
+                "id": "cr-6-8-9",
+                "title": "🛁 Принять ванну с пеной и игрушками",
+                "comment": "",
+                "groupKey": "joys",
+                "groupName": "Маленькие радости",
+                "semanticGraphicKey": "iceCream",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "joys"
+                ],
+                "active": true,
+                "sortOrder": 9,
+                "price": 4
+            },
+            {
+                "id": "cr-6-8-10",
+                "title": "🎨 Порисовать с родителем 20 минут",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 10,
+                "price": 4
+            },
+            {
+                "id": "cr-6-8-11",
+                "title": "🍦 Получить одно мороженое",
+                "comment": "",
+                "groupKey": "joys",
+                "groupName": "Маленькие радости",
+                "semanticGraphicKey": "iceCream",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "joys"
+                ],
+                "active": true,
+                "sortOrder": 11,
+                "price": 6
+            },
+            {
+                "id": "cr-6-8-12",
+                "title": "🧁 Выбрать небольшой десерт",
+                "comment": "",
+                "groupKey": "joys",
+                "groupName": "Маленькие радости",
+                "semanticGraphicKey": "iceCream",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "joys"
+                ],
+                "active": true,
+                "sortOrder": 12,
+                "price": 5
+            },
+            {
+                "id": "cr-6-8-13",
+                "title": "🛝 Сходить на новую детскую площадку",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 13,
+                "price": 7
+            },
+            {
+                "id": "cr-6-8-14",
+                "title": "🎡 Сходить в игровую зону",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 14,
+                "price": 12
+            },
+            {
+                "id": "cr-6-8-15",
+                "title": "🎳 Сходить в боулинг с семьёй",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 15,
+                "price": 14
+            },
+            {
+                "id": "cr-6-8-16",
+                "title": "🎬 Сходить в кино",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 16,
+                "price": 12
+            },
+            {
+                "id": "cr-6-8-17",
+                "title": "🏊 Сходить в бассейн",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 17,
+                "price": 10
+            },
+            {
+                "id": "cr-6-8-18",
+                "title": "📚 Выбрать новую книгу",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 18,
+                "price": 10
+            },
+            {
+                "id": "cr-6-8-19",
+                "title": "🧩 Получить небольшой набор для творчества или пазл",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 19,
+                "price": 12
+            },
+            {
+                "id": "cr-6-8-20",
+                "title": "🧸 Купить маленькую игрушку",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 20,
+                "price": 15
+            },
+            {
+                "id": "cr-6-8-21",
+                "title": "🍓 Выбрать любимые ягоды или фрукты в магазине",
+                "comment": "",
+                "groupKey": "joys",
+                "groupName": "Маленькие радости",
+                "semanticGraphicKey": "iceCream",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "simple",
+                "tags": [
+                    "joys"
+                ],
+                "active": true,
+                "sortOrder": 21,
+                "price": 6
+            },
+            {
+                "id": "cr-6-8-22",
+                "title": "🎈 Устроить семейный мини-пикник",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 6,
+                "maxAge": 8,
+                "difficulty": "normal",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 22,
+                "price": 8
+            },
+            {
+                "id": "cr-9-11-1",
+                "title": "🎲 Выбрать настольную игру на вечер",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "day",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 1,
+                "price": 5
+            },
+            {
+                "id": "cr-9-11-2",
+                "title": "🧸 Поиграть с мамой или папой 30 минут",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 2,
+                "price": 6
+            },
+            {
+                "id": "cr-9-11-3",
+                "title": "🎬 Выбрать семейный фильм на вечер",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 3,
+                "price": 6
+            },
+            {
+                "id": "cr-9-11-4",
+                "title": "🍽️ Выбрать ужин из вариантов",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 4,
+                "price": 5
+            },
+            {
+                "id": "cr-9-11-5",
+                "title": "🚶 Выбрать маршрут прогулки или место для прогулки",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 5,
+                "price": 4
+            },
+            {
+                "id": "cr-9-11-6",
+                "title": "🎵 Выбрать музыку в машине или дома",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 6,
+                "price": 3
+            },
+            {
+                "id": "cr-9-11-7",
+                "title": "🧁 Приготовить десерт вместе с родителем",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 7,
+                "price": 7
+            },
+            {
+                "id": "cr-9-11-8",
+                "title": "🎨 Сделать творческий проект вместе с родителем",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 8,
+                "price": 7
+            },
+            {
+                "id": "cr-9-11-9",
+                "title": "🍦 Получить одно мороженое",
+                "comment": "",
+                "groupKey": "joys",
+                "groupName": "Маленькие радости",
+                "semanticGraphicKey": "iceCream",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "simple",
+                "tags": [
+                    "joys"
+                ],
+                "active": true,
+                "sortOrder": 9,
+                "price": 7
+            },
+            {
+                "id": "cr-9-11-10",
+                "title": "☕ Сходить с родителем в кафе за напитком или десертом",
+                "comment": "",
+                "groupKey": "joys",
+                "groupName": "Маленькие радости",
+                "semanticGraphicKey": "iceCream",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "joys"
+                ],
+                "active": true,
+                "sortOrder": 10,
+                "price": 9
+            },
+            {
+                "id": "cr-9-11-11",
+                "title": "🎬 Сходить в кино",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 11,
+                "price": 14
+            },
+            {
+                "id": "cr-9-11-12",
+                "title": "🎳 Сходить в боулинг",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 12,
+                "price": 15
+            },
+            {
+                "id": "cr-9-11-13",
+                "title": "🏊 Сходить в бассейн",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 13,
+                "price": 12
+            },
+            {
+                "id": "cr-9-11-14",
+                "title": "🎡 Сходить в игровую зону или парк аттракционов",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "advanced",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 14,
+                "price": 16
+            },
+            {
+                "id": "cr-9-11-15",
+                "title": "📚 Выбрать новую книгу или комикс",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 15,
+                "price": 12
+            },
+            {
+                "id": "cr-9-11-16",
+                "title": "🎧 Купить недорогой аксессуар для хобби",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "advanced",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 16,
+                "price": 18
+            },
+            {
+                "id": "cr-9-11-17",
+                "title": "✨ Купить маленький аксессуар",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 17,
+                "price": 14
+            },
+            {
+                "id": "cr-9-11-18",
+                "title": "📦 Сделать один небольшой онлайн-заказ",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "advanced",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 18,
+                "price": 20
+            },
+            {
+                "id": "cr-9-11-19",
+                "title": "🎮 Получить 30 дополнительных минут игры",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 19,
+                "price": 8
+            },
+            {
+                "id": "cr-9-11-20",
+                "title": "🛌 Лечь спать на 30 минут позже в выходной",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 20,
+                "price": 8
+            },
+            {
+                "id": "cr-9-11-21",
+                "title": "👫 Пригласить друга домой или на прогулку",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 21,
+                "price": 10
+            },
+            {
+                "id": "cr-9-11-22",
+                "title": "🍕 Выбрать семейную доставку из согласованных вариантов",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 9,
+                "maxAge": 11,
+                "difficulty": "normal",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 22,
+                "price": 12
+            },
+            {
+                "id": "cr-12-14-1",
+                "title": "🎬 Выбрать семейный фильм на вечер",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 1,
+                "price": 6
+            },
+            {
+                "id": "cr-12-14-2",
+                "title": "🎲 Выбрать настольную игру или карточную игру на вечер",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "simple",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 2,
+                "price": 6
+            },
+            {
+                "id": "cr-12-14-3",
+                "title": "☕ Сходить с родителем в кафе и поговорить вдвоём",
+                "comment": "",
+                "groupKey": "family",
+                "groupName": "Время с семьёй",
+                "semanticGraphicKey": "users",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "family"
+                ],
+                "active": true,
+                "sortOrder": 3,
+                "price": 9
+            },
+            {
+                "id": "cr-12-14-4",
+                "title": "🍽️ Выбрать ужин или доставку из согласованных вариантов",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 4,
+                "price": 8
+            },
+            {
+                "id": "cr-12-14-5",
+                "title": "🚶 Выбрать место для семейной прогулки",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 5,
+                "price": 5
+            },
+            {
+                "id": "cr-12-14-6",
+                "title": "🎵 Выбрать музыку в машине или дома",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "simple",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 6,
+                "price": 3
+            },
+            {
+                "id": "cr-12-14-7",
+                "title": "🛌 Лечь спать на 45 минут позже в выходной",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 7,
+                "price": 10
+            },
+            {
+                "id": "cr-12-14-8",
+                "title": "🎮 Получить 45 дополнительных минут игры",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 8,
+                "price": 10
+            },
+            {
+                "id": "cr-12-14-9",
+                "title": "📱 Получить 45 дополнительных минут экранного времени",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 9,
+                "price": 10
+            },
+            {
+                "id": "cr-12-14-10",
+                "title": "👫 Пригласить друга домой или на совместную прогулку",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 10,
+                "price": 12
+            },
+            {
+                "id": "cr-12-14-11",
+                "title": "🎬 Сходить в кино",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 11,
+                "price": 16
+            },
+            {
+                "id": "cr-12-14-12",
+                "title": "🎳 Сходить в боулинг",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 12,
+                "price": 17
+            },
+            {
+                "id": "cr-12-14-13",
+                "title": "🏊 Сходить в бассейн",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 2,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 13,
+                "price": 14
+            },
+            {
+                "id": "cr-12-14-14",
+                "title": "🎧 Купить недорогой аксессуар для хобби или техники",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 14,
+                "price": 20
+            },
+            {
+                "id": "cr-12-14-15",
+                "title": "📚 Купить книгу, комикс или мангу",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "normal",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 15,
+                "price": 15
+            },
+            {
+                "id": "cr-12-14-16",
+                "title": "✨ Купить небольшой аксессуар или косметику",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 16,
+                "price": 18
+            },
+            {
+                "id": "cr-12-14-17",
+                "title": "👕 Купить одну вещь из одежды в согласованном бюджете",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 17,
+                "price": 24
+            },
+            {
+                "id": "cr-12-14-18",
+                "title": "📦 Сделать один онлайн-заказ в согласованном бюджете",
+                "comment": "",
+                "groupKey": "purchases",
+                "groupName": "Покупки",
+                "semanticGraphicKey": "gift",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "purchases"
+                ],
+                "active": true,
+                "sortOrder": 18,
+                "price": 24
+            },
+            {
+                "id": "cr-12-14-19",
+                "title": "🍔 Выбрать кафе или фастфуд для семейного выхода",
+                "comment": "",
+                "groupKey": "outings",
+                "groupName": "Прогулки и развлечения",
+                "semanticGraphicKey": "treePine",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "outings"
+                ],
+                "active": true,
+                "sortOrder": 19,
+                "price": 16
+            },
+            {
+                "id": "cr-12-14-20",
+                "title": "🎟️ Сходить на концерт, выставку или мероприятие по интересам",
+                "comment": "",
+                "groupKey": "biggoals",
+                "groupName": "Большие цели",
+                "semanticGraphicKey": "trophy",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "biggoals"
+                ],
+                "active": true,
+                "sortOrder": 20,
+                "price": 30
+            },
+            {
+                "id": "cr-12-14-21",
+                "title": "🎧 Купить большую желанную вещь",
+                "comment": "",
+                "groupKey": "biggoals",
+                "groupName": "Большие цели",
+                "semanticGraphicKey": "trophy",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "week",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "biggoals"
+                ],
+                "active": true,
+                "sortOrder": 21,
+                "price": 45
+            },
+            {
+                "id": "cr-12-14-22",
+                "title": "🎯 Получить бюджет на небольшую самостоятельную покупку",
+                "comment": "",
+                "groupKey": "privileges",
+                "groupName": "Выбор и привилегии",
+                "semanticGraphicKey": "star",
+                "frequencyLimit": 1,
+                "frequencyPeriod": "month",
+                "minAge": 12,
+                "maxAge": 14,
+                "difficulty": "advanced",
+                "tags": [
+                    "privileges"
+                ],
+                "active": true,
+                "sortOrder": 22,
+                "price": 20
+            }
+        ]
+    }
 }
