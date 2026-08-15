@@ -5,6 +5,7 @@
     import * as content from '$lib/content/public/ru/how';
     import PublicSection from '$lib/components/public/PublicSection.svelte';
     import PublicButton from '$lib/components/public/PublicButton.svelte';
+    import PublicIcon from '$lib/components/public/PublicIcon.svelte';
     import { fade } from 'svelte/transition';
 
     export let data: PageData;
@@ -39,8 +40,11 @@
 <div class="public-page">
     <!-- Hero Section -->
     <PublicSection>
-        <div class="hero">
-            <span class="eyebrow">{content.hero.eyebrow}</span>
+        <div class="page-hero">
+            <div class="eyebrow">
+                <PublicIcon name="check" />
+                {content.hero.eyebrow}
+            </div>
             <h1>{content.hero.title}</h1>
             <p>{content.hero.text}</p>
         </div>
@@ -48,7 +52,7 @@
 
     <!-- How It Works Section -->
     <PublicSection>
-        <div class="how-it-works">
+        <div class="how-it-works split">
             <div class="steps">
                 {#each content.steps as step, i (step.title)}
                     <div class="step">
@@ -61,15 +65,21 @@
                 {/each}
             </div>
 
-            <div class="advantage-card">
+            <aside class="card advantage-card">
+                <div class="icon-box">
+                    <PublicIcon name="telegram" />
+                </div>
                 <h3>{content.telegramAdvantage.title}</h3>
                 <p>{content.telegramAdvantage.text}</p>
-                <ul>
+                <div class="feature-list">
                     {#each content.telegramAdvantage.features as feature (feature)}
-                        <li>{feature}</li>
+                        <div class="feature">
+                            <PublicIcon name="check" />
+                            <span>{feature}</span>
+                        </div>
                     {/each}
-                </ul>
-            </div>
+                </div>
+            </aside>
         </div>
     </PublicSection>
 
@@ -77,7 +87,7 @@
     <PublicSection>
         <div class="preview-carousel">
             <h2>{content.carousel.title}</h2>
-            
+
             <div class="carousel-viewport">
                 {#each content.carousel.items as item, i (item.image)}
                     {#if i === activeIndex}
@@ -93,8 +103,8 @@
                 <button on:click={prevSlide} aria-label="Previous slide">&larr;</button>
                 <div class="indicators">
                     {#each content.carousel.items as _, i (i)}
-                        <button 
-                            class:active={i === activeIndex} 
+                        <button
+                            class:active={i === activeIndex}
                             on:click={() => activeIndex = i}
                             aria-label="Go to slide {i + 1}"
                         ></button>
@@ -109,10 +119,11 @@
     <PublicSection>
         <div class="final-cta">
             <h2>Готовы начать?</h2>
-            <PublicButton 
-                href={getPublicSiteUrl(appConfig.publicOrigin, '/telegram')} 
-                variant="primary" 
+            <PublicButton
+                href={getPublicSiteUrl(appConfig.publicOrigin, '/telegram')}
+                variant="primary"
             >
+                <PublicIcon name="telegram" />
                 Открыть в Telegram
             </PublicButton>
         </div>
@@ -126,38 +137,14 @@
         gap: 0;
     }
 
-    .hero {
-        text-align: center;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .hero .eyebrow {
-        display: block;
-        color: var(--public-accent);
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.875rem;
-        margin-bottom: 1rem;
-    }
-
-    .hero h1 {
-        font-size: clamp(2rem, 8vw, 3rem);
-        margin-bottom: 1.5rem;
-        line-height: 1.1;
-    }
-
-    .hero p {
-        font-size: clamp(1.125rem, 3vw, 1.25rem);
-        line-height: 1.6;
-        color: var(--public-text-muted);
+    .page-hero {
+        text-align: left;
+        max-width: 100%;
     }
 
     .how-it-works {
-        display: grid;
         grid-template-columns: 1fr 350px;
         gap: 4rem;
-        align-items: start;
     }
 
     .steps {
@@ -197,47 +184,12 @@
         color: var(--public-text-muted);
     }
 
-    .advantage-card {
-        background: var(--public-bg-secondary);
-        padding: 2rem;
-        border-radius: 1.5rem;
-        border: 1px solid var(--public-border);
-    }
-
     .advantage-card h3 {
-        margin: 0 0 1rem 0;
-        font-size: 1.5rem;
+        margin: 0 0 0.5rem 0;
     }
 
     .advantage-card p {
-        margin: 0 0 1.5rem 0;
-        line-height: 1.6;
-        color: var(--public-text-muted);
-    }
-
-    .advantage-card ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .advantage-card li {
-        position: relative;
-        padding-left: 1.75rem;
-        color: var(--public-text-muted);
-        font-size: 0.9375rem;
-    }
-
-    .advantage-card li::before {
-        content: '✓';
-        position: absolute;
-        left: 0;
-        color: var(--public-accent);
-        font-weight: bold;
-        font-size: 1.1rem;
+        margin: 0 0 1.25rem 0;
     }
 
     .preview-carousel {
@@ -356,7 +308,7 @@
         }
 
         .advantage-card {
-            margin-top: 2rem;
+            margin-top: 0;
         }
 
         .steps {

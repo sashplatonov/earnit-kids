@@ -16,6 +16,14 @@
     --public-max: 70rem;
     --public-content-max: 760px;
     --public-touch: 2.75rem;
+
+    /* Aliases used by the public page components so the palette matches the
+       reference site exactly. */
+    --public-accent: #275fd6;
+    --public-accent-2: #1d4fb9;
+    --public-bg-secondary: #eef2f7;
+    --public-border: #dde3eb;
+    --public-text-muted: #687386;
 }
 
 .public-shell {
@@ -121,9 +129,166 @@
     stroke-linejoin: round;
 }
 
+/* Reference page primitives — shared across public pages */
+
+.public-shell :global(.page-hero) {
+    padding: 2rem 0 .875rem;
+}
+
+.public-shell :global(.page-hero p) {
+    font-size: 1.125rem;
+    color: var(--public-muted);
+    max-width: 47.5rem;
+    margin: .75rem 0 0;
+}
+
+.public-shell :global(.eyebrow) {
+    display: inline-flex;
+    align-items: center;
+    gap: .4375rem;
+    padding: .375rem .5625rem;
+    border-radius: 999px;
+    background: var(--public-blue-soft);
+    color: var(--public-blue);
+    font-size: .75rem;
+    font-weight: 800;
+    margin-bottom: .8125rem;
+    white-space: nowrap;
+}
+
+.public-shell :global(.eyebrow svg) {
+    width: 1rem;
+    height: 1rem;
+    min-width: 1rem;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.public-shell :global(.card) {
+    background: var(--public-surface);
+    border: 1px solid var(--public-line);
+    border-radius: var(--public-radius);
+    padding: 1.0625rem;
+    box-shadow: 0 4px 13px rgb(39 54 82 / 4.5%);
+}
+
+.public-shell :global(.card h3) {
+    font-size: 1.1875rem;
+}
+
+.public-shell :global(.card p) {
+    color: var(--public-muted);
+    margin: .5rem 0 0;
+}
+
+.public-shell :global(.icon-box) {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: .6875rem;
+    background: var(--public-blue-soft);
+    display: grid;
+    place-items: center;
+    color: var(--public-blue);
+    margin-bottom: .75rem;
+}
+
+.public-shell :global(.icon-box svg) {
+    width: 1.3125rem;
+    height: 1.3125rem;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.public-shell :global(.grid-3) {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .6875rem;
+}
+
+.public-shell :global(.split) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.125rem;
+    align-items: start;
+}
+
+.public-shell :global(.body-lead) {
+    font-size: 1.0625rem;
+    color: var(--public-muted);
+    margin: .75rem 0 0;
+    max-width: 43.125rem;
+}
+
+.public-shell :global(.feature-list) {
+    display: grid;
+    gap: .5rem;
+    margin-top: .875rem;
+}
+
+.public-shell :global(.feature) {
+    display: flex;
+    gap: .5625rem;
+    align-items: flex-start;
+}
+
+.public-shell :global(.feature svg) {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--public-green);
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.2;
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+.public-shell :global(.feature span) {
+    color: #4f5d72;
+}
+
+.public-shell :global(.callout) {
+    background: #15294d;
+    color: #fff;
+    border-radius: 1.3125rem;
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.public-shell :global(.callout p) {
+    color: #cbd6e8;
+    margin: .4375rem 0 0;
+}
+
+/* Shared page sections: alternate muted background and consistent spacing */
+.public-shell :global(.public-page > .section-muted) {
+    background: var(--public-surface-2);
+    border-top: 1px solid #e2e7ee;
+    border-bottom: 1px solid #e2e7ee;
+}
+
 @media (max-width: 640px) {
     .public-shell :global(.public-mobile-cta) {
         display: inline-flex;
+    }
+    .public-shell :global(.grid-3) {
+        grid-template-columns: 1fr;
+        gap: .5rem;
+    }
+    .public-shell :global(.split) {
+        grid-template-columns: 1fr;
+        gap: .75rem;
+    }
+    .public-shell :global(.callout) {
+        grid-template-columns: 1fr;
     }
 }
 

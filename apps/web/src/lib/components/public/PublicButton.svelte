@@ -57,4 +57,14 @@
         outline: 3px solid rgb(128 170 255 / 50%);
         outline-offset: 2px;
     }
+
+    .public-button :global(svg) {
+        width: 1.125rem;
+        height: 1.125rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
 </style>
