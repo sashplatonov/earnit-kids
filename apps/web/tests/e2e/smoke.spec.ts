@@ -28,10 +28,6 @@ test('public marketing routes render the legacy parity content', async ({ page, 
     await page.goto('/en/features/shop');
     await expect(page).toHaveTitle('EarnIt Kids | Family rewards shop');
     await expect(page.getByRole('heading', { name: 'Rewards shop that stays fair' })).toBeVisible();
-
-    await page.goto('/en/blog');
-    await expect(page).toHaveTitle('EarnIt Kids | Blog for parents and children');
-    await expect(page.getByRole('heading', { name: 'Helpful ideas for parents and children' })).toBeVisible();
 });
 
 test('login page switches between legacy auth panels', async ({ page }) => {

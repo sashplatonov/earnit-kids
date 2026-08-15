@@ -22,7 +22,6 @@ RUN apk add --no-cache wget ca-certificates
 COPY --from=build /workspace/web/package*.json ./
 COPY --from=build /workspace/web/node_modules ./node_modules
 COPY --from=build /workspace/web/build ./build
-COPY --from=build /workspace/web/data ./data
 COPY --from=build /workspace/web/scripts ./scripts
 
 ENV NODE_ENV=production

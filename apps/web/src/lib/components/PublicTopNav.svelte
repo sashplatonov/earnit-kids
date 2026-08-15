@@ -14,7 +14,6 @@
         <a href={$i18n.href('/')}>{$i18n.t('common.navigation.home')}</a>
         <a href={$i18n.href('/features/tasks')}>{$i18n.t('common.navigation.tasks')}</a>
         <a href={$i18n.href('/features/shop')}>{$i18n.t('common.navigation.shop')}</a>
-        <a href={$i18n.href('/blog')}>{$i18n.t('common.navigation.blog')}</a>
         <a href={$i18n.href('/about')}>{$i18n.t('common.navigation.about')}</a>
         <a href={$i18n.href('/faq')}>{$i18n.t('common.navigation.faq')}</a>
     </nav>

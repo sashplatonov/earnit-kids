@@ -15,7 +15,6 @@ export const commonMessages = {
         home: 'Главная',
         tasks: 'Задания',
         shop: 'Награды',
-        blog: 'Блог',
         about: 'О нас',
         faq: 'Вопросы',
         more: 'Еще',

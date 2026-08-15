@@ -3,7 +3,7 @@ export const DEFAULT_LOCALE = 'en';
 export const LOCALE_COOKIE_NAME = 'locale';
 
 export type Locale = (typeof LOCALES)[number];
-export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'analytics' | 'history' | 'tasks' | 'shop' | 'admin' | 'blog' | 'errors' | 'superadmin';
+export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'analytics' | 'history' | 'tasks' | 'shop' | 'admin' | 'errors' | 'superadmin';
 
 const LOCALE_SET = new Set<string>(LOCALES);
 // EXPLAIN: Bare-URL public routes are served without a locale prefix so they
@@ -189,10 +189,6 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
 
     if (internalPath === '/login' || internalPath === '/verify' || internalPath === '/reset-password') {
         return ['common', 'public', 'auth', 'errors'];
-    }
-
-    if (internalPath.startsWith('/blog')) {
-        return ['common', 'public', 'blog', 'errors'];
     }
 
     if (internalPath.startsWith('/app/analytics')) {

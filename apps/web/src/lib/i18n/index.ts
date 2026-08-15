@@ -12,7 +12,6 @@ import { appMessages as enAppMessages } from './messages/en/app';
 import { adminMessages as enAdminMessages } from './messages/en/admin';
 import { analyticsMessages as enAnalyticsMessages } from './messages/en/analytics';
 import { authMessages as enAuthMessages } from './messages/en/auth';
-import { blogMessages as enBlogMessages } from './messages/en/blog';
 import { commonMessages as enCommonMessages } from './messages/en/common';
 import { errorMessages as enErrorMessages } from './messages/en/errors';
 import { historyMessages as enHistoryMessages } from './messages/en/history';
@@ -24,7 +23,6 @@ import { adminMessages as ruAdminMessages } from './messages/ru/admin';
 import { appMessages as ruAppMessages } from './messages/ru/app';
 import { analyticsMessages as ruAnalyticsMessages } from './messages/ru/analytics';
 import { authMessages as ruAuthMessages } from './messages/ru/auth';
-import { blogMessages as ruBlogMessages } from './messages/ru/blog';
 import { commonMessages as ruCommonMessages } from './messages/ru/common';
 import { errorMessages as ruErrorMessages } from './messages/ru/errors';
 import { historyMessages as ruHistoryMessages } from './messages/ru/history';
@@ -72,7 +70,6 @@ const ENGLISH_DOMAIN_CATALOG = {
     history: enHistoryMessages,
     tasks: enTasksMessages,
     shop: enShopMessages,
-    blog: enBlogMessages,
     errors: enErrorMessages,
     superadmin: enSuperadminMessages,
 } as const;
@@ -87,7 +84,6 @@ const RUSSIAN_DOMAIN_CATALOG = {
     history: ruHistoryMessages,
     tasks: ruTasksMessages,
     shop: ruShopMessages,
-    blog: ruBlogMessages,
     errors: ruErrorMessages,
     superadmin: ruSuperadminMessages,
 } as const;

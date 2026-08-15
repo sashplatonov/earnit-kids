@@ -174,6 +174,21 @@ function writeJson(res, payload, status = 200) {
     res.end(JSON.stringify(payload));
 }
 
+function resolveTelegramMiniAppUrl() {
+    const raw = process.env.TELEGRAM_MINI_APP_URL || '';
+    return raw.trim().replace(/\/+$/, '');
+}
+
+function serveConfigJs(req, res) {
+    const telegramMiniAppUrl = resolveTelegramMiniAppUrl();
+    const body = `window.EARNIT_CONFIG = {\n  telegramMiniAppUrl: ${JSON.stringify(telegramMiniAppUrl)}\n};\n`;
+    res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Cache-Control': 'no-cache',
+    });
+    res.end(body);
+}
+
 function proxyRequest(req, res) {
     proxy.web(req, res, { target: backendOrigin });
 }
@@ -192,6 +207,11 @@ const server = createServer((req, res) => {
                     service: 'web',
                     backendUrl: backendOrigin,
                 });
+                return;
+            }
+
+            if (pathname === '/public/config.js') {
+                serveConfigJs(req, res);
                 return;
             }
 

@@ -15,7 +15,6 @@ export const commonMessages = {
         home: 'Home',
         tasks: 'Tasks',
         shop: 'Rewards',
-        blog: 'Blog',
         about: 'About',
         faq: 'FAQ',
         more: 'More',

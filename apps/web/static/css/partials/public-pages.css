@@ -71,7 +71,6 @@
 .public-panel,
 .feature-layout,
 .faq-shell,
-.blog-shell,
 .article-shell,
 .public-cta {
     border-radius: 28px;
@@ -87,7 +86,6 @@
 .public-panel::before,
 .feature-layout::before,
 .faq-shell::before,
-.blog-shell::before,
 .article-shell::before,
 .public-cta::before {
     content: '';
@@ -106,7 +104,6 @@
 
 .landing-hero > div,
 .feature-layout > div,
-.blog-shell > div,
 .public-cta > div {
     min-width: 0;
     position: relative;
@@ -133,7 +130,6 @@
 
 .landing-hero__panel,
 .feature-layout__panel,
-.blog-image-wrap,
 .article-image-wrap {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 244, 236, 0.96));
     border-radius: 28px;
@@ -145,7 +141,6 @@
 .landing-hero img,
 .landing-hero__illustration,
 .feature-layout img,
-.blog-image,
 .article-image {
     width: 100%;
     max-width: 100%;
@@ -165,7 +160,6 @@
 .feature-layout__content h1,
 .public-panel h3,
 .faq-shell h1,
-.blog-header h1,
 .article-header h1,
 .public-cta h3 {
     color: var(--public-text-strong);
@@ -181,7 +175,6 @@
 .public-shell p,
 .feature-layout li,
 .faq-card p,
-.blog-header p,
 .article-shell .meta,
 .article-body,
 .creation-wizard__hint {
@@ -274,8 +267,7 @@
 .value-card,
 .feature-point,
 .wizard-step,
-.faq-card,
-.blog-card {
+.faq-card {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(251, 245, 237, 0.96));
     border-radius: 24px;
     padding: 1.15rem 1.25rem;
@@ -305,7 +297,6 @@
 .value-card h3,
 .feature-point h3,
 .wizard-step h3,
-.blog-card h2,
 .faq-card summary {
     margin: 0;
     color: var(--public-text-strong);
@@ -358,7 +349,6 @@
 }
 
 .feature-layout img,
-.blog-image,
 .article-image {
     border-radius: 24px;
     border: 1px solid rgba(122, 149, 191, 0.16);
@@ -552,7 +542,6 @@
     color: var(--public-text-muted);
 }
 
-.blog-shell,
 .article-shell {
     position: relative;
     display: flex;
@@ -560,39 +549,9 @@
     gap: 1.25rem;
 }
 
-.blog-header,
 .article-header {
     position: relative;
     z-index: 1;
-}
-
-.blog-list {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    gap: 0.9rem;
-}
-
-.blog-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.blog-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(122, 149, 191, 0.28);
-    box-shadow: 0 18px 32px rgba(123, 145, 185, 0.14);
-}
-
-.blog-card a {
-    text-decoration: none;
-    color: inherit;
-    overflow-wrap: anywhere;
-}
-
-.blog-card small {
-    display: inline-block;
-    margin-top: 0.35rem;
-    color: var(--public-text-muted);
 }
 
 .article-body {
@@ -615,8 +574,6 @@
 .feature-point,
 .wizard-step,
 .faq-card,
-.blog-card,
-.blog-header,
 .article-header,
 .feature-layout__content,
 .feature-layout__panel,
@@ -639,7 +596,6 @@
     .public-panel,
     .feature-layout,
     .faq-shell,
-    .blog-shell,
     .article-shell,
     .public-cta {
         padding: 1.35rem;
