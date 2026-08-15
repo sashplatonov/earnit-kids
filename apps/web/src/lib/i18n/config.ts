@@ -6,6 +6,11 @@ export type Locale = (typeof LOCALES)[number];
 export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'analytics' | 'history' | 'tasks' | 'shop' | 'admin' | 'blog' | 'errors' | 'superadmin';
 
 const LOCALE_SET = new Set<string>(LOCALES);
+// EXPLAIN: Bare-URL public routes are served without a locale prefix so they
+// EXPLAIN: can be shared as stable canonical links. They must not be
+// EXPLAIN: canonicalized to `/en/...` by `shouldCanonicalizePath`.
+const PUBLIC_BARE_PATHS = ['/', '/how', '/tasks', '/rewards', '/parents', '/faq'] as const;
+
 const BYPASS_PREFIXES = [
     '/api',
     '/healthz',
@@ -123,6 +128,9 @@ export function swapPathLocale(pathname: string, locale: Locale): string {
 
 export function isBypassedLocalePath(pathname: string): boolean {
     const normalized = normalisePath(pathname);
+    if ((PUBLIC_BARE_PATHS as readonly string[]).includes(normalized)) {
+        return true;
+    }
     return BYPASS_PREFIXES.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`));
 }
 
@@ -138,7 +146,20 @@ export function shouldCanonicalizePath(pathname: string): boolean {
 export function resolveDomainsForPath(pathname: string): MessageDomain[] {
     const internalPath = stripLocaleFromPath(pathname);
 
-    if (internalPath === '/' || internalPath === '/about' || internalPath === '/faq' || internalPath.startsWith('/features')) {
+    if (
+        internalPath === '/'
+        || internalPath === '/how'
+        || internalPath === '/tasks'
+        || internalPath === '/rewards'
+        || internalPath === '/parents'
+        || internalPath === '/faq'
+    ) {
+        return ['common', 'public', 'errors'];
+    }
+
+    // EXPLAIN: Legacy public routes still served from src/routes until PUB-01
+    // EXPLAIN: moves them to apps/web/legacy/public-site.
+    if (internalPath === '/about' || internalPath.startsWith('/features')) {
         return ['common', 'public', 'errors'];
     }
 

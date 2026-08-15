@@ -46,6 +46,11 @@ describe('i18n helpers', () => {
         expect(shouldCanonicalizePath('/about')).toBe(true);
         expect(shouldCanonicalizePath('/en/about')).toBe(false);
         expect(shouldCanonicalizePath('/api/data')).toBe(false);
+        // EXPLAIN: Bare public routes bypass canonicalization to stay shareable.
+        expect(shouldCanonicalizePath('/how')).toBe(false);
+        expect(shouldCanonicalizePath('/tasks')).toBe(false);
+        expect(shouldCanonicalizePath('/parents')).toBe(false);
+        expect(shouldCanonicalizePath('/faq')).toBe(false);
     });
 
     it('returns Russian translation when available', () => {

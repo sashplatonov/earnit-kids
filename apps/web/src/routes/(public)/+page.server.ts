@@ -10,6 +10,10 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
             cookies.get(LAST_APP_SECTION_COOKIE),
         );
 
+        // EXPLAIN: Public routes are bare-URL (no locale prefix), but the
+        // EXPLAIN: authenticated app and super-admin surfaces still use the
+        // EXPLAIN: locale-prefixed routing. `locals.locale` is `ru` for the
+        // EXPLAIN: public route group, so redirects land on the RU app shell.
         if (locals.session.role === 'super_admin' && cookies.get(LAST_APP_SECTION_COOKIE) == null) {
             throw redirect(302, localizePath('/super-admin', locals.locale));
         }
@@ -38,6 +42,6 @@ export const actions: Actions = {
             throw redirect(303, toAppPath(preferredSection, locals.locale));
         }
 
-        throw redirect(303, localizePath('/', locals.locale));
+        throw redirect(303, '/');
     },
 };

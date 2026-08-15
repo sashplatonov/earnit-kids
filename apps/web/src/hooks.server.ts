@@ -27,13 +27,24 @@ export const handle: Handle = async ({ event, resolve }) => {
     const { locale: localeFromPath, pathname: internalPath } = splitLocaleFromPath(event.url.pathname);
     const cookieLocale = normalizeLocale(event.cookies.get(LOCALE_COOKIE_NAME));
     const headerLocale = resolveLocaleFromAcceptLanguage(event.request.headers.get('accept-language'));
-    // EXPLAIN: The Telegram Mini App is a Russian-only product surface.
+    // EXPLAIN: The Telegram Mini App and the public marketing site are
+    // EXPLAIN: Russian-only product surfaces served at bare URLs (no locale
+    // EXPLAIN: prefix) so they can be shared as stable canonical links.
     const isTelegramMiniApp = internalPath === '/telegram' || internalPath.startsWith('/telegram/');
-    const resolvedLocale = isTelegramMiniApp ? 'ru' : localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
+    const isPublicRoute = internalPath === '/'
+        || internalPath === '/how'
+        || internalPath === '/tasks'
+        || internalPath === '/rewards'
+        || internalPath === '/parents'
+        || internalPath === '/faq';
+    const isRussianOnlySurface = isTelegramMiniApp || isPublicRoute;
+    const resolvedLocale = isRussianOnlySurface ? 'ru' : localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
 
     event.locals.locale = resolvedLocale;
 
-    if (event.url.pathname === '/') {
+    // EXPLAIN: Public and Telegram routes live at bare URLs; do not redirect
+    // EXPLAIN: `/` to the locale-prefixed `/en/` for those surfaces.
+    if (event.url.pathname === '/' && !isPublicRoute) {
         throw redirect(302, `${localizePath('/', DEFAULT_LOCALE)}${event.url.search}`);
     }
 

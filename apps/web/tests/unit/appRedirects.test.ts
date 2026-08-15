@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { actions as rootActions, load as rootLoad } from '../../src/routes/+page.server';
+import { actions as rootActions, load as rootLoad } from '../../src/routes/(public)/+page.server';
 import { load as loginLoad } from '../../src/routes/login/+page.server';
 import { load as appLoad } from '../../src/routes/app/+page.server';
 import { LAST_APP_SECTION_COOKIE } from '../../src/lib/app/routes';
@@ -20,8 +20,10 @@ function cookiesWith(section?: string | null) {
 }
 
 function localsWith(role: SessionRole) {
+    // EXPLAIN: The public route group resolves to locale `ru`, so redirects
+    // EXPLAIN: from the public landing land on the RU app/super-admin shell.
     return {
-        locale: 'en' as const,
+        locale: 'ru' as const,
         appConfig: {},
         session: {
             authenticated: true,
@@ -55,24 +57,26 @@ describe('authenticated app redirects', () => {
     it('returns a super admin to the saved app section from the root entrypoint', async () => {
         await expect(rootLoad({ locals: localsWith('super_admin'), cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
             status: 302,
-            location: '/en/app/shop',
+            location: '/ru/app/shop',
         });
     });
 
     it('keeps the super admin landing on /super-admin when no app state was saved', async () => {
         await expect(rootLoad({ locals: localsWith('super_admin'), cookies: cookiesWith(null) } as never)).rejects.toMatchObject({
             status: 302,
-            location: '/en/super-admin',
+            location: '/ru/super-admin',
         });
     });
 
     it('uses the saved section on /login and /app redirects', async () => {
-        await expect(loginLoad({ locals: localsWith('super_admin'), cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
+        // EXPLAIN: /login is a locale-prefixed auth route, not a bare public
+        // EXPLAIN: route, so its locale comes from the path (en here).
+        await expect(loginLoad({ locals: { locale: 'en', appConfig: {}, session: { authenticated: true, role: 'super_admin' } }, cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
             status: 302,
             location: '/en/app/shop',
         });
 
-        await expect(appLoad({ locals: localsWith('super_admin'), cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
+        await expect(appLoad({ locals: { locale: 'en', appConfig: {}, session: { authenticated: true, role: 'super_admin' } }, cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
             status: 302,
             location: '/en/app/shop',
         });
@@ -81,7 +85,7 @@ describe('authenticated app redirects', () => {
     it('redirects accidental root form posts back to a GET route instead of throwing 405', async () => {
         await expect(rootActions.default({
             locals: {
-                locale: 'en',
+                locale: 'ru',
                 appConfig: {},
                 session: {
                     authenticated: false,
@@ -91,7 +95,7 @@ describe('authenticated app redirects', () => {
             cookies: cookiesWith(null),
         } as never)).rejects.toMatchObject({
             status: 303,
-            location: '/en/',
+            location: '/',
         });
     });
 });
