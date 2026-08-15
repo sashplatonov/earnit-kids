@@ -41,8 +41,8 @@ class TelegramEmojiCoverageTest {
         TelegramQuickActionResponse child = childView();
 
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        buttons.addAll(builder.parentMain(parent, MINI_APP, "https://example.test"));
-        buttons.addAll(builder.parentChildPicker(parent));
+        buttons.addAll(builder.parentMain(parent, MINI_APP));
+        buttons.addAll(builder.parentChildPicker(parent, "https://example.test"));
         buttons.addAll(builder.parentCoins(parent, MINI_APP));
         buttons.addAll(builder.parentCoinConfirmation(parent, -10));
         buttons.addAll(builder.coinRetry(parent, -10));

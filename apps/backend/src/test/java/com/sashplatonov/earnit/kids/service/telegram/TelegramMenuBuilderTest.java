@@ -25,11 +25,11 @@ class TelegramMenuBuilderTest {
     void parentMainIsACompactDecisionMenu() {
         TelegramQuickActionResponse view = view();
 
-        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram", ""))
+        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .hasSize(5)
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
-        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram", ""))
+        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
             .contains("nav.requests-child-1.signed", "nav.coins-child-1.signed",
                 "nav.recent-child-1.signed", "nav.switch-child-1.signed");
@@ -38,26 +38,35 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
-    void parentMainAddsPublicSiteUrlButtonWhenConfigured() {
+    void parentMainOmitsPublicSiteButton() {
         TelegramQuickActionResponse view = view();
 
-        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram", "https://example.test"))
+        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение", "🔗 Публичный сайт");
-        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram", "https://example.test"))
+            .doesNotContain("🔗 Публичный сайт");
+    }
+
+    @Test
+    void parentChildPickerAddsPublicSiteUrlButtonWhenConfigured() {
+        TelegramQuickActionResponse view = view();
+
+        assertThat(menuBuilder().parentChildPicker(view, "https://example.test"))
+            .extracting(TelegramBotApiClient.InlineButton::text)
+            .containsExactly("👧 Alex · 42", "🏠 Главное меню", "🔗 Публичный сайт");
+        assertThat(menuBuilder().parentChildPicker(view, "https://example.test"))
             .filteredOn(button -> button.text().equals("🔗 Публичный сайт"))
             .extracting(TelegramBotApiClient.InlineButton::url, TelegramBotApiClient.InlineButton::urlKind)
             .containsExactly(tuple("https://example.test", "url"));
     }
 
     @Test
-    void parentMainOmitsPublicSiteButtonWhenUrlBlank() {
+    void parentChildPickerOmitsPublicSiteButtonWhenUrlBlank() {
         TelegramQuickActionResponse view = view();
 
-        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram", ""))
+        assertThat(menuBuilder().parentChildPicker(view, ""))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .doesNotContain("🔗 Публичный сайт");
-        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram", "   "))
+        assertThat(menuBuilder().parentChildPicker(view, "   "))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .doesNotContain("🔗 Публичный сайт");
     }
@@ -76,7 +85,7 @@ class TelegramMenuBuilderTest {
 
         assertThat(TelegramMenuFlow.homeText(view))
             .isEqualTo("👧 Alex\n🪙 42 монеты\n\n🎯 Требуют внимания: 1");
-        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram", ""))
+        assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
     }
@@ -226,7 +235,7 @@ class TelegramMenuBuilderTest {
                 new ChildDto(2, "Sam", 18, 100, 0, "forest", List.of(), List.of(), List.of(), List.of(), null)),
             List.of(), List.of(), List.of(), List.of());
 
-        assertThat(menuBuilder().parentChildPicker(view))
+        assertThat(menuBuilder().parentChildPicker(view, ""))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("👧 Alex · 42", "👧 Sam · 18", "🏠 Главное меню");
     }

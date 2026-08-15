@@ -19,24 +19,25 @@ public class TelegramMenuBuilder {
     }
 
     public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view,
-                                                               String miniAppUrl,
-                                                               String publicSiteUrl) {
+                                                               String miniAppUrl) {
         // EXPLAIN: Decision menu: two-column grid, Mini App is always the last row.
-        // EXPLAIN: The public site share button is added only when a non-blank
-        // EXPLAIN: public origin is configured (no broken button otherwise).
+        // EXPLAIN: The public site share button is deliberately kept off this
+        // EXPLAIN: first-level screen so it does not draw focus; it lives on the
+        // EXPLAIN: child picker instead.
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         buttons.add(parentNavigation(TelegramCopy.REQUESTS, "requests", view, "home-row-1"));
         buttons.add(parentNavigation(TelegramCopy.COINS, "coins", view, "home-row-1"));
         buttons.add(parentNavigation(TelegramCopy.RECENT, "recent", view, "home-row-2"));
         buttons.add(parentNavigation(TelegramCopy.SWITCH_CHILD, "switch", view, "home-row-2"));
         buttons.add(webApp(TelegramCopy.OPEN_APP, miniAppUrl, "home-row-3"));
-        if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
-            buttons.add(url(TelegramCopy.SHARE_SITE, publicSiteUrl, "home-row-4"));
-        }
         return List.copyOf(buttons);
     }
 
-    public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view) {
+    public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view,
+                                                                       String publicSiteUrl) {
+        // EXPLAIN: Child picker is a deeper, secondary screen; the public site
+        // EXPLAIN: share button is appended here only when a non-blank public
+        // EXPLAIN: origin is configured (no broken button otherwise).
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.children().stream().limit(10).forEach(child ->
             buttons.add(navigation(TelegramCopy.chooseChild(child.name(), child.balance()), "child-" + child.id())));
@@ -44,6 +45,9 @@ public class TelegramMenuBuilder {
             buttons.add(callback(TelegramCopy.ADD_CHILD_MINI_APP, "noop"));
         }
         buttons.add(navigation(TelegramCopy.HOME, "main"));
+        if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
+            buttons.add(url(TelegramCopy.SHARE_SITE, publicSiteUrl, "picker-row-4"));
+        }
         return List.copyOf(buttons);
     }
 

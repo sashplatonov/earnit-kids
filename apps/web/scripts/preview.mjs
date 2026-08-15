@@ -3,7 +3,7 @@ import process from 'node:process';
 import { gzip } from 'node:zlib';
 import httpProxy from 'http-proxy-3';
 import { handler } from '../build/handler.js';
-import { buildProxyReferer, resolveProxyContext } from './proxy-context.mjs';
+import { buildProxyReferer, resolveProxyContext, resolveTelegramMiniAppUrl } from './proxy-context.mjs';
 
 function applyCliOverrides(argv) {
     for (let index = 0; index < argv.length; index += 1) {
@@ -172,11 +172,6 @@ function compression(req, res, next) {
 function writeJson(res, payload, status = 200) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(payload));
-}
-
-function resolveTelegramMiniAppUrl() {
-    const raw = process.env.TELEGRAM_MINI_APP_URL || '';
-    return raw.trim().replace(/\/+$/, '');
 }
 
 function serveConfigJs(req, res) {

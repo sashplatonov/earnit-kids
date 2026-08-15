@@ -12,6 +12,8 @@
 
     const i18n = useI18n();
 
+    export let publicOrigin = '';
+
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = new URLSearchParams(window.location.search).get('context') ?? '';
     let view: 'home' | 'tasks' | 'rewards' | 'family' = tabForContext(context);
@@ -82,6 +84,11 @@
             <TelegramParentFamily />
         {/if}
     </div>
+    {#if publicOrigin}
+        <footer class="site-link" aria-label={$i18n.t('app.telegram.shell.publicSiteAria')}>
+            <a href={publicOrigin} target="_blank" rel="noopener noreferrer"><TelegramIcon name="link" size={14} label={$i18n.t('app.telegram.shell.publicSiteAria')} />{$i18n.t('app.telegram.shell.publicSite')}</a>
+        </footer>
+    {/if}
 </main>
 
 <style>
@@ -93,6 +100,10 @@
     .tabs button { display: inline-flex; align-items: center; justify-content: center; gap: .2rem; padding-inline: .25rem; white-space: nowrap; }
     .state { padding: 2rem 1rem; text-align: center; color: #5c6780; }
     .state--error { color: #a33b3b; }
+    .site-link { display: flex; justify-content: center; margin-top: 1.25rem; }
+    .site-link a { display: inline-flex; align-items: center; gap: .3rem; color: #8a93a8; font-size: .78rem; text-decoration: none; }
+    .site-link a:hover { color: #3867d6; }
+    .site-link a:focus-visible { outline: 3px solid #80aaff; outline-offset: 2px; border-radius: .3rem; }
     @media (max-width: 700px) {
         .parent-workspace { padding: calc(.65rem + env(safe-area-inset-top)) .75rem calc(5.75rem + env(safe-area-inset-bottom)); }
         .tabs { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: .3rem .35rem calc(.3rem + env(safe-area-inset-bottom)); border-top: 1px solid #dfe4ee; background: rgb(255 255 255 / 96%); box-shadow: 0 -8px 24px rgb(24 36 61 / 8%); }

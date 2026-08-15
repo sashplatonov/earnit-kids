@@ -3,10 +3,11 @@
     import TelegramChildShell from './TelegramChildShell.svelte';
 
     export let role: string;
+    export let publicOrigin = '';
 </script>
 
 {#if role === 'parent' || role === 'admin' || role === 'super_admin'}
-    <TelegramParentShell />
+    <TelegramParentShell {publicOrigin} />
 {:else}
-    <TelegramChildShell />
+    <TelegramChildShell {publicOrigin} />
 {/if}

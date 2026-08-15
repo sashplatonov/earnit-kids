@@ -23,6 +23,23 @@ export function resolveProxyContext(env = process.env) {
     };
 }
 
+export function resolveTelegramMiniAppUrl(env = process.env) {
+    // EXPLAIN: Prefer an explicit full Mini App URL when provided; otherwise
+    // EXPLAIN: form the Telegram deep link automatically from the bot username
+    // EXPLAIN: and the public site origin (APP_URL) so the user lands in the
+    // EXPLAIN: Mini App without a hand-maintained hosting URL.
+    const explicit = (env.TELEGRAM_MINI_APP_URL || '').trim();
+    if (explicit) {
+        return explicit.replace(/\/+$/, '');
+    }
+    const botUsername = (env.TELEGRAM_BOT_USERNAME || '').trim();
+    const publicOrigin = (env.APP_URL || env.FRONTEND_URL || env.PUBLIC_BASE_URL || '').trim();
+    if (!botUsername || !publicOrigin) {
+        return '';
+    }
+    return `https://t.me/${botUsername}?startapp=${publicOrigin.replace(/\/+$/, '')}`;
+}
+
 export function buildProxyReferer(referer, publicOrigin) {
     if (!referer) {
         return null;

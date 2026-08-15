@@ -1,7 +1,7 @@
 import type { AppConfig } from '$lib/types/config';
 
 const DEFAULT_BACKEND_ORIGIN = 'http://localhost:8080';
-const DEFAULT_PUBLIC_ORIGIN = 'http://localhost:3000';
+const DEFAULT_PUBLIC_ORIGIN = 'http://localhost:4174';
 const DEFAULT_SESSION_PATH = '/api/page-data/session';
 const DEFAULT_WS_PATH = '/ws';
 const DEFAULT_DEV_PORT = 4173;

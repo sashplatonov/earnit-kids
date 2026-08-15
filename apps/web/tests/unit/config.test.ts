@@ -6,7 +6,7 @@ describe('loadAppConfig', () => {
         const config = loadAppConfig({} as NodeJS.ProcessEnv);
 
         expect(config.backendOrigin).toBe('http://localhost:8080');
-        expect(config.publicOrigin).toBe('http://localhost:3000');
+        expect(config.publicOrigin).toBe('http://localhost:4174');
         expect(config.telegramMiniAppUrl).toBeNull();
         expect(config.sessionPath).toBe('/api/page-data/session');
         expect(config.wsPath).toBe('/ws');

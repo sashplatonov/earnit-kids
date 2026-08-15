@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildProxyReferer, resolveProxyContext } from '../../scripts/proxy-context.mjs';
+import { buildProxyReferer, resolveProxyContext, resolveTelegramMiniAppUrl } from '../../scripts/proxy-context.mjs';
 
 describe('resolveProxyContext', () => {
     it('keeps backend target and public origin separate', () => {
@@ -45,5 +45,46 @@ describe('buildProxyReferer', () => {
             });
     it('falls back to the public origin when referer is malformed', () => {
         expect(buildProxyReferer('not-a-url', 'http://localhost:5001')).toBe('http://localhost:5001');
+    });
+});
+
+describe('resolveTelegramMiniAppUrl', () => {
+    it('prefers an explicit TELEGRAM_MINI_APP_URL and trims trailing slashes', () => {
+        expect(resolveTelegramMiniAppUrl({
+            TELEGRAM_MINI_APP_URL: 'https://t.me/earnit_bot?startapp=home///',
+            TELEGRAM_BOT_USERNAME: 'earnit_bot',
+            APP_URL: 'http://localhost:5001',
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=home');
+    });
+
+    it('forms the deep link from bot username and APP_URL', () => {
+        expect(resolveTelegramMiniAppUrl({
+            TELEGRAM_BOT_USERNAME: 'earnit_bot',
+            APP_URL: 'http://localhost:5001///',
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=http://localhost:5001');
+    });
+
+    it('falls back to FRONTEND_URL then PUBLIC_BASE_URL for the origin', () => {
+        expect(resolveTelegramMiniAppUrl({
+            TELEGRAM_BOT_USERNAME: 'earnit_bot',
+            FRONTEND_URL: 'https://app.example.test',
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=https://app.example.test');
+
+        expect(resolveTelegramMiniAppUrl({
+            TELEGRAM_BOT_USERNAME: 'earnit_bot',
+            PUBLIC_BASE_URL: 'https://public.example.test',
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=https://public.example.test');
+    });
+
+    it('returns empty when bot username or origin is missing', () => {
+        expect(resolveTelegramMiniAppUrl({
+            APP_URL: 'http://localhost:5001',
+        } as NodeJS.ProcessEnv)).toBe('');
+
+        expect(resolveTelegramMiniAppUrl({
+            TELEGRAM_BOT_USERNAME: 'earnit_bot',
+        } as NodeJS.ProcessEnv)).toBe('');
+
+        expect(resolveTelegramMiniAppUrl({} as NodeJS.ProcessEnv)).toBe('');
     });
 });

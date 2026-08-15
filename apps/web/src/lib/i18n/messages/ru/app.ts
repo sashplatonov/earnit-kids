@@ -142,6 +142,8 @@ export const appMessages = {
             tasks: 'Задания',
             rewards: 'Награды',
             family: 'Семья',
+            publicSite: 'Публичный сайт',
+            publicSiteAria: 'Открыть публичный сайт EarnIt Kids',
         },
         childShell: {
             workspace: 'Рабочее пространство ребёнка',

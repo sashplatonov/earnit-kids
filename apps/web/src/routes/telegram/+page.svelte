@@ -12,6 +12,8 @@
 
     const i18n = useI18n();
 
+    export let data: { publicOrigin?: string };
+
     type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram';
     let state: State = 'loading';
     let message = '';
@@ -30,6 +32,14 @@
         return null;
     }
 
+    // EXPLAIN: Pairing tokens are hex strings (SecureTokenGenerator). The public
+    // EXPLAIN: site deep link passes the APP_URL as startapp, which is not a
+    // EXPLAIN: pairing token — skip the pairing attempt for non-hex values so the
+    // EXPLAIN: user still lands in the Mini App and logs in normally.
+    function isHexToken(value: string): boolean {
+        return /^[0-9a-fA-F]+$/.test(value);
+    }
+
     async function authenticate(): Promise<void> {
         const telegram = initializeTelegramWebApp();
         if (!telegram) {
@@ -43,8 +53,9 @@
         }
         state = 'loading';
         try {
-            const pairingToken = telegram.initDataUnsafe?.start_param
+            const rawStartParam = telegram.initDataUnsafe?.start_param
                 ?? new URLSearchParams(window.location.search).get('tgWebAppStartParam');
+            const pairingToken = rawStartParam && isHexToken(rawStartParam) ? rawStartParam : '';
             let pairingFailed = false;
             if (pairingToken) {
                 const pairing = await completeTelegramAccountLink(pairingToken, telegram.initData);
@@ -87,7 +98,7 @@
 </svelte:head>
 
 {#if state === 'ready' && verifiedRole}
-    <TelegramRoleResolver role={verifiedRole} />
+    <TelegramRoleResolver role={verifiedRole} publicOrigin={data.publicOrigin ?? ''} />
 {:else}
     <main class="telegram-page" aria-live="polite">
         <div class="telegram-card">
