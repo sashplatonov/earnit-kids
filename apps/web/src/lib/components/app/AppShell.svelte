@@ -25,6 +25,7 @@
 
     export let session: SessionSnapshot;
     export let activeSection: AppSection;
+    export let publicOrigin: string = '';
 
     const isAdmin = session.role === 'admin' || session.role === 'parent' || session.role === 'super_admin';
     const isSuperAdmin = session.role === 'super_admin';
@@ -70,7 +71,7 @@
         {$i18n.t('app.shell.offlineBanner')}
     </div>
 
-    <AppHeader {isAdmin} {balance} childNickname={String(childNickname)} />
+    <AppHeader {isAdmin} {balance} childNickname={String(childNickname)} {publicOrigin} />
     <AppNav {isAdmin} {isSuperAdmin} activeSection={activeSection} requestsCount={reqCount} />
 
 

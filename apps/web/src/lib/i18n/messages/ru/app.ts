@@ -44,6 +44,10 @@ export const appMessages = {
         logout: 'Выйти',
         moreAria: 'Дополнительные разделы',
         superAdmin: 'Супер админка',
+        shareButton: 'Поделиться сайтом',
+        shareButtonHint: 'Поделиться публичным сайтом EarnIt Kids',
+        shareCopied: 'Ссылка скопирована в буфер обмена',
+        shareFailed: 'Не удалось поделиться ссылкой',
     },
     friends: {
         minSearchToast: 'Введите минимум 3 символа',

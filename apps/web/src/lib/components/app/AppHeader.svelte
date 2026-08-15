@@ -5,12 +5,14 @@
     import { adminAwardCoins } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { showToast } from '$lib/stores/toasts';
+    import { sharePublicSite } from '$lib/services/publicSiteShare';
 
     export let balance: number = 0;
     export let earnedCount: number = 0;
     export let earnedLimitNote: string = '';
     export let isAdmin: boolean = false;
     export let childNickname: string = '';
+    export let publicOrigin: string = '';
 
     const i18n = useI18n();
 
@@ -21,6 +23,17 @@
             ? `${$i18n.formatNumber($appStore.dailyCoinLimit)} / ${$i18n.t('common.units.perDay')}`
             : '';
     $: showLimitNote = resolvedLimitNote.trim().length > 0;
+
+    async function handleShare() {
+        const result = await sharePublicSite(publicOrigin || window.location.origin, '/');
+        if (result.ok) {
+            if (result.method === 'clipboard') {
+                showToast($i18n.t('app.shell.shareCopied'), 'success');
+            }
+            return;
+        }
+        showToast($i18n.t('app.shell.shareFailed'), 'error');
+    }
 
     function openSettings() {
         location.assign($i18n.href(resolve('/app/[section]', { section: 'settings' })));
@@ -81,6 +94,12 @@
                 <span>{$i18n.t('common.actions.install')}</span>
             </button>
             {#if isAdmin}
+            <button class="btn btn--secondary btn--small header__share" type="button"
+                on:click={handleShare} title={$i18n.t('app.shell.shareButtonHint')}
+                aria-label={$i18n.t('app.shell.shareButtonHint')}>
+                <span class="gamified-icon icon-link" aria-hidden="true"></span>
+                <span class="header__share-label">{$i18n.t('app.shell.shareButton')}</span>
+            </button>
             <button class="btn btn--secondary btn--small header__profile" id="header-profile-btn" type="button"
                 on:click={openSettings}>
                 <span class="gamified-icon icon-profile" aria-hidden="true"></span>

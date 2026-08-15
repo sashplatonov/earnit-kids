@@ -44,6 +44,10 @@ export const appMessages = {
         logout: 'Sign out',
         moreAria: 'Additional sections',
         superAdmin: 'Super admin',
+        shareButton: 'Share site',
+        shareButtonHint: 'Share the EarnIt Kids public site',
+        shareCopied: 'Link copied to clipboard',
+        shareFailed: 'Could not share the link',
     },
     friends: {
         minSearchToast: 'Enter at least 3 characters',
