@@ -278,7 +278,7 @@ Epic сам по себе не является implementation task. Комми�
 | 18 | PUB-10 | P1 | PUB-11A..PUB-11C | ✅ Cutover + archive legacy |
 | 19 | PUB-12 | P2 | PUB-02B, PUB-02C | ✅ Минимальная product analytics |
 | 20 | PUB-13 | P3 | PUB-02B | ✅ Sharing из Telegram-бота |
-| 21 | PUB-01 | P3 | - | Очистить favicon reference |
+| 21 | PUB-01 | P3 | - | ✅ Очистить favicon reference |
 | 22 | PUB-14 | P3 | - | ✅ Опциональная чистка favicon приложения |
 
 ---
@@ -312,7 +312,7 @@ JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify
 
 # PUB-01: Убрать лишние favicon из reference
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Выполнено  
 **Приоритет:** P3  
 **Зависит от:** -
 
