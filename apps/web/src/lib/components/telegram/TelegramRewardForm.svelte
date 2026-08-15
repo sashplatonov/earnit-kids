@@ -98,7 +98,7 @@
     </div>
 {/if}
 
-<TelegramGraphicsPicker open={graphicOpen} title={$i18n.t('app.telegram.rewardForm.graphicLabel')} initial={icon} on:select={(event) => icon = event.detail} on:close={() => graphicOpen = false} />
+<TelegramGraphicsPicker open={graphicOpen} title={$i18n.t('app.telegram.rewardForm.graphicLabel')} initial={icon} onSelect={(key) => icon = key} onClose={() => graphicOpen = false} />
 
 <style>
     .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }

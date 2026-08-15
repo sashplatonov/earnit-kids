@@ -4,7 +4,7 @@
     import { useI18n } from '$lib/i18n/context';
     import { switchChild, refreshData } from '$lib/services/bootstrap';
     import {
-        adminGetChildLink,
+        adminAddChild,
         adminGetInactiveChildren,
         adminSetChildActive,
         adminGetChildTelegram,
@@ -25,6 +25,9 @@
     const i18n = useI18n();
 
     let inviteOpen = false;
+    let newChildName = '';
+    let addChildBusy = false;
+    let addChildError = '';
     let rolesOpen = false;
     let notificationsOpen = false;
     let myAccountOpen = false;
@@ -33,9 +36,6 @@
     let limitsOpen = false;
     let importOpen = false;
     let limitsChild: Child | null = null;
-    let link = '';
-    let linkBusy = false;
-    let linkError = '';
     let switching = false;
     let switchError = '';
     let inactiveChildren: Child[] = [];
@@ -64,18 +64,23 @@
         if ($appStore.currentChildId != id) switchError = $i18n.t('app.telegram.family.switchError');
     }
 
-    async function createLink() {
-        const id = $appStore.currentChildId;
-        if (id == null) {
-            linkError = $i18n.t('app.telegram.family.chooseChildFirst');
+    async function addChild() {
+        const name = newChildName.trim();
+        if (!name) {
+            addChildError = $i18n.t('app.telegram.family.addChildNameRequired');
             return;
         }
-        linkBusy = true;
-        linkError = '';
-        const result = await adminGetChildLink(id);
-        linkBusy = false;
-        if (result) link = result.link;
-        else linkError = $i18n.t('app.telegram.family.linkError');
+        addChildBusy = true;
+        addChildError = '';
+        const result = await adminAddChild(name);
+        addChildBusy = false;
+        if (result) {
+            newChildName = '';
+            inviteOpen = false;
+            await refreshData();
+        } else {
+            addChildError = $i18n.t('app.telegram.family.addChildError');
+        }
     }
 
     async function loadInactive() {
@@ -167,10 +172,10 @@
 
     {#if inviteOpen}
         <div class="invite">
-            <p class="muted">{$i18n.t('app.telegram.family.createLinkHint')}</p>
-            <button type="button" on:click={createLink} disabled={linkBusy}><TelegramIcon name="link" size={18} label={$i18n.t('app.telegram.family.createLink')} />{linkBusy ? $i18n.t('app.telegram.family.creating') : $i18n.t('app.telegram.family.createLink')}</button>
-            {#if link}<label for="family-invite-link">{$i18n.t('app.telegram.family.inviteLink')}</label><input id="family-invite-link" readonly value={link} on:focus={(event) => event.currentTarget.select()} />{/if}
-            {#if linkError}<p class="error" role="alert">{linkError}</p>{/if}
+            <p class="muted">{$i18n.t('app.telegram.family.addChildNameHint')}</p>
+            <input id="family-new-child-name" class="invite-input" bind:value={newChildName} placeholder={$i18n.t('app.telegram.family.addChildNamePlaceholder')} disabled={addChildBusy} />
+            <button type="button" disabled={addChildBusy} on:click={addChild}><TelegramIcon name="addChild" size={18} label={$i18n.t('app.telegram.family.addChild')} />{addChildBusy ? $i18n.t('app.telegram.family.addingChild') : $i18n.t('app.telegram.family.addChild')}</button>
+            {#if addChildError}<p class="error" role="alert">{addChildError}</p>{/if}
         </div>
     {/if}
     {#if switchError}<p class="error" role="alert">{switchError}</p>{/if}
@@ -191,7 +196,6 @@
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
         <button class="setting" type="button" on:click={() => rolesOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.family.rolesAndAccess')} /></span><span class="grow">{$i18n.t('app.telegram.family.rolesAndAccess')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <button class="setting" type="button" on:click={() => inviteOpen = true}><span class="setting-icon"><TelegramIcon name="link" size={20} label={$i18n.t('app.telegram.family.invitations')} /></span><span class="grow">{$i18n.t('app.telegram.family.invitations')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => parentsOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
@@ -199,13 +203,12 @@
     </div>
 </div>
 
-<TelegramRolesAccess open={rolesOpen} on:close={() => rolesOpen = false} />
-<TelegramNotifications open={notificationsOpen} on:close={() => notificationsOpen = false} />
-<TelegramMyAccount open={myAccountOpen} on:close={() => myAccountOpen = false} on:openEmail={() => { myAccountOpen = false; emailSettingsOpen = true; }} />
-<TelegramEmailSettings open={emailSettingsOpen} on:close={() => emailSettingsOpen = false} />
-<TelegramParents open={parentsOpen} on:close={() => parentsOpen = false} />
-<TelegramImport open={importOpen} on:close={() => importOpen = false} />
-<TelegramLimits open={limitsOpen} child={limitsChild} on:close={() => limitsOpen = false} on:saved={() => { if (manageChild) void loadTelegram(manageChild.id); }} />
+<TelegramRolesAccess open={rolesOpen} onClose={() => rolesOpen = false} />
+<TelegramNotifications open={notificationsOpen} onClose={() => notificationsOpen = false} />
+<TelegramMyAccount open={myAccountOpen} onClose={() => myAccountOpen = false} onOpenEmail={() => { myAccountOpen = false; emailSettingsOpen = true; }} />
+<TelegramEmailSettings open={emailSettingsOpen} onClose={() => emailSettingsOpen = false} />
+<TelegramParents open={parentsOpen} onClose={() => parentsOpen = false} />
+<TelegramImport open={importOpen} onClose={() => importOpen = false} />
 
 {#if manageChild}
     <div class="sheet-backdrop" role="presentation" on:click={() => manageChild = null}></div>
@@ -214,7 +217,7 @@
 
         <div class="settings">
             <div class="setting"><span class="setting-icon"><TelegramIcon name="send" size={20} label={$i18n.t('app.telegram.family.telegram')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.telegram')}</span><span class="setting-meta">{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></span><span class="manage-badge" class:badge-active={telegram?.linked}>{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></div>
-            <button class="setting" type="button" on:click={() => { limitsChild = manageChild; limitsOpen = true; }}><span class="setting-icon"><TelegramIcon name="gauge" size={20} label={$i18n.t('app.telegram.family.limits')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.limits')}</span><span class="setting-meta">{$i18n.t('app.telegram.family.limitsMeta')}</span></span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+            <button class="setting" type="button" on:click={() => { limitsChild = manageChild; manageChild = null; limitsOpen = true; }}><span class="setting-icon"><TelegramIcon name="gauge" size={20} label={$i18n.t('app.telegram.family.limits')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.limits')}</span><span class="setting-meta">{$i18n.t('app.telegram.family.limitsMeta')}</span></span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         </div>
 
         {#if inviteView}
@@ -264,6 +267,8 @@
     </div>
 {/if}
 
+<TelegramLimits open={limitsOpen} child={limitsChild} onClose={() => limitsOpen = false} onSaved={() => { if (limitsChild) void loadTelegram(limitsChild.id); }} />
+
 <style>
     .family { width:100%; }
     h1 { margin:0 0 .5rem; color:#18243d; font-size:1.35rem; }
@@ -281,10 +286,9 @@
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .invite { margin-top:.6rem; padding:.7rem; border:1px solid #e6e9f0; border-radius:.75rem; background:#fff; }
     .invite .muted { margin:0 0 .5rem; color:#66718a; font-size:.85rem; line-height:1.4; }
+    .invite-input { box-sizing:border-box; width:100%; min-height:2.5rem; margin-bottom:.5rem; padding:.5rem .7rem; border:1px solid #cfd6e4; border-radius:.6rem; font:inherit; }
     .invite button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.75rem; padding:.45rem .7rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; cursor:pointer; }
     .invite button:disabled { cursor:wait; opacity:.6; }
-    .invite label { display:block; margin-top:.6rem; font-size:.85rem; color:#33415f; }
-    .invite input { box-sizing:border-box; width:100%; min-height:2.5rem; margin-top:.25rem; padding:.5rem; border:1px solid #dfe4ee; border-radius:.6rem; font:inherit; }
     .settings { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
     .setting { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3rem; padding:.35rem 0; border:0; border-bottom:1px solid #edf0f5; background:transparent; color:#33415f; font:inherit; text-align:left; }
     .setting:last-child { border-bottom:0; }

@@ -136,7 +136,7 @@
         </details>
     {/if}
 </div>
-<TelegramTaskForm open={formOpen} task={editingTask} groupSuggestions={groups} on:close={() => formOpen = false} />
+<TelegramTaskForm open={formOpen} task={editingTask} groupSuggestions={groups} onClose={() => formOpen = false} />
 <GroupOrderEditor bind:isOpen={groupEditorOpen} isAdmin={canEdit} isSaving={groupSaving} {groups} title={$i18n.t('app.telegram.tasks.taskGroups')} descriptionAdmin={$i18n.t('app.telegram.tasks.dragHint')} descriptionChild="" on:save={saveGroups} />
 
 <style>
