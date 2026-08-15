@@ -1609,6 +1609,7 @@ copy into family
 
 **Priority:** P1  
 **Depends on:** CAT-001..CAT-014, GRP-001..GRP-003
+**Status:** ✅ Done
 
 ## Group management
 
