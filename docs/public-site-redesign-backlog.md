@@ -275,7 +275,7 @@ Epic сам по себе не является implementation task. Комми�
 | 15 | PUB-11A | P1 | PUB-03..PUB-09 | ✅ Functional E2E + progressive enhancement |
 | 16 | PUB-11B | P1 | PUB-11A | ✅ Responsive + accessibility + content stress |
 | 17 | PUB-11C | P1 | PUB-11A | ✅ Visual regression + performance |
-| 18 | PUB-10 | P1 | PUB-11A..PUB-11C | Cutover + archive legacy |
+| 18 | PUB-10 | P1 | PUB-11A..PUB-11C | ✅ Cutover + archive legacy |
 | 19 | PUB-12 | P2 | PUB-02B, PUB-02C | Минимальная product analytics |
 | 20 | PUB-13 | P3 | PUB-02B | Sharing из Telegram-бота |
 | 21 | PUB-01 | P3 | - | Очистить favicon reference |
@@ -1227,7 +1227,7 @@ Primary CTA не должен зависеть от наличия Telegram Desk
 Размер задачи приемлем как release/cutover task, потому что implementation уже завершена до неё. Здесь только переключение, smoke и cleanup.
 
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Выполнено  
 **Приоритет:** P1  
 **Зависит от:** PUB-11A, PUB-11B, PUB-11C
 

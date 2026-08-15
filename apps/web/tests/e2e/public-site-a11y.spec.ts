@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 // EXPLAIN: Responsive + accessibility verification for the public site.
 // EXPLAIN: Checks no horizontal overflow across the four target viewports,

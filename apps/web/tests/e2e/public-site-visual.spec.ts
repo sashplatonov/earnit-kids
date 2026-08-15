@@ -31,7 +31,7 @@ test.describe('public site — visual screenshots', () => {
 });
 
 test.describe('public site — performance smoke', () => {
-    test('home does not eagerly load the carousel screenshots before viewport', async ({ page, request }) => {
+    test('home does not eagerly load the carousel screenshots before viewport', async ({ page }) => {
         const imageRequests: string[] = [];
         page.on('request', (req) => {
             if (req.url().includes('/img/public/screenshots/')) {
@@ -47,7 +47,7 @@ test.describe('public site — performance smoke', () => {
         expect(imageRequests).toHaveLength(0);
     });
 
-    test('home initial bundle is not oversized', async ({ page, request }) => {
+    test('home initial bundle is not oversized', async ({ page }) => {
         const jsBytes: string[] = [];
         page.on('response', (res) => {
             if (res.url().includes('_app/immutable') && res.request().resourceType() === 'script') {
