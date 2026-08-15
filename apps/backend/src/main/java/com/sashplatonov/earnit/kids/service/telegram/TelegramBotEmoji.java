@@ -30,6 +30,7 @@ public final class TelegramBotEmoji {
     public static final String GREETING = "👋";
     public static final String CELEBRATE = "🎉";
     public static final String DECLINE = "❌";
+    public static final String LINK = "🔗";
 
     // EXPLAIN: Legacy aliases kept during the UX migration; new code must use
     // EXPLAIN: the semantic names above.

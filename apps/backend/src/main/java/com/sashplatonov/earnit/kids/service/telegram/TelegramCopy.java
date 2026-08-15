@@ -30,6 +30,7 @@ public final class TelegramCopy {
     public static final String RETRY = TelegramBotEmoji.REFRESH + " Повторить";
     public static final String CONFIRM = TelegramBotEmoji.APPROVE + " Подтвердить";
     public static final String CANCEL = TelegramBotEmoji.REJECT + " Отмена";
+    public static final String SHARE_SITE = TelegramBotEmoji.LINK + " Публичный сайт";
 
     // EXPLAIN: Dynamic button labels.
     public static String coinAdd(int amount) {

@@ -17,6 +17,9 @@ public interface TelegramConfig {
     @WithDefault("")
     Optional<String> miniAppUrl();
 
+    @WithDefault("")
+    Optional<String> publicSiteUrl();
+
     @WithDefault("300")
     int initDataMaxAgeSeconds();
 

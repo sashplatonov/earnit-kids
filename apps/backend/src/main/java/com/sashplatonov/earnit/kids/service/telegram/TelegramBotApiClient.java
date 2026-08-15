@@ -114,28 +114,39 @@ public class TelegramBotApiClient {
         if (button.callbackData() != null) {
             return Map.of("text", button.text(), "callback_data", button.callbackData());
         }
+        if (button.urlKind() != null && "url".equals(button.urlKind())) {
+            return Map.of("text", button.text(), "url", button.url());
+        }
         return Map.of("text", button.text(), "web_app", Map.of("url", button.url()));
     }
 
-    public record InlineButton(String text, String url, String callbackData, String rowId) {
+    public record InlineButton(String text, String url, String callbackData, String rowId, String urlKind) {
         public InlineButton(String text, String url) {
-            this(text, url, null, null);
+            this(text, url, null, null, null);
+        }
+
+        public InlineButton(String text, String url, String rowId) {
+            this(text, url, null, rowId, null);
         }
 
         public static InlineButton callback(String text, String data) {
-            return new InlineButton(text, null, data, null);
+            return new InlineButton(text, null, data, null, null);
         }
 
         public static InlineButton callback(String text, String data, String rowId) {
-            return new InlineButton(text, null, data, rowId);
+            return new InlineButton(text, null, data, rowId, null);
         }
 
         public static InlineButton webApp(String text, String url) {
-            return new InlineButton(text, url, null, null);
+            return new InlineButton(text, url, null, null, null);
         }
 
         public static InlineButton webApp(String text, String url, String rowId) {
-            return new InlineButton(text, url, null, rowId);
+            return new InlineButton(text, url, null, rowId, null);
+        }
+
+        public static InlineButton url(String text, String url, String rowId) {
+            return new InlineButton(text, url, null, rowId, "url");
         }
     }
 }

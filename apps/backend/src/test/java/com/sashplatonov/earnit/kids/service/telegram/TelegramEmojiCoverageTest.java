@@ -41,7 +41,7 @@ class TelegramEmojiCoverageTest {
         TelegramQuickActionResponse child = childView();
 
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        buttons.addAll(builder.parentMain(parent, MINI_APP));
+        buttons.addAll(builder.parentMain(parent, MINI_APP, "https://example.test"));
         buttons.addAll(builder.parentChildPicker(parent));
         buttons.addAll(builder.parentCoins(parent, MINI_APP));
         buttons.addAll(builder.parentCoinConfirmation(parent, -10));
@@ -56,11 +56,11 @@ class TelegramEmojiCoverageTest {
         buttons.addAll(builder.recent(parent, MINI_APP));
         buttons.addAll(builder.recent(child, MINI_APP));
         buttons.addAll(builder.backToMain());
-        buttons.addAll(TelegramMenuFlow.navigationMenu("requests-child-1", parent, MINI_APP, builder));
-        buttons.addAll(TelegramMenuFlow.navigationMenu("tasks-child-1", child, MINI_APP, builder));
-        buttons.addAll(TelegramMenuFlow.navigationMenu("rewards-child-1", child, MINI_APP, builder));
-        buttons.addAll(TelegramMenuFlow.navigationMenu("coins-child-1", parent, MINI_APP, builder));
-        buttons.addAll(TelegramMenuFlow.navigationMenu("recent-child-1", child, MINI_APP, builder));
+        buttons.addAll(TelegramMenuFlow.navigationMenu("requests-child-1", parent, MINI_APP, "https://example.test", builder));
+        buttons.addAll(TelegramMenuFlow.navigationMenu("tasks-child-1", child, MINI_APP, "https://example.test", builder));
+        buttons.addAll(TelegramMenuFlow.navigationMenu("rewards-child-1", child, MINI_APP, "https://example.test", builder));
+        buttons.addAll(TelegramMenuFlow.navigationMenu("coins-child-1", parent, MINI_APP, "https://example.test", builder));
+        buttons.addAll(TelegramMenuFlow.navigationMenu("recent-child-1", child, MINI_APP, "https://example.test", builder));
 
         assertThat(buttons).isNotEmpty();
         for (TelegramBotApiClient.InlineButton button : buttons) {

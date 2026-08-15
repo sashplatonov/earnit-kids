@@ -34,10 +34,10 @@ class TelegramBotBoundaryTest {
         TelegramQuickActionResponse parent = parentView();
         TelegramMenuBuilder builder = menuBuilder();
 
-        assertThat(TelegramMenuFlow.navigationMenu("tasks-child-1", parent, MINI_APP, builder))
+        assertThat(TelegramMenuFlow.navigationMenu("tasks-child-1", parent, MINI_APP, "", builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
-        assertThat(TelegramMenuFlow.navigationMenu("rewards-child-1", parent, MINI_APP, builder))
+        assertThat(TelegramMenuFlow.navigationMenu("rewards-child-1", parent, MINI_APP, "", builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
     }
@@ -47,10 +47,10 @@ class TelegramBotBoundaryTest {
         TelegramQuickActionResponse parent = parentView();
         TelegramMenuBuilder builder = menuBuilder();
 
-        assertThat(TelegramMenuFlow.navigationMenu("balance-child-1", parent, MINI_APP, builder))
+        assertThat(TelegramMenuFlow.navigationMenu("balance-child-1", parent, MINI_APP, "", builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
-        assertThat(TelegramMenuFlow.navigationMenu("switch-child-1", parent, MINI_APP, builder))
+        assertThat(TelegramMenuFlow.navigationMenu("switch-child-1", parent, MINI_APP, "", builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("👧 Aliska · 22", "🏠 Главное меню");
     }
@@ -62,12 +62,12 @@ class TelegramBotBoundaryTest {
 
         List<String> childHome = List.of("✅ Мои задания", "🎁 Награды", "📜 Последние", "📱 Открыть приложение");
         for (String action : List.of("coins-child-1", "requests-child-1", "balance-child-1")) {
-            assertThat(TelegramMenuFlow.navigationMenu(action, child, MINI_APP, builder))
+            assertThat(TelegramMenuFlow.navigationMenu(action, child, MINI_APP, "", builder))
                 .extracting(TelegramBotApiClient.InlineButton::text)
                 .containsExactlyElementsOf(childHome);
         }
         // A stale switch action is safe for a child: it only offers Home.
-        assertThat(TelegramMenuFlow.navigationMenu("switch-child-1", child, MINI_APP, builder))
+        assertThat(TelegramMenuFlow.navigationMenu("switch-child-1", child, MINI_APP, "", builder))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🏠 Главное меню");
     }

@@ -99,13 +99,14 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         if (miniAppUrl.isBlank()) {
             return;
         }
+        String publicSiteUrl = config.publicSiteUrl().orElse("");
         if (quickActions != null && menuBuilder != null && telegramUserId != Long.MIN_VALUE) {
             var view = quickActions.load(telegramUserId, null);
             if (view.isPresent()) {
                 try {
                     TelegramQuickActionResponse loaded = view.get();
                     apiClient.sendMessage(chatId, TelegramMenuFlow.startText(loaded),
-                        TelegramMenuFlow.startMenu(loaded, miniAppUrl, menuBuilder));
+                        TelegramMenuFlow.startMenu(loaded, miniAppUrl, publicSiteUrl, menuBuilder));
                 } catch (Exception exception) {
                     throw new IllegalStateException(exception);
                 }
@@ -188,11 +189,12 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             return;
         }
         String miniAppUrl = config.miniAppUrl().orElse("");
+        String publicSiteUrl = config.publicSiteUrl().orElse("");
         quickActions.load(verified.telegramUserId(), TelegramMenuFlow.selectedChildId(verified.action()))
             .ifPresent(view -> {
             try {
                 apiClient.editMessageText(chatId, messageId, TelegramMenuFlow.navigationText(verified.action(), view),
-                    TelegramMenuFlow.navigationMenu(verified.action(), view, miniAppUrl, menuBuilder));
+                    TelegramMenuFlow.navigationMenu(verified.action(), view, miniAppUrl, publicSiteUrl, menuBuilder));
             } catch (Exception exception) {
                 throw new IllegalStateException(exception);
             }

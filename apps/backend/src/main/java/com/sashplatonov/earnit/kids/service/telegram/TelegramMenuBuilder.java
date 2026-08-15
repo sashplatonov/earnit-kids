@@ -18,15 +18,22 @@ public class TelegramMenuBuilder {
         this.callbacks = callbacks;
     }
 
-    public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view, String miniAppUrl) {
+    public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view,
+                                                               String miniAppUrl,
+                                                               String publicSiteUrl) {
         // EXPLAIN: Decision menu: two-column grid, Mini App is always the last row.
-        return List.of(
-            parentNavigation(TelegramCopy.REQUESTS, "requests", view, "home-row-1"),
-            parentNavigation(TelegramCopy.COINS, "coins", view, "home-row-1"),
-            parentNavigation(TelegramCopy.RECENT, "recent", view, "home-row-2"),
-            parentNavigation(TelegramCopy.SWITCH_CHILD, "switch", view, "home-row-2"),
-            webApp(TelegramCopy.OPEN_APP, miniAppUrl, "home-row-3")
-        );
+        // EXPLAIN: The public site share button is added only when a non-blank
+        // EXPLAIN: public origin is configured (no broken button otherwise).
+        List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
+        buttons.add(parentNavigation(TelegramCopy.REQUESTS, "requests", view, "home-row-1"));
+        buttons.add(parentNavigation(TelegramCopy.COINS, "coins", view, "home-row-1"));
+        buttons.add(parentNavigation(TelegramCopy.RECENT, "recent", view, "home-row-2"));
+        buttons.add(parentNavigation(TelegramCopy.SWITCH_CHILD, "switch", view, "home-row-2"));
+        buttons.add(webApp(TelegramCopy.OPEN_APP, miniAppUrl, "home-row-3"));
+        if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
+            buttons.add(url(TelegramCopy.SHARE_SITE, publicSiteUrl, "home-row-4"));
+        }
+        return List.copyOf(buttons);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view) {
@@ -233,5 +240,9 @@ public class TelegramMenuBuilder {
 
     private TelegramBotApiClient.InlineButton webApp(String text, String url, String rowId) {
         return TelegramBotApiClient.InlineButton.webApp(text, url, rowId);
+    }
+
+    private TelegramBotApiClient.InlineButton url(String text, String url, String rowId) {
+        return TelegramBotApiClient.InlineButton.url(text, url, rowId);
     }
 }

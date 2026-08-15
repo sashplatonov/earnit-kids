@@ -238,7 +238,7 @@ class TelegramBotServiceImplTest {
         when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
         List<TelegramBotApiClient.InlineButton> main = List.of(
             TelegramBotApiClient.InlineButton.callback("🎯 Запросы", "nav.signed"));
-        when(menuBuilder.parentMain(view, "https://example.test/telegram")).thenReturn(main);
+        when(menuBuilder.parentMain(view, "https://example.test/telegram", "")).thenReturn(main);
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -293,7 +293,7 @@ class TelegramBotServiceImplTest {
                 Instant.parse("2026-08-13T12:00:00Z"))));
         when(quickActions.load(77L, 2)).thenReturn(Optional.of(view));
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
-        when(menuBuilder.parentMain(view, "https://example.test/telegram")).thenReturn(List.of());
+        when(menuBuilder.parentMain(view, "https://example.test/telegram", "")).thenReturn(List.of());
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
