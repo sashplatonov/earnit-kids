@@ -38,6 +38,21 @@ const LEGACY_ALIAS_MAP: Record<string, string> = {
     '/verify.html': '/verify',
 };
 
+// EXPLAIN: Permanent (308) redirects for legacy public pages that were replaced
+// EXPLAIN: by the new SvelteKit public site. These map directly to bare public
+// EXPLAIN: URLs (no locale prefix) and must be handled before the generic
+// EXPLAIN: legacy alias logic. The destination pages are the canonical public
+// EXPLAIN: URLs, so no `/ru` prefix is applied.
+const PUBLIC_REDIRECT_MAP: Record<string, string> = {
+    '/about': '/parents',
+    '/about.html': '/parents',
+    '/features': '/tasks',
+    '/features/tasks': '/tasks',
+    '/features/shop': '/rewards',
+    '/faq.html': '/faq',
+    '/index.html': '/',
+};
+
 function normalisePath(pathname: string): string {
     if (!pathname || pathname === '/') {
         return '/';
@@ -136,6 +151,13 @@ export function isBypassedLocalePath(pathname: string): boolean {
 
 export function resolveLegacyAlias(pathname: string): string | null {
     return LEGACY_ALIAS_MAP[normalisePath(pathname)] ?? null;
+}
+
+// EXPLAIN: Permanent public-site redirect for a legacy URL. Returns the bare
+// EXPLAIN: canonical public path (no locale prefix) or null when the path is
+// EXPLAIN: not a legacy public page.
+export function resolvePublicRedirect(pathname: string): string | null {
+    return PUBLIC_REDIRECT_MAP[normalisePath(pathname)] ?? null;
 }
 
 export function shouldCanonicalizePath(pathname: string): boolean {

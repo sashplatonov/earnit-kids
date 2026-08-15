@@ -271,7 +271,7 @@ Epic сам по себе не является implementation task. Комми�
 | 11 | PUB-07A | P1 | PUB-03..PUB-06 | ✅ Page metadata + canonical + OG |
 | 12 | PUB-07B | P1 | PUB-07A | ✅ Sitemap + environment indexing + 404 |
 | 13 | PUB-08 | P1 | PUB-02B, PUB-02C | ✅ Sharing из Mini App |
-| 14 | PUB-09 | P1 | PUB-03..PUB-07B | Permanent redirects |
+| 14 | PUB-09 | P1 | PUB-03..PUB-07B | ✅ Permanent redirects |
 | 15 | PUB-11A | P1 | PUB-03..PUB-09 | Functional E2E + progressive enhancement |
 | 16 | PUB-11B | P1 | PUB-11A | Responsive + accessibility + content stress |
 | 17 | PUB-11C | P1 | PUB-11A | Visual regression + performance |
@@ -1145,7 +1145,7 @@ Primary CTA не должен зависеть от наличия Telegram Desk
 Размер задачи приемлем: одна migration concern - legacy redirects. Не смешивать сюда archive/cutover.
 
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Выполнено  
 **Приоритет:** P1  
 **Зависит от:** PUB-03, PUB-04A, PUB-04B, PUB-05A, PUB-05B, PUB-06, PUB-07B
 
@@ -1201,6 +1201,24 @@ Primary CTA не должен зависеть от наличия Telegram Desk
 - Ни один ранее поддерживаемый важный URL не получает случайный 404 во время migration.
 - Все permanent redirects покрыты тестами.
 - Blog migration decision задокументирован отдельно.
+
+## Blog migration decision
+
+Блог не перенаправляется на `/` автоматически. Текущие статьи `/blog/*` сохраняются как есть (контент остаётся в `src/routes/blog`), потому что нет смысловой replacement-страницы. Окончательное решение по судьбе blog (архив, перенос, 410) выносится в отдельную задачу и не входит в PUB-09.
+
+## Redirect map (реализовано)
+
+```text
+/about          → /parents   (308)
+/about.html     → /parents   (308)
+/features       → /tasks     (308)
+/features/tasks → /tasks     (308)
+/features/shop  → /rewards   (308)
+/faq.html       → /faq       (308)
+/index.html     → /          (308)
+```
+
+Все redirects реализованы через `resolvePublicRedirect()` в `hooks.server.ts` и покрыты юнит-тестами (`tests/unit/publicRedirect.test.ts`). HTTP-статус — `308 Permanent Redirect`. Query string сохраняется.
 
 ---
 

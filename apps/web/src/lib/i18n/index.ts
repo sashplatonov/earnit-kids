@@ -46,6 +46,7 @@ export {
     resolveLocaleFromAcceptLanguage,
     resolveDomainsForPath,
     resolveLegacyAlias,
+    resolvePublicRedirect,
     shouldCanonicalizePath,
     splitLocaleFromPath,
     stripLocaleFromPath,
