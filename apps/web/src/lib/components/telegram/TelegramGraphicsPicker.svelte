@@ -70,11 +70,12 @@
 
         {#if filteredRecent.length}
             <h3 class="picker-subtitle">{$i18n.t('app.telegram.graphics.recent')}</h3>
-            <div class="grid">
+            <div class="group">
                 {#each filteredRecent as graphic (graphic.key + graphic.label)}
                     <button class:selected={graphic.key === initial} type="button" on:click={() => choose(graphic.key)}>
                         <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphic.label} /></span>
-                        <span class="glabel">{graphic.label}</span>
+                        <span class="grow"><span class="glabel">{graphic.label}</span></span>
+                        {#if graphic.key === initial}<span class="badge">{$i18n.t('app.telegram.graphics.selected')}</span>{/if}
                     </button>
                 {/each}
             </div>
@@ -83,11 +84,12 @@
         {#each SEMANTIC_GRAPHIC_CATEGORIES as category (category.key)}
             {#if visible(getGraphicsForCategory(category.key)).length}
                 <h3 class="picker-subtitle">{category.label}</h3>
-                <div class="grid">
+                <div class="group">
                     {#each visible(getGraphicsForCategory(category.key)) as graphic (category.key + graphic.label)}
                         <button class:selected={graphic.key === initial} type="button" on:click={() => choose(graphic.key)}>
                             <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphic.label} /></span>
-                            <span class="glabel">{graphic.label}</span>
+                            <span class="grow"><span class="glabel">{graphic.label}</span></span>
+                            {#if graphic.key === initial}<span class="badge">{$i18n.t('app.telegram.graphics.selected')}</span>{/if}
                         </button>
                     {/each}
                 </div>
@@ -104,10 +106,13 @@
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
     .search { box-sizing:border-box; width:100%; min-height:2.75rem; margin-bottom:.5rem; padding:.6rem .7rem; border:1px solid #cfd6e4; border-radius:.7rem; font:inherit; }
     .picker-subtitle { margin:1rem 0 .45rem; color:#4d5870; font-size:.85rem; }
-    .grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:.5rem; }
-    .grid button { display:flex; flex-direction:column; align-items:center; gap:.35rem; min-height:4.6rem; padding:.5rem .25rem; border:1px solid #e6e9f0; border-radius:.8rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
-    .grid button.selected { border-color:#3867d6; background:#f2f5ff; color:#18243d; }
-    .gico { display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
-    .glabel { display:block; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; font-size:.72rem; font-weight:600; }
+    .group { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
+    .group button { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3rem; padding:.35rem 0; border:0; border-bottom:1px solid #edf0f5; background:transparent; color:#18243d; font:inherit; text-align:left; cursor:pointer; }
+    .group button:last-child { border-bottom:0; }
+    .group button.selected { color:#2854ba; }
+    .gico { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
+    .grow { flex:1; min-width:0; }
+    .glabel { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+    .badge { flex:0 0 auto; padding:.2rem .55rem; border-radius:999px; background:#eef2ff; color:#2854ba; font-size:.72rem; font-weight:700; }
     .close { width:100%; min-height:2.75rem; margin-top:.75rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
 </style>
