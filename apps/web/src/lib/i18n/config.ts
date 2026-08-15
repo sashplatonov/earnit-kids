@@ -8,7 +8,8 @@ export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'analytics' |
 const LOCALE_SET = new Set<string>(LOCALES);
 // EXPLAIN: Bare-URL public routes are served without a locale prefix so they
 // EXPLAIN: can be shared as stable canonical links. They must not be
-// EXPLAIN: canonicalized to `/en/...` by `shouldCanonicalizePath`.
+// EXPLAIN: Bare-URL public marketing paths redirect to the static HTML site
+// EXPLAIN: in /public/*. They must not be canonicalized to `/en/...`.
 const PUBLIC_BARE_PATHS = ['/', '/how', '/tasks', '/rewards', '/parents', '/faq'] as const;
 
 const BYPASS_PREFIXES = [
@@ -25,6 +26,7 @@ const BYPASS_PREFIXES = [
     '/favicon.ico',
     '/apple-touch-icon',
     '/.well-known',
+    '/public',
 ] as const;
 
 const LEGACY_ALIAS_MAP: Record<string, string> = {
@@ -38,19 +40,22 @@ const LEGACY_ALIAS_MAP: Record<string, string> = {
     '/verify.html': '/verify',
 };
 
-// EXPLAIN: Permanent (308) redirects for legacy public pages that were replaced
-// EXPLAIN: by the new SvelteKit public site. These map directly to bare public
-// EXPLAIN: URLs (no locale prefix) and must be handled before the generic
-// EXPLAIN: legacy alias logic. The destination pages are the canonical public
-// EXPLAIN: URLs, so no `/ru` prefix is applied.
+// EXPLAIN: Redirect bare public marketing URLs (/, /how, /tasks, etc.) to the
+// EXPLAIN: static HTML site in /public/*. The site lives outside SvelteKit
+// EXPLAIN: routing and these redirects keep stable canonical links.
 const PUBLIC_REDIRECT_MAP: Record<string, string> = {
-    '/about': '/parents',
-    '/about.html': '/parents',
-    '/features': '/tasks',
-    '/features/tasks': '/tasks',
-    '/features/shop': '/rewards',
-    '/faq.html': '/faq',
-    '/index.html': '/',
+    '/how': '/public/how.html',
+    '/tasks': '/public/tasks.html',
+    '/rewards': '/public/rewards.html',
+    '/parents': '/public/parents.html',
+    '/faq': '/public/faq.html',
+    '/about': '/public/parents.html',
+    '/about.html': '/public/parents.html',
+    '/features': '/public/tasks.html',
+    '/features/tasks': '/public/tasks.html',
+    '/features/shop': '/public/rewards.html',
+    '/faq.html': '/public/faq.html',
+    '/index.html': '/public/index.html',
 };
 
 function normalisePath(pathname: string): string {
@@ -168,6 +173,9 @@ export function shouldCanonicalizePath(pathname: string): boolean {
 export function resolveDomainsForPath(pathname: string): MessageDomain[] {
     const internalPath = stripLocaleFromPath(pathname);
 
+    // EXPLAIN: The public marketing site is a static HTML site in /public/*
+    // EXPLAIN: and is not served by SvelteKit. These bare URLs redirect there
+    // EXPLAIN: via hooks.server.ts, so they never reach the i18n domain resolver.
     if (
         internalPath === '/'
         || internalPath === '/how'
@@ -176,13 +184,7 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         || internalPath === '/parents'
         || internalPath === '/faq'
     ) {
-        return ['common', 'public', 'errors'];
-    }
-
-    // EXPLAIN: Legacy public routes still served from src/routes until PUB-01
-    // EXPLAIN: moves them to apps/web/legacy/public-site.
-    if (internalPath === '/about' || internalPath.startsWith('/features')) {
-        return ['common', 'public', 'errors'];
+        return ['common', 'errors'];
     }
 
     if (internalPath === '/login' || internalPath === '/verify' || internalPath === '/reset-password') {

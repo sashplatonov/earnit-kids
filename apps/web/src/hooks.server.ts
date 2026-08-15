@@ -28,26 +28,14 @@ export const handle: Handle = async ({ event, resolve }) => {
     const { locale: localeFromPath, pathname: internalPath } = splitLocaleFromPath(event.url.pathname);
     const cookieLocale = normalizeLocale(event.cookies.get(LOCALE_COOKIE_NAME));
     const headerLocale = resolveLocaleFromAcceptLanguage(event.request.headers.get('accept-language'));
-    // EXPLAIN: The Telegram Mini App and the public marketing site are
-    // EXPLAIN: Russian-only product surfaces served at bare URLs (no locale
-    // EXPLAIN: prefix) so they can be shared as stable canonical links.
+
+    // EXPLAIN: The Telegram Mini App is a Russian-only surface served at a bare
+    // EXPLAIN: URL (no locale prefix). The public marketing site is a static
+    // EXPLAIN: HTML site in static/public/ and is not routed through SvelteKit.
     const isTelegramMiniApp = internalPath === '/telegram' || internalPath.startsWith('/telegram/');
-    const isPublicRoute = internalPath === '/'
-        || internalPath === '/how'
-        || internalPath === '/tasks'
-        || internalPath === '/rewards'
-        || internalPath === '/parents'
-        || internalPath === '/faq';
-    const isRussianOnlySurface = isTelegramMiniApp || isPublicRoute;
-    const resolvedLocale = isRussianOnlySurface ? 'ru' : localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
+    const resolvedLocale = isTelegramMiniApp ? 'ru' : localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
 
     event.locals.locale = resolvedLocale;
-
-    // EXPLAIN: Public and Telegram routes live at bare URLs; do not redirect
-    // EXPLAIN: `/` to the locale-prefixed `/en/` for those surfaces.
-    if (event.url.pathname === '/' && !isPublicRoute) {
-        throw redirect(302, `${localizePath('/', DEFAULT_LOCALE)}${event.url.search}`);
-    }
 
     // EXPLAIN: The Mini App is Russian-only; serve it under the canonical /ru
     // EXPLAIN: prefix even when a request carries another locale in the path.
@@ -55,11 +43,9 @@ export const handle: Handle = async ({ event, resolve }) => {
         throw redirect(302, `${localizePath(internalPath, 'ru')}${event.url.search}`);
     }
 
-    // EXPLAIN: Permanent (308) redirects for legacy public pages replaced by the
-    // EXPLAIN: new public site. Targets are bare canonical public URLs. This
-    // EXPLAIN: must run before the generic legacy alias logic so marketing pages
-    // EXPLAIN: redirect to the new bare public paths instead of locale-prefixed
-    // EXPLAIN: legacy routes.
+    // EXPLAIN: Redirect bare public marketing URLs to the static HTML site in
+    // EXPLAIN: /public/*. Runs before legacy aliases so marketing pages land on
+    // EXPLAIN: the static site instead of locale-prefixed app routes.
     const publicRedirectTarget = resolvePublicRedirect(internalPath);
     if (publicRedirectTarget) {
         throw redirect(308, `${publicRedirectTarget}${event.url.search}`);

@@ -1,15 +1,14 @@
 import { loadAppConfig } from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
-// EXPLAIN: Public site canonical URLs (Russian-only first stage). These are
-// EXPLAIN: the only real production pages — no `/ru` prefix, no EN hreflang.
+// EXPLAIN: Public site canonical URLs (static HTML in /public/).
 const PUBLIC_PAGES = [
-    { path: '/', priority: '1.0', changefreq: 'weekly' },
-    { path: '/how', priority: '0.8', changefreq: 'monthly' },
-    { path: '/tasks', priority: '0.8', changefreq: 'monthly' },
-    { path: '/rewards', priority: '0.8', changefreq: 'monthly' },
-    { path: '/parents', priority: '0.8', changefreq: 'monthly' },
-    { path: '/faq', priority: '0.6', changefreq: 'monthly' },
+    { path: '/public/index.html', priority: '1.0', changefreq: 'weekly' },
+    { path: '/public/how.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/public/tasks.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/public/rewards.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/public/parents.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/public/faq.html', priority: '0.6', changefreq: 'monthly' },
 ] as const;
 
 export const GET: RequestHandler = async () => {
@@ -18,7 +17,7 @@ export const GET: RequestHandler = async () => {
     const today = new Date().toISOString().slice(0, 10);
 
     const urls = PUBLIC_PAGES.map((page) => {
-        const loc = page.path === '/' ? `${base}/` : `${base}${page.path}`;
+        const loc = `${base}${page.path}`;
         return [
             '  <url>',
             `    <loc>${loc}</loc>`,

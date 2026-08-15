@@ -13,6 +13,6 @@
     }
 </script>
 
-<AppShell session={data.session} {activeSection} publicOrigin={data.appConfig.publicOrigin}>
+<AppShell session={data.session} {activeSection}>
     <slot />
 </AppShell>
