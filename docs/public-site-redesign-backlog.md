@@ -273,7 +273,7 @@ Epic сам по себе не является implementation task. Комми�
 | 13 | PUB-08 | P1 | PUB-02B, PUB-02C | ✅ Sharing из Mini App |
 | 14 | PUB-09 | P1 | PUB-03..PUB-07B | ✅ Permanent redirects |
 | 15 | PUB-11A | P1 | PUB-03..PUB-09 | ✅ Functional E2E + progressive enhancement |
-| 16 | PUB-11B | P1 | PUB-11A | Responsive + accessibility + content stress |
+| 16 | PUB-11B | P1 | PUB-11A | ✅ Responsive + accessibility + content stress |
 | 17 | PUB-11C | P1 | PUB-11A | Visual regression + performance |
 | 18 | PUB-10 | P1 | PUB-11A..PUB-11C | Cutover + archive legacy |
 | 19 | PUB-12 | P2 | PUB-02B, PUB-02C | Минимальная product analytics |
@@ -1318,7 +1318,7 @@ Telegram link доступна
 
 # PUB-11B: Responsive + accessibility + content stress
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Выполнено  
 **Приоритет:** P1  
 **Зависит от:** PUB-11A
 
