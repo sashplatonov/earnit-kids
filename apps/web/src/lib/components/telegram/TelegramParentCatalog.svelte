@@ -3,6 +3,7 @@
     import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { mapGroupKeyToFamily, templateToReward, templateToTask } from '$lib/services/catalogFilter';
+    import { recordReadyCatalogEvent } from '$lib/services/readyCatalogTelemetry';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramReadyCatalog from './TelegramReadyCatalog.svelte';
     import TelegramCatalogDetails from './TelegramCatalogDetails.svelte';
@@ -65,6 +66,7 @@
 
         if (fresh.length === 0) {
             // Everything already added — nothing to do.
+            recordReadyCatalogEvent({ name: 'catalog_duplicate_skipped', type: kind === 'task' ? 'TASK' : 'REWARD', bulkCount: templates.length });
             return;
         }
 

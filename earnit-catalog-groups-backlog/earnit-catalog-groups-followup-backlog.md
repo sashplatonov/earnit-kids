@@ -1550,6 +1550,7 @@ Do not replace existing family list with an empty state if catalog API fails.
 # CAT-013 - Analytics for catalog usefulness
 
 **Priority:** P2
+**Status:** ✅ Done
 
 Track non-PII events:
 

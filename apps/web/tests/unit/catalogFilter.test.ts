@@ -16,7 +16,7 @@ import {
     templateToReward,
     templateToTask,
 } from '../../src/lib/services/catalogFilter';
-import type { CatalogRewardTemplate, CatalogTaskTemplate } from '../../src/lib/stores/app';
+import type { CatalogRewardTemplate, CatalogTaskTemplate, Task } from '../../src/lib/stores/app';
 
 const taskTemplate: CatalogTaskTemplate = {
     id: 'ct-6-8-1',
@@ -128,11 +128,11 @@ describe('nonAgeFilterCount', () => {
 
 describe('isAlreadyAdded', () => {
     it('detects a copy by sourceCatalogItemId', () => {
-        const family = [{ id: 1, name: 'Умыться', sourceCatalogItemId: 'ct-6-8-1' }];
+        const family = [{ id: 1, name: 'Умыться', sourceCatalogItemId: 'ct-6-8-1' } as unknown as Task];
         expect(isAlreadyAdded(taskTemplate, family)).toBe(true);
     });
     it('detects a copy by normalized title', () => {
-        const family = [{ id: 1, name: '🌅 Умыться, одеться и причесаться' }];
+        const family = [{ id: 1, name: '🌅 Умыться, одеться и причесаться' } as unknown as Task];
         expect(isAlreadyAdded(taskTemplate, family)).toBe(true);
     });
     it('returns false when not added', () => {

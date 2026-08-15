@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
@@ -14,6 +14,7 @@
         type CatalogFilters,
     } from '$lib/services/catalogFilter';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
+    import { recordReadyCatalogEvent } from '$lib/services/readyCatalogTelemetry';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';
@@ -58,19 +59,25 @@
     function isAdded(template: { id: string; title: string }): boolean {
         return isAlreadyAdded(template, familyItems);
     }
+    function track(name: 'catalog_opened' | 'catalog_search_used' | 'catalog_filter_selected' | 'catalog_item_added' | 'catalog_bulk_add' | 'catalog_duplicate_skipped' | 'catalog_details_opened', extra: Record<string, unknown> = {}) {
+        recordReadyCatalogEvent({ name, type: kind === 'task' ? 'TASK' : 'REWARD', ...extra });
+    }
     function toggleSelect(id: string) {
         selectedIds = selectedIds.includes(id)
             ? selectedIds.filter((entry) => entry !== id)
             : [...selectedIds, id];
     }
     function addOne(template: CatalogTaskTemplate | CatalogRewardTemplate) {
+        track('catalog_item_added', { catalogGroupKey: template.groupKey });
         dispatch('add', { template, groupName: null });
     }
     function addSelected() {
         const selected = filtered.filter((item) => selectedIds.includes(item.id));
+        track('catalog_bulk_add', { bulkCount: selected.length });
         dispatch('addMany', { templates: selected, groupName: null });
     }
     function openDetails(template: CatalogTaskTemplate | CatalogRewardTemplate) {
+        track('catalog_details_opened', { catalogGroupKey: template.groupKey });
         dispatch('openDetails', { template });
     }
     function amountLabel(template: CatalogTaskTemplate | CatalogRewardTemplate): string {
@@ -80,6 +87,10 @@
     function freqLabel(template: CatalogTaskTemplate | CatalogRewardTemplate): string {
         return formatFrequency(template.frequencyLimit, template.frequencyPeriod);
     }
+
+    onMount(() => {
+        recordReadyCatalogEvent({ name: 'catalog_opened', type: kind === 'task' ? 'TASK' : 'REWARD' });
+    });
 </script>
 
 <div class="catalog">
@@ -95,7 +106,7 @@
 
     <div class="search">
         <TelegramIcon name="search" size={18} label={$i18n.t('app.telegram.readyCatalog.search')} />
-        <input type="search" bind:value={query} placeholder={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} />
+        <input type="search" bind:value={query} on:input={() => track('catalog_search_used')} placeholder={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} />
     </div>
 
     <div class="filterbar">
@@ -166,7 +177,7 @@
     onSelect={(group) => selectedGroup = group}
 />
 
-<TelegramCatalogFilters open={filterMode != null} mode={filterMode ?? 'age'} {filters} onApply={(next) => filters = next} onClose={() => filterMode = null} />
+<TelegramCatalogFilters open={filterMode != null} mode={filterMode ?? 'age'} {filters} onApply={(next) => { filters = next; track('catalog_filter_selected'); }} onClose={() => filterMode = null} />
 
 <style>
     .catalog { width:100%; }
