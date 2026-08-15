@@ -562,7 +562,7 @@ Mobile:
 
 # PUB-02D: Typed RU content, UI labels и content ownership
 
-**Статус:** ⬜ Не начато  
+**Статус:** ✅ Завершено  
 **Приоритет:** P1  
 **Зависит от:** PUB-02A
 
