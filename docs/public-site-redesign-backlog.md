@@ -267,7 +267,7 @@ Epic сам по себе не является implementation task. Комми�
 | 7 | PUB-04B | P1 | PUB-02A..PUB-02D | ✅ `/parents` |
 | 8 | PUB-05A | P1 | PUB-02A..PUB-02D | ✅ `/tasks` |
 | 9 | PUB-05B | P1 | PUB-02A..PUB-02D | ✅ `/rewards` |
-| 10 | PUB-06 | P1 | PUB-02A..PUB-02D | FAQ |
+| 10 | PUB-06 | P1 | PUB-02A..PUB-02D | ✅ FAQ |
 | 11 | PUB-07A | P1 | PUB-03..PUB-06 | Page metadata + canonical + OG |
 | 12 | PUB-07B | P1 | PUB-07A | Sitemap + environment indexing + 404 |
 | 13 | PUB-08 | P1 | PUB-02B, PUB-02C | Sharing из Mini App |
