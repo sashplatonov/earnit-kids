@@ -6,6 +6,7 @@
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { showToast } from '$lib/stores/toasts';
     import { sharePublicSite } from '$lib/services/publicSiteShare';
+    import { trackPublicShare } from '$lib/observability/publicAnalytics';
 
     export let balance: number = 0;
     export let earnedCount: number = 0;
@@ -26,6 +27,7 @@
 
     async function handleShare() {
         const result = await sharePublicSite(publicOrigin || window.location.origin, '/');
+        trackPublicShare('/');
         if (result.ok) {
             if (result.method === 'clipboard') {
                 showToast($i18n.t('app.shell.shareCopied'), 'success');

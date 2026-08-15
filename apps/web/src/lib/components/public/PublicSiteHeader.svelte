@@ -1,5 +1,6 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
+    import { trackPublicCtaClick } from '$lib/observability/publicAnalytics';
     import type { AppConfig } from '$lib/types/config';
 
     export let appConfig: AppConfig;
@@ -34,6 +35,10 @@
             document.getElementById('public-menu-button')?.focus();
         }
     }
+
+    function trackCta(placement: 'header' | 'mobile_menu') {
+        trackPublicCtaClick(placement, window.location.pathname);
+    }
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -52,7 +57,7 @@
         </nav>
 
         {#if telegramUrl}
-            <a class="public-cta-link" href={telegramUrl} rel="external noopener">
+            <a class="public-cta-link" href={telegramUrl} rel="external noopener" on:click={() => trackCta('header')}>
                 {$i18n.t('public.cta.openTelegram')}
             </a>
         {/if}
@@ -79,7 +84,7 @@
                 <a href={item.href} on:click={closeMenu} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>
             {/each}
             {#if telegramUrl}
-                <a class="public-cta-link" href={telegramUrl} rel="external noopener" on:click={closeMenu}>
+                <a class="public-cta-link" href={telegramUrl} rel="external noopener" on:click={() => { closeMenu(); trackCta('mobile_menu'); }}>
                     {$i18n.t('public.cta.openTelegram')}
                 </a>
             {/if}
