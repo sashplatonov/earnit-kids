@@ -264,7 +264,7 @@ Epic сам по себе не является implementation task. Комми�
 | 4 | PUB-02D | P1 | PUB-02A | Typed RU content + UI labels + ownership |
 | 5 | PUB-03 | P1 | PUB-02A..PUB-02D | ✅ Главная |
 | 6 | PUB-04A | P1 | PUB-02A..PUB-02D | ✅ `/how` |
-| 7 | PUB-04B | P1 | PUB-02A..PUB-02D | `/parents` |
+| 7 | PUB-04B | P1 | PUB-02A..PUB-02D | ✅ `/parents` |
 | 8 | PUB-05A | P1 | PUB-02A..PUB-02D | `/tasks` |
 | 9 | PUB-05B | P1 | PUB-02A..PUB-02D | `/rewards` |
 | 10 | PUB-06 | P1 | PUB-02A..PUB-02D | FAQ |
