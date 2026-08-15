@@ -303,6 +303,7 @@ Reward = "что я получу"
 
 **Priority:** P0  
 **Channel:** Parent Mini App
+**Status:** ✅ Done
 
 ## Problem
 
@@ -400,6 +401,7 @@ Only offer "leave without group" if the domain allows ungrouped Tasks.
 
 **Priority:** P0  
 **Channel:** Parent Mini App
+**Status:** ✅ Done
 
 Same principles as GRP-001, but independent Reward groups.
 

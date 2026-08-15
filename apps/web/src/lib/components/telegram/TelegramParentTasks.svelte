@@ -1,7 +1,6 @@
 <script lang="ts">
     import { appStore, type Task } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import GroupOrderEditor from '$lib/components/app/GroupOrderEditor.svelte';
     import { saveChildGroupOrder } from '$lib/services/api';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';
@@ -9,6 +8,7 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramTaskForm from './TelegramTaskForm.svelte';
     import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';
+    import TelegramGroupManager from './TelegramGroupManager.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
     import { formatLastUsedTime } from './telegramLastUsed';
 
@@ -84,6 +84,17 @@
             });
         }
     }
+    function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
+        const { group, moveTo } = event.detail;
+        const nextTasks = $appStore.tasks.map((task) =>
+            task.groupName === group ? { ...task, groupName: moveTo ?? null } as typeof task : task
+        );
+        appStore.setState({ tasks: nextTasks });
+        void scheduleSave();
+        const nextGroups = groups.filter((g) => g !== group);
+        const nextHidden = hiddenGroups.filter((g) => g !== group);
+        void saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));
+    }
 </script>
 
 <svelte:window on:click={() => openMenuId = null} on:keydown={handleWindowKeydown} />
@@ -147,7 +158,7 @@
     {/if}
 </div>
 <TelegramTaskForm open={formOpen} task={editingTask} groupSuggestions={groups} onClose={() => formOpen = false} />
-<GroupOrderEditor bind:isOpen={groupEditorOpen} variant="sheet" isAdmin={canEdit} isSaving={groupSaving} {groups} {hiddenGroups} title={$i18n.t('app.telegram.tasks.taskGroups')} descriptionAdmin={$i18n.t('app.telegram.tasks.dragHint')} descriptionChild="" on:save={saveGroups} />
+<TelegramGroupManager open={groupEditorOpen} kind="tasks" onClose={() => groupEditorOpen = false} on:save={saveGroups} on:deleteGroup={handleDeleteGroup} />
 
 <style>
     .tasks { width:100%; }
