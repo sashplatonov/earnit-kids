@@ -142,7 +142,7 @@ class FamilyChildManagementService {
 
     OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
                                                 GroupOrderSection section, List<String> groups,
-                                                boolean personalOrder) {
+                                                List<String> hiddenGroups, boolean personalOrder) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
@@ -158,14 +158,18 @@ class FamilyChildManagementService {
         }
 
         String serializedOrder;
+        String serializedHidden = null;
         try {
             serializedOrder = serializeGroupOrder(groups);
+            if (!personalOrder) {
+                serializedHidden = serializeGroupOrder(hiddenGroups);
+            }
         } catch (JsonProcessingException ex) {
             log.warn("Failed to serialize group order familyId={} childId={} section={}", familyId, childId, section, ex);
             return failure("GROUP_ORDER_SAVE_FAILED", "family.groupOrderSaveFailed");
         }
 
-        childRepository.updateGroupOrder(childId, section, personalOrder, serializedOrder);
+        childRepository.updateGroupOrder(childId, section, personalOrder, serializedOrder, serializedHidden);
         invalidateAnalyticsCache(familyId);
         return OperationResult.success(null);
     }

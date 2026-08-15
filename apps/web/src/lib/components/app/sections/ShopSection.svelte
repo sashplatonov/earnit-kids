@@ -481,18 +481,18 @@
         syncSelectedGroupUrl(resolvedGroup, options?.replace ?? false);
     }
 
-    async function persistGroupOrder(nextOrder: string[]) {
+    async function persistGroupOrder(nextOrder: string[], hiddenGroups: string[]) {
         if (resolvedChildId == null) {
             showToast(tShop('toasts.selectChildFirst'), 'error');
             return;
         }
 
         isSavingGroupOrder = true;
-        const result = await saveChildGroupOrder(resolvedChildId, 'shop', nextOrder);
+        const result = await saveChildGroupOrder(resolvedChildId, 'shop', nextOrder, hiddenGroups);
         if (result.ok) {
             appStore.update((state) => ({
                 ...state,
-                children: applyGroupOrderToChildren(state.children, resolvedChildId, 'shop', isAdmin, nextOrder),
+                children: applyGroupOrderToChildren(state.children, resolvedChildId, 'shop', isAdmin, nextOrder, hiddenGroups),
             }));
             isEditingGroupOrder = false;
             showToast(isAdmin ? tShop('toasts.groupOrderSavedAdmin') : tShop('toasts.groupOrderSavedChild'), 'success');
@@ -502,8 +502,8 @@
         isSavingGroupOrder = false;
     }
 
-    async function handleGroupOrderSave(event: CustomEvent<string[]>) {
-        await persistGroupOrder(event.detail);
+    async function handleGroupOrderSave(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
+        await persistGroupOrder(event.detail.groups, event.detail.hiddenGroups);
     }
 
     function setViewMode(nextMode: CardViewMode) {
@@ -580,6 +580,7 @@
         {isAdmin}
         isSaving={isSavingGroupOrder}
         {groups}
+        hiddenGroups={currentChild?.hiddenShopGroupOrder ?? []}
         title={tShop('groupOrder.title')}
         descriptionAdmin={tShop('groupOrder.descriptionAdmin')}
         descriptionChild={tShop('groupOrder.descriptionChild')}

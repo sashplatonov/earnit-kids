@@ -19,8 +19,10 @@
     let status: 'idle' | 'pending' | 'success' | 'error' | 'stale' = 'idle';
     let message = '';
     $: activeShop = $appStore.shopItems.filter((item) => item.isActive !== false);
-    $: affordable = activeShop.filter((item) => $appStore.balance >= item.price).sort((first, second) => first.price - second.price);
-    $: nextGoal = activeShop.filter((item) => $appStore.balance < item.price).sort((first, second) => first.price - second.price)[0] ?? null;
+    $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
+    $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
+    $: affordable = activeShop.filter((item) => $appStore.balance >= item.price && !hiddenGroups.includes(item.groupName?.trim() ?? '')).sort((first, second) => first.price - second.price);
+    $: nextGoal = activeShop.filter((item) => $appStore.balance < item.price && !hiddenGroups.includes(item.groupName?.trim() ?? '')).sort((first, second) => first.price - second.price)[0] ?? null;
     $: goalPercent = nextGoal && nextGoal.price > 0 ? Math.min(100, Math.round(($appStore.balance / nextGoal.price) * 100)) : 0;
     $: goalMissing = nextGoal ? Math.max(0, nextGoal.price - $appStore.balance) : 0;
     $: pendingIds = $appStore.requests.filter((request) => (request.requestType === 'shop_purchase' || request.itemId != null) && request.status === 'pending').map((request) => request.itemId).filter((id): id is string | number => id != null);

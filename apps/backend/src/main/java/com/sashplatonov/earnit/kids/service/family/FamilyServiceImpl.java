@@ -250,8 +250,8 @@ public final class FamilyServiceImpl implements FamilyService {
     @Override
     public OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
                                                        GroupOrderSection section, List<String> groups,
-                                                       boolean personalOrder) {
-        return familyChildManagementService.updateChildGroupOrder(familyId, childId, section, groups, personalOrder);
+                                                       List<String> hiddenGroups, boolean personalOrder) {
+        return familyChildManagementService.updateChildGroupOrder(familyId, childId, section, groups, hiddenGroups, personalOrder);
     }
 
     @Override

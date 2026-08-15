@@ -153,7 +153,7 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
     }
 
     @Transactional
-    public boolean updateGroupOrder(int childId, GroupOrderSection section, boolean personalOrder, String groupOrder) {
+    public boolean updateGroupOrder(int childId, GroupOrderSection section, boolean personalOrder, String groupOrder, String hiddenGroups) {
         Optional<ChildEntity> opt = findByIdOptional(childId);
         if (opt.isEmpty()) {
             return false;
@@ -166,6 +166,7 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
                     child.setChildTaskGroupOrder(groupOrder);
                 } else {
                     child.setTaskGroupOrder(groupOrder);
+                    child.setHiddenTaskGroups(hiddenGroups);
                 }
                 return true;
             }
@@ -174,6 +175,7 @@ public class ChildRepository implements PanacheRepositoryBase<ChildEntity, Integ
                     child.setChildShopGroupOrder(groupOrder);
                 } else {
                     child.setShopGroupOrder(groupOrder);
+                    child.setHiddenShopGroups(hiddenGroups);
                 }
                 return true;
             }

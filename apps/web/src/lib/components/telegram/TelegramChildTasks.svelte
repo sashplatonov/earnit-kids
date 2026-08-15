@@ -16,10 +16,13 @@
     let busy = false;
     let status: 'idle' | 'pending' | 'success' | 'error' | 'stale' = 'idle';
     let message = '';
-    $: summary = buildTodayTaskSummary($appStore.tasks);
+    $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
+    $: hiddenGroups = currentChild?.hiddenTaskGroupOrder ?? [];
+    $: visibleTasks = $appStore.tasks.filter((task) => !hiddenGroups.includes(task.groupName?.trim() ?? ''));
+    $: summary = buildTodayTaskSummary(visibleTasks);
     $: progressPercent = summary.limitCount > 0 ? Math.min(100, Math.round((summary.completedCount / summary.limitCount) * 100)) : 0;
     $: pendingIds = $appStore.requests.filter((request) => request.requestType !== 'shop_purchase' && request.status === 'pending').map((request) => request.taskId).filter((id): id is string | number => id != null);
-    $: allItems = $appStore.tasks.filter((task) => task.isActive !== false).map((task): CatalogItem => ({ id: task.id, title: task.name, amount: task.coins, group: task.groupName, available: task.periodProgress?.available !== false, disabledReason: task.periodProgress?.available === false ? $i18n.t('app.telegram.childTasks.limitReached') : undefined }));
+    $: allItems = visibleTasks.filter((task) => task.isActive !== false).map((task): CatalogItem => ({ id: task.id, title: task.name, amount: task.coins, group: task.groupName, available: task.periodProgress?.available !== false, disabledReason: task.periodProgress?.available === false ? $i18n.t('app.telegram.childTasks.limitReached') : undefined }));
     $: groups = [...new Set(allItems.map((item) => item.group?.trim()).filter((group): group is string => Boolean(group)))];
     $: items = selectedGroup ? allItems.filter((item) => item.group?.trim() === selectedGroup) : allItems;
     async function submit(note: string | null) {
@@ -33,7 +36,7 @@
     }
 </script>
 
-<section aria-labelledby="child-tasks-title"><div class="heading"><h2 id="child-tasks-title">{$i18n.t('app.telegram.childTasks.tasksToday')}</h2><span>{summary.trackedCount > 0 ? $i18n.t('app.telegram.childTasks.done', { completed: summary.completedCount, limit: summary.limitCount }) : $i18n.t('app.telegram.childTasks.available', { count: $appStore.tasks.length })}</span></div>{#if summary.trackedCount > 0}<div class="today-progress" role="progressbar" aria-valuemin="0" aria-valuemax={summary.limitCount} aria-valuenow={summary.completedCount} aria-label={$i18n.t('app.telegram.childTasks.todayProgress')}><span style={`width: ${progressPercent}%`}></span></div>{/if}<TelegramGroupSubnav {groups} selected={selectedGroup} kind="tasks" allLabel={$i18n.t('app.telegram.groupSubnav.all')} moreLabel={$i18n.t('app.telegram.groupSubnav.more')} allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')} onSelect={(group) => selectedGroup = group} />{#if selectedGroup && !items.length}<p class="empty">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>{:else}<TelegramGroupedCatalog kind="task" {items} {pendingIds} on:request={(event) => { selected = event.detail; status = 'idle'; }} />{/if}<TelegramActionStatus state={status} message={message} /></section>
+<section aria-labelledby="child-tasks-title"><div class="heading"><h2 id="child-tasks-title">{$i18n.t('app.telegram.childTasks.tasksToday')}</h2><span>{summary.trackedCount > 0 ? $i18n.t('app.telegram.childTasks.done', { completed: summary.completedCount, limit: summary.limitCount }) : $i18n.t('app.telegram.childTasks.available', { count: visibleTasks.length })}</span></div>{#if summary.trackedCount > 0}<div class="today-progress" role="progressbar" aria-valuemin="0" aria-valuemax={summary.limitCount} aria-valuenow={summary.completedCount} aria-label={$i18n.t('app.telegram.childTasks.todayProgress')}><span style={`width: ${progressPercent}%`}></span></div>{/if}<TelegramGroupSubnav {groups} selected={selectedGroup} kind="tasks" allLabel={$i18n.t('app.telegram.groupSubnav.all')} moreLabel={$i18n.t('app.telegram.groupSubnav.more')} allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')} onSelect={(group) => selectedGroup = group} />{#if selectedGroup && !items.length}<p class="empty">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>{:else}<TelegramGroupedCatalog kind="task" {items} {pendingIds} on:request={(event) => { selected = event.detail; status = 'idle'; }} />{/if}<TelegramActionStatus state={status} message={message} /></section>
 <TelegramRequestSheet open={selected !== null} title={selected?.title ?? ''} bind:busy on:close={() => selected = null} on:submit={(event) => submit(event.detail)} />
 
 <style>

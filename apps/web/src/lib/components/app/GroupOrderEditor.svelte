@@ -17,12 +17,15 @@
     export let title = '';
     export let descriptionAdmin = '';
     export let descriptionChild = '';
+    export let variant: 'modal' | 'sheet' = 'modal';
+    export let hiddenGroups: string[] = [];
 
     const dispatch = createEventDispatcher<{
-        save: string[];
+        save: { groups: string[]; hiddenGroups: string[] };
     }>();
 
     let draft: string[] = [];
+    let draftHidden: string[] = [];
     let dragSourceIndex: number | null = null;
     let dropSlotIndex: number | null = null;
     let activePointerId: number | null = null;
@@ -66,8 +69,15 @@
 
     $: if (!isOpen) {
         draft = [...groups];
+        draftHidden = [...hiddenGroups];
         rowRefs = [];
         clearDragState();
+    }
+
+    function toggleHidden(group: string) {
+        draftHidden = draftHidden.includes(group)
+            ? draftHidden.filter((entry) => entry !== group)
+            : [...draftHidden, group];
     }
 
     function clearDragState() {
@@ -87,7 +97,7 @@
     }
 
     function saveOrder() {
-        dispatch('save', draft);
+        dispatch('save', { groups: draft, hiddenGroups: draftHidden });
     }
 
     function startPointerDrag(event: PointerEvent, index: number) {
@@ -228,7 +238,7 @@
 <svelte:window on:pointermove={handlePointerMove} on:pointerup={handlePointerUp} on:pointercancel={handlePointerUp} on:keydown={handleWindowKeydown} />
 
 {#if isOpen}
-<div class="group-order-modal" bind:this={modalPanel}>
+<div class="group-order-modal" class:group-order-modal--sheet={variant === 'sheet'} bind:this={modalPanel}>
     <button class="group-order-modal__backdrop" type="button" aria-label={tApp('groupOrder.cancel')} on:click={closeEditor} disabled={isSaving}></button>
     <div
         class="group-order-panel"
@@ -265,6 +275,7 @@
                     <div
                         class="group-order-row"
                         class:group-order-row--dragging={dragSourceIndex === index}
+                        class:group-order-row--hidden={draftHidden.includes(group)}
                         bind:this={rowRefs[index]}
                         role="listitem"
                         on:pointerdown={(e) => { if ((e as PointerEvent).pointerType === 'touch' && activePointerId == null) startPointerDrag(e as PointerEvent, index); }}
@@ -272,6 +283,23 @@
                         <span class="group-order-row__index">{index + 1}</span>
                         <div class="group-order-row__content">
                             <span class="group-order-row__name">{group}</span>
+                            {#if isAdmin}
+                            <button
+                                class="group-order-row__toggle"
+                                class:group-order-row__toggle--on={!draftHidden.includes(group)}
+                                type="button"
+                                role="switch"
+                                aria-checked={!draftHidden.includes(group)}
+                                aria-label={draftHidden.includes(group)
+                                    ? tApp('groupOrder.showToChild', { group })
+                                    : tApp('groupOrder.hideFromChild', { group })}
+                                on:click|stopPropagation={() => toggleHidden(group)}
+                            >
+                                <span class="group-order-row__toggle-track" aria-hidden="true">
+                                    <span class="group-order-row__toggle-thumb"></span>
+                                </span>
+                            </button>
+                            {/if}
                         </div>
                         <button
                             class="group-order-row__handle"
@@ -295,6 +323,10 @@
                 {/if}
             </div>
         </div>
+
+        {#if isAdmin && variant === 'sheet'}
+            <p class="group-order-panel__visibility-hint">{tApp('groupOrder.visibilityHint')}</p>
+        {/if}
 
         <div class="group-order-panel__actions">
             <button class="btn btn--secondary btn--small" type="button" on:click={closeEditor} disabled={isSaving}>
@@ -321,6 +353,15 @@
         backdrop-filter: blur(8px);
     }
 
+    .group-order-modal--sheet {
+        z-index: 41;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+        background: rgb(15 24 45 / 35%);
+        backdrop-filter: none;
+    }
+
     .group-order-modal__backdrop {
         position: absolute;
         inset: 0;
@@ -340,6 +381,15 @@
         border-radius: 1.1rem;
         background: rgba(255, 255, 255, 0.98);
         box-shadow: 0 24px 80px rgba(26, 39, 67, 0.24);
+    }
+
+    .group-order-modal--sheet .group-order-panel {
+        width: 100%;
+        max-height: 82dvh;
+        border: 0;
+        border-radius: 1.1rem 1.1rem 0 0;
+        background: #fff;
+        box-shadow: 0 -1rem 3rem rgb(27 39 73 / 18%);
     }
 
     .group-order-panel__header {
@@ -448,6 +498,7 @@
         min-width: 0;
         display: flex;
         align-items: center;
+        gap: 0.5rem;
     }
 
     .group-order-row__name {
@@ -458,6 +509,52 @@
         line-height: 1.08;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    .group-order-row--hidden .group-order-row__name {
+        color: rgba(32, 48, 78, 0.45);
+        text-decoration: line-through;
+    }
+
+    .group-order-row__toggle {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.1rem;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .group-order-row__toggle-track {
+        position: relative;
+        width: 2.05rem;
+        height: 1.22rem;
+        border-radius: 999px;
+        background: #cdd4e2;
+        transition: background 0.16s ease;
+    }
+
+    .group-order-row__toggle-thumb {
+        position: absolute;
+        top: 0.13rem;
+        left: 0.13rem;
+        width: 0.96rem;
+        height: 0.96rem;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(24, 36, 61, 0.28);
+        transition: transform 0.16s ease;
+    }
+
+    .group-order-row__toggle--on .group-order-row__toggle-track {
+        background: #3867d6;
+    }
+
+    .group-order-row__toggle--on .group-order-row__toggle-thumb {
+        transform: translateX(0.83rem);
     }
 
     .group-order-row__handle {
@@ -531,6 +628,18 @@
         padding: 0.72rem 1rem 0.88rem;
         border-top: 1px solid rgba(120, 140, 175, 0.14);
         background: rgba(255, 255, 255, 0.98);
+    }
+
+    .group-order-panel__visibility-hint {
+        margin: 0;
+        padding: 0.55rem 1rem 0.25rem;
+        color: rgba(54, 68, 96, 0.62);
+        font-size: 0.78rem;
+        line-height: 1.35;
+    }
+
+    .group-order-modal--sheet .group-order-panel__actions {
+        padding: 0.72rem 1rem calc(0.88rem + env(safe-area-inset-bottom));
     }
 
     @media (max-width: 640px) {
@@ -637,6 +746,26 @@
             min-height: 2.3rem;
             padding: 0.48rem 0.68rem;
             font-size: 0.82rem;
+        }
+
+        .group-order-modal--sheet {
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .group-order-modal--sheet .group-order-panel {
+            width: 100%;
+            max-height: 82dvh;
+            border-radius: 1.1rem 1.1rem 0 0;
+        }
+
+        .group-order-modal--sheet .group-order-panel__actions {
+            padding: 0.52rem 0.62rem calc(0.58rem + env(safe-area-inset-bottom));
+        }
+
+        .group-order-modal--sheet .group-order-panel__description {
+            display: none;
         }
     }
 </style>

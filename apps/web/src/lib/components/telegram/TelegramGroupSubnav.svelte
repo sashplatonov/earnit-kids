@@ -13,7 +13,7 @@
 
     const i18n = useI18n();
 
-    const MAX_RANKED = 3;
+    const MAX_RANKED = 2;
 
     let ranked: string[] = [];
     let moreOpen = false;

@@ -15,6 +15,8 @@
     const i18n = useI18n();
 
     $: groups = [...new Set($appStore.shopItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
+    $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
+    $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
     let selectedGroup = '';
     $: filteredItems = selectedGroup
         ? $appStore.shopItems.filter((item) => item.groupName === selectedGroup)
@@ -65,13 +67,22 @@
         appStore.setState({ shopItems: $appStore.shopItems.filter((entry) => entry.id != item.id) });
         void scheduleSave();
     }
-    async function saveGroups(event: CustomEvent<string[]>) {
+    async function saveGroups(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
         if ($appStore.currentChildId == null) return;
         groupSaving = true;
-        const result = await saveChildGroupOrder($appStore.currentChildId, 'shop', event.detail);
+        const result = await saveChildGroupOrder($appStore.currentChildId, 'shop', event.detail.groups, event.detail.hiddenGroups);
         groupSaving = false;
         groupMessage = result.ok ? $i18n.t('app.telegram.tasks.groupsSaved') : $i18n.t('app.telegram.tasks.groupsSaveError');
-        if (result.ok) groupEditorOpen = false;
+        if (result.ok) {
+            groupEditorOpen = false;
+            appStore.setState({
+                children: $appStore.children.map((child) =>
+                    String(child.id) === String($appStore.currentChildId)
+                        ? { ...child, shopGroupOrder: event.detail.groups, hiddenShopGroupOrder: event.detail.hiddenGroups }
+                        : child
+                ),
+            });
+        }
     }
 </script>
 
@@ -128,16 +139,15 @@
     {/if}
 
     {#if canEdit}
-        <details class="groups">
-            <summary><TelegramIcon name="filter" size={16} label={$i18n.t('app.telegram.tasks.manageGroups')} />{$i18n.t('app.telegram.tasks.manageGroups')}</summary>
-            <p>{groups.length ? groups.join(' · ') : $i18n.t('app.telegram.tasks.noNamedGroups')}</p>
-            <button type="button" on:click={() => groupEditorOpen = true}><TelegramIcon name="edit" size={18} label={$i18n.t('app.telegram.tasks.reorderGroups')} />{$i18n.t('app.telegram.tasks.reorderGroups')}</button>
-            {#if groupMessage}<span role="status">{groupMessage}</span>{/if}
-        </details>
+        <button class="groups" type="button" on:click={() => groupEditorOpen = true}>
+            <TelegramIcon name="filter" size={16} label={$i18n.t('app.telegram.tasks.manageGroups')} />
+            <span>{$i18n.t('app.telegram.tasks.manageGroups')}</span>
+        </button>
+        {#if groupMessage}<span role="status" class="group-message">{groupMessage}</span>{/if}
     {/if}
 </div>
 <TelegramRewardForm open={formOpen} item={editingItem} groupSuggestions={groups} onClose={() => formOpen = false} />
-<GroupOrderEditor bind:isOpen={groupEditorOpen} isAdmin={canEdit} isSaving={groupSaving} {groups} title={$i18n.t('app.telegram.rewards.rewardGroups')} descriptionAdmin={$i18n.t('app.telegram.tasks.dragHint')} descriptionChild="" on:save={saveGroups} />
+<GroupOrderEditor bind:isOpen={groupEditorOpen} variant="sheet" isAdmin={canEdit} isSaving={groupSaving} {groups} {hiddenGroups} title={$i18n.t('app.telegram.rewards.rewardGroups')} descriptionAdmin={$i18n.t('app.telegram.tasks.dragHint')} descriptionChild="" on:save={saveGroups} />
 
 <style>
     .rewards { width:100%; }
@@ -163,9 +173,7 @@
     .menu button:hover { background:#f2f5ff; }
     .menu button.danger { color:#c63c42; }
     .muted { color:#66718a; }
-    details.groups { margin-top:.75rem; border:1px solid #e6e9f0; border-radius:.75rem; background:#fff; padding:.4rem .6rem; }
-    details.groups summary { display:flex; align-items:center; gap:.4rem; min-height:2.75rem; color:#18243d; font-weight:700; cursor:pointer; list-style:none; }
-    details.groups summary::-webkit-details-marker { display:none; }
-    details.groups p { margin:.25rem 0; color:#66718a; font-size:.85rem; }
-    details.groups button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.75rem; padding:.4rem .7rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    button.groups { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.75rem; border:1px solid #e6e9f0; border-radius:.75rem; background:#fff; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
+    button.groups span { display:inline-flex; align-items:center; }
+    .group-message { display:block; margin-top:.4rem; text-align:center; color:#66718a; font-size:.85rem; }
 </style>

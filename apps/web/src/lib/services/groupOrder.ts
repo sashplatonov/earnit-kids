@@ -32,6 +32,10 @@ function resolveField(section: GroupOrderSection, isAdmin: boolean) {
     return isAdmin ? 'shopGroupOrder' : 'childShopGroupOrder';
 }
 
+function resolveHiddenField(section: GroupOrderSection) {
+    return section === 'tasks' ? 'hiddenTaskGroupOrder' : 'hiddenShopGroupOrder';
+}
+
 export function normalizeGroupLabel(value: unknown): string {
     if (typeof value !== 'string') {
         return UNGROUPED_LABEL;
@@ -131,14 +135,20 @@ export function applyGroupOrderToChildren(
     childId: unknown,
     section: GroupOrderSection,
     isAdmin: boolean,
-    groups: readonly string[]
+    groups: readonly string[],
+    hiddenGroups?: readonly string[]
 ): Child[] {
     const field = resolveField(section, isAdmin);
     const nextGroups = sanitizeGroupOrder(groups);
 
+    const patch: Partial<Child> = { [field]: nextGroups };
+    if (hiddenGroups != null) {
+        patch[resolveHiddenField(section)] = sanitizeGroupOrder(hiddenGroups);
+    }
+
     return children.map((child) =>
         String(child.id) === String(childId)
-            ? { ...child, [field]: nextGroups }
+            ? { ...child, ...patch }
             : child
     );
 }

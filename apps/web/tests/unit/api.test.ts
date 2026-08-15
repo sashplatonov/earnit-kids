@@ -520,7 +520,7 @@ describe('fetchWithCsrf', () => {
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
         expect(url).toBe('/api/children/15/group-order');
         expect(init.method).toBe('POST');
-        expect(init.body).toBe(JSON.stringify({ section: 'tasks', groups: ['Дом', 'Учеба'] }));
+        expect(init.body).toBe(JSON.stringify({ section: 'tasks', groups: ['Дом', 'Учеба'], hiddenGroups: [] }));
     });
 
     it('posts bulk task actions through the shared JSON POST contract', async () => {

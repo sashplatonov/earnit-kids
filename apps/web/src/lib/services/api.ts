@@ -647,8 +647,8 @@ export async function adminRegenerateChildLink(childId: unknown) {
 export const adminSaveLimits = (childId: unknown, limits: { name: string; dailyCoinLimit?: number; monthlyLimit?: number; dailyRewardLimit?: number }) =>
     postJson(`/api/children/${encodeURIComponent(String(childId))}/settings`, limits);
 
-export const saveChildGroupOrder = (childId: unknown, section: 'tasks' | 'shop', groups: string[]) =>
-    postJsonResult(`/api/children/${encodeURIComponent(String(childId))}/group-order`, { section, groups });
+export const saveChildGroupOrder = (childId: unknown, section: 'tasks' | 'shop', groups: string[], hiddenGroups: string[] = []) =>
+    postJsonResult(`/api/children/${encodeURIComponent(String(childId))}/group-order`, { section, groups, hiddenGroups });
 
 // ── Child Telegram linkage ────────────────────────────────────────────────────
 

@@ -14,6 +14,8 @@ public record ChildDto(
     List<String> shopGroupOrder,
     List<String> childTaskGroupOrder,
     List<String> childShopGroupOrder,
+    List<String> hiddenTaskGroups,
+    List<String> hiddenShopGroups,
     Long rewardGoalItemId,
     String status
 ) {
@@ -22,6 +24,8 @@ public record ChildDto(
         shopGroupOrder = shopGroupOrder == null ? List.of() : List.copyOf(shopGroupOrder);
         childTaskGroupOrder = childTaskGroupOrder == null ? List.of() : List.copyOf(childTaskGroupOrder);
         childShopGroupOrder = childShopGroupOrder == null ? List.of() : List.copyOf(childShopGroupOrder);
+        hiddenTaskGroups = hiddenTaskGroups == null ? List.of() : List.copyOf(hiddenTaskGroups);
+        hiddenShopGroups = hiddenShopGroups == null ? List.of() : List.copyOf(hiddenShopGroups);
         status = status == null || status.isBlank() ? "ACTIVE" : status;
     }
 
@@ -38,6 +42,6 @@ public record ChildDto(
                     List<String> childShopGroupOrder,
                     Long rewardGoalItemId) {
         this(id, name, balance, monthlyLimit, dailyCoinLimit, 0, theme, taskGroupOrder, shopGroupOrder,
-            childTaskGroupOrder, childShopGroupOrder, rewardGoalItemId, "ACTIVE");
+            childTaskGroupOrder, childShopGroupOrder, List.of(), List.of(), rewardGoalItemId, "ACTIVE");
     }
 }

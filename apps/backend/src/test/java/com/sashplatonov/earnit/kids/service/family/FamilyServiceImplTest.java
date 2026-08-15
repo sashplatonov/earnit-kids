@@ -160,13 +160,13 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
 
-        assertThat(service.updateChildGroupOrder("fam-1", 10, null, List.of("Дом"), false))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, null, List.of("Дом"), List.of(), false))
             .isInstanceOf(OperationResult.Failure.class);
 
-        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.tasks, List.of(" Дом ", "Учеба", "Дом"), false))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.tasks, List.of(" Дом ", "Учеба", "Дом"), List.of("Скрытая"), false))
             .isInstanceOf(OperationResult.Success.class);
 
-        verify(childRepository).updateGroupOrder(10, GroupOrderSection.tasks, false, "[\"Дом\",\"Учеба\"]");
+        verify(childRepository).updateGroupOrder(10, GroupOrderSection.tasks, false, "[\"Дом\",\"Учеба\"]", "[\"Скрытая\"]");
     }
 
     @Test
@@ -174,13 +174,13 @@ class FamilyServiceImplTest {
         when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
         when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child(10, 1, "Alice", 0)));
 
-        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.shop, List.of("Хочу", "Потом"), true))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.shop, List.of("Хочу", "Потом"), List.of(), true))
             .isInstanceOf(OperationResult.Success.class);
-        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.shop, List.of(), true))
+        assertThat(service.updateChildGroupOrder("fam-1", 10, GroupOrderSection.shop, List.of(), List.of(), true))
             .isInstanceOf(OperationResult.Success.class);
 
-        verify(childRepository).updateGroupOrder(10, GroupOrderSection.shop, true, "[\"Хочу\",\"Потом\"]");
-        verify(childRepository).updateGroupOrder(10, GroupOrderSection.shop, true, null);
+        verify(childRepository).updateGroupOrder(10, GroupOrderSection.shop, true, "[\"Хочу\",\"Потом\"]", null);
+        verify(childRepository).updateGroupOrder(10, GroupOrderSection.shop, true, null, null);
     }
 
     @Test

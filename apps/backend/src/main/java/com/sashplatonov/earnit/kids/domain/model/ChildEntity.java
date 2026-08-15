@@ -69,6 +69,12 @@ public class ChildEntity extends CreatedAtEntity {
     @Column(name = "child_shop_group_order")
     private String childShopGroupOrder;
 
+    @Column(name = "hidden_task_groups")
+    private String hiddenTaskGroups;
+
+    @Column(name = "hidden_shop_groups")
+    private String hiddenShopGroups;
+
     @Column(name = "reward_goal_item_id")
     private Long rewardGoalItemId;
 

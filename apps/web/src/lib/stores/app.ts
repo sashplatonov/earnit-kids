@@ -116,6 +116,8 @@ export interface Child {
     shopGroupOrder?: string[];
     childTaskGroupOrder?: string[];
     childShopGroupOrder?: string[];
+    hiddenTaskGroupOrder?: string[];
+    hiddenShopGroupOrder?: string[];
     [key: string]: unknown;
 }
 

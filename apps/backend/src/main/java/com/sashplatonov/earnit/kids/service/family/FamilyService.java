@@ -49,7 +49,7 @@ public interface FamilyService {
 
     OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
                                                 GroupOrderSection section, List<String> groups,
-                                                boolean personalOrder);
+                                                List<String> hiddenGroups, boolean personalOrder);
 
     OperationResult<List<FriendDto>> searchByNickname(String nickname, int excludeChildId);
 

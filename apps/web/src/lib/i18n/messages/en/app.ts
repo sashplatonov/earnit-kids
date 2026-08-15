@@ -123,6 +123,9 @@ export const appMessages = {
         cancel: 'Cancel',
         saving: 'Saving...',
         save: 'Save',
+        hideFromChild: 'Hide group "{group}" from child',
+        showToChild: 'Show group "{group}" to child',
+        visibilityHint: 'Turn off groups the child should not see.',
     },
     telegram: {
         shell: {

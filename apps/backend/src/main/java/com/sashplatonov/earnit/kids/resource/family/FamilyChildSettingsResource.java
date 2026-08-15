@@ -205,7 +205,7 @@ public class FamilyChildSettingsResource extends FamilyResourceSupport {
         }
 
         OperationResult<Void> result = familyService.updateChildGroupOrder(
-            auth.familyId(), childId, request.section(), request.groups(), auth.isChild());
+            auth.familyId(), childId, request.section(), request.groups(), request.hiddenGroups(), auth.isChild());
         notifyChildUpdated(auth.familyId(), childId, result);
         return toVoidResponse(result);
     }
