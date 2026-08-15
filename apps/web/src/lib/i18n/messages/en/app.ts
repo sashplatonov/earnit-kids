@@ -155,6 +155,11 @@ export const appMessages = {
             noChildren: 'No children yet.',
             currentChild: 'Current child',
             addChild: 'Add child',
+            addChildNameHint: 'Enter the child\'s name — the profile will appear in the child list, and you can link Telegram in the child settings.',
+            addChildNamePlaceholder: 'e.g. Alex',
+            addChildNameRequired: 'Enter the child\'s name',
+            addChildError: 'Could not add child. Try again.',
+            addingChild: 'Adding…',
             createLinkHint: 'Create a sign-in link for this child.',
             createLink: 'Create invite link',
             creating: 'Creating…',
@@ -404,6 +409,7 @@ export const appMessages = {
         graphics: {
             search: 'Search',
             recent: 'Recent',
+            selected: 'Selected',
         },
         taskForm: {
             addTitle: 'New task',
@@ -514,6 +520,7 @@ export const appMessages = {
             all: 'All',
             more: 'More',
             allGroups: 'All groups',
+            close: 'Close',
             emptyGroup: 'Nothing in this group yet',
         },
         import: {

@@ -155,6 +155,11 @@ export const appMessages = {
             noChildren: 'Детей пока нет.',
             currentChild: 'Текущий ребёнок',
             addChild: 'Добавить ребёнка',
+            addChildNameHint: 'Введите имя ребёнка — профиль появится в списке детей, а привязать Telegram можно в настройках ребёнка.',
+            addChildNamePlaceholder: 'Например: Саша',
+            addChildNameRequired: 'Введите имя ребёнка',
+            addChildError: 'Не удалось добавить ребёнка. Попробуйте ещё раз.',
+            addingChild: 'Добавляем…',
             createLinkHint: 'Создайте ссылку для входа этого ребёнка.',
             createLink: 'Создать ссылку',
             creating: 'Создаём…',
@@ -212,7 +217,7 @@ export const appMessages = {
             showFewerRequests: 'Показать меньше заявок',
             allRequestsAria: 'Все заявки',
             quickActions: 'Быстрые действия',
-            addCoins: 'Начислить монеты',
+            addCoins: 'Начислить',
             history: 'История',
             recentActivity: 'Недавняя активность',
             showRecent: 'Показать недавние',
@@ -404,6 +409,7 @@ export const appMessages = {
         graphics: {
             search: 'Поиск',
             recent: 'Недавние',
+            selected: 'Выбрано',
         },
         taskForm: {
             addTitle: 'Новое задание',
@@ -514,6 +520,7 @@ export const appMessages = {
             all: 'Все',
             more: 'Ещё',
             allGroups: 'Все группы',
+            close: 'Закрыть',
             emptyGroup: 'В этой группе пока ничего нет',
         },
         import: {
