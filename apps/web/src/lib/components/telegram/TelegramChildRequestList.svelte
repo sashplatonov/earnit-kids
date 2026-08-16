@@ -53,6 +53,14 @@
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return bTime - aTime;
     });
+
+    const PAGE_SIZE = 10;
+    let visibleCount = PAGE_SIZE;
+    $: visibleRequests = sortedRequests.slice(0, visibleCount);
+    $: hasMore = visibleCount < sortedRequests.length;
+    function showMore() {
+        visibleCount += PAGE_SIZE;
+    }
 </script>
 
 <section class="panel" aria-labelledby="child-requests-title">
@@ -64,7 +72,8 @@
     {:else if !sortedRequests.length}
         <div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.childRequests.title')} /><span>{$i18n.t('app.telegram.childRequests.empty')}</span></div>
     {:else}
-        <div class="items">{#each sortedRequests as request (request.id)}<TelegramRequestRow request={request} kindLabel={kindLabel(request)} statusLabel={statusLabel(request.status)} statusTone={statusTone(request.status)} meta={meta(request)} locale={$i18n.locale}>{#if request.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(request)} on:click={() => onCancel(request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}</TelegramRequestRow>{/each}</div>
+        <div class="items">{#each visibleRequests as request (request.id)}<TelegramRequestRow request={request} kindLabel={kindLabel(request)} statusLabel={statusLabel(request.status)} statusTone={statusTone(request.status)} meta={meta(request)} locale={$i18n.locale}>{#if request.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(request)} on:click={() => onCancel(request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}</TelegramRequestRow>{/each}</div>
+        {#if hasMore}<button class="load-more" type="button" on:click={showMore}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.childRequests.showMore')} />{$i18n.t('app.telegram.childRequests.showMore')}</button>{/if}
     {/if}
     {#if cancelError}<p class="error" role="alert">{cancelError}</p>{/if}
 </section>
@@ -83,4 +92,5 @@
     .state-error button { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.4rem .7rem; border:1px solid #f3cfd2; border-radius:.6rem; background:#fff; color:#a33b3b; font:inherit; cursor:pointer; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; font-size:.9rem; margin:.6rem 0 0; }
+    .load-more { width:100%; min-height:2.75rem; margin-top:.75rem; padding:.5rem .7rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
 </style>
