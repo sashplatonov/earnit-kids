@@ -372,20 +372,11 @@
         {#if myRequests.length > 0}
         <div class="cards request-list" class:cards--list={viewMode === 'list'} id="my-requests-list">
             {#each myRequests as req (req.id)}
-            {@const childName = resolveChildName(req)}
             <article
-                class="card request-card"
+                class="card request-card request-card--mine"
                 class:request-card--list={viewMode === 'list'}
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
-                <div class="card__badge-row">
-                    <span class={`card__badge request-chip--status ${requestStatusClass(req.status)}`}>
-                        <span class="request-status-dot" aria-hidden="true"></span>
-                        {requestStatusLabel(req.status)}
-                    </span>
-                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
-                    <span class="card__badge card__badge--group">{req.ui.group}</span>
-                </div>
                 <div class="request-card__layout">
                     <div class="request-card__main">
                         <CardHeader
@@ -393,7 +384,6 @@
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
-                            compactChips={requestCompactChips(req)}
                             titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
                             titleActionExpanded={openNoteRequestId === String(req.id)}
                             titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
@@ -404,13 +394,12 @@
                         {/if}
                     </div>
                     <div class="request-card__side">
-                        {#if formatDate(requestCreatedAt(req))}
-                            <span class="request-card__date">{formatDate(requestCreatedAt(req))}</span>
-                        {/if}
+                        <span class={`request-status-chip ${requestStatusClass(req.status)}`}>
+                            <span class="request-status-dot" aria-hidden="true"></span>
+                            {requestStatusLabel(req.status)}
+                        </span>
                         {#if req.status !== 'approved'}
-                        <div class="card__actions request-card__actions">
-                            <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
-                        </div>
+                        <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
                         {/if}
                     </div>
                 </div>
@@ -529,6 +518,106 @@
         color: #1e293b;
     }
 
+    /* ---- Compact "my requests" card (child view) ---- */
+    .request-card--mine {
+        min-height: 0;
+        height: auto;
+        padding: 0.55rem 0.7rem;
+        gap: 0;
+    }
+
+    .request-card--mine .request-card__layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.6rem;
+        align-items: center;
+    }
+
+    .request-card--mine .request-card__main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+    }
+
+    .request-card--mine .card__comment {
+        min-height: 0;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+        font-size: 0.78rem;
+        margin-top: 0.1rem;
+    }
+
+    .request-card--mine .request-card__side {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        flex-shrink: 0;
+    }
+
+    /* Status chip with colored dot */
+    .request-status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.18rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+        border: 1px solid transparent;
+    }
+
+    .request-status-chip.request-chip--success {
+        background: color-mix(in srgb, var(--color-success) 16%, white);
+        border-color: color-mix(in srgb, var(--color-success) 38%, white);
+        color: var(--color-success);
+    }
+
+    .request-status-chip.request-chip--danger {
+        background: color-mix(in srgb, var(--color-danger) 14%, white);
+        border-color: color-mix(in srgb, var(--color-danger) 32%, white);
+        color: var(--color-danger);
+    }
+
+    .request-status-chip.request-chip--warning {
+        background: color-mix(in srgb, var(--color-warning) 22%, white);
+        border-color: color-mix(in srgb, var(--color-warning) 40%, white);
+        color: #8a6118;
+    }
+
+    /* Status dot indicator */
+    .request-status-dot {
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        flex: none;
+        background: currentColor;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
+    }
+
+    .request-status-chip.request-chip--success .request-status-dot {
+        background: var(--color-success);
+    }
+
+    .request-status-chip.request-chip--danger .request-status-dot {
+        background: var(--color-danger);
+    }
+
+    .request-status-chip.request-chip--warning .request-status-dot {
+        background: var(--color-warning);
+    }
+
+    .request-card--mine .history-item__delete-btn {
+        width: 1.9rem;
+        height: 1.9rem;
+        font-size: 0.8rem;
+    }
+
+    /* ---- List (row) view overrides ---- */
     .request-card--list {
         min-height: 0;
         height: auto;
@@ -552,14 +641,10 @@
     }
 
     .request-card--list .request-card__side {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.3rem;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.4rem;
         margin-top: 0;
-    }
-
-    .request-card--list .request-card__date {
-        font-size: 0.68rem;
     }
 
     .request-card--list .request-card__money-price {
@@ -593,30 +678,6 @@
         font-weight: 900;
     }
 
-    /* Status dot indicator for child request status chips */
-    .request-status-dot {
-        display: inline-block;
-        width: 0.5rem;
-        height: 0.5rem;
-        border-radius: 50%;
-        margin-right: 0.3rem;
-        vertical-align: middle;
-        background: currentColor;
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
-    }
-
-    .request-chip--success .request-status-dot {
-        background: #22c55e;
-    }
-
-    .request-chip--danger .request-status-dot {
-        background: #ef4444;
-    }
-
-    .request-chip--warning .request-status-dot {
-        background: #f59e0b;
-    }
-
     .request-card--list .history-item__delete-btn {
         width: 2.2rem;
         height: 2.2rem;
@@ -626,6 +687,10 @@
         .request-card {
             min-height: 0;
             padding: 0.6rem 0.65rem;
+        }
+
+        .request-card--mine {
+            padding: 0.5rem 0.6rem;
         }
 
         .request-card--list {
