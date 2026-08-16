@@ -132,9 +132,8 @@
 </script>
 
 <div class="catalog-screen">
-    <button class="back" type="button" on:click={back}>
+    <button class="back" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.back')} on:click={back}>
         <TelegramIcon name="back" size={18} label={$i18n.t('app.telegram.readyCatalog.back')} />
-        {kind === 'task' ? $i18n.t('app.telegram.readyCatalog.myTasks') : $i18n.t('app.telegram.readyCatalog.myRewards')}
     </button>
 
     <TelegramReadyCatalog

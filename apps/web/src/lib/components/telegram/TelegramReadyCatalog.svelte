@@ -122,6 +122,16 @@
         </button>
     </div>
 
+    <TelegramGroupSubnav
+        {groups}
+        selected={selectedGroup}
+        kind={kind === 'task' ? 'tasks' : 'shop'}
+        allLabel={$i18n.t('app.telegram.groupSubnav.all')}
+        moreLabel={$i18n.t('app.telegram.groupSubnav.more')}
+        allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')}
+        onSelect={(group) => selectedGroup = group}
+    />
+
     {#if !filtered.length}
         <div class="empty">
             <p class="empty-title">{$i18n.t('app.telegram.readyCatalog.noResults')}</p>
@@ -147,9 +157,9 @@
                     </button>
                     {#if !bulkMode}
                         {#if isAdded(template)}
-                            <span class="added"><TelegramIcon name="check" size={16} label={$i18n.t('app.telegram.readyCatalog.added')} /><span>{$i18n.t('app.telegram.readyCatalog.added')}</span></span>
+                            <span class="added"><TelegramIcon name="check" size={14} label={$i18n.t('app.telegram.readyCatalog.added')} /><span>{$i18n.t('app.telegram.readyCatalog.added')}</span></span>
                         {:else}
-                            <button class="add" type="button" on:click={() => addOne(template)}><TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.add')} /><span>{$i18n.t('app.telegram.readyCatalog.add')}</span></button>
+                            <button class="add" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.add')} on:click={() => addOne(template)}><TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.add')} /></button>
                         {/if}
                     {/if}
                 </div>
@@ -168,16 +178,6 @@
         </div>
     {/if}
 </div>
-
-<TelegramGroupSubnav
-    {groups}
-    selected={selectedGroup}
-    kind={kind === 'task' ? 'tasks' : 'shop'}
-    allLabel={$i18n.t('app.telegram.groupSubnav.all')}
-    moreLabel={$i18n.t('app.telegram.groupSubnav.more')}
-    allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')}
-    onSelect={(group) => selectedGroup = group}
-/>
 
 <TelegramCatalogFilters open={filterMode != null} mode={filterMode ?? 'age'} {filters} onApply={(next) => { filters = next; track('catalog_filter_selected'); }} onClose={() => filterMode = null} />
 
@@ -201,7 +201,7 @@
     .entity-text { min-width:0; }
     .title { display:block; color:#18243d; font-size:.95rem; font-weight:600; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
     .meta { display:block; margin-top:.15rem; color:#66718a; font-size:.8rem; }
-    .add { display:inline-flex; align-items:center; gap:.3rem; min-height:2.5rem; padding:.35rem .6rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .add { display:inline-flex; align-items:center; justify-content:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
     .added { display:inline-flex; align-items:center; gap:.3rem; min-height:2.5rem; padding:.35rem .6rem; border:1px solid #cbe8d7; border-radius:.7rem; background:#eaf7ef; color:#168552; font:inherit; font-weight:700; white-space:nowrap; }
     .check { width:2.25rem; height:2.25rem; flex:0 0 auto; display:grid; place-items:center; border:1.5px solid #b9c1cf; border-radius:.5rem; background:#fff; color:#fff; cursor:pointer; }
     .check.on { background:#3867d6; border-color:#3867d6; }
