@@ -8,6 +8,7 @@
     import TelegramChildRewards from './TelegramChildRewards.svelte';
     import TelegramActionStatus from './TelegramActionStatus.svelte';
     import TelegramHistoryList from './TelegramHistoryList.svelte';
+    import TelegramChildRequestList from './TelegramChildRequestList.svelte';
     import { loadTelegramHistory } from '$lib/services/telegramActivity';
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -111,7 +112,7 @@
                 <button aria-selected={activityView === 'requests'} class:active={activityView === 'requests'} id="child-activity-tab-requests" role="tab" tabindex={activityView === 'requests' ? 0 : -1} type="button" on:click={() => selectActivityView('requests')}>{$i18n.t('app.telegram.childShell.requests')}</button>
             </div>
             {#if activityView === 'requests'}
-                <section class="state" role="status">{$i18n.t('app.telegram.childRequests.loading')}</section>
+                <TelegramChildRequestList />
             {:else}
                 <TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />
             {/if}

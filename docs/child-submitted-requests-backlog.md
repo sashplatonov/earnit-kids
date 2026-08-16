@@ -117,7 +117,7 @@ git commit -m "feat(web): add requests subsection to child activity"
 
 **## P1-3: Create the child request list component with cancel control**
 
-**\*\*Status:\*\*** ⬜ Not started
+**\*\*Status:\*\*** ✅ Completed
 **\*\*Priority:\*\*** P1
 **\*\*Depends on:\*\*** P1-2
 
