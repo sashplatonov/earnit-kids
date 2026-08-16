@@ -39,6 +39,17 @@
         }
     }
 
+    function parentHint(key: string): string {
+        switch (key) {
+            case 'taskMarkedDone': return $i18n.t('app.telegram.notifications.taskMarkedDoneHint');
+            case 'rewardRequested': return $i18n.t('app.telegram.notifications.rewardRequestedHint');
+            case 'balanceChanged': return $i18n.t('app.telegram.notifications.balanceChangedHint');
+            case 'parentInviteAccepted': return $i18n.t('app.telegram.notifications.parentInviteAcceptedHint');
+            case 'childTelegramLinked': return $i18n.t('app.telegram.notifications.childTelegramLinkedHint');
+            default: return '';
+        }
+    }
+
     function childLabel(key: string): string {
         switch (key) {
             case 'taskApproved': return $i18n.t('app.telegram.notifications.taskApproved');
@@ -48,6 +59,18 @@
             case 'newTasks': return $i18n.t('app.telegram.notifications.newTasks');
             case 'rewardAvailable': return $i18n.t('app.telegram.notifications.rewardAvailable');
             default: return key;
+        }
+    }
+
+    function childHint(key: string): string {
+        switch (key) {
+            case 'taskApproved': return $i18n.t('app.telegram.notifications.taskApprovedHint');
+            case 'taskRejected': return $i18n.t('app.telegram.notifications.taskRejectedHint');
+            case 'rewardApproved': return $i18n.t('app.telegram.notifications.rewardApprovedHint');
+            case 'rewardRejected': return $i18n.t('app.telegram.notifications.rewardRejectedHint');
+            case 'newTasks': return $i18n.t('app.telegram.notifications.newTasksHint');
+            case 'rewardAvailable': return $i18n.t('app.telegram.notifications.rewardAvailableHint');
+            default: return '';
         }
     }
 
@@ -124,11 +147,11 @@
             <div class="flat">
                 <p class="group-label">{$i18n.t('app.telegram.notifications.parentGroupTasks')}</p>
                 {#each settings.parent.filter(isParentTask) as pref (pref.key)}
-                    <div class="row"><span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={18} label={parentLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{parentLabel(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button></div>
+                    <div class="row"><span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={18} label={parentLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{parentLabel(pref.key)}</span><span class="setting-meta">{parentHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button></div>
                 {/each}
                 <p class="group-label">{$i18n.t('app.telegram.notifications.parentGroupFamily')}</p>
                 {#each settings.parent.filter((pref) => !isParentTask(pref)) as pref (pref.key)}
-                    <div class="row"><span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={18} label={parentLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{parentLabel(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button></div>
+                    <div class="row"><span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={18} label={parentLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{parentLabel(pref.key)}</span><span class="setting-meta">{parentHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button></div>
                 {/each}
             </div>
 
@@ -137,11 +160,11 @@
                 <div class="flat">
                     <p class="group-label">{$i18n.t('app.telegram.notifications.childGroupDecisions')}</p>
                     {#each child.preferences.filter((pref) => ['taskApproved', 'taskRejected', 'rewardApproved', 'rewardRejected'].includes(pref.key)) as pref (pref.key)}
-                        <div class="row"><span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={18} label={childLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{childLabel(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button></div>
+                        <div class="row"><span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={18} label={childLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{childLabel(pref.key)}</span><span class="setting-meta">{childHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button></div>
                     {/each}
                     <p class="group-label">{$i18n.t('app.telegram.notifications.childGroupReminders')}</p>
                     {#each child.preferences.filter((pref) => ['newTasks', 'rewardAvailable'].includes(pref.key)) as pref (pref.key)}
-                        <div class="row"><span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={18} label={childLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{childLabel(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button></div>
+                        <div class="row"><span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={18} label={childLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{childLabel(pref.key)}</span><span class="setting-meta">{childHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button></div>
                     {/each}
                 </div>
             {/each}
@@ -164,6 +187,7 @@
     .row-icon { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; color:#5b63e9; }
     .grow { flex:1; min-width:0; }
     .setting-title { display:block; font-weight:600; font-size:.9rem; line-height:1.3; }
+    .setting-meta { display:block; margin-top:.1rem; color:#8a93a8; font-size:.75rem; line-height:1.2; }
     .switch { width:2.875rem; height:1.75rem; flex:0 0 auto; padding:0; border:0; border-radius:999px; background:#d8dce5; cursor:pointer; position:relative; }
     .switch.on { background:#3867d6; }
     .switch:after { content:""; position:absolute; width:1.375rem; height:1.375rem; top:.1875rem; left:.1875rem; border-radius:50%; background:#fff; transition:left .15s ease; }
