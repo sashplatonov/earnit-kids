@@ -231,4 +231,73 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
 
         return toVoidResponse(familyParentAccessService.removeMembership(membershipId, auth.familyId(), auth.email()));
     }
+
+    @POST
+    @Path("/parents/{membershipId}/deactivate")
+    @Operation(summary = "Deactivate a parent membership without deleting data")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Membership deactivated",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "400", description = "Deactivation failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Family admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response deactivateParent(@Context ContainerRequestContext ctx,
+                                     @Parameter(required = true, description = "Membership id to deactivate")
+                                     @PathParam("membershipId") int membershipId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) {
+            return unauthorized();
+        }
+
+        return toResponse(familyParentAccessService.setMembershipActive(
+            membershipId, false, auth.familyId(), auth.email()));
+    }
+
+    @POST
+    @Path("/parents/{membershipId}/reactivate")
+    @Operation(summary = "Reactivate a deactivated parent membership")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Membership reactivated",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "400", description = "Reactivation failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Family admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response reactivateParent(@Context ContainerRequestContext ctx,
+                                     @Parameter(required = true, description = "Membership id to reactivate")
+                                     @PathParam("membershipId") int membershipId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) {
+            return unauthorized();
+        }
+
+        return toResponse(familyParentAccessService.setMembershipActive(
+            membershipId, true, auth.familyId(), auth.email()));
+    }
+
+    @POST
+    @Path("/parents/{membershipId}/transfer-admin")
+    @Operation(summary = "Transfer family admin ownership to another parent")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Admin transferred",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "400", description = "Transfer failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Family admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response transferAdmin(@Context ContainerRequestContext ctx,
+                                  @Parameter(required = true, description = "Membership id to promote to admin")
+                                  @PathParam("membershipId") int membershipId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) {
+            return unauthorized();
+        }
+
+        return toResponse(familyParentAccessService.transferAdmin(
+            membershipId, auth.familyId(), auth.email()));
+    }
 }

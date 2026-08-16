@@ -16,4 +16,10 @@ public interface FamilyParentAccessService {
         Integer membershipId, String permission, String familyId);
 
     OperationResult<Void> removeMembership(Integer membershipId, String familyId, String actorEmail);
+
+    OperationResult<ParentMembershipDto> setMembershipActive(
+        Integer membershipId, boolean active, String familyId, String actorEmail);
+
+    OperationResult<ParentMembershipDto> transferAdmin(
+        Integer membershipId, String familyId, String actorEmail);
 }

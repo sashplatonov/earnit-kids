@@ -14,11 +14,10 @@
     } from '$lib/services/api';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
-    import TelegramRolesAccess from './TelegramRolesAccess.svelte';
+    import TelegramParentAccess from './TelegramParentAccess.svelte';
     import TelegramNotifications from './TelegramNotifications.svelte';
     import TelegramMyAccount from './TelegramMyAccount.svelte';
     import TelegramEmailSettings from './TelegramEmailSettings.svelte';
-    import TelegramParents from './TelegramParents.svelte';
     import TelegramLimits from './TelegramLimits.svelte';
     import TelegramImport from './TelegramImport.svelte';
 
@@ -30,11 +29,10 @@
     let newChildName = '';
     let addChildBusy = false;
     let addChildError = '';
-    let rolesOpen = false;
+    let accessOpen = false;
     let notificationsOpen = false;
     let myAccountOpen = false;
     let emailSettingsOpen = false;
-    let parentsOpen = false;
     let limitsOpen = false;
     let importOpen = false;
     let limitsChild: Child | null = null;
@@ -196,20 +194,18 @@
 
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
-        <button class="setting" type="button" on:click={() => rolesOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.family.rolesAndAccess')} /></span><span class="grow">{$i18n.t('app.telegram.family.rolesAndAccess')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => accessOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <button class="setting" type="button" on:click={() => parentsOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => importOpen = true}><span class="setting-icon"><TelegramIcon name="upload" size={20} label={$i18n.t('app.telegram.import.title')} /></span><span class="grow">{$i18n.t('app.telegram.import.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={onViewAsChild}><span class="setting-icon"><TelegramIcon name="eye" size={20} label={$i18n.t('app.telegram.family.viewAsChild')} /></span><span class="grow">{$i18n.t('app.telegram.family.viewAsChild')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
     </div>
 </div>
 
-<TelegramRolesAccess open={rolesOpen} onClose={() => rolesOpen = false} />
+<TelegramParentAccess open={accessOpen} onClose={() => accessOpen = false} />
 <TelegramNotifications open={notificationsOpen} onClose={() => notificationsOpen = false} />
 <TelegramMyAccount open={myAccountOpen} onClose={() => myAccountOpen = false} onOpenEmail={() => { myAccountOpen = false; emailSettingsOpen = true; }} />
 <TelegramEmailSettings open={emailSettingsOpen} onClose={() => emailSettingsOpen = false} />
-<TelegramParents open={parentsOpen} onClose={() => parentsOpen = false} />
 <TelegramImport open={importOpen} onClose={() => importOpen = false} />
 
 {#if manageChild}

@@ -451,6 +451,15 @@ export const addParentMembership = (body: { email: string; permission: Membershi
 export const updateParentMembership = (membershipId: number, body: { permission: MembershipPermission }) =>
     putJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}`, body);
 
+export const deactivateParentMembership = (membershipId: number) =>
+    postJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}/deactivate`, {});
+
+export const reactivateParentMembership = (membershipId: number) =>
+    postJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}/reactivate`, {});
+
+export const transferParentAdmin = (membershipId: number) =>
+    postJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}/transfer-admin`, {});
+
 export async function removeParentMembership(membershipId: number): Promise<ApiActionResult<void>> {
     return deleteJsonResult<void>(`/api/parents/${encodeURIComponent(String(membershipId))}`);
 }

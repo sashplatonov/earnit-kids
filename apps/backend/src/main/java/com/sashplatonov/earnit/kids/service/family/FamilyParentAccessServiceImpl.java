@@ -48,7 +48,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
         }
 
-        var memberships = membershipRepository.findByFamilyId(familyOpt.get().getId());
+        var memberships = membershipRepository.findByFamilyIdIncludingInactive(familyOpt.get().getId());
         if (memberships.isEmpty()) {
             return OperationResult.success(List.of());
         }
@@ -250,5 +250,95 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             membership.getPermission(),
             membership.getStatus()
         );
+    }
+
+    @Override
+    @Transactional
+    public OperationResult<ParentMembershipDto> setMembershipActive(
+        Integer membershipId, boolean active, String familyId, String actorEmail) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var membershipOpt = membershipRepository.findByIdOptional(membershipId);
+        if (membershipOpt.isEmpty()) {
+            return failure(ERROR_MEMBERSHIP_NOT_FOUND, "parentAccess.membershipNotFound");
+        }
+
+        var membership = membershipOpt.get();
+        Integer familyDbId = familyOpt.get().getId();
+        if (!membership.getFamilyId().equals(familyDbId)) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        // EXPLAIN: Cannot deactivate the last active admin — the family would be left without an owner.
+        if (!active && membership.getPermission() == FamilyParentMembershipEntity.Permission.family_admin) {
+            long adminCount = membershipRepository.countFamilyAdmins(familyDbId);
+            if (adminCount <= 1) {
+                return failure(ERROR_LAST_ADMIN, "parentAccess.cannotRemoveLastAdmin");
+            }
+        }
+
+        membership.setStatus(active ? MembershipStatus.active : MembershipStatus.inactive);
+
+        var parent = parentAccountRepository.findByIdOptional(membership.getParentAccountId()).orElse(null);
+
+        log.info("Set parent membership active={}: id={}, familyId={}", active, membershipId, familyId);
+
+        return OperationResult.success(toDto(membership, parent));
+    }
+
+    @Override
+    @Transactional
+    public OperationResult<ParentMembershipDto> transferAdmin(
+        Integer membershipId, String familyId, String actorEmail) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var membershipOpt = membershipRepository.findByIdOptional(membershipId);
+        if (membershipOpt.isEmpty()) {
+            return failure(ERROR_MEMBERSHIP_NOT_FOUND, "parentAccess.membershipNotFound");
+        }
+
+        var target = membershipOpt.get();
+        Integer familyDbId = familyOpt.get().getId();
+        if (!target.getFamilyId().equals(familyDbId)) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        // EXPLAIN: Only the current admin can transfer ownership, and only to an active non-admin member.
+        if (target.getStatus() != MembershipStatus.active) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+        if (target.getPermission() == FamilyParentMembershipEntity.Permission.family_admin) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        // EXPLAIN: The actor must be the current family admin.
+        var actorParentOpt = parentAccountRepository.findByEmail(actorEmail);
+        if (actorParentOpt.isEmpty()) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+        var actorMembershipOpt = membershipRepository.findByParentAndFamily(actorParentOpt.get().getId(), familyDbId);
+        if (actorMembershipOpt.isEmpty()) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+        var actorMembership = actorMembershipOpt.get();
+        if (actorMembership.getPermission() != FamilyParentMembershipEntity.Permission.family_admin) {
+            return failure(ERROR_ADMIN_DELETE_FORBIDDEN, "parentAccess.cannotRemoveAdmin");
+        }
+
+        // EXPLAIN: Demote the current admin to editor, promote the target to family_admin.
+        actorMembership.setPermission(FamilyParentMembershipEntity.Permission.editor);
+        target.setPermission(FamilyParentMembershipEntity.Permission.family_admin);
+
+        var parent = parentAccountRepository.findByIdOptional(target.getParentAccountId()).orElse(null);
+
+        log.info("Transferred family admin: targetMembershipId={}, familyId={}", membershipId, familyId);
+
+        return OperationResult.success(toDto(target, parent));
     }
 }

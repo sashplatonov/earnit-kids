@@ -18,6 +18,10 @@ public class FamilyParentMembershipRepository implements PanacheRepositoryBase<F
         return find("familyId = ?1 AND status = 'active'", familyId).list();
     }
 
+    public List<FamilyParentMembershipEntity> findByFamilyIdIncludingInactive(Integer familyId) {
+        return find("familyId = ?1", familyId).list();
+    }
+
     public Optional<FamilyParentMembershipEntity> findByParentAndFamily(Integer parentAccountId, Integer familyId) {
         return find("parentAccountId = ?1 AND familyId = ?2 AND status = 'active'", parentAccountId, familyId)
             .firstResultOptional();
