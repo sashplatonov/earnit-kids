@@ -144,7 +144,7 @@
                 <div class="row">
                     {#if bulkMode}
                         <button class="check" class:on={selectedIds.includes(template.id)} type="button" aria-pressed={selectedIds.includes(template.id)} aria-label={stripEmoji(template.title)} on:click={() => toggleSelect(template.id)}>
-                            {#if selectedIds.includes(template.id)}<TelegramIcon name="check" size={16} label={stripEmoji(template.title)} />{/if}
+                            {#if selectedIds.includes(template.id)}<TelegramIcon name="check" size={14} label={stripEmoji(template.title)} />{/if}
                         </button>
                     {/if}
                     <button class="row-main" type="button" aria-label={stripEmoji(template.title)} on:click={() => openDetails(template)}>
@@ -203,7 +203,7 @@
     .meta { display:block; margin-top:.15rem; color:#66718a; font-size:.8rem; }
     .add { display:inline-flex; align-items:center; justify-content:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
     .added { display:inline-flex; align-items:center; gap:.3rem; min-height:2.5rem; padding:.35rem .6rem; border:1px solid #cbe8d7; border-radius:.7rem; background:#eaf7ef; color:#168552; font:inherit; font-weight:700; white-space:nowrap; }
-    .check { width:2.25rem; height:2.25rem; flex:0 0 auto; display:grid; place-items:center; border:1.5px solid #b9c1cf; border-radius:.5rem; background:#fff; color:#fff; cursor:pointer; }
+    .check { width:1.5rem; height:1.5rem; flex:0 0 auto; display:grid; place-items:center; border:1.5px solid #b9c1cf; border-radius:.4rem; background:#fff; color:#fff; cursor:pointer; }
     .check.on { background:#3867d6; border-color:#3867d6; }
     .empty { padding:2rem 1rem; text-align:center; }
     .empty-title { margin:0; color:#18243d; font-weight:700; }
