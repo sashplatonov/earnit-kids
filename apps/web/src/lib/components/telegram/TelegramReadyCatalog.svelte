@@ -186,7 +186,7 @@
     .meta { display:block; margin-top:.15rem; color:#66718a; font-size:.8rem; }
     .add { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #3867d6; border-radius:.5rem; background:#3867d6; color:#fff; cursor:pointer; }
     .added { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #cbe8d7; border-radius:.5rem; background:#eaf7ef; color:#168552; cursor:default; }
-    .check { width:1.5rem; height:1.5rem; flex:0 0 auto; display:grid; place-items:center; border:1.5px solid #b9c1cf; border-radius:.3rem; background:#fff; color:#fff; cursor:pointer; aspect-ratio:1/1; }
+    .check { width:1.75rem; height:1.75rem; flex:0 0 auto; display:grid; place-items:center; border:2px solid #b9c1cf; border-radius:.45rem; background:#fff; color:#fff; cursor:pointer; }
     .check.on { background:#3867d6; border-color:#3867d6; }
     .empty { padding:2rem 1rem; text-align:center; }
     .empty-title { margin:0; color:#18243d; font-weight:700; }
