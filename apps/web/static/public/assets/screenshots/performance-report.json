@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-08-16T07:34:54.367Z",
+  "environment": {
+    "siteUrl": "http://127.0.0.1:5001",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    }
+  },
+  "views": [
+    {
+      "view": "parent-home",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 70.70000004768372,
+      "domContentLoaded": 276.60000002384186,
+      "loadComplete": 410.10000002384186,
+      "firstPaint": 264,
+      "firstContentfulPaint": 280,
+      "largestContentfulPaint": 344,
+      "cumulativeLayoutShift": 0.0451,
+      "resourceCount": 44
+    },
+    {
+      "view": "parent-tasks",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 70.70000004768372,
+      "domContentLoaded": 276.60000002384186,
+      "loadComplete": 410.10000002384186,
+      "firstPaint": 264,
+      "firstContentfulPaint": 280,
+      "largestContentfulPaint": 344,
+      "cumulativeLayoutShift": 0.0451,
+      "resourceCount": 44
+    },
+    {
+      "view": "parent-family",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 70.70000004768372,
+      "domContentLoaded": 276.60000002384186,
+      "loadComplete": 410.10000002384186,
+      "firstPaint": 264,
+      "firstContentfulPaint": 280,
+      "largestContentfulPaint": 344,
+      "cumulativeLayoutShift": 0.0451,
+      "resourceCount": 45
+    },
+    {
+      "view": "child-today",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 26.19999998807907,
+      "domContentLoaded": 103.80000001192093,
+      "loadComplete": 140,
+      "firstPaint": 104,
+      "firstContentfulPaint": 112,
+      "largestContentfulPaint": 140,
+      "cumulativeLayoutShift": 1.0187,
+      "resourceCount": 42
+    }
+  ]
+}
