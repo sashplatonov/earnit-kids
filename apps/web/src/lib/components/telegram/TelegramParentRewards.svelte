@@ -235,7 +235,7 @@
     .meta { display:flex; align-items:center; gap:.3rem; margin-top:.15rem; color:#66718a; font-size:.8rem; }
     .meta--last { color:#8a93a8; font-size:.75rem; }
     .more { width:2.75rem; height:2.75rem; display:grid; place-items:center; border:0; background:transparent; color:#66718a; cursor:pointer; }
-    .grant { display:inline-flex; align-items:center; gap:.3rem; min-height:2.5rem; padding:.35rem .6rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .grant { display:inline-flex; align-items:center; gap:.3rem; min-height:2.75rem; padding:.35rem .6rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
     .grant:disabled { opacity:.5; cursor:not-allowed; }
     .menu-wrap { position:relative; }
     .menu { position:absolute; right:0; top:calc(100% - .5rem); z-index:30; min-width:11rem; padding:.35rem; border:1px solid #e0e4ec; border-radius:.75rem; background:#fff; box-shadow:0 .75rem 2rem rgb(24 36 61 / 14%); }

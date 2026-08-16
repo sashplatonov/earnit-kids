@@ -178,7 +178,7 @@
 
 <style>
     .catalog-screen { width:100%; }
-    .back { display:inline-flex; align-items:center; gap:.3rem; min-height:2.5rem; padding:.35rem .5rem; border:0; border-radius:.6rem; background:transparent; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; margin-bottom:.4rem; }
+    .back { display:inline-flex; align-items:center; justify-content:center; gap:.3rem; min-width:2.75rem; min-height:2.75rem; padding:.35rem .5rem; border:0; border-radius:.6rem; background:transparent; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; margin-bottom:.4rem; }
     .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
     .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
     h2 { margin:0 0 .5rem; color:#18243d; font-size:1.15rem; }
