@@ -82,9 +82,9 @@
         track('catalog_details_opened', { catalogGroupKey: template.groupKey });
         dispatch('openDetails', { template });
     }
-    function amountLabel(template: CatalogTaskTemplate | CatalogRewardTemplate): string {
+    function amountLabel(template: CatalogTaskTemplate | CatalogRewardTemplate) {
         const amount = kind === 'task' ? (template as CatalogTaskTemplate).coins : (template as CatalogRewardTemplate).price;
-        return $i18n.t('app.telegram.readyCatalog.coins', { count: amount });
+        return { amount, coins: amount };
     }
     function freqLabel(template: CatalogTaskTemplate | CatalogRewardTemplate): string {
         return formatFrequency(template.frequencyLimit, template.frequencyPeriod);
@@ -97,10 +97,6 @@
 
 <div class="catalog">
     <div class="page-header">
-        <div>
-            <h1 id="catalog-title">{kind === 'task' ? $i18n.t('app.telegram.readyCatalog.taskTitle') : $i18n.t('app.telegram.readyCatalog.rewardTitle')}</h1>
-            <p class="desc">{kind === 'task' ? $i18n.t('app.telegram.readyCatalog.taskDescription') : $i18n.t('app.telegram.readyCatalog.rewardDescription')}</p>
-        </div>
         <button class="bulk-toggle" type="button" on:click={() => { bulkMode = !bulkMode; selectedIds = []; }}>
             {bulkMode ? $i18n.t('app.telegram.readyCatalog.done') : $i18n.t('app.telegram.readyCatalog.selectSeveral')}
         </button>
@@ -151,13 +147,13 @@
                         <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: template.title, group: template.groupName, semantic: template.semanticGraphicKey ?? null })} size={20} label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')} /></span>
                         <span class="entity-text">
                             <span class="title">{template.title}</span>
-                            <span class="meta">{amountLabel(template)} · {stripEmoji(template.groupName || '')}</span>
+                            <span class="meta"><TelegramCoin size={13} />{amountLabel(template).amount} · {stripEmoji(template.groupName || '')}</span>
                             <span class="meta">{freqLabel(template)}</span>
                         </span>
                     </button>
                     {#if !bulkMode}
                         {#if isAdded(template)}
-                            <span class="added"><TelegramIcon name="check" size={14} label={$i18n.t('app.telegram.readyCatalog.added')} /><span>{$i18n.t('app.telegram.readyCatalog.added')}</span></span>
+                            <button class="added" type="button" disabled><TelegramIcon name="check" size={16} label={$i18n.t('app.telegram.readyCatalog.added')} /></button>
                         {:else}
                             <button class="add" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.add')} on:click={() => addOne(template)}><TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.add')} /></button>
                         {/if}
@@ -183,10 +179,10 @@
 
 <style>
     .catalog { width:100%; }
-    .page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-bottom:.45rem; }
-    h1 { margin:0; color:#18243d; font-size:1.35rem; }
-    .desc { margin:.15rem 0 0; color:#66718a; font-size:.85rem; }
-    .bulk-toggle { min-height:2.5rem; padding:.35rem .6rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; white-space:nowrap; }
+    .page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; margin-bottom:.4rem; }
+    h1 { margin:0; color:#18243d; font-size:1.15rem; }
+    .desc { margin:.1rem 0 0; color:#66718a; font-size:.75rem; }
+    .bulk-toggle { min-height:2.25rem; padding:.3rem .5rem; border:0; border-radius:.6rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; white-space:nowrap; font-size:.85rem; }
     .search { display:flex; align-items:center; gap:.5rem; min-height:2.75rem; padding:0 .7rem; border:1px solid #dfe4ee; border-radius:.75rem; background:#fff; margin-bottom:.5rem; }
     .search input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#18243d; font:inherit; }
     .filterbar { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.6rem; }
@@ -201,8 +197,8 @@
     .entity-text { min-width:0; }
     .title { display:block; color:#18243d; font-size:.95rem; font-weight:600; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
     .meta { display:block; margin-top:.15rem; color:#66718a; font-size:.8rem; }
-    .add { display:inline-flex; align-items:center; justify-content:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
-    .added { display:inline-flex; align-items:center; gap:.3rem; min-height:2.5rem; padding:.35rem .6rem; border:1px solid #cbe8d7; border-radius:.7rem; background:#eaf7ef; color:#168552; font:inherit; font-weight:700; white-space:nowrap; }
+    .add { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #3867d6; border-radius:.5rem; background:#3867d6; color:#fff; cursor:pointer; }
+    .added { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #cbe8d7; border-radius:.5rem; background:#eaf7ef; color:#168552; cursor:default; }
     .check { width:1.5rem; height:1.5rem; flex:0 0 auto; display:grid; place-items:center; border:1.5px solid #b9c1cf; border-radius:.4rem; background:#fff; color:#fff; cursor:pointer; }
     .check.on { background:#3867d6; border-color:#3867d6; }
     .empty { padding:2rem 1rem; text-align:center; }

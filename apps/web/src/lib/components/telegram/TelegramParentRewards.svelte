@@ -133,8 +133,8 @@
     <div class="page-header">
         <h1 id="rewards-title">{$i18n.t('app.telegram.rewards.title')}</h1>
         <div class="header-actions">
-            {#if canEdit}<button class="add" type="button" on:click={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.rewards.addReward')} /><span>{$i18n.t('app.telegram.rewards.add')}</span></button>{/if}
-            <button class="catalog" type="button" on:click={() => catalogOpen = true}><TelegramIcon name="gift" size={18} label={$i18n.t('app.telegram.readyCatalog.catalogRewards')} /><span>{$i18n.t('app.telegram.readyCatalog.catalogRewards')}</span></button>
+            {#if canEdit}<button class="add" type="button" aria-label={$i18n.t('app.telegram.rewards.addReward')} on:click={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.rewards.addReward')} /></button>{/if}
+            <button class="catalog" type="button" on:click={() => catalogOpen = true}><TelegramIcon name="gift" size={18} label={$i18n.t('app.telegram.readyCatalog.catalogRewards')} /><span>{$i18n.t('app.telegram.tasks.catalogShort')}</span></button>
         </div>
     </div>
 
@@ -220,7 +220,7 @@
     .page-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.45rem; }
     h1 { margin:0; color:#18243d; font-size:1.35rem; }
     .header-actions { display:flex; align-items:center; gap:.25rem; }
-    .add { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
+    .add { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-width:2.75rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
     .catalog { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .list { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
