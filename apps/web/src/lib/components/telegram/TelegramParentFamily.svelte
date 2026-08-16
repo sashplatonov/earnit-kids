@@ -150,7 +150,6 @@
 <div class="family">
     <h1 id="family-title">{$i18n.t('app.telegram.family.title')}</h1>
 
-    <h2 class="section-title">{$i18n.t('app.telegram.family.children')}</h2>
     {#if !$appStore.children.length}
         <p class="muted">{$i18n.t('app.telegram.family.noChildren')}</p>
     {:else}
@@ -160,7 +159,7 @@
                     <button class:current={$appStore.currentChildId == child.id} class="childrow" type="button" disabled={switching} on:click={() => select(child.id)} aria-pressed={$appStore.currentChildId == child.id}>
                         <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
                         <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge"><TelegramIcon name="checkCircle" size={12} label={$i18n.t('app.telegram.family.currentChild')} />{$i18n.t('app.telegram.family.currentChild')}</span>{/if}</span>
-                        <span class="balance"><TelegramCoin size={14} />{child.balance}</span>
+                        {#if $appStore.currentChildId != child.id}<span class="balance"><TelegramCoin size={14} />{child.balance}</span>{/if}
                     </button>
                     <button class="childrow-more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: child.nickname })} on:click={() => openManage(child)}><TelegramIcon name="more" size={18} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
                 </div>
