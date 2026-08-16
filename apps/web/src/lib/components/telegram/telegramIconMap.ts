@@ -1,8 +1,10 @@
 import {
     Activity,
     Archive,
+    ArrowDown,
     ArrowLeft,
     ArrowRight,
+    ArrowUp,
     Award,
     Bath,
     BedSingle,
@@ -48,6 +50,7 @@ import {
     Key,
     Languages,
     Link,
+    ListOrdered,
     Mail,
     Medal,
     Minus,
@@ -126,6 +129,9 @@ export const telegramIconMap = {
     remove: Minus,
     home: House,
     arrowRight: ArrowRight,
+    arrowUp: ArrowUp,
+    arrowDown: ArrowDown,
+    reorder: ListOrdered,
     // ── semantic entity graphics ──────────────────────────────────────────
     sun: Sun,
     book: BookOpen,

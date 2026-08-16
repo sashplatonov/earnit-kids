@@ -38,6 +38,8 @@
     let error = '';
     let moveTargetOpen = false;
     let pendingDeleteGroup: string | null = null;
+    let reorderOpen = false;
+    let reorderDraft: string[] = [];
 
     $: title = kind === 'tasks'
         ? $i18n.t('app.telegram.groupManager.taskTitle')
@@ -188,6 +190,24 @@
         dispatch('deleteGroup', { group, moveTo });
     }
 
+    function openReorder() {
+        closeMenu(true);
+        reorderDraft = [...orderedGroups];
+        reorderOpen = true;
+    }
+    function moveReorder(index: number, delta: number) {
+        const next = [...reorderDraft];
+        const target = index + delta;
+        if (target < 0 || target >= next.length) return;
+        const [item] = next.splice(index, 1);
+        next.splice(target, 0, item);
+        reorderDraft = next;
+    }
+    function saveReorder() {
+        saveGroupOrder(reorderDraft, hiddenGroups);
+        reorderOpen = false;
+    }
+
     $: currentGraphic = getSemanticGraphic(groupIcon);
 </script>
 
@@ -217,9 +237,9 @@
                             {#if openMenuId === group}
                                 <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: group })}>
                                     <button role="menuitem" type="button" on:click={() => openEdit(group)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.groupManager.edit')} /><span>{$i18n.t('app.telegram.groupManager.edit')}</span></button>
-                                    <button role="menuitem" type="button" on:click={() => moveUp(group)}><TelegramIcon name="arrowRight" size={16} label={$i18n.t('app.telegram.groupManager.moveUp')} /><span>{$i18n.t('app.telegram.groupManager.moveUp')}</span></button>
-                                    <button role="menuitem" type="button" on:click={() => moveDown(group)}><TelegramIcon name="arrowRight" size={16} label={$i18n.t('app.telegram.groupManager.moveDown')} /><span>{$i18n.t('app.telegram.groupManager.moveDown')}</span></button>
+                                    <button role="menuitem" type="button" on:click={() => { closeMenu(true); reorderOpen = true; }}><TelegramIcon name="reorder" size={16} label={$i18n.t('app.telegram.groupManager.reorder')} /><span>{$i18n.t('app.telegram.groupManager.reorder')}</span></button>
                                     <button role="menuitem" type="button" on:click={() => toggleArchive(group)}><TelegramIcon name="archive" size={16} label={hiddenGroups.includes(group) ? $i18n.t('app.telegram.groupManager.unarchive') : $i18n.t('app.telegram.groupManager.archive')} /><span>{hiddenGroups.includes(group) ? $i18n.t('app.telegram.groupManager.unarchive') : $i18n.t('app.telegram.groupManager.archive')}</span></button>
+                                    <div class="menu-divider" role="presentation"></div>
                                     <button role="menuitem" class="danger" type="button" on:click={() => void removeGroup(group)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.groupManager.delete')} /><span>{$i18n.t('app.telegram.groupManager.delete')}</span></button>
                                 </div>
                             {/if}
@@ -271,6 +291,27 @@
     </div>
 {/if}
 
+{#if reorderOpen}
+    <div class="sheet-backdrop" role="presentation" on:click={() => reorderOpen = false}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reorder-title" tabindex="-1">
+        <h2 id="reorder-title">{$i18n.t('app.telegram.groupManager.reorderTitle')}</h2>
+        <div class="list" role="list">
+            {#each reorderDraft as group, index (group)}
+                <div class="row" role="listitem">
+                    <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: kind === 'tasks' ? 'task' : 'reward', group })} size={20} label={group} /></span>
+                    <span class="entity-text"><span class="title">{group}</span></span>
+                    <div class="reorder-actions">
+                        <button class="reorder-btn" type="button" aria-label={$i18n.t('app.telegram.groupManager.moveUp')} disabled={index === 0} on:click={() => moveReorder(index, -1)}><TelegramIcon name="arrowUp" size={18} label={$i18n.t('app.telegram.groupManager.moveUp')} /></button>
+                        <button class="reorder-btn" type="button" aria-label={$i18n.t('app.telegram.groupManager.moveDown')} disabled={index === reorderDraft.length - 1} on:click={() => moveReorder(index, 1)}><TelegramIcon name="arrowDown" size={18} label={$i18n.t('app.telegram.groupManager.moveDown')} /></button>
+                    </div>
+                </div>
+            {/each}
+        </div>
+        <button class="primary" type="button" on:click={saveReorder}>{$i18n.t('app.telegram.groupManager.done')}</button>
+        <button class="close" type="button" on:click={() => reorderOpen = false}>{$i18n.t('app.telegram.groupManager.cancel')}</button>
+    </div>
+{/if}
+
 <style>
     .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
     .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
@@ -291,6 +332,10 @@
     .menu button { display:flex; align-items:center; gap:.55rem; width:100%; min-height:2.75rem; padding:.4rem .6rem; border:0; border-radius:.5rem; background:transparent; color:#33415f; font:inherit; text-align:left; cursor:pointer; }
     .menu button:hover { background:#f2f5ff; }
     .menu button.danger { color:#c63c42; }
+    .menu-divider { height:1px; margin:.25rem 0; background:#edf0f5; }
+    .reorder-actions { display:flex; align-items:center; gap:.25rem; flex:0 0 auto; }
+    .reorder-btn { width:2.5rem; height:2.5rem; display:grid; place-items:center; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#66718a; cursor:pointer; }
+    .reorder-btn:disabled { opacity:.4; cursor:not-allowed; }
     .muted { color:#66718a; }
     .close { width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
     label { display:block; margin:.6rem 0 .3rem; color:#33415f; font-weight:600; font-size:.85rem; }
