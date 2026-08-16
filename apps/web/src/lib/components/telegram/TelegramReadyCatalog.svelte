@@ -75,6 +75,8 @@
         const selected = filtered.filter((item) => selectedIds.includes(item.id));
         track('catalog_bulk_add', { bulkCount: selected.length });
         dispatch('addMany', { templates: selected, groupName: null });
+        selectedIds = [];
+        bulkMode = false;
     }
     function openDetails(template: CatalogTaskTemplate | CatalogRewardTemplate) {
         track('catalog_details_opened', { catalogGroupKey: template.groupKey });

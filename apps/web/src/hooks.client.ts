@@ -1,5 +1,7 @@
-import { initNewRelicBrowser, noticeBrowserError } from '$lib/observability/newrelic';
+import { initNewRelicBrowser, logBrowser, noticeBrowserError } from '$lib/observability/newrelic';
 import { installGlobalClientLogging, logClientError } from '$lib/logging/clientLogger';
+import { recordCatalogEvent } from '$lib/services/catalogTelemetry';
+import { recordReadyCatalogEvent } from '$lib/services/readyCatalogTelemetry';
 
 let initialized = false;
 
@@ -11,6 +13,17 @@ export async function init(): Promise<void> {
     initialized = true;
     await initNewRelicBrowser();
     installGlobalClientLogging();
+
+    if (typeof window !== 'undefined') {
+        window.addEventListener('catalog:telemetry', (event: Event) => {
+            const detail = (event as CustomEvent).detail;
+            if (detail == null) return;
+            logBrowser('info', 'catalog_telemetry', JSON.stringify(detail), detail);
+        });
+        // Force-load both telemetry modules so their event dispatchers are bound.
+        recordCatalogEvent({ name: 'noop' });
+        recordReadyCatalogEvent({ name: 'noop', type: 'TASK' });
+    }
 }
 
 type ClientErrorInput = {

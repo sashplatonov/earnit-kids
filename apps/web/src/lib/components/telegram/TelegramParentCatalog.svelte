@@ -1,8 +1,9 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
-    import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate } from '$lib/stores/app';
+    import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate, type Child } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { mapGroupKeyToFamily, templateToReward, templateToTask } from '$lib/services/catalogFilter';
+    import { applyGroupOrderToChildren, getEffectiveGroupOrder, type GroupOrderSection } from '$lib/services/groupOrder';
     import { recordReadyCatalogEvent } from '$lib/services/readyCatalogTelemetry';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramReadyCatalog from './TelegramReadyCatalog.svelte';
@@ -13,6 +14,12 @@
     export let onBack: () => void = () => {};
 
     const i18n = useI18n();
+
+    $: isAdmin = $appStore.isAdmin;
+    $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
+    $: currentChild = ($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
+        ?? $appStore.children[0]
+        ?? null) as Child | null;
 
     $: familyItems = kind === 'task' ? $appStore.tasks : $appStore.shopItems;
     $: familyGroups = [...new Set(familyItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
@@ -89,13 +96,24 @@
     }
 
     function applyAdd(templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>, groupName: string | null) {
+        const section: GroupOrderSection = kind === 'task' ? 'tasks' : 'shop';
+        const nextItems = kind === 'task'
+            ? templates.map((template) => templateToTask(template as CatalogTaskTemplate, groupName))
+            : templates.map((template) => templateToReward(template as CatalogRewardTemplate, groupName));
+
+        const patch: Partial<import('$lib/stores/app').AppState> = { children: $appStore.children };
         if (kind === 'task') {
-            const newTasks = templates.map((template) => templateToTask(template as CatalogTaskTemplate, groupName));
-            appStore.setState({ tasks: [...$appStore.tasks, ...newTasks] });
+            patch.tasks = [...$appStore.tasks, ...(nextItems as import('$lib/stores/app').Task[])];
         } else {
-            const newItems = templates.map((template) => templateToReward(template as CatalogRewardTemplate, groupName));
-            appStore.setState({ shopItems: [...$appStore.shopItems, ...newItems] });
+            patch.shopItems = [...$appStore.shopItems, ...(nextItems as import('$lib/stores/app').ShopItem[])];
         }
+
+        if (groupName && currentChild && resolvedChildId && !getEffectiveGroupOrder(currentChild, section, isAdmin).includes(groupName)) {
+            const nextOrder = [...getEffectiveGroupOrder(currentChild, section, isAdmin), groupName];
+            patch.children = applyGroupOrderToChildren($appStore.children, resolvedChildId, section, isAdmin, nextOrder);
+        }
+
+        appStore.setState(patch);
         void scheduleSave();
         detailsOpen = false;
         bulkSummaryOpen = false;

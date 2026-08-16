@@ -56,7 +56,6 @@ final class FamilyCommandMutationService {
             if (taskId == null || name == null || name.isBlank()) {
                 continue;
             }
-
             taskRepository.upsertTask(new TaskUpsertCommand(
                 familyDbId,
                 selectedChildId,
@@ -88,7 +87,8 @@ final class FamilyCommandMutationService {
                     payloadService.coalesceFirst(task.get("isActive"), task.get("is_active")),
                     true
                 ),
-                payloadService.defaultBoolean(task.get("isDeleted"), false)
+                payloadService.defaultBoolean(task.get("isDeleted"), false),
+                payloadService.asLong(task.get("sourceCatalogItemId"))
             ));
         }
     }
@@ -127,7 +127,8 @@ final class FamilyCommandMutationService {
                 payloadService.firstNonBlank(
                     payloadService.asString(item.get("icon")),
                     payloadService.asString(item.get("graphic"))
-                )
+                ),
+                payloadService.asLong(item.get("sourceCatalogItemId"))
             ));
         }
         clearInvalidRewardGoal(familyDbId, selectedChildId);

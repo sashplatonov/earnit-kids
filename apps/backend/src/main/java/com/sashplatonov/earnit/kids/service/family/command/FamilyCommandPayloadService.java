@@ -87,6 +87,9 @@ final class FamilyCommandPayloadService {
     }
 
     Long asLong(Object value) {
+        if (value == null) {
+            return null;
+        }
         if (value instanceof Number number) {
             return number.longValue();
         }

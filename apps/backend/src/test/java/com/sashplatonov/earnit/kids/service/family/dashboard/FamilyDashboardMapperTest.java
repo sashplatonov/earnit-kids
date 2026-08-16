@@ -79,4 +79,38 @@ class FamilyDashboardMapperTest {
         assertThat(shopDto.lastPurchasedAt()).isNull();
         assertThat(shopDto.frequency()).isEqualTo("weekly");
     }
+
+    @Test
+    void mapsTaskAndShopSourceCatalogItemId() throws Exception {
+        TaskEntity task = TaskEntity.builder()
+            .taskId(11L)
+            .childId(7)
+            .name("Read")
+            .coins(5)
+            .groupName("Study")
+            .frequency(OBJECT_MAPPER.readTree("{\"limit\":1,\"period\":\"day\"}"))
+            .comment("Pages")
+            .moneyLimit(300)
+            .active(true)
+            .sourceCatalogItemId(101L)
+            .build();
+        ShopItemEntity shopItem = ShopItemEntity.builder()
+            .itemId(22L)
+            .childId(7)
+            .name("Toy")
+            .price(9)
+            .groupName("Fun")
+            .frequency(OBJECT_MAPPER.readTree("\"weekly\""))
+            .comment("Prize")
+            .moneyLimit(200)
+            .active(false)
+            .sourceCatalogItemId(202L)
+            .build();
+
+        var taskDto = mapper.toTaskDto(task, null, OBJECT_MAPPER);
+        var shopDto = mapper.toShopItemDto(shopItem, null, OBJECT_MAPPER);
+
+        assertThat(taskDto.sourceCatalogItemId()).isEqualTo(101L);
+        assertThat(shopDto.sourceCatalogItemId()).isEqualTo(202L);
+    }
 }

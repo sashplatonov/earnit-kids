@@ -34,10 +34,11 @@ const allowedNames = new Set<ReadyCatalogEventName>([
 
 export function sanitizeReadyCatalogTelemetry(input: Record<string, unknown>): ReadyCatalogTelemetryEvent | null {
     if (!allowedNames.has(input.name as ReadyCatalogEventName)) return null;
-    if (input.type !== 'TASK' && input.type !== 'REWARD') return null;
+    const type = input.type === 'TASK' ? 'TASK' : input.type === 'REWARD' ? 'REWARD' : null;
+    if (type == null) return null;
     const event: ReadyCatalogTelemetryEvent = {
         name: input.name as ReadyCatalogEventName,
-        type: input.type,
+        type,
     };
     if (typeof input.catalogGroupKey === 'string' && input.catalogGroupKey) {
         event.catalogGroupKey = input.catalogGroupKey;

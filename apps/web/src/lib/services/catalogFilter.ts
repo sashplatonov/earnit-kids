@@ -112,6 +112,13 @@ export function catalogGroups<T extends { groupName?: string }>(items: readonly 
     return seen;
 }
 
+/** Create a deterministic local-only id. */
+function generateLocalId(): string {
+    const time = Date.now().toString(36);
+    const random = Math.random().toString(36).slice(2, 8);
+    return `${time}-${random}`;
+}
+
 /**
  * Duplicate detection: a family item is a copy of a catalog template when it
  * carries the same `sourceCatalogItemId`, or when its normalized title matches
@@ -147,6 +154,7 @@ export function formatFrequency(limit: number | null | undefined, period: string
         year: 'год',
     };
     const label = periodLabel[resolvedPeriod] ?? 'неделю';
+    if (resolvedLimit == null || resolvedLimit === 0) return `Без лимита`;
     if (resolvedLimit === 1) return `1 раз в ${label}`;
     if (resolvedLimit === 2) return `2 раза в ${label}`;
     return `${resolvedLimit} раз в ${label}`;
@@ -183,7 +191,7 @@ export function mapGroupKeyToFamily(
 /** Build a family Task from a catalog template (copy operation). */
 export function templateToTask(template: CatalogTaskTemplate, groupName: string | null): Task {
     return {
-        id: Date.now() + Math.random(),
+        id: generateLocalId(),
         name: template.title,
         coins: template.coins,
         groupName,
@@ -200,7 +208,7 @@ export function templateToTask(template: CatalogTaskTemplate, groupName: string 
 /** Build a family ShopItem from a catalog template (copy operation). */
 export function templateToReward(template: CatalogRewardTemplate, groupName: string | null): ShopItem {
     return {
-        id: Date.now() + Math.random(),
+        id: generateLocalId(),
         name: template.title,
         price: template.price,
         groupName,

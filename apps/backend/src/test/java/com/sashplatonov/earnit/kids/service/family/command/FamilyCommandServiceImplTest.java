@@ -129,6 +129,52 @@ class FamilyCommandServiceImplTest {
             ArgumentCaptor.forClass(ShopItemUpsertCommand.class);
         verify(shopItemRepository).upsertShopItem(shopCommandCaptor.capture());
         assertThat(shopCommandCaptor.getValue().name()).isEqualTo("Toy");
+
+        assertThat(taskCommandCaptor.getValue().sourceCatalogItemId()).isNull();
+        assertThat(shopCommandCaptor.getValue().sourceCatalogItemId()).isNull();
+    }
+
+    @Test
+    void saveFamilyData_preservesSourceCatalogItemId() {
+        ChildEntity child = child(10, 1, "Alice", 10);
+        FamilyDataResponse payload = new FamilyDataResponse(10, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(familyRepository.getRules("fam-1")).thenReturn(Optional.empty());
+        when(childRepository.getChildren(1)).thenReturn(List.of(child));
+        when(familyDashboardQueryService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
+
+        Map<String, Object> commandPayload = new LinkedHashMap<>();
+        Map<String, Object> taskItem = new LinkedHashMap<>();
+        taskItem.put("id", 101L);
+        taskItem.put("name", "Read");
+        taskItem.put("coins", 5);
+        taskItem.put("group", "Home");
+        taskItem.put("sourceCatalogItemId", 1001L);
+        commandPayload.put("tasks", List.of(taskItem));
+
+        Map<String, Object> shopItem = new LinkedHashMap<>();
+        shopItem.put("id", 201L);
+        shopItem.put("name", "Toy");
+        shopItem.put("price", 7);
+        shopItem.put("group", "Fun");
+        shopItem.put("sourceCatalogItemId", 2001L);
+        commandPayload.put("shop", List.of(shopItem));
+
+        OperationResult<FamilyDataResponse> result = service.saveFamilyData("fam-1", 10, commandPayload, false);
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+
+        verify(taskRepository).markAllTasksDeleted(10);
+        verify(shopItemRepository).markAllShopItemsDeleted(10);
+
+        ArgumentCaptor<TaskUpsertCommand> taskCommandCaptor = ArgumentCaptor.forClass(TaskUpsertCommand.class);
+        verify(taskRepository).upsertTask(taskCommandCaptor.capture());
+        assertThat(taskCommandCaptor.getValue().sourceCatalogItemId()).isEqualTo(1001L);
+
+        ArgumentCaptor<ShopItemUpsertCommand> shopCommandCaptor =
+            ArgumentCaptor.forClass(ShopItemUpsertCommand.class);
+        verify(shopItemRepository).upsertShopItem(shopCommandCaptor.capture());
+        assertThat(shopCommandCaptor.getValue().sourceCatalogItemId()).isEqualTo(2001L);
     }
 
     @Test

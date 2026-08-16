@@ -29,6 +29,7 @@ public interface FamilyDashboardMapper {
     @Mapping(target = "isActive", source = "task.active")
     @Mapping(target = "lastCompletedAt", source = "lastCompletedAt")
     @Mapping(target = "periodProgress", source = "periodProgress")
+    @Mapping(target = "sourceCatalogItemId", source = "task.sourceCatalogItemId")
     TaskDto toTaskDto(TaskEntity task, String lastCompletedAt, TaskPeriodProgressDto periodProgress,
                       @Context ObjectMapper objectMapper);
 
@@ -39,6 +40,7 @@ public interface FamilyDashboardMapper {
     @Mapping(target = "id", source = "shopItem.itemId")
     @Mapping(target = "isActive", source = "shopItem.active")
     @Mapping(target = "lastPurchasedAt", source = "lastPurchasedAt")
+    @Mapping(target = "sourceCatalogItemId", source = "shopItem.sourceCatalogItemId")
     ShopItemDto toShopItemDto(ShopItemEntity shopItem, String lastPurchasedAt, @Context ObjectMapper objectMapper);
 
     default List<String> map(String rawGroupOrder, @Context ObjectMapper objectMapper) {

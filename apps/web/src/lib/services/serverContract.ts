@@ -73,6 +73,7 @@ export function normalizeTask(task: Record<string, unknown> = {}) {
         childId: (task.childId ?? null) as unknown,
         frequency: (task.frequency ?? null) as unknown,
         periodProgress: normalizeTaskPeriodProgress(task.periodProgress ?? task.period_progress),
+        sourceCatalogItemId: (task.sourceCatalogItemId ?? task.source_catalog_item_id ?? null) as unknown,
     };
 }
 
@@ -127,6 +128,7 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
         ageMax: item.ageMax ?? item.age_max ?? null,
         lastPurchasedAt: item.lastPurchasedAt ?? item.last_purchased_at ?? null,
         childId: (item.childId ?? null) as unknown,
+        sourceCatalogItemId: (item.sourceCatalogItemId ?? item.source_catalog_item_id ?? null) as unknown,
     };
 }
 

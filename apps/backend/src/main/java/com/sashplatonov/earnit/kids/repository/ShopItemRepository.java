@@ -74,6 +74,7 @@ public class ShopItemRepository implements PanacheRepositoryBase<ShopItemEntity,
             shopItem.setMoneyLimit(command.moneyLimit());
             shopItem.setActive(command.active());
             shopItem.setDeleted(command.deleted());
+            shopItem.setSourceCatalogItemId(command.sourceCatalogItemId());
         } else {
             persist(ShopItemEntity.builder()
                 .familyId(command.familyDbId())
@@ -88,6 +89,7 @@ public class ShopItemRepository implements PanacheRepositoryBase<ShopItemEntity,
                 .moneyLimit(command.moneyLimit())
                 .active(command.active())
                 .deleted(command.deleted())
+                .sourceCatalogItemId(command.sourceCatalogItemId())
                 .build());
         }
         return true;

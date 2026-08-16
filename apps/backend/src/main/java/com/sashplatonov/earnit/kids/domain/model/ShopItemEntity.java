@@ -69,4 +69,7 @@ public class ShopItemEntity extends CreatedAtEntity {
     @Column(name = "is_deleted")
     @Builder.Default
     private boolean deleted = false;
+
+    @Column(name = "source_catalog_item_id")
+    private Long sourceCatalogItemId;
 }

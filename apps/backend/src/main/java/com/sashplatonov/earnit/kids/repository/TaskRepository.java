@@ -67,6 +67,7 @@ public class TaskRepository implements PanacheRepositoryBase<TaskEntity, Long> {
             task.setMoneyLimit(command.moneyLimit());
             task.setActive(command.active());
             task.setDeleted(command.deleted());
+            task.setSourceCatalogItemId(command.sourceCatalogItemId());
         } else {
             persist(TaskEntity.builder()
                 .familyId(command.familyDbId())
@@ -83,6 +84,7 @@ public class TaskRepository implements PanacheRepositoryBase<TaskEntity, Long> {
                 .moneyLimit(command.moneyLimit())
                 .active(command.active())
                 .deleted(command.deleted())
+                .sourceCatalogItemId(command.sourceCatalogItemId())
                 .build());
         }
         return true;
