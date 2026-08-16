@@ -420,6 +420,17 @@ export const startTelegramAccountLink = () =>
 export const unlinkTelegramAccount = () =>
     deleteJsonResult<void>('/api/telegram/account-connection');
 
+/** Create a single-use Telegram invite that binds a second parent to the family. */
+export async function createParentTelegramInvite(): Promise<{ launchUrl: string } | null> {
+    const result = await postJsonResult<{ launchUrl: string }>('/api/telegram/parents/invite', {});
+    return result.ok ? result.data : null;
+}
+
+/** Accept a parent Telegram invite: binds the Telegram user and joins the family. */
+export async function acceptParentTelegramInvite(token: string, email: string, initData: string): Promise<ApiActionResult<void>> {
+    return postJsonResult<void>('/api/telegram/parents/invite/accept', { token, email, initData });
+}
+
 export async function loadParentMemberships(): Promise<ApiActionResult<ParentMembership[]>> {
     try {
         const res = await fetchWithCsrf('/api/parents');

@@ -54,6 +54,8 @@ import {
     getAccountConnection,
     changeAccountEmail,
     unlinkAccountEmail,
+    createParentTelegramInvite,
+    acceptParentTelegramInvite,
 } from '../../src/lib/services/api';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -824,5 +826,27 @@ describe('fetchWithCsrf', () => {
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
         expect(url).toBe('/api/account/email/unlink');
         expect(init.body).toBe(JSON.stringify({}));
+    });
+
+    it('creates a parent Telegram invite link', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ launchUrl: 'https://t.me/bot?startapp=pi_abc' }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        await expect(createParentTelegramInvite()).resolves.toEqual({ launchUrl: 'https://t.me/bot?startapp=pi_abc' });
+        const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/telegram/parents/invite');
+    });
+
+    it('accepts a parent Telegram invite with email and initData', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true, data: null }));
+        vi.stubGlobal('fetch', fetchMock);
+        setBrowserGlobals();
+
+        const result = await acceptParentTelegramInvite('pi_token', 'maria@example.com', 'signed-init');
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/telegram/parents/invite/accept');
+        expect(init.body).toBe(JSON.stringify({ token: 'pi_token', email: 'maria@example.com', initData: 'signed-init' }));
+        expect(result.ok).toBe(true);
     });
 });

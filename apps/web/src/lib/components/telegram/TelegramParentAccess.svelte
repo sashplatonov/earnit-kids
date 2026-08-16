@@ -3,6 +3,7 @@
     import { useI18n } from '$lib/i18n/context';
     import {
         addParentMembership,
+        createParentTelegramInvite,
         deactivateParentMembership,
         loadParentMemberships,
         reactivateParentMembership,
@@ -23,6 +24,8 @@
     let view: 'list' | 'choose' | 'email' | 'telegram' = 'list';
     let email = '';
     let busy = false;
+    let inviteLink = '';
+    let copied = false;
     let actionBusy = false;
 
     // EXPLAIN: In the Telegram flow $appStore.permission is not populated (the
@@ -62,6 +65,26 @@
             await reload();
         } else {
             error = result.error || $i18n.t('app.telegram.parents.error');
+        }
+    }
+
+    async function createTelegramLink() {
+        busy = true; error = '';
+        const result = await createParentTelegramInvite();
+        busy = false;
+        if (result?.launchUrl) {
+            inviteLink = result.launchUrl;
+        } else {
+            error = $i18n.t('app.telegram.parents.error');
+        }
+    }
+
+    async function copyLink() {
+        try {
+            await navigator.clipboard.writeText(inviteLink);
+            copied = true;
+        } catch {
+            copied = false;
         }
     }
 
@@ -177,9 +200,13 @@
             <button class="close" type="button" on:click={() => view = 'choose'}>{$i18n.t('app.telegram.emailSettings.cancel')}</button>
         {:else}
             <p class="confirm-meta">{$i18n.t('app.telegram.parents.telegramHint')}</p>
-            <label for="parent-email-tg">{$i18n.t('app.telegram.parents.emailLabel')}</label>
-            <input id="parent-email-tg" class="input" type="email" bind:value={email} placeholder="name@example.com" />
-            <button class="primary" type="button" disabled={busy} on:click={sendEmailInvite}>{$i18n.t('app.telegram.parents.sendInvite')}</button>
+            {#if !inviteLink}
+                <button class="primary" type="button" disabled={busy} on:click={createTelegramLink}>{$i18n.t('app.telegram.parents.createLink')}</button>
+            {:else}
+                <p class="confirm-meta"><strong>{$i18n.t('app.telegram.parents.linkReady')}</strong></p>
+                <button class="primary" type="button" on:click={copyLink}>{copied ? $i18n.t('app.telegram.parents.copied') : $i18n.t('app.telegram.parents.copyLink')}</button>
+                <button class="close" type="button" on:click={() => { inviteLink = ''; copied = false; }}>{$i18n.t('app.telegram.parents.createNew')}</button>
+            {/if}
             <button class="close" type="button" on:click={() => view = 'choose'}>{$i18n.t('app.telegram.emailSettings.cancel')}</button>
         {/if}
 

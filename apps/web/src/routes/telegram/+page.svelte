@@ -6,6 +6,7 @@
         exchangeTelegramInitData,
         initializeTelegramWebApp,
     } from '$lib/services/telegram';
+    import { acceptParentTelegramInvite } from '$lib/services/api';
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
     import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
     import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
@@ -14,10 +15,13 @@
 
     export let data: { publicOrigin?: string };
 
-    type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram';
+    type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram' | 'parent-invite';
     let state: State = 'loading';
     let message = '';
     let verifiedRole = '';
+    let parentInviteToken = '';
+    let inviteEmail = '';
+    let inviteBusy = false;
 
     async function errorCode(response: Response): Promise<string | null> {
         try {
@@ -55,6 +59,12 @@
         try {
             const rawStartParam = telegram.initDataUnsafe?.start_param
                 ?? new URLSearchParams(window.location.search).get('tgWebAppStartParam');
+            const parentInvite = rawStartParam?.startsWith('pi_') ? rawStartParam : '';
+            if (parentInvite) {
+                parentInviteToken = parentInvite;
+                state = 'parent-invite';
+                return;
+            }
             const pairingToken = rawStartParam && isHexToken(rawStartParam) ? rawStartParam : '';
             let pairingFailed = false;
             const childInviteToken = rawStartParam?.startsWith('ci_') ? rawStartParam : '';
@@ -89,6 +99,25 @@
         }
     }
 
+    async function submitParentInvite(): Promise<void> {
+        if (!inviteEmail.trim() || inviteBusy) return;
+        inviteBusy = true;
+        message = '';
+        const telegram = initializeTelegramWebApp();
+        const initData = telegram?.initData ?? '';
+        const result = await acceptParentTelegramInvite(parentInviteToken, inviteEmail.trim(), initData);
+        inviteBusy = false;
+        if (result.ok) {
+            parentInviteToken = '';
+            inviteEmail = '';
+            state = 'loading';
+            await authenticate();
+        } else {
+            state = 'parent-invite';
+            message = result.error || $i18n.t('app.telegram.parents.error');
+        }
+    }
+
     onMount(() => {
         void authenticate();
     });
@@ -115,6 +144,11 @@
                 <p>{$i18n.t('app.telegram.entry.unlinked')}</p>
                 <a class="telegram-action" href="/login">{$i18n.t('app.telegram.entry.signInLink')}</a>
                 <p class="telegram-hint">{$i18n.t('app.telegram.entry.childHint')}</p>
+            {:else if state === 'parent-invite'}
+                <p>{$i18n.t('app.telegram.entry.parentInviteHint')}</p>
+                <input class="telegram-input" type="email" bind:value={inviteEmail} placeholder="name@example.com" />
+                <button class="telegram-action" type="button" disabled={inviteBusy} on:click={() => void submitParentInvite()}>{$i18n.t('app.telegram.entry.acceptInvite')}</button>
+                {#if message}<p class="telegram-hint">{message}</p>{/if}
             {:else}
                 <p>{message || $i18n.t('app.telegram.entry.resolveError')}</p>
                 <TelegramActionButton icon="refresh" label={$i18n.t('app.telegram.entry.tryAgain')} on:click={() => void authenticate()} />
@@ -174,6 +208,17 @@
         font: inherit;
         text-decoration: none;
         cursor: pointer;
+    }
+
+    .telegram-input {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 2.75rem;
+        margin-top: 1.25rem;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #cfd6e4;
+        border-radius: 0.75rem;
+        font: inherit;
     }
 
     .telegram-hint {
