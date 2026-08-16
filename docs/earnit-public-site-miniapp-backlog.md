@@ -228,7 +228,7 @@ git commit -m "feat(web): parent completes task or grants reward directly in Min
 
 ## P2-5: Актуальные скриншоты Mini App на публичном сайте
 
-**Status:** ⬜ Not started
+**Status:** ⛔ Blocked — требуется работающий авторизованный экземпляр Mini App (Telegram-сессия и реальные данные семьи) для съёмки скриншотов вручную; автономно получить их нельзя.
 **Priority:** P2
 **Depends on:** -
 
@@ -279,7 +279,7 @@ git commit -m "docs(web): refresh Mini App screenshots on public site"
 
 ## P2-6: Оптимизация медленных флоу Mini App и Telegram-бота (20/80)
 
-**Status:** ⬜ Not started
+**Status:** ⛔ Blocked — критерии приёмки требуют замера реальных задержек на работающем авторизованном окружении Mini App и бота до любых изменений; автономно получить измерение нельзя, поэтому оптимизация вслепую исключена.
 **Priority:** P2
 **Depends on:** -
 
