@@ -2,10 +2,8 @@ package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventEntity;
 import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventType;
-import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
-import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,15 +16,12 @@ import java.util.Optional;
 // EXPLAIN: so the composer stays within the PMD GodClass guardrail (SRP).
 @ApplicationScoped
 public class TelegramChildOutcomeText {
-    private final ChildRepository children;
     private final PurchaseRequestRepository requests;
     private final ShopItemRepository shopItems;
 
     @Inject
-    public TelegramChildOutcomeText(ChildRepository children,
-                                    PurchaseRequestRepository requests,
+    public TelegramChildOutcomeText(PurchaseRequestRepository requests,
                                     ShopItemRepository shopItems) {
-        this.children = children;
         this.requests = requests;
         this.shopItems = shopItems;
     }
@@ -60,7 +55,8 @@ public class TelegramChildOutcomeText {
         return switch (event.getEventType()) {
             case TASK_APPROVED -> TelegramParentActionCopy.taskCompleted(delta,
                 balance == null ? 0 : balance);
-            case REWARD_PURCHASED -> TelegramParentActionCopy.rewardGranted();
+            case REWARD_PURCHASED -> TelegramParentActionCopy.rewardGranted(delta,
+                balance == null ? 0 : balance);
             default -> generic(event);
         };
     }

@@ -44,7 +44,7 @@ public class TelegramNotificationComposer {
                                  ShopItemRepository shopItems,
                                  TelegramCallbackService callbacks) {
         this(children, requests, shopItems, callbacks,
-            new TelegramChildOutcomeText(children, requests, shopItems));
+            new TelegramChildOutcomeText(requests, shopItems));
     }
 
     public List<TelegramBotApiClient.InlineButton> buttons(ApplicationOutboxEventEntity event) {

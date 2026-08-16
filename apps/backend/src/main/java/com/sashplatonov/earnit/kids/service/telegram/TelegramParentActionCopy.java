@@ -13,7 +13,9 @@ public final class TelegramParentActionCopy {
             + "\nБаланс: " + balance;
     }
 
-    public static String rewardGranted() {
-        return TelegramBotEmoji.CELEBRATE + " Родитель выдал награду";
+    public static String rewardGranted(int delta, int balance) {
+        return TelegramBotEmoji.CELEBRATE + " Родитель выдал награду\n\n"
+            + TelegramBotEmoji.COINS + " " + delta + " " + TelegramCopy.moneta(delta)
+            + "\nБаланс: " + balance;
     }
 }

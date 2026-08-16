@@ -149,7 +149,7 @@ class TelegramOutboxProcessorTest {
         assertThat(processor.process(now)).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo("SENT");
         verify(api).sendMessage(78L,
-            "🎉 Родитель выдал награду",
+            "🎉 Родитель выдал награду\n\n🪙 -50 монет\nБаланс: 95",
             List.of());
     }
 }
