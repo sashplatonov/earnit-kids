@@ -154,7 +154,7 @@ export const appMessages = {
             refreshing: 'Refreshing…',
             refreshingWorkspace: 'Refreshing workspace',
             retry: 'Retry',
-            today: 'Today',
+            tasks: 'Tasks',
             rewards: 'Rewards',
             activity: 'Activity',
             exitPreview: 'Back to parent',
@@ -304,6 +304,9 @@ export const appMessages = {
             taskChanged: 'This task changed. Your list was refreshed.',
             limitReached: 'Limit reached',
             todayProgress: 'Today progress',
+            noTasks: 'No tasks yet.',
+            request: 'Complete',
+            pending: 'Pending',
         },
         childRewards: {
             rewardsTitle: 'Rewards',

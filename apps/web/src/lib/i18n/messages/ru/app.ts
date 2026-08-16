@@ -154,7 +154,7 @@ export const appMessages = {
             refreshing: 'Обновляем…',
             refreshingWorkspace: 'Обновление пространства',
             retry: 'Повторить',
-            today: 'Сегодня',
+            tasks: 'Задания',
             rewards: 'Награды',
             activity: 'Активность',
             exitPreview: 'Вернуться к родителю',
@@ -304,6 +304,9 @@ export const appMessages = {
             taskChanged: 'Задание изменилось. Список обновлён.',
             limitReached: 'Достигнут лимит',
             todayProgress: 'Прогресс за сегодня',
+            noTasks: 'Заданий пока нет.',
+            request: 'Выполнить',
+            pending: 'Ожидает',
         },
         childRewards: {
             rewardsTitle: 'Награды',
