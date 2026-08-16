@@ -28,7 +28,11 @@
     let copied = false;
     let actionBusy = false;
 
-    $: isAdmin = $appStore.permission === 'family_admin';
+    // EXPLAIN: In the Telegram flow $appStore.permission is not populated (the
+    // EXPLAIN: /api/data response carries isAdmin only), so also trust isAdmin
+    // EXPLAIN: so parent management buttons (deactivate/reactivate, transfer,
+    // EXPLAIN: invite) stay visible for family admins.
+    $: isAdmin = $appStore.isAdmin || $appStore.permission === 'family_admin';
     $: children = $appStore.children;
 
     $: if (open) void reload();
