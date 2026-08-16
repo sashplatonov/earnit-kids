@@ -11,6 +11,7 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRequestList from './TelegramRequestList.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
+    import { formatLastUsedTime } from './telegramLastUsed';
 
     const i18n = useI18n();
 
@@ -115,7 +116,7 @@
     {:else}
         <div class="activity" aria-label={$i18n.t('app.telegram.home.recentActivity')}>
             {#each history as entry (entry.id)}
-                <div class="a"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: entry.type === 'purchase' || entry.type === 'spend' ? 'reward' : 'task', title: entry.description || entry.title || entry.taskName || entry.itemName || '', group: entry.groupName })} size={18} label={$i18n.t('app.telegram.home.activity')} /></span><span class="grow"><span class="title">{stripLeadingEmoji(entry.description || entry.title || entry.taskName || entry.itemName || $i18n.t('app.telegram.home.activity'))}</span><span class="meta">{entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : $i18n.t('app.telegram.home.recently')}</span></span><strong class:spend={entry.amount < 0}><TelegramCoin size={13} />{entry.amount > 0 ? '+' : ''}{entry.amount}</strong></div>
+                <div class="a"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: entry.type === 'purchase' || entry.type === 'spend' ? 'reward' : 'task', title: entry.description || entry.title || entry.taskName || entry.itemName || '', group: entry.groupName })} size={18} label={$i18n.t('app.telegram.home.activity')} /></span><span class="grow"><span class="title">{stripLeadingEmoji(entry.description || entry.title || entry.taskName || entry.itemName || $i18n.t('app.telegram.home.activity'))}</span><span class="meta">{entry.createdAt ? formatLastUsedTime(entry.createdAt, $i18n.locale) : $i18n.t('app.telegram.home.recently')}</span></span><strong class:spend={entry.amount < 0}><TelegramCoin size={13} />{entry.amount > 0 ? '+' : ''}{entry.amount}</strong></div>
             {/each}
         </div>
         {#if showFullHistory && historyHasMore}
