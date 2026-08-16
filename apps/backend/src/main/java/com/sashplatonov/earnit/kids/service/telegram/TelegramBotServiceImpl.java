@@ -5,12 +5,12 @@ import com.sashplatonov.earnit.kids.config.TelegramConfig;
 import com.sashplatonov.earnit.kids.dto.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
-import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.jboss.logging.Logger;
 
+import java.net.URI;
 import java.util.List;
 
 @ApplicationScoped
@@ -99,7 +99,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         if (miniAppUrl.isBlank()) {
             return;
         }
-        String publicSiteUrl = config.publicSiteUrl().orElse("");
+        String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
         if (quickActions != null && menuBuilder != null && telegramUserId != Long.MIN_VALUE) {
             var view = quickActions.load(telegramUserId, null);
             if (view.isPresent()) {
@@ -189,7 +189,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             return;
         }
         String miniAppUrl = config.miniAppUrl().orElse("");
-        String publicSiteUrl = config.publicSiteUrl().orElse("");
+        String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
         quickActions.load(verified.telegramUserId(), TelegramMenuFlow.selectedChildId(verified.action()))
             .ifPresent(view -> {
             try {
@@ -210,6 +210,30 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             .map(featureGate::isBotEnabled)
             // EXPLAIN: Unlinked users receive generic /start entry without family data.
             .orElse(true);
+    }
+
+    // EXPLAIN: The public site share button must point at the site root, never
+    // EXPLAIN: at a specific app page. APP_URL may carry a path/query (e.g.
+    // EXPLAIN: /en/app/tasks); strip it down to the bare origin so the button
+    // EXPLAIN: always opens the public marketing site.
+    private static String normalizePublicSiteUrl(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String trimmed = value.trim();
+        try {
+            URI uri = URI.create(trimmed);
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return trimmed;
+            }
+            String origin = uri.getScheme() + ":" + '/' + '/' + uri.getHost();
+            if (uri.getPort() >= 0) {
+                origin = origin + ":" + uri.getPort();
+            }
+            return origin;
+        } catch (Exception exception) {
+            return trimmed;
+        }
     }
 
 }

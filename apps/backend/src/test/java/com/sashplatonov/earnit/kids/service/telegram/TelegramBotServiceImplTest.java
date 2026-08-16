@@ -605,6 +605,39 @@ class TelegramBotServiceImplTest {
         verify(apiClient).editMessageText(44L, 19L, "ℹ️ Этот запрос уже обработан", List.of());
     }
 
+    @Test
+    void childPickerNormalizesPublicSiteUrlToTheSiteRoot() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 2, "Sam", 12, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(41L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(callbacks.verifyNavigation("nav.signed", 77L)).thenReturn(Optional.of(
+            new TelegramCallbackService.VerifiedCallback("switch-child-2", 77L,
+                Instant.parse("2026-08-13T12:00:00Z"))));
+        when(quickActions.load(77L, 2)).thenReturn(Optional.of(view));
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        // EXPLAIN: APP_URL may carry a path/query; the public site button must
+        // EXPLAIN: still point at the bare origin.
+        when(config.publicSiteUrl()).thenReturn(Optional.of("https://example.test/en/app/tasks?tab=1"));
+        when(menuBuilder.parentChildPicker(view, "https://example.test")).thenReturn(List.of());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":41,"callback_query":{"id":"callback","from":{"id":77},"data":"nav.signed",
+            "message":{"chat":{"id":44},"message_id":19}}}
+            """));
+
+        verify(menuBuilder).parentChildPicker(view, "https://example.test");
+        verify(apiClient).editMessageText(44L, 19L, "👧 Кого показывать?", List.of());
+    }
+
     private TelegramBotServiceImpl service(TelegramIdentityService identities,
                                            TelegramBotApiClient apiClient,
                                            TelegramCallbackService callbacks,
