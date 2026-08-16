@@ -64,6 +64,13 @@ describe('resolveTelegramMiniAppUrl', () => {
         } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=http://localhost:5001/telegram');
     });
 
+    it('strips path and query from APP_URL so the deep link always targets the origin', () => {
+        expect(resolveTelegramMiniAppUrl({
+            TELEGRAM_BOT_USERNAME: 'earnit_bot',
+            APP_URL: 'https://earnit-kids.igo.mywire.org/en/app/tasks?tab=1',
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=https://earnit-kids.igo.mywire.org/telegram');
+    });
+
     it('falls back to FRONTEND_URL then PUBLIC_BASE_URL for the origin', () => {
         expect(resolveTelegramMiniAppUrl({
             TELEGRAM_BOT_USERNAME: 'earnit_bot',
