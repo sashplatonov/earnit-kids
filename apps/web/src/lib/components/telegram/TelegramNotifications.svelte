@@ -188,10 +188,10 @@
     .grow { flex:1; min-width:0; }
     .setting-title { display:block; font-weight:600; font-size:.9rem; line-height:1.3; }
     .setting-meta { display:block; margin-top:.1rem; color:#8a93a8; font-size:.75rem; line-height:1.2; }
-    .switch { width:2.875rem; height:1.75rem; flex:0 0 auto; padding:0; border:0; border-radius:999px; background:#d8deea; cursor:pointer; position:relative; }
+    .switch { width:2.875rem; height:1.125rem; flex:0 0 auto; padding:0; border:0; border-radius:999px; background:#d8deea; cursor:pointer; position:relative; }
     .switch.on { background:#536be3; }
-    .switch:after { content:""; position:absolute; width:1.375rem; height:1.375rem; top:.1875rem; left:.1875rem; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgb(0 0 0 / 20%); transition:left .15s ease; }
-    .switch.on:after { left:1.3125rem; }
+    .switch:after { content:""; position:absolute; width:.875rem; height:.875rem; top:.125rem; left:.125rem; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgb(0 0 0 / 20%); transition:left .15s ease; }
+    .switch.on:after { left:1.625rem; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
     .close { width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
