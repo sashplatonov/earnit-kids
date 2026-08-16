@@ -4,8 +4,10 @@
     import { scheduleSave } from '$lib/services/save';
     import { buildTaskPayload } from '$lib/services/taskPayload';
     import { getSemanticGraphic } from './semanticGraphics';
+    import { getTelegramEntityIcon } from './telegramEntityIcons';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGraphicsPicker from './TelegramGraphicsPicker.svelte';
+    import TelegramGroupPicker from './TelegramGroupPicker.svelte';
 
     export let open = false;
     export let task: Task | null = null;
@@ -22,10 +24,12 @@
     let freqPeriod: 'day' | 'week' | 'month' | 'year' = 'week';
     let icon: string | null = null;
     let graphicOpen = false;
+    let groupPickerOpen = false;
     let error = '';
 
     $: isEdit = task != null;
     $: currentGraphic = getSemanticGraphic(icon);
+    $: suggestions = [...new Set(groupSuggestions.filter(Boolean))];
 
     $: if (open && task) {
         title = task.name ?? '';
@@ -39,8 +43,6 @@
     } else if (open && !task) {
         title = ''; groupName = ''; coins = 10; icon = null; freqLimit = ''; freqPeriod = 'week'; error = '';
     }
-
-    $: suggestions = [...new Set(groupSuggestions.filter(Boolean))];
 
     function save() {
         if (!title.trim()) { error = $i18n.t('app.telegram.taskForm.nameRequired'); return; }
@@ -90,11 +92,11 @@
         <label for="task-coins">{$i18n.t('app.telegram.taskForm.coinsLabel')}</label>
         <input id="task-coins" class="input" type="number" inputmode="numeric" bind:value={coins} min="0" />
 
-        <label for="task-group">{$i18n.t('app.telegram.taskForm.groupLabel')}</label>
-        <input id="task-group" class="input" list="task-group-suggestions" bind:value={groupName} placeholder={$i18n.t('app.telegram.taskForm.groupPlaceholder')} />
-        <datalist id="task-group-suggestions">
-            {#each suggestions as group (group)}<option value={group}></option>{/each}
-        </datalist>
+        <button class="field" id="task-group" type="button" on:click={() => groupPickerOpen = true}>
+            <span class="gico"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', group: groupName })} size={20} label={groupName || $i18n.t('app.telegram.taskForm.groupPlaceholder')} /></span>
+            <span class="grow">{groupName || $i18n.t('app.telegram.taskForm.groupPlaceholder')}</span>
+            <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
+        </button>
 
         <label for="task-schedule">{$i18n.t('app.telegram.taskForm.scheduleLabel')}</label>
         <select id="task-schedule" class="input" bind:value={freqPeriod}>
@@ -112,6 +114,7 @@
 {/if}
 
 <TelegramGraphicsPicker open={graphicOpen} title={$i18n.t('app.telegram.taskForm.graphicLabel')} initial={icon} onSelect={(key) => icon = key} onClose={() => graphicOpen = false} />
+<TelegramGroupPicker open={groupPickerOpen} groups={suggestions} selected={groupName} title={$i18n.t('app.telegram.groupPicker.title')} onSelect={(group) => groupName = group} onClose={() => groupPickerOpen = false} />
 
 <style>
     .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }

@@ -542,6 +542,13 @@ export const appMessages = {
             close: 'Close',
             emptyGroup: 'Nothing in this group yet',
         },
+        groupPicker: {
+            title: 'Choose a group',
+            search: 'Search groups',
+            selected: 'Selected',
+            noResults: 'No groups found',
+            close: 'Close',
+        },
         groupManager: {
             taskTitle: 'Task groups',
             rewardTitle: 'Reward groups',

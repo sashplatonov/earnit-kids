@@ -542,6 +542,13 @@ export const appMessages = {
             close: 'Закрыть',
             emptyGroup: 'В этой группе пока ничего нет',
         },
+        groupPicker: {
+            title: 'Выберите группу',
+            search: 'Поиск по группам',
+            selected: 'Выбрано',
+            noResults: 'Группы не найдены',
+            close: 'Закрыть',
+        },
         groupManager: {
             taskTitle: 'Группы заданий',
             rewardTitle: 'Группы наград',

@@ -4,8 +4,10 @@
     import { scheduleSave } from '$lib/services/save';
     import { buildShopPayload } from '$lib/services/shopPayload';
     import { getSemanticGraphic } from './semanticGraphics';
+    import { getTelegramEntityIcon } from './telegramEntityIcons';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGraphicsPicker from './TelegramGraphicsPicker.svelte';
+    import TelegramGroupPicker from './TelegramGroupPicker.svelte';
 
     export let open = false;
     export let item: ShopItem | null = null;
@@ -20,6 +22,7 @@
     let price = 50;
     let icon: string | null = null;
     let graphicOpen = false;
+    let groupPickerOpen = false;
     let error = '';
 
     $: isEdit = item != null;
@@ -85,11 +88,11 @@
         <label for="reward-price">{$i18n.t('app.telegram.rewardForm.priceLabel')}</label>
         <input id="reward-price" class="input" type="number" inputmode="numeric" bind:value={price} min="0" />
 
-        <label for="reward-group">{$i18n.t('app.telegram.rewardForm.groupLabel')}</label>
-        <input id="reward-group" class="input" list="reward-group-suggestions" bind:value={groupName} placeholder={$i18n.t('app.telegram.rewardForm.groupPlaceholder')} />
-        <datalist id="reward-group-suggestions">
-            {#each suggestions as group (group)}<option value={group}></option>{/each}
-        </datalist>
+        <button class="field" id="reward-group" type="button" on:click={() => groupPickerOpen = true}>
+            <span class="gico"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', group: groupName })} size={20} label={groupName || $i18n.t('app.telegram.rewardForm.groupPlaceholder')} /></span>
+            <span class="grow">{groupName || $i18n.t('app.telegram.rewardForm.groupPlaceholder')}</span>
+            <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
+        </button>
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
 
@@ -98,6 +101,7 @@
     </div>
 {/if}
 
+<TelegramGroupPicker open={groupPickerOpen} groups={suggestions} selected={groupName} title={$i18n.t('app.telegram.groupPicker.title')} onSelect={(group) => groupName = group} onClose={() => groupPickerOpen = false} />
 <TelegramGraphicsPicker open={graphicOpen} title={$i18n.t('app.telegram.rewardForm.graphicLabel')} initial={icon} onSelect={(key) => icon = key} onClose={() => graphicOpen = false} />
 
 <style>
