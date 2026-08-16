@@ -379,11 +379,8 @@
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
                 <div class="card__badge-row">
-                    {#if childName}
-                    <span class="card__badge request-chip--child">{childName}</span>
-                    {/if}
-                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     <span class={`card__badge request-chip--status ${requestStatusClass(req.status)}`}>{requestStatusLabel(req.status)}</span>
+                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     <span class="card__badge card__badge--group">{req.ui.group}</span>
                 </div>
                 <div class="request-card__layout">
@@ -393,7 +390,6 @@
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
-                            compactChips={requestCompactChips(req)}
                             titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
                             titleActionExpanded={openNoteRequestId === String(req.id)}
                             titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
@@ -404,14 +400,8 @@
                         {/if}
                     </div>
                     <div class="request-card__side">
-                        <div class="card__meta">
-                        <span class="card__meta-item">{requestStatusLabel(req.status)}</span>
                         {#if formatDate(requestCreatedAt(req))}
-                            <span class="card__meta-item">{formatDate(requestCreatedAt(req))}</span>
-                        {/if}
-                        </div>
-                        {#if requestMoneyLabel(req.ui.moneyAmount)}
-                        <span class="request-card__money-price">{requestMoneyLabel(req.ui.moneyAmount)}</span>
+                            <span class="request-card__date">{formatDate(requestCreatedAt(req))}</span>
                         {/if}
                         {#if req.status !== 'approved'}
                         <div class="card__actions request-card__actions">
@@ -453,8 +443,10 @@
     }
 
     .request-card {
-        min-height: 312px;
+        min-height: 0;
+        height: auto;
         overflow: visible;
+        padding: 0.75rem 0.85rem;
     }
 
     .request-card--purchase .card__coins {
@@ -468,23 +460,32 @@
     }
 
     .request-card__layout {
-        display: flex;
-        flex-direction: column;
-        gap: 0.9rem;
-        height: 100%;
-        overflow: visible;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.65rem;
+        align-items: start;
     }
 
-    .request-card__main,
+    .request-card__main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        min-width: 0;
+    }
+
     .request-card__side {
         display: flex;
         flex-direction: column;
-        gap: 0.8rem;
-        overflow: visible;
+        align-items: flex-end;
+        gap: 0.4rem;
+        flex-shrink: 0;
     }
 
-    .request-card__side {
-        margin-top: auto;
+    .request-card__date {
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 600;
+        white-space: nowrap;
     }
 
     .request-card__money-price {
@@ -527,7 +528,7 @@
     .request-card--list {
         min-height: 0;
         height: auto;
-        padding: 0.4rem 0.75rem;
+        padding: 0.35rem 0.5rem;
     }
 
     .request-card--list .card__badge-row,
@@ -537,32 +538,34 @@
     }
 
     .request-card--list .request-card__layout {
-        flex-direction: row;
-        flex-wrap: wrap;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.4rem;
         align-items: center;
-        gap: 0.5rem 0.75rem;
     }
 
     .request-card--list .request-card__main {
-        flex: 1 1 0;
         min-width: 0;
     }
 
     .request-card--list .request-card__side {
-        flex-direction: row;
-        align-items: center;
-        gap: 0.4rem;
-        flex-shrink: 0;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.3rem;
         margin-top: 0;
     }
 
+    .request-card--list .request-card__date {
+        font-size: 0.68rem;
+    }
+
     .request-card--list .request-card__money-price {
-        flex: none;
+        display: none;
     }
 
     .request-card--list .request-card__actions {
-        flex-wrap: nowrap;
-        gap: 0.4rem;
+        display: flex;
+        flex-direction: row;
+        gap: 0.3rem;
         justify-content: flex-end;
         margin-top: 0;
         align-items: center;
@@ -570,8 +573,12 @@
 
     .request-card--list .request-card__actions .btn {
         flex: none;
-        padding: 0.38rem 0.7rem;
-        font-size: 0.82rem;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        font-size: 0.88rem;
+        display: grid;
+        place-items: center;
     }
 
     /* Bright child name badge for requests */
@@ -590,45 +597,31 @@
     @media (max-width: 640px) {
         .request-card {
             min-height: 0;
+            padding: 0.6rem 0.65rem;
         }
 
         .request-card--list {
-            padding: 0.38rem 0.46rem 0.38rem 0.56rem;
+            padding: 0.35rem 0.45rem;
         }
 
         .request-card--list .request-card__layout {
-            display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
-            align-items: stretch;
-            gap: 0.48rem;
+            gap: 0.4rem;
+            align-items: center;
         }
 
         .request-card--list .request-card__side {
-            align-self: stretch;
-            align-items: stretch;
-            gap: 0;
+            gap: 0.25rem;
         }
 
-        .request-card--list .request-card__money-price {
-            display: none;
-        }
-
-        .request-card--list .request-card__actions {
-            width: auto;
-            min-height: 3.15rem;
-            flex-direction: column;
-            justify-content: stretch;
-            align-items: stretch;
-            gap: 0.24rem;
+        .request-card--list .request-card__date {
+            font-size: 0.65rem;
         }
 
         .request-card--list .request-card__actions .btn {
-            flex: 1 1 0;
-            min-width: 3.6rem;
-            min-height: 0;
-            padding: 0.2rem 0.42rem;
-            font-size: 0.68rem;
-            line-height: 1.05;
+            width: 1.95rem;
+            height: 1.95rem;
+            font-size: 0.82rem;
         }
 
         .request-note-popover {
