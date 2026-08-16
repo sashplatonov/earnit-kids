@@ -311,6 +311,7 @@ export const appMessages = {
             rewardChanged: 'This reward changed. Your list was refreshed.',
             askForReward: 'Ask for reward',
             moreToGo: '{count} more to go',
+            missing: 'Missing {count}',
             nextGoal: 'Next goal',
         },
         requests: {

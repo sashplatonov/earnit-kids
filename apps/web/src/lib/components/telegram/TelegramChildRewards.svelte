@@ -21,12 +21,23 @@
     $: activeShop = $appStore.shopItems.filter((item) => item.isActive !== false);
     $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
     $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
-    $: affordable = activeShop.filter((item) => $appStore.balance >= item.price && !hiddenGroups.includes(item.groupName?.trim() ?? '')).sort((first, second) => first.price - second.price);
-    $: nextGoal = activeShop.filter((item) => $appStore.balance < item.price && !hiddenGroups.includes(item.groupName?.trim() ?? '')).sort((first, second) => first.price - second.price)[0] ?? null;
+    $: visibleShop = activeShop.filter((item) => !hiddenGroups.includes(item.groupName?.trim() ?? ''));
+    $: affordable = visibleShop.filter((item) => $appStore.balance >= item.price).sort((first, second) => first.price - second.price);
+    $: nextGoal = visibleShop.filter((item) => $appStore.balance < item.price).sort((first, second) => first.price - second.price)[0] ?? null;
     $: goalPercent = nextGoal && nextGoal.price > 0 ? Math.min(100, Math.round(($appStore.balance / nextGoal.price) * 100)) : 0;
     $: goalMissing = nextGoal ? Math.max(0, nextGoal.price - $appStore.balance) : 0;
     $: pendingIds = $appStore.requests.filter((request) => (request.requestType === 'shop_purchase' || request.itemId != null) && request.status === 'pending').map((request) => request.itemId).filter((id): id is string | number => id != null);
-    $: allItems = affordable.map((item): CatalogItem => ({ id: item.id, title: item.name, amount: item.price, group: item.groupName, available: true }));
+    $: allItems = visibleShop.map((item): CatalogItem => {
+        const affordableItem = $appStore.balance >= item.price;
+        return {
+            id: item.id,
+            title: item.name,
+            amount: item.price,
+            group: item.groupName,
+            available: affordableItem,
+            disabledReason: affordableItem ? undefined : $i18n.t('app.telegram.childRewards.missing', { count: item.price - $appStore.balance }),
+        };
+    });
     $: groups = [...new Set(allItems.map((item) => item.group?.trim()).filter((group): group is string => Boolean(group)))];
     $: items = selectedGroup ? allItems.filter((item) => item.group?.trim() === selectedGroup) : allItems;
     async function submit(note: string | null) {
