@@ -24,26 +24,31 @@ export function resolveProxyContext(env = process.env) {
 }
 
 export function resolveTelegramMiniAppUrl(env = process.env) {
-    // EXPLAIN: Prefer an explicit full Mini App URL when provided; otherwise
-    // EXPLAIN: form the Telegram deep link automatically from the bot username
-    // EXPLAIN: and the public site origin (APP_URL) so the user lands in the
-    // EXPLAIN: Mini App without a hand-maintained hosting URL.
-    const explicit = (env.TELEGRAM_MINI_APP_URL || '').trim();
-    if (explicit) {
-        return explicit.replace(/\/+$/, '');
-    }
+    // EXPLAIN: The public site button must always be a Telegram deep link
+    // EXPLAIN: (https://t.me/<bot>?startapp=<mini-app-url>), never a bare web
+    // EXPLAIN: page. The startapp payload is the HTTPS Mini App URL Telegram
+    // EXPLAIN: opens inside the bot.
     const botUsername = (env.TELEGRAM_BOT_USERNAME || '').trim();
-    const rawOrigin = (env.APP_URL || env.FRONTEND_URL || env.PUBLIC_BASE_URL || '').trim();
-    if (!botUsername || !rawOrigin) {
+    if (!botUsername) {
         return '';
     }
-    // EXPLAIN: APP_URL may contain a path in dev/preview; the deep link must
-    // EXPLAIN: always point at the site root so Telegram opens a valid origin.
-    const publicOrigin = trimTrailingSlashes(new URL(rawOrigin).origin);
-    // EXPLAIN: The startapp payload opens the Mini App inside Telegram. It must
-    // EXPLAIN: target the /telegram entry, not the public marketing site root,
-    // EXPLAIN: so the bot button lands on the actual Mini App surface.
-    return `https://t.me/${botUsername}?startapp=${publicOrigin}/telegram`;
+    // EXPLAIN: Prefer the explicit Mini App URL (TELEGRAM_MINI_APP_URL); fall
+    // EXPLAIN: back to the APP_URL origin + /telegram so the deep link always
+    // EXPLAIN: targets the Mini App entry, not the marketing site root.
+    const explicit = (env.TELEGRAM_MINI_APP_URL || '').trim();
+    const rawOrigin = (env.APP_URL || env.FRONTEND_URL || env.PUBLIC_BASE_URL || '').trim();
+    let startapp;
+    if (explicit) {
+        startapp = explicit.replace(/\/+$/, '');
+    } else if (rawOrigin) {
+        // EXPLAIN: APP_URL may contain a path in dev/preview; the deep link
+        // EXPLAIN: must always point at the site root so Telegram opens a
+        // EXPLAIN: valid origin.
+        startapp = `${trimTrailingSlashes(new URL(rawOrigin).origin)}/telegram`;
+    } else {
+        return '';
+    }
+    return `https://t.me/${botUsername}?startapp=${startapp}`;
 }
 
 export function buildProxyReferer(referer, publicOrigin) {
