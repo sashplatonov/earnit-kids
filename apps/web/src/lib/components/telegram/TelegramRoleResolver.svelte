@@ -4,10 +4,14 @@
 
     export let role: string;
     export let publicOrigin = '';
+
+    // EXPLAIN: A parent can preview the child experience. When viewAsChild is
+    // EXPLAIN: true, the child shell is rendered instead of the parent shell.
+    let viewAsChild = false;
 </script>
 
-{#if role === 'parent' || role === 'admin' || role === 'super_admin'}
-    <TelegramParentShell {publicOrigin} />
+{#if (role === 'parent' || role === 'admin' || role === 'super_admin') && !viewAsChild}
+    <TelegramParentShell {publicOrigin} onViewAsChild={() => viewAsChild = true} />
 {:else}
-    <TelegramChildShell {publicOrigin} />
+    <TelegramChildShell {publicOrigin} onExitPreview={() => viewAsChild = false} />
 {/if}

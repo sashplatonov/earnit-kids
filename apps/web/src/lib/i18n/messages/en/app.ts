@@ -157,6 +157,7 @@ export const appMessages = {
             today: 'Today',
             rewards: 'Rewards',
             activity: 'Activity',
+            exitPreview: 'Back to parent',
         },
         family: {
             title: 'Family',
@@ -180,6 +181,7 @@ export const appMessages = {
             rolesAndAccess: 'Roles and access',
             invitations: 'Invitations',
             notifications: 'Notifications',
+            viewAsChild: 'View as child',
             inactiveChildren: 'Inactive children',
             status: 'Status',
             active: 'Active',

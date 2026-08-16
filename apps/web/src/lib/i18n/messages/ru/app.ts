@@ -157,6 +157,7 @@ export const appMessages = {
             today: 'Сегодня',
             rewards: 'Награды',
             activity: 'Активность',
+            exitPreview: 'Вернуться к родителю',
         },
         family: {
             title: 'Семья',
@@ -180,6 +181,7 @@ export const appMessages = {
             rolesAndAccess: 'Роли и доступы',
             invitations: 'Приглашения',
             notifications: 'Уведомления',
+            viewAsChild: 'Посмотреть как ребёнок',
             inactiveChildren: 'Неактивные дети',
             status: 'Статус',
             active: 'Активен',

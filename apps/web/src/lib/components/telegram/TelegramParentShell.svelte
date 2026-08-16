@@ -13,6 +13,7 @@
     const i18n = useI18n();
 
     export let publicOrigin = '';
+    export let onViewAsChild: () => void = () => {};
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = new URLSearchParams(window.location.search).get('context') ?? '';
@@ -81,7 +82,7 @@
         {:else if view === 'rewards'}
             <TelegramParentRewards />
         {:else}
-            <TelegramParentFamily />
+            <TelegramParentFamily onViewAsChild={onViewAsChild} />
         {/if}
     </div>
     {#if publicOrigin}
