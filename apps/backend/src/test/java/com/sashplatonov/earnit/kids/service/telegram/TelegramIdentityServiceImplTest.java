@@ -47,9 +47,22 @@ class TelegramIdentityServiceImplTest {
             .familyId(2).telegramUserId(77L).role("parent").active(true).linkedAt(NOW).build();
         when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(existing));
 
-        assertThatThrownBy(() -> service.linkParent(1, 77L, "parent@example.com", NOW))
+        assertThatThrownBy(() -> service.linkParent(1, 77L, null, "parent@example.com", NOW))
             .isInstanceOf(IllegalStateException.class);
         verify(identities, never()).persist(any(TelegramIdentityEntity.class));
+    }
+
+    @Test
+    void linkParent_setsParentAccountIdWhenProvided() {
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.empty());
+
+        service.linkParent(1, 77L, 42, "parent@example.com", NOW);
+
+        verify(identities).persist(org.mockito.ArgumentMatchers.<TelegramIdentityEntity>argThat(identity ->
+            identity.getFamilyId().equals(1)
+                && identity.getTelegramUserId().equals(77L)
+                && identity.getParentAccountId().equals(42)
+                && "parent".equals(identity.getRole())));
     }
 
     @Test

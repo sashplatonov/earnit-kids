@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public interface TelegramIdentityService {
     Optional<TelegramIdentity> findActiveByTelegramUserId(long telegramUserId);
-    TelegramIdentity linkParent(Integer familyId, long telegramUserId, String actor, Instant now);
+    TelegramIdentity linkParent(Integer familyId, long telegramUserId, Integer parentAccountId, String actor, Instant now);
     boolean unlink(long telegramUserId, String actor, Instant now);
     TelegramChildInvitationToken issueChildInvitation(Integer familyId, Integer childId, String issuedBy, Instant expiresAt, Instant now);
     boolean revokeChildInvitation(Integer familyId, Integer invitationId, String actor, Instant now);

@@ -47,6 +47,7 @@ class TelegramCrossChannelIntegrationTest {
     @Inject TelegramQuickActionService quickActions;
     @Inject FamilyActionService webActions;
     @Inject TelegramDeliveryPlanner planner;
+    @Inject com.sashplatonov.earnit.kids.repository.ParentAccountRepository parents;
 
     @Test
     @Transactional
@@ -69,8 +70,14 @@ class TelegramCrossChannelIntegrationTest {
             new TaskContentCommand("Put toys away", 10, "Home", "", "before bed", "tidy the room"),
             new ObjectMapper().readTree("{\"period\":\"day\"}"), 100, true, false));
 
+        var parentAccount = com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.builder()
+            .email("integration-test")
+            .passwordHash("")
+            .verified(false)
+            .build();
+        parents.persist(parentAccount);
         TelegramIdentityService.TelegramIdentity parent = identities.linkParent(
-            family.getId(), parentTelegramId, "integration-test", NOW);
+            family.getId(), parentTelegramId, parentAccount.getId(), "integration-test", NOW);
         TelegramIdentityService.TelegramChildInvitationToken invitation = identities.issueChildInvitation(
             family.getId(), child.getId(), "integration-test", NOW.plusSeconds(3600), NOW);
         TelegramIdentityService.TelegramIdentity linkedChild = identities.acceptChildInvitation(

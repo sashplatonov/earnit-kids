@@ -50,7 +50,7 @@ public class TelegramIdentityServiceImpl implements TelegramIdentityService {
     }
 
     @Override @Transactional
-    public TelegramIdentity linkParent(Integer familyId, long telegramUserId, String actor, Instant now) {
+    public TelegramIdentity linkParent(Integer familyId, long telegramUserId, Integer parentAccountId, String actor, Instant now) {
         Optional<TelegramIdentityEntity> existing = identities.findActiveByTelegramUserId(telegramUserId);
         if (existing.isPresent()) {
             TelegramIdentityEntity identity = existing.get();
@@ -60,7 +60,13 @@ public class TelegramIdentityServiceImpl implements TelegramIdentityService {
             return identity(identity);
         }
         TelegramIdentityEntity created = TelegramIdentityEntity.builder()
-            .familyId(familyId).telegramUserId(telegramUserId).role("parent").active(true).linkedAt(now).build();
+            .familyId(familyId)
+            .parentAccountId(parentAccountId)
+            .telegramUserId(telegramUserId)
+            .role("parent")
+            .active(true)
+            .linkedAt(now)
+            .build();
         identities.persist(created);
         audit(familyId, null, created.getId(), "LINK", actor, now);
         return identity(created);
