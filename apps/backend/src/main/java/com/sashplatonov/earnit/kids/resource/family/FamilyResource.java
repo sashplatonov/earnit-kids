@@ -107,19 +107,25 @@ public class FamilyResource extends FamilyResourceSupport {
     @Operation(summary = "Create a child task completion request immediately in the database")
     public Response requestTaskCompletion(@Context ContainerRequestContext ctx,
                                           @PathParam("taskId") long taskId,
+                                          @QueryParam("childId") Integer childId,
                                           @Valid CreateRequestNoteRequest payload) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isChild()) {
+        if (auth == null || !auth.isChild() && !auth.canEditFamilyData()) {
             return unauthorized();
+        }
+
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
+        if (effectiveChildId == null) {
+            return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
         OperationResult<FamilyDataResponse> result = familyActionService.requestTaskCompletion(
             auth.familyId(),
-            auth.childId(),
+            effectiveChildId,
             taskId,
             payload != null ? payload.note() : null
         );
-        notifyDataUpdated(auth, auth.childId(), result);
+        notifyDataUpdated(auth, effectiveChildId, result);
         return toResponse(result);
     }
 
@@ -235,19 +241,25 @@ public class FamilyResource extends FamilyResourceSupport {
     @Operation(summary = "Create a child purchase request immediately in the database")
     public Response requestItemPurchase(@Context ContainerRequestContext ctx,
                                         @PathParam("itemId") long itemId,
+                                        @QueryParam("childId") Integer childId,
                                         @Valid CreateRequestNoteRequest payload) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isChild()) {
+        if (auth == null || !auth.isChild() && !auth.canEditFamilyData()) {
             return unauthorized();
+        }
+
+        Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
+        if (effectiveChildId == null) {
+            return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
         OperationResult<FamilyDataResponse> result = familyActionService.requestItemPurchase(
             auth.familyId(),
-            auth.childId(),
+            effectiveChildId,
             itemId,
             payload != null ? payload.note() : null
         );
-        notifyDataUpdated(auth, auth.childId(), result);
+        notifyDataUpdated(auth, effectiveChildId, result);
         return toResponse(result);
     }
 

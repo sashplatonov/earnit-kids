@@ -53,7 +53,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -373,11 +375,53 @@ class FamilyResourceTest {
             List.of(), false, List.of(), 10, null, null, null);
         when(familyActionService.requestTaskCompletion("fam-1", 10, 1001L, null)).thenReturn(OperationResult.success(payload));
 
-        Response response = resource.requestTaskCompletion(contextWithAuth(childAuth(10)), 1001L, new CreateRequestNoteRequest(null));
+        Response response = resource.requestTaskCompletion(contextWithAuth(childAuth(10)), 1001L, null, new CreateRequestNoteRequest(null));
 
         assertThat(response.getStatus()).isEqualTo(200);
         verify(familyActionService).requestTaskCompletion("fam-1", 10, 1001L, null);
         verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "child", "childId", 10)));
+    }
+
+    @Test
+    void requestTaskCompletion_parentPreviewingChild_usesRequestedChildId() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyActionService.requestTaskCompletion("fam-1", 10, 1001L, null)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.requestTaskCompletion(contextWithAuth(adminAuth()), 1001L, 10, new CreateRequestNoteRequest(null));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).requestTaskCompletion("fam-1", 10, 1001L, null);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "admin", "childId", 10)));
+    }
+
+    @Test
+    void requestTaskCompletion_parentWithoutChildId_returnsBadRequest() {
+        Response response = resource.requestTaskCompletion(contextWithAuth(adminAuth()), 1001L, null, new CreateRequestNoteRequest(null));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        verify(familyActionService, never()).requestTaskCompletion(anyString(), anyInt(), anyLong(), any());
+    }
+
+    @Test
+    void requestItemPurchase_parentPreviewingChild_usesRequestedChildId() {
+        FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),
+            List.of(), true, List.of(), 10, null, null, null);
+        when(familyActionService.requestItemPurchase("fam-1", 10, 2001L, null)).thenReturn(OperationResult.success(payload));
+
+        Response response = resource.requestItemPurchase(contextWithAuth(adminAuth()), 2001L, 10, new CreateRequestNoteRequest(null));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(familyActionService).requestItemPurchase("fam-1", 10, 2001L, null);
+        verify(webSocketNotificationService).notifyFamily(eq("fam-1"), eq("DATA_UPDATED"), eq(Map.of("by", "admin", "childId", 10)));
+    }
+
+    @Test
+    void requestItemPurchase_parentWithoutChildId_returnsBadRequest() {
+        Response response = resource.requestItemPurchase(contextWithAuth(adminAuth()), 2001L, null, new CreateRequestNoteRequest(null));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        verify(familyActionService, never()).requestItemPurchase(anyString(), anyInt(), anyLong(), any());
     }
 
     @Test

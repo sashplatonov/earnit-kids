@@ -31,7 +31,7 @@
     async function submit(note: string | null) {
         if (!selected || busy) return;
         busy = true; status = 'pending'; message = $i18n.t('app.telegram.childTasks.sendingRequest');
-        const result = note ? await requestCoinsWithNote(selected.id, note) : await requestCoins(selected.id);
+        const result = note ? await requestCoinsWithNote(selected.id, note, $appStore.currentChildId) : await requestCoins(selected.id, $appStore.currentChildId);
         busy = false;
         if (result.ok) { if (result.data && typeof result.data === 'object') applyDataSnapshot(result.data as Record<string, unknown>); status = 'success'; message = $i18n.t('app.telegram.childTasks.requestSent'); selected = null; }
         else if (result.errorCode === 'STALE_STATE') { await refreshData(); status = 'stale'; message = $i18n.t('app.telegram.childTasks.taskChanged'); selected = null; }

@@ -530,11 +530,11 @@ export async function changePassword(oldPassword: string, newPassword: string): 
 export const earnCoins = (taskId: unknown, childId?: unknown) =>
     postJsonAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/complete${buildChildQuery(childId)}`, {});
 
-export const requestCoins = (taskId: unknown) =>
-    postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, {});
+export const requestCoins = (taskId: unknown, childId?: unknown) =>
+    postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request${buildChildQuery(childId)}`, {});
 
-export const requestCoinsWithNote = (taskId: unknown, note?: string | null) =>
-    postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request`, { note: note ?? null });
+export const requestCoinsWithNote = (taskId: unknown, note?: string | null, childId?: unknown) =>
+    postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request${buildChildQuery(childId)}`, { note: note ?? null });
 
 // ── Shop actions ──────────────────────────────────────────────────────────────
 
@@ -543,12 +543,12 @@ export const buyItem = (itemId: unknown, childId?: unknown) =>
     postJsonAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/purchase${buildChildQuery(childId)}`, {});
 
 /** Child: create a purchase request that requires parent approval. */
-export const requestItem = (itemId: unknown) =>
-    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request`, {});
+export const requestItem = (itemId: unknown, childId?: unknown) =>
+    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request${buildChildQuery(childId)}`, {});
 
 /** Child: create a purchase request with optional note. */
-export const requestItemWithNote = (itemId: unknown, note?: string | null) =>
-    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request`, { note: note ?? null });
+export const requestItemWithNote = (itemId: unknown, note?: string | null, childId?: unknown) =>
+    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request${buildChildQuery(childId)}`, { note: note ?? null });
 
 export const setRewardGoal = (itemId: number | string | null) =>
     postJsonResult('/api/shop/reward-goal', { itemId });
