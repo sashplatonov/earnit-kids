@@ -23,8 +23,6 @@
 
     const i18n = useI18n();
 
-    export let onViewAsChild: () => void = () => {};
-
     let inviteOpen = false;
     let newChildName = '';
     let addChildBusy = false;
@@ -198,7 +196,6 @@
         <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => importOpen = true}><span class="setting-icon"><TelegramIcon name="upload" size={20} label={$i18n.t('app.telegram.import.title')} /></span><span class="grow">{$i18n.t('app.telegram.import.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <button class="setting" type="button" on:click={onViewAsChild}><span class="setting-icon"><TelegramIcon name="eye" size={20} label={$i18n.t('app.telegram.family.viewAsChild')} /></span><span class="grow">{$i18n.t('app.telegram.family.viewAsChild')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
     </div>
 </div>
 

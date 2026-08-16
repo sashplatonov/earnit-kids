@@ -62,7 +62,7 @@
 </script>
 
 <main class="parent-workspace" aria-label={$i18n.t('app.telegram.shell.workspace')}>
-    <TelegramParentHeader />
+    <TelegramParentHeader onViewAsChild={onViewAsChild} />
 
     <div class="tabs" aria-label={$i18n.t('app.telegram.shell.workspace')} role="tablist" tabindex="-1" on:keydown={handleTabKeydown}>
         <button aria-controls="parent-panel-home" aria-selected={view === 'home'} class:active={view === 'home'} id="parent-tab-home" role="tab" tabindex={view === 'home' ? 0 : -1} type="button" on:click={() => selectView('home')}><TelegramIcon name="home" size={20} label={$i18n.t('app.telegram.shell.home')} /><span>{$i18n.t('app.telegram.shell.home')}{pending.length ? ` (${pending.length})` : ''}</span></button>
@@ -82,7 +82,7 @@
         {:else if view === 'rewards'}
             <TelegramParentRewards />
         {:else}
-            <TelegramParentFamily onViewAsChild={onViewAsChild} />
+            <TelegramParentFamily />
         {/if}
     </div>
     {#if publicOrigin}
