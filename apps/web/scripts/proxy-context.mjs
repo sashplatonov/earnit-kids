@@ -37,7 +37,11 @@ export function resolveTelegramMiniAppUrl(env = process.env) {
     if (!botUsername || !publicOrigin) {
         return '';
     }
-    return `https://t.me/${botUsername}?startapp=${publicOrigin.replace(/\/+$/, '')}`;
+    // EXPLAIN: The startapp payload opens the Mini App inside Telegram. It must
+    // EXPLAIN: target the /telegram entry, not the public marketing site root,
+    // EXPLAIN: so the bot button lands on the actual Mini App surface.
+    const miniAppPath = `${publicOrigin.replace(/\/+$/, '')}/telegram`;
+    return `https://t.me/${botUsername}?startapp=${miniAppPath}`;
 }
 
 export function buildProxyReferer(referer, publicOrigin) {

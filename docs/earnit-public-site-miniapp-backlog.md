@@ -78,7 +78,7 @@ git commit -m "fix(web): normalize publicOrigin to site root for Mini App footer
 
 ## P1-2: Кнопки «Открыть в Telegram» на публичном сайте ведут на Telegram-бота
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P1
 **Depends on:** -
 
