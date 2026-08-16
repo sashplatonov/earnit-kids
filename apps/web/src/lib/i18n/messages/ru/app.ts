@@ -340,6 +340,7 @@ export const appMessages = {
             cancelConfirmCancel: 'Оставить заявку',
             cancelSuccess: 'Заявка отменена.',
             cancelError: 'Не удалось отменить заявку. Попробуйте ещё раз.',
+            showMore: 'Показать ещё',
         },
         requests: {
             requests: 'Заявки',
@@ -387,6 +388,7 @@ export const appMessages = {
             saving: 'Сохраняем…',
         },
         history: {
+            history: 'История',
             recentActivity: 'Недавняя активность',
             loadingActivity: 'Загружаем активность…',
             noActivity: 'Активности пока нет.',

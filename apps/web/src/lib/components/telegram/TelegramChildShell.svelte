@@ -134,7 +134,7 @@
             <TelegramChildRewards />
         {:else}
             <div class="activity-switch" role="tablist" aria-label={$i18n.t('app.telegram.childShell.activity')}>
-                <button aria-selected={activityView === 'history'} class:active={activityView === 'history'} id="child-activity-tab-history" role="tab" tabindex={activityView === 'history' ? 0 : -1} type="button" on:click={() => selectActivityView('history')}>{$i18n.t('app.telegram.history.recentActivity')}</button>
+                <button aria-selected={activityView === 'history'} class:active={activityView === 'history'} id="child-activity-tab-history" role="tab" tabindex={activityView === 'history' ? 0 : -1} type="button" on:click={() => selectActivityView('history')}>{$i18n.t('app.telegram.history.history')}</button>
                 <button aria-selected={activityView === 'requests'} class:active={activityView === 'requests'} id="child-activity-tab-requests" role="tab" tabindex={activityView === 'requests' ? 0 : -1} type="button" on:click={() => selectActivityView('requests')}>{$i18n.t('app.telegram.childShell.requests')}</button>
             </div>
             {#if activityView === 'requests'}

@@ -340,6 +340,7 @@ export const appMessages = {
             cancelConfirmCancel: 'Keep request',
             cancelSuccess: 'Request cancelled.',
             cancelError: 'The request could not be cancelled. Try again.',
+            showMore: 'Show more',
         },
         requests: {
             requests: 'Requests',
@@ -387,6 +388,7 @@ export const appMessages = {
             saving: 'Saving…',
         },
         history: {
+            history: 'History',
             recentActivity: 'Recent activity',
             loadingActivity: 'Loading activity…',
             noActivity: 'No activity yet.',
