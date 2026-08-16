@@ -33,7 +33,6 @@
     // EXPLAIN: so parent management buttons (deactivate/reactivate, transfer,
     // EXPLAIN: invite) stay visible for family admins.
     $: isAdmin = $appStore.isAdmin || $appStore.permission === 'family_admin';
-    $: children = $appStore.children;
 
     $: if (open) void reload();
 
@@ -126,7 +125,7 @@
             description: $i18n.t('app.telegram.parents.transferDescription', { email: parent.email }),
             confirmLabel: $i18n.t('app.telegram.parents.transfer'),
             cancelLabel: $i18n.t('app.telegram.tasks.cancel'),
-            tone: 'neutral',
+            tone: 'danger',
         });
         if (!confirmed) return;
         actionBusy = true;
@@ -179,17 +178,6 @@
                                     </div>
                                 {/if}
                             </div>
-                        {/each}
-                    {/if}
-                </div>
-
-                <h3 class="sheet-subtitle">{$i18n.t('app.telegram.roles.children')}</h3>
-                <div class="flat">
-                    {#if !children.length}
-                        <p class="muted">{$i18n.t('app.telegram.family.noChildren')}</p>
-                    {:else}
-                        {#each children as child (child.id)}
-                            <div class="row"><span class="setting-icon"><TelegramIcon name="child" size={18} label={$i18n.t('app.telegram.roles.children')} /></span><span class="grow"><span class="setting-title">{child.nickname}</span></span></div>
                         {/each}
                     {/if}
                 </div>

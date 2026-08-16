@@ -9,7 +9,7 @@
     import TelegramParentFamily from './TelegramParentFamily.svelte';
     import TelegramParentHeader from './TelegramParentHeader.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
-    import ConfirmModal from '$lib/components/app/modals/ConfirmModal.svelte';
+    import TelegramConfirmModal from './TelegramConfirmModal.svelte';
 
     const i18n = useI18n();
 
@@ -86,7 +86,7 @@
             <TelegramParentFamily />
         {/if}
     </div>
-    <ConfirmModal />
+    <TelegramConfirmModal />
     {#if publicOrigin}
         <footer class="site-link" aria-label={$i18n.t('app.telegram.shell.publicSiteAria')}>
             <a href={publicOrigin} target="_blank" rel="noopener noreferrer"><TelegramIcon name="link" size={14} label={$i18n.t('app.telegram.shell.publicSiteAria')} />{$i18n.t('app.telegram.shell.publicSite')}</a>
