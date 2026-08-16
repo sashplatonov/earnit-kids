@@ -41,7 +41,7 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
             familyDbId,
             childId,
             taskId,
-            "pending",
+            PurchaseRequestStatus.pending,
             startInclusive,
             endExclusive
         );
@@ -85,7 +85,7 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
             familyDbId,
             childId,
             itemId,
-            "pending",
+            PurchaseRequestStatus.pending,
             startInclusive,
             endExclusive
         );
