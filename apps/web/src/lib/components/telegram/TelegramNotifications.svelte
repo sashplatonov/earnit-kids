@@ -147,11 +147,31 @@
             <div class="flat">
                 <p class="group-label">{$i18n.t('app.telegram.notifications.parentGroupTasks')}</p>
                 {#each settings.parent.filter(isParentTask) as pref (pref.key)}
-                    <div class="row"><span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={18} label={parentLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{parentLabel(pref.key)}</span><span class="setting-meta">{parentHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button></div>
+                    <div class="row">
+                        <span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={20} label={parentLabel(pref.key)} /></span>
+                        <span class="grow">
+                            <span class="setting-title">{parentLabel(pref.key)}</span>
+                            <span class="setting-meta">{parentHint(pref.key)}</span>
+                        </span>
+                        <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}>
+                            <span class="switch-track"></span>
+                            <span class="switch-thumb"></span>
+                        </button>
+                    </div>
                 {/each}
                 <p class="group-label">{$i18n.t('app.telegram.notifications.parentGroupFamily')}</p>
                 {#each settings.parent.filter((pref) => !isParentTask(pref)) as pref (pref.key)}
-                    <div class="row"><span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={18} label={parentLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{parentLabel(pref.key)}</span><span class="setting-meta">{parentHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button></div>
+                    <div class="row">
+                        <span class="row-icon"><TelegramIcon name={parentIcon(pref.key)} size={20} label={parentLabel(pref.key)} /></span>
+                        <span class="grow">
+                            <span class="setting-title">{parentLabel(pref.key)}</span>
+                            <span class="setting-meta">{parentHint(pref.key)}</span>
+                        </span>
+                        <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}>
+                            <span class="switch-track"></span>
+                            <span class="switch-thumb"></span>
+                        </button>
+                    </div>
                 {/each}
             </div>
 
@@ -160,11 +180,31 @@
                 <div class="flat">
                     <p class="group-label">{$i18n.t('app.telegram.notifications.childGroupDecisions')}</p>
                     {#each child.preferences.filter((pref) => ['taskApproved', 'taskRejected', 'rewardApproved', 'rewardRejected'].includes(pref.key)) as pref (pref.key)}
-                        <div class="row"><span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={18} label={childLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{childLabel(pref.key)}</span><span class="setting-meta">{childHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button></div>
+                        <div class="row">
+                            <span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={20} label={childLabel(pref.key)} /></span>
+                            <span class="grow">
+                                <span class="setting-title">{childLabel(pref.key)}</span>
+                                <span class="setting-meta">{childHint(pref.key)}</span>
+                            </span>
+                            <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}>
+                                <span class="switch-track"></span>
+                                <span class="switch-thumb"></span>
+                            </button>
+                        </div>
                     {/each}
                     <p class="group-label">{$i18n.t('app.telegram.notifications.childGroupReminders')}</p>
                     {#each child.preferences.filter((pref) => ['newTasks', 'rewardAvailable'].includes(pref.key)) as pref (pref.key)}
-                        <div class="row"><span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={18} label={childLabel(pref.key)} /></span><span class="grow"><span class="setting-title">{childLabel(pref.key)}</span><span class="setting-meta">{childHint(pref.key)}</span></span><button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button></div>
+                        <div class="row">
+                            <span class="row-icon"><TelegramIcon name={childIcon(pref.key)} size={20} label={childLabel(pref.key)} /></span>
+                            <span class="grow">
+                                <span class="setting-title">{childLabel(pref.key)}</span>
+                                <span class="setting-meta">{childHint(pref.key)}</span>
+                            </span>
+                            <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}>
+                                <span class="switch-track"></span>
+                                <span class="switch-thumb"></span>
+                            </button>
+                        </div>
                     {/each}
                 </div>
             {/each}
@@ -184,14 +224,15 @@
     .group-label { margin:.5rem 0 .1rem; color:#8a93a8; font-size:.75rem; font-weight:600; }
     .row { display:flex; align-items:center; gap:.6rem; min-height:2.9rem; padding:.3rem 0; border-bottom:1px solid #edf0f5; }
     .row:last-child { border-bottom:0; }
-    .row-icon { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; color:#5b63e9; }
+    .row-icon { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
     .grow { flex:1; min-width:0; }
-    .setting-title { display:block; font-weight:600; font-size:.9rem; line-height:1.3; }
-    .setting-meta { display:block; margin-top:.1rem; color:#8a93a8; font-size:.75rem; line-height:1.2; }
-    .switch { width:2.875rem; height:1.125rem; flex:0 0 auto; padding:0; border:0; border-radius:999px; background:#d8deea; cursor:pointer; position:relative; }
+    .setting-title { display:block; font-weight:700; font-size:.95rem; line-height:1.3; }
+    .setting-meta { display:block; margin-top:.15rem; color:#8a93a8; font-size:.8rem; line-height:1.3; }
+    .switch { position:relative; width:3rem; height:1.875rem; flex:0 0 auto; padding:0; border:0; border-radius:999px; background:#d8deea; cursor:pointer; }
     .switch.on { background:#536be3; }
-    .switch:after { content:""; position:absolute; width:.875rem; height:.875rem; top:.125rem; left:.125rem; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgb(0 0 0 / 20%); transition:left .15s ease; }
-    .switch.on:after { left:1.625rem; }
+    .switch-track { position:absolute; inset:0; border-radius:999px; }
+    .switch-thumb { position:absolute; top:.1875rem; left:.1875rem; width:1.5rem; height:1.5rem; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgb(0 0 0 / 20%); transition:left .2s ease; }
+    .switch.on .switch-thumb { left:1.3125rem; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
     .close { width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
