@@ -71,7 +71,7 @@ public class TelegramChildConnectionServiceImpl implements TelegramChildConnecti
             now
         );
         return OperationResult.success(new TelegramLinkLaunchResponse(
-            "https:" + '/' + '/' + "t.me/" + botUsername + "?startapp=" + token.token()
+            "https:" + '/' + '/' + "t.me/" + botUsername + "?startapp=" + TelegramInviteToken.CHILD_INVITE_PREFIX + token.token()
         ));
     }
 

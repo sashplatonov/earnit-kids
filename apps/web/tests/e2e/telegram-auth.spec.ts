@@ -112,6 +112,30 @@ test('Telegram Mini App completes a one-time parent link before exchanging its s
     await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
 });
 
+test('a child-invite token is sent through the exchange without a parent self-link', async ({ page }) => {
+    await page.addInitScript(() => {
+        (window as Window & { Telegram?: unknown }).Telegram = {
+            WebApp: {
+                initData: 'signed-child-data',
+                initDataUnsafe: { start_param: 'ci_abc123' },
+                ready: () => {},
+                expand: () => {},
+            },
+        };
+    });
+    let parentLinkHit = false;
+    await page.route('**/api/telegram/account-connection/complete', async () => { parentLinkHit = true; });
+    await page.route('**/api/telegram/auth/exchange', async (route) => {
+        expect(route.request().postDataJSON()).toEqual({ initData: 'signed-child-data', token: 'ci_abc123' });
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ role: 'child', familyId: 'family-1' }) });
+    });
+
+    await page.goto('/telegram');
+
+    await expect(page.locator('#child-tab-tasks')).toBeVisible();
+    expect(parentLinkHit).toBe(false);
+});
+
 test('a consumed pairing token still opens the Mini App for its now-linked Telegram user', async ({ page }) => {
     await page.addInitScript(() => {
         (window as Window & { Telegram?: unknown }).Telegram = {

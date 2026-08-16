@@ -22,7 +22,7 @@ class TelegramMiniAppAuthResourceTest {
         TelegramMiniAppAuthResource resource = new TelegramMiniAppAuthResource(
             gate, mock(TelegramMiniAppAuthService.class), mock(CookieBuilder.class));
 
-        try (Response response = resource.exchange(new TelegramMiniAppAuthResource.TelegramInitDataRequest("init-data"))) {
+        try (Response response = resource.exchange(new TelegramMiniAppAuthResource.TelegramInitDataRequest("init-data", null))) {
             assertThat(response.getStatus()).isEqualTo(404);
         }
     }
@@ -33,13 +33,13 @@ class TelegramMiniAppAuthResourceTest {
         TelegramMiniAppAuthService authService = mock(TelegramMiniAppAuthService.class);
         CookieBuilder cookies = mock(CookieBuilder.class);
         when(gate.isEnabled()).thenReturn(true);
-        when(authService.authenticate("valid-data")).thenReturn(OperationResult.success(
+        when(authService.authenticate("valid-data", null)).thenReturn(OperationResult.success(
             new AuthPayload("family-1", "parent@example.test", "admin", null, null, false, "family_admin", null, false)));
         when(cookies.buildAuthCookies("parent@example.test", "admin", "family-1", null, false, "family_admin"))
             .thenReturn(List.of("app_auth=signed; Path=/"));
         TelegramMiniAppAuthResource resource = new TelegramMiniAppAuthResource(gate, authService, cookies);
 
-        try (Response response = resource.exchange(new TelegramMiniAppAuthResource.TelegramInitDataRequest("valid-data"))) {
+        try (Response response = resource.exchange(new TelegramMiniAppAuthResource.TelegramInitDataRequest("valid-data", null))) {
             assertThat(response.getStatus()).isEqualTo(200);
             assertThat(response.getStringHeaders().getFirst("Set-Cookie")).startsWith("app_auth=signed");
         }

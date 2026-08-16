@@ -24,11 +24,11 @@ export function initializeTelegramWebApp(): TelegramWebApp | null {
     return telegram;
 }
 
-export async function exchangeTelegramInitData(initData: string): Promise<Response> {
+export async function exchangeTelegramInitData(initData: string, token?: string | null): Promise<Response> {
     return fetchWithCsrf('/api/telegram/auth/exchange', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData }),
+        body: JSON.stringify({ initData, token: token ?? null }),
     });
 }
 

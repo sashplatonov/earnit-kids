@@ -16,7 +16,9 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TelegramMiniAppAuthServiceTest {
@@ -81,13 +83,44 @@ class TelegramMiniAppAuthServiceTest {
         assertThat(result).isInstanceOf(com.sashplatonov.earnit.kids.util.OperationResult.Failure.class);
     }
 
+    @Test
+    void acceptsChildInvitationTokenBeforeAuthenticating() {
+        TelegramInitDataVerifier verifier = mock(TelegramInitDataVerifier.class);
+        TelegramIdentityRepository identities = mock(TelegramIdentityRepository.class);
+        TelegramIdentityService identityService = mock(TelegramIdentityService.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        ChildRepository children = mock(ChildRepository.class);
+        ParentAccountRepository parents = mock(ParentAccountRepository.class);
+        FamilyParentMembershipRepository memberships = mock(FamilyParentMembershipRepository.class);
+        when(verifier.verify("child-data")).thenReturn(Optional.of(verified(77L)));
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(identity("child", 7)));
+        when(families.findByDbId(1)).thenReturn(Optional.of(family()));
+        when(children.findByIdOptional(7)).thenReturn(Optional.of(
+            ChildEntity.builder().id(7).familyDbId(1).name("Kid").build()));
+
+        TelegramMiniAppAuthService service = new TelegramMiniAppAuthService(
+            verifier, identities, identityService, () -> Instant.parse("2026-08-13T12:00:00Z"));
+        service.families = families;
+        service.children = children;
+        service.parents = parents;
+        service.memberships = memberships;
+
+        var result = service.authenticate("child-data", "ci_child-secret");
+
+        assertThat(result).isInstanceOf(com.sashplatonov.earnit.kids.util.OperationResult.Success.class);
+        var payload = ((com.sashplatonov.earnit.kids.util.OperationResult.Success<com.sashplatonov.earnit.kids.dto.response.AuthPayload>) result).value();
+        assertThat(payload.role()).isEqualTo("child");
+        verify(identityService).acceptChildInvitation(eq("child-secret"), eq(77L), eq(Instant.parse("2026-08-13T12:00:00Z")));
+    }
+
     private TelegramMiniAppAuthService service(TelegramInitDataVerifier verifier,
                                                 TelegramIdentityRepository identities,
                                                 FamilyRepository families,
                                                 ChildRepository children,
                                                 ParentAccountRepository parents,
                                                 FamilyParentMembershipRepository memberships) {
-        TelegramMiniAppAuthService service = new TelegramMiniAppAuthService(verifier, identities);
+        TelegramMiniAppAuthService service = new TelegramMiniAppAuthService(
+            verifier, identities, mock(TelegramIdentityService.class), () -> Instant.parse("2026-08-13T12:00:00Z"));
         service.families = families;
         service.children = children;
         service.parents = parents;

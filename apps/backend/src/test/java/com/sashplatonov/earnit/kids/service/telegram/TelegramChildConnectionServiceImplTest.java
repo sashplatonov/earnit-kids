@@ -109,7 +109,7 @@ class TelegramChildConnectionServiceImplTest {
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         var launch = ((OperationResult.Success<TelegramLinkLaunchResponse>) result).value();
-        assertThat(launch.launchUrl()).isEqualTo("https://t.me/earnit_bot?startapp=secret-token");
+        assertThat(launch.launchUrl()).isEqualTo("https://t.me/earnit_bot?startapp=ci_secret-token");
         verify(identityService).issueChildInvitation(eq(1), eq(15), eq("parent"),
             eq(NOW.plusSeconds(900)), eq(NOW));
     }

@@ -57,11 +57,12 @@
                 ?? new URLSearchParams(window.location.search).get('tgWebAppStartParam');
             const pairingToken = rawStartParam && isHexToken(rawStartParam) ? rawStartParam : '';
             let pairingFailed = false;
-            if (pairingToken) {
+            const childInviteToken = rawStartParam?.startsWith('ci_') ? rawStartParam : '';
+            if (pairingToken && !childInviteToken) {
                 const pairing = await completeTelegramAccountLink(pairingToken, telegram.initData);
                 pairingFailed = !pairing.ok;
             }
-            const response = await exchangeTelegramInitData(telegram.initData);
+            const response = await exchangeTelegramInitData(telegram.initData, childInviteToken || null);
             if (response.ok) {
                 state = 'ready';
                 try {

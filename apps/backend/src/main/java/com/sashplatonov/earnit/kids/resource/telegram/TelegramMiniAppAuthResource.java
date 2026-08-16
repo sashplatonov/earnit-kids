@@ -40,7 +40,7 @@ public class TelegramMiniAppAuthResource {
         if (!featureGate.isEnabled()) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return switch (authService.authenticate(request.initData())) {
+        return switch (authService.authenticate(request.initData(), request.token())) {
             case OperationResult.Success<AuthPayload> success -> {
                 AuthPayload payload = success.value();
                 if (featureGate.hasRolloutRestriction() && !featureGate.isMiniAppEnabled(payload.familyId())) {
@@ -61,5 +61,5 @@ public class TelegramMiniAppAuthResource {
         };
     }
 
-    public record TelegramInitDataRequest(@NotBlank String initData) { }
+    public record TelegramInitDataRequest(@NotBlank String initData, String token) { }
 }

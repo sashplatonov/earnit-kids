@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -18,6 +19,8 @@ public class TelegramMiniAppAuthService {
 
     private final TelegramInitDataVerifier verifier;
     private final TelegramIdentityRepository identities;
+    private final TelegramIdentityService identityService;
+    private final TimeProvider timeProvider;
     @Inject
     FamilyRepository families;
     @Inject
@@ -29,15 +32,30 @@ public class TelegramMiniAppAuthService {
 
     @Inject
     public TelegramMiniAppAuthService(TelegramInitDataVerifier verifier,
-                                      TelegramIdentityRepository identities) {
+                                      TelegramIdentityRepository identities,
+                                      TelegramIdentityService identityService,
+                                      TimeProvider timeProvider) {
         this.verifier = verifier;
         this.identities = identities;
+        this.identityService = identityService;
+        this.timeProvider = timeProvider;
     }
 
     public OperationResult<AuthPayload> authenticate(String rawInitData) {
+        return authenticate(rawInitData, null);
+    }
+
+    // EXPLAIN: A sign-in via the child-invite deep link carries the pairing
+    // EXPLAIN: token as startapp. Accepting it first binds the child's Telegram
+    // EXPLAIN: account so the subsequent identity lookup succeeds.
+    public OperationResult<AuthPayload> authenticate(String rawInitData, String pairingToken) {
         var verified = verifier.verify(rawInitData);
         if (verified.isEmpty()) {
             return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
+        }
+        if (pairingToken != null && !pairingToken.isBlank() && pairingToken.startsWith(TelegramInviteToken.CHILD_INVITE_PREFIX)) {
+            String token = pairingToken.substring(TelegramInviteToken.CHILD_INVITE_PREFIX.length());
+            identityService.acceptChildInvitation(token, verified.get().telegramUserId(), timeProvider.now());
         }
         TelegramIdentityEntity identity = identities.findActiveByTelegramUserId(verified.get().telegramUserId())
             .orElse(null);
