@@ -21,12 +21,12 @@
 </header>
 
 <style>
-    .balance-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
-    h1 { margin:.2rem 0 0; color:#18243d; font-size:clamp(1.35rem, 6vw, 2rem); }
-    .loading-title { color:#9aa3b5; font-size:clamp(1.35rem, 6vw, 2rem); }
-    .balance-pill { display:inline-flex; align-items:center; gap:.35rem; padding:.5rem .7rem; border-radius:999px; background:#fff4c2; color:#573d00; font-weight:700; white-space:nowrap; }
+    .balance-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; min-height:3.4rem; margin-bottom:1rem; }
+    h1 { margin:.2rem 0 0; color:#18243d; font-size:clamp(1.35rem, 6vw, 2rem); line-height:1.25; }
+    .loading-title { color:#9aa3b5; font-size:clamp(1.35rem, 6vw, 2rem); line-height:1.25; }
+    .balance-pill { display:inline-flex; align-items:center; gap:.35rem; box-sizing:border-box; height:2.25rem; padding:.5rem .7rem; border-radius:999px; background:#fff4c2; color:#573d00; font-weight:700; white-space:nowrap; }
     .skeleton { display:block; background:#e8eaf1; border-radius:.55rem; animation: skeleton-pulse 1.3s ease-in-out infinite; }
-    .skeleton--pill { width:4.2rem; height:2.1rem; border-radius:999px; }
+    .skeleton--pill { width:4.2rem; height:2.25rem; border-radius:999px; }
     @keyframes skeleton-pulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
     @media (prefers-reduced-motion: reduce) { .skeleton { animation:none; } }
 </style>

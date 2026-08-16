@@ -92,8 +92,9 @@
 </main>
 
 <style>
-    .parent-workspace { width: 100%; max-width: 48rem; margin: 0 auto; padding: calc(.75rem + env(safe-area-inset-top)) 1rem 2rem; }
-    .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .25rem; margin-bottom: .75rem; }
+    .parent-workspace { display: flex; flex-direction: column; width: 100%; max-width: 48rem; min-height: 100vh; margin: 0 auto; padding: calc(.75rem + env(safe-area-inset-top)) 1rem 2rem; }
+    .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .25rem; flex-shrink: 0; margin-bottom: .75rem; }
+    [role="tabpanel"] { flex: 1 1 auto; min-height: 0; }
     button { min-height: 2.75rem; border: 1px solid #dfe4ee; border-radius: .75rem; background: #fff; color: #33415f; font: inherit; cursor: pointer; }
     button:focus-visible { outline: 3px solid #80aaff; outline-offset: 2px; }
     .tabs button.active { border-color: #b9c0ff; background: #fff; color: #2854ba; font-weight: 750; }

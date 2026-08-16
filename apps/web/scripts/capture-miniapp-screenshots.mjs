@@ -306,7 +306,19 @@ const HISTORY_PAGE = {
 
 const PERF_INIT_SCRIPT = `
 (() => {
-    self.__miniAppPerf = { lcp: null, cls: 0, fcp: null, fp: null, ttfb: null };
+    if (self.__miniAppPerf) return;
+    self.__miniAppPerf = { lcp: null, cls: 0, clsEntries: [], fcp: null, fp: null, ttfb: null };
+    function nodePath(el) {
+        if (!el || !(el instanceof Element)) return '';
+        const tag = el.tagName?.toLowerCase?.() || '';
+        const id = el.id ? '#' + el.id : '';
+        const cls = el.className && typeof el.className === 'string' ? '.' + el.className.split(/\\s+/).filter(Boolean).slice(0, 2).join('.') : '';
+        return tag + id + cls;
+    }
+    function rect(r) {
+        if (!r) return null;
+        return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+    }
     try {
         const lcpObserver = new PerformanceObserver((list) => {
             const entries = list.getEntries();
@@ -321,6 +333,16 @@ const PERF_INIT_SCRIPT = `
             for (const entry of list.getEntries()) {
                 if (!entry.hadRecentInput) {
                     self.__miniAppPerf.cls += entry.value;
+                    const sources = (entry.sources || []).map((s) => ({
+                        path: nodePath(s.node),
+                        prev: rect(s.previousRect),
+                        curr: rect(s.currentRect),
+                    }));
+                    self.__miniAppPerf.clsEntries.push({
+                        value: Number(entry.value.toFixed(4)),
+                        startTime: Math.round(entry.startTime),
+                        sources,
+                    });
                 }
             }
         });
@@ -335,6 +357,11 @@ function json(body) {
 
 async function collectMetrics(page, viewName) {
     const metrics = await page.evaluate(() => {
+        function rect(el) {
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+        }
         const nav = performance.getEntriesByType('navigation')[0] || {};
         const paints = performance.getEntriesByType('paint');
         const fpEntry = paints.find((p) => p.name === 'first-paint');
@@ -349,6 +376,13 @@ async function collectMetrics(page, viewName) {
             firstContentfulPaint: fcpEntry ? fcpEntry.startTime : null,
             largestContentfulPaint: perf.lcp,
             cumulativeLayoutShift: Number(perf.cls.toFixed(4)),
+            clsEntries: perf.clsEntries ? perf.clsEntries.slice(0, 5) : [],
+            panelRects: {
+                workspace: rect(document.querySelector('.child-workspace, .parent-workspace')),
+                panel: rect(document.querySelector('[role="tabpanel"]')),
+                tabs: rect(document.querySelector('.tabs')),
+                footer: rect(document.querySelector('.site-link')),
+            },
             resourceCount: performance.getEntriesByType('resource').length,
         };
     });
