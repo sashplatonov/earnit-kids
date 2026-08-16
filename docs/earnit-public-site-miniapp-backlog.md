@@ -176,7 +176,7 @@ git commit -m "feat(backend): Russian child notification for direct parent task/
 
 ## P1-4: Родитель в Mini App выполняет задание / выдаёт награду без заявки
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P1
 **Depends on:** P1-3
 

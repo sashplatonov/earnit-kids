@@ -1,7 +1,8 @@
 <script lang="ts">
     import { appStore, type Task } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { saveChildGroupOrder } from '$lib/services/api';
+    import { earnCoins, saveChildGroupOrder } from '$lib/services/api';
+    import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';
     import { orderGroups } from '$lib/services/groupOrder';
@@ -70,6 +71,24 @@
         if (!confirmed) return;
         appStore.setState({ tasks: $appStore.tasks.filter((item) => item.id != task.id) });
         void scheduleSave();
+    }
+    // EXPLAIN: Parent directly completes a task for the current child, awarding
+    // EXPLAIN: coins without a child request. Reuses earnCoins (POST /complete).
+    let completingId: string | number | null = null;
+    let completeError = '';
+    async function completeForChild(task: Task) {
+        if ($appStore.currentChildId == null || completingId != null) return;
+        closeMenu();
+        completingId = task.id;
+        completeError = '';
+        const result = await earnCoins(task.id, $appStore.currentChildId) as Record<string, unknown> | null;
+        completingId = null;
+        if (result) {
+            applyDataSnapshot(result);
+        } else {
+            completeError = $i18n.t('app.telegram.tasks.completeError');
+            await refreshData();
+        }
     }
     async function saveGroups(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
         if ($appStore.currentChildId == null) return;
@@ -145,6 +164,7 @@
                             <button class="more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })} aria-haspopup="menu" aria-expanded={openMenuId === task.id} on:click|stopPropagation={(event) => toggleMenu(task.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
                             {#if openMenuId === task.id}
                                 <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })}>
+                                    <button role="menuitem" type="button" disabled={task.isActive === false} on:click={() => void completeForChild(task)}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.complete')} /><span>{$i18n.t('app.telegram.tasks.complete')}</span></button>
                                     <button role="menuitem" type="button" on:click={() => edit(task)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.tasks.edit')} /><span>{$i18n.t('app.telegram.tasks.edit')}</span></button>
                                     <button role="menuitem" type="button" on:click={() => toggleArchive(task)}><TelegramIcon name="archive" size={16} label={task.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')} /><span>{task.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')}</span></button>
                                     <button role="menuitem" class="danger" type="button" on:click={() => void remove(task)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.tasks.delete')} /><span>{$i18n.t('app.telegram.tasks.delete')}</span></button>
@@ -165,6 +185,7 @@
         </button>
         {#if groupMessage}<span role="status" class="group-message">{groupMessage}</span>{/if}
     {/if}
+    {#if completeError}<p class="error" role="alert">{completeError}</p>{/if}
 </div>
 <TelegramTaskForm open={formOpen} task={editingTask} groupSuggestions={groups} onClose={() => formOpen = false} />
 <TelegramGroupManager open={groupEditorOpen} kind="tasks" onClose={() => groupEditorOpen = false} on:save={saveGroups} on:deleteGroup={handleDeleteGroup} />
@@ -194,7 +215,9 @@
     .menu button { display:flex; align-items:center; gap:.55rem; width:100%; min-height:2.75rem; padding:.4rem .6rem; border:0; border-radius:.5rem; background:transparent; color:#33415f; font:inherit; text-align:left; cursor:pointer; }
     .menu button:hover { background:#f2f5ff; }
     .menu button.danger { color:#c63c42; }
+    .menu button:disabled { opacity:.5; cursor:not-allowed; }
     .muted { color:#66718a; }
+    .error { margin:.75rem 0 0; padding:.6rem .75rem; border-radius:.75rem; background:#fff0f0; color:#a33b3b; font-size:.875rem; }
     button.groups { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.75rem; border:1px solid #e6e9f0; border-radius:.75rem; background:#fff; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
     button.groups span { display:inline-flex; align-items:center; }
     .group-message { display:block; margin-top:.4rem; text-align:center; color:#66718a; font-size:.85rem; }

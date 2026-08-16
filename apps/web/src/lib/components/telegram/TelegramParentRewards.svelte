@@ -1,7 +1,8 @@
 <script lang="ts">
     import { appStore, type ShopItem } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { saveChildGroupOrder } from '$lib/services/api';
+    import { buyItem, saveChildGroupOrder } from '$lib/services/api';
+    import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';
     import { orderGroups } from '$lib/services/groupOrder';
@@ -70,6 +71,29 @@
         if (!confirmed) return;
         appStore.setState({ shopItems: $appStore.shopItems.filter((entry) => entry.id != item.id) });
         void scheduleSave();
+    }
+    // EXPLAIN: Parent directly grants a reward to the current child, spending
+    // EXPLAIN: coins without a child request. Reuses buyItem (POST /purchase).
+    let grantingId: string | number | null = null;
+    let grantError = '';
+    async function grantToChild(item: ShopItem) {
+        if ($appStore.currentChildId == null || grantingId != null) return;
+        closeMenu();
+        grantingId = item.id;
+        grantError = '';
+        if (($appStore.balance ?? 0) < (item.price ?? 0)) {
+            grantingId = null;
+            grantError = $i18n.t('app.telegram.rewards.notEnoughCoins');
+            return;
+        }
+        const result = await buyItem(item.id, $appStore.currentChildId) as Record<string, unknown> | null;
+        grantingId = null;
+        if (result) {
+            applyDataSnapshot(result);
+        } else {
+            grantError = $i18n.t('app.telegram.rewards.grantError');
+            await refreshData();
+        }
     }
     async function saveGroups(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
         if ($appStore.currentChildId == null) return;
@@ -145,6 +169,7 @@
                             <button class="more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(item.name) })} aria-haspopup="menu" aria-expanded={openMenuId === item.id} on:click|stopPropagation={(event) => toggleMenu(item.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
                             {#if openMenuId === item.id}
                                 <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(item.name) })}>
+                                    <button role="menuitem" type="button" disabled={item.isActive === false} on:click={() => void grantToChild(item)}><TelegramIcon name="gift" size={16} label={$i18n.t('app.telegram.rewards.grant')} /><span>{$i18n.t('app.telegram.rewards.grant')}</span></button>
                                     <button role="menuitem" type="button" on:click={() => edit(item)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.tasks.edit')} /><span>{$i18n.t('app.telegram.tasks.edit')}</span></button>
                                     <button role="menuitem" type="button" on:click={() => toggleArchive(item)}><TelegramIcon name="archive" size={16} label={item.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')} /><span>{item.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')}</span></button>
                                     <button role="menuitem" class="danger" type="button" on:click={() => void remove(item)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.tasks.delete')} /><span>{$i18n.t('app.telegram.tasks.delete')}</span></button>
@@ -165,6 +190,7 @@
         </button>
         {#if groupMessage}<span role="status" class="group-message">{groupMessage}</span>{/if}
     {/if}
+    {#if grantError}<p class="error" role="alert">{grantError}</p>{/if}
 </div>
 <TelegramRewardForm open={formOpen} item={editingItem} groupSuggestions={groups} onClose={() => formOpen = false} />
 <TelegramGroupManager open={groupEditorOpen} kind="shop" onClose={() => groupEditorOpen = false} on:save={saveGroups} on:deleteGroup={handleDeleteGroup} />
@@ -194,7 +220,9 @@
     .menu button { display:flex; align-items:center; gap:.55rem; width:100%; min-height:2.75rem; padding:.4rem .6rem; border:0; border-radius:.5rem; background:transparent; color:#33415f; font:inherit; text-align:left; cursor:pointer; }
     .menu button:hover { background:#f2f5ff; }
     .menu button.danger { color:#c63c42; }
+    .menu button:disabled { opacity:.5; cursor:not-allowed; }
     .muted { color:#66718a; }
+    .error { margin:.75rem 0 0; padding:.6rem .75rem; border-radius:.75rem; background:#fff0f0; color:#a33b3b; font-size:.875rem; }
     button.groups { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.75rem; border:1px solid #e6e9f0; border-radius:.75rem; background:#fff; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
     button.groups span { display:inline-flex; align-items:center; }
     .group-message { display:block; margin-top:.4rem; text-align:center; color:#66718a; font-size:.85rem; }
