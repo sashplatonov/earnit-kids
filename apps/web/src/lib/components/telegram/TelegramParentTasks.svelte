@@ -220,7 +220,7 @@
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .list { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
     .empty-group { padding:1rem 0; text-align:center; }
-    .row { display:flex; align-items:center; gap:.25rem; min-height:3.5rem; border-bottom:1px solid #edf0f5; }
+    .row { display:flex; align-items:stretch; gap:.25rem; min-height:3.5rem; border-bottom:1px solid #edf0f5; }
     .row:last-child { border-bottom:0; }
     .row.archived { opacity:.6; }
     .row-main { display:flex; align-items:center; gap:.6rem; flex:1; min-width:0; min-height:3.5rem; padding:.3rem 0; border:0; background:transparent; text-align:left; cursor:pointer; }
@@ -230,7 +230,7 @@
     .meta { display:flex; align-items:center; gap:.3rem; margin-top:.15rem; color:#66718a; font-size:.8rem; }
     .meta--last { color:#8a93a8; font-size:.75rem; }
     .more { width:2.75rem; height:2.75rem; display:grid; place-items:center; border:0; background:transparent; color:#66718a; cursor:pointer; }
-    .check { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #cbd3e2; border-radius:.5rem; background:#fff; color:#17884b; font-weight:900; cursor:pointer; }
+    .check { width:1.75rem; height:1.75rem; flex:0 0 auto; align-self:flex-end; margin-bottom:.4rem; display:grid; place-items:center; border:1px solid #cbd3e2; border-radius:.45rem; background:#fff; color:#17884b; font-weight:900; cursor:pointer; }
     .check:disabled { opacity:.5; cursor:not-allowed; }
     .menu-wrap { position:relative; }
     .menu { position:absolute; right:0; top:calc(100% - .5rem); z-index:30; min-width:11rem; padding:.35rem; border:1px solid #e0e4ec; border-radius:.75rem; background:#fff; box-shadow:0 .75rem 2rem rgb(24 36 61 / 14%); }
