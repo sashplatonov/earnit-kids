@@ -180,8 +180,6 @@
 <style>
     .catalog { width:100%; }
     .page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; margin-bottom:.4rem; }
-    h1 { margin:0; color:#18243d; font-size:1.15rem; }
-    .desc { margin:.1rem 0 0; color:#66718a; font-size:.75rem; }
     .bulk-toggle { min-height:2.25rem; padding:.3rem .5rem; border:0; border-radius:.6rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; white-space:nowrap; font-size:.85rem; }
     .search { display:flex; align-items:center; gap:.5rem; min-height:2.75rem; padding:0 .7rem; border:1px solid #dfe4ee; border-radius:.75rem; background:#fff; margin-bottom:.5rem; }
     .search input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#18243d; font:inherit; }
