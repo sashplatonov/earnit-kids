@@ -108,4 +108,48 @@ class TelegramOutboxProcessorTest {
         assertThat(delivery.getNextAttemptAt()).isAfter(now);
         assertThat(event.getResultingBalance()).isEqualTo(125);
     }
+
+    @Test
+    void directParentTaskCompletionSendsRussianNotificationToChild() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(10L).eventId(10L).recipientIdentityId(5).chatId(78L).status("PENDING")
+            .nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(10L).eventType(ApplicationOutboxEventType.TASK_APPROVED).familyId(1).childId(2)
+            .requestId(null).coinDelta(20).resultingBalance(145).createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(10L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+        when(callbacks.signNavigation(anyString())).thenAnswer(invocation ->
+            "nav." + invocation.getArgument(0, String.class) + ".signed");
+
+        assertThat(processor.process(now)).isEqualTo(1);
+        assertThat(delivery.getStatus()).isEqualTo("SENT");
+        verify(api).sendMessage(78L,
+            "🎉 Родитель выполнил задание за тебя\n\n🪙 +20 монет\nБаланс: 145",
+            List.of(
+                TelegramBotApiClient.InlineButton.callback("✅ Мои задания", "nav.tasks.signed"),
+                TelegramBotApiClient.InlineButton.callback("🎁 Награды", "nav.rewards.signed")));
+    }
+
+    @Test
+    void directParentRewardGrantSendsRussianNotificationToChild() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(11L).eventId(11L).recipientIdentityId(5).chatId(78L).status("PENDING")
+            .nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(11L).eventType(ApplicationOutboxEventType.REWARD_PURCHASED).familyId(1).childId(2)
+            .requestId(null).coinDelta(-50).resultingBalance(95).createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(11L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+
+        assertThat(processor.process(now)).isEqualTo(1);
+        assertThat(delivery.getStatus()).isEqualTo("SENT");
+        verify(api).sendMessage(78L,
+            "🎉 Родитель выдал награду",
+            List.of());
+    }
 }

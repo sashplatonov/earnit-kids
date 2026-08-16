@@ -127,7 +127,7 @@ git commit -m "fix(web): point public site Telegram buttons to bot deep link"
 
 ## P1-3: Уведомление ребёнку при прямом выполнении задания / выдаче награды родителем
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P1
 **Depends on:** -
 

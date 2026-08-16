@@ -45,6 +45,10 @@
         <Class name="com.sashplatonov.earnit.kids.service.telegram.TelegramNotificationComposer"/>
     </Match>
     <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.telegram.TelegramChildOutcomeText"/>
+    </Match>
+    <Match>
         <Bug pattern="EI_EXPOSE_REP2,BX_UNBOXING_IMMEDIATELY_REBOXED"/>
         <Class name="com.sashplatonov.earnit.kids.service.telegram.TelegramQuickActionServiceImpl"/>
     </Match>

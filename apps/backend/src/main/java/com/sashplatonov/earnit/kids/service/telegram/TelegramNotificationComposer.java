@@ -22,16 +22,29 @@ public class TelegramNotificationComposer {
     private final PurchaseRequestRepository requests;
     private final ShopItemRepository shopItems;
     private final TelegramCallbackService callbacks;
+    private final TelegramChildOutcomeText outcomeText;
 
     @Inject
     public TelegramNotificationComposer(ChildRepository children,
                                         PurchaseRequestRepository requests,
                                         ShopItemRepository shopItems,
-                                        TelegramCallbackService callbacks) {
+                                        TelegramCallbackService callbacks,
+                                        TelegramChildOutcomeText outcomeText) {
         this.children = children;
         this.requests = requests;
         this.shopItems = shopItems;
         this.callbacks = callbacks;
+        this.outcomeText = outcomeText;
+    }
+
+    // EXPLAIN: Test-only constructor that builds the child-outcome text helper
+    // EXPLAIN: from the same repositories to keep existing unit tests intact.
+    TelegramNotificationComposer(ChildRepository children,
+                                 PurchaseRequestRepository requests,
+                                 ShopItemRepository shopItems,
+                                 TelegramCallbackService callbacks) {
+        this(children, requests, shopItems, callbacks,
+            new TelegramChildOutcomeText(children, requests, shopItems));
     }
 
     public List<TelegramBotApiClient.InlineButton> buttons(ApplicationOutboxEventEntity event) {
@@ -91,20 +104,7 @@ public class TelegramNotificationComposer {
     }
 
     private String childOutcomeText(ApplicationOutboxEventEntity event) {
-        String requestTitle = request(event).map(this::title).orElse(null);
-        if (requestTitle == null) {
-            return generic(event);
-        }
-        int delta = event.getCoinDelta();
-        Integer balance = event.getResultingBalance();
-        return switch (event.getEventType()) {
-            case TASK_APPROVED -> TelegramCopy.childTaskApproved(requestTitle, delta,
-                balance == null ? 0 : balance);
-            case REWARD_APPROVED -> TelegramCopy.childRewardApproved(requestTitle);
-            case TASK_REJECTED -> TelegramCopy.childTaskRejected(requestTitle);
-            case REWARD_REJECTED -> TelegramCopy.childRewardRejected(requestTitle);
-            default -> generic(event);
-        };
+        return outcomeText.text(event);
     }
 
     private boolean isRequestEvent(ApplicationOutboxEventType type) {
