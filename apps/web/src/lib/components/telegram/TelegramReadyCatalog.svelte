@@ -89,22 +89,28 @@
 </script>
 
 <div class="catalog">
-    <div class="page-header">
+    <div class="catalog-header">
+        <h2 class="catalog-title">{kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')}</h2>
+        <p class="catalog-subtitle">{kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasksHintShort') : $i18n.t('app.telegram.readyCatalog.catalogRewardsHintShort')}</p>
+    </div>
+
+    <div class="action-row">
         <button class="bulk-toggle" type="button" on:click={() => { bulkMode = !bulkMode; selectedIds = []; }}>
-            {bulkMode ? $i18n.t('app.telegram.readyCatalog.done') : $i18n.t('app.telegram.readyCatalog.selectSeveral')}
+            {#if bulkMode}
+                <TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.readyCatalog.done')} />
+            {:else}
+                <TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.readyCatalog.selectSeveral')} />
+            {/if}
+        </button>
+        <button class="filter-btn" class:active={activeFilterCount > 0} type="button" on:click={() => filterOpen = true}>
+            <TelegramIcon name="filter" size={18} label={$i18n.t('app.telegram.readyCatalog.filters')} />
+            <span>{filtersLabel}</span>
         </button>
     </div>
 
     <div class="search">
         <TelegramIcon name="search" size={18} label={$i18n.t('app.telegram.readyCatalog.search')} />
         <input type="search" bind:value={query} on:input={() => track('catalog_search_used')} placeholder={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} />
-    </div>
-
-    <div class="filterbar">
-        <button class="filter-btn" class:active={activeFilterCount > 0} type="button" on:click={() => filterOpen = true}>
-            <TelegramIcon name="filter" size={18} label={$i18n.t('app.telegram.readyCatalog.filters')} />
-            <span>{filtersLabel}</span>
-        </button>
     </div>
 
     <TelegramGroupSubnav
@@ -168,11 +174,14 @@
 
 <style>
     .catalog { width:100%; }
-    .page-header { display:flex; align-items:center; justify-content:space-between; gap:.4rem; margin-bottom:.25rem; }
-    .bulk-toggle { min-height:1.75rem; padding:.2rem .4rem; border:0; border-radius:.45rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; white-space:nowrap; font-size:.75rem; }
+    .catalog-header { margin-bottom:.4rem; }
+    .catalog-title { margin:0; color:#18243d; font-size:1.1rem; font-weight:700; }
+    .catalog-subtitle { margin:.15rem 0 0; color:#66718a; font-size:.85rem; line-height:1.3; }
+    .action-row { display:flex; align-items:center; gap:.4rem; margin-bottom:.4rem; }
+    .bulk-toggle { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border:0; border-radius:.5rem; background:transparent; color:#3867d6; cursor:pointer; }
+    .bulk-toggle:hover { background:#f2f5ff; }
     .search { display:flex; align-items:center; gap:.45rem; min-height:2.25rem; padding:0 .55rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; margin-bottom:.35rem; }
     .search input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#18243d; font:inherit; font-size:.85rem; }
-    .filterbar { display:grid; grid-template-columns:1fr; gap:.35rem; margin-bottom:.45rem; }
     .filter-btn { display:flex; align-items:center; justify-content:center; gap:.35rem; min-height:2rem; padding:0 .5rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#566176; font:inherit; font-weight:700; font-size:.75rem; cursor:pointer; min-width:0; }
     .filter-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .filter-btn.active { color:#2854ba; border-color:#c4c8ff; background:#f7f7ff; }
