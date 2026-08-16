@@ -162,7 +162,7 @@
                         </span>
                     </button>
                     {#if canEdit}
-                        <button class="check" type="button" aria-label={$i18n.t('app.telegram.tasks.completeShort')} disabled={task.isActive === false || completingId != null} on:click|stopPropagation={() => confirmComplete = task}><TelegramIcon name="done" size={18} label={$i18n.t('app.telegram.tasks.completeShort')} /></button>
+                        <button class="check" type="button" aria-label={$i18n.t('app.telegram.tasks.completeShort')} disabled={task.isActive === false || completingId != null} on:click|stopPropagation={() => confirmComplete = task}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} /></button>
                         <div class="menu-wrap">
                             <button class="more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })} aria-haspopup="menu" aria-expanded={openMenuId === task.id} on:click|stopPropagation={(event) => toggleMenu(task.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
                             {#if openMenuId === task.id}
@@ -230,7 +230,7 @@
     .meta { display:flex; align-items:center; gap:.3rem; margin-top:.15rem; color:#66718a; font-size:.8rem; }
     .meta--last { color:#8a93a8; font-size:.75rem; }
     .more { width:2.75rem; height:2.75rem; display:grid; place-items:center; border:0; background:transparent; color:#66718a; cursor:pointer; }
-    .check { width:2.75rem; height:2.75rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #cbd3e2; border-radius:.65rem; background:#fff; color:#17884b; font-weight:900; cursor:pointer; }
+    .check { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #cbd3e2; border-radius:.5rem; background:#fff; color:#17884b; font-weight:900; cursor:pointer; }
     .check:disabled { opacity:.5; cursor:not-allowed; }
     .menu-wrap { position:relative; }
     .menu { position:absolute; right:0; top:calc(100% - .5rem); z-index:30; min-width:11rem; padding:.35rem; border:1px solid #e0e4ec; border-radius:.75rem; background:#fff; box-shadow:0 .75rem 2rem rgb(24 36 61 / 14%); }
