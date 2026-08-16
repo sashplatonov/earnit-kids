@@ -379,7 +379,10 @@
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
                 <div class="card__badge-row">
-                    <span class={`card__badge request-chip--status ${requestStatusClass(req.status)}`}>{requestStatusLabel(req.status)}</span>
+                    <span class={`card__badge request-chip--status ${requestStatusClass(req.status)}`}>
+                        <span class="request-status-dot" aria-hidden="true"></span>
+                        {requestStatusLabel(req.status)}
+                    </span>
                     <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                     <span class="card__badge card__badge--group">{req.ui.group}</span>
                 </div>
@@ -390,6 +393,7 @@
                             amount={formatRequestAmount(req)}
                             amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
                             amountNote={requestMoneyLabel(req.ui.moneyAmount)}
+                            compactChips={requestCompactChips(req)}
                             titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
                             titleActionExpanded={openNoteRequestId === String(req.id)}
                             titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
@@ -587,6 +591,30 @@
         color: #2d1b5a;
         border: 1px solid rgba(99, 102, 241, 0.18);
         font-weight: 900;
+    }
+
+    /* Status dot indicator for child request status chips */
+    .request-status-dot {
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        margin-right: 0.3rem;
+        vertical-align: middle;
+        background: currentColor;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
+    }
+
+    .request-chip--success .request-status-dot {
+        background: #22c55e;
+    }
+
+    .request-chip--danger .request-status-dot {
+        background: #ef4444;
+    }
+
+    .request-chip--warning .request-status-dot {
+        background: #f59e0b;
     }
 
     .request-card--list .history-item__delete-btn {
