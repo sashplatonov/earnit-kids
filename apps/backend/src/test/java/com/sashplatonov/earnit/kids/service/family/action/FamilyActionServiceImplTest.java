@@ -509,6 +509,34 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void deleteRequest_childDeletingOwnRejectedRequest_physicallyDeletes() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        PurchaseRequestEntity request = PurchaseRequestEntity.builder()
+            .id(4006L)
+            .familyId(1)
+            .childId(10)
+            .taskId(3001L)
+            .taskName("Убрать комнату")
+            .coins(50)
+            .requestType(PurchaseRequestType.earn)
+            .status(PurchaseRequestStatus.rejected)
+            .moneyAmount(0)
+            .createdAt(FIXED_NOW)
+            .build();
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(purchaseRequestRepository.findByIdOptional(4006L)).thenReturn(Optional.of(request));
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.deleteRequest("fam-1", 10, 4006L);
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        verify(purchaseRequestRepository).delete(request);
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
     void deleteRequest_adminDeletesRequestPhysically() {
         ChildEntity child = child(10, 1, "Alice", 20);
         PurchaseRequestEntity request = PurchaseRequestEntity.builder()

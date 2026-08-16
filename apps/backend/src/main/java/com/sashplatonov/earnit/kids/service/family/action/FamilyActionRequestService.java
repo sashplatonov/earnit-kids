@@ -216,13 +216,13 @@ final class FamilyActionRequestService {
 
         boolean isChildDeletingOwnRequest = currentChildId != null
             && Objects.equals(request.get().getChildId(), currentChildId);
-        if (isChildDeletingOwnRequest && !FamilyActionRequestSupport.isPending(request.get())) {
+        if (isChildDeletingOwnRequest && request.get().getStatus() == PurchaseRequestStatus.approved) {
             return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
         }
 
         int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
-        if (isChildDeletingOwnRequest) {
-            // EXPLAIN: A child cancelling their own pending request soft-cancels it (status = cancelled) so it stays visible in history instead of being physically deleted; parents keep the physical-delete behavior.
+        if (isChildDeletingOwnRequest && FamilyActionRequestSupport.isPending(request.get())) {
+            // EXPLAIN: A child cancelling their own pending request soft-cancels it (status = cancelled) so it stays visible in history instead of being physically deleted; rejected requests and parent deletes keep the physical-delete behavior.
             request.get().setStatus(PurchaseRequestStatus.cancelled);
         } else {
             purchaseRequestRepository.delete(request.get());
