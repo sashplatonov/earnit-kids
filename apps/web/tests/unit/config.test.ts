@@ -52,6 +52,22 @@ describe('loadAppConfig', () => {
         expect(config.publicOrigin).toBe('http://localhost:5001');
     });
 
+    it('normalizes publicOrigin to the site root, stripping path and query', () => {
+        const config = loadAppConfig({
+            APP_URL: 'https://earnit-kids.igo.mywire.org/en/app/tasks?tab=1',
+        } as NodeJS.ProcessEnv);
+
+        expect(config.publicOrigin).toBe('https://earnit-kids.igo.mywire.org');
+    });
+
+    it('keeps publicOrigin unchanged when it has no path beyond the root', () => {
+        const config = loadAppConfig({
+            APP_URL: 'https://earnit-kids.igo.mywire.org/',
+        } as NodeJS.ProcessEnv);
+
+        expect(config.publicOrigin).toBe('https://earnit-kids.igo.mywire.org');
+    });
+
     it('reads the Telegram Mini App URL from env and trims trailing slashes', () => {
         const config = loadAppConfig({
             APP_URL: 'http://localhost:3000',

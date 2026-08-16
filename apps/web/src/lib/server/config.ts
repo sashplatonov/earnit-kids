@@ -16,6 +16,18 @@ function parsePort(rawValue: string | undefined, fallbackValue: number): number 
     return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : fallbackValue;
 }
 
+// EXPLAIN: Public links (Mini App footer, sitemap, robots, proxy referer) must
+// EXPLAIN: point at the site root, never at a specific app page. Strip any path
+// EXPLAIN: and query so APP_URL like https://host/en/app/tasks yields https://host.
+function resolvePublicOrigin(rawValue: string): string {
+    const trimmed = trimTrailingSlashes(rawValue);
+    try {
+        return new URL(trimmed).origin;
+    } catch {
+        return trimmed;
+    }
+}
+
 export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     const backendOrigin = env.BACKEND_ORIGIN || env.BACKEND_URL || DEFAULT_BACKEND_ORIGIN;
     const publicOrigin = env.APP_URL || env.FRONTEND_URL || env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN;
@@ -23,7 +35,7 @@ export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 
     return {
         backendOrigin: trimTrailingSlashes(backendOrigin),
-        publicOrigin: trimTrailingSlashes(publicOrigin),
+        publicOrigin: resolvePublicOrigin(publicOrigin),
         telegramMiniAppUrl: rawTelegramMiniAppUrl.trim() ? trimTrailingSlashes(rawTelegramMiniAppUrl.trim()) : null,
         sessionPath: env.SESSION_PATH || DEFAULT_SESSION_PATH,
         wsPath: env.WS_PATH || DEFAULT_WS_PATH,
