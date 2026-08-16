@@ -299,7 +299,7 @@
     .childrow-wrap { display:flex; align-items:center; border-bottom:1px solid #edf0f5; }
     .childrow-wrap:last-child { border-bottom:0; }
     .childrow-wrap .childrow { flex:1; min-width:0; border-bottom:0; }
-    .childrow-more { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border:0; background:transparent; color:#66718a; cursor:pointer; }
+    .childrow-more { display:grid; place-items:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border:0; background:transparent; color:#66718a; cursor:pointer; }
     .inactive-row { display:flex; align-items:center; gap:.6rem; min-height:3.25rem; padding:.4rem 0; border-bottom:1px solid #edf0f5; }
     .inactive-row:last-child { border-bottom:0; }
     .inactive-row .avatar { opacity:.55; }
