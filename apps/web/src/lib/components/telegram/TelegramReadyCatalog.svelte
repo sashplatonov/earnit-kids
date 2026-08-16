@@ -38,22 +38,15 @@
     let query = '';
     let filters: CatalogFilters = { ...EMPTY_FILTERS };
     let selectedGroup = '';
-    let filterMode: 'age' | 'filters' | null = null;
+    let filterOpen = false;
     let bulkMode = false;
     let selectedIds: string[] = [];
 
     $: filtered = filterCatalog(templates, filters, query)
         .filter((item) => !selectedGroup || item.groupName === selectedGroup);
-    $: nonAgeCount = nonAgeFilterCount(filters);
-    $: ageLabel = filters.age === '6-8'
-        ? $i18n.t('app.telegram.readyCatalog.age6_8')
-        : filters.age === '9-11'
-            ? $i18n.t('app.telegram.readyCatalog.age9_11')
-            : filters.age === '12-14'
-                ? $i18n.t('app.telegram.readyCatalog.age12_14')
-                : $i18n.t('app.telegram.readyCatalog.age');
-    $: filtersLabel = nonAgeCount > 0
-        ? $i18n.t('app.telegram.readyCatalog.filtersCount', { count: nonAgeCount })
+    $: activeFilterCount = nonAgeFilterCount(filters) + (filters.age != null ? 1 : 0);
+    $: filtersLabel = activeFilterCount > 0
+        ? $i18n.t('app.telegram.readyCatalog.filtersCount', { count: activeFilterCount })
         : $i18n.t('app.telegram.readyCatalog.filters');
 
     function isAdded(template: { id: string; title: string }): boolean {
@@ -108,11 +101,7 @@
     </div>
 
     <div class="filterbar">
-        <button class="filter-btn" class:active={filters.age != null} type="button" on:click={() => filterMode = 'age'}>
-            <TelegramIcon name="child" size={18} label={$i18n.t('app.telegram.readyCatalog.age')} />
-            <span>{ageLabel}</span>
-        </button>
-        <button class="filter-btn" class:active={nonAgeCount > 0} type="button" on:click={() => filterMode = 'filters'}>
+        <button class="filter-btn" class:active={activeFilterCount > 0} type="button" on:click={() => filterOpen = true}>
             <TelegramIcon name="filter" size={18} label={$i18n.t('app.telegram.readyCatalog.filters')} />
             <span>{filtersLabel}</span>
         </button>
@@ -175,7 +164,7 @@
     {/if}
 </div>
 
-<TelegramCatalogFilters open={filterMode != null} mode={filterMode ?? 'age'} {filters} onApply={(next) => { filters = next; track('catalog_filter_selected'); }} onClose={() => filterMode = null} />
+<TelegramCatalogFilters open={filterOpen} {filters} onApply={(next) => { filters = next; track('catalog_filter_selected'); }} onClose={() => filterOpen = false} />
 
 <style>
     .catalog { width:100%; }
@@ -183,8 +172,8 @@
     .bulk-toggle { min-height:2.25rem; padding:.3rem .5rem; border:0; border-radius:.6rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; white-space:nowrap; font-size:.85rem; }
     .search { display:flex; align-items:center; gap:.5rem; min-height:2.75rem; padding:0 .7rem; border:1px solid #dfe4ee; border-radius:.75rem; background:#fff; margin-bottom:.5rem; }
     .search input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#18243d; font:inherit; }
-    .filterbar { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.6rem; }
-    .filter-btn { display:flex; align-items:center; gap:.4rem; min-height:2.5rem; padding:0 .6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#566176; font:inherit; font-weight:700; font-size:.85rem; cursor:pointer; min-width:0; }
+    .filterbar { display:grid; grid-template-columns:1fr; gap:.5rem; margin-bottom:.6rem; }
+    .filter-btn { display:flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.5rem; padding:0 .6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#566176; font:inherit; font-weight:700; font-size:.85rem; cursor:pointer; min-width:0; }
     .filter-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .filter-btn.active { color:#2854ba; border-color:#c4c8ff; background:#f7f7ff; }
     .list { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
@@ -197,7 +186,7 @@
     .meta { display:block; margin-top:.15rem; color:#66718a; font-size:.8rem; }
     .add { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #3867d6; border-radius:.5rem; background:#3867d6; color:#fff; cursor:pointer; }
     .added { width:2rem; height:2rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #cbe8d7; border-radius:.5rem; background:#eaf7ef; color:#168552; cursor:default; }
-    .check { width:1.5rem; height:1.5rem; flex:0 0 auto; display:grid; place-items:center; border:1.5px solid #b9c1cf; border-radius:.4rem; background:#fff; color:#fff; cursor:pointer; }
+    .check { width:1.5rem; height:1.5rem; flex:0 0 auto; display:grid; place-items:center; border:1.5px solid #b9c1cf; border-radius:.3rem; background:#fff; color:#fff; cursor:pointer; aspect-ratio:1/1; }
     .check.on { background:#3867d6; border-color:#3867d6; }
     .empty { padding:2rem 1rem; text-align:center; }
     .empty-title { margin:0; color:#18243d; font-weight:700; }
