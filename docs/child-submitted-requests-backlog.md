@@ -71,7 +71,7 @@ git commit -m "feat(web): add child requests i18n keys for Mini App"
 
 **## P1-2: Add a "Requests" subsection inside child Activity**
 
-**\*\*Status:\*\*** ⬜ Not started
+**\*\*Status:\*\*** ✅ Completed
 **\*\*Priority:\*\*** P1
 **\*\*Depends on:\*\*** P1-1
 
