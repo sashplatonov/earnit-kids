@@ -160,19 +160,23 @@
                                 <span class="setting-icon"><TelegramIcon name="users" size={18} label={$i18n.t('app.telegram.roles.parents')} /></span>
                                 <span class="grow">
                                     <span class="setting-title">{parent.email}</span>
-                                    <span class="setting-meta">{permissionLabel(parent)}</span>
+                                    <span class="chip" class:chip-admin={parent.permission === 'family_admin'} class:chip-pending={parent.status === 'pending'}>{permissionLabel(parent)}</span>
                                 </span>
                                 {#if isAdmin && parent.permission !== 'family_admin'}
-                                    <button class="row-action" type="button" disabled={actionBusy} on:click={() => toggleActive(parent)}>
-                                        {parent.status === 'inactive'
-                                            ? $i18n.t('app.telegram.parents.reactivate')
-                                            : $i18n.t('app.telegram.parents.deactivate')}
-                                    </button>
-                                    {#if parent.status !== 'inactive'}
-                                        <button class="row-action row-action--transfer" type="button" disabled={actionBusy} on:click={() => transferAdmin(parent)}>
-                                            {$i18n.t('app.telegram.parents.transfer')}
-                                        </button>
-                                    {/if}
+                                    <div class="actions-row">
+                                        {#if parent.status !== 'inactive'}
+                                            <button class="row-action row-action--danger" type="button" disabled={actionBusy} on:click={() => toggleActive(parent)}>
+                                                <TelegramIcon name="pause" size={14} label={$i18n.t('app.telegram.parents.deactivate')} />
+                                            </button>
+                                            <button class="row-action row-action--transfer" type="button" disabled={actionBusy} on:click={() => transferAdmin(parent)}>
+                                                <TelegramIcon name="shield" size={14} label={$i18n.t('app.telegram.parents.transfer')} />
+                                            </button>
+                                        {:else}
+                                            <button class="row-action row-action--reactivate" type="button" disabled={actionBusy} on:click={() => toggleActive(parent)}>
+                                                <TelegramIcon name="play" size={14} label={$i18n.t('app.telegram.parents.reactivate')} />
+                                            </button>
+                                        {/if}
+                                    </div>
                                 {/if}
                             </div>
                         {/each}
@@ -229,16 +233,21 @@
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
     .sheet-subtitle { margin:1rem 0 .4rem; color:#4d5870; font-size:.85rem; }
     .flat { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
-    .row { display:flex; align-items:center; gap:.6rem; min-height:3rem; padding:.35rem 0; border-bottom:1px solid #edf0f5; }
+    .row { display:flex; align-items:center; gap:.6rem; min-height:3.5rem; padding:.35rem 0; border-bottom:1px solid #edf0f5; }
     .row:last-child { border-bottom:0; }
     .row.inactive { opacity:.6; }
     .grow { flex:1; min-width:0; }
     .setting-icon { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; color:#5b63e9; }
     .setting-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
-    .setting-meta { display:block; margin-top:.1rem; color:#8a93a8; font-size:.75rem; }
-    .row-action { min-height:2rem; padding:.25rem .55rem; border:1px solid #dfe4ee; border-radius:.5rem; background:#fff; color:#33415f; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .chip { display:inline-flex; align-items:center; gap:.25rem; padding:.15rem .45rem; border-radius:999px; font-size:.72rem; font-weight:700; margin-top:.2rem; background:#f1f3f7; color:#66718a; }
+    .chip-admin { background:#eaf7ef; color:#17884b; }
+    .chip-pending { background:#fff4e6; color:#b66d21; }
+    .actions-row { display:flex; align-items:center; gap:.35rem; flex:0 0 auto; }
+    .row-action { width:2.25rem; height:2.25rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #dfe4ee; border-radius:.5rem; background:#fff; color:#33415f; cursor:pointer; }
     .row-action:disabled { opacity:.5; cursor:not-allowed; }
-    .row-action--transfer { color:#3867d6; border-color:#c4c8ff; background:#f7f7ff; }
+    .row-action--danger { border-color:#fdd; background:#fff5f5; color:#c63c42; }
+    .row-action--transfer { border-color:#c4c8ff; background:#f7f7ff; color:#3867d6; }
+    .row-action--reactivate { border-color:#d4edda; background:#f0fff4; color:#17884b; }
     .choice { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
     .choice button { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3rem; padding:.5rem .7rem; border:1px solid #dfe4ee; border-radius:.75rem; background:#fff; color:#33415f; font:inherit; font-weight:700; cursor:pointer; }
     label { display:block; margin:.6rem 0 .3rem; color:#33415f; font-weight:600; font-size:.85rem; }
