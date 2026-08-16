@@ -1,14 +1,17 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { appStore } from '$lib/stores/app';
+    import { appStore, type Request } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
+    import { deleteRequest } from '$lib/services/api';
+    import { confirmAction } from '$lib/services/confirm';
     import TelegramBalanceHeader from './TelegramBalanceHeader.svelte';
     import TelegramChildTasks from './TelegramChildTasks.svelte';
     import TelegramChildRewards from './TelegramChildRewards.svelte';
     import TelegramActionStatus from './TelegramActionStatus.svelte';
     import TelegramHistoryList from './TelegramHistoryList.svelte';
     import TelegramChildRequestList from './TelegramChildRequestList.svelte';
+    import TelegramConfirmModal from './TelegramConfirmModal.svelte';
     import { loadTelegramHistory } from '$lib/services/telegramActivity';
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -34,7 +37,7 @@
 
     function tabForContext(value: string): 'tasks' | 'rewards' | 'activity' {
         if (value === 'rewards') return 'rewards';
-        if (value === 'activity' || value === 'history') return 'activity';
+        if (value === 'activity' || value === 'history' || value === 'requests') return 'activity';
         return 'tasks';
     }
 
@@ -71,6 +74,29 @@
     function selectActivityView(next: 'history' | 'requests') {
         activityView = next;
         if (next === 'history') void loadHistory(true);
+    }
+    let cancellingIds: Array<string | number> = [];
+    let cancelError = '';
+    async function handleCancel(request: Request) {
+        if (request.status !== 'pending') return;
+        if (cancellingIds.some((id) => String(id) === String(request.id))) return;
+        const confirmed = await confirmAction({
+            title: $i18n.t('app.telegram.childRequests.cancelConfirmTitle'),
+            description: $i18n.t('app.telegram.childRequests.cancelConfirmDescription'),
+            confirmLabel: $i18n.t('app.telegram.childRequests.cancelConfirmAction'),
+            cancelLabel: $i18n.t('app.telegram.childRequests.cancelConfirmCancel'),
+            tone: 'danger',
+        });
+        if (!confirmed) return;
+        cancelError = '';
+        cancellingIds = [...cancellingIds, request.id];
+        const ok = await deleteRequest(request.id, $appStore.currentChildId);
+        cancellingIds = cancellingIds.filter((id) => String(id) !== String(request.id));
+        if (ok) {
+            await refreshData();
+        } else {
+            cancelError = $i18n.t('app.telegram.childRequests.cancelError');
+        }
     }
     function handleTabKeydown(event: KeyboardEvent) {
         const index = tabs.indexOf(view);
@@ -112,12 +138,13 @@
                 <button aria-selected={activityView === 'requests'} class:active={activityView === 'requests'} id="child-activity-tab-requests" role="tab" tabindex={activityView === 'requests' ? 0 : -1} type="button" on:click={() => selectActivityView('requests')}>{$i18n.t('app.telegram.childShell.requests')}</button>
             </div>
             {#if activityView === 'requests'}
-                <TelegramChildRequestList />
+                <TelegramChildRequestList cancellingIds={cancellingIds} error={cancelError} onRetry={() => cancelError = ''} onCancel={handleCancel} />
             {:else}
                 <TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />
             {/if}
         {/if}
     </div>
+    <TelegramConfirmModal />
     {#if publicOrigin}
         <footer class="site-link" aria-label={$i18n.t('app.telegram.shell.publicSiteAria')}>
             <a href={publicOrigin} target="_blank" rel="noopener noreferrer"><TelegramIcon name="link" size={14} label={$i18n.t('app.telegram.shell.publicSiteAria')} />{$i18n.t('app.telegram.shell.publicSite')}</a>

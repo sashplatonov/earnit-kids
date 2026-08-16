@@ -167,7 +167,7 @@ git commit -m "feat(web): add child request list with cancel control"
 
 **## P1-4: Wire cancel to the existing delete endpoint and add regression coverage**
 
-**\*\*Status:\*\*** ⬜ Not started
+**\*\*Status:\*\*** ✅ Completed
 **\*\*Priority:\*\*** P1
 **\*\*Depends on:\*\*** P1-3
 
@@ -206,6 +206,8 @@ Reuse \`deleteRequest(requestId, childId)\` from \`apps/web/src/lib/services/api
 **### Pre-ship check**
 
 \- Inspect representative \`/api/data\` payload sizes with request history included. If historical requests are unbounded and materially inflate the snapshot, document a follow-up for retention/recent-window pagination instead of silently shipping an unbounded list.
+
+**Pre-ship result:** ✅ The child snapshot is already bounded — \`FamilyDashboardHydrator.loadRequests\` reads at most 50 requests (\`purchaseRequestRepository.getRequests(familyDbId, 50, 0)\`). No unbounded growth; no follow-up pagination task required.
 
 **### Verification**
 

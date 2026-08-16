@@ -453,6 +453,90 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void deleteRequest_childCancellingOwnPendingRequest_softCancelsInsteadOfDeleting() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        PurchaseRequestEntity request = PurchaseRequestEntity.builder()
+            .id(4003L)
+            .familyId(1)
+            .childId(10)
+            .taskId(3001L)
+            .taskName("Убрать комнату")
+            .coins(50)
+            .requestType(PurchaseRequestType.earn)
+            .status(PurchaseRequestStatus.pending)
+            .moneyAmount(0)
+            .createdAt(FIXED_NOW)
+            .build();
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(purchaseRequestRepository.findByIdOptional(4003L)).thenReturn(Optional.of(request));
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.deleteRequest("fam-1", 10, 4003L);
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        assertThat(request.getStatus()).isEqualTo(PurchaseRequestStatus.cancelled);
+        verify(purchaseRequestRepository, never()).delete(request);
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void deleteRequest_childCancellingOwnApprovedRequest_returnsFailure() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        PurchaseRequestEntity request = PurchaseRequestEntity.builder()
+            .id(4004L)
+            .familyId(1)
+            .childId(10)
+            .taskId(3001L)
+            .taskName("Убрать комнату")
+            .coins(50)
+            .requestType(PurchaseRequestType.earn)
+            .status(PurchaseRequestStatus.approved)
+            .moneyAmount(0)
+            .createdAt(FIXED_NOW)
+            .build();
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(purchaseRequestRepository.findByIdOptional(4004L)).thenReturn(Optional.of(request));
+
+        OperationResult<FamilyDataResponse> result = service.deleteRequest("fam-1", 10, 4004L);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(request.getStatus()).isEqualTo(PurchaseRequestStatus.approved);
+        verify(purchaseRequestRepository, never()).delete(request);
+        verify(familyService, never()).loadFamilyData(anyString(), anyInt(), anyBoolean());
+    }
+
+    @Test
+    void deleteRequest_adminDeletesRequestPhysically() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        PurchaseRequestEntity request = PurchaseRequestEntity.builder()
+            .id(4005L)
+            .familyId(1)
+            .childId(10)
+            .taskId(3001L)
+            .taskName("Убрать комнату")
+            .coins(50)
+            .requestType(PurchaseRequestType.earn)
+            .status(PurchaseRequestStatus.pending)
+            .moneyAmount(0)
+            .createdAt(FIXED_NOW)
+            .build();
+        FamilyDataResponse payload = emptyPayload(true, 10);
+
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(purchaseRequestRepository.findByIdOptional(4005L)).thenReturn(Optional.of(request));
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        OperationResult<FamilyDataResponse> result = service.deleteRequest("fam-1", null, 4005L);
+
+        assertThat(successValue(result)).isEqualTo(payload);
+        verify(purchaseRequestRepository).delete(request);
+        verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
     void deleteHistoryEntry_reversesBalanceAndDeletesHistory() {
         ChildEntity child = child(10, 1, "Alice", 20);
         HistoryEntryEntity historyEntry = HistoryEntryEntity.builder()
