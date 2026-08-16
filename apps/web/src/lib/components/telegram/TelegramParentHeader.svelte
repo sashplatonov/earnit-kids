@@ -43,8 +43,10 @@
         <span class="child-name">{current?.nickname ?? $i18n.t('app.telegram.header.child')}</span>
         <TelegramIcon name="chevronDown" size={16} label={$i18n.t('app.telegram.header.openChildList')} />
     </button>
-    <span class="balance" aria-label={$i18n.t('app.telegram.header.balance', { balance: $appStore.balance })}><TelegramCoin size={16} label={$i18n.t('app.telegram.header.coins')} />{$appStore.balance}</span>
-    <button class="view-child" type="button" aria-label={$i18n.t('app.telegram.family.viewAsChild')} on:click={onViewAsChild}><TelegramIcon name="eye" size={18} label={$i18n.t('app.telegram.family.viewAsChild')} /></button>
+    <span class="header-actions">
+        <button class="view-child" type="button" aria-label={$i18n.t('app.telegram.family.viewAsChild')} on:click={onViewAsChild}><TelegramIcon name="eye" size={18} label={$i18n.t('app.telegram.family.viewAsChild')} /></button>
+        <span class="balance" aria-label={$i18n.t('app.telegram.header.balance', { balance: $appStore.balance })}><TelegramCoin size={16} label={$i18n.t('app.telegram.header.coins')} />{$appStore.balance}</span>
+    </span>
 </header>
 
 {#if open}
@@ -70,6 +72,7 @@
     .child-select { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.3rem .6rem; border:0; background:transparent; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
     .child-select:disabled { cursor:default; opacity:.6; }
     .child-name { max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .header-actions { display:flex; align-items:center; gap:.5rem; flex:0 0 auto; margin-left:auto; }
     .view-child { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#3867d6; cursor:pointer; }
     .view-child:hover { background:#f2f5ff; }
     .balance { display:inline-flex; align-items:center; gap:.35rem; padding:.45rem .65rem; border-radius:999px; background:#fff4c2; color:#573d00; font-weight:700; white-space:nowrap; }
