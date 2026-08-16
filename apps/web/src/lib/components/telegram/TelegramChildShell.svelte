@@ -138,7 +138,7 @@
                 <button aria-selected={activityView === 'requests'} class:active={activityView === 'requests'} id="child-activity-tab-requests" role="tab" tabindex={activityView === 'requests' ? 0 : -1} type="button" on:click={() => selectActivityView('requests')}>{$i18n.t('app.telegram.childShell.requests')}</button>
             </div>
             {#if activityView === 'requests'}
-                <TelegramChildRequestList cancellingIds={cancellingIds} error={cancelError} onRetry={() => cancelError = ''} onCancel={handleCancel} />
+                <TelegramChildRequestList cancellingIds={cancellingIds} cancelError={cancelError} onCancel={handleCancel} />
             {:else}
                 <TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />
             {/if}

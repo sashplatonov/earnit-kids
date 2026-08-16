@@ -9,6 +9,7 @@
 
     export let loading = false;
     export let error = '';
+    export let cancelError = '';
     export let onRetry: () => void = () => {};
     export let cancellingIds: Array<string | number> = [];
     export let onCancel: (request: Request) => void = () => {};
@@ -65,6 +66,7 @@
     {:else}
         <div class="items">{#each sortedRequests as request (request.id)}<TelegramRequestRow request={request} kindLabel={kindLabel(request)} statusLabel={statusLabel(request.status)} statusTone={statusTone(request.status)} meta={meta(request)} locale={$i18n.locale}>{#if request.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(request)} on:click={() => onCancel(request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}</TelegramRequestRow>{/each}</div>
     {/if}
+    {#if cancelError}<p class="error" role="alert">{cancelError}</p>{/if}
 </section>
 
 <style>
@@ -80,4 +82,5 @@
     .state-error p { margin:0; flex:1; font-size:.9rem; }
     .state-error button { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.4rem .7rem; border:1px solid #f3cfd2; border-radius:.6rem; background:#fff; color:#a33b3b; font:inherit; cursor:pointer; }
     .muted { color:#66718a; }
+    .error { color:#a33b3b; font-size:.9rem; margin:.6rem 0 0; }
 </style>
