@@ -867,6 +867,33 @@ If some expensive sections require separate loading later, split only those sect
 
 ---
 
+## ✅ ADM-16 - Aggregated API
+
+**Status:** ✅ COMPLETE - Implemented in commit `feat(admin): ADM-16 aggregated dashboard API`
+
+**Implemented:**
+- Added `GET /api/admin/dashboard?period=30d` aggregated endpoint
+- Response shape: `overview`, `coinEconomy`, `rewardShop`, `tasks`, `parentSignals`, `childSignals`, `activation`, `activity`
+- Composes all section services into one response
+- Frontend now makes 1 aggregated call + 1 trends call instead of 9 separate calls
+- Individual section endpoints remain available for deliberate split loading
+
+**Files created:**
+- `AdminDashboardResponse.java` - aggregated DTO
+- `AdminDashboardService.java` - composes all section services
+- `AdminDashboardResource.java` - REST endpoint `GET /api/admin/dashboard`
+
+**Files modified:**
+- `+page.server.ts` - use aggregated endpoint
+
+**Verified:**
+- ✅ Backend compiles
+- ✅ Backend tests pass (484 tests)
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
+
+---
+
 # ADM-17 - Authorization is backend-enforced
 
 Every admin analytics endpoint must verify admin privilege server-side.

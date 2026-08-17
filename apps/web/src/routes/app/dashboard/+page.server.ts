@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
         throw redirect(302, localizePath('/app/settings', locals.locale));
     }
 
-    // Fetch analytics overview data - session cookie is passed automatically
+    // Fetch aggregated dashboard data - session cookie is passed automatically
     let overview = null;
     let coinEconomy = null;
     let rewardShop = null;
@@ -24,40 +24,20 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     let retention = null;
     let trends = null;
     try {
-        const [overviewRes, coinRes, rewardRes, taskRes, parentRes, childRes, funnelRes, retentionRes, trendsRes] = await Promise.all([
-            fetch('/api/admin/analytics/overview?period=30d'),
-            fetch('/api/admin/analytics/coin-economy?period=30d'),
-            fetch('/api/admin/analytics/reward-shop?period=30d'),
-            fetch('/api/admin/analytics/task-economy?period=30d'),
-            fetch('/api/admin/analytics/parent-behavior?period=30d'),
-            fetch('/api/admin/analytics/child-behavior?period=30d'),
-            fetch('/api/admin/analytics/activation-funnel'),
-            fetch('/api/admin/analytics/retention?period=30d'),
+        const [dashboardRes, trendsRes] = await Promise.all([
+            fetch('/api/admin/dashboard?period=30d'),
             fetch('/api/admin/analytics/trends?period=30d'),
         ]);
-        if (overviewRes.ok) {
-            overview = await overviewRes.json();
-        }
-        if (coinRes.ok) {
-            coinEconomy = await coinRes.json();
-        }
-        if (rewardRes.ok) {
-            rewardShop = await rewardRes.json();
-        }
-        if (taskRes.ok) {
-            taskEconomy = await taskRes.json();
-        }
-        if (parentRes.ok) {
-            parentBehavior = await parentRes.json();
-        }
-        if (childRes.ok) {
-            childBehavior = await childRes.json();
-        }
-        if (funnelRes.ok) {
-            activationFunnel = await funnelRes.json();
-        }
-        if (retentionRes.ok) {
-            retention = await retentionRes.json();
+        if (dashboardRes.ok) {
+            const dashboard = await dashboardRes.json();
+            overview = { overview: dashboard.overview };
+            coinEconomy = dashboard.coinEconomy;
+            rewardShop = dashboard.rewardShop;
+            taskEconomy = dashboard.tasks;
+            parentBehavior = dashboard.parentSignals;
+            childBehavior = dashboard.childSignals;
+            activationFunnel = dashboard.activation;
+            retention = dashboard.activity;
         }
         if (trendsRes.ok) {
             trends = await trendsRes.json();
