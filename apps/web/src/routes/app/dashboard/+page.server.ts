@@ -15,10 +15,17 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
     // Fetch analytics overview data - session cookie is passed automatically
     let overview = null;
+    let coinEconomy = null;
     try {
-        const response = await fetch('/api/admin/analytics/overview?period=30d');
-        if (response.ok) {
-            overview = await response.json();
+        const [overviewRes, coinRes] = await Promise.all([
+            fetch('/api/admin/analytics/overview?period=30d'),
+            fetch('/api/admin/analytics/coin-economy?period=30d'),
+        ]);
+        if (overviewRes.ok) {
+            overview = await overviewRes.json();
+        }
+        if (coinRes.ok) {
+            coinEconomy = await coinRes.json();
         }
     } catch (e) {
         console.error('Failed to fetch admin analytics:', e);
@@ -26,6 +33,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
     return {
         overview,
+        coinEconomy,
     };
 };
 

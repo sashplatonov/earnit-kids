@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.dto.response.AdminAnalyticsResponse;
+import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -66,7 +67,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countActiveChildren(Instant periodStart) {
+    public int countActiveChildren(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT h.childId) FROM HistoryEntryEntity h
             WHERE h.createdAt >= :periodStart
@@ -123,5 +124,81 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .setParameter("periodStart", periodStart)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    // EXPLAIN: Coin economy metrics for ADM-05
+    public AdminCoinEconomyResponse.CoinMetrics getCoinMetrics(Instant periodStart, int activeChildrenInPeriod) {
+        long earned = sumCoinsEarned(periodStart);
+        long spent = sumCoinsSpent(periodStart);
+        double spendRate = earned > 0 ? (double) spent / earned : 0.0;
+
+        return AdminCoinEconomyResponse.CoinMetrics.builder()
+            .earned(earned)
+            .spent(spent)
+            .spendRate(Math.round(spendRate * 100.0))
+            .activeChildren(activeChildrenInPeriod)
+            .build();
+    }
+
+    public AdminCoinEconomyResponse.BalanceMetrics getBalanceMetrics() {
+        String sql = """
+            SELECT c.balance FROM ChildEntity c WHERE c.isTestAccount = false
+            """;
+        var balances = entityManager.createQuery(sql, Integer.class).getResultList();
+
+        if (balances.isEmpty()) {
+            return AdminCoinEconomyResponse.BalanceMetrics.builder()
+                .medianBalance(0)
+                .averageBalance(0)
+                .zeroBalanceCount(0)
+                .zeroBalancePercent(0)
+                .highBalanceCount(0)
+                .highBalancePercent(0)
+                .build();
+        }
+
+        double sum = balances.stream().mapToInt(Integer::intValue).sum();
+        double average = sum / balances.size();
+
+        var sorted = balances.stream().sorted().toList();
+        int n = sorted.size();
+        double median = n % 2 == 0
+            ? (sorted.get(n / 2 - 1) + sorted.get(n / 2)) / 2.0
+            : sorted.get(n / 2);
+
+        int zeroCount = (int) balances.stream().filter(b -> b == 0).count();
+        int zeroPercent = Math.toIntExact(Math.round(100.0 * zeroCount / n));
+
+        int highCount = (int) balances.stream().filter(b -> b >= 20).count();
+        int highPercent = Math.toIntExact(Math.round(100.0 * highCount / n));
+
+        return AdminCoinEconomyResponse.BalanceMetrics.builder()
+            .medianBalance(median)
+            .averageBalance(Math.round(average * 100.0) / 100.0)
+            .zeroBalanceCount(zeroCount)
+            .zeroBalancePercent(zeroPercent)
+            .highBalanceCount(highCount)
+            .highBalancePercent(highPercent)
+            .build();
+    }
+
+    public AdminCoinEconomyResponse.RewardMetrics getRewardMetrics(Instant periodStart) {
+        String familiesWithRewardSql = """
+            SELECT COUNT(DISTINCT p.familyDbId) FROM PurchaseRequestEntity p
+            WHERE p.status = :status AND p.createdAt >= :periodStart
+            """;
+        Long familiesWithReward = entityManager.createQuery(familiesWithRewardSql, Long.class)
+            .setParameter("status", PurchaseRequestStatus.approved)
+            .setParameter("periodStart", periodStart)
+            .getSingleResult();
+
+        int totalFamilies = countTotalFamilies();
+        int fwr = familiesWithReward != null ? Math.toIntExact(familiesWithReward) : 0;
+        int percent = totalFamilies > 0 ? Math.toIntExact(Math.round(100.0 * fwr / totalFamilies)) : 0;
+
+        return AdminCoinEconomyResponse.RewardMetrics.builder()
+            .familiesWithReward(fwr)
+            .percentFamiliesWithReward(percent)
+            .build();
     }
 }

@@ -15,6 +15,7 @@
 
     export let data;
     $: overview = data.overview;
+    $: coinEconomy = data.coinEconomy;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -215,22 +216,22 @@
                     <div class="compare-top">
                         <div class="number-block">
                             <span>{t('coins.earned')}</span>
-                            <b>—</b>
+                            <b>{coinEconomy?.coins?.earned?.toLocaleString() ?? '—'}</b>
                         </div>
                         <div class="number-block">
                             <span>{t('coins.spent')}</span>
-                            <b>—</b>
+                            <b>{coinEconomy?.coins?.spent?.toLocaleString() ?? '—'}</b>
                         </div>
                     </div>
                     <div class="bar">
-                        <div class="bar-fill" style="width: 0%"></div>
+                        <div class="bar-fill" style="width: {coinEconomy?.coins?.spendRate ?? 0}%"></div>
                     </div>
                     <div class="bar-label">
                         <span>
-                            Spend / Earn 
+                            {t('coins.spendEarn.label')} 
                             <button class="mini-info" aria-label={t('tooltips.spendEarn.label')}>i</button>
                         </span>
-                        <b>—%</b>
+                        <b>{coinEconomy?.coins?.spendRate ?? '—'}%</b>
                     </div>
                     <div class="insight">{t('coins.insight')}</div>
                 </div>
@@ -242,7 +243,7 @@
                             <button class="mini-info" aria-label={t('tooltips.medianBalance.label')}>i</button>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
-                        <div class="metric-value">— 🪙</div>
+                        <div class="metric-value">{coinEconomy?.balances?.medianBalance ?? '—'} 🪙</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -258,7 +259,7 @@
                             <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')}>i</button>
                             <small>{t('metrics.earningNotSpending.desc')}</small>
                         </div>
-                        <div class="metric-value">—%</div>
+                        <div class="metric-value">{coinEconomy?.balances?.zeroBalancePercent ?? '—'}%</div>
                     </div>
                 </div>
             </section>
