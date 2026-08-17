@@ -120,8 +120,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             if (view.isPresent()) {
                 TelegramQuickActionResponse loaded = view.get();
                 String homeText = TelegramMenuFlow.startText(loaded);
-                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl, miniAppUrl,
-                    config.botUsername().orElse(""));
+                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl, miniAppUrl);
                 TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
                     ? kb.childMain() : kb.parentMain();
                 apiClient.sendMessageWithReplyKeyboard(chatId, homeText, replyKeyboard);
