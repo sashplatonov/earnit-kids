@@ -20,6 +20,7 @@
     $: taskEconomy = data.taskEconomy;
     $: parentBehavior = data.parentBehavior;
     $: childBehavior = data.childBehavior;
+    $: activationFunnel = data.activationFunnel;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -468,53 +469,87 @@
                 aria-labelledby="tab-activity"
             >
                 <h2 class="section-title">{t('sections.activation')}</h2>
-                <div class="funnel">
-                    <div class="step">
-                        <div class="step-line">
-                            <b>{t('funnel.registered')}</b>
-                            <span>—</span>
+                {#if activationFunnel?.stages && activationFunnel.stages.length > 0}
+                    <div class="funnel">
+                        {#each activationFunnel.stages as stage}
+                            <div class="step">
+                                <div class="step-line">
+                                    <b>{stage.label}</b>
+                                    <span>{stage.count} · {stage.percentFromPrevious}%</span>
+                                </div>
+                                <div class="track">
+                                    <div class="fill" style="width: {stage.percentFromInitial}%"></div>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {:else}
+                    <div class="funnel">
+                        <div class="step">
+                            <div class="step-line">
+                                <b>{t('funnel.registered')}</b>
+                                <span>—</span>
+                            </div>
+                            <div class="track">
+                                <div class="fill" style="width: 100%"></div>
+                            </div>
                         </div>
-                        <div class="track">
-                            <div class="fill" style="width: 100%"></div>
+                        <div class="step">
+                            <div class="step-line">
+                                <b>{t('funnel.addedChild')}</b>
+                                <span>—</span>
+                            </div>
+                            <div class="track">
+                                <div class="fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-line">
+                                <b>{t('funnel.hasTask')}</b>
+                                <span>—</span>
+                            </div>
+                            <div class="track">
+                                <div class="fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-line">
+                                <b>{t('funnel.completedTask')}</b>
+                                <span>—</span>
+                            </div>
+                            <div class="track">
+                                <div class="fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-line">
+                                <b>{t('funnel.earnedCoins')}</b>
+                                <span>—</span>
+                            </div>
+                            <div class="track">
+                                <div class="fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-line">
+                                <b>{t('funnel.hasReward')}</b>
+                                <span>—</span>
+                            </div>
+                            <div class="track">
+                                <div class="fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-line">
+                                <b>{t('funnel.receivedReward')}</b>
+                                <span>—</span>
+                            </div>
+                            <div class="track">
+                                <div class="fill" style="width: 0%"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="step">
-                        <div class="step-line">
-                            <b>{t('funnel.addedChild')}</b>
-                            <span>—</span>
-                        </div>
-                        <div class="track">
-                            <div class="fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-line">
-                            <b>{t('funnel.hasTask')}</b>
-                            <span>—</span>
-                        </div>
-                        <div class="track">
-                            <div class="fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-line">
-                            <b>{t('funnel.earnedCoins')}</b>
-                            <span>—</span>
-                        </div>
-                        <div class="track">
-                            <div class="fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-line">
-                            <b>{t('funnel.receivedReward')}</b>
-                            <span>—</span>
-                        </div>
-                        <div class="track">
-                            <div class="fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
+                {/if}
 
                 <h2 class="section-title">{t('sections.parentNeeds')}</h2>
                 <div class="kpis">

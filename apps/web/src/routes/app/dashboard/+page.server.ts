@@ -20,14 +20,16 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     let taskEconomy = null;
     let parentBehavior = null;
     let childBehavior = null;
+    let activationFunnel = null;
     try {
-        const [overviewRes, coinRes, rewardRes, taskRes, parentRes, childRes] = await Promise.all([
+        const [overviewRes, coinRes, rewardRes, taskRes, parentRes, childRes, funnelRes] = await Promise.all([
             fetch('/api/admin/analytics/overview?period=30d'),
             fetch('/api/admin/analytics/coin-economy?period=30d'),
             fetch('/api/admin/analytics/reward-shop?period=30d'),
             fetch('/api/admin/analytics/task-economy?period=30d'),
             fetch('/api/admin/analytics/parent-behavior?period=30d'),
             fetch('/api/admin/analytics/child-behavior?period=30d'),
+            fetch('/api/admin/analytics/activation-funnel'),
         ]);
         if (overviewRes.ok) {
             overview = await overviewRes.json();
@@ -47,6 +49,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
         if (childRes.ok) {
             childBehavior = await childRes.json();
         }
+        if (funnelRes.ok) {
+            activationFunnel = await funnelRes.json();
+        }
     } catch (e) {
         console.error('Failed to fetch admin analytics:', e);
     }
@@ -58,6 +63,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
         taskEconomy,
         parentBehavior,
         childBehavior,
+        activationFunnel,
     };
 };
 

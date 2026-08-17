@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.repository;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.dto.response.AdminActivationFunnelResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminAnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminChildBehaviorResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
@@ -794,5 +795,119 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             }
         }
         return count;
+    }
+
+    // EXPLAIN: Activation funnel for ADM-12
+    public List<AdminActivationFunnelResponse.FunnelStage> getActivationFunnel() {
+        // EXPLAIN: Current-state funnel (ever-completed, not cohort-based)
+        int registered = countTotalFamilies();
+        int addedChild = countFamiliesWithChild();
+        int hasTask = countFamiliesWithTask();
+        int childCompletedTask = countFamiliesWithTaskCompletion();
+        int earnedCoins = countFamiliesWithCoinEarn();
+        int hasReward = countFamiliesWithRewardConfigured();
+        int receivedReward = countFamiliesWithRewardReceived();
+
+        List<AdminActivationFunnelResponse.FunnelStage> stages = new ArrayList<>();
+        
+        stages.add(createStage("registered", "Зарегистрировались", registered, registered));
+        stages.add(createStage("added_child", "Добавили ребёнка", addedChild, registered, addedChild));
+        stages.add(createStage("has_task", "Есть задание", hasTask, addedChild, hasTask));
+        stages.add(createStage("completed_task", "Выполнили задание", childCompletedTask, hasTask, childCompletedTask));
+        stages.add(createStage("earned_coins", "Заработали монеты", earnedCoins, childCompletedTask, earnedCoins));
+        stages.add(createStage("has_reward", "Есть награда", hasReward, earnedCoins, hasReward));
+        stages.add(createStage("received_reward", "Получили награду", receivedReward, hasReward, receivedReward));
+
+        return stages;
+    }
+
+    private AdminActivationFunnelResponse.FunnelStage createStage(String key, String label, int count, int previousCount) {
+        double percentFromPrevious = previousCount > 0 ? (count * 100.0) / previousCount : 0.0;
+        return AdminActivationFunnelResponse.FunnelStage.builder()
+            .key(key)
+            .label(label)
+            .count(count)
+            .percentFromPrevious(Math.round(percentFromPrevious * 100.0) / 100.0)
+            .build();
+    }
+
+    private AdminActivationFunnelResponse.FunnelStage createStage(String key, String label, int count, int previousCount, int initialCount) {
+        double percentFromPrevious = previousCount > 0 ? (count * 100.0) / previousCount : 0.0;
+        double percentFromInitial = initialCount > 0 ? (count * 100.0) / initialCount : 0.0;
+        return AdminActivationFunnelResponse.FunnelStage.builder()
+            .key(key)
+            .label(label)
+            .count(count)
+            .percentFromPrevious(Math.round(percentFromPrevious * 100.0) / 100.0)
+            .percentFromInitial(Math.round(percentFromInitial * 100.0) / 100.0)
+            .build();
+    }
+
+    private int countFamiliesWithChild() {
+        String sql = """
+            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
+            JOIN ChildEntity c ON c.familyId = f.id
+            """;
+        Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    private int countFamiliesWithTask() {
+        String sql = """
+            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
+            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN TaskEntity t ON t.childId = c.id
+            """;
+        Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    private int countFamiliesWithTaskCompletion() {
+        String sql = """
+            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
+            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN HistoryEntryEntity h ON h.relatedId = c.id
+            WHERE h.type = :type
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("type", HistoryEntryType.TASK_COMPLETED)
+            .getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    private int countFamiliesWithCoinEarn() {
+        String sql = """
+            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
+            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN HistoryEntryEntity h ON h.relatedId = c.id
+            WHERE h.type = :type
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("type", HistoryEntryType.earn)
+            .getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    private int countFamiliesWithRewardConfigured() {
+        String sql = """
+            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
+            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ShopItemEntity s ON s.childId = c.id
+            """;
+        Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    private int countFamiliesWithRewardReceived() {
+        String sql = """
+            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
+            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN PurchaseRequestEntity pr ON pr.childId = c.id
+            WHERE pr.status = :approved
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("approved", PurchaseRequestStatus.approved)
+            .getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
     }
 }
