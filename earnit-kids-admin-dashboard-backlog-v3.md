@@ -956,6 +956,28 @@ If drill-down is later required, make it a separate explicitly designed admin fe
 
 ---
 
+## ✅ ADM-18 - Privacy / no unnecessary PII
+
+**Status:** ✅ COMPLETE - Verified in commit `docs(admin): ADM-18 privacy audit`
+
+**Audit result:**
+- All admin analytics responses are aggregated; no raw family/child lists exposed.
+- No PII fields selected in `AdminAnalyticsRepository` queries (no `c.name`, `f.email`, `username`, `description`, `comment`, `note`, `token`).
+- No PII rendered in the dashboard UI.
+- The only "name" fields are `groupName`/`icon` (task/reward category names, not person identifiers).
+- No individual balances tied to identity; balances are aggregated (median, counts, percentages).
+- No drill-down to individual families/children in v1.
+
+**Files reviewed:**
+- All `Admin*Response.java` DTOs
+- `AdminAnalyticsRepository.java`
+- `+page.svelte`
+
+**Verified:**
+- ✅ No PII in DTOs, queries, or UI
+
+---
+
 # ADM-19 - Empty / low-data states
 
 For a new deployment with little data:
