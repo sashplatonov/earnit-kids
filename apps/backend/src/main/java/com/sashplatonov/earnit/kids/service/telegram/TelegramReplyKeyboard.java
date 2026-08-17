@@ -52,15 +52,15 @@ public record TelegramReplyKeyboard(
         }
     }
 
-    public record Button(String label, String url) {
+    public record Button(String label, String webAppUrl) {
         public Button(String label) {
             this(label, null);
         }
 
-        // EXPLAIN: A KeyboardButton with url field opens the URL directly in the
-        // EXPLAIN: in-app browser when tapped (no message sent to the bot).
-        // EXPLAIN: UX-04 — preferred over web_app for reply keyboards.
-        public static Button url(String label, String url) {
+        // EXPLAIN: A KeyboardButton with web_app capability opens the Mini App
+        // EXPLAIN: directly from the persistent keyboard (UX-04). Telegram
+        // EXPLAIN: KeyboardButton has no `url` field — only web_app (WebAppInfo).
+        public static Button webApp(String label, String url) {
             return new Button(label, url);
         }
     }

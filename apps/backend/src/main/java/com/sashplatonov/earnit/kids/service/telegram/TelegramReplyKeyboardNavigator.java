@@ -30,14 +30,32 @@ public class TelegramReplyKeyboardNavigator {
         String label = message.path("text").asText("");
         BotNavAction.fromLabel(label).ifPresent(action -> {
             try {
-                // EXPLAIN: OPEN_APP and OPEN_SITE are url buttons — they open
-                // EXPLAIN: client-side and never send text to the bot, so only
-                // EXPLAIN: nav actions that produce content reach this branch.
-                navigateByAction(chatId, telegramUserId, action.actionCode());
+                // EXPLAIN: OPEN_APP is a web_app button — it opens the Mini App
+                // EXPLAIN: client-side and never sends text to the bot, so it
+                // EXPLAIN: never reaches this branch. OPEN_SITE is a plain text
+                // EXPLAIN: button (KeyboardButton has no `url` field), so it
+                // EXPLAIN: arrives here and is answered with one inline URL button.
+                if (action == BotNavAction.OPEN_SITE) {
+                    sendSiteLink(chatId);
+                } else {
+                    navigateByAction(chatId, telegramUserId, action.actionCode());
+                }
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
         });
+    }
+
+    // EXPLAIN: UX-04 — a reply keyboard button cannot open an arbitrary external
+    // EXPLAIN: URL (only web_app Mini Apps). The site button therefore sends a
+    // EXPLAIN: single compact message with one inline URL button.
+    private void sendSiteLink(long chatId) throws Exception {
+        String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+        if (publicSiteUrl.isEmpty()) {
+            return;
+        }
+        apiClient.sendMessage(chatId, TelegramCopy.SHARE_SITE,
+            java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.SHARE_SITE, publicSiteUrl, null)));
     }
 
     // EXPLAIN: UX-01 — sends navigation content with the persistent reply keyboard.

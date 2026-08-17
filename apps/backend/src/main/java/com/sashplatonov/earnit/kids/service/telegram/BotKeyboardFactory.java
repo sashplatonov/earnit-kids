@@ -29,11 +29,11 @@ public class BotKeyboardFactory {
         rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.NAV_RECENT, TelegramCopy.NAV_SELECT_CHILD));
         if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
             rows.add(new TelegramReplyKeyboard.Row(
-                TelegramReplyKeyboard.Button.url(TelegramCopy.NAV_OPEN_APP, miniAppUrl),
-                TelegramReplyKeyboard.Button.url(TelegramCopy.NAV_OPEN_SITE, publicSiteUrl)));
+                TelegramReplyKeyboard.Button.webApp(TelegramCopy.NAV_OPEN_APP, miniAppUrl),
+                new TelegramReplyKeyboard.Button(TelegramCopy.NAV_OPEN_SITE)));
         } else {
             rows.add(new TelegramReplyKeyboard.Row(
-                TelegramReplyKeyboard.Button.url(TelegramCopy.NAV_OPEN_APP, miniAppUrl)));
+                TelegramReplyKeyboard.Button.webApp(TelegramCopy.NAV_OPEN_APP, miniAppUrl)));
         }
         return TelegramReplyKeyboard.persistent(rows);
     }
@@ -45,7 +45,7 @@ public class BotKeyboardFactory {
             new TelegramReplyKeyboard.Row(TelegramCopy.MY_TASKS, TelegramCopy.REWARDS),
             new TelegramReplyKeyboard.Row(
                 new TelegramReplyKeyboard.Button(TelegramCopy.NAV_RECENT),
-                TelegramReplyKeyboard.Button.url(TelegramCopy.OPEN_APP, miniAppUrl))
+                TelegramReplyKeyboard.Button.webApp(TelegramCopy.OPEN_APP, miniAppUrl))
         );
         return TelegramReplyKeyboard.persistent(rows);
     }

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EarnIt Kids - Telegram Persistent Keyboard Reference</title>
+<style>
+:root{--tg:#111317;--bubble:#30353c;--text:#eef1f4;--muted:#a6adb6;--key:#e9edf2;--keyText:#1c2229;--ok:#58b579}
+*{box-sizing:border-box}
+body{margin:0;background:#090b0e;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.phone{width:430px;max-width:100%;margin:0 auto;min-height:100vh;background:var(--tg);display:flex;flex-direction:column}
+.header{height:58px;background:#272c32;padding:8px 14px;display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:#454b53;display:grid;place-items:center}
+.header b{display:block}.header small{color:var(--muted)}
+.chat{flex:1;padding:14px 12px 172px}
+.ref{font-size:11px;color:#8f98a3;text-transform:uppercase;letter-spacing:.08em;margin:13px 0 6px}
+.bubble{max-width:86%;background:var(--bubble);border-radius:16px 16px 16px 5px;padding:10px 12px;margin:7px 0}
+.muted{color:var(--muted);font-size:13px}
+.inline{max-width:86%;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px}
+.inline button{border:0;border-radius:10px;background:#30353c;color:#fff;padding:11px 8px;font-weight:700}
+.approve{color:#bfeccc!important}.reject{color:#ffc2c2!important}
+.resolved{border-left:3px solid var(--ok)}
+.note{margin-top:14px;padding:10px 12px;border:1px dashed #555e69;border-radius:11px;color:#bec5ce;font-size:12px;line-height:1.45}
+.bad{color:#ffb4b4}
+.composer-shell{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:430px;max-width:100%;background:#1b1e23;border-top:1px solid #333941;padding:7px 7px 8px}
+.composer{height:42px;border-radius:21px;background:#2b3036;display:flex;align-items:center;padding:0 14px;color:#929aa4;margin-bottom:7px}
+.keyboard{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.key{height:38px;border:0;border-radius:7px;background:var(--key);color:var(--keyText);font-size:14px;font-weight:650}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="header">
+    <div class="avatar">🌕</div>
+    <div><b>EarnIt Kids</b><small>bot</small></div>
+  </div>
+
+  <main class="chat">
+    <div class="ref">Reference A - Persistent navigation</div>
+    <div class="bubble">
+      👧 Aliska<br>
+      🌕 25 монет
+      <div style="margin-top:8px">✅ Сейчас ничего не требует внимания</div>
+      <div class="muted" style="margin-top:7px">Это статус, а не контейнер глобального меню.</div>
+    </div>
+
+    <div class="ref">Reference B - Pending child request</div>
+    <div class="bubble">
+      👧 Aliska выполнила:<br><br>
+      🏠 Сделать одно полезное дело по дому<br>
+      🌕 +2 монеты
+      <div class="muted" style="margin-top:5px">07:27</div>
+    </div>
+    <div class="inline">
+      <button class="approve">👍 Одобрить</button>
+      <button class="reject">👎 Отклонить</button>
+    </div>
+
+    <div class="ref">Reference C - Resolved child request</div>
+    <div class="bubble resolved">
+      ✅ Одобрено<br><br>
+      🧼 Умыться, одеться и причесаться<br>
+      🌕 +1 монета<br>
+      Баланс: 27
+      <div class="muted" style="margin-top:5px">09:40 · действий больше нет</div>
+    </div>
+
+    <div class="note">
+      <b>Главный принцип:</b> глобальная навигация живёт только в persistent Telegram reply keyboard внизу. Inline-кнопки остаются только у конкретного pending request.
+    </div>
+
+    <div class="note bad">
+      <b>Не делать:</b> повторно отправлять в историю карточку с глобальной навигацией. Нижний ряд persistent keyboard должен быть двухколоночным: «📱 Приложение» + «🌐 Сайт», без full-width кнопки.
+    </div>
+  </main>
+
+  <div class="composer-shell">
+    <div class="composer">Сообщение</div>
+    <div class="keyboard">
+      <button class="key">🎯 Запросы</button>
+      <button class="key">🌕 Монеты</button>
+      <button class="key">📜 Последние</button>
+      <button class="key">👧 Выбрать ребёнка</button>
+      <button class="key">📱 Приложение</button>
+      <button class="key">🌐 Сайт</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

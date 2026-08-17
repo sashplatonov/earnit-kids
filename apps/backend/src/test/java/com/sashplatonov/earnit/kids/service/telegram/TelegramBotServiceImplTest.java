@@ -663,7 +663,7 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
-    void siteUrlButtonOpensDirectlyWithoutSendingMessage() throws Exception {
+    void siteUrlButtonSendsInlineUrlButton() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
@@ -676,9 +676,9 @@ class TelegramBotServiceImplTest {
             {"update_id":50,"message":{"chat":{"id":44},"from":{"id":77},"text":"🌐 Сайт"}}
             """));
 
-        // EXPLAIN: 🌐 Сайт is a url button in the reply keyboard — it opens the site
-        // EXPLAIN: directly in the in-app browser and never sends text to the bot.
-        verify(apiClient, never()).sendMessage(any(Long.class), any(String.class), any());
+        // EXPLAIN: 🌐 Сайт is a plain text button (KeyboardButton has no `url`
+        // EXPLAIN: field), so the bot answers with one inline URL button.
+        verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.SHARE_SITE), any());
         verify(apiClient, never()).sendMessageWithReplyKeyboard(any(Long.class), any(String.class), any());
     }
 
