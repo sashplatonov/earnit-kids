@@ -75,6 +75,27 @@
         activeTooltip = null;
     }
 
+    // EXPLAIN: ADM-22 dynamic product insight hints derived from transparent metrics
+    function buildCoinInsight(): string | null {
+        const spendRate = coinEconomy?.coins?.spendRate;
+        const earningNotSpending = childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending;
+        const zeroBalance = coinEconomy?.balances?.zeroBalancePercent;
+
+        if (earningNotSpending != null && earningNotSpending > 30) {
+            return t('insights.earningNotSpending', { percent: Math.round(earningNotSpending) });
+        }
+        if (spendRate != null && spendRate < 40) {
+            return t('insights.lowSpendRate', { percent: Math.round(spendRate) });
+        }
+        if (spendRate != null && spendRate > 90) {
+            return t('insights.highSpendRate', { percent: Math.round(spendRate) });
+        }
+        if (zeroBalance != null && zeroBalance > 50) {
+            return t('insights.manyZeroBalance', { percent: Math.round(zeroBalance) });
+        }
+        return null;
+    }
+
     // EXPLAIN: ADM-21 tooltip content (what it shows, how it's calculated, example, interpretation)
     const tooltipContent: Record<string, { title: string; body: string }> = {
         activeFamilies: {
@@ -346,7 +367,9 @@
                         </span>
                         <b>{coinEconomy?.coins?.spendRate ?? '—'}%</b>
                     </div>
-                    <div class="insight">{t('coins.insight')}</div>
+                    {#if buildCoinInsight()}
+                        <div class="insight">{buildCoinInsight()}</div>
+                    {/if}
                 </div>
 
                 <div class="metric-list">

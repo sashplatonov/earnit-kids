@@ -143,6 +143,12 @@ export const adminMessages = {
             spent: 'Spent',
             insight: '43% of active children earned coins but did not receive rewards.',
         },
+        insights: {
+            earningNotSpending: '{percent}% of children earned coins but did not receive rewards. Check prices and reward attractiveness.',
+            lowSpendRate: 'Spend / Earn = {percent}%. Children spend little of their earned coins. Rewards may be too expensive or not attractive enough.',
+            highSpendRate: 'Spend / Earn = {percent}%. Children spend almost all earned coins. Rewards may be too cheap.',
+            manyZeroBalance: '{percent}% of children have a zero balance. Check how children earn coins.',
+        },
         metrics: {
             medianBalance: {
                 title: 'Median balance',

@@ -1222,6 +1222,31 @@ Rules:
 
 ---
 
+## ✅ ADM-22 - Product insight hints
+
+**Status:** ✅ COMPLETE - Implemented in commit `feat(admin): ADM-22 product insight hints`
+
+**Implemented:**
+- Replaced static hardcoded insight with dynamic hints derived from transparent metrics
+- Hints shown only when a meaningful threshold is met:
+  - `>30%` children earning but not spending → check prices and reward attractiveness
+  - `Spend/Earn < 40%` → rewards may be too expensive or unattractive
+  - `Spend/Earn > 90%` → rewards may be too cheap
+  - `>50%` children with zero balance → check how children earn coins
+- Hints are neutral observations, not alarming red states
+- No universal "correct target" implied; v1 focuses on observation, not automated scoring
+- Hints use real metric values (e.g. `43% детей зарабатывали монеты...`)
+
+**Files modified:**
+- `+page.svelte` - dynamic `buildCoinInsight()` function
+- i18n `ru/admin.ts` and `en/admin.ts` - insight hint templates
+
+**Verified:**
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
+
+---
+
 # Recommended first-version tab information architecture
 
 ```text
