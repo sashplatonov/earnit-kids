@@ -90,7 +90,7 @@
 
 <div class="catalog">
     <div class="action-row">
-        <button class="bulk-toggle" type="button" on:click={() => { bulkMode = !bulkMode; selectedIds = []; }}>
+        <button class="bulk-toggle" type="button" aria-pressed={bulkMode} on:click={() => { bulkMode = !bulkMode; selectedIds = []; }}>
             {#if bulkMode}
                 <TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.readyCatalog.done')} />
             {:else}
