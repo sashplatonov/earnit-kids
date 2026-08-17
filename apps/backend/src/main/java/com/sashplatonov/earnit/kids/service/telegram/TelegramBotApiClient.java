@@ -57,10 +57,12 @@ public class TelegramBotApiClient {
     // EXPLAIN: UX-01 — force Telegram to drop any cached reply keyboard on the
     // EXPLAIN: client. ReplyKeyboardRemove clears the stale keyboard so the next
     // EXPLAIN: /start renders the fresh definition. Sent once per version bump.
+    // EXPLAIN: Telegram rejects empty/zero-width text, so a real placeholder is
+    // EXPLAIN: used; the message is immediately superseded by the fresh keyboard.
     public void removeReplyKeyboard(long chatId) throws Exception {
         call("sendMessage", Map.of(
             "chat_id", chatId,
-            "text", "\u200B",
+            "text", "🔄",
             "reply_markup", Map.of("remove_keyboard", true)
         ));
     }
