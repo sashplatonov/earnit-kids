@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.dto.response.AdminAnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
+import com.sashplatonov.earnit.kids.dto.response.AdminRewardsResponse;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -200,5 +201,112 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .familiesWithReward(fwr)
             .percentFamiliesWithReward(percent)
             .build();
+    }
+
+    // EXPLAIN: Reward shop metrics for ADM-06
+    public AdminRewardsResponse.RewardShopMetrics getRewardShopMetrics(Instant periodStart) {
+        int rewardsConfigured = countRewardsConfigured();
+        double familiesWithRewardPercent = percentFamiliesWithActiveReward();
+        long rewardRequests = countRewardRequests(periodStart);
+        long approvedRewards = countApprovedRewards(periodStart);
+        double rejectionRate = calcRejectionRate(periodStart);
+        double medianPrice = calcMedianRewardPrice();
+        double medianPurchasedPrice = calcMedianPurchasedPrice(periodStart);
+
+        return AdminRewardsResponse.RewardShopMetrics.builder()
+            .rewardsConfigured(rewardsConfigured)
+            .familiesWithRewardPercent(familiesWithRewardPercent)
+            .rewardRequests(rewardRequests)
+            .approvedRewards(approvedRewards)
+            .rejectionRate(rejectionRate)
+            .medianPrice(medianPrice)
+            .medianPurchasedPrice(medianPurchasedPrice)
+            .build();
+    }
+
+    private int countRewardsConfigured() {
+        String sql = "SELECT COUNT(DISTINCT familyId) FROM ShopItemEntity";
+        Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    private double percentFamiliesWithActiveReward() {
+        String sql = """
+            SELECT COUNT(DISTINCT s.familyId) FROM ShopItemEntity s
+            WHERE s.familyId IN (SELECT DISTINCT h.familyDbId FROM HistoryEntryEntity h)
+            """;
+        Long familiesWithReward = entityManager.createQuery(sql, Long.class).getSingleResult();
+        int totalFamilies = countTotalFamilies();
+        if (totalFamilies == 0) return 0.0;
+        return Math.round(100.0 * familiesWithReward / totalFamilies);
+    }
+
+    private long countRewardRequests(Instant periodStart) {
+        String sql = """
+            SELECT COUNT(p) FROM PurchaseRequestEntity p
+            WHERE p.createdAt >= :periodStart
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart)
+            .getSingleResult();
+        return result != null ? result : 0L;
+    }
+
+    private long countApprovedRewards(Instant periodStart) {
+        String sql = """
+            SELECT COUNT(p) FROM PurchaseRequestEntity p
+            WHERE p.status = :status AND p.createdAt >= :periodStart
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("status", PurchaseRequestStatus.approved)
+            .setParameter("periodStart", periodStart)
+            .getSingleResult();
+        return result != null ? result : 0L;
+    }
+
+    private double calcRejectionRate(Instant periodStart) {
+        String sql = """
+            SELECT COUNT(p) FROM PurchaseRequestEntity p
+            WHERE p.status IN (:rejected, :cancelled) AND p.createdAt >= :periodStart
+            """;
+        Long rejected = entityManager.createQuery(sql, Long.class)
+            .setParameter("rejected", PurchaseRequestStatus.rejected)
+            .setParameter("cancelled", PurchaseRequestStatus.cancelled)
+            .setParameter("periodStart", periodStart)
+            .getSingleResult();
+
+        long total = countRewardRequests(periodStart);
+        if (total == 0) return 0.0;
+        return Math.round(100.0 * rejected / total);
+    }
+
+    private double calcMedianRewardPrice() {
+        String sql = "SELECT s.price FROM ShopItemEntity s WHERE s.price > 0";
+        var prices = entityManager.createQuery(sql, Integer.class).getResultList();
+        if (prices.isEmpty()) return 0.0;
+
+        var sorted = prices.stream().sorted().toList();
+        int n = sorted.size();
+        return n % 2 == 0
+            ? (sorted.get(n / 2 - 1) + sorted.get(n / 2)) / 2.0
+            : sorted.get(n / 2);
+    }
+
+    private double calcMedianPurchasedPrice(Instant periodStart) {
+        String sql = """
+            SELECT p.coins FROM PurchaseRequestEntity p
+            WHERE p.status = :status AND p.createdAt >= :periodStart AND p.coins > 0
+            """;
+        var prices = entityManager.createQuery(sql, Integer.class)
+            .setParameter("status", PurchaseRequestStatus.approved)
+            .setParameter("periodStart", periodStart)
+            .getResultList();
+        if (prices.isEmpty()) return 0.0;
+
+        var sorted = prices.stream().sorted().toList();
+        int n = sorted.size();
+        return n % 2 == 0
+            ? (sorted.get(n / 2 - 1) + sorted.get(n / 2)) / 2.0
+            : sorted.get(n / 2);
     }
 }

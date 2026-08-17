@@ -16,6 +16,7 @@
     export let data;
     $: overview = data.overview;
     $: coinEconomy = data.coinEconomy;
+    $: rewardShop = data.rewardShop;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -276,13 +277,13 @@
                 <div class="kpis">
                     <div class="kpi">
                         <div class="kpi-label">{t('rewards.requests')}</div>
-                        <div class="kpi-value">—</div>
+                        <div class="kpi-value">{rewardShop?.rewardShopMetrics?.rewardRequests ?? '—'}</div>
                         <div class="kpi-foot">{t('periods.30d')}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('rewards.issued')}</div>
                         <button class="info" aria-label={t('tooltips.rewardsIssued.label')}>i</button>
-                        <div class="kpi-value">—</div>
+                        <div class="kpi-value">{rewardShop?.rewardShopMetrics?.approvedRewards ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.successful')}</div>
                     </div>
                 </div>
@@ -295,7 +296,7 @@
                             <button class="mini-info" aria-label={t('tooltips.medianPrice.label')}>i</button>
                             <small>{t('rewards.medianPrice.desc')}</small>
                         </div>
-                        <div class="metric-value">— 🪙</div>
+                        <div class="metric-value">{rewardShop?.rewardShopMetrics?.medianPrice ?? '—'} 🪙</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -303,7 +304,7 @@
                             <button class="mini-info" aria-label={t('tooltips.chosenPrice.label')}>i</button>
                             <small>{t('rewards.chosenPrice.desc')}</small>
                         </div>
-                        <div class="metric-value">— 🪙</div>
+                        <div class="metric-value">{rewardShop?.rewardShopMetrics?.medianPurchasedPrice ?? '—'} 🪙</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -311,7 +312,7 @@
                             <button class="mini-info" aria-label={t('tooltips.rewardsFailed.label')}>i</button>
                             <small>{t('rewards.failed.desc')}</small>
                         </div>
-                        <div class="metric-value">—%</div>
+                        <div class="metric-value">{rewardShop?.rewardShopMetrics?.rejectionRate ?? '—'}%</div>
                     </div>
                 </div>
 
