@@ -71,8 +71,8 @@ public class TelegramReplyKeyboardNavigator {
                 try {
                     String navText = TelegramMenuFlow.navigationText(action, view);
                     TelegramReplyKeyboard replyKeyboard = "child".equals(view.role())
-                        ? new BotKeyboardFactory(null, miniAppUrl).childMain()
-                        : new BotKeyboardFactory(publicSiteUrl, miniAppUrl).parentMain();
+                        ? new BotKeyboardFactory(null, miniAppUrl, config.botUsername().orElse("")).childMain()
+                        : new BotKeyboardFactory(publicSiteUrl, miniAppUrl, config.botUsername().orElse("")).parentMain();
                     apiClient.sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
