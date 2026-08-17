@@ -48,14 +48,14 @@ public class TelegramReplyKeyboardNavigator {
 
     // EXPLAIN: UX-04 — a reply keyboard button cannot open an arbitrary external
     // EXPLAIN: URL (only web_app Mini Apps). The site button therefore sends a
-    // EXPLAIN: single compact message with one inline URL button.
+    // EXPLAIN: single compact message with the same heading and one URL button.
     private void sendSiteLink(long chatId) throws Exception {
         String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
         if (publicSiteUrl.isEmpty()) {
             return;
         }
-        apiClient.sendMessage(chatId, TelegramCopy.SHARE_SITE,
-            java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.SHARE_SITE, publicSiteUrl, null)));
+        apiClient.sendMessage(chatId, TelegramCopy.NAV_OPEN_SITE,
+            java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.NAV_OPEN_SITE, publicSiteUrl, null)));
     }
 
     // EXPLAIN: UX-01 — sends navigation content with the persistent reply keyboard.

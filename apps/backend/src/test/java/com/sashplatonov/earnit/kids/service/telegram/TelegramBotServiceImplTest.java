@@ -677,8 +677,9 @@ class TelegramBotServiceImplTest {
             """));
 
         // EXPLAIN: 🌐 Сайт is a plain text button (KeyboardButton has no `url`
-        // EXPLAIN: field), so the bot answers with one inline URL button.
-        verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.SHARE_SITE), any());
+        // EXPLAIN: field), so the bot answers with one inline URL button using
+        // EXPLAIN: the same heading as the tapped button.
+        verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.NAV_OPEN_SITE), any());
         verify(apiClient, never()).sendMessageWithReplyKeyboard(any(Long.class), any(String.class), any());
     }
 
