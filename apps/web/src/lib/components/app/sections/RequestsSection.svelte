@@ -260,7 +260,7 @@
             {@const childName = resolveChildName(req)}
             {@const createdAt = formatDate(requestCreatedAt(req))}
             <article
-                class="card request-card"
+                class="card request-card request-card--attention"
                 class:request-card--list={viewMode === 'list'}
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
@@ -291,11 +291,6 @@
                         <span class="request-chip request-chip--group">{req.ui.group}</span>
                         {#if createdAt}<span class="request-chip request-chip--muted">{createdAt}</span>{/if}
                     </div>
-                    {#if req.ui.description}
-                    <p class="request-item__comment">{req.ui.description}</p>
-                    {/if}
-                </div>
-                <div class="request-item__actions">
                     <div class="request-item__amounts">
                         <span class="request-item__coins {req.ui.isPurchase ? 'item-coins' : 'task-coins'}">
                             <span class="gamified-icon icon-coin" aria-hidden="true"></span>
@@ -305,10 +300,13 @@
                         <span class="request-item__money">{requestMoneyLabel(req.ui.moneyAmount)}</span>
                         {/if}
                     </div>
-                    <div class="request-item__buttons">
-                        <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓</button>
-                        <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗</button>
-                    </div>
+                    {#if req.ui.description}
+                    <p class="request-item__comment">{req.ui.description}</p>
+                    {/if}
+                </div>
+                <div class="attention-actions">
+                    <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓ {tHistory('requests.approve')}</button>
+                    <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗ {tHistory('requests.reject')}</button>
                 </div>
             </article>
             {/each}
@@ -372,19 +370,7 @@
                     <div class="request-item__chips">
                         <span class={`request-chip ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
                         <span class="request-chip request-chip--group">{req.ui.group}</span>
-                        <span class={`request-chip ${requestStatusClass(req.status)}`}>
-                            <span class="request-status-dot" aria-hidden="true"></span>
-                            {requestStatusLabel(req.status)}
-                        </span>
-                        {#if formatDate(requestCreatedAt(req))}
-                        <span class="request-chip request-chip--muted">{formatDate(requestCreatedAt(req))}</span>
-                        {/if}
                     </div>
-                    {#if req.ui.description}
-                    <p class="request-item__comment">{req.ui.description}</p>
-                    {/if}
-                </div>
-                <div class="request-item__actions">
                     <div class="request-item__amounts">
                         <span class="request-item__coins {req.ui.isPurchase ? 'item-coins' : 'task-coins'}">
                             <span class="gamified-icon icon-coin" aria-hidden="true"></span>
@@ -394,11 +380,21 @@
                         <span class="request-item__money">{requestMoneyLabel(req.ui.moneyAmount)}</span>
                         {/if}
                     </div>
-                    <div class="request-item__buttons">
-                        {#if req.status !== 'approved'}
-                        <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
-                        {/if}
-                    </div>
+                    {#if req.ui.description}
+                    <p class="request-item__comment">{req.ui.description}</p>
+                    {/if}
+                </div>
+                <div class="request-item__side">
+                    <span class={`request-status-chip ${requestStatusClass(req.status)}`}>
+                        <span class="request-status-dot" aria-hidden="true"></span>
+                        {requestStatusLabel(req.status)}
+                    </span>
+                    {#if formatDate(requestCreatedAt(req))}
+                    <span class="request-item__time">{formatDate(requestCreatedAt(req))}</span>
+                    {/if}
+                    {#if req.status !== 'approved'}
+                    <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
+                    {/if}
                 </div>
             </article>
             {/each}
@@ -433,10 +429,53 @@
         overflow: visible;
         padding: 0.6rem 0.75rem;
         display: grid;
-        grid-template-columns: 2.25rem minmax(0, 1fr) auto;
-        grid-template-areas: 'icon content actions';
+        grid-template-columns: 2.25rem minmax(0, 1fr);
+        grid-template-areas: 'icon content';
         gap: 0.6rem;
-        align-items: center;
+        align-items: start;
+    }
+
+    .request-card--attention {
+        grid-template-areas:
+            'icon content'
+            '. actions';
+    }
+
+    .request-card--attention .attention-actions {
+        grid-area: actions;
+        margin-left: 2.85rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .request-card--attention .attention-actions .btn {
+        min-height: 2.4rem;
+        padding: 0.4rem 0.5rem;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+
+    .request-card--mine {
+        grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+        grid-template-areas: 'icon content side';
+    }
+
+    .request-item__side {
+        grid-area: side;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.3rem;
+        flex-shrink: 0;
+        min-width: 0;
+    }
+
+    .request-item__time {
+        color: var(--color-text-muted);
+        font-size: 0.7rem;
+        line-height: 1.2;
+        white-space: nowrap;
     }
 
     .request-card--purchase .request-item__coins {
@@ -487,9 +526,10 @@
     }
 
     .request-item__title > span:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        min-width: 0;
+        white-space: normal;
+        overflow: visible;
+        overflow-wrap: anywhere;
     }
 
     .request-item__chips {
@@ -511,20 +551,11 @@
         line-clamp: 1;
     }
 
-    .request-item__actions {
-        grid-area: actions;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.35rem;
-        flex-shrink: 0;
-        min-width: 0;
-    }
-
     .request-item__amounts {
         display: flex;
-        flex-direction: column;
-        align-items: flex-end;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
         gap: 0.22rem;
     }
 
@@ -560,19 +591,6 @@
         font-weight: 800;
         line-height: 1;
         white-space: nowrap;
-    }
-
-    .request-item__buttons {
-        display: flex;
-        align-items: center;
-        gap: 0.28rem;
-        margin-left: auto;
-    }
-
-    .request-item__buttons .btn {
-        min-width: 1.9rem;
-        min-height: 1.9rem;
-        padding-inline: 0.45rem;
     }
 
     .request-item__note-btn {
@@ -690,8 +708,19 @@
         height: auto;
         padding: 0.35rem 0.5rem;
         grid-template-columns: 2rem minmax(0, 1fr) auto;
+        grid-template-areas: 'icon content side';
         gap: 0.45rem;
         align-items: center;
+    }
+
+    .request-card--list.request-card--attention {
+        grid-template-areas:
+            'icon content side'
+            '. actions actions';
+    }
+
+    .request-card--list.request-card--attention .attention-actions {
+        margin-left: 2.45rem;
     }
 
     .request-card--list .request-item__icon {
@@ -717,7 +746,7 @@
         display: none;
     }
 
-    .request-card--list .request-item__actions {
+    .request-card--list .request-item__side {
         flex-direction: row;
         align-items: center;
         gap: 0.4rem;
@@ -733,17 +762,7 @@
         display: none;
     }
 
-    .request-card--list .request-item__buttons .btn {
-        flex: none;
-        width: 2rem;
-        height: 2rem;
-        padding: 0;
-        font-size: 0.88rem;
-        display: grid;
-        place-items: center;
-    }
-
-    .request-card--list .request-item__buttons .history-item__delete-btn {
+    .request-card--list .request-item__side .history-item__delete-btn {
         width: 2.2rem;
         height: 2.2rem;
     }
@@ -751,8 +770,29 @@
     @media (max-width: 640px) {
         .request-card {
             padding: 0.5rem 0.6rem;
-            grid-template-columns: 2rem minmax(0, 1fr) auto;
+            grid-template-columns: 2rem minmax(0, 1fr);
             gap: 0.45rem;
+        }
+
+        .request-card--mine {
+            grid-template-columns: 2rem minmax(0, 1fr);
+            grid-template-areas:
+                'icon content'
+                '. side';
+        }
+
+        .request-card--mine .request-item__side {
+            grid-area: side;
+            margin-left: 2.45rem;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.3rem 0.5rem;
+        }
+
+        .request-card--attention .attention-actions {
+            margin-left: 2.45rem;
         }
 
         .request-item__icon {
@@ -775,16 +815,6 @@
 
         .request-card--list {
             padding: 0.35rem 0.45rem;
-        }
-
-        .request-card--list .request-item__actions {
-            gap: 0.25rem;
-        }
-
-        .request-card--list .request-item__buttons .btn {
-            width: 1.95rem;
-            height: 1.95rem;
-            font-size: 0.82rem;
         }
 
         .request-note-popover {
