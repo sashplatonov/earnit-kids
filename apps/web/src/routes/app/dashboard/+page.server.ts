@@ -19,13 +19,15 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     let rewardShop = null;
     let taskEconomy = null;
     let parentBehavior = null;
+    let childBehavior = null;
     try {
-        const [overviewRes, coinRes, rewardRes, taskRes, parentRes] = await Promise.all([
+        const [overviewRes, coinRes, rewardRes, taskRes, parentRes, childRes] = await Promise.all([
             fetch('/api/admin/analytics/overview?period=30d'),
             fetch('/api/admin/analytics/coin-economy?period=30d'),
             fetch('/api/admin/analytics/reward-shop?period=30d'),
             fetch('/api/admin/analytics/task-economy?period=30d'),
             fetch('/api/admin/analytics/parent-behavior?period=30d'),
+            fetch('/api/admin/analytics/child-behavior?period=30d'),
         ]);
         if (overviewRes.ok) {
             overview = await overviewRes.json();
@@ -42,6 +44,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
         if (parentRes.ok) {
             parentBehavior = await parentRes.json();
         }
+        if (childRes.ok) {
+            childBehavior = await childRes.json();
+        }
     } catch (e) {
         console.error('Failed to fetch admin analytics:', e);
     }
@@ -52,6 +57,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
         rewardShop,
         taskEconomy,
         parentBehavior,
+        childBehavior,
     };
 };
 

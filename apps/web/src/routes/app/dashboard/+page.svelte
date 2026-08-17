@@ -19,6 +19,7 @@
     $: rewardShop = data.rewardShop;
     $: taskEconomy = data.taskEconomy;
     $: parentBehavior = data.parentBehavior;
+    $: childBehavior = data.childBehavior;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -553,6 +554,38 @@
                             <small>{t('parent.familiesWithPending.desc')}</small>
                         </div>
                         <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesWithPendingRequests ?? '—'}</div>
+                    </div>
+                </div>
+
+                <h2 class="section-title">{t('sections.childNeeds')}</h2>
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="kpi-label">{t('child.activeDays.title')}</div>
+                        <div class="kpi-value">{childBehavior?.childBehaviorMetrics?.medianActiveDaysPerChild ?? '—'}</div>
+                        <div class="kpi-foot">{t('child.activeDays.desc')}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('child.tasksBeforeReward.title')}</div>
+                        <div class="kpi-value">{childBehavior?.childBehaviorMetrics?.medianTasksBeforeReward ?? '—'}</div>
+                        <div class="kpi-foot">{t('child.tasksBeforeReward.desc')}</div>
+                    </div>
+                </div>
+
+                <div class="metric-list">
+                    <div class="metric">
+                        <div>
+                            <strong>{t('child.earningNotSpending.title')}</strong>
+                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')}>i</button>
+                            <small>{t('child.earningNotSpending.desc')}</small>
+                        </div>
+                        <div class="metric-value">{childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending ?? '—'}%</div>
+                    </div>
+                    <div class="metric">
+                        <div>
+                            <strong>{t('child.requestedNotReceived.title')}</strong>
+                            <small>{t('child.requestedNotReceived.desc')}</small>
+                        </div>
+                        <div class="metric-value">{childBehavior?.childBehaviorMetrics?.percentChildrenRequestedNotReceived ?? '—'}%</div>
                     </div>
                 </div>
             </section>
