@@ -82,6 +82,189 @@ export const adminMessages = {
         dashboardTitle: 'Дашборд',
         dashboardDesc: 'Использование сервиса и экономика монет',
     },
+    dashboard: {
+        title: 'Дашборд',
+        subtitle: 'Все семьи · агрегированные данные',
+        redirecting: 'Перенаправляем...',
+        updatedAt: '{time}',
+        aria: {
+            tabs: 'Разделы дашборда',
+        },
+        tabs: {
+            overview: 'Обзор',
+            coins: 'Монеты',
+            rewards: 'Награды',
+            tasks: 'Задания',
+            activity: 'Активность',
+        },
+        periods: {
+            '7d': '7 дней',
+            '30d': '30 дней',
+            '90d': '90 дней',
+            all: 'Всё время',
+        },
+        kpis: {
+            totalFamilies: 'Всего семей',
+            activeFamilies: 'Активные семьи',
+            activeChildren: 'Активных детей',
+            rewardsReceived: 'Получено наград',
+            lifetime: 'за всё время',
+            successful: 'успешные выдачи',
+        },
+        sections: {
+            keySignals: 'Ключевые сигналы',
+            coinEconomy: 'Экономика монет',
+            prices: 'Цены',
+            popular: 'Что дети выбирают',
+            content: 'Контент',
+            activation: 'Активация семей',
+            parentCycle: 'Родительский цикл',
+        },
+        signals: {
+            earningNotSpending: {
+                title: 'Зарабатывают, но не тратят',
+                desc: 'активные дети без выдачи наград',
+            },
+            decisionTime: {
+                title: 'Время до решения',
+                desc: 'медиана ответа родителя',
+            },
+        },
+        coins: {
+            earned: 'Заработано',
+            spent: 'Потрачено',
+            insight: '43% активных детей зарабатывали монеты, но не получали награды.',
+        },
+        metrics: {
+            medianBalance: {
+                title: 'Медианный баланс',
+                desc: 'текущий баланс ребёнка',
+            },
+            timeToFirstReward: {
+                title: 'До первой награды',
+                desc: 'медиана после начала использования',
+            },
+            earningNotSpending: {
+                title: 'Зарабатывают, но не тратят',
+                desc: 'заработали монеты, но не получили наград',
+            },
+        },
+        rewards: {
+            requests: 'Запросов наград',
+            issued: 'Выдано наград',
+            medianPrice: {
+                title: 'Медианная цена',
+                desc: 'активные награды',
+            },
+            chosenPrice: {
+                title: 'Цена выбранной награды',
+                desc: 'реально полученные награды',
+            },
+            failed: {
+                title: 'Не состоялись',
+                desc: 'отклонены / отменены',
+            },
+        },
+        popular: {
+            entertainment: {
+                title: 'Время и развлечения',
+            },
+            familyTime: {
+                title: 'Время с семьёй',
+            },
+        },
+        tasks: {
+            completed: 'Выполнено заданий',
+            approvedByParents: 'одобрено родителями',
+            catalogUsage: {
+                title: 'Используют каталог',
+                desc: 'добавили готовые задания/награды',
+            },
+            customContent: {
+                title: 'Создают своё',
+                desc: 'есть кастомный контент',
+            },
+            coinsPerTask: {
+                title: 'Монет за задание',
+                desc: 'медиана одобренных выполнений',
+            },
+        },
+        funnel: {
+            registered: 'Зарегистрировались',
+            addedChild: 'Добавили ребёнка',
+            hasTask: 'Есть задание',
+            earnedCoins: 'Заработали монеты',
+            receivedReward: 'Получили награду',
+        },
+        parent: {
+            decisionTime: {
+                title: 'Время до решения',
+                desc: 'медиана ответа родителя',
+            },
+            pendingBacklog: {
+                title: 'Ждут решения',
+                desc: 'текущий pending backlog',
+            },
+            activeDays: {
+                title: 'Активных дней',
+                desc: 'медиана на ребёнка за период',
+            },
+        },
+        tooltips: {
+            selectInfo: 'Нажмите на ⓘ для пояснения показателя',
+            activeFamilies: {
+                label: 'Активные семьи',
+            },
+            activeChildren: {
+                label: 'Активные дети',
+            },
+            rewardsReceived: {
+                label: 'Получено наград',
+            },
+            spendEarn: {
+                label: 'Spend / Earn',
+            },
+            medianBalance: {
+                label: 'Медианный баланс',
+            },
+            timeToFirstReward: {
+                label: 'До первой награды',
+            },
+            earningNotSpending: {
+                label: 'Зарабатывают, но не тратят',
+            },
+            rewardsIssued: {
+                label: 'Выдано наград',
+            },
+            medianPrice: {
+                label: 'Медианная цена',
+            },
+            chosenPrice: {
+                label: 'Цена выбранной награды',
+            },
+            rewardsFailed: {
+                label: 'Не состоялись',
+            },
+            decisionTime: {
+                label: 'Время до решения',
+            },
+            pendingBacklog: {
+                label: 'Ждут решения',
+            },
+            activeDays: {
+                label: 'Активных дней',
+            },
+        },
+        footer: {
+            keyUxTitle: 'Ключевой UX:',
+            keyUxText: '5 смысловых табов всегда помещаются в ширину Mini App без горизонтального скролла. У каждого есть смысловая графика: 📊 обзор, 🪙 монеты, 🎁 награды, ✅ задания, 📈 активность. Неочевидные показатели объясняются по tap на `i`: что это, как считается и простой пример.',
+        },
+        units: {
+            minutes: 'мин',
+            days: 'дней',
+            issues: 'выдачи',
+        },
+    },
     catalog: {
         taskAdded: 'Задание «{name}» добавлено',
         productAdded: 'Товар «{name}» добавлен',

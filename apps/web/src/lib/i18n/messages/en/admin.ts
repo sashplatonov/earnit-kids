@@ -82,6 +82,189 @@ export const adminMessages = {
         dashboardTitle: 'Dashboard',
         dashboardDesc: 'Service usage and coin economy',
     },
+    dashboard: {
+        title: 'Dashboard',
+        subtitle: 'All families · aggregated data',
+        redirecting: 'Redirecting...',
+        updatedAt: '{time}',
+        aria: {
+            tabs: 'Dashboard tabs',
+        },
+        tabs: {
+            overview: 'Overview',
+            coins: 'Coins',
+            rewards: 'Rewards',
+            tasks: 'Tasks',
+            activity: 'Activity',
+        },
+        periods: {
+            '7d': '7 days',
+            '30d': '30 days',
+            '90d': '90 days',
+            all: 'All time',
+        },
+        kpis: {
+            totalFamilies: 'Total families',
+            activeFamilies: 'Active families',
+            activeChildren: 'Active children',
+            rewardsReceived: 'Rewards received',
+            lifetime: 'lifetime',
+            successful: 'successful issues',
+        },
+        sections: {
+            keySignals: 'Key signals',
+            coinEconomy: 'Coin economy',
+            prices: 'Prices',
+            popular: 'What children choose',
+            content: 'Content',
+            activation: 'Family activation',
+            parentCycle: 'Parent cycle',
+        },
+        signals: {
+            earningNotSpending: {
+                title: 'Earning but not spending',
+                desc: 'active children without reward issues',
+            },
+            decisionTime: {
+                title: 'Time to decision',
+                desc: 'median parent response time',
+            },
+        },
+        coins: {
+            earned: 'Earned',
+            spent: 'Spent',
+            insight: '43% of active children earned coins but did not receive rewards.',
+        },
+        metrics: {
+            medianBalance: {
+                title: 'Median balance',
+                desc: 'current child balance',
+            },
+            timeToFirstReward: {
+                title: 'To first reward',
+                desc: 'median after starting usage',
+            },
+            earningNotSpending: {
+                title: 'Earning but not spending',
+                desc: 'earned coins but did not receive rewards',
+            },
+        },
+        rewards: {
+            requests: 'Reward requests',
+            issued: 'Rewards issued',
+            medianPrice: {
+                title: 'Median price',
+                desc: 'active rewards',
+            },
+            chosenPrice: {
+                title: 'Chosen reward price',
+                desc: 'actually received rewards',
+            },
+            failed: {
+                title: 'Failed',
+                desc: 'declined / cancelled',
+            },
+        },
+        popular: {
+            entertainment: {
+                title: 'Time & entertainment',
+            },
+            familyTime: {
+                title: 'Family time',
+            },
+        },
+        tasks: {
+            completed: 'Tasks completed',
+            approvedByParents: 'approved by parents',
+            catalogUsage: {
+                title: 'Using catalog',
+                desc: 'added ready-made tasks/rewards',
+            },
+            customContent: {
+                title: 'Create their own',
+                desc: 'have custom content',
+            },
+            coinsPerTask: {
+                title: 'Coins per task',
+                desc: 'median of approved completions',
+            },
+        },
+        funnel: {
+            registered: 'Registered',
+            addedChild: 'Added child',
+            hasTask: 'Has task',
+            earnedCoins: 'Earned coins',
+            receivedReward: 'Received reward',
+        },
+        parent: {
+            decisionTime: {
+                title: 'Time to decision',
+                desc: 'median parent response time',
+            },
+            pendingBacklog: {
+                title: 'Pending backlog',
+                desc: 'current pending backlog',
+            },
+            activeDays: {
+                title: 'Active days',
+                desc: 'median per child for period',
+            },
+        },
+        tooltips: {
+            selectInfo: 'Tap on ⓘ for metric explanation',
+            activeFamilies: {
+                label: 'Active families',
+            },
+            activeChildren: {
+                label: 'Active children',
+            },
+            rewardsReceived: {
+                label: 'Rewards received',
+            },
+            spendEarn: {
+                label: 'Spend / Earn',
+            },
+            medianBalance: {
+                label: 'Median balance',
+            },
+            timeToFirstReward: {
+                label: 'Time to first reward',
+            },
+            earningNotSpending: {
+                label: 'Earning but not spending',
+            },
+            rewardsIssued: {
+                label: 'Rewards issued',
+            },
+            medianPrice: {
+                label: 'Median price',
+            },
+            chosenPrice: {
+                label: 'Chosen reward price',
+            },
+            rewardsFailed: {
+                label: 'Failed rewards',
+            },
+            decisionTime: {
+                label: 'Time to decision',
+            },
+            pendingBacklog: {
+                label: 'Pending backlog',
+            },
+            activeDays: {
+                label: 'Active days',
+            },
+        },
+        footer: {
+            keyUxTitle: 'Key UX:',
+            keyUxText: '5 semantic tabs always fit within Mini App width without horizontal scroll. Each has meaningful graphics: 📊 overview, 🪙 coins, 🎁 rewards, ✅ tasks, 📈 activity. Unclear metrics are explained on tap on `i`: what it is, how it\'s calculated, and a simple example.',
+        },
+        units: {
+            minutes: 'min',
+            days: 'days',
+            issues: 'issues',
+        },
+    },
     catalog: {
         taskAdded: 'Task "{name}" added',
         productAdded: 'Reward "{name}" added',
