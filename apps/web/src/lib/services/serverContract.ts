@@ -129,6 +129,7 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
         lastPurchasedAt: item.lastPurchasedAt ?? item.last_purchased_at ?? null,
         childId: (item.childId ?? null) as unknown,
         sourceCatalogItemId: (item.sourceCatalogItemId ?? item.source_catalog_item_id ?? null) as unknown,
+        periodProgress: normalizeTaskPeriodProgress(item.periodProgress ?? item.period_progress),
     };
 }
 

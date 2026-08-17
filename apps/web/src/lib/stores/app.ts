@@ -45,6 +45,7 @@ export interface ShopItem {
     ageMin?: number | null;
     ageMax?: number | null;
     lastPurchasedAt?: string | null;
+    periodProgress?: TaskPeriodProgress | null;
     [key: string]: unknown;
 }
 
