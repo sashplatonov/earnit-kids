@@ -755,6 +755,37 @@ Recommended v1:
 
 ---
 
+## ✅ ADM-14 - Simple trends
+
+**Status:** ✅ COMPLETE - Implemented in commit `feat(admin): ADM-14 simple trends`
+
+**Implemented:**
+- Active families by day (bar chart)
+- Coins earned vs spent by day (dual-bar comparison)
+- Reward redemptions and task completions aggregated per day in the same trend points
+- Compact vertical bar charts readable on mobile
+- Only 2 trend charts (activity + earned/spent) per v1 recommendation; remaining metrics stay as cards/rows
+- Empty state when no data for the period
+
+**Files created:**
+- `AdminTrendsResponse.java` - DTO with TrendPoint nested class
+- `AdminTrendsService.java` - service layer with period parsing
+- `AdminTrendsResource.java` - REST endpoint `GET /api/admin/analytics/trends?period=30d`
+
+**Files modified:**
+- `AdminAnalyticsRepository.java` - added `getTrendPoints` aggregating history/requests by day
+- `+page.server.ts` - fetch trends data
+- `+page.svelte` - activity tab trends section with bar charts
+- i18n `ru/admin.ts` and `en/admin.ts` - trends translations
+
+**Verified:**
+- ✅ Backend compiles
+- ✅ Backend tests pass (484 tests)
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
+
+---
+
 # ADM-15 - Data definitions must be explicit
 
 Create a central analytics definitions layer/documentation.

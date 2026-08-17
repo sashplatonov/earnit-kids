@@ -126,6 +126,7 @@ export const adminMessages = {
             activation: 'Активация семей',
             parentCycle: 'Родительский цикл',
             retention: 'Удержание и активность',
+            trends: 'Тренды',
         },
         signals: {
             earningNotSpending: {
@@ -234,6 +235,17 @@ export const adminMessages = {
                 title: 'Активны за 30 дней',
                 desc: 'семьи с активностью за последние 30 дней',
             },
+        },
+        trends: {
+            activeFamilies: {
+                title: 'Активные семьи по дням',
+                desc: 'семьи с активностью за день',
+            },
+            earnedSpent: {
+                title: 'Заработано vs потрачено',
+                desc: 'монеты по дням',
+            },
+            empty: 'Нет данных за период',
         },
         tooltips: {
             selectInfo: 'Нажмите на ⓘ для пояснения показателя',

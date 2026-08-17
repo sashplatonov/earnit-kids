@@ -126,6 +126,7 @@ export const adminMessages = {
             activation: 'Family activation',
             parentCycle: 'Parent cycle',
             retention: 'Retention & activity',
+            trends: 'Trends',
         },
         signals: {
             earningNotSpending: {
@@ -234,6 +235,17 @@ export const adminMessages = {
                 title: 'Active in 30 days',
                 desc: 'families with activity in the last 30 days',
             },
+        },
+        trends: {
+            activeFamilies: {
+                title: 'Active families by day',
+                desc: 'families with activity per day',
+            },
+            earnedSpent: {
+                title: 'Earned vs spent',
+                desc: 'coins per day',
+            },
+            empty: 'No data for the period',
         },
         tooltips: {
             selectInfo: 'Tap on ⓘ for metric explanation',

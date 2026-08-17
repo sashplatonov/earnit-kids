@@ -22,6 +22,7 @@
     $: childBehavior = data.childBehavior;
     $: activationFunnel = data.activationFunnel;
     $: retention = data.retention;
+    $: trends = data.trends;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -52,6 +53,15 @@
     function changePeriod(period: string) {
         selectedPeriod = period;
         // Period change logic will be implemented with actual data loading
+    }
+
+    // EXPLAIN: Trend bar helpers for ADM-14
+    $: maxActiveFamilies = Math.max(1, ...(trends?.points ?? []).map((p: { activeFamilies: number }) => p.activeFamilies));
+    $: maxCoins = Math.max(1, ...(trends?.points ?? []).map((p: { coinsEarned: number; coinsSpent: number }) => Math.max(p.coinsEarned, p.coinsSpent)));
+
+    function barHeight(value: number, max: number): number {
+        if (!max) return 0;
+        return Math.max(2, Math.round((value / max) * 100));
     }
 </script>
 
@@ -585,6 +595,41 @@
                     </div>
                 </div>
 
+                <h2 class="section-title">{t('sections.trends')}</h2>
+                {#if trends?.points && trends.points.length > 0}
+                    <div class="trend">
+                        <div class="trend-head">
+                            <b>{t('trends.activeFamilies.title')}</b>
+                            <small>{t('trends.activeFamilies.desc')}</small>
+                        </div>
+                        <div class="bars">
+                            {#each trends.points as point (point.date)}
+                                <div class="bar-col" title="{point.date}: {point.activeFamilies}">
+                                    <div class="bar" style="height: {barHeight(point.activeFamilies, maxActiveFamilies)}%"></div>
+                                    <small class="bar-label">{point.date.slice(5)}</small>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                    <div class="trend">
+                        <div class="trend-head">
+                            <b>{t('trends.earnedSpent.title')}</b>
+                            <small>{t('trends.earnedSpent.desc')}</small>
+                        </div>
+                        <div class="bars">
+                            {#each trends.points as point (point.date)}
+                                <div class="bar-col" title="{point.date}: {point.coinsEarned} / {point.coinsSpent}">
+                                    <div class="bar earned" style="height: {barHeight(point.coinsEarned, maxCoins)}%"></div>
+                                    <div class="bar spent" style="height: {barHeight(point.coinsSpent, maxCoins)}%"></div>
+                                    <small class="bar-label">{point.date.slice(5)}</small>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {:else}
+                    <div class="empty-note">{t('trends.empty')}</div>
+                {/if}
+
                 <h2 class="section-title">{t('sections.parentNeeds')}</h2>
                 <div class="kpis">
                     <div class="kpi">
@@ -1068,6 +1113,78 @@
     .fill {
         height: 100%;
         background: var(--primary, #5e6fec);
+    }
+
+    .trend {
+        background: #fff;
+        border: 1px solid var(--line, #e5e8f0);
+        border-radius: 15px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
+    .trend-head {
+        margin-bottom: 8px;
+    }
+
+    .trend-head b {
+        font-size: 13px;
+        display: block;
+    }
+
+    .trend-head small {
+        color: var(--muted, #8791a6);
+        font-size: 11px;
+    }
+
+    .bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 90px;
+        overflow-x: auto;
+    }
+
+    .bar-col {
+        flex: 1 0 14px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        height: 100%;
+    }
+
+    .bar {
+        width: 100%;
+        max-width: 12px;
+        background: var(--primary, #5e6fec);
+        border-radius: 3px 3px 0 0;
+    }
+
+    .bar.earned {
+        background: var(--primary, #5e6fec);
+    }
+
+    .bar.spent {
+        background: var(--orange, #f0a35e);
+    }
+
+    .bar-label {
+        font-size: 8px;
+        color: var(--muted, #8791a6);
+        margin-top: 3px;
+        white-space: nowrap;
+    }
+
+    .empty-note {
+        padding: 12px;
+        background: #fff;
+        border: 1px solid var(--line, #e5e8f0);
+        border-radius: 15px;
+        color: var(--muted, #8791a6);
+        font-size: 12px;
+        text-align: center;
     }
 
     .footer-note {
