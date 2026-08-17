@@ -31,7 +31,8 @@ public class BotKeyboardFactory {
         if (miniAppUrl == null || miniAppUrl.isBlank() || botUsername == null || botUsername.isBlank()) {
             return miniAppUrl;
         }
-        return "https://t.me/" + botUsername + "?startapp=" + miniAppUrl;
+        return "https://t.me/" + java.net.URLEncoder.encode(botUsername, java.nio.charset.StandardCharsets.UTF_8)
+            + "?startapp=" + java.net.URLEncoder.encode(miniAppUrl, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     // EXPLAIN: Returns a reply keyboard for the parent main view.
