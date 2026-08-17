@@ -1,7 +1,6 @@
 <script lang="ts">
     import { browser } from '$app/environment';
     import { onMount, onDestroy, tick } from 'svelte';
-    import CardHeader from '$lib/components/app/CardHeader.svelte';
     import SectionHeaderControls from '$lib/components/app/SectionHeaderControls.svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
@@ -179,39 +178,6 @@
         return '';
     }
 
-    function requestCompactChips(req: Request & {
-        ui: {
-            group: string;
-            typeLabel: string;
-            isPurchase: boolean;
-        };
-    }) {
-        // NOTE: In list (row) view on mobile we only show the 1st chip (group) and the 2nd chip.
-        // We want the child's name to always be visible and placed near the beginning, so we
-        // inject it as the 2nd chip when available.
-        const chips: Array<{ label: string; className?: string }> = [
-            { label: req.ui.group, className: 'card__compact-chip--group' },
-        ];
-
-        const childName = resolveChildName(req);
-        if (childName) chips.push({ label: childName, className: 'card__compact-chip--child' });
-
-        chips.push({ label: req.ui.typeLabel });
-
-        if (!isAdmin) {
-            chips.push({
-                label: requestStatusLabel(req.status),
-                className: req.status === 'approved'
-                    ? 'card__compact-chip--status-available'
-                    : req.status === 'rejected'
-                        ? 'card__compact-chip--status-locked'
-                        : '',
-            });
-        }
-
-        return chips;
-    }
-
     function setViewMode(nextMode: CardViewMode) {
         viewMode = nextMode;
         saveCardViewMode('requests', viewRole, nextMode);
@@ -292,51 +258,56 @@
         <div id="incoming-requests-list" class="cards request-list" class:cards--list={viewMode === 'list'}>
             {#each incomingRequests as req (req.id)}
             {@const childName = resolveChildName(req)}
+            {@const createdAt = formatDate(requestCreatedAt(req))}
             <article
                 class="card request-card"
                 class:request-card--list={viewMode === 'list'}
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
-                <div class="card__badge-row">
-                    {#if childName}
-                    <span class="card__badge request-chip--child">{childName}</span>
-                    {/if}
-                    <span class={`card__badge ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
-                    <span class="card__badge card__badge--group">{req.ui.group}</span>
+                <div class="request-item__icon">
+                    <span class={`gamified-icon ${req.ui.iconClass}`} aria-hidden="true"></span>
                 </div>
-                <div class="request-card__layout">
-                    <div class="request-card__main">
-                        <CardHeader
-                            title={req.ui.title}
-                            amount={formatRequestAmount(req)}
-                            amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
-                            amountNote={requestMoneyLabel(req.ui.moneyAmount)}
-                            compactChips={requestCompactChips(req)}
-                            titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
-                            titleActionExpanded={openNoteRequestId === String(req.id)}
-                            titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
-                            onTitleAction={req.ui.note ? ((event?: MouseEvent) => toggleNote(req.id, event)) : null}
-                        />
-                        {#if req.ui.description}
-                        <p class="card__comment">{req.ui.description}</p>
+                <div class="request-item__content">
+                    <h3 class="request-item__title">
+                        <span>{req.ui.title}</span>
+                        {#if req.ui.note}
+                        <span class="request-note-tooltip request-item__note">
+                            <button
+                                type="button"
+                                class="request-item__note-btn"
+                                aria-label={tHistory('requests.noteButtonAria')}
+                                aria-expanded={openNoteRequestId === String(req.id)}
+                                aria-controls={requestNoteId(req.id)}
+                                on:click|stopPropagation={(event) => toggleNote(req.id, event)}
+                            >
+                                <span aria-hidden="true">📝</span>
+                            </button>
+                        </span>
+                        {/if}
+                    </h3>
+                    <div class="request-item__chips">
+                        {#if childName}<span class="request-chip request-chip--child">{childName}</span>{/if}
+                        <span class={`request-chip ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
+                        <span class="request-chip request-chip--group">{req.ui.group}</span>
+                        {#if createdAt}<span class="request-chip request-chip--muted">{createdAt}</span>{/if}
+                    </div>
+                    {#if req.ui.description}
+                    <p class="request-item__comment">{req.ui.description}</p>
+                    {/if}
+                </div>
+                <div class="request-item__actions">
+                    <div class="request-item__amounts">
+                        <span class="request-item__coins {req.ui.isPurchase ? 'item-coins' : 'task-coins'}">
+                            <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                            {formatRequestAmount(req)}
+                        </span>
+                        {#if requestMoneyLabel(req.ui.moneyAmount)}
+                        <span class="request-item__money">{requestMoneyLabel(req.ui.moneyAmount)}</span>
                         {/if}
                     </div>
-                    <div class="request-card__side">
-                        <div class="card__meta">
-                        {#if childName}
-                            <span class="card__meta-item">{childName}</span>
-                        {/if}
-                        {#if formatDate(requestCreatedAt(req))}
-                            <span class="card__meta-item">{formatDate(requestCreatedAt(req))}</span>
-                        {/if}
-                        </div>
-                        {#if requestMoneyLabel(req.ui.moneyAmount)}
-                        <span class="request-card__money-price">{requestMoneyLabel(req.ui.moneyAmount)}</span>
-                        {/if}
-                        <div class="card__actions request-card__actions">
-                            <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓</button>
-                            <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗</button>
-                        </div>
+                    <div class="request-item__buttons">
+                        <button class="btn btn--success btn--small" aria-label={tHistory('requests.approveAria')} on:click={() => handleApprove(req)}>✓</button>
+                        <button class="btn btn--danger btn--small" aria-label={tHistory('requests.rejectAria')} on:click={() => handleReject(req)}>✗</button>
                     </div>
                 </div>
             </article>
@@ -377,27 +348,53 @@
                 class:request-card--list={viewMode === 'list'}
                 class:request-card--purchase={req.ui.isPurchase}
                 class:request-card--task={!req.ui.isPurchase}>
-                <div class="request-card__layout">
-                    <div class="request-card__main">
-                        <CardHeader
-                            title={req.ui.title}
-                            amount={formatRequestAmount(req)}
-                            amountClass={req.ui.isPurchase ? 'item-coins' : 'task-coins'}
-                            amountNote={requestMoneyLabel(req.ui.moneyAmount)}
-                            titleActionAria={req.ui.note ? tHistory('requests.noteButtonAria') : ''}
-                            titleActionExpanded={openNoteRequestId === String(req.id)}
-                            titleActionControls={req.ui.note ? requestNoteId(req.id) : ''}
-                            onTitleAction={req.ui.note ? ((event?: MouseEvent) => toggleNote(req.id, event)) : null}
-                        />
-                        {#if req.ui.description}
-                        <p class="card__comment">{req.ui.description}</p>
+                <div class="request-item__icon">
+                    <span class={`gamified-icon ${req.ui.iconClass}`} aria-hidden="true"></span>
+                </div>
+                <div class="request-item__content">
+                    <h3 class="request-item__title">
+                        <span>{req.ui.title}</span>
+                        {#if req.ui.note}
+                        <span class="request-note-tooltip request-item__note">
+                            <button
+                                type="button"
+                                class="request-item__note-btn"
+                                aria-label={tHistory('requests.noteButtonAria')}
+                                aria-expanded={openNoteRequestId === String(req.id)}
+                                aria-controls={requestNoteId(req.id)}
+                                on:click|stopPropagation={(event) => toggleNote(req.id, event)}
+                            >
+                                <span aria-hidden="true">📝</span>
+                            </button>
+                        </span>
                         {/if}
-                    </div>
-                    <div class="request-card__side">
-                        <span class={`request-status-chip ${requestStatusClass(req.status)}`}>
+                    </h3>
+                    <div class="request-item__chips">
+                        <span class={`request-chip ${req.ui.typeChipClass}`}>{req.ui.typeLabel}</span>
+                        <span class="request-chip request-chip--group">{req.ui.group}</span>
+                        <span class={`request-chip ${requestStatusClass(req.status)}`}>
                             <span class="request-status-dot" aria-hidden="true"></span>
                             {requestStatusLabel(req.status)}
                         </span>
+                        {#if formatDate(requestCreatedAt(req))}
+                        <span class="request-chip request-chip--muted">{formatDate(requestCreatedAt(req))}</span>
+                        {/if}
+                    </div>
+                    {#if req.ui.description}
+                    <p class="request-item__comment">{req.ui.description}</p>
+                    {/if}
+                </div>
+                <div class="request-item__actions">
+                    <div class="request-item__amounts">
+                        <span class="request-item__coins {req.ui.isPurchase ? 'item-coins' : 'task-coins'}">
+                            <span class="gamified-icon icon-coin" aria-hidden="true"></span>
+                            {formatRequestAmount(req)}
+                        </span>
+                        {#if requestMoneyLabel(req.ui.moneyAmount)}
+                        <span class="request-item__money">{requestMoneyLabel(req.ui.moneyAmount)}</span>
+                        {/if}
+                    </div>
+                    <div class="request-item__buttons">
                         {#if req.status !== 'approved'}
                         <button class="history-item__delete-btn" on:click={() => handleDelete(req.id)} aria-label={tHistory('requests.deleteAria')}>✕</button>
                         {/if}
@@ -430,69 +427,178 @@
 {/if}
 
 <style>
-    .cards--list {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0.35rem;
-    }
-
     .request-card {
         min-height: 0;
         height: auto;
         overflow: visible;
-        padding: 0.75rem 0.85rem;
+        padding: 0.6rem 0.75rem;
+        display: grid;
+        grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+        grid-template-areas: 'icon content actions';
+        gap: 0.6rem;
+        align-items: center;
     }
 
-    .request-card--purchase .card__coins {
+    .request-card--purchase .request-item__coins {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(190, 70, 52, 0.9));
         color: white;
     }
 
-    .request-card--task .card__coins {
+    .request-card--task .request-item__coins {
         background: var(--gradient-success);
         color: white;
     }
 
-    .request-card__layout {
+    .request-item__icon {
+        grid-area: icon;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.65rem;
-        align-items: start;
-    }
-
-    .request-card__main {
-        display: flex;
-        flex-direction: column;
-        gap: 0.45rem;
-        min-width: 0;
-    }
-
-    .request-card__side {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.4rem;
+        place-items: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.65rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: #5b63e9;
         flex-shrink: 0;
     }
 
-    .request-card__date {
-        font-size: 0.72rem;
-        color: #64748b;
-        font-weight: 600;
+    .request-item__icon .gamified-icon {
+        width: 1.15rem;
+        height: 1.15rem;
+    }
+
+    .request-item__content {
+        grid-area: content;
+        display: flex;
+        flex-direction: column;
+        gap: 0.22rem;
+        min-width: 0;
+    }
+
+    .request-item__title {
+        margin: 0;
+        font-size: clamp(0.82rem, 3.8cqi, 0.98rem);
+        font-weight: var(--font-heading-weight);
+        color: var(--color-text-high-contrast);
+        line-height: 1.25;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        min-width: 0;
+    }
+
+    .request-item__title > span:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .request-card__money-price {
+    .request-item__chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .request-item__comment {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-size: 0.78rem;
+        line-height: 1.35;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
+
+    .request-item__actions {
+        grid-area: actions;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        flex-shrink: 0;
+        min-width: 0;
+    }
+
+    .request-item__amounts {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.22rem;
+    }
+
+    .request-item__coins {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        background: var(--gradient-gold);
+        color: var(--color-text-high-contrast);
+        padding: 0.25rem 0.6rem;
+        border-radius: var(--radius-xl);
+        font-weight: 700;
+        font-size: 0.82rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .request-item__coins .gamified-icon {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+
+    .request-item__money {
         display: inline-flex;
         align-items: center;
         width: fit-content;
-        padding: 0.18rem 0.46rem;
+        padding: 0.15rem 0.4rem;
         border-radius: 999px;
         background: rgba(245, 158, 11, 0.12);
         color: #8a6118;
-        font-size: 0.76rem;
+        font-size: 0.72rem;
         font-weight: 800;
         line-height: 1;
         white-space: nowrap;
+    }
+
+    .request-item__buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.28rem;
+        margin-left: auto;
+    }
+
+    .request-item__buttons .btn {
+        min-width: 1.9rem;
+        min-height: 1.9rem;
+        padding-inline: 0.45rem;
+    }
+
+    .request-item__note-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.45rem;
+        height: 1.45rem;
+        padding: 0;
+        border: 1px solid rgba(99, 102, 241, 0.22);
+        border-radius: 9999px;
+        background: rgba(99, 102, 241, 0.1);
+        color: #4338ca;
+        cursor: pointer;
+        line-height: 1;
+        font-size: 0.82rem;
+        transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+        flex: 0 0 auto;
+    }
+
+    .request-item__note-btn:hover,
+    .request-item__note-btn:focus-visible {
+        background: rgba(99, 102, 241, 0.16);
+        border-color: rgba(99, 102, 241, 0.34);
+        transform: translateY(-1px);
+        outline: none;
     }
 
     .request-note-popover {
@@ -516,44 +622,6 @@
     .request-note-popover__label {
         font-weight: 800;
         color: #1e293b;
-    }
-
-    /* ---- Compact "my requests" card (child view) ---- */
-    .request-card--mine {
-        min-height: 0;
-        height: auto;
-        padding: 0.55rem 0.7rem;
-        gap: 0;
-    }
-
-    .request-card--mine .request-card__layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.6rem;
-        align-items: center;
-    }
-
-    .request-card--mine .request-card__main {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        min-width: 0;
-    }
-
-    .request-card--mine .card__comment {
-        min-height: 0;
-        -webkit-line-clamp: 1;
-        line-clamp: 1;
-        font-size: 0.78rem;
-        margin-top: 0.1rem;
-    }
-
-    .request-card--mine .request-card__side {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.35rem;
-        flex-shrink: 0;
     }
 
     /* Status chip with colored dot */
@@ -611,56 +679,61 @@
         background: var(--color-warning);
     }
 
-    .request-card--mine .history-item__delete-btn {
-        width: 1.9rem;
-        height: 1.9rem;
-        font-size: 0.8rem;
+    /* ---- List (row) view overrides ---- */
+    .cards--list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.35rem;
     }
 
-    /* ---- List (row) view overrides ---- */
     .request-card--list {
         min-height: 0;
         height: auto;
         padding: 0.35rem 0.5rem;
+        grid-template-columns: 2rem minmax(0, 1fr) auto;
+        gap: 0.45rem;
+        align-items: center;
     }
 
-    .request-card--list .card__badge-row,
-    .request-card--list .card__comment,
-    .request-card--list .card__meta {
+    .request-card--list .request-item__icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.55rem;
+    }
+
+    .request-card--list .request-item__icon .gamified-icon {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .request-card--list .request-item__content {
+        gap: 0.18rem;
+    }
+
+    .request-card--list .request-item__title {
+        font-size: 0.86rem;
+    }
+
+    .request-card--list .request-item__comment {
         display: none;
     }
 
-    .request-card--list .request-card__layout {
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.4rem;
-        align-items: center;
-    }
-
-    .request-card--list .request-card__main {
-        min-width: 0;
-    }
-
-    .request-card--list .request-card__side {
+    .request-card--list .request-item__actions {
         flex-direction: row;
         align-items: center;
         gap: 0.4rem;
-        margin-top: 0;
     }
 
-    .request-card--list .request-card__money-price {
+    .request-card--list .request-item__amounts {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .request-card--list .request-item__money {
         display: none;
     }
 
-    .request-card--list .request-card__actions {
-        display: flex;
-        flex-direction: row;
-        gap: 0.3rem;
-        justify-content: flex-end;
-        margin-top: 0;
-        align-items: center;
-    }
-
-    .request-card--list .request-card__actions .btn {
+    .request-card--list .request-item__buttons .btn {
         flex: none;
         width: 2rem;
         height: 2rem;
@@ -670,48 +743,45 @@
         place-items: center;
     }
 
-    /* Bright child name badge for requests */
-    .request-chip--child {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(168, 85, 247, 0.22));
-        color: #2d1b5a;
-        border: 1px solid rgba(99, 102, 241, 0.18);
-        font-weight: 900;
-    }
-
-    .request-card--list .history-item__delete-btn {
+    .request-card--list .request-item__buttons .history-item__delete-btn {
         width: 2.2rem;
         height: 2.2rem;
     }
 
     @media (max-width: 640px) {
         .request-card {
-            min-height: 0;
-            padding: 0.6rem 0.65rem;
+            padding: 0.5rem 0.6rem;
+            grid-template-columns: 2rem minmax(0, 1fr) auto;
+            gap: 0.45rem;
         }
 
-        .request-card--mine {
-            padding: 0.5rem 0.6rem;
+        .request-item__icon {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .request-item__icon .gamified-icon {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .request-item__title {
+            font-size: 0.86rem;
+        }
+
+        .request-item__comment {
+            font-size: 0.74rem;
         }
 
         .request-card--list {
             padding: 0.35rem 0.45rem;
         }
 
-        .request-card--list .request-card__layout {
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 0.4rem;
-            align-items: center;
-        }
-
-        .request-card--list .request-card__side {
+        .request-card--list .request-item__actions {
             gap: 0.25rem;
         }
 
-        .request-card--list .request-card__date {
-            font-size: 0.65rem;
-        }
-
-        .request-card--list .request-card__actions .btn {
+        .request-card--list .request-item__buttons .btn {
             width: 1.95rem;
             height: 1.95rem;
             font-size: 0.82rem;
@@ -720,6 +790,5 @@
         .request-note-popover {
             width: min(16rem, calc(100vw - 1rem));
         }
-
     }
 </style>

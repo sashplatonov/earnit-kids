@@ -15,38 +15,37 @@
 </script>
 
 <article class="request-card">
-    <div class="request-top">
-        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={kindLabel} /></span>
-        <div class="entity-text">
-            <h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || kindLabel)}</h3>
-            <p class="meta">{meta}</p>
-            <p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p>
-        </div>
-        <div class="row-side">
-            <span class="status-chip status-chip--{statusTone}">{statusLabel}</span>
-            {#if request.createdAt}<time datetime={request.createdAt}>{formatLastUsedTime(request.createdAt, locale as 'en' | 'ru')}</time>{/if}
-        </div>
+    <span class="entity-icon">
+        <TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={kindLabel} />
+    </span>
+    <div class="entity-text">
+        <h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || kindLabel)}</h3>
+        <p class="meta">{meta}</p>
+        <p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p>
     </div>
-    {#if statusTone === 'pending'}
+    <div class="row-side">
+        <span class="status-chip status-chip--{statusTone}">{statusLabel}</span>
+        {#if request.createdAt}<time datetime={request.createdAt}>{formatLastUsedTime(request.createdAt, locale as 'en' | 'ru')}</time>{/if}
+        {#if statusTone === 'pending'}
         <div class="request-actions"><slot /></div>
-    {/if}
+        {/if}
+    </div>
 </article>
 
 <style>
-    .request-card { padding:.75rem; border:1px solid #e5e9f1; border-radius:.9rem; background:#fff; }
-    .request-top { display:flex; align-items:flex-start; gap:.6rem; }
+    .request-card { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.55rem; align-items:center; padding:.55rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
     .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
-    .entity-text { min-width:0; flex:1; }
-    h3 { margin:0; font-size:.95rem; line-height:1.3; }
-    .meta { margin:.15rem 0 0; color:#66718a; font-size:.8rem; }
-    .amount { display:flex; align-items:center; gap:.25rem; margin:.25rem 0 0; color:#18243d; font-weight:750; font-size:.85rem; }
-    .row-side { display:flex; flex-direction:column; align-items:flex-end; gap:.3rem; flex:0 0 auto; }
+    .entity-text { min-width:0; display:flex; flex-direction:column; gap:.12rem; }
+    h3 { margin:0; font-size:.9rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .meta { margin:0; color:#66718a; font-size:.75rem; }
+    .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#18243d; font-weight:750; font-size:.82rem; }
+    .row-side { display:flex; flex-direction:column; align-items:flex-end; gap:.25rem; flex:0 0 auto; }
     .status-chip { display:inline-flex; align-items:center; padding:.15rem .5rem; border-radius:999px; font-size:.72rem; font-weight:700; white-space:nowrap; }
     .status-chip--pending { background:#fff4e0; color:#8a6118; }
     .status-chip--approved { background:#eaf7ef; color:#17884b; }
     .status-chip--rejected { background:#fff0f1; color:#c63c42; }
     .status-chip--cancelled { background:#eef0f5; color:#66718a; }
     .status-chip--neutral { background:#eef0f5; color:#66718a; }
-    time { color:#8a93a8; font-size:.75rem; }
-    .request-actions { display:flex; justify-content:flex-end; margin-top:.6rem; }
+    time { color:#8a93a8; font-size:.72rem; }
+    .request-actions { display:flex; flex-direction:row; gap:.35rem; }
 </style>

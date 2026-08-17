@@ -72,7 +72,9 @@
     {:else if !sortedRequests.length}
         <div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.childRequests.title')} /><span>{$i18n.t('app.telegram.childRequests.empty')}</span></div>
     {:else}
-        <div class="items">{#each visibleRequests as request (request.id)}<TelegramRequestRow request={request} kindLabel={kindLabel(request)} statusLabel={statusLabel(request.status)} statusTone={statusTone(request.status)} meta={meta(request)} locale={$i18n.locale}>{#if request.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(request)} on:click={() => onCancel(request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}</TelegramRequestRow>{/each}</div>
+        <div class="items">{#each visibleRequests as request (request.id)}<TelegramRequestRow request={request} kindLabel={kindLabel(request)} statusLabel={statusLabel(request.status)} statusTone={statusTone(request.status)} meta={meta(request)} locale={$i18n.locale}>
+            <button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(request)} on:click={() => onCancel(request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>
+        </TelegramRequestRow>{/each}</div>
         {#if hasMore}<button class="load-more" type="button" on:click={showMore}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.childRequests.showMore')} />{$i18n.t('app.telegram.childRequests.showMore')}</button>{/if}
     {/if}
     {#if cancelError}<p class="error" role="alert">{cancelError}</p>{/if}
