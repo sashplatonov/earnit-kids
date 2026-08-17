@@ -49,10 +49,12 @@
     {:else if error}<div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label={$i18n.t('app.telegram.home.error')} /><p>{error}</p><button type="button" on:click={onRetry}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></div>
     {:else if !requests.length}<div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.requests.allClear')} /><span>{resolvedEmpty}</span></div>
     {:else}<div class="items">{#each requests as request (request.id)}<article class="request-card" class:decision={canDecide && request.status === 'pending'}>
-    <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={$i18n.t('app.telegram.requests.request')} /></span>
-    <div class="entity-text"><h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || $i18n.t('app.telegram.requests.request'))}</h3><p class="meta">{requestMeta(request)}</p><p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p></div>
+    <div class="card-main">
+        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={$i18n.t('app.telegram.requests.request')} /></span>
+        <div class="entity-text"><h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || $i18n.t('app.telegram.requests.request'))}</h3><p class="meta">{requestMeta(request)}</p><p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p></div>
+    </div>
     {#if canDecide && request.status === 'pending'}
-    <div class="decision-actions"><button class="approve" type="button" aria-label={$i18n.t('app.telegram.requests.approveRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'approve')}><TelegramIcon name="approve" size={18} label={$i18n.t('app.telegram.requests.approve')} /><span>{$i18n.t('app.telegram.requests.approve')}</span></button><button class="reject" type="button" aria-label={$i18n.t('app.telegram.requests.rejectRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'reject')}><TelegramIcon name="reject" size={18} label={$i18n.t('app.telegram.requests.reject')} /><span>{$i18n.t('app.telegram.requests.reject')}</span></button></div>
+    <div class="attention-actions"><button class="approve" type="button" aria-label={$i18n.t('app.telegram.requests.approveRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'approve')}><TelegramIcon name="approve" size={18} label={$i18n.t('app.telegram.requests.approve')} /><span>{$i18n.t('app.telegram.requests.approve')}</span></button><button class="reject" type="button" aria-label={$i18n.t('app.telegram.requests.rejectRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'reject')}><TelegramIcon name="reject" size={18} label={$i18n.t('app.telegram.requests.reject')} /><span>{$i18n.t('app.telegram.requests.reject')}</span></button></div>
     {/if}
 </article>{/each}</div>{/if}
     {#if decisionError}<p class="error" role="alert">{decisionError}</p>{/if}
@@ -63,19 +65,23 @@
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
     .items { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
-    .request-card { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.55rem; align-items:center; padding:.55rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
+    .request-card { display:flex; flex-direction:column; gap:0; padding:.55rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
     .request-card.decision { border-color:#dfe4ee; box-shadow:0 1px 3px rgb(24 36 61 / 6%); }
+    .card-main { display:grid; grid-template-columns:2.25rem minmax(0,1fr); gap:.55rem; align-items:start; }
     .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
     .entity-text { min-width:0; display:flex; flex-direction:column; gap:.12rem; }
-    h3 { margin:0; font-size:.9rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    h3 { margin:0; font-size:.9rem; line-height:1.3; white-space:normal; overflow-wrap:anywhere; }
     .meta { margin:0; color:#66718a; font-size:.75rem; }
     .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#18243d; font-weight:750; font-size:.82rem; }
-    .decision-actions { display:flex; flex-direction:column; gap:.35rem; flex:0 0 auto; }
-    .decision-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.3rem; padding:.35rem .5rem; border-radius:.6rem; font:inherit; font-weight:700; cursor:pointer; }
-    .decision-actions button:disabled { cursor:wait; opacity:.6; }
+    .attention-actions { margin-top:.6rem; margin-left:2.8rem; display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.3rem; min-height:2.4rem; padding:.4rem .5rem; border-radius:.6rem; font:inherit; font-weight:700; cursor:pointer; }
+    .attention-actions button:disabled { cursor:wait; opacity:.6; }
     .approve { border:1px solid #cce9d8; background:#eaf7ef; color:#17884b; }
     .reject { border:1px solid #f3cfd2; background:#fff0f1; color:#c63c42; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
+    @media (max-width:370px) {
+        .attention-actions { margin-left:0; }
+    }
     .state-empty { display:flex; align-items:center; gap:.55rem; padding:.6rem .75rem; border-radius:.8rem; background:#eaf7ef; color:#275d3b; font-size:.9rem; }
     .state-error { display:flex; align-items:center; gap:.55rem; padding:.6rem .75rem; border-radius:.8rem; background:#fff0f0; color:#a33b3b; }
     .state-error p { margin:0; flex:1; }
