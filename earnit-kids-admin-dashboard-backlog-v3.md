@@ -1037,6 +1037,30 @@ Do not introduce a separate analytics warehouse in this backlog unless existing 
 
 ---
 
+## ✅ ADM-20 - Performance
+
+**Status:** ✅ COMPLETE - Implemented in commit `perf(admin): ADM-20 cache dashboard aggregates`
+
+**Implemented:**
+- Added `@CacheResult(cacheName = "admin-dashboard")` to the aggregated dashboard service
+- Configured `admin-dashboard` and `admin-analytics-overview` Caffeine caches with a short TTL (default 2 min)
+- Fixed a latent bug: `admin-analytics-overview` cache was referenced but never configured, so it cached indefinitely
+- All aggregation happens in the database; no loading of all families/tasks/rewards into memory
+- No N+1 queries; all metrics use single aggregate queries
+- `Обновлено ...` timestamp already shown in the dashboard toolbar
+- New env var `ADMIN_DASHBOARD_CACHE_TTL` (default `PT2M`) added to `.env.example`
+
+**Files modified:**
+- `AdminDashboardService.java` - added `@CacheResult`
+- `application.properties` - cache config for `admin-dashboard` and `admin-analytics-overview`
+- `.env.example` (root and backend) - `ADMIN_DASHBOARD_CACHE_TTL`
+
+**Verified:**
+- ✅ Backend compiles
+- ✅ Backend tests pass (484 tests)
+
+---
+
 # ADM-21 - Metric tooltips with explanations and examples
 
 Every non-obvious KPI/metric must have an info affordance:

@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.dto.response.AdminParentBehaviorResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminRetentionResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminRewardsResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -46,6 +47,8 @@ public class AdminDashboardService {
     @Inject
     AdminRetentionService retentionService;
 
+    // EXPLAIN: ADM-20: cache aggregated dashboard for a short interval (1-5 min)
+    @CacheResult(cacheName = "admin-dashboard")
     public AdminDashboardResponse getDashboard(String period) {
         AdminAnalyticsResponse overview = overviewService.getOverview(period);
         AdminCoinEconomyResponse coinEconomy = coinEconomyService.getCoinEconomy(period);
