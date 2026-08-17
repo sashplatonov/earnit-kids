@@ -909,6 +909,33 @@ Requirements:
 
 ---
 
+## ✅ ADM-17 - Authorization is backend-enforced
+
+**Status:** ✅ COMPLETE - Implemented in commit `fix(admin): ADM-17 enforce backend admin authorization`
+
+**Implemented:**
+- Fixed a critical authorization gap: 5 admin resources (parent-behavior, child-behavior, activation-funnel, retention, trends) used `@RolesAllowed` + `SecurityContext.isUserInRole()`, which is **inert** because the app has no Quarkus security wiring (`quarkus.http.auth.*`, `SecurityIdentity`, `IdentityProvider`).
+- Rewrote all 5 resources to use the trusted `AuthContext`/`AuthFilter` path (same as overview, coin-economy, reward-shop, task-economy, dashboard).
+- Every admin analytics endpoint now returns:
+  - `401` for unauthenticated requests
+  - `403` for non-admin authenticated users
+- Admin dashboard never depends on client-supplied family IDs for global access.
+- Telegram Mini App authentication validated via the same trusted auth path as the rest of the app.
+
+**Files modified:**
+- `AdminParentBehaviorResource.java`
+- `AdminChildBehaviorResource.java`
+- `AdminActivationFunnelResource.java`
+- `AdminRetentionResource.java`
+- `AdminTrendsResource.java`
+
+**Verified:**
+- ✅ Backend compiles
+- ✅ Backend tests pass (484 tests)
+- ✅ No remaining `@RolesAllowed`/`SecurityContext` in admin resources
+
+---
+
 # ADM-18 - Privacy / no unnecessary PII
 
 Dashboard v1 should be aggregated.
