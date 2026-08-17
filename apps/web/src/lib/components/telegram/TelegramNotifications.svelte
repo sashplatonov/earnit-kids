@@ -153,7 +153,10 @@
                             <span class="setting-title">{parentLabel(pref.key)}</span>
                             <span class="setting-meta">{parentHint(pref.key)}</span>
                         </span>
-                        <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button>
+                        <label class="switch">
+                            <input type="checkbox" checked={pref.enabled} aria-label={parentLabel(pref.key)} on:change={() => toggleParent(pref)} />
+                            <span class="track"></span>
+                        </label>
                     </div>
                 {/each}
                 <p class="group-label">{$i18n.t('app.telegram.notifications.parentGroupFamily')}</p>
@@ -164,7 +167,10 @@
                             <span class="setting-title">{parentLabel(pref.key)}</span>
                             <span class="setting-meta">{parentHint(pref.key)}</span>
                         </span>
-                        <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={parentLabel(pref.key)} on:click={() => toggleParent(pref)}></button>
+                        <label class="switch">
+                            <input type="checkbox" checked={pref.enabled} aria-label={parentLabel(pref.key)} on:change={() => toggleParent(pref)} />
+                            <span class="track"></span>
+                        </label>
                     </div>
                 {/each}
             </div>
@@ -180,7 +186,10 @@
                                 <span class="setting-title">{childLabel(pref.key)}</span>
                                 <span class="setting-meta">{childHint(pref.key)}</span>
                             </span>
-                            <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button>
+                            <label class="switch">
+                                <input type="checkbox" checked={pref.enabled} aria-label={childLabel(pref.key)} on:change={() => toggleChild(child.childId, pref)} />
+                                <span class="track"></span>
+                            </label>
                         </div>
                     {/each}
                     <p class="group-label">{$i18n.t('app.telegram.notifications.childGroupReminders')}</p>
@@ -191,7 +200,10 @@
                                 <span class="setting-title">{childLabel(pref.key)}</span>
                                 <span class="setting-meta">{childHint(pref.key)}</span>
                             </span>
-                            <button class="switch" class:on={pref.enabled} type="button" role="switch" aria-checked={pref.enabled} aria-label={childLabel(pref.key)} on:click={() => toggleChild(child.childId, pref)}></button>
+                            <label class="switch">
+                                <input type="checkbox" checked={pref.enabled} aria-label={childLabel(pref.key)} on:change={() => toggleChild(child.childId, pref)} />
+                                <span class="track"></span>
+                            </label>
                         </div>
                     {/each}
                 </div>
@@ -216,10 +228,14 @@
     .grow { flex:1; min-width:0; }
     .setting-title { display:block; font-weight:700; font-size:.95rem; line-height:1.3; }
     .setting-meta { display:block; margin-top:.15rem; color:#8a93a8; font-size:.8rem; line-height:1.3; }
-    .switch { position:relative; width:2.6rem; height:1.5rem; flex:0 0 auto; padding:0; border:0; border-radius:999px; background:#d8dce5; cursor:pointer; }
-    .switch.on { background:#3867d6; }
-    .switch:after { content:""; position:absolute; width:1.1rem; height:1.1rem; top:.2rem; left:.2rem; border-radius:50%; background:#fff; transition:left .15s ease; }
-    .switch.on:after { left:1.3rem; }
+    .switch { position:relative; display:inline-flex; align-items:center; width:2.75rem; height:1.625rem; flex:0 0 auto; cursor:pointer; }
+    .switch input { position:absolute; opacity:0; pointer-events:none; }
+    .track { width:2.75rem; height:1.625rem; border-radius:999px; background:#cfd5e2; position:relative; transition:background .18s ease; }
+    .track::after { content:""; position:absolute; top:.1875rem; left:.1875rem; width:1.25rem; height:1.25rem; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgb(0 0 0 / 18%); transition:transform .18s ease; }
+    .switch input:checked + .track { background:#3867d6; }
+    .switch input:checked + .track::after { transform:translateX(1.125rem); }
+    .switch input:focus-visible + .track { outline:3px solid rgb(56 103 214 / 22%); outline-offset:2px; }
+    .switch input:disabled + .track { opacity:.45; cursor:not-allowed; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
     .close { width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
