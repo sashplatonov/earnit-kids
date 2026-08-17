@@ -5,6 +5,8 @@ import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventEntity;
 import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventType;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.domain.model.RequestResolutionStatus;
 import com.sashplatonov.earnit.kids.domain.model.TelegramDeliveryEntity;
 import com.sashplatonov.earnit.kids.repository.ApplicationOutboxEventRepository;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
@@ -151,5 +153,139 @@ class TelegramOutboxProcessorTest {
         verify(api).sendMessage(78L,
             "🎉 Родитель выдал награду\n\n🪙 -50 монет\nБаланс: 95",
             List.of());
+    }
+
+    @Test
+    void resolvedRequestEditsMessageAndDropsButtons() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(12L).eventId(12L).recipientIdentityId(5).chatId(77L).status("PENDING")
+            .messageId(19L).nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(12L).eventType(ApplicationOutboxEventType.REQUEST_RESOLVED).familyId(1).childId(2)
+            .requestId(8L).resolutionStatus(RequestResolutionStatus.approved)
+            .resolutionTitle("Утренний старт").createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(12L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+
+        assertThat(processor.process(now)).isEqualTo(1);
+        assertThat(delivery.getStatus()).isEqualTo("SENT");
+        verify(api).editMessageText(77L, 19L, "Утренний старт\n✅ Одобрено", List.of());
+        verify(api, never()).sendMessage(any(Long.class), any(String.class), any());
+    }
+
+    @Test
+    void resolvedRequestWithoutMessageIdIsSkipped() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(13L).eventId(13L).recipientIdentityId(5).chatId(77L).status("PENDING")
+            .nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(13L).eventType(ApplicationOutboxEventType.REQUEST_RESOLVED).familyId(1).childId(2)
+            .requestId(8L).resolutionStatus(RequestResolutionStatus.rejected)
+            .resolutionTitle("Утренний старт").createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(13L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+
+        assertThat(processor.process(now)).isEqualTo(1);
+        assertThat(delivery.getStatus()).isEqualTo("SKIPPED");
+        verify(api, never()).editMessageText(any(Long.class), any(Long.class), any(String.class), any());
+    }
+
+    @Test
+    void resolvedMessageAlreadyAbsentIsNoOpSuccess() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(14L).eventId(14L).recipientIdentityId(5).chatId(77L).status("PENDING")
+            .messageId(19L).nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(14L).eventType(ApplicationOutboxEventType.REQUEST_RESOLVED).familyId(1).childId(2)
+            .requestId(8L).resolutionStatus(RequestResolutionStatus.cancelled)
+            .resolutionTitle("Утренний старт").createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(14L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+        doThrow(new TelegramApiException(400, "message to edit not found", 0))
+            .when(api).editMessageText(any(Long.class), any(Long.class), any(String.class), any());
+
+        assertThat(processor.process(now)).isEqualTo(1);
+        assertThat(delivery.getStatus()).isEqualTo("SENT");
+        assertThat(delivery.getAttemptCount()).isEqualTo(1);
+    }
+
+    @Test
+    void resolvedTransientErrorRetries() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(15L).eventId(15L).recipientIdentityId(5).chatId(77L).status("PENDING")
+            .messageId(19L).nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(15L).eventType(ApplicationOutboxEventType.REQUEST_RESOLVED).familyId(1).childId(2)
+            .requestId(8L).resolutionStatus(RequestResolutionStatus.deleted)
+            .resolutionTitle("Утренний старт").createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(15L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+        doThrow(new TelegramApiException(500, "internal error", 0))
+            .when(api).editMessageText(any(Long.class), any(Long.class), any(String.class), any());
+
+        assertThat(processor.process(now)).isZero();
+        assertThat(delivery.getStatus()).isEqualTo("PENDING");
+        assertThat(delivery.getAttemptCount()).isEqualTo(1);
+        assertThat(delivery.getNextAttemptAt()).isAfter(now);
+    }
+
+    @Test
+    void requestAlreadyFinalBeforeSendSkipsActionableMessage() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(16L).eventId(16L).recipientIdentityId(5).chatId(77L).status("PENDING")
+            .nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(16L).eventType(ApplicationOutboxEventType.TASK_REQUEST_CREATED).familyId(1).childId(2)
+            .requestId(8L).createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(16L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+        when(requests.findByIdOptional(8L)).thenReturn(Optional.of(
+            PurchaseRequestEntity.builder().id(8L).taskName("Утренний старт")
+                .status(PurchaseRequestStatus.approved).coins(1).build()));
+
+        assertThat(processor.process(now)).isEqualTo(1);
+        assertThat(delivery.getStatus()).isEqualTo("SKIPPED");
+        verify(api, never()).sendMessage(any(Long.class), any(String.class), any());
+    }
+
+    @Test
+    void requestResolvedBetweenPreCheckAndSendIsEditedAfterSend() throws Exception {
+        Instant now = Instant.parse("2026-08-13T10:00:00Z");
+        TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+            .id(17L).eventId(17L).recipientIdentityId(5).chatId(77L).status("PENDING")
+            .nextAttemptAt(now).build();
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(17L).eventType(ApplicationOutboxEventType.TASK_REQUEST_CREATED).familyId(1).childId(2)
+            .requestId(8L).createdAt(now).build();
+        when(deliveries.findDue(eq(now), any(Instant.class))).thenReturn(List.of(delivery));
+        when(events.findById(17L)).thenReturn(event);
+        when(config.outboxMaxAttempts()).thenReturn(5);
+        when(api.sendMessage(any(Long.class), any(String.class), any())).thenReturn(19L);
+        // EXPLAIN: First read sees pending, second read (post-send recheck) sees approved.
+        when(requests.findByIdOptional(8L))
+            .thenReturn(Optional.of(PurchaseRequestEntity.builder().id(8L).taskName("Утренний старт")
+                .status(PurchaseRequestStatus.pending).coins(1).build()))
+            .thenReturn(Optional.of(PurchaseRequestEntity.builder().id(8L).taskName("Утренний старт")
+                .status(PurchaseRequestStatus.approved).coins(1).build()));
+        when(children.findByIdOptional(2)).thenReturn(Optional.of(
+            ChildEntity.builder().id(2).name("Aliska").build()));
+
+        assertThat(processor.process(now)).isEqualTo(1);
+        assertThat(delivery.getStatus()).isEqualTo("SENT");
+        verify(api).sendMessage(77L, "👧 Aliska выполнила:\n\nУтренний старт\n🪙 +1 монета",
+            List.of(
+                TelegramBotApiClient.InlineButton.callback("👍 Одобрить", "parent.request.approve.2.8"),
+                TelegramBotApiClient.InlineButton.callback("👎 Отклонить", "parent.request.reject.2.8")));
+        verify(api).editMessageText(77L, 19L, "Утренний старт\n✅ Одобрено", List.of());
     }
 }

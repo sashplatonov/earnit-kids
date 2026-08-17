@@ -789,7 +789,7 @@ before messageId is persisted
 
 # P0-4: Минимальный regression и integration test set
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P0  
 **Depends on:** P0-3
 

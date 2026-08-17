@@ -151,4 +151,61 @@ class TelegramCrossChannelIntegrationTest {
         assertThat(parent.id()).isNotNull();
         assertThat(linkedChild.id()).isNotNull();
     }
+
+    @Test
+    @Transactional
+    void resolutionPublishesRequestResolvedAndPlansDeliveryForParent() throws Exception {
+        String familyId = "tg_resolved_" + System.nanoTime();
+        String email = familyId + "@example.test";
+        long taskId = 80000L + System.nanoTime() % 10000;
+        long parentTelegramId = 90000011L;
+        long childTelegramId = 90000012L;
+
+        FamilyEntity family = families.create(familyId, email, "secret123", true, null).orElseThrow();
+        ChildEntity child = children.createChild(family.getId(), "Mia").orElseThrow();
+        tasks.upsertTask(new TaskUpsertCommand(
+            family.getId(), child.getId(), taskId,
+            new TaskContentCommand("Read", 20, "School", "", "after dinner", "read ten pages"),
+            new ObjectMapper().readTree("{\"period\":\"day\"}"), 100, true, false));
+
+        var parentAccount = com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.builder()
+            .email("resolved-" + familyId)
+            .passwordHash("")
+            .verified(false)
+            .build();
+        parents.persist(parentAccount);
+        TelegramIdentityService.TelegramIdentity parent = identities.linkParent(
+            family.getId(), parentTelegramId, parentAccount.getId(), "integration-test", NOW);
+        TelegramIdentityService.TelegramChildInvitationToken invitation = identities.issueChildInvitation(
+            family.getId(), child.getId(), "integration-test", NOW.plusSeconds(3600), NOW);
+        identities.acceptChildInvitation(invitation.token(), childTelegramId, NOW).orElseThrow();
+
+        OperationResult<?> miniAppRequest = quickActions.requestTask(childTelegramId, child.getId(), taskId);
+        assertThat(miniAppRequest).isInstanceOf(OperationResult.Success.class);
+        PurchaseRequestEntity request = requests.getRequests(family.getId(), 10, 0).stream()
+            .filter(value -> value.getTaskId() != null && value.getTaskId() == taskId)
+            .findFirst().orElseThrow();
+
+        OperationResult<?> webApproval = webActions.approveRequest(familyId, child.getId(), request.getId());
+        assertThat(webApproval).isInstanceOf(OperationResult.Success.class);
+
+        List<ApplicationOutboxEventType> eventTypes = events.list("familyId = ?1", family.getId()).stream()
+            .map(value -> value.getEventType()).toList();
+        assertThat(eventTypes).contains(ApplicationOutboxEventType.REQUEST_RESOLVED);
+
+        var resolvedEvent = events.list("familyId = ?1", family.getId()).stream()
+            .filter(value -> value.getEventType() == ApplicationOutboxEventType.REQUEST_RESOLVED)
+            .findFirst().orElseThrow();
+        assertThat(resolvedEvent.getRequestId()).isEqualTo(request.getId());
+        assertThat(resolvedEvent.getResolutionStatus()).isEqualTo(
+            com.sashplatonov.earnit.kids.domain.model.RequestResolutionStatus.approved);
+
+        // EXPLAIN: The outbox processor is not running in this test, so the
+        // EXPLAIN: request-created message was never actually sent. REQUEST_RESOLVED
+        // EXPLAIN: therefore targets no sent message and planning completes as a
+        // EXPLAIN: no-op without creating a resolved delivery.
+        planner.planDueEvents(NOW);
+        assertThat(resolvedEvent.getPlanningCompletedAt()).isNotNull();
+        assertThat(deliveries.findByEvent(resolvedEvent.getId())).isEmpty();
+    }
 }
