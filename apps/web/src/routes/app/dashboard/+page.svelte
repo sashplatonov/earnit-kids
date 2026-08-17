@@ -17,6 +17,7 @@
     $: overview = data.overview;
     $: coinEconomy = data.coinEconomy;
     $: rewardShop = data.rewardShop;
+    $: taskEconomy = data.taskEconomy;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -358,7 +359,7 @@
                 <h2 class="section-title">{t('sections.popular')}</h2>
                 {#if rewardShop?.rewardShopMetrics?.topPatterns && rewardShop.rewardShopMetrics.topPatterns.length > 0}
                     <div class="rows">
-                        {#each rewardShop.rewardShopMetrics.topPatterns as pattern, i}
+                        {#each rewardShop.rewardShopMetrics.topPatterns as pattern, i (pattern.groupName)}
                             <div class="rank">
                                 <div class="rank-icon">{pattern.icon || '🎁'}</div>
                                 <div class="rank-content">
@@ -403,13 +404,13 @@
                 <div class="kpis">
                     <div class="kpi">
                         <div class="kpi-label">{t('tasks.completed')}</div>
-                        <div class="kpi-value">—</div>
+                        <div class="kpi-value">{taskEconomy?.taskMetrics?.taskCompletions ?? '—'}</div>
                         <div class="kpi-foot">{t('periods.30d')}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">Approval rate</div>
                         <button class="info" aria-label="Процент одобренных заданий">i</button>
-                        <div class="kpi-value">—%</div>
+                        <div class="kpi-value">{taskEconomy?.taskMetrics?.approvalRate ?? '—'}%</div>
                         <div class="kpi-foot">{t('tasks.approvedByParents')}</div>
                     </div>
                 </div>
@@ -421,23 +422,39 @@
                             <strong>{t('tasks.catalogUsage.title')}</strong>
                             <small>{t('tasks.catalogUsage.desc')}</small>
                         </div>
-                        <div class="metric-value">—%</div>
+                        <div class="metric-value">{taskEconomy?.taskMetrics?.familiesWithTasksPercent ?? '—'}%</div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('tasks.customContent.title')}</strong>
                             <small>{t('tasks.customContent.desc')}</small>
                         </div>
-                        <div class="metric-value">—%</div>
+                        <div class="metric-value">{taskEconomy?.taskMetrics?.tasksConfigured ?? '—'}</div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('tasks.coinsPerTask.title')}</strong>
                             <small>{t('tasks.coinsPerTask.desc')}</small>
                         </div>
-                        <div class="metric-value">— 🪙</div>
+                        <div class="metric-value">{taskEconomy?.taskMetrics?.medianCoinsPerTask ?? '—'} 🪙</div>
                     </div>
                 </div>
+
+                {#if taskEconomy?.topPatterns && taskEconomy.topPatterns.length > 0}
+                    <h2 class="section-title">{t('sections.popular')}</h2>
+                    <div class="rows">
+                        {#each taskEconomy.topPatterns as pattern, i (pattern.groupName)}
+                            <div class="rank">
+                                <div class="rank-icon">{pattern.icon || '✅'}</div>
+                                <div class="rank-content">
+                                    <b>{pattern.groupName}</b>
+                                    <small>{pattern.count} · {pattern.percent}%</small>
+                                </div>
+                                <div class="rank-val">#{i + 1}</div>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
             </section>
 
             <!-- Activity Tab -->

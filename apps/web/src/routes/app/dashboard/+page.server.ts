@@ -17,11 +17,13 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     let overview = null;
     let coinEconomy = null;
     let rewardShop = null;
+    let taskEconomy = null;
     try {
-        const [overviewRes, coinRes, rewardRes] = await Promise.all([
+        const [overviewRes, coinRes, rewardRes, taskRes] = await Promise.all([
             fetch('/api/admin/analytics/overview?period=30d'),
             fetch('/api/admin/analytics/coin-economy?period=30d'),
             fetch('/api/admin/analytics/reward-shop?period=30d'),
+            fetch('/api/admin/analytics/task-economy?period=30d'),
         ]);
         if (overviewRes.ok) {
             overview = await overviewRes.json();
@@ -32,6 +34,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
         if (rewardRes.ok) {
             rewardShop = await rewardRes.json();
         }
+        if (taskRes.ok) {
+            taskEconomy = await taskRes.json();
+        }
     } catch (e) {
         console.error('Failed to fetch admin analytics:', e);
     }
@@ -40,6 +45,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
         overview,
         coinEconomy,
         rewardShop,
+        taskEconomy,
     };
 };
 
