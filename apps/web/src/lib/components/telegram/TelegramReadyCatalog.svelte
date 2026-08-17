@@ -101,11 +101,10 @@
             <TelegramIcon name="filter" size={18} label={$i18n.t('app.telegram.readyCatalog.filters')} />
             <span>{filtersLabel}</span>
         </button>
-    </div>
-
-    <div class="search">
-        <TelegramIcon name="search" size={18} label={$i18n.t('app.telegram.readyCatalog.search')} />
-        <input type="search" bind:value={query} on:input={() => track('catalog_search_used')} placeholder={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} />
+        <div class="search">
+            <TelegramIcon name="search" size={18} label={$i18n.t('app.telegram.readyCatalog.search')} />
+            <input type="search" bind:value={query} on:input={() => track('catalog_search_used')} placeholder={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} />
+        </div>
     </div>
 
     <TelegramGroupSubnav
@@ -172,7 +171,7 @@
     .action-row { display:flex; align-items:center; gap:.4rem; margin-bottom:.4rem; }
     .bulk-toggle { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border:0; border-radius:.5rem; background:transparent; color:#3867d6; cursor:pointer; }
     .bulk-toggle:hover { background:#f2f5ff; }
-    .search { display:flex; align-items:center; gap:.45rem; min-height:2.25rem; padding:0 .55rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; margin-bottom:.35rem; }
+    .search { display:flex; align-items:center; gap:.45rem; flex:1; min-width:0; min-height:2.25rem; padding:0 .55rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; }
     .search input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#18243d; font:inherit; font-size:.85rem; }
     .filter-btn { display:flex; align-items:center; justify-content:center; gap:.35rem; min-height:2rem; padding:0 .5rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#566176; font:inherit; font-weight:700; font-size:.75rem; cursor:pointer; min-width:0; }
     .filter-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
