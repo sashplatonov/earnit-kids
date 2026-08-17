@@ -33,6 +33,7 @@ public final class TelegramBotEmoji {
     public static final String CANCEL = "↩️";
     public static final String DELETE = "🗑️";
     public static final String LINK = "🔗";
+    public static final String SITE = "🌐";
 
     // EXPLAIN: Legacy aliases kept during the UX migration; new code must use
     // EXPLAIN: the semantic names above.

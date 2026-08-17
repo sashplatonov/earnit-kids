@@ -89,12 +89,22 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         String text = message.path("text").asText("");
         long chatId = message.path("chat").path("id").asLong(Long.MIN_VALUE);
         long telegramUserId = message.path("from").path("id").asLong(Long.MIN_VALUE);
-        if (chatId == Long.MIN_VALUE || !TelegramMenuFlow.isStartCommand(text)) {
+        if (chatId == Long.MIN_VALUE) {
             return;
         }
-        if (!isEnabledForFamily(telegramUserId)) {
-            return;
+        // EXPLAIN: UX-01 — persistent reply keyboard navigation. If the text matches
+        // EXPLAIN: a known nav action, handle it as navigation; otherwise treat as /start.
+        if (TelegramMenuFlow.isStartCommand(text)) {
+            if (!isEnabledForFamily(telegramUserId)) {
+                return;
+            }
+            handleStartCommand(chatId, telegramUserId);
+        } else if (telegramUserId != Long.MIN_VALUE) {
+            handleReplyKeyboardNavigation(message, chatId, telegramUserId);
         }
+    }
+
+    private void handleStartCommand(long chatId, long telegramUserId) throws Exception {
         String miniAppUrl = config.miniAppUrl().orElse("");
         if (miniAppUrl.isBlank()) {
             return;
@@ -103,24 +113,74 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         if (quickActions != null && menuBuilder != null && telegramUserId != Long.MIN_VALUE) {
             var view = quickActions.load(telegramUserId, null);
             if (view.isPresent()) {
-                try {
-                    TelegramQuickActionResponse loaded = view.get();
-                    apiClient.sendMessage(chatId, TelegramMenuFlow.startText(loaded),
-                        TelegramMenuFlow.startMenu(loaded, miniAppUrl, publicSiteUrl, menuBuilder));
-                } catch (Exception exception) {
-                    throw new IllegalStateException(exception);
-                }
+                TelegramQuickActionResponse loaded = view.get();
+                String homeText = TelegramMenuFlow.startText(loaded);
+                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl);
+                TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
+                    ? kb.childMain() : kb.parentMain();
+                apiClient.sendMessageWithReplyKeyboard(chatId, homeText, replyKeyboard);
             } else {
                 var parent = identities.findActiveByTelegramUserId(telegramUserId)
                     .filter(identity -> "parent".equals(identity.role()));
-                apiClient.sendMessage(chatId, parent.map(ignored -> "No children yet").orElse(START_TEXT),
-                    parent.map(ignored -> menuBuilder.parentNoChildren(miniAppUrl))
-                        .orElseGet(() -> List.of(new TelegramBotApiClient.InlineButton("Open Mini App", miniAppUrl))));
+                if (parent.isPresent()) {
+                    apiClient.sendMessage(chatId, "No children yet",
+                        menuBuilder.parentNoChildren(miniAppUrl));
+                } else {
+                    apiClient.sendMessage(chatId, START_TEXT,
+                        List.of(new TelegramBotApiClient.InlineButton("Open Mini App", miniAppUrl)));
+                }
             }
             return;
         }
         apiClient.sendMessage(chatId, START_TEXT,
             List.of(new TelegramBotApiClient.InlineButton("Open Mini App", miniAppUrl)));
+    }
+
+    // EXPLAIN: UX-01 — routes reply keyboard button taps to the appropriate handler.
+    // EXPLAIN: The message text matches a BotNavAction label to determine navigation.
+    private void handleReplyKeyboardNavigation(JsonNode message, long chatId, long telegramUserId)
+        throws Exception {
+        String label = message.path("text").asText("");
+        BotNavAction.fromLabel(label).ifPresent(action -> {
+            try {
+                if (!isEnabledForFamily(telegramUserId)) {
+                    return;
+                }
+                if (action == BotNavAction.OPEN_APP || action == BotNavAction.OPEN_SITE) {
+                    String deepLink = TelegramDeepLink.build(action.actionCode(), "");
+                    String text = TelegramMenuFlow.deepLinkText(action);
+                    TelegramReplyKeyboard replyKeyboard = new BotKeyboardFactory(
+                        normalizePublicSiteUrl(config.publicSiteUrl().orElse(""))).parentMain();
+                    apiClient.sendMessageWithReplyKeyboard(chatId, text + "\n" + deepLink, replyKeyboard);
+                } else {
+                    // EXPLAIN: All other nav actions navigate the home card.
+                    navigateByAction(chatId, telegramUserId, action.actionCode());
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        });
+    }
+
+    // EXPLAIN: UX-01 — sends navigation content with the persistent reply keyboard.
+    // EXPLAIN: UX-06 — the reply keyboard is always present; no inline menu is appended.
+    private void navigateByAction(long chatId, long telegramUserId, String action) throws Exception {
+        if (quickActions == null || menuBuilder == null) {
+            return;
+        }
+        String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+        quickActions.load(telegramUserId, TelegramMenuFlow.selectedChildId(action))
+            .ifPresent(view -> {
+                try {
+                    String navText = TelegramMenuFlow.navigationText(action, view);
+                    TelegramReplyKeyboard replyKeyboard = "child".equals(view.role())
+                        ? new BotKeyboardFactory(null).childMain()
+                        : new BotKeyboardFactory(publicSiteUrl).parentMain();
+                    apiClient.sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            });
     }
 
     private void handleCallback(JsonNode callback) throws Exception {

@@ -17,6 +17,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -169,7 +171,17 @@ class TelegramBotServiceImplTest {
             {"update_id":27,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
             """));
 
-        verify(apiClient).sendMessage(44L, "👋 Alex\n🪙 20 монет", List.of());
+        verify(apiClient).sendMessageWithReplyKeyboard(
+            eq(44L),
+            eq("👋 Alex\n🪙 20 монет"),
+            argThat((TelegramReplyKeyboard kb) ->
+                kb.rows().size() == 2
+                && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.MY_TASKS)
+                && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.REWARDS)
+                && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.NAV_RECENT)
+                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.OPEN_APP)
+            )
+        );
     }
 
     @Test
@@ -247,7 +259,19 @@ class TelegramBotServiceImplTest {
             {"update_id":16,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
             """));
 
-        verify(apiClient).sendMessage(44L, "👧 Alex\n🪙 20 монет\n\n✅ Сейчас ничего не требует внимания", main);
+        verify(apiClient).sendMessageWithReplyKeyboard(
+            eq(44L),
+            eq("👧 Alex\n🪙 20 монет\n\n✅ Сейчас ничего не требует внимания"),
+            argThat((TelegramReplyKeyboard kb) ->
+                kb.rows().size() == 3
+                && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.NAV_REQUESTS)
+                && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.NAV_COINS)
+                && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.NAV_RECENT)
+                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.NAV_SELECT_CHILD)
+                && kb.rows().get(2).buttons().size() == 1
+                && kb.rows().get(2).buttons().get(0).label().equals(TelegramCopy.NAV_OPEN_APP)
+            )
+        );
     }
 
     @Test

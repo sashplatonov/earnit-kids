@@ -44,6 +44,25 @@ public class TelegramBotApiClient {
         call("answerCallbackQuery", Map.of("callback_query_id", callbackQueryId));
     }
 
+    // EXPLAIN: UX-01 — send a message with a persistent reply keyboard instead of
+    // EXPLAIN: inline keyboard. Used for /start and home-screen messages.
+    public Long sendMessageWithReplyKeyboard(long chatId, String text, TelegramReplyKeyboard replyKeyboard)
+        throws Exception {
+        com.fasterxml.jackson.databind.JsonNode result = call("sendMessage",
+            replyKeyboardPayload(chatId, null, text, replyKeyboard));
+        return result.path("result").path("message_id").isNumber()
+            ? result.path("result").path("message_id").longValue() : null;
+    }
+
+    // EXPLAIN: UX-01 — edit a message replacing its inline keyboard with a persistent
+    // EXPLAIN: reply keyboard. Used when the user first opens the Mini App from the
+    // EXPLAIN: persistent keyboard (the home-card message is updated to show a reply
+    // EXPLAIN: keyboard for subsequent interactions).
+    public void editMessageWithReplyKeyboard(long chatId, long messageId, String text,
+                                            TelegramReplyKeyboard replyKeyboard) throws Exception {
+        call("editMessageText", replyKeyboardPayload(chatId, messageId, text, replyKeyboard));
+    }
+
     public void registerWebhook(URI webhookUrl, String secret) throws Exception {
         call("setWebhook", Map.of(
             "url", webhookUrl.toString(),
@@ -79,8 +98,38 @@ public class TelegramBotApiClient {
             payload.put("message_id", messageId);
         }
         payload.put("text", text);
-        payload.put("reply_markup", Map.of("inline_keyboard", keyboardRows(buttons)));
+        if (buttons != null && !buttons.isEmpty()) {
+            payload.put("reply_markup", Map.of("inline_keyboard", keyboardRows(buttons)));
+        }
         return payload;
+    }
+
+    // EXPLAIN: Builds the payload for a message with ReplyKeyboardMarkup.
+    private Map<String, Object> replyKeyboardPayload(long chatId, Long messageId, String text,
+                                                     TelegramReplyKeyboard replyKeyboard) {
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("chat_id", chatId);
+        if (messageId != null) {
+            payload.put("message_id", messageId);
+        }
+        payload.put("text", text);
+        payload.put("reply_markup", replyKeyboardPayload(replyKeyboard));
+        return payload;
+    }
+
+    // EXPLAIN: Serialises a TelegramReplyKeyboard to the Telegram `reply_markup` map.
+    private Map<String, Object> replyKeyboardPayload(TelegramReplyKeyboard replyKeyboard) {
+        List<List<Map<String, Object>>> keyboardRows = replyKeyboard.rows().stream()
+            .map(row -> row.buttons().stream()
+                .map(btn -> Map.<String, Object>of("text", btn.label()))
+                .toList())
+            .toList();
+        return Map.of(
+            "keyboard", keyboardRows,
+            "is_persistent", replyKeyboard.isPersistent(),
+            "resize_keyboard", replyKeyboard.resizeKeyboard(),
+            "one_time_keyboard", replyKeyboard.oneTimeKeyboard()
+        );
     }
 
     // EXPLAIN: Adjacent buttons sharing a non-null rowId render on one Telegram
