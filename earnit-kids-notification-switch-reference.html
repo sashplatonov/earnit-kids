@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EarnIt Kids - Notification Switch Reference</title>
+<style>
+:root{
+  --bg:#f5f6fa;
+  --surface:#fff;
+  --text:#2d3345;
+  --muted:#8b95aa;
+  --line:#e5e8f0;
+  --primary:#5c6fe7;
+  --primary-soft:#eef1ff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#eef1f6;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+}
+.page{
+  width:410px;
+  max-width:100%;
+  margin:0 auto;
+  min-height:100vh;
+  background:var(--bg);
+}
+.topbar{
+  height:48px;
+  padding:0 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#252b33;
+  color:#fff;
+  font-weight:700;
+}
+.sheet{
+  margin-top:118px;
+  background:#fff;
+  border-radius:18px 18px 0 0;
+  min-height:calc(100vh - 118px);
+  padding:16px 16px 28px;
+  box-shadow:0 -5px 24px rgba(35,42,55,.08);
+}
+h1{
+  margin:0 0 18px;
+  font-size:21px;
+}
+.group-title{
+  margin:14px 0 8px;
+  color:#626d83;
+  font-size:14px;
+  font-weight:700;
+}
+.section-label{
+  margin:8px 0 4px;
+  color:#9aa3b5;
+  font-size:12px;
+}
+.list{
+  border:1px solid var(--line);
+  border-radius:15px;
+  overflow:hidden;
+}
+.row{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  min-height:70px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+}
+.row:last-child{border-bottom:0}
+.icon{
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  background:var(--primary-soft);
+  color:var(--primary);
+  font-size:20px;
+}
+.content{min-width:0}
+.title{
+  margin:0;
+  font-size:15px;
+  line-height:1.25;
+  font-weight:760;
+}
+.desc{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.35;
+}
+
+/* Native-like compact switch */
+.switch{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  width:44px;
+  height:26px;
+  flex:0 0 auto;
+}
+.switch input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.track{
+  width:44px;
+  height:26px;
+  border-radius:999px;
+  background:#cfd5e2;
+  transition:.18s ease;
+  position:relative;
+}
+.track::after{
+  content:"";
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.18);
+  transition:.18s ease;
+}
+.switch input:checked + .track{
+  background:var(--primary);
+}
+.switch input:checked + .track::after{
+  transform:translateX(18px);
+}
+.switch input:focus-visible + .track{
+  outline:3px solid rgba(92,111,231,.22);
+  outline-offset:2px;
+}
+
+/* Disabled example */
+.switch input:disabled + .track{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.note{
+  margin-top:16px;
+  padding:12px;
+  border:1px dashed #cfd5e2;
+  border-radius:12px;
+  background:#fff;
+  color:#566078;
+  font-size:12px;
+  line-height:1.5;
+}
+.bad{
+  margin-top:16px;
+  padding:12px;
+  border-radius:12px;
+  background:#fff3f3;
+  color:#8c5050;
+  font-size:12px;
+  line-height:1.5;
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <div>🌕 EarnIt Kids</div>
+    <div>⋮ &nbsp; ×</div>
+  </div>
+
+  <section class="sheet">
+    <h1>Уведомления</h1>
+
+    <div class="group-title">Родитель</div>
+    <div class="section-label">Задания и награды</div>
+
+    <div class="list">
+      <div class="row">
+        <div class="icon">📋</div>
+        <div class="content">
+          <p class="title">Ребёнок отметил задание выполненным</p>
+          <div class="desc">Когда ребёнок отправил задание на проверку</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked aria-label="Ребёнок отметил задание выполненным">
+          <span class="track"></span>
+        </label>
+      </div>
+
+      <div class="row">
+        <div class="icon">🎁</div>
+        <div class="content">
+          <p class="title">Ребёнок запросил награду</p>
+          <div class="desc">Когда отправлен запрос на выдачу награды</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked aria-label="Ребёнок запросил награду">
+          <span class="track"></span>
+        </label>
+      </div>
+
+      <div class="section-label" style="grid-column:1/-1"></div>
+
+      <div class="row">
+        <div class="icon">✈️</div>
+        <div class="content">
+          <p class="title">Telegram ребёнка привязан</p>
+          <div class="desc">Подключён Telegram аккаунт ребёнка</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" aria-label="Telegram ребёнка привязан">
+          <span class="track"></span>
+        </label>
+      </div>
+
+      <div class="row">
+        <div class="icon">👥</div>
+        <div class="content">
+          <p class="title">Родитель принял приглашение</p>
+          <div class="desc">Новый родитель присоединился к семье</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked aria-label="Родитель принял приглашение">
+          <span class="track"></span>
+        </label>
+      </div>
+
+      <div class="row">
+        <div class="icon">🪙</div>
+        <div class="content">
+          <p class="title">Баланс ребёнка изменился</p>
+          <div class="desc">Уведомлять при изменении количества монет</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked aria-label="Баланс ребёнка изменился">
+          <span class="track"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="bad">
+      <strong>Не делать:</strong> круглый control размером почти с иконку, где положение on/off читается только по белому кружку. Такой элемент похож на плавающую кнопку, а не на стандартный switch.
+    </div>
+
+    <div class="note">
+      <strong>Ключевой UX:</strong> визуальный switch должен быть компактным, примерно 44×26 px, с понятным горизонтальным track и thumb. Состояние должно считываться мгновенно: серый track = off, accent track = on. Сам control не должен конкурировать по размеру с иконкой уведомления.
+    </div>
+  </section>
+</div>
+</body>
+</html>
