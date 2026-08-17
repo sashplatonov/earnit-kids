@@ -647,8 +647,6 @@ export const appMessages = {
             myRewards: 'Мои награды',
             catalogTasks: 'Каталог заданий',
             catalogRewards: 'Каталог наград',
-            catalogTasksHintShort: 'Добавьте готовые задания',
-            catalogRewardsHintShort: 'Добавьте готовые награды',
             searchTasks: 'Поиск по заданиям',
             searchRewards: 'Поиск по наградам',
             search: 'Поиск',

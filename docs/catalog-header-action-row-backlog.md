@@ -22,7 +22,7 @@
 
 ## CAT-HDR-1: Убрать дублирующий заголовок каталога
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P1
 **Depends on:** -
 

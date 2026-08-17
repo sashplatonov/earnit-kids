@@ -89,11 +89,6 @@
 </script>
 
 <div class="catalog">
-    <div class="catalog-header">
-        <h2 class="catalog-title">{kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')}</h2>
-        <p class="catalog-subtitle">{kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasksHintShort') : $i18n.t('app.telegram.readyCatalog.catalogRewardsHintShort')}</p>
-    </div>
-
     <div class="action-row">
         <button class="bulk-toggle" type="button" on:click={() => { bulkMode = !bulkMode; selectedIds = []; }}>
             {#if bulkMode}
@@ -174,9 +169,6 @@
 
 <style>
     .catalog { width:100%; }
-    .catalog-header { margin-bottom:.4rem; }
-    .catalog-title { margin:0; color:#18243d; font-size:1.1rem; font-weight:700; }
-    .catalog-subtitle { margin:.15rem 0 0; color:#66718a; font-size:.85rem; line-height:1.3; }
     .action-row { display:flex; align-items:center; gap:.4rem; margin-bottom:.4rem; }
     .bulk-toggle { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border:0; border-radius:.5rem; background:transparent; color:#3867d6; cursor:pointer; }
     .bulk-toggle:hover { background:#f2f5ff; }
