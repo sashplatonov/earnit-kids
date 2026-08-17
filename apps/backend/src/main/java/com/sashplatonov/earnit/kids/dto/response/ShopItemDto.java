@@ -15,13 +15,14 @@ public record ShopItemDto(
     boolean isActive,
     int childId,
     String lastPurchasedAt,
-    Long sourceCatalogItemId
+    Long sourceCatalogItemId,
+    TaskPeriodProgressDto periodProgress
 ) {
     // EXPLAIN: Convenience constructor preserving the pre-icon call signature.
     public ShopItemDto(long id, String name, int price, String groupName, Object frequency,
                        String comment, Integer moneyLimit, boolean isActive, int childId,
                        String lastPurchasedAt) {
         this(id, name, price, groupName, null, frequency, comment, moneyLimit, isActive,
-            childId, lastPurchasedAt, null);
+            childId, lastPurchasedAt, null, null);
     }
 }

@@ -44,7 +44,7 @@ public class FamilyDashboardCatalogLoader {
         List<TaskDto> tasks = loadTasks(
             familyDbId, childId, lastCompletedAtByTaskId, zoneId
         );
-        List<ShopItemDto> shopItems = loadShopItems(childId, lastPurchasedAtByItemId);
+        List<ShopItemDto> shopItems = loadShopItems(familyDbId, childId, lastPurchasedAtByItemId, zoneId);
         Map<Long, TaskDto> taskMap = buildTaskMap(tasks);
         Map<Long, ShopItemDto> shopMap = buildShopItemMap(shopItems);
         return new FamilyDashboardCatalogContext(tasks, shopItems, taskMap, shopMap);
@@ -103,9 +103,48 @@ public class FamilyDashboardCatalogLoader {
         }
     }
 
-    private List<ShopItemDto> loadShopItems(int childId, Map<Long, String> lastPurchasedAtByItemId) {
-        return shopItemRepository.getShopItems(childId).stream()
-            .map(shopItem -> mapper.toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId()), objectMapper))
+    private List<ShopItemDto> loadShopItems(int familyDbId,
+                                            int childId,
+                                            Map<Long, String> lastPurchasedAtByItemId,
+                                            ZoneId zoneId) {
+        var shopItemEntities = shopItemRepository.getShopItems(childId);
+        Instant now = timeProvider.now();
+        Map<Long, TaskPeriodProgressDto> progressByItemId = new HashMap<>();
+        Map<String, Map<Long, Long>> purchasedByPeriod = new HashMap<>();
+        Map<String, Map<Long, Long>> pendingByPeriod = new HashMap<>();
+        for (var shopItem : shopItemEntities) {
+            var resolvedWindow = frequencyWindowService.resolveCurrentWindow(shopItem.getFrequency(), now, zoneId);
+            if (resolvedWindow.isEmpty()) {
+                continue;
+            }
+            var window = resolvedWindow.get();
+            long purchased = purchasedByPeriod.computeIfAbsent(window.period(), ignored ->
+                historyRepository.countShopPurchasesInWindowByItem(familyDbId, childId, window.start(), window.end())
+            ).getOrDefault(shopItem.getItemId(), 0L);
+            long pending = pendingByPeriod.computeIfAbsent(window.period(), ignored ->
+                purchaseRequestRepository.countPendingItemRequestsInWindowByItem(
+                    familyDbId, childId, window.start(), window.end()
+                )
+            ).getOrDefault(shopItem.getItemId(), 0L);
+            int used = Math.toIntExact(Math.min(Integer.MAX_VALUE, purchased + pending));
+            progressByItemId.put(shopItem.getItemId(), new TaskPeriodProgressDto(
+                window.period(),
+                Math.toIntExact(Math.min(Integer.MAX_VALUE, purchased)),
+                Math.toIntExact(Math.min(Integer.MAX_VALUE, pending)),
+                window.limit(),
+                Math.max(0, window.limit() - used),
+                used < window.limit() && shopItem.isActive(),
+                window.start(),
+                window.end()
+            ));
+        }
+        return shopItemEntities.stream()
+            .map(shopItem -> mapper.toShopItemDto(
+                shopItem,
+                lastPurchasedAtByItemId.get(shopItem.getItemId()),
+                progressByItemId.get(shopItem.getItemId()),
+                objectMapper
+            ))
             .toList();
     }
 

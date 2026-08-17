@@ -274,6 +274,32 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         );
     }
 
+    public Map<Long, Long> countShopPurchasesInWindowByItem(
+        int familyDbId,
+        int childId,
+        Instant startInclusive,
+        Instant endExclusive
+    ) {
+        var query = entityManager.createQuery(
+            "SELECT new " + HistoryRelatedCount.class.getName() +
+            "(h.relatedId, COUNT(h.id)) FROM HistoryEntryEntity h " +
+                "WHERE h.familyId = ?1 AND h.childId = ?2 AND h.type = ?3 " +
+                "AND h.relatedId IS NOT NULL AND h.createdAt >= ?4 AND h.createdAt < ?5 " +
+                "GROUP BY h.relatedId",
+            HistoryRelatedCount.class
+        );
+        query.setParameter(1, familyDbId);
+        query.setParameter(2, childId);
+        query.setParameter(3, HistoryEntryType.spend);
+        query.setParameter(4, startInclusive);
+        query.setParameter(5, endExclusive);
+        Map<Long, Long> counts = new HashMap<>();
+        for (HistoryRelatedCount row : query.getResultList()) {
+            counts.put(row.relatedId(), row.count());
+        }
+        return counts;
+    }
+
     @Transactional
     public boolean addHistory(int familyDbId, int childId, long externalId, HistoryEntryType type,
                               int amount, String description, int moneyAmount,

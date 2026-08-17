@@ -91,6 +91,31 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
         );
     }
 
+    public Map<Long, Long> countPendingItemRequestsInWindowByItem(
+        int familyDbId,
+        int childId,
+        Instant startInclusive,
+        Instant endExclusive
+    ) {
+        var query = entityManager.createQuery(
+            "SELECT r.itemId, COUNT(r.id) FROM PurchaseRequestEntity r " +
+                "WHERE r.familyId = ?1 AND r.childId = ?2 AND r.status = ?3 " +
+                "AND r.itemId IS NOT NULL AND r.createdAt >= ?4 AND r.createdAt < ?5 " +
+                "GROUP BY r.itemId",
+            Object[].class
+        );
+        query.setParameter(1, familyDbId);
+        query.setParameter(2, childId);
+        query.setParameter(3, PurchaseRequestStatus.pending);
+        query.setParameter(4, startInclusive);
+        query.setParameter(5, endExclusive);
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : query.getResultList()) {
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return counts;
+    }
+
     public List<PurchaseRequestEntity> getRequests(int familyDbId, int limit, int offset) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getRequests",
