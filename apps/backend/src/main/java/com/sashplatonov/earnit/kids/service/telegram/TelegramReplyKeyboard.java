@@ -40,13 +40,28 @@ public record TelegramReplyKeyboard(
             this(java.util.Arrays.stream(labels).map(Button::new).toList());
         }
 
+        // EXPLAIN: Convenience constructor accepting pre-built buttons (e.g. a
+        // EXPLAIN: web_app button that opens the Mini App client-side).
+        public Row(Button... buttons) {
+            this(java.util.List.of(buttons));
+        }
+
         // EXPLAIN: Accessor returns an unmodifiable view of buttons.
         public java.util.List<Button> buttons() {
             return java.util.List.copyOf(buttons);
         }
     }
 
-    public record Button(String label) {
+    public record Button(String label, String webAppUrl) {
+        public Button(String label) {
+            this(label, null);
+        }
+
+        // EXPLAIN: A KeyboardButton with web_app capability opens the Mini App
+        // EXPLAIN: directly from the persistent keyboard (UX-04).
+        public static Button webApp(String label, String url) {
+            return new Button(label, url);
+        }
     }
 
     // EXPLAIN: Convenience factory matching the persistent-keyboard UX spec.

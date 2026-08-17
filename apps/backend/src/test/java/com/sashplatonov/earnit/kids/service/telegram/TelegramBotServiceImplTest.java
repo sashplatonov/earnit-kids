@@ -662,6 +662,41 @@ class TelegramBotServiceImplTest {
         verify(apiClient).editMessageText(44L, 19L, "👧 Кого показывать?", List.of());
     }
 
+    @Test
+    void siteNavButtonRepliesWithSingleUrlButton() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(50L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(config.publicSiteUrl()).thenReturn(Optional.of("https://example.test/en/app"));
+        var service = service(identities, apiClient, callbacks, config);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":50,"message":{"chat":{"id":44},"from":{"id":77},"text":"🌐 Сайт"}}
+            """));
+
+        verify(apiClient).sendMessage(eq(44L), eq("🌐 Сайт"),
+            eq(List.of(TelegramBotApiClient.InlineButton.url("🔗 Публичный сайт", "https://example.test", null))));
+    }
+
+    @Test
+    void openAppWebAppButtonNeverArrivesAsTextNavigation() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        when(identities.recordWebhookUpdate(51L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        var service = service(identities, apiClient, callbacks, config);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":51,"message":{"chat":{"id":44},"from":{"id":77},"text":"📱 Приложение"}}
+            """));
+
+        verify(apiClient, never()).sendMessage(any(Long.class), any(String.class), any());
+        verify(apiClient, never()).sendMessageWithReplyKeyboard(any(Long.class), any(String.class), any());
+    }
+
     private TelegramBotServiceImpl service(TelegramIdentityService identities,
                                            TelegramBotApiClient apiClient,
                                            TelegramCallbackService callbacks,

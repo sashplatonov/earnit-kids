@@ -150,14 +150,4 @@ final class TelegramMenuFlow {
         return "child".equals(view.role()) ? menuBuilder.childMain(view, miniAppUrl)
             : menuBuilder.parentMain(view, miniAppUrl);
     }
-
-    // EXPLAIN: Returns the user-facing text for a BotNavAction deep-link message.
-    // EXPLAIN: UX-04 — the bot sends this text before the Mini App opens.
-    static String deepLinkText(BotNavAction action) {
-        return switch (action) {
-            case OPEN_APP -> TelegramCopy.NAV_OPEN_APP + " — открываю приложение…";
-            case OPEN_SITE -> TelegramCopy.NAV_OPEN_SITE + " — открываю сайт…";
-            default -> "";
-        };
-    }
 }

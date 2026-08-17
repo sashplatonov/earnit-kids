@@ -27,22 +27,6 @@ public final class TelegramDeepLink {
         return context(miniAppUrl, "rewards");
     }
 
-    // EXPLAIN: Routes a BotNavAction.actionCode() to the corresponding deep link.
-    // EXPLAIN: Falls back to the Mini App home URL for unknown codes.
-    public static String build(String actionCode, String miniAppUrl) {
-        if (miniAppUrl == null || miniAppUrl.isBlank()) {
-            return "";
-        }
-        return switch (actionCode) {
-            case "coins" -> coins(miniAppUrl);
-            case "recent", "history" -> history(miniAppUrl);
-            case "switch" -> miniAppUrl;
-            case "app" -> miniAppUrl;
-            case "site" -> "";
-            default -> miniAppUrl;
-        };
-    }
-
     private static String context(String miniAppUrl, String context) {
         if (miniAppUrl == null || miniAppUrl.isBlank()) {
             return "";

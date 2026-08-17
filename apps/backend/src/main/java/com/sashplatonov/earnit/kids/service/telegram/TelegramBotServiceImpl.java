@@ -115,7 +115,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             if (view.isPresent()) {
                 TelegramQuickActionResponse loaded = view.get();
                 String homeText = TelegramMenuFlow.startText(loaded);
-                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl);
+                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl, miniAppUrl);
                 TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
                     ? kb.childMain() : kb.parentMain();
                 apiClient.sendMessageWithReplyKeyboard(chatId, homeText, replyKeyboard);
@@ -146,14 +146,20 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 if (!isEnabledForFamily(telegramUserId)) {
                     return;
                 }
-                if (action == BotNavAction.OPEN_APP || action == BotNavAction.OPEN_SITE) {
-                    String deepLink = TelegramDeepLink.build(action.actionCode(), "");
-                    String text = TelegramMenuFlow.deepLinkText(action);
-                    TelegramReplyKeyboard replyKeyboard = new BotKeyboardFactory(
-                        normalizePublicSiteUrl(config.publicSiteUrl().orElse(""))).parentMain();
-                    apiClient.sendMessageWithReplyKeyboard(chatId, text + "\n" + deepLink, replyKeyboard);
-                } else {
-                    // EXPLAIN: All other nav actions navigate the home card.
+                if (action == BotNavAction.OPEN_SITE) {
+                    // EXPLAIN: UX-04 — a persistent reply-keyboard button cannot open an
+                    // EXPLAIN: external URL directly, so the bot replies with one compact
+                    // EXPLAIN: message carrying a single URL button (no menu rebuild).
+                    String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+                    if (!publicSiteUrl.isBlank()) {
+                        apiClient.sendMessage(chatId, TelegramCopy.NAV_OPEN_SITE,
+                            List.of(TelegramBotApiClient.InlineButton.url(
+                                TelegramCopy.SHARE_SITE, publicSiteUrl, null)));
+                    }
+                } else if (action != BotNavAction.OPEN_APP) {
+                    // EXPLAIN: OPEN_APP is a web_app button and opens client-side, so it
+                    // EXPLAIN: never arrives here as a text message. All other nav actions
+                    // EXPLAIN: navigate the home card.
                     navigateByAction(chatId, telegramUserId, action.actionCode());
                 }
             } catch (Exception e) {
@@ -169,13 +175,14 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             return;
         }
         String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+        String miniAppUrl = config.miniAppUrl().orElse("");
         quickActions.load(telegramUserId, TelegramMenuFlow.selectedChildId(action))
             .ifPresent(view -> {
                 try {
                     String navText = TelegramMenuFlow.navigationText(action, view);
                     TelegramReplyKeyboard replyKeyboard = "child".equals(view.role())
-                        ? new BotKeyboardFactory(null).childMain()
-                        : new BotKeyboardFactory(publicSiteUrl).parentMain();
+                        ? new BotKeyboardFactory(null, miniAppUrl).childMain()
+                        : new BotKeyboardFactory(publicSiteUrl, miniAppUrl).parentMain();
                     apiClient.sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
                 } catch (Exception e) {
                     throw new IllegalStateException(e);

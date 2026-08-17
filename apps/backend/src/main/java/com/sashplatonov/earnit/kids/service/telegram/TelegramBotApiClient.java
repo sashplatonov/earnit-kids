@@ -54,15 +54,6 @@ public class TelegramBotApiClient {
             ? result.path("result").path("message_id").longValue() : null;
     }
 
-    // EXPLAIN: UX-01 — edit a message replacing its inline keyboard with a persistent
-    // EXPLAIN: reply keyboard. Used when the user first opens the Mini App from the
-    // EXPLAIN: persistent keyboard (the home-card message is updated to show a reply
-    // EXPLAIN: keyboard for subsequent interactions).
-    public void editMessageWithReplyKeyboard(long chatId, long messageId, String text,
-                                            TelegramReplyKeyboard replyKeyboard) throws Exception {
-        call("editMessageText", replyKeyboardPayload(chatId, messageId, text, replyKeyboard));
-    }
-
     public void registerWebhook(URI webhookUrl, String secret) throws Exception {
         call("setWebhook", Map.of(
             "url", webhookUrl.toString(),
@@ -121,7 +112,7 @@ public class TelegramBotApiClient {
     private Map<String, Object> replyKeyboardPayload(TelegramReplyKeyboard replyKeyboard) {
         List<List<Map<String, Object>>> keyboardRows = replyKeyboard.rows().stream()
             .map(row -> row.buttons().stream()
-                .map(btn -> Map.<String, Object>of("text", btn.label()))
+                .map(this::replyKeyboardButtonPayload)
                 .toList())
             .toList();
         return Map.of(
@@ -130,6 +121,15 @@ public class TelegramBotApiClient {
             "resize_keyboard", replyKeyboard.resizeKeyboard(),
             "one_time_keyboard", replyKeyboard.oneTimeKeyboard()
         );
+    }
+
+    // EXPLAIN: A web_app button opens the Mini App client-side; a plain button
+    // EXPLAIN: only sends its label as a message (used for nav actions).
+    private Map<String, Object> replyKeyboardButtonPayload(TelegramReplyKeyboard.Button button) {
+        if (button.webAppUrl() != null) {
+            return Map.of("text", button.label(), "web_app", Map.of("url", button.webAppUrl()));
+        }
+        return Map.of("text", button.label());
     }
 
     // EXPLAIN: Adjacent buttons sharing a non-null rowId render on one Telegram

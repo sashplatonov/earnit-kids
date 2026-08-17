@@ -39,24 +39,4 @@ public enum BotNavAction {
         }
         return java.util.Optional.empty();
     }
-
-    // EXPLAIN: Returns the BotNavAction matching the given raw action string,
-    // EXPLAIN: or empty when the action is not a persistent-keyboard action.
-    public static java.util.Optional<BotNavAction> fromActionCode(String action) {
-        if (action == null || action.isBlank()) {
-            return java.util.Optional.empty();
-        }
-        String base = baseAction(action);
-        for (BotNavAction nav : values()) {
-            if (nav.actionCode.equals(base)) {
-                return java.util.Optional.of(nav);
-            }
-        }
-        return java.util.Optional.empty();
-    }
-
-    private static String baseAction(String action) {
-        int marker = action.indexOf("-child-");
-        return marker >= 0 ? action.substring(0, marker) : action;
-    }
 }
