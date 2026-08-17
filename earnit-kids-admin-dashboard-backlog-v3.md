@@ -1413,3 +1413,27 @@ Do not literally abbreviate `Активность` to `Актив.` unless requi
 - labels remain understandable;
 - active tab is immediately recognizable;
 - tab bar height remains compact.
+
+---
+
+## ✅ ADM-23 - Semantic graphics in dashboard tabs
+
+**Status:** ✅ COMPLETE - Verified in commit `docs(admin): ADM-23 semantic tab icons`
+
+**Verification result:**
+- Already implemented in ADM-03 and verified in ADM-21
+- Each tab has a semantic icon (📊 Обзор, 🪙 Монеты, 🎁 Награды, ✅ Задания, 📈 Активность) as part of the tab itself
+- `grid-template-columns: repeat(5, minmax(0, 1fr))` with `width: 100%` and `min-width: 0` ensures all 5 tabs fit within 320-430px
+- Icon-over-label composition (preferred approach, no abbreviation needed)
+- Active tab clearly recognizable via accent background
+- Compact tab bar height (52px)
+- No horizontal tab scroll, no clipping outside screen
+- Media query reduces font/icon size on very narrow screens
+
+**Files reviewed:**
+- `+page.svelte` tab bar markup and CSS
+
+**Verified:**
+- ✅ All acceptance criteria met
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
