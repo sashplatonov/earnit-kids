@@ -18,6 +18,7 @@
     $: coinEconomy = data.coinEconomy;
     $: rewardShop = data.rewardShop;
     $: taskEconomy = data.taskEconomy;
+    $: parentBehavior = data.parentBehavior;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -514,6 +515,20 @@
                     </div>
                 </div>
 
+                <h2 class="section-title">{t('sections.parentNeeds')}</h2>
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="kpi-label">{t('parent.catalogUsage.title')}</div>
+                        <div class="kpi-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCatalogPercent ?? '—'}%</div>
+                        <div class="kpi-foot">{t('parent.catalogUsage.desc')}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('parent.customContent.title')}</div>
+                        <div class="kpi-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCustomContentPercent ?? '—'}%</div>
+                        <div class="kpi-foot">{t('parent.customContent.desc')}</div>
+                    </div>
+                </div>
+
                 <h2 class="section-title">{t('sections.parentCycle')}</h2>
                 <div class="metric-list">
                     <div class="metric">
@@ -522,7 +537,7 @@
                             <button class="mini-info" aria-label={t('tooltips.decisionTime.label')}>i</button>
                             <small>{t('parent.decisionTime.desc')}</small>
                         </div>
-                        <div class="metric-value">— {t('units.minutes')}</div>
+                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours ?? '—'} {t('units.hours')}</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -530,15 +545,14 @@
                             <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')}>i</button>
                             <small>{t('parent.pendingBacklog.desc')}</small>
                         </div>
-                        <div class="metric-value">—</div>
+                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.pendingRequestsCount ?? '—'}</div>
                     </div>
                     <div class="metric">
                         <div>
-                            <strong>{t('parent.activeDays.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.activeDays.label')}>i</button>
-                            <small>{t('parent.activeDays.desc')}</small>
+                            <strong>{t('parent.familiesWithPending.title')}</strong>
+                            <small>{t('parent.familiesWithPending.desc')}</small>
                         </div>
-                        <div class="metric-value">—</div>
+                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesWithPendingRequests ?? '—'}</div>
                     </div>
                 </div>
             </section>
