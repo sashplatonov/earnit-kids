@@ -18,13 +18,11 @@
     // EXPLAIN: Bot deep links (history/coins) open the exact home sub-context.
     export let initialContext = '';
     let showAll = false;
-    let fullHistoryLoaded = false;
     let history: HistoryEntry[] = [];
     let historyLoading = false;
     let historyHasMore = false;
     let historyPage = 0;
     let historyError = '';
-    let showFullHistory = false;
     let coinSheetOpen = false;
     let coinBusy = false;
     let coinError = '';
@@ -47,14 +45,6 @@
         historyLoading = false;
     }
 
-    function toggleHistory() {
-        showFullHistory = !showFullHistory;
-        if (showFullHistory && !fullHistoryLoaded) {
-            fullHistoryLoaded = true;
-            void loadHistory(true);
-        }
-    }
-
     async function adjustCoins(event: CustomEvent<{ amount: number; note: string | null }>) {
         const childId = $appStore.currentChildId;
         if (childId == null) {
@@ -74,16 +64,10 @@
     }
 
     onMount(() => {
-        if (initialContext === 'history') {
-            showFullHistory = true;
-            fullHistoryLoaded = true;
-            void loadHistory(true);
-        } else if (initialContext === 'coins') {
+        if (initialContext === 'coins') {
             coinSheetOpen = true;
-            void loadHistory(true);
-        } else {
-            void loadHistory(true);
         }
+        void loadHistory(true);
     });
 </script>
 
@@ -99,12 +83,10 @@
     <h2 class="section-title">{$i18n.t('app.telegram.home.quickActions')}</h2>
     <div class="quick-actions" aria-label={$i18n.t('app.telegram.home.quickActions')}>
         <button type="button" on:click={() => coinSheetOpen = true}><TelegramIcon name="coinAdjustment" size={20} label={$i18n.t('app.telegram.home.addCoins')} /><span>{$i18n.t('app.telegram.home.addCoins')}</span></button>
-        <button type="button" on:click={toggleHistory}><TelegramIcon name="history" size={20} label={$i18n.t('app.telegram.home.history')} /><span>{$i18n.t('app.telegram.home.history')}</span></button>
     </div>
 
     <div class="section-heading">
-        {#if showFullHistory}<h2 class="section-title">{$i18n.t('app.telegram.home.history')}</h2>{:else}<h2 class="section-title">{$i18n.t('app.telegram.home.recentActivity')}</h2>{/if}
-        {#if history.length}<button class="small-link" type="button" on:click={toggleHistory}>{showFullHistory ? $i18n.t('app.telegram.home.showRecent') : $i18n.t('app.telegram.home.viewAll')}</button>{/if}
+        <h2 class="section-title">{$i18n.t('app.telegram.home.recentActivity')}</h2>
     </div>
 
     {#if historyLoading && !history.length}
@@ -119,7 +101,7 @@
                 <div class="a"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: entry.type === 'purchase' || entry.type === 'spend' ? 'reward' : 'task', title: entry.description || entry.title || entry.taskName || entry.itemName || '', group: entry.groupName })} size={18} label={$i18n.t('app.telegram.home.activity')} /></span><span class="grow"><span class="title">{stripLeadingEmoji(entry.description || entry.title || entry.taskName || entry.itemName || $i18n.t('app.telegram.home.activity'))}</span><span class="meta">{entry.createdAt ? formatLastUsedTime(entry.createdAt, $i18n.locale) : $i18n.t('app.telegram.home.recently')}</span></span><strong class:spend={entry.amount < 0}><TelegramCoin size={13} />{entry.amount > 0 ? '+' : ''}{entry.amount}</strong></div>
             {/each}
         </div>
-        {#if showFullHistory && historyHasMore}
+        {#if historyHasMore}
             <button class="load-more" type="button" on:click={() => loadHistory()} disabled={historyLoading}>{historyLoading ? $i18n.t('app.telegram.home.loading') : $i18n.t('app.telegram.home.loadMore')}</button>
         {/if}
     {/if}
@@ -132,9 +114,8 @@
     .section-heading { display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
     .section-title { margin:0; color:#18243d; font-size:1rem; }
     .count { display:inline-grid; place-items:center; min-width:1.6rem; height:1.6rem; padding:0 .45rem; border-radius:999px; background:#eef0ff; color:#5b63e9; font-size:.82rem; font-weight:800; }
-    .see-all, .small-link, .load-more, .quick-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border-radius:.7rem; font:inherit; cursor:pointer; }
+    .see-all, .load-more, .quick-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border-radius:.7rem; font:inherit; cursor:pointer; }
     .see-all, .load-more { min-height:2.75rem; padding:.5rem .8rem; border:1px solid #dfe4ee; background:#fff; color:#33415f; }
-    .small-link { min-height:2.75rem; padding:.35rem .4rem; border:0; background:transparent; color:#3867d6; font-weight:700; font-size:.85rem; }
     .quick-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.6rem; }
     .quick-actions button { min-height:3rem; padding:.55rem .7rem; border:1px solid #3867d6; background:#fff; color:#3867d6; font-weight:700; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
