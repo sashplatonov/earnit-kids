@@ -63,6 +63,89 @@
         if (!max) return 0;
         return Math.max(2, Math.round((value / max) * 100));
     }
+
+    // EXPLAIN: ADM-21 tap-accessible tooltip state
+    let activeTooltip: string | null = null;
+
+    function toggleTooltip(key: string) {
+        activeTooltip = activeTooltip === key ? null : key;
+    }
+
+    function closeTooltip() {
+        activeTooltip = null;
+    }
+
+    // EXPLAIN: ADM-21 tooltip content (what it shows, how it's calculated, example, interpretation)
+    const tooltipContent: Record<string, { title: string; body: string }> = {
+        activeFamilies: {
+            title: t('tooltips.activeFamilies.label'),
+            body: t('tooltips.activeFamilies.body'),
+        },
+        activeChildren: {
+            title: t('tooltips.activeChildren.label'),
+            body: t('tooltips.activeChildren.body'),
+        },
+        rewardsReceived: {
+            title: t('tooltips.rewardsReceived.label'),
+            body: t('tooltips.rewardsReceived.body'),
+        },
+        taskCompletions: {
+            title: t('tooltips.taskCompletions.label'),
+            body: t('tooltips.taskCompletions.body'),
+        },
+        spendEarn: {
+            title: t('tooltips.spendEarn.label'),
+            body: t('tooltips.spendEarn.body'),
+        },
+        medianBalance: {
+            title: t('tooltips.medianBalance.label'),
+            body: t('tooltips.medianBalance.body'),
+        },
+        timeToFirstReward: {
+            title: t('tooltips.timeToFirstReward.label'),
+            body: t('tooltips.timeToFirstReward.body'),
+        },
+        earningNotSpending: {
+            title: t('tooltips.earningNotSpending.label'),
+            body: t('tooltips.earningNotSpending.body'),
+        },
+        rewardsIssued: {
+            title: t('tooltips.rewardsIssued.label'),
+            body: t('tooltips.rewardsIssued.body'),
+        },
+        medianPrice: {
+            title: t('tooltips.medianPrice.label'),
+            body: t('tooltips.medianPrice.body'),
+        },
+        chosenPrice: {
+            title: t('tooltips.chosenPrice.label'),
+            body: t('tooltips.chosenPrice.body'),
+        },
+        rewardsFailed: {
+            title: t('tooltips.rewardsFailed.label'),
+            body: t('tooltips.rewardsFailed.body'),
+        },
+        approvalRate: {
+            title: t('tooltips.approvalRate.label'),
+            body: t('tooltips.approvalRate.body'),
+        },
+        decisionTime: {
+            title: t('tooltips.decisionTime.label'),
+            body: t('tooltips.decisionTime.body'),
+        },
+        pendingBacklog: {
+            title: t('tooltips.pendingBacklog.label'),
+            body: t('tooltips.pendingBacklog.body'),
+        },
+        active7d: {
+            title: t('tooltips.active7d.label'),
+            body: t('tooltips.active7d.body'),
+        },
+        active30d: {
+            title: t('tooltips.active30d.label'),
+            body: t('tooltips.active30d.body'),
+        },
+    };
 </script>
 
 <svelte:head>
@@ -163,7 +246,7 @@
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.activeFamilies')}</div>
-                        <button class="info" aria-label={t('tooltips.activeFamilies.label')} title={t('tooltips.activeFamilies.label')}>i</button>
+                        <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={() => toggleTooltip('activeFamilies')}>i</button>
                         <div class="kpi-value">{overview?.overview?.activeFamilies ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
@@ -174,7 +257,7 @@
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.activeChildren')}</div>
-                        <button class="info" aria-label={t('tooltips.activeChildren.label')} title={t('tooltips.activeChildren.label')}>i</button>
+                        <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={() => toggleTooltip('activeChildren')}>i</button>
                         <div class="kpi-value">{overview?.overview?.activeChildren ?? '—'}</div>
                         <div class="kpi-foot">{t('periods.30d')}</div>
                     </div>
@@ -190,21 +273,27 @@
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.rewardsReceived')}</div>
-                        <button class="info" aria-label={t('tooltips.rewardsReceived.label')} title={t('tooltips.rewardsReceived.label')}>i</button>
+                        <button class="info" aria-label={t('tooltips.rewardsReceived.label')} on:click={() => toggleTooltip('rewardsReceived')}>i</button>
                         <div class="kpi-value">{overview?.overview?.rewardPurchases ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.successful')}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.taskCompletions')}</div>
-                        <button class="info" aria-label={t('tooltips.taskCompletions.label')} title={t('tooltips.taskCompletions.label')}>i</button>
+                        <button class="info" aria-label={t('tooltips.taskCompletions.label')} on:click={() => toggleTooltip('taskCompletions')}>i</button>
                         <div class="kpi-value">{overview?.overview?.taskCompletions ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                 </div>
 
-                <div class="tooltip-box" id="overview-tooltips">
-                    <p class="tooltip-placeholder">{t('tooltips.selectInfo')}</p>
-                </div>
+                {#if activeTooltip && tooltipContent[activeTooltip]}
+                    <div class="tooltip-box" role="dialog" aria-label={tooltipContent[activeTooltip].title}>
+                        <div class="tooltip-head">
+                            <b>{tooltipContent[activeTooltip].title}</b>
+                            <button class="tooltip-close" aria-label="Close" on:click={closeTooltip}>×</button>
+                        </div>
+                        <p>{tooltipContent[activeTooltip].body}</p>
+                    </div>
+                {/if}
 
                 <h2 class="section-title">{t('sections.keySignals')}</h2>
                 <div class="rows">
@@ -253,7 +342,7 @@
                     <div class="bar-label">
                         <span>
                             {t('coins.spendEarn.label')} 
-                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={() => toggleTooltip('spendEarn')}>i</button>
                         </span>
                         <b>{coinEconomy?.coins?.spendRate ?? '—'}%</b>
                     </div>
@@ -264,7 +353,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('metrics.medianBalance.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.medianBalance.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={() => toggleTooltip('medianBalance')}>i</button>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
                         <div class="metric-value">{coinEconomy?.balances?.medianBalance ?? '—'} 🪙</div>
@@ -272,7 +361,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('metrics.timeToFirstReward.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={() => toggleTooltip('timeToFirstReward')}>i</button>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
                         <div class="metric-value">— {t('units.days')}</div>
@@ -280,7 +369,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('metrics.earningNotSpending.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
                             <small>{t('metrics.earningNotSpending.desc')}</small>
                         </div>
                         <div class="metric-value">{coinEconomy?.balances?.zeroBalancePercent ?? '—'}%</div>
@@ -305,7 +394,7 @@
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('rewards.issued')}</div>
-                        <button class="info" aria-label={t('tooltips.rewardsIssued.label')}>i</button>
+                        <button class="info" aria-label={t('tooltips.rewardsIssued.label')} on:click={() => toggleTooltip('rewardsIssued')}>i</button>
                         <div class="kpi-value">{rewardShop?.rewardShopMetrics?.approvedRewards ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.successful')}</div>
                     </div>
@@ -316,7 +405,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('rewards.medianPrice.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.medianPrice.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.medianPrice.label')} on:click={() => toggleTooltip('medianPrice')}>i</button>
                             <small>{t('rewards.medianPrice.desc')}</small>
                         </div>
                         <div class="metric-value">{rewardShop?.rewardShopMetrics?.medianPrice ?? '—'} 🪙</div>
@@ -324,7 +413,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('rewards.chosenPrice.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.chosenPrice.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.chosenPrice.label')} on:click={() => toggleTooltip('chosenPrice')}>i</button>
                             <small>{t('rewards.chosenPrice.desc')}</small>
                         </div>
                         <div class="metric-value">{rewardShop?.rewardShopMetrics?.medianPurchasedPrice ?? '—'} 🪙</div>
@@ -332,7 +421,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('rewards.failed.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.rewardsFailed.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.rewardsFailed.label')} on:click={() => toggleTooltip('rewardsFailed')}>i</button>
                             <small>{t('rewards.failed.desc')}</small>
                         </div>
                         <div class="metric-value">{rewardShop?.rewardShopMetrics?.rejectionRate ?? '—'}%</div>
@@ -431,7 +520,7 @@
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">Approval rate</div>
-                        <button class="info" aria-label="Процент одобренных заданий">i</button>
+                        <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={() => toggleTooltip('approvalRate')}>i</button>
                         <div class="kpi-value">{taskEconomy?.taskMetrics?.approvalRate ?? '—'}%</div>
                         <div class="kpi-foot">{t('tasks.approvedByParents')}</div>
                     </div>
@@ -588,7 +677,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('retention.active7d.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.active7d.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={() => toggleTooltip('active7d')}>i</button>
                             <small>{t('retention.active7d.desc')}</small>
                         </div>
                         <div class="metric-value">{retention?.retentionMetrics?.active7d ?? '—'}</div>
@@ -596,7 +685,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('retention.active30d.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.active30d.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={() => toggleTooltip('active30d')}>i</button>
                             <small>{t('retention.active30d.desc')}</small>
                         </div>
                         <div class="metric-value">{retention?.retentionMetrics?.active30d ?? '—'}</div>
@@ -657,7 +746,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('parent.decisionTime.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={() => toggleTooltip('decisionTime')}>i</button>
                             <small>{t('parent.decisionTime.desc')}</small>
                         </div>
                         <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours ?? '—'} {t('units.hours')}</div>
@@ -665,7 +754,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('parent.pendingBacklog.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={() => toggleTooltip('pendingBacklog')}>i</button>
                             <small>{t('parent.pendingBacklog.desc')}</small>
                         </div>
                         <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.pendingRequestsCount ?? '—'}</div>
@@ -697,7 +786,7 @@
                     <div class="metric">
                         <div>
                             <strong>{t('child.earningNotSpending.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
                             <small>{t('child.earningNotSpending.desc')}</small>
                         </div>
                         <div class="metric-value">{childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending ?? '—'}%</div>
@@ -919,9 +1008,33 @@
         box-shadow: 0 8px 22px rgba(25, 31, 45, 0.18);
     }
 
-    .tooltip-placeholder {
-        margin: 0;
+    .tooltip-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .tooltip-head b {
+        font-size: 12px;
         color: #ccd2ff;
+    }
+
+    .tooltip-box p {
+        margin: 0;
+        color: #e6e9f2;
+        white-space: pre-line;
+    }
+
+    .tooltip-close {
+        border: 0;
+        background: transparent;
+        color: #ccd2ff;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 2px;
     }
 
     .rows {

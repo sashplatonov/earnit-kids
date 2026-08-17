@@ -1179,6 +1179,31 @@ Use tooltips especially for:
 
 Basic self-explanatory counts such as `Всего семей` may omit a tooltip unless definition ambiguity exists.
 
+---
+
+## ✅ ADM-21 - Metric tooltips with explanations and examples
+
+**Status:** ✅ COMPLETE - Implemented in commit `feat(admin): ADM-21 metric tooltips`
+
+**Implemented:**
+- Replaced hover-only `title` tooltips with tap/click-accessible popover tooltips
+- Each tooltip answers: what it shows, how it's calculated, a simple example, and interpretation where useful
+- Tooltips cover: active families, active children, rewards received, task completions, Spend/Earn, median balance, time to first reward, earning but not spending, rewards issued, median price, chosen price, failed rewards, approval rate, decision time, pending backlog, active 7d/30d
+- Tooltip closes by close button or tapping the same icon again
+- Icon has accessible `aria-label`
+- Tooltip text is 3-6 short lines with round-number examples
+- KPI cards stay compact; no permanent long explanations inside cards
+
+**Files modified:**
+- `+page.svelte` - tap-accessible tooltip system + popover UI
+- i18n `ru/admin.ts` and `en/admin.ts` - full tooltip body content
+
+**Verified:**
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
+
+---
+
 # ADM-22 - Product insight hints
 
 The UI may show small neutral hints under selected metrics, for example:

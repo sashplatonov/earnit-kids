@@ -255,54 +255,71 @@ export const adminMessages = {
             selectInfo: 'Tap on ⓘ for metric explanation',
             activeFamilies: {
                 label: 'Active families',
+                body: 'Families with at least one meaningful action in the selected period: task completion, parent decision on a request, reward issue, or balance change.\n\nSimply opening the Mini App does not count as activity.',
             },
             activeChildren: {
                 label: 'Active children',
+                body: 'Children with at least one meaningful action in the selected period: task completion, earning coins, or receiving a reward.\n\nSimply opening the Mini App does not count as activity.',
             },
             rewardsReceived: {
                 label: 'Rewards received',
+                body: 'Number of successfully issued rewards in the selected period.\n\nCalculation: reward requests with status "approved".\n\nExample: children received 116 rewards in 30 days.',
             },
             taskCompletions: {
                 label: 'Task completions',
+                body: 'Number of tasks completed by children in the selected period.\n\nCalculation: task completion events.\n\nExample: children completed 320 tasks in 30 days.',
             },
             spendEarn: {
                 label: 'Spend / Earn',
+                body: 'Shows what share of coins earned by children was spent on rewards.\n\nCalculation: coins spent / coins earned.\n\nExample: children earned 1,000 coins and spent 650. Spend / Earn = 65%.\n\nA low value may mean rewards are too expensive or not attractive enough.',
             },
             medianBalance: {
                 label: 'Median balance',
+                body: 'Median current child balance.\n\nCalculation: sort all child balances and take the middle element.\n\nExample: balances 1, 2, 4, 6, 12 → median = 4.\n\nMedian is more robust to outliers than the mean.',
             },
             timeToFirstReward: {
                 label: 'Time to first reward',
+                body: 'Median time from family start to the first successfully received reward.\n\nExample: 5 families got their first reward after 1, 2, 4, 6, and 12 days. Median = 4 days.\n\nThe longer this path, the higher the risk the child does not feel the value of the "task → coins → reward" loop.',
             },
             earningNotSpending: {
                 label: 'Earning but not spending',
+                body: 'Share of active children who earned coins in the selected period but received no reward.\n\nExample: 100 children earned coins, 38 of them received no rewards. Metric = 38%.\n\nThis is a signal to check prices, reward assortment, and the request/approval flow.',
             },
             rewardsIssued: {
                 label: 'Rewards issued',
+                body: 'Number of successfully issued rewards in the selected period.\n\nCalculation: reward requests with status "approved".\n\nExample: 116 rewards issued in 30 days.',
             },
             medianPrice: {
                 label: 'Median price',
+                body: 'Median price of active rewards in the shop.\n\nCalculation: sort reward prices and take the middle element.\n\nExample: prices 5, 10, 15, 20, 50 → median = 15.',
             },
             chosenPrice: {
                 label: 'Chosen reward price',
+                body: 'Median price of rewards children actually received in the selected period.\n\nComparing with the median price helps understand whether children choose expensive or cheap rewards.',
             },
             rewardsFailed: {
                 label: 'Failed rewards',
+                body: 'Share of reward requests that were declined or cancelled.\n\nCalculation: (declined + cancelled) / all requests.\n\nA high value may mean rewards are too expensive or parents often decline.',
+            },
+            approvalRate: {
+                label: 'Approval rate',
+                body: 'Share of completed tasks approved by parents.\n\nCalculation: approved / (approved + declined).\n\nExample: 80 of 100 approved → 80%.',
             },
             decisionTime: {
                 label: 'Time to decision',
+                body: 'Median time between a child sending a request and the parent deciding.\n\nExample: decisions came after 2, 8, 18, 40, and 120 minutes. Median = 18 minutes.\n\nA slow parent response can break the child feedback loop.',
             },
             pendingBacklog: {
                 label: 'Pending backlog',
-            },
-            activeDays: {
-                label: 'Active days',
+                body: 'Current number of requests awaiting a parent decision.\n\nA large backlog may mean parents are not keeping up with children\'s requests.',
             },
             active7d: {
                 label: 'Active in 7 days',
+                body: 'Families with at least one meaningful action in the last 7 days.\n\nThis is rolling activity, not cohort retention.',
             },
             active30d: {
                 label: 'Active in 30 days',
+                body: 'Families with at least one meaningful action in the last 30 days.\n\nThis is rolling activity, not cohort retention.',
             },
         },
         footer: {
