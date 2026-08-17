@@ -232,6 +232,25 @@
                 <TelegramAccountConnections />
             </div>
 
+            {#if isAdmin}
+                <a href="/app/dashboard" class="card settings-card admin-only" style="text-decoration: none; color: inherit; display: block;">
+                    <div class="card__header">
+                        <h3 class="card__title">{$i18n.t('admin.settings.dashboardTitle')}</h3>
+                        <div class="card__icon">
+                            <span class="gamified-icon" aria-hidden="true">📊</span>
+                        </div>
+                    </div>
+                    <p class="card__comment" style="margin-top: 0.5rem;">
+                        {$i18n.t('admin.settings.dashboardDesc')}
+                    </p>
+                    <div class="card__actions" style="margin-top: 1rem;">
+                        <span style="color: var(--primary, #5c6fe7); font-weight: 600;">
+                            {$i18n.t('common.actions.open')} →
+                        </span>
+                    </div>
+                </a>
+            {/if}
+
             {#if canManageParentAccess}
                 <ParentAccessManager />
             {/if}

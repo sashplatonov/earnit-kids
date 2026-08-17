@@ -79,6 +79,8 @@ export const adminMessages = {
         accountConnectionsUnlinkTitle: 'Отключить Telegram?',
         accountConnectionsUnlinkText: 'Бот и Mini App больше не смогут открыть эту семью из этого Telegram-аккаунта.',
         accountConnectionsCancel: 'Отмена',
+        dashboardTitle: 'Дашборд',
+        dashboardDesc: 'Использование сервиса и экономика монет',
     },
     catalog: {
         taskAdded: 'Задание «{name}» добавлено',
