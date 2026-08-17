@@ -25,6 +25,7 @@ import java.time.Instant;
 public class TelegramDeliveryEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(name = "event_id", nullable = false) private Long eventId;
+    @Column(name = "request_id") private Long requestId;
     @Column(name = "recipient_identity_id", nullable = false) private Integer recipientIdentityId;
     @Column(name = "chat_id", nullable = false) private Long chatId;
     @Column(name = "idempotency_key", nullable = false) private String idempotencyKey;

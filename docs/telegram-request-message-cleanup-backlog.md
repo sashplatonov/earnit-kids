@@ -437,7 +437,7 @@ reject vs delete
 
 # P0-2: Найти все фактически отправленные Telegram messages заявки
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P0  
 **Depends on:** P0-1
 

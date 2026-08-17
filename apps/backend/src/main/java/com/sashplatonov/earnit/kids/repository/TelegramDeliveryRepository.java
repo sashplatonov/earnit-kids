@@ -25,6 +25,15 @@ public class TelegramDeliveryRepository implements PanacheRepositoryBase<Telegra
         return find("eventId = ?1 order by id", eventId).list();
     }
 
+    // EXPLAIN: Returns every actually sent request-created message for a request
+    // EXPLAIN: so a REQUEST_RESOLVED event can update all historical copies. Only
+    // EXPLAIN: deliveries that carry a real Telegram message id are returned;
+    // EXPLAIN: pending/failed deliveries without a message are excluded.
+    public List<TelegramDeliveryEntity> findSentRequestMessages(Long requestId) {
+        return find("requestId = ?1 and status = 'SENT' and chatId is not null "
+                + "and messageId is not null order by id", requestId).list();
+    }
+
     public int deleteEligible(Instant cutoff, int batchSize) {
         var rows = find("terminalAt is not null and terminalAt < ?1 "
                 + "and status in ('SENT', 'SKIPPED', 'SKIPPED_DISABLED', 'FAILED') order by id", cutoff)

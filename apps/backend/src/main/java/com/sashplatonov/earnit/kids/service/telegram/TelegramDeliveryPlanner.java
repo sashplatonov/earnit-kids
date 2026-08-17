@@ -56,7 +56,8 @@ public class TelegramDeliveryPlanner {
             for (TelegramIdentityEntity identity : recipients) {
                 if (deliveries.findByEventAndRecipient(event.getId(), identity.getId()).isEmpty()) {
                     TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
-                        .eventId(event.getId()).recipientIdentityId(identity.getId())
+                        .eventId(event.getId()).requestId(event.getRequestId())
+                        .recipientIdentityId(identity.getId())
                         .chatId(identity.getTelegramUserId())
                         .idempotencyKey(event.getId() + ":" + identity.getId())
                         .status(notificationsEnabled ? "PENDING" : "SKIPPED_DISABLED")
