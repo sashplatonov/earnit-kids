@@ -228,6 +228,37 @@ Do not render all tab contents into DOM as one continuous page just hidden visua
 
 ---
 
+## ✅ ADM-03 - Dashboard top-level structure with tabs
+
+**Status:** ✅ COMPLETE - Implemented in commits `8cabbac5` and `817f7b63`
+
+**Implemented:**
+- Dashboard page at `/app/dashboard` with 5 tabs
+- Tab navigation with semantic emoji icons (📊 Обзор, 🪙 Монеты, 🎁 Награды, ✅ Задания, 📈 Активность)
+- Period selector toolbar with presets (7 дней, 30 дней, 90 дней, Всё время)
+- Sticky tab navigation optimized for Mini App viewport
+- KPI card structure with tooltip support
+- Full i18n translations (Russian and English)
+- Admin-only access control (client-side + server-side)
+- Last updated timestamp display
+- Responsive design matching Reference B specification
+
+**Files created:**
+- `apps/web/src/routes/app/dashboard/+page.svelte` - Complete UI with all 5 tabs
+- `apps/web/src/routes/app/dashboard/+page.server.ts` - Server-side admin authorization
+- i18n translations in `apps/web/src/lib/i18n/messages/ru/admin.ts` and `en/admin.ts`
+
+**Verified:**
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
+- ✅ Backend tests pass
+- ✅ Admin users can access dashboard
+- ✅ Non-admin users are redirected to settings
+
+**Next step:** Implement actual data loading for Overview tab KPIs (ADM-04)
+
+---
+
 # ADM-04 - Executive overview KPIs
 
 At the top show the small set of metrics that explains system health fastest.

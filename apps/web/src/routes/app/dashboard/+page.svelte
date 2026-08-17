@@ -13,6 +13,9 @@
 
     $: isAdmin = $appStore.isAdmin;
 
+    export let data;
+    $: overview = data.overview;
+
     // Tab definitions with semantic icons
     const tabs = [
         { id: 'overview', label: t('tabs.overview'), icon: '📊' },
@@ -130,26 +133,47 @@
                 <div class="kpis">
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.totalFamilies')}</div>
-                        <div class="kpi-value">—</div>
+                        <div class="kpi-value">{overview?.overview?.totalFamilies ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.lifetime')}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.activeFamilies')}</div>
                         <button class="info" aria-label={t('tooltips.activeFamilies.label')} title={t('tooltips.activeFamilies.label')}>i</button>
-                        <div class="kpi-value">—</div>
-                        <div class="kpi-foot">—</div>
+                        <div class="kpi-value">{overview?.overview?.activeFamilies ?? '—'}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('kpis.totalChildren')}</div>
+                        <div class="kpi-value">{overview?.overview?.totalChildren ?? '—'}</div>
+                        <div class="kpi-foot">{t('kpis.lifetime')}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.activeChildren')}</div>
                         <button class="info" aria-label={t('tooltips.activeChildren.label')} title={t('tooltips.activeChildren.label')}>i</button>
-                        <div class="kpi-value">—</div>
+                        <div class="kpi-value">{overview?.overview?.activeChildren ?? '—'}</div>
                         <div class="kpi-foot">{t('periods.30d')}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('kpis.coinsEarned')}</div>
+                        <div class="kpi-value">{overview?.overview?.coinsEarned ?? '—'}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('kpis.coinsSpent')}</div>
+                        <div class="kpi-value">{overview?.overview?.coinsSpent ?? '—'}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.rewardsReceived')}</div>
                         <button class="info" aria-label={t('tooltips.rewardsReceived.label')} title={t('tooltips.rewardsReceived.label')}>i</button>
-                        <div class="kpi-value">—</div>
+                        <div class="kpi-value">{overview?.overview?.rewardPurchases ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.successful')}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('kpis.taskCompletions')}</div>
+                        <button class="info" aria-label={t('tooltips.taskCompletions.label')} title={t('tooltips.taskCompletions.label')}>i</button>
+                        <div class="kpi-value">{overview?.overview?.taskCompletions ?? '—'}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                 </div>
 

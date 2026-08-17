@@ -105,10 +105,15 @@ export const adminMessages = {
         },
         kpis: {
             totalFamilies: 'Всего семей',
+            totalChildren: 'Всего детей',
             activeFamilies: 'Активные семьи',
             activeChildren: 'Активных детей',
+            coinsEarned: 'Монет заработано',
+            coinsSpent: 'Монет потрачено',
             rewardsReceived: 'Получено наград',
+            taskCompletions: 'Выполнено заданий',
             lifetime: 'за всё время',
+            inPeriod: 'за {period}',
             successful: 'успешные выдачи',
         },
         sections: {
@@ -220,6 +225,9 @@ export const adminMessages = {
             },
             rewardsReceived: {
                 label: 'Получено наград',
+            },
+            taskCompletions: {
+                label: 'Выполнено заданий',
             },
             spendEarn: {
                 label: 'Spend / Earn',
