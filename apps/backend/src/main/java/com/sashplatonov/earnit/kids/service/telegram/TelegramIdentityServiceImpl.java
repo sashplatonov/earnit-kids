@@ -176,6 +176,20 @@ public class TelegramIdentityServiceImpl implements TelegramIdentityService {
         return updates.recordIfNew(updateId, now);
     }
 
+    @Override
+    public boolean needsReplyKeyboardReset(long telegramUserId, int configuredVersion) {
+        return identities.findActiveByTelegramUserId(telegramUserId)
+            .map(identity -> identity.getKeyboardVersion() < configuredVersion)
+            .orElse(false);
+    }
+
+    @Override @Transactional
+    public void markReplyKeyboardVersion(long telegramUserId, int version) {
+        identities.findActiveByTelegramUserId(telegramUserId).ifPresent(identity -> {
+            identity.setKeyboardVersion(version);
+        });
+    }
+
     private void audit(Integer familyId, Integer childId, Integer identityId, String type, String actor, Instant now) {
         audits.persist(com.sashplatonov.earnit.kids.domain.model.TelegramSecurityAuditEventEntity.builder()
             .familyId(familyId).childId(childId).identityId(identityId).eventType(type).actorReference(actor).createdAt(now).build());

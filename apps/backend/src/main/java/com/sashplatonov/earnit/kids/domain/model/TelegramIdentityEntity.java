@@ -32,4 +32,6 @@ public class TelegramIdentityEntity {
     @Column(name = "is_active", nullable = false) private boolean active = true;
     @Column(name = "linked_at", nullable = false) private Instant linkedAt;
     @Column(name = "unlinked_at") private Instant unlinkedAt;
+    @Builder.Default
+    @Column(name = "keyboard_version", nullable = false) private int keyboardVersion = 0;
 }

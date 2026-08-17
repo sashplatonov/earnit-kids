@@ -56,6 +56,12 @@ public interface TelegramConfig {
     @WithDefault("1")
     int callbackMenuVersion();
 
+    // EXPLAIN: UX-01 — bump this to force a one-time ReplyKeyboardRemove for
+    // EXPLAIN: every identity whose stored version is behind, clearing any
+    // EXPLAIN: stale cached reply keyboard on the Telegram client.
+    @WithDefault("1")
+    int replyKeyboardVersion();
+
     @WithDefault("true")
     boolean retentionEnabled();
 

@@ -123,6 +123,16 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl, miniAppUrl);
                 TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
                     ? kb.childMain() : kb.parentMain();
+                // EXPLAIN: UX-01 — one-time reset: when the identity's stored
+                // EXPLAIN: keyboard version is behind the configured version,
+                // EXPLAIN: clear any stale cached keyboard before sending the
+                // EXPLAIN: fresh definition, then record the new version.
+                int keyboardVersion = config.replyKeyboardVersion();
+                if (telegramUserId != Long.MIN_VALUE
+                    && identities.needsReplyKeyboardReset(telegramUserId, keyboardVersion)) {
+                    apiClient.removeReplyKeyboard(chatId);
+                    identities.markReplyKeyboardVersion(telegramUserId, keyboardVersion);
+                }
                 apiClient.sendMessageWithReplyKeyboard(chatId, homeText, replyKeyboard);
             } else {
                 var parent = identities.findActiveByTelegramUserId(telegramUserId)

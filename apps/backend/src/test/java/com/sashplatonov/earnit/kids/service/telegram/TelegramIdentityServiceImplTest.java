@@ -136,4 +136,34 @@ class TelegramIdentityServiceImplTest {
         assertThat(service.recordWebhookUpdate(42L, NOW)).isFalse();
         verify(updates, org.mockito.Mockito.times(2)).recordIfNew(42L, NOW);
     }
+
+    @Test
+    void needsReplyKeyboardReset_isTrueWhenStoredVersionIsBehind() {
+        TelegramIdentityEntity identity = TelegramIdentityEntity.builder()
+            .familyId(1).telegramUserId(77L).role("parent").active(true).linkedAt(NOW)
+            .keyboardVersion(0).build();
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(identity));
+
+        assertThat(service.needsReplyKeyboardReset(77L, 1)).isTrue();
+        assertThat(service.needsReplyKeyboardReset(77L, 0)).isFalse();
+    }
+
+    @Test
+    void needsReplyKeyboardReset_isFalseWhenIdentityMissing() {
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.empty());
+
+        assertThat(service.needsReplyKeyboardReset(77L, 1)).isFalse();
+    }
+
+    @Test
+    void markReplyKeyboardVersion_updatesStoredVersion() {
+        TelegramIdentityEntity identity = TelegramIdentityEntity.builder()
+            .familyId(1).telegramUserId(77L).role("parent").active(true).linkedAt(NOW)
+            .keyboardVersion(0).build();
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(identity));
+
+        service.markReplyKeyboardVersion(77L, 2);
+
+        assertThat(identity.getKeyboardVersion()).isEqualTo(2);
+    }
 }

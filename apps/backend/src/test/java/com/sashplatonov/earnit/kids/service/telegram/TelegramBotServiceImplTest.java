@@ -684,6 +684,40 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
+    void startResetsStaleReplyKeyboardOncePerVersion() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        TelegramFeatureGate featureGate = mock(TelegramFeatureGate.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "child", 3, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of());
+        when(identities.recordWebhookUpdate(60L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(
+            new TelegramIdentityService.TelegramIdentity(1, 4, 3, 77L, "child")));
+        when(families.findFamilyIdByDbId(4)).thenReturn(Optional.of("family"));
+        when(featureGate.isBotEnabled("family")).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
+        when(config.replyKeyboardVersion()).thenReturn(2);
+        when(identities.needsReplyKeyboardReset(77L, 2)).thenReturn(true);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(
+            identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
+            quickActions, menuBuilder, featureGate, families);
+
+        service.handleUpdate(new ObjectMapper().readTree("""
+            {"update_id":60,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
+            """));
+
+        verify(apiClient).removeReplyKeyboard(44L);
+        verify(identities).markReplyKeyboardVersion(77L, 2);
+        verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), any(String.class), any());
+    }
+
+    @Test
     void openAppWebAppButtonNeverArrivesAsTextNavigation() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);

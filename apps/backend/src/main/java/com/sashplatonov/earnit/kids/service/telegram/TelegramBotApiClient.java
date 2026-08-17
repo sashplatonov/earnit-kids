@@ -54,6 +54,17 @@ public class TelegramBotApiClient {
             ? result.path("result").path("message_id").longValue() : null;
     }
 
+    // EXPLAIN: UX-01 — force Telegram to drop any cached reply keyboard on the
+    // EXPLAIN: client. ReplyKeyboardRemove clears the stale keyboard so the next
+    // EXPLAIN: /start renders the fresh definition. Sent once per version bump.
+    public void removeReplyKeyboard(long chatId) throws Exception {
+        call("sendMessage", Map.of(
+            "chat_id", chatId,
+            "text", "\u200B",
+            "reply_markup", Map.of("remove_keyboard", true)
+        ));
+    }
+
     public void registerWebhook(URI webhookUrl, String secret) throws Exception {
         call("setWebhook", Map.of(
             "url", webhookUrl.toString(),

@@ -29,4 +29,7 @@ public class TelegramIdentityRepository implements PanacheRepositoryBase<Telegra
     public List<TelegramIdentityEntity> findActiveParents(Integer familyId) {
         return find("familyId = ?1 AND role = 'parent' AND active = true", familyId).list();
     }
+    public Optional<TelegramIdentityEntity> findActiveByTelegramUserIdForUpdate(long telegramUserId) {
+        return find("telegramUserId = ?1 AND active = true", telegramUserId).firstResultOptional();
+    }
 }
