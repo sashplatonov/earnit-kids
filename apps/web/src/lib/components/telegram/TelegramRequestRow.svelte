@@ -27,7 +27,9 @@
             {#if request.createdAt}<time datetime={request.createdAt}>{formatLastUsedTime(request.createdAt, locale as 'en' | 'ru')}</time>{/if}
         </div>
     </div>
-    <div class="request-actions"><slot /></div>
+    {#if statusTone === 'pending'}
+        <div class="request-actions"><slot /></div>
+    {/if}
 </article>
 
 <style>
@@ -47,5 +49,4 @@
     .status-chip--neutral { background:#eef0f5; color:#66718a; }
     time { color:#8a93a8; font-size:.75rem; }
     .request-actions { display:flex; justify-content:flex-end; margin-top:.6rem; }
-    .request-actions :global(:empty) { display:none; }
 </style>

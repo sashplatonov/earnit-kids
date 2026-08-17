@@ -116,7 +116,7 @@
     .count { display:inline-grid; place-items:center; min-width:1.6rem; height:1.6rem; padding:0 .45rem; border-radius:999px; background:#eef0ff; color:#5b63e9; font-size:.82rem; font-weight:800; }
     .see-all, .load-more, .quick-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border-radius:.7rem; font:inherit; cursor:pointer; }
     .see-all, .load-more { min-height:2.75rem; padding:.5rem .8rem; border:1px solid #dfe4ee; background:#fff; color:#33415f; }
-    .quick-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.6rem; }
+    .quick-actions { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
     .quick-actions button { min-height:3rem; padding:.55rem .7rem; border:1px solid #3867d6; background:#fff; color:#3867d6; font-weight:700; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .activity { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .75rem; }
