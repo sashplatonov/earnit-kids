@@ -50,6 +50,7 @@ import {
     Key,
     Languages,
     Link,
+    ListChecks,
     ListOrdered,
     Mail,
     Medal,
@@ -132,6 +133,7 @@ export const telegramIconMap = {
     arrowUp: ArrowUp,
     arrowDown: ArrowDown,
     reorder: ListOrdered,
+    selectSeveral: ListChecks,
     // ── semantic entity graphics ──────────────────────────────────────────
     sun: Sun,
     book: BookOpen,

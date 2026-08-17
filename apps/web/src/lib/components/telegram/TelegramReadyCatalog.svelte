@@ -94,7 +94,7 @@
             {#if bulkMode}
                 <TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.readyCatalog.done')} />
             {:else}
-                <TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.readyCatalog.selectSeveral')} />
+                <TelegramIcon name="selectSeveral" size={18} label={$i18n.t('app.telegram.readyCatalog.selectSeveral')} />
             {/if}
         </button>
         <button class="filter-btn" class:active={activeFilterCount > 0} type="button" on:click={() => filterOpen = true}>

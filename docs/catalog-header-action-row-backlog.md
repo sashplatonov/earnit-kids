@@ -72,7 +72,7 @@ git commit -m "fix(web): remove duplicate catalog header in ready catalog"
 
 ## CAT-HDR-2: Графическая кнопка «Выбрать несколько» в одной строке с «Фильтры»
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P2
 **Depends on:** CAT-HDR-1
 
