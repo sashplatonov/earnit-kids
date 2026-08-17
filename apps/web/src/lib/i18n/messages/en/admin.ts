@@ -125,6 +125,7 @@ export const adminMessages = {
             content: 'Content',
             activation: 'Family activation',
             parentCycle: 'Parent cycle',
+            retention: 'Retention & activity',
         },
         signals: {
             earningNotSpending: {
@@ -216,6 +217,24 @@ export const adminMessages = {
                 desc: 'median per child for period',
             },
         },
+        retention: {
+            newFamilies: {
+                title: 'New families',
+                desc: 'registered during the period',
+            },
+            returningFamilies: {
+                title: 'Returning',
+                desc: 'active in period, registered earlier',
+            },
+            active7d: {
+                title: 'Active in 7 days',
+                desc: 'families with activity in the last 7 days',
+            },
+            active30d: {
+                title: 'Active in 30 days',
+                desc: 'families with activity in the last 30 days',
+            },
+        },
         tooltips: {
             selectInfo: 'Tap on ⓘ for metric explanation',
             activeFamilies: {
@@ -262,6 +281,12 @@ export const adminMessages = {
             },
             activeDays: {
                 label: 'Active days',
+            },
+            active7d: {
+                label: 'Active in 7 days',
+            },
+            active30d: {
+                label: 'Active in 30 days',
             },
         },
         footer: {

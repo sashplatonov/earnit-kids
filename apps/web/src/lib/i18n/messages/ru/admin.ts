@@ -125,6 +125,7 @@ export const adminMessages = {
             content: 'Контент',
             activation: 'Активация семей',
             parentCycle: 'Родительский цикл',
+            retention: 'Удержание и активность',
         },
         signals: {
             earningNotSpending: {
@@ -216,6 +217,24 @@ export const adminMessages = {
                 desc: 'медиана на ребёнка за период',
             },
         },
+        retention: {
+            newFamilies: {
+                title: 'Новые семьи',
+                desc: 'зарегистрировались за период',
+            },
+            returningFamilies: {
+                title: 'Возвращающиеся',
+                desc: 'активны за период, зарегистрированы раньше',
+            },
+            active7d: {
+                title: 'Активны за 7 дней',
+                desc: 'семьи с активностью за последние 7 дней',
+            },
+            active30d: {
+                title: 'Активны за 30 дней',
+                desc: 'семьи с активностью за последние 30 дней',
+            },
+        },
         tooltips: {
             selectInfo: 'Нажмите на ⓘ для пояснения показателя',
             activeFamilies: {
@@ -262,6 +281,12 @@ export const adminMessages = {
             },
             activeDays: {
                 label: 'Активных дней',
+            },
+            active7d: {
+                label: 'Активны за 7 дней',
+            },
+            active30d: {
+                label: 'Активны за 30 дней',
             },
         },
         footer: {

@@ -63,7 +63,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countActiveFamilies(Instant periodStart) {
+    public int countActiveFamilies(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT h.familyDbId) FROM HistoryEntryEntity h
             WHERE h.createdAt >= :periodStart
@@ -907,6 +907,34 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             """;
         Long result = entityManager.createQuery(sql, Long.class)
             .setParameter("approved", PurchaseRequestStatus.approved)
+            .getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    // EXPLAIN: Retention/activity metrics for ADM-13
+    public int countNewFamilies(Instant periodStart) {
+        String sql = """
+            SELECT COUNT(f) FROM FamilyEntity f
+            WHERE f.createdAt >= :periodStart
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart)
+            .getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    public int countReturningFamilies(Instant periodStart) {
+        // EXPLAIN: Families active in period that registered before it
+        String sql = """
+            SELECT COUNT(DISTINCT h.familyDbId) FROM HistoryEntryEntity h
+            WHERE h.createdAt >= :periodStart
+            AND h.familyDbId IN (
+                SELECT f.id FROM FamilyEntity f
+                WHERE f.createdAt < :periodStart
+            )
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }

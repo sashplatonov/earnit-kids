@@ -21,6 +21,7 @@
     $: parentBehavior = data.parentBehavior;
     $: childBehavior = data.childBehavior;
     $: activationFunnel = data.activationFunnel;
+    $: retention = data.retention;
 
     // Tab definitions with semantic icons
     const tabs = [
@@ -40,7 +41,7 @@
     onMount(() => {
         if (!isAdmin) {
             // eslint-disable-next-line svelte/no-navigation-without-resolve
-            goto('/app/settings', { replaceState: true }).resolve();
+            goto('/app/settings', { replaceState: true });
         }
     });
 
@@ -471,7 +472,7 @@
                 <h2 class="section-title">{t('sections.activation')}</h2>
                 {#if activationFunnel?.stages && activationFunnel.stages.length > 0}
                     <div class="funnel">
-                        {#each activationFunnel.stages as stage}
+                        {#each activationFunnel.stages as stage (stage.key)}
                             <div class="step">
                                 <div class="step-line">
                                     <b>{stage.label}</b>
@@ -550,6 +551,39 @@
                         </div>
                     </div>
                 {/if}
+
+                <h2 class="section-title">{t('sections.retention')}</h2>
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="kpi-label">{t('retention.newFamilies.title')}</div>
+                        <div class="kpi-value">{retention?.retentionMetrics?.newFamilies ?? '—'}</div>
+                        <div class="kpi-foot">{t('retention.newFamilies.desc')}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('retention.returningFamilies.title')}</div>
+                        <div class="kpi-value">{retention?.retentionMetrics?.returningFamilies ?? '—'}</div>
+                        <div class="kpi-foot">{t('retention.returningFamilies.desc')}</div>
+                    </div>
+                </div>
+
+                <div class="metric-list">
+                    <div class="metric">
+                        <div>
+                            <strong>{t('retention.active7d.title')}</strong>
+                            <button class="mini-info" aria-label={t('tooltips.active7d.label')}>i</button>
+                            <small>{t('retention.active7d.desc')}</small>
+                        </div>
+                        <div class="metric-value">{retention?.retentionMetrics?.active7d ?? '—'}</div>
+                    </div>
+                    <div class="metric">
+                        <div>
+                            <strong>{t('retention.active30d.title')}</strong>
+                            <button class="mini-info" aria-label={t('tooltips.active30d.label')}>i</button>
+                            <small>{t('retention.active30d.desc')}</small>
+                        </div>
+                        <div class="metric-value">{retention?.retentionMetrics?.active30d ?? '—'}</div>
+                    </div>
+                </div>
 
                 <h2 class="section-title">{t('sections.parentNeeds')}</h2>
                 <div class="kpis">

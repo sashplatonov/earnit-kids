@@ -703,6 +703,38 @@ as rolling activity, clearly distinct from cohort retention.
 
 ---
 
+## ✅ ADM-13 - Retention/activity
+
+**Status:** ✅ COMPLETE - Implemented in commit `feat(admin): ADM-13 retention/activity`
+
+**Implemented:**
+- New families (registered during selected period)
+- Returning families (active in period, registered before it)
+- Active families (already present in KPI overview, shown in trend context)
+- Active in 7 days (rolling activity)
+- Active in 30 days (rolling activity)
+- Clearly labeled as rolling activity, distinct from cohort retention
+- No invented cohort retention (7-day/30-day return) since event history does not yet support trustworthy cohort reconstruction
+
+**Files created:**
+- `AdminRetentionResponse.java` - DTO with RetentionMetrics nested class
+- `AdminRetentionService.java` - service layer with period parsing
+- `AdminRetentionResource.java` - REST endpoint `GET /api/admin/analytics/retention?period=30d`
+
+**Files modified:**
+- `AdminAnalyticsRepository.java` - added `countNewFamilies`, `countReturningFamilies`, made `countActiveFamilies` public
+- `+page.server.ts` - fetch retention data
+- `+page.svelte` - activity tab retention section
+- i18n `ru/admin.ts` and `en/admin.ts` - retention translations
+
+**Verified:**
+- ✅ Backend compiles
+- ✅ Backend tests pass (484 tests)
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
+
+---
+
 # ADM-14 - Simple trends
 
 For the most useful metrics show compact trend bars/sparklines where data exists:
