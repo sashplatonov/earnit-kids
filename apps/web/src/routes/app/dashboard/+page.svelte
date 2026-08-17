@@ -356,24 +356,39 @@
                 </div>
 
                 <h2 class="section-title">{t('sections.popular')}</h2>
-                <div class="rows">
-                    <div class="rank">
-                        <div class="rank-icon">🎲</div>
-                        <div class="rank-content">
-                            <b>{t('popular.entertainment.title')}</b>
-                            <small>— {t('units.issues')}</small>
-                        </div>
-                        <div class="rank-val">#1</div>
+                {#if rewardShop?.rewardShopMetrics?.topPatterns && rewardShop.rewardShopMetrics.topPatterns.length > 0}
+                    <div class="rows">
+                        {#each rewardShop.rewardShopMetrics.topPatterns as pattern, i}
+                            <div class="rank">
+                                <div class="rank-icon">{pattern.icon || '🎁'}</div>
+                                <div class="rank-content">
+                                    <b>{pattern.groupName}</b>
+                                    <small>{pattern.count} · {pattern.percent}%</small>
+                                </div>
+                                <div class="rank-val">#{i + 1}</div>
+                            </div>
+                        {/each}
                     </div>
-                    <div class="rank">
-                        <div class="rank-icon">👨‍👩‍👧</div>
-                        <div class="rank-content">
-                            <b>{t('popular.familyTime.title')}</b>
-                            <small>— {t('units.issues')}</small>
+                {:else}
+                    <div class="rows">
+                        <div class="rank">
+                            <div class="rank-icon">🎲</div>
+                            <div class="rank-content">
+                                <b>{t('popular.entertainment.title')}</b>
+                                <small>— {t('units.issues')}</small>
+                            </div>
+                            <div class="rank-val">#1</div>
                         </div>
-                        <div class="rank-val">#2</div>
+                        <div class="rank">
+                            <div class="rank-icon">👨‍👩‍👧</div>
+                            <div class="rank-content">
+                                <b>{t('popular.familyTime.title')}</b>
+                                <small>— {t('units.issues')}</small>
+                            </div>
+                            <div class="rank-val">#2</div>
+                        </div>
                     </div>
-                </div>
+                {/if}
             </section>
 
             <!-- Tasks Tab -->

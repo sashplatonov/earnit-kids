@@ -14,6 +14,8 @@ import jakarta.persistence.PersistenceContext;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApplicationScoped
 public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEntity, Integer> {
@@ -213,6 +215,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         double medianPrice = calcMedianRewardPrice();
         double medianPurchasedPrice = calcMedianPurchasedPrice(periodStart);
         AdminRewardsResponse.RewardPriceDistribution priceDistribution = calcRewardPriceDistribution();
+        List<AdminRewardsResponse.TopRewardPattern> topPatterns = calcTopRewardPatterns(periodStart);
 
         return AdminRewardsResponse.RewardShopMetrics.builder()
             .rewardsConfigured(rewardsConfigured)
@@ -223,6 +226,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .medianPrice(medianPrice)
             .medianPurchasedPrice(medianPurchasedPrice)
             .priceDistribution(priceDistribution)
+            .topPatterns(topPatterns)
             .build();
     }
 
@@ -333,5 +337,41 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .bucket21to50(bucket21to50)
             .bucket51plus(bucket51plus)
             .build();
+    }
+
+    private List<AdminRewardsResponse.TopRewardPattern> calcTopRewardPatterns(Instant periodStart) {
+        String sql = """
+            SELECT s.groupName, s.icon, COUNT(p) as cnt
+            FROM PurchaseRequestEntity p
+            JOIN p.shopItem s
+            WHERE p.status = :status AND p.createdAt >= :periodStart
+            AND s.groupName IS NOT NULL AND s.groupName != ''
+            GROUP BY s.groupName, s.icon
+            ORDER BY cnt DESC
+            """;
+        var results = entityManager.createQuery(sql, Object[].class)
+            .setParameter("status", PurchaseRequestStatus.approved)
+            .setParameter("periodStart", periodStart)
+            .setMaxResults(5)
+            .getResultList();
+        
+        long total = countApprovedRewards(periodStart);
+        List<AdminRewardsResponse.TopRewardPattern> patterns = new ArrayList<>();
+        
+        for (Object[] row : results) {
+            String groupName = (String) row[0];
+            String icon = (String) row[1];
+            long count = ((Number) row[2]).longValue();
+            double percent = total > 0 ? Math.round(100.0 * count / total) : 0.0;
+            
+            patterns.add(AdminRewardsResponse.TopRewardPattern.builder()
+                .groupName(groupName)
+                .icon(icon)
+                .count(count)
+                .percent(percent)
+                .build());
+        }
+        
+        return patterns;
     }
 }
