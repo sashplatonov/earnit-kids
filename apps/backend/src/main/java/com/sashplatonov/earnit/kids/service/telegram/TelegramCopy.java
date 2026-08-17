@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
+import com.sashplatonov.earnit.kids.domain.model.RequestResolutionStatus;
+
 // EXPLAIN: Centralized user-facing copy for the Telegram bot. Every button
 // EXPLAIN: label is composed from exactly one semantic emoji taken from
 // EXPLAIN: TelegramBotEmoji plus a human label. Emoji literals must never be
@@ -133,6 +135,19 @@ public final class TelegramCopy {
     // EXPLAIN: Stale decision feedback shown instead of a second mutation.
     public static String stale() {
         return TelegramBotEmoji.INFO + " Этот запрос уже обработан";
+    }
+
+    // EXPLAIN: Final status line appended to a resolved request message. The
+    // EXPLAIN: message keeps its original body and gains a terminal status with
+    // EXPLAIN: no approve/reject buttons.
+    public static String requestResolved(String title, RequestResolutionStatus status) {
+        String statusLine = switch (status) {
+            case approved -> TelegramBotEmoji.SUCCESS + " Одобрено";
+            case rejected -> TelegramBotEmoji.DECLINE + " Отклонено";
+            case cancelled -> TelegramBotEmoji.CANCEL + " Отменено";
+            case deleted -> TelegramBotEmoji.DELETE + " Удалено";
+        };
+        return title == null || title.isBlank() ? statusLine : title + "\n" + statusLine;
     }
 
     // EXPLAIN: Generic action failure with retry-safe copy.

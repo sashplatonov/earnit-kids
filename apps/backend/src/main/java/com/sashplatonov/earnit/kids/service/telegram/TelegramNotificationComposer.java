@@ -61,6 +61,13 @@ public class TelegramNotificationComposer {
         return childOutcomeText(event);
     }
 
+    // EXPLAIN: Final status text for a REQUEST_RESOLVED event. The title comes
+    // EXPLAIN: from the event snapshot (captured before a physical delete) so the
+    // EXPLAIN: message can be updated even after the request entity is gone.
+    public String resolvedText(ApplicationOutboxEventEntity event) {
+        return TelegramCopy.requestResolved(event.getResolutionTitle(), event.getResolutionStatus());
+    }
+
     // EXPLAIN: Request-created notifications carry one-callback approve/reject
     // EXPLAIN: buttons so a parent can decide directly from the notification.
     private List<TelegramBotApiClient.InlineButton> requestButtons(ApplicationOutboxEventEntity event) {

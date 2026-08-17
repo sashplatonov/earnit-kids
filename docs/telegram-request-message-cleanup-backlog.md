@@ -500,7 +500,7 @@ Retention-проблема подтверждена (раздел 6): добав
 
 # P0-3: Одной операцией обновлять существующее сообщение и закрыть late-send race
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P0  
 **Depends on:** P0-1, P0-2
 

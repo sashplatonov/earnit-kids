@@ -34,7 +34,7 @@ class TelegramOutboxProcessorTest {
     private final TelegramNotificationComposer composer =
         new TelegramNotificationComposer(children, requests, shopItems, callbacks);
     private final TelegramOutboxProcessor processor = new TelegramOutboxProcessor(
-        planner, deliveries, events, api, config, composer);
+        planner, deliveries, events, requests, api, config, null, composer);
 
     @Test
     void successfulDeliveryIsTerminalAndUsesServerBalance() throws Exception {

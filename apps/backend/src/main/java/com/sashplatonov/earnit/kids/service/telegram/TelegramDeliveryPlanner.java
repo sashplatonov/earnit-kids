@@ -49,26 +49,60 @@ public class TelegramDeliveryPlanner {
         for (ApplicationOutboxEventEntity event : events.findPlanningCandidates(now.minus(PLANNING_LEASE))) {
             event.setPlanningClaimedAt(now);
             event.setPlanningStatus("PLANNING");
-            List<TelegramIdentityEntity> recipients = recipients(event);
             boolean notificationsEnabled = families.findFamilyIdByDbId(event.getFamilyId())
                 .map(featureGate::areNotificationsEnabled)
                 .orElse(false);
-            for (TelegramIdentityEntity identity : recipients) {
-                if (deliveries.findByEventAndRecipient(event.getId(), identity.getId()).isEmpty()) {
-                    TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
-                        .eventId(event.getId()).requestId(event.getRequestId())
-                        .recipientIdentityId(identity.getId())
-                        .chatId(identity.getTelegramUserId())
-                        .idempotencyKey(event.getId() + ":" + identity.getId())
-                        .status(notificationsEnabled ? "PENDING" : "SKIPPED_DISABLED")
-                        .nextAttemptAt(now).terminalAt(notificationsEnabled ? null : now).build();
-                    deliveries.persist(delivery);
-                    planned++;
-                    observability.outbox(notificationsEnabled ? "queued" : "skipped_disabled");
-                }
+            if (event.getEventType() == ApplicationOutboxEventType.REQUEST_RESOLVED) {
+                planned += planResolved(event, now, notificationsEnabled);
+            } else {
+                planned += planRecipients(event, now, notificationsEnabled);
             }
             event.setPlanningCompletedAt(now);
-            event.setPlanningStatus(status(recipients, event));
+            event.setPlanningStatus(status(event));
+        }
+        return planned;
+    }
+
+    // EXPLAIN: REQUEST_RESOLVED is not a new notification: it targets the exact
+    // EXPLAIN: request-created messages that were actually sent, so a delivery is
+    // EXPLAIN: created per original sent message instead of per current parent.
+    // EXPLAIN: The original message id is copied onto the resolved delivery so the
+    // EXPLAIN: processor knows exactly which Telegram message to edit.
+    private int planResolved(ApplicationOutboxEventEntity event, Instant now, boolean notificationsEnabled) {
+        int planned = 0;
+        for (TelegramDeliveryEntity original : deliveries.findSentRequestMessages(event.getRequestId())) {
+            if (deliveries.findByEventAndRecipient(event.getId(), original.getRecipientIdentityId()).isEmpty()) {
+                deliveries.persist(TelegramDeliveryEntity.builder()
+                    .eventId(event.getId()).requestId(event.getRequestId())
+                    .recipientIdentityId(original.getRecipientIdentityId())
+                    .chatId(original.getChatId())
+                    .messageId(original.getMessageId())
+                    .idempotencyKey(event.getId() + ":" + original.getRecipientIdentityId())
+                    .status(notificationsEnabled ? "PENDING" : "SKIPPED_DISABLED")
+                    .nextAttemptAt(now).terminalAt(notificationsEnabled ? null : now).build());
+                planned++;
+                observability.outbox(notificationsEnabled ? "queued" : "skipped_disabled");
+            }
+        }
+        return planned;
+    }
+
+    private int planRecipients(ApplicationOutboxEventEntity event, Instant now, boolean notificationsEnabled) {
+        int planned = 0;
+        List<TelegramIdentityEntity> recipients = recipients(event);
+        for (TelegramIdentityEntity identity : recipients) {
+            if (deliveries.findByEventAndRecipient(event.getId(), identity.getId()).isEmpty()) {
+                TelegramDeliveryEntity delivery = TelegramDeliveryEntity.builder()
+                    .eventId(event.getId()).requestId(event.getRequestId())
+                    .recipientIdentityId(identity.getId())
+                    .chatId(identity.getTelegramUserId())
+                    .idempotencyKey(event.getId() + ":" + identity.getId())
+                    .status(notificationsEnabled ? "PENDING" : "SKIPPED_DISABLED")
+                    .nextAttemptAt(now).terminalAt(notificationsEnabled ? null : now).build();
+                deliveries.persist(delivery);
+                planned++;
+                observability.outbox(notificationsEnabled ? "queued" : "skipped_disabled");
+            }
         }
         return planned;
     }
@@ -85,11 +119,12 @@ public class TelegramDeliveryPlanner {
             || type == ApplicationOutboxEventType.REWARD_REQUEST_CREATED;
     }
 
-    private String status(List<TelegramIdentityEntity> recipients, ApplicationOutboxEventEntity event) {
-        if (recipients.isEmpty()) {
+    private String status(ApplicationOutboxEventEntity event) {
+        List<TelegramDeliveryEntity> eventDeliveries = deliveries.findByEvent(event.getId());
+        if (eventDeliveries.isEmpty()) {
             return "NO_RECIPIENTS";
         }
-        return deliveries.findByEvent(event.getId()).stream().allMatch(this::isTerminal) ? "COMPLETE" : "PLANNED";
+        return eventDeliveries.stream().allMatch(this::isTerminal) ? "COMPLETE" : "PLANNED";
     }
 
     private boolean isTerminal(TelegramDeliveryEntity delivery) {
