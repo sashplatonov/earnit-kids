@@ -30,6 +30,8 @@ public class ApplicationOutboxEventEntity {
     @Column(name = "family_id", nullable = false) private Integer familyId;
     @Column(name = "child_id", nullable = false) private Integer childId;
     @Column(name = "request_id") private Long requestId;
+    @Enumerated(EnumType.STRING) @Column(name = "resolution_status") private RequestResolutionStatus resolutionStatus;
+    @Column(name = "resolution_title") private String resolutionTitle;
     @Column(name = "coin_delta", nullable = false) private int coinDelta;
     @Column(name = "resulting_balance") private Integer resultingBalance;
     @Column(name = "created_at", nullable = false) private Instant createdAt;

@@ -148,6 +148,7 @@ public class TelegramNotificationComposer {
             case REWARD_APPROVED -> TelegramBotEmoji.REWARD + " Reward approved";
             case REWARD_REJECTED -> TelegramBotEmoji.REJECT + " Reward rejected";
             case BALANCE_ADJUSTED -> TelegramBotEmoji.COINS + " Parent adjusted balance";
+            case REQUEST_RESOLVED -> "Request resolved";
         };
         if (event.getResultingBalance() == null || event.getCoinDelta() == 0) {
             return action;

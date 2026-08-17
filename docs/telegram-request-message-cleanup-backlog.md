@@ -316,7 +316,7 @@ action buttons отсутствуют.
 
 # P0-1: Публиковать `REQUEST_RESOLVED`
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P0
 
 ## Outcome

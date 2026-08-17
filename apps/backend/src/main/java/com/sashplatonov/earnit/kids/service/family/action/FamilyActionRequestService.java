@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
+import com.sashplatonov.earnit.kids.domain.model.RequestResolutionStatus;
 import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
@@ -177,6 +178,7 @@ final class FamilyActionRequestService {
             request.get(), FamilyActionRequestSupport.isPurchase(request.get())
                 ? -request.get().getCoins() : request.get().getCoins(),
             child.get().getBalance());
+        publishResolved(request.get(), RequestResolutionStatus.approved);
         int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
         return supportService.loadFamilyData(familyId, responseChildId, true);
     }
@@ -199,6 +201,7 @@ final class FamilyActionRequestService {
         publish(FamilyActionRequestSupport.isPurchase(request.get())
                 ? ApplicationOutboxEventType.REWARD_REJECTED : ApplicationOutboxEventType.TASK_REJECTED,
             request.get(), 0, null);
+        publishResolved(request.get(), RequestResolutionStatus.rejected);
         int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
         return supportService.loadFamilyData(familyId, responseChildId, true);
     }
@@ -224,7 +227,13 @@ final class FamilyActionRequestService {
         if (isChildDeletingOwnRequest && FamilyActionRequestSupport.isPending(request.get())) {
             // EXPLAIN: A child cancelling their own pending request soft-cancels it (status = cancelled) so it stays visible in history instead of being physically deleted; rejected requests and parent deletes keep the physical-delete behavior.
             request.get().setStatus(PurchaseRequestStatus.cancelled);
+            publishResolved(request.get(), RequestResolutionStatus.cancelled);
         } else {
+            // EXPLAIN: Publish the resolution before the physical delete so the
+            // EXPLAIN: deleted status and title are captured while the entity is
+            // EXPLAIN: still readable; the authoritative REQUEST_RESOLVED(deleted)
+            // EXPLAIN: then updates any previously sent Telegram message.
+            publishResolved(request.get(), RequestResolutionStatus.deleted);
             purchaseRequestRepository.delete(request.get());
         }
         return supportService.loadFamilyData(familyId, responseChildId, true);
@@ -266,5 +275,15 @@ final class FamilyActionRequestService {
     private void publish(ApplicationOutboxEventType type, PurchaseRequestEntity request, int delta, Integer balance) {
         eventSupport.publish(type, request.getFamilyId(), request.getChildId(), request.getId(), delta, balance,
             historyFactory.now());
+    }
+
+    // EXPLAIN: Publishes the single REQUEST_RESOLVED signal that tells the
+    // EXPLAIN: Telegram outbox to update previously sent request messages to a
+    // EXPLAIN: final status and drop the approve/reject buttons. The title is
+    // EXPLAIN: captured so a physically deleted request can still be rendered.
+    private void publishResolved(PurchaseRequestEntity request, RequestResolutionStatus status) {
+        eventSupport.publish(ApplicationOutboxEventType.REQUEST_RESOLVED,
+            request.getFamilyId(), request.getChildId(), request.getId(), 0, null,
+            historyFactory.now(), status, request.getTaskName());
     }
 }

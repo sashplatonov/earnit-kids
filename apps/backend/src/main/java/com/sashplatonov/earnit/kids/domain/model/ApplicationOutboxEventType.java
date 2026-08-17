@@ -8,5 +8,6 @@ public enum ApplicationOutboxEventType {
     REWARD_PURCHASED,
     REWARD_APPROVED,
     REWARD_REJECTED,
-    BALANCE_ADJUSTED
+    BALANCE_ADJUSTED,
+    REQUEST_RESOLVED
 }
