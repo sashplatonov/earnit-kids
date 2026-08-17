@@ -227,7 +227,7 @@ git commit -m "refactor(web): remove redundant history quick action and view-all
 
 ## P2-1: Привести вёрстку «Мои заявки» ребёнка к виду родителя
 
-**Статус:** ⬜ Не начато
+**Статус:** ✅ Выполнено
 **Приоритет:** P2
 **Зависит от:** —
 
