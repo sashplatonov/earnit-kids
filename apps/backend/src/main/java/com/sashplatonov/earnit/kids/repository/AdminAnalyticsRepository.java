@@ -212,6 +212,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         double rejectionRate = calcRejectionRate(periodStart);
         double medianPrice = calcMedianRewardPrice();
         double medianPurchasedPrice = calcMedianPurchasedPrice(periodStart);
+        AdminRewardsResponse.RewardPriceDistribution priceDistribution = calcRewardPriceDistribution();
 
         return AdminRewardsResponse.RewardShopMetrics.builder()
             .rewardsConfigured(rewardsConfigured)
@@ -221,6 +222,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .rejectionRate(rejectionRate)
             .medianPrice(medianPrice)
             .medianPurchasedPrice(medianPurchasedPrice)
+            .priceDistribution(priceDistribution)
             .build();
     }
 
@@ -308,5 +310,28 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return n % 2 == 0
             ? (sorted.get(n / 2 - 1) + sorted.get(n / 2)) / 2.0
             : sorted.get(n / 2);
+    }
+
+    private AdminRewardsResponse.RewardPriceDistribution calcRewardPriceDistribution() {
+        String sql = "SELECT s.price FROM ShopItemEntity s WHERE s.price > 0";
+        var prices = entityManager.createQuery(sql, Integer.class).getResultList();
+        
+        int bucket1to5 = 0, bucket6to10 = 0, bucket11to20 = 0, bucket21to50 = 0, bucket51plus = 0;
+        
+        for (int price : prices) {
+            if (price <= 5) bucket1to5++;
+            else if (price <= 10) bucket6to10++;
+            else if (price <= 20) bucket11to20++;
+            else if (price <= 50) bucket21to50++;
+            else bucket51plus++;
+        }
+        
+        return AdminRewardsResponse.RewardPriceDistribution.builder()
+            .bucket1to5(bucket1to5)
+            .bucket6to10(bucket6to10)
+            .bucket11to20(bucket11to20)
+            .bucket21to50(bucket21to50)
+            .bucket51plus(bucket51plus)
+            .build();
     }
 }

@@ -120,6 +120,7 @@ export const adminMessages = {
             keySignals: 'Ключевые сигналы',
             coinEconomy: 'Экономика монет',
             prices: 'Цены',
+            distribution: 'Распределение цен',
             popular: 'Что дети выбирают',
             content: 'Контент',
             activation: 'Активация семей',

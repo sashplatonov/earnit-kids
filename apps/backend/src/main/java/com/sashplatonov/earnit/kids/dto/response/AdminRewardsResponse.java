@@ -20,5 +20,16 @@ public class AdminRewardsResponse {
         private double rejectionRate;
         private double medianPrice;
         private double medianPurchasedPrice;
+        private RewardPriceDistribution priceDistribution;
+    }
+
+    @Data
+    @Builder
+    public static class RewardPriceDistribution {
+        private int bucket1to5;
+        private int bucket6to10;
+        private int bucket11to20;
+        private int bucket21to50;
+        private int bucket51plus;
     }
 }

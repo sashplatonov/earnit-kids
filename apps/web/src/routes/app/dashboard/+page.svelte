@@ -316,6 +316,45 @@
                     </div>
                 </div>
 
+                <h2 class="section-title">{t('sections.distribution')}</h2>
+                <div class="bars">
+                    <div class="bar-row">
+                        <span class="bar-label">1-5 🪙</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket1to5 ?? 0)}%"></div>
+                        </div>
+                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket1to5 ?? '—'}</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">6-10 🪙</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket6to10 ?? 0)}%"></div>
+                        </div>
+                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket6to10 ?? '—'}</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">11-20 🪙</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket11to20 ?? 0)}%"></div>
+                        </div>
+                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket11to20 ?? '—'}</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">21-50 🪙</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket21to50 ?? 0)}%"></div>
+                        </div>
+                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket21to50 ?? '—'}</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">50+ 🪙</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket51plus ?? 0)}%"></div>
+                        </div>
+                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket51plus ?? '—'}</span>
+                    </div>
+                </div>
+
                 <h2 class="section-title">{t('sections.popular')}</h2>
                 <div class="rows">
                     <div class="rank">
