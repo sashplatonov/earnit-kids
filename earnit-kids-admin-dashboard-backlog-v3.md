@@ -818,6 +818,26 @@ Do not execute many unrelated per-card queries directly from the UI/controller.
 
 ---
 
+## ✅ ADM-15 - Data definitions must be explicit
+
+**Status:** ✅ COMPLETE - Implemented in commit `docs(admin): ADM-15 explicit metric definitions`
+
+**Implemented:**
+- Created central analytics definitions document `apps/backend/docs/ADMIN_ANALYTICS.md`
+- Single source of truth for every dashboard metric definition and query
+- Documents architecture (resource → service → repository) and period semantics
+- Defines all metrics exactly once: `active_family`, `active_child`, `coins_earned`, `coins_spent`, `reward_completed`, `task_completed`, `first_reward_at`, and all others
+- Documents trend point aggregation
+- Rules: no duplicate definitions, no per-card queries from UI/controller, aggregate in DB, safe zero denominators
+
+**Files created:**
+- `apps/backend/docs/ADMIN_ANALYTICS.md`
+
+**Verified:**
+- ✅ Documentation-only change (no code impact)
+
+---
+
 # ADM-16 - Aggregated API
 
 Expose one dashboard-oriented API response or a small number of section endpoints.
