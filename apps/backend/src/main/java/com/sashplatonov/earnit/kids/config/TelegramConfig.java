@@ -36,6 +36,9 @@ public interface TelegramConfig {
     boolean notificationsEnabled();
 
     @WithDefault("")
+    Optional<String> adminUserIds();
+
+    @WithDefault("")
     Optional<String> rolloutFamilyId();
 
     @WithDefault("false")
