@@ -123,11 +123,11 @@ public class TelegramBotApiClient {
         );
     }
 
-    // EXPLAIN: A web_app button opens the Mini App client-side; a plain button
-    // EXPLAIN: only sends its label as a message (used for nav actions).
+    // EXPLAIN: A url button opens the URL in the in-app browser when tapped —
+    // EXPLAIN: no message is sent to the bot. Used for site and mini app links.
     private Map<String, Object> replyKeyboardButtonPayload(TelegramReplyKeyboard.Button button) {
-        if (button.webAppUrl() != null) {
-            return Map.of("text", button.label(), "web_app", Map.of("url", button.webAppUrl()));
+        if (button.url() != null) {
+            return Map.of("text", button.label(), "url", button.url());
         }
         return Map.of("text", button.label());
     }

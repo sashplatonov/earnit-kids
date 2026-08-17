@@ -10,7 +10,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.jboss.logging.Logger;
 
-import java.net.URI;
 import java.util.List;
 
 @ApplicationScoped
@@ -68,6 +67,12 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         this.families = families;
     }
 
+    // EXPLAIN: Lazily-built reply keyboard navigator (SRP) — keeps this class
+    // EXPLAIN: focused on webhook dispatch and below the PMD GodClass gate.
+    private TelegramReplyKeyboardNavigator replyKeyboardNavigator() {
+        return new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient);
+    }
+
     @Override
     @Transactional
     public void handleUpdate(JsonNode update) {
@@ -94,13 +99,13 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         }
         // EXPLAIN: UX-01 — persistent reply keyboard navigation. If the text matches
         // EXPLAIN: a known nav action, handle it as navigation; otherwise treat as /start.
+        if (!TelegramFeatureSupport.isEnabledForFamily(featureGate, identities, families, telegramUserId)) {
+            return;
+        }
         if (TelegramMenuFlow.isStartCommand(text)) {
-            if (!isEnabledForFamily(telegramUserId)) {
-                return;
-            }
             handleStartCommand(chatId, telegramUserId);
         } else if (telegramUserId != Long.MIN_VALUE) {
-            handleReplyKeyboardNavigation(message, chatId, telegramUserId);
+            replyKeyboardNavigator().handle(message, chatId, telegramUserId);
         }
     }
 
@@ -109,7 +114,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         if (miniAppUrl.isBlank()) {
             return;
         }
-        String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+        String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
         if (quickActions != null && menuBuilder != null && telegramUserId != Long.MIN_VALUE) {
             var view = quickActions.load(telegramUserId, null);
             if (view.isPresent()) {
@@ -136,60 +141,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             List.of(new TelegramBotApiClient.InlineButton("Open Mini App", miniAppUrl)));
     }
 
-    // EXPLAIN: UX-01 — routes reply keyboard button taps to the appropriate handler.
-    // EXPLAIN: The message text matches a BotNavAction label to determine navigation.
-    private void handleReplyKeyboardNavigation(JsonNode message, long chatId, long telegramUserId)
-        throws Exception {
-        String label = message.path("text").asText("");
-        BotNavAction.fromLabel(label).ifPresent(action -> {
-            try {
-                if (!isEnabledForFamily(telegramUserId)) {
-                    return;
-                }
-                if (action == BotNavAction.OPEN_SITE) {
-                    // EXPLAIN: UX-04 — a persistent reply-keyboard button cannot open an
-                    // EXPLAIN: external URL directly, so the bot replies with one compact
-                    // EXPLAIN: message carrying a single URL button (no menu rebuild).
-                    String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
-                    if (!publicSiteUrl.isBlank()) {
-                        apiClient.sendMessage(chatId, TelegramCopy.NAV_OPEN_SITE,
-                            List.of(TelegramBotApiClient.InlineButton.url(
-                                TelegramCopy.SHARE_SITE, publicSiteUrl, null)));
-                    }
-                } else if (action != BotNavAction.OPEN_APP) {
-                    // EXPLAIN: OPEN_APP is a web_app button and opens client-side, so it
-                    // EXPLAIN: never arrives here as a text message. All other nav actions
-                    // EXPLAIN: navigate the home card.
-                    navigateByAction(chatId, telegramUserId, action.actionCode());
-                }
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        });
-    }
-
-    // EXPLAIN: UX-01 — sends navigation content with the persistent reply keyboard.
-    // EXPLAIN: UX-06 — the reply keyboard is always present; no inline menu is appended.
-    private void navigateByAction(long chatId, long telegramUserId, String action) throws Exception {
-        if (quickActions == null || menuBuilder == null) {
-            return;
-        }
-        String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
-        String miniAppUrl = config.miniAppUrl().orElse("");
-        quickActions.load(telegramUserId, TelegramMenuFlow.selectedChildId(action))
-            .ifPresent(view -> {
-                try {
-                    String navText = TelegramMenuFlow.navigationText(action, view);
-                    TelegramReplyKeyboard replyKeyboard = "child".equals(view.role())
-                        ? new BotKeyboardFactory(null, miniAppUrl).childMain()
-                        : new BotKeyboardFactory(publicSiteUrl, miniAppUrl).parentMain();
-                    apiClient.sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                }
-            });
-    }
-
     private void handleCallback(JsonNode callback) throws Exception {
         String callbackId = callback.path("id").asText("");
         long telegramUserId = callback.path("from").path("id").asLong(Long.MIN_VALUE);
@@ -198,7 +149,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             return;
         }
         try {
-            if (!isEnabledForFamily(telegramUserId)) {
+            if (!TelegramFeatureSupport.isEnabledForFamily(featureGate, identities, families, telegramUserId)) {
                 return;
             }
             if (data.startsWith("nav.")) {
@@ -256,7 +207,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             return;
         }
         String miniAppUrl = config.miniAppUrl().orElse("");
-        String publicSiteUrl = normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+        String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
         quickActions.load(verified.telegramUserId(), TelegramMenuFlow.selectedChildId(verified.action()))
             .ifPresent(view -> {
             try {
@@ -266,41 +217,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 throw new IllegalStateException(exception);
             }
         });
-    }
-
-    private boolean isEnabledForFamily(long telegramUserId) {
-        if (featureGate == null) {
-            return true;
-        }
-        return identities.findActiveByTelegramUserId(telegramUserId)
-            .flatMap(identity -> families.findFamilyIdByDbId(identity.familyId()))
-            .map(featureGate::isBotEnabled)
-            // EXPLAIN: Unlinked users receive generic /start entry without family data.
-            .orElse(true);
-    }
-
-    // EXPLAIN: The public site share button must point at the site root, never
-    // EXPLAIN: at a specific app page. APP_URL may carry a path/query (e.g.
-    // EXPLAIN: /en/app/tasks); strip it down to the bare origin so the button
-    // EXPLAIN: always opens the public marketing site.
-    private static String normalizePublicSiteUrl(String value) {
-        if (value == null || value.isBlank()) {
-            return "";
-        }
-        String trimmed = value.trim();
-        try {
-            URI uri = URI.create(trimmed);
-            if (uri.getScheme() == null || uri.getHost() == null) {
-                return trimmed;
-            }
-            String origin = uri.getScheme() + ":" + '/' + '/' + uri.getHost();
-            if (uri.getPort() >= 0) {
-                origin = origin + ":" + uri.getPort();
-            }
-            return origin;
-        } catch (Exception exception) {
-            return trimmed;
-        }
     }
 
 }
