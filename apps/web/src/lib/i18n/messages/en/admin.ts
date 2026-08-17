@@ -247,6 +247,10 @@ export const adminMessages = {
             },
             empty: 'No data for the period',
         },
+        empty: {
+            title: 'No data for the period',
+            desc: 'No registered families yet. Metrics will appear as families start using the service.',
+        },
         tooltips: {
             selectInfo: 'Tap on ⓘ for metric explanation',
             activeFamilies: {

@@ -997,6 +997,27 @@ Dashboard must work with:
 
 ---
 
+## ✅ ADM-19 - Empty / low-data states
+
+**Status:** ✅ COMPLETE - Implemented in commit `feat(admin): ADM-19 empty/low-data states`
+
+**Implemented:**
+- Added global empty-state banner when there are 0 registered families (`📭 Нет данных за период`)
+- All metrics already use `?? '—'` for unavailable values
+- Backend already guards all divide-by-zero denominators (returns `0` or `—`)
+- Empty states already present for trends, top reward patterns, and activation funnel
+- Dashboard works with 0 families, 1 family, no rewards, no purchases, coins earned = 0, no historical events
+
+**Files modified:**
+- `+page.svelte` - global empty-state banner + CSS
+- i18n `ru/admin.ts` and `en/admin.ts` - empty-state translations
+
+**Verified:**
+- ✅ `npm run lint` passes
+- ✅ `npm run build` passes
+
+---
+
 # ADM-20 - Performance
 
 Global analytics can become expensive as family count grows.

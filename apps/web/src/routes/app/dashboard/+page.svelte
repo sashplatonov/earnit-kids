@@ -117,6 +117,14 @@
             </div>
         </div>
 
+        {#if (overview?.overview?.totalFamilies ?? 0) === 0}
+            <div class="empty-state" role="status">
+                <span class="empty-ico" aria-hidden="true">📭</span>
+                <b>{t('empty.title')}</b>
+                <small>{t('empty.desc')}</small>
+            </div>
+        {/if}
+
         <!-- Tab navigation -->
         <div class="tabs-wrap">
             <div class="tabs" role="tablist" aria-label={t('aria.tabs')}>
@@ -1185,6 +1193,33 @@
         color: var(--muted, #8791a6);
         font-size: 12px;
         text-align: center;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 22px 16px;
+        margin: 4px 0 12px;
+        background: #fff;
+        border: 1px dashed #ccd2df;
+        border-radius: 15px;
+        text-align: center;
+    }
+
+    .empty-ico {
+        font-size: 26px;
+    }
+
+    .empty-state b {
+        font-size: 14px;
+    }
+
+    .empty-state small {
+        color: var(--muted, #8791a6);
+        font-size: 12px;
+        line-height: 1.4;
     }
 
     .footer-note {
