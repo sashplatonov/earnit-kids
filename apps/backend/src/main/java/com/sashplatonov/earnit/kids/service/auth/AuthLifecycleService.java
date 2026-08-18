@@ -35,7 +35,7 @@ class AuthLifecycleService {
         }
 
         boolean verificationEnabled = supportService.isEmailVerificationEnabled();
-        String familyId = email.replaceAll("[^a-zA-Z0-9]", "_") + "_" + System.currentTimeMillis();
+        String familyId = "fam_" + supportService.generateHexToken(16);
         String verificationToken = verificationEnabled ? supportService.generateHexToken(32) : null;
         String hashedPassword = supportService.hashPassword(adminPassword);
 
