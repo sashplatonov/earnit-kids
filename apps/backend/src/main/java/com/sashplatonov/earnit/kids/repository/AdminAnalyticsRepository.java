@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.repository;
 
+import com.sashplatonov.earnit.kids.domain.model.ChildStatus;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
@@ -153,10 +154,16 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     public AdminCoinEconomyResponse.BalanceMetrics getBalanceMetrics() {
+        // EXPLAIN: ChildEntity has no test-account flag; real children are the
+        // EXPLAIN: active ones (status = ACTIVE), matching how the rest of the
+        // EXPLAIN: domain filters children (see FamilyDashboardScopeLoader,
+        // EXPLAIN: FamilyNotificationServiceImpl).
         String sql = """
-            SELECT c.balance FROM ChildEntity c WHERE c.isTestAccount = false
+            SELECT c.balance FROM ChildEntity c WHERE c.status = :activeStatus
             """;
-        var balances = entityManager.createQuery(sql, Integer.class).getResultList();
+        var balances = entityManager.createQuery(sql, Integer.class)
+            .setParameter("activeStatus", ChildStatus.ACTIVE.name())
+            .getResultList();
 
         if (balances.isEmpty()) {
             return AdminCoinEconomyResponse.BalanceMetrics.builder()
@@ -402,7 +409,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private double calcFamiliesUsingCatalogPercent(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN HistoryEntryEntity h ON h.relatedId = c.id
             WHERE h.createdAt >= :periodStart
             AND h.groupName IS NOT NULL AND h.groupName != ''
@@ -419,7 +426,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private double calcFamiliesUsingCustomContentPercent(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN HistoryEntryEntity h ON h.relatedId = c.id
             WHERE h.createdAt >= :periodStart
             AND (h.groupName IS NULL OR h.groupName = '' OR h.groupName = 'custom')
@@ -480,7 +487,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
 
     private int countFamiliesWithPendingRequests() {
         String sql = """
-            SELECT COUNT(DISTINCT c.familyId) FROM ChildEntity c
+            SELECT COUNT(DISTINCT c.familyDbId) FROM ChildEntity c
             JOIN PurchaseRequestEntity pr ON pr.childId = c.id
             WHERE pr.status = :pending
             """;
@@ -687,7 +694,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private int countFamiliesWithChild() {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             """;
         Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
@@ -696,7 +703,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private int countFamiliesWithTask() {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN TaskEntity t ON t.childId = c.id
             """;
         Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
@@ -706,7 +713,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private int countFamiliesWithTaskCompletion() {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN HistoryEntryEntity h ON h.relatedId = c.id
             WHERE h.type = :type
             """;
@@ -719,7 +726,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private int countFamiliesWithCoinEarn() {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN HistoryEntryEntity h ON h.relatedId = c.id
             WHERE h.type = :type
             """;
@@ -732,7 +739,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private int countFamiliesWithRewardConfigured() {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN ShopItemEntity s ON s.childId = c.id
             """;
         Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
@@ -742,7 +749,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private int countFamiliesWithRewardReceived() {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyId = f.id
+            JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN PurchaseRequestEntity pr ON pr.childId = c.id
             WHERE pr.status = :approved AND pr.requestType IN (:shop, :shopPurchase)
             """;

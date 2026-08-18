@@ -93,6 +93,39 @@ class AdminAnalyticsRepositoryTest {
         return created.get();
     }
 
+    @Test
+    @Transactional
+    void balanceMetricsDoNotThrowAndIncludeActiveChildren() {
+        // EXPLAIN: Production P0 — getBalanceMetrics previously referenced the
+        // EXPLAIN: non-existent ChildEntity.isTestAccount attribute, crashing
+        // EXPLAIN: GET /api/admin/dashboard with a 500. It must not throw.
+        assertThatCode(() -> adminAnalyticsRepository.getBalanceMetrics())
+            .doesNotThrowAnyException();
+
+        FamilyEntity family = seedFamily();
+        ChildEntity child = seedChild(family.getId());
+        assertThat(child.getStatus()).isEqualTo("ACTIVE");
+
+        assertThatCode(() -> adminAnalyticsRepository.getBalanceMetrics())
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    @Transactional
+    void familyJoinsUseCorrectFamilyDbIdAttribute() {
+        // EXPLAIN: Production P0 family — ChildEntity exposes familyDbId, not
+        // EXPLAIN: familyId; queries joining on c.familyId throw UnknownPathException.
+        // EXPLAIN: The dashboard composes several such queries (catalog/custom
+        // EXPLAIN: usage, activation funnel), so exercise them all.
+        FamilyEntity family = seedFamily();
+        seedChild(family.getId());
+
+        assertThatCode(() -> adminAnalyticsRepository.getParentBehaviorMetrics(Instant.EPOCH))
+            .doesNotThrowAnyException();
+        assertThatCode(() -> adminAnalyticsRepository.getActivationFunnel())
+            .doesNotThrowAnyException();
+    }
+
     private ChildEntity seedChild(int familyDbId) {
         Optional<ChildEntity> child = childRepository.createChild(familyDbId, "Kid " + System.nanoTime());
         assertThat(child).isPresent();
