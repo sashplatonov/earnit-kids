@@ -65,6 +65,25 @@ export async function proxyToBackend(event: RequestEvent): Promise<Response> {
 
     const response = await fetch(targetUrl, requestInit);
 
+    // EXPLAIN: Log /api/data responses to debug admin dashboard visibility —
+    // EXPLAIN: the isAdmin field in the JSON determines whether the Dashboard
+    // EXPLAIN: card is shown in Settings. This server-side log appears in the
+    // EXPLAIN: web container stdout, not dependent on the UI-log forwarder.
+    if (event.url.pathname === '/api/data' && response.ok) {
+        try {
+            const cloned = response.clone();
+            const body = await cloned.text();
+            const parsed = body ? JSON.parse(body) : {};
+            console.info('[proxy] /api/data response:', {
+                isAdmin: parsed.isAdmin,
+                role: parsed.role ?? null,
+                familyId: parsed.familyId ?? null,
+            });
+        } catch {
+            // ignore parse errors — don't break the proxy
+        }
+    }
+
     return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
