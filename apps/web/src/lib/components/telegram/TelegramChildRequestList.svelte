@@ -84,7 +84,7 @@
     .panel { width:100%; }
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
-    .items { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
+    .items { display:flex; flex-direction:column; gap:.55rem; width:100%; }
     .cancel { display:inline-flex; align-items:center; gap:.35rem; min-height:2rem; padding:.35rem .55rem; border:1px solid #f3cfd2; border-radius:.55rem; background:#fff0f1; color:#c63c42; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
     .cancel:disabled { cursor:wait; opacity:.6; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }

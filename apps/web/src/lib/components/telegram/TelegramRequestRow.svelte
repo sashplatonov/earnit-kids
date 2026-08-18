@@ -45,7 +45,7 @@
 </article>
 
 <style>
-    .request-card { display:flex; align-items:flex-start; gap:.65rem; padding:.6rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
+    .request-card { display:flex; align-items:flex-start; gap:.65rem; width:100%; box-sizing:border-box; padding:.6rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
     .entity-graphic { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border-radius:.75rem; background:#f5f6fa; }
     .entity-emoji { font-size:1.35rem; line-height:1; }
     .entity-icon { display:grid; place-items:center; color:#5b63e9; }
