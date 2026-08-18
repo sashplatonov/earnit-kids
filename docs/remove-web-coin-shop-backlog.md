@@ -245,7 +245,7 @@ git commit -m "refactor(web,backend): remove reward-goal feature"
 
 ## P0-5: Remove the shop portion of the print catalog
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** P0-4
 

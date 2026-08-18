@@ -9,9 +9,7 @@
         nickname: string;
         balance: number;
         taskGroupOrder?: string[];
-        shopGroupOrder?: string[];
         childTaskGroupOrder?: string[];
-        childShopGroupOrder?: string[];
     };
 
     type PrintTask = {
@@ -24,18 +22,6 @@
         ageMin?: number | null;
         ageMax?: number | null;
         lastCompletedAt?: unknown;
-        frequency?: { limit?: number; period?: string } | null;
-        isActive?: boolean;
-    };
-
-    type PrintShopItem = {
-        id: string | number;
-        name: string;
-        price: number;
-        groupName?: string | null;
-        comment?: string | null;
-        moneyLimit?: number | null;
-        lastPurchasedAt?: unknown;
         frequency?: { limit?: number; period?: string } | null;
         isActive?: boolean;
     };
@@ -55,7 +41,6 @@
     const i18n = useI18n();
 
     $: tasks = data.tasks as unknown as PrintTask[];
-    $: shopItems = data.shopItems as unknown as PrintShopItem[];
     $: children = data.children as unknown as PrintChild[];
     $: currentChild = (children.find((child) => String(child.id) === String(data.childId)) ?? children[0] ?? null) as PrintChild | null;
     $: taskGroups = groupItems(
@@ -65,14 +50,6 @@
             getEffectiveGroupOrder(currentChild, 'tasks', data.isAdmin),
         ),
         (task) => normalizeGroupLabel(task.groupName),
-    );
-    $: shopGroups = groupItems(
-        shopItems,
-        orderGroups(
-            [...new Set(shopItems.map((item) => normalizeGroupLabel(item.groupName)))],
-            getEffectiveGroupOrder(currentChild, 'shop', data.isAdmin),
-        ),
-        (item) => normalizeGroupLabel(item.groupName),
     );
 
     function groupItems<T>(items: T[], orderedGroups: string[], getGroupLabel: (item: T) => string): CatalogGroup<T>[] {
@@ -92,7 +69,7 @@
         return groups;
     }
 
-    function formatFrequency(prefix: 'tasks' | 'shop', frequency: { limit?: number; period?: string } | null | undefined) {
+    function formatFrequency(frequency: { limit?: number; period?: string } | null | undefined) {
         const limit = frequency?.limit;
         const period = frequency?.period;
 
@@ -112,10 +89,10 @@
         const periodKey = periodMap[period];
 
         if (!periodKey) {
-            return $i18n.t(`${prefix}.frequencyFallback` as MessageKey, { limit: $i18n.formatNumber(numericLimit) });
+            return $i18n.t(`tasks.frequencyFallback` as MessageKey, { limit: $i18n.formatNumber(numericLimit) });
         }
 
-        return $i18n.t(`${prefix}.${periodKey}.${pluralCategory}` as MessageKey, { limit: $i18n.formatNumber(numericLimit) });
+        return $i18n.t(`tasks.${periodKey}.${pluralCategory}` as MessageKey, { limit: $i18n.formatNumber(numericLimit) });
     }
 
     function formatLastDate(value: unknown) {
@@ -132,7 +109,7 @@
             { label: task.groupName ?? $i18n.t('tasks.section.noGroup') },
         ];
 
-        const frequency = formatFrequency('tasks', task.frequency);
+        const frequency = formatFrequency(task.frequency);
         if (frequency) {
             chips.push({ label: frequency });
         }
@@ -161,35 +138,6 @@
 
         return chips;
     }
-
-    function shopChips(item: PrintShopItem): PrintChip[] {
-        const chips: PrintChip[] = [
-            { label: item.groupName ?? $i18n.t('shop.section.noGroup') },
-        ];
-
-        const frequency = formatFrequency('shop', item.frequency);
-        if (frequency) {
-            chips.push({ label: frequency });
-        }
-
-        if (item.moneyLimit != null) {
-            chips.push({
-                label: $i18n.t('shop.section.moneyLimit', { amount: $i18n.formatNumber(item.moneyLimit) }),
-                className: 'catalog-card__chip--money',
-            });
-        }
-
-        const date = formatLastDate(item.lastPurchasedAt);
-        if (date) {
-            chips.push({ label: $i18n.t('shop.section.lastPurchased', { date }) });
-        }
-
-        if (item.isActive === false) {
-            chips.push({ label: $i18n.t('shop.section.blocked') });
-        }
-
-        return chips;
-    }
 </script>
 
 <svelte:head>
@@ -204,7 +152,7 @@
         </header>
     {/if}
 
-    {#if tasks.length === 0 && shopItems.length === 0}
+    {#if tasks.length === 0}
         <section class="print-empty">
             <h2>{$i18n.t('common.printCatalog')}</h2>
             <p>{$i18n.t('common.printCatalogEmpty')}</p>
@@ -234,39 +182,6 @@
                                             {/each}
                                         </div>
                                         <p>{task.comment || $i18n.t('tasks.section.defaultComment')}</p>
-                                    </article>
-                                {/each}
-                            </div>
-                        </section>
-                    {/each}
-                </div>
-            </section>
-        {/if}
-
-        {#if shopItems.length > 0}
-            <section class="catalog-section catalog-section--shop">
-                <div class="catalog-section__head">
-                    <p class="catalog-section__eyebrow">{$i18n.t('common.navigation.shop')}</p>
-                    <h2>{$i18n.t('shop.section.title')}</h2>
-                </div>
-
-                <div class="group-stack">
-                    {#each shopGroups as group (group.label)}
-                        <section class="group-panel group-panel--shop">
-                            <h3>{group.label}</h3>
-                            <div class="card-grid">
-                                {#each group.items as item (item.id)}
-                                    <article class="catalog-card">
-                                        <div class="catalog-card__topline">
-                                            <span class="catalog-card__value">{$i18n.formatNumber(item.price)}</span>
-                                        </div>
-                                        <h4>{item.name}</h4>
-                                        <div class="catalog-card__chips">
-                                            {#each shopChips(item) as chip, chipIndex (`${chip.label}-${chipIndex}`)}
-                                                <span class={`catalog-card__chip ${chip.className ?? ''}`}>{chip.label}</span>
-                                            {/each}
-                                        </div>
-                                        <p>{item.comment || $i18n.t('shop.section.defaultComment')}</p>
                                     </article>
                                 {/each}
                             </div>
@@ -361,10 +276,6 @@
 
     .group-panel--tasks {
         background: linear-gradient(180deg, rgba(219, 234, 186, 0.42), rgba(255, 255, 255, 0.94));
-    }
-
-    .group-panel--shop {
-        background: linear-gradient(180deg, rgba(233, 221, 255, 0.42), rgba(255, 255, 255, 0.94));
     }
 
     .group-panel h3 {
@@ -500,12 +411,6 @@
             page-break-inside: auto;
         }
 
-        .catalog-section--shop {
-            break-before: page;
-            page-break-before: always;
-            margin-top: 0;
-        }
-
         .catalog-section__head {
             margin-bottom: 1.8mm;
             break-after: avoid;
@@ -599,8 +504,7 @@
             font-size: 9pt;
         }
 
-        .group-panel--tasks,
-        .group-panel--shop {
+        .group-panel--tasks {
             background: #fff;
         }
 
@@ -611,10 +515,6 @@
 
         .group-panel--tasks {
             border-color: rgba(112, 145, 57, 0.35);
-        }
-
-        .group-panel--shop {
-            border-color: rgba(116, 90, 192, 0.32);
         }
     }
 </style>

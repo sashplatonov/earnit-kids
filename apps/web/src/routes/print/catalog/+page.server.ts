@@ -60,7 +60,6 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
         childName: normalized.childNickname ?? '',
         isAdmin: isAdminRole(locals.session.role),
         tasks: normalized.tasks,
-        shopItems: normalized.shop,
         children: normalized.children,
     };
 };
