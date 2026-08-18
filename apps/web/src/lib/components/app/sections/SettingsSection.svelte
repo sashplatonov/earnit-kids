@@ -29,6 +29,13 @@
     // EXPLAIN: the Dashboard card is visible on the very first SSR render.
     $: sessionIsAdmin = session?.role === 'admin' || session?.role === 'parent' || session?.role === 'super_admin';
     $: isAdmin = $appStore.isAdmin || sessionIsAdmin;
+
+    // EXPLAIN: Diagnostic log forwarded to backend container logs to trace
+    // EXPLAIN: admin visibility. Only logs on the client (browser).
+    $: if (typeof window !== 'undefined') {
+        console.info('[SettingsSection] isAdmin:', isAdmin, 'sessionIsAdmin:', sessionIsAdmin,
+            'role:', session?.role, 'appStoreIsAdmin:', $appStore.isAdmin);
+    }
     $: isLoading = $appStore.isLoading;
     $: childNickname = $appStore.childNickname ?? '';
     $: currentChildId = $appStore.currentChildId;

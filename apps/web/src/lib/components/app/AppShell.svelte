@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { browser } from '$app/environment';
     import AppHeader from './AppHeader.svelte';
     import AppNav from './AppNav.svelte';
     import Toast from './Toast.svelte';
@@ -26,6 +27,12 @@
     export let session: SessionSnapshot;
     export let activeSection: AppSection;
 
+    // EXPLAIN: Install the UI-log forwarder BEFORE any console.info below so
+    // EXPLAIN: diagnostic logs reach the backend container. Only on the client.
+    if (browser) {
+        initUiLogForwarder();
+    }
+
     const isAdmin = session.role === 'admin' || session.role === 'parent' || session.role === 'super_admin';
     const isSuperAdmin = session.role === 'super_admin';
 
@@ -49,8 +56,6 @@
     $: reqCount = $pendingRequestsCount;
 
     onMount(() => {
-        // Forward browser console logs to the backend so they appear in container logs
-        initUiLogForwarder();
         let mounted = true;
         let cleanupPwa: (() => void) | null = null;
 
