@@ -7,7 +7,6 @@ import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminDashboardResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminParentBehaviorResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminRetentionResponse;
-import com.sashplatonov.earnit.kids.dto.response.AdminRewardsResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
 import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -30,9 +29,6 @@ public class AdminDashboardService {
     AdminCoinEconomyService coinEconomyService;
 
     @Inject
-    AdminRewardShopService rewardShopService;
-
-    @Inject
     AdminTaskEconomyService taskEconomyService;
 
     @Inject
@@ -52,7 +48,6 @@ public class AdminDashboardService {
     public AdminDashboardResponse getDashboard(String period) {
         AdminAnalyticsResponse overview = overviewService.getOverview(period);
         AdminCoinEconomyResponse coinEconomy = coinEconomyService.getCoinEconomy(period);
-        AdminRewardsResponse rewardShop = rewardShopService.getRewardShop(period);
         AdminTasksResponse tasks = taskEconomyService.getTaskEconomy(period);
         AdminParentBehaviorResponse parentSignals = parentBehaviorService.getParentBehavior(period);
         AdminChildBehaviorResponse childSignals = childBehaviorService.getChildBehavior(period);
@@ -62,7 +57,6 @@ public class AdminDashboardService {
         return AdminDashboardResponse.builder()
             .overview(overview.getOverview())
             .coinEconomy(coinEconomy)
-            .rewardShop(rewardShop)
             .tasks(tasks)
             .parentSignals(parentSignals)
             .childSignals(childSignals)

@@ -93,7 +93,6 @@ export const adminMessages = {
         tabs: {
             overview: 'Overview',
             coins: 'Coins',
-            rewards: 'Rewards',
             tasks: 'Tasks',
             activity: 'Activity',
         },
@@ -119,9 +118,6 @@ export const adminMessages = {
         sections: {
             keySignals: 'Key signals',
             coinEconomy: 'Coin economy',
-            prices: 'Prices',
-            distribution: 'Price distribution',
-            popular: 'What children choose',
             content: 'Content',
             activation: 'Family activation',
             parentCycle: 'Parent cycle',
@@ -161,30 +157,6 @@ export const adminMessages = {
             earningNotSpending: {
                 title: 'Earning but not spending',
                 desc: 'earned coins but did not receive rewards',
-            },
-        },
-        rewards: {
-            requests: 'Reward requests',
-            issued: 'Rewards issued',
-            medianPrice: {
-                title: 'Median price',
-                desc: 'active rewards',
-            },
-            chosenPrice: {
-                title: 'Chosen reward price',
-                desc: 'actually received rewards',
-            },
-            failed: {
-                title: 'Failed',
-                desc: 'declined / cancelled',
-            },
-        },
-        popular: {
-            entertainment: {
-                title: 'Time & entertainment',
-            },
-            familyTime: {
-                title: 'Family time',
             },
         },
         tasks: {
@@ -291,22 +263,6 @@ export const adminMessages = {
                 label: 'Earning but not spending',
                 body: 'Share of active children who earned coins in the selected period but received no reward.\n\nExample: 100 children earned coins, 38 of them received no rewards. Metric = 38%.\n\nThis is a signal to check prices, reward assortment, and the request/approval flow.',
             },
-            rewardsIssued: {
-                label: 'Rewards issued',
-                body: 'Number of successfully issued rewards in the selected period.\n\nCalculation: reward requests with status "approved".\n\nExample: 116 rewards issued in 30 days.',
-            },
-            medianPrice: {
-                label: 'Median price',
-                body: 'Median price of active rewards in the shop.\n\nCalculation: sort reward prices and take the middle element.\n\nExample: prices 5, 10, 15, 20, 50 → median = 15.',
-            },
-            chosenPrice: {
-                label: 'Chosen reward price',
-                body: 'Median price of rewards children actually received in the selected period.\n\nComparing with the median price helps understand whether children choose expensive or cheap rewards.',
-            },
-            rewardsFailed: {
-                label: 'Failed rewards',
-                body: 'Share of reward requests that were declined or cancelled.\n\nCalculation: (declined + cancelled) / all requests.\n\nA high value may mean rewards are too expensive or parents often decline.',
-            },
             approvalRate: {
                 label: 'Approval rate',
                 body: 'Share of completed tasks approved by parents.\n\nCalculation: approved / (approved + declined).\n\nExample: 80 of 100 approved → 80%.',
@@ -330,7 +286,7 @@ export const adminMessages = {
         },
         footer: {
             keyUxTitle: 'Key UX:',
-            keyUxText: '5 semantic tabs always fit within Mini App width without horizontal scroll. Each has meaningful graphics: 📊 overview, 🪙 coins, 🎁 rewards, ✅ tasks, 📈 activity. Unclear metrics are explained on tap on `i`: what it is, how it\'s calculated, and a simple example.',
+            keyUxText: '5 semantic tabs always fit within Mini App width without horizontal scroll. Each has meaningful graphics: 📊 overview, 🪙 coins, ✅ tasks, 📈 activity. Unclear metrics are explained on tap on `i`: what it is, how it\'s calculated, and a simple example.',
         },
         units: {
             minutes: 'min',

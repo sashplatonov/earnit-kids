@@ -14,7 +14,6 @@ public class AdminDashboardResponse {
 
     private AdminAnalyticsResponse.Overview overview;
     private AdminCoinEconomyResponse coinEconomy;
-    private AdminRewardsResponse rewardShop;
     private AdminTasksResponse tasks;
     private AdminParentBehaviorResponse parentSignals;
     private AdminChildBehaviorResponse childSignals;

@@ -16,7 +16,6 @@
     export let data;
     $: overview = data.overview;
     $: coinEconomy = data.coinEconomy;
-    $: rewardShop = data.rewardShop;
     $: taskEconomy = data.taskEconomy;
     $: parentBehavior = data.parentBehavior;
     $: childBehavior = data.childBehavior;
@@ -28,7 +27,6 @@
     const tabs = [
         { id: 'overview', label: t('tabs.overview'), icon: '📊' },
         { id: 'coins', label: t('tabs.coins'), icon: '🪙' },
-        { id: 'rewards', label: t('tabs.rewards'), icon: '🎁' },
         { id: 'tasks', label: t('tabs.tasks'), icon: '✅' },
         { id: 'activity', label: t('tabs.activity'), icon: '📈' },
     ] as const;
@@ -129,22 +127,6 @@
         earningNotSpending: {
             title: t('tooltips.earningNotSpending.label'),
             body: t('tooltips.earningNotSpending.body'),
-        },
-        rewardsIssued: {
-            title: t('tooltips.rewardsIssued.label'),
-            body: t('tooltips.rewardsIssued.body'),
-        },
-        medianPrice: {
-            title: t('tooltips.medianPrice.label'),
-            body: t('tooltips.medianPrice.body'),
-        },
-        chosenPrice: {
-            title: t('tooltips.chosenPrice.label'),
-            body: t('tooltips.chosenPrice.body'),
-        },
-        rewardsFailed: {
-            title: t('tooltips.rewardsFailed.label'),
-            body: t('tooltips.rewardsFailed.body'),
         },
         approvalRate: {
             title: t('tooltips.approvalRate.label'),
@@ -398,132 +380,6 @@
                         <div class="metric-value">{coinEconomy?.balances?.zeroBalancePercent ?? '—'}%</div>
                     </div>
                 </div>
-            </section>
-
-            <!-- Rewards Tab -->
-            <section 
-                id="panel-rewards" 
-                class="tab-panel" 
-                class:active={activeTab === 'rewards'}
-                role="tabpanel"
-                aria-labelledby="tab-rewards"
-            >
-                <h2 class="section-title">{t('tabs.rewards')}</h2>
-                <div class="kpis">
-                    <div class="kpi">
-                        <div class="kpi-label">{t('rewards.requests')}</div>
-                        <div class="kpi-value">{rewardShop?.rewardShopMetrics?.rewardRequests ?? '—'}</div>
-                        <div class="kpi-foot">{t('periods.30d')}</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="kpi-label">{t('rewards.issued')}</div>
-                        <button class="info" aria-label={t('tooltips.rewardsIssued.label')} on:click={() => toggleTooltip('rewardsIssued')}>i</button>
-                        <div class="kpi-value">{rewardShop?.rewardShopMetrics?.approvedRewards ?? '—'}</div>
-                        <div class="kpi-foot">{t('kpis.successful')}</div>
-                    </div>
-                </div>
-
-                <h2 class="section-title">{t('sections.prices')}</h2>
-                <div class="metric-list">
-                    <div class="metric">
-                        <div>
-                            <strong>{t('rewards.medianPrice.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.medianPrice.label')} on:click={() => toggleTooltip('medianPrice')}>i</button>
-                            <small>{t('rewards.medianPrice.desc')}</small>
-                        </div>
-                        <div class="metric-value">{rewardShop?.rewardShopMetrics?.medianPrice ?? '—'} 🪙</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <strong>{t('rewards.chosenPrice.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.chosenPrice.label')} on:click={() => toggleTooltip('chosenPrice')}>i</button>
-                            <small>{t('rewards.chosenPrice.desc')}</small>
-                        </div>
-                        <div class="metric-value">{rewardShop?.rewardShopMetrics?.medianPurchasedPrice ?? '—'} 🪙</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <strong>{t('rewards.failed.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.rewardsFailed.label')} on:click={() => toggleTooltip('rewardsFailed')}>i</button>
-                            <small>{t('rewards.failed.desc')}</small>
-                        </div>
-                        <div class="metric-value">{rewardShop?.rewardShopMetrics?.rejectionRate ?? '—'}%</div>
-                    </div>
-                </div>
-
-                <h2 class="section-title">{t('sections.distribution')}</h2>
-                <div class="bars">
-                    <div class="bar-row">
-                        <span class="bar-label">1-5 🪙</span>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket1to5 ?? 0)}%"></div>
-                        </div>
-                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket1to5 ?? '—'}</span>
-                    </div>
-                    <div class="bar-row">
-                        <span class="bar-label">6-10 🪙</span>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket6to10 ?? 0)}%"></div>
-                        </div>
-                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket6to10 ?? '—'}</span>
-                    </div>
-                    <div class="bar-row">
-                        <span class="bar-label">11-20 🪙</span>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket11to20 ?? 0)}%"></div>
-                        </div>
-                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket11to20 ?? '—'}</span>
-                    </div>
-                    <div class="bar-row">
-                        <span class="bar-label">21-50 🪙</span>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket21to50 ?? 0)}%"></div>
-                        </div>
-                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket21to50 ?? '—'}</span>
-                    </div>
-                    <div class="bar-row">
-                        <span class="bar-label">50+ 🪙</span>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {Math.max(5, rewardShop?.rewardShopMetrics?.priceDistribution?.bucket51plus ?? 0)}%"></div>
-                        </div>
-                        <span class="bar-value">{rewardShop?.rewardShopMetrics?.priceDistribution?.bucket51plus ?? '—'}</span>
-                    </div>
-                </div>
-
-                <h2 class="section-title">{t('sections.popular')}</h2>
-                {#if rewardShop?.rewardShopMetrics?.topPatterns && rewardShop.rewardShopMetrics.topPatterns.length > 0}
-                    <div class="rows">
-                        {#each rewardShop.rewardShopMetrics.topPatterns as pattern, i (pattern.groupName)}
-                            <div class="rank">
-                                <div class="rank-icon">{pattern.icon || '🎁'}</div>
-                                <div class="rank-content">
-                                    <b>{pattern.groupName}</b>
-                                    <small>{pattern.count} · {pattern.percent}%</small>
-                                </div>
-                                <div class="rank-val">#{i + 1}</div>
-                            </div>
-                        {/each}
-                    </div>
-                {:else}
-                    <div class="rows">
-                        <div class="rank">
-                            <div class="rank-icon">🎲</div>
-                            <div class="rank-content">
-                                <b>{t('popular.entertainment.title')}</b>
-                                <small>— {t('units.issues')}</small>
-                            </div>
-                            <div class="rank-val">#1</div>
-                        </div>
-                        <div class="rank">
-                            <div class="rank-icon">👨‍👩‍👧</div>
-                            <div class="rank-content">
-                                <b>{t('popular.familyTime.title')}</b>
-                                <small>— {t('units.issues')}</small>
-                            </div>
-                            <div class="rank-val">#2</div>
-                        </div>
-                    </div>
-                {/if}
             </section>
 
             <!-- Tasks Tab -->

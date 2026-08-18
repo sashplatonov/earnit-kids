@@ -16,7 +16,6 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     // Fetch aggregated dashboard data - session cookie is passed automatically
     let overview = null;
     let coinEconomy = null;
-    let rewardShop = null;
     let taskEconomy = null;
     let parentBehavior = null;
     let childBehavior = null;
@@ -32,7 +31,6 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
             const dashboard = await dashboardRes.json();
             overview = { overview: dashboard.overview };
             coinEconomy = dashboard.coinEconomy;
-            rewardShop = dashboard.rewardShop;
             taskEconomy = dashboard.tasks;
             parentBehavior = dashboard.parentSignals;
             childBehavior = dashboard.childSignals;
@@ -49,7 +47,6 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
     return {
         overview,
         coinEconomy,
-        rewardShop,
         taskEconomy,
         parentBehavior,
         childBehavior,
