@@ -65,15 +65,15 @@
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
     .items { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
-    .request-card { display:flex; flex-direction:column; gap:0; padding:.55rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
-    .request-card.decision { border-color:#dfe4ee; box-shadow:0 1px 3px rgb(24 36 61 / 6%); }
-    .card-main { display:grid; grid-template-columns:2.25rem minmax(0,1fr); gap:.55rem; align-items:start; }
-    .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
-    .entity-text { min-width:0; display:flex; flex-direction:column; gap:.12rem; }
-    h3 { margin:0; font-size:.9rem; line-height:1.3; white-space:normal; overflow-wrap:anywhere; min-width:0; }
-    .meta { margin:0; color:#66718a; font-size:.75rem; }
-    .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#18243d; font-weight:750; font-size:.82rem; }
-    .attention-actions { margin-top:.6rem; margin-left:2.8rem; display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .request-card { display:flex; flex-direction:column; gap:0; padding:.75rem; border:1px solid #e4e8f1; border-radius:1rem; background:#fff; }
+    .request-card.decision { border-color:#dfe4ee; box-shadow:0 2px 10px rgba(32,40,61,.05); }
+    .card-main { display:grid; grid-template-columns:2.75rem minmax(0,1fr); gap:.6rem; align-items:start; }
+    .entity-icon { display:grid; place-items:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border-radius:.8rem; background:#eef0ff; color:#5b63e9; }
+    .entity-text { min-width:0; display:flex; flex-direction:column; gap:.25rem; }
+    h3 { margin:0; font-size:.94rem; line-height:1.3; font-weight:700; white-space:normal; overflow-wrap:anywhere; min-width:0; }
+    .meta { margin:0; color:#7f899e; font-size:.75rem; line-height:1.3; }
+    .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#20283d; font-weight:700; font-size:.81rem; }
+    .attention-actions { margin-top:.6rem; margin-left:3.4rem; display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
     .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.3rem; min-height:2.4rem; padding:.4rem .5rem; border-radius:.6rem; font:inherit; font-weight:700; cursor:pointer; }
     .attention-actions button:disabled { cursor:wait; opacity:.6; }
     .approve { border:1px solid #cce9d8; background:#eaf7ef; color:#17884b; }
