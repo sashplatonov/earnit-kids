@@ -1,0 +1,665 @@
+{
+  "generatedAt": "2026-08-16T07:43:37.038Z",
+  "environment": {
+    "siteUrl": "http://127.0.0.1:5001",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    }
+  },
+  "views": [
+    {
+      "view": "parent-home",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 89.60000002384186,
+      "domContentLoaded": 326.4000000357628,
+      "loadComplete": 456.10000002384186,
+      "firstPaint": 304,
+      "firstContentfulPaint": 332,
+      "largestContentfulPaint": 416,
+      "cumulativeLayoutShift": 0.0116,
+      "clsEntries": [
+        {
+          "value": 0.0015,
+          "startTime": 396,
+          "sources": [
+            {
+              "path": "span.balance.svelte-14yzoo2",
+              "prev": {
+                "x": 306,
+                "y": 11,
+                "w": 56,
+                "h": 47
+              },
+              "curr": {
+                "x": 287,
+                "y": 11,
+                "w": 75,
+                "h": 47
+              }
+            },
+            {
+              "path": "span",
+              "prev": {
+                "x": 27,
+                "y": 636,
+                "w": 49,
+                "h": 21
+              },
+              "curr": {
+                "x": 17,
+                "y": 636,
+                "w": 71,
+                "h": 21
+              }
+            },
+            {
+              "path": "svg",
+              "prev": {
+                "x": 127,
+                "y": 27,
+                "w": 16,
+                "h": 16
+              },
+              "curr": {
+                "x": 83,
+                "y": 27,
+                "w": 16,
+                "h": 16
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0092,
+          "startTime": 407,
+          "sources": [
+            {
+              "path": "footer.site-link.svelte-1onr8vx",
+              "prev": {
+                "x": 13,
+                "y": 544,
+                "w": 349,
+                "h": 24
+              },
+              "curr": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0005,
+          "startTime": 428,
+          "sources": [
+            {
+              "path": "h2.section-title.svelte-csi9lg",
+              "prev": {
+                "x": 13,
+                "y": 630,
+                "w": 181,
+                "h": 23
+              },
+              "curr": {
+                "x": 13,
+                "y": 642,
+                "w": 181,
+                "h": 23
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0004,
+          "startTime": 442,
+          "sources": [
+            {
+              "path": "",
+              "prev": {
+                "x": 13,
+                "y": 71,
+                "w": 233,
+                "h": 36
+              },
+              "curr": {
+                "x": 12,
+                "y": 68,
+                "w": 230,
+                "h": 36
+              }
+            },
+            {
+              "path": "button.small-link.svelte-csi9lg",
+              "prev": {
+                "x": 250,
+                "y": 630,
+                "w": 112,
+                "h": 37
+              },
+              "curr": {
+                "x": 255,
+                "y": 630,
+                "w": 107,
+                "h": 37
+              }
+            }
+          ]
+        }
+      ],
+      "panelRects": {
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "w": 375,
+          "h": 1059
+        },
+        "panel": {
+          "x": 13,
+          "y": 69,
+          "w": 349,
+          "h": 846
+        },
+        "tabs": {
+          "x": 0,
+          "y": 603,
+          "w": 375,
+          "h": 64
+        },
+        "footer": {
+          "x": 13,
+          "y": 937,
+          "w": 349,
+          "h": 24
+        }
+      },
+      "resourceCount": 44
+    },
+    {
+      "view": "parent-tasks",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 89.60000002384186,
+      "domContentLoaded": 326.4000000357628,
+      "loadComplete": 456.10000002384186,
+      "firstPaint": 304,
+      "firstContentfulPaint": 332,
+      "largestContentfulPaint": 416,
+      "cumulativeLayoutShift": 0.0116,
+      "clsEntries": [
+        {
+          "value": 0.0015,
+          "startTime": 396,
+          "sources": [
+            {
+              "path": "span.balance.svelte-14yzoo2",
+              "prev": {
+                "x": 306,
+                "y": 11,
+                "w": 56,
+                "h": 47
+              },
+              "curr": {
+                "x": 287,
+                "y": 11,
+                "w": 75,
+                "h": 47
+              }
+            },
+            {
+              "path": "span",
+              "prev": {
+                "x": 27,
+                "y": 636,
+                "w": 49,
+                "h": 21
+              },
+              "curr": {
+                "x": 17,
+                "y": 636,
+                "w": 71,
+                "h": 21
+              }
+            },
+            {
+              "path": "svg",
+              "prev": {
+                "x": 127,
+                "y": 27,
+                "w": 16,
+                "h": 16
+              },
+              "curr": {
+                "x": 83,
+                "y": 27,
+                "w": 16,
+                "h": 16
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0092,
+          "startTime": 407,
+          "sources": [
+            {
+              "path": "footer.site-link.svelte-1onr8vx",
+              "prev": {
+                "x": 13,
+                "y": 544,
+                "w": 349,
+                "h": 24
+              },
+              "curr": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0005,
+          "startTime": 428,
+          "sources": [
+            {
+              "path": "h2.section-title.svelte-csi9lg",
+              "prev": {
+                "x": 13,
+                "y": 630,
+                "w": 181,
+                "h": 23
+              },
+              "curr": {
+                "x": 13,
+                "y": 642,
+                "w": 181,
+                "h": 23
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0004,
+          "startTime": 442,
+          "sources": [
+            {
+              "path": "",
+              "prev": {
+                "x": 13,
+                "y": 71,
+                "w": 233,
+                "h": 36
+              },
+              "curr": {
+                "x": 12,
+                "y": 68,
+                "w": 230,
+                "h": 36
+              }
+            },
+            {
+              "path": "button.small-link.svelte-csi9lg",
+              "prev": {
+                "x": 250,
+                "y": 630,
+                "w": 112,
+                "h": 37
+              },
+              "curr": {
+                "x": 255,
+                "y": 630,
+                "w": 107,
+                "h": 37
+              }
+            }
+          ]
+        }
+      ],
+      "panelRects": {
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "w": 375,
+          "h": 685
+        },
+        "panel": {
+          "x": 13,
+          "y": 69,
+          "w": 349,
+          "h": 472
+        },
+        "tabs": {
+          "x": 0,
+          "y": 603,
+          "w": 375,
+          "h": 64
+        },
+        "footer": {
+          "x": 13,
+          "y": 563,
+          "w": 349,
+          "h": 24
+        }
+      },
+      "resourceCount": 44
+    },
+    {
+      "view": "parent-family",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 89.60000002384186,
+      "domContentLoaded": 326.4000000357628,
+      "loadComplete": 456.10000002384186,
+      "firstPaint": 304,
+      "firstContentfulPaint": 332,
+      "largestContentfulPaint": 416,
+      "cumulativeLayoutShift": 0.0116,
+      "clsEntries": [
+        {
+          "value": 0.0015,
+          "startTime": 396,
+          "sources": [
+            {
+              "path": "span.balance.svelte-14yzoo2",
+              "prev": {
+                "x": 306,
+                "y": 11,
+                "w": 56,
+                "h": 47
+              },
+              "curr": {
+                "x": 287,
+                "y": 11,
+                "w": 75,
+                "h": 47
+              }
+            },
+            {
+              "path": "span",
+              "prev": {
+                "x": 27,
+                "y": 636,
+                "w": 49,
+                "h": 21
+              },
+              "curr": {
+                "x": 17,
+                "y": 636,
+                "w": 71,
+                "h": 21
+              }
+            },
+            {
+              "path": "svg",
+              "prev": {
+                "x": 127,
+                "y": 27,
+                "w": 16,
+                "h": 16
+              },
+              "curr": {
+                "x": 83,
+                "y": 27,
+                "w": 16,
+                "h": 16
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0092,
+          "startTime": 407,
+          "sources": [
+            {
+              "path": "footer.site-link.svelte-1onr8vx",
+              "prev": {
+                "x": 13,
+                "y": 544,
+                "w": 349,
+                "h": 24
+              },
+              "curr": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0005,
+          "startTime": 428,
+          "sources": [
+            {
+              "path": "h2.section-title.svelte-csi9lg",
+              "prev": {
+                "x": 13,
+                "y": 630,
+                "w": 181,
+                "h": 23
+              },
+              "curr": {
+                "x": 13,
+                "y": 642,
+                "w": 181,
+                "h": 23
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0004,
+          "startTime": 442,
+          "sources": [
+            {
+              "path": "",
+              "prev": {
+                "x": 13,
+                "y": 71,
+                "w": 233,
+                "h": 36
+              },
+              "curr": {
+                "x": 12,
+                "y": 68,
+                "w": 230,
+                "h": 36
+              }
+            },
+            {
+              "path": "button.small-link.svelte-csi9lg",
+              "prev": {
+                "x": 250,
+                "y": 630,
+                "w": 112,
+                "h": 37
+              },
+              "curr": {
+                "x": 255,
+                "y": 630,
+                "w": 107,
+                "h": 37
+              }
+            }
+          ]
+        }
+      ],
+      "panelRects": {
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "w": 375,
+          "h": 792
+        },
+        "panel": {
+          "x": 13,
+          "y": 69,
+          "w": 349,
+          "h": 579
+        },
+        "tabs": {
+          "x": 0,
+          "y": 603,
+          "w": 375,
+          "h": 64
+        },
+        "footer": {
+          "x": 13,
+          "y": 670,
+          "w": 349,
+          "h": 24
+        }
+      },
+      "resourceCount": 45
+    },
+    {
+      "view": "child-today",
+      "url": "http://127.0.0.1:5001/ru/telegram",
+      "navigationStart": 0,
+      "ttfb": 18.900000035762787,
+      "domContentLoaded": 92.5,
+      "loadComplete": 128.80000001192093,
+      "firstPaint": 96,
+      "firstContentfulPaint": 100,
+      "largestContentfulPaint": 128,
+      "cumulativeLayoutShift": 0.0264,
+      "clsEntries": [
+        {
+          "value": 0.0091,
+          "startTime": 122,
+          "sources": [
+            {
+              "path": "footer.site-link.svelte-17cvtl3",
+              "prev": {
+                "x": 13,
+                "y": 544,
+                "w": 349,
+                "h": 24
+              },
+              "curr": {
+                "x": 13,
+                "y": 633,
+                "w": 349,
+                "h": 24
+              }
+            }
+          ]
+        },
+        {
+          "value": 0.0173,
+          "startTime": 134,
+          "sources": [
+            {
+              "path": "details.svelte-ixmxae",
+              "prev": {
+                "x": 13,
+                "y": 452,
+                "w": 349,
+                "h": 138
+              },
+              "curr": {
+                "x": 13,
+                "y": 429,
+                "w": 349,
+                "h": 138
+              }
+            },
+            {
+              "path": "article.svelte-ixmxae",
+              "prev": {
+                "x": 13,
+                "y": 354,
+                "w": 349,
+                "h": 84
+              },
+              "curr": {
+                "x": 13,
+                "y": 331,
+                "w": 349,
+                "h": 84
+              }
+            },
+            {
+              "path": "footer.site-link.svelte-17cvtl3",
+              "prev": {
+                "x": 13,
+                "y": 633,
+                "w": 349,
+                "h": 24
+              },
+              "curr": {
+                "x": 13,
+                "y": 610,
+                "w": 349,
+                "h": 24
+              }
+            },
+            {
+              "path": "p.svelte-ixmxae",
+              "prev": {
+                "x": 76,
+                "y": 302,
+                "w": 160,
+                "h": 27
+              },
+              "curr": {
+                "x": 76,
+                "y": 279,
+                "w": 157,
+                "h": 27
+              }
+            },
+            {
+              "path": "button.svelte-ixmxae",
+              "prev": {
+                "x": 250,
+                "y": 264,
+                "w": 98,
+                "h": 52
+              },
+              "curr": {
+                "x": 250,
+                "y": 252,
+                "w": 97,
+                "h": 52
+              }
+            }
+          ]
+        }
+      ],
+      "panelRects": {
+        "workspace": {
+          "x": 0,
+          "y": 0,
+          "w": 375,
+          "h": 733
+        },
+        "panel": {
+          "x": 13,
+          "y": 86,
+          "w": 349,
+          "h": 502
+        },
+        "tabs": {
+          "x": 0,
+          "y": 603,
+          "w": 375,
+          "h": 64
+        },
+        "footer": {
+          "x": 13,
+          "y": 610,
+          "w": 349,
+          "h": 24
+        }
+      },
+      "resourceCount": 42
+    }
+  ]
+}
