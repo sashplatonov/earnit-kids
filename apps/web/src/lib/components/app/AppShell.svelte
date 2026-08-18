@@ -29,6 +29,9 @@
     const isAdmin = session.role === 'admin' || session.role === 'parent' || session.role === 'super_admin';
     const isSuperAdmin = session.role === 'super_admin';
 
+    // EXPLAIN: Diagnostic log for admin visibility debugging — forwarded to backend container logs
+    console.info('[AppShell] session role:', session.role, 'isAdmin:', isAdmin, 'isSuperAdmin:', isSuperAdmin);
+
 
     $: balance = $appStore.balance;
     $: childNickname = $appStore.childNickname ?? session.childName ?? '';

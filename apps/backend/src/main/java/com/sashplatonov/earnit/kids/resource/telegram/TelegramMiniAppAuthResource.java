@@ -16,11 +16,13 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.logging.Logger;
 
 @Path("/api/telegram/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TelegramMiniAppAuthResource {
+    private static final Logger LOG = Logger.getLogger(TelegramMiniAppAuthResource.class);
     private final TelegramFeatureGate featureGate;
     private final TelegramMiniAppAuthService authService;
     private final CookieBuilder cookieBuilder;
@@ -43,7 +45,11 @@ public class TelegramMiniAppAuthResource {
         return switch (authService.authenticate(request.initData(), request.token())) {
             case OperationResult.Success<AuthPayload> success -> {
                 AuthPayload payload = success.value();
+                LOG.infof("Telegram auth exchange success: role=%s, familyId=%s, "
+                    + "isSuperAdmin=%s, permission=%s",
+                    payload.role(), payload.familyId(), payload.isSuperAdmin(), payload.permission());
                 if (featureGate.hasRolloutRestriction() && !featureGate.isMiniAppEnabled(payload.familyId())) {
+                    LOG.warnf("Mini app disabled for familyId=%s due to rollout restriction", payload.familyId());
                     yield Response.status(Response.Status.NOT_FOUND).build();
                 }
                 Response.ResponseBuilder response = Response.ok(

@@ -8,6 +8,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.jboss.logging.Logger;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
@@ -20,6 +21,8 @@ import jakarta.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Session", description = "Derived session snapshot endpoints")
 public class SessionPageDataResource {
+
+    private static final Logger LOG = Logger.getLogger(SessionPageDataResource.class);
     private final JwtCompatVerifier jwtCompatVerifier;
 
     @Inject
@@ -35,6 +38,8 @@ public class SessionPageDataResource {
     public Response session(@Parameter(description = "Incoming Cookie header")
                                            @HeaderParam("Cookie") String cookieHeader) {
         var resp = jwtCompatVerifier.readSession(cookieHeader);
+        LOG.debugf("Session snapshot: authenticated=%s, role=%s, familyId=%s",
+            resp.authenticated(), resp.role(), resp.familyId());
         return Response.ok(resp).build();
     }
 }

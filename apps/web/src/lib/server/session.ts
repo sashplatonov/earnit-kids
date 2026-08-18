@@ -39,11 +39,19 @@ export async function resolveSessionSnapshot(event: RequestEvent): Promise<Sessi
         });
 
         if (!response.ok) {
+            console.warn('[session] Backend session endpoint returned non-OK status:', response.status);
             return GUEST_SESSION;
         }
 
-        return (await response.json()) as SessionSnapshot;
-    } catch {
+        const session = (await response.json()) as SessionSnapshot;
+        console.info('[session] Resolved session:', {
+            authenticated: session.authenticated,
+            role: session.role,
+            familyId: session.familyId,
+        });
+        return session;
+    } catch (e) {
+        console.warn('[session] Failed to resolve session snapshot:', e);
         return GUEST_SESSION;
     } finally {
         clearTimeout(timeoutId);

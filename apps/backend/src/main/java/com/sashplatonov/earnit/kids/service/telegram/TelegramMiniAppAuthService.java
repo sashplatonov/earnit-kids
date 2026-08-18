@@ -82,7 +82,7 @@ public class TelegramMiniAppAuthService {
 
         // EXPLAIN: Admin check – if Telegram ID is in TELEGRAM_ADMIN_USER_IDS, grant admin access
         if (adminAccessService != null && adminAccessService.isAdmin(identity.getTelegramUserId())) {
-            LOG.infof("Telegram user %d identified as admin", identity.getTelegramUserId());
+            LOG.infof("Telegram user %d identified as admin, granting admin role", identity.getTelegramUserId());
             // EXPLAIN: No linked parent account; use placeholder values where appropriate
             AuthPayload adminPayload = new AuthPayload(
                 family.getFamilyId(),
@@ -97,6 +97,8 @@ public class TelegramMiniAppAuthService {
             LOG.debugf("Returning admin AuthPayload: %s", adminPayload);
             return OperationResult.success(adminPayload);
         }
+        LOG.infof("Telegram user %d is NOT an admin (not in admin-user-ids list), "
+            + "proceeding with role=%s", identity.getTelegramUserId(), identity.getRole());
 
         LOG.debugf("Proceeding with role-based authentication, role=%s", identity.getRole());
         if ("parent".equals(identity.getRole())) {
