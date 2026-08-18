@@ -44,6 +44,12 @@ class AdminAnalyticsRepositoryTest {
 
         AdminTasksResponse.TaskMetrics taskMetrics = adminAnalyticsRepository.getTaskMetrics(Instant.EPOCH);
         assertThat(taskMetrics).isNotNull();
+
+        // EXPLAIN: Production P0 — calcTopTaskPatterns previously selected the
+        // EXPLAIN: non-existent HistoryEntryEntity.icon attribute, which 500'd the
+        // EXPLAIN: whole dashboard and made it render the empty state. Must not throw.
+        assertThatCode(() -> adminAnalyticsRepository.calcTopTaskPatterns(Instant.EPOCH))
+            .doesNotThrowAnyException();
     }
 
     @Test

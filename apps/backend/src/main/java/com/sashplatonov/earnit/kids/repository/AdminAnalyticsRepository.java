@@ -353,12 +353,14 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     public List<AdminTasksResponse.TopTaskPattern> calcTopTaskPatterns(Instant periodStart) {
+        // EXPLAIN: HistoryEntryEntity has no icon column, only groupName; group
+        // EXPLAIN: by groupName and return a default icon in the DTO.
         String sql = """
-            SELECT h.groupName, h.icon, COUNT(h) as cnt
+            SELECT h.groupName, COUNT(h) as cnt
             FROM HistoryEntryEntity h
             WHERE h.type = :type AND h.createdAt >= :periodStart
             AND h.groupName IS NOT NULL AND h.groupName != ''
-            GROUP BY h.groupName, h.icon
+            GROUP BY h.groupName
             ORDER BY cnt DESC
             """;
         var results = entityManager.createQuery(sql, Object[].class)
@@ -372,13 +374,12 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         
         for (Object[] row : results) {
             String groupName = (String) row[0];
-            String icon = (String) row[1];
-            long count = ((Number) row[2]).longValue();
+            long count = ((Number) row[1]).longValue();
             double percent = total > 0 ? Math.round(100.0 * count / total) : 0.0;
             
             patterns.add(AdminTasksResponse.TopTaskPattern.builder()
                 .groupName(groupName)
-                .icon(icon)
+                .icon("")
                 .count(count)
                 .percent(percent)
                 .build());
