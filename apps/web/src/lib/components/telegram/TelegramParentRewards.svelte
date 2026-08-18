@@ -5,7 +5,7 @@
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';
-    import { orderGroups } from '$lib/services/groupOrder';
+    import { orderGroups } from '$lib/telegram/services/groupOrder';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRewardForm from './TelegramRewardForm.svelte';

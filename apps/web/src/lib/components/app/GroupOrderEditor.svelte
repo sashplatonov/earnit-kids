@@ -2,7 +2,7 @@
     import { createEventDispatcher, onMount, onDestroy } from 'svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
-    import { isNoopGroupDrop, moveGroup, reorderGroupsBySlot } from '$lib/services/groupOrder';
+    import { isNoopGroupDrop, moveGroup, reorderGroupsBySlot } from '$lib/telegram/services/groupOrder';
 
     const i18n = useI18n();
 

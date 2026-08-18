@@ -6,11 +6,6 @@ export type Locale = (typeof LOCALES)[number];
 export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'analytics' | 'history' | 'tasks' | 'admin' | 'errors' | 'superadmin';
 
 const LOCALE_SET = new Set<string>(LOCALES);
-// EXPLAIN: Bare-URL public routes are served without a locale prefix so they
-// EXPLAIN: can be shared as stable canonical links. They must not be
-// EXPLAIN: Bare-URL public marketing paths redirect to the static HTML site
-// EXPLAIN: in /public/*. They must not be canonicalized to `/en/...`.
-const PUBLIC_BARE_PATHS = ['/', '/how', '/tasks', '/rewards', '/parents', '/faq'] as const;
 
 const BYPASS_PREFIXES = [
     '/api',
@@ -38,24 +33,6 @@ const LEGACY_ALIAS_MAP: Record<string, string> = {
     '/reset-password.html': '/reset-password',
     '/super-admin.html': '/super-admin',
     '/verify.html': '/verify',
-};
-
-// EXPLAIN: Redirect bare public marketing URLs (/, /how, /tasks, etc.) to the
-// EXPLAIN: static HTML site in /public/*. The site lives outside SvelteKit
-// EXPLAIN: routing and these redirects keep stable canonical links.
-const PUBLIC_REDIRECT_MAP: Record<string, string> = {
-    '/how': '/public/how.html',
-    '/tasks': '/public/tasks.html',
-    '/rewards': '/public/rewards.html',
-    '/parents': '/public/parents.html',
-    '/faq': '/public/faq.html',
-    '/about': '/public/parents.html',
-    '/about.html': '/public/parents.html',
-    '/features': '/public/tasks.html',
-    '/features/tasks': '/public/tasks.html',
-    '/features/shop': '/public/rewards.html',
-    '/faq.html': '/public/faq.html',
-    '/index.html': '/public/index.html',
 };
 
 function normalisePath(pathname: string): string {
@@ -148,21 +125,11 @@ export function swapPathLocale(pathname: string, locale: Locale): string {
 
 export function isBypassedLocalePath(pathname: string): boolean {
     const normalized = normalisePath(pathname);
-    if ((PUBLIC_BARE_PATHS as readonly string[]).includes(normalized)) {
-        return true;
-    }
     return BYPASS_PREFIXES.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`));
 }
 
 export function resolveLegacyAlias(pathname: string): string | null {
     return LEGACY_ALIAS_MAP[normalisePath(pathname)] ?? null;
-}
-
-// EXPLAIN: Permanent public-site redirect for a legacy URL. Returns the bare
-// EXPLAIN: canonical public path (no locale prefix) or null when the path is
-// EXPLAIN: not a legacy public page.
-export function resolvePublicRedirect(pathname: string): string | null {
-    return PUBLIC_REDIRECT_MAP[normalisePath(pathname)] ?? null;
 }
 
 export function shouldCanonicalizePath(pathname: string): boolean {

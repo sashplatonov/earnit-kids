@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeReadyCatalogTelemetry } from '../../src/lib/services/readyCatalogTelemetry';
+import { sanitizeReadyCatalogTelemetry } from '../../src/lib/telegram/services/readyCatalogTelemetry';
 
 describe('sanitizeReadyCatalogTelemetry', () => {
     it('accepts a valid catalog_opened event', () => {

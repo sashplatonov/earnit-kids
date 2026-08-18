@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildShopPayload } from '../../src/lib/services/shopPayload';
+import { buildShopPayload } from '../../src/lib/telegram/services/shopPayload';
 
 describe('buildShopPayload', () => {
     it('builds a backend-compatible shop payload with frequency and money limits', () => {

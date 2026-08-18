@@ -12,9 +12,9 @@
         nonAgeFilterCount,
         stripEmoji,
         type CatalogFilters,
-    } from '$lib/services/catalogFilter';
+    } from '$lib/telegram/services/catalogFilter';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
-    import { recordReadyCatalogEvent } from '$lib/services/readyCatalogTelemetry';
+    import { recordReadyCatalogEvent } from '$lib/telegram/services/readyCatalogTelemetry';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';

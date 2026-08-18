@@ -7,7 +7,7 @@
         parseCsvImport,
         type CsvImportKind,
         type CsvImportValidationError,
-    } from '$lib/services/csvImport';
+    } from '$lib/telegram/services/csvImport';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
 

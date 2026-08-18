@@ -4,7 +4,7 @@
     import { appStore, type Task, type ShopItem } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { confirmAction } from '$lib/services/confirm';
-    import { moveGroup } from '$lib/services/groupOrder';
+    import { moveGroup } from '$lib/telegram/services/groupOrder';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
     import { getSemanticGraphic } from './semanticGraphics';
     import TelegramIcon from './TelegramIcon.svelte';

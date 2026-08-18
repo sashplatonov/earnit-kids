@@ -2,7 +2,7 @@
     import { useI18n } from '$lib/i18n/context';
     import { appStore, type ShopItem } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
-    import { buildShopPayload } from '$lib/services/shopPayload';
+    import { buildShopPayload } from '$lib/telegram/services/shopPayload';
     import { getSemanticGraphic } from './semanticGraphics';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
     import TelegramIcon from './TelegramIcon.svelte';

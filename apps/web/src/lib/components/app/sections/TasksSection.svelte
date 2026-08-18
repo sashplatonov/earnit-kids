@@ -24,7 +24,7 @@
         normalizeGroupLabel,
         orderGroups,
         sortItemsByGroup,
-    } from '$lib/services/groupOrder';
+    } from '$lib/telegram/services/groupOrder';
     import { requestGroupName } from '$lib/services/groupPrompt';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { showToast } from '$lib/stores/toasts';

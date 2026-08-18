@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCsvTemplate, parseCsvImport } from '../../src/lib/services/csvImport';
+import { buildCsvTemplate, parseCsvImport } from '../../src/lib/telegram/services/csvImport';
 
 describe('parseCsvImport', () => {
     it('parses task csv with comma separators', () => {

@@ -1,7 +1,7 @@
 import { initNewRelicBrowser, logBrowser, noticeBrowserError } from '$lib/observability/newrelic';
 import { installGlobalClientLogging, logClientError } from '$lib/logging/clientLogger';
 import { recordCatalogEvent } from '$lib/services/catalogTelemetry';
-import { recordReadyCatalogEvent } from '$lib/services/readyCatalogTelemetry';
+import { recordReadyCatalogEvent } from '$lib/telegram/services/readyCatalogTelemetry';
 
 let initialized = false;
 

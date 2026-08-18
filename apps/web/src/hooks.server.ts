@@ -6,7 +6,6 @@ import {
     localizePath,
     normalizeLocale,
     resolveLegacyAlias,
-    resolvePublicRedirect,
     resolveLocaleFromAcceptLanguage,
     shouldCanonicalizePath,
     splitLocaleFromPath,
@@ -41,14 +40,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     // EXPLAIN: prefix even when a request carries another locale in the path.
     if (isTelegramMiniApp && localeFromPath && localeFromPath !== 'ru') {
         throw redirect(302, `${localizePath(internalPath, 'ru')}${event.url.search}`);
-    }
-
-    // EXPLAIN: Redirect bare public marketing URLs to the static HTML site in
-    // EXPLAIN: /public/*. Runs before legacy aliases so marketing pages land on
-    // EXPLAIN: the static site instead of locale-prefixed app routes.
-    const publicRedirectTarget = resolvePublicRedirect(internalPath);
-    if (publicRedirectTarget) {
-        throw redirect(308, `${publicRedirectTarget}${event.url.search}`);
     }
 
     const legacyAliasTarget = resolveLegacyAlias(internalPath);

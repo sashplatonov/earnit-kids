@@ -1,7 +1,7 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
     import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate } from '$lib/stores/app';
-    import { formatFrequency, isAlreadyAdded, stripEmoji } from '$lib/services/catalogFilter';
+    import { formatFrequency, isAlreadyAdded, stripEmoji } from '$lib/telegram/services/catalogFilter';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 

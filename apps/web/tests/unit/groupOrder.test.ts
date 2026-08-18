@@ -8,7 +8,7 @@ import {
     orderGroups,
     reorderGroupsBySlot,
     sortItemsByGroup,
-} from '../../src/lib/services/groupOrder';
+} from '../../src/lib/telegram/services/groupOrder';
 
 describe('normalizeGroupLabel', () => {
     it('falls back to the ungrouped label for empty values', () => {

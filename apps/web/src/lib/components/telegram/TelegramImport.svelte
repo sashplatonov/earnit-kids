@@ -9,7 +9,7 @@
         parseCsvImport,
         type CsvImportKind,
         type CsvImportValidationError,
-    } from '$lib/services/csvImport';
+    } from '$lib/telegram/services/csvImport';
     import TelegramIcon from './TelegramIcon.svelte';
 
     export let open = false;

@@ -15,7 +15,7 @@ import {
     stripEmoji,
     templateToReward,
     templateToTask,
-} from '../../src/lib/services/catalogFilter';
+} from '../../src/lib/telegram/services/catalogFilter';
 import type { CatalogRewardTemplate, CatalogTaskTemplate, Task } from '../../src/lib/stores/app';
 
 const taskTemplate: CatalogTaskTemplate = {

@@ -2,9 +2,9 @@
     import { useI18n } from '$lib/i18n/context';
     import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate, type Child } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
-    import { mapGroupKeyToFamily, templateToReward, templateToTask } from '$lib/services/catalogFilter';
-    import { applyGroupOrderToChildren, getEffectiveGroupOrder, type GroupOrderSection } from '$lib/services/groupOrder';
-    import { recordReadyCatalogEvent } from '$lib/services/readyCatalogTelemetry';
+    import { mapGroupKeyToFamily, templateToReward, templateToTask } from '$lib/telegram/services/catalogFilter';
+    import { applyGroupOrderToChildren, getEffectiveGroupOrder, type GroupOrderSection } from '$lib/telegram/services/groupOrder';
+    import { recordReadyCatalogEvent } from '$lib/telegram/services/readyCatalogTelemetry';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramReadyCatalog from './TelegramReadyCatalog.svelte';
     import TelegramCatalogDetails from './TelegramCatalogDetails.svelte';

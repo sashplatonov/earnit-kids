@@ -1,6 +1,6 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
-    import { getEffectiveGroupOrder, normalizeGroupLabel, orderGroups, sortItemsByGroup } from '$lib/services/groupOrder';
+    import { getEffectiveGroupOrder, normalizeGroupLabel, orderGroups, sortItemsByGroup } from '$lib/telegram/services/groupOrder';
     import type { MessageKey } from '$lib/i18n';
     import type { PageData } from './$types';
 

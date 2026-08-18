@@ -1,7 +1,7 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
-    import type { CatalogFilters, AgeFilter, DifficultyFilter, FrequencyFilter } from '$lib/services/catalogFilter';
+    import type { CatalogFilters, AgeFilter, DifficultyFilter, FrequencyFilter } from '$lib/telegram/services/catalogFilter';
 
     export let open = false;
     export let filters: CatalogFilters;
