@@ -29,6 +29,17 @@
     const isAdmin = session.role === 'admin' || session.role === 'parent' || session.role === 'super_admin';
     const isSuperAdmin = session.role === 'super_admin';
 
+    // EXPLAIN: Initialize appStore synchronously from session so SSR and first
+    // EXPLAIN: render see the correct isAdmin value. Without this, the Dashboard
+    // EXPLAIN: card in SettingsSection is hidden because \$appStore.isAdmin
+    // EXPLAIN: defaults to false and only updates after async initializeFromServer().
+    appStore.setState({
+        isAdmin,
+        role: session.role ?? null,
+        permission: session.permission ?? null,
+        familyId: (session.familyId as string | null | undefined) ?? null,
+    });
+
     // EXPLAIN: Diagnostic log for admin visibility debugging — forwarded to backend container logs
     console.info('[AppShell] session role:', session.role, 'isAdmin:', isAdmin, 'isSuperAdmin:', isSuperAdmin);
 
@@ -43,11 +54,6 @@
         let mounted = true;
         let cleanupPwa: (() => void) | null = null;
 
-        appStore.setState({
-            isAdmin,
-            permission: session.permission ?? null,
-            familyId: (session.familyId as string | null | undefined) ?? null,
-        });
         void initializeFromServer();
         void initializePwa(() => refreshData(true)).then((cleanup) => {
             if (!mounted) {
