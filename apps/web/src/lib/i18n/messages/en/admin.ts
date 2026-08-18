@@ -284,10 +284,6 @@ export const adminMessages = {
                 body: 'Families with at least one meaningful action in the last 30 days.\n\nThis is rolling activity, not cohort retention.',
             },
         },
-        footer: {
-            keyUxTitle: 'Key UX:',
-            keyUxText: '4 semantic tabs always fit within Mini App width without horizontal scroll. Each has meaningful graphics: 📊 overview, 🪙 coins, ✅ tasks, 📈 activity. Unclear metrics are explained on tap on `i`: what it is, how it\'s calculated, and a simple example.',
-        },
         units: {
             minutes: 'min',
             days: 'days',

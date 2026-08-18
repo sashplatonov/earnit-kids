@@ -4,6 +4,7 @@
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import { goto } from '$app/navigation';
+    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
 
     const i18n = useI18n();
 
@@ -27,12 +28,13 @@
     // EXPLAIN: resolved server-side, so changing it reloads real data.
     $: selectedPeriod = data.period ?? '30d';
 
-    // Tab definitions with semantic icons
+    // EXPLAIN: Tab definitions with semantic SVG icons (from the shared
+    // EXPLAIN: TelegramIcon set) instead of emoji, so the tab bar reads clearly.
     const tabs = [
-        { id: 'overview', label: t('tabs.overview'), icon: '📊' },
-        { id: 'coins', label: t('tabs.coins'), icon: '🪙' },
-        { id: 'tasks', label: t('tabs.tasks'), icon: '✅' },
-        { id: 'activity', label: t('tabs.activity'), icon: '📈' },
+        { id: 'overview', label: t('tabs.overview'), icon: 'gauge' },
+        { id: 'coins', label: t('tabs.coins'), icon: 'coin' },
+        { id: 'tasks', label: t('tabs.tasks'), icon: 'task' },
+        { id: 'activity', label: t('tabs.activity'), icon: 'activity' },
     ] as const;
 
     type TabId = typeof tabs[number]['id'];
@@ -227,7 +229,9 @@
                         aria-controls={`panel-${tab.id}`}
                         on:click={() => switchTab(tab.id as TabId)}
                     >
-                        <span class="tab-ico" aria-hidden="true">{tab.icon}</span>
+                        <span class="tab-ico" aria-hidden="true">
+                            <TelegramIcon name={tab.icon} size={17} strokeWidth={2} />
+                        </span>
                         <span class="tab-label">{tab.label}</span>
                     </button>
                 {/each}
@@ -252,8 +256,10 @@
                         <div class="kpi-foot">{t('kpis.lifetime')}</div>
                     </div>
                     <div class="kpi">
-                        <div class="kpi-label">{t('kpis.activeFamilies')}</div>
-                        <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={() => toggleTooltip('activeFamilies')}>i</button>
+                        <div class="kpi-head">
+                            <div class="kpi-label">{t('kpis.activeFamilies')}</div>
+                            <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={() => toggleTooltip('activeFamilies')}>i</button>
+                        </div>
                         <div class="kpi-value">{overview?.overview?.activeFamilies ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
@@ -263,8 +269,10 @@
                         <div class="kpi-foot">{t('kpis.lifetime')}</div>
                     </div>
                     <div class="kpi">
-                        <div class="kpi-label">{t('kpis.activeChildren')}</div>
-                        <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={() => toggleTooltip('activeChildren')}>i</button>
+                        <div class="kpi-head">
+                            <div class="kpi-label">{t('kpis.activeChildren')}</div>
+                            <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={() => toggleTooltip('activeChildren')}>i</button>
+                        </div>
                         <div class="kpi-value">{overview?.overview?.activeChildren ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
@@ -279,14 +287,18 @@
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                     <div class="kpi">
-                        <div class="kpi-label">{t('kpis.rewardsReceived')}</div>
-                        <button class="info" aria-label={t('tooltips.rewardsReceived.label')} on:click={() => toggleTooltip('rewardsReceived')}>i</button>
+                        <div class="kpi-head">
+                            <div class="kpi-label">{t('kpis.rewardsReceived')}</div>
+                            <button class="info" aria-label={t('tooltips.rewardsReceived.label')} on:click={() => toggleTooltip('rewardsReceived')}>i</button>
+                        </div>
                         <div class="kpi-value">{overview?.overview?.rewardPurchases ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.successful')}</div>
                     </div>
                     <div class="kpi">
-                        <div class="kpi-label">{t('kpis.taskCompletions')}</div>
-                        <button class="info" aria-label={t('tooltips.taskCompletions.label')} on:click={() => toggleTooltip('taskCompletions')}>i</button>
+                        <div class="kpi-head">
+                            <div class="kpi-label">{t('kpis.taskCompletions')}</div>
+                            <button class="info" aria-label={t('tooltips.taskCompletions.label')} on:click={() => toggleTooltip('taskCompletions')}>i</button>
+                        </div>
                         <div class="kpi-value">{overview?.overview?.taskCompletions ?? '—'}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
@@ -351,24 +363,30 @@
                 <div class="metric-list">
                     <div class="metric">
                         <div>
-                            <strong>{t('metrics.medianBalance.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={() => toggleTooltip('medianBalance')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('metrics.medianBalance.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={() => toggleTooltip('medianBalance')}>i</button>
+                            </div>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
                         <div class="metric-value">{coinEconomy?.balances?.medianBalance ?? '—'} 🪙</div>
                     </div>
                     <div class="metric">
                         <div>
-                            <strong>{t('metrics.timeToFirstReward.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={() => toggleTooltip('timeToFirstReward')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('metrics.timeToFirstReward.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={() => toggleTooltip('timeToFirstReward')}>i</button>
+                            </div>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
                         <div class="metric-value">— {t('units.days')}</div>
                     </div>
                     <div class="metric">
                         <div>
-                            <strong>{t('metrics.earningNotSpending.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('metrics.earningNotSpending.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
+                            </div>
                             <small>{t('metrics.earningNotSpending.desc')}</small>
                         </div>
                         <div class="metric-value">{coinEconomy?.balances?.zeroBalancePercent ?? '—'}%</div>
@@ -392,8 +410,10 @@
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                     <div class="kpi">
-                        <div class="kpi-label">Approval rate</div>
-                        <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={() => toggleTooltip('approvalRate')}>i</button>
+                        <div class="kpi-head">
+                            <div class="kpi-label">Approval rate</div>
+                            <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={() => toggleTooltip('approvalRate')}>i</button>
+                        </div>
                         <div class="kpi-value">{taskEconomy?.taskMetrics?.approvalRate ?? '—'}%</div>
                         <div class="kpi-foot">{t('tasks.approvedByParents')}</div>
                     </div>
@@ -549,16 +569,20 @@
                 <div class="metric-list">
                     <div class="metric">
                         <div>
-                            <strong>{t('retention.active7d.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={() => toggleTooltip('active7d')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('retention.active7d.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={() => toggleTooltip('active7d')}>i</button>
+                            </div>
                             <small>{t('retention.active7d.desc')}</small>
                         </div>
                         <div class="metric-value">{retention?.retentionMetrics?.active7d ?? '—'}</div>
                     </div>
                     <div class="metric">
                         <div>
-                            <strong>{t('retention.active30d.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={() => toggleTooltip('active30d')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('retention.active30d.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={() => toggleTooltip('active30d')}>i</button>
+                            </div>
                             <small>{t('retention.active30d.desc')}</small>
                         </div>
                         <div class="metric-value">{retention?.retentionMetrics?.active30d ?? '—'}</div>
@@ -618,16 +642,20 @@
                 <div class="metric-list">
                     <div class="metric">
                         <div>
-                            <strong>{t('parent.decisionTime.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={() => toggleTooltip('decisionTime')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('parent.decisionTime.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={() => toggleTooltip('decisionTime')}>i</button>
+                            </div>
                             <small>{t('parent.decisionTime.desc')}</small>
                         </div>
                         <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours ?? '—'} {t('units.hours')}</div>
                     </div>
                     <div class="metric">
                         <div>
-                            <strong>{t('parent.pendingBacklog.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={() => toggleTooltip('pendingBacklog')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('parent.pendingBacklog.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={() => toggleTooltip('pendingBacklog')}>i</button>
+                            </div>
                             <small>{t('parent.pendingBacklog.desc')}</small>
                         </div>
                         <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.pendingRequestsCount ?? '—'}</div>
@@ -658,8 +686,10 @@
                 <div class="metric-list">
                     <div class="metric">
                         <div>
-                            <strong>{t('child.earningNotSpending.title')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
+                            <div class="metric-title">
+                                <strong>{t('child.earningNotSpending.title')}</strong>
+                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
+                            </div>
                             <small>{t('child.earningNotSpending.desc')}</small>
                         </div>
                         <div class="metric-value">{childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending ?? '—'}%</div>
@@ -684,10 +714,6 @@
                 <p>{tooltipContent[activeTooltip].body}</p>
             </div>
         {/if}
-
-        <div class="footer-note">
-            <b>{t('footer.keyUxTitle')}</b> {t('footer.keyUxText')}
-        </div>
     </main>
 {/if}
 
@@ -850,12 +876,17 @@
         line-height: 1.25;
     }
 
+    .kpi-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
     .info {
-        position: absolute;
-        top: 11px;
-        right: 11px;
+        margin-left: auto;
         width: 20px;
         height: 20px;
+        flex-shrink: 0;
         border: 0;
         border-radius: 50%;
         background: var(--soft, #eef0ff);
@@ -1068,6 +1099,12 @@
         display: block;
     }
 
+    .metric-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
     .metric small {
         display: block;
         color: var(--muted, #8791a6);
@@ -1193,39 +1230,31 @@
 
     .empty-state {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 4px;
-        padding: 22px 16px;
-        margin: 4px 0 12px;
+        gap: 8px;
+        padding: 9px 12px;
+        margin: 4px 0 10px;
         background: #fff;
         border: 1px dashed #ccd2df;
-        border-radius: 15px;
-        text-align: center;
+        border-radius: 12px;
+        text-align: left;
     }
 
     .empty-ico {
-        font-size: 26px;
+        font-size: 18px;
+        flex-shrink: 0;
     }
 
     .empty-state b {
-        font-size: 14px;
+        font-size: 12px;
+        white-space: nowrap;
     }
 
     .empty-state small {
         color: var(--muted, #8791a6);
-        font-size: 12px;
-        line-height: 1.4;
-    }
-
-    .footer-note {
-        padding: 12px;
-        margin-top: 18px;
-        border: 1px dashed #ccd2df;
-        border-radius: 13px;
-        color: #687287;
         font-size: 11px;
-        line-height: 1.45;
+        line-height: 1.3;
+        flex: 1;
     }
 
     .redirect-message {
