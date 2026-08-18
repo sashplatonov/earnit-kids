@@ -12,12 +12,14 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 
 // EXPLAIN: Admin access service to detect Telegram admin IDs from configuration
 import com.sashplatonov.earnit.kids.service.admin.AdminAccessService;
 
 @ApplicationScoped
 public class TelegramMiniAppAuthService {
+    private static final Logger LOG = Logger.getLogger(TelegramMiniAppAuthService.class);
     private static final String AUTH_FAILED = "Telegram authentication failed.";
 
     private final TelegramInitDataVerifier verifier;
@@ -48,6 +50,7 @@ public class TelegramMiniAppAuthService {
     }
 
     public OperationResult<AuthPayload> authenticate(String rawInitData) {
+        LOG.debugf("Starting authentication for rawInitData=%s", rawInitData);
         return authenticate(rawInitData, null);
     }
 
@@ -56,7 +59,9 @@ public class TelegramMiniAppAuthService {
     // EXPLAIN: account so the subsequent identity lookup succeeds.
     public OperationResult<AuthPayload> authenticate(String rawInitData, String pairingToken) {
         var verified = verifier.verify(rawInitData);
+        LOG.debug("Verification result: " + verified);
         if (verified.isEmpty()) {
+            LOG.warn("Verification failed for rawInitData");
             return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
         }
         if (pairingToken != null && !pairingToken.isBlank() && pairingToken.startsWith(TelegramInviteToken.CHILD_INVITE_PREFIX)) {
@@ -66,17 +71,20 @@ public class TelegramMiniAppAuthService {
         TelegramIdentityEntity identity = identities.findActiveByTelegramUserId(verified.get().telegramUserId())
             .orElse(null);
         if (identity == null) {
+            LOG.warnf("No active Telegram identity found for userId=%d", verified.get().telegramUserId());
             return OperationResult.failure("TELEGRAM_IDENTITY_UNLINKED", AUTH_FAILED);
         }
         var family = identity.getFamilyId() == null ? null : families.findByDbId(identity.getFamilyId()).orElse(null);
         if (family == null || family.isBlocked()) {
+            LOG.warnf("Family not found or blocked for familyId=%s", identity.getFamilyId());
             return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
         }
 
         // EXPLAIN: Admin check – if Telegram ID is in TELEGRAM_ADMIN_USER_IDS, grant admin access
         if (adminAccessService != null && adminAccessService.isAdmin(identity.getTelegramUserId())) {
+            LOG.infof("Telegram user %d identified as admin", identity.getTelegramUserId());
             // EXPLAIN: No linked parent account; use placeholder values where appropriate
-            return OperationResult.success(new AuthPayload(
+            AuthPayload adminPayload = new AuthPayload(
                 family.getFamilyId(),
                 null,
                 "admin",
@@ -85,9 +93,12 @@ public class TelegramMiniAppAuthService {
                 false,
                 "family_admin",
                 null,
-                false));
+                false);
+            LOG.debugf("Returning admin AuthPayload: %s", adminPayload);
+            return OperationResult.success(adminPayload);
         }
 
+        LOG.debugf("Proceeding with role-based authentication, role=%s", identity.getRole());
         if ("parent".equals(identity.getRole())) {
             return authenticateParent(identity, family);
         }

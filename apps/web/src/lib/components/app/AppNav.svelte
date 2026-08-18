@@ -34,6 +34,8 @@
     let navElement: HTMLElement | null = null;
 
     $: primarySections = isAdmin ? ADMIN_PRIMARY_SECTIONS : CHILD_PRIMARY_SECTIONS;
+    // EXPLAIN: UI debug – log admin flag and which sections are being rendered
+    console.log('AppNav: isAdmin =', isAdmin, 'primarySections =', primarySections);
 
     function closeMoreMenu() {
         moreOpen = false;
@@ -129,6 +131,9 @@
             <ChildSwitcher />
             <div class="nav__group nav__group--parent">
                 {#each primarySections as section (section)}
+                    {#if section === 'dashboard'}
+                        <script>console.log('AppNav: rendering dashboard menu item for admin');</script>
+                    {/if}
                     <a
                         class="nav__btn"
                         class:active={activeSection === section}
