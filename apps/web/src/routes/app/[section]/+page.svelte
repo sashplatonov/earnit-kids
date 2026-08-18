@@ -7,7 +7,6 @@
     import RequestsSection from '$lib/components/app/sections/RequestsSection.svelte';
     import RulesSection from '$lib/components/app/sections/RulesSection.svelte';
     import SettingsSection from '$lib/components/app/sections/SettingsSection.svelte';
-    import ShopSection from '$lib/components/app/sections/ShopSection.svelte';
     import TasksSection from '$lib/components/app/sections/TasksSection.svelte';
     import type { PageData } from './$types';
 
@@ -23,8 +22,6 @@
     <AnalyticsSection />
 {:else if data.section === 'tasks'}
     <TasksSection />
-{:else if data.section === 'shop'}
-    <ShopSection />
 {:else if data.section === 'requests'}
     <RequestsSection />
 {:else if data.section === 'history'}

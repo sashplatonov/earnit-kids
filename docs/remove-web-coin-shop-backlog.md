@@ -2,7 +2,7 @@
 
 ## Goal
 
-Remove the web (SvelteKit `apps/web`) implementation of the coin shop (магазин монет / rewards shop) and every piece of code that is used **only** by the web shop, so that no dead code remains. The Telegram mini app and Telegram bot keep their own reward flows. Code that is **shared** between the web shop and the Telegram mini app / bot must **not** be deleted — it is listed in the "Shared code" appendix with exact file paths and locations so a follow-up decision can be made.
+Remove the web (SvelteKit `apps/web`) implementation of the coin shop (магазин монет / rewards shop) and every piece of code that is used **only** by the web shop, so that no dead code remains. This includes the web admin (super-admin) coin-shop management and the legacy public marketing site, which are also no longer needed. The Telegram mini app and Telegram bot keep their own reward flows. Code that is **shared** between the web shop and the Telegram mini app / bot must **not** be deleted — it is listed in the "Shared code" appendix with exact file paths and locations, and is migrated into a unified Telegram structure (P1-1…P1-4).
 
 ## Architectural decisions
 
@@ -12,7 +12,9 @@ Remove the web (SvelteKit `apps/web`) implementation of the coin shop (мага�
 - **Reward goal** (`rewardGoalItemId`, `setRewardGoal`, `RewardGoalProgress`, the `TodaySummary` goal block, the analytics "reward goal" card) is a web-only feature but is rendered in **both** `ShopSection` and `TasksSection` (via `TodaySummary`). It is removed as part of the web shop deletion, which requires touching `TasksSection` and the backend `ChildEntity.rewardGoalItemId`/`ChildDto.rewardGoalItemId`/`ChildRepository.updateRewardGoal`.
 - **i18n `shop` domain** (`messages/{en,ru}/shop.ts`) is web-only in content, but the domain is registered in `config.ts`/`index.ts` and the `/telegram` route loads it. The `import.kindShop`/`import.kindTasks` keys are duplicated in `tasks.ts` and are used by the shared `CsvImportModal`/`TelegramImport`. The `shop.ts` file is deleted, but the `shop` domain registration and the `import.*` keys must be reconciled (see tasks).
 - **Print catalog** (`routes/print/catalog/*`) renders both tasks and shop. Only the shop portion is removed; the tasks portion and `printCatalog.ts` are kept.
-- **Rejected approach:** do not delete shared services (`shopPayload.ts`, `catalogFilter.ts`, `csvImport.ts`, `groupOrder.ts`, `save.ts`, `bootstrap.ts`, `serverContract.ts`, `stores/app.ts`, `stores/modal.ts`) or shared API functions (`buyItem`, `requestItem`, `requestItemWithNote`, `importShopItems`, `saveChildGroupOrder`) — they are used by Telegram. Only their web-only members are trimmed.
+- **Rejected approach:** do not delete shared services (`shopPayload.ts`, `catalogFilter.ts`, `csvImport.ts`, `groupOrder.ts`, `save.ts`, `bootstrap.ts`, `serverContract.ts`, `stores/app.ts`, `stores/modal.ts`) or shared API functions (`buyItem`, `requestItem`, `requestItemWithNote`, `importShopItems`, `saveChildGroupOrder`) — they are used by Telegram. Only their web-only members are trimmed (P0-7), and the remaining shared members are migrated into a unified Telegram structure (P1-1…P1-4).
+- **Web admin (super-admin) shop** is a separate web-only surface: the `catalog-products` tab, the base `products` catalog (`baseData.products`), and the shop/reward columns in the families table. These are removed in P0-10. The `catalog.rewards` ready catalog is **kept** (Telegram mini app).
+- **Legacy public site** (`static/public/*.html` + `resolvePublicRedirect`/`PUBLIC_REDIRECT_MAP`/`LEGACY_ALIAS_MAP`) is no longer needed and is removed in P0-11. The `publicOrigin` config value is **kept** (mini app footer + `robots.txt`/`sitemap.xml`).
 
 ## Recommended implementation order
 
@@ -27,10 +29,16 @@ Remove the web (SvelteKit `apps/web`) implementation of the coin shop (мага�
 | 7 | P0-7 | P0 | P0-4 | Trim web-only members from shared services (view-model, telemetry, card-view-mode). |
 | 8 | P0-8 | P0 | P0-7 | Remove the web-only admin reward-shop analytics (backend + dashboard). |
 | 9 | P0-9 | P0 | P0-8 | Final dead-code sweep and full verification gates. |
+| 10 | P0-10 | P0 | P0-9 | Remove the web admin (super-admin) coin-shop management and base `products` catalog. |
+| 11 | P0-11 | P0 | P0-10 | Remove the legacy public marketing site (static HTML + redirects + i18n). |
+| 12 | P1-1 | P1 | P0-9 | Migrate shared shop services into a unified Telegram mini-app structure. |
+| 13 | P1-2 | P1 | P1-1 | Migrate shared shop store/contract types into the Telegram structure. |
+| 14 | P1-3 | P1 | P1-2 | Migrate shared shop API client functions into the Telegram structure. |
+| 15 | P1-4 | P1 | P1-3 | Final shared-code migration sweep and verification. |
 
 ## P0-1: Remove the web shop UI and section wiring
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** -
 
@@ -465,6 +473,315 @@ cd apps/web && npm run lint && npm run test && npm run build
 ```bash
 git add -A
 git commit -m "chore(web,backend): final dead-code sweep after web shop removal"
+```
+
+## P0-10: Remove the web admin (super-admin) coin-shop management and base `products` catalog
+
+**Status:** ⬜ Not started
+**Priority:** P0
+**Depends on:** P0-9
+
+### Outcome
+
+The super-admin web page no longer manages the coin shop: the `catalog-products` tab, the base `products` catalog editor, and the shop/reward columns in the families table are removed. The backend base `products` catalog (`baseData.products`) is removed, while the `catalog.rewards` (ready catalog) used by the Telegram mini app is kept.
+
+### Architectural decision
+
+There are **two** reward catalogs in the backend `baseData.json`:
+- `baseData.products` — the legacy "base products" catalog, consumed only by the web `CatalogSection` (admin "catalog" section) and the super-admin `catalog-products` tab. This is web-only and is removed.
+- `baseData.catalog.rewards` — the "ready catalog" consumed by the Telegram mini app (`TelegramReadyCatalog` → `$appStore.catalog.rewards`). This is **kept**.
+
+The super-admin page (`routes/super-admin/+page.svelte`) has a `catalog-products` tab and a `catalog-tasks` tab that edit `baseData.products`/`baseData.tasks` via `POST /api/super/base-data`. Only the **products** half is removed; the **tasks** half stays. The families table also shows `shopCount`/reward columns and a per-family `shop` list — these are removed.
+
+### Files
+
+- Modify `apps/web/src/routes/super-admin/+page.svelte` (remove the `catalog-products` tab, `catalogProducts` state, `CatalogType = 'products'` branches, `addProductFromCatalog`-equivalent edit/delete for products, the `shopCount`/`withShop`/`avgShop` dashboard stats, the `shop` column in the families table, and the per-family `shopItems`/rewards detail block).
+- Modify `apps/web/src/lib/components/app/sections/CatalogSection.svelte` (remove the `catalogProducts`/`filteredProducts` bindings, `addProductFromCatalog`, and the products column; keep the tasks column).
+- Modify `apps/web/src/lib/i18n/messages/en/superadmin.ts` and `ru/superadmin.ts` (remove `catalogProducts`, `baseProducts`, `addProduct`, `loadingProducts`, `emptyProducts`, `useShop`, `averageRewardsPerFamily`, `totalRewards`, `rewards`, `rewardsChip`, `tasksAndRewards`, `rewardsHeading`, `rewardsEmpty`).
+- Modify `apps/web/src/lib/i18n/messages/en/admin.ts` and `ru/admin.ts` (remove `catalog.productAdded`, `catalog.productsCount`, `catalog.productsEyebrow`, `catalog.productsTitle`, `catalog.defaultProductGroup`, `catalog.addProduct`, `catalog.noProducts`).
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/database/BaseDataService.java` (remove `products` from `EMPTY_BASE_DATA`, `normalizeBaseData`, and `getBaseData`/`saveBaseData` normalization).
+- Modify `apps/backend/src/main/resources/baseData.json` (remove the top-level `products` array; keep `tasks` and `catalog`).
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response/SuperAdminFamiliesResponse.java` (remove `shopCount` from `FamilySummary`).
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response/SuperAdminFamilyDetailsResponse.java` (remove the `shop` field).
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/system/SuperAdminService.java` (remove `shopItemRepository` usage for family summaries/details and the `toShopPayload` helper if now unused).
+- Modify `apps/web/src/lib/services/serverContract.ts` (remove `products` from `normalizeBaseData`).
+- Modify `apps/web/src/lib/stores/app.ts` (remove `baseData.products` from `AppState` and `initialState`).
+
+### Work
+
+1. Remove the `catalog-products` tab and all `products`-typed branches from `super-admin/+page.svelte`; keep `catalog-tasks`.
+2. Remove the shop/reward columns and per-family reward detail from the super-admin families view.
+3. Remove the products column from `CatalogSection.svelte` (keep the tasks column).
+4. Remove the now-unused i18n keys from `superadmin.ts` and `admin.ts`.
+5. Remove `products` from `BaseDataService` and `baseData.json`.
+6. Remove `shopCount`/`shop` from the super-admin DTOs and `SuperAdminService`.
+7. Remove `products` from `serverContract.ts` and `stores/app.ts`.
+8. Update backend tests referencing `baseData.products`/`shopCount`/`SuperAdminService`.
+
+### Acceptance criteria
+
+- The super-admin page has no `catalog-products` tab and no shop/reward columns.
+- `GET /api/super/base-data` no longer returns a `products` array; `catalog.rewards` is still returned.
+- The Telegram mini app ready catalog (`$appStore.catalog.rewards`) still loads and renders.
+- Backend `./mvnw verify` and web `npm run lint && npm run build` pass.
+
+### Verification
+
+```bash
+cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify
+cd apps/web && npm run lint && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/routes/super-admin/+page.svelte apps/web/src/lib/components/app/sections/CatalogSection.svelte apps/web/src/lib/i18n/messages/en/superadmin.ts apps/web/src/lib/i18n/messages/ru/superadmin.ts apps/web/src/lib/i18n/messages/en/admin.ts apps/web/src/lib/i18n/messages/ru/admin.ts apps/web/src/lib/services/serverContract.ts apps/web/src/lib/stores/app.ts apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/database/BaseDataService.java apps/backend/src/main/resources/baseData.json apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response/SuperAdminFamiliesResponse.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response/SuperAdminFamilyDetailsResponse.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/system/SuperAdminService.java
+git commit -m "refactor(web,backend): remove web admin coin-shop management and base products catalog"
+```
+
+## P0-11: Remove the legacy public marketing site
+
+**Status:** ⬜ Not started
+**Priority:** P0
+**Depends on:** P0-10
+
+### Outcome
+
+The legacy static public marketing site (`static/public/*.html`) and all its redirect/alias/i18n wiring are removed. The root URL no longer redirects to `/public/index.html`; instead it redirects to the app shell (or login) for unauthenticated users.
+
+### Architectural decision
+
+The public site is a static HTML site in `apps/web/static/public/` served outside SvelteKit routing, reached via `resolvePublicRedirect`/`PUBLIC_REDIRECT_MAP`/`LEGACY_ALIAS_MAP` in `config.ts`, `hooks.server.ts`, and `routes/+page.server.ts`. It is no longer needed. The `publicOrigin` config value is **kept** because the Telegram mini app footer still links to it (`TelegramParentShell`/`TelegramChildShell` → `publicSite`), and `sitemap.xml`/`robots.txt` reference it — but the static HTML pages themselves are removed.
+
+### Files
+
+- Remove `apps/web/static/public/` (all `*.html`, `site.js`, `styles.css`, `config.js`, `assets/`, favicons).
+- Modify `apps/web/src/routes/+page.server.ts` (replace the `redirect(302, '/public/index.html')` fallback with a redirect to `/login` or the app shell).
+- Modify `apps/web/src/lib/i18n/config.ts` (remove `PUBLIC_BARE_PATHS`, `PUBLIC_REDIRECT_MAP`, `resolvePublicRedirect`, and the `/public` entry in `BYPASS_PREFIXES`; remove the `LEGACY_ALIAS_MAP` entries that point to `/public/*`).
+- Modify `apps/web/src/hooks.server.ts` (remove the `resolvePublicRedirect` import and the public-redirect block).
+- Modify `apps/web/src/lib/i18n/index.ts` (remove the `resolvePublicRedirect` re-export if present).
+- Modify `apps/web/src/routes/sitemap.xml/+server.ts` (remove the `/public/*.html` entries; keep app routes or emit an empty sitemap).
+- Modify `apps/web/src/lib/components/PublicTopNav.svelte` (remove the `/features/shop`, `/features/tasks`, `/about` links that pointed at the public site, or remove the component if only used by the login page).
+- Modify `apps/web/src/routes/login/+page.svelte` (remove `PublicTopNav` usage if the component is removed).
+- Modify `apps/web/src/lib/i18n/messages/en/public.ts` and `ru/public.ts` (remove the `public` domain if no longer referenced; keep `common`/`auth` keys used by login).
+- Modify `apps/web/src/lib/i18n/config.ts` (remove `'public'` from the `MessageDomain` union and the `/login` domain list if the domain is removed).
+
+### Work
+
+1. Delete `static/public/`.
+2. Change the root redirect to point at `/login` (or the app shell) instead of `/public/index.html`.
+3. Remove the public redirect/alias maps and the `resolvePublicRedirect` function.
+4. Remove the `/public/*` sitemap entries.
+5. Remove `PublicTopNav` (or its public-site links) and its usage in `login/+page.svelte`.
+6. Remove the `public` i18n domain if it is no longer consumed.
+7. Keep `publicOrigin` in `config.ts` (still used by the mini app footer and `robots.txt`).
+
+### Acceptance criteria
+
+- `/` no longer redirects to `/public/index.html`; it redirects to `/login` (or the app shell) for unauthenticated users.
+- `/how`, `/tasks`, `/rewards`, `/parents`, `/faq`, `/features/*` no longer resolve to static HTML.
+- The Telegram mini app footer "public site" link still points at `publicOrigin` (unchanged).
+- `npm run lint` and `npm run build` pass.
+
+### Verification
+
+```bash
+cd apps/web && npm run lint && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/static/public apps/web/src/routes/+page.server.ts apps/web/src/lib/i18n/config.ts apps/web/src/hooks.server.ts apps/web/src/lib/i18n/index.ts apps/web/src/routes/sitemap.xml/+server.ts apps/web/src/lib/components/PublicTopNav.svelte apps/web/src/routes/login/+page.svelte apps/web/src/lib/i18n/messages/en/public.ts apps/web/src/lib/i18n/messages/ru/public.ts
+git commit -m "refactor(web): remove legacy public marketing site"
+```
+
+## P1-1: Migrate shared shop services into a unified Telegram mini-app structure
+
+**Status:** ⬜ Not started
+**Priority:** P1
+**Depends on:** P0-9
+
+### Outcome
+
+The shared shop services currently living in the generic `apps/web/src/lib/services/` are moved into a Telegram-scoped structure so the mini app and bot code is uniform. The web app no longer imports them.
+
+### Architectural decision
+
+The shared services (`shopPayload.ts`, `catalogFilter.ts`, `csvImport.ts`, `groupOrder.ts`, `save.ts`, `bootstrap.ts`, `serverContract.ts`, `catalogItemViewModel.ts`, `catalogTelemetry.ts`, `catalogViewState.ts`, `groupPrompt.ts`, `confirm.ts`) are consumed by both the web app and the Telegram mini app. After the web shop removal (P0-1…P0-9), the remaining consumers are the Telegram mini app plus the web `TasksSection`/`HistorySection`/`RequestsSection` (which still use `groupOrder`, `catalogItemViewModel`, `catalogTelemetry`, `catalogViewState`, `groupPrompt`, `confirm`, `save`, `bootstrap`, `serverContract`). The migration target is a new `apps/web/src/lib/telegram/` tree (or `apps/web/src/lib/components/telegram/`-adjacent `services/`), with the web-only consumers re-pointed to the new location. This is a **move + re-import** refactor, not a behavior change.
+
+### Files
+
+- Create `apps/web/src/lib/telegram/services/` (new directory).
+- Move `apps/web/src/lib/services/shopPayload.ts` → `apps/web/src/lib/telegram/services/shopPayload.ts`.
+- Move `apps/web/src/lib/services/catalogFilter.ts` → `apps/web/src/lib/telegram/services/catalogFilter.ts`.
+- Move `apps/web/src/lib/services/csvImport.ts` → `apps/web/src/lib/telegram/services/csvImport.ts`.
+- Move `apps/web/src/lib/services/groupOrder.ts` → `apps/web/src/lib/telegram/services/groupOrder.ts`.
+- Move `apps/web/src/lib/services/readyCatalogTelemetry.ts` → `apps/web/src/lib/telegram/services/readyCatalogTelemetry.ts`.
+- Update all import paths in `apps/web/src/lib/components/telegram/*.svelte` and the web sections that still use these services.
+
+### Work
+
+1. Create the `telegram/services/` directory.
+2. Move the five shop/catalog services into it (preserve content; only relocate).
+3. Update every `import ... from '$lib/services/<name>'` to the new path in Telegram components and remaining web consumers.
+4. Keep `save.ts`, `bootstrap.ts`, `serverContract.ts`, `confirm.ts`, `catalogItemViewModel.ts`, `catalogTelemetry.ts`, `catalogViewState.ts`, `groupPrompt.ts` in place for now (they are shared with the web tasks/history/requests sections and are handled in P1-2/P1-3).
+
+### Acceptance criteria
+
+- The five services live under `apps/web/src/lib/telegram/services/`.
+- No import references the old `$lib/services/shopPayload`/`catalogFilter`/`csvImport`/`groupOrder`/`readyCatalogTelemetry` paths.
+- `npm run lint` and `npm run build` pass.
+
+### Verification
+
+```bash
+cd apps/web && npm run lint && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/lib/telegram/services apps/web/src/lib/services/shopPayload.ts apps/web/src/lib/services/catalogFilter.ts apps/web/src/lib/services/csvImport.ts apps/web/src/lib/services/groupOrder.ts apps/web/src/lib/services/readyCatalogTelemetry.ts apps/web/src/lib/components/telegram
+git commit -m "refactor(web): move shared shop services into telegram structure"
+```
+
+## P1-2: Migrate shared shop store/contract types into the Telegram structure
+
+**Status:** ⬜ Not started
+**Priority:** P1
+**Depends on:** P1-1
+
+### Outcome
+
+The shop-specific types and normalization (`ShopItem`, `CatalogRewardTemplate`, `normalizeShopItem`, `normalizeCatalog`, the `shop`/`shopItems`/`catalog.rewards` fields) are extracted into a Telegram-scoped module, leaving the web store/contract free of shop concerns.
+
+### Architectural decision
+
+`stores/app.ts` and `services/serverContract.ts` are shared. The shop-specific members (`ShopItem`, `CatalogRewardTemplate`, `shopItems`, `baseData.products` (already removed in P0-10), `catalog.rewards`, `normalizeShopItem`, `normalizeCatalog`, `shop` field) are moved to a new `apps/web/src/lib/telegram/` module. The web `TasksSection`/`HistorySection`/`RequestsSection` still reference `shopItems`/`baseData.products` for history/request catalog lookups — those lookups are re-pointed to the Telegram module or trimmed if the web history/requests no longer need shop context.
+
+### Files
+
+- Create `apps/web/src/lib/telegram/types.ts` (or `apps/web/src/lib/telegram/shopTypes.ts`).
+- Modify `apps/web/src/lib/stores/app.ts` (remove `ShopItem`, `CatalogRewardTemplate`, `shopItems`, `catalog.rewards`; keep `Task`, `CatalogTaskTemplate`, `tasks`, `catalog.tasks`).
+- Modify `apps/web/src/lib/services/serverContract.ts` (remove `normalizeShopItem`, `normalizeCatalog` reward half, `shop` field, `shopItems`).
+- Modify `apps/web/src/lib/components/app/sections/HistorySection.svelte` and `RequestsSection.svelte` (re-point or trim `shopItems`/`baseProducts` usage).
+- Update Telegram components to import the new types.
+
+### Work
+
+1. Create the Telegram types module with `ShopItem`, `CatalogRewardTemplate`, and the shop normalization helpers.
+2. Remove shop members from `stores/app.ts` and `serverContract.ts`.
+3. Re-point Telegram components and the web history/requests sections to the new module.
+4. Confirm the web `TasksSection` no longer depends on shop types.
+
+### Acceptance criteria
+
+- `stores/app.ts` and `serverContract.ts` contain no `ShopItem`/`shopItems`/`catalog.rewards`/`normalizeShopItem` references.
+- Telegram components import shop types from the new Telegram module.
+- `npm run lint` and `npm run build` pass.
+
+### Verification
+
+```bash
+cd apps/web && npm run lint && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/lib/telegram apps/web/src/lib/stores/app.ts apps/web/src/lib/services/serverContract.ts apps/web/src/lib/components/app/sections/HistorySection.svelte apps/web/src/lib/components/app/sections/RequestsSection.svelte apps/web/src/lib/components/telegram
+git commit -m "refactor(web): extract shop types into telegram structure"
+```
+
+## P1-3: Migrate shared shop API client functions into the Telegram structure
+
+**Status:** ⬜ Not started
+**Priority:** P1
+**Depends on:** P1-2
+
+### Outcome
+
+The shop API client functions (`buyItem`, `requestItem`, `requestItemWithNote`, `importShopItems`, `saveChildGroupOrder`) are moved into a Telegram-scoped API module, leaving `api.ts` free of shop endpoints.
+
+### Architectural decision
+
+`services/api.ts` is shared. The shop functions are consumed only by Telegram components after the web shop removal. They are moved to `apps/web/src/lib/telegram/api.ts` (or `telegram/services/api.ts`). `saveChildGroupOrder` is also used by the web `TasksSection` (task group order) — it is kept in `api.ts` or split so the `tasks`/`shop` section parameter remains generic.
+
+### Files
+
+- Create `apps/web/src/lib/telegram/api.ts`.
+- Modify `apps/web/src/lib/services/api.ts` (remove `buyItem`, `requestItem`, `requestItemWithNote`, `importShopItems`; keep `saveChildGroupOrder` if still used by web tasks).
+- Update Telegram components (`TelegramParentRewards`, `TelegramChildRewards`, `TelegramImport`) to import from the new module.
+
+### Work
+
+1. Create the Telegram API module and move the four shop functions.
+2. Remove them from `api.ts`.
+3. Re-point the Telegram importers.
+4. Keep `saveChildGroupOrder` in `api.ts` (shared with web tasks) or move it and re-point both consumers.
+
+### Acceptance criteria
+
+- `api.ts` no longer exports `buyItem`/`requestItem`/`requestItemWithNote`/`importShopItems`.
+- Telegram components import shop API functions from the Telegram module.
+- `npm run lint` and `npm run build` pass.
+
+### Verification
+
+```bash
+cd apps/web && npm run lint && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/lib/telegram/api.ts apps/web/src/lib/services/api.ts apps/web/src/lib/components/telegram
+git commit -m "refactor(web): move shop api client into telegram structure"
+```
+
+## P1-4: Final shared-code migration sweep and verification
+
+**Status:** ⬜ Not started
+**Priority:** P1
+**Depends on:** P1-3
+
+### Outcome
+
+The shared-code migration is complete: no shop-specific code remains in the generic `services/`/`stores/` layer, and the Telegram mini app / bot code is in a uniform structure. All quality gates pass.
+
+### Architectural decision
+
+Verification-only task: confirm the generic layer is free of shop concerns, the Telegram structure is self-contained, and the full test/build matrix passes.
+
+### Files
+
+- No new files. Any residual references found are cleaned up in this task.
+
+### Work
+
+1. Grep `apps/web/src/lib/services` and `apps/web/src/lib/stores` for `ShopItem`, `shopItems`, `shopPayload`, `catalogFilter`, `csvImport`, `groupOrder`, `buyItem`, `requestItem`, `importShopItems`, `catalog.rewards`.
+2. Confirm the Telegram structure (`apps/web/src/lib/telegram/`) is self-contained.
+3. Run the full verification matrix.
+
+### Acceptance criteria
+
+- The generic `services/`/`stores/` layer contains no shop-specific code.
+- Backend `./mvnw verify`, web `npm run lint`, `npm run test`, and `npm run build` all pass.
+- Telegram reward flows (purchase/request/import/group-order) still work.
+
+### Verification
+
+```bash
+cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify
+cd apps/web && npm run lint && npm run test && npm run build
+```
+
+### Commit
+
+```bash
+git add -A
+git commit -m "chore(web): final shared-code migration sweep"
 ```
 
 ---

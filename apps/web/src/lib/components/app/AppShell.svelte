@@ -9,7 +9,6 @@
     import CsvImportModal from './modals/CsvImportModal.svelte';
     import RequestNoteModal from './modals/RequestNoteModal.svelte';
     import TaskModal from './modals/TaskModal.svelte';
-    import ShopModal from './modals/ShopModal.svelte';
     import type { AppSection } from '$lib/app/routes';
     import { useI18n } from '$lib/i18n/context';
     import type { SessionSnapshot } from '$lib/types/session';
@@ -18,6 +17,7 @@
     import { initializePwa } from '$lib/services/pwa';
     import { initializePushNotifications } from '$lib/services/push';
     import { startWebSocket, stopWebSocket } from '$lib/services/websocket';
+    import { initUiLogForwarder } from '$lib/utils/uiLog';
 
     // __BUILD_TS__ is injected at build time by vite.config.ts define (declared in vite-env.d.ts)
     const buildTs: string = __BUILD_TS__;
@@ -35,6 +35,8 @@
     $: reqCount = $pendingRequestsCount;
 
     onMount(() => {
+        // Forward browser console logs to the backend so they appear in container logs
+        initUiLogForwarder();
         let mounted = true;
         let cleanupPwa: (() => void) | null = null;
 
@@ -85,7 +87,6 @@
     <CsvImportModal />
     <RequestNoteModal />
     <TaskModal />
-    <ShopModal />
 
     <!-- Toast notifications -->
     <Toast />

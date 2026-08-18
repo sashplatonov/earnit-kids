@@ -131,9 +131,6 @@
             <ChildSwitcher />
             <div class="nav__group nav__group--parent">
                 {#each primarySections as section (section)}
-                    {#if section === 'dashboard'}
-                        <script>console.log('AppNav: rendering dashboard menu item for admin');</script>
-                    {/if}
                     <a
                         class="nav__btn"
                         class:active={activeSection === section}
