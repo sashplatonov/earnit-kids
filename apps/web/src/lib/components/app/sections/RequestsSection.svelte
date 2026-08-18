@@ -47,7 +47,6 @@
         tasks: $appStore.tasks,
         shopItems: $appStore.shopItems,
         baseTasks: $appStore.baseData.tasks,
-        baseProducts: $appStore.baseData.products,
     });
 
     $: incomingRequests = requests

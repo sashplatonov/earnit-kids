@@ -5,7 +5,6 @@ export interface RequestCatalog {
     tasks?: Task[];
     shopItems?: ShopItem[];
     baseTasks?: Task[];
-    baseProducts?: ShopItem[];
 }
 
 export interface RequestCatalogLookups {
@@ -80,7 +79,7 @@ export function isPurchaseRequest(request: Request): boolean {
 export function buildRequestCatalog(catalog: RequestCatalog = {}): RequestCatalogLookups {
     return {
         taskLookup: buildLookup([...(catalog.tasks ?? []), ...(catalog.baseTasks ?? [])]),
-        itemLookup: buildLookup([...(catalog.shopItems ?? []), ...(catalog.baseProducts ?? [])]),
+        itemLookup: buildLookup([...(catalog.shopItems ?? [])]),
     };
 }
 

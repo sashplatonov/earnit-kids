@@ -20,7 +20,6 @@ public record SuperAdminFamiliesResponse(
         String lastActivity,
         boolean isBlocked,
         int tasksCount,
-        int shopCount,
         int childrenCount,
         List<ChildSummary> children
     ) {

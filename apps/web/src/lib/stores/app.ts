@@ -137,7 +137,7 @@ export interface AppState {
     familyId: string | null;
     monthlyLimit: number;
     dailyCoinLimit: number;
-    baseData: { tasks: Task[]; products: ShopItem[] };
+    baseData: { tasks: Task[] };
     catalog: { tasks: CatalogTaskTemplate[]; rewards: CatalogRewardTemplate[] };
     children: Child[];
     currentChildId: string | number | null;
@@ -198,7 +198,7 @@ const initialState: AppState = {
     familyId: null,
     monthlyLimit: 10000,
     dailyCoinLimit: 0,
-    baseData: { tasks: [], products: [] },
+    baseData: { tasks: [] },
     catalog: { tasks: [], rewards: [] },
     children: [],
     currentChildId: null,

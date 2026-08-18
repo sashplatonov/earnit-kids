@@ -25,9 +25,8 @@ class BaseDataServiceTest {
 
         Map<String, Object> data = service.getBaseData();
 
-        assertThat(data).containsKeys("tasks", "products");
+        assertThat(data).containsKeys("tasks");
         assertThat((List<?>) data.get("tasks")).isNotEmpty();
-        assertThat((List<?>) data.get("products")).isNotEmpty();
     }
 
     @Test
@@ -36,21 +35,20 @@ class BaseDataServiceTest {
         BaseDataService service = new BaseDataService(new ObjectMapper(), baseDataFile);
 
         Map<String, Object> payload = Map.of(
-            "tasks", List.of(Map.of("id", "1", "name", "Read")),
-            "products", List.of(Map.of("id", "2", "name", "Toy"))
+            "tasks", List.of(Map.of("id", "1", "name", "Read"))
         );
 
         assertThat(service.saveBaseData(payload)).isTrue();
         assertThat(service.getBaseData()).isEqualTo(payload);
         assertThat(Files.exists(baseDataFile)).isTrue();
-        assertThat(Files.readString(baseDataFile)).contains("Read", "Toy");
+        assertThat(Files.readString(baseDataFile)).contains("Read");
     }
 
     @Test
     void getBaseData_usesShortLivedCacheAndRefreshesAfterTtl() throws Exception {
         Path baseDataFile = tempDir.resolve("baseData.json");
         Files.writeString(baseDataFile, """
-            {"tasks":[{"id":"1","name":"Read"}],"products":[{"id":"2","name":"Toy"}]}
+            {"tasks":[{"id":"1","name":"Read"}]}
             """);
 
         AtomicReference<Instant> now = new AtomicReference<>(Instant.parse("2026-04-16T12:00:00Z"));
@@ -64,7 +62,7 @@ class BaseDataServiceTest {
         Map<String, Object> first = service.getBaseData();
 
         Files.writeString(baseDataFile, """
-            {"tasks":[{"id":"3","name":"Draw"}],"products":[{"id":"4","name":"Ball"}]}
+            {"tasks":[{"id":"3","name":"Draw"}]}
             """);
 
         Map<String, Object> cached = service.getBaseData();
@@ -74,6 +72,6 @@ class BaseDataServiceTest {
         Map<String, Object> refreshed = service.getBaseData();
 
         assertThat(refreshed).isNotEqualTo(first);
-        assertThat(refreshed.toString()).contains("Draw", "Ball");
+        assertThat(refreshed.toString()).contains("Draw");
     }
 }

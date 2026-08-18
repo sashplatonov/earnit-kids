@@ -5,7 +5,6 @@ export interface HistoryCatalog {
     tasks?: Task[];
     shopItems?: ShopItem[];
     baseTasks?: Task[];
-    baseProducts?: ShopItem[];
 }
 
 export interface HistoryCatalogLookups {
@@ -85,7 +84,7 @@ function findItem(entry: HistoryEntry, lookups: HistoryCatalogLookups): ShopItem
 export function buildHistoryCatalog(catalog: HistoryCatalog = {}): HistoryCatalogLookups {
     return {
         taskLookup: buildLookup([...(catalog.tasks ?? []), ...(catalog.baseTasks ?? [])]),
-        itemLookup: buildLookup([...(catalog.shopItems ?? []), ...(catalog.baseProducts ?? [])]),
+        itemLookup: buildLookup([...(catalog.shopItems ?? [])]),
     };
 }
 

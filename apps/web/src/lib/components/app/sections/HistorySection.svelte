@@ -53,7 +53,6 @@
         tasks: $appStore.tasks,
         shopItems: $appStore.shopItems,
         baseTasks: $appStore.baseData.tasks,
-        baseProducts: $appStore.baseData.products,
     });
     $: historyEntries = history.map(entry => ({ ...entry, ui: resolveHistoryCard(entry, historyCatalog, historyDetailsI18n) })) as HistoryViewEntry[];
 

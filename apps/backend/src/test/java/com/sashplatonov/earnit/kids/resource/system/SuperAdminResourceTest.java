@@ -65,7 +65,6 @@ class SuperAdminResourceTest {
                     false,
                     1,
                     1,
-                    1,
                     List.of()
                 ))
             )
@@ -105,7 +104,6 @@ class SuperAdminResourceTest {
                 ),
                 new com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse.FamilyData(
                     0,
-                    List.of(),
                     List.of(),
                     List.of(),
                     List.of()
@@ -211,7 +209,7 @@ class SuperAdminResourceTest {
 
     @Test
     void getBaseData_superAdmin_returnsData() {
-        when(superAdminService.getBaseData()).thenReturn(java.util.Map.of("tasks", List.of(), "products", List.of()));
+        when(superAdminService.getBaseData()).thenReturn(java.util.Map.of("tasks", List.of()));
 
         Response response = resource.getBaseData(contextWithAuth(superAdminAuth()));
 

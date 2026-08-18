@@ -30,13 +30,11 @@ public record SuperAdminFamilyDetailsResponse(
     public record FamilyData(
         int balance,
         List<TaskDto> tasks,
-        List<ShopItemDto> shop,
         List<HistoryEntryDto> history,
         List<RequestDto> requests
     ) {
         public FamilyData {
             tasks = tasks == null ? List.of() : List.copyOf(tasks);
-            shop = shop == null ? List.of() : List.copyOf(shop);
             history = history == null ? List.of() : List.copyOf(history);
             requests = requests == null ? List.of() : List.copyOf(requests);
         }

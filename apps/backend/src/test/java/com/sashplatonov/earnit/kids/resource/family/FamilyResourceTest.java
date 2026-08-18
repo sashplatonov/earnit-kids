@@ -157,7 +157,7 @@ class FamilyResourceTest {
         Response unauthorized = readResource.getBaseData(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        when(baseDataService.getBaseData()).thenReturn(Map.of("tasks", List.of(), "products", List.of()));
+        when(baseDataService.getBaseData()).thenReturn(Map.of("tasks", List.of()));
         Response ok = readResource.getBaseData(contextWithAuth(adminAuth()));
         assertThat(ok.getStatus()).isEqualTo(200);
     }

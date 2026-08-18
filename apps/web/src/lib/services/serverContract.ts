@@ -135,7 +135,6 @@ export function normalizeShopItem(item: Record<string, unknown> = {}) {
 function normalizeBaseData(baseData: Record<string, unknown> = {}) {
     return {
         tasks: Array.isArray(baseData.tasks) ? baseData.tasks.map(normalizeTask) : [],
-        products: Array.isArray(baseData.products) ? baseData.products.map(normalizeShopItem) : [],
     };
 }
 

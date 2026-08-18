@@ -6,7 +6,6 @@ import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
-import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.config.auth.PasswordHasher;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
@@ -14,11 +13,9 @@ import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
-import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
-import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.SuperAdminFamiliesResponse;
 import com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
@@ -44,7 +41,6 @@ public class SuperAdminService {
     private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
     private final TaskRepository taskRepository;
-    private final ShopItemRepository shopItemRepository;
     private final HistoryRepository historyRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final FamilyService familyService;
@@ -90,7 +86,6 @@ public class SuperAdminService {
                 new SuperAdminFamilyDetailsResponse.FamilyData(
                     children.stream().mapToInt(ChildEntity::getBalance).sum(),
                     taskRepository.getTasksForFamily(family.getId()).stream().map(this::toTaskPayload).toList(),
-                    shopItemRepository.getShopItemsForFamily(family.getId()).stream().map(this::toShopPayload).toList(),
                     historyRepository.getHistoryForFamily(family.getId(), 100, 0).stream()
                         .map(this::toHistoryPayload)
                         .toList(),
@@ -194,7 +189,6 @@ public class SuperAdminService {
             toIso(family.getLastActivity()),
             family.isBlocked(),
             taskRepository.getTasksForFamily(family.getId()).size(),
-            shopItemRepository.getShopItemsForFamily(family.getId()).size(),
             children.size(),
             children.stream().map(this::toChildSummary).toList()
         );
@@ -225,21 +219,6 @@ public class SuperAdminService {
             !task.isDeleted(),
             task.getChildId(),
             null,
-            null
-        );
-    }
-
-    private ShopItemDto toShopPayload(ShopItemEntity item) {
-        return new ShopItemDto(
-            item.getItemId(),
-            item.getName(),
-            item.getPrice(),
-            item.getGroupName(),
-            parseFrequency(item.getFrequency()),
-            item.getComment(),
-            item.getMoneyLimit(),
-            !item.isDeleted(),
-            item.getChildId(),
             null
         );
     }

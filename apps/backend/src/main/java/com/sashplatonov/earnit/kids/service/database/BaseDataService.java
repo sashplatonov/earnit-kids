@@ -25,7 +25,7 @@ import java.util.Map;
 @Slf4j
 public class BaseDataService {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
-    private static final Map<String, Object> EMPTY_BASE_DATA = Map.of("tasks", List.of(), "products", List.of());
+    private static final Map<String, Object> EMPTY_BASE_DATA = Map.of("tasks", List.of());
     private static final Duration DEFAULT_CACHE_TTL = Duration.ofMinutes(5);
 
     private final ObjectMapper objectMapper;
@@ -145,7 +145,6 @@ public class BaseDataService {
 
         Map<String, Object> normalized = new HashMap<>(objectMapper.convertValue(rawBaseData, MAP_TYPE));
         normalized.putIfAbsent("tasks", List.of());
-        normalized.putIfAbsent("products", List.of());
         normalized.replaceAll((key, value) -> value instanceof List<?> list ? List.copyOf(list) : value);
         return Map.copyOf(normalized);
     }

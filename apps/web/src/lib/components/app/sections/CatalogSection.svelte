@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
-    import type { ShopItem, Task } from '$lib/stores/app';
+    import type { Task } from '$lib/stores/app';
     import { appStore } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { showToast } from '$lib/stores/toasts';
@@ -14,7 +14,6 @@
 
     $: baseData = $appStore.baseData;
     $: catalogTasks = (baseData?.tasks ?? []) as Task[];
-    $: catalogProducts = (baseData?.products ?? []) as ShopItem[];
 
     let ageMin = 7;
     let ageMax = 18;
@@ -25,24 +24,11 @@
         return min <= ageMax && max >= ageMin;
     });
 
-    $: filteredProducts = catalogProducts.filter((product) => {
-        const min = Number(product.ageMin ?? 0);
-        const max = Number(product.ageMax ?? 99);
-        return min <= ageMax && max >= ageMin;
-    });
-
     function addTaskFromCatalog(task: Task) {
         const newTask = { ...task, id: Date.now() };
         appStore.setState({ tasks: [...$appStore.tasks, newTask as typeof $appStore.tasks[0]] });
         void scheduleSave();
         showToast(tAdmin('catalog.taskAdded', { name: task.name }), 'success');
-    }
-
-    function addProductFromCatalog(product: ShopItem) {
-        const newItem = { ...product, id: Date.now() };
-        appStore.setState({ shopItems: [...$appStore.shopItems, newItem as typeof $appStore.shopItems[0]] });
-        void scheduleSave();
-        showToast(tAdmin('catalog.productAdded', { name: product.name }), 'success');
     }
 
     function formatAgeLabel(item: { ageMin?: number | null; ageMax?: number | null }) {
@@ -91,10 +77,6 @@
                 <div class="catalog-hero__summary-card">
                     <span>{tAdmin('catalog.tasksCount')}</span>
                     <strong>{$i18n.formatNumber(filteredTasks.length)}</strong>
-                </div>
-                <div class="catalog-hero__summary-card">
-                    <span>{tAdmin('catalog.productsCount')}</span>
-                    <strong>{$i18n.formatNumber(filteredProducts.length)}</strong>
                 </div>
             </div>
         </div>
@@ -167,52 +149,6 @@
                     {/each}
                     {#if filteredTasks.length === 0}
                     <p class="hint">{tAdmin('catalog.noTasks')}</p>
-                    {/if}
-                </div>
-            </article>
-            <article class="catalog-column">
-                <div class="catalog-column__header">
-                    <div>
-                        <p class="catalog-column__eyebrow">{tAdmin('catalog.productsEyebrow')}</p>
-                        <h3>{tAdmin('catalog.productsTitle')}</h3>
-                    </div>
-                    <span class="catalog-column__count">{$i18n.formatNumber(filteredProducts.length)}</span>
-                </div>
-                <div id="catalog-products-list" class="catalog-stack">
-                    {#each filteredProducts as product (product.id)}
-                    <article class="catalog-card catalog-card--product">
-                        <div class="catalog-card__body">
-                            <div class="catalog-card__headline">
-                                <div>
-                                    <p class="catalog-card__group">{product.groupName ?? tAdmin('catalog.defaultProductGroup')}</p>
-                                    <h4 class="catalog-card__title">{product.name}</h4>
-                                </div>
-                                <div class="catalog-card__price">
-                                    <strong>{$i18n.formatNumber(product.price ?? 0)}</strong>
-                                    <span>{tAdmin('catalog.coinsUnit')}</span>
-                                </div>
-                            </div>
-
-                            {#if product.comment}
-                            <p class="catalog-card__description">{product.comment}</p>
-                            {/if}
-
-                            <div class="catalog-card__meta">
-                                <span class="catalog-meta-chip">{formatAgeLabel(product)}</span>
-                                {#if moneyLimitLabel(product.moneyLimit)}
-                                <span class="catalog-meta-chip">{moneyLimitLabel(product.moneyLimit)}</span>
-                                {/if}
-                            </div>
-                        </div>
-
-                        <button class="btn btn--primary btn--small catalog-card__action" type="button"
-                            on:click={() => addProductFromCatalog(product)}>
-                            {tAdmin('catalog.addProduct')}
-                        </button>
-                    </article>
-                    {/each}
-                    {#if filteredProducts.length === 0}
-                    <p class="hint">{tAdmin('catalog.noProducts')}</p>
                     {/if}
                 </div>
             </article>
