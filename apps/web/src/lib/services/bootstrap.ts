@@ -4,6 +4,7 @@
  */
 import { get } from 'svelte/store';
 import { appStore } from '$lib/stores/app';
+import { shopItems } from '$lib/telegram/stores/shopItems';
 import type { AppState } from '$lib/stores/app';
 import { showToast } from '$lib/stores/toasts';
 import { loadDataDetailsFromServer, loadDataFromServer, loadBaseData } from './api';
@@ -56,6 +57,12 @@ export async function initializeFromServer(): Promise<boolean> {
     if (state.familyId == null && currentFamilyId != null) {
         state.familyId = currentFamilyId;
     }
+
+    // Sync server shop items to the dedicated shopItems store
+    if (state.shopItems && Array.isArray(state.shopItems)) {
+        shopItems.set(state.shopItems);
+    }
+
     // Keep isLoading true — will be cleared after all data (including child data) is loaded
     appStore.setState({ ...(state as Partial<AppState>), isLoading: true });
     measure('buildInitialState', t2);
