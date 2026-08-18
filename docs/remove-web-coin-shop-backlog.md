@@ -185,7 +185,7 @@ git commit -m "refactor(backend): remove web-only shop bulk and reward-goal endp
 
 ## P0-4: Remove the reward-goal feature (web + backend persistence)
 
-**Status:** ⬜ Not started
+**Status:** 🚧 In progress
 **Priority:** P0
 **Depends on:** P0-3
 
@@ -196,6 +196,8 @@ The reward-goal feature is fully removed: `RewardGoalProgress`, the `TodaySummar
 ### Architectural decision
 
 The reward goal is web-only (not present in Telegram), but it is rendered in both `ShopSection` (removed in P0-1) and `TasksSection` via `TodaySummary`. Removing it requires editing `TasksSection` and `TodaySummary`, and removing the persisted `rewardGoalItemId` from the backend child model. The analytics "reward goal" card in `analyticsDailyQuests.ts` is also removed.
+
+> **Note:** The analytics "reward goal" card (`buildRewardGoalCard`, `chooseTargetShopItem`, `AnalyticsQuestShopItemContext`, and the `shopItems` analytics option) was already removed in P0-2, because its `actionTarget: 'shop'` blocked the section-type change. This task now only covers `RewardGoalProgress`, `TodaySummary`, `TasksSection`, and the backend `rewardGoalItemId` persistence.
 
 ### Files
 
