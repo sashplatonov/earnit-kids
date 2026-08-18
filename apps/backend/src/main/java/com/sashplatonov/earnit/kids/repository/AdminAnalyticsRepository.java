@@ -12,6 +12,7 @@ import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminParentBehaviorResponse;
 
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
+import com.sashplatonov.earnit.kids.dto.response.AdminRewardsResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminTrendsResponse;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -112,7 +113,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return result != null ? result : 0L;
     }
 
-    private int countSuccessfulRewardPurchases(Instant periodStart) {
+    public int countSuccessfulRewardPurchases(Instant periodStart) {
         String sql = """
             SELECT COUNT(p) FROM PurchaseRequestEntity p
             WHERE p.status = :status AND p.createdAt >= :periodStart
@@ -135,6 +136,20 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         Long result = entityManager.createQuery(sql, Long.class)
             .setParameter("type", HistoryEntryType.earn)
             .setParameter("periodStart", periodStart)
+            .getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    public int countAllRewardRequests(Instant periodStart) {
+        String sql = """
+            SELECT COUNT(p) FROM PurchaseRequestEntity p
+            WHERE p.createdAt >= :periodStart
+            AND p.requestType IN (:shop, :shopPurchase)
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
@@ -368,15 +383,15 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .setParameter("periodStart", periodStart)
             .setMaxResults(5)
             .getResultList();
-        
+
         long total = countApprovedTaskCompletions(periodStart);
         List<AdminTasksResponse.TopTaskPattern> patterns = new ArrayList<>();
-        
+
         for (Object[] row : results) {
             String groupName = (String) row[0];
             long count = ((Number) row[1]).longValue();
             double percent = total > 0 ? Math.round(100.0 * count / total) : 0.0;
-            
+
             patterns.add(AdminTasksResponse.TopTaskPattern.builder()
                 .groupName(groupName)
                 .icon("")
@@ -384,8 +399,84 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
                 .percent(percent)
                 .build());
         }
-        
         return patterns;
+    }
+
+    public double calcMedianRewardPrice(Instant periodStart) {
+        String sql = """
+            SELECT p.coins FROM PurchaseRequestEntity p
+            WHERE p.createdAt >= :periodStart
+            AND p.coins > 0
+            AND p.requestType IN (:shop, :shopPurchase)
+            """;
+        var prices = entityManager.createQuery(sql, Integer.class)
+            .setParameter("periodStart", periodStart)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
+            .getResultList();
+        if (prices.isEmpty()) return 0.0;
+        var sorted = prices.stream().sorted().toList();
+        int n = sorted.size();
+        return n % 2 == 0 ? (sorted.get(n / 2 - 1) + sorted.get(n / 2)) / 2.0 : sorted.get(n / 2);
+    }
+
+    public double calcMedianPriceOfIssuedRewards(Instant periodStart) {
+        String sql = """
+            SELECT p.coins FROM PurchaseRequestEntity p
+            WHERE p.status = :status AND p.createdAt >= :periodStart
+            AND p.coins > 0
+            AND p.requestType IN (:shop, :shopPurchase)
+            """;
+        var prices = entityManager.createQuery(sql, Integer.class)
+            .setParameter("status", PurchaseRequestStatus.approved)
+            .setParameter("periodStart", periodStart)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
+            .getResultList();
+        if (prices.isEmpty()) return 0.0;
+        var sorted = prices.stream().sorted().toList();
+        int n = sorted.size();
+        return n % 2 == 0 ? (sorted.get(n / 2 - 1) + sorted.get(n / 2)) / 2.0 : sorted.get(n / 2);
+    }
+
+    public List<AdminRewardsResponse.RewardRanking> calcRewardRankings(Instant periodStart) {
+        // EXPLAIN: Reward category lives on the shop item (ShopItemEntity.groupName),
+        // EXPLAIN: not on the request. Join on childId+itemId to resolve the category.
+        String sql = """
+            SELECT s.groupName, COUNT(p) as cnt
+            FROM PurchaseRequestEntity p
+            JOIN ShopItemEntity s ON s.childId = p.childId AND s.itemId = p.itemId
+            WHERE p.status = :status AND p.createdAt >= :periodStart
+            AND p.requestType IN (:shop, :shopPurchase)
+            AND s.groupName IS NOT NULL AND s.groupName != ''
+            GROUP BY s.groupName
+            ORDER BY cnt DESC
+            """;
+        var results = entityManager.createQuery(sql, Object[].class)
+            .setParameter("status", PurchaseRequestStatus.approved)
+            .setParameter("periodStart", periodStart)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
+            .setMaxResults(5)
+            .getResultList();
+
+        long total = countSuccessfulRewardPurchases(periodStart);
+        List<AdminRewardsResponse.RewardRanking> rankings = new ArrayList<>();
+
+        for (int i = 0; i < results.size(); i++) {
+            Object[] row = results.get(i);
+            String category = (String) row[0];
+            long count = ((Number) row[1]).longValue();
+            double percent = total > 0 ? Math.round(100.0 * count / total) : 0.0;
+
+            rankings.add(AdminRewardsResponse.RewardRanking.builder()
+                .category(category)
+                .count(Math.toIntExact(count))
+                .percent(percent)
+                .rank(i + 1)
+                .build());
+        }
+        return rankings;
     }
 
     // EXPLAIN: Parent behavior metrics for ADM-10

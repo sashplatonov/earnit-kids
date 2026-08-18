@@ -19,5 +19,6 @@ public class AdminDashboardResponse {
     private AdminChildBehaviorResponse childSignals;
     private AdminActivationFunnelResponse activation;
     private AdminRetentionResponse activity;
+    private AdminRewardsResponse rewards;
     private String updatedAt;
 }

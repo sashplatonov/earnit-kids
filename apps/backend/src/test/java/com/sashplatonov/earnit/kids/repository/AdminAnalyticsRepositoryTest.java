@@ -138,6 +138,30 @@ class AdminAnalyticsRepositoryTest {
         return child.get();
     }
 
+    @Test
+    @Transactional
+    void rewardAnalyticsQueriesDoNotThrow() {
+        // EXPLAIN: Production P0 — calcRewardRankings previously referenced the
+        // EXPLAIN: non-existent PurchaseRequestEntity.category attribute, which
+        // EXPLAIN: threw QuerySyntaxException and 500'd the whole dashboard. The
+        // EXPLAIN: new reward queries must not throw and must return sane values.
+        Instant periodStart = Instant.EPOCH;
+        assertThatCode(() -> adminAnalyticsRepository.countAllRewardRequests(periodStart))
+            .doesNotThrowAnyException();
+        assertThatCode(() -> adminAnalyticsRepository.calcMedianRewardPrice(periodStart))
+            .doesNotThrowAnyException();
+        assertThatCode(() -> adminAnalyticsRepository.calcMedianPriceOfIssuedRewards(periodStart))
+            .doesNotThrowAnyException();
+        assertThatCode(() -> adminAnalyticsRepository.calcRewardRankings(periodStart))
+            .doesNotThrowAnyException();
+        assertThatCode(() -> adminAnalyticsRepository.countSuccessfulRewardPurchases(periodStart))
+            .doesNotThrowAnyException();
+
+        // EXPLAIN: Sanity — median prices are never negative.
+        assertThat(adminAnalyticsRepository.calcMedianRewardPrice(periodStart)).isNotNegative();
+        assertThat(adminAnalyticsRepository.calcMedianPriceOfIssuedRewards(periodStart)).isNotNegative();
+    }
+
     private void markApprovedByExternalId(long externalId) {
         PurchaseRequestEntity request = (PurchaseRequestEntity) entityManager
             .createQuery("SELECT r FROM PurchaseRequestEntity r WHERE r.externalId = :ext")
