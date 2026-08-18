@@ -44,6 +44,7 @@
         let cleanupPwa: (() => void) | null = null;
 
         appStore.setState({
+            isAdmin,
             permission: session.permission ?? null,
             familyId: (session.familyId as string | null | undefined) ?? null,
         });
