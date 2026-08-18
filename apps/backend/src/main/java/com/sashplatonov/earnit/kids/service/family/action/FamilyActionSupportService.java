@@ -87,10 +87,6 @@ final class FamilyActionSupportService {
         return now.atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant();
     }
 
-    void clearRewardGoal(int childId) {
-        childRepository.updateRewardGoal(childId, null);
-    }
-
     Optional<TaskEntity> findActiveTask(int familyDbId, int childId, long taskId) {
         return taskRepository.find(
             "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
@@ -130,10 +126,6 @@ final class FamilyActionSupportService {
 
     List<TaskEntity> findTaskEntities(int familyDbId, int childId) {
         return taskRepository.find("familyId = ?1 AND childId = ?2", familyDbId, childId).list();
-    }
-
-    List<ShopItemEntity> findShopItemEntities(int familyDbId, int childId) {
-        return shopItemRepository.find("familyId = ?1 AND childId = ?2", familyDbId, childId).list();
     }
 
     int resolveResponseChildId(int familyDbId, Integer currentChildId, int fallbackChildId) {

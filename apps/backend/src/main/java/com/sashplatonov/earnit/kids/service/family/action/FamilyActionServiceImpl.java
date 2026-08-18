@@ -1,6 +1,5 @@
 package com.sashplatonov.earnit.kids.service.family.action;
 
-import com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
@@ -27,7 +26,6 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     private final FamilyActionRequestService requestService;
     private final FamilyActionBulkService bulkService;
     private final FamilyActionImportService importService;
-    private final FamilyActionRewardGoalService rewardGoalService;
     private final BackendKpiMetrics backendKpiMetrics;
 
     public FamilyActionServiceImpl(FamilyRepository familyRepository,
@@ -84,7 +82,6 @@ public class FamilyActionServiceImpl implements FamilyActionService {
         );
         this.bulkService = new FamilyActionBulkService(supportService);
         this.importService = new FamilyActionImportService(supportService, frequencyService, taskRepository, shopItemRepository);
-        this.rewardGoalService = new FamilyActionRewardGoalService(supportService, childRepository);
         this.backendKpiMetrics = backendKpiMetrics;
     }
 
@@ -120,13 +117,6 @@ public class FamilyActionServiceImpl implements FamilyActionService {
                                                                    String note) {
         return backendKpiMetrics.recordResult("family_action", "request_item_purchase",
             () -> requestService.requestItemPurchase(familyId, childId, itemId, note));
-    }
-
-    @Override
-    @Transactional
-    public OperationResult<FamilyDataResponse> setRewardGoal(String familyId, int childId, Long itemId) {
-        return backendKpiMetrics.recordResult("family_action", "set_reward_goal",
-            () -> rewardGoalService.setRewardGoal(familyId, childId, itemId));
     }
 
     @Override
@@ -172,13 +162,6 @@ public class FamilyActionServiceImpl implements FamilyActionService {
     public OperationResult<FamilyDataResponse> bulkTaskAction(String familyId, BulkTaskActionRequest request) {
         return backendKpiMetrics.recordResult("family_action", "bulk_task_action",
             () -> bulkService.bulkTaskAction(familyId, request));
-    }
-
-    @Override
-    @Transactional
-    public OperationResult<FamilyDataResponse> bulkShopItemAction(String familyId, BulkShopItemActionRequest request) {
-        return backendKpiMetrics.recordResult("family_action", "bulk_shop_item_action",
-            () -> bulkService.bulkShopItemAction(familyId, request));
     }
 
     @Override

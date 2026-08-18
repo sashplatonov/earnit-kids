@@ -130,7 +130,7 @@ git commit -m "refactor(web): remove shop from app section registry and nav"
 
 ## P0-3: Remove web-only shop API functions and backend bulk/reward-goal endpoints
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** P0-2
 

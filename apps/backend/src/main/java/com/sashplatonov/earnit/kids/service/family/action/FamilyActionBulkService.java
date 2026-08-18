@@ -1,9 +1,7 @@
 package com.sashplatonov.earnit.kids.service.family.action;
 
-import com.sashplatonov.earnit.kids.domain.model.ShopItemEntity;
 import com.sashplatonov.earnit.kids.domain.model.TaskEntity;
 import com.sashplatonov.earnit.kids.dto.request.BulkActionType;
-import com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
@@ -68,57 +66,6 @@ final class FamilyActionBulkService {
         if (actionError != null) {
             return OperationResult.failure(actionError);
         }
-        return supportService.loadFamilyData(familyId, request.childId(), true);
-    }
-
-    OperationResult<FamilyDataResponse> bulkShopItemAction(String familyId, BulkShopItemActionRequest request) {
-        var familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
-        }
-        var child = supportService.findFamilyChild(familyDbId.get(), request.childId());
-        if (child.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.childNotFound"));
-        }
-
-        LinkedHashSet<Long> itemIds = normalizedIds(request.itemIds());
-        if (itemIds.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
-        }
-
-        BulkActionType action = request.action();
-        if (action == null) {
-            return unknownBulkAction(null);
-        }
-
-        Map<Long, ShopItemEntity> itemsByBusinessId = selectedEntitiesByBusinessId(
-            supportService.findShopItemEntities(familyDbId.get(), request.childId()),
-            itemIds,
-            ShopItemEntity::getItemId
-        );
-        if (itemsByBusinessId.size() != itemIds.size()) {
-            return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
-        }
-
-        String actionError = applyBulkAction(
-            action,
-            request.groupName(),
-            itemsByBusinessId.values(),
-            BackendMessages.message("shop.groupNameRequired"),
-            item -> item.setDeleted(true),
-            item -> item.setActive(false),
-            item -> item.setActive(true),
-            ShopItemEntity::setGroupName
-        );
-        if (actionError != null) {
-            return OperationResult.failure(actionError);
-        }
-        if ((action == BulkActionType.delete || action == BulkActionType.block)
-            && child.map(entity -> entity.getRewardGoalItemId() != null && itemIds.contains(entity.getRewardGoalItemId()))
-                .orElse(false)) {
-            supportService.clearRewardGoal(request.childId());
-        }
-
         return supportService.loadFamilyData(familyId, request.childId(), true);
     }
 

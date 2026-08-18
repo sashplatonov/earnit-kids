@@ -1,12 +1,10 @@
 package com.sashplatonov.earnit.kids.resource.family;
 
 import com.sashplatonov.earnit.kids.dto.request.AdjustBalanceRequest;
-import com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.CreateRequestNoteRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
-import com.sashplatonov.earnit.kids.dto.request.RewardGoalRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.dto.response.ImportValidationErrorResponse;
@@ -165,22 +163,6 @@ public class FamilyResource extends FamilyResourceSupport {
     }
 
     @POST
-    @Path("/shop/bulk")
-    @Operation(summary = "Apply a bulk action to multiple shop items")
-    public Response bulkShopItemAction(@Context ContainerRequestContext ctx,
-                                       @RequestBody(required = true, description = "Bulk shop item action payload")
-                                       @Valid BulkShopItemActionRequest request) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
-            return unauthorized();
-        }
-
-        OperationResult<FamilyDataResponse> result = familyActionService.bulkShopItemAction(auth.familyId(), request);
-        notifyDataUpdated(auth, request.childId(), result);
-        return toResponse(result);
-    }
-
-    @POST
     @Path("/tasks/import")
     @Operation(summary = "Import tasks from CSV rows")
     @APIResponses({
@@ -260,32 +242,6 @@ public class FamilyResource extends FamilyResourceSupport {
             payload != null ? payload.note() : null
         );
         notifyDataUpdated(auth, effectiveChildId, result);
-        return toResponse(result);
-    }
-
-    @POST
-    @Path("/shop/reward-goal")
-    @Operation(summary = "Select or clear the authenticated child's reward goal")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Reward goal updated",
-            content = @Content(schema = @Schema(implementation = FamilyDataResponse.class))),
-        @APIResponse(responseCode = "400", description = "Reward item is invalid",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Child authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response setRewardGoal(@Context ContainerRequestContext ctx,
-                                  @RequestBody(required = true, description = "Reward item ID, or null to clear")
-                                  @Valid @NotNull RewardGoalRequest request) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isChild()) {
-            return unauthorized();
-        }
-
-        OperationResult<FamilyDataResponse> result = familyActionService.setRewardGoal(
-            auth.familyId(), auth.childId(), request.itemId()
-        );
-        notifyDataUpdated(auth, auth.childId(), result);
         return toResponse(result);
     }
 

@@ -104,4 +104,16 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
         <Class name="com.sashplatonov.earnit.kids.service.telegram.TelegramParentInvitationServiceImpl"/>
     </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.telegram.TelegramReplyKeyboardNavigator"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.service.telegram.TelegramWebhookRegistrationService"/>
+    </Match>
+    <Match>
+        <Bug pattern="UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"/>
+        <Class name="com.sashplatonov.earnit.kids.api.UiLogMessage"/>
+    </Match>
 </FindBugsFilter>

@@ -1,7 +1,6 @@
 package com.sashplatonov.earnit.kids.service.family.action;
 
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
-import com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.BulkTaskActionRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportShopItemsRequest;
 import com.sashplatonov.earnit.kids.dto.request.ImportTasksRequest;
@@ -17,8 +16,6 @@ public interface FamilyActionService {
 
     OperationResult<FamilyDataResponse> requestItemPurchase(String familyId, int childId, long itemId, String note);
 
-    OperationResult<FamilyDataResponse> setRewardGoal(String familyId, int childId, Long itemId);
-
     OperationResult<FamilyDataResponse> approveRequest(String familyId, Integer currentChildId, long requestId);
 
     OperationResult<FamilyDataResponse> rejectRequest(String familyId, Integer currentChildId, long requestId);
@@ -30,8 +27,6 @@ public interface FamilyActionService {
     OperationResult<FamilyDataResponse> adjustBalance(String familyId, int childId, int amount, String description);
 
     OperationResult<FamilyDataResponse> bulkTaskAction(String familyId, BulkTaskActionRequest request);
-
-    OperationResult<FamilyDataResponse> bulkShopItemAction(String familyId, BulkShopItemActionRequest request);
 
     FamilyDataResponse importTasks(String familyId, ImportTasksRequest request);
 

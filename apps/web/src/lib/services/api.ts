@@ -544,9 +544,6 @@ export const requestItem = (itemId: unknown, childId?: unknown) =>
 export const requestItemWithNote = (itemId: unknown, note?: string | null, childId?: unknown) =>
     postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request${buildChildQuery(childId)}`, { note: note ?? null });
 
-export const setRewardGoal = (itemId: number | string | null) =>
-    postJsonResult('/api/shop/reward-goal', { itemId });
-
 export type BulkAction = 'delete' | 'block' | 'unblock' | 'change_group';
 
 export type BulkTaskActionPayload = {
@@ -556,18 +553,8 @@ export type BulkTaskActionPayload = {
     groupName?: string | null;
 };
 
-export type BulkShopActionPayload = {
-    childId: unknown;
-    action: BulkAction;
-    itemIds: Array<number | string>;
-    groupName?: string | null;
-};
-
 export const bulkTaskAction = (body: BulkTaskActionPayload) =>
     postJsonResultAfterPendingSave('/api/tasks/bulk', body);
-
-export const bulkShopAction = (body: BulkShopActionPayload) =>
-    postJsonResultAfterPendingSave('/api/shop/bulk', body);
 
 export const importTasks = (body: {
     childId: unknown;

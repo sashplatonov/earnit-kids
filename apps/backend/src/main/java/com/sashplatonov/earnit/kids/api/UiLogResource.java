@@ -8,8 +8,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 
-// EXPLAIN: REST endpoint used by the frontend to forward UI console messages to the backend log.
-// This allows developers to see UI‑side logs in the container's stdout/STDERR.
+// EXPLAIN: REST endpoint used by the frontend to forward UI console messages to
+// EXPLAIN: the backend log, so UI-side logs appear in the container's stdout.
 @ApplicationScoped
 @Path("/api/ui-log")
 public class UiLogResource {
@@ -23,7 +23,6 @@ public class UiLogResource {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        // Dispatch based on the requested level; default to INFO.
         String level = (msg.level != null) ? msg.level.toLowerCase() : "info";
         switch (level) {
             case "debug":

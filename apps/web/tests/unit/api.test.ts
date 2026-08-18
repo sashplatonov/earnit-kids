@@ -13,7 +13,6 @@ import {
     adminGetChildLink,
     adminRegenerateChildLink,
     adminSaveChildSettings,
-    bulkShopAction,
     bulkTaskAction,
     importShopItems,
     importTasks,
@@ -549,31 +548,6 @@ describe('fetchWithCsrf', () => {
             action: 'change_group',
             taskIds: [101, 102],
             groupName: 'Дом',
-        }));
-    });
-
-    it('posts bulk shop actions through the shared JSON POST contract', async () => {
-        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ updated: true }));
-
-        vi.stubGlobal('fetch', fetchMock);
-        setBrowserGlobals();
-
-        await expect(bulkShopAction({
-            childId: 15,
-            action: 'block',
-            itemIds: [201, 202],
-        })).resolves.toEqual({
-            ok: true,
-            data: { updated: true },
-        });
-
-        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-        expect(url).toBe('/api/shop/bulk');
-        expect(init.method).toBe('POST');
-        expect(init.body).toBe(JSON.stringify({
-            childId: 15,
-            action: 'block',
-            itemIds: [201, 202],
         }));
     });
 

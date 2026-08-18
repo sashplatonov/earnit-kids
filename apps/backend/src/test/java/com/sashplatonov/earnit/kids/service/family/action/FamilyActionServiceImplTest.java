@@ -171,41 +171,6 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
-    void setRewardGoal_activeOwnedItem_persistsAndReturnsChildSnapshot() {
-        ChildEntity child = child(10, 1, "Alice", 0);
-        ShopItemEntity item = shopItem(10, 1, 2001L, "Console", 7);
-        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
-        FamilyDataResponse payload = emptyPayload(false, 10);
-        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
-        when(shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
-            1, 10, 2001L
-        )).thenReturn(itemQuery);
-        when(familyService.loadFamilyData("fam-1", 10, false)).thenReturn(OperationResult.success(payload));
-
-        OperationResult<FamilyDataResponse> result = service.setRewardGoal("fam-1", 10, 2001L);
-
-        assertThat(successValue(result)).isEqualTo(payload);
-        verify(childRepository).updateRewardGoal(10, 2001L);
-    }
-
-    @Test
-    void setRewardGoal_itemOutsideChildScope_returnsFailureWithoutMutation() {
-        ChildEntity child = child(10, 1, "Alice", 0);
-        io.quarkus.hibernate.orm.panache.PanacheQuery emptyItemQuery = queryOf();
-        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
-        when(shopItemRepository.find(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
-            1, 10, 999L
-        )).thenReturn(emptyItemQuery);
-
-        assertThat(service.setRewardGoal("fam-1", 10, 999L)).isInstanceOf(OperationResult.Failure.class);
-        verify(childRepository, never()).updateRewardGoal(10, 999L);
-    }
-
-    @Test
     void requestTaskCompletion_whenDailyLimitReached_returnsFailure() {
         ChildEntity child = child(10, 1, "Alice", 0);
         TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
@@ -663,56 +628,6 @@ class FamilyActionServiceImplTest {
         assertThat(first.isDeleted()).isFalse();
         assertThat(first.isActive()).isTrue();
         verify(familyService, never()).loadFamilyData(anyString(), anyInt(), anyBoolean());
-    }
-
-    @Test
-    void bulkShopItemAction_block_marksSelectedItemsInactive() {
-        ChildEntity child = child(10, 1, "Alice", 20);
-        child.setRewardGoalItemId(2001L);
-        ShopItemEntity first = shopItem(10, 1, 2001L, "Console", 7);
-        ShopItemEntity second = shopItem(10, 1, 2002L, "Game", 5);
-        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOfList(first, second);
-        FamilyDataResponse payload = emptyPayload(true, 10);
-
-        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
-        when(shopItemRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(itemQuery);
-        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
-
-        OperationResult<FamilyDataResponse> result = service.bulkShopItemAction(
-            "fam-1",
-            new com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest(10, BulkActionType.block, List.of(2001L, 2002L), null)
-        );
-
-        assertThat(successValue(result)).isEqualTo(payload);
-        assertThat(first.isActive()).isFalse();
-        assertThat(second.isActive()).isFalse();
-        verify(childRepository).updateRewardGoal(10, null);
-        verify(familyService).loadFamilyData("fam-1", 10, true);
-    }
-
-    @Test
-    void bulkShopItemAction_changeGroup_updatesSelectedItemsGroup() {
-        ChildEntity child = child(10, 1, "Alice", 20);
-        ShopItemEntity first = shopItem(10, 1, 2001L, "Console", 7);
-        ShopItemEntity second = shopItem(10, 1, 2002L, "Game", 5);
-        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOfList(first, second);
-        FamilyDataResponse payload = emptyPayload(true, 10);
-
-        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
-        when(shopItemRepository.find("familyId = ?1 AND childId = ?2", 1, 10)).thenReturn(itemQuery);
-        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
-
-        OperationResult<FamilyDataResponse> result = service.bulkShopItemAction(
-            "fam-1",
-            new com.sashplatonov.earnit.kids.dto.request.BulkShopItemActionRequest(10, BulkActionType.change_group, List.of(2001L, 2002L), "Big rewards")
-        );
-
-        assertThat(successValue(result)).isEqualTo(payload);
-        assertThat(first.getGroupName()).isEqualTo("Big rewards");
-        assertThat(second.getGroupName()).isEqualTo("Big rewards");
-        verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
     @Test
