@@ -55,9 +55,9 @@ describe('authenticated app redirects', () => {
     });
 
     it('returns a super admin to the saved app section from the root entrypoint', async () => {
-        await expect(rootLoad({ locals: localsWith('super_admin'), cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
+        await expect(rootLoad({ locals: localsWith('super_admin'), cookies: cookiesWith('requests') } as never)).rejects.toMatchObject({
             status: 302,
-            location: '/ru/app/shop',
+            location: '/ru/app/requests',
         });
     });
 
@@ -71,14 +71,14 @@ describe('authenticated app redirects', () => {
     it('uses the saved section on /login and /app redirects', async () => {
         // EXPLAIN: /login is a locale-prefixed auth route, not a bare public
         // EXPLAIN: route, so its locale comes from the path (en here).
-        await expect(loginLoad({ locals: { locale: 'en', appConfig: {}, session: { authenticated: true, role: 'super_admin' } }, cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
+        await expect(loginLoad({ locals: { locale: 'en', appConfig: {}, session: { authenticated: true, role: 'super_admin' } }, cookies: cookiesWith('requests') } as never)).rejects.toMatchObject({
             status: 302,
-            location: '/en/app/shop',
+            location: '/en/app/requests',
         });
 
-        await expect(appLoad({ locals: { locale: 'en', appConfig: {}, session: { authenticated: true, role: 'super_admin' } }, cookies: cookiesWith('shop') } as never)).rejects.toMatchObject({
+        await expect(appLoad({ locals: { locale: 'en', appConfig: {}, session: { authenticated: true, role: 'super_admin' } }, cookies: cookiesWith('requests') } as never)).rejects.toMatchObject({
             status: 302,
-            location: '/en/app/shop',
+            location: '/en/app/requests',
         });
     });
 });

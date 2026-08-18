@@ -1,4 +1,4 @@
-export type AnalyticsQuestActionTarget = 'tasks' | 'shop';
+export type AnalyticsQuestActionTarget = 'tasks';
 
 export type AnalyticsQuestStatus = 'not-started' | 'in-progress' | 'ready' | 'completed';
 
@@ -31,13 +31,6 @@ export interface AnalyticsQuestTaskContext {
     coins: number | null;
 }
 
-export interface AnalyticsQuestShopItemContext {
-    title: string;
-    groupName: string;
-    comment: string | null;
-    price: number;
-}
-
 export interface AnalyticsQuestRecommendationContext {
     title: string;
     description: string;
@@ -53,7 +46,6 @@ interface BuildDailyQuestsInput {
     isAdmin: boolean;
     periodEarned: number;
     recommendations: AnalyticsQuestRecommendationContext[];
-    shopItems: AnalyticsQuestShopItemContext[];
     streakValue: number;
     tasks: AnalyticsQuestTaskContext[];
 }
@@ -61,10 +53,9 @@ interface BuildDailyQuestsInput {
 const STREAK_TARGET = 3;
 
 /**
- * Build 3 motivational cards for the "What's Next?" section:
+ * Build 2 motivational cards for the "What's Next?" section:
  * 1. Quick Task — a specific task the child can do right now
- * 2. Reward Goal — a specific shop item to save for (or buy now)
- * 3. Streak — current streak progress toward a milestone
+ * 2. Streak — current streak progress toward a milestone
  */
 export function buildDailyQuests(input: BuildDailyQuestsInput): AnalyticsDailyQuest[] {
     const safe = {
@@ -77,7 +68,6 @@ export function buildDailyQuests(input: BuildDailyQuestsInput): AnalyticsDailyQu
 
     return [
         buildQuickTaskCard(safe),
-        buildRewardGoalCard(safe),
         buildStreakCard(safe),
     ];
 }
@@ -131,72 +121,6 @@ function buildQuickTaskCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
 }
 
 
-function buildRewardGoalCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
-    const { currentBalance, i18n, shopItems } = input;
-
-    if (shopItems.length === 0) {
-        return {
-            id: 'reward-goal',
-            title: i18n.t('cardRewardNoItemsTitle'),
-            description: i18n.t('cardRewardNoItemsDesc'),
-            subtitle: '',
-            current: currentBalance,
-            target: 50,
-            percent: clampPercent(currentBalance, 50),
-            rewardLabel: i18n.t('cardRewardBalance', { balance: i18n.formatNumber(currentBalance) }),
-            actionLabel: i18n.t('cardActionOpenShop'),
-            actionTarget: 'shop',
-            status: currentBalance > 0 ? 'in-progress' : 'not-started',
-            variant: 'reward',
-        };
-    }
-
-    const targetItem = chooseTargetShopItem(shopItems, currentBalance);
-    if (!targetItem) {
-        return {
-            id: 'reward-goal',
-            title: i18n.t('cardRewardPickTitle'),
-            description: i18n.t('cardRewardPickDesc'),
-            subtitle: '',
-            current: currentBalance,
-            target: 50,
-            percent: clampPercent(currentBalance, 50),
-            rewardLabel: i18n.t('cardRewardBalance', { balance: i18n.formatNumber(currentBalance) }),
-            actionLabel: i18n.t('cardActionOpenShop'),
-            actionTarget: 'shop',
-            status: 'in-progress',
-            variant: 'reward',
-        };
-    }
-
-    const remaining = Math.max(targetItem.price - currentBalance, 0);
-    const readyToBuy = remaining === 0;
-
-    return {
-        id: 'reward-goal',
-        title: targetItem.title,
-        description: readyToBuy
-            ? i18n.t('cardRewardReadyDesc')
-            : i18n.t('cardRewardProgressDesc', {
-                have: i18n.formatNumber(currentBalance),
-                need: i18n.formatNumber(targetItem.price),
-                left: i18n.formatNumber(remaining),
-            }),
-        subtitle: targetItem.groupName,
-        current: currentBalance,
-        target: targetItem.price,
-        percent: clampPercent(currentBalance, targetItem.price),
-        rewardLabel: readyToBuy
-            ? i18n.t('cardRewardReadyBadge')
-            : i18n.t('cardRewardLeftBadge', { left: i18n.formatNumber(remaining) }),
-        actionLabel: i18n.t('cardActionOpenShop'),
-        actionTarget: 'shop',
-        status: readyToBuy ? 'ready' : currentBalance > 0 ? 'in-progress' : 'not-started',
-        variant: 'reward',
-    };
-}
-
-
 function buildStreakCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
     const { i18n, streakValue } = input;
     const target = STREAK_TARGET;
@@ -223,24 +147,6 @@ function buildStreakCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
     };
 }
 
-
-function chooseTargetShopItem(
-    shopItems: AnalyticsQuestShopItemContext[],
-    currentBalance: number,
-): AnalyticsQuestShopItemContext | null {
-    if (shopItems.length === 0) return null;
-
-    // Prefer affordable items first (closest to balance), then cheapest unaffordable
-    const sorted = [...shopItems].sort((a, b) => {
-        const aAffordable = a.price <= currentBalance;
-        const bAffordable = b.price <= currentBalance;
-        if (aAffordable !== bAffordable) return aAffordable ? -1 : 1;
-        if (aAffordable) return b.price - a.price; // Most expensive affordable first
-        return a.price - b.price; // Cheapest unaffordable first
-    });
-
-    return sorted[0] ?? null;
-}
 
 function chooseRecommendedTask(
     tasks: AnalyticsQuestTaskContext[],

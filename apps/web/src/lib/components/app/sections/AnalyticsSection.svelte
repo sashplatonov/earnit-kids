@@ -114,8 +114,8 @@
     }
 
 
-    async function handleQuestAction(target: AnalyticsDailyQuest['actionTarget']) {
-        const section: AppSection = target === 'shop' ? 'shop' : 'tasks';
+    async function handleQuestAction() {
+        const section: AppSection = 'tasks';
         location.assign($i18n.href(resolve('/app/[section]', { section })));
     }
 
@@ -190,7 +190,6 @@
         const view = buildAnalyticsViewModel(data, {
             currentBalance: $appStore.balance,
             isAdmin,
-            shopItems: $appStore.shopItems,
             tasks: $appStore.tasks,
             i18n: createViewModelI18n(),
         });
@@ -420,7 +419,7 @@
                         <button
                             class="analytics-next-card__action"
                             type="button"
-                            on:click={() => void handleQuestAction(quest.actionTarget)}
+                            on:click={() => void handleQuestAction()}
                         >
                             {quest.actionLabel}
                         </button>

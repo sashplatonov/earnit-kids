@@ -86,7 +86,7 @@ git commit -m "refactor(web): remove web coin shop UI and section wiring"
 
 ## P0-2: Remove `shop` from the section registry and navigation
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** P0-1
 

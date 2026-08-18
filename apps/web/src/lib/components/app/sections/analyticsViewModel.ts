@@ -8,7 +8,6 @@ import {
     buildDailyQuests,
     type AnalyticsDailyQuest,
     type AnalyticsDailyQuestI18n,
-    type AnalyticsQuestShopItemContext,
     type AnalyticsQuestTaskContext,
 } from './analyticsDailyQuests';
 
@@ -66,19 +65,9 @@ interface AnalyticsSourceTask {
     coins?: unknown;
 }
 
-interface AnalyticsSourceShopItem {
-    name?: unknown;
-    title?: unknown;
-    groupName?: unknown;
-    comment?: unknown;
-    price?: unknown;
-    coins?: unknown;
-}
-
 interface AnalyticsViewModelOptions {
     currentBalance?: unknown;
     tasks?: AnalyticsSourceTask[] | null;
-    shopItems?: AnalyticsSourceShopItem[] | null;
     isAdmin?: boolean;
     i18n?: AnalyticsViewModelI18n;
 }
@@ -125,7 +114,6 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
     const itemCount = readChartSeries(root?.itemCount, root?.topItems, 'count');
     const trend = readTrendSeries(root?.trend, root?.trends, i18n);
     const normalizedTasks = normalizeTaskContext(options.tasks, i18n);
-    const normalizedShopItems = normalizeShopContext(options.shopItems);
 
     const spent = readNumber(summary?.totalSpent) ?? readNumber(root?.spent) ?? sumTrend(trend, 'spent');
     const currentBalance = readNumber(options.currentBalance) ?? readNumber(root?.balance);
@@ -150,7 +138,6 @@ export function buildAnalyticsViewModel(payload: unknown, options: AnalyticsView
         isAdmin: options.isAdmin === true,
         periodEarned,
         recommendations,
-        shopItems: normalizedShopItems,
         streakValue,
         tasks: normalizedTasks,
     });
@@ -401,29 +388,6 @@ function normalizeTaskContext(
             groupName: readText(task.groupName) ?? i18n.t('noGroup'),
             comment: readText(task.comment),
             coins: readNumber(task.coins),
-        }];
-    });
-}
-
-function normalizeShopContext(
-    shopItemsSource: AnalyticsSourceShopItem[] | null | undefined,
-): AnalyticsQuestShopItemContext[] {
-    if (!Array.isArray(shopItemsSource)) {
-        return [];
-    }
-
-    return shopItemsSource.flatMap((item) => {
-        const title = readText(item.name) ?? readText(item.title);
-        const price = readNumber(item.price) ?? readNumber(item.coins);
-        if (title == null || price == null || price <= 0) {
-            return [];
-        }
-
-        return [{
-            title,
-            groupName: readText(item.groupName) ?? '',
-            comment: readText(item.comment),
-            price,
         }];
     });
 }

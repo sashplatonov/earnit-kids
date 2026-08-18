@@ -22,7 +22,7 @@ describe('app routes', () => {
     });
 
     it('prefers a saved allowed section over the role default', () => {
-        expect(resolvePreferredAppSection('super_admin', 'shop')).toBe('shop');
+        expect(resolvePreferredAppSection('super_admin', 'requests')).toBe('requests');
         expect(resolvePreferredAppSection('child', 'limits')).toBe('tasks');
         expect(resolvePreferredAppSection('parent', 'unknown')).toBe('analytics');
         expect(LAST_APP_SECTION_COOKIE).toBe('earnit_last_app_section');
@@ -31,7 +31,7 @@ describe('app routes', () => {
     it('limits admin-only sections for child sessions', () => {
         expect(isSectionAllowed('limits', 'child')).toBe(false);
         expect(isSectionAllowed('catalog', 'child')).toBe(false);
-        expect(isSectionAllowed('shop', 'child')).toBe(true);
+        expect(isSectionAllowed('requests', 'child')).toBe(true);
     });
 
     it('builds and parses locale-prefixed /app section paths', () => {

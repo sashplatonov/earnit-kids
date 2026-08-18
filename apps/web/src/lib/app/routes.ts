@@ -3,7 +3,6 @@ import { DEFAULT_LOCALE, localizePath, stripLocaleFromPath, type Locale, type Me
 export const SHARED_APP_SECTIONS = [
     'analytics',
     'tasks',
-    'shop',
     'requests',
     'history',
     'friends',
@@ -41,11 +40,6 @@ export const APP_SECTION_META: Record<AppSection, AppSectionMeta> = {
         labelKey: 'app.sections.tasksLabel',
         titleKey: 'app.sections.tasksTitle',
         iconClass: 'icon-tasks',
-    },
-    shop: {
-        labelKey: 'app.sections.shopLabel',
-        titleKey: 'app.sections.shopTitle',
-        iconClass: 'icon-shop',
     },
     requests: {
         labelKey: 'app.sections.requestsLabel',
@@ -88,13 +82,11 @@ export const ADMIN_PRIMARY_SECTIONS: AppSection[] = [
     'analytics',
     'tasks',
     'requests',
-    'shop',
 ];
 
 export const CHILD_PRIMARY_SECTIONS: AppSection[] = [
     'analytics',
     'tasks',
-    'shop',
     'requests',
 ];
 

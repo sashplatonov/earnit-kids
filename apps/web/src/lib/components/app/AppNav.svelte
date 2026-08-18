@@ -93,7 +93,7 @@
             return;
         }
 
-        const kind = activeSection === 'shop' ? 'shop' : 'tasks';
+        const kind = 'tasks';
 
         modalStore.open('csv-import-modal', {
             kind,
