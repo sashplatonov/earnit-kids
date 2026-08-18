@@ -37,7 +37,7 @@
 
     function meta(request: Request): string {
         const group = request.taskGroup || request.itemGroup || request.groupName;
-        return group ? `${kindLabel(request)} · ${group}` : kindLabel(request);
+        return group ? `${group} · ${kindLabel(request)}` : kindLabel(request);
     }
 
     function isCancelling(request: Request): boolean {
@@ -85,7 +85,7 @@
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
     .items { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
-    .cancel { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.4rem .7rem; border:1px solid #f3cfd2; border-radius:.6rem; background:#fff0f1; color:#c63c42; font:inherit; font-weight:700; cursor:pointer; }
+    .cancel { display:inline-flex; align-items:center; gap:.35rem; min-height:2rem; padding:.35rem .55rem; border:1px solid #f3cfd2; border-radius:.55rem; background:#fff0f1; color:#c63c42; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
     .cancel:disabled { cursor:wait; opacity:.6; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .state-empty { display:flex; align-items:center; gap:.55rem; padding:.6rem .75rem; border-radius:.8rem; background:#eaf7ef; color:#275d3b; font-size:.9rem; }

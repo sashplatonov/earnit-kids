@@ -27,6 +27,12 @@ export function stripLeadingEmoji(value: string): string {
     return value.replace(EMOJI_LEAD, '').trim();
 }
 
+/** Extract the leading emoji/decorative glyphs from a value, if any. */
+export function extractLeadingEmoji(value: string): string {
+    const match = value.match(EMOJI_LEAD);
+    return match ? match[0].trim() : '';
+}
+
 const TITLE_ICON_RULES: ReadonlyArray<{ test: RegExp; icon: TelegramIconName }> = [
     { test: /крепост|castle/i, icon: 'castle' },
     { test: /настольн|board ?game|dice/i, icon: 'dice' },

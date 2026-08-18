@@ -51,7 +51,7 @@ export async function initializeFromServer(): Promise<boolean> {
     const currentPermission = get(appStore).permission;
     const currentFamilyId = get(appStore).familyId;
 
-    const state = buildInitialState(record, baseData as Record<string, unknown>);
+    const state = buildInitialState(record, baseData as Record<string, unknown>) as Partial<AppState> & Record<string, unknown>;
     if (state.permission == null && currentPermission != null) {
         state.permission = currentPermission;
     }
@@ -65,8 +65,9 @@ export async function initializeFromServer(): Promise<boolean> {
     }
 
     // Sync server reward catalog to the dedicated catalogRewards store
-    if (state.catalog?.rewards && Array.isArray(state.catalog.rewards)) {
-        catalogRewards.set(state.catalog.rewards);
+    const catalogRecord = state.catalog as Record<string, unknown> | undefined;
+    if (catalogRecord?.rewards && Array.isArray(catalogRecord.rewards)) {
+        catalogRewards.set(catalogRecord.rewards);
     }
 
     // Keep isLoading true — will be cleared after all data (including child data) is loaded
