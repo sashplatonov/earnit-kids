@@ -148,14 +148,6 @@
 <div class="family">
     <h1 id="family-title">{$i18n.t('app.telegram.family.title')}</h1>
 
-    <!-- TEMP-DEBUG: admin dashboard visibility -->
-    <div style="margin: 0.5rem 0 1rem; padding: 0.75rem; border: 1px dashed #f00; border-radius: 8px; font-size: 0.8rem; line-height: 1.5; background: rgba(255,0,0,0.05);">
-        <strong style="color:#f00;">DEBUG admin dashboard</strong>
-        <div>appStore.isAdmin = {$appStore.isAdmin}</div>
-        <div>appStore.role = {$appStore.role ?? 'null'}</div>
-        <div>appStore.permission = {$appStore.permission ?? 'null'}</div>
-    </div>
-
     {#if $appStore.isAdmin}
         <a href="/app/dashboard" style="display: block; text-decoration: none; color: inherit; padding: 0.75rem 1rem; border: 1px solid var(--primary, #5c6fe7); border-radius: 8px; margin-bottom: 1rem; background: rgba(92,111,231,0.05);">
             <strong style="color: var(--primary, #5c6fe7);">📊 {$i18n.t('admin.settings.dashboardTitle')}</strong>

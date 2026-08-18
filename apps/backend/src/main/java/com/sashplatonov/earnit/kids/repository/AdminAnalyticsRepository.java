@@ -66,7 +66,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
 
     public int countActiveFamilies(Instant periodStart) {
         String sql = """
-            SELECT COUNT(DISTINCT h.familyDbId) FROM HistoryEntryEntity h
+            SELECT COUNT(DISTINCT h.familyId) FROM HistoryEntryEntity h
             WHERE h.createdAt >= :periodStart
             """;
         Long result = entityManager.createQuery(sql, Long.class)
@@ -192,7 +192,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
 
     public AdminCoinEconomyResponse.RewardMetrics getRewardMetrics(Instant periodStart) {
         String familiesWithRewardSql = """
-            SELECT COUNT(DISTINCT p.familyDbId) FROM PurchaseRequestEntity p
+            SELECT COUNT(DISTINCT p.familyId) FROM PurchaseRequestEntity p
             WHERE p.status = :status AND p.createdAt >= :periodStart
             """;
         Long familiesWithReward = entityManager.createQuery(familiesWithRewardSql, Long.class)
@@ -242,7 +242,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private double percentFamiliesWithActiveTask() {
         String sql = """
             SELECT COUNT(DISTINCT t.familyId) FROM TaskEntity t
-            WHERE t.familyId IN (SELECT DISTINCT h.familyDbId FROM HistoryEntryEntity h)
+            WHERE t.familyId IN (SELECT DISTINCT h.familyId FROM HistoryEntryEntity h)
             """;
         Long familiesWithTask = entityManager.createQuery(sql, Long.class).getSingleResult();
         int totalFamilies = countTotalFamilies();
@@ -757,9 +757,9 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     public int countReturningFamilies(Instant periodStart) {
         // EXPLAIN: Families active in period that registered before it
         String sql = """
-            SELECT COUNT(DISTINCT h.familyDbId) FROM HistoryEntryEntity h
+            SELECT COUNT(DISTINCT h.familyId) FROM HistoryEntryEntity h
             WHERE h.createdAt >= :periodStart
-            AND h.familyDbId IN (
+            AND h.familyId IN (
                 SELECT f.id FROM FamilyEntity f
                 WHERE f.createdAt < :periodStart
             )
@@ -792,7 +792,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
 
         // EXPLAIN: Aggregate active families by day
         String familiesSql = """
-            SELECT FUNCTION('DATE', h.createdAt) as day, COUNT(DISTINCT h.familyDbId) as families
+            SELECT FUNCTION('DATE', h.createdAt) as day, COUNT(DISTINCT h.familyId) as families
             FROM HistoryEntryEntity h
             WHERE h.createdAt >= :periodStart
             GROUP BY FUNCTION('DATE', h.createdAt)
