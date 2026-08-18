@@ -1,6 +1,7 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
-    import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate } from '$lib/stores/app';
+    import { appStore, type CatalogTaskTemplate } from '$lib/stores/app';
+    import type { CatalogRewardTemplate } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
     import { formatFrequency, isAlreadyAdded, stripEmoji } from '$lib/telegram/services/catalogFilter';
     import TelegramCoin from './TelegramCoin.svelte';

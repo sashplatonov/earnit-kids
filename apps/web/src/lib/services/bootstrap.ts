@@ -7,7 +7,7 @@ import { appStore } from '$lib/stores/app';
 import type { AppState } from '$lib/stores/app';
 import { showToast } from '$lib/stores/toasts';
 import { loadDataDetailsFromServer, loadDataFromServer, loadBaseData } from './api';
-import { buildInitialState, normalizeServerData, normalizeShopItem, normalizeTask, normalizeHistoryEntry, normalizeRequest } from './serverContract';
+import { buildInitialState, normalizeServerData, normalizeTask, normalizeHistoryEntry, normalizeRequest } from './serverContract';
 import { logClientInfo } from '$lib/logging/clientLogger';
 
 const LAST_CHILD_KEY = 'earnit-last-child-id';
@@ -111,7 +111,6 @@ export function applyDataSnapshot(data: Record<string, unknown>): void {
     if (typeof data.balance === 'number') partial.balance = data.balance;
     if ('rules' in data) partial.rules = (data.rules as string | null | undefined) ?? null;
     if (Array.isArray(normalized.tasks)) partial.tasks = (normalized.tasks as unknown as AppState['tasks']);
-    if (Array.isArray(normalized.shop)) partial.shopItems = (normalized.shop as unknown as AppState['shopItems']);
     if (Array.isArray(normalized.history)) partial.history = (normalized.history as unknown as AppState['history']);
     if (Array.isArray(normalized.requests)) partial.requests = (normalized.requests as unknown as AppState['requests']);
     if (Array.isArray(data.children)) partial.children = (normalized.children as unknown as AppState['children']);
@@ -140,7 +139,6 @@ export async function switchChild(childId: string | number): Promise<void> {
             balance: (rec.balance as number) ?? 0,
             rules: (rec.rules as string | null | undefined) ?? null,
             tasks: Array.isArray(rec.tasks) ? (rec.tasks.map(normalizeTask) as unknown as AppState['tasks']) : [],
-            shopItems: Array.isArray(rec.shop) ? (rec.shop.map(normalizeShopItem) as unknown as AppState['shopItems']) : [],
             childNickname: (rec.childNickname as string) ?? null,
         });
     }

@@ -104,10 +104,10 @@
                 );
                 appStore.setState({ tasks: renamedItems });
             } else {
-                const renamedItems = ($appStore.shopItems as ShopItem[]).map((item) =>
+                const renamedItems = ($shopItems as ShopItem[]).map((item) =>
                     item.groupName === editingGroup ? { ...item, groupName: name } as ShopItem : item
                 );
-                appStore.setState({ shopItems: renamedItems });
+                shopItems.set(renamedItems);
             }
             saveGroupOrder(nextGroups, nextHidden);
             saveGroupIcon(name, groupIcon);

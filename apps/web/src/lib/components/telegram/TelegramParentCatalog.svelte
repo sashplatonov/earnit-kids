@@ -108,7 +108,10 @@
         if (kind === 'task') {
             patch.tasks = [...$appStore.tasks, ...(nextItems as import('$lib/stores/app').Task[])];
         } else {
-            patch.shopItems = [...$appStore.shopItems, ...(nextItems as import('$lib/stores/app').ShopItem[])];
+            // shopItems are now managed in specialized stores, but we maintain patch for any generic state updates if needed
+            // However, since we've decoupled, we primarily update the specialized store
+            shopItems.update((items) => [...items, ...(nextItems as import('$lib/telegram/stores/types').ShopItem[])]);
+            catalogRewards.update((rewards) => [...rewards, ...(templates as CatalogRewardTemplate[])]);
         }
 
         if (groupName && currentChild && resolvedChildId && !getEffectiveGroupOrder(currentChild, section, isAdmin).includes(groupName)) {

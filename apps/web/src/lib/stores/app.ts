@@ -32,23 +32,6 @@ export interface TaskPeriodProgress {
     resetAt: string;
 }
 
-export interface ShopItem {
-    id: number | string;
-    name: string;
-    price: number;
-    isActive?: boolean;
-    groupName?: string | null;
-    icon?: string | null;
-    comment?: string | null;
-    moneyLimit?: number | null;
-    frequency?: { period?: string; limit?: number } | null;
-    ageMin?: number | null;
-    ageMax?: number | null;
-    lastPurchasedAt?: string | null;
-    periodProgress?: TaskPeriodProgress | null;
-    [key: string]: unknown;
-}
-
 export interface HistoryEntry {
     id: number | string;
     type: 'task_completed' | 'purchase' | 'admin' | 'earn' | 'spend';
@@ -128,7 +111,6 @@ export interface AppState {
     balance: number;
     rules: string | null;
     tasks: Task[];
-    shopItems: ShopItem[];
     history: HistoryEntry[];
     requests: Request[];
     friends: Friend[];
@@ -138,7 +120,7 @@ export interface AppState {
     monthlyLimit: number;
     dailyCoinLimit: number;
     baseData: { tasks: Task[] };
-    catalog: { tasks: CatalogTaskTemplate[]; rewards: CatalogRewardTemplate[] };
+    catalog: { tasks: CatalogTaskTemplate[] };
     children: Child[];
     currentChildId: string | number | null;
     isLoading: boolean;
@@ -163,25 +145,6 @@ export interface CatalogTaskTemplate {
     [key: string]: unknown;
 }
 
-export interface CatalogRewardTemplate {
-    id: string;
-    title: string;
-    comment?: string | null;
-    price: number;
-    groupKey: string;
-    groupName: string;
-    semanticGraphicKey?: string | null;
-    frequencyLimit?: number | null;
-    frequencyPeriod?: string | null;
-    minAge?: number | null;
-    maxAge?: number | null;
-    difficulty?: string | null;
-    tags?: string[];
-    active?: boolean;
-    sortOrder?: number;
-    [key: string]: unknown;
-}
-
 const initialState: AppState = {
     isAdmin: false,
     role: null,
@@ -189,7 +152,6 @@ const initialState: AppState = {
     balance: 0,
     rules: null,
     tasks: [],
-    shopItems: [],
     history: [],
     requests: [],
     friends: [],
@@ -199,7 +161,7 @@ const initialState: AppState = {
     monthlyLimit: 10000,
     dailyCoinLimit: 0,
     baseData: { tasks: [] },
-    catalog: { tasks: [], rewards: [] },
+    catalog: { tasks: [] },
     children: [],
     currentChildId: null,
     isLoading: true,

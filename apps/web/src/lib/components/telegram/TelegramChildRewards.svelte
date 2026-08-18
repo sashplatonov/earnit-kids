@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { requestItem, requestItemWithNote } from '$lib/services/api';
+    import { requestItem, requestItemWithNote } from '$lib/telegram/services/shopApi';
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
     import { appStore } from '$lib/stores/app';
     import type { ShopItem } from '$lib/telegram/stores/types';

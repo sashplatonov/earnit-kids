@@ -1,5 +1,6 @@
 import { historyMessages as englishHistoryMessages } from '$lib/i18n/messages/en/history';
-import type { Request, ShopItem, Task } from '$lib/stores/app';
+import type { Request, Task } from '$lib/stores/app';
+import type { ShopItem } from '$lib/telegram/stores/types';
 
 export interface RequestCatalog {
     tasks?: Task[];

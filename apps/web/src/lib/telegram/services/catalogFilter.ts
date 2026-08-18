@@ -3,7 +3,8 @@
  * frequency formatting and group mapping. Kept free of Svelte/DOM so it can be
  * unit-tested in isolation.
  */
-import type { CatalogRewardTemplate, CatalogTaskTemplate, Task, ShopItem } from '$lib/stores/app';
+import type { CatalogTaskTemplate, Task } from '$lib/stores/app';
+import type { CatalogRewardTemplate, ShopItem } from '$lib/telegram/stores/types';
 
 export type CatalogKind = 'task' | 'reward';
 

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
     import { appStore, type ShopItem } from '$lib/stores/app';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
     import { scheduleSave } from '$lib/services/save';
     import { buildShopPayload } from '$lib/telegram/services/shopPayload';
     import { getSemanticGraphic } from './semanticGraphics';
@@ -57,12 +58,16 @@
         });
 
         if (item) {
+            const nextItems = $shopItems.map((entry) => entry.id == item.id ? ({ ...entry, ...payload } as typeof entry) : entry);
             appStore.setState({
-                shopItems: $appStore.shopItems.map((entry) => entry.id == item.id ? ({ ...entry, ...payload } as typeof entry) : entry),
+                shopItems: nextItems,
             });
+            shopItems.set(nextItems);
         } else {
             const newItem = { ...payload, id: Date.now() };
-            appStore.setState({ shopItems: [...$appStore.shopItems, newItem as unknown as typeof $appStore.shopItems[number]] });
+            const nextItems = [...$shopItems, newItem as unknown as typeof $shopItems[number]];
+            appStore.setState({ shopItems: nextItems });
+            shopItems.set(nextItems);
         }
         void scheduleSave();
         onSaved();

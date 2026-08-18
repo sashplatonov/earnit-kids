@@ -1,7 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
-    import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate } from '$lib/stores/app';
+    import { appStore, type CatalogTaskTemplate } from '$lib/stores/app';
+    import type { CatalogRewardTemplate } from '$lib/telegram/stores/types';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
+    import { catalogRewards } from '$lib/telegram/stores/rewards';
     import { scheduleSave } from '$lib/services/save';
     import {
         EMPTY_FILTERS,
@@ -31,8 +34,8 @@
 
     $: templates = kind === 'task'
         ? ($appStore.catalog.tasks as CatalogTaskTemplate[])
-        : ($appStore.catalog.rewards as CatalogRewardTemplate[]);
-    $: familyItems = kind === 'task' ? $appStore.tasks : $appStore.shopItems;
+        : ($catalogRewards as CatalogRewardTemplate[]);
+    $: familyItems = kind === 'task' ? $appStore.tasks : $shopItems;
     $: groups = catalogGroups(templates as Array<{ groupName?: string }>);
 
     let query = '';

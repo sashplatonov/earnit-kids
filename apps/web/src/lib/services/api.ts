@@ -181,7 +181,7 @@ async function putJsonResult<T = unknown>(url: string, body: unknown): Promise<A
     }
 }
 
-async function postJsonResultWithValidation<T = unknown>(url: string, body: unknown): Promise<ImportActionResult<T>> {
+export async function postJsonResultWithValidation<T = unknown>(url: string, body: unknown): Promise<ImportActionResult<T>> {
     try {
         const res = await fetchWithCsrf(url, {
             method: 'POST',
@@ -230,7 +230,7 @@ async function flushPendingCrudSave(): Promise<void> {
     await flushPendingSave();
 }
 
-async function postJsonAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<T | null> {
+export export async function postJsonAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<T | null> {
     try {
         await flushPendingCrudSave();
         return postJson<T>(url, body);
@@ -240,7 +240,7 @@ async function postJsonAfterPendingSave<T = unknown>(url: string, body: unknown)
     }
 }
 
-async function postJsonResultAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
+export export async function postJsonResultAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
     try {
         await flushPendingCrudSave();
         return postJsonResult<T>(url, body);
@@ -533,16 +533,13 @@ export const requestCoinsWithNote = (taskId: unknown, note?: string | null, chil
 
 
 /** Admin: immediately purchase an item for a child. */
-export const buyItem = (itemId: unknown, childId?: unknown) =>
-    postJsonAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/purchase${buildChildQuery(childId)}`, {});
+// Moved to $lib/telegram/services/shopApi.ts
 
 /** Child: create a purchase request that requires parent approval. */
-export const requestItem = (itemId: unknown, childId?: unknown) =>
-    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request${buildChildQuery(childId)}`, {});
+// Moved to $lib/telegram/services/shopApi.ts
 
 /** Child: create a purchase request with optional note. */
-export const requestItemWithNote = (itemId: unknown, note?: string | null, childId?: unknown) =>
-    postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request${buildChildQuery(childId)}`, { note: note ?? null });
+// Moved to $lib/telegram/services/shopApi.ts
 
 export type BulkAction = 'delete' | 'block' | 'unblock' | 'change_group';
 
@@ -561,6 +558,7 @@ export const importTasks = (body: {
     rows: Array<Record<string, unknown>>;
 }) => flushPendingCrudSave().then(() => postJsonResultWithValidation('/api/tasks/import', body));
 
+// Moved to $lib/telegram/services/shopApi.ts
 export const importShopItems = (body: {
     childId: unknown;
     rows: Array<Record<string, unknown>>;

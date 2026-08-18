@@ -5,6 +5,7 @@
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
     import { approveRequest, rejectRequest, deleteRequest, fetchRequestsFromServer } from '$lib/services/api';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
@@ -45,7 +46,7 @@
 
     $: requestCatalog = buildRequestCatalog({
         tasks: $appStore.tasks,
-        shopItems: $appStore.shopItems,
+        shopItems: $shopItems,
         baseTasks: $appStore.baseData.tasks,
     });
 

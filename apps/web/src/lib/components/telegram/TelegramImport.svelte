@@ -1,7 +1,8 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { importTasks, importShopItems } from '$lib/services/api';
+    import { importTasks } from '$lib/services/api';
+    import { importShopItems } from '$lib/telegram/services/shopApi';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import {
         CSV_IMPORT_SCHEMAS,

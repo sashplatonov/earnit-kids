@@ -7,6 +7,7 @@
     import { deleteHistoryItem } from '$lib/services/api';
     import { loadCardViewMode, saveCardViewMode, type CardViewMode, type CardViewRole } from '$lib/services/cardViewMode';
     import { appStore } from '$lib/stores/app';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
     import type { HistoryEntry } from '$lib/stores/app';
     import { showToast } from '$lib/stores/toasts';
     import { buildHistoryCatalog, resolveHistoryCard } from './historyDetails';
@@ -51,7 +52,7 @@
     $: historyDetailsI18n = ($i18n.locale, createHistoryDetailsI18n());
     $: historyCatalog = buildHistoryCatalog({
         tasks: $appStore.tasks,
-        shopItems: $appStore.shopItems,
+        shopItems: $shopItems,
         baseTasks: $appStore.baseData.tasks,
     });
     $: historyEntries = history.map(entry => ({ ...entry, ui: resolveHistoryCard(entry, historyCatalog, historyDetailsI18n) })) as HistoryViewEntry[];

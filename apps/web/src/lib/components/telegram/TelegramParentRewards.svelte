@@ -1,7 +1,8 @@
 <script lang="ts">
     import { appStore, type ShopItem } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { buyItem, saveChildGroupOrder } from '$lib/services/api';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
+    import { buyItem, saveChildGroupOrder } from '$lib/telegram/services/shopApi';
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';
@@ -17,15 +18,15 @@
 
     const i18n = useI18n();
 
-    $: rawGroups = [...new Set($appStore.shopItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
+    $: rawGroups = [...new Set($shopItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
     $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
     $: groups = orderGroups(rawGroups, currentChild?.shopGroupOrder);
     $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
     let selectedGroup = '';
     let catalogOpen = false;
     $: filteredItems = selectedGroup
-        ? $appStore.shopItems.filter((item) => item.groupName === selectedGroup)
-        : $appStore.shopItems;
+        ? $shopItems.filter((item) => item.groupName === selectedGroup)
+        : $shopItems;
     $: canEdit = $appStore.permission !== 'viewer';
     let groupMessage = '';
     let groupEditorOpen = false;
@@ -54,9 +55,11 @@
     function toggleArchive(item: ShopItem) {
         closeMenu(true);
         const nextActive = item.isActive === false;
+        const nextItems = $shopItems.map((entry) => entry.id == item.id ? ({ ...entry, isActive: nextActive } as typeof entry) : entry);
         appStore.setState({
-            shopItems: $appStore.shopItems.map((entry) => entry.id == item.id ? ({ ...entry, isActive: nextActive } as typeof entry) : entry),
+            shopItems: nextItems,
         });
+        shopItems.set(nextItems);
         void scheduleSave();
     }
     async function remove(item: ShopItem) {
@@ -69,7 +72,9 @@
             tone: 'danger',
         });
         if (!confirmed) return;
-        appStore.setState({ shopItems: $appStore.shopItems.filter((entry) => entry.id != item.id) });
+        const nextItems = $shopItems.filter((entry) => entry.id != item.id);
+        appStore.setState({ shopItems: nextItems });
+        shopItems.set(nextItems);
         void scheduleSave();
     }
     // EXPLAIN: Parent directly grants a reward to the current child, spending
@@ -116,10 +121,11 @@
     }
     function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
         const { group, moveTo } = event.detail;
-        const nextItems = $appStore.shopItems.map((item) =>
+        const nextItems = $shopItems.map((item) =>
             item.groupName === group ? { ...item, groupName: moveTo ?? null } as typeof item : item
         );
         appStore.setState({ shopItems: nextItems });
+        shopItems.set(nextItems);
         void scheduleSave();
         const nextGroups = groups.filter((g) => g !== group);
         const nextHidden = hiddenGroups.filter((g) => g !== group);
@@ -140,7 +146,7 @@
 
     {#if catalogOpen}
         <TelegramParentCatalog kind="reward" onBack={() => catalogOpen = false} />
-    {:else if !$appStore.shopItems.length}
+    {:else if !$shopItems.length}
         <p class="muted">{$i18n.t('app.telegram.rewards.noRewards')}</p>
     {:else}
         <TelegramGroupSubnav
