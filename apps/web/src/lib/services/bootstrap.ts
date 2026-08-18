@@ -5,6 +5,7 @@
 import { get } from 'svelte/store';
 import { appStore } from '$lib/stores/app';
 import { shopItems } from '$lib/telegram/stores/shopItems';
+import { catalogRewards } from '$lib/telegram/stores/rewards';
 import type { AppState } from '$lib/stores/app';
 import { showToast } from '$lib/stores/toasts';
 import { loadDataDetailsFromServer, loadDataFromServer, loadBaseData } from './api';
@@ -61,6 +62,11 @@ export async function initializeFromServer(): Promise<boolean> {
     // Sync server shop items to the dedicated shopItems store
     if (state.shopItems && Array.isArray(state.shopItems)) {
         shopItems.set(state.shopItems);
+    }
+
+    // Sync server reward catalog to the dedicated catalogRewards store
+    if (state.catalog?.rewards && Array.isArray(state.catalog.rewards)) {
+        catalogRewards.set(state.catalog.rewards);
     }
 
     // Keep isLoading true — will be cleared after all data (including child data) is loaded
