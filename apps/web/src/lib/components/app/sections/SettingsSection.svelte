@@ -147,6 +147,7 @@
     <div class="section__header">
         <h2>{tAdmin('settings.sectionTitle')}</h2>
     </div>
+    <!-- DEBUG: isAdmin={isAdmin} sessionIsAdmin={sessionIsAdmin} role={session?.role} appStoreIsAdmin={$appStore.isAdmin} -->
     <div class="cards" id="settings-cards">
         {#if isAdmin}
             {#if isReadonlyParent}
