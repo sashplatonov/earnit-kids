@@ -16,7 +16,8 @@ import {
     templateToReward,
     templateToTask,
 } from '../../src/lib/telegram/services/catalogFilter';
-import type { CatalogRewardTemplate, CatalogTaskTemplate, Task } from '../../src/lib/stores/app';
+import type { CatalogTaskTemplate, Task } from '../../src/lib/stores/app';
+import type { CatalogRewardTemplate } from '../../src/lib/telegram/stores/types';
 
 const taskTemplate: CatalogTaskTemplate = {
     id: 'ct-6-8-1',

@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { appStore, type ShopItem } from '$lib/stores/app';
+    import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
+    import type { ShopItem } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
     import { buyItem, saveChildGroupOrder } from '$lib/telegram/services/shopApi';
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
@@ -56,9 +57,6 @@
         closeMenu(true);
         const nextActive = item.isActive === false;
         const nextItems = $shopItems.map((entry) => entry.id == item.id ? ({ ...entry, isActive: nextActive } as typeof entry) : entry);
-        appStore.setState({
-            shopItems: nextItems,
-        });
         shopItems.set(nextItems);
         void scheduleSave();
     }
@@ -73,7 +71,6 @@
         });
         if (!confirmed) return;
         const nextItems = $shopItems.filter((entry) => entry.id != item.id);
-        appStore.setState({ shopItems: nextItems });
         shopItems.set(nextItems);
         void scheduleSave();
     }
@@ -124,7 +121,6 @@
         const nextItems = $shopItems.map((item) =>
             item.groupName === group ? { ...item, groupName: moveTo ?? null } as typeof item : item
         );
-        appStore.setState({ shopItems: nextItems });
         shopItems.set(nextItems);
         void scheduleSave();
         const nextGroups = groups.filter((g) => g !== group);

@@ -1,4 +1,4 @@
-import { postJsonAfterPendingSave, postJsonResultAfterPendingSave, postJsonResultWithValidation } from '$lib/services/api';
+import { postJsonAfterPendingSave, postJsonResultAfterPendingSave, postJsonResultWithValidation, saveChildGroupOrder as _saveChildGroupOrder, earnCoins as _earnCoins } from '$lib/services/api';
 
 function buildChildQuery(childId: unknown): string {
     return childId != null ? `?childId=${encodeURIComponent(String(childId))}` : '';
@@ -15,6 +15,9 @@ export const requestItem = (itemId: unknown, childId?: unknown) =>
 /** Child: create a purchase request with optional note. */
 export const requestItemWithNote = (itemId: unknown, note?: string | null, childId?: unknown) =>
     postJsonResultAfterPendingSave(`/api/shop/${encodeURIComponent(String(itemId))}/request${buildChildQuery(childId)}`, { note: note ?? null });
+
+export const saveChildGroupOrder = _saveChildGroupOrder;
+export const earnCoins = _earnCoins;
 
 export const importShopItems = (body: {
     childId: unknown;

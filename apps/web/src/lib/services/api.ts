@@ -230,7 +230,7 @@ async function flushPendingCrudSave(): Promise<void> {
     await flushPendingSave();
 }
 
-export export async function postJsonAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<T | null> {
+export async function postJsonAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<T | null> {
     try {
         await flushPendingCrudSave();
         return postJson<T>(url, body);
@@ -240,7 +240,7 @@ export export async function postJsonAfterPendingSave<T = unknown>(url: string, 
     }
 }
 
-export export async function postJsonResultAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
+export async function postJsonResultAfterPendingSave<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
     try {
         await flushPendingCrudSave();
         return postJsonResult<T>(url, body);

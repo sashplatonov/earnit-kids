@@ -1,7 +1,7 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
-    import { appStore, type Child } from '$lib/stores/app';
-    import type { CatalogRewardTemplate, CatalogTaskTemplate } from '$lib/telegram/stores/types';
+    import { appStore, type CatalogTaskTemplate, type Child } from '$lib/stores/app';
+    import type { CatalogRewardTemplate } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
     import { catalogRewards } from '$lib/telegram/stores/rewards';
     import { scheduleSave } from '$lib/services/save';

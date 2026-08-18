@@ -1,13 +1,10 @@
 import { redirect } from '@sveltejs/kit';
-import { LAST_APP_SECTION_COOKIE, resolvePreferredAppSection, toAppPath } from '$lib/app/routes';
+import { localizePath } from '$lib/i18n';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, cookies }) => {
+export const load: PageServerLoad = async ({ locals }) => {
     if (locals.session.authenticated) {
-        throw redirect(
-            302,
-            toAppPath(resolvePreferredAppSection(locals.session.role, cookies.get(LAST_APP_SECTION_COOKIE)), locals.locale),
-        );
+        throw redirect(302, localizePath('/telegram', locals.locale));
     }
 
     return {

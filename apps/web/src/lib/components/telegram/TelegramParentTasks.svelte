@@ -1,7 +1,7 @@
 <script lang="ts">
     import { appStore, type Task } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { earnCoins, saveChildGroupOrder } from '$lib/services/api';
+    import { earnCoins, saveChildGroupOrder } from '$lib/telegram/services/shopApi';
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
     import { confirmAction } from '$lib/services/confirm';
     import { scheduleSave } from '$lib/services/save';

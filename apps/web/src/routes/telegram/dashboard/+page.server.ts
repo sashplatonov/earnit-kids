@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { isAdminRole } from '$lib/app/routes';
+import { isAdminRole } from '$lib/auth/roles';
 import type { Actions, PageServerLoad } from './$types';
 
 // EXPLAIN: The admin dashboard lives inside the Telegram Mini App block

@@ -10,23 +10,17 @@ import {
 import { formatCoins, formatDate, formatDateTime, formatMoneyLike, formatNumber, formatShortDate } from './formatters';
 import { appMessages as enAppMessages } from './messages/en/app';
 import { adminMessages as enAdminMessages } from './messages/en/admin';
-import { analyticsMessages as enAnalyticsMessages } from './messages/en/analytics';
 import { authMessages as enAuthMessages } from './messages/en/auth';
 import { commonMessages as enCommonMessages } from './messages/en/common';
 import { errorMessages as enErrorMessages } from './messages/en/errors';
-import { historyMessages as enHistoryMessages } from './messages/en/history';
 import { publicMessages as enPublicMessages } from './messages/en/public';
-import { superadminMessages as enSuperadminMessages } from './messages/en/superadmin';
 import { tasksMessages as enTasksMessages } from './messages/en/tasks';
 import { adminMessages as ruAdminMessages } from './messages/ru/admin';
 import { appMessages as ruAppMessages } from './messages/ru/app';
-import { analyticsMessages as ruAnalyticsMessages } from './messages/ru/analytics';
 import { authMessages as ruAuthMessages } from './messages/ru/auth';
 import { commonMessages as ruCommonMessages } from './messages/ru/common';
 import { errorMessages as ruErrorMessages } from './messages/ru/errors';
-import { historyMessages as ruHistoryMessages } from './messages/ru/history';
 import { publicMessages as ruPublicMessages } from './messages/ru/public';
-import { superadminMessages as ruSuperadminMessages } from './messages/ru/superadmin';
 import { tasksMessages as ruTasksMessages } from './messages/ru/tasks';
 
 export { DEFAULT_LOCALE, LOCALES } from './config';
@@ -63,11 +57,8 @@ const ENGLISH_DOMAIN_CATALOG = {
     auth: enAuthMessages,
     app: enAppMessages,
     admin: enAdminMessages,
-    analytics: enAnalyticsMessages,
-    history: enHistoryMessages,
     tasks: enTasksMessages,
     errors: enErrorMessages,
-    superadmin: enSuperadminMessages,
 } as const;
 
 const RUSSIAN_DOMAIN_CATALOG = {
@@ -76,11 +67,8 @@ const RUSSIAN_DOMAIN_CATALOG = {
     auth: ruAuthMessages,
     app: ruAppMessages,
     admin: ruAdminMessages,
-    analytics: ruAnalyticsMessages,
-    history: ruHistoryMessages,
     tasks: ruTasksMessages,
     errors: ruErrorMessages,
-    superadmin: ruSuperadminMessages,
 } as const;
 
 type Primitive = string | number | boolean | null | undefined;
