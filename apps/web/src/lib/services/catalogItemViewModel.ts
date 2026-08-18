@@ -1,19 +1,10 @@
-import type { ShopItem, Task } from '$lib/stores/app';
+import type { Task } from '$lib/stores/app';
 
 export interface TaskCatalogItemViewModel {
     id: number | string;
     title: string;
     amount: number;
     active: boolean;
-}
-
-export interface ShopCatalogItemViewModel {
-    id: number | string;
-    title: string;
-    amount: number;
-    active: boolean;
-    affordable: boolean;
-    missing: number;
 }
 
 function toNonNegativeNumber(value: unknown): number {
@@ -27,18 +18,5 @@ export function buildTaskCatalogItemViewModel(task: Task): TaskCatalogItemViewMo
         title: String(task.title ?? task.name ?? ''),
         amount: toNonNegativeNumber(task.coins),
         active: task.isActive !== false,
-    };
-}
-
-export function buildShopCatalogItemViewModel(item: ShopItem, balance: number): ShopCatalogItemViewModel {
-    const amount = toNonNegativeNumber(item.price);
-    const availableBalance = toNonNegativeNumber(balance);
-    return {
-        id: item.id,
-        title: String(item.name ?? ''),
-        amount,
-        active: item.isActive !== false,
-        affordable: availableBalance >= amount,
-        missing: Math.max(0, amount - availableBalance),
     };
 }

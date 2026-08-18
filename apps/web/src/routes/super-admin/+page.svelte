@@ -11,8 +11,8 @@
 
     const i18n = useI18n();
 
-    type TabId = 'dashboard' | 'families' | 'catalog-tasks' | 'catalog-products' | 'database' | 'system';
-    type CatalogType = 'tasks' | 'products';
+    type TabId = 'dashboard' | 'families' | 'catalog-tasks' | 'database' | 'system';
+    type CatalogType = 'tasks';
     type StatusTone = 'success' | 'error' | 'info' | '';
 
     type FamilyDetail = {
@@ -21,7 +21,6 @@
         data: {
             balance?: number;
             tasks?: Array<Record<string, unknown>>;
-            shop?: Array<Record<string, unknown>>;
             history?: Array<Record<string, unknown>>;
             requests?: Array<Record<string, unknown>>;
         };
@@ -59,7 +58,7 @@
     // Restore the previously active tab from session storage (survives page reloads)
     if (typeof sessionStorage !== 'undefined') {
         const saved = sessionStorage.getItem('superAdminActiveTab') as TabId | null;
-        if (saved && ['dashboard', 'families', 'catalog-tasks', 'catalog-products', 'database', 'system'].includes(saved)) {
+        if (saved && ['dashboard', 'families', 'catalog-tasks', 'database', 'system'].includes(saved)) {
             activeTab = saved;
         }
     }
@@ -76,7 +75,6 @@
     let familyDetailError = '';
 
     let catalogTasks: CatalogItem[] = [];
-    let catalogProducts: CatalogItem[] = [];
     let catalogLoading = false;
     let catalogError = '';
     let catalogSaveStatus = '';
@@ -126,7 +124,6 @@
         ['dashboard', $i18n.t('superadmin.tabs.dashboard')],
         ['families', $i18n.t('superadmin.tabs.families')],
         ['catalog-tasks', $i18n.t('superadmin.tabs.catalogTasks')],
-        ['catalog-products', $i18n.t('superadmin.tabs.catalogProducts')],
         ['database', $i18n.t('superadmin.tabs.database')],
         ['system', $i18n.t('superadmin.tabs.system')],
     ] as Array<[TabId, string]>;
@@ -222,33 +219,23 @@
     }
 
     function catalogTitle(type: CatalogType): string {
-        return type === 'tasks'
-            ? $i18n.t('superadmin.catalog.baseTasks')
-            : $i18n.t('superadmin.catalog.baseProducts');
+        return $i18n.t('superadmin.catalog.baseTasks');
     }
 
     function catalogAddLabel(type: CatalogType): string {
-        return type === 'tasks'
-            ? $i18n.t('superadmin.catalog.addTask')
-            : $i18n.t('superadmin.catalog.addProduct');
+        return $i18n.t('superadmin.catalog.addTask');
     }
 
     function catalogLoadingLabel(type: CatalogType): string {
-        return type === 'tasks'
-            ? $i18n.t('superadmin.catalog.loadingTasks')
-            : $i18n.t('superadmin.catalog.loadingProducts');
+        return $i18n.t('superadmin.catalog.loadingTasks');
     }
 
     function catalogEmptyLabel(type: CatalogType): string {
-        return type === 'tasks'
-            ? $i18n.t('superadmin.catalog.emptyTasks')
-            : $i18n.t('superadmin.catalog.emptyProducts');
+        return $i18n.t('superadmin.catalog.emptyTasks');
     }
 
     function catalogCostLabel(type: CatalogType): string {
-        return type === 'tasks'
-            ? $i18n.t('superadmin.catalog.reward')
-            : $i18n.t('superadmin.catalog.price');
+        return $i18n.t('superadmin.catalog.reward');
     }
 
     function catalogModalTitle(): string {
@@ -286,7 +273,7 @@
     async function loadCatalog() {
         catalogLoading = true;
         catalogError = '';
-        catalogViewMode = loadCardViewMode(activeTab === 'catalog-tasks' ? 'tasks' : 'shop', 'admin');
+        catalogViewMode = loadCardViewMode('tasks', 'admin');
 
         try {
             const res = await fetchWithCsrf('/api/super/base-data');
@@ -295,9 +282,8 @@
                 return;
             }
 
-            const payload = await res.json() as { tasks?: CatalogItem[]; products?: CatalogItem[] };
+            const payload = await res.json() as { tasks?: CatalogItem[] };
             catalogTasks = payload.tasks ?? [];
-            catalogProducts = payload.products ?? [];
         } catch {
             catalogError = $i18n.t('superadmin.states.networkUnavailable');
         } finally {
@@ -307,7 +293,7 @@
 
     function setCatalogViewMode(mode: CardViewMode) {
         catalogViewMode = mode;
-        saveCardViewMode(activeTab === 'catalog-tasks' ? 'tasks' : 'shop', 'admin', mode);
+        saveCardViewMode('tasks', 'admin', mode);
     }
 
     async function saveCatalog() {
@@ -317,7 +303,7 @@
             const res = await fetchWithCsrf('/api/super/base-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tasks: catalogTasks, products: catalogProducts }),
+                body: JSON.stringify({ tasks: catalogTasks }),
             });
             catalogSaveStatus = res.ok ? 'saved' : 'error';
             setTimeout(() => {
@@ -332,7 +318,7 @@
         editType = type;
         editIndex = index;
 
-        const items = type === 'tasks' ? catalogTasks : catalogProducts;
+        const items = catalogTasks;
         const item = index >= 0 ? items[index] : null;
 
         editName = item?.name ?? '';
@@ -355,24 +341,17 @@
         const item: CatalogItem = {
             name: editName.trim(),
             group: editGroup.trim() || undefined,
-            coins: editType === 'tasks' ? Number(editCost) || 0 : undefined,
-            price: editType === 'products' ? Number(editCost) || 0 : undefined,
+            coins: Number(editCost) || 0,
             age_min: Number(editAgeMin) || 0,
             age_max: Number(editAgeMax) || 18,
             frequency: frequencyLimit > 0 ? { limit: frequencyLimit, period: editFreqPeriod } : null,
             money_limit: editMoneyLimit ? Number(editMoneyLimit) || null : null,
         };
 
-        if (editType === 'tasks') {
-            if (editIndex >= 0) {
-                catalogTasks = catalogTasks.map((task, currentIndex) => currentIndex === editIndex ? { ...task, ...item } : task);
-            } else {
-                catalogTasks = [...catalogTasks, { ...item, id: Date.now() }];
-            }
-        } else if (editIndex >= 0) {
-            catalogProducts = catalogProducts.map((product, currentIndex) => currentIndex === editIndex ? { ...product, ...item } : product);
+        if (editIndex >= 0) {
+            catalogTasks = catalogTasks.map((task, currentIndex) => currentIndex === editIndex ? { ...task, ...item } : task);
         } else {
-            catalogProducts = [...catalogProducts, { ...item, id: Date.now() }];
+            catalogTasks = [...catalogTasks, { ...item, id: Date.now() }];
         }
 
         editModalOpen = false;
@@ -384,11 +363,7 @@
             return;
         }
 
-        if (type === 'tasks') {
-            catalogTasks = catalogTasks.filter((_, currentIndex) => currentIndex !== index);
-        } else {
-            catalogProducts = catalogProducts.filter((_, currentIndex) => currentIndex !== index);
-        }
+        catalogTasks = catalogTasks.filter((_, currentIndex) => currentIndex !== index);
 
         void saveCatalog();
     }
@@ -580,17 +555,14 @@
         const newMonth = families.filter((family) => createdAt(family) >= monthAgoMs).length;
         const totalChildren = families.reduce((sum, family) => sum + parseNumber(family.childrenCount), 0);
         const totalTasks = families.reduce((sum, family) => sum + parseNumber(family.tasksCount), 0);
-        const totalShop = families.reduce((sum, family) => sum + parseNumber(family.shopCount), 0);
         const withTasks = families.filter((family) => parseNumber(family.tasksCount) > 0).length;
-        const withShop = families.filter((family) => parseNumber(family.shopCount) > 0).length;
         const avgTasks = (totalTasks / families.length).toFixed(1);
-        const avgShop = (totalShop / families.length).toFixed(1);
         const recent = [...families]
             .filter((family) => createdAt(family) > 0)
             .sort((left, right) => createdAt(right) - createdAt(left))
             .slice(0, 8);
         const topEngaged = [...families]
-            .sort((left, right) => (parseNumber(right.tasksCount) + parseNumber(right.shopCount)) - (parseNumber(left.tasksCount) + parseNumber(left.shopCount)))
+            .sort((left, right) => parseNumber(right.tasksCount) - parseNumber(left.tasksCount))
             .slice(0, 8);
 
         return {
@@ -602,11 +574,8 @@
             blocked: blockedFamiliesCount,
             totalChildren,
             totalTasks,
-            totalShop,
             withTasks,
-            withShop,
             avgTasks,
-            avgShop,
             recent,
             topEngaged,
         };
@@ -640,8 +609,8 @@
         activeTab = tabId;
         sessionStorage.setItem('superAdminActiveTab', tabId);
 
-        if (tabId === 'catalog-tasks' || tabId === 'catalog-products') {
-            if (catalogTasks.length === 0 && catalogProducts.length === 0 && !catalogLoading) {
+        if (tabId === 'catalog-tasks') {
+            if (catalogTasks.length === 0 && !catalogLoading) {
                 void loadCatalog();
             }
         }
@@ -748,7 +717,6 @@
                                 </div>
                                 <span class="sa-reg-item__stats">
                                     <span class="sa-stat-chip sa-stat-chip--tasks">📋 {parseNumber(family.tasksCount)}</span>
-                                    <span class="sa-stat-chip sa-stat-chip--shop">🛒 {parseNumber(family.shopCount)}</span>
                                 </span>
                             </li>
                             {/each}
@@ -766,18 +734,9 @@
                             </div>
                             <span class="sa-adoption-pct">{families.length > 0 ? (dashboardStats.withTasks / families.length * 100).toFixed(0) : 0}% <span class="sa-adoption-count">({dashboardStats.withTasks}/{dashboardStats.total})</span></span>
                         </div>
-                        <div class="sa-adoption-row">
-                            <span class="sa-adoption-label">{$i18n.t('superadmin.dashboard.useShop')}</span>
-                            <div class="sa-adoption-bar-wrap">
-                                <div class="sa-adoption-bar sa-adoption-bar--shop" style="width: {families.length > 0 ? (dashboardStats.withShop / families.length * 100).toFixed(0) : 0}%"></div>
-                            </div>
-                            <span class="sa-adoption-pct">{families.length > 0 ? (dashboardStats.withShop / families.length * 100).toFixed(0) : 0}% <span class="sa-adoption-count">({dashboardStats.withShop}/{dashboardStats.total})</span></span>
-                        </div>
                         <div class="sa-adoption-meta">
                             <span>{$i18n.t('superadmin.dashboard.averageTasksPerFamily')}: <strong>{dashboardStats.avgTasks}</strong></span>
-                            <span>{$i18n.t('superadmin.dashboard.averageRewardsPerFamily')}: <strong>{dashboardStats.avgShop}</strong></span>
                             <span>{$i18n.t('superadmin.dashboard.totalTasks')}: <strong>{dashboardStats.totalTasks}</strong></span>
-                            <span>{$i18n.t('superadmin.dashboard.totalRewards')}: <strong>{dashboardStats.totalShop}</strong></span>
                         </div>
                     </div>
                 </section>
@@ -819,7 +778,6 @@
                             <th class="ft__th ft__th--status">{$i18n.t('superadmin.families.status')}</th>
                             <th class="ft__th ft__th--num">{$i18n.t('superadmin.families.children')}</th>
                             <th class="ft__th ft__th--num">{$i18n.t('superadmin.families.tasks')}</th>
-                            <th class="ft__th ft__th--num">{$i18n.t('superadmin.families.rewards')}</th>
                             <th class="ft__th ft__th--profiles">{$i18n.t('superadmin.families.profiles')}</th>
                             <th class="ft__th ft__th--date">{$i18n.t('superadmin.families.created')}</th>
                             <th class="ft__th ft__th--date">{$i18n.t('superadmin.families.activity')}</th>
@@ -842,7 +800,6 @@
                             </td>
                             <td class="ft__td ft__td--num ft__td--center">{parseNumber(family.childrenCount)}</td>
                             <td class="ft__td ft__td--num ft__td--center"><span class:ft__num--zero={parseNumber(family.tasksCount) === 0}>{parseNumber(family.tasksCount)}</span></td>
-                            <td class="ft__td ft__td--num ft__td--center"><span class:ft__num--zero={parseNumber(family.shopCount) === 0}>{parseNumber(family.shopCount)}</span></td>
                             <td class="ft__td ft__td--profiles">{previewChildren(family)}</td>
                             <td class="ft__td ft__td--date">{formatShortDate(family.createdAt ?? family.created_at)}</td>
                             <td class="ft__td ft__td--date">{formatShortDate(family.lastActive ?? family.last_activity)}</td>
@@ -857,16 +814,16 @@
                         </tr>
                         {/each}
                         {#if filteredFamilies.length === 0}
-                        <tr><td colspan="9" class="ft__empty">{$i18n.t('superadmin.states.nothingFound')}</td></tr>
+                        <tr><td colspan="8" class="ft__empty">{$i18n.t('superadmin.states.nothingFound')}</td></tr>
                         {/if}
                     </tbody>
                 </table>
             </div>
             {/if}
         </div>
-        {:else if activeTab === 'catalog-tasks' || activeTab === 'catalog-products'}
-        {@const type = activeTab === 'catalog-tasks' ? 'tasks' : 'products'}
-        {@const items = activeTab === 'catalog-tasks' ? catalogTasks : catalogProducts}
+        {:else if activeTab === 'catalog-tasks'}
+        {@const type = 'tasks'}
+        {@const items = catalogTasks}
         <div id="tab-{activeTab}" class="tab-content active" role="tabpanel" aria-labelledby={`tab-btn-${activeTab}`}>
             <article class="panel catalog-panel">
                 <header class="panel__header">
@@ -898,7 +855,7 @@
                 {:else if items.length === 0}
                 <div class="panel-state panel-state--empty" aria-live="polite">{catalogEmptyLabel(type)}</div>
                 {:else}
-                <div id={activeTab === 'catalog-tasks' ? 'base-tasks-list' : 'base-products-list'}
+                <div id="base-tasks-list"
                     class="cards sa-catalog-items"
                     class:cards--list={catalogViewMode === 'list'}>
                     {#each items as item, index (item.id ?? index)}
@@ -1058,7 +1015,6 @@
         {@const info = familyDetail.familyInfo}
         {@const children = asObjectArray(info.children)}
         {@const tasks = familyDetail.data.tasks ?? []}
-        {@const shopItems = familyDetail.data.shop ?? []}
         {@const historyItems = familyDetail.data.history ?? []}
         {@const requestItems = familyDetail.data.requests ?? []}
 
@@ -1073,7 +1029,6 @@
                     <span class="fdc__chip">{$i18n.t('superadmin.families.activityChip', { date: formatShortDate(info.last_activity) })}</span>
                     <span class="fdc__chip">{$i18n.t('superadmin.families.balanceChip', { balance: parseNumber(familyDetail.data.balance) })}</span>
                     <span class="fdc__chip">{$i18n.t('superadmin.families.tasksChip', { count: tasks.length })}</span>
-                    <span class="fdc__chip">{$i18n.t('superadmin.families.rewardsChip', { count: shopItems.length })}</span>
                 </div>
             </div>
         </header>
@@ -1133,7 +1088,7 @@
 
             <section class="family-detail-section">
                 <div class="fdc__section-head">
-                    <span class="fdc__section-label">{$i18n.t('superadmin.families.tasksAndRewards')}</span>
+                    <span class="fdc__section-label">{$i18n.t('superadmin.families.tasksHeading')}</span>
                 </div>
                 <div class="family-detail-collections">
                     <div class="family-detail-collection">
@@ -1153,25 +1108,6 @@
                         </ul>
                         {:else}
                         <p class="panel-state">{$i18n.t('superadmin.families.tasksEmpty')}</p>
-                        {/if}
-                    </div>
-                    <div class="family-detail-collection">
-                        <h4>{$i18n.t('superadmin.families.rewardsHeading')}</h4>
-                        {#if shopItems.length > 0}
-                        <ul class="family-detail-list">
-                            {#each shopItems.slice(0, 6) as item ((item as Record<string, unknown>).id)}
-                            {@const shopItem = item as Record<string, unknown>}
-                            <li class="family-detail-list__item">
-                                <div>
-                                    <strong>{String(shopItem.name ?? EMPTY_VALUE)}</strong>
-                                    <span>{String(shopItem.group ?? $i18n.t('superadmin.families.noGroup'))}</span>
-                                </div>
-                                <span>{$i18n.t('superadmin.families.childBalance', { amount: parseNumber(shopItem.price) })}</span>
-                            </li>
-                            {/each}
-                        </ul>
-                        {:else}
-                        <p class="panel-state">{$i18n.t('superadmin.families.rewardsEmpty')}</p>
                         {/if}
                     </div>
                 </div>
