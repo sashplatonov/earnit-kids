@@ -30,7 +30,7 @@ Remove the web (SvelteKit `apps/web`) implementation of the coin shop (мага�
 | 8 | P0-8 | P0 | P0-7 | Remove the web-only admin reward-shop analytics (backend + dashboard). ✅ |
 | 9 | P0-9 | P0 | P0-8 | Final dead-code sweep and full verification gates. ✅ |
 | 10 | P0-10 | P0 | P0-9 | Remove the web admin (super-admin) coin-shop management and base `products` catalog. ✅ |
-| 11 | P0-11 | P0 | P0-10 | Remove the legacy public marketing site (static HTML + redirects + i18n). |
+| 11 | P0-11 | P0 | P0-10 | Remove the legacy public marketing site (static HTML + redirects + i18n). ✅ |
 | 12 | P1-1 | P1 | P0-9 | Migrate shared shop services into a unified Telegram mini-app structure. |
 | 13 | P1-2 | P1 | P1-1 | Migrate shared shop store/contract types into the Telegram structure. |
 | 14 | P1-3 | P1 | P1-2 | Migrate shared shop API client functions into the Telegram structure. |
