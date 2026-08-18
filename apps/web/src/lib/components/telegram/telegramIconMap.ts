@@ -134,7 +134,6 @@ export const telegramIconMap = {
     arrowDown: ArrowDown,
     reorder: ListOrdered,
     selectSeveral: ListChecks,
-    // ── semantic entity graphics ──────────────────────────────────────────
     sun: Sun,
     book: BookOpen,
     pencil: Pencil,
@@ -155,7 +154,6 @@ export const telegramIconMap = {
     shield: Shield,
     link: Link,
     bell: Bell,
-    // ── settings / account / import semantics ────────────────────────────
     upload: Upload,
     mail: Mail,
     gauge: Gauge,
@@ -167,7 +165,6 @@ export const telegramIconMap = {
     copy: Copy,
     file: FileText,
     unlink: Unlink,
-    // ── semantic entity graphics (extended library) ──────────────────────
     sunrise: Sunrise,
     moon: Moon,
     bed: BedSingle,

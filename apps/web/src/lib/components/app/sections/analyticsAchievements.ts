@@ -30,8 +30,6 @@ interface AchievementDef {
     target: number;
 }
 
-// ── Tier Medal Icons ───────────────────────────────────────────────────────
-
 const TIER_ICONS: Record<AchievementDef['tier'], string> = {
     bronze: '🥉',
     silver: '🥈',
@@ -39,8 +37,6 @@ const TIER_ICONS: Record<AchievementDef['tier'], string> = {
     platinum: '💠',
     diamond: '💎',
 };
-
-// ── Achievement Definitions ────────────────────────────────────────────────
 
 const ACHIEVEMENT_DEFS: AchievementDef[] = [
     // ⭐ Level
@@ -75,7 +71,6 @@ const ACHIEVEMENT_DEFS: AchievementDef[] = [
     { id: 'shop-diamond',  category: 'shop', tier: 'diamond',  icon: '🎉', nameKey: 'achShopDiamond',  descKey: 'achShopDesc', target: 50 },
 ];
 
-// ── Public API ─────────────────────────────────────────────────────────────
 
 export interface BuildAchievementsInput {
     earned: number;

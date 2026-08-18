@@ -82,7 +82,6 @@ export function buildDailyQuests(input: BuildDailyQuestsInput): AnalyticsDailyQu
     ];
 }
 
-// ─── Card 1: Quick Task ──────────────────────────────────────────────────────
 
 function buildQuickTaskCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
     const { i18n, isAdmin, recommendations, tasks } = input;
@@ -131,7 +130,6 @@ function buildQuickTaskCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
     };
 }
 
-// ─── Card 2: Reward Goal ─────────────────────────────────────────────────────
 
 function buildRewardGoalCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
     const { currentBalance, i18n, shopItems } = input;
@@ -198,7 +196,6 @@ function buildRewardGoalCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest 
     };
 }
 
-// ─── Card 3: Streak ──────────────────────────────────────────────────────────
 
 function buildStreakCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
     const { i18n, streakValue } = input;
@@ -226,7 +223,6 @@ function buildStreakCard(input: BuildDailyQuestsInput): AnalyticsDailyQuest {
     };
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function chooseTargetShopItem(
     shopItems: AnalyticsQuestShopItemContext[],

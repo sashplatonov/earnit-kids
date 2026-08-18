@@ -71,13 +71,11 @@ export const analyticsMessages = {
         last7DaysSummary: 'In the last 7 days out of {baseTotal} coins in the period',
         reasonStaleKeyword: 'recent',
         reasonRepeatKeyword: 'repeat',
-        // ── Card: Quick Task ──────────────────────────────────────────
         cardTaskFallbackTitle: 'Set up a task',
         cardTaskFallbackDescChild: 'Ask a parent to add your first task.',
         cardTaskFallbackDescAdmin: 'Open Tasks and add the first task.',
         cardTaskDesc: 'Earn {coins} coins for completing this.',
         cardTaskReward: '+{coins} 🪙',
-        // ── Card: Reward Goal ──────────────────────────────────────────
         cardRewardNoItemsTitle: 'Save coins',
         cardRewardNoItemsDesc: 'Ask a parent to add items to the shop.',
         cardRewardPickTitle: 'Pick a reward',
@@ -87,18 +85,15 @@ export const analyticsMessages = {
         cardRewardProgressDesc: '{have} of {need} 🪙 saved. {left} more to go.',
         cardRewardReadyBadge: 'Can buy now! 🎉',
         cardRewardLeftBadge: '{left} 🪙 left',
-        // ── Card: Streak ───────────────────────────────────────────────
         cardStreakStartTitle: 'Start a streak',
         cardStreakStartDesc: 'Complete one task today to begin.',
         cardStreakActiveTitle: '{days}-day streak!',
         cardStreakActiveDesc: '{current} of {target} days — keep going!',
         cardStreakDoneBadge: 'Streak achieved! 🔥',
         cardStreakGoalBadge: 'Goal: {target} days',
-        // ── Actions ────────────────────────────────────────────────────
         cardActionDoTask: 'Do it now',
         cardActionOpenTasks: 'Open Tasks',
         cardActionOpenShop: 'Open Rewards',
-        // ── Achievements ───────────────────────────────────────────────
         achLevelBronze: 'Level 2',
         achLevelSilver: 'Level 5',
         achLevelGold: 'Level 10',
@@ -129,7 +124,6 @@ export const analyticsMessages = {
         achShopPlatinum: '30 buys',
         achShopDiamond: '50 buys',
         achShopDesc: '{current} of {target} buys',
-        // ── Legend ────────────────────────────────────────────────────
         achLegendTitle: 'Achievement tiers',
         achLegendBronze: 'Bronze',
         achLegendSilver: 'Silver',

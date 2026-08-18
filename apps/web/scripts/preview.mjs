@@ -175,7 +175,7 @@ function writeJson(res, payload, status = 200) {
 }
 
 function serveConfigJs(req, res) {
-    const telegramMiniAppUrl = resolveTelegramMiniAppUrl();
+    const telegramMiniAppUrl = resolveTelegramMiniAppUrl() || 'https://example.com/telegram';
     const body = `window.EARNIT_CONFIG = {\n  telegramMiniAppUrl: ${JSON.stringify(telegramMiniAppUrl)}\n};\n`;
     res.writeHead(200, {
         'Content-Type': 'application/javascript; charset=utf-8',

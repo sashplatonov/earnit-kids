@@ -71,13 +71,11 @@ export const analyticsMessages = {
         last7DaysSummary: 'За 7 дней из {baseTotal} мон. в периоде',
         reasonStaleKeyword: 'давно',
         reasonRepeatKeyword: 'повтор',
-        // ── Card: Quick Task ──────────────────────────────────────────
         cardTaskFallbackTitle: 'Добавить задание',
         cardTaskFallbackDescChild: 'Попроси родителя добавить первое задание.',
         cardTaskFallbackDescAdmin: 'Открой Задания и добавь первое задание.',
         cardTaskDesc: 'Получи {coins} монет за выполнение.',
         cardTaskReward: '+{coins} 🪙',
-        // ── Card: Reward Goal ──────────────────────────────────────────
         cardRewardNoItemsTitle: 'Копи монеты',
         cardRewardNoItemsDesc: 'Попроси родителя добавить товары в магазин.',
         cardRewardPickTitle: 'Выбери награду',
@@ -87,18 +85,15 @@ export const analyticsMessages = {
         cardRewardProgressDesc: '{have} из {need} 🪙. Осталось {left}.',
         cardRewardReadyBadge: 'Можно покупать! 🎉',
         cardRewardLeftBadge: 'Ещё {left} 🪙',
-        // ── Card: Streak ───────────────────────────────────────────────
         cardStreakStartTitle: 'Начни серию',
         cardStreakStartDesc: 'Сделай одно задание сегодня, чтобы начать.',
         cardStreakActiveTitle: '{days} {days, plural, one{день} few{дня} many{дней} other{дней}} подряд!',
         cardStreakActiveDesc: '{current} из {target} дней — продолжай!',
         cardStreakDoneBadge: 'Серия собрана! 🔥',
         cardStreakGoalBadge: 'Цель: {target} дней',
-        // ── Actions ────────────────────────────────────────────────────
         cardActionDoTask: 'Выполнить',
         cardActionOpenTasks: 'К заданиям',
         cardActionOpenShop: 'В магазин',
-        // ── Achievements ───────────────────────────────────────────────
         achLevelBronze: 'Уровень 2',
         achLevelSilver: 'Уровень 5',
         achLevelGold: 'Уровень 10',
@@ -129,7 +124,6 @@ export const analyticsMessages = {
         achShopPlatinum: '30 покупок',
         achShopDiamond: '50 покупок',
         achShopDesc: '{current} из {target} покупок',
-        // ── Legend ────────────────────────────────────────────────────
         achLegendTitle: 'Уровни ачивок',
         achLegendBronze: 'Бронза',
         achLegendSilver: 'Серебро',

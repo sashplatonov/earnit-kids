@@ -8,7 +8,6 @@ import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } fro
 import type { Child } from '$lib/stores/app';
 import { logClientError } from '$lib/logging/clientLogger';
 
-// ── CSRF ─────────────────────────────────────────────────────────────────────
 
 function getCsrfToken(): string {
     if (typeof document === 'undefined') return '';
@@ -295,7 +294,6 @@ async function deleteJsonResult<T = unknown>(url: string): Promise<ApiActionResu
     }
 }
 
-// ── Endpoints ─────────────────────────────────────────────────────────────────
 
 export const API_URL = '/api/data';
 
@@ -475,7 +473,6 @@ export async function removeParentMembership(membershipId: number): Promise<ApiA
     return deleteJsonResult<void>(`/api/parents/${encodeURIComponent(String(membershipId))}`);
 }
 
-// ── Family notification settings ──────────────────────────────────────────────
 
 export type NotificationPreference = { key: string; enabled: boolean };
 export type ChildNotificationSettings = { childId: number; childName: string; preferences: NotificationPreference[] };
@@ -497,7 +494,6 @@ export async function setFamilyNotificationPreference(
     return result.ok;
 }
 
-// ── Parent account (My Account) ───────────────────────────────────────────────
 
 export type AccountConnection = {
     email: string;
@@ -525,7 +521,6 @@ export async function changePassword(oldPassword: string, newPassword: string): 
     return postJsonResult<void>('/api/change-password', { oldPassword, newPassword });
 }
 
-// ── Task actions ──────────────────────────────────────────────────────────────
 
 export const earnCoins = (taskId: unknown, childId?: unknown) =>
     postJsonAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/complete${buildChildQuery(childId)}`, {});
@@ -536,7 +531,6 @@ export const requestCoins = (taskId: unknown, childId?: unknown) =>
 export const requestCoinsWithNote = (taskId: unknown, note?: string | null, childId?: unknown) =>
     postJsonResultAfterPendingSave(`/api/tasks/${encodeURIComponent(String(taskId))}/request${buildChildQuery(childId)}`, { note: note ?? null });
 
-// ── Shop actions ──────────────────────────────────────────────────────────────
 
 /** Admin: immediately purchase an item for a child. */
 export const buyItem = (itemId: unknown, childId?: unknown) =>
@@ -585,7 +579,6 @@ export const importShopItems = (body: {
     rows: Array<Record<string, unknown>>;
 }) => flushPendingCrudSave().then(() => postJsonResultWithValidation('/api/shop/import', body));
 
-// ── Lightweight polling ───────────────────────────────────────────────────────
 
 /**
  * Fetch only the requests page (lightweight) instead of the full `/api/data`
@@ -601,7 +594,6 @@ export async function fetchRequestsFromServer(page = 1, limit = 50): Promise<Rec
     }
 }
 
-// ── Request actions ───────────────────────────────────────────────────────────
 
 export const approveRequest = (requestId: unknown, childId?: unknown) =>
     postJsonAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}/approve${buildChildQuery(childId)}`, {});
@@ -612,12 +604,10 @@ export const rejectRequest = (requestId: unknown, childId?: unknown) =>
 export const deleteRequest = (requestId: unknown, childId?: unknown) =>
     deleteResourceAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}${buildChildQuery(childId)}`, 'Delete request failed');
 
-// ── History actions ───────────────────────────────────────────────────────────
 
 export const deleteHistoryItem = (historyId: unknown, childId?: unknown) =>
     deleteResourceAfterPendingSave(`/api/history/${encodeURIComponent(String(historyId))}${buildChildQuery(childId)}`, 'Delete history failed');
 
-// ── Admin actions ─────────────────────────────────────────────────────────────
 
 /** Award or deduct coins for a child. Maps to POST /api/balance/adjust. */
 export const adminAwardCoins = (childId: unknown, amount: number, description?: string) =>
@@ -670,7 +660,6 @@ export const adminSaveLimits = (childId: unknown, limits: { name: string; dailyC
 export const saveChildGroupOrder = (childId: unknown, section: 'tasks' | 'shop', groups: string[], hiddenGroups: string[] = []) =>
     postJsonResult(`/api/children/${encodeURIComponent(String(childId))}/group-order`, { section, groups, hiddenGroups });
 
-// ── Child Telegram linkage ────────────────────────────────────────────────────
 
 export type ChildTelegramConnection = {
     childId: number;
@@ -697,7 +686,6 @@ export async function adminUnlinkChildTelegram(childId: unknown): Promise<boolea
     return result.ok;
 }
 
-// ── Push registration ─────────────────────────────────────────────────────────
 
 export const registerPushTokenOnServer = (payload: unknown) =>
     postJson('/api/push/register', payload);
@@ -705,7 +693,6 @@ export const registerPushTokenOnServer = (payload: unknown) =>
 export const unregisterPushTokenOnServer = (payload: unknown) =>
     postJson('/api/push/unregister', payload);
 
-// ── Analytics ─────────────────────────────────────────────────────────────────
 
 export async function loadAnalyticsData(childId?: unknown, timeframe = 'month') {
     const q = new URLSearchParams({ timeframe: String(timeframe) });
@@ -716,7 +703,6 @@ export async function loadAnalyticsData(childId?: unknown, timeframe = 'month') 
     } catch { return null; }
 }
 
-// ── Friends ───────────────────────────────────────────────────────────────────
 
 export const searchFriend = async (query: string) => {
     try {
