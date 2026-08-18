@@ -49,38 +49,34 @@ describe('buildProxyReferer', () => {
 });
 
 describe('resolveTelegramMiniAppUrl', () => {
-    it('uses TELEGRAM_MINI_APP_URL as the startapp payload and trims trailing slashes', () => {
+    it('builds a deep link with a short startapp command (URL is in BotFather)', () => {
         expect(resolveTelegramMiniAppUrl({
             TELEGRAM_MINI_APP_URL: 'https://earnit-kids.igo.mywire.org/telegram///',
             TELEGRAM_BOT_USERNAME: 'earnit_bot',
             APP_URL: 'http://localhost:5001',
-        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=https://earnit-kids.igo.mywire.org/telegram');
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=home');
     });
 
-    it('forms the deep link from bot username and APP_URL pointing at the Mini App', () => {
+    it('builds the deep link from bot username alone when only APP_URL is set', () => {
         expect(resolveTelegramMiniAppUrl({
             TELEGRAM_BOT_USERNAME: 'earnit_bot',
             APP_URL: 'http://localhost:5001///',
-        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=http://localhost:5001/telegram');
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=home');
     });
 
-    it('strips path and query from APP_URL so the deep link always targets the origin', () => {
+    it('ignores APP_URL path/query because the Mini App URL lives in BotFather', () => {
         expect(resolveTelegramMiniAppUrl({
             TELEGRAM_BOT_USERNAME: 'earnit_bot',
             APP_URL: 'https://earnit-kids.igo.mywire.org/en/app/tasks?tab=1',
-        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=https://earnit-kids.igo.mywire.org/telegram');
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=home');
     });
 
-    it('falls back to FRONTEND_URL then PUBLIC_BASE_URL for the origin', () => {
+    it('uses an explicit t.me deep link verbatim when TELEGRAM_MINI_APP_URL is one', () => {
         expect(resolveTelegramMiniAppUrl({
+            TELEGRAM_MINI_APP_URL: 'https://t.me/earnit_bot?startapp=custom',
             TELEGRAM_BOT_USERNAME: 'earnit_bot',
-            FRONTEND_URL: 'https://app.example.test',
-        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=https://app.example.test/telegram');
-
-        expect(resolveTelegramMiniAppUrl({
-            TELEGRAM_BOT_USERNAME: 'earnit_bot',
-            PUBLIC_BASE_URL: 'https://public.example.test',
-        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=https://public.example.test/telegram');
+            APP_URL: 'http://localhost:5001',
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=custom');
     });
 
     it('returns empty when bot username is missing even if a Mini App URL is set', () => {
@@ -90,15 +86,17 @@ describe('resolveTelegramMiniAppUrl', () => {
         } as NodeJS.ProcessEnv)).toBe('');
     });
 
-    it('returns empty when bot username or origin is missing', () => {
+    it('returns empty when bot username is missing', () => {
         expect(resolveTelegramMiniAppUrl({
             APP_URL: 'http://localhost:5001',
         } as NodeJS.ProcessEnv)).toBe('');
 
+        expect(resolveTelegramMiniAppUrl({} as NodeJS.ProcessEnv)).toBe('');
+    });
+
+    it('builds a home deep link from bot username alone', () => {
         expect(resolveTelegramMiniAppUrl({
             TELEGRAM_BOT_USERNAME: 'earnit_bot',
-        } as NodeJS.ProcessEnv)).toBe('');
-
-        expect(resolveTelegramMiniAppUrl({} as NodeJS.ProcessEnv)).toBe('');
+        } as NodeJS.ProcessEnv)).toBe('https://t.me/earnit_bot?startapp=home');
     });
 });

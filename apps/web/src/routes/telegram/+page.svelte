@@ -37,9 +37,10 @@
     }
 
     // EXPLAIN: Pairing tokens are hex strings (SecureTokenGenerator). The public
-    // EXPLAIN: site deep link passes the APP_URL as startapp, which is not a
-    // EXPLAIN: pairing token — skip the pairing attempt for non-hex values so the
-    // EXPLAIN: user still lands in the Mini App and logs in normally.
+    // EXPLAIN: site deep link passes a short command (e.g. "home") as startapp,
+    // EXPLAIN: which is not a pairing token — skip the pairing attempt for
+    // EXPLAIN: non-hex values so the user still lands in the Mini App and logs
+    // EXPLAIN: in normally.
     function isHexToken(value: string): boolean {
         return /^[0-9a-fA-F]+$/.test(value);
     }

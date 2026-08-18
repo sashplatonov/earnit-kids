@@ -25,30 +25,29 @@ export function resolveProxyContext(env = process.env) {
 
 export function resolveTelegramMiniAppUrl(env = process.env) {
     // EXPLAIN: The public site button must always be a Telegram deep link
-    // EXPLAIN: (https://t.me/<bot>?startapp=<mini-app-url>), never a bare web
-    // EXPLAIN: page. The startapp payload is the HTTPS Mini App URL Telegram
-    // EXPLAIN: opens inside the bot.
+    // EXPLAIN: (https://t.me/<bot>?startapp=<command>), never a bare web page.
+    // EXPLAIN: The Mini App HTTPS URL itself is configured in BotFather
+    // EXPLAIN: (Bot Settings → Configure Mini App), NOT passed in startapp.
+    // EXPLAIN: Telegram rejects URL-shaped startapp values (containing "://")
+    // EXPLAIN: with START_PARAM_INVALID; startapp must be a short command
+    // EXPLAIN: token (letters, digits, _, -), as the backend already does for
+    // EXPLAIN: pairing invites (pi_/ci_ prefixes). The /telegram route ignores
+    // EXPLAIN: non-token start_param values, so "home" is a safe default.
     const botUsername = (env.TELEGRAM_BOT_USERNAME || '').trim();
     if (!botUsername) {
         return '';
     }
-    // EXPLAIN: Prefer the explicit Mini App URL (TELEGRAM_MINI_APP_URL); fall
-    // EXPLAIN: back to the APP_URL origin + /telegram so the deep link always
-    // EXPLAIN: targets the Mini App entry, not the marketing site root.
     const explicit = (env.TELEGRAM_MINI_APP_URL || '').trim();
-    const rawOrigin = (env.APP_URL || env.FRONTEND_URL || env.PUBLIC_BASE_URL || '').trim();
-    let startapp;
-    if (explicit) {
-        startapp = explicit.replace(/\/+$/, '');
-    } else if (rawOrigin) {
-        // EXPLAIN: APP_URL may contain a path in dev/preview; the deep link
-        // EXPLAIN: must always point at the site root so Telegram opens a
-        // EXPLAIN: valid origin.
-        startapp = `${trimTrailingSlashes(new URL(rawOrigin).origin)}/telegram`;
-    } else {
-        return '';
+    // EXPLAIN: If TELEGRAM_MINI_APP_URL is already a t.me deep link, use it
+    // EXPLAIN: verbatim so operators can override the startapp command.
+    if (explicit.startsWith('https://t.me/') || explicit.startsWith('http://t.me/')) {
+        return explicit.replace(/\/+$/, '');
     }
-    return `https://t.me/${botUsername}?startapp=${startapp}`;
+    // EXPLAIN: Otherwise build the deep link with a short startapp command.
+    // EXPLAIN: "home" is a neutral command the /telegram route treats as a
+    // EXPLAIN: non-pairing value (not hex, not pi_/ci_), so the user lands in
+    // EXPLAIN: the Mini App and logs in normally.
+    return `https://t.me/${botUsername}?startapp=home`;
 }
 
 export function buildProxyReferer(referer, publicOrigin) {
