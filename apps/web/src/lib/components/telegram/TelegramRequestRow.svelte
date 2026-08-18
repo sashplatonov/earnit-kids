@@ -45,13 +45,13 @@
 </article>
 
 <style>
-    .request-card { display:flex; align-items:flex-start; gap:.65rem; width:100%; box-sizing:border-box; padding:.6rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
-    .entity-graphic { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border-radius:.75rem; background:#f5f6fa; }
-    .entity-emoji { font-size:1.35rem; line-height:1; }
+    .request-card { display:flex; align-items:flex-start; gap:.55rem; width:100%; box-sizing:border-box; padding:.5rem .55rem; border:1px solid #e5e9f1; border-radius:.8rem; background:#fff; }
+    .entity-graphic { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#f5f6fa; }
+    .entity-emoji { font-size:1.25rem; line-height:1; }
     .entity-icon { display:grid; place-items:center; color:#5b63e9; }
-    .content { flex:1; min-width:0; display:flex; flex-direction:column; gap:.28rem; }
+    .content { flex:1; min-width:0; display:flex; flex-direction:column; gap:.25rem; }
     .content-header { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
-    h3 { margin:0; font-size:.95rem; line-height:1.25; font-weight:700; color:#18243d; white-space:normal; overflow-wrap:anywhere; min-width:0; }
+    h3 { margin:0; font-size:.94rem; line-height:1.25; font-weight:700; color:#18243d; white-space:normal; overflow-wrap:anywhere; min-width:0; }
     .side { display:flex; flex-direction:column; align-items:flex-end; gap:.15rem; flex:0 0 auto; min-width:0; }
     .status-chip { display:inline-flex; align-items:center; padding:.2rem .55rem; border-radius:999px; font-size:.7rem; font-weight:800; white-space:nowrap; }
     .status-chip--pending { background:#fff5df; color:#98721d; }
