@@ -93,6 +93,7 @@ export const adminMessages = {
         tabs: {
             overview: 'Overview',
             coins: 'Coins',
+            rewards: 'Rewards',
             tasks: 'Tasks',
             activity: 'Activity',
         },
@@ -110,6 +111,8 @@ export const adminMessages = {
             coinsEarned: 'Coins earned',
             coinsSpent: 'Coins spent',
             rewardsReceived: 'Rewards received',
+            rewardRequests: 'Reward requests',
+            rewardsIssued: 'Rewards issued',
             taskCompletions: 'Task completions',
             lifetime: 'lifetime',
             inPeriod: 'in {period}',
@@ -118,6 +121,7 @@ export const adminMessages = {
         sections: {
             keySignals: 'Key signals',
             coinEconomy: 'Coin economy',
+            rewards: 'Rewards',
             content: 'Content',
             activation: 'Family activation',
             parentCycle: 'Parent cycle',
@@ -159,9 +163,28 @@ export const adminMessages = {
                 desc: 'earned coins but did not receive rewards',
             },
         },
+        rewards: {
+            prices: 'Prices',
+            whatChildrenPick: 'What children pick',
+            medianPrice: {
+                title: 'Median price',
+                desc: 'active rewards',
+            },
+            selectedPrice: {
+                title: 'Selected reward price',
+                desc: 'actually received rewards',
+            },
+            failed: {
+                title: 'Not completed',
+                desc: 'rejected or cancelled',
+            },
+        },
         tasks: {
             completed: 'Tasks completed',
             approvedByParents: 'approved by parents',
+            approvalRate: {
+                label: 'Approval rate',
+            },
             catalogUsage: {
                 title: 'Using catalog',
                 desc: 'added ready-made tasks/rewards',
@@ -179,8 +202,11 @@ export const adminMessages = {
             registered: 'Registered',
             addedChild: 'Added child',
             hasTask: 'Has task',
+            completedTask: 'Completed task',
             earnedCoins: 'Earned coins',
             receivedReward: 'Received reward',
+            noData: 'No funnel data',
+            noDataDesc: 'Metrics will appear after families start using the service.',
         },
         parent: {
             decisionTime: {

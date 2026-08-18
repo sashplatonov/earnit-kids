@@ -22,6 +22,7 @@
     $: childBehavior = data.childBehavior;
     $: activationFunnel = data.activationFunnel;
     $: retention = data.retention;
+    $: rewards = data.rewards;
     $: trends = data.trends;
 
     // EXPLAIN: The selected period comes from the URL (?period=...) and is
@@ -33,6 +34,7 @@
     const tabs = [
         { id: 'overview', label: t('tabs.overview'), icon: 'gauge' },
         { id: 'coins', label: t('tabs.coins'), icon: 'coin' },
+        { id: 'rewards', label: t('tabs.rewards'), icon: 'gift' },
         { id: 'tasks', label: t('tabs.tasks'), icon: 'task' },
         { id: 'activity', label: t('tabs.activity'), icon: 'activity' },
     ] as const;
@@ -77,6 +79,12 @@
 
     function closeTooltip() {
         activeTooltip = null;
+    }
+
+    function formatValue(val: number | string | null | undefined, isPercent = false): string {
+        if (val === null || val === undefined) return '—';
+        if (typeof val === 'number' && val === 0) return '0';
+        return isPercent ? `${val}%` : val.toLocaleString();
     }
 
     // EXPLAIN: ADM-22 dynamic product insight hints derived from transparent metrics
@@ -215,6 +223,12 @@
                 <b>{t('empty.title')}</b>
                 <small>{t('empty.desc')}</small>
             </div>
+        {:else if (overview?.overview?.activeFamilies ?? 0) === 0}
+            <div class="empty-state" role="status">
+                <span class="empty-ico" aria-hidden="true">📉</span>
+                <b>{t('empty.noActivityTitle')}</b>
+                <small>{t('empty.noActivityDesc')}</small>
+            </div>
         {/if}
 
         <!-- Tab navigation -->
@@ -252,7 +266,7 @@
                 <div class="kpis">
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.totalFamilies')}</div>
-                        <div class="kpi-value">{overview?.overview?.totalFamilies ?? '—'}</div>
+                        <div class="kpi-value">{formatValue(overview?.overview?.totalFamilies)}</div>
                         <div class="kpi-foot">{t('kpis.lifetime')}</div>
                     </div>
                     <div class="kpi">
@@ -260,12 +274,12 @@
                             <div class="kpi-label">{t('kpis.activeFamilies')}</div>
                             <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={() => toggleTooltip('activeFamilies')}>i</button>
                         </div>
-                        <div class="kpi-value">{overview?.overview?.activeFamilies ?? '—'}</div>
+                        <div class="kpi-value">{formatValue(overview?.overview?.activeFamilies)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.totalChildren')}</div>
-                        <div class="kpi-value">{overview?.overview?.totalChildren ?? '—'}</div>
+                        <div class="kpi-value">{formatValue(overview?.overview?.totalChildren)}</div>
                         <div class="kpi-foot">{t('kpis.lifetime')}</div>
                     </div>
                     <div class="kpi">
@@ -273,33 +287,7 @@
                             <div class="kpi-label">{t('kpis.activeChildren')}</div>
                             <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={() => toggleTooltip('activeChildren')}>i</button>
                         </div>
-                        <div class="kpi-value">{overview?.overview?.activeChildren ?? '—'}</div>
-                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="kpi-label">{t('kpis.coinsEarned')}</div>
-                        <div class="kpi-value">{overview?.overview?.coinsEarned ?? '—'}</div>
-                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="kpi-label">{t('kpis.coinsSpent')}</div>
-                        <div class="kpi-value">{overview?.overview?.coinsSpent ?? '—'}</div>
-                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="kpi-head">
-                            <div class="kpi-label">{t('kpis.rewardsReceived')}</div>
-                            <button class="info" aria-label={t('tooltips.rewardsReceived.label')} on:click={() => toggleTooltip('rewardsReceived')}>i</button>
-                        </div>
-                        <div class="kpi-value">{overview?.overview?.rewardPurchases ?? '—'}</div>
-                        <div class="kpi-foot">{t('kpis.successful')}</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="kpi-head">
-                            <div class="kpi-label">{t('kpis.taskCompletions')}</div>
-                            <button class="info" aria-label={t('tooltips.taskCompletions.label')} on:click={() => toggleTooltip('taskCompletions')}>i</button>
-                        </div>
-                        <div class="kpi-value">{overview?.overview?.taskCompletions ?? '—'}</div>
+                        <div class="kpi-value">{formatValue(overview?.overview?.activeChildren)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                 </div>
@@ -312,15 +300,25 @@
                             <b>{t('signals.earningNotSpending.title')}</b>
                             <small>{t('signals.earningNotSpending.desc')}</small>
                         </div>
-                        <div class="rank-val">—%</div>
+                        <div class="rank-val">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending, true)}</div>
                     </div>
+                    <div class="rank">
+                        <div class="rank-icon">📉</div>
+                        <div class="rank-content">
+                            <b>{t('signals.lowSpendRate.title')}</b>
+                            <small>{t('signals.lowSpendRate.desc')}</small>
+                        </div>
+                        <div class="rank-val">{formatValue(coinEconomy?.coins?.spendRate, true)}</div>
+                    </div>
+                </div>
+                <div class="rows">
                     <div class="rank">
                         <div class="rank-icon">⏱️</div>
                         <div class="rank-content">
                             <b>{t('signals.decisionTime.title')}</b>
                             <small>{t('signals.decisionTime.desc')}</small>
                         </div>
-                        <div class="rank-val">— {t('units.minutes')}</div>
+                        <div class="rank-val">{formatValue(parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours)} {t('units.hours')}</div>
                     </div>
                 </div>
             </div>
@@ -338,11 +336,11 @@
                     <div class="compare-top">
                         <div class="number-block">
                             <span>{t('coins.earned')}</span>
-                            <b>{coinEconomy?.coins?.earned?.toLocaleString() ?? '—'}</b>
+                            <b>{formatValue(coinEconomy?.coins?.earned)}</b>
                         </div>
                         <div class="number-block">
                             <span>{t('coins.spent')}</span>
-                            <b>{coinEconomy?.coins?.spent?.toLocaleString() ?? '—'}</b>
+                            <b>{formatValue(coinEconomy?.coins?.spent)}</b>
                         </div>
                     </div>
                     <div class="bar">
@@ -353,7 +351,7 @@
                             {t('coins.spendEarn.label')} 
                             <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={() => toggleTooltip('spendEarn')}>i</button>
                         </span>
-                        <b>{coinEconomy?.coins?.spendRate ?? '—'}%</b>
+                        <b>{formatValue(coinEconomy?.coins?.spendRate, true)}</b>
                     </div>
                     {#if buildCoinInsight()}
                         <div class="insight">{buildCoinInsight()}</div>
@@ -369,7 +367,7 @@
                             </div>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
-                        <div class="metric-value">{coinEconomy?.balances?.medianBalance ?? '—'} 🪙</div>
+                        <div class="metric-value">{formatValue(coinEconomy?.balances?.medianBalance)} 🪙</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -379,7 +377,7 @@
                             </div>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
-                        <div class="metric-value">— {t('units.days')}</div>
+                        <div class="metric-value">{formatValue(data.coinEconomy?.balances?.timeToFirstReward)} {t('units.days')}</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -389,8 +387,70 @@
                             </div>
                             <small>{t('metrics.earningNotSpending.desc')}</small>
                         </div>
-                        <div class="metric-value">{coinEconomy?.balances?.zeroBalancePercent ?? '—'}%</div>
+                        <div class="metric-value">{formatValue(coinEconomy?.balances?.zeroBalancePercent, true)}</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Rewards Tab -->
+            <div
+                id="panel-rewards"
+                class="tab-panel"
+                class:active={activeTab === 'rewards'}
+                role="tabpanel"
+                aria-labelledby="tab-rewards"
+            >
+                <h2 class="section-title">{t('tabs.rewards')}</h2>
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="kpi-label">{t('kpis.rewardRequests')}</div>
+                        <div class="kpi-value">{formatValue(rewards?.metrics?.requestCount)}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">{t('kpis.rewardsIssued')}</div>
+                        <div class="kpi-value">{formatValue(rewards?.metrics?.issuedCount)}</div>
+                        <div class="kpi-foot">{t('kpis.successful')}</div>
+                    </div>
+                </div>
+
+                <h2 class="section-title">{t('rewards.prices')}</h2>
+                <div class="metric-list">
+                    <div class="metric">
+                        <div>
+                            <strong>{t('rewards.medianPrice.title')}</strong>
+                            <small>{t('rewards.medianPrice.desc')}</small>
+                        </div>
+                        <div class="metric-value">{formatValue(rewards?.metrics?.medianPrice)} 🪙</div>
+                    </div>
+                    <div class="metric">
+                        <div>
+                            <strong>{t('rewards.selectedPrice.title')}</strong>
+                            <small>{t('rewards.selectedPrice.desc')}</small>
+                        </div>
+                        <div class="metric-value">{formatValue(rewards?.metrics?.selectedPrice)} 🪙</div>
+                    </div>
+                    <div class="metric">
+                        <div>
+                            <strong>{t('rewards.failed.title')}</strong>
+                            <small>{t('rewards.failed.desc')}</small>
+                        </div>
+                        <div class="metric-value">{formatValue(rewards?.metrics?.failedRate, true)}</div>
+                    </div>
+                </div>
+
+                <h2 class="section-title">{t('rewards.whatChildrenPick')}</h2>
+                <div class="rows">
+                    {#each rewards?.rankings ?? [] as rank (rank.category)}
+                        <div class="rank">
+                            <div class="rank-icon">🎁</div>
+                            <div class="rank-content">
+                                <b>{rank.category}</b>
+                                <small>{rank.count} · {rank.percent}%</small>
+                            </div>
+                            <div class="rank-val">#{rank.rank}</div>
+                        </div>
+                    {/each}
                 </div>
             </div>
 
@@ -406,15 +466,15 @@
                 <div class="kpis">
                     <div class="kpi">
                         <div class="kpi-label">{t('tasks.completed')}</div>
-                        <div class="kpi-value">{taskEconomy?.taskMetrics?.taskCompletions ?? '—'}</div>
+                        <div class="kpi-value">{formatValue(taskEconomy?.taskMetrics?.taskCompletions)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-head">
-                            <div class="kpi-label">Approval rate</div>
+                            <div class="kpi-label">{t('tasks.approvalRate.label')}</div>
                             <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={() => toggleTooltip('approvalRate')}>i</button>
                         </div>
-                        <div class="kpi-value">{taskEconomy?.taskMetrics?.approvalRate ?? '—'}%</div>
+                        <div class="kpi-value">{formatValue(taskEconomy?.taskMetrics?.approvalRate, true)}</div>
                         <div class="kpi-foot">{t('tasks.approvedByParents')}</div>
                     </div>
                 </div>
@@ -426,21 +486,21 @@
                             <strong>{t('tasks.catalogUsage.title')}</strong>
                             <small>{t('tasks.catalogUsage.desc')}</small>
                         </div>
-                        <div class="metric-value">{taskEconomy?.taskMetrics?.familiesWithTasksPercent ?? '—'}%</div>
+                        <div class="metric-value">{formatValue(taskEconomy?.taskMetrics?.familiesWithTasksPercent, true)}</div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('tasks.customContent.title')}</strong>
                             <small>{t('tasks.customContent.desc')}</small>
                         </div>
-                        <div class="metric-value">{taskEconomy?.taskMetrics?.tasksConfigured ?? '—'}</div>
+                        <div class="metric-value">{formatValue(taskEconomy?.taskMetrics?.tasksConfigured)}</div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('tasks.coinsPerTask.title')}</strong>
                             <small>{t('tasks.coinsPerTask.desc')}</small>
                         </div>
-                        <div class="metric-value">{taskEconomy?.taskMetrics?.medianCoinsPerTask ?? '—'} 🪙</div>
+                        <div class="metric-value">{formatValue(taskEconomy?.taskMetrics?.medianCoinsPerTask)} 🪙</div>
                     </div>
                 </div>
 
@@ -486,87 +546,31 @@
                     </div>
                 {:else}
                     <div class="funnel">
-                        <div class="step">
-                            <div class="step-line">
-                                <b>{t('funnel.registered')}</b>
-                                <span>—</span>
-                            </div>
-                            <div class="track">
-                                <div class="fill" style="width: 100%"></div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-line">
-                                <b>{t('funnel.addedChild')}</b>
-                                <span>—</span>
-                            </div>
-                            <div class="track">
-                                <div class="fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-line">
-                                <b>{t('funnel.hasTask')}</b>
-                                <span>—</span>
-                            </div>
-                            <div class="track">
-                                <div class="fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-line">
-                                <b>{t('funnel.completedTask')}</b>
-                                <span>—</span>
-                            </div>
-                            <div class="track">
-                                <div class="fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-line">
-                                <b>{t('funnel.earnedCoins')}</b>
-                                <span>—</span>
-                            </div>
-                            <div class="track">
-                                <div class="fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-line">
-                                <b>{t('funnel.hasReward')}</b>
-                                <span>—</span>
-                            </div>
-                            <div class="track">
-                                <div class="fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-line">
-                                <b>{t('funnel.receivedReward')}</b>
-                                <span>—</span>
-                            </div>
-                            <div class="track">
-                                <div class="fill" style="width: 0%"></div>
+                        <div class="empty-state" style="min-height: 76px; display: flex; align-items: center; justify-content: center; text-align: center; border: 1px dashed var(--line, #e5e8f0); border-radius: 14px; background: #fff; padding: 12px;">
+                            <div style="text-align: center;">
+                                <b>{t('funnel.noData')}</b>
+                                <small style="display: block; color: var(--muted, #8791a6); margin-top: 4px;">{t('funnel.noDataDesc')}</small>
                             </div>
                         </div>
                     </div>
                 {/if}
 
                 <h2 class="section-title">{t('sections.retention')}</h2>
-                <div class="kpis">
-                    <div class="kpi">
-                        <div class="kpi-label">{t('retention.newFamilies.title')}</div>
-                        <div class="kpi-value">{retention?.retentionMetrics?.newFamilies ?? '—'}</div>
-                        <div class="kpi-foot">{t('retention.newFamilies.desc')}</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="kpi-label">{t('retention.returningFamilies.title')}</div>
-                        <div class="kpi-value">{retention?.retentionMetrics?.returningFamilies ?? '—'}</div>
-                        <div class="kpi-foot">{t('retention.returningFamilies.desc')}</div>
-                    </div>
-                </div>
-
                 <div class="metric-list">
+                    <div class="metric">
+                        <div>
+                            <strong>{t('retention.newFamilies.title')}</strong>
+                            <small>{t('retention.newFamilies.desc')}</small>
+                        </div>
+                        <div class="metric-value">{retention?.retentionMetrics?.newFamilies ?? '—'}</div>
+                    </div>
+                    <div class="metric">
+                        <div>
+                            <strong>{t('retention.returningFamilies.title')}</strong>
+                            <small>{t('retention.returningFamilies.desc')}</small>
+                        </div>
+                        <div class="metric-value">{retention?.retentionMetrics?.returningFamilies ?? '—'}</div>
+                    </div>
                     <div class="metric">
                         <div>
                             <div class="metric-title">
@@ -625,16 +629,20 @@
                 {/if}
 
                 <h2 class="section-title">{t('sections.parentNeeds')}</h2>
-                <div class="kpis">
-                    <div class="kpi">
-                        <div class="kpi-label">{t('parent.catalogUsage.title')}</div>
-                        <div class="kpi-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCatalogPercent ?? '—'}%</div>
-                        <div class="kpi-foot">{t('parent.catalogUsage.desc')}</div>
+                <div class="metric-list">
+                    <div class="metric">
+                        <div>
+                            <strong>{t('parent.catalogUsage.title')}</strong>
+                            <small>{t('parent.catalogUsage.desc')}</small>
+                        </div>
+                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCatalogPercent ?? '—'}%</div>
                     </div>
-                    <div class="kpi">
-                        <div class="kpi-label">{t('parent.customContent.title')}</div>
-                        <div class="kpi-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCustomContentPercent ?? '—'}%</div>
-                        <div class="kpi-foot">{t('parent.customContent.desc')}</div>
+                    <div class="metric">
+                        <div>
+                            <strong>{t('parent.customContent.title')}</strong>
+                            <small>{t('parent.customContent.desc')}</small>
+                        </div>
+                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCustomContentPercent ?? '—'}%</div>
                     </div>
                 </div>
 
@@ -648,7 +656,7 @@
                             </div>
                             <small>{t('parent.decisionTime.desc')}</small>
                         </div>
-                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours ?? '—'} {t('units.hours')}</div>
+                        <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours)} {t('units.hours')}</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -658,32 +666,33 @@
                             </div>
                             <small>{t('parent.pendingBacklog.desc')}</small>
                         </div>
-                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.pendingRequestsCount ?? '—'}</div>
+                        <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.pendingRequestsCount)}</div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('parent.familiesWithPending.title')}</strong>
                             <small>{t('parent.familiesWithPending.desc')}</small>
                         </div>
-                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesWithPendingRequests ?? '—'}</div>
+                        <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.familiesWithPendingRequests)}</div>
                     </div>
                 </div>
 
                 <h2 class="section-title">{t('sections.childNeeds')}</h2>
-                <div class="kpis">
-                    <div class="kpi">
-                        <div class="kpi-label">{t('child.activeDays.title')}</div>
-                        <div class="kpi-value">{childBehavior?.childBehaviorMetrics?.medianActiveDaysPerChild ?? '—'}</div>
-                        <div class="kpi-foot">{t('child.activeDays.desc')}</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="kpi-label">{t('child.tasksBeforeReward.title')}</div>
-                        <div class="kpi-value">{childBehavior?.childBehaviorMetrics?.medianTasksBeforeReward ?? '—'}</div>
-                        <div class="kpi-foot">{t('child.tasksBeforeReward.desc')}</div>
-                    </div>
-                </div>
-
                 <div class="metric-list">
+                    <div class="metric">
+                        <div>
+                            <strong>{t('child.activeDays.title')}</strong>
+                            <small>{t('child.activeDays.desc')}</small>
+                        </div>
+                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.medianActiveDaysPerChild)}</div>
+                    </div>
+                    <div class="metric">
+                        <div>
+                            <strong>{t('child.tasksBeforeReward.title')}</strong>
+                            <small>{t('child.tasksBeforeReward.desc')}</small>
+                        </div>
+                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.medianTasksBeforeReward)}</div>
+                    </div>
                     <div class="metric">
                         <div>
                             <div class="metric-title">
@@ -692,14 +701,14 @@
                             </div>
                             <small>{t('child.earningNotSpending.desc')}</small>
                         </div>
-                        <div class="metric-value">{childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending ?? '—'}%</div>
+                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending, true)}</div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('child.requestedNotReceived.title')}</strong>
                             <small>{t('child.requestedNotReceived.desc')}</small>
                         </div>
-                        <div class="metric-value">{childBehavior?.childBehaviorMetrics?.percentChildrenRequestedNotReceived ?? '—'}%</div>
+                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenRequestedNotReceived, true)}</div>
                     </div>
                 </div>
             </div>
@@ -720,6 +729,7 @@
 <style>
     :global(.dashboard-container) {
         padding: 14px;
+        padding-bottom: calc(70px + env(safe-area-inset-bottom) + 12px);
         background: var(--bg, #f6f7fb);
         min-height: 100vh;
     }
@@ -793,7 +803,7 @@
     .tabs {
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 4px;
     }
 
@@ -850,24 +860,26 @@
     }
 
     .section-title {
-        font-size: 18px;
-        font-weight: 800;
-        margin: 16px 0 9px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #1a1d23;
+        margin: 20px 0 12px;
     }
 
     .kpis {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        gap: 12px;
+        margin-bottom: 20px;
     }
 
     .kpi {
         background: #fff;
         border: 1px solid var(--line, #e5e8f0);
-        border-radius: 14px;
-        padding: 11px;
-        min-height: 91px;
-        position: relative;
+        border-radius: 15px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
     }
 
     .kpi-label {
@@ -912,14 +924,19 @@
     }
 
     .tooltip-box {
-        margin-top: 8px;
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(340px, calc(100vw - 24px));
         background: #202633;
         color: #fff;
         border-radius: 13px;
         padding: 11px 12px;
         font-size: 11px;
         line-height: 1.45;
-        box-shadow: 0 8px 22px rgba(25, 31, 45, 0.18);
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
+        z-index: 100;
     }
 
     .tooltip-head {
@@ -1050,18 +1067,24 @@
 
     .mini-info {
         display: inline-flex;
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
         border: 0;
         border-radius: 50%;
-        background: var(--soft, #eef0ff);
-        color: var(--primary, #5e6fec);
-        font-size: 11px;
-        font-weight: 800;
+        background: #f0f2f7;
+        color: var(--muted, #8791a6);
+        font-size: 10px;
+        font-weight: 600;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         margin-left: 4px;
+        transition: background 0.2s;
+    }
+
+    .mini-info:hover {
+        background: var(--soft, #eef0ff);
+        color: var(--primary, #5e6fec);
     }
 
     .insight {
@@ -1088,6 +1111,20 @@
         align-items: center;
         padding: 11px 12px;
         border-bottom: 1px solid var(--line, #e5e8f0);
+    }
+
+    @media (max-width: 400px) {
+        .metric {
+            grid-template-columns: 1fr;
+            gap: 4px;
+            text-align: left;
+        }
+
+        .metric-value {
+            text-align: left;
+            font-size: 16px;
+            margin-top: 2px;
+        }
     }
 
     .metric:last-child {
@@ -1181,14 +1218,14 @@
     .bars {
         display: flex;
         align-items: flex-end;
-        gap: 3px;
+        gap: 4px;
         height: 90px;
         overflow-x: auto;
+        padding-bottom: 4px;
     }
 
     .bar-col {
-        flex: 1 0 14px;
-        min-width: 0;
+        flex: 0 0 18px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1198,9 +1235,8 @@
 
     .bar {
         width: 100%;
-        max-width: 12px;
         background: var(--primary, #5e6fec);
-        border-radius: 3px 3px 0 0;
+        border-radius: 2px 2px 0 0;
     }
 
     .bar.earned {
@@ -1212,10 +1248,11 @@
     }
 
     .bar-label {
-        font-size: 8px;
+        font-size: 9px;
         color: var(--muted, #8791a6);
-        margin-top: 3px;
+        margin-top: 4px;
         white-space: nowrap;
+        opacity: 0.8;
     }
 
     .empty-note {

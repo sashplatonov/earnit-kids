@@ -27,6 +27,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     let childBehavior = null;
     let activationFunnel = null;
     let retention = null;
+    let rewards = null;
     let trends = null;
     try {
         const [dashboardRes, trendsRes] = await Promise.all([
@@ -42,6 +43,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
             childBehavior = dashboard.childSignals;
             activationFunnel = dashboard.activation;
             retention = dashboard.activity;
+            rewards = dashboard.rewards;
         }
         if (trendsRes.ok) {
             trends = await trendsRes.json();
@@ -58,9 +60,11 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
         childBehavior,
         activationFunnel,
         retention,
+        rewards,
         trends,
         period,
     };
+
 };
 
 export const actions: Actions = {

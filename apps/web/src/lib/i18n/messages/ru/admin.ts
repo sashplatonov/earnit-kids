@@ -93,6 +93,7 @@ export const adminMessages = {
         tabs: {
             overview: 'Обзор',
             coins: 'Монеты',
+            rewards: 'Награды',
             tasks: 'Задания',
             activity: 'Активность',
         },
@@ -110,6 +111,8 @@ export const adminMessages = {
             coinsEarned: 'Монет заработано',
             coinsSpent: 'Монет потрачено',
             rewardsReceived: 'Получено наград',
+            rewardRequests: 'Запросов наград',
+            rewardsIssued: 'Выдано наград',
             taskCompletions: 'Выполнено заданий',
             lifetime: 'за всё время',
             inPeriod: 'за {period}',
@@ -118,6 +121,7 @@ export const adminMessages = {
         sections: {
             keySignals: 'Ключевые сигналы',
             coinEconomy: 'Экономика монет',
+            rewards: 'Награды',
             content: 'Контент',
             activation: 'Активация семей',
             parentCycle: 'Родительский цикл',
@@ -159,9 +163,28 @@ export const adminMessages = {
                 desc: 'заработали монеты, но не получили наград',
             },
         },
+        rewards: {
+            prices: 'Цены',
+            whatChildrenPick: 'Что дети выбирают',
+            medianPrice: {
+                title: 'Медианная цена',
+                desc: 'активные награды',
+            },
+            selectedPrice: {
+                title: 'Цена выбранной награды',
+                desc: 'реально полученные награды',
+            },
+            failed: {
+                title: 'Не состоялись',
+                desc: 'отклонены или отменены',
+            },
+        },
         tasks: {
             completed: 'Выполнено заданий',
             approvedByParents: 'одобрено родителями',
+            approvalRate: {
+                label: 'Процент одобрения',
+            },
             catalogUsage: {
                 title: 'Используют каталог',
                 desc: 'добавили готовые задания/награды',
@@ -179,8 +202,11 @@ export const adminMessages = {
             registered: 'Зарегистрировались',
             addedChild: 'Добавили ребёнка',
             hasTask: 'Есть задание',
+            completedTask: 'Выполнили задание',
             earnedCoins: 'Заработали монеты',
             receivedReward: 'Получили награду',
+            noData: 'Нет данных по воронке',
+            noDataDesc: 'Показатели появятся после начала использования сервиса семьями.',
         },
         parent: {
             decisionTime: {
@@ -228,6 +254,8 @@ export const adminMessages = {
         empty: {
             title: 'Нет данных за период',
             desc: 'Пока нет зарегистрированных семей. Показатели появятся, как только семьи начнут пользоваться сервисом.',
+            noActivityTitle: 'Нет активности за {period}',
+            noActivityDesc: 'Попробуйте выбрать другой период.',
         },
         tooltips: {
             selectInfo: 'Нажмите на ⓘ для пояснения показателя',
@@ -264,7 +292,7 @@ export const adminMessages = {
                 body: 'Доля активных детей, которые получили монеты за выбранный период, но не получили ни одной награды.\n\nПример: 100 детей зарабатывали монеты, 38 из них не получили наград. Показатель = 38%.\n\nЭто сигнал проверить цены, ассортимент наград и процесс запроса/одобрения.',
             },
             approvalRate: {
-                label: 'Процент одобренных заданий',
+                label: 'Процент одобрения',
                 body: 'Доля выполненных заданий, одобренных родителями.\n\nРасчёт: одобренные / (одобренные + отклонённые).\n\nПример: одобрено 80 из 100 → 80%.',
             },
             decisionTime: {
