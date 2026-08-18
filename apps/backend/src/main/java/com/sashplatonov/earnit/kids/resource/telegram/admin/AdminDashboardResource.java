@@ -1,11 +1,11 @@
-package com.sashplatonov.earnit.kids.resource.admin;
+package com.sashplatonov.earnit.kids.resource.telegram.admin;
 
 import com.sashplatonov.earnit.kids.config.auth.AuthContext;
 import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.response.AdminDashboardResponse;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
-import com.sashplatonov.earnit.kids.service.admin.AdminDashboardService;
+import com.sashplatonov.earnit.kids.service.telegram.admin.AdminDashboardService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;

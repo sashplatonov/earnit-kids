@@ -4,14 +4,16 @@ This document is the single source of truth for how each admin dashboard metric 
 
 ## Architecture
 
-The admin analytics layer follows the project's standard layering:
+The admin analytics layer follows the project's standard layering. Because the
+dashboard is an administrative tool inside the Telegram Mini App, the admin
+analytics code lives in the Telegram-scoped packages:
 
 ```text
-resource/  →  service/  →  repository/
+resource/telegram/admin/  →  service/telegram/admin/  →  repository/
 ```
 
-- `resource/admin/Admin*Resource.java` — HTTP endpoints, admin role enforcement, period parsing.
-- `service/admin/Admin*Service.java` — orchestration, period calculation, response assembly.
+- `resource/telegram/admin/Admin*Resource.java` — HTTP endpoints, admin role enforcement, period parsing.
+- `service/telegram/admin/Admin*Service.java` — orchestration, period calculation, response assembly.
 - `repository/AdminAnalyticsRepository.java` — all aggregation queries live here. No per-card queries are executed from the UI or controller.
 
 ## Period semantics
@@ -72,8 +74,8 @@ Period start is computed as `now - N days`. Lifetime totals (e.g. total register
 
 ### `reward_completed`
 
-- **Definition:** A `PurchaseRequestEntity` with `status = approved` created in the period.
-- **Query:** `SELECT COUNT(p) FROM PurchaseRequestEntity p WHERE p.status = approved AND p.createdAt >= :periodStart`.
+- **Definition:** A `PurchaseRequestEntity` with `request_type IN (shop, shop_purchase)` and `status = approved` created in the period. Task approvals (`request_type = earn`) are not counted as rewards.
+- **Query:** `SELECT COUNT(p) FROM PurchaseRequestEntity p WHERE p.requestType IN (shop, shop_purchase) AND p.status = approved AND p.createdAt >= :periodStart`.
 - **Period:** yes.
 
 ### `task_completed`
@@ -104,27 +106,7 @@ Period start is computed as `now - N days`. Lifetime totals (e.g. total register
 
 ### `families_with_reward`
 
-- **Definition:** Families with at least one `PurchaseRequestEntity` with `status = approved` in the period.
-- **Period:** yes.
-
-### `reward_request`
-
-- **Definition:** Any `PurchaseRequestEntity` created in the period (any status).
-- **Period:** yes.
-
-### `reward_rejection_rate`
-
-- **Definition:** `(rejected + cancelled) / total requests` in the period, as a percentage.
-- **Period:** yes.
-
-### `median_reward_price`
-
-- **Definition:** Median of `ShopItemEntity.price` where `price > 0`.
-- **Period:** current state.
-
-### `median_purchased_reward_price`
-
-- **Definition:** Median of `PurchaseRequestEntity.coins` where `status = approved` and `coins > 0` in the period.
+- **Definition:** Families with at least one `PurchaseRequestEntity` with `request_type IN (shop, shop_purchase)` and `status = approved` in the period.
 - **Period:** yes.
 
 ### `families_using_catalog`

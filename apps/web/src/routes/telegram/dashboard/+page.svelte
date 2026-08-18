@@ -23,6 +23,10 @@
     $: retention = data.retention;
     $: trends = data.trends;
 
+    // EXPLAIN: The selected period comes from the URL (?period=...) and is
+    // EXPLAIN: resolved server-side, so changing it reloads real data.
+    $: selectedPeriod = data.period ?? '30d';
+
     // Tab definitions with semantic icons
     const tabs = [
         { id: 'overview', label: t('tabs.overview'), icon: '📊' },
@@ -34,13 +38,12 @@
     type TabId = typeof tabs[number]['id'];
 
     let activeTab: TabId = 'overview';
-    let selectedPeriod = '30d';
 
-    // Redirect non-admins on mount
+    // Redirect non-admins to the Telegram Mini App home
     onMount(() => {
         if (!isAdmin) {
             // eslint-disable-next-line svelte/no-navigation-without-resolve
-            goto('/app/settings', { replaceState: true });
+            goto('/telegram', { replaceState: true });
         }
     });
 
@@ -49,8 +52,9 @@
     }
 
     function changePeriod(period: string) {
-        selectedPeriod = period;
-        // Period change logic will be implemented with actual data loading
+        if (period === selectedPeriod) return;
+        // eslint-disable-next-line svelte/no-navigation-without-resolve
+        goto(`/telegram/dashboard?period=${period}`, { replaceState: true });
     }
 
     // EXPLAIN: Trend bar helpers for ADM-14
@@ -233,7 +237,7 @@
         <!-- Tab panels -->
         <div class="tab-panels">
             <!-- Overview Tab -->
-            <section 
+            <div 
                 id="panel-overview" 
                 class="tab-panel" 
                 class:active={activeTab === 'overview'}
@@ -262,7 +266,7 @@
                         <div class="kpi-label">{t('kpis.activeChildren')}</div>
                         <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={() => toggleTooltip('activeChildren')}>i</button>
                         <div class="kpi-value">{overview?.overview?.activeChildren ?? '—'}</div>
-                        <div class="kpi-foot">{t('periods.30d')}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.coinsEarned')}</div>
@@ -288,16 +292,6 @@
                     </div>
                 </div>
 
-                {#if activeTooltip && tooltipContent[activeTooltip]}
-                    <div class="tooltip-box" role="dialog" aria-label={tooltipContent[activeTooltip].title}>
-                        <div class="tooltip-head">
-                            <b>{tooltipContent[activeTooltip].title}</b>
-                            <button class="tooltip-close" aria-label="Close" on:click={closeTooltip}>×</button>
-                        </div>
-                        <p>{tooltipContent[activeTooltip].body}</p>
-                    </div>
-                {/if}
-
                 <h2 class="section-title">{t('sections.keySignals')}</h2>
                 <div class="rows">
                     <div class="rank">
@@ -317,10 +311,10 @@
                         <div class="rank-val">— {t('units.minutes')}</div>
                     </div>
                 </div>
-            </section>
+            </div>
 
             <!-- Coins Tab -->
-            <section 
+            <div 
                 id="panel-coins" 
                 class="tab-panel" 
                 class:active={activeTab === 'coins'}
@@ -380,10 +374,10 @@
                         <div class="metric-value">{coinEconomy?.balances?.zeroBalancePercent ?? '—'}%</div>
                     </div>
                 </div>
-            </section>
+            </div>
 
             <!-- Tasks Tab -->
-            <section 
+            <div 
                 id="panel-tasks" 
                 class="tab-panel" 
                 class:active={activeTab === 'tasks'}
@@ -395,7 +389,7 @@
                     <div class="kpi">
                         <div class="kpi-label">{t('tasks.completed')}</div>
                         <div class="kpi-value">{taskEconomy?.taskMetrics?.taskCompletions ?? '—'}</div>
-                        <div class="kpi-foot">{t('periods.30d')}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">Approval rate</div>
@@ -445,10 +439,10 @@
                         {/each}
                     </div>
                 {/if}
-            </section>
+            </div>
 
             <!-- Activity Tab -->
-            <section 
+            <div 
                 id="panel-activity" 
                 class="tab-panel" 
                 class:active={activeTab === 'activity'}
@@ -678,8 +672,18 @@
                         <div class="metric-value">{childBehavior?.childBehaviorMetrics?.percentChildrenRequestedNotReceived ?? '—'}%</div>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
+
+        {#if activeTooltip && tooltipContent[activeTooltip]}
+            <div class="tooltip-box" role="dialog" aria-label={tooltipContent[activeTooltip].title}>
+                <div class="tooltip-head">
+                    <b>{tooltipContent[activeTooltip].title}</b>
+                    <button class="tooltip-close" aria-label="Close" on:click={closeTooltip}>×</button>
+                </div>
+                <p>{tooltipContent[activeTooltip].body}</p>
+            </div>
+        {/if}
 
         <div class="footer-note">
             <b>{t('footer.keyUxTitle')}</b> {t('footer.keyUxText')}
@@ -763,7 +767,7 @@
     .tabs {
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 4px;
     }
 

@@ -247,7 +247,7 @@
             </div>
 
             {#if isAdmin}
-                <a href="/app/dashboard" class="card settings-card admin-only" style="text-decoration: none; color: inherit; display: block;">
+                <a href="/telegram/dashboard" class="card settings-card admin-only" style="text-decoration: none; color: inherit; display: block;">
                     <div class="card__header">
                         <h3 class="card__title">{$i18n.t('admin.settings.dashboardTitle')}</h3>
                         <div class="card__icon">

@@ -1,7 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
-    import { appStore, type Task, type ShopItem } from '$lib/stores/app';
+    import { appStore, type Task } from '$lib/stores/app';
+    import type { ShopItem } from '$lib/telegram/stores/types';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
     import { scheduleSave } from '$lib/services/save';
     import { confirmAction } from '$lib/services/confirm';
     import { moveGroup } from '$lib/telegram/services/groupOrder';
@@ -20,7 +22,7 @@
         deleteGroup: { group: string; moveTo: string | null };
     }>();
 
-    $: items = kind === 'tasks' ? ($appStore.tasks as Task[]) : ($appStore.shopItems as ShopItem[]);
+    $: items = kind === 'tasks' ? ($appStore.tasks as Task[]) : ($shopItems as ShopItem[]);
     $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
     $: groups = [...new Set(items.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
     $: hiddenGroups = kind === 'tasks'

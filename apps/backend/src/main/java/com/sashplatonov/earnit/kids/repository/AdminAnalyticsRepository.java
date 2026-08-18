@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.repository;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.dto.response.AdminActivationFunnelResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminAnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminChildBehaviorResponse;
@@ -114,10 +115,13 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         String sql = """
             SELECT COUNT(p) FROM PurchaseRequestEntity p
             WHERE p.status = :status AND p.createdAt >= :periodStart
+            AND p.requestType IN (:shop, :shopPurchase)
             """;
         Long result = entityManager.createQuery(sql, Long.class)
             .setParameter("status", PurchaseRequestStatus.approved)
             .setParameter("periodStart", periodStart)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
@@ -194,10 +198,13 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         String familiesWithRewardSql = """
             SELECT COUNT(DISTINCT p.familyId) FROM PurchaseRequestEntity p
             WHERE p.status = :status AND p.createdAt >= :periodStart
+            AND p.requestType IN (:shop, :shopPurchase)
             """;
         Long familiesWithReward = entityManager.createQuery(familiesWithRewardSql, Long.class)
             .setParameter("status", PurchaseRequestStatus.approved)
             .setParameter("periodStart", periodStart)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
             .getSingleResult();
 
         int totalFamilies = countTotalFamilies();
@@ -265,9 +272,10 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private long countApprovedTaskCompletions(Instant periodStart) {
         String sql = """
             SELECT COUNT(p) FROM PurchaseRequestEntity p
-            WHERE p.type = 'task' AND p.status = :status AND p.createdAt >= :periodStart
+            WHERE p.requestType = :earnType AND p.status = :status AND p.createdAt >= :periodStart
             """;
         Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("earnType", PurchaseRequestType.earn)
             .setParameter("status", PurchaseRequestStatus.approved)
             .setParameter("periodStart", periodStart)
             .getSingleResult();
@@ -277,9 +285,10 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private long countRejectedTaskCompletions(Instant periodStart) {
         String sql = """
             SELECT COUNT(p) FROM PurchaseRequestEntity p
-            WHERE p.type = 'task' AND p.status IN (:rejected, :cancelled) AND p.createdAt >= :periodStart
+            WHERE p.requestType = :earnType AND p.status IN (:rejected, :cancelled) AND p.createdAt >= :periodStart
             """;
         Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("earnType", PurchaseRequestType.earn)
             .setParameter("rejected", PurchaseRequestStatus.rejected)
             .setParameter("cancelled", PurchaseRequestStatus.cancelled)
             .setParameter("periodStart", periodStart)
@@ -296,9 +305,10 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     private double calcMedianCoinsPerApprovedTask() {
         String sql = """
             SELECT p.coins FROM PurchaseRequestEntity p
-            WHERE p.type = 'task' AND p.status = :status AND p.coins > 0
+            WHERE p.requestType = :earnType AND p.status = :status AND p.coins > 0
             """;
         var coins = entityManager.createQuery(sql, Integer.class)
+            .setParameter("earnType", PurchaseRequestType.earn)
             .setParameter("status", PurchaseRequestStatus.approved)
             .getResultList();
         if (coins.isEmpty()) return 0.0;
@@ -734,10 +744,12 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
             JOIN ChildEntity c ON c.familyId = f.id
             JOIN PurchaseRequestEntity pr ON pr.childId = c.id
-            WHERE pr.status = :approved
+            WHERE pr.status = :approved AND pr.requestType IN (:shop, :shopPurchase)
             """;
         Long result = entityManager.createQuery(sql, Long.class)
             .setParameter("approved", PurchaseRequestStatus.approved)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
@@ -807,12 +819,15 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             SELECT FUNCTION('DATE', p.createdAt) as day, COUNT(p) as rewards
             FROM PurchaseRequestEntity p
             WHERE p.status = :approved AND p.createdAt >= :periodStart
+            AND p.requestType IN (:shop, :shopPurchase)
             GROUP BY FUNCTION('DATE', p.createdAt)
             ORDER BY day
             """;
         var rewardResults = entityManager.createQuery(rewardsSql, Object[].class)
             .setParameter("approved", PurchaseRequestStatus.approved)
             .setParameter("periodStart", periodStart)
+            .setParameter("shop", PurchaseRequestType.shop)
+            .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
             .getResultList();
 
         // EXPLAIN: Merge into a map keyed by day

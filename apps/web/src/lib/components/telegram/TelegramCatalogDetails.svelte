@@ -1,6 +1,7 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
     import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate } from '$lib/stores/app';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
     import { formatFrequency, isAlreadyAdded, stripEmoji } from '$lib/telegram/services/catalogFilter';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -13,7 +14,7 @@
 
     const i18n = useI18n();
 
-    $: familyItems = kind === 'task' ? $appStore.tasks : $appStore.shopItems;
+    $: familyItems = kind === 'task' ? $appStore.tasks : $shopItems;
     $: added = template != null && isAlreadyAdded(template, familyItems);
     $: amount = template != null
         ? (kind === 'task' ? (template as CatalogTaskTemplate).coins : (template as CatalogRewardTemplate).price)

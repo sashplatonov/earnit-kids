@@ -1,4 +1,4 @@
-package com.sashplatonov.earnit.kids.service.admin;
+package com.sashplatonov.earnit.kids.service.telegram.admin;
 
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
 import com.sashplatonov.earnit.kids.repository.AdminAnalyticsRepository;

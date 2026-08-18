@@ -149,7 +149,7 @@
     <h1 id="family-title">{$i18n.t('app.telegram.family.title')}</h1>
 
     {#if $appStore.isAdmin}
-        <a href="/app/dashboard" style="display: block; text-decoration: none; color: inherit; padding: 0.75rem 1rem; border: 1px solid var(--primary, #5c6fe7); border-radius: 8px; margin-bottom: 1rem; background: rgba(92,111,231,0.05);">
+        <a href="/telegram/dashboard" style="display: block; text-decoration: none; color: inherit; padding: 0.75rem 1rem; border: 1px solid var(--primary, #5c6fe7); border-radius: 8px; margin-bottom: 1rem; background: rgba(92,111,231,0.05);">
             <strong style="color: var(--primary, #5c6fe7);">📊 {$i18n.t('admin.settings.dashboardTitle')}</strong>
             <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: #666;">{$i18n.t('admin.settings.dashboardDesc')}</p>
         </a>

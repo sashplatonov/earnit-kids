@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.sashplatonov.earnit.kids.service.admin.AdminAccessService;
+import com.sashplatonov.earnit.kids.service.telegram.admin.AdminAccessService;
 import com.sashplatonov.earnit.kids.service.telegram.TelegramIdentityService;
 
 class TelegramMiniAppAuthServiceTest {

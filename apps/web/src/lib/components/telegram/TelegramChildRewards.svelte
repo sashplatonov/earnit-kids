@@ -1,7 +1,9 @@
 <script lang="ts">
     import { requestItem, requestItemWithNote } from '$lib/services/api';
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
-    import { appStore, type ShopItem } from '$lib/stores/app';
+    import { appStore } from '$lib/stores/app';
+    import type { ShopItem } from '$lib/telegram/stores/types';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
     import { useI18n } from '$lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -18,7 +20,7 @@
     let busy = false;
     let status: 'idle' | 'pending' | 'success' | 'error' | 'stale' = 'idle';
     let message = '';
-    $: activeShop = $appStore.shopItems.filter((item) => item.isActive !== false);
+    $: activeShop = $shopItems.filter((item) => item.isActive !== false);
     $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
     $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
     $: visibleShop = activeShop.filter((item) => !hiddenGroups.includes(item.groupName?.trim() ?? ''));

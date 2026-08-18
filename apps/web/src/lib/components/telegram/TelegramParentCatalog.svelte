@@ -1,6 +1,9 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
-    import { appStore, type CatalogRewardTemplate, type CatalogTaskTemplate, type Child } from '$lib/stores/app';
+    import { appStore, type Child } from '$lib/stores/app';
+    import type { CatalogRewardTemplate, CatalogTaskTemplate } from '$lib/telegram/stores/types';
+    import { shopItems } from '$lib/telegram/stores/shopItems';
+    import { catalogRewards } from '$lib/telegram/stores/rewards';
     import { scheduleSave } from '$lib/services/save';
     import { mapGroupKeyToFamily, templateToReward, templateToTask } from '$lib/telegram/services/catalogFilter';
     import { applyGroupOrderToChildren, getEffectiveGroupOrder, type GroupOrderSection } from '$lib/telegram/services/groupOrder';
@@ -21,7 +24,7 @@
         ?? $appStore.children[0]
         ?? null) as Child | null;
 
-    $: familyItems = kind === 'task' ? $appStore.tasks : $appStore.shopItems;
+    $: familyItems = kind === 'task' ? $appStore.tasks : $shopItems;
     $: familyGroups = [...new Set(familyItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
 
     let detailsOpen = false;
