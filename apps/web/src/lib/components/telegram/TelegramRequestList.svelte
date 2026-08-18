@@ -5,7 +5,7 @@
     import { refreshData } from '$lib/services/bootstrap';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
-    import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
+    import { extractLeadingEmoji, getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
 
     const i18n = useI18n();
 
@@ -50,7 +50,13 @@
     {:else if !requests.length}<div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.requests.allClear')} /><span>{resolvedEmpty}</span></div>
     {:else}<div class="items">{#each requests as request (request.id)}<article class="request-card" class:decision={canDecide && request.status === 'pending'}>
     <div class="card-main">
-        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={$i18n.t('app.telegram.requests.request')} /></span>
+        <span class="entity-graphic" aria-hidden="true">
+            {#if extractLeadingEmoji(request.taskName || request.itemName || request.title || '')}
+                <span class="entity-emoji">{extractLeadingEmoji(request.taskName || request.itemName || request.title || '')}</span>
+            {:else}
+                <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={$i18n.t('app.telegram.requests.request')} /></span>
+            {/if}
+        </span>
         <div class="entity-text"><h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || $i18n.t('app.telegram.requests.request'))}</h3><p class="meta">{requestMeta(request)}</p><p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p></div>
     </div>
     {#if canDecide && request.status === 'pending'}
@@ -64,21 +70,22 @@
     .panel { width:100%; }
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
-    .items { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
-    .request-card { display:flex; flex-direction:column; gap:0; padding:.55rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
+    .items { display:flex; flex-direction:column; gap:.55rem; width:100%; }
+    .request-card { display:flex; flex-direction:column; gap:0; width:100%; box-sizing:border-box; padding:.6rem .65rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
     .request-card.decision { border-color:#dfe4ee; box-shadow:0 1px 3px rgb(24 36 61 / 6%); }
-    .card-main { display:grid; grid-template-columns:2.25rem minmax(0,1fr); gap:.55rem; align-items:start; }
-    .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
-    .entity-text { min-width:0; display:flex; flex-direction:column; gap:.25rem; }
-    h3 { margin:0; font-size:.94rem; line-height:1.3; font-weight:700; white-space:normal; overflow-wrap:anywhere; min-width:0; }
+    .card-main { display:flex; align-items:flex-start; gap:.65rem; }
+    .entity-graphic { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border-radius:.75rem; background:#f5f6fa; }
+    .entity-emoji { font-size:1.35rem; line-height:1; }
+    .entity-icon { display:grid; place-items:center; color:#5b63e9; }
+    .entity-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:.25rem; }
+    h3 { margin:0; font-size:.95rem; line-height:1.25; font-weight:700; color:#18243d; white-space:normal; overflow-wrap:anywhere; min-width:0; }
     .meta { margin:0; color:#7f899e; font-size:.75rem; line-height:1.3; }
     .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#20283d; font-weight:700; font-size:.81rem; }
-    .attention-actions { margin-top:.6rem; margin-left:2.8rem; display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
-    .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.3rem; min-height:2.4rem; padding:.4rem .5rem; border-radius:.6rem; font:inherit; font-weight:700; cursor:pointer; }
+    .attention-actions { margin-top:.6rem; margin-left:2.85rem; display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.3rem; min-height:2.2rem; padding:.4rem .5rem; border-radius:.55rem; font:inherit; font-size:.85rem; font-weight:700; cursor:pointer; }
     .attention-actions button:disabled { cursor:wait; opacity:.6; }
     .approve { border:1px solid #cce9d8; background:#eaf7ef; color:#17884b; }
     .reject { border:1px solid #f3cfd2; background:#fff0f1; color:#c63c42; }
-    button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     @media (max-width:370px) {
         .attention-actions { margin-left:0; }
     }
