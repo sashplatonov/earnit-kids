@@ -82,9 +82,12 @@
 
 <style>
     .panel { width:100%; }
-    .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
+    .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:0 .2rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
     .items { display:flex; flex-direction:column; gap:.45rem; width:100%; }
+    @media (max-width:700px) {
+        .items { margin:0 -.75rem; padding:0 .75rem; width:calc(100% + 1.5rem); }
+    }
     .cancel { display:inline-flex; align-items:center; gap:.35rem; min-height:1.9rem; padding:.3rem .5rem; border:1px solid #f3cfd2; border-radius:.55rem; background:#fff0f1; color:#c63c42; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
     .cancel:disabled { cursor:wait; opacity:.6; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }

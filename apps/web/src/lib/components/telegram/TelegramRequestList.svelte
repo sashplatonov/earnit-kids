@@ -68,9 +68,12 @@
 
 <style>
     .panel { width:100%; }
-    .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
+    .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:0 .2rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
     .items { display:flex; flex-direction:column; gap:.55rem; width:100%; }
+    @media (max-width:700px) {
+        .items { margin:0 -.75rem; padding:0 .75rem; width:calc(100% + 1.5rem); }
+    }
     .request-card { display:flex; flex-direction:column; gap:0; width:100%; box-sizing:border-box; padding:.55rem .6rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
     .request-card.decision { border-color:#dfe4ee; }
     .card-main { display:flex; align-items:flex-start; gap:.55rem; }
