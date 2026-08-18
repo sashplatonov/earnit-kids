@@ -83,10 +83,14 @@ public class TelegramMiniAppAuthService {
         // EXPLAIN: Admin check – if Telegram ID is in TELEGRAM_ADMIN_USER_IDS, grant admin access
         if (adminAccessService != null && adminAccessService.isAdmin(identity.getTelegramUserId())) {
             LOG.infof("Telegram user %d identified as admin, granting admin role", identity.getTelegramUserId());
-            // EXPLAIN: No linked parent account; use placeholder values where appropriate
+            // EXPLAIN: Resolve the parent email so account-connection and other email-based
+            // EXPLAIN: endpoints work. Prefer the identity's linked parent account; otherwise
+            // EXPLAIN: fall back to the first family_admin member of the family.
+            String adminEmail = resolveAdminEmail(identity, family);
+            LOG.infof("Admin session email resolved: %s", adminEmail);
             AuthPayload adminPayload = new AuthPayload(
                 family.getFamilyId(),
-                null,
+                adminEmail,
                 "admin",
                 null,
                 null,
@@ -137,5 +141,27 @@ public class TelegramMiniAppAuthService {
 
     private OperationResult<AuthPayload> failed() {
         return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
+    }
+
+    // EXPLAIN: Resolve a parent email for the admin session so that email-based
+    // EXPLAIN: endpoints (account-connection, profile) work for Telegram admins.
+    // EXPLAIN: Prefer the identity's linked parent account; otherwise fall back
+    // EXPLAIN: to the first active family_admin member of the family.
+    private String resolveAdminEmail(TelegramIdentityEntity identity, FamilyEntity family) {
+        if (identity.getParentAccountId() != null) {
+            var parent = parents.findByIdOptional(identity.getParentAccountId()).orElse(null);
+            if (parent != null && !parent.isBlocked()) {
+                return parent.getEmail();
+            }
+        }
+        var familyAdmins = memberships.findByFamilyId(family.getId());
+        for (var membership : familyAdmins) {
+            var parent = parents.findByIdOptional(membership.getParentAccountId()).orElse(null);
+            if (parent != null && !parent.isBlocked()) {
+                return parent.getEmail();
+            }
+        }
+        LOG.warnf("No parent email found for admin session, familyId=%s", family.getFamilyId());
+        return null;
     }
 }

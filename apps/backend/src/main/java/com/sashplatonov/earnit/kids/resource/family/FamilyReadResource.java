@@ -30,6 +30,7 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.jboss.logging.Logger;
 
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
@@ -37,6 +38,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Tag(name = "Family", description = "Family dashboard read endpoints")
 public class FamilyReadResource {
 
+    private static final Logger LOG = Logger.getLogger(FamilyReadResource.class);
     private final FamilyService familyService;
     private final BaseDataService baseDataService;
 
@@ -64,6 +66,8 @@ public class FamilyReadResource {
         }
 
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
+        LOG.infof("GET /api/data: role=%s, isAdmin=%s, familyId=%s, email=%s, childId=%s",
+            auth.role(), auth.isAdmin(), auth.familyId(), auth.email(), effectiveChildId);
         OperationResult<FamilyDashboardShellResponse> result =
             familyService.loadFamilyShellData(auth.familyId(), effectiveChildId, auth.isAdmin());
 

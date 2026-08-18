@@ -20,6 +20,7 @@ import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.jboss.logging.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -29,6 +30,7 @@ import java.util.HexFormat;
 
 @ApplicationScoped
 public class TelegramAccountConnectionServiceImpl implements TelegramAccountConnectionService {
+    private static final Logger LOG = Logger.getLogger(TelegramAccountConnectionServiceImpl.class);
     private static final int LINK_TOKEN_BYTES = 32;
     private static final long LINK_TTL_SECONDS = 600;
     private static final String LINK_FAILED = "Telegram linking could not be completed.";
@@ -72,15 +74,22 @@ public class TelegramAccountConnectionServiceImpl implements TelegramAccountConn
 
     @Override
     public OperationResult<TelegramAccountConnectionResponse> connection(String familyId, String email) {
+        LOG.infof("Telegram connection check: familyId=%s, email=%s", familyId, email);
         return context(familyId, email).map(context -> OperationResult.success(connectionResponse(
             context, featureGate.isMiniAppEnabled(familyId))))
-            .orElseGet(() -> failure("TELEGRAM_CONNECTION_FORBIDDEN", "Account connection is unavailable."));
+            .orElseGet(() -> {
+                LOG.warnf("Telegram connection check failed: context not found for familyId=%s, email=%s",
+                    familyId, email);
+                return failure("TELEGRAM_CONNECTION_FORBIDDEN", "Account connection is unavailable.");
+            });
     }
 
     private TelegramAccountConnectionResponse connectionResponse(ConnectionContext context, boolean miniAppEnabled) {
         boolean telegramConnected = identities.findActiveParentByParentAccountId(context.parentAccountId())
             .filter(identity -> context.familyDbId().equals(identity.getFamilyId()))
             .isPresent();
+        LOG.infof("Telegram connection result: parentAccountId=%s, familyDbId=%s, telegramConnected=%s",
+            context.parentAccountId(), context.familyDbId(), telegramConnected);
         return new TelegramAccountConnectionResponse(
             context.email(), true, telegramConnected, miniAppEnabled ? miniAppUrl().orElse(null) : null);
     }
