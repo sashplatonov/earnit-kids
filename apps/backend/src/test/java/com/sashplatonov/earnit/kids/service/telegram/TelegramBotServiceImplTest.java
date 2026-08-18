@@ -242,8 +242,8 @@ class TelegramBotServiceImplTest {
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
             "family", "parent", 1, "Alex", 20,
             List.of(
-                new ChildDto(1, "Alex", 20, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of(), null),
-                new ChildDto(2, "Sam", 12, 100, 0, "forest", List.of(), List.of(), List.of(), List.of(), null)),
+                new ChildDto(1, "Alex", 20, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of()),
+                new ChildDto(2, "Sam", 12, 100, 0, "forest", List.of(), List.of(), List.of(), List.of())),
             List.of(), List.of(), List.of(), List.of());
         when(identities.recordWebhookUpdate(16L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));

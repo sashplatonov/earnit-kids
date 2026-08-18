@@ -104,7 +104,6 @@
               })
         : sortItemsByGroup(tasks, groups, (task) => normalizeGroupLabel(task.groupName));
     $: todaySummary = buildTodayTaskSummary(tasks);
-    $: rewardGoal = $appStore.shopItems.find((item) => String(item.id) === String(currentChild?.rewardGoalItemId)) ?? null;
 
     onMount(() => {
         const applyLocation = () => {
@@ -502,15 +501,6 @@
         nextLabel={tTasks('today.next')}
         nextActionLabel={tTasks('today.open')}
         onNext={(task) => openTaskFromToday(task.id)}
-        rewardGoal={rewardGoal}
-        rewardGoalSelected={currentChild?.rewardGoalItemId != null}
-        balance={$appStore.balance}
-        goalLabel={tTasks('today.goal')}
-        goalReadyLabel={tTasks('today.goalReady')}
-        goalMissingLabel={(amount) => tTasks('today.goalMissing', { amount: $i18n.formatNumber(amount) })}
-        goalEmptyLabel={tTasks(isAdmin ? 'today.goalEmptyAdmin' : 'today.goalEmpty')}
-        goalStaleLabel={tTasks('today.goalStale')}
-        formatNumber={(value) => $i18n.formatNumber(value)}
     />
 
     <CatalogGroupNav id="tasks-group-nav" {groups} selected={selectedGroup} allLabel={tTasks('section.all')}

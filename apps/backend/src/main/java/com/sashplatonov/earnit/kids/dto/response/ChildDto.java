@@ -16,7 +16,6 @@ public record ChildDto(
     List<String> childShopGroupOrder,
     List<String> hiddenTaskGroups,
     List<String> hiddenShopGroups,
-    Long rewardGoalItemId,
     String status
 ) {
     public ChildDto {
@@ -39,9 +38,8 @@ public record ChildDto(
                     List<String> taskGroupOrder,
                     List<String> shopGroupOrder,
                     List<String> childTaskGroupOrder,
-                    List<String> childShopGroupOrder,
-                    Long rewardGoalItemId) {
+                    List<String> childShopGroupOrder) {
         this(id, name, balance, monthlyLimit, dailyCoinLimit, 0, theme, taskGroupOrder, shopGroupOrder,
-            childTaskGroupOrder, childShopGroupOrder, List.of(), List.of(), rewardGoalItemId, "ACTIVE");
+            childTaskGroupOrder, childShopGroupOrder, List.of(), List.of(), "ACTIVE");
     }
 }

@@ -104,7 +104,6 @@ export interface Child {
     id: number | string;
     nickname: string;
     balance: number;
-    rewardGoalItemId?: number | string | null;
     status?: 'ACTIVE' | 'INACTIVE' | string | null;
     monthlyLimit?: number;
     dailyCoinLimit?: number;

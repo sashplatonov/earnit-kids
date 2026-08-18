@@ -1,6 +1,5 @@
 package com.sashplatonov.earnit.kids.service.family.command;
 
-import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
@@ -10,7 +9,6 @@ import com.sashplatonov.earnit.kids.repository.command.TaskContentCommand;
 import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
 
 import java.util.Map;
-import java.util.Objects;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -131,14 +129,5 @@ final class FamilyCommandMutationService {
                 payloadService.asLong(item.get("sourceCatalogItemId"))
             ));
         }
-        clearInvalidRewardGoal(familyDbId, selectedChildId);
-    }
-
-    private void clearInvalidRewardGoal(int familyDbId, int childId) {
-        childRepository.findByIdOptional(childId)
-            .map(ChildEntity::getRewardGoalItemId)
-            .filter(Objects::nonNull)
-            .filter(itemId -> !shopItemRepository.isActiveItem(familyDbId, childId, itemId))
-            .ifPresent(itemId -> childRepository.updateRewardGoal(childId, null));
     }
 }

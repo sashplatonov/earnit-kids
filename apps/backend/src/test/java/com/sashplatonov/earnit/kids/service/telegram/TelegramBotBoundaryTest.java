@@ -128,7 +128,7 @@ class TelegramBotBoundaryTest {
         return new TelegramQuickActionResponse(
             "family", "parent", 1, "Aliska", 22,
             List.of(new ChildDto(1, "Aliska", 22, 100, 0, "ocean", List.of(), List.of(),
-                List.of(), List.of(), null)),
+                List.of(), List.of())),
             List.of(), List.of(), List.of(), List.of());
     }
 
@@ -136,7 +136,7 @@ class TelegramBotBoundaryTest {
         return new TelegramQuickActionResponse(
             "family", "child", 1, "Aliska", 22,
             List.of(new ChildDto(1, "Aliska", 22, 100, 0, "ocean", List.of(), List.of(),
-                List.of(), List.of(), null)),
+                List.of(), List.of())),
             List.of(), List.of(), List.of(), List.of());
     }
 }

@@ -36,15 +36,6 @@ public class ShopItemRepository implements PanacheRepositoryBase<ShopItemEntity,
         );
     }
 
-    public boolean isActiveItem(int familyDbId, int childId, long itemId) {
-        return count(
-            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
-            familyDbId,
-            childId,
-            itemId
-        ) > 0;
-    }
-
     public List<ShopItemEntity> getShopItemsForFamily(int familyDbId) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getShopItemsForFamily",

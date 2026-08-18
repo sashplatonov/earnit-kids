@@ -76,7 +76,7 @@ class TelegramMenuBuilderTest {
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
             "family", "parent", 1, "Alex", 42,
             List.of(new ChildDto(1, "Alex", 42, 100, 0, "ocean", List.of(), List.of(),
-                List.of(), List.of(), null)),
+                List.of(), List.of())),
             List.of(), List.of(),
             List.of(new RequestDto(19L, 7L, "Homework", null, null, "Homework", null, null,
                 null, null, 20, PurchaseRequestStatus.pending, PurchaseRequestType.earn, 0,
@@ -231,8 +231,8 @@ class TelegramMenuBuilderTest {
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
             "family", "parent", 1, "Alex", 42,
             List.of(
-                new ChildDto(1, "Alex", 42, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of(), null),
-                new ChildDto(2, "Sam", 18, 100, 0, "forest", List.of(), List.of(), List.of(), List.of(), null)),
+                new ChildDto(1, "Alex", 42, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of()),
+                new ChildDto(2, "Sam", 18, 100, 0, "forest", List.of(), List.of(), List.of(), List.of())),
             List.of(), List.of(), List.of(), List.of());
 
         assertThat(menuBuilder().parentChildPicker(view, ""))
@@ -327,7 +327,7 @@ class TelegramMenuBuilderTest {
     private TelegramQuickActionResponse view() {
         return new TelegramQuickActionResponse(
             "family", "parent", 1, "Alex", 42,
-            List.of(new ChildDto(1, "Alex", 42, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of(), null)),
+            List.of(new ChildDto(1, "Alex", 42, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of())),
             List.of(), List.of(), List.of(), List.of());
     }
 

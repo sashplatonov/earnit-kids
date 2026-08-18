@@ -119,7 +119,7 @@ class TelegramEmojiCoverageTest {
         return new TelegramQuickActionResponse(
             "family", "parent", 1, "Aliska", 22,
             List.of(new ChildDto(1, "Aliska", 22, 100, 0, "ocean", List.of(), List.of(),
-                List.of(), List.of(), null)),
+                List.of(), List.of())),
             List.of(),
             List.of(),
             List.of(new RequestDto(19L, 7L, "Утренний старт", null, null, "Утренний старт", null, null,
@@ -133,7 +133,7 @@ class TelegramEmojiCoverageTest {
         return new TelegramQuickActionResponse(
             "family", "child", 1, "Aliska", 22,
             List.of(new ChildDto(1, "Aliska", 22, 100, 0, "ocean", List.of(), List.of(),
-                List.of(), List.of(), null)),
+                List.of(), List.of())),
             List.of(new TaskDto(1, "Утренний старт", 1, null, null, null, null, null, null,
                 true, 1, null, null)),
             List.of(new ShopItemDto(1, "Королева настолки", 2, null, null, null, null,

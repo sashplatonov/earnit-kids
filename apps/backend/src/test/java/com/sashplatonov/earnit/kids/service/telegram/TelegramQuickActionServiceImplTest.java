@@ -26,7 +26,7 @@ class TelegramQuickActionServiceImplTest {
         FamilyActionService actions = mock(FamilyActionService.class);
         var service = new TelegramQuickActionServiceImpl(identities, families, familyService, actions);
         var identity = new TelegramIdentityService.TelegramIdentity(1, 10, null, 77L, "parent");
-        var child = new ChildDto(42, "Alice", 0, 0, 0, null, null, null, null, null, null);
+        var child = new ChildDto(42, "Alice", 0, 0, 0, null, null, null, null, null);
 
         when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(identity));
         when(families.findFamilyIdByDbId(10)).thenReturn(Optional.of("family-1"));

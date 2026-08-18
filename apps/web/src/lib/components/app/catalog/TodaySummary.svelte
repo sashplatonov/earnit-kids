@@ -1,7 +1,6 @@
 <script lang="ts">
-    import type { ShopItem, Task } from '$lib/stores/app';
+    import type { Task } from '$lib/stores/app';
     import type { TodayTaskSummary } from '$lib/services/todayTaskViewModel';
-    import RewardGoalProgress from './RewardGoalProgress.svelte';
 
     export let summary: TodayTaskSummary;
     export let title = '';
@@ -11,15 +10,6 @@
     export let nextLabel = '';
     export let nextActionLabel = '';
     export let onNext: ((task: Task) => void) | null = null;
-    export let rewardGoal: ShopItem | null = null;
-    export let rewardGoalSelected = false;
-    export let balance = 0;
-    export let goalLabel = '';
-    export let goalReadyLabel = '';
-    export let goalMissingLabel: (amount: number) => string = (amount) => String(amount);
-    export let goalEmptyLabel = '';
-    export let goalStaleLabel = '';
-    export let formatNumber: (value: number) => string = (value) => String(value);
 
     $: progressPercent = summary.limitCount > 0
         ? Math.min(100, Math.round((summary.completedCount / summary.limitCount) * 100))
@@ -51,9 +41,6 @@
     </button>
     {/if}
     {/if}
-    <RewardGoalProgress item={rewardGoal} {balance} label={goalLabel} readyLabel={goalReadyLabel}
-        missingLabel={goalMissingLabel} emptyLabel={goalEmptyLabel} staleLabel={goalStaleLabel}
-        stale={rewardGoalSelected && !rewardGoal} {formatNumber} compact />
 </section>
 
 <style>
@@ -61,9 +48,6 @@
         display: grid;
         grid-template-columns: minmax(0, 1.15fr) auto minmax(10rem, 0.85fr) minmax(13rem, 1fr);
         gap: 0.5rem;
-        align-items: center;
-        margin: 0 0 0.75rem;
-        padding: 0.5rem 0.7rem;
         border: 1px solid color-mix(in oklch, var(--color-primary) 22%, transparent);
         border-radius: var(--radius-md);
         background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 10%, white), color-mix(in oklch, var(--color-secondary) 10%, white));

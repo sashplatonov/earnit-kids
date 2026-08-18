@@ -161,11 +161,5 @@ export const tasksMessages = {
 		available: 'Ready now',
 		next: 'Suggested next step',
 		open: 'Open task',
-		goal: 'Reward goal',
-		goalMissing: '{amount} coins to go',
-		goalReady: 'Ready to request',
-		goalEmpty: 'Choose a reward in the Shop to make today’s progress feel concrete.',
-		goalEmptyAdmin: 'The child has not chosen a reward goal yet.',
-		goalStale: 'The selected reward is no longer available. Choose another in the Shop.',
 	},
 } as const;

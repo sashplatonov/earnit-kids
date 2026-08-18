@@ -43,7 +43,6 @@ export function normalizeChild(child: Record<string, unknown> = {}) {
         hiddenShopGroupOrder: readStringArray(child.hiddenShopGroups ?? child.hidden_shop_groups ?? child.hiddenShopGroupOrder),
         id: (child.id ?? child.childId ?? null) as unknown,
         balance: (child.balance ?? 0) as number,
-        rewardGoalItemId: (child.rewardGoalItemId ?? child.reward_goal_item_id ?? null) as number | string | null,
         status: (child.status ?? null) as string | null,
         isPinSet: (child.isPinSet ?? child.is_pin_set ?? false) as boolean,
         ageMin: (child.ageMin ?? child.age_min ?? null) as number | null,

@@ -185,7 +185,7 @@ git commit -m "refactor(backend): remove web-only shop bulk and reward-goal endp
 
 ## P0-4: Remove the reward-goal feature (web + backend persistence)
 
-**Status:** 🚧 In progress
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** P0-3
 

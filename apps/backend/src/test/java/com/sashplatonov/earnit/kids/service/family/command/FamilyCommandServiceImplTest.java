@@ -211,24 +211,6 @@ class FamilyCommandServiceImplTest {
         verify(childRepository, never()).updateBalance(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt());
     }
 
-    @Test
-    void saveFamilyData_deletedGoalItem_clearsRewardGoal() {
-        ChildEntity child = child(10, 1, "Alice", 10);
-        child.setRewardGoalItemId(201L);
-        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
-        when(childRepository.getChildren(1)).thenReturn(List.of(child));
-        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
-        when(shopItemRepository.isActiveItem(1, 10, 201L)).thenReturn(false);
-        when(familyDashboardQueryService.loadFamilyData(anyString(), any(), anyBoolean()))
-            .thenReturn(OperationResult.success(new FamilyDataResponse(0, null, List.of(), List.of(), List.of(),
-                List.of(), List.of(), false, List.of(), null, null, null, null)));
-
-        assertThat(service.saveFamilyData("fam-1", 10, Map.of("shop", List.of()), false))
-            .isInstanceOf(OperationResult.Success.class);
-
-        verify(childRepository).updateRewardGoal(10, null);
-    }
-
     private static ChildEntity child(int id, int familyDbId, String name, int balance) {
         return ChildEntity.builder()
             .id(id)
