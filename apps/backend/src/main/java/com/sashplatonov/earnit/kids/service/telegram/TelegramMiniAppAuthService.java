@@ -13,6 +13,9 @@ import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+// EXPLAIN: Admin access service to detect Telegram admin IDs from configuration
+import com.sashplatonov.earnit.kids.service.admin.AdminAccessService;
+
 @ApplicationScoped
 public class TelegramMiniAppAuthService {
     private static final String AUTH_FAILED = "Telegram authentication failed.";
@@ -29,6 +32,9 @@ public class TelegramMiniAppAuthService {
     ParentAccountRepository parents;
     @Inject
     FamilyParentMembershipRepository memberships;
+
+    @Inject
+    AdminAccessService adminAccessService;
 
     @Inject
     public TelegramMiniAppAuthService(TelegramInitDataVerifier verifier,
@@ -66,6 +72,22 @@ public class TelegramMiniAppAuthService {
         if (family == null || family.isBlocked()) {
             return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
         }
+
+        // EXPLAIN: Admin check – if Telegram ID is in TELEGRAM_ADMIN_USER_IDS, grant admin access
+        if (adminAccessService != null && adminAccessService.isAdmin(identity.getTelegramUserId())) {
+            // EXPLAIN: No linked parent account; use placeholder values where appropriate
+            return OperationResult.success(new AuthPayload(
+                family.getFamilyId(),
+                null,
+                "admin",
+                null,
+                null,
+                false,
+                "family_admin",
+                null,
+                false));
+        }
+
         if ("parent".equals(identity.getRole())) {
             return authenticateParent(identity, family);
         }

@@ -21,6 +21,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sashplatonov.earnit.kids.service.admin.AdminAccessService;
+import com.sashplatonov.earnit.kids.service.telegram.TelegramIdentityService;
+
 class TelegramMiniAppAuthServiceTest {
     @Test
     void authenticatesLinkedParent() {
@@ -125,7 +128,48 @@ class TelegramMiniAppAuthServiceTest {
         service.children = children;
         service.parents = parents;
         service.memberships = memberships;
+        // EXPLAIN: Admin access service mock – will be set per test if needed
+        service.adminAccessService = mock(AdminAccessService.class);
         return service;
+    }
+
+    @Test
+    void authenticatesAdminWhenTelegramIdIsAdmin() {
+        // Arrange – set up mocks and a Telegram ID that is considered an admin
+        TelegramInitDataVerifier verifier = mock(TelegramInitDataVerifier.class);
+        TelegramIdentityRepository identities = mock(TelegramIdentityRepository.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        ChildRepository children = mock(ChildRepository.class);
+        ParentAccountRepository parents = mock(ParentAccountRepository.class);
+        FamilyParentMembershipRepository memberships = mock(FamilyParentMembershipRepository.class);
+
+        // Simulate verification of init data returning a telegram user ID 123L
+        when(verifier.verify("admin-data")).thenReturn(Optional.of(verified(123L)));
+        // Identity record – role can be anything; admin check occurs before role handling
+        // Create an identity with the admin telegramUserId 123L
+        TelegramIdentityEntity adminIdentity = TelegramIdentityEntity.builder()
+            .familyId(1)
+            .parentAccountId(null)
+            .childId(null)
+            .telegramUserId(123L)
+            .role("parent")
+            .active(true)
+            .build();
+        when(identities.findActiveByTelegramUserId(123L)).thenReturn(Optional.of(adminIdentity));
+        when(families.findByDbId(1)).thenReturn(Optional.of(family()));
+
+        // Create service instance with mocked admin access service
+        TelegramMiniAppAuthService svc = service(verifier, identities, families, children, parents, memberships);
+        // Mark the telegram user ID as an admin
+        when(svc.adminAccessService.isAdmin(123L)).thenReturn(true);
+
+        var result = svc.authenticate("admin-data");
+
+        assertThat(result).isInstanceOf(com.sashplatonov.earnit.kids.util.OperationResult.Success.class);
+            var payload = ((com.sashplatonov.earnit.kids.util.OperationResult.Success<com.sashplatonov.earnit.kids.dto.response.AuthPayload>) result).value();
+        assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.permission()).isEqualTo("family_admin");
+        assertThat(payload.familyId()).isEqualTo("family-1");
     }
 
     private TelegramInitDataVerifier.VerifiedInitData verified(long id) {
