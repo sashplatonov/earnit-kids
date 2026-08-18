@@ -70,7 +70,7 @@
     .card-main { display:grid; grid-template-columns:2.25rem minmax(0,1fr); gap:.55rem; align-items:start; }
     .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
     .entity-text { min-width:0; display:flex; flex-direction:column; gap:.12rem; }
-    h3 { margin:0; font-size:.9rem; line-height:1.3; white-space:normal; overflow-wrap:anywhere; }
+    h3 { margin:0; font-size:.9rem; line-height:1.3; white-space:normal; overflow-wrap:anywhere; min-width:0; }
     .meta { margin:0; color:#66718a; font-size:.75rem; }
     .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#18243d; font-weight:750; font-size:.82rem; }
     .attention-actions { margin-top:.6rem; margin-left:2.8rem; display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
