@@ -154,17 +154,6 @@
     <div class="section__header">
         <h2>{tAdmin('settings.sectionTitle')}</h2>
     </div>
-    <!-- DEBUG: isAdmin={isAdmin} sessionIsAdmin={sessionIsAdmin} role={session?.role} appStoreIsAdmin={$appStore.isAdmin} -->
-    <!-- TEMP-DEBUG: admin dashboard visibility -->
-    <div style="margin: 0.5rem 0 1rem; padding: 0.75rem; border: 1px dashed #f00; border-radius: 8px; font-size: 0.8rem; line-height: 1.5; background: rgba(255,0,0,0.05);">
-        <strong style="color:#f00;">DEBUG admin dashboard</strong>
-        <div>isAdmin = {isAdmin}</div>
-        <div>sessionIsAdmin = {sessionIsAdmin}</div>
-        <div>role = {session?.role ?? 'null'}</div>
-        <div>appStore.isAdmin = {$appStore.isAdmin}</div>
-        <div>permission = {$appStore.permission ?? 'null'}</div>
-        <div>session.authenticated = {session?.authenticated ?? 'null'}</div>
-    </div>
     <div class="cards" id="settings-cards">
         {#if isAdmin}
             {#if isReadonlyParent}
