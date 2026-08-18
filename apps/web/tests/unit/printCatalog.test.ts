@@ -40,13 +40,11 @@ describe('print catalog route', () => {
             childId: string | null;
             childName: string;
             tasks: unknown[];
-            shopItems: unknown[];
         };
 
         expect(result.childId).toBe('7');
         expect(result.childName).toBe('Mia');
         expect(result.tasks).toHaveLength(1);
-        expect(result.shopItems).toHaveLength(1);
     });
 
     it('falls back to the persisted or first child when admin childId is missing', async () => {

@@ -69,7 +69,9 @@
     $: rowCount = parsed.normalizedRows.length;
 
     function t(kindKey: CsvImportKind, key: string, variables?: Record<string, string | number>): string {
-        return $i18n.t(`${kindKey}.${key}` as MessageKey, variables);
+        // EXPLAIN: The import.* keys are identical in the tasks and shop domains;
+        // EXPLAIN: resolve them from the tasks domain since the shop domain is removed.
+        return $i18n.t(`tasks.${key}` as MessageKey, variables);
     }
 
     function close() {

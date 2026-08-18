@@ -75,11 +75,9 @@ describe('i18n helpers', () => {
 
     it('loads dedicated tasks, shop, and admin domains for remaining app surfaces', () => {
         expect(resolveDomainsForPath('/app/tasks')).toEqual(['common', 'app', 'tasks', 'errors']);
-        expect(resolveDomainsForPath('/app/shop')).toEqual(['common', 'app', 'shop', 'errors']);
         expect(resolveDomainsForPath('/app/settings')).toEqual(['common', 'app', 'admin', 'errors']);
         expect(resolveDomainsForPath('/app/catalog')).toEqual(['common', 'app', 'admin', 'errors']);
         expect(translateKey(buildI18nPayload('en', ['tasks']), 'tasks.actions.complete')).toBe('Done!');
-        expect(translateKey(buildI18nPayload('en', ['shop']), 'shop.actions.request')).toBe('Request');
         expect(translateKey(buildI18nPayload('en', ['admin']), 'admin.rules.title')).toBe('Rules and goals');
     });
 

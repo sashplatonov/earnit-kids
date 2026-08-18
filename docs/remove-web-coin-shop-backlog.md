@@ -288,7 +288,7 @@ git commit -m "refactor(web): remove shop portion of print catalog"
 
 ## P0-6: Remove the web-only `shop` i18n domain and reconcile shared import keys
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** P0-4
 

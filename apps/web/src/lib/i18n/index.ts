@@ -16,7 +16,6 @@ import { commonMessages as enCommonMessages } from './messages/en/common';
 import { errorMessages as enErrorMessages } from './messages/en/errors';
 import { historyMessages as enHistoryMessages } from './messages/en/history';
 import { publicMessages as enPublicMessages } from './messages/en/public';
-import { shopMessages as enShopMessages } from './messages/en/shop';
 import { superadminMessages as enSuperadminMessages } from './messages/en/superadmin';
 import { tasksMessages as enTasksMessages } from './messages/en/tasks';
 import { adminMessages as ruAdminMessages } from './messages/ru/admin';
@@ -27,7 +26,6 @@ import { commonMessages as ruCommonMessages } from './messages/ru/common';
 import { errorMessages as ruErrorMessages } from './messages/ru/errors';
 import { historyMessages as ruHistoryMessages } from './messages/ru/history';
 import { publicMessages as ruPublicMessages } from './messages/ru/public';
-import { shopMessages as ruShopMessages } from './messages/ru/shop';
 import { superadminMessages as ruSuperadminMessages } from './messages/ru/superadmin';
 import { tasksMessages as ruTasksMessages } from './messages/ru/tasks';
 
@@ -69,7 +67,6 @@ const ENGLISH_DOMAIN_CATALOG = {
     analytics: enAnalyticsMessages,
     history: enHistoryMessages,
     tasks: enTasksMessages,
-    shop: enShopMessages,
     errors: enErrorMessages,
     superadmin: enSuperadminMessages,
 } as const;
@@ -83,7 +80,6 @@ const RUSSIAN_DOMAIN_CATALOG = {
     analytics: ruAnalyticsMessages,
     history: ruHistoryMessages,
     tasks: ruTasksMessages,
-    shop: ruShopMessages,
     errors: ruErrorMessages,
     superadmin: ruSuperadminMessages,
 } as const;

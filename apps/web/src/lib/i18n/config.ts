@@ -3,7 +3,7 @@ export const DEFAULT_LOCALE = 'en';
 export const LOCALE_COOKIE_NAME = 'locale';
 
 export type Locale = (typeof LOCALES)[number];
-export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'analytics' | 'history' | 'tasks' | 'shop' | 'admin' | 'errors' | 'superadmin';
+export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'analytics' | 'history' | 'tasks' | 'admin' | 'errors' | 'superadmin';
 
 const LOCALE_SET = new Set<string>(LOCALES);
 // EXPLAIN: Bare-URL public routes are served without a locale prefix so they
@@ -203,10 +203,6 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'app', 'tasks', 'errors'];
     }
 
-    if (internalPath.startsWith('/app/shop')) {
-        return ['common', 'app', 'shop', 'errors'];
-    }
-
     if (
         internalPath.startsWith('/app/rules')
         || internalPath.startsWith('/app/settings')
@@ -221,7 +217,7 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
     }
 
     if (internalPath === '/telegram' || internalPath.startsWith('/telegram/')) {
-        return ['common', 'app', 'tasks', 'shop', 'admin', 'errors'];
+        return ['common', 'app', 'tasks', 'admin', 'errors'];
     }
 
     if (internalPath.startsWith('/app')) {
