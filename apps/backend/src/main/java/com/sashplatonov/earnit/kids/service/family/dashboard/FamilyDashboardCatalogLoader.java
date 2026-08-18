@@ -59,23 +59,28 @@ public class FamilyDashboardCatalogLoader {
         Map<Long, TaskPeriodProgressDto> progressByTaskId = new HashMap<>();
         Map<String, Map<Long, Long>> completedByPeriod = new HashMap<>();
         Map<String, Map<Long, Long>> pendingByPeriod = new HashMap<>();
+
         for (var task : taskEntities) {
             var resolvedWindow = frequencyWindowService.resolveCurrentWindow(task.getFrequency(), now, zoneId);
             if (resolvedWindow.isEmpty()) {
                 continue;
             }
             var window = resolvedWindow.get();
-            long completed = completedByPeriod.computeIfAbsent(window.period(), ignored ->
+            String period = window.period();
+
+            long completed = completedByPeriod.computeIfAbsent(period, p ->
                 historyRepository.countTaskEarnsInWindowByTask(familyDbId, childId, window.start(), window.end())
             ).getOrDefault(task.getTaskId(), 0L);
-            long pending = pendingByPeriod.computeIfAbsent(window.period(), ignored ->
+
+            long pending = pendingByPeriod.computeIfAbsent(period, p ->
                 purchaseRequestRepository.countPendingTaskRequestsInWindowByTask(
                     familyDbId, childId, window.start(), window.end()
                 )
             ).getOrDefault(task.getTaskId(), 0L);
+
             int used = Math.toIntExact(Math.min(Integer.MAX_VALUE, completed + pending));
             progressByTaskId.put(task.getTaskId(), new TaskPeriodProgressDto(
-                window.period(),
+                period,
                 Math.toIntExact(Math.min(Integer.MAX_VALUE, completed)),
                 Math.toIntExact(Math.min(Integer.MAX_VALUE, pending)),
                 window.limit(),
@@ -112,23 +117,28 @@ public class FamilyDashboardCatalogLoader {
         Map<Long, TaskPeriodProgressDto> progressByItemId = new HashMap<>();
         Map<String, Map<Long, Long>> purchasedByPeriod = new HashMap<>();
         Map<String, Map<Long, Long>> pendingByPeriod = new HashMap<>();
+
         for (var shopItem : shopItemEntities) {
             var resolvedWindow = frequencyWindowService.resolveCurrentWindow(shopItem.getFrequency(), now, zoneId);
             if (resolvedWindow.isEmpty()) {
                 continue;
             }
             var window = resolvedWindow.get();
-            long purchased = purchasedByPeriod.computeIfAbsent(window.period(), ignored ->
+            String period = window.period();
+
+            long purchased = purchasedByPeriod.computeIfAbsent(period, p ->
                 historyRepository.countShopPurchasesInWindowByItem(familyDbId, childId, window.start(), window.end())
             ).getOrDefault(shopItem.getItemId(), 0L);
-            long pending = pendingByPeriod.computeIfAbsent(window.period(), ignored ->
+
+            long pending = pendingByPeriod.computeIfAbsent(period, p ->
                 purchaseRequestRepository.countPendingItemRequestsInWindowByItem(
                     familyDbId, childId, window.start(), window.end()
                 )
             ).getOrDefault(shopItem.getItemId(), 0L);
+
             int used = Math.toIntExact(Math.min(Integer.MAX_VALUE, purchased + pending));
             progressByItemId.put(shopItem.getItemId(), new TaskPeriodProgressDto(
-                window.period(),
+                period,
                 Math.toIntExact(Math.min(Integer.MAX_VALUE, purchased)),
                 Math.toIntExact(Math.min(Integer.MAX_VALUE, pending)),
                 window.limit(),
@@ -167,18 +177,9 @@ public class FamilyDashboardCatalogLoader {
     private Map<Long, String> loadLatestHistoryTimestamps(int childId, HistoryEntryType type) {
         Map<Long, Instant> aggregated = historyRepository.loadLatestTimestampsByRelatedId(childId, type);
         Map<Long, String> latestTimestamps = new LinkedHashMap<>();
-        if (aggregated != null && !aggregated.isEmpty()) {
+        if (aggregated != null) {
             aggregated.forEach((id, instant) -> latestTimestamps.put(id, instant.toString()));
-            return latestTimestamps;
         }
-
-        historyRepository.list(
-            "childId = ?1 AND type = ?2 AND relatedId IS NOT NULL ORDER BY createdAt DESC, id DESC",
-            childId,
-            type
-        ).stream()
-            .filter(entry -> entry.getRelatedId() != null && entry.getCreatedAt() != null)
-            .forEach(entry -> latestTimestamps.putIfAbsent(entry.getRelatedId(), entry.getCreatedAt().toString()));
         return latestTimestamps;
     }
 }
