@@ -9,6 +9,7 @@
     import SettingsSection from '$lib/components/app/sections/SettingsSection.svelte';
     import TasksSection from '$lib/components/app/sections/TasksSection.svelte';
     import type { PageData } from './$types';
+    import { page } from '$app/stores';
 
     export let data: PageData;
 </script>
@@ -31,7 +32,7 @@
 {:else if data.section === 'rules'}
     <RulesSection />
 {:else if data.section === 'settings'}
-    <SettingsSection />
+    <SettingsSection session={$page.data.session} />
 {:else if data.section === 'limits'}
     <LimitsSection />
 {:else if data.section === 'catalog'}

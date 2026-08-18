@@ -13,6 +13,9 @@
     import { showToast } from '$lib/stores/toasts';
     import ParentAccessManager from '$lib/components/app/settings/ParentAccessManager.svelte';
     import TelegramAccountConnections from '$lib/components/app/settings/TelegramAccountConnections.svelte';
+    import type { SessionSnapshot } from '$lib/types/session';
+
+    export let session: SessionSnapshot | null = null;
 
     const i18n = useI18n();
     const THEME_KEYS = ['mint', 'ocean', 'sun', 'coral', 'cosmos'] as const;
@@ -21,7 +24,11 @@
         return $i18n.t(`admin.${key}` as MessageKey, variables);
     }
 
-    $: isAdmin = $appStore.isAdmin;
+    // EXPLAIN: Derive isAdmin from session.role first (available at SSR time),
+    // EXPLAIN: then sync with appStore once client-side data loads. This ensures
+    // EXPLAIN: the Dashboard card is visible on the very first SSR render.
+    $: sessionIsAdmin = session?.role === 'admin' || session?.role === 'parent' || session?.role === 'super_admin';
+    $: isAdmin = $appStore.isAdmin || sessionIsAdmin;
     $: isLoading = $appStore.isLoading;
     $: childNickname = $appStore.childNickname ?? '';
     $: currentChildId = $appStore.currentChildId;
