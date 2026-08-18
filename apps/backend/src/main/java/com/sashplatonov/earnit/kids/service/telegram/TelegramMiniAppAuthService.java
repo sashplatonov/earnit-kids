@@ -80,12 +80,21 @@ public class TelegramMiniAppAuthService {
             return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
         }
 
-        // EXPLAIN: Admin check – if Telegram ID is in TELEGRAM_ADMIN_USER_IDS, grant admin access
-        if (adminAccessService != null && adminAccessService.isAdmin(identity.getTelegramUserId())) {
-            LOG.infof("Telegram user %d identified as admin, granting admin role", identity.getTelegramUserId());
-            // EXPLAIN: Resolve the parent email so account-connection and other email-based
-            // EXPLAIN: endpoints work. Prefer the identity's linked parent account; otherwise
-            // EXPLAIN: fall back to the first family_admin member of the family.
+        // EXPLAIN: Admin check – if Telegram ID is in TELEGRAM_ADMIN_USER_IDS:
+        // EXPLAIN:   1. If the user has a parent identity, authenticate as a normal parent
+        // EXPLAIN:      (preserves real email and permission, doesn't break parent UI).
+        // EXPLAIN:      The parent path already returns role="admin" so the Dashboard
+        // EXPLAIN:      card is visible via AuthContext.isAdmin().
+        // EXPLAIN:   2. If the user has a child or non-parent identity, use the admin
+        // EXPLAIN:      override to grant admin access with a resolved parent email.
+        boolean isConfigAdmin = adminAccessService != null && adminAccessService.isAdmin(identity.getTelegramUserId());
+        if (isConfigAdmin && "parent".equals(identity.getRole()) && identity.getParentAccountId() != null) {
+            LOG.infof("Telegram user %d is admin+parent, using normal parent auth", identity.getTelegramUserId());
+            return authenticateParent(identity, family);
+        }
+        if (isConfigAdmin) {
+            LOG.infof("Telegram user %d identified as admin (non-parent identity), granting admin role",
+                identity.getTelegramUserId());
             String adminEmail = resolveAdminEmail(identity, family);
             LOG.infof("Admin session email resolved: %s", adminEmail);
             AuthPayload adminPayload = new AuthPayload(
