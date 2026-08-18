@@ -22,6 +22,10 @@ const BYPASS_PREFIXES = [
     '/apple-touch-icon',
     '/.well-known',
     '/public',
+    '/how',
+    '/tasks',
+    '/parents',
+    '/faq',
 ] as const;
 
 const LEGACY_ALIAS_MAP: Record<string, string> = {
