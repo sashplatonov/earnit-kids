@@ -5,10 +5,10 @@ import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.dto.response.ChildTelegramConnectionResponse;
 import com.sashplatonov.earnit.kids.dto.response.TelegramLinkLaunchResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -37,7 +37,7 @@ public class TelegramChildConnectionServiceImpl implements TelegramChildConnecti
     public OperationResult<ChildTelegramConnectionResponse> connection(String familyId, int childId) {
         var child = familyChild(familyId, childId);
         if (child.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         Optional<TelegramIdentityEntity> identity = identities.findActiveChild(childId);
         return OperationResult.success(new ChildTelegramConnectionResponse(
@@ -52,14 +52,14 @@ public class TelegramChildConnectionServiceImpl implements TelegramChildConnecti
     public OperationResult<TelegramLinkLaunchResponse> invite(String familyId, int childId) {
         var child = familyChild(familyId, childId);
         if (child.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         String botUsername = config.botUsername().filter(value -> !value.isBlank()).orElse(null);
         if (botUsername == null) {
-            return failure("TELEGRAM_LINK_UNAVAILABLE", UNAVAILABLE);
+            return ServiceResults.failure("TELEGRAM_LINK_UNAVAILABLE", UNAVAILABLE);
         }
         if (identities.findActiveChild(childId).isPresent()) {
-            return failure("TELEGRAM_ALREADY_LINKED", "This child already has a linked Telegram account.");
+            return ServiceResults.failure("TELEGRAM_ALREADY_LINKED", "This child already has a linked Telegram account.");
         }
 
         Instant now = timeProvider.now();
@@ -80,7 +80,7 @@ public class TelegramChildConnectionServiceImpl implements TelegramChildConnecti
     public OperationResult<Void> unlink(String familyId, int childId) {
         var child = familyChild(familyId, childId);
         if (child.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         Optional<TelegramIdentityEntity> identity = identities.findActiveChild(childId);
         if (identity.isEmpty()) {
@@ -97,9 +97,5 @@ public class TelegramChildConnectionServiceImpl implements TelegramChildConnecti
         }
         return children.findByIdOptional(childId)
             .filter(child -> dbIdOpt.get().equals(child.getFamilyDbId()));
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 }

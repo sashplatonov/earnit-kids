@@ -3,11 +3,11 @@ package com.sashplatonov.earnit.kids.service.family.command;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -57,7 +57,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
                                                               boolean adminSession) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         int familyDbId = dbIdOpt.get();
@@ -68,7 +68,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
 
         List<ChildEntity> accessibleChildren = selectionService.resolveVisibleChildren(children, adminSession, childId);
         if (accessibleChildren.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         Integer selectedChildId = selectionService.resolveSelectedChildId(
@@ -80,7 +80,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
         );
         if (selectedChildId != null
             && accessibleChildren.stream().noneMatch(child -> child.getId().equals(selectedChildId))) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         mutationService.syncFamilyRules(familyId, payload, adminSession);
@@ -90,9 +90,5 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
         analyticsService.invalidateCache(familyId);
 
         return familyDashboardQueryService.loadFamilyData(familyId, selectedChildId, adminSession);
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 }

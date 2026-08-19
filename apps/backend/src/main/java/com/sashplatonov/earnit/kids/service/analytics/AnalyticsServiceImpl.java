@@ -13,6 +13,7 @@ import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.repository.projection.HistoryDailyAggregate;
 import com.sashplatonov.earnit.kids.repository.projection.HistoryPeriodSummary;
 import com.sashplatonov.earnit.kids.repository.projection.HistoryRankedAggregate;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.service.observability.BackendKpiMetrics;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
@@ -84,7 +85,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
             Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
             if (familyDbIdOpt.isEmpty()) {
-                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+                return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
             int familyDbId = familyDbIdOpt.get();
@@ -287,10 +288,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         return historyRepository.list("familyId = ?1 AND createdAt >= ?2 AND createdAt < ?3",
             familyDbId, from, to);
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 
     private boolean isExpired(AnalyticsCacheEntry cached) {

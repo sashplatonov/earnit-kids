@@ -3,7 +3,7 @@ package com.sashplatonov.earnit.kids.service.family.dashboard;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -27,7 +27,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
         return backendKpiMetrics.recordResult("dashboard", "shell", () -> {
             Optional<FamilyDashboardScopeData> scopeOpt = scopeLoader.loadFamilyScope(familyId, childId, adminSession);
             if (scopeOpt.isEmpty()) {
-                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+                return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
             FamilyDashboardScopeData scope = scopeOpt.get();
@@ -46,7 +46,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
         return backendKpiMetrics.recordResult("dashboard", "detail", () -> {
             Optional<FamilyDashboardScopeData> scopeOpt = scopeLoader.loadFamilyScope(familyId, childId, adminSession);
             if (scopeOpt.isEmpty()) {
-                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+                return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
             FamilyDashboardScopeData scope = scopeOpt.get();
@@ -64,7 +64,7 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
         return backendKpiMetrics.recordResult("dashboard", "full", () -> {
             Optional<FamilyDashboardScopeData> scopeOpt = scopeLoader.loadFamilyScope(familyId, childId, adminSession);
             if (scopeOpt.isEmpty()) {
-                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+                return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
             FamilyDashboardScopeData scope = scopeOpt.get();
@@ -75,9 +75,5 @@ public class FamilyDashboardQueryServiceImpl implements FamilyDashboardQueryServ
             FamilyDashboardCatalogContext catalog = catalogLoader.loadCatalogContext(scope.familyDbId(), scope.activeChild().getId());
             return OperationResult.success(responseAssembler.buildFamilyDataResponse(scope, catalog, adminSession));
         });
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 }

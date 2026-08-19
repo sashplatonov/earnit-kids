@@ -229,7 +229,7 @@ git commit -m "refactor(backend): extract ResourceAuthSupport with role guards a
 
 ## P0-3: Extract `ServiceResults` failure factory
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P0  
 **Depends on:** -
 

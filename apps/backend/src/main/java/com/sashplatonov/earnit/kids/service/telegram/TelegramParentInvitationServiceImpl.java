@@ -6,11 +6,11 @@ import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.domain.model.TelegramParentInvitationEntity;
 import com.sashplatonov.earnit.kids.dto.response.TelegramLinkLaunchResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramParentInvitationRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
@@ -49,11 +49,11 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
     public OperationResult<TelegramLinkLaunchResponse> invite(String familyId, String issuedBy, Instant now) {
         Optional<Integer> dbIdOpt = families.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         String botUsername = config.botUsername().filter(value -> !value.isBlank()).orElse(null);
         if (botUsername == null) {
-            return failure("TELEGRAM_LINK_UNAVAILABLE", UNAVAILABLE);
+            return ServiceResults.failure("TELEGRAM_LINK_UNAVAILABLE", UNAVAILABLE);
         }
         String token = tokens.generateHexToken(32);
         invitations.persist(TelegramParentInvitationEntity.builder()
@@ -73,24 +73,24 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
     public OperationResult<TelegramIdentityService.TelegramIdentity> accept(String token, String initData,
                                                                              String email, Instant now) {
         if (email == null || email.isBlank() || email.length() > 254) {
-            return failure("INVALID_EMAIL", "auth.emailInvalid");
+            return ServiceResults.failure("INVALID_EMAIL", "auth.emailInvalid");
         }
         var verified = verifier.verify(initData).orElse(null);
         if (verified == null) {
-            return failure("TELEGRAM_INVITE_INVALID", "Telegram invitation is invalid or expired.");
+            return ServiceResults.failure("TELEGRAM_INVITE_INVALID", "Telegram invitation is invalid or expired.");
         }
         String normalized = email.trim().toLowerCase(Locale.ROOT);
         String secret = stripPrefix(token);
         if (secret.isEmpty()) {
-            return failure("TELEGRAM_INVITE_INVALID", "Telegram invitation is invalid or expired.");
+            return ServiceResults.failure("TELEGRAM_INVITE_INVALID", "Telegram invitation is invalid or expired.");
         }
         if (identityService.findActiveByTelegramUserId(verified.telegramUserId()).isPresent()) {
-            return failure("TELEGRAM_ALREADY_LINKED", "telegram.accountAlreadyLinked");
+            return ServiceResults.failure("TELEGRAM_ALREADY_LINKED", "telegram.accountAlreadyLinked");
         }
         var invitation = invitations.findByDigestForUpdate(digest(secret)).orElse(null);
         if (invitation == null || invitation.getRevokedAt() != null || invitation.getConsumedAt() != null
             || !invitation.getExpiresAt().isAfter(now)) {
-            return failure("TELEGRAM_INVITE_INVALID", "Telegram invitation is invalid or expired.");
+            return ServiceResults.failure("TELEGRAM_INVITE_INVALID", "Telegram invitation is invalid or expired.");
         }
         Optional<ParentAccountEntity> existing = parents.findByEmail(normalized);
         ParentAccountEntity parent = existing.orElseGet(() -> {
@@ -101,7 +101,7 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
         });
         if (existing.isPresent()
             && memberships.findByParentAndFamily(parent.getId(), invitation.getFamilyId()).isPresent()) {
-            return failure("ALREADY_MEMBER", "parentAccess.alreadyMember");
+            return ServiceResults.failure("ALREADY_MEMBER", "parentAccess.alreadyMember");
         }
         memberships.persist(FamilyParentMembershipEntity.builder()
             .parentAccountId(parent.getId())
@@ -131,9 +131,5 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is unavailable", exception);
         }
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 }

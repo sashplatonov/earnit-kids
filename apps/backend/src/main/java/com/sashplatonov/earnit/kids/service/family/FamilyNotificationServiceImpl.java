@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.dto.response.NotificationPreferenceDto;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyNotificationPreferenceRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -54,7 +55,7 @@ public class FamilyNotificationServiceImpl implements FamilyNotificationService 
     public OperationResult<FamilyNotificationSettingsResponse> getSettings(String familyId) {
         Optional<Integer> dbIdOpt = families.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         int familyDbId = dbIdOpt.get();
 
@@ -86,27 +87,27 @@ public class FamilyNotificationServiceImpl implements FamilyNotificationService 
                                                String key, boolean enabled) {
         Optional<Integer> dbIdOpt = families.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         int familyDbId = dbIdOpt.get();
 
         if (SCOPE_PARENT.equals(scope)) {
             if (!PARENT_DEFAULTS.containsKey(key)) {
-                return failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
+                return ServiceResults.failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
             }
             childId = null;
         } else if (SCOPE_CHILD.equals(scope)) {
             if (!CHILD_DEFAULTS.containsKey(key)) {
-                return failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
+                return ServiceResults.failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
             }
             if (childId == null || children.findByIdOptional(childId)
                 .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId))
                 .filter(child -> ChildStatus.ACTIVE.name().equals(child.getStatus()))
                 .isEmpty()) {
-                return failure("CHILD_NOT_FOUND", "family.childNotFound");
+                return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
             }
         } else {
-            return failure("INVALID_SCOPE", "family.unknownSetting", Map.of("key", "scope"));
+            return ServiceResults.failure("INVALID_SCOPE", "family.unknownSetting", Map.of("key", "scope"));
         }
 
         preferences.setEnabled(familyDbId, scope, childId, key, enabled);
@@ -115,15 +116,5 @@ public class FamilyNotificationServiceImpl implements FamilyNotificationService 
 
     private static NotificationPreferenceDto preference(String key, boolean fallback, Boolean stored) {
         return new NotificationPreferenceDto(key, stored != null ? stored : fallback);
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey, Map<String, String> variables) {
-        return OperationResult.failure(errorCode,
-            com.sashplatonov.earnit.kids.i18n.BackendMessages.message(messageKey, variables));
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode,
-            com.sashplatonov.earnit.kids.i18n.BackendMessages.message(messageKey));
     }
 }

@@ -2,10 +2,10 @@ package com.sashplatonov.earnit.kids.service.family;
 
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.dto.response.FriendDto;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.FriendRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -38,20 +38,20 @@ class FamilyFriendService {
 
     OperationResult<Void> addFriend(String familyId, int childId, int friendChildId) {
         if (childId == friendChildId) {
-            return failure("CANNOT_ADD_SELF", "family.cannotAddSelf");
+            return ServiceResults.failure("CANNOT_ADD_SELF", "family.cannotAddSelf");
         }
 
         if (familyRepository.getDbId(familyId).isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         if (childRepository.findByIdOptional(friendChildId).isEmpty()) {
-            return failure("USER_NOT_FOUND", "family.userNotFound");
+            return ServiceResults.failure("USER_NOT_FOUND", "family.userNotFound");
         }
 
         boolean saved = friendRepository.addFriend(childId, friendChildId);
         if (!saved) {
-            return failure("FRIEND_ADD_FAILED", "family.friendAddFailed");
+            return ServiceResults.failure("FRIEND_ADD_FAILED", "family.friendAddFailed");
         }
 
         analyticsService.invalidateCache(familyId);
@@ -64,9 +64,5 @@ class FamilyFriendService {
             .map(friend -> new FriendDto(friend.getId(), friend.getName(), friend.getBalance()))
             .toList();
         return OperationResult.success(friends);
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 }

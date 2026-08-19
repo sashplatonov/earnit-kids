@@ -2,9 +2,9 @@ package com.sashplatonov.earnit.kids.service.family;
 
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,17 +26,17 @@ class FamilyPreferenceService {
         if (key == FamilyPreferenceKey.lastSelectedChildId) {
             Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
             if (familyDbIdOpt.isEmpty()) {
-                return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+                return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
 
             Integer childId = parseChildIdPreference(value);
             if (value != null && childId == null) {
-                return failure("INVALID_CHILD_ID", "family.invalidChildId");
+                return ServiceResults.failure("INVALID_CHILD_ID", "family.invalidChildId");
             }
             if (childId != null) {
                 Optional<ChildEntity> childOpt = childRepository.findByIdOptional(childId);
                 if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), familyDbIdOpt.get())) {
-                    return failure("CHILD_NOT_FOUND", "family.childNotFound");
+                    return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
                 }
             }
 
@@ -44,7 +44,7 @@ class FamilyPreferenceService {
             analyticsService.invalidateCache(familyId);
             return OperationResult.success(null);
         }
-        return failure("UNKNOWN_SETTING", "family.unknownSetting", Map.of("key", String.valueOf(key)));
+        return ServiceResults.failure("UNKNOWN_SETTING", "family.unknownSetting", Map.of("key", String.valueOf(key)));
     }
 
     private Integer parseChildIdPreference(Object value) {
@@ -62,13 +62,5 @@ class FamilyPreferenceService {
             }
         }
         return null;
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey, Map<String, String> variables) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey, variables));
     }
 }

@@ -8,9 +8,9 @@ import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -38,24 +38,24 @@ class FamilyChildManagementService {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             log.warn("createChild failed: family not found familyId={}", familyId);
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         int familyDbId = dbIdOpt.get();
 
         if (childName == null || childName.isBlank()) {
-            return failure("CHILD_NAME_REQUIRED", "family.childNameRequired");
+            return ServiceResults.failure("CHILD_NAME_REQUIRED", "family.childNameRequired");
         }
         if (childName.length() > 50) {
-            return failure("CHILD_NAME_TOO_LONG", "family.childNameTooLong");
+            return ServiceResults.failure("CHILD_NAME_TOO_LONG", "family.childNameTooLong");
         }
         if (childRepository.isNicknameTaken(familyDbId, childName, null)) {
-            return failure("CHILD_NAME_TAKEN", "family.childNameTaken");
+            return ServiceResults.failure("CHILD_NAME_TAKEN", "family.childNameTaken");
         }
 
         Optional<ChildEntity> childOpt = childRepository.createChild(familyDbId, childName);
         if (childOpt.isEmpty()) {
             log.error("createChild failed: repository returned empty familyId={}", familyId);
-            return failure("CHILD_CREATE_FAILED", "family.createFailed");
+            return ServiceResults.failure("CHILD_CREATE_FAILED", "family.createFailed");
         }
 
         ChildEntity child = childOpt.get();
@@ -68,13 +68,13 @@ class FamilyChildManagementService {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             log.warn("deleteChild failed: family not found familyId={} childId={}", familyId, childId);
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         var childOpt = childRepository.findByIdOptional(childId);
         if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), dbIdOpt.get())) {
             log.warn("deleteChild failed: child not found or family mismatch familyId={} childId={}", familyId, childId);
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         childRepository.deleteChild(childId);
@@ -86,18 +86,18 @@ class FamilyChildManagementService {
     OperationResult<Void> updateNickname(String familyId, int childId, String newName) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         if (newName == null || newName.isBlank()) {
-            return failure("NAME_REQUIRED", "family.nameRequired");
+            return ServiceResults.failure("NAME_REQUIRED", "family.nameRequired");
         }
         if (childRepository.isNicknameTaken(dbIdOpt.get(), newName, childId)) {
-            return failure("CHILD_NAME_TAKEN", "family.childNameTaken");
+            return ServiceResults.failure("CHILD_NAME_TAKEN", "family.childNameTaken");
         }
 
         childRepository.updateName(childId, newName);
@@ -110,11 +110,11 @@ class FamilyChildManagementService {
                                               int monthlyLimit, Integer dailyRewardLimit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         Optional<ChildEntity> existing = findFamilyChild(dbIdOpt.get(), childId);
         if (existing.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         // EXPLAIN: A missing daily_reward_limit means "keep the current value",
         // EXPLAIN: so older clients that do not send it cannot reset the limit.
@@ -127,13 +127,13 @@ class FamilyChildManagementService {
     OperationResult<Void> updateChildTheme(String familyId, int childId, ChildTheme theme) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (theme == null) {
-            return failure("INVALID_THEME", "family.invalidTheme", Map.of("theme", "null"));
+            return ServiceResults.failure("INVALID_THEME", "family.invalidTheme", Map.of("theme", "null"));
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         childRepository.updateTheme(childId, theme);
         invalidateAnalyticsCache(familyId);
@@ -145,15 +145,15 @@ class FamilyChildManagementService {
                                                 List<String> hiddenGroups, boolean personalOrder) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         if (section == null) {
-            return failure("INVALID_GROUP_ORDER_SECTION", "family.invalidGroupOrderSection",
+            return ServiceResults.failure("INVALID_GROUP_ORDER_SECTION", "family.invalidGroupOrderSection",
                 Map.of("section", "null"));
         }
 
@@ -166,7 +166,7 @@ class FamilyChildManagementService {
             }
         } catch (JsonProcessingException ex) {
             log.warn("Failed to serialize group order familyId={} childId={} section={}", familyId, childId, section, ex);
-            return failure("GROUP_ORDER_SAVE_FAILED", "family.groupOrderSaveFailed");
+            return ServiceResults.failure("GROUP_ORDER_SAVE_FAILED", "family.groupOrderSaveFailed");
         }
 
         childRepository.updateGroupOrder(childId, section, personalOrder, serializedOrder, serializedHidden);
@@ -177,12 +177,12 @@ class FamilyChildManagementService {
     OperationResult<String> getChildLoginLink(String familyId, int childId) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         var childOpt = findFamilyChild(dbIdOpt.get(), childId);
         if (childOpt.isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         return OperationResult.success(childOpt.get().getToken());
     }
@@ -190,15 +190,15 @@ class FamilyChildManagementService {
     OperationResult<String> regenerateChildToken(String familyId, int childId) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         Optional<String> newToken = childRepository.regenerateToken(childId);
         if (newToken.isEmpty()) {
-            return failure("TOKEN_GENERATION_FAILED", "family.tokenGenerationFailed");
+            return ServiceResults.failure("TOKEN_GENERATION_FAILED", "family.tokenGenerationFailed");
         }
         return OperationResult.success(newToken.get());
     }
@@ -206,10 +206,10 @@ class FamilyChildManagementService {
     OperationResult<Void> setChildActive(String familyId, int childId, boolean active) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         ChildStatus status = active ? ChildStatus.ACTIVE : ChildStatus.INACTIVE;
@@ -222,7 +222,7 @@ class FamilyChildManagementService {
     OperationResult<List<ChildDto>> listInactiveChildren(String familyId) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         List<ChildDto> children = childRepository.getInactiveChildren(dbIdOpt.get()).stream()
@@ -266,13 +266,5 @@ class FamilyChildManagementService {
         }
 
         return List.copyOf(normalized);
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey, Map<String, String> variables) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey, variables));
     }
 }

@@ -11,13 +11,13 @@ import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
+import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -65,10 +65,10 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
     public OperationResult<PaginatedHistory> getHistory(String familyId, int childId, int page, int limit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
-            return failure("CHILD_NOT_FOUND", "family.childNotFound");
+            return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
@@ -90,7 +90,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
     public OperationResult<PaginatedRequests> getRequests(String familyId, int page, int limit) {
         Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
-            return failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         int familyDbId = dbIdOpt.get();
@@ -112,10 +112,6 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         hydrateMissingRequests(familyDbId, rows, taskMap, shopMap);
         List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, taskMap, shopMap)).toList();
         return OperationResult.success(new PaginatedRequests(items, total, page, effectiveLimit));
-    }
-
-    private static <T> OperationResult<T> failure(String errorCode, String messageKey) {
-        return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 
     private Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
