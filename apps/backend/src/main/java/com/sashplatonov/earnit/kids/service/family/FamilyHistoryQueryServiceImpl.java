@@ -12,7 +12,6 @@ import com.sashplatonov.earnit.kids.dto.response.RequestDto;
 import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.HistoryRepository;
 import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
@@ -33,7 +32,6 @@ import java.util.Optional;
 public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQueryService {
     private static final int MAX_PAGE_SIZE = 100;
 
-    private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
@@ -41,17 +39,17 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final FamilyDashboardMapper mapper;
     private final ObjectMapper objectMapper;
+    private final FamilyOperationGuard familyOperationGuard;
 
     @Inject
-    public FamilyHistoryQueryServiceImpl(FamilyRepository familyRepository,
-                                         ChildRepository childRepository,
+    public FamilyHistoryQueryServiceImpl(ChildRepository childRepository,
                                          TaskRepository taskRepository,
                                          ShopItemRepository shopItemRepository,
                                          HistoryRepository historyRepository,
                                          PurchaseRequestRepository purchaseRequestRepository,
                                          FamilyDashboardMapper mapper,
-                                         ObjectMapper objectMapper) {
-        this.familyRepository = familyRepository;
+                                         ObjectMapper objectMapper,
+                                         FamilyOperationGuard familyOperationGuard) {
         this.childRepository = childRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
@@ -59,15 +57,17 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         this.purchaseRequestRepository = purchaseRequestRepository;
         this.mapper = mapper;
         this.objectMapper = objectMapper;
+        this.familyOperationGuard = familyOperationGuard;
     }
 
     @Override
     public OperationResult<PaginatedHistory> getHistory(String familyId, int childId, int page, int limit) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
-        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
+        if (findFamilyChild(familyDbId, childId).isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
@@ -79,7 +79,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         List<ShopItemDto> shopItems = loadShopItems(childId, Map.of());
         Map<Long, TaskDto> taskMap = buildTaskMap(tasks);
         Map<Long, ShopItemDto> shopMap = buildShopItemMap(shopItems);
-        hydrateMissingHistoryEntries(dbIdOpt.get(), childId, rows, taskMap, shopMap);
+        hydrateMissingHistoryEntries(familyDbId, childId, rows, taskMap, shopMap);
         List<HistoryEntryDto> items = rows.stream()
             .map(historyEntry -> toHistoryDto(historyEntry, taskMap, shopMap))
             .toList();
@@ -88,12 +88,11 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
 
     @Override
     public OperationResult<PaginatedRequests> getRequests(String familyId, int page, int limit) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
-
-        int familyDbId = dbIdOpt.get();
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
         int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
         int offset = (page - 1) * effectiveLimit;
         List<PurchaseRequestEntity> rows = purchaseRequestRepository.getRequests(familyDbId, effectiveLimit, offset);

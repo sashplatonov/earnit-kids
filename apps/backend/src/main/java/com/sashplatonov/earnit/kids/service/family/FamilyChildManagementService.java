@@ -9,7 +9,6 @@ import com.sashplatonov.earnit.kids.dto.request.GroupOrderSection;
 import com.sashplatonov.earnit.kids.dto.response.ChildDto;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -29,18 +28,18 @@ import com.sashplatonov.earnit.kids.service.analytics.AnalyticsService;
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 class FamilyChildManagementService {
-    private final FamilyRepository familyRepository;
     private final ChildRepository childRepository;
     private final ObjectMapper objectMapper;
     private final AnalyticsService analyticsService;
+    private final FamilyOperationGuard familyOperationGuard;
 
     OperationResult<ChildInfo> createChild(String familyId, String childName) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
             log.warn("createChild failed: family not found familyId={}", familyId);
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return familyDbIdResult.asFailure();
         }
-        int familyDbId = dbIdOpt.get();
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
         if (childName == null || childName.isBlank()) {
             return ServiceResults.failure("CHILD_NAME_REQUIRED", "family.childNameRequired");
@@ -65,14 +64,15 @@ class FamilyChildManagementService {
     }
 
     OperationResult<Void> deleteChild(String familyId, int childId) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
             log.warn("deleteChild failed: family not found familyId={} childId={}", familyId, childId);
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
         var childOpt = childRepository.findByIdOptional(childId);
-        if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), dbIdOpt.get())) {
+        if (childOpt.isEmpty() || !Objects.equals(childOpt.get().getFamilyDbId(), familyDbId)) {
             log.warn("deleteChild failed: child not found or family mismatch familyId={} childId={}", familyId, childId);
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
@@ -84,19 +84,20 @@ class FamilyChildManagementService {
     }
 
     OperationResult<Void> updateNickname(String familyId, int childId, String newName) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+        if (findFamilyChild(familyDbId, childId).isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
         if (newName == null || newName.isBlank()) {
             return ServiceResults.failure("NAME_REQUIRED", "family.nameRequired");
         }
-        if (childRepository.isNicknameTaken(dbIdOpt.get(), newName, childId)) {
+        if (childRepository.isNicknameTaken(familyDbId, newName, childId)) {
             return ServiceResults.failure("CHILD_NAME_TAKEN", "family.childNameTaken");
         }
 
@@ -108,11 +109,12 @@ class FamilyChildManagementService {
     OperationResult<Void> updateChildSettings(String familyId, int childId,
                                               String name, int dailyCoinLimit,
                                               int monthlyLimit, Integer dailyRewardLimit) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
-        Optional<ChildEntity> existing = findFamilyChild(dbIdOpt.get(), childId);
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
+        Optional<ChildEntity> existing = findFamilyChild(familyDbId, childId);
         if (existing.isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
@@ -125,14 +127,15 @@ class FamilyChildManagementService {
     }
 
     OperationResult<Void> updateChildTheme(String familyId, int childId, ChildTheme theme) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
         if (theme == null) {
             return ServiceResults.failure("INVALID_THEME", "family.invalidTheme", Map.of("theme", "null"));
         }
-        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+        if (findFamilyChild(familyDbId, childId).isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
         childRepository.updateTheme(childId, theme);
@@ -143,12 +146,13 @@ class FamilyChildManagementService {
     OperationResult<Void> updateChildGroupOrder(String familyId, int childId,
                                                 GroupOrderSection section, List<String> groups,
                                                 List<String> hiddenGroups, boolean personalOrder) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+        if (findFamilyChild(familyDbId, childId).isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
@@ -175,12 +179,13 @@ class FamilyChildManagementService {
     }
 
     OperationResult<String> getChildLoginLink(String familyId, int childId) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        var childOpt = findFamilyChild(dbIdOpt.get(), childId);
+        var childOpt = findFamilyChild(familyDbId, childId);
         if (childOpt.isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
@@ -188,11 +193,12 @@ class FamilyChildManagementService {
     }
 
     OperationResult<String> regenerateChildToken(String familyId, int childId) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
-        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
+        if (findFamilyChild(familyDbId, childId).isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
@@ -204,11 +210,12 @@ class FamilyChildManagementService {
     }
 
     OperationResult<Void> setChildActive(String familyId, int childId, boolean active) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
-        if (findFamilyChild(dbIdOpt.get(), childId).isEmpty()) {
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
+        if (findFamilyChild(familyDbId, childId).isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
@@ -220,12 +227,13 @@ class FamilyChildManagementService {
     }
 
     OperationResult<List<ChildDto>> listInactiveChildren(String familyId) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+        OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        List<ChildDto> children = childRepository.getInactiveChildren(dbIdOpt.get()).stream()
+        List<ChildDto> children = childRepository.getInactiveChildren(familyDbId).stream()
             .map(child -> FamilyDashboardMapper.INSTANCE.toChildDto(child, objectMapper))
             .toList();
         return OperationResult.success(children);

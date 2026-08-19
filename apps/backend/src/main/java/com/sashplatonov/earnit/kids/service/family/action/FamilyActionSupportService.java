@@ -56,6 +56,13 @@ final class FamilyActionSupportService {
         return familyRepository.getDbId(familyId);
     }
 
+    OperationResult<Integer> requireFamilyDbId(String familyId) {
+        return getFamilyDbId(familyId)
+            .<OperationResult<Integer>>map(OperationResult::success)
+            .orElseGet(() -> OperationResult.failure("FAMILY_NOT_FOUND",
+                com.sashplatonov.earnit.kids.i18n.BackendMessages.message("family.familyNotFound")));
+    }
+
     Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
         return childRepository.findByIdOptional(childId)
             .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));

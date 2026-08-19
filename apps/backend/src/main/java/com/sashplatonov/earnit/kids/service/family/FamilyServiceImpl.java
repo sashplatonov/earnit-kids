@@ -68,10 +68,10 @@ public final class FamilyServiceImpl implements FamilyService {
         this.familyCommandService = familyCommandService;
         this.analyticsService = analyticsService;
         this.familyChildManagementService = new FamilyChildManagementService(
-            familyRepository,
             childRepository,
             objectMapper,
-            analyticsService
+            analyticsService,
+            new FamilyOperationGuard(familyRepository)
         );
         this.familyFriendService = new FamilyFriendService(
             familyRepository,
@@ -142,14 +142,14 @@ public final class FamilyServiceImpl implements FamilyService {
             backendKpiMetrics
         );
         FamilyHistoryQueryService familyHistoryQueryService = new FamilyHistoryQueryServiceImpl(
-            familyRepository,
             childRepository,
             taskRepository,
             shopItemRepository,
             historyRepository,
             purchaseRequestRepository,
             dashboardMapper,
-            mapper
+            mapper,
+            new FamilyOperationGuard(familyRepository)
         );
         FamilyCommandService familyCommandService = new FamilyCommandServiceImpl(
             familyRepository,
@@ -166,10 +166,10 @@ public final class FamilyServiceImpl implements FamilyService {
         this.familyCommandService = familyCommandService;
         this.analyticsService = analyticsService;
         this.familyChildManagementService = new FamilyChildManagementService(
-            familyRepository,
             childRepository,
             mapper,
-            analyticsService
+            analyticsService,
+            new FamilyOperationGuard(familyRepository)
         );
         this.familyFriendService = new FamilyFriendService(
             familyRepository,

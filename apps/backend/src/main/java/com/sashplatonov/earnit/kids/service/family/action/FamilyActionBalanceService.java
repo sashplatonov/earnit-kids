@@ -38,12 +38,13 @@ final class FamilyActionBalanceService {
     }
 
     OperationResult<FamilyDataResponse> completeTask(String familyId, int childId, long taskId) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId, childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -51,24 +52,25 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
-        Optional<TaskEntity> task = supportService.findActiveTask(familyDbId.get(), childId, taskId);
+        Optional<TaskEntity> task = supportService.findActiveTask(familyDbId, childId, taskId);
         if (task.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("tasks.notFound"));
         }
 
         child.get().setBalance(child.get().getBalance() + task.get().getCoins());
-        historyRepository.persist(historyFactory.buildTaskHistory(familyDbId.get(), childId, task.get()));
-        publish(ApplicationOutboxEventType.TASK_APPROVED, familyDbId.get(), childId, null, task.get().getCoins(), child.get().getBalance());
+        historyRepository.persist(historyFactory.buildTaskHistory(familyDbId, childId, task.get()));
+        publish(ApplicationOutboxEventType.TASK_APPROVED, familyDbId, childId, null, task.get().getCoins(), child.get().getBalance());
         return supportService.loadFamilyData(familyId, childId, true);
     }
 
     OperationResult<FamilyDataResponse> purchaseItem(String familyId, int childId, long itemId) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId, childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -76,7 +78,7 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
-        Optional<ShopItemEntity> item = supportService.findActiveItem(familyDbId.get(), childId, itemId);
+        Optional<ShopItemEntity> item = supportService.findActiveItem(familyDbId, childId, itemId);
         if (item.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
         }
@@ -88,28 +90,29 @@ final class FamilyActionBalanceService {
         long rewardLimit = child.get().getDailyRewardLimit();
         if (rewardLimit > 0
             && supportService.dailyRewardSpend(childId,
-                supportService.startOfFamilyDay(familyDbId.get(), historyFactory.now())) + item.get().getPrice() > rewardLimit) {
+                supportService.startOfFamilyDay(familyDbId, historyFactory.now())) + item.get().getPrice() > rewardLimit) {
             return OperationResult.failure(BackendMessages.message("balance.rewardLimitReached"));
         }
 
         child.get().setBalance(child.get().getBalance() - item.get().getPrice());
-        historyRepository.persist(historyFactory.buildShopHistory(familyDbId.get(), childId, item.get()));
-        publish(ApplicationOutboxEventType.REWARD_PURCHASED, familyDbId.get(), childId, null, -item.get().getPrice(), child.get().getBalance());
+        historyRepository.persist(historyFactory.buildShopHistory(familyDbId, childId, item.get()));
+        publish(ApplicationOutboxEventType.REWARD_PURCHASED, familyDbId, childId, null, -item.get().getPrice(), child.get().getBalance());
         return supportService.loadFamilyData(familyId, childId, true);
     }
 
     OperationResult<FamilyDataResponse> deleteHistoryEntry(String familyId, int childId, long historyEntryId) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId, childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
 
-        Optional<HistoryEntryEntity> historyEntry = supportService.findHistoryEntry(familyDbId.get(), childId, historyEntryId);
+        Optional<HistoryEntryEntity> historyEntry = supportService.findHistoryEntry(familyDbId, childId, historyEntryId);
         if (historyEntry.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("history.entryNotFound"));
         }
@@ -126,15 +129,16 @@ final class FamilyActionBalanceService {
                                                       int childId,
                                                       int amount,
                                                       String description) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
         if (amount == 0) {
             return OperationResult.failure(BackendMessages.message("balance.amountZero"));
         }
 
-        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId, childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -143,8 +147,8 @@ final class FamilyActionBalanceService {
         }
 
         child.get().setBalance(child.get().getBalance() + amount);
-        historyRepository.persist(historyFactory.buildAdjustmentHistory(familyDbId.get(), childId, amount, description));
-        publish(ApplicationOutboxEventType.BALANCE_ADJUSTED, familyDbId.get(), childId, null, amount, child.get().getBalance());
+        historyRepository.persist(historyFactory.buildAdjustmentHistory(familyDbId, childId, amount, description));
+        publish(ApplicationOutboxEventType.BALANCE_ADJUSTED, familyDbId, childId, null, amount, child.get().getBalance());
         return supportService.loadFamilyData(familyId, childId, true);
     }
 

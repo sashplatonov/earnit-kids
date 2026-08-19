@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
+import com.sashplatonov.earnit.kids.service.family.FamilyOperationGuard;
 import com.sashplatonov.earnit.kids.service.database.BaseDataService;
 import com.sashplatonov.earnit.kids.service.observability.BackendKpiMetrics;
 @ApplicationScoped
@@ -48,6 +49,7 @@ public class SuperAdminService {
     private final BackendKpiMetrics backendKpiMetrics;
     private final ObjectMapper objectMapper;
     private final PasswordHasher passwordHasher;
+    private final FamilyOperationGuard familyOperationGuard;
 
     public SuperAdminFamiliesResponse getFamilies() {
         return backendKpiMetrics.recordValue("admin", "families", () ->
@@ -149,11 +151,12 @@ public class SuperAdminService {
 
     public OperationResult<String> regenerateFamilyToken(String familyId) {
         return backendKpiMetrics.recordResult("admin", "regenerate_family_token", () -> {
-            Optional<Integer> familyDbId = familyRepository.getDbId(familyId);
-            if (familyDbId.isEmpty()) {
-                return OperationResult.failure("FAMILY_NOT_FOUND", BackendMessages.message("family.familyNotFound"));
+            OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
+            if (familyDbIdResult.isFailure()) {
+                return familyDbIdResult.asFailure();
             }
-            List<ChildEntity> children = childRepository.getChildren(familyDbId.get());
+            int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
+            List<ChildEntity> children = childRepository.getChildren(familyDbId);
             if (children.isEmpty()) {
                 return OperationResult.failure(
                     "FAMILY_HAS_NO_CHILDREN",

@@ -45,12 +45,13 @@ final class FamilyActionRequestService {
                                                               int childId,
                                                               long taskId,
                                                               String note) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId, childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -58,12 +59,12 @@ final class FamilyActionRequestService {
             return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
-        Optional<TaskEntity> task = supportService.findActiveTask(familyDbId.get(), childId, taskId);
+        Optional<TaskEntity> task = supportService.findActiveTask(familyDbId, childId, taskId);
         if (task.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("tasks.notFound"));
         }
 
-        String taskLimitError = frequencyService.validateTaskRequestLimit(familyDbId.get(), childId, task.get());
+        String taskLimitError = frequencyService.validateTaskRequestLimit(familyDbId, childId, task.get());
         if (taskLimitError != null) {
             return OperationResult.failure("TASK_REQUEST_LIMIT_REACHED", taskLimitError);
         }
@@ -77,7 +78,7 @@ final class FamilyActionRequestService {
             ? success.value()
             : null;
 
-        PurchaseRequestEntity request = buildTaskRequest(familyDbId.get(), childId, task.get(), normalizedNote);
+        PurchaseRequestEntity request = buildTaskRequest(familyDbId, childId, task.get(), normalizedNote);
         purchaseRequestRepository.persist(request);
         purchaseRequestRepository.flush();
         publish(ApplicationOutboxEventType.TASK_REQUEST_CREATED, request, 0, null);
@@ -88,12 +89,13 @@ final class FamilyActionRequestService {
                                                             int childId,
                                                             long itemId,
                                                             String note) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId.get(), childId);
+        Optional<ChildEntity> child = supportService.findFamilyChild(familyDbId, childId);
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -101,12 +103,12 @@ final class FamilyActionRequestService {
             return OperationResult.failure(BackendMessages.message("family.childInactive"));
         }
 
-        Optional<ShopItemEntity> item = supportService.findActiveItem(familyDbId.get(), childId, itemId);
+        Optional<ShopItemEntity> item = supportService.findActiveItem(familyDbId, childId, itemId);
         if (item.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("shop.itemNotFound"));
         }
 
-        String itemLimitError = frequencyService.validateItemRequestLimit(familyDbId.get(), childId, item.get());
+        String itemLimitError = frequencyService.validateItemRequestLimit(familyDbId, childId, item.get());
         if (itemLimitError != null) {
             return OperationResult.failure("ITEM_REQUEST_LIMIT_REACHED", itemLimitError);
         }
@@ -120,7 +122,7 @@ final class FamilyActionRequestService {
             ? success.value()
             : null;
 
-        PurchaseRequestEntity request = buildPurchaseRequest(familyDbId.get(), childId, item.get(), normalizedNote);
+        PurchaseRequestEntity request = buildPurchaseRequest(familyDbId, childId, item.get(), normalizedNote);
         purchaseRequestRepository.persist(request);
         purchaseRequestRepository.flush();
         publish(ApplicationOutboxEventType.REWARD_REQUEST_CREATED, request, 0, null);
@@ -128,12 +130,13 @@ final class FamilyActionRequestService {
     }
 
     OperationResult<FamilyDataResponse> approveRequest(String familyId, Integer currentChildId, long requestId) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequestForUpdate(familyDbId.get(), requestId);
+        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequestForUpdate(familyDbId, requestId);
         if (request.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
@@ -141,7 +144,7 @@ final class FamilyActionRequestService {
             return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
         }
 
-        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId.get(), request.get().getChildId());
+        Optional<ChildEntity> child = supportService.findFamilyChildForUpdate(familyDbId, request.get().getChildId());
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -151,16 +154,16 @@ final class FamilyActionRequestService {
 
         Optional<ShopItemEntity> item = request.get().getItemId() == null
             ? Optional.empty()
-            : supportService.findActiveItem(familyDbId.get(), request.get().getChildId(), request.get().getItemId());
+            : supportService.findActiveItem(familyDbId, request.get().getChildId(), request.get().getItemId());
         Optional<TaskEntity> task = request.get().getTaskId() == null
             ? Optional.empty()
-            : supportService.findActiveTask(familyDbId.get(), request.get().getChildId(), request.get().getTaskId());
+            : supportService.findActiveTask(familyDbId, request.get().getChildId(), request.get().getTaskId());
 
         if (FamilyActionRequestSupport.isPurchase(request.get())) {
             long rewardLimit = child.get().getDailyRewardLimit();
             if (rewardLimit > 0
                 && supportService.dailyRewardSpend(request.get().getChildId(),
-                    supportService.startOfFamilyDay(familyDbId.get(), historyFactory.now())) + request.get().getCoins() > rewardLimit) {
+                    supportService.startOfFamilyDay(familyDbId, historyFactory.now())) + request.get().getCoins() > rewardLimit) {
                 return OperationResult.failure(BackendMessages.message("balance.rewardLimitReached"));
             }
             if (child.get().getBalance() < request.get().getCoins()) {
@@ -171,7 +174,7 @@ final class FamilyActionRequestService {
             child.get().setBalance(child.get().getBalance() + request.get().getCoins());
         }
 
-        historyRepository.persist(historyFactory.buildRequestHistory(familyDbId.get(), request.get(), item, task));
+        historyRepository.persist(historyFactory.buildRequestHistory(familyDbId, request.get(), item, task));
         request.get().setStatus(PurchaseRequestStatus.approved);
         publish(FamilyActionRequestSupport.isPurchase(request.get())
                 ? ApplicationOutboxEventType.REWARD_APPROVED : ApplicationOutboxEventType.TASK_APPROVED,
@@ -179,17 +182,18 @@ final class FamilyActionRequestService {
                 ? -request.get().getCoins() : request.get().getCoins(),
             child.get().getBalance());
         publishResolved(request.get(), RequestResolutionStatus.approved);
-        int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
+        int responseChildId = supportService.resolveResponseChildId(familyDbId, currentChildId, request.get().getChildId());
         return supportService.loadFamilyData(familyId, responseChildId, true);
     }
 
     OperationResult<FamilyDataResponse> rejectRequest(String familyId, Integer currentChildId, long requestId) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequestForUpdate(familyDbId.get(), requestId);
+        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequestForUpdate(familyDbId, requestId);
         if (request.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
@@ -202,17 +206,18 @@ final class FamilyActionRequestService {
                 ? ApplicationOutboxEventType.REWARD_REJECTED : ApplicationOutboxEventType.TASK_REJECTED,
             request.get(), 0, null);
         publishResolved(request.get(), RequestResolutionStatus.rejected);
-        int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
+        int responseChildId = supportService.resolveResponseChildId(familyDbId, currentChildId, request.get().getChildId());
         return supportService.loadFamilyData(familyId, responseChildId, true);
     }
 
     OperationResult<FamilyDataResponse> deleteRequest(String familyId, Integer currentChildId, long requestId) {
-        Optional<Integer> familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
 
-        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequest(familyDbId.get(), requestId);
+        Optional<PurchaseRequestEntity> request = supportService.findFamilyRequest(familyDbId, requestId);
         if (request.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("requests.notFound"));
         }
@@ -223,7 +228,7 @@ final class FamilyActionRequestService {
             return OperationResult.failure(BackendMessages.message("requests.alreadyProcessed"));
         }
 
-        int responseChildId = supportService.resolveResponseChildId(familyDbId.get(), currentChildId, request.get().getChildId());
+        int responseChildId = supportService.resolveResponseChildId(familyDbId, currentChildId, request.get().getChildId());
         if (isChildDeletingOwnRequest && FamilyActionRequestSupport.isPending(request.get())) {
             // EXPLAIN: A child cancelling their own pending request soft-cancels it (status = cancelled) so it stays visible in history instead of being physically deleted; rejected requests and parent deletes keep the physical-delete behavior.
             request.get().setStatus(PurchaseRequestStatus.cancelled);

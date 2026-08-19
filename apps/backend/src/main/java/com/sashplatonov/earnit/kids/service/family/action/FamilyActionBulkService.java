@@ -25,11 +25,12 @@ final class FamilyActionBulkService {
     }
 
     OperationResult<FamilyDataResponse> bulkTaskAction(String familyId, BulkTaskActionRequest request) {
-        var familyDbId = supportService.getFamilyDbId(familyId);
-        if (familyDbId.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("family.familyNotFound"));
+        OperationResult<Integer> familyDbIdResult = supportService.requireFamilyDbId(familyId);
+        if (familyDbIdResult.isFailure()) {
+            return familyDbIdResult.asFailure();
         }
-        var child = supportService.findFamilyChild(familyDbId.get(), request.childId());
+        int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
+        var child = supportService.findFamilyChild(familyDbId, request.childId());
         if (child.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("family.childNotFound"));
         }
@@ -45,7 +46,7 @@ final class FamilyActionBulkService {
         }
 
         Map<Long, TaskEntity> tasksByBusinessId = selectedEntitiesByBusinessId(
-            supportService.findTaskEntities(familyDbId.get(), request.childId()),
+            supportService.findTaskEntities(familyDbId, request.childId()),
             taskIds,
             TaskEntity::getTaskId
         );

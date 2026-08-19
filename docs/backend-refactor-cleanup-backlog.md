@@ -314,7 +314,7 @@ git commit -m "refactor(backend): extract ServiceResults failure factory across 
 
 ## P1-1: Extract `FamilyOperationGuard` for family ownership
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P1  
 **Depends on:** P0-3
 

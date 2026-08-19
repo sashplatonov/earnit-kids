@@ -22,4 +22,16 @@ public sealed interface OperationResult<T>
     default boolean isSuccess() {
         return this instanceof Success<T>;
     }
+
+    default boolean isFailure() {
+        return this instanceof Failure<T>;
+    }
+
+    // EXPLAIN: Reconstructs this failure as a value-less OperationResult<R> so callers can early-return a failure of any payload type without an unchecked cast.
+    default <R> OperationResult<R> asFailure() {
+        if (this instanceof Failure<T> f) {
+            return OperationResult.failure(f.errorCode(), f.message());
+        }
+        throw new IllegalStateException("asFailure() called on a success result");
+    }
 }
