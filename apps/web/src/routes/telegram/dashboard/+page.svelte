@@ -45,6 +45,7 @@
 
     // Redirect non-admins to the Telegram Mini App home
     onMount(() => {
+        document.body.classList.remove('admin-loading');
         if (!isAdmin) {
             // eslint-disable-next-line svelte/no-navigation-without-resolve
             goto('/telegram', { replaceState: true });
@@ -57,6 +58,7 @@
 
     function changePeriod(period: string) {
         if (period === selectedPeriod) return;
+        document.body.classList.add('admin-loading');
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         goto(`/telegram/dashboard?period=${period}`, { replaceState: true });
     }
@@ -175,6 +177,11 @@
     </div>
 {:else}
     <main class="dashboard-container">
+        {#if data.isLoading}
+            <div class="loading-overlay">
+                <div class="spinner"></div>
+            </div>
+        {/if}
         <header class="dashboard-header">
             <button class="back-btn" type="button" on:click={() => {
                 // eslint-disable-next-line svelte/no-navigation-without-resolve
@@ -785,6 +792,34 @@
         align-items: center;
         gap: 7px;
         margin: 13px 0 9px;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(2px);
+    }
+
+    .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #eceff6;
+        border-top: 3px solid var(--primary, #5c6fe7);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 
     .segment {
