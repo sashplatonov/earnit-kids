@@ -19,7 +19,10 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     const rawPeriod = url.searchParams.get('period') ?? '30d';
     const period = ['7d', '30d', '90d', 'all'].includes(rawPeriod) ? rawPeriod : '30d';
 
-    // Fetch aggregated dashboard data - session cookie is passed automatically
+    // Fetch aggregated dashboard data - session cookie is passed automatically.
+    // EXPLAIN: Each fetch is isolated so a transient failure of one endpoint
+    // EXPLAIN: never wipes out the metrics that did load. A single rejected
+    // EXPLAIN: Promise.all would otherwise null every section on the page.
     let overview = null;
     let coinEconomy = null;
     let taskEconomy = null;
@@ -29,13 +32,15 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     let retention = null;
     let rewards = null;
     let trends = null;
-    try {
-        const [dashboardRes, trendsRes] = await Promise.all([
-            fetch(`/api/admin/dashboard?period=${period}`),
-            fetch(`/api/admin/analytics/trends?period=${period}`),
-        ]);
-        if (dashboardRes.ok) {
-            const dashboard = await dashboardRes.json();
+
+    const [dashboardRes, trendsRes] = await Promise.allSettled([
+        fetch(`/api/admin/dashboard?period=${period}`),
+        fetch(`/api/admin/analytics/trends?period=${period}`),
+    ]);
+
+    if (dashboardRes.status === 'fulfilled' && dashboardRes.value.ok) {
+        try {
+            const dashboard = await dashboardRes.value.json();
             overview = { overview: dashboard.overview };
             coinEconomy = dashboard.coinEconomy;
             taskEconomy = dashboard.tasks;
@@ -44,12 +49,21 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
             activationFunnel = dashboard.activation;
             retention = dashboard.activity;
             rewards = dashboard.rewards;
+        } catch (e) {
+            console.error('Failed to parse admin dashboard response:', e);
         }
-        if (trendsRes.ok) {
-            trends = await trendsRes.json();
+    } else {
+        console.error('Admin dashboard fetch failed:', dashboardRes.status === 'rejected' ? dashboardRes.reason : `HTTP ${dashboardRes.status === 'fulfilled' ? dashboardRes.value.status : '?'}`);
+    }
+
+    if (trendsRes.status === 'fulfilled' && trendsRes.value.ok) {
+        try {
+            trends = await trendsRes.value.json();
+        } catch (e) {
+            console.error('Failed to parse admin trends response:', e);
         }
-    } catch (e) {
-        console.error('Failed to fetch admin analytics:', e);
+    } else {
+        console.error('Admin trends fetch failed:', trendsRes.status === 'rejected' ? trendsRes.reason : `HTTP ${trendsRes.status === 'fulfilled' ? trendsRes.value.status : '?'}`);
     }
 
     return {

@@ -255,6 +255,10 @@ export const adminMessages = {
         empty: {
             title: 'No data for the period',
             desc: 'No registered families yet. Metrics will appear as families start using the service.',
+            noActivityTitle: 'No activity for {period}',
+            noActivityDesc: 'Try a different period.',
+            unavailableTitle: 'Could not load data',
+            unavailableDesc: 'Try refreshing the page or choosing another period.',
         },
         tooltips: {
             selectInfo: 'Tap on ⓘ for metric explanation',

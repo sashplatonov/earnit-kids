@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestType;
+import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -160,6 +161,19 @@ class AdminAnalyticsRepositoryTest {
         // EXPLAIN: Sanity — median prices are never negative.
         assertThat(adminAnalyticsRepository.calcMedianRewardPrice(periodStart)).isNotNegative();
         assertThat(adminAnalyticsRepository.calcMedianPriceOfIssuedRewards(periodStart)).isNotNegative();
+    }
+
+    @Test
+    @Transactional
+    void balanceMetricsExposeTimeToFirstReward() {
+        // EXPLAIN: ADM-05 — the dashboard renders timeToFirstReward but the
+        // EXPLAIN: DTO previously never populated it, so the metric always
+        // EXPLAIN: displayed a dash. getBalanceMetrics must return the field
+        // EXPLAIN: (0.0 when no approved reward exists yet) and must not throw.
+        AdminCoinEconomyResponse.BalanceMetrics metrics =
+            adminAnalyticsRepository.getBalanceMetrics();
+        assertThat(metrics).isNotNull();
+        assertThat(metrics.getTimeToFirstReward()).isNotNegative();
     }
 
     private void markApprovedByExternalId(long externalId) {

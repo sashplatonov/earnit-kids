@@ -180,6 +180,8 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .setParameter("activeStatus", ChildStatus.ACTIVE.name())
             .getResultList();
 
+        double timeToFirstReward = calcMedianTimeToFirstReward();
+
         if (balances.isEmpty()) {
             return AdminCoinEconomyResponse.BalanceMetrics.builder()
                 .medianBalance(0)
@@ -188,6 +190,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
                 .zeroBalancePercent(0)
                 .highBalanceCount(0)
                 .highBalancePercent(0)
+                .timeToFirstReward(timeToFirstReward)
                 .build();
         }
 
@@ -213,7 +216,41 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .zeroBalancePercent(zeroPercent)
             .highBalanceCount(highCount)
             .highBalancePercent(highPercent)
+            .timeToFirstReward(timeToFirstReward)
             .build();
+    }
+
+    // EXPLAIN: ADM-05: median days from family creation to the family's first
+    // EXPLAIN: approved reward. This is an all-time metric (matches the
+    // EXPLAIN: "median after starting usage" tooltip), independent of the period.
+    private double calcMedianTimeToFirstReward() {
+        String sql = """
+            SELECT pr.createdAt, f.createdAt
+            FROM PurchaseRequestEntity pr
+            JOIN FamilyEntity f ON f.id = pr.familyId
+            WHERE pr.status = :approved
+            """;
+        List<Object[]> rows = entityManager.createQuery(sql, Object[].class)
+            .setParameter("approved", PurchaseRequestStatus.approved)
+            .getResultList();
+
+        if (rows.isEmpty()) return 0.0;
+
+        List<Double> days = new ArrayList<>();
+        for (Object[] row : rows) {
+            Instant rewardAt = (Instant) row[0];
+            Instant familyCreatedAt = (Instant) row[1];
+            if (rewardAt != null && familyCreatedAt != null && rewardAt.isAfter(familyCreatedAt)) {
+                days.add(ChronoUnit.DAYS.between(familyCreatedAt, rewardAt) + (double) (ChronoUnit.HOURS.between(familyCreatedAt, rewardAt) % 24) / 24.0);
+            }
+        }
+
+        if (days.isEmpty()) return 0.0;
+        days.sort(Double::compareTo);
+        int n = days.size();
+        return n % 2 == 0
+            ? (days.get(n / 2 - 1) + days.get(n / 2)) / 2.0
+            : days.get(n / 2);
     }
 
     public AdminCoinEconomyResponse.RewardMetrics getRewardMetrics(Instant periodStart) {

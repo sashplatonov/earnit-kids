@@ -224,7 +224,13 @@
             </div>
         </div>
 
-        {#if (overview?.overview?.totalFamilies ?? 0) === 0}
+        {#if overview == null}
+            <div class="empty-state" role="status">
+                <span class="empty-ico" aria-hidden="true">⚠️</span>
+                <b>{t('empty.unavailableTitle')}</b>
+                <small>{t('empty.unavailableDesc')}</small>
+            </div>
+        {:else if (overview?.overview?.totalFamilies ?? 0) === 0}
             <div class="empty-state" role="status">
                 <span class="empty-ico" aria-hidden="true">📭</span>
                 <b>{t('empty.title')}</b>

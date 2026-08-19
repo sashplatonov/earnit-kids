@@ -30,6 +30,8 @@ public class AdminCoinEconomyResponse {
         private int zeroBalancePercent;
         private int highBalanceCount;
         private int highBalancePercent;
+        // EXPLAIN: ADM-05: median days from family creation to first approved reward
+        private double timeToFirstReward;
     }
 
     @Data
