@@ -178,8 +178,8 @@ class TelegramBotServiceImplTest {
                 kb.rows().size() == 2
                 && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.MY_TASKS)
                 && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.REWARDS)
+                && kb.rows().get(1).buttons().size() == 1
                 && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.NAV_RECENT)
-                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.NAV_OPEN_APP)
             )
         );
     }
@@ -263,13 +263,11 @@ class TelegramBotServiceImplTest {
             eq(44L),
             eq("👧 Alex\n🪙 20 монет\n\n✅ Сейчас ничего не требует внимания"),
             argThat((TelegramReplyKeyboard kb) ->
-                kb.rows().size() == 3
+                kb.rows().size() == 2
                 && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.NAV_REQUESTS)
                 && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.NAV_COINS)
                 && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.NAV_RECENT)
                 && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.NAV_SELECT_CHILD)
-                && kb.rows().get(2).buttons().size() == 1
-                && kb.rows().get(2).buttons().get(0).label().equals(TelegramCopy.NAV_OPEN_APP)
             )
         );
     }
@@ -715,27 +713,6 @@ class TelegramBotServiceImplTest {
         verify(apiClient).removeReplyKeyboard(44L);
         verify(identities).markReplyKeyboardVersion(77L, 2);
         verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), any(String.class), any());
-    }
-
-    @Test
-    void miniAppButtonSendsInlineUrlButtonLikeSite() throws Exception {
-        TelegramIdentityService identities = mock(TelegramIdentityService.class);
-        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
-        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
-        TelegramConfig config = mock(TelegramConfig.class);
-        when(identities.recordWebhookUpdate(51L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
-        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
-        var service = service(identities, apiClient, callbacks, config);
-
-        service.handleUpdate(new ObjectMapper().readTree("""
-            {"update_id":51,"message":{"chat":{"id":44},"from":{"id":77},"text":"📱 MiniApp"}}
-            """));
-
-        // EXPLAIN: 📱 MiniApp is now a plain text button (KeyboardButton has no
-        // EXPLAIN: `url` field), so the bot answers with one inline URL button
-        // EXPLAIN: pointing at the Mini App, mirroring the 🌐 Сайт fallback.
-        verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.NAV_OPEN_APP), any());
-        verify(apiClient, never()).sendMessageWithReplyKeyboard(any(Long.class), any(String.class), any());
     }
 
     private TelegramBotServiceImpl service(TelegramIdentityService identities,

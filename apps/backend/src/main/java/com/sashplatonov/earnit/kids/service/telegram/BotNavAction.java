@@ -7,7 +7,6 @@ public enum BotNavAction {
     COINS("coins", TelegramCopy.NAV_COINS),
     RECENT("recent", TelegramCopy.NAV_RECENT),
     SELECT_CHILD("switch", TelegramCopy.NAV_SELECT_CHILD),
-    OPEN_APP("app", TelegramCopy.NAV_OPEN_APP),
     OPEN_SITE("site", TelegramCopy.NAV_OPEN_SITE);
 
     private final String actionCode;
