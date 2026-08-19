@@ -120,7 +120,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
             if (view.isPresent()) {
                 TelegramQuickActionResponse loaded = view.get();
                 String homeText = TelegramMenuFlow.startText(loaded);
-                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl, miniAppUrl);
+                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl);
                 TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
                     ? kb.childMain() : kb.parentMain();
                 // EXPLAIN: UX-01 — one-time reset: when the identity's stored

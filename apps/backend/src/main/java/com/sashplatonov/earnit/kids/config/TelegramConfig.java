@@ -62,7 +62,10 @@ public interface TelegramConfig {
     // EXPLAIN: UX-01 — bump this to force a one-time ReplyKeyboardRemove for
     // EXPLAIN: every identity whose stored version is behind, clearing any
     // EXPLAIN: stale cached reply keyboard on the Telegram client.
-    @WithDefault("1")
+    // EXPLAIN: Version 2 — bottom row switched to plain-text MiniApp + Сайт
+    // EXPLAIN: (both answered with inline URL buttons), replacing the web_app
+    // EXPLAIN: Mini App button.
+    @WithDefault("2")
     int replyKeyboardVersion();
 
     @WithDefault("true")

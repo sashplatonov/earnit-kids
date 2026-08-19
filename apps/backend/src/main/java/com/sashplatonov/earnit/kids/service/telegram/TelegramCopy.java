@@ -40,7 +40,7 @@ public final class TelegramCopy {
     public static final String NAV_COINS = TelegramBotEmoji.COINS + " Монеты";
     public static final String NAV_RECENT = TelegramBotEmoji.RECENT + " Последние";
     public static final String NAV_SELECT_CHILD = TelegramBotEmoji.CHILD + " Выбрать ребёнка";
-    public static final String NAV_OPEN_APP = TelegramBotEmoji.MINI_APP + " Приложение";
+    public static final String NAV_OPEN_APP = TelegramBotEmoji.MINI_APP + " MiniApp";
     public static final String NAV_OPEN_SITE = TelegramBotEmoji.SITE + " Сайт";
 
     // EXPLAIN: Dynamic button labels.

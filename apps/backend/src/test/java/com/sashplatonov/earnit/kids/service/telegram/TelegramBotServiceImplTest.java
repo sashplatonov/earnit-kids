@@ -179,7 +179,7 @@ class TelegramBotServiceImplTest {
                 && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.MY_TASKS)
                 && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.REWARDS)
                 && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.NAV_RECENT)
-                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.OPEN_APP)
+                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.NAV_OPEN_APP)
             )
         );
     }
@@ -718,19 +718,23 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
-    void openAppWebAppButtonNeverArrivesAsTextNavigation() throws Exception {
+    void miniAppButtonSendsInlineUrlButtonLikeSite() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
         TelegramConfig config = mock(TelegramConfig.class);
         when(identities.recordWebhookUpdate(51L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
         var service = service(identities, apiClient, callbacks, config);
 
         service.handleUpdate(new ObjectMapper().readTree("""
-            {"update_id":51,"message":{"chat":{"id":44},"from":{"id":77},"text":"📱 Приложение"}}
+            {"update_id":51,"message":{"chat":{"id":44},"from":{"id":77},"text":"📱 MiniApp"}}
             """));
 
-        verify(apiClient, never()).sendMessage(any(Long.class), any(String.class), any());
+        // EXPLAIN: 📱 MiniApp is now a plain text button (KeyboardButton has no
+        // EXPLAIN: `url` field), so the bot answers with one inline URL button
+        // EXPLAIN: pointing at the Mini App, mirroring the 🌐 Сайт fallback.
+        verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.NAV_OPEN_APP), any());
         verify(apiClient, never()).sendMessageWithReplyKeyboard(any(Long.class), any(String.class), any());
     }
 

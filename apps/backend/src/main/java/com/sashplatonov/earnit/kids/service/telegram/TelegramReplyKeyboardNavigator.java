@@ -30,12 +30,13 @@ public class TelegramReplyKeyboardNavigator {
         String label = message.path("text").asText("");
         BotNavAction.fromLabel(label).ifPresent(action -> {
             try {
-                // EXPLAIN: OPEN_APP is a web_app button — it opens the Mini App
-                // EXPLAIN: client-side and never sends text to the bot, so it
-                // EXPLAIN: never reaches this branch. OPEN_SITE is a plain text
-                // EXPLAIN: button (KeyboardButton has no `url` field), so it
-                // EXPLAIN: arrives here and is answered with one inline URL button.
-                if (action == BotNavAction.OPEN_SITE) {
+                // EXPLAIN: OPEN_APP and OPEN_SITE are plain text buttons
+                // EXPLAIN: (KeyboardButton has no `url` field), so their taps
+                // EXPLAIN: arrive here and are answered with one inline URL
+                // EXPLAIN: button — Mini App and public site respectively.
+                if (action == BotNavAction.OPEN_APP) {
+                    sendMiniAppLink(chatId);
+                } else if (action == BotNavAction.OPEN_SITE) {
                     sendSiteLink(chatId);
                 } else {
                     navigateByAction(chatId, telegramUserId, action.actionCode());
@@ -44,6 +45,18 @@ public class TelegramReplyKeyboardNavigator {
                 throw new IllegalStateException(e);
             }
         });
+    }
+
+    // EXPLAIN: UX-04 — a reply keyboard button cannot open an arbitrary external
+    // EXPLAIN: URL (only web_app Mini Apps). The Mini App button therefore sends
+    // EXPLAIN: a single compact message with the same heading and one URL button.
+    private void sendMiniAppLink(long chatId) throws Exception {
+        String miniAppUrl = config.miniAppUrl().orElse("");
+        if (miniAppUrl.isBlank()) {
+            return;
+        }
+        apiClient.sendMessage(chatId, TelegramCopy.NAV_OPEN_APP,
+            java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.NAV_OPEN_APP, miniAppUrl, null)));
     }
 
     // EXPLAIN: UX-04 — a reply keyboard button cannot open an arbitrary external
@@ -65,14 +78,13 @@ public class TelegramReplyKeyboardNavigator {
             return;
         }
         String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
-        String miniAppUrl = config.miniAppUrl().orElse("");
         quickActions.load(telegramUserId, TelegramMenuFlow.selectedChildId(action))
             .ifPresent(view -> {
                 try {
                     String navText = TelegramMenuFlow.navigationText(action, view);
                     TelegramReplyKeyboard replyKeyboard = "child".equals(view.role())
-                        ? new BotKeyboardFactory(null, miniAppUrl).childMain()
-                        : new BotKeyboardFactory(publicSiteUrl, miniAppUrl).parentMain();
+                        ? new BotKeyboardFactory(null).childMain()
+                        : new BotKeyboardFactory(publicSiteUrl).parentMain();
                     apiClient.sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
