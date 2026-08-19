@@ -1,24 +1,21 @@
 package com.sashplatonov.earnit.kids.resource.family;
 
 import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.service.family.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
-import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-abstract class FamilyResourceSupport {
+abstract class FamilyResourceSupport extends ResourceAuthSupport {
 
     protected final FamilyService familyService;
     protected final WebSocketNotificationService webSocketNotificationService;
@@ -30,23 +27,6 @@ abstract class FamilyResourceSupport {
         this.familyService = familyService;
         this.webSocketNotificationService = webSocketNotificationService;
         this.familyParentAccessService = familyParentAccessService;
-    }
-
-    protected AuthContext getAuthOrFail(ContainerRequestContext ctx) {
-        Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return prop instanceof AuthContext auth ? auth : null;
-    }
-
-    protected Response unauthorized() {
-        return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
-            .build();
-    }
-
-    protected Response badRequest(String message) {
-        return Response.status(Response.Status.BAD_REQUEST)
-            .entity(ErrorResponse.of(message, "BAD_REQUEST", 400))
-            .build();
     }
 
     protected <T> Response toResponse(OperationResult<T> result) {

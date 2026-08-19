@@ -146,7 +146,7 @@ git commit -m "refactor(backend): extract OperationResultResponses utility with 
 
 ## P0-2: Extract `ResourceAuthSupport` base + role guards
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P0  
 **Depends on:** P0-1
 
