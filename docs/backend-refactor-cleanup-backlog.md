@@ -74,7 +74,7 @@ suite and quality gates.
 
 ## P0-1: Extract `OperationResultResponses` utility
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P0  
 **Depends on:** -
 

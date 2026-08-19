@@ -5,12 +5,12 @@ import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
-import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.family.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
 
@@ -50,25 +50,15 @@ abstract class FamilyResourceSupport {
     }
 
     protected <T> Response toResponse(OperationResult<T> result) {
-        return switch (result) {
-            case OperationResult.Success<T> s -> Response.ok(s.value()).build();
-            case OperationResult.Failure<T> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), errorCodeOrBadRequest(f.errorCode()), 400)).build();
-        };
+        return OperationResultResponses.toOk(result);
     }
 
     protected Response toVoidResponse(OperationResult<Void> result) {
-        return switch (result) {
-            case OperationResult.Success<Void> ignored -> Response.ok(SimpleResponse.ok()).build();
-            case OperationResult.Failure<Void> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), errorCodeOrBadRequest(f.errorCode()), 400)).build();
-        };
+        return OperationResultResponses.toVoidOk(result);
     }
 
     protected String errorCodeOrBadRequest(String errorCode) {
-        return errorCode != null ? errorCode : "BAD_REQUEST";
+        return OperationResultResponses.errorCodeOrBadRequest(errorCode);
     }
 
     protected void notifyDataUpdated(AuthContext auth, Integer childId, OperationResult<FamilyDataResponse> result) {

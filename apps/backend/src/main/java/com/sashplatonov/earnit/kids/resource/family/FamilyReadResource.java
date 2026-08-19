@@ -12,6 +12,7 @@ import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.database.BaseDataService;
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -71,7 +72,7 @@ public class FamilyReadResource {
         OperationResult<FamilyDashboardShellResponse> result =
             familyService.loadFamilyShellData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
-        return toResponse(result);
+        return OperationResultResponses.toOk(result);
     }
 
     @GET
@@ -95,7 +96,7 @@ public class FamilyReadResource {
         OperationResult<FamilyDashboardDetailResponse> result =
             familyService.loadFamilyDetailData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
-        return toResponse(result);
+        return OperationResultResponses.toOk(result);
     }
 
     @GET
@@ -118,7 +119,7 @@ public class FamilyReadResource {
         }
 
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
-        return toResponse(familyService.getAnalyticsData(auth.familyId(), effectiveChildId, timeframe));
+        return OperationResultResponses.toOk(familyService.getAnalyticsData(auth.familyId(), effectiveChildId, timeframe));
     }
 
     @GET
@@ -147,7 +148,7 @@ public class FamilyReadResource {
             return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
-        return toResponse(familyService.getHistory(auth.familyId(), effectiveChildId, page, limit));
+        return OperationResultResponses.toOk(familyService.getHistory(auth.familyId(), effectiveChildId, page, limit));
     }
 
     @GET
@@ -169,7 +170,7 @@ public class FamilyReadResource {
             return unauthorized();
         }
 
-        return toResponse(familyService.getRequests(auth.familyId(), page, limit));
+        return OperationResultResponses.toOk(familyService.getRequests(auth.familyId(), page, limit));
     }
 
     @GET
@@ -204,18 +205,5 @@ public class FamilyReadResource {
         return Response.status(Response.Status.BAD_REQUEST)
             .entity(ErrorResponse.of(message, "BAD_REQUEST", 400))
             .build();
-    }
-
-    private <T> Response toResponse(OperationResult<T> result) {
-        return switch (result) {
-            case OperationResult.Success<T> s -> Response.ok(s.value()).build();
-            case OperationResult.Failure<T> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), errorCodeOrBadRequest(f.errorCode()), 400)).build();
-        };
-    }
-
-    private String errorCodeOrBadRequest(String errorCode) {
-        return errorCode != null ? errorCode : "BAD_REQUEST";
     }
 }
