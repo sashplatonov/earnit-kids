@@ -79,13 +79,14 @@ export const adminMessages = {
         accountConnectionsUnlinkTitle: 'Unlink Telegram?',
         accountConnectionsUnlinkText: 'The bot and Mini App will no longer be able to open this family from this Telegram account.',
         accountConnectionsCancel: 'Cancel',
-        dashboardTitle: 'Dashboard',
+        dashboardTitle: 'Statistics',
         dashboardDesc: 'Service usage and coin economy',
     },
     dashboard: {
         title: 'Dashboard',
         subtitle: 'All families · aggregated data',
         redirecting: 'Redirecting...',
+        back: 'Back',
         updatedAt: '{time}',
         aria: {
             tabs: 'Dashboard tabs',

@@ -149,9 +149,8 @@
     <h1 id="family-title">{$i18n.t('app.telegram.family.title')}</h1>
 
     {#if $appStore.isAdmin}
-        <a href="/telegram/dashboard" style="display: block; text-decoration: none; color: inherit; padding: 0.75rem 1rem; border: 1px solid var(--primary, #5c6fe7); border-radius: 8px; margin-bottom: 1rem; background: rgba(92,111,231,0.05);">
-            <strong style="color: var(--primary, #5c6fe7);">📊 {$i18n.t('admin.settings.dashboardTitle')}</strong>
-            <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: #666;">{$i18n.t('admin.settings.dashboardDesc')}</p>
+        <a href="/telegram/dashboard" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; padding: 0.75rem 1rem; border: 1px solid var(--primary, #5c6fe7); border-radius: 8px; margin-bottom: 1rem; background: rgba(92,111,231,0.05);">
+            <strong style="color: var(--primary, #5c6fe7); font-size: 1rem;">📊 {$i18n.t('admin.settings.dashboardTitle')}</strong>
         </a>
     {/if}
 
@@ -161,7 +160,7 @@
         <div class="flat">
             {#each $appStore.children as child (child.id)}
                 <div class="childrow-wrap">
-                    <button class:current={$appStore.currentChildId == child.id} class="childrow" type="button" disabled={switching} on:click={() => select(child.id)} aria-pressed={$appStore.currentChildId == child.id}>
+                    <button class:current={$appStore.currentChildId == child.id} class="childrow" type="button" disabled={switching} on:click={() => { select(child.id); openManage(child); }} aria-pressed={$appStore.currentChildId == child.id}>
                         <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
                         <span class="grow"><span class="name">{child.nickname}</span>{#if $appStore.currentChildId == child.id}<span class="badge"><TelegramIcon name="checkCircle" size={12} label={$i18n.t('app.telegram.family.currentChild')} />{$i18n.t('app.telegram.family.currentChild')}</span>{/if}</span>
                         {#if $appStore.currentChildId != child.id}<span class="balance"><TelegramCoin size={14} />{child.balance}</span>{/if}

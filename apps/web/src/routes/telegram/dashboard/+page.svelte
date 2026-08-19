@@ -176,6 +176,13 @@
 {:else}
     <main class="dashboard-container">
         <header class="dashboard-header">
+            <button class="back-btn" type="button" on:click={() => {
+                // eslint-disable-next-line svelte/no-navigation-without-resolve
+                goto('/telegram');
+            }}>
+                <TelegramIcon name="back" size={18} label={t('back')} />
+                <span>{t('back')}</span>
+            </button>
             <h1>{t('title')}</h1>
             <p class="subtitle">{t('subtitle')}</p>
         </header>
@@ -729,6 +736,8 @@
 <style>
     :global(.dashboard-container) {
         padding: 14px;
+        max-width: 800px;
+        margin: 0 auto;
         padding-bottom: calc(70px + env(safe-area-inset-bottom) + 12px);
         background: var(--bg, #f6f7fb);
         min-height: 100vh;
@@ -736,6 +745,21 @@
 
     .dashboard-header {
         margin-bottom: 14px;
+        position: relative;
+    }
+
+    .back-btn {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: transparent;
+        border: 0;
+        color: var(--primary, #5c6fe7);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+        margin-bottom: 8px;
     }
 
     .dashboard-header h1 {

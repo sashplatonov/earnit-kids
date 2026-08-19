@@ -43,7 +43,7 @@ class TelegramMenuBuilderTest {
 
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .doesNotContain("🔗 Публичный сайт");
+            .doesNotContain("🔗 Сайт");
     }
 
     @Test
@@ -52,9 +52,9 @@ class TelegramMenuBuilderTest {
 
         assertThat(menuBuilder().parentChildPicker(view, "https://example.test"))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("👧 Alex · 42", "🏠 Главное меню", "🔗 Публичный сайт");
+            .containsExactly("👧 Alex · 42", "🏠 Главное меню", "🔗 Сайт");
         assertThat(menuBuilder().parentChildPicker(view, "https://example.test"))
-            .filteredOn(button -> button.text().equals("🔗 Публичный сайт"))
+            .filteredOn(button -> button.text().equals("🔗 Сайт"))
             .extracting(TelegramBotApiClient.InlineButton::url, TelegramBotApiClient.InlineButton::urlKind)
             .containsExactly(tuple("https://example.test", "url"));
     }
@@ -65,10 +65,10 @@ class TelegramMenuBuilderTest {
 
         assertThat(menuBuilder().parentChildPicker(view, ""))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .doesNotContain("🔗 Публичный сайт");
+            .doesNotContain("🔗 Сайт");
         assertThat(menuBuilder().parentChildPicker(view, "   "))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .doesNotContain("🔗 Публичный сайт");
+            .doesNotContain("🔗 Сайт");
     }
 
     @Test

@@ -32,7 +32,7 @@ public final class TelegramCopy {
     public static final String RETRY = TelegramBotEmoji.REFRESH + " Повторить";
     public static final String CONFIRM = TelegramBotEmoji.APPROVE + " Подтвердить";
     public static final String CANCEL = TelegramBotEmoji.REJECT + " Отмена";
-    public static final String SHARE_SITE = TelegramBotEmoji.LINK + " Публичный сайт";
+    public static final String SHARE_SITE = TelegramBotEmoji.LINK + " Сайт";
 
     // EXPLAIN: Persistent reply keyboard labels (UX-01). Short labels keep the
     // EXPLAIN: bottom row balanced between two equal-width buttons.

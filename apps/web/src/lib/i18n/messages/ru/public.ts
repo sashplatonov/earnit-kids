@@ -1,6 +1,6 @@
 export const publicMessages = {
     shell: {
-        siteAria: 'Публичный сайт EarnIt Kids',
+        siteAria: 'Сайт EarnIt Kids',
         mainAria: 'Основное содержание',
         skipToContent: 'К содержанию',
         menuButton: 'Меню',

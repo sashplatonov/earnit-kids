@@ -110,8 +110,8 @@ export const appMessages = {
             tasks: 'Tasks',
             rewards: 'Rewards',
             family: 'Family',
-            publicSite: 'Public site',
-            publicSiteAria: 'Open the EarnIt Kids public site',
+            publicSite: 'Site',
+            publicSiteAria: 'Open the EarnIt Kids site',
         },
         childShell: {
             workspace: 'Child workspace',
