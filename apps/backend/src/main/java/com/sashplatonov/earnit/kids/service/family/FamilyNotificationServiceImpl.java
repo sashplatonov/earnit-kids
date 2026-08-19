@@ -17,7 +17,6 @@ import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 // EXPLAIN: Role-aware notification preferences. Parent and child keys are
@@ -47,6 +46,7 @@ public class FamilyNotificationServiceImpl implements FamilyNotificationService 
     @Inject private FamilyRepository families;
     @Inject private ChildRepository children;
     @Inject private FamilyNotificationPreferenceRepository preferences;
+    @Inject private ChildOwnershipService childOwnershipService;
 
     FamilyNotificationServiceImpl() {
     }
@@ -100,8 +100,7 @@ public class FamilyNotificationServiceImpl implements FamilyNotificationService 
             if (!CHILD_DEFAULTS.containsKey(key)) {
                 return ServiceResults.failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
             }
-            if (childId == null || children.findByIdOptional(childId)
-                .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId))
+            if (childId == null || childOwnershipService.findFamilyChild(familyDbId, childId)
                 .filter(child -> ChildStatus.ACTIVE.name().equals(child.getStatus()))
                 .isEmpty()) {
                 return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");

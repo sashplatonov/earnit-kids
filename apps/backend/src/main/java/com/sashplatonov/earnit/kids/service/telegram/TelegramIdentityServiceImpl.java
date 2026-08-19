@@ -3,7 +3,6 @@ package com.sashplatonov.earnit.kids.service.telegram;
 import com.sashplatonov.earnit.kids.domain.model.TelegramCallbackActionEntity;
 import com.sashplatonov.earnit.kids.domain.model.TelegramChildInvitationEntity;
 import com.sashplatonov.earnit.kids.domain.model.TelegramIdentityEntity;
-import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramCallbackActionRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramChildInvitationRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
@@ -28,9 +27,8 @@ public class TelegramIdentityServiceImpl implements TelegramIdentityService {
     @Inject private TelegramCallbackActionRepository callbacks;
     @Inject private TelegramWebhookUpdateRepository updates;
     @Inject private TelegramSecurityAuditEventRepository audits;
-    @Inject
-    ChildRepository children;
     @Inject private SecureTokenGenerator tokens;
+    @Inject private com.sashplatonov.earnit.kids.service.family.ChildOwnershipService childOwnershipService;
 
     TelegramIdentityServiceImpl() {
     }
@@ -92,7 +90,7 @@ public class TelegramIdentityServiceImpl implements TelegramIdentityService {
     @Override @Transactional
     public TelegramChildInvitationToken issueChildInvitation(Integer familyId, Integer childId, String issuedBy, Instant expiresAt, Instant now) {
         requireFutureExpiry(expiresAt, now);
-        if (children.findByIdOptional(childId).filter(child -> familyId.equals(child.getFamilyDbId())).isEmpty()) {
+        if (childOwnershipService.findFamilyChild(familyId, childId).isEmpty()) {
             throw new IllegalArgumentException("Child does not belong to family");
         }
         String token = tokens.generateHexToken(32);

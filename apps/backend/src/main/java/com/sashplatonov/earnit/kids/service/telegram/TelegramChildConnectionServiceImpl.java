@@ -5,10 +5,10 @@ import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.dto.response.ChildTelegramConnectionResponse;
 import com.sashplatonov.earnit.kids.dto.response.TelegramLinkLaunchResponse;
-import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
 import com.sashplatonov.earnit.kids.service.common.ServiceResults;
+import com.sashplatonov.earnit.kids.service.family.ChildOwnershipService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,10 +24,10 @@ public class TelegramChildConnectionServiceImpl implements TelegramChildConnecti
     private static final String UNAVAILABLE = "Telegram linking is not configured.";
 
     @Inject private FamilyRepository families;
-    @Inject private ChildRepository children;
     @Inject private TelegramIdentityRepository identities;
     @Inject private TelegramIdentityService identityService;
     @Inject private TelegramConfig config;
+    @Inject private ChildOwnershipService childOwnershipService;
     @Inject private TimeProvider timeProvider;
 
     TelegramChildConnectionServiceImpl() {
@@ -95,7 +95,6 @@ public class TelegramChildConnectionServiceImpl implements TelegramChildConnecti
         if (dbIdOpt.isEmpty()) {
             return Optional.empty();
         }
-        return children.findByIdOptional(childId)
-            .filter(child -> dbIdOpt.get().equals(child.getFamilyDbId()));
+        return childOwnershipService.findFamilyChild(dbIdOpt.get(), childId);
     }
 }

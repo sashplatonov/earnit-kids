@@ -71,7 +71,8 @@ public final class FamilyServiceImpl implements FamilyService {
             childRepository,
             objectMapper,
             analyticsService,
-            new FamilyOperationGuard(familyRepository)
+            new FamilyOperationGuard(familyRepository),
+            new ChildOwnershipService(childRepository)
         );
         this.familyFriendService = new FamilyFriendService(
             familyRepository,
@@ -149,7 +150,8 @@ public final class FamilyServiceImpl implements FamilyService {
             purchaseRequestRepository,
             dashboardMapper,
             mapper,
-            new FamilyOperationGuard(familyRepository)
+            new FamilyOperationGuard(familyRepository),
+            new ChildOwnershipService(childRepository)
         );
         FamilyCommandService familyCommandService = new FamilyCommandServiceImpl(
             familyRepository,
@@ -169,7 +171,8 @@ public final class FamilyServiceImpl implements FamilyService {
             childRepository,
             mapper,
             analyticsService,
-            new FamilyOperationGuard(familyRepository)
+            new FamilyOperationGuard(familyRepository),
+            new ChildOwnershipService(childRepository)
         );
         this.familyFriendService = new FamilyFriendService(
             familyRepository,

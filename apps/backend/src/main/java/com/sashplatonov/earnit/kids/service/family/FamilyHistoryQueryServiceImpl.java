@@ -40,6 +40,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
     private final FamilyDashboardMapper mapper;
     private final ObjectMapper objectMapper;
     private final FamilyOperationGuard familyOperationGuard;
+    private final ChildOwnershipService childOwnershipService;
 
     @Inject
     public FamilyHistoryQueryServiceImpl(ChildRepository childRepository,
@@ -49,7 +50,8 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
                                          PurchaseRequestRepository purchaseRequestRepository,
                                          FamilyDashboardMapper mapper,
                                          ObjectMapper objectMapper,
-                                         FamilyOperationGuard familyOperationGuard) {
+                                         FamilyOperationGuard familyOperationGuard,
+                                         ChildOwnershipService childOwnershipService) {
         this.childRepository = childRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
@@ -58,6 +60,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         this.mapper = mapper;
         this.objectMapper = objectMapper;
         this.familyOperationGuard = familyOperationGuard;
+        this.childOwnershipService = childOwnershipService;
     }
 
     @Override
@@ -114,8 +117,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
     }
 
     private Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
-        return childRepository.findByIdOptional(childId)
-            .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
+        return childOwnershipService.findFamilyChild(familyDbId, childId);
     }
 
     private List<TaskDto> loadTasks(int childId, Map<Long, String> lastCompletedAtByTaskId) {

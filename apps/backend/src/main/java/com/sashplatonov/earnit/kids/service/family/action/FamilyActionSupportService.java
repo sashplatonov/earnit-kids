@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
+import com.sashplatonov.earnit.kids.service.family.ChildOwnershipService;
 final class FamilyActionSupportService {
 
     private final FamilyRepository familyRepository;
@@ -35,6 +36,7 @@ final class FamilyActionSupportService {
     private final HistoryRepository historyRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final FamilyService familyService;
+    private final ChildOwnershipService childOwnershipService;
 
     FamilyActionSupportService(FamilyRepository familyRepository,
                                ChildRepository childRepository,
@@ -43,6 +45,18 @@ final class FamilyActionSupportService {
                                HistoryRepository historyRepository,
                                PurchaseRequestRepository purchaseRequestRepository,
                                FamilyService familyService) {
+        this(familyRepository, childRepository, taskRepository, shopItemRepository, historyRepository,
+            purchaseRequestRepository, familyService, new ChildOwnershipService(childRepository));
+    }
+
+    FamilyActionSupportService(FamilyRepository familyRepository,
+                               ChildRepository childRepository,
+                               TaskRepository taskRepository,
+                               ShopItemRepository shopItemRepository,
+                               HistoryRepository historyRepository,
+                               PurchaseRequestRepository purchaseRequestRepository,
+                               FamilyService familyService,
+                               ChildOwnershipService childOwnershipService) {
         this.familyRepository = familyRepository;
         this.childRepository = childRepository;
         this.taskRepository = taskRepository;
@@ -50,6 +64,7 @@ final class FamilyActionSupportService {
         this.historyRepository = historyRepository;
         this.purchaseRequestRepository = purchaseRequestRepository;
         this.familyService = familyService;
+        this.childOwnershipService = childOwnershipService;
     }
 
     Optional<Integer> getFamilyDbId(String familyId) {
@@ -64,8 +79,7 @@ final class FamilyActionSupportService {
     }
 
     Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
-        return childRepository.findByIdOptional(childId)
-            .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
+        return childOwnershipService.findFamilyChild(familyDbId, childId);
     }
 
     Optional<ChildEntity> findFamilyChildForUpdate(int familyDbId, int childId) {

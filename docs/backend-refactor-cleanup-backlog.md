@@ -392,7 +392,7 @@ git commit -m "refactor(backend): extract FamilyOperationGuard and fix FAMILY_NO
 
 ## P1-2: Extract `ChildOwnershipService`
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P1  
 **Depends on:** P1-1
 

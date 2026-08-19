@@ -32,6 +32,7 @@ class FamilyChildManagementService {
     private final ObjectMapper objectMapper;
     private final AnalyticsService analyticsService;
     private final FamilyOperationGuard familyOperationGuard;
+    private final ChildOwnershipService childOwnershipService;
 
     OperationResult<ChildInfo> createChild(String familyId, String childName) {
         OperationResult<Integer> familyDbIdResult = familyOperationGuard.requireFamilyDbId(familyId);
@@ -244,8 +245,7 @@ class FamilyChildManagementService {
     }
 
     private Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
-        return childRepository.findByIdOptional(childId)
-            .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
+        return childOwnershipService.findFamilyChild(familyDbId, childId);
     }
 
     private String serializeGroupOrder(List<String> groups) throws JsonProcessingException {

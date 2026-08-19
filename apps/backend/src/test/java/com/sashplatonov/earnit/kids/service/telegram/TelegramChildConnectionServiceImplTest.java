@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.dto.response.TelegramLinkLaunchResponse;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
+import com.sashplatonov.earnit.kids.service.family.ChildOwnershipService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,7 @@ class TelegramChildConnectionServiceImplTest {
     @Mock TelegramIdentityService identityService;
     @Mock TelegramConfig config;
     @Mock TimeProvider timeProvider;
+    @Mock ChildOwnershipService childOwnershipService;
 
     @InjectMocks TelegramChildConnectionServiceImpl service;
 
@@ -54,7 +56,7 @@ class TelegramChildConnectionServiceImplTest {
     @Test
     void connection_reportsUnlinkedWhenNoIdentity() {
         when(families.getDbId("family-1")).thenReturn(Optional.of(1));
-        when(children.findByIdOptional(15)).thenReturn(Optional.of(child(15, 1)));
+        when(childOwnershipService.findFamilyChild(1, 15)).thenReturn(Optional.of(child(15, 1)));
         when(identities.findActiveChild(15)).thenReturn(Optional.empty());
 
         OperationResult<ChildTelegramConnectionResponse> result = service.connection("family-1", 15);
@@ -68,7 +70,7 @@ class TelegramChildConnectionServiceImplTest {
     @Test
     void connection_reportsLinkedWhenIdentityExists() {
         when(families.getDbId("family-1")).thenReturn(Optional.of(1));
-        when(children.findByIdOptional(15)).thenReturn(Optional.of(child(15, 1)));
+        when(childOwnershipService.findFamilyChild(1, 15)).thenReturn(Optional.of(child(15, 1)));
         TelegramIdentityEntity identity = TelegramIdentityEntity.builder()
             .telegramUserId(42L)
             .role("child")
@@ -88,7 +90,7 @@ class TelegramChildConnectionServiceImplTest {
     @Test
     void invite_rejectsChildFromAnotherFamily() {
         when(families.getDbId("family-1")).thenReturn(Optional.of(1));
-        when(children.findByIdOptional(15)).thenReturn(Optional.of(child(15, 99)));
+        when(childOwnershipService.findFamilyChild(1, 15)).thenReturn(Optional.empty());
 
         OperationResult<?> result = service.invite("family-1", 15);
 
@@ -98,7 +100,7 @@ class TelegramChildConnectionServiceImplTest {
     @Test
     void invite_createsLaunchUrlWhenBotConfigured() {
         when(families.getDbId("family-1")).thenReturn(Optional.of(1));
-        when(children.findByIdOptional(15)).thenReturn(Optional.of(child(15, 1)));
+        when(childOwnershipService.findFamilyChild(1, 15)).thenReturn(Optional.of(child(15, 1)));
         when(config.botUsername()).thenReturn(Optional.of("earnit_bot"));
         when(identities.findActiveChild(15)).thenReturn(Optional.empty());
         when(timeProvider.now()).thenReturn(NOW);
@@ -117,7 +119,7 @@ class TelegramChildConnectionServiceImplTest {
     @Test
     void invite_failsWhenBotNotConfigured() {
         when(families.getDbId("family-1")).thenReturn(Optional.of(1));
-        when(children.findByIdOptional(15)).thenReturn(Optional.of(child(15, 1)));
+        when(childOwnershipService.findFamilyChild(1, 15)).thenReturn(Optional.of(child(15, 1)));
         when(config.botUsername()).thenReturn(Optional.empty());
 
         OperationResult<?> result = service.invite("family-1", 15);
@@ -128,7 +130,7 @@ class TelegramChildConnectionServiceImplTest {
     @Test
     void unlink_unlinksExistingIdentity() {
         when(families.getDbId("family-1")).thenReturn(Optional.of(1));
-        when(children.findByIdOptional(15)).thenReturn(Optional.of(child(15, 1)));
+        when(childOwnershipService.findFamilyChild(1, 15)).thenReturn(Optional.of(child(15, 1)));
         TelegramIdentityEntity identity = TelegramIdentityEntity.builder()
             .telegramUserId(42L)
             .role("child")
@@ -147,7 +149,7 @@ class TelegramChildConnectionServiceImplTest {
     @Test
     void unlink_succeedsEvenWhenNoIdentityLinked() {
         when(families.getDbId("family-1")).thenReturn(Optional.of(1));
-        when(children.findByIdOptional(15)).thenReturn(Optional.of(child(15, 1)));
+        when(childOwnershipService.findFamilyChild(1, 15)).thenReturn(Optional.of(child(15, 1)));
         when(identities.findActiveChild(15)).thenReturn(Optional.empty());
 
         OperationResult<Void> result = service.unlink("family-1", 15);
