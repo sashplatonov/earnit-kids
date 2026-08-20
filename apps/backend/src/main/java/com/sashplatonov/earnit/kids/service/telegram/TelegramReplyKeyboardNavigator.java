@@ -3,6 +3,8 @@ package com.sashplatonov.earnit.kids.service.telegram;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.config.TelegramConfig;
 
+import java.util.function.Supplier;
+
 // EXPLAIN: Routes persistent reply keyboard button taps to navigation content.
 // EXPLAIN: UX-01 — extracted from TelegramBotServiceImpl to keep the service
 // EXPLAIN: focused on webhook dispatch (SRP) and below the PMD GodClass gate.
@@ -12,7 +14,7 @@ public class TelegramReplyKeyboardNavigator {
     private final TelegramQuickActionService quickActions;
     private final TelegramMenuBuilder menuBuilder;
     private final TelegramConfig config;
-    private final TelegramBotApiClient apiClient;
+    private final Supplier<TelegramBotApiClient> apiClient;
 
     public TelegramReplyKeyboardNavigator(TelegramQuickActionService quickActions,
                                           TelegramMenuBuilder menuBuilder,
@@ -21,7 +23,7 @@ public class TelegramReplyKeyboardNavigator {
         this.quickActions = quickActions;
         this.menuBuilder = menuBuilder;
         this.config = config;
-        this.apiClient = apiClient;
+        this.apiClient = () -> apiClient;
     }
 
     public void handle(JsonNode message, long chatId, long telegramUserId) throws Exception {
@@ -50,7 +52,7 @@ public class TelegramReplyKeyboardNavigator {
         if (publicSiteUrl.isEmpty()) {
             return;
         }
-        apiClient.sendMessage(chatId, TelegramCopy.NAV_OPEN_SITE,
+        apiClient.get().sendMessage(chatId, TelegramCopy.NAV_OPEN_SITE,
             java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.NAV_OPEN_SITE, publicSiteUrl, null)));
     }
 
@@ -68,7 +70,7 @@ public class TelegramReplyKeyboardNavigator {
                     TelegramReplyKeyboard replyKeyboard = "child".equals(view.role())
                         ? new BotKeyboardFactory(null).childMain()
                         : new BotKeyboardFactory(publicSiteUrl).parentMain();
-                    apiClient.sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
+                    apiClient.get().sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }

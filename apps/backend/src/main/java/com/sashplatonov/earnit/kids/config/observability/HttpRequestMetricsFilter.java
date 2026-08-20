@@ -12,15 +12,17 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 
+import java.util.function.Supplier;
+
 @Provider
 @Priority(Priorities.USER)
 public class HttpRequestMetricsFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private static final String START_NANOS = "metrics.startNanos";
     private static final String REQUEST_PATH = "metrics.path";
-    private final HttpRequestMetricsRegistry metricsRegistry;
-    private final HttpResponsePayloadEstimator payloadEstimator;
-    private final SlowOperationDiagnostics slowOperationDiagnostics;
+    private final Supplier<HttpRequestMetricsRegistry> metricsRegistry;
+    private final Supplier<HttpResponsePayloadEstimator> payloadEstimator;
+    private final Supplier<SlowOperationDiagnostics> slowOperationDiagnostics;
 
     @Inject
     public HttpRequestMetricsFilter(
@@ -28,9 +30,9 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
         HttpResponsePayloadEstimator payloadEstimator,
         SlowOperationDiagnostics slowOperationDiagnostics
     ) {
-        this.metricsRegistry = metricsRegistry;
-        this.payloadEstimator = payloadEstimator;
-        this.slowOperationDiagnostics = slowOperationDiagnostics;
+        this.metricsRegistry = () -> metricsRegistry;
+        this.payloadEstimator = () -> payloadEstimator;
+        this.slowOperationDiagnostics = () -> slowOperationDiagnostics;
     }
 
     @Override
@@ -48,9 +50,9 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
         Object pathValue = requestContext.getProperty(REQUEST_PATH);
         String path = pathValue == null ? "/" : pathValue.toString();
 
-        long payloadBytes = payloadEstimator.estimate(requestContext, responseContext, path);
+        long payloadBytes = payloadEstimator.get().estimate(requestContext, responseContext, path);
 
-        metricsRegistry.record(
+        metricsRegistry.get().record(
             requestContext.getMethod(),
             path,
             responseContext.getStatus(),
@@ -58,7 +60,7 @@ public class HttpRequestMetricsFilter implements ContainerRequestFilter, Contain
             payloadBytes
         );
 
-        slowOperationDiagnostics.recordRequest(
+        slowOperationDiagnostics.get().recordRequest(
             requestContext.getMethod(),
             path,
             responseContext.getStatus(),

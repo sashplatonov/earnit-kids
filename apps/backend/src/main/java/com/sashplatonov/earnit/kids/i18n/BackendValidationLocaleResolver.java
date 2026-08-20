@@ -7,15 +7,16 @@ import org.hibernate.validator.spi.messageinterpolation.LocaleResolver;
 import org.hibernate.validator.spi.messageinterpolation.LocaleResolverContext;
 
 import java.util.Locale;
+import java.util.function.Supplier;
 
 @ApplicationScoped
 @Priority(1000)
 public class BackendValidationLocaleResolver implements LocaleResolver {
 
-    private final RequestLocaleContext requestLocaleContext;
+    private final Supplier<RequestLocaleContext> requestLocaleContext;
 
     public BackendValidationLocaleResolver(RequestLocaleContext requestLocaleContext) {
-        this.requestLocaleContext = requestLocaleContext;
+        this.requestLocaleContext = () -> requestLocaleContext;
     }
 
     @Override
@@ -36,7 +37,7 @@ public class BackendValidationLocaleResolver implements LocaleResolver {
         }
 
         try {
-            return BackendLocaleSupport.supportedOrDefault(requestLocaleContext.getLocale());
+            return BackendLocaleSupport.supportedOrDefault(requestLocaleContext.get().getLocale());
         } catch (ContextNotActiveException ex) {
             return RequestLocaleHolder.getLocale();
         }

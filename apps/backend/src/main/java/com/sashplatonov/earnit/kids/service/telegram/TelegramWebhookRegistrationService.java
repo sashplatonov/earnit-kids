@@ -9,6 +9,7 @@ import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.net.URI;
+import java.util.function.Supplier;
 
 @ApplicationScoped
 public class TelegramWebhookRegistrationService {
@@ -17,7 +18,7 @@ public class TelegramWebhookRegistrationService {
 
     private final TelegramFeatureGate featureGate;
     private final TelegramConfig config;
-    private final TelegramBotApiClient apiClient;
+    private final Supplier<TelegramBotApiClient> apiClient;
 
     @Inject
     public TelegramWebhookRegistrationService(TelegramFeatureGate featureGate,
@@ -25,7 +26,7 @@ public class TelegramWebhookRegistrationService {
                                               TelegramBotApiClient apiClient) {
         this.featureGate = featureGate;
         this.config = config;
-        this.apiClient = apiClient;
+        this.apiClient = () -> apiClient;
     }
 
     void onStart(@Observes StartupEvent ignored) {
@@ -54,7 +55,7 @@ public class TelegramWebhookRegistrationService {
 
     private void registerWithRateLimitRetry(URI webhookUrl, String secret) throws Exception {
         try {
-            apiClient.registerWebhook(webhookUrl, secret);
+            apiClient.get().registerWebhook(webhookUrl, secret);
         } catch (TelegramApiException exception) {
             if (exception.statusCode() != 429 || exception.retryAfterSeconds() <= 0) {
                 throw exception;
@@ -67,7 +68,7 @@ public class TelegramWebhookRegistrationService {
                 Thread.currentThread().interrupt();
                 throw interrupted;
             }
-            apiClient.registerWebhook(webhookUrl, secret);
+            apiClient.get().registerWebhook(webhookUrl, secret);
         }
     }
 

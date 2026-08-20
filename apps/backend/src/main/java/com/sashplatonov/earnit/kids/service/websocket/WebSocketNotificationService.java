@@ -24,7 +24,7 @@ public class WebSocketNotificationService {
     private static final String ACTIVE_SESSIONS_METRIC = "earnit.backend.websocket.active.sessions";
 
     private final OpenConnections openConnections;
-    private final ObjectMapper objectMapper;
+    private final java.util.function.Supplier<ObjectMapper> objectMapper;
     private final TimeProvider timeProvider;
     private final BackendKpiMetrics backendKpiMetrics;
     private final ConcurrentMap<String, WebSocketSessionInfo> sessions = new ConcurrentHashMap<>();
@@ -33,7 +33,7 @@ public class WebSocketNotificationService {
     public WebSocketNotificationService(OpenConnections openConnections, ObjectMapper objectMapper,
                                         TimeProvider timeProvider, BackendKpiMetrics backendKpiMetrics) {
         this.openConnections = openConnections;
-        this.objectMapper = objectMapper;
+        this.objectMapper = () -> objectMapper;
         this.timeProvider = timeProvider;
         this.backendKpiMetrics = backendKpiMetrics;
         backendKpiMetrics.registerGauge(
@@ -118,7 +118,7 @@ public class WebSocketNotificationService {
 
     private String encodeMessage(String type, Object data) {
         try {
-            return objectMapper.writeValueAsString(
+            return objectMapper.get().writeValueAsString(
                 new WebSocketEventResponse(type, data, timeProvider.now().toString())
             );
         } catch (JsonProcessingException ex) {

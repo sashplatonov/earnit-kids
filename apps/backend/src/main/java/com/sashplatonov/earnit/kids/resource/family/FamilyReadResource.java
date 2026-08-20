@@ -13,6 +13,7 @@ import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -32,6 +33,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
+import java.util.function.Supplier;
+
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -39,12 +42,17 @@ import org.jboss.logging.Logger;
 public class FamilyReadResource extends ResourceAuthSupport {
 
     private static final Logger LOG = Logger.getLogger(FamilyReadResource.class);
-    private final FamilyService familyService;
+    private final Supplier<FamilyService> familyService;
     private final BaseDataService baseDataService;
 
-    @Inject
     public FamilyReadResource(FamilyService familyService, BaseDataService baseDataService) {
-        this.familyService = familyService;
+        this.familyService = () -> familyService;
+        this.baseDataService = baseDataService;
+    }
+
+    @Inject
+    public FamilyReadResource(Provider<FamilyService> familyService, BaseDataService baseDataService) {
+        this.familyService = familyService::get;
         this.baseDataService = baseDataService;
     }
 
@@ -69,7 +77,7 @@ public class FamilyReadResource extends ResourceAuthSupport {
         LOG.infof("GET /api/data: role=%s, isAdmin=%s, familyId=%s, email=%s, childId=%s",
             auth.role(), auth.isAdmin(), auth.familyId(), auth.email(), effectiveChildId);
         OperationResult<FamilyDashboardShellResponse> result =
-            familyService.loadFamilyShellData(auth.familyId(), effectiveChildId, auth.isAdmin());
+            familyService.get().loadFamilyShellData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
         return OperationResultResponses.toOk(result);
     }
@@ -93,7 +101,7 @@ public class FamilyReadResource extends ResourceAuthSupport {
 
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
         OperationResult<FamilyDashboardDetailResponse> result =
-            familyService.loadFamilyDetailData(auth.familyId(), effectiveChildId, auth.isAdmin());
+            familyService.get().loadFamilyDetailData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
         return OperationResultResponses.toOk(result);
     }
@@ -118,7 +126,7 @@ public class FamilyReadResource extends ResourceAuthSupport {
         }
 
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
-        return OperationResultResponses.toOk(familyService.getAnalyticsData(auth.familyId(), effectiveChildId, timeframe));
+        return OperationResultResponses.toOk(familyService.get().getAnalyticsData(auth.familyId(), effectiveChildId, timeframe));
     }
 
     @GET
@@ -147,7 +155,7 @@ public class FamilyReadResource extends ResourceAuthSupport {
             return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
-        return OperationResultResponses.toOk(familyService.getHistory(auth.familyId(), effectiveChildId, page, limit));
+        return OperationResultResponses.toOk(familyService.get().getHistory(auth.familyId(), effectiveChildId, page, limit));
     }
 
     @GET
@@ -169,7 +177,7 @@ public class FamilyReadResource extends ResourceAuthSupport {
             return unauthorized();
         }
 
-        return OperationResultResponses.toOk(familyService.getRequests(auth.familyId(), page, limit));
+        return OperationResultResponses.toOk(familyService.get().getRequests(auth.familyId(), page, limit));
     }
 
     @GET

@@ -6,6 +6,7 @@ import com.sashplatonov.earnit.kids.service.family.FamilyNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -17,15 +18,21 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.function.Supplier;
+
 @Path("/api/family/notifications")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class FamilyNotificationResource extends ResourceAuthSupport {
-    private final FamilyNotificationService notifications;
+    private final Supplier<FamilyNotificationService> notifications;
+
+    public FamilyNotificationResource(FamilyNotificationService notifications) {
+        this.notifications = () -> notifications;
+    }
 
     @Inject
-    public FamilyNotificationResource(FamilyNotificationService notifications) {
-        this.notifications = notifications;
+    public FamilyNotificationResource(Provider<FamilyNotificationService> notifications) {
+        this.notifications = notifications::get;
     }
 
     @GET
@@ -35,7 +42,7 @@ public class FamilyNotificationResource extends ResourceAuthSupport {
             return authFailure;
         }
         var auth = authContext(context);
-        return response(notifications.getSettings(auth.familyId()));
+        return response(notifications.get().getSettings(auth.familyId()));
     }
 
     @PUT
@@ -46,7 +53,7 @@ public class FamilyNotificationResource extends ResourceAuthSupport {
             return authFailure;
         }
         var auth = authContext(context);
-        OperationResult<Void> result = notifications.setPreference(
+        OperationResult<Void> result = notifications.get().setPreference(
             auth.familyId(), request.scope(), request.childId(), request.key(), request.enabled());
         return OperationResultResponses.toVoidOk(result);
     }

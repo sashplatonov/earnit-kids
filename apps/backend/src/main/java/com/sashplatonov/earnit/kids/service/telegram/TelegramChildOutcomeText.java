@@ -10,20 +10,21 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 // EXPLAIN: Renders the child-facing outcome notification text for approved,
 // EXPLAIN: rejected, or parent-granted tasks/rewards. Kept out of the composer
 // EXPLAIN: so the composer stays within the PMD GodClass guardrail (SRP).
 @ApplicationScoped
 public class TelegramChildOutcomeText {
-    private final PurchaseRequestRepository requests;
-    private final ShopItemRepository shopItems;
+    private final Supplier<PurchaseRequestRepository> requests;
+    private final Supplier<ShopItemRepository> shopItems;
 
     @Inject
     public TelegramChildOutcomeText(PurchaseRequestRepository requests,
                                     ShopItemRepository shopItems) {
-        this.requests = requests;
-        this.shopItems = shopItems;
+        this.requests = () -> requests;
+        this.shopItems = () -> shopItems;
     }
 
     public String text(ApplicationOutboxEventEntity event) {
@@ -65,7 +66,7 @@ public class TelegramChildOutcomeText {
         if (event.getRequestId() == null) {
             return Optional.empty();
         }
-        return requests.findByIdOptional(event.getRequestId());
+        return requests.get().findByIdOptional(event.getRequestId());
     }
 
     private String title(PurchaseRequestEntity request) {
@@ -73,7 +74,7 @@ public class TelegramChildOutcomeText {
             return request.getTaskName();
         }
         if (request.getItemId() != null) {
-            return shopItems.findByIdOptional(request.getItemId())
+            return shopItems.get().findByIdOptional(request.getItemId())
                 .map(ShopItemEntity::getName)
                 .orElse(null);
         }

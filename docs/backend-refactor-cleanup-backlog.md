@@ -1039,7 +1039,7 @@ git commit -m "fix(backend): restore V39 migration test startup"
 
 ## P0-5: Remove SpotBugs ownership-leak suppressions
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** P0-4
 

@@ -13,13 +13,14 @@ import jakarta.inject.Inject;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 // EXPLAIN: Composes Telegram notification copy and buttons for outbox events so
 // EXPLAIN: the delivery processor stays focused on transport (SRP guardrail).
 @ApplicationScoped
 public class TelegramNotificationComposer {
-    private final ChildRepository children;
-    private final PurchaseRequestRepository requests;
+    private final Supplier<ChildRepository> children;
+    private final Supplier<PurchaseRequestRepository> requests;
     private final ShopItemRepository shopItems;
     private final TelegramCallbackService callbacks;
     private final TelegramChildOutcomeText outcomeText;
@@ -30,8 +31,8 @@ public class TelegramNotificationComposer {
                                         ShopItemRepository shopItems,
                                         TelegramCallbackService callbacks,
                                         TelegramChildOutcomeText outcomeText) {
-        this.children = children;
-        this.requests = requests;
+        this.children = () -> children;
+        this.requests = () -> requests;
         this.shopItems = shopItems;
         this.callbacks = callbacks;
         this.outcomeText = outcomeText;
@@ -122,14 +123,14 @@ public class TelegramNotificationComposer {
         if (event.getRequestId() == null) {
             return Optional.empty();
         }
-        return requests.findByIdOptional(event.getRequestId());
+        return requests.get().findByIdOptional(event.getRequestId());
     }
 
     private Optional<ChildEntity> child(Integer childId) {
         if (childId == null) {
             return Optional.empty();
         }
-        return children.findByIdOptional(childId);
+        return children.get().findByIdOptional(childId);
     }
 
     private String title(PurchaseRequestEntity request) {

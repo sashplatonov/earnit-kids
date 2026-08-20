@@ -10,14 +10,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @ApplicationScoped
 public class TelegramQuickActionServiceImpl implements TelegramQuickActionService {
     private static final int MAX_ITEMS = 5;
     private final TelegramIdentityService identities;
-    private final FamilyRepository families;
-    private final FamilyService familyService;
-    private final FamilyActionService actions;
+    private final Supplier<FamilyRepository> families;
+    private final Supplier<FamilyService> familyService;
+    private final Supplier<FamilyActionService> actions;
 
     @Inject
     public TelegramQuickActionServiceImpl(TelegramIdentityService identities,
@@ -25,9 +26,9 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
                                           FamilyService familyService,
                                           FamilyActionService actions) {
         this.identities = identities;
-        this.families = families;
-        this.familyService = familyService;
-        this.actions = actions;
+        this.families = () -> families;
+        this.familyService = () -> familyService;
+        this.actions = () -> actions;
     }
 
     @Override
@@ -53,31 +54,31 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
     @Override
     public OperationResult<TelegramQuickActionResponse> requestTask(long telegramUserId, int childId, long taskId) {
         return mutate(telegramUserId, childId, false,
-            familyId -> actions.requestTaskCompletion(familyId, childId, taskId, null));
+            familyId -> actions.get().requestTaskCompletion(familyId, childId, taskId, null));
     }
 
     @Override
     public OperationResult<TelegramQuickActionResponse> requestReward(long telegramUserId, int childId, long rewardId) {
         return mutate(telegramUserId, childId, false,
-            familyId -> actions.requestItemPurchase(familyId, childId, rewardId, null));
+            familyId -> actions.get().requestItemPurchase(familyId, childId, rewardId, null));
     }
 
     @Override
     public OperationResult<TelegramQuickActionResponse> approveRequest(long telegramUserId, int childId, long requestId) {
         return mutate(telegramUserId, childId, true,
-            familyId -> actions.approveRequest(familyId, childId, requestId));
+            familyId -> actions.get().approveRequest(familyId, childId, requestId));
     }
 
     @Override
     public OperationResult<TelegramQuickActionResponse> rejectRequest(long telegramUserId, int childId, long requestId) {
         return mutate(telegramUserId, childId, true,
-            familyId -> actions.rejectRequest(familyId, childId, requestId));
+            familyId -> actions.get().rejectRequest(familyId, childId, requestId));
     }
 
     @Override
     public OperationResult<TelegramQuickActionResponse> adjustBalance(long telegramUserId, int childId, int amount) {
         return mutate(telegramUserId, childId, true,
-            familyId -> actions.adjustBalance(familyId, childId, amount, "Telegram quick action"));
+            familyId -> actions.get().adjustBalance(familyId, childId, amount, "Telegram quick action"));
     }
 
     private OperationResult<TelegramQuickActionResponse> mutate(long telegramUserId,
@@ -113,11 +114,11 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
     }
 
     private Optional<String> familyId(Integer familyDbId) {
-        return families.findFamilyIdByDbId(familyDbId);
+        return families.get().findFamilyIdByDbId(familyDbId);
     }
 
     private Optional<FamilyDataResponse> familyData(String familyId, Integer childId, boolean parent) {
-        OperationResult<FamilyDataResponse> result = familyService.loadFamilyData(familyId, childId, parent);
+        OperationResult<FamilyDataResponse> result = familyService.get().loadFamilyData(familyId, childId, parent);
         if (result instanceof OperationResult.Success<FamilyDataResponse> success) {
             return Optional.of(success.value());
         }

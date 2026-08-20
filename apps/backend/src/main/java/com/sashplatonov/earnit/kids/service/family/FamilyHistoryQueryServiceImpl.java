@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,13 +33,13 @@ import java.util.Optional;
 public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQueryService {
     private static final int MAX_PAGE_SIZE = 100;
 
-    private final ChildRepository childRepository;
+    private final Supplier<ChildRepository> childRepository;
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
-    private final HistoryRepository historyRepository;
-    private final PurchaseRequestRepository purchaseRequestRepository;
+    private final Supplier<HistoryRepository> historyRepository;
+    private final Supplier<PurchaseRequestRepository> purchaseRequestRepository;
     private final FamilyDashboardMapper mapper;
-    private final ObjectMapper objectMapper;
+    private final Supplier<ObjectMapper> objectMapper;
     private final FamilyOperationGuard familyOperationGuard;
     private final ChildOwnershipService childOwnershipService;
     private final HistoryDtoMapper historyDtoMapper;
@@ -56,13 +57,13 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
                                          ChildOwnershipService childOwnershipService,
                                          HistoryDtoMapper historyDtoMapper,
                                          RelatedEntityHydrator relatedEntityHydrator) {
-        this.childRepository = childRepository;
+        this.childRepository = () -> childRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
-        this.historyRepository = historyRepository;
-        this.purchaseRequestRepository = purchaseRequestRepository;
+        this.historyRepository = () -> historyRepository;
+        this.purchaseRequestRepository = () -> purchaseRequestRepository;
         this.mapper = mapper;
-        this.objectMapper = objectMapper;
+        this.objectMapper = () -> objectMapper;
         this.familyOperationGuard = familyOperationGuard;
         this.childOwnershipService = childOwnershipService;
         this.historyDtoMapper = historyDtoMapper;
@@ -81,8 +82,8 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         }
 
         PageRequest pageRequest = PageRequest.of(page, limit, MAX_PAGE_SIZE);
-        List<HistoryEntryEntity> rows = historyRepository.getHistory(childId, pageRequest.limit(), pageRequest.offset());
-        int total = historyRepository.getHistoryCount(childId);
+        List<HistoryEntryEntity> rows = historyRepository.get().getHistory(childId, pageRequest.limit(), pageRequest.offset());
+        int total = historyRepository.get().getHistoryCount(childId);
         List<TaskDto> tasks = loadTasks(childId, Map.of());
         List<ShopItemDto> shopItems = loadShopItems(childId, Map.of());
         Map<Long, TaskDto> taskMap = buildTaskMap(tasks);
@@ -102,8 +103,8 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         }
         int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
         PageRequest pageRequest = PageRequest.of(page, limit, MAX_PAGE_SIZE);
-        List<PurchaseRequestEntity> rows = purchaseRequestRepository.getRequests(familyDbId, pageRequest.limit(), pageRequest.offset());
-        int total = purchaseRequestRepository.getRequestsCount(familyDbId);
+        List<PurchaseRequestEntity> rows = purchaseRequestRepository.get().getRequests(familyDbId, pageRequest.limit(), pageRequest.offset());
+        int total = purchaseRequestRepository.get().getRequestsCount(familyDbId);
         Map<Long, TaskDto> taskMap = new LinkedHashMap<>();
         Map<Long, ShopItemDto> shopMap = new LinkedHashMap<>();
         rows.stream()
@@ -126,13 +127,13 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
 
     private List<TaskDto> loadTasks(int childId, Map<Long, String> lastCompletedAtByTaskId) {
         return taskRepository.getTasks(childId).stream()
-            .map(task -> mapper.toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId()), objectMapper))
+            .map(task -> mapper.toTaskDto(task, lastCompletedAtByTaskId.get(task.getTaskId()), objectMapper.get()))
             .toList();
     }
 
     private List<ShopItemDto> loadShopItems(int childId, Map<Long, String> lastPurchasedAtByItemId) {
         return shopItemRepository.getShopItems(childId).stream()
-            .map(shopItem -> mapper.toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId()), objectMapper))
+            .map(shopItem -> mapper.toShopItemDto(shopItem, lastPurchasedAtByItemId.get(shopItem.getItemId()), objectMapper.get()))
             .toList();
     }
 

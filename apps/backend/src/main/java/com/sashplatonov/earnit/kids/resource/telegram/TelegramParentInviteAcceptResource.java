@@ -11,6 +11,7 @@ import com.sashplatonov.earnit.kids.service.telegram.TelegramParentInvitationSer
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -19,6 +20,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.function.Supplier;
+
 @Path("/api/telegram/parents/invite/accept")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -26,10 +29,9 @@ public class TelegramParentInviteAcceptResource {
     private final TelegramParentInvitationService invitations;
     private final TelegramFeatureGate featureGate;
     private final CookieBuilder cookieBuilder;
-    private final FamilyRepository families;
+    private final Supplier<FamilyRepository> families;
     private final TimeProvider timeProvider;
 
-    @Inject
     public TelegramParentInviteAcceptResource(TelegramParentInvitationService invitations,
                                               TelegramFeatureGate featureGate,
                                               CookieBuilder cookieBuilder,
@@ -38,7 +40,20 @@ public class TelegramParentInviteAcceptResource {
         this.invitations = invitations;
         this.featureGate = featureGate;
         this.cookieBuilder = cookieBuilder;
-        this.families = families;
+        this.families = () -> families;
+        this.timeProvider = timeProvider;
+    }
+
+    @Inject
+    public TelegramParentInviteAcceptResource(TelegramParentInvitationService invitations,
+                                              TelegramFeatureGate featureGate,
+                                              CookieBuilder cookieBuilder,
+                                              Provider<FamilyRepository> families,
+                                              TimeProvider timeProvider) {
+        this.invitations = invitations;
+        this.featureGate = featureGate;
+        this.cookieBuilder = cookieBuilder;
+        this.families = families::get;
         this.timeProvider = timeProvider;
     }
 
@@ -50,7 +65,7 @@ public class TelegramParentInviteAcceptResource {
         return switch (invitations.accept(request.token(), request.initData(), request.email(), timeProvider.now())) {
             case OperationResult.Success<TelegramIdentityService.TelegramIdentity> success -> {
                 var identity = success.value();
-                String familyId = families.findFamilyIdByDbId(identity.familyId()).orElse("family-" + identity.familyId());
+                String familyId = families.get().findFamilyIdByDbId(identity.familyId()).orElse("family-" + identity.familyId());
                 Response.ResponseBuilder response = Response.ok(AuthResponse.success("admin", familyId));
                 cookieBuilder.buildAuthCookies(
                     request.email(), "admin", familyId, null, false, "editor")

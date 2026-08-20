@@ -12,16 +12,17 @@ import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 
 import java.util.Locale;
+import java.util.function.Supplier;
 
 @Provider
 @Priority(Priorities.AUTHENTICATION - 10)
 public class RequestLocaleFilter implements ContainerRequestFilter, ContainerResponseFilter {
     public static final String REQUEST_LOCALE_PROPERTY = "request.locale";
 
-    private final RequestLocaleContext requestLocaleContext;
+    private final Supplier<RequestLocaleContext> requestLocaleContext;
 
     public RequestLocaleFilter(RequestLocaleContext requestLocaleContext) {
-        this.requestLocaleContext = requestLocaleContext;
+        this.requestLocaleContext = () -> requestLocaleContext;
     }
 
     @Override
@@ -31,13 +32,13 @@ public class RequestLocaleFilter implements ContainerRequestFilter, ContainerRes
             requestContext.getHeaderString("Accept-Language")
         );
         RequestLocaleHolder.set(locale);
-        requestLocaleContext.setLocale(locale);
+        requestLocaleContext.get().setLocale(locale);
         requestContext.setProperty(REQUEST_LOCALE_PROPERTY, BackendLocaleSupport.toLanguageTag(locale));
     }
 
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
-        requestLocaleContext.clear();
+        requestLocaleContext.get().clear();
         RequestLocaleHolder.clear();
     }
 }

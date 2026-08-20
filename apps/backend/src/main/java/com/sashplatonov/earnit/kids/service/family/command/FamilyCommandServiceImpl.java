@@ -11,23 +11,23 @@ import com.sashplatonov.earnit.kids.service.common.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.sashplatonov.earnit.kids.service.analytics.AnalyticsService;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardQueryService;
 @ApplicationScoped
 @Slf4j
-@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class FamilyCommandServiceImpl implements FamilyCommandService {
 
-    private final FamilyRepository familyRepository;
-    private final ChildRepository childRepository;
+    private final Supplier<FamilyRepository> familyRepository;
+    private final Supplier<ChildRepository> childRepository;
     private final FamilyDashboardQueryService familyDashboardQueryService;
     private final AnalyticsService analyticsService;
     private final FamilyCommandSelectionService selectionService;
@@ -41,8 +41,8 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
                                     AnalyticsService analyticsService,
                                     ObjectMapper objectMapper) {
         FamilyCommandPayloadService payloadService = new FamilyCommandPayloadService(objectMapper);
-        this.familyRepository = familyRepository;
-        this.childRepository = childRepository;
+        this.familyRepository = () -> familyRepository;
+        this.childRepository = () -> childRepository;
         this.familyDashboardQueryService = familyDashboardQueryService;
         this.analyticsService = analyticsService;
         this.selectionService = new FamilyCommandSelectionService(familyRepository, payloadService);
@@ -50,18 +50,36 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
             familyRepository, childRepository, taskRepository, shopItemRepository, payloadService);
     }
 
+    @Inject
+    public FamilyCommandServiceImpl(Provider<FamilyRepository> familyRepository,
+                                    Provider<ChildRepository> childRepository,
+                                    FamilyDashboardQueryService familyDashboardQueryService,
+                                    TaskRepository taskRepository,
+                                    ShopItemRepository shopItemRepository,
+                                    AnalyticsService analyticsService,
+                                    ObjectMapper objectMapper) {
+        FamilyCommandPayloadService payloadService = new FamilyCommandPayloadService(objectMapper);
+        this.familyRepository = familyRepository::get;
+        this.childRepository = childRepository::get;
+        this.familyDashboardQueryService = familyDashboardQueryService;
+        this.analyticsService = analyticsService;
+        this.selectionService = new FamilyCommandSelectionService(familyRepository.get(), payloadService);
+        this.mutationService = new FamilyCommandMutationService(
+            familyRepository.get(), childRepository.get(), taskRepository, shopItemRepository, payloadService);
+    }
+
     @Override
     @Transactional
     public OperationResult<FamilyDataResponse> saveFamilyData(String familyId, Integer childId,
                                                               Map<String, Object> payload,
                                                               boolean adminSession) {
-        Optional<Integer> dbIdOpt = familyRepository.getDbId(familyId);
+        Optional<Integer> dbIdOpt = familyRepository.get().getDbId(familyId);
         if (dbIdOpt.isEmpty()) {
             return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
 
         int familyDbId = dbIdOpt.get();
-        List<ChildEntity> children = childRepository.getChildren(familyDbId);
+        List<ChildEntity> children = childRepository.get().getChildren(familyDbId);
         if (children.isEmpty()) {
             return familyDashboardQueryService.loadFamilyData(familyId, childId, adminSession);
         }
@@ -86,7 +104,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
         mutationService.syncFamilyRules(familyId, payload, adminSession);
         mutationService.syncTasks(familyDbId, selectedChildId, payload);
         mutationService.syncShopItems(familyDbId, selectedChildId, payload);
-        familyRepository.updateLastActivity(familyId);
+        familyRepository.get().updateLastActivity(familyId);
         analyticsService.invalidateCache(familyId);
 
         return familyDashboardQueryService.loadFamilyData(familyId, selectedChildId, adminSession);

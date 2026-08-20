@@ -6,19 +6,20 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 // EXPLAIN: Resolves a child only when it belongs to the given family, so callers never operate on a child from another family.
 @ApplicationScoped
 public class ChildOwnershipService {
 
-    private final ChildRepository childRepository;
+    private final Supplier<ChildRepository> childRepository;
 
     public ChildOwnershipService(ChildRepository childRepository) {
-        this.childRepository = childRepository;
+        this.childRepository = () -> childRepository;
     }
 
     public Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
-        return childRepository.findByIdOptional(childId)
+        return childRepository.get().findByIdOptional(childId)
             .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
     }
 }

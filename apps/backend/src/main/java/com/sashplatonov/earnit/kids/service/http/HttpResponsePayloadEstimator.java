@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.service.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Provider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -14,6 +15,7 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.function.Supplier;
 import java.util.Locale;
 import java.util.Map;
 
@@ -21,11 +23,10 @@ import java.util.Map;
 @Slf4j
 public class HttpResponsePayloadEstimator {
 
-    private final ObjectMapper objectMapper;
+    private final Supplier<ObjectMapper> objectMapper;
     private final boolean payloadEstimationEnabled;
     private final int maxCollectionSize;
 
-    @Inject
     public HttpResponsePayloadEstimator(
         ObjectMapper objectMapper,
         @ConfigProperty(
@@ -39,7 +40,18 @@ public class HttpResponsePayloadEstimator {
         )
         int maxCollectionSize
     ) {
-        this.objectMapper = objectMapper;
+        this.objectMapper = () -> objectMapper;
+        this.payloadEstimationEnabled = payloadEstimationEnabled;
+        this.maxCollectionSize = maxCollectionSize;
+    }
+
+    @Inject
+    public HttpResponsePayloadEstimator(Provider<ObjectMapper> objectMapper,
+                                        @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-enabled")
+                                        boolean payloadEstimationEnabled,
+                                        @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-max-collection-size")
+                                        int maxCollectionSize) {
+        this.objectMapper = objectMapper::get;
         this.payloadEstimationEnabled = payloadEstimationEnabled;
         this.maxCollectionSize = maxCollectionSize;
     }
@@ -74,7 +86,7 @@ public class HttpResponsePayloadEstimator {
         }
 
         try {
-            return objectMapper.writeValueAsBytes(entity).length;
+            return objectMapper.get().writeValueAsBytes(entity).length;
         } catch (Exception ex) {
             log.warn(
                 "Failed to estimate payload size for {} {}",

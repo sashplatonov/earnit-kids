@@ -16,6 +16,7 @@ import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -37,21 +38,31 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import java.util.function.Supplier;
+
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Family", description = "Family mutations and child-management endpoints")
 public class FamilyResource extends FamilyResourceSupport {
 
-    private final FamilyActionService familyActionService;
+    private final Supplier<FamilyActionService> familyActionService;
 
-    @Inject
     public FamilyResource(FamilyActionService familyActionService,
                           FamilyService familyService,
                           WebSocketNotificationService webSocketNotificationService,
                           FamilyParentAccessService familyParentAccessService) {
         super(familyService, webSocketNotificationService, familyParentAccessService);
-        this.familyActionService = familyActionService;
+        this.familyActionService = () -> familyActionService;
+    }
+
+    @Inject
+    public FamilyResource(Provider<FamilyActionService> familyActionService,
+                          FamilyService familyService,
+                          WebSocketNotificationService webSocketNotificationService,
+                          FamilyParentAccessService familyParentAccessService) {
+        super(familyService, webSocketNotificationService, familyParentAccessService);
+        this.familyActionService = familyActionService::get;
     }
 
     @POST
@@ -95,7 +106,7 @@ public class FamilyResource extends FamilyResourceSupport {
             return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.completeTask(auth.familyId(), childId, taskId);
+        OperationResult<FamilyDataResponse> result = familyActionService.get().completeTask(auth.familyId(), childId, taskId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -117,7 +128,7 @@ public class FamilyResource extends FamilyResourceSupport {
             return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.requestTaskCompletion(
+        OperationResult<FamilyDataResponse> result = familyActionService.get().requestTaskCompletion(
             auth.familyId(),
             effectiveChildId,
             taskId,
@@ -141,7 +152,7 @@ public class FamilyResource extends FamilyResourceSupport {
             return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.purchaseItem(auth.familyId(), childId, itemId);
+        OperationResult<FamilyDataResponse> result = familyActionService.get().purchaseItem(auth.familyId(), childId, itemId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -157,7 +168,7 @@ public class FamilyResource extends FamilyResourceSupport {
             return unauthorized();
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.bulkTaskAction(auth.familyId(), request);
+        OperationResult<FamilyDataResponse> result = familyActionService.get().bulkTaskAction(auth.familyId(), request);
         notifyDataUpdated(auth, request.childId(), result);
         return toResponse(result);
     }
@@ -182,7 +193,7 @@ public class FamilyResource extends FamilyResourceSupport {
         }
 
         try {
-            FamilyDataResponse payload = familyActionService.importTasks(auth.familyId(), request);
+            FamilyDataResponse payload = familyActionService.get().importTasks(auth.familyId(), request);
             notifyDataUpdated(auth, request.childId(), OperationResult.success(payload));
             return Response.ok(payload).build();
         } catch (ImportValidationException exception) {
@@ -210,7 +221,7 @@ public class FamilyResource extends FamilyResourceSupport {
         }
 
         try {
-            FamilyDataResponse payload = familyActionService.importShopItems(auth.familyId(), request);
+            FamilyDataResponse payload = familyActionService.get().importShopItems(auth.familyId(), request);
             notifyDataUpdated(auth, request.childId(), OperationResult.success(payload));
             return Response.ok(payload).build();
         } catch (ImportValidationException exception) {
@@ -235,7 +246,7 @@ public class FamilyResource extends FamilyResourceSupport {
             return badRequest(BackendMessages.message("errors.childIdRequired"));
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.requestItemPurchase(
+        OperationResult<FamilyDataResponse> result = familyActionService.get().requestItemPurchase(
             auth.familyId(),
             effectiveChildId,
             itemId,
@@ -257,7 +268,7 @@ public class FamilyResource extends FamilyResourceSupport {
         }
 
         OperationResult<FamilyDataResponse> result =
-            familyActionService.approveRequest(auth.familyId(), childId, requestId);
+            familyActionService.get().approveRequest(auth.familyId(), childId, requestId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -274,7 +285,7 @@ public class FamilyResource extends FamilyResourceSupport {
         }
 
         OperationResult<FamilyDataResponse> result =
-            familyActionService.rejectRequest(auth.familyId(), childId, requestId);
+            familyActionService.get().rejectRequest(auth.familyId(), childId, requestId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -293,7 +304,7 @@ public class FamilyResource extends FamilyResourceSupport {
         Integer effectiveChildId = auth.isChild() ? auth.childId() : childId;
 
         OperationResult<FamilyDataResponse> result =
-            familyActionService.deleteRequest(auth.familyId(), effectiveChildId, requestId);
+            familyActionService.get().deleteRequest(auth.familyId(), effectiveChildId, requestId);
         notifyDataUpdated(auth, effectiveChildId, result);
         return toResponse(result);
     }
@@ -313,7 +324,7 @@ public class FamilyResource extends FamilyResourceSupport {
         }
 
         OperationResult<FamilyDataResponse> result =
-            familyActionService.deleteHistoryEntry(auth.familyId(), childId, historyEntryId);
+            familyActionService.get().deleteHistoryEntry(auth.familyId(), childId, historyEntryId);
         notifyDataUpdated(auth, childId, result);
         return toResponse(result);
     }
@@ -329,7 +340,7 @@ public class FamilyResource extends FamilyResourceSupport {
             return unauthorized();
         }
 
-        OperationResult<FamilyDataResponse> result = familyActionService.adjustBalance(
+        OperationResult<FamilyDataResponse> result = familyActionService.get().adjustBalance(
             auth.familyId(),
             request.childId(),
             request.amount(),

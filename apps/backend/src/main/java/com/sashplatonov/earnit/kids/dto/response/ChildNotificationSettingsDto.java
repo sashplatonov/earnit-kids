@@ -7,4 +7,7 @@ public record ChildNotificationSettingsDto(
     String childName,
     List<NotificationPreferenceDto> preferences
 ) {
+    public ChildNotificationSettingsDto {
+        preferences = List.copyOf(preferences);
+    }
 }

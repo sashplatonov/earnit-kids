@@ -19,6 +19,7 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
@@ -31,13 +32,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 @ApplicationScoped
 public class AnalyticsServiceImpl implements AnalyticsService {
     private static final Duration DEFAULT_CACHE_TTL = Duration.ofSeconds(60);
 
-    private final FamilyRepository familyRepository;
-    private final HistoryRepository historyRepository;
+    private final Supplier<FamilyRepository> familyRepository;
+    private final Supplier<HistoryRepository> historyRepository;
     private final TaskRepository taskRepository;
     private final ShopItemRepository shopItemRepository;
     private final TimeProvider timeProvider;
@@ -45,7 +47,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final Duration analyticsCacheTtl;
     private final ConcurrentMap<String, AnalyticsCacheEntry> analyticsCache = new ConcurrentHashMap<>();
 
-    @Inject
     public AnalyticsServiceImpl(FamilyRepository familyRepository,
                                 HistoryRepository historyRepository,
                                 TaskRepository taskRepository,
@@ -54,8 +55,26 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                                 BackendKpiMetrics backendKpiMetrics,
                                 @ConfigProperty(name = "app.performance.cache.analytics-ttl")
                                 Duration analyticsCacheTtl) {
-        this.familyRepository = familyRepository;
-        this.historyRepository = historyRepository;
+        this.familyRepository = () -> familyRepository;
+        this.historyRepository = () -> historyRepository;
+        this.taskRepository = taskRepository;
+        this.shopItemRepository = shopItemRepository;
+        this.timeProvider = timeProvider;
+        this.backendKpiMetrics = backendKpiMetrics;
+        this.analyticsCacheTtl = analyticsCacheTtl == null ? DEFAULT_CACHE_TTL : analyticsCacheTtl;
+    }
+
+    @Inject
+    public AnalyticsServiceImpl(Provider<FamilyRepository> familyRepository,
+                                Provider<HistoryRepository> historyRepository,
+                                TaskRepository taskRepository,
+                                ShopItemRepository shopItemRepository,
+                                TimeProvider timeProvider,
+                                BackendKpiMetrics backendKpiMetrics,
+                                @ConfigProperty(name = "app.performance.cache.analytics-ttl")
+                                Duration analyticsCacheTtl) {
+        this.familyRepository = familyRepository::get;
+        this.historyRepository = historyRepository::get;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
         this.timeProvider = timeProvider;
@@ -83,7 +102,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 return OperationResult.success(cached.payload());
             }
 
-            Optional<Integer> familyDbIdOpt = familyRepository.getDbId(familyId);
+            Optional<Integer> familyDbIdOpt = familyRepository.get().getDbId(familyId);
             if (familyDbIdOpt.isEmpty()) {
                 return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
             }
@@ -131,8 +150,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         Instant previousStart = periodStart.minus(periodDuration);
 
         // EXPLAIN: Use SQL aggregation instead of loading full history rows.
-        var currentRaw = historyRepository.summarizePeriod(familyDbId, childId, periodStart, now);
-        var previousRaw = historyRepository.summarizePeriod(familyDbId, childId, previousStart, periodStart);
+        var currentRaw = historyRepository.get().summarizePeriod(familyDbId, childId, periodStart, now);
+        var previousRaw = historyRepository.get().summarizePeriod(familyDbId, childId, previousStart, periodStart);
 
         HistoryPeriodSummary currentSummary = normalizeSummary(currentRaw);
         HistoryPeriodSummary previousSummary = normalizeSummary(previousRaw);
@@ -152,15 +171,15 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         List<ShopItemEntity> items = queryShopItems(familyDbId, childId);
 
         List<AnalyticsResponse.AnalyticsStatItem> topTasks = buildTopTaskStatsAggregated(
-            historyRepository.topTasksInPeriod(familyDbId, childId, periodStart, now),
+            historyRepository.get().topTasksInPeriod(familyDbId, childId, periodStart, now),
             tasks
         );
         List<AnalyticsResponse.AnalyticsStatItem> topItems = buildTopItemStatsAggregated(
-            historyRepository.topItemsInPeriod(familyDbId, childId, periodStart, now),
+            historyRepository.get().topItemsInPeriod(familyDbId, childId, periodStart, now),
             items
         );
         List<AnalyticsResponse.AnalyticsTrendPoint> trends = buildTrendsAggregated(
-            historyRepository.dailyTrendInPeriod(familyDbId, childId, periodStart, now)
+            historyRepository.get().dailyTrendInPeriod(familyDbId, childId, periodStart, now)
         );
         List<AnalyticsResponse.AnalyticsRecommendation> recommendations = buildRecommendations(familyDbId, childId);
 
@@ -281,12 +300,12 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private List<HistoryEntryEntity> queryHistory(int familyDbId, Integer childId, Instant from, Instant to) {
         if (childId != null) {
-            return historyRepository.list(
+            return historyRepository.get().list(
                 "familyId = ?1 AND childId = ?2 AND createdAt >= ?3 AND createdAt < ?4",
                 familyDbId, childId, from, to);
         }
 
-        return historyRepository.list("familyId = ?1 AND createdAt >= ?2 AND createdAt < ?3",
+        return historyRepository.get().list("familyId = ?1 AND createdAt >= ?2 AND createdAt < ?3",
             familyDbId, from, to);
     }
 

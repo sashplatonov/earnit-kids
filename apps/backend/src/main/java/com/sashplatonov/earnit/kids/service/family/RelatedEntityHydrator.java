@@ -13,24 +13,25 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 // EXPLAIN: Batch-resolves task/shop entities referenced by history rows that are not already present in the supplied maps, so callers avoid N+1 lookups and never re-fetch entities already hydrated.
 @ApplicationScoped
 public class RelatedEntityHydrator {
 
-    private final TaskRepository taskRepository;
-    private final ShopItemRepository shopItemRepository;
+    private final Supplier<TaskRepository> taskRepository;
+    private final Supplier<ShopItemRepository> shopItemRepository;
     private final FamilyDashboardMapper mapper;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final Supplier<com.fasterxml.jackson.databind.ObjectMapper> objectMapper;
 
     public RelatedEntityHydrator(TaskRepository taskRepository,
                                  ShopItemRepository shopItemRepository,
                                  FamilyDashboardMapper mapper,
                                  com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
-        this.taskRepository = taskRepository;
-        this.shopItemRepository = shopItemRepository;
+        this.taskRepository = () -> taskRepository;
+        this.shopItemRepository = () -> shopItemRepository;
         this.mapper = mapper;
-        this.objectMapper = objectMapper;
+        this.objectMapper = () -> objectMapper;
     }
 
     public void hydrateMissingHistoryEntries(int familyDbId, int childId, List<HistoryEntryEntity> rows,
@@ -49,13 +50,13 @@ public class RelatedEntityHydrator {
             .toList();
 
         if (!missingTaskIds.isEmpty()) {
-            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, List.of(childId), missingTaskIds).stream()
-                .map(task -> mapper.toTaskDto(task, null, objectMapper))
+            taskRepository.get().findByFamilyAndChildAndTaskIds(familyDbId, List.of(childId), missingTaskIds).stream()
+                .map(task -> mapper.toTaskDto(task, null, objectMapper.get()))
                 .forEach(task -> taskMap.putIfAbsent(task.id(), task));
         }
         if (!missingShopIds.isEmpty()) {
-            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, List.of(childId), missingShopIds).stream()
-                .map(item -> mapper.toShopItemDto(item, null, objectMapper))
+            shopItemRepository.get().findByFamilyAndChildAndItemIds(familyDbId, List.of(childId), missingShopIds).stream()
+                .map(item -> mapper.toShopItemDto(item, null, objectMapper.get()))
                 .forEach(item -> shopMap.putIfAbsent(item.id(), item));
         }
     }
@@ -82,13 +83,13 @@ public class RelatedEntityHydrator {
             .toList();
 
         if (!missingTaskIds.isEmpty() && !childIds.isEmpty()) {
-            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, childIds, missingTaskIds).stream()
-                .map(task -> mapper.toTaskDto(task, null, objectMapper))
+            taskRepository.get().findByFamilyAndChildAndTaskIds(familyDbId, childIds, missingTaskIds).stream()
+                .map(task -> mapper.toTaskDto(task, null, objectMapper.get()))
                 .forEach(task -> taskMap.putIfAbsent(task.id(), task));
         }
         if (!missingShopIds.isEmpty() && !childIds.isEmpty()) {
-            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, childIds, missingShopIds).stream()
-                .map(item -> mapper.toShopItemDto(item, null, objectMapper))
+            shopItemRepository.get().findByFamilyAndChildAndItemIds(familyDbId, childIds, missingShopIds).stream()
+                .map(item -> mapper.toShopItemDto(item, null, objectMapper.get()))
                 .forEach(item -> shopMap.putIfAbsent(item.id(), item));
         }
     }
