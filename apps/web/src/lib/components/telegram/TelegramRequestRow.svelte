@@ -15,6 +15,8 @@
 
     $: title = stripLeadingEmoji(request.taskName || request.itemName || request.title || kindLabel);
     $: entityIcon = getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName });
+    $: isRewardRequest = requestKind(request) === 'reward';
+    $: amount = Math.abs(request.coins ?? request.amount ?? 0);
 </script>
 
 <article class="request-row">
@@ -31,7 +33,7 @@
         </div>
         <p class="meta">{meta}</p>
         <div class="content-footer">
-            <p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p>
+            <p class="amount" class:spend={isRewardRequest}><TelegramCoin size={13} />{isRewardRequest ? '-' : '+'}{amount}</p>
             {#if statusTone === 'pending'}
                 <div class="request-actions"><slot /></div>
             {/if}
@@ -57,7 +59,8 @@
     time { color:#7f899e; font-size:.7rem; white-space:nowrap; }
     .meta { margin:0; color:#8a93a8; font-size:.75rem; line-height:1.3; }
     .content-footer { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-top:.1rem; }
-    .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#66718a; font-weight:700; font-size:.8rem; }
+    .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#237b3c; font-weight:700; font-size:.8rem; }
+    .amount.spend { color:#a33b3b; }
     .request-actions { display:flex; flex-direction:row; gap:.35rem; flex:0 0 auto; }
     @media (max-width:370px) {
         .content-header { flex-direction:column; }

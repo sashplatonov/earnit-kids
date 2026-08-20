@@ -41,6 +41,9 @@
         const what = request.requestType === 'shop_purchase' ? $i18n.t('app.telegram.requests.rewardRequest') : $i18n.t('app.telegram.requests.taskRequest');
         return `${who} · ${what}`;
     }
+    function requestAmount(request: Request): number {
+        return Math.abs(request.coins ?? request.amount ?? 0);
+    }
 </script>
 
 <section class="panel" aria-labelledby="telegram-requests-title">
@@ -57,7 +60,7 @@
                 <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={$i18n.t('app.telegram.requests.request')} /></span>
             {/if}
         </span>
-        <div class="entity-text"><h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || $i18n.t('app.telegram.requests.request'))}</h3><p class="meta">{requestMeta(request)}</p><p class="amount"><TelegramCoin size={13} />+{request.coins ?? request.amount ?? 0}</p></div>
+        <div class="entity-text"><h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || $i18n.t('app.telegram.requests.request'))}</h3><p class="meta">{requestMeta(request)}</p><p class="amount" class:spend={requestKind(request) === 'reward'}><TelegramCoin size={13} />{requestKind(request) === 'reward' ? '-' : '+'}{requestAmount(request)}</p></div>
     </div>
     {#if canDecide && request.status === 'pending'}
     <div class="attention-actions"><button class="approve" type="button" aria-label={$i18n.t('app.telegram.requests.approveRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'approve')}><TelegramIcon name="approve" size={18} label={$i18n.t('app.telegram.requests.approve')} /><span>{$i18n.t('app.telegram.requests.approve')}</span></button><button class="reject" type="button" aria-label={$i18n.t('app.telegram.requests.rejectRequest')} disabled={busy === request.id} on:click={() => decide(request.id, 'reject')}><TelegramIcon name="reject" size={18} label={$i18n.t('app.telegram.requests.reject')} /><span>{$i18n.t('app.telegram.requests.reject')}</span></button></div>
@@ -83,7 +86,8 @@
     .entity-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:.2rem; }
     h3 { margin:0; font-size:.94rem; line-height:1.25; font-weight:700; color:#18243d; white-space:normal; overflow-wrap:anywhere; min-width:0; }
     .meta { margin:0; color:#7f899e; font-size:.75rem; line-height:1.3; }
-    .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#20283d; font-weight:700; font-size:.81rem; }
+    .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#237b3c; font-weight:700; font-size:.81rem; }
+    .amount.spend { color:#a33b3b; }
     .attention-actions { margin-top:.55rem; margin-left:2.5rem; display:grid; grid-template-columns:1fr 1fr; gap:.45rem; }
     .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.25rem; min-height:2.75rem; padding:.35rem .45rem; border-radius:.55rem; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
     .attention-actions button:disabled { cursor:wait; opacity:.6; }
