@@ -2,11 +2,13 @@ package com.sashplatonov.earnit.kids.service.family;
 
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.repository.ChildRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Objects;
 import java.util.Optional;
 
 // EXPLAIN: Resolves a child only when it belongs to the given family, so callers never operate on a child from another family.
+@ApplicationScoped
 public class ChildOwnershipService {
 
     private final ChildRepository childRepository;

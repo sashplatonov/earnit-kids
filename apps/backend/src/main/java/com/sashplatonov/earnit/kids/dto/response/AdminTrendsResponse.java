@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-// EXPLAIN: ADM-14: Simple trends analytics response
 @Data
 @Builder
 @AllArgsConstructor

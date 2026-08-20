@@ -5,10 +5,12 @@ import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
 import com.sashplatonov.earnit.kids.dto.response.ShopItemDto;
 import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Map;
 
 // EXPLAIN: Maps a HistoryEntryEntity to its DTO, resolving related task/shop details via FamilyRelatedDetailsResolver. Shared by history query, dashboard hydration, and super-admin payloads so the mapping stays in one place.
+@ApplicationScoped
 public class HistoryDtoMapper {
 
     private final FamilyDashboardMapper mapper;

@@ -20,7 +20,6 @@ public record TaskDto(
     TaskPeriodProgressDto periodProgress,
     Long sourceCatalogItemId
 ) {
-    // EXPLAIN: Convenience constructor preserving the pre-icon call signature.
     public TaskDto(long id, String name, int coins, String groupName, Object frequency,
                    String comment, String cueWhen, String cueAction, Integer moneyLimit,
                    boolean isActive, int childId, String lastCompletedAt,

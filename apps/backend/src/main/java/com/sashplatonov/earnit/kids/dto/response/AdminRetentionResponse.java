@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// EXPLAIN: ADM-13: Retention/activity analytics response
 @Data
 @Builder
 @AllArgsConstructor

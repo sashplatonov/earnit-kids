@@ -8,12 +8,14 @@ import com.sashplatonov.earnit.kids.dto.response.TaskDto;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 // EXPLAIN: Batch-resolves task/shop entities referenced by history rows that are not already present in the supplied maps, so callers avoid N+1 lookups and never re-fetch entities already hydrated.
+@ApplicationScoped
 public class RelatedEntityHydrator {
 
     private final TaskRepository taskRepository;

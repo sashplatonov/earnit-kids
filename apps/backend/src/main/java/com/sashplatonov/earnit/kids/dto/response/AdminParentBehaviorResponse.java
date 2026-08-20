@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-// EXPLAIN: ADM-10: Parent behavior and needs analytics response
 @Data
 @Builder
 @AllArgsConstructor
@@ -28,5 +27,5 @@ public class AdminParentBehaviorResponse {
     }
 
     private ParentBehaviorMetrics parentBehaviorMetrics;
-    private List<String> insights; // EXPLAIN: Optional: AI-generated insights about parent behavior
+    private List<String> insights;
 }

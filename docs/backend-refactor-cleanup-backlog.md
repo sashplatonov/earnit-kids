@@ -672,7 +672,7 @@ git commit -m "refactor(backend): extract PanachePagination helper for paginated
 
 ## P2-1: Remove noise `EXPLAIN:` comments — DTO layer
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P2  
 **Depends on:** -
 

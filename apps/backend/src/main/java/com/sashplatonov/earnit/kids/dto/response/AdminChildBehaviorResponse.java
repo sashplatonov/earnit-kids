@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// EXPLAIN: ADM-11: Child behavior and needs analytics response
 @Data
 @Builder
 @AllArgsConstructor

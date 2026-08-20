@@ -28,7 +28,6 @@ public record ChildDto(
         status = status == null || status.isBlank() ? "ACTIVE" : status;
     }
 
-    // EXPLAIN: Convenience constructor preserving the pre-status call signature.
     public ChildDto(int id,
                     String name,
                     int balance,

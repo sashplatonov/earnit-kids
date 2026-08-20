@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-// EXPLAIN: ADM-12: Activation funnel analytics response
 @Data
 @Builder
 @AllArgsConstructor
