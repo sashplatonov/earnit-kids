@@ -46,7 +46,7 @@
     }
 </script>
 
-<section class="panel" aria-labelledby="telegram-requests-title">
+<section aria-labelledby="telegram-requests-title">
     {#if showHeading}<div class="heading"><h2 id="telegram-requests-title">{resolvedHeading}</h2></div>{/if}
     {#if loading}<p class="muted" role="status">{$i18n.t('app.telegram.requests.loading')}</p>
     {:else if error}<div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label={$i18n.t('app.telegram.home.error')} /><p>{error}</p><button type="button" on:click={onRetry}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></div>
@@ -68,7 +68,6 @@
 </section>
 
 <style>
-    .panel { width:100%; }
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:0 .2rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
     .list { display:flex; flex-direction:column; width:100%; box-sizing:border-box; padding:0 .6rem; border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; }
