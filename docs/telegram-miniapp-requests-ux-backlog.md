@@ -177,7 +177,7 @@ git commit -m "refactor(web): unify child request list styling"
 
 ## P2-1: Add request-list visual and geometry regression coverage
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P2  
 **Depends on:** P1-1, P1-2, P1-3
 

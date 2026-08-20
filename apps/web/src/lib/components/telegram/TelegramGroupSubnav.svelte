@@ -94,7 +94,7 @@
 <style>
     .group-subnav { margin: .15rem 0 .6rem; }
     .subnav-row { display: flex; align-items: center; gap: .4rem; padding: .1rem 0 .35rem; }
-    .chip { display: inline-flex; align-items: center; justify-content: center; gap: .15rem; flex: 0 0 auto; min-height: 2.15rem; padding: 0 .75rem; border: 1px solid #dfe4ee; border-radius: 999px; background: #fff; color: #66718a; font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; touch-action: manipulation; white-space: nowrap; }
+    .chip { display: inline-flex; align-items: center; justify-content: center; gap: .15rem; flex: 0 0 auto; min-height: 2.75rem; padding: 0 .75rem; border: 1px solid #dfe4ee; border-radius: 999px; background: #fff; color: #66718a; font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; touch-action: manipulation; white-space: nowrap; }
     .chip.active { border-color: #b9c7ef; background: #eef2ff; color: #2854ba; }
     .chip--grow { flex: 1 1 0; min-width: 0; }
     .chip-label { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

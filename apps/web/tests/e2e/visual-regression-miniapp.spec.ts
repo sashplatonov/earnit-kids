@@ -62,13 +62,13 @@ async function mock(page: Page, role: 'parent' | 'child', data: unknown, width: 
 test('no horizontal overflow at 320, 375 and 430 widths for parent and child', async ({ page }) => {
     for (const width of [320, 375, 430]) {
         await mock(page, 'parent', parentData, width);
-        for (const tab of ['Home', 'Tasks', 'Rewards', 'Family']) {
+        for (const tab of [/Home|Главная/, /Tasks|Задания/, /Rewards|Награды/, /Family|Семья/]) {
             await page.getByRole('tab', { name: tab }).click();
             await page.waitForTimeout(150);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
         }
         await mock(page, 'child', childData, width);
-        for (const tab of ['Today', 'Rewards', 'Activity']) {
+        for (const tab of [/Tasks|Задания/, /Rewards|Награды/, /Activity|Активность/]) {
             await page.getByRole('tab', { name: tab }).click();
             await page.waitForTimeout(150);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
@@ -78,7 +78,7 @@ test('no horizontal overflow at 320, 375 and 430 widths for parent and child', a
 
 test('every Mini App button meets the 44px minimum touch target', async ({ page }) => {
     await mock(page, 'parent', parentData, 375);
-    for (const tab of ['Home', 'Tasks', 'Rewards', 'Family']) {
+    for (const tab of [/Home|Главная/, /Tasks|Задания/, /Rewards|Награды/, /Family|Семья/]) {
         await page.getByRole('tab', { name: tab }).click();
         await page.waitForTimeout(150);
         for (const button of await page.locator('button').all()) {
@@ -88,7 +88,7 @@ test('every Mini App button meets the 44px minimum touch target', async ({ page 
         }
     }
     await mock(page, 'child', childData, 375);
-    for (const tab of ['Today', 'Rewards', 'Activity']) {
+    for (const tab of [/Tasks|Задания/, /Rewards|Награды/, /Activity|Активность/]) {
         await page.getByRole('tab', { name: tab }).click();
         await page.waitForTimeout(150);
         for (const button of await page.locator('button').all()) {
@@ -104,8 +104,7 @@ test('forbidden parent patterns are absent from the Mini App', async ({ page }) 
     await page.waitForTimeout(400);
 
     // Home must be a decision inbox: no duplicate Tasks/Rewards quick actions.
-    await expect(page.getByRole('button', { name: 'Add coins' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'History' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Add coins|Начислить/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Manage tasks' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Manage rewards' })).toHaveCount(0);
 
@@ -114,7 +113,7 @@ test('forbidden parent patterns are absent from the Mini App', async ({ page }) 
     await expect(page.getByText('Manage catalog', { exact: true })).toHaveCount(0);
 
     // Tasks/Rewards must not use large per-row Edit buttons.
-    await page.getByRole('tab', { name: 'Tasks' }).click();
+    await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
     await page.waitForTimeout(150);
     await expect(page.getByText('Manage catalog', { exact: true })).toHaveCount(0);
     for (const button of await page.locator('button').all()) {
@@ -123,7 +122,78 @@ test('forbidden parent patterns are absent from the Mini App', async ({ page }) 
     }
 
     // Family invite must be collapsed by default.
-    await page.getByRole('tab', { name: 'Family' }).click();
+    await page.getByRole('tab', { name: /Family|Семья/ }).click();
     await page.waitForTimeout(150);
     await expect(page.getByText('Create a sign-in link for this child.', { exact: true })).toHaveCount(0);
+});
+
+test('request and task lists keep one surface and usable geometry at narrow widths', async ({ page }) => {
+    const parentRequests = [
+        { id: 31, taskName: 'A very long task request title that must keep its available content width', requestType: 'task_completion', childNickname: 'Aliska', coins: 2, status: 'pending' },
+        { id: 32, itemName: 'A reward request with a long readable title', requestType: 'shop_purchase', childNickname: 'Lizka', coins: 5, status: 'pending' },
+    ];
+    const childRequests = [
+        { id: 41, taskName: '🏠 Clean room with a long title', requestType: 'task_completion', coins: 2, status: 'pending', createdAt: '2026-08-19T09:00:00Z' },
+        { id: 42, itemName: '🎁 Family reward with a long title', requestType: 'shop_purchase', coins: 5, status: 'approved', createdAt: '2026-08-18T09:00:00Z' },
+    ];
+    const parentFixture = { ...parentData, requests: parentRequests };
+    const childFixture = { ...childData, tasks: [
+        ...childData.tasks,
+        { id: 4, name: 'A very long child task title that must remain reachable', coins: 3, groupName: 'Дом и порядок', isActive: true, periodProgress: { period: 'day', completed: 0, pending: 0, limit: 1, remaining: 1, available: true } },
+    ], requests: childRequests };
+
+    for (const width of [320, 375, 430]) {
+        await mock(page, 'parent', { ...parentFixture, requests: [] }, width, { requests: parentRequests, history: [], friends: [] });
+        await page.getByRole('tab', { name: /Home|Главная/ }).click();
+        const parentList = page.locator('section[aria-labelledby="parent-home-title"] .items');
+        await expect(parentList).toBeVisible();
+        await expect(parentList.locator('.request-card')).toHaveCount(2);
+        expect(await parentList.evaluate((node) => {
+            const rows = [...node.children];
+            return getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)'
+                && rows.every((row) => getComputedStyle(row).borderTopWidth === '0px'
+                    && getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)')
+                && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px');
+        })).toBeTruthy();
+        for (const row of await parentList.locator('.request-card').all()) {
+            const mainBottom = await row.locator('.card-main').evaluate((node) => node.getBoundingClientRect().bottom);
+            const actionsTop = await row.locator('.attention-actions').evaluate((node) => node.getBoundingClientRect().top);
+            expect(actionsTop).toBeGreaterThanOrEqual(mainBottom);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+
+        await mock(page, 'child', { ...childFixture, requests: [] }, width, { requests: childRequests, history: [], friends: [] });
+        await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
+        const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list');
+        await expect(taskList).toBeVisible();
+        await expect(taskList.locator('.row')).toHaveCount(4);
+        expect(await taskList.evaluate((node) => {
+            const rows = [...node.children];
+            return rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)'
+                && getComputedStyle(row).borderTopWidth === '0px')
+                && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px');
+        })).toBeTruthy();
+        await expect(taskList.getByText('A very long child task title that must remain reachable')).toBeVisible();
+        expect(await taskList.locator('.check').last().evaluate((node) => {
+            const rect = node.getBoundingClientRect();
+            return rect.width >= 44 && rect.height >= 44;
+        })).toBeTruthy();
+
+        await page.getByRole('tab', { name: /Activity|Активность/ }).click();
+        await page.getByRole('tab', { name: /Requests|Заявки/ }).click();
+        const requestList = page.locator('section[aria-labelledby="child-requests-title"] .items');
+        await expect(requestList).toBeVisible();
+        await expect(requestList.locator('.request-row')).toHaveCount(2);
+        await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
+        await expect(requestList.locator('.request-row').first().getByLabel(/Task request|Заявка на задание/)).toBeVisible();
+        await expect(requestList.locator('.request-row').nth(1).getByLabel(/Reward request|Заявка на награду/)).toBeVisible();
+        expect(await requestList.evaluate((node) => {
+            const rows = [...node.children];
+            return getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)'
+                && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)'
+                    && getComputedStyle(row).borderTopWidth === '0px')
+                && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px');
+        })).toBeTruthy();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    }
 });

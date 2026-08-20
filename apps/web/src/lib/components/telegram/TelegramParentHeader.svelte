@@ -73,7 +73,7 @@
     .child-select:disabled { cursor:default; opacity:.6; }
     .child-name { max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .header-actions { display:flex; align-items:center; gap:.5rem; flex:0 0 auto; margin-left:auto; }
-    .view-child { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 auto; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#3867d6; cursor:pointer; }
+    .view-child { display:grid; place-items:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#3867d6; cursor:pointer; }
     .view-child:hover { background:#f2f5ff; }
     .balance { display:inline-flex; align-items:center; gap:.35rem; padding:.45rem .65rem; border-radius:999px; background:#fff4c2; color:#573d00; font-weight:700; white-space:nowrap; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
