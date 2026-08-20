@@ -83,13 +83,13 @@ export const adminMessages = {
         dashboardDesc: 'Service usage and coin economy',
     },
     dashboard: {
-        title: 'Dashboard',
+        title: 'Statistics',
         subtitle: 'All families · aggregated data',
         redirecting: 'Redirecting...',
         back: 'Back',
         updatedAt: '{time}',
         aria: {
-            tabs: 'Dashboard tabs',
+            tabs: 'Statistics tabs',
         },
         tabs: {
             overview: 'Overview',
@@ -124,8 +124,11 @@ export const adminMessages = {
             coinEconomy: 'Coin economy',
             rewards: 'Rewards',
             content: 'Content',
+            popular: 'Popular',
             activation: 'Family activation',
             parentCycle: 'Parent cycle',
+            parentNeeds: 'Parent needs',
+            childNeeds: 'Child needs',
             retention: 'Retention & activity',
             trends: 'Trends',
         },
@@ -138,10 +141,17 @@ export const adminMessages = {
                 title: 'Time to decision',
                 desc: 'median parent response time',
             },
+            lowSpendRate: {
+                title: 'Low spending rate',
+                desc: 'earned coins spent on rewards',
+            },
         },
         coins: {
             earned: 'Earned',
             spent: 'Spent',
+            spendEarn: {
+                label: 'Spend / Earn',
+            },
             insight: '43% of active children earned coins but did not receive rewards.',
         },
         insights: {
@@ -210,6 +220,14 @@ export const adminMessages = {
             noDataDesc: 'Metrics will appear after families start using the service.',
         },
         parent: {
+            catalogUsage: {
+                title: 'Using catalog',
+                desc: 'families with ready-made tasks or rewards',
+            },
+            customContent: {
+                title: 'Custom content',
+                desc: 'families with their own tasks or rewards',
+            },
             decisionTime: {
                 title: 'Time to decision',
                 desc: 'median parent response time',
@@ -217,6 +235,10 @@ export const adminMessages = {
             pendingBacklog: {
                 title: 'Pending backlog',
                 desc: 'current pending backlog',
+            },
+            familiesWithPending: {
+                title: 'Families with pending requests',
+                desc: 'families awaiting a parent decision',
             },
             activeDays: {
                 title: 'Active days',
@@ -239,6 +261,24 @@ export const adminMessages = {
             active30d: {
                 title: 'Active in 30 days',
                 desc: 'families with activity in the last 30 days',
+            },
+        },
+        child: {
+            activeDays: {
+                title: 'Active days',
+                desc: 'median per child for period',
+            },
+            tasksBeforeReward: {
+                title: 'Tasks before reward',
+                desc: 'median completed tasks before a reward',
+            },
+            earningNotSpending: {
+                title: 'Earning but not spending',
+                desc: 'earned coins but did not receive rewards',
+            },
+            requestedNotReceived: {
+                title: 'Requested but not received',
+                desc: 'requested rewards not yet received',
             },
         },
         trends: {
@@ -264,6 +304,7 @@ export const adminMessages = {
             retry: 'Retry',
         },
         tooltips: {
+            close: 'Close explanation',
             selectInfo: 'Tap on ⓘ for metric explanation',
             activeFamilies: {
                 label: 'Active families',
@@ -320,6 +361,7 @@ export const adminMessages = {
         },
         units: {
             minutes: 'min',
+            hours: 'hours',
             days: 'days',
             issues: 'issues',
         },

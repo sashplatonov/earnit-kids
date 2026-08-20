@@ -31,6 +31,7 @@
     // EXPLAIN: The selected period comes from the URL (?period=...) and is
     // EXPLAIN: resolved server-side, so changing it reloads real data.
     $: selectedPeriod = data.period ?? '30d';
+    $: selectedPeriodLabel = t(`periods.${selectedPeriod}`);
 
     // EXPLAIN: Tab definitions with semantic SVG icons (from the shared
     // EXPLAIN: TelegramIcon set) instead of emoji, so the tab bar reads clearly.
@@ -99,7 +100,7 @@
     function formatValue(val: number | string | null | undefined, isPercent = false): string {
         if (val === null || val === undefined) return '—';
         if (typeof val === 'number' && val === 0) return '0';
-        return isPercent ? `${val}%` : val.toLocaleString();
+        return isPercent ? `${val}%` : typeof val === 'number' ? $i18n.formatNumber(val) : val;
     }
 
     // EXPLAIN: ADM-22 dynamic product insight hints derived from transparent metrics
@@ -235,7 +236,7 @@
                 </button>
             </div>
             <div class="updated">
-                {t('updatedAt', { time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) })}
+                {t('updatedAt', { time: $i18n.formatDate(new Date(), { hour: '2-digit', minute: '2-digit' }) })}
             </div>
         </div>
 
@@ -318,7 +319,7 @@
                             <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={() => toggleTooltip('activeFamilies')}>i</button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeFamilies)}</div>
-                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.totalChildren')}</div>
@@ -331,7 +332,7 @@
                             <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={() => toggleTooltip('activeChildren')}>i</button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeChildren)}</div>
-                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
                     </div>
                 </div>
 
@@ -464,7 +465,7 @@
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.rewardRequests')}</div>
                         <div class="kpi-value">{formatValue(rewards?.metrics?.requestCount)}</div>
-                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.rewardsIssued')}</div>
@@ -534,7 +535,7 @@
                     <div class="kpi">
                         <div class="kpi-label">{t('tasks.completed')}</div>
                         <div class="kpi-value">{formatValue(taskEconomy?.taskMetrics?.taskCompletions)}</div>
-                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriod })}</div>
+                        <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
                     </div>
                     <div class="kpi">
                         <div class="kpi-head">
@@ -822,7 +823,7 @@
             <div class="tooltip-box" role="dialog" aria-label={tooltipContent[activeTooltip].title}>
                 <div class="tooltip-head">
                     <b>{tooltipContent[activeTooltip].title}</b>
-                    <button class="tooltip-close" aria-label="Close" on:click={closeTooltip}>×</button>
+                    <button class="tooltip-close" aria-label={t('tooltips.close')} on:click={closeTooltip}>×</button>
                 </div>
                 <p>{tooltipContent[activeTooltip].body}</p>
             </div>

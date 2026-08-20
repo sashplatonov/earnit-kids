@@ -83,13 +83,13 @@ export const adminMessages = {
         dashboardDesc: 'Использование сервиса и экономика монет',
     },
     dashboard: {
-        title: 'Дашборд',
+        title: 'Статистика',
         subtitle: 'Все семьи · агрегированные данные',
         redirecting: 'Перенаправляем...',
         back: 'Назад',
         updatedAt: '{time}',
         aria: {
-            tabs: 'Разделы дашборда',
+            tabs: 'Разделы статистики',
         },
         tabs: {
             overview: 'Обзор',
@@ -124,8 +124,11 @@ export const adminMessages = {
             coinEconomy: 'Экономика монет',
             rewards: 'Награды',
             content: 'Контент',
+            popular: 'Популярное',
             activation: 'Активация семей',
             parentCycle: 'Родительский цикл',
+            parentNeeds: 'Потребности родителей',
+            childNeeds: 'Потребности детей',
             retention: 'Удержание и активность',
             trends: 'Тренды',
         },
@@ -138,10 +141,17 @@ export const adminMessages = {
                 title: 'Время до решения',
                 desc: 'медиана ответа родителя',
             },
+            lowSpendRate: {
+                title: 'Низкая доля трат',
+                desc: 'заработанные монеты, потраченные на награды',
+            },
         },
         coins: {
             earned: 'Заработано',
             spent: 'Потрачено',
+            spendEarn: {
+                label: 'Траты / заработок',
+            },
             insight: '43% активных детей зарабатывали монеты, но не получали награды.',
         },
         insights: {
@@ -210,6 +220,14 @@ export const adminMessages = {
             noDataDesc: 'Показатели появятся после начала использования сервиса семьями.',
         },
         parent: {
+            catalogUsage: {
+                title: 'Используют каталог',
+                desc: 'семьи с готовыми заданиями или наградами',
+            },
+            customContent: {
+                title: 'Свой контент',
+                desc: 'семьи со своими заданиями или наградами',
+            },
             decisionTime: {
                 title: 'Время до решения',
                 desc: 'медиана ответа родителя',
@@ -217,6 +235,10 @@ export const adminMessages = {
             pendingBacklog: {
                 title: 'Ждут решения',
                 desc: 'текущий pending backlog',
+            },
+            familiesWithPending: {
+                title: 'Семьи с ожидающими запросами',
+                desc: 'семьи, ожидающие решения родителя',
             },
             activeDays: {
                 title: 'Активных дней',
@@ -239,6 +261,24 @@ export const adminMessages = {
             active30d: {
                 title: 'Активны за 30 дней',
                 desc: 'семьи с активностью за последние 30 дней',
+            },
+        },
+        child: {
+            activeDays: {
+                title: 'Активных дней',
+                desc: 'медиана на ребёнка за период',
+            },
+            tasksBeforeReward: {
+                title: 'Заданий до награды',
+                desc: 'медиана выполненных заданий до награды',
+            },
+            earningNotSpending: {
+                title: 'Зарабатывают, но не тратят',
+                desc: 'заработали монеты, но не получили наград',
+            },
+            requestedNotReceived: {
+                title: 'Запросили, но не получили',
+                desc: 'запрошенные награды ещё не получены',
             },
         },
         trends: {
@@ -264,6 +304,7 @@ export const adminMessages = {
             retry: 'Повторить',
         },
         tooltips: {
+            close: 'Закрыть пояснение',
             selectInfo: 'Нажмите на ⓘ для пояснения показателя',
             activeFamilies: {
                 label: 'Активные семьи',
@@ -320,6 +361,7 @@ export const adminMessages = {
         },
         units: {
             minutes: 'мин',
+            hours: 'ч',
             days: 'дней',
             issues: 'выдачи',
         },
