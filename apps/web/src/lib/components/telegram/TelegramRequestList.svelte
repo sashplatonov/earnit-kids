@@ -51,8 +51,8 @@
     {#if loading}<p class="muted" role="status">{$i18n.t('app.telegram.requests.loading')}</p>
     {:else if error}<div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label={$i18n.t('app.telegram.home.error')} /><p>{error}</p><button type="button" on:click={onRetry}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></div>
     {:else if !requests.length}<div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.requests.allClear')} /><span>{resolvedEmpty}</span></div>
-    {:else}<div class="items" aria-label={resolvedHeading}>{#each requests as request (request.id)}<article class="request-row">
-        <span class="entity-graphic" aria-hidden="true"><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={18} label={$i18n.t('app.telegram.requests.request')} /></span></span>
+    {:else}<div class="list" aria-label={resolvedHeading}>{#each requests as request (request.id)}<article class="row">
+        <span class="entity-icon" aria-hidden="true"><TelegramIcon name={getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName })} size={20} label={$i18n.t('app.telegram.requests.request')} /></span>
         <div class="content">
             <h3>{stripLeadingEmoji(request.taskName || request.itemName || request.title || $i18n.t('app.telegram.requests.request'))}</h3>
             <p class="meta">{requestMeta(request)}</p>
@@ -71,11 +71,10 @@
     .panel { width:100%; }
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:0 .2rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
-    .items { display:flex; flex-direction:column; width:100%; box-sizing:border-box; padding:0 .6rem; }
-    .request-row { display:flex; align-items:stretch; gap:.25rem; width:100%; box-sizing:border-box; min-height:4rem; padding:.5rem 0; border-bottom:1px solid #edf0f5; background:transparent; }
-    .request-row:last-child { border-bottom:0; }
-    .entity-graphic { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; margin-top:.2rem; border-radius:.65rem; background:#eef0ff; }
-    .entity-icon { display:grid; place-items:center; color:#5b63e9; }
+    .list { display:flex; flex-direction:column; width:100%; box-sizing:border-box; padding:0 .6rem; border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; }
+    .row { display:flex; align-items:stretch; gap:.6rem; width:100%; box-sizing:border-box; min-height:4rem; padding:.5rem 0; border-bottom:1px solid #edf0f5; }
+    .row:last-child { border-bottom:0; }
+    .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; margin-top:.2rem; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
     .content { flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:.2rem; }
     h3 { margin:0; color:#18243d; font-size:.95rem; line-height:1.3; font-weight:600; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
     .meta { margin:0; color:#66718a; font-size:.8rem; line-height:1.3; }
