@@ -8,8 +8,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 
-// EXPLAIN: REST endpoint used by the frontend to forward UI console messages to
-// EXPLAIN: the backend log, so UI-side logs appear in the container's stdout.
 @ApplicationScoped
 @Path("/api/ui-log")
 public class UiLogResource {

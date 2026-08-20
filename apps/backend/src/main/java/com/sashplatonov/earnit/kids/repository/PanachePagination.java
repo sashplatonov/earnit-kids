@@ -5,7 +5,6 @@ import io.quarkus.hibernate.orm.panache.PanacheQuery;
 
 import java.util.List;
 
-// EXPLAIN: Wraps the Panache .range(offset, offset + limit - 1).list() pattern so paginated repository queries stay consistent and never repeat the range math.
 public final class PanachePagination {
 
     private PanachePagination() {

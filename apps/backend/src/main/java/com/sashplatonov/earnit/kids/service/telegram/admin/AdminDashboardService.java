@@ -46,7 +46,6 @@ public class AdminDashboardService {
     @Inject
     AdminRewardsService rewardsService;
 
-    // EXPLAIN: ADM-20: cache aggregated dashboard for a short interval (1-5 min)
     @CacheResult(cacheName = "admin-dashboard")
     public AdminDashboardResponse getDashboard(String period) {
         AdminAnalyticsResponse overview = overviewService.getOverview(period);

@@ -154,7 +154,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    // EXPLAIN: Coin economy metrics for ADM-05
     public AdminCoinEconomyResponse.CoinMetrics getCoinMetrics(Instant periodStart, int activeChildrenInPeriod) {
         long earned = sumCoinsEarned(periodStart);
         long spent = sumCoinsSpent(periodStart);
@@ -276,7 +275,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .build();
     }
 
-    // EXPLAIN: Task economy metrics for ADM-09
     public AdminTasksResponse.TaskMetrics getTaskMetrics(Instant periodStart) {
         int tasksConfigured = countTasksConfigured();
         double familiesWithTasksPercent = percentFamiliesWithActiveTask();
@@ -516,7 +514,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return rankings;
     }
 
-    // EXPLAIN: Parent behavior metrics for ADM-10
     public AdminParentBehaviorResponse.ParentBehaviorMetrics getParentBehaviorMetrics(Instant periodStart) {
         double familiesUsingCatalogPercent = calcFamiliesUsingCatalogPercent(periodStart);
         double familiesUsingCustomContentPercent = calcFamiliesUsingCustomContentPercent(periodStart);
@@ -631,7 +628,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return 0.0;
     }
 
-    // EXPLAIN: Child behavior metrics for ADM-11
     public AdminChildBehaviorResponse.ChildBehaviorMetrics getChildBehaviorMetrics(Instant periodStart) {
         double medianActiveDaysPerChild = calcMedianActiveDaysPerChild(periodStart);
         double medianTasksBeforeReward = calcMedianTasksBeforeReward(periodStart);
@@ -774,7 +770,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return count;
     }
 
-    // EXPLAIN: Activation funnel for ADM-12
     public List<AdminActivationFunnelResponse.FunnelStage> getActivationFunnel() {
         // EXPLAIN: Current-state funnel (ever-completed, not cohort-based)
         int registered = countTotalFamilies();
@@ -890,7 +885,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    // EXPLAIN: Retention/activity metrics for ADM-13
     public int countNewFamilies(Instant periodStart) {
         String sql = """
             SELECT COUNT(f) FROM FamilyEntity f
@@ -918,9 +912,7 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    // EXPLAIN: Simple trends for ADM-14
     public List<AdminTrendsResponse.TrendPoint> getTrendPoints(Instant periodStart, Instant now) {
-        // EXPLAIN: Aggregate history entries by day for earned/spent/task completions
         String historySql = """
             SELECT FUNCTION('DATE', h.createdAt) as day,
                    COALESCE(SUM(CASE WHEN h.type = :earn THEN h.amount ELSE 0 END), 0) as earned,
@@ -938,7 +930,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .setParameter("periodStart", periodStart)
             .getResultList();
 
-        // EXPLAIN: Aggregate active families by day
         String familiesSql = """
             SELECT FUNCTION('DATE', h.createdAt) as day, COUNT(DISTINCT h.familyId) as families
             FROM HistoryEntryEntity h
@@ -950,7 +941,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .setParameter("periodStart", periodStart)
             .getResultList();
 
-        // EXPLAIN: Aggregate reward redemptions by day
         String rewardsSql = """
             SELECT FUNCTION('DATE', p.createdAt) as day, COUNT(p) as rewards
             FROM PurchaseRequestEntity p
@@ -966,7 +956,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
             .getResultList();
 
-        // EXPLAIN: Merge into a map keyed by day
         java.util.Map<java.sql.Date, AdminTrendsResponse.TrendPoint> byDay = new java.util.LinkedHashMap<>();
 
         for (Object[] row : historyResults) {

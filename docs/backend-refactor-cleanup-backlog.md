@@ -74,7 +74,7 @@ suite and quality gates.
 
 ## P0-1: Extract `OperationResultResponses` utility
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** -
 
@@ -818,7 +818,7 @@ git commit -m "refactor(backend): remove noise EXPLAIN comments from telegram se
 
 ## P2-3: Remove noise `EXPLAIN:` comments — repository/remaining
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P2  
 **Depends on:** P2-2
 

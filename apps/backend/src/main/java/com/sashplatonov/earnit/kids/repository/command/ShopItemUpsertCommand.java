@@ -17,7 +17,6 @@ public record ShopItemUpsertCommand(
     String icon,
     Long sourceCatalogItemId
 ) {
-    // EXPLAIN: Convenience constructor preserving the pre-icon call signature.
     public ShopItemUpsertCommand(int familyDbId, int childId, long itemId, String name,
                                  int price, String groupName, JsonNode frequency,
                                  String comment, Integer moneyLimit, boolean active,
@@ -26,7 +25,6 @@ public record ShopItemUpsertCommand(
             moneyLimit, active, deleted, icon, null);
     }
 
-    // EXPLAIN: Convenience constructor preserving the pre-source-catalog call signature.
     public ShopItemUpsertCommand(int familyDbId, int childId, long itemId, String name,
                                  int price, String groupName, JsonNode frequency,
                                  String comment, Integer moneyLimit, boolean active,
