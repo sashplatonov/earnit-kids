@@ -17,7 +17,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-// EXPLAIN: ADM-16: Aggregated dashboard endpoint composing all section services
 @ApplicationScoped
 public class AdminDashboardService {
 

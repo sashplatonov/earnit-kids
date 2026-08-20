@@ -749,7 +749,7 @@ git commit -m "refactor(backend): remove noise EXPLAIN comments from DTO layer"
 
 ## P2-2: Remove noise `EXPLAIN:` comments — service/telegram
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P2  
 **Depends on:** P2-1
 

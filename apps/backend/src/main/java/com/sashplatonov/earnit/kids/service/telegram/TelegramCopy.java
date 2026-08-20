@@ -12,7 +12,6 @@ public final class TelegramCopy {
     private TelegramCopy() {
     }
 
-    // EXPLAIN: Button labels: exactly one semantic emoji each.
     public static final String HOME = TelegramBotEmoji.HOME + " Главное меню";
     public static final String MY_TASKS = TelegramBotEmoji.TASKS + " Мои задания";
     public static final String REWARDS = TelegramBotEmoji.REWARDS + " Награды";
@@ -42,7 +41,6 @@ public final class TelegramCopy {
     public static final String NAV_SELECT_CHILD = TelegramBotEmoji.CHILD + " Выбрать ребёнка";
     public static final String NAV_OPEN_SITE = TelegramBotEmoji.SITE + " Сайт";
 
-    // EXPLAIN: Dynamic button labels.
     public static String coinAdd(int amount) {
         return TelegramBotEmoji.ADD + " +" + amount;
     }
@@ -63,14 +61,11 @@ public final class TelegramCopy {
         return TelegramBotEmoji.CHILD + " " + childName + " · " + balance;
     }
 
-    // EXPLAIN: Title of the flat child picker screen.
     public static String chooseChildTitle() {
         return TelegramBotEmoji.CHILD + " Кого показывать?";
     }
 
-    // EXPLAIN: Message templates.
 
-    // EXPLAIN: Parent Home decision menu.
     public static String parentHome(String childName, int balance, int pending) {
         String body = TelegramBotEmoji.CHILD + " " + childName + "\n" + coinsLine(balance);
         String attention = pending > 0
@@ -79,7 +74,6 @@ public final class TelegramCopy {
         return body + attention;
     }
 
-    // EXPLAIN: Parent coins quick-action screen.
     public static String parentCoins(String childName, int balance) {
         return TelegramBotEmoji.CHILD + " " + childName + "\n"
             + TelegramBotEmoji.COINS + " Баланс: " + balance + "\n\n"
@@ -87,7 +81,6 @@ public final class TelegramCopy {
             + TelegramBotEmoji.REMOVE + " Снять монеты";
     }
 
-    // EXPLAIN: Parent coins immediate-action feedback, keeps the quick-action keyboard.
     public static String coinApplied(int delta, int balance) {
         String verb = delta > 0 ? "Добавлено" : "Снято";
         return TelegramBotEmoji.SUCCESS + " " + verb + " " + Math.abs(delta) + " "
@@ -102,30 +95,25 @@ public final class TelegramCopy {
         return verb + " " + amount + " " + moneta(amount) + preposition + childName + "?";
     }
 
-    // EXPLAIN: Child greeting Home.
     public static String childHome(String childName, int balance) {
         return TelegramBotEmoji.GREETING + " " + childName + "\n" + coinsLine(balance);
     }
 
-    // EXPLAIN: One-at-a-time Requests queue header.
     public static String requestQueue(int index, int total) {
         return TelegramBotEmoji.REQUESTS + " Запрос " + index + " из " + total;
     }
 
-    // EXPLAIN: Full queue screen text for one pending request.
     public static String requestQueueText(String childName, String title, int coins, int index, int total) {
         return requestQueue(index, total) + "\n\n" + TelegramBotEmoji.CHILD + " " + childName + "\n\n"
             + title + "\n" + TelegramBotEmoji.COINS + " +" + coins + " " + moneta(coins);
     }
 
-    // EXPLAIN: Pending request body used on the approval notification.
     public static String requestNotification(String childName, String title, int coins, boolean task) {
         String lead = task ? " выполнила:" : " хочет награду:";
         return TelegramBotEmoji.CHILD + " " + childName + lead + "\n\n"
             + title + "\n" + TelegramBotEmoji.COINS + " +" + coins + " " + moneta(coins);
     }
 
-    // EXPLAIN: Approved task outcome shown to the parent.
     public static String parentApproved(String title, int delta, int balance) {
         String result = TelegramBotEmoji.SUCCESS + " Одобрено\n\n" + title;
         if (delta != 0) {
@@ -135,7 +123,6 @@ public final class TelegramCopy {
         return result;
     }
 
-    // EXPLAIN: Rejected request outcome shown to the parent.
     public static String parentRejected() {
         return TelegramBotEmoji.REJECT + " Отклонено";
     }
@@ -158,43 +145,35 @@ public final class TelegramCopy {
         return title == null || title.isBlank() ? statusLine : title + "\n" + statusLine;
     }
 
-    // EXPLAIN: Generic action failure with retry-safe copy.
     public static String error() {
         return TelegramBotEmoji.ERROR + " Не удалось выполнить действие\nПопробуйте ещё раз";
     }
 
-    // EXPLAIN: Child waiting state after submitting a Done request.
     public static String waiting(String taskName) {
         return TelegramBotEmoji.WAITING + " " + taskName + "\nЖдём решения родителя";
     }
 
-    // EXPLAIN: Child reward request submitted.
     public static String rewardWaiting() {
         return TelegramBotEmoji.WAITING + " Заявка отправлена родителю";
     }
 
-    // EXPLAIN: Child task approved feedback.
     public static String childTaskApproved(String title, int delta, int balance) {
         return TelegramBotEmoji.CELEBRATE + " " + title + " одобрен\n\n"
             + TelegramBotEmoji.COINS + " +" + delta + " " + moneta(delta) + "\nБаланс: " + balance;
     }
 
-    // EXPLAIN: Child reward approved feedback.
     public static String childRewardApproved(String title) {
         return TelegramBotEmoji.CELEBRATE + " Награда одобрена\n\n" + title;
     }
 
-    // EXPLAIN: Child task rejected feedback.
     public static String childTaskRejected(String title) {
         return TelegramBotEmoji.DECLINE + " " + title + " не одобрен";
     }
 
-    // EXPLAIN: Child reward rejected feedback.
     public static String childRewardRejected(String title) {
         return TelegramBotEmoji.DECLINE + " Награда не одобрена\n\n" + title;
     }
 
-    // EXPLAIN: Empty / informational states.
     public static String emptyRequests() {
         return TelegramBotEmoji.SUCCESS + " Нет запросов, ожидающих решения";
     }
@@ -211,7 +190,6 @@ public final class TelegramCopy {
         return TelegramBotEmoji.SUCCESS + " Пока нет событий";
     }
 
-    // EXPLAIN: Helpers.
 
     // EXPLAIN: "🪙 N монета/монеты/монет" with correct Russian plural form.
     public static String coinsLine(int n) {

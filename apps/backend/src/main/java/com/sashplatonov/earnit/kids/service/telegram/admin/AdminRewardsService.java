@@ -23,7 +23,6 @@ public class AdminRewardsService {
         Instant periodStart = calculatePeriodStart(period);
         Instant now = Instant.now();
 
-        // EXPLAIN: Basic metrics: request volume, issued count, price medians, failure rate.
         int requestCount = repository.countAllRewardRequests(periodStart);
         int issuedCount = repository.countSuccessfulRewardPurchases(periodStart);
         double medianPrice = repository.calcMedianRewardPrice(periodStart);
@@ -38,7 +37,6 @@ public class AdminRewardsService {
             .failedRate(failedRate)
             .build();
 
-        // EXPLAIN: Rankings of reward categories by issued count.
         List<AdminRewardsResponse.RewardRanking> rankings = repository.calcRewardRankings(periodStart);
 
         return AdminRewardsResponse.builder()

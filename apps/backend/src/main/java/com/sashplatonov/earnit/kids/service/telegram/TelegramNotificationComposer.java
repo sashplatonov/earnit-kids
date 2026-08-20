@@ -98,7 +98,6 @@ public class TelegramNotificationComposer {
         return TelegramBotApiClient.InlineButton.callback(label, callbacks.signNavigation(action));
     }
 
-    // EXPLAIN: Request-created text names the child and the request.
     private String requestText(ApplicationOutboxEventEntity event) {
         Optional<PurchaseRequestEntity> request = request(event);
         Optional<ChildEntity> child = child(event.getChildId());

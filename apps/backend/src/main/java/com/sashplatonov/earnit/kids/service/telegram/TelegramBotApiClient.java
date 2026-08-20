@@ -108,7 +108,6 @@ public class TelegramBotApiClient {
         return payload;
     }
 
-    // EXPLAIN: Builds the payload for a message with ReplyKeyboardMarkup.
     private Map<String, Object> replyKeyboardPayload(long chatId, Long messageId, String text,
                                                      TelegramReplyKeyboard replyKeyboard) {
         Map<String, Object> payload = new java.util.HashMap<>();
@@ -121,7 +120,6 @@ public class TelegramBotApiClient {
         return payload;
     }
 
-    // EXPLAIN: Serialises a TelegramReplyKeyboard to the Telegram `reply_markup` map.
     private Map<String, Object> replyKeyboardPayload(TelegramReplyKeyboard replyKeyboard) {
         List<List<Map<String, Object>>> keyboardRows = replyKeyboard.rows().stream()
             .map(row -> row.buttons().stream()

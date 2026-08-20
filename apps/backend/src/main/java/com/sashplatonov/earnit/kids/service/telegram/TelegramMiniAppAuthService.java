@@ -14,7 +14,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
-// EXPLAIN: Admin access service to detect Telegram admin IDs from configuration
 import com.sashplatonov.earnit.kids.service.telegram.admin.AdminAccessService;
 
 @ApplicationScoped

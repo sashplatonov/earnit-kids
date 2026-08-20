@@ -1,6 +1,5 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
-// EXPLAIN: Centralized navigation action labels for the persistent reply keyboard.
 // EXPLAIN: UX-05 — raw string comparisons must not be scattered across handlers.
 public enum BotNavAction {
     REQUESTS("requests", TelegramCopy.NAV_REQUESTS),
@@ -25,8 +24,6 @@ public enum BotNavAction {
         return label;
     }
 
-    // EXPLAIN: Returns the BotNavAction matching a reply keyboard button label.
-    // EXPLAIN: UX-01 — used to route reply keyboard taps back to navigation.
     public static java.util.Optional<BotNavAction> fromLabel(String label) {
         if (label == null || label.isBlank()) {
             return java.util.Optional.empty();

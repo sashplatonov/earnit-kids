@@ -24,8 +24,6 @@ public class TelegramReplyKeyboardNavigator {
         this.apiClient = apiClient;
     }
 
-    // EXPLAIN: UX-01 — routes reply keyboard button taps to the appropriate handler.
-    // EXPLAIN: The message text matches a BotNavAction label to determine navigation.
     public void handle(JsonNode message, long chatId, long telegramUserId) throws Exception {
         String label = message.path("text").asText("");
         BotNavAction.fromLabel(label).ifPresent(action -> {

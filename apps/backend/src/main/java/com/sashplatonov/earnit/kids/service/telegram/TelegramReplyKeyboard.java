@@ -18,12 +18,10 @@ public record TelegramReplyKeyboard(
         this.oneTimeKeyboard = oneTimeKeyboard;
     }
 
-    // EXPLAIN: Convenience constructor defaults to persistent keyboard settings.
     public TelegramReplyKeyboard(java.util.List<Row> rows) {
         this(rows, true, true, false);
     }
 
-    // EXPLAIN: Accessor returns an unmodifiable view of rows.
     @Override
     public java.util.List<Row> rows() {
         return java.util.List.copyOf(rows);
@@ -35,18 +33,14 @@ public record TelegramReplyKeyboard(
             this.buttons = java.util.List.copyOf(buttons);
         }
 
-        // EXPLAIN: Convenience constructor accepting label strings.
         public Row(String... labels) {
             this(java.util.Arrays.stream(labels).map(Button::new).toList());
         }
 
-        // EXPLAIN: Convenience constructor accepting pre-built buttons (e.g. a
-        // EXPLAIN: web_app button that opens the Mini App client-side).
         public Row(Button... buttons) {
             this(java.util.List.of(buttons));
         }
 
-        // EXPLAIN: Accessor returns an unmodifiable view of buttons.
         public java.util.List<Button> buttons() {
             return java.util.List.copyOf(buttons);
         }
