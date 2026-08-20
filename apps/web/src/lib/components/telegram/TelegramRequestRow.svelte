@@ -2,7 +2,7 @@
     import type { Request } from '$lib/stores/app';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
-    import { extractLeadingEmoji, getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
+    import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
     import { requestKind } from './telegramRequestKind';
     import { formatLastUsedTime } from './telegramLastUsed';
 
@@ -14,17 +14,12 @@
     export let locale: string = 'en';
 
     $: title = stripLeadingEmoji(request.taskName || request.itemName || request.title || kindLabel);
-    $: titleEmoji = extractLeadingEmoji(request.taskName || request.itemName || request.title || '');
-    $: fallbackIcon = getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName });
+    $: entityIcon = getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName });
 </script>
 
-<article class="request-card">
+<article class="request-row">
     <span class="entity-graphic" aria-hidden="true">
-        {#if titleEmoji}
-            <span class="entity-emoji">{titleEmoji}</span>
-        {:else}
-            <span class="entity-icon"><TelegramIcon name={fallbackIcon} size={20} label={kindLabel} /></span>
-        {/if}
+        <span class="entity-icon"><TelegramIcon name={entityIcon} size={20} label={kindLabel} /></span>
     </span>
     <div class="content">
         <div class="content-header">
@@ -45,9 +40,9 @@
 </article>
 
 <style>
-    .request-card { display:flex; align-items:flex-start; gap:.55rem; width:100%; box-sizing:border-box; padding:.5rem .55rem; border:1px solid #e5e9f1; border-radius:.8rem; background:#fff; }
-    .entity-graphic { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#f5f6fa; }
-    .entity-emoji { font-size:1.25rem; line-height:1; }
+    .request-row { display:flex; align-items:flex-start; gap:.6rem; width:100%; box-sizing:border-box; min-height:4rem; padding:.5rem 0; border-bottom:1px solid #edf0f5; background:transparent; }
+    .request-row:last-child { border-bottom:0; }
+    .entity-graphic { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; }
     .entity-icon { display:grid; place-items:center; color:#5b63e9; }
     .content { flex:1; min-width:0; display:flex; flex-direction:column; gap:.25rem; }
     .content-header { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }

@@ -123,13 +123,15 @@ git commit -m "refactor(web): keep child tasks in one list"
 
 ## P1-3: Align My requests rows and replace child emoji tiles
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P1  
 **Depends on:** P1-2
 
 ### Outcome
 
 Child Activity -> **My requests** uses one Tasks/Rewards-style list with divider-separated rows. Task and reward requests display the corresponding existing Mini App vector icon, not an emoji copied from the request title.
+
+Implemented the shared list surface, icon-only request row tile, responsive cancel target, and E2E coverage for emoji-prefixed task and reward titles.
 
 ### Architectural decision
 
@@ -163,6 +165,8 @@ Keep `TelegramChildRequestList.svelte` responsible only for sorting, pagination,
 cd apps/web && npm run lint && npm run test && npm run build
 cd apps/web && npm run test:e2e -- tests/e2e/telegram-child.spec.ts
 ```
+
+✅ Passed: lint, 177 unit tests, production build, and 3 child E2E tests.
 
 ### Commit
 

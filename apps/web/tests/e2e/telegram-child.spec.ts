@@ -62,7 +62,7 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     let cancelled = false;
-    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [], shop: [], requests: [{ id: 7, taskId: 1, taskName: 'Read', requestType: 'task_completion', coins: 20, status: cancelled ? 'cancelled' : 'pending', createdAt: '2026-08-16T09:00:00Z' }] }) }));
+    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [], shop: [], requests: [{ id: 7, taskId: 1, taskName: '🏠 Clean room', requestType: 'task_completion', coins: 20, status: cancelled ? 'cancelled' : 'pending', createdAt: '2026-08-16T09:00:00Z' }, { id: 8, itemId: 2, itemName: '🎁 Game time', requestType: 'shop_purchase', coins: 30, status: 'approved', createdAt: '2026-08-15T09:00:00Z' }] }) }));
     await page.route('**/api/requests/7**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }));
 
     await page.goto('/telegram');
@@ -70,13 +70,28 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await page.getByRole('tab', { name: 'Активность' }).click();
     await page.getByRole('tab', { name: 'Заявки' }).click();
     await expect(page.getByRole('heading', { name: 'Мои заявки' })).toBeVisible();
+    const requestList = page.locator('section[aria-labelledby="child-requests-title"] .items');
+    await expect(requestList).toBeVisible();
+    await expect(requestList.locator('.request-row')).toHaveCount(2);
+    await expect(requestList.getByRole('heading', { name: 'Clean room' })).toBeVisible();
+    await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
+    await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
+    await expect(requestList.locator('.request-row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
+    await expect(requestList.locator('.request-row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
+    expect(await requestList.evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
+        && getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)')).toBeTruthy();
     await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toBeVisible();
+    expect(await page.getByRole('button', { name: 'Отменить эту заявку' }).evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        return rect.width >= 44 && rect.height >= 44;
+    })).toBeTruthy();
     await page.getByRole('button', { name: 'Отменить эту заявку' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     cancelled = true;
     await page.getByRole('button', { name: 'Отменить заявку' }).click();
     await expect(page.getByText('Отменено')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toHaveCount(0);
+    await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
