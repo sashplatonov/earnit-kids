@@ -38,6 +38,17 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
         const rect = node.getBoundingClientRect();
         return rect.width >= 44 && rect.height >= 44;
     })).toBeTruthy();
+    const rowTrigger = taskList.locator('.row-main').first();
+    const requestButton = taskList.locator('.check').first();
+    await rowTrigger.focus();
+    await page.keyboard.press('Tab');
+    await expect(requestButton).toBeFocused();
+    await expect(requestButton).toHaveCSS('outline-width', '3px');
+    await expect(requestButton).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
+    await page.keyboard.press('Shift+Tab');
+    await expect(rowTrigger).toBeFocused();
+    await expect(rowTrigger).toHaveCSS('outline-width', '3px');
+    await expect(rowTrigger).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
     await page.locator('#child-tab-rewards').click();
     await expect(page.locator('#child-panel-rewards')).toBeVisible();
     await page.locator('#child-tab-tasks').click();

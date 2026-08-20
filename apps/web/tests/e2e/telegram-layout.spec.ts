@@ -35,4 +35,12 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     for (const button of await taskList.locator('.row-main, .check').all()) expect(await button.evaluate((node) => Math.min(node.getBoundingClientRect().width, node.getBoundingClientRect().height) >= 44)).toBeTruthy();
+    const firstRowTrigger = taskList.locator('.row-main').first();
+    await firstRowTrigger.focus();
+    await expect(firstRowTrigger).toHaveCSS('outline-width', '3px');
+    await expect(firstRowTrigger).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
+    await page.keyboard.press('Tab');
+    await expect(taskList.locator('.check').first()).toBeFocused();
+    await expect(taskList.locator('.check').first()).toHaveCSS('outline-width', '3px');
+    await expect(taskList.locator('.check').first()).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
 });

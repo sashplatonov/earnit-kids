@@ -91,9 +91,9 @@ On the child Tasks tab, both the task-row trigger and the 44px request button vi
 
 ### Acceptance criteria
 
-- [ ] A keyboard user can distinguish the focused task-row trigger and the focused request button without relying on color-only state.
-- [ ] Escape from the request sheet still restores focus to the request button.
-- [ ] Multiple task rows remain one divider-separated list surface with no horizontal overflow at 320px.
+- [x] A keyboard user can distinguish the focused task-row trigger and the focused request button without relying on color-only state. ✅
+- [x] Escape from the request sheet still restores focus to the request button. ✅
+- [x] Multiple task rows remain one divider-separated list surface with no horizontal overflow at 320px. ✅
 
 ### Verification
 
