@@ -150,30 +150,27 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         if (callbackId.isBlank() || telegramUserId == Long.MIN_VALUE) {
             return;
         }
-        try {
-            if (!TelegramFeatureSupport.isEnabledForFamily(featureGate, identities, families, telegramUserId)) {
-                return;
-            }
-            if (data.startsWith("nav.")) {
-                callbacks.verifyNavigation(data, telegramUserId)
-                    .ifPresent(verified -> {
-                        if (verified.action().startsWith("coins-apply-")) {
-                            TelegramCoinAdjustmentHandler.handle(telegramUserId, verified.action(), callback,
-                                quickActions, apiClient, menuBuilder, config.miniAppUrl().orElse(""));
-                        } else {
-                            navigate(callback, verified);
-                        }
-                    });
-            } else if (data.startsWith("task.request.") || data.startsWith("reward.request.")) {
+        acknowledgeCallback(callbackId);
+        if (!TelegramFeatureSupport.isEnabledForFamily(featureGate, identities, families, telegramUserId)) {
+            return;
+        }
+        if (data.startsWith("nav.")) {
+            callbacks.verifyNavigation(data, telegramUserId)
+                .ifPresent(verified -> {
+                    if (verified.action().startsWith("coins-apply-")) {
+                        TelegramCoinAdjustmentHandler.handle(telegramUserId, verified.action(), callback,
+                            quickActions, apiClient, menuBuilder, config.miniAppUrl().orElse(""));
+                    } else {
+                        navigate(callback, verified);
+                    }
+                });
+        } else if (data.startsWith("task.request.") || data.startsWith("reward.request.")) {
                 handleChildQuickAction(data, telegramUserId, callback);
             } else if (data.startsWith("parent.request.")) {
                 TelegramParentRequestHandler.handle(telegramUserId, data, callback,
                     quickActions, apiClient, menuBuilder, config.miniAppUrl().orElse(""));
-            } else if (data.startsWith("mutate.")) {
-                callbacks.consumeMutation(data.substring("mutate.".length()), telegramUserId);
-            }
-        } finally {
-            acknowledgeCallback(callbackId);
+        } else if (data.startsWith("mutate.")) {
+            callbacks.consumeMutation(data.substring("mutate.".length()), telegramUserId);
         }
     }
 

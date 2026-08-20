@@ -21,7 +21,7 @@ import java.util.HexFormat;
 
 @ApplicationScoped
 public class TelegramCallbackService {
-    private static final int CALLBACK_SIGNATURE_BYTES = 16;
+    private static final int CALLBACK_SIGNATURE_BYTES = 15;
     @Inject private TelegramConfig config;
     @Inject private TelegramIdentityRepository identities;
     @Inject private TelegramCallbackActionRepository callbacks;
@@ -108,8 +108,8 @@ public class TelegramCallbackService {
             byte[] expected = Base64.getUrlDecoder().decode(signature(canonical));
             byte[] actual = Base64.getUrlDecoder().decode(encodedSignature);
             return MessageDigest.isEqual(expected, actual)
-                || actual.length == CALLBACK_SIGNATURE_BYTES
-                && MessageDigest.isEqual(Arrays.copyOf(expected, CALLBACK_SIGNATURE_BYTES), actual);
+                || (actual.length == CALLBACK_SIGNATURE_BYTES || actual.length == 16)
+                && MessageDigest.isEqual(Arrays.copyOf(expected, actual.length), actual);
         } catch (IllegalArgumentException exception) {
             return false;
         }

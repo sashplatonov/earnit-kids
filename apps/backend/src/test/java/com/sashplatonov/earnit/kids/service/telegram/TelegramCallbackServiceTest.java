@@ -60,6 +60,13 @@ class TelegramCallbackServiceTest {
         assertThat(service.verifyNavigation(childData, 42L)).contains(
             new TelegramCallbackService.VerifiedCallback("tasks-child-42", 42L,
                 Instant.ofEpochSecond(1_000L)));
+
+        String nextData = service.signNavigation("requests-next-123456789012345-child-987654321098765");
+        assertThat(nextData.getBytes(StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(64);
+        assertThat(service.verifyNavigation(nextData, 42L)).contains(
+            new TelegramCallbackService.VerifiedCallback(
+                "requests-next-123456789012345-child-987654321098765", 42L,
+                Instant.ofEpochSecond(1_000L)));
     }
 
     @Test

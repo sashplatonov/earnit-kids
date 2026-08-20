@@ -5,6 +5,10 @@ final class TelegramCallbackActionCodec {
     }
 
     static String compact(String action) {
+        String compactRequestNavigation = compactRequestNavigation(action);
+        if (compactRequestNavigation != null) {
+            return compactRequestNavigation;
+        }
         String[] coinParts = action.split("-", -1);
         if (isCoinAction(coinParts)) {
             return ("confirm".equals(coinParts[1]) ? "A" : "a")
@@ -20,6 +24,10 @@ final class TelegramCallbackActionCodec {
     }
 
     static String expand(String action) {
+        String expandedRequestNavigation = expandRequestNavigation(action);
+        if (expandedRequestNavigation != null) {
+            return expandedRequestNavigation;
+        }
         if (isCompactCoinAction(action)) {
             String[] parts = action.substring(2).split("-", -1);
             if (parts.length == 2) {
@@ -43,6 +51,22 @@ final class TelegramCallbackActionCodec {
     private static boolean isCompactCoinAction(String action) {
         return action.length() > 2 && (action.charAt(0) == 'A' || action.charAt(0) == 'a')
             && (action.charAt(1) == '+' || action.charAt(1) == '-');
+    }
+
+    private static String compactRequestNavigation(String action) {
+        if (!action.startsWith("requests-next-")) {
+            return null;
+        }
+        String[] parts = action.substring("requests-next-".length()).split("-child-", -1);
+        return parts.length == 2 ? "N" + parts[0] + "-" + parts[1] : null;
+    }
+
+    private static String expandRequestNavigation(String action) {
+        if (action.length() < 4 || action.charAt(0) != 'N') {
+            return null;
+        }
+        String[] parts = action.substring(1).split("-", -1);
+        return parts.length == 2 ? "requests-next-" + parts[0] + "-child-" + parts[1] : null;
     }
 
     private static String[] splitChildAction(String action) {
