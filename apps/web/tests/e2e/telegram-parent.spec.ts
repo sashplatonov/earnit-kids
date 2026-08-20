@@ -75,7 +75,21 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.locator('.items')).toHaveCSS('border-style', 'solid');
     await expect(requestRows.nth(0)).toHaveCSS('border-bottom-width', '1px');
     await expect(requestRows.nth(1)).toHaveCSS('border-bottom-width', '0px');
-    await requestRows.nth(0).getByRole('button', { name: /Approve request|Одобрить заявку/ }).click();
+    const approveButton = requestRows.nth(0).getByRole('button', { name: /Approve request|Одобрить заявку/ });
+    const rejectButton = requestRows.nth(0).getByRole('button', { name: /Reject request|Отклонить заявку/ });
+    await page.locator('body').click({ position: { x: 1, y: 1 } });
+    for (let tab = 0; tab < 40; tab += 1) {
+        if (await page.evaluate(() => document.activeElement?.getAttribute('aria-label')?.match(/Approve request|Одобрить заявку/))) break;
+        await page.keyboard.press('Tab');
+    }
+    await expect(approveButton).toBeFocused();
+    await expect(approveButton).toHaveCSS('outline-width', '3px');
+    await expect(approveButton).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
+    await approveButton.press('Tab');
+    await expect(rejectButton).toBeFocused();
+    await expect(rejectButton).toHaveCSS('outline-width', '3px');
+    await expect(rejectButton).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
+    await approveButton.click();
     await expect(page.getByRole('alert')).toContainText(/This request could not be updated|Не удалось обновить заявку/);
     await requestRows.nth(1).getByRole('button', { name: /Reject request|Отклонить заявку/ }).click();
     const mobileNav = await page.getByRole('tablist').evaluate((node) => {

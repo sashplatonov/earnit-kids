@@ -87,6 +87,7 @@
     .attention-actions { margin-top:.55rem; margin-left:2.5rem; display:grid; grid-template-columns:1fr 1fr; gap:.45rem; }
     .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.25rem; min-height:2.75rem; padding:.35rem .45rem; border-radius:.55rem; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
     .attention-actions button:disabled { cursor:wait; opacity:.6; }
+    .attention-actions button:focus-visible, .state-error button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .approve { border:1px solid #cce9d8; background:#eaf7ef; color:#17884b; }
     .reject { border:1px solid #f3cfd2; background:#fff0f1; color:#c63c42; }
     @media (max-width:370px) {
