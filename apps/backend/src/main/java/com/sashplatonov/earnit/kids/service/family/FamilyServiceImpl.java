@@ -126,10 +126,9 @@ public final class FamilyServiceImpl implements FamilyService {
             purchaseRequestRepository,
             friendRepository,
             childRepository,
-            taskRepository,
-            shopItemRepository,
             dashboardMapper,
-            mapper
+            new HistoryDtoMapper(dashboardMapper),
+            new RelatedEntityHydrator(taskRepository, shopItemRepository, dashboardMapper, mapper)
         );
         FamilyDashboardResponseAssembler responseAssembler = new FamilyDashboardResponseAssembler(
             hydrator,
@@ -151,7 +150,9 @@ public final class FamilyServiceImpl implements FamilyService {
             dashboardMapper,
             mapper,
             new FamilyOperationGuard(familyRepository),
-            new ChildOwnershipService(childRepository)
+            new ChildOwnershipService(childRepository),
+            new HistoryDtoMapper(dashboardMapper),
+            new RelatedEntityHydrator(taskRepository, shopItemRepository, dashboardMapper, mapper)
         );
         FamilyCommandService familyCommandService = new FamilyCommandServiceImpl(
             familyRepository,

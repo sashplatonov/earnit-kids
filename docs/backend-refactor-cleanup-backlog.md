@@ -465,7 +465,7 @@ git commit -m "refactor(backend): extract ChildOwnershipService for family-scope
 
 ## P1-3: Extract `HistoryDtoMapper` and `RelatedEntityHydrator`
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P1  
 **Depends on:** -
 

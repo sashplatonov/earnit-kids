@@ -82,10 +82,10 @@ class FamilyDashboardQueryServiceImplTest {
             purchaseRequestRepository,
             friendRepository,
             childRepository,
-            taskRepository,
-            shopItemRepository,
             mapper,
-            OBJECT_MAPPER
+            new com.sashplatonov.earnit.kids.service.family.HistoryDtoMapper(mapper),
+            new com.sashplatonov.earnit.kids.service.family.RelatedEntityHydrator(
+                taskRepository, shopItemRepository, mapper, OBJECT_MAPPER)
         );
         FamilyDashboardResponseAssembler responseAssembler = new FamilyDashboardResponseAssembler(
             hydrator,

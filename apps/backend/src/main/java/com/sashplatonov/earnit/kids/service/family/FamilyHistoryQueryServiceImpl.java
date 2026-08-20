@@ -3,7 +3,6 @@ package com.sashplatonov.earnit.kids.service.family;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
 import com.sashplatonov.earnit.kids.domain.model.HistoryEntryEntity;
-import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
 import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.dto.response.HistoryEntryDto;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
@@ -41,6 +40,8 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
     private final ObjectMapper objectMapper;
     private final FamilyOperationGuard familyOperationGuard;
     private final ChildOwnershipService childOwnershipService;
+    private final HistoryDtoMapper historyDtoMapper;
+    private final RelatedEntityHydrator relatedEntityHydrator;
 
     @Inject
     public FamilyHistoryQueryServiceImpl(ChildRepository childRepository,
@@ -51,7 +52,9 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
                                          FamilyDashboardMapper mapper,
                                          ObjectMapper objectMapper,
                                          FamilyOperationGuard familyOperationGuard,
-                                         ChildOwnershipService childOwnershipService) {
+                                         ChildOwnershipService childOwnershipService,
+                                         HistoryDtoMapper historyDtoMapper,
+                                         RelatedEntityHydrator relatedEntityHydrator) {
         this.childRepository = childRepository;
         this.taskRepository = taskRepository;
         this.shopItemRepository = shopItemRepository;
@@ -61,6 +64,8 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         this.objectMapper = objectMapper;
         this.familyOperationGuard = familyOperationGuard;
         this.childOwnershipService = childOwnershipService;
+        this.historyDtoMapper = historyDtoMapper;
+        this.relatedEntityHydrator = relatedEntityHydrator;
     }
 
     @Override
@@ -82,9 +87,9 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         List<ShopItemDto> shopItems = loadShopItems(childId, Map.of());
         Map<Long, TaskDto> taskMap = buildTaskMap(tasks);
         Map<Long, ShopItemDto> shopMap = buildShopItemMap(shopItems);
-        hydrateMissingHistoryEntries(familyDbId, childId, rows, taskMap, shopMap);
+        relatedEntityHydrator.hydrateMissingHistoryEntries(familyDbId, childId, rows, taskMap, shopMap);
         List<HistoryEntryDto> items = rows.stream()
-            .map(historyEntry -> toHistoryDto(historyEntry, taskMap, shopMap))
+            .map(historyEntry -> historyDtoMapper.toDto(historyEntry, taskMap, shopMap))
             .toList();
         return OperationResult.success(new PaginatedHistory(items, total, page, effectiveLimit));
     }
@@ -111,7 +116,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
                 loadShopItems(requestChildId, Map.of())
                     .forEach(shopItem -> shopMap.putIfAbsent(shopItem.id(), shopItem));
             });
-        hydrateMissingRequests(familyDbId, rows, taskMap, shopMap);
+        relatedEntityHydrator.hydrateMissingRequests(familyDbId, rows, taskMap, shopMap);
         List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, taskMap, shopMap)).toList();
         return OperationResult.success(new PaginatedRequests(items, total, page, effectiveLimit));
     }
@@ -146,79 +151,6 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
             shopMap.putIfAbsent(shopItem.id(), shopItem);
         }
         return shopMap;
-    }
-
-    private void hydrateMissingHistoryEntries(int familyDbId, int childId, List<HistoryEntryEntity> rows,
-                                              Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
-        List<Long> missingTaskIds = rows.stream()
-            .filter(entry -> entry.getType() == HistoryEntryType.earn && entry.getRelatedId() != null)
-            .map(HistoryEntryEntity::getRelatedId)
-            .filter(relatedId -> !taskMap.containsKey(relatedId))
-            .distinct()
-            .toList();
-        List<Long> missingShopIds = rows.stream()
-            .filter(entry -> entry.getType() == HistoryEntryType.spend && entry.getRelatedId() != null)
-            .map(HistoryEntryEntity::getRelatedId)
-            .filter(relatedId -> !shopMap.containsKey(relatedId))
-            .distinct()
-            .toList();
-
-        if (!missingTaskIds.isEmpty()) {
-            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, List.of(childId), missingTaskIds).stream()
-                .map(task -> mapper.toTaskDto(task, null, objectMapper))
-                .forEach(task -> taskMap.putIfAbsent(task.id(), task));
-        }
-        if (!missingShopIds.isEmpty()) {
-            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, List.of(childId), missingShopIds).stream()
-                .map(item -> mapper.toShopItemDto(item, null, objectMapper))
-                .forEach(item -> shopMap.putIfAbsent(item.id(), item));
-        }
-    }
-
-    private void hydrateMissingRequests(int familyDbId, List<PurchaseRequestEntity> rows,
-                                        Map<Long, TaskDto> taskMap, Map<Long, ShopItemDto> shopMap) {
-        List<Integer> childIds = rows.stream()
-            .map(PurchaseRequestEntity::getChildId)
-            .filter(Objects::nonNull)
-            .distinct()
-            .toList();
-
-        List<Long> missingTaskIds = rows.stream()
-            .map(PurchaseRequestEntity::getTaskId)
-            .filter(Objects::nonNull)
-            .filter(taskId -> !taskMap.containsKey(taskId))
-            .distinct()
-            .toList();
-        List<Long> missingShopIds = rows.stream()
-            .map(PurchaseRequestEntity::getItemId)
-            .filter(Objects::nonNull)
-            .filter(itemId -> !shopMap.containsKey(itemId))
-            .distinct()
-            .toList();
-
-        if (!missingTaskIds.isEmpty() && !childIds.isEmpty()) {
-            taskRepository.findByFamilyAndChildAndTaskIds(familyDbId, childIds, missingTaskIds).stream()
-                .map(task -> mapper.toTaskDto(task, null, objectMapper))
-                .forEach(task -> taskMap.putIfAbsent(task.id(), task));
-        }
-        if (!missingShopIds.isEmpty() && !childIds.isEmpty()) {
-            shopItemRepository.findByFamilyAndChildAndItemIds(familyDbId, childIds, missingShopIds).stream()
-                .map(item -> mapper.toShopItemDto(item, null, objectMapper))
-                .forEach(item -> shopMap.putIfAbsent(item.id(), item));
-        }
-    }
-
-    private HistoryEntryDto toHistoryDto(HistoryEntryEntity entry,
-                                         Map<Long, TaskDto> taskMap,
-                                         Map<Long, ShopItemDto> shopMap) {
-        FamilyRelatedDetailsResolver.HistoryDetails details =
-            FamilyRelatedDetailsResolver.resolveHistoryDetails(entry, taskMap, shopMap, mapper);
-        return new HistoryEntryDto(entry.getExternalId(), entry.getType(), entry.getAmount(),
-            details.title(),
-            details.description(), entry.getMoneyAmount(), entry.getRelatedId(), details.taskId(),
-            details.taskName(), details.itemId(), details.itemName(), details.groupName(), details.comment(),
-            entry.getCreatedAt() != null ? entry.getCreatedAt().toString() : null,
-            entry.getChildId());
     }
 
     private RequestDto toRequestDto(PurchaseRequestEntity request,
