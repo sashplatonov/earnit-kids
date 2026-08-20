@@ -53,24 +53,42 @@ suite and quality gates.
   used instead, consistent with "keep mapping explicit and local when short").
   Do not introduce Javadoc (forbidden by Checkstyle). Do not move `OperationResult`
   failure factory into `OperationResult` itself (would couple `util/` to `i18n/`).
+- **Review follow-ups (2026-08-20)**: `V39__randomize_family_ids.sql` has already
+  been applied in production and is immutable. Its first PostgreSQL-only statement
+  prevents the H2 test application from booting, while its second update would
+  hash the newly generated identifier a second time. A new migration/test-baseline
+  strategy must make both PostgreSQL deployment and H2 validation deterministic.
+  Quality rules remain enforcement, not reporting: existing SpotBugs and JaCoCo
+  exclusions cannot substitute for fixing ownership leaks or adding meaningful
+  coverage. The configured JaCoCo threshold must match this backlog's 0.80 goal.
+- **Remaining response mapping**: Auth responses own cookies, redirects, and
+  response DTO selection; `OperationResultResponses` owns the generic
+  success/failure branching. Extend the existing utility with callback/status
+  hooks instead of creating a second auth-specific mapper, and preserve every
+  response body, status, header, and redirect target.
 
 ## Recommended implementation order
 
 | Order | Task | Priority | Depends on | Reason |
 | ---: | --- | --- | --- | --- |
-| 1 | P0-1: Extract `OperationResultResponses` utility | P0 | - | Fixes latent null-error-code bug; unblocks all resource-layer cleanup |
-| 2 | P0-2: Extract `ResourceAuthSupport` base + role guards | P0 | P0-1 | Removes ~35 duplicated auth guards; standardizes unauthorized message |
-| 3 | P0-3: Extract `ServiceResults` failure factory | P0 | - | Removes 11 duplicated `failure(errorCode, messageKey)` helpers |
-| 4 | P1-1: Extract `FamilyOperationGuard` for family ownership | P1 | P0-3 | Removes ~15 duplicated family-db-id guards; fixes error-code inconsistency |
-| 5 | P1-2: Extract `ChildOwnershipService` | P1 | P1-1 | Removes 6 duplicated `findFamilyChild` helpers |
-| 6 | P1-3: Extract `HistoryDtoMapper` + `RelatedEntityHydrator` | P1 | - | Removes ~100 verbatim-duplicated lines across 2 service classes |
-| 7 | P1-4: Extract `PageRequest` pagination helper | P1 | - | Removes 4 duplicated clamping blocks; fixes inconsistent max-page-size (100 vs 500) |
-| 8 | P1-5: Extract `PanachePagination` repository helper | P1 | P1-4 | Removes 3 duplicated `.range().list()` blocks |
-| 9 | P2-1: Remove noise `EXPLAIN:` comments — DTO layer | P2 | - | Low-risk; DTOs have no behavior to break |
-| 10 | P2-2: Remove noise `EXPLAIN:` comments — service/telegram | P2 | P2-1 | Largest comment concentration (30 files); review per-file |
-| 11 | P2-3: Remove noise `EXPLAIN:` comments — repository/remaining | P2 | P2-2 | AdminAnalyticsRepository (25 comments) + remaining packages |
-| 12 | P2-4: Adopt `ResourceAuthSupport` across all resources | P2 | P0-2 | Migrate `FamilyReadResource`, `AccountResource`, telegram resources, admin resources |
-| 13 | P3-1: Final quality gate + coverage check | P3 | All | Confirm `verify` passes, JaCoCo ≥ 0.80, no regressions |
+| 1 | P0-4: Restore H2-compatible Flyway startup after V39 | P0 | - | Broken migration blocks two Quarkus tests and OpenAPI runtime proof |
+| 2 | P0-5: Remove SpotBugs ownership-leak suppressions | P0 | P0-4 | A clean analyzer result must reflect fixed code, not exclusions |
+| 3 | P0-6: Restore and enforce 80% JaCoCo line coverage | P0 | P0-4 | The current 62.8% result and 0.65 configured threshold violate P3-1 |
+| 4 | P0-1: Extract `OperationResultResponses` utility | P0 | - | Fixes latent null-error-code bug; unblocks all resource-layer cleanup |
+| 5 | P0-2: Extract `ResourceAuthSupport` base + role guards | P0 | P0-1 | Removes ~35 duplicated auth guards; standardizes unauthorized message |
+| 6 | P0-3: Extract `ServiceResults` failure factory | P0 | - | Removes 11 duplicated `failure(errorCode, messageKey)` helpers |
+| 7 | P1-1: Extract `FamilyOperationGuard` for family ownership | P1 | P0-3 | Removes ~15 duplicated family-db-id guards; fixes error-code inconsistency |
+| 8 | P1-2: Extract `ChildOwnershipService` | P1 | P1-1 | Removes 6 duplicated `findFamilyChild` helpers |
+| 9 | P1-3: Extract `HistoryDtoMapper` + `RelatedEntityHydrator` | P1 | - | Removes ~100 verbatim-duplicated lines across 2 service classes |
+| 10 | P1-4: Extract `PageRequest` pagination helper | P1 | - | Removes 4 duplicated clamping blocks; fixes inconsistent max-page-size (100 vs 500) |
+| 11 | P1-5: Extract `PanachePagination` repository helper | P1 | P1-4 | Removes 3 duplicated `.range().list()` blocks |
+| 12 | P2-1: Remove noise `EXPLAIN:` comments — DTO layer | P2 | - | Low-risk; DTOs have no behavior to break |
+| 13 | P2-2: Remove noise `EXPLAIN:` comments — service/telegram | P2 | P2-1 | Largest comment concentration (30 files); review per-file |
+| 14 | P2-3: Remove noise `EXPLAIN:` comments — repository/remaining | P2 | P2-2 | AdminAnalyticsRepository (25 comments) + remaining packages |
+| 15 | P2-4: Adopt `ResourceAuthSupport` across all resources | P2 | P0-2 | Migrate `FamilyReadResource`, `AccountResource`, telegram resources, admin resources |
+| 16 | P2-5: Complete `OperationResult` response-mapping migration | P2 | P0-1 | Five resource-level switches still violate P0-1 acceptance criteria |
+| 17 | P2-6: Finish removal of noise `EXPLAIN:` comments | P2 | P2-1, P2-2, P2-3 | 269 comments remain; P3-1 requires fewer than 120 |
+| 18 | P3-1: Final quality gate + coverage check | P3 | All preceding tasks | Confirm `verify` passes, JaCoCo ≥ 0.80, no regressions |
 
 ## P0-1: Extract `OperationResultResponses` utility
 
@@ -960,11 +978,300 @@ git commit -m "refactor(backend): adopt ResourceAuthSupport and OperationResultR
 
 ---
 
-## P3-1: Final quality gate and coverage check
+## P0-4: Restore H2-compatible Flyway startup after V39
+
+**Status:** ⬜ Not started
+**Priority:** P0
+**Depends on:** -
+
+### Outcome
+
+Quarkus starts with the complete Flyway chain in the H2 test profile, so the two
+currently blocked Quarkus tests and local `/q/openapi` verification can run. The
+production migration history remains checksum-safe and family identifiers remain
+non-reversible/non-email-derived values.
+
+### Architectural decision
+
+V39 has been applied in production, so its checksum and production behavior are
+immutable. Add a test-resource migration with the same version/name that shadows
+the production resource only in H2 tests and uses one H2-compatible `MD5` update
+to model the intended post-V39 state. Do not modify V39 and do not add a new
+production remapping migration: either would risk Flyway validation failure or a
+second irreversible identifier change in production.
+
+### Files
+
+- Create `apps/backend/src/test/resources/db/migration/V39__randomize_family_ids.sql` as the H2-only counterpart to the immutable production migration.
+- Create or modify `apps/backend/src/test/java/com/sashplatonov/earnit/kids/repository/FamilyIdRandomizationMigrationTest.java`.
+- Modify the existing Quarkus tests only to remove temporary workarounds, if any.
+
+### Work
+
+1. Preserve the applied production V39 byte-for-byte; do not run Flyway repair and do not create a production follow-up that rewrites `family_id`.
+2. Make the H2 test migration chain compatible by adding its version-matched test resource, preserving the intended contract that an existing `families.family_id` becomes a `fam_`-prefixed, deterministic non-email value exactly once.
+3. Add migration coverage for a seeded family ID and for application startup; assert the resulting identifier is prefixed, changed once, unique, and does not expose the original email-derived input.
+4. Re-run the two currently failing Quarkus tests before the full backend gate.
+
+### Acceptance criteria
+
+- H2 executes V39 without `ENCODE`/`DIGEST` function errors.
+- The H2 test counterpart executes exactly one `UPDATE families SET family_id` statement.
+- The production V39 file and its Flyway checksum are unchanged.
+- `AdjustBalanceRequestValidationTest` and `NewRelicMetricsExportSmokeTest` boot Quarkus and pass.
+
+### Verification
+
+```bash
+cd apps/backend
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw test -Dtest='AdjustBalanceRequestValidationTest,NewRelicMetricsExportSmokeTest,FamilyIdRandomizationMigrationTest'
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw test
+```
+
+### Commit
+
+```bash
+git add apps/backend/src/test/resources/db/migration/ apps/backend/src/test/java/com/sashplatonov/earnit/kids/repository/
+git commit -m "fix(backend): restore V39 migration test startup"
+```
+
+---
+
+## P0-5: Remove SpotBugs ownership-leak suppressions
+
+**Status:** ⬜ Not started
+**Priority:** P0
+**Depends on:** P0-4
+
+### Outcome
+
+SpotBugs reports no medium-or-higher defects without filtering `EI_EXPOSE_REP`,
+`EI_EXPOSE_REP2`, or `BX_UNBOXING_IMMEDIATELY_REBOXED`. Mutable request-scoped
+objects and collections no longer escape CDI beans or response DTOs by reference.
+
+### Architectural decision
+
+Each class owns its mutable state. Constructor-injected mutable collections and
+request contexts are copied or transformed at the owning boundary; response DTOs
+expose immutable snapshots. Remove the filter entries only together with the
+root-cause code fixes and tests—do not lower SpotBugs severity or introduce
+annotations/suppressions.
+
+### Files
+
+- Modify `apps/backend/config/spotbugs-exclude.xml`.
+- Modify the classes currently matched by that filter under `apps/backend/src/main/java/com/sashplatonov/earnit/kids/{config,i18n,resource,service,dto}/`.
+- Create or modify focused unit tests beside each corrected component under `apps/backend/src/test/java/com/sashplatonov/earnit/kids/`.
+
+### Work
+
+1. Run SpotBugs with the current filter removed in a temporary working copy to enumerate the real defects by class and pattern.
+2. Replace direct retention/return of mutable arrays, collections, request contexts, or boxed values with the appropriate immutable copy, value extraction, or primitive representation.
+3. Remove every `EI_EXPOSE_REP`, `EI_EXPOSE_REP2`, and `BX_UNBOXING_IMMEDIATELY_REBOXED` match from `spotbugs-exclude.xml`; remove the filter reference altogether if no justified, non-fixable match remains.
+4. Add tests demonstrating that mutation of an input collection/context cannot alter the component's retained state and that response collection mutations cannot alter subsequent reads.
+
+### Acceptance criteria
+
+- `config/spotbugs-exclude.xml` contains no suppression for the listed patterns.
+- Standard `mvnw verify` runs SpotBugs with zero findings and no suppression/annotation added for this work.
+- Existing HTTP response shapes and request-scoped locale/metrics behavior are unchanged.
+
+### Verification
+
+```bash
+cd apps/backend
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw test -Dtest='*ResourceTest,*ServiceTest,*DtoTest'
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw spotbugs:check
+rg -n 'EI_EXPOSE_REP|BX_UNBOXING_IMMEDIATELY_REBOXED' config/spotbugs-exclude.xml
+```
+
+### Commit
+
+```bash
+git add apps/backend/config/spotbugs-exclude.xml apps/backend/src/main/java/ apps/backend/src/test/java/
+git commit -m "fix(backend): remove SpotBugs ownership suppressions"
+```
+
+---
+
+## P0-6: Restore and enforce 80% JaCoCo line coverage
+
+**Status:** ⬜ Not started
+**Priority:** P0
+**Depends on:** P0-4
+
+### Outcome
+
+The backend's checked line coverage is at least 80%, enforced by Maven rather
+than merely reported. Added tests exercise meaningful failure, authorization,
+and persistence-boundary behavior rather than generated code or dead branches.
+
+### Architectural decision
+
+The P3-1 contract is the source of truth: the current `pom.xml` threshold of
+0.65 and repository-package exclusion cannot define a weaker quality gate. Keep
+only exclusions proven impossible to instrument and document that Quarkus reason
+next to the configuration; otherwise remove them and cover the real behavior.
+Coverage is raised through focused unit/integration tests, not reduced by wider
+exclusions or changed production semantics.
+
+### Files
+
+- Modify `apps/backend/pom.xml`.
+- Create or modify focused tests under `apps/backend/src/test/java/com/sashplatonov/earnit/kids/` for the lowest-covered production classes from `target/site/jacoco`.
+- Modify production classes only when a test exposes an untestable dependency boundary that requires a behavior-preserving seam.
+
+### Work
+
+1. After P0-4 restores test startup, generate the JaCoCo XML/HTML report and rank uncovered executable lines by package and risk.
+2. Add regression coverage for the highest-impact uncovered resource, service, and repository-adjacent branches, including authorization/failure paths introduced by this refactor.
+3. Set the Maven JaCoCo bundle LINE `COVEREDRATIO` minimum to `0.80`; remove or narrowly justify any remaining package exclusion based on instrumentation evidence.
+4. Ensure the check fails locally below the threshold and passes only with the measured 80%+ result.
+
+### Acceptance criteria
+
+- JaCoCo reports at least 0.80 checked line coverage after a clean test run.
+- `mvnw verify` fails when the measured checked coverage is below 0.80.
+- No new coverage exclusion, skipped test, or suppression is introduced to reach the target.
+- New tests cover both successful and failure/authorization paths for affected code.
+
+### Verification
+
+```bash
+cd apps/backend
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw clean verify
+rg -n '<minimum>0\.80</minimum>|<exclude>' pom.xml
+```
+
+### Commit
+
+```bash
+git add apps/backend/pom.xml apps/backend/src/main/java/ apps/backend/src/test/java/
+git commit -m "test(backend): enforce refactor coverage target"
+```
+
+---
+
+## P2-5: Complete `OperationResult` response-mapping migration
 
 **Status:** ⬜ Not started  
+**Priority:** P2
+**Depends on:** P0-1
+
+### Outcome
+
+No resource retains an inline `switch (result)` for `OperationResult` mapping.
+The five remaining switches in `AuthResource` and `ChildMagicLinkResource` use
+the existing common mapper while preserving authentication cookies, redirect
+responses, API status codes, bodies, and error codes.
+
+### Architectural decision
+
+`OperationResultResponses` is the only common mapping mechanism. It must accept
+resource-owned success callbacks and explicit failure status/error-code mapping
+where auth behavior is not the generic 400 response. Cookie construction,
+redirect origin resolution, and `AuthResponse` DTO selection remain in the auth
+resources; do not create an auth mapper or move HTTP mechanics into services.
+
+### Files
+
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/util/OperationResultResponses.java`.
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/auth/AuthResource.java`.
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/auth/ChildMagicLinkResource.java`.
+- Modify `apps/backend/src/test/java/com/sashplatonov/earnit/kids/util/OperationResultResponsesTest.java`.
+- Modify or create resource tests for both auth resources.
+
+### Work
+
+1. Extend the existing mapper with the minimal callback/status overload needed by the auth success and failure paths.
+2. Replace the four `AuthResource` and one `ChildMagicLinkResource` switches without changing the successful cookies, selection-required response, 201 registration response, 401/400/409 error codes, or 303 redirect locations.
+3. Add response-level regression tests for each distinct status and cookie/redirect branch.
+4. Search all resources after the change and remove only `OperationResult` switches; do not alter unrelated pattern matching.
+
+### Acceptance criteria
+
+- `rg -n -U 'switch\\s*\\(result\\)' apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource` returns no matches.
+- Auth responses preserve their pre-change status, entity, `Set-Cookie` headers, error code, and redirect location for success and failure paths.
+- The common mapper remains the single source of generic failure response construction.
+
+### Verification
+
+```bash
+cd apps/backend
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw test -Dtest='AuthResourceTest,ChildMagicLinkResourceTest,OperationResultResponsesTest'
+rg -n -U 'switch\\s*\\(result\\)' src/main/java/com/sashplatonov/earnit/kids/resource
+```
+
+### Commit
+
+```bash
+git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/{resource/auth,util}/ apps/backend/src/test/java/com/sashplatonov/earnit/kids/{resource/auth,util}/
+git commit -m "refactor(backend): complete result response mapping"
+```
+
+---
+
+## P2-6: Finish removal of noise `EXPLAIN:` comments
+
+**Status:** ⬜ Not started
+**Priority:** P2
+**Depends on:** P2-1, P2-2, P2-3
+
+### Outcome
+
+The production source contains fewer than 120 `EXPLAIN:` comments, with every
+remaining comment documenting a non-obvious algorithm, ordering constraint,
+security boundary, or subtle bug workaround rather than restating identifiers or
+the adjacent statement.
+
+### Architectural decision
+
+The existing Checkstyle rule remains the syntax guard for comments, but review
+of semantic value belongs to the owning package. Remove comments in place;
+neither new comments nor Checkstyle suppressions are an acceptable substitute.
+Preserve comments only when deleting them would lose the reason a non-obvious
+flow must remain as written.
+
+### Files
+
+- Modify the Java files returned by `rg -l 'EXPLAIN:' apps/backend/src/main/java/com/sashplatonov/earnit/kids --glob '*.java'` after individual review.
+- Modify focused tests only if comment removal exposes dead code or stale behavior that must be removed safely.
+
+### Work
+
+1. Produce a per-file inventory of the 269 current comments and classify each as required rationale or decorative restatement.
+2. Remove decorative comments across all packages, including the files not reached by the three completed package-oriented passes.
+3. Keep only comments that explain a decision not apparent from names/types/control flow; do not reword noise to retain it.
+4. Recount comments and run Checkstyle after the final edit.
+
+### Acceptance criteria
+
+- The exact production-source count is below 120.
+- Every remaining comment begins with `EXPLAIN:` or `FIXME:` and explains a genuinely non-obvious constraint or algorithm.
+- No Java behavior, API response, or test expectation changes solely because of this cleanup.
+
+### Verification
+
+```bash
+cd apps/backend
+rg -n 'EXPLAIN:' src/main/java/com/sashplatonov/earnit/kids --glob '*.java' | wc -l
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw validate
+```
+
+### Commit
+
+```bash
+git add apps/backend/src/main/java/
+git commit -m "refactor(backend): finish noise comment cleanup"
+```
+
+---
+
+## P3-1: Final quality gate and coverage check
+
+**Status:** ⛔ Blocked
 **Priority:** P3  
-**Depends on:** P0-1, P0-2, P0-3, P1-1, P1-2, P1-3, P1-4, P1-5, P2-1, P2-2, P2-3, P2-4
+**Depends on:** P0-1, P0-2, P0-3, P0-4, P0-5, P0-6, P1-1, P1-2, P1-3, P1-4, P1-5, P2-1, P2-2, P2-3, P2-4, P2-5, P2-6
 
 ### Outcome
 
