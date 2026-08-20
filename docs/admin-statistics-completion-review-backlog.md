@@ -123,7 +123,7 @@ git commit -m "fix(backend): Scope activation funnel periods"
 
 ## P2-1: Make Statistics help controls touch- and keyboard-accessible
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P2  
 **Depends on:** -
 

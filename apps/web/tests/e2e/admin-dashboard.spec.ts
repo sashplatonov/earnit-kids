@@ -46,6 +46,12 @@ test('admin Statistics stays usable at compact mobile width', async ({ page }) =
         expect((await tab.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     }
 
+    for (const control of await page.locator('.info:visible, .mini-info:visible').all()) {
+        const box = await control.boundingBox();
+        expect(box?.width).toBeGreaterThanOrEqual(44);
+        expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     expect(overflow).toBe(false);
     await expect(page.locator('.tabs-wrap')).toHaveCSS('position', 'fixed');
@@ -62,12 +68,28 @@ test('admin Statistics keeps localized tooltip and desktop navigation accessible
     await expect(page.getByText(/admin\.dashboard|tabs\.|kpis\.|tooltips\./)).toHaveCount(0);
 
     const tooltipTrigger = page.getByRole('button', { name: 'Активные семьи' }).first();
-    await tooltipTrigger.click();
+    const helpControls = page.locator('.info:visible, .mini-info:visible');
+    for (const control of await helpControls.all()) {
+        const box = await control.boundingBox();
+        expect(box?.width).toBeGreaterThanOrEqual(44);
+        expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+
+    await tooltipTrigger.focus();
+    await page.keyboard.press('Enter');
     await expect(page.getByRole('dialog', { name: 'Активные семьи' })).toBeVisible();
     const close = page.getByRole('button', { name: 'Закрыть пояснение' });
     await expect(close).toBeVisible();
+    await expect(close).toBeFocused();
     await close.press('Enter');
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(tooltipTrigger).toBeFocused();
+
+    await tooltipTrigger.click();
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(tooltipTrigger).toBeFocused();
 
     const tabs = page.getByRole('tab');
     await tabs.first().focus();

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, tick } from 'svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
@@ -104,13 +104,32 @@
 
     // EXPLAIN: ADM-21 tap-accessible tooltip state
     let activeTooltip: string | null = null;
+    let tooltipTrigger: HTMLButtonElement | null = null;
+    let tooltipCloseButton: HTMLButtonElement | null = null;
 
-    function toggleTooltip(key: string) {
-        activeTooltip = activeTooltip === key ? null : key;
+    async function toggleTooltip(key: string, event: MouseEvent) {
+        const trigger = event.currentTarget as HTMLButtonElement;
+        if (activeTooltip === key) {
+            closeTooltip();
+            return;
+        }
+        tooltipTrigger = trigger;
+        activeTooltip = key;
+        await tick();
+        tooltipCloseButton?.focus();
     }
 
-    function closeTooltip() {
+    async function closeTooltip() {
         activeTooltip = null;
+        await tick();
+        tooltipTrigger?.focus();
+    }
+
+    function handleTooltipKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape' && activeTooltip) {
+            event.preventDefault();
+            closeTooltip();
+        }
     }
 
     function formatValue(val: number | string | null | undefined, isPercent = false): string {
@@ -340,7 +359,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('kpis.activeFamilies')}</div>
-                            <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={() => toggleTooltip('activeFamilies')}>i</button>
+                            <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={(event) => toggleTooltip('activeFamilies', event)}>i</button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeFamilies)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
@@ -353,7 +372,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('kpis.activeChildren')}</div>
-                            <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={() => toggleTooltip('activeChildren')}>i</button>
+                            <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={(event) => toggleTooltip('activeChildren', event)}>i</button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeChildren)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
@@ -396,7 +415,7 @@
                     <div class="bar-label">
                         <span>
                             {t('coins.spendEarn.label')} 
-                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={() => toggleTooltip('spendEarn')}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={(event) => toggleTooltip('spendEarn', event)}>i</button>
                         </span>
                         <b>{formatValue(coinEconomy?.coins?.spendRate, true)}</b>
                     </div>
@@ -410,7 +429,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.medianBalance.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={() => toggleTooltip('medianBalance')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={(event) => toggleTooltip('medianBalance', event)}>i</button>
                             </div>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
@@ -420,7 +439,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.timeToFirstReward.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={() => toggleTooltip('timeToFirstReward')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={(event) => toggleTooltip('timeToFirstReward', event)}>i</button>
                             </div>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
@@ -430,7 +449,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.earningNotSpending.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}>i</button>
                             </div>
                             <small>{t('metrics.earningNotSpending.desc')}</small>
                         </div>
@@ -535,7 +554,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('tasks.approvalRate.label')}</div>
-                            <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={() => toggleTooltip('approvalRate')}>i</button>
+                            <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={(event) => toggleTooltip('approvalRate', event)}>i</button>
                         </div>
                         <div class="kpi-value">{formatValue(taskEconomy?.taskMetrics?.approvalRate, true)}</div>
                         <div class="kpi-foot">{t('tasks.approvedByParents')}</div>
@@ -652,7 +671,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('retention.active7d.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={() => toggleTooltip('active7d')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={(event) => toggleTooltip('active7d', event)}>i</button>
                             </div>
                             <small>{t('retention.active7d.desc')}</small>
                         </div>
@@ -662,7 +681,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('retention.active30d.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={() => toggleTooltip('active30d')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={(event) => toggleTooltip('active30d', event)}>i</button>
                             </div>
                             <small>{t('retention.active30d.desc')}</small>
                         </div>
@@ -744,7 +763,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('parent.decisionTime.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={() => toggleTooltip('decisionTime')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={(event) => toggleTooltip('decisionTime', event)}>i</button>
                             </div>
                             <small>{t('parent.decisionTime.desc')}</small>
                         </div>
@@ -754,7 +773,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('parent.pendingBacklog.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={() => toggleTooltip('pendingBacklog')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={(event) => toggleTooltip('pendingBacklog', event)}>i</button>
                             </div>
                             <small>{t('parent.pendingBacklog.desc')}</small>
                         </div>
@@ -796,7 +815,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('child.earningNotSpending.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={() => toggleTooltip('earningNotSpending')}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}>i</button>
                             </div>
                             <small>{t('child.earningNotSpending.desc')}</small>
                         </div>
@@ -818,13 +837,15 @@
             <div class="tooltip-box" role="dialog" aria-label={tooltipContent[activeTooltip].title}>
                 <div class="tooltip-head">
                     <b>{tooltipContent[activeTooltip].title}</b>
-                    <button class="tooltip-close" aria-label={t('tooltips.close')} on:click={closeTooltip}>×</button>
+                    <button bind:this={tooltipCloseButton} class="tooltip-close" type="button" aria-label={t('tooltips.close')} on:click={closeTooltip}>×</button>
                 </div>
                 <p>{tooltipContent[activeTooltip].body}</p>
             </div>
         {/if}
-    </main>
+</main>
 {/if}
+
+<svelte:window on:keydown={handleTooltipKeydown} />
 
 <style>
     :global(.dashboard-container) {
@@ -1035,8 +1056,8 @@
 
     .info {
         margin-left: auto;
-        width: 20px;
-        height: 20px;
+        width: 44px;
+        height: 44px;
         flex-shrink: 0;
         border: 0;
         border-radius: 50%;
@@ -1098,13 +1119,15 @@
     }
 
     .tooltip-close {
+        width: 44px;
+        height: 44px;
         border: 0;
         background: transparent;
         color: #ccd2ff;
         font-size: 16px;
         line-height: 1;
         cursor: pointer;
-        padding: 0 2px;
+        padding: 0;
     }
 
     .rows {
@@ -1206,8 +1229,8 @@
 
     .mini-info {
         display: inline-flex;
-        width: 16px;
-        height: 16px;
+        width: 44px;
+        height: 44px;
         border: 0;
         border-radius: 50%;
         background: #f0f2f7;
@@ -1218,12 +1241,18 @@
         justify-content: center;
         cursor: pointer;
         margin-left: 4px;
+        vertical-align: middle;
         transition: background 0.2s;
     }
 
     .mini-info:hover {
         background: var(--soft, #eef0ff);
         color: var(--primary, #5e6fec);
+    }
+
+    .mini-info:focus-visible {
+        outline: 3px solid #273fd0;
+        outline-offset: 2px;
     }
 
     .insight {
