@@ -18,17 +18,6 @@ public class TelegramMenuBuilder {
         this.callbacks = callbacks;
     }
 
-    public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view,
-                                                               String miniAppUrl) {
-        List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-        buttons.add(parentNavigation(TelegramCopy.REQUESTS, "requests", view, "home-row-1"));
-        buttons.add(parentNavigation(TelegramCopy.COINS, "coins", view, "home-row-1"));
-        buttons.add(parentNavigation(TelegramCopy.RECENT, "recent", view, "home-row-2"));
-        buttons.add(parentNavigation(TelegramCopy.SWITCH_CHILD, "switch", view, "home-row-2"));
-        buttons.add(webApp(TelegramCopy.OPEN_APP, miniAppUrl, "home-row-3"));
-        return List.copyOf(buttons);
-    }
-
     public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view,
                                                                        String publicSiteUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
@@ -37,7 +26,6 @@ public class TelegramMenuBuilder {
         if (buttons.isEmpty()) {
             buttons.add(callback(TelegramCopy.ADD_CHILD_MINI_APP, "noop"));
         }
-        buttons.add(navigation(TelegramCopy.HOME, "main"));
         if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
             buttons.add(url(TelegramCopy.SHARE_SITE, publicSiteUrl, "picker-row-4"));
         }
@@ -59,8 +47,7 @@ public class TelegramMenuBuilder {
             navigation(TelegramCopy.coinRemove(2), "coins-apply-remove-2-child-" + view.childId(), "coins-row-3"),
             navigation(TelegramCopy.coinRemove(5), "coins-confirm-remove-5-child-" + view.childId(), "coins-row-4"),
             navigation(TelegramCopy.coinRemove(10), "coins-confirm-remove-10-child-" + view.childId(), "coins-row-4"),
-            webApp(TelegramCopy.CUSTOM_AMOUNT, TelegramDeepLink.coins(miniAppUrl), "coins-row-5"),
-            parentNavigation(TelegramCopy.HOME, "main", view, "coins-row-6")
+            webApp(TelegramCopy.CUSTOM_AMOUNT, TelegramDeepLink.coins(miniAppUrl), "coins-row-5")
         );
     }
 
@@ -70,21 +57,16 @@ public class TelegramMenuBuilder {
         int amount = Math.abs(delta);
         String target = "-child-" + view.childId();
         return List.of(
-            navigation(TelegramCopy.CONFIRM, "coins-apply-" + direction + "-" + amount + target, "confirm-row-1"),
-            parentNavigation(TelegramCopy.HOME, "main", view, "confirm-row-2"));
+            navigation(TelegramCopy.CONFIRM, "coins-apply-" + direction + "-" + amount + target, "confirm-row-1"));
     }
 
     public List<TelegramBotApiClient.InlineButton> parentRequestRetry(TelegramQuickActionResponse view,
                                                                        String retryData) {
-        return List.of(
-            callback(TelegramCopy.RETRY, retryData),
-            parentNavigation(TelegramCopy.HOME, "main", view));
+        return List.of(callback(TelegramCopy.RETRY, retryData));
     }
 
     public List<TelegramBotApiClient.InlineButton> childRetry(String retryData) {
-        return List.of(
-            callback(TelegramCopy.RETRY, retryData),
-            navigation(TelegramCopy.HOME, "main"));
+        return List.of(callback(TelegramCopy.RETRY, retryData));
     }
 
     public List<TelegramBotApiClient.InlineButton> coinRetry(TelegramQuickActionResponse view, int delta) {
@@ -92,18 +74,7 @@ public class TelegramMenuBuilder {
         int amount = Math.abs(delta);
         return List.of(
             navigation(TelegramCopy.RETRY, "coins-apply-" + direction + "-" + amount + "-child-" + view.childId(),
-                "retry-row-1"),
-            parentNavigation(TelegramCopy.HOME, "main", view, "retry-row-2"));
-    }
-
-    public List<TelegramBotApiClient.InlineButton> childMain(TelegramQuickActionResponse view,
-                                                              String miniAppUrl) {
-        return List.of(
-            navigation(TelegramCopy.MY_TASKS, "tasks"),
-            navigation(TelegramCopy.REWARDS, "rewards"),
-            navigation(TelegramCopy.RECENT, "recent"),
-            webApp(TelegramCopy.OPEN_APP, miniAppUrl)
-        );
+                "retry-row-1"));
     }
 
     public List<TelegramBotApiClient.InlineButton> childTasks(TelegramQuickActionResponse view,
@@ -116,7 +87,6 @@ public class TelegramMenuBuilder {
         if (view.tasks().size() > 5) {
             buttons.add(webApp(TelegramCopy.ALL_TASKS, TelegramDeepLink.tasks(miniAppUrl)));
         }
-        buttons.add(navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
     }
 
@@ -131,7 +101,6 @@ public class TelegramMenuBuilder {
         if (hasMoreRewards(view)) {
             buttons.add(webApp(TelegramCopy.ALL_REWARDS, TelegramDeepLink.rewards(miniAppUrl)));
         }
-        buttons.add(navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
     }
 
@@ -142,12 +111,11 @@ public class TelegramMenuBuilder {
     }
 
     public List<TelegramBotApiClient.InlineButton> backToMain() {
-        return List.of(navigation(TelegramCopy.HOME, "main"));
+        return List.of();
     }
 
     public List<TelegramBotApiClient.InlineButton> backToMain(TelegramQuickActionResponse view) {
-        return "parent".equals(view.role())
-            ? List.of(parentNavigation(TelegramCopy.HOME, "main", view)) : backToMain();
+        return List.of();
     }
 
     public List<TelegramBotApiClient.InlineButton> parentRequestQueue(TelegramQuickActionResponse view,
@@ -166,14 +134,12 @@ public class TelegramMenuBuilder {
         if (index + 1 < total) {
             buttons.add(parentNavigation(TelegramCopy.NEXT, "requests-next-" + request.id(), view, "queue-row-2"));
         }
-        buttons.add(parentNavigation(TelegramCopy.HOME, "main", view, "queue-row-3"));
         return List.copyOf(buttons);
     }
 
     public List<TelegramBotApiClient.InlineButton> parentRequestsEmpty(TelegramQuickActionResponse view,
                                                                         String miniAppUrl) {
         return List.of(
-            parentNavigation(TelegramCopy.HOME, "main", view),
             webApp(TelegramCopy.OPEN_APP, miniAppUrl));
     }
 
@@ -183,9 +149,6 @@ public class TelegramMenuBuilder {
         if ("parent".equals(view.role())) {
             buttons.add(webApp(TelegramCopy.FULL_HISTORY, TelegramDeepLink.history(miniAppUrl)));
         }
-        buttons.add("parent".equals(view.role())
-            ? parentNavigation(TelegramCopy.HOME, "main", view)
-            : navigation(TelegramCopy.HOME, "main"));
         return List.copyOf(buttons);
     }
 
@@ -203,12 +166,6 @@ public class TelegramMenuBuilder {
 
     private TelegramBotApiClient.InlineButton navigation(String text, String action, String rowId) {
         return callback(text, callbacks.signNavigation(action), rowId);
-    }
-
-    private TelegramBotApiClient.InlineButton parentNavigation(String text,
-                                                                 String action,
-                                                                 TelegramQuickActionResponse view) {
-        return navigation(text, action + "-child-" + view.childId());
     }
 
     private TelegramBotApiClient.InlineButton parentNavigation(String text,

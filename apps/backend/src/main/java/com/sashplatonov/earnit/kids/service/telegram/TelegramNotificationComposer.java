@@ -79,8 +79,8 @@ public class TelegramNotificationComposer {
         return switch (type) {
             case TASK_APPROVED, REWARD_APPROVED ->
                 List.of(nav(TelegramCopy.MY_TASKS, "tasks"), nav(TelegramCopy.REWARDS, "rewards"));
-            case TASK_REJECTED -> List.of(nav(TelegramCopy.MY_TASKS, "tasks"), nav(TelegramCopy.HOME, "main"));
-            case REWARD_REJECTED -> List.of(nav(TelegramCopy.REWARDS, "rewards"), nav(TelegramCopy.HOME, "main"));
+            case TASK_REJECTED -> List.of(nav(TelegramCopy.MY_TASKS, "tasks"));
+            case REWARD_REJECTED -> List.of(nav(TelegramCopy.REWARDS, "rewards"));
             default -> List.of();
         };
     }

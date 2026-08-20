@@ -162,7 +162,6 @@ class TelegramBotServiceImplTest {
         when(featureGate.isBotEnabled("family")).thenReturn(true);
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
         when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
-        when(menuBuilder.childMain(view, "https://example.test/telegram")).thenReturn(List.of());
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder, featureGate, families);
@@ -248,9 +247,6 @@ class TelegramBotServiceImplTest {
         when(identities.recordWebhookUpdate(16L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
         when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
-        List<TelegramBotApiClient.InlineButton> main = List.of(
-            TelegramBotApiClient.InlineButton.callback("🎯 Запросы", "nav.signed"));
-        when(menuBuilder.parentMain(view, "https://example.test/telegram")).thenReturn(main);
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -315,7 +311,6 @@ class TelegramBotServiceImplTest {
                 Instant.parse("2026-08-13T12:00:00Z"))));
         when(quickActions.load(77L, 2)).thenReturn(Optional.of(view));
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
-        when(menuBuilder.parentMain(view, "https://example.test/telegram")).thenReturn(List.of());
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -583,7 +578,7 @@ class TelegramBotServiceImplTest {
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
         when(quickActions.rejectRequest(77L, 3, 19L)).thenReturn(OperationResult.success(after));
         List<TelegramBotApiClient.InlineButton> emptyButtons = List.of(
-            TelegramBotApiClient.InlineButton.callback("🏠 Главное меню", "nav.signed"));
+            TelegramBotApiClient.InlineButton.webApp(TelegramCopy.OPEN_APP, "https://example.test/telegram"));
         when(menuBuilder.parentRequestQueue(after, null)).thenReturn(List.of());
         when(menuBuilder.parentRequestsEmpty(after, "https://example.test/telegram")).thenReturn(emptyButtons);
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(

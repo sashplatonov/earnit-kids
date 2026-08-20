@@ -6,7 +6,6 @@ public final class TelegramCopy {
     private TelegramCopy() {
     }
 
-    public static final String HOME = TelegramBotEmoji.HOME + " Главное меню";
     public static final String MY_TASKS = TelegramBotEmoji.TASKS + " Мои задания";
     public static final String REWARDS = TelegramBotEmoji.REWARDS + " Награды";
     public static final String REQUESTS = TelegramBotEmoji.REQUESTS + " Запросы";

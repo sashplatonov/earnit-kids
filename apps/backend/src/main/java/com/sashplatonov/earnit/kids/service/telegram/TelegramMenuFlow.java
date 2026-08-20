@@ -16,13 +16,6 @@ final class TelegramMenuFlow {
         return homeText(view);
     }
 
-    static List<TelegramBotApiClient.InlineButton> startMenu(TelegramQuickActionResponse view,
-                                                              String miniAppUrl,
-                                                              String publicSiteUrl,
-                                                              TelegramMenuBuilder menuBuilder) {
-        return mainMenu(view, miniAppUrl, menuBuilder);
-    }
-
     static String homeText(TelegramQuickActionResponse view) {
         return "child".equals(view.role())
             ? TelegramCopy.childHome(view.childName(), view.balance())
@@ -39,7 +32,7 @@ final class TelegramMenuFlow {
                                                                     String publicSiteUrl,
                                                                     TelegramMenuBuilder menuBuilder) {
         if (isChildSelection(action)) {
-            return mainMenu(view, miniAppUrl, menuBuilder);
+            return List.of();
         }
         String base = baseAction(action);
         if (base.startsWith("requests-next-")) {
@@ -53,7 +46,7 @@ final class TelegramMenuFlow {
             case "requests" -> requestsMenu(view, miniAppUrl, menuBuilder);
             case "recent" -> menuBuilder.recent(view, miniAppUrl);
             case "coins" -> coinsMenu(view, miniAppUrl, menuBuilder);
-            case "main" -> mainMenu(view, miniAppUrl, menuBuilder);
+            case "main" -> List.of();
             default -> unknownMenu(action, view, miniAppUrl, menuBuilder);
         };
     }
@@ -70,7 +63,7 @@ final class TelegramMenuFlow {
                                                                               String miniAppUrl,
                                                                               TelegramMenuBuilder menuBuilder) {
         if ("parent".equals(view.role())) {
-            return mainMenu(view, miniAppUrl, menuBuilder);
+            return List.of();
         }
         return "tasks".equals(baseAction(action)) ? menuBuilder.childTasks(view, miniAppUrl)
             : menuBuilder.childRewards(view, miniAppUrl);
@@ -80,7 +73,7 @@ final class TelegramMenuFlow {
                                                                           String miniAppUrl,
                                                                           TelegramMenuBuilder menuBuilder) {
         if (!"parent".equals(view.role())) {
-            return mainMenu(view, miniAppUrl, menuBuilder);
+            return List.of();
         }
         List<TelegramBotApiClient.InlineButton> queue = menuBuilder.parentRequestQueue(view, null);
         return queue.isEmpty() ? menuBuilder.parentRequestsEmpty(view, miniAppUrl) : queue;
@@ -89,8 +82,7 @@ final class TelegramMenuFlow {
     private static List<TelegramBotApiClient.InlineButton> coinsMenu(TelegramQuickActionResponse view,
                                                                        String miniAppUrl,
                                                                        TelegramMenuBuilder menuBuilder) {
-        return "parent".equals(view.role()) ? menuBuilder.parentCoins(view, miniAppUrl)
-            : mainMenu(view, miniAppUrl, menuBuilder);
+        return "parent".equals(view.role()) ? menuBuilder.parentCoins(view, miniAppUrl) : List.of();
     }
 
     private static List<TelegramBotApiClient.InlineButton> unknownMenu(String action,
@@ -100,7 +92,7 @@ final class TelegramMenuFlow {
         if ("parent".equals(view.role()) && action.startsWith("coins-confirm-")) {
             return menuBuilder.parentCoinConfirmation(view, coinDelta(action));
         }
-        return mainMenu(view, miniAppUrl, menuBuilder);
+        return List.of();
     }
 
     private static String baseAction(String action) {
@@ -140,10 +132,4 @@ final class TelegramMenuFlow {
         return marker >= 0 ? Integer.valueOf(action.substring(marker + 7)) : null;
     }
 
-    private static List<TelegramBotApiClient.InlineButton> mainMenu(TelegramQuickActionResponse view,
-                                                                      String miniAppUrl,
-                                                                      TelegramMenuBuilder menuBuilder) {
-        return "child".equals(view.role()) ? menuBuilder.childMain(view, miniAppUrl)
-            : menuBuilder.parentMain(view, miniAppUrl);
-    }
 }
