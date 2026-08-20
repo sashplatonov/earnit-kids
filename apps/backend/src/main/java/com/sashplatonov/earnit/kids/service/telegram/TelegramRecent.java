@@ -31,15 +31,9 @@ final class TelegramRecent {
     }
 
     static String row(HistoryEntryDto entry, Instant now) {
-        return emoji(entry) + " " + amount(entry) + " · " + title(entry) + "\n" + formatDate(entry.createdAt(), now);
-    }
-
-    private static String emoji(HistoryEntryDto entry) {
-        return entry.type() == HistoryEntryType.spend ? TelegramBotEmoji.REWARDS : TelegramBotEmoji.TASK_DONE;
-    }
-
-    private static String amount(HistoryEntryDto entry) {
-        return entry.amount() >= 0 ? "+" + entry.amount() : Integer.toString(entry.amount());
+        boolean earning = entry.type() != HistoryEntryType.spend;
+        return TelegramCoinCopy.delta(entry.amount(), earning, false) + " · " + title(entry)
+            + "\n" + formatDate(entry.createdAt(), now);
     }
 
     private static String title(HistoryEntryDto entry) {

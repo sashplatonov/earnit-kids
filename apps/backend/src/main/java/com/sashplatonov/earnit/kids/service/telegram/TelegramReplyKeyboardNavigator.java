@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.service.telegram;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.config.TelegramConfig;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class TelegramReplyKeyboardNavigator {
@@ -55,10 +56,15 @@ public class TelegramReplyKeyboardNavigator {
             .ifPresent(view -> {
                 try {
                     String navText = TelegramMenuFlow.navigationText(action, view);
-                    TelegramReplyKeyboard replyKeyboard = "child".equals(view.role())
-                        ? new BotKeyboardFactory(null).childMain()
-                        : new BotKeyboardFactory(publicSiteUrl).parentMain();
-                    apiClient.get().sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
+                    if ("parent".equals(view.role())) {
+                        List<TelegramBotApiClient.InlineButton> inlineButtons =
+                            TelegramMenuFlow.navigationMenu(action, view, config.miniAppUrl().orElse(""),
+                                publicSiteUrl, menuBuilder);
+                        apiClient.get().sendMessage(chatId, navText, inlineButtons);
+                    } else {
+                        TelegramReplyKeyboard replyKeyboard = new BotKeyboardFactory(null).childMain();
+                        apiClient.get().sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
+                    }
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
