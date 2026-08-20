@@ -1,10 +1,7 @@
 package com.sashplatonov.earnit.kids.resource.common;
 
-import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -24,7 +21,7 @@ import jakarta.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Push", description = "Push-notification subscription placeholders")
-public class PushResource {
+public class PushResource extends ResourceAuthSupport {
 
     @POST
     @Path("/register")
@@ -36,11 +33,9 @@ public class PushResource {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Response register(@Context ContainerRequestContext ctx) {
-        AuthContext auth = getAuth(ctx);
-        if (auth == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
-                .build();
+        Response authFailure = requireAuthResponse(ctx);
+        if (authFailure != null) {
+            return authFailure;
         }
 
         return Response.ok(SimpleResponse.ok()).build();
@@ -56,18 +51,12 @@ public class PushResource {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Response unregister(@Context ContainerRequestContext ctx) {
-        AuthContext auth = getAuth(ctx);
-        if (auth == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
-                .build();
+        Response authFailure = requireAuthResponse(ctx);
+        if (authFailure != null) {
+            return authFailure;
         }
 
         return Response.ok(SimpleResponse.ok()).build();
     }
 
-    private AuthContext getAuth(ContainerRequestContext ctx) {
-        Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return prop instanceof AuthContext auth ? auth : null;
-    }
 }

@@ -146,7 +146,7 @@ git commit -m "refactor(backend): extract OperationResultResponses utility with 
 
 ## P0-2: Extract `ResourceAuthSupport` base + role guards
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** P0-1
 
@@ -893,7 +893,7 @@ git commit -m "refactor(backend): remove noise EXPLAIN comments from repository 
 
 ## P2-4: Adopt `ResourceAuthSupport` across all resources
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P2  
 **Depends on:** P0-2
 

@@ -1,7 +1,6 @@
 package com.sashplatonov.earnit.kids.resource.telegram.admin;
 
-import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
+import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
 import com.sashplatonov.earnit.kids.service.telegram.admin.AdminTaskEconomyService;
 import jakarta.inject.Inject;
@@ -19,7 +18,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Path("/api/admin/analytics")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Admin Analytics", description = "Admin dashboard analytics endpoints")
-public class AdminTaskEconomyResource {
+public class AdminTaskEconomyResource extends ResourceAuthSupport {
 
     private final AdminTaskEconomyService taskEconomyService;
 
@@ -33,34 +32,10 @@ public class AdminTaskEconomyResource {
     public Response getTaskEconomy(
             @Context ContainerRequestContext ctx,
             @QueryParam("period") @DefaultValue("30d") String period) {
-        Response authFailure = requireAdmin(ctx);
-        if (authFailure != null) {
-            return authFailure;
-        }
+        requireAdmin(ctx);
 
         AdminTasksResponse response = taskEconomyService.getTaskEconomy(period);
         return Response.ok(response).build();
     }
 
-    private Response requireAdmin(ContainerRequestContext ctx) {
-        AuthContext auth = auth(ctx);
-        if (auth == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("{\"error\":\"Unauthorized\"}")
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-        if (!auth.isAdmin()) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity("{\"error\":\"Admin access required\"}")
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-        return null;
-    }
-
-    private AuthContext auth(ContainerRequestContext ctx) {
-        Object property = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return property instanceof AuthContext auth ? auth : null;
-    }
 }

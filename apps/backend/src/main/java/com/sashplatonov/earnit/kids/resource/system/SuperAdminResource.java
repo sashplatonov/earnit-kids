@@ -1,7 +1,5 @@
 package com.sashplatonov.earnit.kids.resource.system;
 
-import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.SetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.ToggleFamilyBlockRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
@@ -9,6 +7,7 @@ import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.dto.response.SuperAdminFamilyDetailsResponse;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.service.system.SuperAdminService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.inject.Inject;
@@ -30,14 +29,14 @@ import java.util.Map;
 @Path("/api/super")
 @Produces(MediaType.APPLICATION_JSON)
 @RequiredArgsConstructor(onConstructor_ = @Inject)
-public class SuperAdminResource {
+public class SuperAdminResource extends ResourceAuthSupport {
 
     private final SuperAdminService superAdminService;
 
     @GET
     @Path("/families")
     public Response getFamilies(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -48,7 +47,7 @@ public class SuperAdminResource {
     @Path("/family/{familyId}/data")
     public Response getFamilyDetails(@Context ContainerRequestContext ctx,
                                      @PathParam("familyId") String familyId) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -68,7 +67,7 @@ public class SuperAdminResource {
     public Response toggleFamilyBlock(@Context ContainerRequestContext ctx,
                                       @PathParam("familyId") String familyId,
                                       ToggleFamilyBlockRequest request) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -92,7 +91,7 @@ public class SuperAdminResource {
     @Path("/family/{familyId}/regenerate-token")
     public Response regenerateFamilyToken(@Context ContainerRequestContext ctx,
                                           @PathParam("familyId") String familyId) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -104,7 +103,7 @@ public class SuperAdminResource {
     @Path("/child/{childId}/regenerate-token")
     public Response regenerateChildToken(@Context ContainerRequestContext ctx,
                                          @PathParam("childId") int childId) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -118,7 +117,7 @@ public class SuperAdminResource {
     public Response setFamilyPassword(@Context ContainerRequestContext ctx,
                                       @PathParam("familyId") String familyId,
                                       @Valid SetPasswordRequest request) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -132,7 +131,7 @@ public class SuperAdminResource {
     @GET
     @Path("/base-data")
     public Response getBaseData(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -143,7 +142,7 @@ public class SuperAdminResource {
     @Path("/base-data")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response saveBaseData(@Context ContainerRequestContext ctx, Map<String, Object> payload) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -186,23 +185,4 @@ public class SuperAdminResource {
         };
     }
 
-    private Response requireSuperAdmin(ContainerRequestContext ctx) {
-        AuthContext auth = auth(ctx);
-        if (auth == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
-                .build();
-        }
-        if (!auth.isSuperAdmin()) {
-            return Response.status(Response.Status.FORBIDDEN)
-                .entity(ErrorResponse.of(BackendMessages.message("errors.forbidden"), "FORBIDDEN", 403))
-                .build();
-        }
-        return null;
-    }
-
-    private AuthContext auth(ContainerRequestContext ctx) {
-        Object property = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return property instanceof AuthContext auth ? auth : null;
-    }
 }

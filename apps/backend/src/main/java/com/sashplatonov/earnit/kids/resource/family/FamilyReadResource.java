@@ -1,7 +1,5 @@
 package com.sashplatonov.earnit.kids.resource.family;
 
-import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.response.AnalyticsResponse;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardDetailResponse;
@@ -9,6 +7,7 @@ import com.sashplatonov.earnit.kids.dto.response.FamilyDashboardShellResponse;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.dto.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.service.database.BaseDataService;
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -37,7 +36,7 @@ import org.jboss.logging.Logger;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Family", description = "Family dashboard read endpoints")
-public class FamilyReadResource {
+public class FamilyReadResource extends ResourceAuthSupport {
 
     private static final Logger LOG = Logger.getLogger(FamilyReadResource.class);
     private final FamilyService familyService;
@@ -190,20 +189,4 @@ public class FamilyReadResource {
         return Response.ok(baseDataService.getBaseData()).build();
     }
 
-    private AuthContext getAuthOrFail(ContainerRequestContext ctx) {
-        Object prop = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return prop instanceof AuthContext auth ? auth : null;
-    }
-
-    private Response unauthorized() {
-        return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
-            .build();
-    }
-
-    private Response badRequest(String message) {
-        return Response.status(Response.Status.BAD_REQUEST)
-            .entity(ErrorResponse.of(message, "BAD_REQUEST", 400))
-            .build();
-    }
 }

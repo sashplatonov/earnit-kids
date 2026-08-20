@@ -7,12 +7,11 @@ import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
-import com.sashplatonov.earnit.kids.dto.response.FamilyDataResponse;
-import com.sashplatonov.earnit.kids.dto.request.FamilyPreferenceKey;
 import com.sashplatonov.earnit.kids.service.family.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -37,7 +36,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
-import java.util.List;
 
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
@@ -72,12 +70,8 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
         }
 
         OperationResult<String> result = familyService.getChildLoginLink(auth.familyId(), childId);
-        return switch (result) {
-            case OperationResult.Success<String> s -> Response.ok(new TokenResponse(s.value())).build();
-            case OperationResult.Failure<String> f ->
-                Response.status(Response.Status.NOT_FOUND)
-                    .entity(ErrorResponse.of(f.message(), "CHILD_NOT_FOUND", 404)).build();
-        };
+        return OperationResultResponses.toMappedOk(result, TokenResponse::new,
+            failure -> Response.Status.NOT_FOUND.getStatusCode(), "CHILD_NOT_FOUND");
     }
 
     @POST
@@ -100,12 +94,8 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
         }
 
         OperationResult<String> result = familyService.regenerateChildToken(auth.familyId(), childId);
-        return switch (result) {
-            case OperationResult.Success<String> s -> Response.ok(new TokenResponse(s.value())).build();
-            case OperationResult.Failure<String> f ->
-                Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(ErrorResponse.of(f.message(), "TOKEN_REGENERATION_FAILED", 500)).build();
-        };
+        return OperationResultResponses.toMappedOk(result, TokenResponse::new,
+            failure -> Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "TOKEN_REGENERATION_FAILED");
     }
 
     @POST
@@ -176,13 +166,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
         var result = familyParentAccessService.addMembership(
             auth.familyId(), request.email(), request.permission(), auth.email());
 
-        return switch (result) {
-            case OperationResult.Success<ParentMembershipDto> s ->
-                Response.status(Response.Status.CREATED).entity(s.value()).build();
-            case OperationResult.Failure<ParentMembershipDto> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), errorCodeOrBadRequest(f.errorCode()), 400)).build();
-        };
+        return OperationResultResponses.toCreated(result);
     }
 
     @PUT

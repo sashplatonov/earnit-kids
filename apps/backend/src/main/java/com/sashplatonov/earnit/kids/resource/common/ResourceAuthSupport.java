@@ -9,7 +9,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
 
-// EXPLAIN: Shared auth extraction and role guards for resource endpoints. The requireX methods throw WebApplicationException carrying the pre-built response so JAX-RS maps them automatically.
+// EXPLAIN: Shared auth extraction and role guards for resource endpoints. The requireX methods throw WebApplicationException with a pre-built response.
 public abstract class ResourceAuthSupport {
 
     protected AuthContext authContext(ContainerRequestContext ctx) {
@@ -70,6 +70,23 @@ public abstract class ResourceAuthSupport {
         return Response.status(Response.Status.BAD_REQUEST)
             .entity(ErrorResponse.of(message, "BAD_REQUEST", 400))
             .build();
+    }
+
+    protected Response requireAuthResponse(ContainerRequestContext ctx) {
+        return authContext(ctx) == null ? unauthorized() : null;
+    }
+
+    protected Response requireAdminOrUnauthorized(ContainerRequestContext ctx) {
+        AuthContext auth = authContext(ctx);
+        return auth == null || !auth.isAdmin() ? unauthorized() : null;
+    }
+
+    protected Response requireSuperAdminResponse(ContainerRequestContext ctx) {
+        AuthContext auth = authContext(ctx);
+        if (auth == null) {
+            return unauthorized();
+        }
+        return auth.isSuperAdmin() ? null : forbidden();
     }
 
     protected OperationResult<Integer> resolveEffectiveChildId(AuthContext auth, Integer childId) {

@@ -1,9 +1,6 @@
 package com.sashplatonov.earnit.kids.resource.system;
 
-import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.service.common.PageRequest;
 import com.sashplatonov.earnit.kids.service.system.SystemDashboardService;
 import jakarta.inject.Inject;
@@ -20,7 +17,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Path("/api/super")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "System", description = "System dashboard endpoints")
-public class SystemDashboardResource {
+public class SystemDashboardResource extends ResourceAuthSupport {
 
     private final SystemDashboardService systemDashboardService;
 
@@ -32,7 +29,7 @@ public class SystemDashboardResource {
     @GET
     @Path("/system/overview")
     public Response getSystemOverview(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -42,7 +39,7 @@ public class SystemDashboardResource {
     @GET
     @Path("/system/db")
     public Response getDatabaseHealth(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -52,7 +49,7 @@ public class SystemDashboardResource {
     @GET
     @Path("/system/http-metrics")
     public Response getHttpMetrics(@Context ContainerRequestContext ctx) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -64,7 +61,7 @@ public class SystemDashboardResource {
     public Response getLogs(@Context ContainerRequestContext ctx,
                             @QueryParam("level") String level,
                             @QueryParam("limit") Integer limit) {
-        Response authFailure = requireSuperAdmin(ctx);
+        Response authFailure = requireSuperAdminResponse(ctx);
         if (authFailure != null) {
             return authFailure;
         }
@@ -73,23 +70,4 @@ public class SystemDashboardResource {
         return Response.ok(systemDashboardService.getLogs(resolvedLevel, resolvedLimit)).build();
     }
 
-    private Response requireSuperAdmin(ContainerRequestContext ctx) {
-        AuthContext auth = auth(ctx);
-        if (auth == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
-                .build();
-        }
-        if (!auth.isSuperAdmin()) {
-            return Response.status(Response.Status.FORBIDDEN)
-                .entity(ErrorResponse.of(BackendMessages.message("errors.forbidden"), "FORBIDDEN", 403))
-                .build();
-        }
-        return null;
-    }
-
-    private AuthContext auth(ContainerRequestContext ctx) {
-        Object property = ctx.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        return property instanceof AuthContext auth ? auth : null;
-    }
 }

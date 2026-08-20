@@ -1,7 +1,6 @@
 package com.sashplatonov.earnit.kids.resource.family;
 
 import com.sashplatonov.earnit.kids.dto.request.CreateChildRequest;
-import com.sashplatonov.earnit.kids.dto.request.ChildTheme;
 import com.sashplatonov.earnit.kids.dto.response.ChildInfo;
 import com.sashplatonov.earnit.kids.dto.request.UpdateChildSettingsRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateGroupOrderRequest;
@@ -9,11 +8,11 @@ import com.sashplatonov.earnit.kids.dto.request.UpdateNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateOwnNicknameRequest;
 import com.sashplatonov.earnit.kids.dto.request.UpdateThemeRequest;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
-import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.family.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -232,13 +231,7 @@ public class FamilyChildSettingsResource extends FamilyResourceSupport {
         OperationResult<ChildInfo> result = familyService.createChild(auth.familyId(), request.name());
         notifyChildUpdated(auth.familyId(), result, childInfo -> childInfo.id());
 
-        return switch (result) {
-            case OperationResult.Success<ChildInfo> s ->
-                Response.status(Response.Status.CREATED).entity(s.value()).build();
-            case OperationResult.Failure<ChildInfo> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), "CHILD_CREATE_FAILED", 400)).build();
-        };
+        return OperationResultResponses.toCreated(result, "CHILD_CREATE_FAILED");
     }
 
     @DELETE

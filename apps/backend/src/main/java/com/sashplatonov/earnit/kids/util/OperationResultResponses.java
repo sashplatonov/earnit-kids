@@ -20,7 +20,28 @@ public final class OperationResultResponses {
     }
 
     public static <T> Response toOk(OperationResult<T> result) {
-        return toOk(result, failure -> Response.Status.BAD_REQUEST.getStatusCode());
+        return toOk(result, (FailureStatusResolver) failure -> Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    public static <T> Response toMappedOk(OperationResult<T> result, Function<T, ?> successMapper) {
+        return toMappedOk(result, successMapper, failure -> Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    public static <T> Response toMappedOk(OperationResult<T> result, Function<T, ?> successMapper,
+                                          FailureStatusResolver failureStatusResolver) {
+        return switch (result) {
+            case OperationResult.Success<T> s -> Response.ok(successMapper.apply(s.value())).build();
+            case OperationResult.Failure<T> f -> failureResponse(f, failureStatusResolver.resolve(f));
+        };
+    }
+
+    public static <T> Response toMappedOk(OperationResult<T> result, Function<T, ?> successMapper,
+                                          FailureStatusResolver failureStatusResolver, String failureErrorCode) {
+        return switch (result) {
+            case OperationResult.Success<T> s -> Response.ok(successMapper.apply(s.value())).build();
+            case OperationResult.Failure<T> f -> failureResponse(
+                f, failureStatusResolver.resolve(f), failureErrorCode);
+        };
     }
 
     public static <T> Response toOk(OperationResult<T> result, FailureStatusResolver failureStatusResolver) {
@@ -48,6 +69,21 @@ public final class OperationResultResponses {
         };
     }
 
+    public static <T> Response toCreated(OperationResult<T> result) {
+        return switch (result) {
+            case OperationResult.Success<T> s -> Response.status(Response.Status.CREATED).entity(s.value()).build();
+            case OperationResult.Failure<T> f -> failureResponse(f, Response.Status.BAD_REQUEST.getStatusCode());
+        };
+    }
+
+    public static <T> Response toCreated(OperationResult<T> result, String failureErrorCode) {
+        return switch (result) {
+            case OperationResult.Success<T> s -> Response.status(Response.Status.CREATED).entity(s.value()).build();
+            case OperationResult.Failure<T> f -> failureResponse(
+                f, Response.Status.BAD_REQUEST.getStatusCode(), failureErrorCode);
+        };
+    }
+
     public static String errorCodeOrBadRequest(String errorCode) {
         return errorCode != null ? errorCode : "BAD_REQUEST";
     }
@@ -55,6 +91,12 @@ public final class OperationResultResponses {
     private static Response failureResponse(OperationResult.Failure<?> failure, int status) {
         return Response.status(status)
             .entity(ErrorResponse.of(failure.message(), errorCodeOrBadRequest(failure.errorCode()), status))
+            .build();
+    }
+
+    private static Response failureResponse(OperationResult.Failure<?> failure, int status, String errorCode) {
+        return Response.status(status)
+            .entity(ErrorResponse.of(failure.message(), errorCode, status))
             .build();
     }
 }

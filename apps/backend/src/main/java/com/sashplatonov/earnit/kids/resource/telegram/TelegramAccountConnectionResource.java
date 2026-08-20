@@ -1,12 +1,11 @@
 package com.sashplatonov.earnit.kids.resource.telegram;
 
-import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.TelegramLinkCompletionRequest;
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.service.telegram.TelegramAccountConnectionService;
 import com.sashplatonov.earnit.kids.service.telegram.TelegramFeatureGate;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -23,7 +22,7 @@ import jakarta.ws.rs.core.Response;
 @Path("/api/telegram/account-connection")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class TelegramAccountConnectionResource {
+public class TelegramAccountConnectionResource extends ResourceAuthSupport {
     private final TelegramAccountConnectionService connections;
     private final TelegramFeatureGate featureGate;
 
@@ -36,20 +35,22 @@ public class TelegramAccountConnectionResource {
 
     @GET
     public Response connection(@Context ContainerRequestContext context) {
-        AuthContext auth = parentAuth(context);
-        if (auth == null) {
-            return unauthorized();
+        Response authFailure = requireAdminOrUnauthorized(context);
+        if (authFailure != null) {
+            return authFailure;
         }
+        var auth = authContext(context);
         return response(connections.connection(auth.familyId(), auth.email()));
     }
 
     @POST
     @Path("/start")
     public Response start(@Context ContainerRequestContext context) {
-        AuthContext auth = parentAuth(context);
-        if (auth == null) {
-            return unauthorized();
+        Response authFailure = requireAdminOrUnauthorized(context);
+        if (authFailure != null) {
+            return authFailure;
         }
+        var auth = authContext(context);
         if (!featureGate.isMiniAppEnabled(auth.familyId())) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -67,33 +68,15 @@ public class TelegramAccountConnectionResource {
 
     @DELETE
     public Response unlink(@Context ContainerRequestContext context) {
-        AuthContext auth = parentAuth(context);
-        if (auth == null) {
-            return unauthorized();
+        Response authFailure = requireAdminOrUnauthorized(context);
+        if (authFailure != null) {
+            return authFailure;
         }
+        var auth = authContext(context);
         return response(connections.unlink(auth.familyId(), auth.email()));
     }
 
-    private AuthContext parentAuth(ContainerRequestContext context) {
-        Object value = context.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        if (!(value instanceof AuthContext auth) || !auth.isAdmin()) {
-            return null;
-        }
-        return auth;
-    }
-
-    private Response unauthorized() {
-        return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(ErrorResponse.unauthorized("Authentication is required."))
-            .build();
-    }
-
     private <T> Response response(OperationResult<T> result) {
-        return switch (result) {
-            case OperationResult.Success<T> success -> Response.ok(success.value()).build();
-            case OperationResult.Failure<T> failure -> Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of(failure.message(), failure.errorCode(), 400))
-                .build();
-        };
+        return OperationResultResponses.toOk(result);
     }
 }

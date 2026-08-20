@@ -1,13 +1,10 @@
 package com.sashplatonov.earnit.kids.resource.account;
 
-import com.sashplatonov.earnit.kids.config.auth.AuthContext;
-import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.request.UpdateAccountEmailRequest;
-import com.sashplatonov.earnit.kids.dto.response.AccountConnectionResponse;
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
-import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.service.account.AccountService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -23,7 +20,7 @@ import jakarta.ws.rs.core.Response;
 @Path("/api/account")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class AccountResource {
+public class AccountResource extends ResourceAuthSupport {
     private final AccountService accounts;
 
     @Inject
@@ -33,10 +30,11 @@ public class AccountResource {
 
     @GET
     public Response connection(@Context ContainerRequestContext context) {
-        AuthContext auth = parentAuth(context);
-        if (auth == null) {
-            return unauthorized();
+        Response authFailure = requireAdminOrUnauthorized(context);
+        if (authFailure != null) {
+            return authFailure;
         }
+        var auth = authContext(context);
         return response(accounts.connection(auth.familyId(), auth.email()));
     }
 
@@ -44,52 +42,30 @@ public class AccountResource {
     @Path("/email")
     public Response changeEmail(@Context ContainerRequestContext context,
                                 @Valid UpdateAccountEmailRequest request) {
-        AuthContext auth = parentAuth(context);
-        if (auth == null) {
-            return unauthorized();
+        Response authFailure = requireAdminOrUnauthorized(context);
+        if (authFailure != null) {
+            return authFailure;
         }
+        var auth = authContext(context);
         return voidResponse(accounts.changeEmail(auth.familyId(), auth.email(), request.newEmail()));
     }
 
     @POST
     @Path("/email/unlink")
     public Response unlinkEmail(@Context ContainerRequestContext context) {
-        AuthContext auth = parentAuth(context);
-        if (auth == null) {
-            return unauthorized();
+        Response authFailure = requireAdminOrUnauthorized(context);
+        if (authFailure != null) {
+            return authFailure;
         }
+        var auth = authContext(context);
         return voidResponse(accounts.unlinkEmail(auth.familyId(), auth.email()));
     }
 
-    private AuthContext parentAuth(ContainerRequestContext context) {
-        Object value = context.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY);
-        if (!(value instanceof AuthContext auth) || !auth.isAdmin()) {
-            return null;
-        }
-        return auth;
-    }
-
-    private Response unauthorized() {
-        return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(ErrorResponse.unauthorized("Authentication is required."))
-            .build();
-    }
-
     private <T> Response response(OperationResult<T> result) {
-        return switch (result) {
-            case OperationResult.Success<T> success -> Response.ok(success.value()).build();
-            case OperationResult.Failure<T> failure -> Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of(failure.message(), failure.errorCode(), 400))
-                .build();
-        };
+        return OperationResultResponses.toOk(result);
     }
 
     private Response voidResponse(OperationResult<Void> result) {
-        return switch (result) {
-            case OperationResult.Success<Void> ignored -> Response.ok(SimpleResponse.ok()).build();
-            case OperationResult.Failure<Void> failure -> Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of(failure.message(), failure.errorCode(), 400))
-                .build();
-        };
+        return OperationResultResponses.toVoidOk(result);
     }
 }
