@@ -58,7 +58,7 @@ the reference's **Key UX** block must not be present.
 
 ## P1-1: Unify and validate the admin statistics period contract
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P1  
 **Depends on:** -
 

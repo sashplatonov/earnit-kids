@@ -30,7 +30,8 @@ class AdminDashboardServiceTest {
         AdminAnalyticsResponse overview = mock(AdminAnalyticsResponse.class);
         AdminAnalyticsResponse.Overview overviewData = mock(AdminAnalyticsResponse.Overview.class);
         when(overview.getOverview()).thenReturn(overviewData);
-        when(overviewService.getOverview("30d")).thenReturn(overview);
+        AdminAnalyticsPeriod period = AdminAnalyticsPeriod.parse("30d");
+        when(overviewService.getOverview(period)).thenReturn(overview);
         AdminCoinEconomyResponse coins = mock(AdminCoinEconomyResponse.class);
         AdminTasksResponse tasks = mock(AdminTasksResponse.class);
         AdminParentBehaviorResponse parents = mock(AdminParentBehaviorResponse.class);
@@ -38,13 +39,13 @@ class AdminDashboardServiceTest {
         AdminActivationFunnelResponse activation = mock(AdminActivationFunnelResponse.class);
         AdminRetentionResponse retention = mock(AdminRetentionResponse.class);
         AdminRewardsResponse rewards = mock(AdminRewardsResponse.class);
-        when(coinService.getCoinEconomy("30d")).thenReturn(coins);
-        when(taskService.getTaskEconomy("30d")).thenReturn(tasks);
-        when(parentService.getParentBehavior("30d")).thenReturn(parents);
-        when(childService.getChildBehavior("30d")).thenReturn(children);
+        when(coinService.getCoinEconomy(period)).thenReturn(coins);
+        when(taskService.getTaskEconomy(period)).thenReturn(tasks);
+        when(parentService.getParentBehavior(period)).thenReturn(parents);
+        when(childService.getChildBehavior(period)).thenReturn(children);
         when(activationService.getActivationFunnel()).thenReturn(activation);
-        when(retentionService.getRetention("30d")).thenReturn(retention);
-        when(rewardsService.getRewardsAnalytics("30d")).thenReturn(rewards);
+        when(retentionService.getRetention(period)).thenReturn(retention);
+        when(rewardsService.getRewardsAnalytics(period)).thenReturn(rewards);
 
         AdminDashboardService service = new AdminDashboardService();
         service.overviewService = overviewService;
@@ -56,7 +57,7 @@ class AdminDashboardServiceTest {
         service.retentionService = retentionService;
         service.rewardsService = rewardsService;
 
-        AdminDashboardResponse result = service.getDashboard("30d");
+        AdminDashboardResponse result = service.getDashboard(period);
 
         assertThat(result.getOverview()).isSameAs(overviewData);
         assertThat(result.getCoinEconomy()).isSameAs(coins);

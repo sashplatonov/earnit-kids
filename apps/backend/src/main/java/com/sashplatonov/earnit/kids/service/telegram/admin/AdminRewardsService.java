@@ -8,7 +8,6 @@ import jakarta.inject.Inject;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @ApplicationScoped
@@ -19,8 +18,8 @@ public class AdminRewardsService {
     @Inject
     AdminAnalyticsRepository repository;
 
-    public AdminRewardsResponse getRewardsAnalytics(String period) {
-        Instant periodStart = calculatePeriodStart(period);
+    public AdminRewardsResponse getRewardsAnalytics(AdminAnalyticsPeriod period) {
+        Instant periodStart = period.start();
         Instant now = Instant.now();
 
         int requestCount = repository.countAllRewardRequests(periodStart);
@@ -51,12 +50,4 @@ public class AdminRewardsService {
         return Math.round(100.0 * (total - successful) / total);
     }
 
-    private Instant calculatePeriodStart(String period) {
-        return switch (period) {
-            case "7d" -> Instant.now().minus(7, ChronoUnit.DAYS);
-            case "30d" -> Instant.now().minus(30, ChronoUnit.DAYS);
-            case "90d" -> Instant.now().minus(90, ChronoUnit.DAYS);
-            default -> Instant.EPOCH;
-        };
-    }
 }

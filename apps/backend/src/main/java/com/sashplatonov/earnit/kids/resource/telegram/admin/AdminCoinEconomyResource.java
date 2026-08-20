@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.resource.telegram.admin;
 import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
 import com.sashplatonov.earnit.kids.service.telegram.admin.AdminCoinEconomyService;
+import com.sashplatonov.earnit.kids.service.telegram.admin.AdminAnalyticsPeriod;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -34,8 +35,12 @@ public class AdminCoinEconomyResource extends ResourceAuthSupport {
             @QueryParam("period") @DefaultValue("30d") String period) {
         requireAdmin(ctx);
 
-        AdminCoinEconomyResponse response = coinEconomyService.getCoinEconomy(period);
-        return Response.ok(response).build();
+        try {
+            AdminCoinEconomyResponse response = coinEconomyService.getCoinEconomy(AdminAnalyticsPeriod.parse(period));
+            return Response.ok(response).build();
+        } catch (IllegalArgumentException exception) {
+            return badRequest(exception.getMessage());
+        }
     }
 
 }

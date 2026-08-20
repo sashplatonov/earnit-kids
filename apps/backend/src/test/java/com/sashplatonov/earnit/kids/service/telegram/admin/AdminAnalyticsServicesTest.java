@@ -41,7 +41,7 @@ class AdminAnalyticsServicesTest {
         when(repository.calcMedianPriceOfIssuedRewards(any())).thenReturn(10.0);
         when(repository.calcRewardRankings(any())).thenReturn(List.of(ranking));
 
-        AdminRewardsResponse result = service.getRewardsAnalytics("30d");
+        AdminRewardsResponse result = service.getRewardsAnalytics(AdminAnalyticsPeriod.parse("30d"));
 
         assertThat(result.getMetrics().getRequestCount()).isEqualTo(8);
         assertThat(result.getMetrics().getIssuedCount()).isEqualTo(6);
@@ -65,7 +65,7 @@ class AdminAnalyticsServicesTest {
         when(repository.getBalanceMetrics()).thenReturn(balances);
         when(repository.getRewardMetrics(any())).thenReturn(rewards);
 
-        AdminCoinEconomyResponse result = service.getCoinEconomy("7d");
+        AdminCoinEconomyResponse result = service.getCoinEconomy(AdminAnalyticsPeriod.parse("7d"));
 
         assertThat(result.getCoins()).isSameAs(coins);
         assertThat(result.getBalances()).isSameAs(balances);
@@ -81,7 +81,7 @@ class AdminAnalyticsServicesTest {
         when(repository.countReturningFamilies(any())).thenReturn(3);
         when(repository.countActiveFamilies(any())).thenReturn(9, 7, 6);
 
-        AdminRetentionResponse result = service.getRetention("90d");
+        AdminRetentionResponse result = service.getRetention(AdminAnalyticsPeriod.parse("90d"));
 
         assertThat(result.getRetentionMetrics().getNewFamilies()).isEqualTo(4);
         assertThat(result.getRetentionMetrics().getReturningFamilies()).isEqualTo(3);
@@ -99,10 +99,11 @@ class AdminAnalyticsServicesTest {
         when(repository.calcTopTaskPatterns(any())).thenReturn(List.of());
         when(repository.getParentBehaviorMetrics(any())).thenReturn(parentMetrics);
 
-        AdminTasksResponse tasks = new AdminTaskEconomyService(repository).getTaskEconomy(null);
+        AdminTasksResponse tasks = new AdminTaskEconomyService(repository)
+            .getTaskEconomy(AdminAnalyticsPeriod.parse(null, NOW));
         AdminParentBehaviorService parents = new AdminParentBehaviorService();
         parents.repository = repository;
-        AdminParentBehaviorResponse parentResult = parents.getParentBehavior("");
+        AdminParentBehaviorResponse parentResult = parents.getParentBehavior(AdminAnalyticsPeriod.parse("", NOW));
 
         assertThat(tasks.getMetrics()).isSameAs(taskMetrics);
         assertThat(parentResult.getParentBehaviorMetrics()).isSameAs(parentMetrics);
@@ -119,7 +120,8 @@ class AdminAnalyticsServicesTest {
         AdminActivationFunnelService activation = new AdminActivationFunnelService();
         activation.repository = repository;
 
-        assertThat(children.getChildBehavior("7d").getChildBehaviorMetrics()).isSameAs(childMetrics);
+        assertThat(children.getChildBehavior(AdminAnalyticsPeriod.parse("7d")).getChildBehaviorMetrics())
+            .isSameAs(childMetrics);
         assertThat(activation.getActivationFunnel().getStages()).isEmpty();
     }
 
@@ -131,7 +133,7 @@ class AdminAnalyticsServicesTest {
         when(repository.getOverview(NOW.minusSeconds(30L * 24 * 60 * 60))).thenReturn(overview);
         AdminAnalyticsService service = new AdminAnalyticsService(repository, timeProvider);
 
-        AdminAnalyticsResponse result = service.getOverview("30d");
+        AdminAnalyticsResponse result = service.getOverview(AdminAnalyticsPeriod.parse("30d", NOW));
 
         assertThat(result.getOverview()).isSameAs(overview);
         assertThat(result.getUpdatedAt()).isEqualTo(NOW.toString());

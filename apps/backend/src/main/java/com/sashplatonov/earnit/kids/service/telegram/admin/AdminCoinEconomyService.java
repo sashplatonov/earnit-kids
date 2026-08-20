@@ -9,7 +9,6 @@ import org.jboss.logging.Logger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 
 @ApplicationScoped
 public class AdminCoinEconomyService {
@@ -20,8 +19,8 @@ public class AdminCoinEconomyService {
     @Inject
     AdminAnalyticsRepository repository;
 
-    public AdminCoinEconomyResponse getCoinEconomy(String period) {
-        Instant periodStart = calculatePeriodStart(period);
+    public AdminCoinEconomyResponse getCoinEconomy(AdminAnalyticsPeriod period) {
+        Instant periodStart = period.start();
         LOG.infof("Fetching coin economy for period starting: %s", periodStart);
 
         int activeChildren = repository.countActiveChildren(periodStart);
@@ -43,12 +42,4 @@ public class AdminCoinEconomyService {
             .build();
     }
 
-    private Instant calculatePeriodStart(String period) {
-        return switch (period) {
-            case "7d" -> Instant.now().minus(7, ChronoUnit.DAYS);
-            case "30d" -> Instant.now().minus(30, ChronoUnit.DAYS);
-            case "90d" -> Instant.now().minus(90, ChronoUnit.DAYS);
-            default -> Instant.ofEpochSecond(0);
-        };
-    }
 }

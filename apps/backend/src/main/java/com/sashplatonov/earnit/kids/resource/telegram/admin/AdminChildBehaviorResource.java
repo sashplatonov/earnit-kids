@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.resource.telegram.admin;
 import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.dto.response.AdminChildBehaviorResponse;
 import com.sashplatonov.earnit.kids.service.telegram.admin.AdminChildBehaviorService;
+import com.sashplatonov.earnit.kids.service.telegram.admin.AdminAnalyticsPeriod;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -34,8 +35,12 @@ public class AdminChildBehaviorResource extends ResourceAuthSupport {
             @QueryParam("period") @DefaultValue("30d") String period) {
         requireAdmin(ctx);
 
-        AdminChildBehaviorResponse response = service.getChildBehavior(period);
-        return Response.ok(response).build();
+        try {
+            AdminChildBehaviorResponse response = service.getChildBehavior(AdminAnalyticsPeriod.parse(period));
+            return Response.ok(response).build();
+        } catch (IllegalArgumentException exception) {
+            return badRequest(exception.getMessage());
+        }
     }
 
 }

@@ -47,7 +47,7 @@ public class AdminDashboardService {
     AdminRewardsService rewardsService;
 
     @CacheResult(cacheName = "admin-dashboard")
-    public AdminDashboardResponse getDashboard(String period) {
+    public AdminDashboardResponse getDashboard(AdminAnalyticsPeriod period) {
         AdminAnalyticsResponse overview = overviewService.getOverview(period);
         AdminCoinEconomyResponse coinEconomy = coinEconomyService.getCoinEconomy(period);
         AdminTasksResponse tasks = taskEconomyService.getTaskEconomy(period);

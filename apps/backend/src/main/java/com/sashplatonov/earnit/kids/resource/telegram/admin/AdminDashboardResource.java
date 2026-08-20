@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.resource.telegram.admin;
 import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.dto.response.AdminDashboardResponse;
 import com.sashplatonov.earnit.kids.service.telegram.admin.AdminDashboardService;
+import com.sashplatonov.earnit.kids.service.telegram.admin.AdminAnalyticsPeriod;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -33,8 +34,13 @@ public class AdminDashboardResource extends ResourceAuthSupport {
             @QueryParam("period") @DefaultValue("30d") String period) {
         requireAdmin(ctx);
 
-        AdminDashboardResponse response = dashboardService.getDashboard(period);
-        return Response.ok(response).build();
+        try {
+            AdminAnalyticsPeriod analyticsPeriod = AdminAnalyticsPeriod.parse(period);
+            AdminDashboardResponse response = dashboardService.getDashboard(analyticsPeriod);
+            return Response.ok(response).build();
+        } catch (IllegalArgumentException exception) {
+            return badRequest(exception.getMessage());
+        }
     }
 
 }

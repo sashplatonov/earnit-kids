@@ -6,7 +6,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 @ApplicationScoped
 public class AdminTaskEconomyService {
@@ -18,8 +17,8 @@ public class AdminTaskEconomyService {
         this.repository = repository;
     }
 
-    public AdminTasksResponse getTaskEconomy(String period) {
-        Instant periodStart = parsePeriod(period);
+    public AdminTasksResponse getTaskEconomy(AdminAnalyticsPeriod period) {
+        Instant periodStart = period.start();
         AdminTasksResponse.TaskMetrics metrics = repository.getTaskMetrics(periodStart);
         return AdminTasksResponse.builder()
             .metrics(metrics)
@@ -28,13 +27,4 @@ public class AdminTaskEconomyService {
             .build();
     }
 
-    private Instant parsePeriod(String period) {
-        if (period == null) period = "30d";
-        return switch (period) {
-            case "7d" -> Instant.now().minus(7, ChronoUnit.DAYS);
-            case "30d" -> Instant.now().minus(30, ChronoUnit.DAYS);
-            case "90d" -> Instant.now().minus(90, ChronoUnit.DAYS);
-            default -> Instant.EPOCH;
-        };
-    }
 }

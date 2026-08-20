@@ -18,8 +18,8 @@ public class AdminRetentionService {
     @Inject
     AdminAnalyticsRepository repository;
 
-    public AdminRetentionResponse getRetention(String period) {
-        Instant periodStart = calculatePeriodStart(period);
+    public AdminRetentionResponse getRetention(AdminAnalyticsPeriod period) {
+        Instant periodStart = period.start();
         Instant now = Instant.now();
 
         AdminRetentionResponse.RetentionMetrics metrics = AdminRetentionResponse.RetentionMetrics.builder()
@@ -36,12 +36,4 @@ public class AdminRetentionService {
             .build();
     }
 
-    private Instant calculatePeriodStart(String period) {
-        return switch (period) {
-            case "7d" -> Instant.now().minus(7, ChronoUnit.DAYS);
-            case "30d" -> Instant.now().minus(30, ChronoUnit.DAYS);
-            case "90d" -> Instant.now().minus(90, ChronoUnit.DAYS);
-            default -> Instant.EPOCH;
-        };
-    }
 }
