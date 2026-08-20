@@ -259,6 +259,9 @@ export const adminMessages = {
             noActivityDesc: 'Try a different period.',
             unavailableTitle: 'Could not load data',
             unavailableDesc: 'Try refreshing the page or choosing another period.',
+            sectionUnavailableTitle: 'This section is unavailable',
+            sectionUnavailableDesc: 'Other statistics remain available. Try again to reload this section.',
+            retry: 'Retry',
         },
         tooltips: {
             selectInfo: 'Tap on ⓘ for metric explanation',

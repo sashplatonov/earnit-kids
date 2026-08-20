@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 
 class AdminDashboardServiceTest {
 
@@ -68,5 +69,41 @@ class AdminDashboardServiceTest {
         assertThat(result.getActivity()).isSameAs(retention);
         assertThat(result.getRewards()).isSameAs(rewards);
         assertThat(result.getUpdatedAt()).isNotBlank();
+        assertThat(result.getUnavailableSections()).isEmpty();
+    }
+
+    @Test
+    void getDashboard_keepsAvailableSectionsWhenOneAnalyticsServiceFails() {
+        AdminAnalyticsService overviewService = mock(AdminAnalyticsService.class);
+        AdminCoinEconomyService coinService = mock(AdminCoinEconomyService.class);
+        AdminTaskEconomyService taskService = mock(AdminTaskEconomyService.class);
+        AdminParentBehaviorService parentService = mock(AdminParentBehaviorService.class);
+        AdminChildBehaviorService childService = mock(AdminChildBehaviorService.class);
+        AdminActivationFunnelService activationService = mock(AdminActivationFunnelService.class);
+        AdminRetentionService retentionService = mock(AdminRetentionService.class);
+        AdminRewardsService rewardsService = mock(AdminRewardsService.class);
+        AdminAnalyticsPeriod period = AdminAnalyticsPeriod.parse("7d");
+        AdminAnalyticsResponse overview = mock(AdminAnalyticsResponse.class);
+        AdminAnalyticsResponse.Overview overviewData = mock(AdminAnalyticsResponse.Overview.class);
+        AdminCoinEconomyResponse coins = mock(AdminCoinEconomyResponse.class);
+        when(overviewService.getOverview(period)).thenReturn(overview);
+        when(overview.getOverview()).thenReturn(overviewData);
+        doThrow(new IllegalStateException("database unavailable")).when(coinService).getCoinEconomy(period);
+
+        AdminDashboardService service = new AdminDashboardService();
+        service.overviewService = overviewService;
+        service.coinEconomyService = coinService;
+        service.taskEconomyService = taskService;
+        service.parentBehaviorService = parentService;
+        service.childBehaviorService = childService;
+        service.activationFunnelService = activationService;
+        service.retentionService = retentionService;
+        service.rewardsService = rewardsService;
+
+        AdminDashboardResponse result = service.getDashboard(period);
+
+        assertThat(result.getOverview()).isSameAs(overviewData);
+        assertThat(result.getCoinEconomy()).isNull();
+        assertThat(result.getUnavailableSections()).containsExactly("coinEconomy");
     }
 }

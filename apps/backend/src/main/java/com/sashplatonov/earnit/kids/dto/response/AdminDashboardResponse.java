@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -20,4 +22,5 @@ public class AdminDashboardResponse {
     private AdminRetentionResponse activity;
     private AdminRewardsResponse rewards;
     private String updatedAt;
+    private List<String> unavailableSections;
 }

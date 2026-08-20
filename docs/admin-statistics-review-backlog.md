@@ -134,7 +134,7 @@ git commit -m "fix(backend): Unify statistics periods"
 
 ## P1-2: Make period loading resilient and diagnosable per Statistics section
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P1  
 **Depends on:** P1-1
 

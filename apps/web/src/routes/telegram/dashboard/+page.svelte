@@ -24,6 +24,9 @@
     $: retention = data.retention;
     $: rewards = data.rewards;
     $: trends = data.trends;
+    $: dashboardStatus = data.dashboardStatus ?? (overview == null ? 'unavailable' : 'available');
+    $: trendsStatus = data.trendsStatus ?? (trends == null ? 'unavailable' : 'available');
+    $: unavailableSections = data.unavailableSections ?? [];
 
     // EXPLAIN: The selected period comes from the URL (?period=...) and is
     // EXPLAIN: resolved server-side, so changing it reloads real data.
@@ -61,6 +64,16 @@
         document.body.classList.add('admin-loading');
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         goto(`/telegram/dashboard?period=${period}`, { replaceState: true });
+    }
+
+    function sectionUnavailable(section: string): boolean {
+        return unavailableSections.includes(section);
+    }
+
+    function retry() {
+        document.body.classList.add('admin-loading');
+        // eslint-disable-next-line svelte/no-navigation-without-resolve
+        goto(`/telegram/dashboard?period=${selectedPeriod}`, { replaceState: true });
     }
 
     // EXPLAIN: Trend bar helpers for ADM-14
@@ -226,11 +239,19 @@
             </div>
         </div>
 
-        {#if overview == null}
+        {#if dashboardStatus === 'unavailable'}
             <div class="empty-state" role="status">
                 <span class="empty-ico" aria-hidden="true">⚠️</span>
                 <b>{t('empty.unavailableTitle')}</b>
                 <small>{t('empty.unavailableDesc')}</small>
+                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+            </div>
+        {:else if sectionUnavailable('overview')}
+            <div class="empty-state" role="status">
+                <span class="empty-ico" aria-hidden="true">⚠️</span>
+                <b>{t('empty.sectionUnavailableTitle')}</b>
+                <small>{t('empty.sectionUnavailableDesc')}</small>
+                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
             </div>
         {:else if (overview?.overview?.totalFamilies ?? 0) === 0}
             <div class="empty-state" role="status">
@@ -277,6 +298,13 @@
                 role="tabpanel"
                 aria-labelledby="tab-overview"
             >
+                {#if sectionUnavailable('overview')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else}
                 <h2 class="section-title">{t('tabs.overview')}</h2>
                 <div class="kpis">
                     <div class="kpi">
@@ -336,6 +364,7 @@
                         <div class="rank-val">{formatValue(parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours)} {t('units.hours')}</div>
                     </div>
                 </div>
+                {/if}
             </div>
 
             <!-- Coins Tab -->
@@ -346,6 +375,13 @@
                 role="tabpanel"
                 aria-labelledby="tab-coins"
             >
+                {#if sectionUnavailable('coinEconomy')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else}
                 <h2 class="section-title">{t('sections.coinEconomy')}</h2>
                 <div class="compare">
                     <div class="compare-top">
@@ -405,6 +441,7 @@
                         <div class="metric-value">{formatValue(coinEconomy?.balances?.zeroBalancePercent, true)}</div>
                     </div>
                 </div>
+                {/if}
             </div>
 
             <!-- Rewards Tab -->
@@ -415,6 +452,13 @@
                 role="tabpanel"
                 aria-labelledby="tab-rewards"
             >
+                {#if sectionUnavailable('rewards')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else}
                 <h2 class="section-title">{t('tabs.rewards')}</h2>
                 <div class="kpis">
                     <div class="kpi">
@@ -467,6 +511,7 @@
                         </div>
                     {/each}
                 </div>
+                {/if}
             </div>
 
             <!-- Tasks Tab -->
@@ -477,6 +522,13 @@
                 role="tabpanel"
                 aria-labelledby="tab-tasks"
             >
+                {#if sectionUnavailable('tasks')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else}
                 <h2 class="section-title">{t('tabs.tasks')}</h2>
                 <div class="kpis">
                     <div class="kpi">
@@ -534,6 +586,7 @@
                         {/each}
                     </div>
                 {/if}
+                {/if}
             </div>
 
             <!-- Activity Tab -->
@@ -545,7 +598,13 @@
                 aria-labelledby="tab-activity"
             >
                 <h2 class="section-title">{t('sections.activation')}</h2>
-                {#if activationFunnel?.stages && activationFunnel.stages.length > 0}
+                {#if sectionUnavailable('activation')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else if activationFunnel?.stages && activationFunnel.stages.length > 0}
                     <div class="funnel">
                         {#each activationFunnel.stages as stage (stage.key)}
                             <div class="step">
@@ -571,6 +630,13 @@
                 {/if}
 
                 <h2 class="section-title">{t('sections.retention')}</h2>
+                {#if sectionUnavailable('retention')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else}
                 <div class="metric-list">
                     <div class="metric">
                         <div>
@@ -607,9 +673,16 @@
                         <div class="metric-value">{retention?.retentionMetrics?.active30d ?? '—'}</div>
                     </div>
                 </div>
+                {/if}
 
                 <h2 class="section-title">{t('sections.trends')}</h2>
-                {#if trends?.points && trends.points.length > 0}
+                {#if trendsStatus === 'unavailable'}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else if trends?.points && trends.points.length > 0}
                     <div class="trend">
                         <div class="trend-head">
                             <b>{t('trends.activeFamilies.title')}</b>
@@ -644,6 +717,13 @@
                 {/if}
 
                 <h2 class="section-title">{t('sections.parentNeeds')}</h2>
+                {#if sectionUnavailable('parentBehavior')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else}
                 <div class="metric-list">
                     <div class="metric">
                         <div>
@@ -660,6 +740,7 @@
                         <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCustomContentPercent ?? '—'}%</div>
                     </div>
                 </div>
+                {/if}
 
                 <h2 class="section-title">{t('sections.parentCycle')}</h2>
                 <div class="metric-list">
@@ -693,6 +774,13 @@
                 </div>
 
                 <h2 class="section-title">{t('sections.childNeeds')}</h2>
+                {#if sectionUnavailable('childBehavior')}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else}
                 <div class="metric-list">
                     <div class="metric">
                         <div>
@@ -726,6 +814,7 @@
                         <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenRequestedNotReceived, true)}</div>
                     </div>
                 </div>
+                {/if}
             </div>
         </div>
 

@@ -259,6 +259,9 @@ export const adminMessages = {
             noActivityDesc: 'Попробуйте выбрать другой период.',
             unavailableTitle: 'Не удалось загрузить данные',
             unavailableDesc: 'Попробуйте обновить страницу или выбрать другой период.',
+            sectionUnavailableTitle: 'Раздел временно недоступен',
+            sectionUnavailableDesc: 'Остальные показатели доступны. Повторите попытку, чтобы загрузить этот раздел.',
+            retry: 'Повторить',
         },
         tooltips: {
             selectInfo: 'Нажмите на ⓘ для пояснения показателя',

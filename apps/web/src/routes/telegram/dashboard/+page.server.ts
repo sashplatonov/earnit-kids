@@ -32,6 +32,9 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     let retention = null;
     let rewards = null;
     let trends = null;
+    let dashboardStatus: 'available' | 'partial' | 'unavailable' = 'unavailable';
+    let trendsStatus: 'available' | 'unavailable' = 'unavailable';
+    let unavailableSections: string[] = [];
 
     const [dashboardRes, trendsRes] = await Promise.allSettled([
         fetch(`/api/admin/dashboard?period=${period}`),
@@ -41,16 +44,23 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     if (dashboardRes.status === 'fulfilled' && dashboardRes.value.ok) {
         try {
             const dashboard = await dashboardRes.value.json();
+            unavailableSections = Array.isArray(dashboard.unavailableSections)
+                ? dashboard.unavailableSections
+                : [];
             overview = { overview: dashboard.overview };
-            coinEconomy = dashboard.coinEconomy;
-            taskEconomy = dashboard.tasks;
-            parentBehavior = dashboard.parentSignals;
-            childBehavior = dashboard.childSignals;
-            activationFunnel = dashboard.activation;
-            retention = dashboard.activity;
-            rewards = dashboard.rewards;
+            coinEconomy = dashboard.unavailableSections?.includes('coinEconomy') ? null : dashboard.coinEconomy;
+            taskEconomy = dashboard.unavailableSections?.includes('tasks') ? null : dashboard.tasks;
+            parentBehavior = dashboard.unavailableSections?.includes('parentBehavior') ? null : dashboard.parentSignals;
+            childBehavior = dashboard.unavailableSections?.includes('childBehavior') ? null : dashboard.childSignals;
+            activationFunnel = dashboard.unavailableSections?.includes('activation') ? null : dashboard.activation;
+            retention = dashboard.unavailableSections?.includes('retention') ? null : dashboard.activity;
+            rewards = dashboard.unavailableSections?.includes('rewards') ? null : dashboard.rewards;
+            dashboardStatus = unavailableSections.length === 0 ? 'available' : 'partial';
+            if (dashboard.overview == null) unavailableSections = [...new Set([...unavailableSections, 'overview'])];
+            if (unavailableSections.length === 8) dashboardStatus = 'unavailable';
         } catch (e) {
             console.error('Failed to parse admin dashboard response:', e);
+            dashboardStatus = 'unavailable';
         }
     } else {
         console.error('Admin dashboard fetch failed:', dashboardRes.status === 'rejected' ? dashboardRes.reason : `HTTP ${dashboardRes.status === 'fulfilled' ? dashboardRes.value.status : '?'}`);
@@ -59,6 +69,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     if (trendsRes.status === 'fulfilled' && trendsRes.value.ok) {
         try {
             trends = await trendsRes.value.json();
+            trendsStatus = 'available';
         } catch (e) {
             console.error('Failed to parse admin trends response:', e);
         }
@@ -76,6 +87,9 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
         retention,
         rewards,
         trends,
+        dashboardStatus,
+        trendsStatus,
+        unavailableSections,
         period,
     };
 

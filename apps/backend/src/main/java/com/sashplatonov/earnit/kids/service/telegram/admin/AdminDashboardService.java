@@ -16,6 +16,8 @@ import jakarta.inject.Inject;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApplicationScoped
 public class AdminDashboardService {
@@ -48,17 +50,59 @@ public class AdminDashboardService {
 
     @CacheResult(cacheName = "admin-dashboard")
     public AdminDashboardResponse getDashboard(AdminAnalyticsPeriod period) {
-        AdminAnalyticsResponse overview = overviewService.getOverview(period);
-        AdminCoinEconomyResponse coinEconomy = coinEconomyService.getCoinEconomy(period);
-        AdminTasksResponse tasks = taskEconomyService.getTaskEconomy(period);
-        AdminParentBehaviorResponse parentSignals = parentBehaviorService.getParentBehavior(period);
-        AdminChildBehaviorResponse childSignals = childBehaviorService.getChildBehavior(period);
-        AdminActivationFunnelResponse activation = activationFunnelService.getActivationFunnel();
-        AdminRetentionResponse activity = retentionService.getRetention(period);
-        AdminRewardsResponse rewards = rewardsService.getRewardsAnalytics(period);
+        List<String> unavailableSections = new ArrayList<>();
+        AdminAnalyticsResponse overview = null;
+        AdminCoinEconomyResponse coinEconomy = null;
+        AdminTasksResponse tasks = null;
+        AdminParentBehaviorResponse parentSignals = null;
+        AdminChildBehaviorResponse childSignals = null;
+        AdminActivationFunnelResponse activation = null;
+        AdminRetentionResponse activity = null;
+        AdminRewardsResponse rewards = null;
+
+        try {
+            overview = overviewService.getOverview(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("overview");
+        }
+        try {
+            coinEconomy = coinEconomyService.getCoinEconomy(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("coinEconomy");
+        }
+        try {
+            tasks = taskEconomyService.getTaskEconomy(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("tasks");
+        }
+        try {
+            parentSignals = parentBehaviorService.getParentBehavior(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("parentBehavior");
+        }
+        try {
+            childSignals = childBehaviorService.getChildBehavior(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("childBehavior");
+        }
+        try {
+            activation = activationFunnelService.getActivationFunnel();
+        } catch (RuntimeException exception) {
+            unavailableSections.add("activation");
+        }
+        try {
+            activity = retentionService.getRetention(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("retention");
+        }
+        try {
+            rewards = rewardsService.getRewardsAnalytics(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("rewards");
+        }
 
         return AdminDashboardResponse.builder()
-            .overview(overview.getOverview())
+            .overview(overview == null ? null : overview.getOverview())
             .coinEconomy(coinEconomy)
             .tasks(tasks)
             .parentSignals(parentSignals)
@@ -67,6 +111,7 @@ public class AdminDashboardService {
             .activity(activity)
             .rewards(rewards)
             .updatedAt(ISO_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC)))
+            .unavailableSections(List.copyOf(unavailableSections))
             .build();
     }
 }
