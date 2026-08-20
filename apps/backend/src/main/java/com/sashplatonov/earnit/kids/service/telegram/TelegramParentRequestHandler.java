@@ -98,7 +98,7 @@ final class TelegramParentRequestHandler {
         }
         RequestDto request = pending.get(0);
         return TelegramCopy.requestQueueText(view.childName(), TelegramViewSupport.requestTitle(request),
-            request.coins(), 1, pending.size());
+            request.coins(), !request.requestType().isPurchase(), 1, pending.size());
     }
 
     private static boolean isStale(TelegramQuickActionResponse view, long requestId) {
@@ -115,7 +115,8 @@ final class TelegramParentRequestHandler {
         var request = view.requests().stream().filter(value -> value.id() == requestId).findFirst();
         String title = request.map(TelegramParentRequestHandler::title).orElse(null);
         int delta = request.map(value -> value.coins()).orElse(0);
-        return TelegramCopy.parentApproved(title == null ? "Запрос" : title, delta, view.balance());
+        return TelegramCopy.parentApproved(title == null ? "Запрос" : title, delta, view.balance(),
+            request.map(value -> !value.requestType().isPurchase()).orElse(true));
     }
 
     private static String title(RequestDto request) {

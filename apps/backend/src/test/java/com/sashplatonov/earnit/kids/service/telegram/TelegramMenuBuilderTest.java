@@ -28,13 +28,13 @@ class TelegramMenuBuilderTest {
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .hasSize(5)
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🟡 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
             .contains("nav.requests-child-1.signed", "nav.coins-child-1.signed",
                 "nav.recent-child-1.signed", "nav.switch-child-1.signed");
         assertThat(TelegramMenuFlow.homeText(view))
-            .isEqualTo("👧 Alex\n🪙 42 монеты\n\n✅ Сейчас ничего не требует внимания");
+            .isEqualTo("👧 Alex\n🟡 42 монеты\n\n✅ Сейчас ничего не требует внимания");
     }
 
     @Test
@@ -84,10 +84,10 @@ class TelegramMenuBuilderTest {
             List.of());
 
         assertThat(TelegramMenuFlow.homeText(view))
-            .isEqualTo("👧 Alex\n🪙 42 монеты\n\n🎯 Требуют внимания: 1");
+            .isEqualTo("👧 Alex\n🟡 42 монеты\n\n🎯 Требуют внимания: 1");
         assertThat(menuBuilder().parentMain(view, "https://example.test/telegram"))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🟡 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
     }
 
     @Test
@@ -99,7 +99,7 @@ class TelegramMenuBuilderTest {
             .containsExactly("✅ Мои задания", "🎁 Награды", "📜 Последние", "📱 Открыть приложение");
         assertThat(TelegramMenuFlow.homeText(new TelegramQuickActionResponse(
             "family", "child", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(), List.of())))
-            .isEqualTo("👋 Alex\n🪙 42 монеты");
+            .isEqualTo("👋 Alex\n🟡 42 монеты");
     }
 
     @Test
@@ -109,9 +109,9 @@ class TelegramMenuBuilderTest {
         assertThat(TelegramMenuFlow.navigationMenu("tasks-child-1", view,
             "https://example.test/telegram", "", menuBuilder()))
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("🎯 Запросы", "🪙 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
+            .containsExactly("🎯 Запросы", "🟡 Монеты", "📜 Последние", "👧 Выбрать ребёнка", "📱 Открыть приложение");
         assertThat(TelegramMenuFlow.navigationText("tasks-child-1", view))
-            .isEqualTo("👧 Alex\n🪙 42 монеты\n\n✅ Сейчас ничего не требует внимания");
+            .isEqualTo("👧 Alex\n🟡 42 монеты\n\n✅ Сейчас ничего не требует внимания");
     }
 
     @Test
@@ -124,13 +124,13 @@ class TelegramMenuBuilderTest {
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("✅ Мои задания", "🎁 Награды", "📜 Последние", "📱 Открыть приложение");
         assertThat(TelegramMenuFlow.navigationText("coins-child-1", view))
-            .isEqualTo("👋 Alex\n🪙 42 монеты");
+            .isEqualTo("👋 Alex\n🟡 42 монеты");
         assertThat(TelegramMenuFlow.navigationMenu("coins-confirm-remove-10-child-1", view,
             "https://example.test/telegram", "", menuBuilder()))
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("✅ Мои задания", "🎁 Награды", "📜 Последние", "📱 Открыть приложение");
         assertThat(TelegramMenuFlow.navigationText("coins-confirm-remove-10-child-1", view))
-            .isEqualTo("👋 Alex\n🪙 42 монеты");
+            .isEqualTo("👋 Alex\n🟡 42 монеты");
     }
 
     @Test
@@ -166,7 +166,7 @@ class TelegramMenuBuilderTest {
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("✅ Готово: Утренний старт", "🏠 Главное меню");
         assertThat(TelegramMenuFlow.navigationText("tasks-child-1", view))
-            .isEqualTo("✅ Мои задания\n\n☀️ Утренний старт\n🪙 +1\n\n☀️ Книжная искра\n🪙 +2");
+            .isEqualTo("✅ Мои задания\n\n☀️ Утренний старт\n🟢 🟡 +1\n\n☀️ Книжная искра\n🟢 🟡 +2");
     }
 
     @Test
@@ -185,7 +185,7 @@ class TelegramMenuBuilderTest {
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
             .contains("parent.request.approve.1.19.queue", "parent.request.reject.1.19.queue");
         assertThat(TelegramMenuFlow.navigationText("requests-child-1", view))
-            .isEqualTo("🎯 Запрос 1 из 1\n\n👧 Alex\n\nHomework\n🪙 +20 монет");
+            .isEqualTo("🎯 Запрос 1 из 1\n\n👧 Alex\n\nHomework\n🟢 🟡 +20 монет");
     }
 
     @Test
@@ -209,9 +209,9 @@ class TelegramMenuBuilderTest {
             .extracting(TelegramBotApiClient.InlineButton::callbackData)
             .contains("nav.requests-next-19-child-1.signed");
         assertThat(TelegramMenuFlow.navigationText("requests-child-1", view))
-            .isEqualTo("🎯 Запрос 1 из 2\n\n👧 Alex\n\nHomework\n🪙 +20 монет");
+            .isEqualTo("🎯 Запрос 1 из 2\n\n👧 Alex\n\nHomework\n🟢 🟡 +20 монет");
         assertThat(TelegramMenuFlow.navigationText("requests-next-19-child-1", view))
-            .isEqualTo("🎯 Запрос 2 из 2\n\n👧 Alex\n\nMovie night\n🪙 +30 монет");
+            .isEqualTo("🎯 Запрос 2 из 2\n\n👧 Alex\n\nMovie night\n🔴 🟡 -30 монет");
     }
 
     @Test
@@ -273,7 +273,7 @@ class TelegramMenuBuilderTest {
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("🎁 Получить: Королева настолки", "🏠 Главное меню");
         assertThat(TelegramMenuFlow.navigationText("rewards-child-1", view))
-            .isEqualTo("🎁 Награды\n🪙 Баланс: 22\n\n🎁 Королева настолки · 2\n\n"
+            .isEqualTo("🎁 Награды\n🟡 Баланс: 22\n\n🎁 Королева настолки\n🔴 🟡 -2\n\n"
                 + "ℹ️ Следующая цель:\nДомашняя лаборатория · 30\nНе хватает 8 монет");
     }
 

@@ -44,7 +44,7 @@ final class TelegramMenuText {
         }
         RequestDto request = pending.get(index);
         return TelegramCopy.requestQueueText(view.childName(), TelegramViewSupport.requestTitle(request),
-            request.coins(), index + 1, pending.size());
+            request.coins(), !request.requestType().isPurchase(), index + 1, pending.size());
     }
 
     private static String catalogText(String action, TelegramQuickActionResponse view) {
@@ -62,7 +62,7 @@ final class TelegramMenuText {
         StringBuilder builder = new StringBuilder(TelegramCopy.MY_TASKS);
         for (TaskDto task : tasks) {
             builder.append("\n\n").append(TelegramBotEmoji.TASK_DONE).append(" ").append(task.name())
-                .append("\n").append(TelegramBotEmoji.COINS).append(" +").append(task.coins());
+                .append("\n").append(TelegramCoinCopy.delta(task.coins(), true, false));
         }
         return builder.toString();
     }
@@ -80,7 +80,7 @@ final class TelegramMenuText {
             .append("\n").append(TelegramBotEmoji.COINS).append(" Баланс: ").append(view.balance());
         for (ShopItemDto reward : affordable) {
             builder.append("\n\n").append(TelegramBotEmoji.REWARDS).append(" ").append(reward.name())
-                .append(" · ").append(reward.price());
+                .append("\n").append(TelegramCoinCopy.delta(reward.price(), false, false));
         }
         view.rewards().stream()
             .filter(reward -> reward.price() > view.balance())

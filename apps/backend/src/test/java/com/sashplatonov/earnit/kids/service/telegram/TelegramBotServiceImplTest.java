@@ -173,7 +173,7 @@ class TelegramBotServiceImplTest {
 
         verify(apiClient).sendMessageWithReplyKeyboard(
             eq(44L),
-            eq("👋 Alex\n🪙 20 монет"),
+            eq("👋 Alex\n🟡 20 монет"),
             argThat((TelegramReplyKeyboard kb) ->
                 kb.rows().size() == 2
                 && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.MY_TASKS)
@@ -261,7 +261,7 @@ class TelegramBotServiceImplTest {
 
         verify(apiClient).sendMessageWithReplyKeyboard(
             eq(44L),
-            eq("👧 Alex\n🪙 20 монет\n\n✅ Сейчас ничего не требует внимания"),
+            eq("👧 Alex\n🟡 20 монет\n\n✅ Сейчас ничего не требует внимания"),
             argThat((TelegramReplyKeyboard kb) ->
                 kb.rows().size() == 2
                 && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.NAV_REQUESTS)
@@ -327,7 +327,7 @@ class TelegramBotServiceImplTest {
 
         verify(quickActions).load(77L, 2);
         verify(apiClient).editMessageText(44L, 19L,
-            "👧 Sam\n🪙 12 монет\n\n✅ Сейчас ничего не требует внимания", List.of());
+            "👧 Sam\n🟡 12 монет\n\n✅ Сейчас ничего не требует внимания", List.of());
     }
 
     @Test
@@ -387,7 +387,7 @@ class TelegramBotServiceImplTest {
             """));
 
         verify(quickActions).adjustBalance(77L, 2, -10);
-        verify(apiClient).editMessageText(44L, 19L, "✅ Снято 10 монет\n🪙 2 монеты", List.of());
+        verify(apiClient).editMessageText(44L, 19L, "✅ Снято 🔴 🟡 -10 монет\n🟡 2 монеты", List.of());
     }
 
     @Test
@@ -530,7 +530,7 @@ class TelegramBotServiceImplTest {
             """));
 
         verify(apiClient).editMessageText(44L, 19L,
-            "✅ Одобрено\n\nHomework\n🪙 +1 монета\nБаланс: 62", List.of());
+            "✅ Одобрено\n\nHomework\n🟢 🟡 +1 монета\nБаланс: 62", List.of());
         verify(apiClient).answerCallbackQuery("callback");
     }
 
@@ -566,7 +566,7 @@ class TelegramBotServiceImplTest {
             """));
 
         verify(apiClient).editMessageText(44L, 19L,
-            "🎯 Запрос 1 из 1\n\n👧 Alex\n\nMovie night\n🪙 +30 монет", next);
+            "🎯 Запрос 1 из 1\n\n👧 Alex\n\nMovie night\n🔴 🟡 -30 монет", next);
     }
 
     @Test

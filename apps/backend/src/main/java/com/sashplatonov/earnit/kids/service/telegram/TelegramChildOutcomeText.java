@@ -90,7 +90,7 @@ public class TelegramChildOutcomeText {
         if (event.getResultingBalance() == null || event.getCoinDelta() == 0) {
             return action;
         }
-        return action + "\n" + (event.getCoinDelta() > 0 ? "+" : "") + event.getCoinDelta()
-            + " " + TelegramBotEmoji.COINS + "\nBalance: " + event.getResultingBalance() + " " + TelegramBotEmoji.COINS;
+        return action + "\n" + TelegramCoinCopy.delta(event.getCoinDelta(), event.getCoinDelta() > 0, true)
+            + "\nBalance: " + event.getResultingBalance() + " " + TelegramBotEmoji.COINS;
     }
 }

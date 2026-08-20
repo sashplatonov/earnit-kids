@@ -75,8 +75,8 @@ public final class TelegramCopy {
 
     public static String coinApplied(int delta, int balance) {
         String verb = delta > 0 ? "Добавлено" : "Снято";
-        return TelegramBotEmoji.SUCCESS + " " + verb + " " + Math.abs(delta) + " "
-            + moneta(Math.abs(delta)) + "\n" + coinsLine(balance);
+        return TelegramBotEmoji.SUCCESS + " " + verb + " " + TelegramCoinCopy.delta(delta, delta > 0, true)
+            + "\n" + coinsLine(balance);
     }
 
     public static String coinConfirmText(String childName, int delta) {
@@ -94,21 +94,22 @@ public final class TelegramCopy {
         return TelegramBotEmoji.REQUESTS + " Запрос " + index + " из " + total;
     }
 
-    public static String requestQueueText(String childName, String title, int coins, int index, int total) {
+    public static String requestQueueText(String childName, String title, int coins, boolean task,
+                                          int index, int total) {
         return requestQueue(index, total) + "\n\n" + TelegramBotEmoji.CHILD + " " + childName + "\n\n"
-            + title + "\n" + TelegramBotEmoji.COINS + " +" + coins + " " + moneta(coins);
+            + title + "\n" + TelegramCoinCopy.delta(coins, task, true);
     }
 
     public static String requestNotification(String childName, String title, int coins, boolean task) {
         String lead = task ? " выполнила:" : " хочет награду:";
         return TelegramBotEmoji.CHILD + " " + childName + lead + "\n\n"
-            + title + "\n" + TelegramBotEmoji.COINS + " +" + coins + " " + moneta(coins);
+            + title + "\n" + TelegramCoinCopy.delta(coins, task, true);
     }
 
-    public static String parentApproved(String title, int delta, int balance) {
+    public static String parentApproved(String title, int delta, int balance, boolean task) {
         String result = TelegramBotEmoji.SUCCESS + " Одобрено\n\n" + title;
         if (delta != 0) {
-            result += "\n" + TelegramBotEmoji.COINS + " +" + delta + " " + moneta(delta);
+            result += "\n" + TelegramCoinCopy.delta(delta, task, true);
         }
         result += "\nБаланс: " + balance;
         return result;
@@ -146,7 +147,7 @@ public final class TelegramCopy {
 
     public static String childTaskApproved(String title, int delta, int balance) {
         return TelegramBotEmoji.CELEBRATE + " " + title + " одобрен\n\n"
-            + TelegramBotEmoji.COINS + " +" + delta + " " + moneta(delta) + "\nБаланс: " + balance;
+            + TelegramCoinCopy.delta(delta, true, true) + "\nБаланс: " + balance;
     }
 
     public static String childRewardApproved(String title) {

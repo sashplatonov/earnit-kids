@@ -7,7 +7,9 @@ public final class TelegramBotEmoji {
     public static final String REQUESTS = "🎯";
     public static final String APPROVE = "👍";
     public static final String REJECT = "👎";
-    public static final String COINS = "🪙";
+    public static final String COINS = "🟡";
+    public static final String COINS_EARNED = "🟢";
+    public static final String COINS_SPENT = "🔴";
     public static final String RECENT = "📜";
     public static final String CHILD = "👧";
     public static final String SWITCH = "🔄";

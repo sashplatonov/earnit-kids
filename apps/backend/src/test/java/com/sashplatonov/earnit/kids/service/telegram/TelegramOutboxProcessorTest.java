@@ -58,7 +58,7 @@ class TelegramOutboxProcessorTest {
         assertThat(processor.process(now)).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo("SENT");
         verify(api).sendMessage(77L,
-            "🎉 Утренний старт одобрен\n\n🪙 +20 монет\nБаланс: 145",
+            "🎉 Утренний старт одобрен\n\n🟢 🟡 +20 монет\nБаланс: 145",
             List.of(
                 TelegramBotApiClient.InlineButton.callback("✅ Мои задания", "nav.tasks.signed"),
                 TelegramBotApiClient.InlineButton.callback("🎁 Награды", "nav.rewards.signed")));
@@ -83,7 +83,7 @@ class TelegramOutboxProcessorTest {
 
         assertThat(processor.process(now)).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo("SENT");
-        verify(api).sendMessage(77L, "👧 Aliska выполнила:\n\nУтренний старт\n🪙 +1 монета",
+        verify(api).sendMessage(77L, "👧 Aliska выполнила:\n\nУтренний старт\n🟢 🟡 +1 монета",
             List.of(
                 TelegramBotApiClient.InlineButton.callback("👍 Одобрить", "parent.request.approve.2.8"),
                 TelegramBotApiClient.InlineButton.callback("👎 Отклонить", "parent.request.reject.2.8")));
@@ -129,7 +129,7 @@ class TelegramOutboxProcessorTest {
         assertThat(processor.process(now)).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo("SENT");
         verify(api).sendMessage(78L,
-            "🎉 Родитель выполнил задание за тебя\n\n🪙 +20 монет\nБаланс: 145",
+            "🎉 Родитель выполнил задание за тебя\n\n🟢 🟡 +20 монет\nБаланс: 145",
             List.of(
                 TelegramBotApiClient.InlineButton.callback("✅ Мои задания", "nav.tasks.signed"),
                 TelegramBotApiClient.InlineButton.callback("🎁 Награды", "nav.rewards.signed")));
@@ -151,7 +151,7 @@ class TelegramOutboxProcessorTest {
         assertThat(processor.process(now)).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo("SENT");
         verify(api).sendMessage(78L,
-            "🎉 Родитель выдал награду\n\n🪙 -50 монет\nБаланс: 95",
+            "🎉 Родитель выдал награду\n\n🔴 🟡 -50 монет\nБаланс: 95",
             List.of());
     }
 
@@ -282,7 +282,7 @@ class TelegramOutboxProcessorTest {
 
         assertThat(processor.process(now)).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo("SENT");
-        verify(api).sendMessage(77L, "👧 Aliska выполнила:\n\nУтренний старт\n🪙 +1 монета",
+        verify(api).sendMessage(77L, "👧 Aliska выполнила:\n\nУтренний старт\n🟢 🟡 +1 монета",
             List.of(
                 TelegramBotApiClient.InlineButton.callback("👍 Одобрить", "parent.request.approve.2.8"),
                 TelegramBotApiClient.InlineButton.callback("👎 Отклонить", "parent.request.reject.2.8")));
