@@ -980,7 +980,7 @@ git commit -m "refactor(backend): adopt ResourceAuthSupport and OperationResultR
 
 ## P0-4: Restore H2-compatible Flyway startup after V39
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** -
 
