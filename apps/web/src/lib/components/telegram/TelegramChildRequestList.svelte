@@ -80,7 +80,7 @@
 </section>
 
 <style>
-    .panel { width:100%; }
+    .panel { width:100%; box-sizing:border-box; border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
     .items { display:flex; flex-direction:column; width:100%; }
     .cancel { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-width:2.75rem; min-height:2.75rem; padding:.3rem .5rem; border:1px solid #f3cfd2; border-radius:.55rem; background:#fff0f1; color:#c63c42; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
     .cancel:disabled { cursor:wait; opacity:.6; }
