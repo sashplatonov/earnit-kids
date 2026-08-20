@@ -77,4 +77,26 @@ class OperationResultResponsesTest {
     void errorCodeOrBadRequest_returnsBadRequestWhenNull() {
         assertThat(OperationResultResponses.errorCodeOrBadRequest(null)).isEqualTo("BAD_REQUEST");
     }
+
+    @Test
+    void toResponse_usesResourceOwnedSuccessCallback() {
+        Response response = OperationResultResponses.toResponse(
+            OperationResult.success("payload"),
+            value -> Response.status(201).entity(value).build(),
+            failure -> Response.serverError().build());
+
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThat(response.getEntity()).isEqualTo("payload");
+    }
+
+    @Test
+    void toResponse_usesResourceOwnedFailureCallback() {
+        Response response = OperationResultResponses.toResponse(
+            OperationResult.failure("failed"),
+            value -> Response.ok(value).build(),
+            failure -> Response.status(303).header("Location", "/login").build());
+
+        assertThat(response.getStatus()).isEqualTo(303);
+        assertThat(response.getHeaderString("Location")).isEqualTo("/login");
+    }
 }

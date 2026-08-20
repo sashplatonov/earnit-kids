@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.config.auth.CookieBuilder;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.service.auth.AuthService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import com.sashplatonov.earnit.kids.util.PublicOriginResolver;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -55,32 +56,22 @@ public class ChildMagicLinkResource {
                                  @PathParam("token") String token) {
         OperationResult<AuthPayload> result = authService.authenticateChild(token);
 
-        return switch (result) {
-            case OperationResult.Success<AuthPayload> s -> {
-                AuthPayload payload = s.value();
-                var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(),
-                    payload.role(),
-                    payload.familyId(),
-                    payload.childId(),
-                    payload.isSuperAdmin(),
-                    payload.permission()
-                );
+        return OperationResultResponses.toResponse(result, payload -> successResponse(payload, request),
+            ignored -> Response.seeOther(
+                URI.create(publicOriginResolver.toAbsoluteRedirect("/login.html?error=invalid_token", request)))
+                .build());
+    }
 
-                URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/", request));
-
-                Response.ResponseBuilder response = Response.seeOther(locationUri)
-                    .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-                    .header("Pragma", "no-cache")
-                    .header("Expires", "0");
-                cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
-                yield response.build();
-            }
-            case OperationResult.Failure<AuthPayload> ignored -> Response
-                .seeOther(
-                    URI.create(publicOriginResolver.toAbsoluteRedirect("/login.html?error=invalid_token", request))
-                )
-                .build();
-        };
+    private Response successResponse(AuthPayload payload, ContainerRequestContext request) {
+        var cookies = cookieBuilder.buildAuthCookies(
+            payload.email(), payload.role(), payload.familyId(), payload.childId(),
+            payload.isSuperAdmin(), payload.permission());
+        URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/", request));
+        Response.ResponseBuilder response = Response.seeOther(locationUri)
+            .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+            .header("Pragma", "no-cache")
+            .header("Expires", "0");
+        cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
+        return response.build();
     }
 }

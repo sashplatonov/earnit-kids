@@ -17,6 +17,7 @@ import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.service.auth.AuthService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -89,30 +90,28 @@ public class AuthResource {
     }
 
     private Response buildAdminAuthResponse(OperationResult<AuthPayload> result) {
-        return switch (result) {
-            case OperationResult.Success<AuthPayload> s -> {
-                AuthPayload payload = s.value();
-                if (payload.selectionRequired() && payload.familyChoices() != null) {
-                    List<AuthResponse.FamilyChoice> choices = payload.familyChoices().stream()
-                        .map(fc -> new AuthResponse.FamilyChoice(
-                            fc.familyId(), fc.familyName(), fc.permission(), fc.blocked()))
-                        .toList();
-                    yield Response.ok(AuthResponse.selectionRequired(choices)).build();
-                }
-                var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), payload.isSuperAdmin(), payload.permission());
+        return OperationResultResponses.toResponse(result, this::adminSuccessResponse,
+            failure -> Response.status(Response.Status.UNAUTHORIZED)
+                .entity(ErrorResponse.of(failure.message(), authFailureCode(failure.message()), 401))
+                .build());
+    }
 
-                Response.ResponseBuilder rb = Response.ok(
-                    AuthResponse.success(payload.role(), payload.familyId()));
-                cookies.forEach(c -> rb.header("Set-Cookie", c));
-                yield rb.build();
-            }
-            case OperationResult.Failure<AuthPayload> f ->
-                Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(ErrorResponse.of(f.message(), authFailureCode(f.message()), 401))
-                    .build();
-        };
+    private Response adminSuccessResponse(AuthPayload payload) {
+        if (payload.selectionRequired() && payload.familyChoices() != null) {
+            List<AuthResponse.FamilyChoice> choices = payload.familyChoices().stream()
+                .map(fc -> new AuthResponse.FamilyChoice(
+                    fc.familyId(), fc.familyName(), fc.permission(), fc.blocked()))
+                .toList();
+            return Response.ok(AuthResponse.selectionRequired(choices)).build();
+        }
+        var cookies = cookieBuilder.buildAuthCookies(
+            payload.email(), payload.role(), payload.familyId(),
+            payload.childId(), payload.isSuperAdmin(), payload.permission());
+
+        Response.ResponseBuilder response = Response.ok(
+            AuthResponse.success(payload.role(), payload.familyId()));
+        cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
+        return response.build();
     }
 
     @POST
@@ -128,24 +127,21 @@ public class AuthResource {
         @RequestBody(required = true, description = "Child login payload") @Valid LoginChildRequest request) {
         OperationResult<AuthPayload> result = authService.authenticateChild(request.token());
 
-        return switch (result) {
-            case OperationResult.Success<AuthPayload> s -> {
-                AuthPayload payload = s.value();
-                var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), payload.isSuperAdmin(), payload.permission());
+        return OperationResultResponses.toResponse(result, this::childSuccessResponse,
+            failure -> Response.status(Response.Status.UNAUTHORIZED)
+                .entity(ErrorResponse.of(failure.message(), "AUTHENTICATION_FAILED", 401))
+                .build());
+    }
 
-                Response.ResponseBuilder rb = Response.ok(
-                    AuthResponse.childSuccess(
-                        payload.familyId(), payload.childId(), payload.childName()));
-                cookies.forEach(c -> rb.header("Set-Cookie", c));
-                yield rb.build();
-            }
-            case OperationResult.Failure<AuthPayload> f ->
-                Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(ErrorResponse.of(f.message(), "AUTHENTICATION_FAILED", 401))
-                    .build();
-        };
+    private Response childSuccessResponse(AuthPayload payload) {
+        var cookies = cookieBuilder.buildAuthCookies(
+            payload.email(), payload.role(), payload.familyId(),
+            payload.childId(), payload.isSuperAdmin(), payload.permission());
+
+        Response.ResponseBuilder response = Response.ok(
+            AuthResponse.childSuccess(payload.familyId(), payload.childId(), payload.childName()));
+        cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
+        return response.build();
     }
 
     @POST
@@ -174,24 +170,21 @@ public class AuthResource {
         OperationResult<AuthPayload> result = authService.registerFamily(
             request.email(), request.password());
 
-        return switch (result) {
-            case OperationResult.Success<AuthPayload> s -> {
-                AuthPayload payload = s.value();
-                var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    null, payload.isSuperAdmin(), payload.permission());
+        return OperationResultResponses.toResponse(result, this::registrationSuccessResponse,
+            failure -> Response.status(Response.Status.CONFLICT)
+                .entity(ErrorResponse.of(failure.message(), "REGISTRATION_CONFLICT", 409))
+                .build());
+    }
 
-                Response.ResponseBuilder rb = Response
-                    .status(Response.Status.CREATED)
-                    .entity(AuthResponse.success(payload.role(), payload.familyId()));
-                cookies.forEach(c -> rb.header("Set-Cookie", c));
-                yield rb.build();
-            }
-            case OperationResult.Failure<AuthPayload> f ->
-                Response.status(Response.Status.CONFLICT)
-                    .entity(ErrorResponse.of(f.message(), "REGISTRATION_CONFLICT", 409))
-                    .build();
-        };
+    private Response registrationSuccessResponse(AuthPayload payload) {
+        var cookies = cookieBuilder.buildAuthCookies(
+            payload.email(), payload.role(), payload.familyId(),
+            null, payload.isSuperAdmin(), payload.permission());
+
+        Response.ResponseBuilder response = Response.status(Response.Status.CREATED)
+            .entity(AuthResponse.success(payload.role(), payload.familyId()));
+        cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
+        return response.build();
     }
 
     @GET
@@ -263,22 +256,20 @@ public class AuthResource {
         OperationResult<AuthPayload> result = authService.selectFamily(
             request.email(), request.familyId());
 
-        return switch (result) {
-            case OperationResult.Success<AuthPayload> s -> {
-                AuthPayload payload = s.value();
-                var cookies = cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(),
-                    payload.childId(), payload.isSuperAdmin(), payload.permission());
+        return OperationResultResponses.toResponse(result, this::familySelectionSuccessResponse,
+            failure -> Response.status(Response.Status.BAD_REQUEST)
+                .entity(ErrorResponse.of(failure.message(), "FAMILY_SELECTION_FAILED", 400))
+                .build());
+    }
 
-                Response.ResponseBuilder rb = Response.ok(
-                    AuthResponse.success(payload.role(), payload.familyId()));
-                cookies.forEach(c -> rb.header("Set-Cookie", c));
-                yield rb.build();
-            }
-            case OperationResult.Failure<AuthPayload> f ->
-                Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(f.message(), "FAMILY_SELECTION_FAILED", 400))
-                    .build();
-        };
+    private Response familySelectionSuccessResponse(AuthPayload payload) {
+        var cookies = cookieBuilder.buildAuthCookies(
+            payload.email(), payload.role(), payload.familyId(),
+            payload.childId(), payload.isSuperAdmin(), payload.permission());
+
+        Response.ResponseBuilder response = Response.ok(
+            AuthResponse.success(payload.role(), payload.familyId()));
+        cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
+        return response.build();
     }
 }

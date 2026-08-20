@@ -247,7 +247,7 @@ git commit -m "refactor(backend): extract ResourceAuthSupport with role guards a
 
 ## P0-3: Extract `ServiceResults` failure factory
 
-**Status:** ✅ Completed  
+**Status:** ✅ Completed
 **Priority:** P0  
 **Depends on:** -
 
@@ -1154,7 +1154,8 @@ git commit -m "test(backend): enforce refactor coverage target"
 
 ## P2-5: Complete `OperationResult` response-mapping migration
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
+
 **Priority:** P2
 **Depends on:** P0-1
 

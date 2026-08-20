@@ -19,6 +19,20 @@ public final class OperationResultResponses {
         int resolve(OperationResult.Failure<?> failure);
     }
 
+    @FunctionalInterface
+    public interface FailureResponseResolver {
+        Response resolve(OperationResult.Failure<?> failure);
+    }
+
+    public static <T> Response toResponse(OperationResult<T> result,
+                                          Function<T, Response> successMapper,
+                                          FailureResponseResolver failureMapper) {
+        return switch (result) {
+            case OperationResult.Success<T> s -> successMapper.apply(s.value());
+            case OperationResult.Failure<T> f -> failureMapper.resolve(f);
+        };
+    }
+
     public static <T> Response toOk(OperationResult<T> result) {
         return toOk(result, (FailureStatusResolver) failure -> Response.Status.BAD_REQUEST.getStatusCode());
     }
