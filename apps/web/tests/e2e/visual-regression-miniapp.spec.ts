@@ -148,17 +148,39 @@ test('request and task lists keep one surface and usable geometry at narrow widt
         const parentList = page.locator('section[aria-labelledby="parent-home-title"] .items');
         await expect(parentList).toBeVisible();
         await expect(parentList.locator('.request-card')).toHaveCount(2);
+        await page.keyboard.press('Tab');
         expect(await parentList.evaluate((node) => {
             const rows = [...node.children];
-            return getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)'
-                && rows.every((row) => getComputedStyle(row).borderTopWidth === '0px'
-                    && getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)')
+            const surface = getComputedStyle(node);
+            return surface.backgroundColor === 'rgb(255, 255, 255)'
+                && [surface.borderTopWidth, surface.borderRightWidth, surface.borderBottomWidth, surface.borderLeftWidth].every((width) => width === '1px')
+                && [surface.borderTopLeftRadius, surface.borderTopRightRadius, surface.borderBottomRightRadius, surface.borderBottomLeftRadius].every((radius) => Number.parseFloat(radius) > 0)
+                && rows.every((row) => {
+                    const style = getComputedStyle(row);
+                    return style.borderTopWidth === '0px'
+                        && style.borderLeftWidth === '0px'
+                        && style.borderRightWidth === '0px'
+                        && [style.borderTopLeftRadius, style.borderTopRightRadius, style.borderBottomRightRadius, style.borderBottomLeftRadius].every((radius) => radius === '0px')
+                        && style.backgroundColor === 'rgba(0, 0, 0, 0)';
+                })
                 && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px');
         })).toBeTruthy();
         for (const row of await parentList.locator('.request-card').all()) {
-            const mainBottom = await row.locator('.card-main').evaluate((node) => node.getBoundingClientRect().bottom);
-            const actionsTop = await row.locator('.attention-actions').evaluate((node) => node.getBoundingClientRect().top);
-            expect(actionsTop).toBeGreaterThanOrEqual(mainBottom);
+            const geometry = await row.evaluate((node) => {
+                const rowRect = node.getBoundingClientRect();
+                const mainRect = node.querySelector('.card-main')!.getBoundingClientRect();
+                const actionsRect = node.querySelector('.attention-actions')!.getBoundingClientRect();
+                return { rowRect, mainRect, actionsRect };
+            });
+            expect(geometry.actionsRect.top).toBeGreaterThanOrEqual(geometry.mainRect.bottom);
+            expect(Math.abs(geometry.mainRect.left - geometry.rowRect.left)).toBeLessThan(1);
+            expect(Math.abs(geometry.mainRect.right - geometry.rowRect.right)).toBeLessThan(1);
+            for (const action of await row.locator('.attention-actions button').all()) {
+                await action.focus();
+                await expect(action).toBeFocused();
+                await expect(action).toHaveCSS('outline-width', '3px');
+                await expect(action).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
+            }
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 
@@ -169,15 +191,31 @@ test('request and task lists keep one surface and usable geometry at narrow widt
         await expect(taskList.locator('.row')).toHaveCount(4);
         expect(await taskList.evaluate((node) => {
             const rows = [...node.children];
-            return rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)'
-                && getComputedStyle(row).borderTopWidth === '0px')
+            const surface = getComputedStyle(node);
+            return [surface.borderTopWidth, surface.borderRightWidth, surface.borderBottomWidth, surface.borderLeftWidth].every((width) => width === '1px')
+                && [surface.borderTopLeftRadius, surface.borderTopRightRadius, surface.borderBottomRightRadius, surface.borderBottomLeftRadius].every((radius) => Number.parseFloat(radius) > 0)
+                && rows.every((row) => {
+                    const style = getComputedStyle(row);
+                    return style.backgroundColor === 'rgba(0, 0, 0, 0)'
+                        && style.borderTopWidth === '0px'
+                        && style.borderLeftWidth === '0px'
+                        && style.borderRightWidth === '0px'
+                        && [style.borderTopLeftRadius, style.borderTopRightRadius, style.borderBottomRightRadius, style.borderBottomLeftRadius].every((radius) => radius === '0px');
+                })
                 && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px');
         })).toBeTruthy();
         await expect(taskList.getByText('A very long child task title that must remain reachable')).toBeVisible();
+        await page.keyboard.press('Tab');
         expect(await taskList.locator('.check').last().evaluate((node) => {
             const rect = node.getBoundingClientRect();
             return rect.width >= 44 && rect.height >= 44;
         })).toBeTruthy();
+        await taskList.locator('.row-main').first().focus();
+        await expect(taskList.locator('.row-main').first()).toHaveCSS('outline-width', '3px');
+        await expect(taskList.locator('.row-main').first()).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
+        await taskList.locator('.check').last().focus();
+        await expect(taskList.locator('.check').last()).toHaveCSS('outline-width', '3px');
+        await expect(taskList.locator('.check').last()).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
 
         await page.getByRole('tab', { name: /Activity|Активность/ }).click();
         await page.getByRole('tab', { name: /Requests|Заявки/ }).click();
@@ -189,9 +227,18 @@ test('request and task lists keep one surface and usable geometry at narrow widt
         await expect(requestList.locator('.request-row').nth(1).getByLabel(/Reward request|Заявка на награду/)).toBeVisible();
         expect(await requestList.evaluate((node) => {
             const rows = [...node.children];
-            return getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)'
-                && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)'
-                    && getComputedStyle(row).borderTopWidth === '0px')
+            const surface = getComputedStyle(node);
+            return surface.backgroundColor === 'rgb(255, 255, 255)'
+                && [surface.borderTopWidth, surface.borderRightWidth, surface.borderBottomWidth, surface.borderLeftWidth].every((width) => width === '1px')
+                && [surface.borderTopLeftRadius, surface.borderTopRightRadius, surface.borderBottomRightRadius, surface.borderBottomLeftRadius].every((radius) => Number.parseFloat(radius) > 0)
+                && rows.every((row) => {
+                    const style = getComputedStyle(row);
+                    return style.backgroundColor === 'rgba(0, 0, 0, 0)'
+                        && style.borderTopWidth === '0px'
+                        && style.borderLeftWidth === '0px'
+                        && style.borderRightWidth === '0px'
+                        && [style.borderTopLeftRadius, style.borderTopRightRadius, style.borderBottomRightRadius, style.borderBottomLeftRadius].every((radius) => radius === '0px');
+                })
                 && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px');
         })).toBeTruthy();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();

@@ -138,10 +138,10 @@ The Mini App visual-regression suite fails if a parent request, child request, o
 
 ### Acceptance criteria
 
-- [ ] The suite fails if any tested row receives a left/right border, an independent radius, a non-transparent card background, or an extra border beyond its divider.
-- [ ] The suite fails if parent actions share the primary-content row or reduce its available width by becoming a side control.
-- [ ] The suite fails if parent decision or child task-request keyboard focus becomes visually indiscernible.
-- [ ] Checks remain deterministic and do not introduce screenshot snapshots or a second test harness.
+- [x] The suite fails if any tested row receives a left/right border, an independent radius, a non-transparent card background, or an extra border beyond its divider. ✅
+- [x] The suite fails if parent actions share the primary-content row or reduce its available width by becoming a side control. ✅
+- [x] The suite fails if parent decision or child task-request keyboard focus becomes visually indiscernible. ✅
+- [x] Checks remain deterministic and do not introduce screenshot snapshots or a second test harness. ✅
 
 ### Verification
 
