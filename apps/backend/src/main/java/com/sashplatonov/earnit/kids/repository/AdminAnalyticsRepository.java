@@ -758,14 +758,14 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
         return count;
     }
 
-    public List<AdminActivationFunnelResponse.FunnelStage> getActivationFunnel() {
-        int registered = countTotalFamilies();
-        int addedChild = countFamiliesWithChild();
-        int hasTask = countFamiliesWithTask();
-        int childCompletedTask = countFamiliesWithTaskCompletion();
-        int earnedCoins = countFamiliesWithCoinEarn();
-        int hasReward = countFamiliesWithRewardConfigured();
-        int receivedReward = countFamiliesWithRewardReceived();
+    public List<AdminActivationFunnelResponse.FunnelStage> getActivationFunnel(Instant periodStart) {
+        int registered = countTotalFamilies(periodStart);
+        int addedChild = countFamiliesWithChild(periodStart);
+        int hasTask = countFamiliesWithTask(periodStart);
+        int childCompletedTask = countFamiliesWithTaskCompletion(periodStart);
+        int earnedCoins = countFamiliesWithCoinEarn(periodStart);
+        int hasReward = countFamiliesWithRewardConfigured(periodStart);
+        int receivedReward = countFamiliesWithRewardReceived(periodStart);
 
         List<AdminActivationFunnelResponse.FunnelStage> stages = new ArrayList<>();
         
@@ -802,72 +802,88 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .build();
     }
 
-    private int countFamiliesWithChild() {
-        String sql = """
-            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
-            JOIN ChildEntity c ON c.familyDbId = f.id
-            """;
-        Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
+    private int countTotalFamilies(Instant periodStart) {
+        String sql = "SELECT COUNT(f) FROM FamilyEntity f WHERE f.createdAt >= :periodStart";
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart)
+            .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countFamiliesWithTask() {
+    private int countFamiliesWithChild(Instant periodStart) {
+        String sql = """
+            SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
+            JOIN ChildEntity c ON c.familyDbId = f.id
+            WHERE f.createdAt >= :periodStart
+            """;
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart).getSingleResult();
+        return result != null ? Math.toIntExact(result) : 0;
+    }
+
+    private int countFamiliesWithTask(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
             JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN TaskEntity t ON t.childId = c.id
+            WHERE f.createdAt >= :periodStart
             """;
-        Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart).getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countFamiliesWithTaskCompletion() {
+    private int countFamiliesWithTaskCompletion(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
             JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN HistoryEntryEntity h ON h.relatedId = c.id
-            WHERE h.type = :type
+            WHERE f.createdAt >= :periodStart AND h.type = :type
             """;
         Long result = entityManager.createQuery(sql, Long.class)
-            .setParameter("type", HistoryEntryType.TASK_COMPLETED)
+            .setParameter("type", HistoryEntryType.TASK_COMPLETED).setParameter("periodStart", periodStart)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countFamiliesWithCoinEarn() {
+    private int countFamiliesWithCoinEarn(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
             JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN HistoryEntryEntity h ON h.relatedId = c.id
-            WHERE h.type = :type
+            WHERE f.createdAt >= :periodStart AND h.type = :type
             """;
         Long result = entityManager.createQuery(sql, Long.class)
-            .setParameter("type", HistoryEntryType.earn)
+            .setParameter("type", HistoryEntryType.earn).setParameter("periodStart", periodStart)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countFamiliesWithRewardConfigured() {
+    private int countFamiliesWithRewardConfigured(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
             JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN ShopItemEntity s ON s.childId = c.id
+            WHERE f.createdAt >= :periodStart
             """;
-        Long result = entityManager.createQuery(sql, Long.class).getSingleResult();
+        Long result = entityManager.createQuery(sql, Long.class)
+            .setParameter("periodStart", periodStart).getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countFamiliesWithRewardReceived() {
+    private int countFamiliesWithRewardReceived(Instant periodStart) {
         String sql = """
             SELECT COUNT(DISTINCT f.id) FROM FamilyEntity f
             JOIN ChildEntity c ON c.familyDbId = f.id
             JOIN PurchaseRequestEntity pr ON pr.childId = c.id
-            WHERE pr.status = :approved AND pr.requestType IN (:shop, :shopPurchase)
+            WHERE f.createdAt >= :periodStart
+            AND pr.status = :approved AND pr.requestType IN (:shop, :shopPurchase)
             """;
         Long result = entityManager.createQuery(sql, Long.class)
             .setParameter("approved", PurchaseRequestStatus.approved)
             .setParameter("shop", PurchaseRequestType.shop)
             .setParameter("shopPurchase", PurchaseRequestType.shop_purchase)
+            .setParameter("periodStart", periodStart)
             .getSingleResult();
         return result != null ? Math.toIntExact(result) : 0;
     }

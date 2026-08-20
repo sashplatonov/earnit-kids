@@ -114,7 +114,7 @@ class AdminAnalyticsServicesTest {
         AdminChildBehaviorResponse.ChildBehaviorMetrics childMetrics =
             AdminChildBehaviorResponse.ChildBehaviorMetrics.builder().childrenEarningNotSpending(5).build();
         when(repository.getChildBehaviorMetrics(any())).thenReturn(childMetrics);
-        when(repository.getActivationFunnel()).thenReturn(List.of());
+        when(repository.getActivationFunnel(any())).thenReturn(List.of());
         AdminChildBehaviorService children = new AdminChildBehaviorService();
         children.repository = repository;
         AdminActivationFunnelService activation = new AdminActivationFunnelService();
@@ -122,7 +122,7 @@ class AdminAnalyticsServicesTest {
 
         assertThat(children.getChildBehavior(AdminAnalyticsPeriod.parse("7d")).getChildBehaviorMetrics())
             .isSameAs(childMetrics);
-        assertThat(activation.getActivationFunnel().getStages()).isEmpty();
+        assertThat(activation.getActivationFunnel(AdminAnalyticsPeriod.parse("7d")).getStages()).isEmpty();
     }
 
     @Test

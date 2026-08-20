@@ -86,7 +86,7 @@ public class AdminDashboardService {
             unavailableSections.add("childBehavior");
         }
         try {
-            activation = activationFunnelService.getActivationFunnel();
+            activation = activationFunnelService.getActivationFunnel(period);
         } catch (RuntimeException exception) {
             unavailableSections.add("activation");
         }

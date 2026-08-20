@@ -44,7 +44,7 @@ class AdminDashboardServiceTest {
         when(taskService.getTaskEconomy(period)).thenReturn(tasks);
         when(parentService.getParentBehavior(period)).thenReturn(parents);
         when(childService.getChildBehavior(period)).thenReturn(children);
-        when(activationService.getActivationFunnel()).thenReturn(activation);
+        when(activationService.getActivationFunnel(period)).thenReturn(activation);
         when(retentionService.getRetention(period)).thenReturn(retention);
         when(rewardsService.getRewardsAnalytics(period)).thenReturn(rewards);
 

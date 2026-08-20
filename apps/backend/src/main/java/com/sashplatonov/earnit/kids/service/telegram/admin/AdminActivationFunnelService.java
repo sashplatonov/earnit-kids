@@ -12,8 +12,12 @@ public class AdminActivationFunnelService {
     AdminAnalyticsRepository repository;
 
     public AdminActivationFunnelResponse getActivationFunnel() {
+        return getActivationFunnel(AdminAnalyticsPeriod.parse("all"));
+    }
+
+    public AdminActivationFunnelResponse getActivationFunnel(AdminAnalyticsPeriod period) {
         return AdminActivationFunnelResponse.builder()
-            .stages(repository.getActivationFunnel())
+            .stages(repository.getActivationFunnel(period.start()))
             .build();
     }
 }

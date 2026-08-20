@@ -129,14 +129,45 @@ class AdminAnalyticsRepositoryTest {
 
         assertThatCode(() -> adminAnalyticsRepository.getParentBehaviorMetrics(Instant.EPOCH))
             .doesNotThrowAnyException();
-        assertThatCode(() -> adminAnalyticsRepository.getActivationFunnel())
+        assertThatCode(() -> adminAnalyticsRepository.getActivationFunnel(Instant.EPOCH))
             .doesNotThrowAnyException();
+    }
+
+    @Test
+    @Transactional
+    void activationFunnelUsesRegisteredFamilyCohort() {
+        int baselineRegistered = adminAnalyticsRepository.getActivationFunnel(Instant.EPOCH).get(0).getCount();
+        int baselineWithChild = adminAnalyticsRepository.getActivationFunnel(Instant.EPOCH).get(1).getCount();
+        FamilyEntity historicalFamily = seedFamily();
+        seedChild(historicalFamily.getId());
+        FamilyEntity recentFamily = seedFamily();
+        seedChild(recentFamily.getId());
+
+        Instant periodStart = Instant.now().plusSeconds(60);
+        setCreatedAt(historicalFamily, periodStart.minusSeconds(60));
+        setCreatedAt(recentFamily, periodStart.plusSeconds(60));
+
+        var allStages = adminAnalyticsRepository.getActivationFunnel(Instant.EPOCH);
+        var periodStages = adminAnalyticsRepository.getActivationFunnel(periodStart);
+
+        assertThat(allStages.get(0).getCount()).isEqualTo(baselineRegistered + 2);
+        assertThat(allStages.get(1).getCount()).isEqualTo(baselineWithChild + 2);
+        assertThat(periodStages.get(0).getCount()).isEqualTo(1);
+        assertThat(periodStages.get(1).getCount()).isEqualTo(1);
     }
 
     private ChildEntity seedChild(int familyDbId) {
         Optional<ChildEntity> child = childRepository.createChild(familyDbId, "Kid " + System.nanoTime());
         assertThat(child).isPresent();
         return child.get();
+    }
+
+    private void setCreatedAt(FamilyEntity family, Instant createdAt) {
+        entityManager.createQuery("UPDATE FamilyEntity f SET f.createdAt = :createdAt WHERE f.id = :id")
+            .setParameter("createdAt", createdAt)
+            .setParameter("id", family.getId())
+            .executeUpdate();
+        entityManager.clear();
     }
 
     @Test

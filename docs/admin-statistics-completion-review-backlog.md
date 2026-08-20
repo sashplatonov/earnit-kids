@@ -56,7 +56,7 @@ Confirmed findings:
 
 ## P1-1: Scope the activation funnel to the selected Statistics period
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P1  
 **Depends on:** -
 
