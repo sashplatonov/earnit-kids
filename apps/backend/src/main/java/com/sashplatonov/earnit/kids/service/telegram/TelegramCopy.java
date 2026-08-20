@@ -34,11 +34,11 @@ public final class TelegramCopy {
     public static final String NAV_OPEN_SITE = TelegramBotEmoji.SITE + " Сайт";
 
     public static String coinAdd(int amount) {
-        return TelegramBotEmoji.ADD + " +" + amount;
+        return TelegramBotEmoji.COINS + " +" + amount;
     }
 
     public static String coinRemove(int amount) {
-        return TelegramBotEmoji.REMOVE + " -" + amount;
+        return TelegramBotEmoji.COINS + " -" + amount;
     }
 
     public static String doneTask(String taskName) {

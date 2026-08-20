@@ -248,8 +248,8 @@ class TelegramMenuBuilderTest {
             menuBuilder().parentCoins(view, "https://example.test/telegram");
         assertThat(coins)
             .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("➕ +1", "➕ +2", "➕ +5", "➕ +10",
-                "➖ -1", "➖ -2", "➖ -5", "➖ -10", "🔢 Другая сумма", "🏠 Главное меню");
+            .containsExactly("🟡 +1", "🟡 +2", "🟡 +5", "🟡 +10",
+                "🟡 -1", "🟡 -2", "🟡 -5", "🟡 -10", "🔢 Другая сумма", "🏠 Главное меню");
         assertThat(coins)
             .filteredOn(button -> button.text().equals("🔢 Другая сумма"))
             .extracting(TelegramBotApiClient.InlineButton::url)
