@@ -119,9 +119,7 @@ public class PurchaseRequestRepository implements PanacheRepositoryBase<Purchase
     public List<PurchaseRequestEntity> getRequests(int familyDbId, int limit, int offset) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getRequests",
-            () -> find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
-                .range(offset, offset + limit - 1)
-                .list(),
+            () -> PanachePagination.page(find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId), limit, offset),
             "familyDbId",
             String.valueOf(familyDbId),
             "limit",

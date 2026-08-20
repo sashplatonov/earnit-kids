@@ -611,7 +611,7 @@ git commit -m "refactor(backend): extract PageRequest pagination helper and fix 
 
 ## P1-5: Extract `PanachePagination` repository helper
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P1  
 **Depends on:** P1-4
 

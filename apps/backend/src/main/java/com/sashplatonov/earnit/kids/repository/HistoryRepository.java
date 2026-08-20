@@ -53,9 +53,7 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
     public List<HistoryEntryEntity> getHistory(int childId, int limit, int offset) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getHistory",
-            () -> find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId)
-                .range(offset, offset + limit - 1)
-                .list(),
+            () -> PanachePagination.page(find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId), limit, offset),
             "childId",
             String.valueOf(childId),
             "limit",
@@ -81,9 +79,7 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
     public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getHistoryForFamily",
-            () -> find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId)
-                .range(offset, offset + limit - 1)
-                .list(),
+            () -> PanachePagination.page(find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId), limit, offset),
             "familyDbId",
             String.valueOf(familyDbId),
             "limit",
