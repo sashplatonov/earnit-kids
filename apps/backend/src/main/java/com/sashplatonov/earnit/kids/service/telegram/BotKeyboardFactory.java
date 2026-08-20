@@ -2,8 +2,6 @@ package com.sashplatonov.earnit.kids.service.telegram;
 
 public class BotKeyboardFactory {
 
-    // EXPLAIN: Called by the backend to resolve the public-site URL for the
-    // EXPLAIN: NAV_OPEN_SITE button. If null the site button is excluded.
     private final String publicSiteUrl;
 
     public BotKeyboardFactory(String publicSiteUrl) {

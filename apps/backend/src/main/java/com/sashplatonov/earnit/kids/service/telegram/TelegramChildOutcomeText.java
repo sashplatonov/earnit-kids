@@ -12,9 +12,6 @@ import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-// EXPLAIN: Renders the child-facing outcome notification text for approved,
-// EXPLAIN: rejected, or parent-granted tasks/rewards. Kept out of the composer
-// EXPLAIN: so the composer stays within the PMD GodClass guardrail (SRP).
 @ApplicationScoped
 public class TelegramChildOutcomeText {
     private final Supplier<PurchaseRequestRepository> requests;
@@ -28,9 +25,6 @@ public class TelegramChildOutcomeText {
     }
 
     public String text(ApplicationOutboxEventEntity event) {
-        // EXPLAIN: A direct parent action (task completed / reward granted) has
-        // EXPLAIN: no child request, so requestId is null. Render the dedicated
-        // EXPLAIN: Russian copy instead of the English generic fallback.
         if (event.getRequestId() == null) {
             return parentActionText(event);
         }

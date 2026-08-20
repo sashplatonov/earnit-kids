@@ -7,13 +7,11 @@ import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.function.Function;
 
-// EXPLAIN: Maps OperationResult to JAX-RS Response with null-safe error codes so every resource maps failures identically.
 public final class OperationResultResponses {
 
     private OperationResultResponses() {
     }
 
-    // EXPLAIN: Resolves the HTTP status to use for a failure result.
     @FunctionalInterface
     public interface FailureStatusResolver {
         int resolve(OperationResult.Failure<?> failure);

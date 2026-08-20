@@ -24,10 +24,6 @@ final class TelegramApiException extends IllegalStateException {
         return description;
     }
 
-    // EXPLAIN: A 400 with one of these descriptions means the target message is
-    // EXPLAIN: already absent or unchanged, which satisfies the edit invariant,
-    // EXPLAIN: so the caller treats it as a terminal no-op success rather than
-    // EXPLAIN: a retryable failure.
     boolean isNoOp() {
         if (statusCode != 400) {
             return false;

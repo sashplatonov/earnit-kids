@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// EXPLAIN: Role-aware notification preferences. Parent and child keys are
-// EXPLAIN: distinct so screens never render meaningless universal lists.
 @ApplicationScoped
 public class FamilyNotificationServiceImpl implements FamilyNotificationService {
     private static final String SCOPE_PARENT = "parent";

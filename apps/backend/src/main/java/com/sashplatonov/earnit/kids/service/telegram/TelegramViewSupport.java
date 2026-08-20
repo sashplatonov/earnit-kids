@@ -11,8 +11,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// EXPLAIN: Shared view helpers (pending queues, task ordering, human-readable
-// EXPLAIN: titles) keep the flow and builder classes small and within SRP guardrails.
 final class TelegramViewSupport {
     private TelegramViewSupport() {
     }

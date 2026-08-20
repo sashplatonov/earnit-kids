@@ -96,8 +96,6 @@ final class FamilyActionSupportService {
         return historyRepository.sumRewardSpendSince(childId, since);
     }
 
-    // EXPLAIN: Resolve the start of the family's local day so daily reward limits
-    // EXPLAIN: reset at midnight in the family timezone, not UTC.
     Instant startOfFamilyDay(int familyDbId, Instant now) {
         ZoneId zoneId;
         try {

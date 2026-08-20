@@ -20,10 +20,6 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentMain(TelegramQuickActionResponse view,
                                                                String miniAppUrl) {
-        // EXPLAIN: Decision menu: two-column grid, Mini App is always the last row.
-        // EXPLAIN: The public site share button is deliberately kept off this
-        // EXPLAIN: first-level screen so it does not draw focus; it lives on the
-        // EXPLAIN: child picker instead.
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         buttons.add(parentNavigation(TelegramCopy.REQUESTS, "requests", view, "home-row-1"));
         buttons.add(parentNavigation(TelegramCopy.COINS, "coins", view, "home-row-1"));
@@ -35,9 +31,6 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentChildPicker(TelegramQuickActionResponse view,
                                                                        String publicSiteUrl) {
-        // EXPLAIN: Child picker is a deeper, secondary screen; the public site
-        // EXPLAIN: share button is appended here only when a non-blank public
-        // EXPLAIN: origin is configured (no broken button otherwise).
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
         view.children().stream().limit(10).forEach(child ->
             buttons.add(navigation(TelegramCopy.chooseChild(child.name(), child.balance()), "child-" + child.id())));
@@ -57,8 +50,6 @@ public class TelegramMenuBuilder {
 
     public List<TelegramBotApiClient.InlineButton> parentCoins(TelegramQuickActionResponse view,
                                                                  String miniAppUrl) {
-        // EXPLAIN: Fixed +1/+2/+5/+10 and -1/-2 apply immediately; -5/-10 ask
-        // EXPLAIN: for confirmation; a custom amount deep-links into the Mini App.
         return List.of(
             navigation(TelegramCopy.coinAdd(1), "coins-apply-add-1-child-" + view.childId(), "coins-row-1"),
             navigation(TelegramCopy.coinAdd(2), "coins-apply-add-2-child-" + view.childId(), "coins-row-1"),
@@ -83,7 +74,6 @@ public class TelegramMenuBuilder {
             parentNavigation(TelegramCopy.HOME, "main", view, "confirm-row-2"));
     }
 
-    // EXPLAIN: Generic error keyboard: retry re-triggers the same safe action.
     public List<TelegramBotApiClient.InlineButton> parentRequestRetry(TelegramQuickActionResponse view,
                                                                        String retryData) {
         return List.of(
@@ -106,8 +96,6 @@ public class TelegramMenuBuilder {
             parentNavigation(TelegramCopy.HOME, "main", view, "retry-row-2"));
     }
 
-    // EXPLAIN: Child Home is a short action companion: tasks, rewards, recent
-    // EXPLAIN: and the Mini App. No parent-only controls are reachable here.
     public List<TelegramBotApiClient.InlineButton> childMain(TelegramQuickActionResponse view,
                                                               String miniAppUrl) {
         return List.of(
@@ -118,8 +106,6 @@ public class TelegramMenuBuilder {
         );
     }
 
-    // EXPLAIN: Action-first: Done buttons only for available (non-pending)
-    // EXPLAIN: tasks, capped at five; more opens the Child Mini App Today.
     public List<TelegramBotApiClient.InlineButton> childTasks(TelegramQuickActionResponse view,
                                                                String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
@@ -134,8 +120,6 @@ public class TelegramMenuBuilder {
         return List.copyOf(buttons);
     }
 
-    // EXPLAIN: Only requestable rewards get a claim button; the nearest goal is
-    // EXPLAIN: motivation in the message body, never an active button.
     public List<TelegramBotApiClient.InlineButton> childRewards(TelegramQuickActionResponse view,
                                                                   String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
@@ -157,7 +141,6 @@ public class TelegramMenuBuilder {
         return affordable > 3 || view.rewards().size() > 4;
     }
 
-    // EXPLAIN: Navigation is shallow; the only return control is Главное меню.
     public List<TelegramBotApiClient.InlineButton> backToMain() {
         return List.of(navigation(TelegramCopy.HOME, "main"));
     }
@@ -167,7 +150,6 @@ public class TelegramMenuBuilder {
             ? List.of(parentNavigation(TelegramCopy.HOME, "main", view)) : backToMain();
     }
 
-    // EXPLAIN: One pending request at a time; auto-advances or ends after decision.
     public List<TelegramBotApiClient.InlineButton> parentRequestQueue(TelegramQuickActionResponse view,
                                                                         String currentRequestId) {
         List<RequestDto> pending = TelegramViewSupport.pendingRequests(view);
@@ -195,8 +177,6 @@ public class TelegramMenuBuilder {
             webApp(TelegramCopy.OPEN_APP, miniAppUrl));
     }
 
-    // EXPLAIN: Recent stays a preview; the rows live in the message body and the
-    // EXPLAIN: full history opens as a Mini App deep link instead of paginating.
     public List<TelegramBotApiClient.InlineButton> recent(TelegramQuickActionResponse view,
                                                             String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();

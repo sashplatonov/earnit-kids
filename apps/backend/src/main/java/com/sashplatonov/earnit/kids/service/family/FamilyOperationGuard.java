@@ -8,7 +8,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-// EXPLAIN: Resolves a family's numeric DB id from its string familyId, returning a FAMILY_NOT_FOUND failure when absent so call sites collapse the guard to one line.
 @ApplicationScoped
 public class FamilyOperationGuard {
 

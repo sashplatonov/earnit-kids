@@ -1,6 +1,5 @@
 package com.sashplatonov.earnit.kids.service.common;
 
-// EXPLAIN: Static pagination math helpers backing PageRequest, kept separate so repository and resource layers can reuse the clamping/offset logic without a record.
 public final class Pagination {
 
     private Pagination() {

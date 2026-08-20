@@ -48,8 +48,6 @@ public class TelegramBotApiClient {
         call("answerCallbackQuery", Map.of("callback_query_id", callbackQueryId));
     }
 
-    // EXPLAIN: UX-01 — send a message with a persistent reply keyboard instead of
-    // EXPLAIN: inline keyboard. Used for /start and home-screen messages.
     public Long sendMessageWithReplyKeyboard(long chatId, String text, TelegramReplyKeyboard replyKeyboard)
         throws Exception {
         com.fasterxml.jackson.databind.JsonNode result = call("sendMessage",
@@ -58,11 +56,6 @@ public class TelegramBotApiClient {
             ? result.path("result").path("message_id").longValue() : null;
     }
 
-    // EXPLAIN: UX-01 — force Telegram to drop any cached reply keyboard on the
-    // EXPLAIN: client. ReplyKeyboardRemove clears the stale keyboard so the next
-    // EXPLAIN: /start renders the fresh definition. Sent once per version bump.
-    // EXPLAIN: Telegram rejects empty/zero-width text, so a real placeholder is
-    // EXPLAIN: used; the message is immediately superseded by the fresh keyboard.
     public void removeReplyKeyboard(long chatId) throws Exception {
         call("sendMessage", Map.of(
             "chat_id", chatId,
@@ -138,9 +131,6 @@ public class TelegramBotApiClient {
         );
     }
 
-    // EXPLAIN: A web_app button opens the Mini App client-side; a plain button
-    // EXPLAIN: only sends its label as a message (used for nav actions).
-    // EXPLAIN: Telegram KeyboardButton has no `url` field — only web_app.
     private Map<String, Object> replyKeyboardButtonPayload(TelegramReplyKeyboard.Button button) {
         if (button.webAppUrl() != null) {
             return Map.of("text", button.label(), "web_app", Map.of("url", button.webAppUrl()));
@@ -148,8 +138,6 @@ public class TelegramBotApiClient {
         return Map.of("text", button.label());
     }
 
-    // EXPLAIN: Adjacent buttons sharing a non-null rowId render on one Telegram
-    // EXPLAIN: keyboard row (2-column grids); null rowId renders a full-width row.
     private List<List<Map<String, Object>>> keyboardRows(List<InlineButton> buttons) {
         List<List<Map<String, Object>>> rows = new java.util.ArrayList<>();
         List<InlineButton> current = new java.util.ArrayList<>();

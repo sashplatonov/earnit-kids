@@ -119,8 +119,6 @@ class FamilyChildManagementService {
         if (existing.isEmpty()) {
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
-        // EXPLAIN: A missing daily_reward_limit means "keep the current value",
-        // EXPLAIN: so older clients that do not send it cannot reset the limit.
         int resolvedRewardLimit = dailyRewardLimit != null ? dailyRewardLimit : existing.get().getDailyRewardLimit();
         childRepository.updateSettings(childId, name, dailyCoinLimit, monthlyLimit, resolvedRewardLimit);
         invalidateAnalyticsCache(familyId);

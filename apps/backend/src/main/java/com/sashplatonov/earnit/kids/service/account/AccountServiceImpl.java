@@ -16,8 +16,6 @@ import jakarta.transaction.Transactional;
 import java.util.Locale;
 import java.util.Optional;
 
-// EXPLAIN: Parent "My Account" operations. Email actions live only inside the
-// EXPLAIN: nested Email settings; unlinking requires a working Telegram login.
 @ApplicationScoped
 public class AccountServiceImpl implements AccountService {
     @Inject private FamilyRepository families;

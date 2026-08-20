@@ -2,12 +2,6 @@ package com.sashplatonov.earnit.kids.service.telegram;
 
 import com.sashplatonov.earnit.kids.domain.model.RequestResolutionStatus;
 
-// EXPLAIN: Centralized user-facing copy for the Telegram bot. Every button
-// EXPLAIN: label is composed from exactly one semantic emoji taken from
-// EXPLAIN: TelegramBotEmoji plus a human label. Emoji literals must never be
-// EXPLAIN: embedded directly in handlers or menu builders. Message templates
-// EXPLAIN: live here so the bot reads as a Telegram-native companion rather
-// EXPLAIN: than a web menu tree.
 public final class TelegramCopy {
     private TelegramCopy() {
     }
@@ -33,8 +27,6 @@ public final class TelegramCopy {
     public static final String CANCEL = TelegramBotEmoji.REJECT + " Отмена";
     public static final String SHARE_SITE = TelegramBotEmoji.LINK + " Сайт";
 
-    // EXPLAIN: Persistent reply keyboard labels (UX-01). Short labels keep the
-    // EXPLAIN: bottom row balanced between two equal-width buttons.
     public static final String NAV_REQUESTS = TelegramBotEmoji.REQUESTS + " Запросы";
     public static final String NAV_COINS = TelegramBotEmoji.COINS + " Монеты";
     public static final String NAV_RECENT = TelegramBotEmoji.RECENT + " Последние";
@@ -87,7 +79,6 @@ public final class TelegramCopy {
             + moneta(Math.abs(delta)) + "\n" + coinsLine(balance);
     }
 
-    // EXPLAIN: Confirmation prompt protecting high negative adjustments.
     public static String coinConfirmText(String childName, int delta) {
         int amount = Math.abs(delta);
         String verb = delta > 0 ? "Добавить" : "Снять";
@@ -127,14 +118,10 @@ public final class TelegramCopy {
         return TelegramBotEmoji.REJECT + " Отклонено";
     }
 
-    // EXPLAIN: Stale decision feedback shown instead of a second mutation.
     public static String stale() {
         return TelegramBotEmoji.INFO + " Этот запрос уже обработан";
     }
 
-    // EXPLAIN: Final status line appended to a resolved request message. The
-    // EXPLAIN: message keeps its original body and gains a terminal status with
-    // EXPLAIN: no approve/reject buttons.
     public static String requestResolved(String title, RequestResolutionStatus status) {
         String statusLine = switch (status) {
             case approved -> TelegramBotEmoji.SUCCESS + " Одобрено";
@@ -191,12 +178,10 @@ public final class TelegramCopy {
     }
 
 
-    // EXPLAIN: "🪙 N монета/монеты/монет" with correct Russian plural form.
     public static String coinsLine(int n) {
         return TelegramBotEmoji.COINS + " " + n + " " + moneta(n);
     }
 
-    // EXPLAIN: Russian plural for "монета".
     public static String moneta(int n) {
         int abs = Math.abs(n) % 100;
         int last = abs % 10;

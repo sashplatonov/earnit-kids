@@ -5,7 +5,6 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 
 import java.util.Map;
 
-// EXPLAIN: Failure factory coupling OperationResult (util) with BackendMessages (i18n), kept in the service layer so util/OperationResult stays free of i18n imports.
 public final class ServiceResults {
 
     private ServiceResults() {

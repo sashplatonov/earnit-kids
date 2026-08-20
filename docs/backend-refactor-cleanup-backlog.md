@@ -1214,7 +1214,7 @@ git commit -m "refactor(backend): complete result response mapping"
 
 ## P2-6: Finish removal of noise `EXPLAIN:` comments
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P2
 **Depends on:** P2-1, P2-2, P2-3
 

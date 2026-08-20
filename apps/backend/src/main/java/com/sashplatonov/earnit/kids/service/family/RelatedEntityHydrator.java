@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-// EXPLAIN: Batch-resolves task/shop entities referenced by history rows that are not already present in the supplied maps, so callers avoid N+1 lookups and never re-fetch entities already hydrated.
 @ApplicationScoped
 public class RelatedEntityHydrator {
 

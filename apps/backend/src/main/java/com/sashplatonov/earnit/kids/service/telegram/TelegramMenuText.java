@@ -31,7 +31,6 @@ final class TelegramMenuText {
         };
     }
 
-    // EXPLAIN: One pending request at a time with a bounded queue header.
     private static String requestsQueueText(String action, TelegramQuickActionResponse view) {
         if (!"parent".equals(view.role())) {
             return TelegramMenuFlow.homeText(view);
@@ -55,7 +54,6 @@ final class TelegramMenuText {
         return "tasks".equals(baseAction(action)) ? tasksText(view) : rewardsText(view);
     }
 
-    // EXPLAIN: Short action list: available then pending, capped at five.
     private static String tasksText(TelegramQuickActionResponse view) {
         List<TaskDto> tasks = TelegramViewSupport.orderedTasks(view);
         if (tasks.isEmpty()) {
@@ -69,8 +67,6 @@ final class TelegramMenuText {
         return builder.toString();
     }
 
-    // EXPLAIN: Up to three affordable rewards plus exactly one nearest goal as
-    // EXPLAIN: motivation; the goal is never rendered as an active button.
     private static String rewardsText(TelegramQuickActionResponse view) {
         List<ShopItemDto> affordable = view.rewards().stream()
             .filter(reward -> reward.price() <= view.balance())

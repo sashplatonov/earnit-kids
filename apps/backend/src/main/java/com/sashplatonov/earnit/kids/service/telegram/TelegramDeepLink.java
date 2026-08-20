@@ -1,8 +1,5 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
-// EXPLAIN: Exact Mini App deep links used by the bot. Role and child scope are
-// EXPLAIN: still server-validated on the Mini App side; the URL never grants
-// EXPLAIN: auth by itself (BUX-013).
 public final class TelegramDeepLink {
     private TelegramDeepLink() {
     }

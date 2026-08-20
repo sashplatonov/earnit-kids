@@ -1,8 +1,5 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
-// EXPLAIN: Russian copy for notifications about direct parent actions (a parent
-// EXPLAIN: completes a task or grants a reward without a child request). Kept
-// EXPLAIN: out of TelegramCopy to stay under the PMD TooManyMethods guardrail.
 public final class TelegramParentActionCopy {
     private TelegramParentActionCopy() {
     }

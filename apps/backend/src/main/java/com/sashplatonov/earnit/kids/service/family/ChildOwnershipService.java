@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-// EXPLAIN: Resolves a child only when it belongs to the given family, so callers never operate on a child from another family.
 @ApplicationScoped
 public class ChildOwnershipService {
 

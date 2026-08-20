@@ -1,6 +1,5 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
-// EXPLAIN: UX-05 — raw string comparisons must not be scattered across handlers.
 public enum BotNavAction {
     REQUESTS("requests", TelegramCopy.NAV_REQUESTS),
     COINS("coins", TelegramCopy.NAV_COINS),

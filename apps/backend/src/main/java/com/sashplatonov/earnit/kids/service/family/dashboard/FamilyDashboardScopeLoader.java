@@ -58,7 +58,6 @@ public class FamilyDashboardScopeLoader {
                                                      boolean adminSession,
                                                      Integer childId) {
         if (adminSession) {
-            // EXPLAIN: Inactive children are hidden from normal parent selectors.
             return children.stream()
                 .filter(child -> ChildStatus.ACTIVE.name().equals(child.getStatus()))
                 .toList();

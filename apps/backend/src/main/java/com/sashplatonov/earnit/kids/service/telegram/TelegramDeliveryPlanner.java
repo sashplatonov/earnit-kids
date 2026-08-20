@@ -63,11 +63,6 @@ public class TelegramDeliveryPlanner {
         return planned;
     }
 
-    // EXPLAIN: REQUEST_RESOLVED is not a new notification: it targets the exact
-    // EXPLAIN: request-created messages that were actually sent, so a delivery is
-    // EXPLAIN: created per original sent message instead of per current parent.
-    // EXPLAIN: The original message id is copied onto the resolved delivery so the
-    // EXPLAIN: processor knows exactly which Telegram message to edit.
     private int planResolved(ApplicationOutboxEventEntity event, Instant now, boolean notificationsEnabled) {
         int planned = 0;
         for (TelegramDeliveryEntity original : deliveries.findSentRequestMessages(event.getRequestId())) {

@@ -129,9 +129,6 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
         return "parent".equals(identity.role());
     }
 
-    // EXPLAIN: Only resolve to a child that is still visible/active in the
-    // EXPLAIN: overview, so a just-deactivated child cannot leave the bot home
-    // EXPLAIN: screen pointing at an inactive id while showing another child.
     private Integer resolveChildId(Integer selectedChildId, FamilyDataResponse data) {
         if (selectedChildId != null && data.children().stream()
             .anyMatch(child -> child.id() == selectedChildId)) {

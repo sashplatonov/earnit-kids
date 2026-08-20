@@ -53,9 +53,6 @@ public class TelegramMiniAppAuthService {
         return authenticate(rawInitData, null);
     }
 
-    // EXPLAIN: A sign-in via the child-invite deep link carries the pairing
-    // EXPLAIN: token as startapp. Accepting it first binds the child's Telegram
-    // EXPLAIN: account so the subsequent identity lookup succeeds.
     public OperationResult<AuthPayload> authenticate(String rawInitData, String pairingToken) {
         var verified = verifier.verify(rawInitData);
         LOG.debug("Verification result: " + verified);
@@ -79,13 +76,6 @@ public class TelegramMiniAppAuthService {
             return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
         }
 
-        // EXPLAIN: Admin check – if Telegram ID is in TELEGRAM_ADMIN_USER_IDS:
-        // EXPLAIN:   1. If the user has a parent identity, authenticate as a normal parent
-        // EXPLAIN:      (preserves real email and permission, doesn't break parent UI).
-        // EXPLAIN:      The parent path already returns role="admin" so the Dashboard
-        // EXPLAIN:      card is visible via AuthContext.isAdmin().
-        // EXPLAIN:   2. If the user has a child or non-parent identity, use the admin
-        // EXPLAIN:      override to grant admin access with a resolved parent email.
         boolean isConfigAdmin = adminAccessService != null && adminAccessService.isAdmin(identity.getTelegramUserId());
         if (isConfigAdmin && "parent".equals(identity.getRole()) && identity.getParentAccountId() != null) {
             LOG.infof("Telegram user %d is admin+parent, using normal parent auth", identity.getTelegramUserId());
@@ -151,10 +141,6 @@ public class TelegramMiniAppAuthService {
         return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
     }
 
-    // EXPLAIN: Resolve a parent email for the admin session so that email-based
-    // EXPLAIN: endpoints (account-connection, profile) work for Telegram admins.
-    // EXPLAIN: Prefer the identity's linked parent account; otherwise fall back
-    // EXPLAIN: to the first active family_admin member of the family.
     private String resolveAdminEmail(TelegramIdentityEntity identity, FamilyEntity family) {
         if (identity.getParentAccountId() != null) {
             var parent = parents.findByIdOptional(identity.getParentAccountId()).orElse(null);

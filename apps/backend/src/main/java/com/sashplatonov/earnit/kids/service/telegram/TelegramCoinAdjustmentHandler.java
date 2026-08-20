@@ -28,8 +28,6 @@ final class TelegramCoinAdjustmentHandler {
         }
         List<TelegramBotApiClient.InlineButton> buttons;
         String text;
-        // EXPLAIN: Fixed adjustments edit the same message, keep the quick-action
-        // EXPLAIN: keyboard for another action, and refetch the real balance.
         if (result instanceof OperationResult.Success<TelegramQuickActionResponse> success) {
             TelegramQuickActionResponse view = success.value();
             text = TelegramCopy.coinApplied(delta, view.balance());

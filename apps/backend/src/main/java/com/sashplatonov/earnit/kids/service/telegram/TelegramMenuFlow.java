@@ -12,8 +12,6 @@ final class TelegramMenuFlow {
         return text.equals("/start") || text.startsWith("/start ");
     }
 
-    // EXPLAIN: /start always renders the role home. Parent Home is a decision
-    // EXPLAIN: inbox for the current child; the child picker is a direct action only.
     static String startText(TelegramQuickActionResponse view) {
         return homeText(view);
     }
@@ -25,8 +23,6 @@ final class TelegramMenuFlow {
         return mainMenu(view, miniAppUrl, menuBuilder);
     }
 
-    // EXPLAIN: Role home text: parent sees child + balance + pending attention,
-    // EXPLAIN: child sees a greeting + balance.
     static String homeText(TelegramQuickActionResponse view) {
         return "child".equals(view.role())
             ? TelegramCopy.childHome(view.childName(), view.balance())

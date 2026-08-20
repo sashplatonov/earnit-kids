@@ -14,13 +14,8 @@ public interface TelegramIdentityService {
     Optional<MutationCallback> consumeMutationCallback(String token, Instant now);
     boolean recordWebhookUpdate(long updateId, Instant now);
 
-    // EXPLAIN: UX-01 — returns true when the identity's stored reply-keyboard
-    // EXPLAIN: version is behind the configured version, meaning the client may
-    // EXPLAIN: still hold a stale cached keyboard and needs a one-time reset.
     boolean needsReplyKeyboardReset(long telegramUserId, int configuredVersion);
 
-    // EXPLAIN: UX-01 — records that the identity has been shown the current
-    // EXPLAIN: reply-keyboard version, so the reset is only sent once per version.
     void markReplyKeyboardVersion(long telegramUserId, int version);
 
     record TelegramIdentity(Integer id, Integer familyId, Integer childId, long telegramUserId, String role) { }

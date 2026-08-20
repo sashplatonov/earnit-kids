@@ -97,8 +97,6 @@ public class TelegramOutboxProcessor {
                 sent++;
             } catch (Exception failure) {
                 if (failure instanceof TelegramApiException apiFailure && apiFailure.isNoOp()) {
-                    // EXPLAIN: Message already absent or unchanged satisfies the
-                    // EXPLAIN: invariant, so the delivery is terminal success.
                     delivery.setStatus("SENT");
                     if (observability != null) observability.outbox("noop");
                     delivery.setSentAt(now);
@@ -130,10 +128,6 @@ public class TelegramOutboxProcessor {
         delivery.setClaimedAt(null);
     }
 
-    // EXPLAIN: REQUEST_RESOLVED edits the already-sent request message in place:
-    // EXPLAIN: it shows the final status and drops the approve/reject buttons in
-    // EXPLAIN: one Telegram mutation. No new message is sent. The message id was
-    // EXPLAIN: copied from the original delivery at planning time.
     private void processResolved(TelegramDeliveryEntity delivery, ApplicationOutboxEventEntity event, Instant now)
         throws Exception {
         if (delivery.getMessageId() == null) {
@@ -156,12 +150,6 @@ public class TelegramOutboxProcessor {
             || type == ApplicationOutboxEventType.REWARD_REQUEST_CREATED;
     }
 
-    // EXPLAIN: Pre-send guard + post-send recheck close the late-send race: if
-    // EXPLAIN: the request is already final before the initial send, no actionable
-    // EXPLAIN: message is created; if it becomes final between the pre-check and
-    // EXPLAIN: the send, the same final edit is applied right after persisting the
-    // EXPLAIN: message id. A transient DB read failure is retried, never treated
-    // EXPLAIN: as a deleted request.
     private void processRequestCreated(TelegramDeliveryEntity delivery, ApplicationOutboxEventEntity event, Instant now)
         throws Exception {
         Optional<PurchaseRequestEntity> request = requests.findByIdOptional(event.getRequestId());

@@ -132,7 +132,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         Instant periodStart = now.minus(periodDuration);
         Instant previousStart = periodStart.minus(periodDuration);
 
-        // EXPLAIN: Use SQL aggregation instead of loading full history rows.
         var currentRaw = historyRepository.get().summarizePeriod(familyDbId, childId, periodStart, now);
         var previousRaw = historyRepository.get().summarizePeriod(familyDbId, childId, previousStart, periodStart);
 
@@ -173,7 +172,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return summary == null ? HistoryPeriodSummary.EMPTY : summary;
     }
 
-    // EXPLAIN: Build top task stats from typed SQL aggregates without leaking ORM row shapes.
     private List<AnalyticsResponse.AnalyticsStatItem> buildTopTaskStatsAggregated(
             List<HistoryRankedAggregate> aggregatedRows, List<TaskEntity> tasks) {
         Map<Long, String> namesByTaskId = tasks.stream()
@@ -193,7 +191,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             .toList();
     }
 
-    // EXPLAIN: Build top item stats from typed SQL aggregates without leaking ORM row shapes.
     private List<AnalyticsResponse.AnalyticsStatItem> buildTopItemStatsAggregated(
             List<HistoryRankedAggregate> aggregatedRows, List<ShopItemEntity> items) {
         Map<Long, String> namesByItemId = items.stream()
@@ -213,7 +210,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             .toList();
     }
 
-    // EXPLAIN: Build daily trends from typed SQL aggregates without depending on row ordering.
     private List<AnalyticsResponse.AnalyticsTrendPoint> buildTrendsAggregated(
         List<HistoryDailyAggregate> dailyRows
     ) {

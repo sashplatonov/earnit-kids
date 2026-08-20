@@ -10,9 +10,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-// EXPLAIN: Builds the Recent preview message body. Renders at most five
-// EXPLAIN: presentation-safe rows with human-readable titles and relative
-// EXPLAIN: dates, so the bot never becomes a full history browser (BUX-005).
 final class TelegramRecent {
     private static final String[] MONTHS = {
         "января", "февраля", "марта", "апреля", "мая", "июня",
@@ -51,7 +48,6 @@ final class TelegramRecent {
             : entry.itemName() != null ? entry.itemName() : "Событие";
     }
 
-    // EXPLAIN: Deterministic UTC-relative label: Сегодня / Вчера / absolute date.
     private static String formatDate(String createdAt, Instant now) {
         try {
             LocalDateTime time = LocalDateTime.ofInstant(Instant.parse(createdAt), ZoneOffset.UTC);

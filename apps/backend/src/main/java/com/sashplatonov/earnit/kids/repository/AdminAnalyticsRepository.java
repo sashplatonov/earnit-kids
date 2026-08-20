@@ -168,10 +168,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     public AdminCoinEconomyResponse.BalanceMetrics getBalanceMetrics() {
-        // EXPLAIN: ChildEntity has no test-account flag; real children are the
-        // EXPLAIN: active ones (status = ACTIVE), matching how the rest of the
-        // EXPLAIN: domain filters children (see FamilyDashboardScopeLoader,
-        // EXPLAIN: FamilyNotificationServiceImpl).
         String sql = """
             SELECT c.balance FROM ChildEntity c WHERE c.status = :activeStatus
             """;
@@ -219,9 +215,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
             .build();
     }
 
-    // EXPLAIN: ADM-05: median days from family creation to the family's first
-    // EXPLAIN: approved reward. This is an all-time metric (matches the
-    // EXPLAIN: "median after starting usage" tooltip), independent of the period.
     private double calcMedianTimeToFirstReward() {
         String sql = """
             SELECT pr.createdAt, f.createdAt
@@ -403,8 +396,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     public List<AdminTasksResponse.TopTaskPattern> calcTopTaskPatterns(Instant periodStart) {
-        // EXPLAIN: HistoryEntryEntity has no icon column, only groupName; group
-        // EXPLAIN: by groupName and return a default icon in the DTO.
         String sql = """
             SELECT h.groupName, COUNT(h) as cnt
             FROM HistoryEntryEntity h
@@ -475,8 +466,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     public List<AdminRewardsResponse.RewardRanking> calcRewardRankings(Instant periodStart) {
-        // EXPLAIN: Reward category lives on the shop item (ShopItemEntity.groupName),
-        // EXPLAIN: not on the request. Join on childId+itemId to resolve the category.
         String sql = """
             SELECT s.groupName, COUNT(p) as cnt
             FROM PurchaseRequestEntity p
@@ -624,7 +613,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     private double calcNotificationsEnabledPercent() {
-        // EXPLAIN: Notification settings not yet stored in FamilyEntity
         return 0.0;
     }
 
@@ -771,7 +759,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     public List<AdminActivationFunnelResponse.FunnelStage> getActivationFunnel() {
-        // EXPLAIN: Current-state funnel (ever-completed, not cohort-based)
         int registered = countTotalFamilies();
         int addedChild = countFamiliesWithChild();
         int hasTask = countFamiliesWithTask();
@@ -897,7 +884,6 @@ public class AdminAnalyticsRepository implements PanacheRepositoryBase<FamilyEnt
     }
 
     public int countReturningFamilies(Instant periodStart) {
-        // EXPLAIN: Families active in period that registered before it
         String sql = """
             SELECT COUNT(DISTINCT h.familyId) FROM HistoryEntryEntity h
             WHERE h.createdAt >= :periodStart

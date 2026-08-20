@@ -67,8 +67,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         this.families = families;
     }
 
-    // EXPLAIN: Lazily-built reply keyboard navigator (SRP) — keeps this class
-    // EXPLAIN: focused on webhook dispatch and below the PMD GodClass gate.
     private TelegramReplyKeyboardNavigator replyKeyboardNavigator() {
         return new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient);
     }
@@ -97,8 +95,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         if (chatId == Long.MIN_VALUE) {
             return;
         }
-        // EXPLAIN: UX-01 — persistent reply keyboard navigation. If the text matches
-        // EXPLAIN: a known nav action, handle it as navigation; otherwise treat as /start.
         if (!TelegramFeatureSupport.isEnabledForFamily(featureGate, identities, families, telegramUserId)) {
             return;
         }
@@ -123,10 +119,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl);
                 TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
                     ? kb.childMain() : kb.parentMain();
-                // EXPLAIN: UX-01 — one-time reset: when the identity's stored
-                // EXPLAIN: keyboard version is behind the configured version,
-                // EXPLAIN: clear any stale cached keyboard before sending the
-                // EXPLAIN: fresh definition, then record the new version.
                 int keyboardVersion = config.replyKeyboardVersion();
                 if (telegramUserId != Long.MIN_VALUE
                     && identities.needsReplyKeyboardReset(telegramUserId, keyboardVersion)) {

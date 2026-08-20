@@ -9,7 +9,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
 
-// EXPLAIN: Shared auth extraction and role guards for resource endpoints. The requireX methods throw WebApplicationException with a pre-built response.
 public abstract class ResourceAuthSupport {
 
     protected AuthContext authContext(ContainerRequestContext ctx) {
@@ -17,7 +16,6 @@ public abstract class ResourceAuthSupport {
         return prop instanceof AuthContext auth ? auth : null;
     }
 
-    // EXPLAIN: Alias kept so FamilyResourceSupport subclasses compile unchanged.
     protected AuthContext getAuthOrFail(ContainerRequestContext ctx) {
         return authContext(ctx);
     }

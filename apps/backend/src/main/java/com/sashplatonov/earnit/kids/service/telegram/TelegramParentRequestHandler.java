@@ -26,8 +26,6 @@ final class TelegramParentRequestHandler {
         if (!"approve".equals(parts[2]) && !"reject".equals(parts[2])) {
             return;
         }
-        // EXPLAIN: A ".queue" suffix means the decision came from the bounded
-        // EXPLAIN: Requests queue, so the message auto-advances to the next item.
         boolean queueContext = parts.length == 6 && "queue".equals(parts[5]);
         int childId = Integer.parseInt(parts[3]);
         long requestId = Long.parseLong(parts[4]);
@@ -56,8 +54,6 @@ final class TelegramParentRequestHandler {
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
             return;
         }
-        // EXPLAIN: One callback completes the decision; the same message is
-        // EXPLAIN: edited and decision buttons disappear (terminal or next queue item).
         if (result instanceof OperationResult.Success<TelegramQuickActionResponse> success) {
             if (queueContext) {
                 editQueueAdvance(callback, success.value(), apiClient, menuBuilder, miniAppUrl);
@@ -76,8 +72,6 @@ final class TelegramParentRequestHandler {
             view == null ? menuBuilder.backToMain() : menuBuilder.parentRequestRetry(view, retryData));
     }
 
-    // EXPLAIN: After a queue decision, auto-advance to the next pending request
-    // EXPLAIN: or render the completion state when the queue is exhausted.
     private static void editQueueAdvance(JsonNode callback,
                                          TelegramQuickActionResponse view,
                                          TelegramBotApiClient apiClient,

@@ -230,14 +230,9 @@ final class FamilyActionRequestService {
 
         int responseChildId = supportService.resolveResponseChildId(familyDbId, currentChildId, request.get().getChildId());
         if (isChildDeletingOwnRequest && FamilyActionRequestSupport.isPending(request.get())) {
-            // EXPLAIN: A child cancelling their own pending request soft-cancels it (status = cancelled) so it stays visible in history instead of being physically deleted; rejected requests and parent deletes keep the physical-delete behavior.
             request.get().setStatus(PurchaseRequestStatus.cancelled);
             publishResolved(request.get(), RequestResolutionStatus.cancelled);
         } else {
-            // EXPLAIN: Publish the resolution before the physical delete so the
-            // EXPLAIN: deleted status and title are captured while the entity is
-            // EXPLAIN: still readable; the authoritative REQUEST_RESOLVED(deleted)
-            // EXPLAIN: then updates any previously sent Telegram message.
             publishResolved(request.get(), RequestResolutionStatus.deleted);
             purchaseRequestRepository.delete(request.get());
         }
@@ -282,10 +277,6 @@ final class FamilyActionRequestService {
             historyFactory.now());
     }
 
-    // EXPLAIN: Publishes the single REQUEST_RESOLVED signal that tells the
-    // EXPLAIN: Telegram outbox to update previously sent request messages to a
-    // EXPLAIN: final status and drop the approve/reject buttons. The title is
-    // EXPLAIN: captured so a physically deleted request can still be rendered.
     private void publishResolved(PurchaseRequestEntity request, RequestResolutionStatus status) {
         eventSupport.publish(ApplicationOutboxEventType.REQUEST_RESOLVED,
             request.getFamilyId(), request.getChildId(), request.getId(), 0, null,

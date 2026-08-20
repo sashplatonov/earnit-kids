@@ -33,7 +33,6 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
     EntityManager entityManager;
     private final SlowOperationDiagnostics slowOperationDiagnostics;
 
-    // EXPLAIN: Latest createdAt per relatedId via SQL aggregation instead of loading rows into Java memory.
     public Map<Long, Instant> loadLatestTimestampsByRelatedId(int childId, HistoryEntryType type) {
         var query = entityManager.createQuery(
             "SELECT new " + HistoryRelatedTimestamp.class.getName() +
@@ -63,8 +62,6 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         );
     }
 
-    // EXPLAIN: Sum of reward spending (spend history) since a day boundary,
-    // EXPLAIN: used to enforce the child's daily reward-spend limit.
     public long sumRewardSpendSince(int childId, Instant since) {
         var query = entityManager.createQuery(
             "SELECT COALESCE(SUM(ABS(h.amount)), 0) FROM HistoryEntryEntity h " +
@@ -98,7 +95,6 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         );
     }
 
-    // EXPLAIN: Analytics aggregation keeps enum and numeric projection types explicit across ORM providers.
     public HistoryPeriodSummary summarizePeriod(int familyDbId, Integer childId, Instant from, Instant to) {
         var jpql = new StringBuilder(
             "SELECT new " + HistoryTypeTotal.class.getName() + "(h.type, SUM(h.amount)) " +
@@ -130,7 +126,6 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         return new HistoryPeriodSummary(earned, spent);
     }
 
-    // EXPLAIN: Top tasks by total coins earned in a time window — aggregated in SQL.
     public List<HistoryRankedAggregate> topTasksInPeriod(
         int familyDbId,
         Integer childId,
@@ -140,7 +135,6 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         return rankedAggregatesInPeriod(familyDbId, childId, HistoryEntryType.earn, from, to);
     }
 
-    // EXPLAIN: Top shop items by total coins spent in a time window — aggregated in SQL.
     public List<HistoryRankedAggregate> topItemsInPeriod(
         int familyDbId,
         Integer childId,
@@ -178,7 +172,6 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         return query.getResultList();
     }
 
-    // EXPLAIN: Daily aggregates (earned, spent) in a time window — one row per day via SQL.
     public List<HistoryDailyAggregate> dailyTrendInPeriod(
         int familyDbId,
         Integer childId,

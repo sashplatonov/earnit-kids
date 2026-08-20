@@ -13,9 +13,6 @@ final class TelegramCallbackActionCodec {
         }
         String[] parts = splitChildAction(action);
         String compactBase = compactBase(parts[0]);
-        // EXPLAIN: Only strip the "-child-" marker when the base actually
-        // EXPLAIN: compacts to a single code; otherwise expand cannot recover
-        // EXPLAIN: the child id from the compact form.
         if (compactBase.equals(parts[0])) {
             return action;
         }

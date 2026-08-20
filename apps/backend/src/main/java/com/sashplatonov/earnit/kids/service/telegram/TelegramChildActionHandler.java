@@ -6,8 +6,6 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 
 import java.util.List;
 
-// EXPLAIN: Child quick actions (Done / reward claim) and their feedback keep the
-// EXPLAIN: main update dispatcher small and within SRP guardrails.
 final class TelegramChildActionHandler {
     private final TelegramQuickActionService quickActions;
     private final TelegramBotApiClient apiClient;

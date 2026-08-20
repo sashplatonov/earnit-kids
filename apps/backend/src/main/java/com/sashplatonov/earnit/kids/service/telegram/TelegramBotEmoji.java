@@ -1,9 +1,5 @@
 package com.sashplatonov.earnit.kids.service.telegram;
 
-// EXPLAIN: Semantic emoji vocabulary for the Telegram bot. Every inline/menu
-// EXPLAIN: button carries exactly one emoji from this map; emoji literals must
-// EXPLAIN: not be scattered across handlers or menu builders. The mapping is
-// EXPLAIN: deterministic and is enforced by TelegramEmojiCoverageTest.
 public final class TelegramBotEmoji {
     public static final String HOME = "🏠";
     public static final String TASKS = "✅";
@@ -35,8 +31,6 @@ public final class TelegramBotEmoji {
     public static final String LINK = "🔗";
     public static final String SITE = "🌐";
 
-    // EXPLAIN: Legacy aliases kept during the UX migration; new code must use
-    // EXPLAIN: the semantic names above.
     @Deprecated public static final String DONE = TASKS;
     @Deprecated public static final String REWARD = REWARDS;
     @Deprecated public static final String REQUEST = REQUESTS;

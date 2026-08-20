@@ -272,7 +272,6 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }
 
-        // EXPLAIN: Cannot deactivate the last active admin — the family would be left without an owner.
         if (!active && membership.getPermission() == FamilyParentMembershipEntity.Permission.family_admin) {
             long adminCount = membershipRepository.countFamilyAdmins(familyDbId);
             if (adminCount <= 1) {
@@ -309,7 +308,6 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }
 
-        // EXPLAIN: Only the current admin can transfer ownership, and only to an active non-admin member.
         if (target.getStatus() != MembershipStatus.active) {
             return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }
@@ -317,7 +315,6 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }
 
-        // EXPLAIN: The actor must be the current family admin.
         var actorParentOpt = parentAccountRepository.findByEmail(actorEmail);
         if (actorParentOpt.isEmpty()) {
             return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
@@ -331,7 +328,6 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_ADMIN_DELETE_FORBIDDEN, "parentAccess.cannotRemoveAdmin");
         }
 
-        // EXPLAIN: Demote the current admin to editor, promote the target to family_admin.
         actorMembership.setPermission(FamilyParentMembershipEntity.Permission.editor);
         target.setPermission(FamilyParentMembershipEntity.Permission.family_admin);
 

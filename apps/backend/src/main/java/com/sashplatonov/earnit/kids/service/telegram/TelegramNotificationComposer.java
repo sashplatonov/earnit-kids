@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-// EXPLAIN: Composes Telegram notification copy and buttons for outbox events so
-// EXPLAIN: the delivery processor stays focused on transport (SRP guardrail).
 @ApplicationScoped
 public class TelegramNotificationComposer {
     private final Supplier<ChildRepository> children;
@@ -38,8 +36,6 @@ public class TelegramNotificationComposer {
         this.outcomeText = outcomeText;
     }
 
-    // EXPLAIN: Test-only constructor that builds the child-outcome text helper
-    // EXPLAIN: from the same repositories to keep existing unit tests intact.
     TelegramNotificationComposer(ChildRepository children,
                                  PurchaseRequestRepository requests,
                                  ShopItemRepository shopItems,
@@ -62,15 +58,10 @@ public class TelegramNotificationComposer {
         return childOutcomeText(event);
     }
 
-    // EXPLAIN: Final status text for a REQUEST_RESOLVED event. The title comes
-    // EXPLAIN: from the event snapshot (captured before a physical delete) so the
-    // EXPLAIN: message can be updated even after the request entity is gone.
     public String resolvedText(ApplicationOutboxEventEntity event) {
         return TelegramCopy.requestResolved(event.getResolutionTitle(), event.getResolutionStatus());
     }
 
-    // EXPLAIN: Request-created notifications carry one-callback approve/reject
-    // EXPLAIN: buttons so a parent can decide directly from the notification.
     private List<TelegramBotApiClient.InlineButton> requestButtons(ApplicationOutboxEventEntity event) {
         if (event.getRequestId() == null) {
             return List.of();
@@ -81,7 +72,6 @@ public class TelegramNotificationComposer {
             TelegramBotApiClient.InlineButton.callback(TelegramCopy.REJECT, "parent.request.reject." + target));
     }
 
-    // EXPLAIN: Child outcome feedback points to the next action without a menu.
     private List<TelegramBotApiClient.InlineButton> childOutcomeButtons(ApplicationOutboxEventType type) {
         if (callbacks == null) {
             return List.of();
