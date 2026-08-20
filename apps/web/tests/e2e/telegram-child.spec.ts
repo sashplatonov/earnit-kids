@@ -13,30 +13,43 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ role: 'child', familyId: 'family-1' }) }));
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
-    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 20, groupName: 'Today', isActive: true }], shop: [{ id: 2, name: 'Game time', price: 30, groupName: 'Fun', isActive: true }], requests: [] }) }));
+    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 20, groupName: 'Today', isActive: true }, { id: 2, name: 'A very long task title that must remain reachable on a narrow mobile viewport', coins: 10, groupName: 'Today', isActive: true }], shop: [{ id: 2, name: 'Game time', price: 30, groupName: 'Fun', isActive: true }], requests: [] }) }));
     await page.route('**/api/tasks/1/request', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ balance: 40, requests: [{ id: 7, taskId: 1, requestType: 'task_completion', status: 'pending' }] }) }));
 
     await page.goto('/telegram');
-    await expect(page.getByRole('heading', { name: 'Hi, Mia!' })).toBeVisible();
-    const taskTab = page.getByRole('tab', { name: 'Today' });
+    await expect(page.getByRole('heading', { name: /(?:Hi|Привет), Mia!/ })).toBeVisible();
+    const taskTab = page.locator('#child-tab-tasks');
     await expect(taskTab).toHaveAttribute('aria-selected', 'true');
     await taskTab.press('End');
-    await expect(page.getByRole('tab', { name: 'Activity' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('tabpanel', { name: 'Activity' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Today' }).click();
-    await expect(page.getByRole('heading', { name: 'Tasks · Today' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Rewards' }).click();
-    await expect(page.getByRole('heading', { name: 'Rewards' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Today' }).click();
-    await page.getByRole('button', { name: 'Done' }).first().click();
+    await expect(page.locator('#child-tab-activity')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel', { name: /Activity|Активность/ })).toBeVisible();
+    await page.locator('#child-tab-tasks').click();
+    const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list');
+    await expect(taskList).toBeVisible();
+    await expect(taskList.locator('.row')).toHaveCount(2);
+    await expect(taskList.getByText('A very long task title that must remain reachable on a narrow mobile viewport')).toBeVisible();
+    expect(await taskList.evaluate((node) => {
+        const rows = [...node.children];
+        return rows.every((row) => row.classList.contains('row'))
+            && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px')
+            && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)');
+    })).toBeTruthy();
+    expect(await taskList.locator('.check').first().evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        return rect.width >= 44 && rect.height >= 44;
+    })).toBeTruthy();
+    await page.locator('#child-tab-rewards').click();
+    await expect(page.locator('#child-panel-rewards')).toBeVisible();
+    await page.locator('#child-tab-tasks').click();
+    await taskList.locator('.check').first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.locator('#request-note')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Done' }).first()).toBeFocused();
-    await page.getByRole('button', { name: 'Done' }).first().click();
-    await page.getByRole('button', { name: 'Send request' }).click();
-    await expect(page.getByRole('status')).toContainText('Request sent');
+    await expect(taskList.locator('.check').first()).toBeFocused();
+    await taskList.locator('.check').first().click();
+    await page.getByRole('button', { name: /Send request|Отправить заявку/ }).click();
+    await expect(page.getByRole('status')).toContainText(/Request sent|Заявка отправлена/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 

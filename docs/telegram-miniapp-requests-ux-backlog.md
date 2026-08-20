@@ -75,7 +75,7 @@ git commit -m "refactor(web): align parent request inbox with lists"
 
 ## P1-2: Keep child My tasks as one un-nested list
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P1  
 **Depends on:** P1-1
 
