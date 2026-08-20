@@ -337,7 +337,7 @@ git commit -m "feat(web): Match statistics reference UI"
 
 ## P2-1: Add end-to-end Statistics period, locale, and responsive regression coverage
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P2  
 **Depends on:** P1-1, P1-2, P1-3, P1-4
 
@@ -349,15 +349,13 @@ load, text falls back to the wrong locale, or compact UI hides a control.
 ### Architectural decision
 
 Extend the existing Playwright admin-session conventions from
-`apps/web/tests/e2e/roles.spec.ts`; test the real `/telegram/dashboard` route
+`apps/web/tests/e2e/helpers.ts`; test the real `/telegram/dashboard` route
 instead of duplicating API behavior in a mocked visual test. Backend service
 tests remain the source for period math and authorization.
 
 ### Files
 
 - Create `apps/web/tests/e2e/admin-dashboard.spec.ts`.
-- Modify `apps/web/tests/e2e/roles.spec.ts` only if its existing admin login
-  helper must be extracted for reuse.
 - Modify focused backend tests from P1-1/P1-2 if coverage gaps remain.
 
 ### Work
@@ -394,7 +392,7 @@ cd apps/web && npm run lint && npm run test && npm run build && npm run test:e2e
 ### Commit
 
 ```bash
-git add apps/backend/src/test apps/web/tests/e2e/admin-dashboard.spec.ts apps/web/tests/e2e/roles.spec.ts
+git add apps/web/tests/e2e/admin-dashboard.spec.ts apps/web/tests/e2e/{analytics,app-sections,parent-access-settings,roles,smoke,tasks-shop-ui}.spec.ts
 git commit -m "test(web): Cover admin statistics tabs"
 ```
 
