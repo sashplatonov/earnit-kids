@@ -12,7 +12,9 @@
         return $i18n.t(`admin.dashboard.${key}` as MessageKey, variables);
     }
 
-    $: isAdmin = $appStore.isAdmin;
+    // EXPLAIN: Server authorization is authoritative on direct dashboard
+    // navigations; the store is populated later by the Mini App bootstrap.
+    $: isAdmin = data.isAdmin === true || $appStore.isAdmin;
 
     export let data;
     $: overview = data.overview;
@@ -58,6 +60,20 @@
 
     function switchTab(tabId: TabId) {
         activeTab = tabId;
+    }
+
+    function handleTabKeydown(event: KeyboardEvent, tabId: TabId) {
+        const currentIndex = tabs.findIndex((tab) => tab.id === tabId);
+        let nextIndex = currentIndex;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % tabs.length;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        if (event.key === 'Home') nextIndex = 0;
+        if (event.key === 'End') nextIndex = tabs.length - 1;
+        if (nextIndex === currentIndex) return;
+        event.preventDefault();
+        const nextTab = tabs[nextIndex];
+        activeTab = nextTab.id;
+        document.getElementById(`tab-${nextTab.id}`)?.focus();
     }
 
     function changePeriod(period: string) {
@@ -206,30 +222,34 @@
         <!-- Period selector toolbar -->
         <div class="toolbar">
             <div class="segment">
-                <button 
+                <button type="button"
                     class="seg" 
                     class:active={selectedPeriod === '7d'}
+                    aria-pressed={selectedPeriod === '7d'}
                     on:click={() => changePeriod('7d')}
                 >
                     {t('periods.7d')}
                 </button>
-                <button 
+                <button type="button"
                     class="seg" 
                     class:active={selectedPeriod === '30d'}
+                    aria-pressed={selectedPeriod === '30d'}
                     on:click={() => changePeriod('30d')}
                 >
                     {t('periods.30d')}
                 </button>
-                <button 
+                <button type="button"
                     class="seg" 
                     class:active={selectedPeriod === '90d'}
+                    aria-pressed={selectedPeriod === '90d'}
                     on:click={() => changePeriod('90d')}
                 >
                     {t('periods.90d')}
                 </button>
-                <button 
+                <button type="button"
                     class="seg" 
                     class:active={selectedPeriod === 'all'}
+                    aria-pressed={selectedPeriod === 'all'}
                     on:click={() => changePeriod('all')}
                 >
                     {t('periods.all')}
@@ -273,12 +293,16 @@
             <div class="tabs" role="tablist" aria-label={t('aria.tabs')}>
                 {#each tabs as tab (tab.id)}
                     <button
+                        type="button"
+                        id={`tab-${tab.id}`}
                         class="tab"
                         class:active={activeTab === tab.id}
                         role="tab"
                         aria-selected={activeTab === tab.id}
                         aria-controls={`panel-${tab.id}`}
+                        tabindex={activeTab === tab.id ? 0 : -1}
                         on:click={() => switchTab(tab.id as TabId)}
+                        on:keydown={(event) => handleTabKeydown(event, tab.id as TabId)}
                     >
                         <span class="tab-ico" aria-hidden="true">
                             <TelegramIcon name={tab.icon} size={17} strokeWidth={2} />
@@ -336,35 +360,6 @@
                     </div>
                 </div>
 
-                <h2 class="section-title">{t('sections.keySignals')}</h2>
-                <div class="rows">
-                    <div class="rank">
-                        <div class="rank-icon">🪙</div>
-                        <div class="rank-content">
-                            <b>{t('signals.earningNotSpending.title')}</b>
-                            <small>{t('signals.earningNotSpending.desc')}</small>
-                        </div>
-                        <div class="rank-val">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending, true)}</div>
-                    </div>
-                    <div class="rank">
-                        <div class="rank-icon">📉</div>
-                        <div class="rank-content">
-                            <b>{t('signals.lowSpendRate.title')}</b>
-                            <small>{t('signals.lowSpendRate.desc')}</small>
-                        </div>
-                        <div class="rank-val">{formatValue(coinEconomy?.coins?.spendRate, true)}</div>
-                    </div>
-                </div>
-                <div class="rows">
-                    <div class="rank">
-                        <div class="rank-icon">⏱️</div>
-                        <div class="rank-content">
-                            <b>{t('signals.decisionTime.title')}</b>
-                            <small>{t('signals.decisionTime.desc')}</small>
-                        </div>
-                        <div class="rank-val">{formatValue(parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours)} {t('units.hours')}</div>
-                    </div>
-                </div>
                 {/if}
             </div>
 
@@ -836,7 +831,9 @@
         padding: 14px;
         max-width: 800px;
         margin: 0 auto;
-        padding-bottom: calc(70px + env(safe-area-inset-bottom) + 12px);
+        width: 100%;
+        overflow-x: clip;
+        padding-bottom: calc(78px + env(safe-area-inset-bottom));
         background: var(--bg, #f6f7fb);
         min-height: 100vh;
     }
@@ -861,7 +858,8 @@
     }
 
     .dashboard-header h1 {
-        font-size: 25px;
+        font-size: 26px;
+        line-height: 1.05;
         margin: 0;
         font-weight: 750;
     }
@@ -880,12 +878,13 @@
     }
 
     .segment {
-        display: flex;
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 4px;
         background: #eceff6;
         padding: 3px;
         border-radius: 12px;
-        overflow: auto;
         min-width: 0;
     }
 
@@ -893,7 +892,8 @@
         border: 0;
         background: transparent;
         border-radius: 9px;
-        padding: 8px 10px;
+        min-height: 44px;
+        padding: 8px 4px;
         color: #687289;
         font-size: 11px;
         white-space: nowrap;
@@ -915,11 +915,16 @@
     }
 
     .tabs-wrap {
-        position: sticky;
-        top: 0;
-        background: var(--bg, #f6f7fb);
-        padding: 6px 0 8px;
-        z-index: 2;
+        position: fixed;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: min(800px, 100%);
+        background: rgba(246, 247, 251, 0.96);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid #dfe3ec;
+        padding: 5px 5px calc(5px + env(safe-area-inset-bottom));
+        z-index: 20;
     }
 
     .tabs {
@@ -931,7 +936,8 @@
 
     .tab {
         min-width: 0;
-        min-height: 52px;
+        min-height: 58px;
+        height: 58px;
         border: 1px solid var(--line, #e5e8f0);
         background: #fff;
         color: #687289;
@@ -949,6 +955,16 @@
         cursor: pointer;
     }
 
+    .tab:focus-visible,
+    .seg:focus-visible,
+    .info:focus-visible,
+    .tooltip-close:focus-visible,
+    .retry-btn:focus-visible,
+    .back-btn:focus-visible {
+        outline: 3px solid #273fd0;
+        outline-offset: 2px;
+    }
+
     .tab-ico {
         display: block;
         font-size: 17px;
@@ -958,9 +974,9 @@
     .tab-label {
         display: block;
         max-width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: clip;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-align: center;
     }
 
     .tab.active {
@@ -982,17 +998,17 @@
     }
 
     .section-title {
-        font-size: 14px;
+        font-size: 18px;
         font-weight: 700;
         color: #1a1d23;
-        margin: 20px 0 12px;
+        margin: 16px 0 8px;
     }
 
     .kpis {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-bottom: 16px;
     }
 
     .kpi {
@@ -1000,6 +1016,7 @@
         border: 1px solid var(--line, #e5e8f0);
         border-radius: 15px;
         padding: 12px;
+        min-height: 92px;
         display: flex;
         flex-direction: column;
     }
@@ -1047,7 +1064,7 @@
 
     .tooltip-box {
         position: fixed;
-        bottom: 80px;
+        bottom: calc(78px + env(safe-area-inset-bottom));
         left: 50%;
         transform: translateX(-50%);
         width: min(340px, calc(100vw - 24px));
@@ -1235,20 +1252,6 @@
         border-bottom: 1px solid var(--line, #e5e8f0);
     }
 
-    @media (max-width: 400px) {
-        .metric {
-            grid-template-columns: 1fr;
-            gap: 4px;
-            text-align: left;
-        }
-
-        .metric-value {
-            text-align: left;
-            font-size: 16px;
-            margin-top: 2px;
-        }
-    }
-
     .metric:last-child {
         border-bottom: 0;
     }
@@ -1396,10 +1399,17 @@
         background: #fff;
         border: 1px dashed #ccd2df;
         border-radius: 12px;
+        min-height: 76px;
         text-align: left;
     }
 
     .empty-ico {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: var(--soft, #eef0ff);
+        display: grid;
+        place-items: center;
         font-size: 18px;
         flex-shrink: 0;
     }
@@ -1423,6 +1433,17 @@
     }
 
     @media (max-width: 350px) {
+        :global(.dashboard-container) {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .seg {
+            font-size: 10px;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+
         .tabs {
             gap: 3px;
         }

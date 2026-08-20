@@ -45,7 +45,12 @@ export async function logout(page: Page) {
     await expect(page).toHaveURL(/\/(?:[a-z]{2}\/)?login(?:\.html)?$/);
 }
 
-export async function registerParent(page: Page, email: string, password = DEFAULT_PARENT_PASSWORD) {
+export async function registerParent(
+    page: Page,
+    email: string,
+    password = DEFAULT_PARENT_PASSWORD,
+    options: { heading?: string | RegExp | null } = {}
+) {
     await page.goto('/login.html');
     await page.getByRole('button', { name: /Register|Регистрация/i }).click();
     const registerPanel = page.locator('[aria-label="Registration"], [aria-label="Регистрация"]');
@@ -67,7 +72,9 @@ export async function registerParent(page: Page, email: string, password = DEFAU
     await appNavigation.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => undefined);
     if (/\/(?:[a-z]{2}\/)?app(?:\/[a-z-]+)?$/.test(new URL(page.url()).pathname)
         || await appNavigation.isVisible().catch(() => false)) {
-        await expect(page.getByRole('heading', { name: /EarnIt Kids/i })).toBeVisible();
+        if (options.heading !== null) {
+            await expect(page.getByRole('heading', { name: options.heading ?? /EarnIt Kids/i })).toBeVisible();
+        }
         return;
     }
 

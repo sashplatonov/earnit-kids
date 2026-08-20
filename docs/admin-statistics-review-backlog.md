@@ -268,7 +268,7 @@ git commit -m "fix(i18n): Localize statistics screen"
 
 ## P1-4: Align the Statistics mobile UI with the supplied reference
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P1  
 **Depends on:** P1-2, P1-3
 

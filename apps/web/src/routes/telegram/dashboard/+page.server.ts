@@ -78,6 +78,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     }
 
     return {
+        isAdmin: true,
         overview,
         coinEconomy,
         taskEconomy,
