@@ -1,7 +1,6 @@
 package com.sashplatonov.earnit.kids.service.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.inject.Provider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -27,6 +26,7 @@ public class HttpResponsePayloadEstimator {
     private final boolean payloadEstimationEnabled;
     private final int maxCollectionSize;
 
+    @Inject
     public HttpResponsePayloadEstimator(
         ObjectMapper objectMapper,
         @ConfigProperty(
@@ -45,16 +45,6 @@ public class HttpResponsePayloadEstimator {
         this.maxCollectionSize = maxCollectionSize;
     }
 
-    @Inject
-    public HttpResponsePayloadEstimator(Provider<ObjectMapper> objectMapper,
-                                        @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-enabled")
-                                        boolean payloadEstimationEnabled,
-                                        @ConfigProperty(name = "app.performance.http-metrics.payload-estimation-max-collection-size")
-                                        int maxCollectionSize) {
-        this.objectMapper = objectMapper::get;
-        this.payloadEstimationEnabled = payloadEstimationEnabled;
-        this.maxCollectionSize = maxCollectionSize;
-    }
 
     public long estimate(
         ContainerRequestContext requestContext,

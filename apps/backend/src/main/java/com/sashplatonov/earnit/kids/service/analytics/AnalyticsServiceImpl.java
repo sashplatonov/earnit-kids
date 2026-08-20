@@ -19,7 +19,6 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
@@ -47,6 +46,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final Duration analyticsCacheTtl;
     private final ConcurrentMap<String, AnalyticsCacheEntry> analyticsCache = new ConcurrentHashMap<>();
 
+    @Inject
     public AnalyticsServiceImpl(FamilyRepository familyRepository,
                                 HistoryRepository historyRepository,
                                 TaskRepository taskRepository,
@@ -64,23 +64,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         this.analyticsCacheTtl = analyticsCacheTtl == null ? DEFAULT_CACHE_TTL : analyticsCacheTtl;
     }
 
-    @Inject
-    public AnalyticsServiceImpl(Provider<FamilyRepository> familyRepository,
-                                Provider<HistoryRepository> historyRepository,
-                                TaskRepository taskRepository,
-                                ShopItemRepository shopItemRepository,
-                                TimeProvider timeProvider,
-                                BackendKpiMetrics backendKpiMetrics,
-                                @ConfigProperty(name = "app.performance.cache.analytics-ttl")
-                                Duration analyticsCacheTtl) {
-        this.familyRepository = familyRepository::get;
-        this.historyRepository = historyRepository::get;
-        this.taskRepository = taskRepository;
-        this.shopItemRepository = shopItemRepository;
-        this.timeProvider = timeProvider;
-        this.backendKpiMetrics = backendKpiMetrics;
-        this.analyticsCacheTtl = analyticsCacheTtl == null ? DEFAULT_CACHE_TTL : analyticsCacheTtl;
-    }
 
     public AnalyticsServiceImpl(FamilyRepository familyRepository,
                                 HistoryRepository historyRepository,

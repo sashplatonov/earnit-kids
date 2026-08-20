@@ -16,7 +16,6 @@ import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.service.websocket.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -48,6 +47,7 @@ public class FamilyResource extends FamilyResourceSupport {
 
     private final Supplier<FamilyActionService> familyActionService;
 
+    @Inject
     public FamilyResource(FamilyActionService familyActionService,
                           FamilyService familyService,
                           WebSocketNotificationService webSocketNotificationService,
@@ -56,14 +56,6 @@ public class FamilyResource extends FamilyResourceSupport {
         this.familyActionService = () -> familyActionService;
     }
 
-    @Inject
-    public FamilyResource(Provider<FamilyActionService> familyActionService,
-                          FamilyService familyService,
-                          WebSocketNotificationService webSocketNotificationService,
-                          FamilyParentAccessService familyParentAccessService) {
-        super(familyService, webSocketNotificationService, familyParentAccessService);
-        this.familyActionService = familyActionService::get;
-    }
 
     @POST
     @Path("/data")

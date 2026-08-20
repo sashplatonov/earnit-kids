@@ -13,7 +13,6 @@ import com.sashplatonov.earnit.kids.service.family.FamilyService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -45,14 +44,9 @@ public class FamilyReadResource extends ResourceAuthSupport {
     private final Supplier<FamilyService> familyService;
     private final BaseDataService baseDataService;
 
+    @Inject
     public FamilyReadResource(FamilyService familyService, BaseDataService baseDataService) {
         this.familyService = () -> familyService;
-        this.baseDataService = baseDataService;
-    }
-
-    @Inject
-    public FamilyReadResource(Provider<FamilyService> familyService, BaseDataService baseDataService) {
-        this.familyService = familyService::get;
         this.baseDataService = baseDataService;
     }
 

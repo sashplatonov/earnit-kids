@@ -24,10 +24,14 @@ public class TelegramBotApiClient {
 
     @Inject
     public TelegramBotApiClient(TelegramConfig config, ObjectMapper objectMapper) {
+        this(config, objectMapper, HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build());
+    }
+
+    TelegramBotApiClient(TelegramConfig config, ObjectMapper objectMapper, HttpClient httpClient) {
         this.config = config;
         this.jsonReader = objectMapper.reader();
         this.jsonWriter = objectMapper.writer();
-        this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+        this.httpClient = httpClient;
     }
 
     public Long sendMessage(long chatId, String text, List<InlineButton> buttons) throws Exception {

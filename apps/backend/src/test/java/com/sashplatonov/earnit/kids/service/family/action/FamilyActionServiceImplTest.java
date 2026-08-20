@@ -112,6 +112,24 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
+    void purchaseItem_withSufficientBalance_debitsAndLoadsData() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        ShopItemEntity item = shopItem(10, 1, 2001L, "Console", 7);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        io.quarkus.hibernate.orm.panache.PanacheQuery itemQuery = queryOf(item);
+        when(shopItemRepository.find(
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
+            1, 10, 2001L)).thenReturn(itemQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        assertThat(successValue(service.purchaseItem("fam-1", 10, 2001L))).isEqualTo(payload);
+        assertThat(child.getBalance()).isEqualTo(13);
+        verify(historyRepository).persist(org.mockito.ArgumentMatchers.any(HistoryEntryEntity.class));
+    }
+
+    @Test
     void purchaseItem_whenDailyRewardLimitReached_returnsFailure() {
         ChildEntity child = child(10, 1, "Alice", 50);
         child.setDailyRewardLimit(10);
@@ -561,6 +579,45 @@ class FamilyActionServiceImplTest {
         assertThat(child.getBalance()).isEqualTo(15);
         verify(historyRepository).delete(historyEntry);
         verify(familyService).loadFamilyData("fam-1", 10, true);
+    }
+
+    @Test
+    void completeTask_creditsChildAndPersistsHistory() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        TaskEntity task = task(10, 1, 3001L, "Убрать комнату", 50);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        io.quarkus.hibernate.orm.panache.PanacheQuery taskQuery = queryOf(task);
+        when(taskRepository.find(
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
+            1, 10, 3001L)).thenReturn(taskQuery);
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        assertThat(successValue(service.completeTask("fam-1", 10, 3001L))).isEqualTo(payload);
+        assertThat(child.getBalance()).isEqualTo(70);
+        verify(historyRepository).persist(org.mockito.ArgumentMatchers.any(HistoryEntryEntity.class));
+    }
+
+    @Test
+    void adjustBalance_zeroAmount_returnsFailure() {
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        assertThat(service.adjustBalance("fam-1", 10, 0, "ignored"))
+            .isInstanceOf(OperationResult.Failure.class);
+        verifyNoInteractions(childRepository);
+    }
+
+    @Test
+    void adjustBalance_nonZeroAmount_updatesBalanceAndHistory() {
+        ChildEntity child = child(10, 1, "Alice", 20);
+        FamilyDataResponse payload = emptyPayload(true, 10);
+        when(familyRepository.getDbId("fam-1")).thenReturn(Optional.of(1));
+        when(childRepository.findByIdOptional(10)).thenReturn(Optional.of(child));
+        when(familyService.loadFamilyData("fam-1", 10, true)).thenReturn(OperationResult.success(payload));
+
+        assertThat(successValue(service.adjustBalance("fam-1", 10, 5, "bonus"))).isEqualTo(payload);
+        assertThat(child.getBalance()).isEqualTo(25);
+        verify(historyRepository).persist(org.mockito.ArgumentMatchers.any(HistoryEntryEntity.class));
     }
 
     @Test

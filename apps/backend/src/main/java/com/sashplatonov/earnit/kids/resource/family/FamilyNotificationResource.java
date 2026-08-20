@@ -6,7 +6,6 @@ import com.sashplatonov.earnit.kids.service.family.FamilyNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -26,13 +25,9 @@ import java.util.function.Supplier;
 public class FamilyNotificationResource extends ResourceAuthSupport {
     private final Supplier<FamilyNotificationService> notifications;
 
+    @Inject
     public FamilyNotificationResource(FamilyNotificationService notifications) {
         this.notifications = () -> notifications;
-    }
-
-    @Inject
-    public FamilyNotificationResource(Provider<FamilyNotificationService> notifications) {
-        this.notifications = notifications::get;
     }
 
     @GET

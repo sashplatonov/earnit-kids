@@ -87,7 +87,7 @@ suite and quality gates.
 | 14 | P2-3: Remove noise `EXPLAIN:` comments — repository/remaining | P2 | P2-2 | AdminAnalyticsRepository (25 comments) + remaining packages |
 | 15 | P2-4: Adopt `ResourceAuthSupport` across all resources | P2 | P0-2 | Migrate `FamilyReadResource`, `AccountResource`, telegram resources, admin resources |
 | 16 | P2-5: Complete `OperationResult` response-mapping migration | P2 | P0-1 | Five resource-level switches still violate P0-1 acceptance criteria |
-| 17 | P2-6: Finish removal of noise `EXPLAIN:` comments | P2 | P2-1, P2-2, P2-3 | 269 comments remain; P3-1 requires fewer than 120 |
+| 17 | P2-6: Finish removal of noise `EXPLAIN:` comments | P2 | P2-1, P2-2, P2-3 | 269 comments remain; P3-1 requires fewer than 20 |
 | 18 | P3-1: Final quality gate + coverage check | P3 | All preceding tasks | Confirm `verify` passes, JaCoCo ≥ 0.80, no regressions |
 
 ## P0-1: Extract `OperationResultResponses` utility
@@ -1096,7 +1096,7 @@ git commit -m "fix(backend): remove SpotBugs ownership suppressions"
 
 ## P0-6: Restore and enforce 80% JaCoCo line coverage
 
-**Status:** ⬜ Not started
+**Status:** ✅ Completed
 **Priority:** P0
 **Depends on:** P0-4
 
@@ -1219,7 +1219,7 @@ git commit -m "refactor(backend): complete result response mapping"
 
 ### Outcome
 
-The production source contains fewer than 120 `EXPLAIN:` comments, with every
+The production source contains fewer than 20 `EXPLAIN:` comments, with every
 remaining comment documenting a non-obvious algorithm, ordering constraint,
 security boundary, or subtle bug workaround rather than restating identifiers or
 the adjacent statement.
@@ -1246,7 +1246,7 @@ flow must remain as written.
 
 ### Acceptance criteria
 
-- The exact production-source count is below 120.
+- The exact production-source count is below 20.
 - Every remaining comment begins with `EXPLAIN:` or `FIXME:` and explains a genuinely non-obvious constraint or algorithm.
 - No Java behavior, API response, or test expectation changes solely because of this cleanup.
 
@@ -1297,7 +1297,7 @@ must not drop below 0.80; if new extracted utilities lack coverage, add tests
 2. Run `./mvnw quarkus:build` to confirm JVM build smoke passes (no wiring errors from new CDI beans).
 3. Start `./mvnw quarkus:dev` and `curl localhost:8080/q/openapi` — diff against pre-refactor spec (captured before starting) to confirm no API contract change.
 4. Confirm `grep -rn "@SuppressWarnings" src/main/java` returns 0 results.
-5. Confirm `grep -rn "EXPLAIN:" src/main/java | wc -l` is substantially reduced from the original 346 (target: under ~120, representing only genuinely complex-flow comments).
+5. Confirm `grep -rn "EXPLAIN:" src/main/java | wc -l` is substantially reduced from the original 346 (target: under ~20, representing only genuinely complex-flow comments).
 6. Confirm no new files in `config/` excluding patterns or suppressions.
 
 ### Acceptance criteria
@@ -1307,7 +1307,7 @@ must not drop below 0.80; if new extracted utilities lack coverage, add tests
 - `./mvnw quarkus:build` succeeds.
 - `/q/openapi` spec is identical to pre-refactor (no new/removed/changed operations, schemas, or status codes).
 - `grep -rn "@SuppressWarnings" src/main/java/com/sashplatonov` returns 0 matches.
-- Remaining `EXPLAIN:` comment count is under ~120 (only complex-flow comments survive).
+- Remaining `EXPLAIN:` comment count is under ~20 (only complex-flow comments survive).
 
 ### Verification
 

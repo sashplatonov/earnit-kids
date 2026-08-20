@@ -11,7 +11,6 @@ import com.sashplatonov.earnit.kids.service.telegram.TelegramParentInvitationSer
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -32,6 +31,7 @@ public class TelegramParentInviteAcceptResource {
     private final Supplier<FamilyRepository> families;
     private final TimeProvider timeProvider;
 
+    @Inject
     public TelegramParentInviteAcceptResource(TelegramParentInvitationService invitations,
                                               TelegramFeatureGate featureGate,
                                               CookieBuilder cookieBuilder,
@@ -44,18 +44,6 @@ public class TelegramParentInviteAcceptResource {
         this.timeProvider = timeProvider;
     }
 
-    @Inject
-    public TelegramParentInviteAcceptResource(TelegramParentInvitationService invitations,
-                                              TelegramFeatureGate featureGate,
-                                              CookieBuilder cookieBuilder,
-                                              Provider<FamilyRepository> families,
-                                              TimeProvider timeProvider) {
-        this.invitations = invitations;
-        this.featureGate = featureGate;
-        this.cookieBuilder = cookieBuilder;
-        this.families = families::get;
-        this.timeProvider = timeProvider;
-    }
 
     @POST
     public Response accept(@Valid ParentInviteAcceptRequest request) {
