@@ -48,7 +48,7 @@
     {#if loading}<p class="muted" role="status">{$i18n.t('app.telegram.requests.loading')}</p>
     {:else if error}<div class="state-error" role="alert"><TelegramIcon name="alert" size={18} label={$i18n.t('app.telegram.home.error')} /><p>{error}</p><button type="button" on:click={onRetry}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></div>
     {:else if !requests.length}<div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.requests.allClear')} /><span>{resolvedEmpty}</span></div>
-    {:else}<div class="items">{#each requests as request (request.id)}<article class="request-card" class:decision={canDecide && request.status === 'pending'}>
+    {:else}<div class="items" aria-label={resolvedHeading}>{#each requests as request (request.id)}<article class="request-card" class:decision={canDecide && request.status === 'pending'}>
     <div class="card-main">
         <span class="entity-graphic" aria-hidden="true">
             {#if extractLeadingEmoji(request.taskName || request.itemName || request.title || '')}
@@ -70,14 +70,14 @@
     .panel { width:100%; }
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:0 .2rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
-    .items { display:flex; flex-direction:column; gap:.55rem; width:100%; }
+    .items { display:flex; flex-direction:column; width:100%; border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; box-sizing:border-box; }
     @media (max-width:700px) {
-        .items { margin:0 -.75rem; padding:0 .75rem; width:calc(100% + 1.5rem); }
+        .items { margin:0 -.75rem; width:calc(100% + 1.5rem); }
     }
-    .request-card { display:flex; flex-direction:column; gap:0; width:100%; box-sizing:border-box; padding:.55rem .6rem; border:1px solid #e5e9f1; border-radius:.85rem; background:#fff; }
-    .request-card.decision { border-color:#dfe4ee; }
+    .request-card { display:flex; flex-direction:column; gap:0; width:100%; box-sizing:border-box; padding:.6rem 0; border:0; border-bottom:1px solid #edf0f5; background:transparent; }
+    .request-card:last-child { border-bottom:0; }
     .card-main { display:flex; align-items:flex-start; gap:.55rem; }
-    .entity-graphic { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#f5f6fa; }
+    .entity-graphic { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; }
     .entity-emoji { font-size:1.25rem; line-height:1; }
     .entity-icon { display:grid; place-items:center; color:#5b63e9; }
     .entity-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:.2rem; }
@@ -85,7 +85,7 @@
     .meta { margin:0; color:#7f899e; font-size:.75rem; line-height:1.3; }
     .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#20283d; font-weight:700; font-size:.81rem; }
     .attention-actions { margin-top:.55rem; margin-left:2.5rem; display:grid; grid-template-columns:1fr 1fr; gap:.45rem; }
-    .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.25rem; min-height:2rem; padding:.35rem .45rem; border-radius:.55rem; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
+    .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.25rem; min-height:2.75rem; padding:.35rem .45rem; border-radius:.55rem; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
     .attention-actions button:disabled { cursor:wait; opacity:.6; }
     .approve { border:1px solid #cce9d8; background:#eaf7ef; color:#17884b; }
     .reject { border:1px solid #f3cfd2; background:#fff0f1; color:#c63c42; }

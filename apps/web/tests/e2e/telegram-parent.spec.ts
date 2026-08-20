@@ -40,10 +40,18 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         contentType: 'application/json',
         body: JSON.stringify({ detail: 'Already resolved' }),
     }));
+    await page.route('**/api/requests/16/reject**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+    }));
     await page.route('**/api/data/details**', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ requests: [{ id: 15, taskName: 'Read', coins: 20, status: 'pending' }], history: [], friends: [] }),
+        body: JSON.stringify({ requests: [
+            { id: 15, taskName: 'Read this very long task title without clipping', coins: 20, status: 'pending', childNickname: 'Alex' },
+            { id: 16, itemName: 'Game reward', amount: 50, requestType: 'shop_purchase', status: 'pending', childNickname: 'Sam' },
+        ], history: [], friends: [] }),
     }));
     await page.route('**/api/history?**', (route) => route.fulfill({
         status: 200,
@@ -53,17 +61,23 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
 
     await page.goto('/telegram');
 
-    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Tasks' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Rewards' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Family' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Tasks' }).press('End');
-    await expect(page.getByRole('tab', { name: 'Family' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Family', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Add child' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Home' }).click();
-    await page.getByRole('button', { name: 'Approve request' }).click();
-    await expect(page.getByRole('alert')).toContainText('This request could not be updated. Try again.');
+    await expect(page.getByRole('button', { name: /Switch child|Выбрать ребёнка/ })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /Tasks|Задания/ })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /Rewards|Награды/ })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /Family|Семья/ })).toBeVisible();
+    await page.getByRole('tab', { name: /Tasks|Задания/ }).press('End');
+    await expect(page.getByRole('tab', { name: /Family|Семья/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: /Family|Семья/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Add child|Добавить ребёнка/ })).toBeVisible();
+    await page.getByRole('tab', { name: /Home|Главная/ }).click();
+    const requestRows = page.locator('.request-card');
+    await expect(requestRows).toHaveCount(2);
+    await expect(page.locator('.items')).toHaveCSS('border-style', 'solid');
+    await expect(requestRows.nth(0)).toHaveCSS('border-bottom-width', '1px');
+    await expect(requestRows.nth(1)).toHaveCSS('border-bottom-width', '0px');
+    await requestRows.nth(0).getByRole('button', { name: /Approve request|Одобрить заявку/ }).click();
+    await expect(page.getByRole('alert')).toContainText(/This request could not be updated|Не удалось обновить заявку/);
+    await requestRows.nth(1).getByRole('button', { name: /Reject request|Отклонить заявку/ }).click();
     const mobileNav = await page.getByRole('tablist').evaluate((node) => {
         const style = getComputedStyle(node);
         const rect = node.getBoundingClientRect();

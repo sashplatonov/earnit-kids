@@ -26,7 +26,7 @@ The supplied reference `docs/earnit-kids-requests-reference-v2(1).html` is the l
 
 ## P1-1: Convert the parent Needs attention inbox into list rows
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed
 **Priority:** P1  
 **Depends on:** -
 
