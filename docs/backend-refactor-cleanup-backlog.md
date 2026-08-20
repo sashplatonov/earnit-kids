@@ -1270,7 +1270,7 @@ git commit -m "refactor(backend): finish noise comment cleanup"
 
 ## P3-1: Final quality gate and coverage check
 
-**Status:** ⛔ Blocked
+**Status:** ✅ Completed
 **Priority:** P3  
 **Depends on:** P0-1, P0-2, P0-3, P0-4, P0-5, P0-6, P1-1, P1-2, P1-3, P1-4, P1-5, P2-1, P2-2, P2-3, P2-4, P2-5, P2-6
 
@@ -1278,8 +1278,8 @@ git commit -m "refactor(backend): finish noise comment cleanup"
 
 The full backend quality gate passes after all refactoring: Checkstyle clean,
 JaCoCo line coverage ≥ 0.80, SpotBugs clean, no `@SuppressWarnings` introduced, no
-new suppressions in `config/`, and the OpenAPI spec at `/q/openapi` is unchanged
-(confirming no API contract drift).
+new suppressions in `config/`, and the OpenAPI spec at `/api/openapi.yaml` is
+unchanged (confirming no API contract drift).
 
 ### Architectural decision
 
@@ -1296,10 +1296,18 @@ must not drop below 0.80; if new extracted utilities lack coverage, add tests
 
 1. Run `./mvnw verify` and confirm: Checkstyle 0 errors, JaCoCo ≥ 0.80, SpotBugs 0 errors, tests 0 failures.
 2. Run `./mvnw quarkus:build` to confirm JVM build smoke passes (no wiring errors from new CDI beans).
-3. Start `./mvnw quarkus:dev` and `curl localhost:8080/q/openapi` — diff against pre-refactor spec (captured before starting) to confirm no API contract change.
+3. Start `./mvnw quarkus:dev` and `curl localhost:8080/api/openapi.yaml` — diff against pre-refactor spec (captured before starting) to confirm no API contract change.
 4. Confirm `grep -rn "@SuppressWarnings" src/main/java` returns 0 results.
 5. Confirm `grep -rn "EXPLAIN:" src/main/java | wc -l` is substantially reduced from the original 346 (target: under ~20, representing only genuinely complex-flow comments).
 6. Confirm no new files in `config/` excluding patterns or suppressions.
+
+### Completion evidence
+
+- `./mvnw -B -ntp validate` passed with Checkstyle reporting 0 violations.
+- `./mvnw -B -ntp verify -Dstyle.color=never` passed with all coverage checks met, PMD passed, SpotBugs reporting 0 bugs, and 0 test failures.
+- `./mvnw -B -ntp quarkus:build -DskipTests` passed.
+- `/api/openapi.yaml` was byte-identical to the pre-refactor baseline (`86,198` bytes); `/q/openapi` is not exposed because the configured path is `/api/openapi.yaml`.
+- `@SuppressWarnings` count is 0, and the production source contains 14 `EXPLAIN:` comments.
 
 ### Acceptance criteria
 
