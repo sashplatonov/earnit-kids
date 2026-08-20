@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.config.auth.AuthContext;
 import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.service.common.PageRequest;
 import com.sashplatonov.earnit.kids.service.system.SystemDashboardService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -67,7 +68,7 @@ public class SystemDashboardResource {
         if (authFailure != null) {
             return authFailure;
         }
-        int resolvedLimit = limit == null ? 100 : Math.max(1, Math.min(limit, 500));
+        int resolvedLimit = PageRequest.of(1, limit == null ? 100 : limit, 500).limit();
         String resolvedLevel = level == null || level.isBlank() ? "all" : level;
         return Response.ok(systemDashboardService.getLogs(resolvedLevel, resolvedLimit)).build();
     }

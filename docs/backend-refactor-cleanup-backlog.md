@@ -541,7 +541,7 @@ git commit -m "refactor(backend): extract HistoryDtoMapper and RelatedEntityHydr
 
 ## P1-4: Extract `PageRequest` pagination helper
 
-**Status:** ⬜ Not started  
+**Status:** ✅ Completed  
 **Priority:** P1  
 **Depends on:** -
 

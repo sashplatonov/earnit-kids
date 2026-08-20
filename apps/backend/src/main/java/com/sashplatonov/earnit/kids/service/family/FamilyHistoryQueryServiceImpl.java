@@ -16,6 +16,7 @@ import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.repository.ShopItemRepository;
 import com.sashplatonov.earnit.kids.repository.TaskRepository;
 import com.sashplatonov.earnit.kids.service.common.ServiceResults;
+import com.sashplatonov.earnit.kids.service.common.PageRequest;
 import com.sashplatonov.earnit.kids.service.family.dashboard.FamilyDashboardMapper;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -79,9 +80,8 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
             return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
         }
 
-        int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
-        int offset = (page - 1) * effectiveLimit;
-        List<HistoryEntryEntity> rows = historyRepository.getHistory(childId, effectiveLimit, offset);
+        PageRequest pageRequest = PageRequest.of(page, limit, MAX_PAGE_SIZE);
+        List<HistoryEntryEntity> rows = historyRepository.getHistory(childId, pageRequest.limit(), pageRequest.offset());
         int total = historyRepository.getHistoryCount(childId);
         List<TaskDto> tasks = loadTasks(childId, Map.of());
         List<ShopItemDto> shopItems = loadShopItems(childId, Map.of());
@@ -91,7 +91,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
         List<HistoryEntryDto> items = rows.stream()
             .map(historyEntry -> historyDtoMapper.toDto(historyEntry, taskMap, shopMap))
             .toList();
-        return OperationResult.success(new PaginatedHistory(items, total, page, effectiveLimit));
+        return OperationResult.success(new PaginatedHistory(items, total, pageRequest.page(), pageRequest.limit()));
     }
 
     @Override
@@ -101,9 +101,8 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
             return familyDbIdResult.asFailure();
         }
         int familyDbId = ((OperationResult.Success<Integer>) familyDbIdResult).value();
-        int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
-        int offset = (page - 1) * effectiveLimit;
-        List<PurchaseRequestEntity> rows = purchaseRequestRepository.getRequests(familyDbId, effectiveLimit, offset);
+        PageRequest pageRequest = PageRequest.of(page, limit, MAX_PAGE_SIZE);
+        List<PurchaseRequestEntity> rows = purchaseRequestRepository.getRequests(familyDbId, pageRequest.limit(), pageRequest.offset());
         int total = purchaseRequestRepository.getRequestsCount(familyDbId);
         Map<Long, TaskDto> taskMap = new LinkedHashMap<>();
         Map<Long, ShopItemDto> shopMap = new LinkedHashMap<>();
@@ -118,7 +117,7 @@ public final class FamilyHistoryQueryServiceImpl implements FamilyHistoryQuerySe
             });
         relatedEntityHydrator.hydrateMissingRequests(familyDbId, rows, taskMap, shopMap);
         List<RequestDto> items = rows.stream().map(request -> toRequestDto(request, taskMap, shopMap)).toList();
-        return OperationResult.success(new PaginatedRequests(items, total, page, effectiveLimit));
+        return OperationResult.success(new PaginatedRequests(items, total, pageRequest.page(), pageRequest.limit()));
     }
 
     private Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
