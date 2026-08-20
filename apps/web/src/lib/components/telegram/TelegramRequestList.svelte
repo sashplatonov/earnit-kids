@@ -71,14 +71,14 @@
     .panel { width:100%; }
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:0 .2rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
-    .items { display:flex; flex-direction:column; width:100%; box-sizing:border-box; }
-    .request-row { display:flex; align-items:flex-start; gap:.6rem; width:100%; box-sizing:border-box; padding:.6rem 0; border-bottom:1px solid #edf0f5; background:transparent; }
+    .items { display:flex; flex-direction:column; width:100%; box-sizing:border-box; padding:0 .6rem; }
+    .request-row { display:flex; align-items:stretch; gap:.25rem; width:100%; box-sizing:border-box; min-height:4rem; padding:.5rem 0; border-bottom:1px solid #edf0f5; background:transparent; }
     .request-row:last-child { border-bottom:0; }
-    .entity-graphic { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; }
+    .entity-graphic { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; margin-top:.2rem; border-radius:.65rem; background:#eef0ff; }
     .entity-icon { display:grid; place-items:center; color:#5b63e9; }
-    .content { flex:1; min-width:0; display:flex; flex-direction:column; gap:.2rem; }
-    h3 { margin:0; color:#18243d; font-size:.9rem; line-height:1.25; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .meta { margin:0; color:#7f899e; font-size:.75rem; line-height:1.3; }
+    .content { flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:.2rem; }
+    h3 { margin:0; color:#18243d; font-size:.95rem; line-height:1.3; font-weight:600; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
+    .meta { margin:0; color:#66718a; font-size:.8rem; line-height:1.3; }
     .content-footer { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-top:.1rem; }
     .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#237b3c; font-weight:700; font-size:.81rem; white-space:nowrap; }
     .amount.spend { color:#a33b3b; }
