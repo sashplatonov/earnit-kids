@@ -50,7 +50,7 @@
     }
 </script>
 
-<section class="panel" aria-label={$i18n.t('app.telegram.childRequests.title')}>
+<section aria-label={$i18n.t('app.telegram.childRequests.title')}>
     {#if asyncState !== 'success'}
         <TelegramAsyncState state={asyncState} loadingLabel={$i18n.t('app.telegram.childRequests.loading')} emptyLabel={$i18n.t('app.telegram.childRequests.empty')} errorMessage={error} retryLabel={$i18n.t('app.telegram.childRequests.retry')} onRetry={onRetry} />
     {:else}

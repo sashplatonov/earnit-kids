@@ -220,7 +220,7 @@ test('request and task lists keep one surface and usable geometry at narrow widt
 
         await page.getByRole('tab', { name: /Activity|Активность/ }).click();
         await page.getByRole('tab', { name: /Requests|Заявки/ }).click();
-        const requestList = page.locator('section.panel .list-surface');
+        const requestList = page.locator('section[aria-label="Мои заявки"] .list-surface, section[aria-label="My requests"] .list-surface');
         await expect(requestList).toBeVisible();
         await expect(requestList.locator('.row')).toHaveCount(2);
         await expect(requestList.locator('.entity-emoji')).toHaveCount(0);

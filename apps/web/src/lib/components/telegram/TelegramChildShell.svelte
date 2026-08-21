@@ -120,7 +120,7 @@
         {:else}
             <TelegramTabBar tabs={activityTabs} selected={activityView} idPrefix="child-activity" ariaLabel={$i18n.t('app.telegram.childShell.activity')} fixedOnMobile={false} onSelect={selectActivityView} />
             {#if activityView === 'requests'}
-                <TelegramChildRequestList cancellingIds={cancellingIds} cancelError={cancelError} onCancel={handleCancel} />
+                <TelegramChildRequestList loading={$appStore.isLoading} cancellingIds={cancellingIds} cancelError={cancelError} onCancel={handleCancel} />
             {:else}
                 <TelegramHistoryList entries={history} loading={historyLoading} error={historyError} hasMore={historyHasMore} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />
             {/if}
