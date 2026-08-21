@@ -106,7 +106,7 @@ git commit -m "fix(telegram): Persist invited parent profiles"
 
 ## TASK-047: Authorize membership management by parent account id
 
-**Status:** TODO
+**Status:** BLOCKED
 **Priority:** P1
 **Depends on:** -
 
@@ -169,6 +169,15 @@ cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw 
 git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/family/FamilyParentAccessResource.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/family/FamilyParentAccessService.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/family/FamilyParentAccessServiceImpl.java apps/backend/src/test/java/com/sashplatonov/earnit/kids/service/family/FamilyParentAccessServiceImplTest.java apps/backend/src/test/java/com/sashplatonov/earnit/kids/resource/family/FamilyParentAccessResourceTest.java docs/telegram-parent-invite-without-email-review-backlog.md
 git commit -m "fix(backend): Authorize Telegram-only parent admins"
 ```
+
+### CHECKPOINT
+
+- Completed: Account-id-first actor resolution, legacy email fallback, resource forwarding, and targeted service/resource coverage.
+- Remaining: Resolve the unrelated pre-existing PMD `GodClass` violation in `TelegramIdentityServiceImpl`, then rerun the required backend `verify` gate.
+- Changed files: FamilyParentAccessResource.java, FamilyParentAccessService.java, FamilyParentAccessServiceImpl.java, FamilyParentActorResolver.java, FamilyParentAccessServiceImplTest.java, FamilyParentAccessResourceTest.java, FamilyResourceTest.java.
+- Verification: Targeted tests passed (59 tests); full backend verify passed compilation, 584 tests, JaCoCo, and the changed service PMD check, but failed on `TelegramIdentityServiceImpl` only.
+- Confirmed blocker: `TelegramIdentityServiceImpl:24` PMD `GodClass` (WMC=47, ATFD=50, TCC=21.667%), outside TASK-047 scope.
+- Next exact action: Resume TASK-047 in a fresh thread after the blocker is resolved, rerun `cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify`, then mark the task DONE and commit the status/state with the implementation.
 
 ## Rejected observations
 

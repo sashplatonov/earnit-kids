@@ -177,7 +177,8 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
     @Override
     @Transactional
-    public OperationResult<Void> removeMembership(Integer membershipId, String familyId, String actorEmail) {
+    public OperationResult<Void> removeMembership(
+        Integer membershipId, String familyId, Integer actorParentAccountId, String actorEmail) {
         var familyOpt = resolveFamily(familyId);
         if (familyOpt.isEmpty()) {
             return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
@@ -195,7 +196,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         }
 
         if (membership.getPermission() == FamilyParentMembershipEntity.Permission.family_admin) {
-            if (isDifferentAdmin(membership, familyDbId, actorEmail)) {
+            if (isDifferentAdmin(membership, familyDbId, actorParentAccountId, actorEmail)) {
                 return failure(ERROR_ADMIN_DELETE_FORBIDDEN, "parentAccess.cannotRemoveAdmin");
             }
             long adminCount = membershipRepository.countFamilyAdmins(familyDbId);
@@ -212,17 +213,12 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     }
 
     private boolean isDifferentAdmin(
-        FamilyParentMembershipEntity membership, Integer familyDbId, String actorEmail) {
-        if (actorEmail == null || actorEmail.isBlank()) {
-            return true;
-        }
-
-        var actorParentOpt = parentAccountRepository.findByEmail(actorEmail);
-        if (actorParentOpt.isEmpty()) {
-            return true;
-        }
-
-        var actorMembershipOpt = membershipRepository.findByParentAndFamily(actorParentOpt.get().getId(), familyDbId);
+        FamilyParentMembershipEntity membership,
+        Integer familyDbId,
+        Integer actorParentAccountId,
+        String actorEmail) {
+        var actorMembershipOpt = FamilyParentActorResolver.resolve(
+            familyDbId, actorParentAccountId, actorEmail, parentAccountRepository, membershipRepository);
         if (actorMembershipOpt.isEmpty()) {
             return true;
         }
@@ -272,7 +268,8 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     @Override
     @Transactional
     public OperationResult<ParentMembershipDto> setMembershipActive(
-        Integer membershipId, boolean active, String familyId, String actorEmail) {
+        Integer membershipId, boolean active, String familyId,
+        Integer actorParentAccountId, String actorEmail) {
         var familyOpt = resolveFamily(familyId);
         if (familyOpt.isEmpty()) {
             return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
@@ -308,7 +305,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     @Override
     @Transactional
     public OperationResult<ParentMembershipDto> transferAdmin(
-        Integer membershipId, String familyId, String actorEmail) {
+        Integer membershipId, String familyId, Integer actorParentAccountId, String actorEmail) {
         var familyOpt = resolveFamily(familyId);
         if (familyOpt.isEmpty()) {
             return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
@@ -332,11 +329,8 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }
 
-        var actorParentOpt = parentAccountRepository.findByEmail(actorEmail);
-        if (actorParentOpt.isEmpty()) {
-            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
-        }
-        var actorMembershipOpt = membershipRepository.findByParentAndFamily(actorParentOpt.get().getId(), familyDbId);
+        var actorMembershipOpt = FamilyParentActorResolver.resolve(
+            familyDbId, actorParentAccountId, actorEmail, parentAccountRepository, membershipRepository);
         if (actorMembershipOpt.isEmpty()) {
             return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
         }

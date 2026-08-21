@@ -15,11 +15,12 @@ public interface FamilyParentAccessService {
     OperationResult<ParentMembershipDto> updateMembership(
         Integer membershipId, String permission, String familyId);
 
-    OperationResult<Void> removeMembership(Integer membershipId, String familyId, String actorEmail);
+    OperationResult<Void> removeMembership(
+        Integer membershipId, String familyId, Integer actorParentAccountId, String actorEmail);
 
     OperationResult<ParentMembershipDto> setMembershipActive(
-        Integer membershipId, boolean active, String familyId, String actorEmail);
+        Integer membershipId, boolean active, String familyId, Integer actorParentAccountId, String actorEmail);
 
     OperationResult<ParentMembershipDto> transferAdmin(
-        Integer membershipId, String familyId, String actorEmail);
+        Integer membershipId, String familyId, Integer actorParentAccountId, String actorEmail);
 }

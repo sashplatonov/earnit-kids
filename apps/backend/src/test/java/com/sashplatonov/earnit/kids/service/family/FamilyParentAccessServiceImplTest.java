@@ -250,7 +250,7 @@ class FamilyParentAccessServiceImplTest {
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
         when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(membership));
 
-        OperationResult<Void> result = service.removeMembership(11, "fam-1", "admin@test.com");
+        OperationResult<Void> result = service.removeMembership(11, "fam-1", null, "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         verify(membershipRepository).delete(membership);
@@ -268,7 +268,7 @@ class FamilyParentAccessServiceImplTest {
         when(parentAccountRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(actor));
         when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actorMembership));
 
-        OperationResult<Void> result = service.removeMembership(11, "fam-1", "admin@test.com");
+        OperationResult<Void> result = service.removeMembership(11, "fam-1", null, "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<Void>) result).errorCode())
@@ -286,7 +286,7 @@ class FamilyParentAccessServiceImplTest {
         when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(membership));
         when(parentAccountRepository.findByIdOptional(1)).thenReturn(Optional.of(parent));
 
-        OperationResult<ParentMembershipDto> result = service.setMembershipActive(11, false, "fam-1", "admin@test.com");
+        OperationResult<ParentMembershipDto> result = service.setMembershipActive(11, false, "fam-1", null, "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         assertThat(membership.getStatus()).isEqualTo(MembershipStatus.inactive);
@@ -303,7 +303,7 @@ class FamilyParentAccessServiceImplTest {
         when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(membership));
         when(membershipRepository.countFamilyAdmins(7)).thenReturn(1L);
 
-        OperationResult<ParentMembershipDto> result = service.setMembershipActive(11, false, "fam-1", "admin@test.com");
+        OperationResult<ParentMembershipDto> result = service.setMembershipActive(11, false, "fam-1", null, "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
@@ -322,7 +322,7 @@ class FamilyParentAccessServiceImplTest {
         when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(membership));
         when(parentAccountRepository.findByIdOptional(1)).thenReturn(Optional.of(parent));
 
-        OperationResult<ParentMembershipDto> result = service.setMembershipActive(11, true, "fam-1", "admin@test.com");
+        OperationResult<ParentMembershipDto> result = service.setMembershipActive(11, true, "fam-1", null, "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         assertThat(membership.getStatus()).isEqualTo(MembershipStatus.active);
@@ -342,11 +342,30 @@ class FamilyParentAccessServiceImplTest {
         when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
         when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
 
-        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", "admin@test.com");
+        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", null, "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         assertThat(target.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
         assertThat(actor.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.editor);
+    }
+
+    @Test
+    void transferAdmin_telegramOnlyAdminUsesAccountIdWithoutEmailLookup() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        ParentAccountEntity targetParent = parent(2, "target@test.com");
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+        when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
+        when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
+
+        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", 1, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        assertThat(target.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
+        verify(parentAccountRepository, org.mockito.Mockito.never()).findByEmail(any());
     }
 
     @Test
@@ -361,7 +380,7 @@ class FamilyParentAccessServiceImplTest {
         when(parentAccountRepository.findByEmail("editor@test.com")).thenReturn(Optional.of(actorParent));
         when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
 
-        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", "editor@test.com");
+        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", null, "editor@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())

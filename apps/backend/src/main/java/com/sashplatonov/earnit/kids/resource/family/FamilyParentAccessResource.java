@@ -213,7 +213,8 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
             return unauthorized();
         }
 
-        return toVoidResponse(familyParentAccessService.removeMembership(membershipId, auth.familyId(), auth.email()));
+        return toVoidResponse(familyParentAccessService.removeMembership(
+            membershipId, auth.familyId(), auth.parentAccountId(), auth.email()));
     }
 
     @POST
@@ -236,7 +237,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
         }
 
         return toResponse(familyParentAccessService.setMembershipActive(
-            membershipId, false, auth.familyId(), auth.email()));
+            membershipId, false, auth.familyId(), auth.parentAccountId(), auth.email()));
     }
 
     @POST
@@ -259,7 +260,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
         }
 
         return toResponse(familyParentAccessService.setMembershipActive(
-            membershipId, true, auth.familyId(), auth.email()));
+            membershipId, true, auth.familyId(), auth.parentAccountId(), auth.email()));
     }
 
     @POST
@@ -282,6 +283,6 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
         }
 
         return toResponse(familyParentAccessService.transferAdmin(
-            membershipId, auth.familyId(), auth.email()));
+            membershipId, auth.familyId(), auth.parentAccountId(), auth.email()));
     }
 }
