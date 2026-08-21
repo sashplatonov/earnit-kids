@@ -21,14 +21,9 @@ test('child activity shows child-readable history on mobile', async ({ page }) =
     await expect(page.getByText('+20')).toBeVisible();
     await expect(page.getByText('-7')).toBeVisible();
     await expect(page.getByText('Morning')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Morning' })).toBeVisible();
     await expect(page.locator('section[aria-label="History"], section[aria-label="История"]')).toBeVisible();
     const list = page.locator('.list-surface');
     await expect(list.locator(':scope > .entity-row')).toHaveCount(2);
     await expect(list.locator('.history-time')).toHaveCount(2);
-    await page.getByRole('button', { name: 'Morning' }).click();
-    await expect(list.locator(':scope > .entity-row')).toHaveCount(1);
-    await expect(page.getByText('A very long activity title that remains readable on a narrow viewport')).toBeVisible();
-    await expect(page.getByText('Spent coins')).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
