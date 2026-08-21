@@ -1,4 +1,4 @@
-export type GroupUsageKind = 'tasks' | 'shop';
+export type GroupUsageKind = 'tasks' | 'shop' | 'history';
 
 export type GroupUsage = {
     count: number;
