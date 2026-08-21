@@ -226,8 +226,8 @@
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .empty-group { padding:1rem 0; text-align:center; }
 
-    .more { width:2.75rem; height:2.75rem; flex:0 0 auto; display:grid; place-items:center; border:0; background:transparent; color:#66718a; cursor:pointer; }
-    .grant { width:2.75rem; height:2.75rem; flex:0 0 auto; align-self:center; display:grid; place-items:center; box-sizing:border-box; aspect-ratio:1/1; border:1px solid #3867d6; border-radius:.5rem; background:#3867d6; color:#fff; cursor:pointer; }
+    .more { color:#66718a; }
+    .grant { border:1px solid #3867d6; border-radius:.5rem; background:#3867d6; color:#fff; }
     .grant:disabled { opacity:.5; cursor:not-allowed; }
     .menu-wrap { position:relative; }
     .menu { position:absolute; right:0; top:calc(100% - .5rem); z-index:30; min-width:11rem; padding:.35rem; border:1px solid #e0e4ec; border-radius:.75rem; background:#fff; box-shadow:0 .75rem 2rem rgb(24 36 61 / 14%); }

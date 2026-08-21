@@ -13,6 +13,14 @@ async function expectCompactList(list: import('@playwright/test').Locator, count
         return rows.every((row) => row.classList.contains('entity-row'))
             && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px')
             && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)')
+            && rows.every((row) => {
+                const content = row.querySelector('.entity-content');
+                return content != null && getComputedStyle(content).minWidth === '0px';
+            })
+            && rows.every((row) => [...row.querySelectorAll('.row-action')].every((action) => {
+                const rect = action.getBoundingClientRect();
+                return rect.width >= 44 && rect.height >= 44;
+            }))
             && rows.every((row) => [...row.querySelectorAll('*')].every((child) => {
                 const style = getComputedStyle(child);
                 return !(style.borderStyle !== 'none' && style.borderRadius !== '0px' && style.backgroundColor === 'rgb(255, 255, 255)');

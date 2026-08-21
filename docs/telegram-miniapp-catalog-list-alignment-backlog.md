@@ -124,7 +124,7 @@ git commit -m "test(web): Characterize Telegram catalog list alignment"
 
 ## TASK-P1-2: Compact shared task and reward rows around the catalog pattern
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-P1-1
 

@@ -14,6 +14,7 @@ async function expectCompactList(list: import('@playwright/test').Locator, count
             && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px')
             && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)')
             && rows.every((row) => [...row.querySelectorAll('*')].every((child) => {
+                if (child.matches('button, a')) return true;
                 const style = getComputedStyle(child);
                 return !(style.borderStyle !== 'none' && style.borderRadius !== '0px' && style.backgroundColor === 'rgb(255, 255, 255)');
             }));
@@ -45,8 +46,8 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
             balance: 42,
             childId: 10,
             children: [{ id: 10, nickname: 'Alex', balance: 42 }, { id: 11, nickname: 'Sam', balance: 8 }],
-            tasks: [{ id: 1, name: 'Read', coins: 20, isActive: true }],
-            shop: [{ id: 2, name: 'Game', price: 50, isActive: true }],
+            tasks: [{ id: 1, name: 'A very long parent task title that remains readable on a narrow viewport', coins: 20, groupName: 'Home', lastCompletedAt: '2026-08-16T09:00:00Z', isActive: false }],
+            shop: [{ id: 2, name: 'A very long parent reward title that remains readable', price: 50, groupName: 'Fun', lastPurchasedAt: '2026-08-15T09:00:00Z', isActive: false }],
             requests: [],
         }),
     }));
@@ -80,6 +81,19 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('tab', { name: /Tasks|Задания/ })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Rewards|Награды/ })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Family|Семья/ })).toBeVisible();
+    await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
+    const taskList = page.locator('.tasks .list-surface');
+    await expectCompactList(taskList, 1);
+    await expect(taskList.getByText(/A very long parent task title/)).toBeVisible();
+    await expect(taskList.getByText('Home')).toBeVisible();
+    await expect(taskList.getByRole('button', { name: /Complete|Выполнить/ })).toBeDisabled();
+    await page.getByRole('tab', { name: /Rewards|Награды/ }).click();
+    const rewardList = page.locator('.rewards .list-surface');
+    await expectCompactList(rewardList, 1);
+    await expect(rewardList.getByText(/A very long parent reward title/)).toBeVisible();
+    await expect(rewardList.getByText('Fun')).toBeVisible();
+    await expect(rewardList.getByRole('button', { name: /Grant|Выдать/ })).toBeDisabled();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
     await page.locator('button.catalog').first().click();
     const catalog = page.locator('.catalog .list');

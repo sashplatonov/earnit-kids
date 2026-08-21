@@ -19,27 +19,29 @@
 </div>
 
 <style>
-    .entity-row { display:flex; align-items:stretch; gap:.6rem; width:100%; box-sizing:border-box; min-width:0; min-height:4rem; padding:.5rem 0; border-bottom:1px solid var(--telegram-divider); background:transparent; }
+    .entity-row { display:grid; grid-template-columns:2.25rem minmax(0,1fr) auto; align-items:center; gap:.45rem; width:100%; box-sizing:border-box; min-width:0; min-height:3.25rem; padding:.25rem 0; border-bottom:1px solid var(--telegram-divider); background:transparent; }
     .entity-row:last-child { border-bottom:0; }
     .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; margin-top:.2rem; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
-    .entity-content { display:flex; flex:1; min-width:0; flex-direction:column; gap:.25rem; }
-    .entity-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; min-width:0; }
-    .entity-title { display:flex; flex:1; align-items:stretch; min-width:0; min-height:2.75rem; color:#18243d; font-size:.95rem; font-weight:600; line-height:1.3; overflow:hidden; overflow-wrap:anywhere; }
+    .entity-content { display:flex; min-width:0; flex-direction:column; gap:.1rem; }
+    .entity-heading { display:block; min-width:0; }
+    .entity-title { display:flex; min-width:0; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; overflow:hidden; overflow-wrap:anywhere; }
     .entity-title :global(h3), .entity-title :global(p) { margin:0; }
     .entity-trailing { display:flex; flex:0 0 auto; min-width:0; flex-direction:column; align-items:flex-end; gap:.15rem; }
-    .entity-meta { min-width:0; color:#8a93a8; font-size:.75rem; line-height:1.3; overflow-wrap:anywhere; }
+    .entity-meta { display:flex; min-width:0; flex-direction:column; gap:.05rem; color:#8a93a8; font-size:.7rem; line-height:1.25; overflow-wrap:anywhere; }
     .entity-actions { display:flex; align-items:center; justify-content:space-between; gap:.5rem; min-width:0; }
     .entity-actions:empty, .entity-meta:empty, .entity-trailing:empty { display:none; }
-    .entity-interactive { display:flex; flex:0 0 auto; align-items:center; gap:.25rem; }
+    .entity-interactive { display:flex; min-width:0; flex:0 0 auto; align-items:center; gap:.15rem; }
     .archived { opacity:.6; }
-    :global(.entity-row .row-main) { display:flex; flex:1 0 auto; align-items:stretch; width:100%; min-width:2.75rem; min-height:2.75rem; height:2.75rem; box-sizing:border-box; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
-    :global(.entity-row .entity-meta .meta) { display:flex; align-items:center; gap:.3rem; margin-top:.15rem; color:#66718a; font-size:.8rem; }
+    :global(.entity-row .row-main) { display:flex; align-items:flex-start; width:100%; min-width:0; min-height:2.75rem; box-sizing:border-box; padding:.2rem 0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+    :global(.entity-row .entity-title .title) { display:-webkit-box; overflow:hidden; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; }
+    :global(.entity-row .entity-meta .meta) { display:flex; align-items:center; gap:.3rem; min-width:0; color:#66718a; font-size:.7rem; }
     :global(.entity-row .entity-meta .meta--last) { color:#8a93a8; font-size:.75rem; }
     :global(.entity-row .row-action) { display:grid; place-items:center; width:2.75rem; height:2.75rem; min-width:2.75rem; min-height:2.75rem; box-sizing:border-box; border:0; border-radius:.5rem; background:transparent; cursor:pointer; }
     :global(.entity-row .row-action:disabled) { opacity:.5; cursor:not-allowed; }
     :global(.entity-row button:focus-visible), :global(.entity-row a:focus-visible) { outline:3px solid var(--telegram-focus); outline-offset:2px; }
     @media (max-width:370px) {
-        .entity-heading { flex-direction:column; }
-        .entity-trailing { width:100%; flex-direction:row; align-items:flex-start; flex-wrap:wrap; }
+        .entity-row { grid-template-columns:2rem minmax(0,1fr) auto; gap:.3rem; }
+        .entity-icon { width:2rem; height:2rem; }
+        .entity-interactive { gap:0; }
     }
 </style>
