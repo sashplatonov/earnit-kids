@@ -87,15 +87,15 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await page.getByRole('tab', { name: 'Активность' }).click();
     await page.getByRole('tab', { name: 'Заявки' }).click();
     await expect(page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]')).toBeVisible();
-    const requestList = page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]').locator('.items');
+    const requestList = page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]').locator('.list-surface');
     await expect(requestList).toBeVisible();
-    await expect(requestList.locator('.request-row')).toHaveCount(2);
+    await expect(requestList.locator('.row')).toHaveCount(2);
     await expect(requestList.getByRole('heading', { name: 'Clean room' })).toBeVisible();
     await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
     await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
-    await expect(requestList.locator('.request-row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
-    await expect(requestList.locator('.request-row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
-    expect(await requestList.locator('..').evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
+    await expect(requestList.locator('.row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
+    await expect(requestList.locator('.row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
+    expect(await requestList.evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
         && getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)')).toBeTruthy();
     await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toBeVisible();
     expect(await page.getByRole('button', { name: 'Отменить эту заявку' }).evaluate((node) => {

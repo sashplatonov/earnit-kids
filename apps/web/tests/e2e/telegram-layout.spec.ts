@@ -13,7 +13,8 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ role: 'child', familyId: 'family-1' }) }));
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
-    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 10, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 2, groupName: 'Home', isActive: true }, { id: 2, name: 'A long task title that remains reachable on a narrow mobile viewport', coins: 2, groupName: 'School', isActive: true }, { id: 3, name: 'Pack', coins: 2, groupName: 'School', isActive: true }], shop: [{ id: 4, name: 'Ice cream', price: 5, groupName: 'Fun', isActive: true }], requests: [] }) }));
+    await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ id: 9, type: 'earn', title: 'Read', amount: 2, createdAt: '2026-08-13T10:00:00Z' }], total: 1, page: 1, limit: 20 }) }));
+    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, childId: 10, balance: 10, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 2, groupName: 'Home', isActive: true }, { id: 2, name: 'A long task title that remains reachable on a narrow mobile viewport', coins: 2, groupName: 'School', isActive: true }, { id: 3, name: 'Pack', coins: 2, groupName: 'School', isActive: true }], shop: [{ id: 4, name: 'Ice cream', price: 5, groupName: 'Fun', isActive: true }], requests: [] }) }));
     await page.goto('/telegram');
     await expect(page.locator('.group-subnav .chip')).toHaveCount(3);
     const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list');
@@ -50,4 +51,9 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     await expect(taskList.locator('.check').first()).toBeFocused();
     await expect(taskList.locator('.check').first()).toHaveCSS('outline-width', '3px');
     await expect(taskList.locator('.check').first()).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
+    await page.locator('#child-tab-activity').click();
+    await page.locator('#child-activity-tab-history').click();
+    await expect(page.locator('#child-panel-activity .list-surface')).toBeVisible();
+    await expect(page.locator('#child-panel-activity .list-surface .row')).toHaveCount(1);
+    await expect(page.locator('#child-panel-activity .list-surface')).toHaveCSS('border-style', 'solid');
 });

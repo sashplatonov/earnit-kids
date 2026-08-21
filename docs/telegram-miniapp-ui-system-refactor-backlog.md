@@ -185,7 +185,7 @@ git commit -m "refactor(web): Centralize request presentation"
 
 ## TASK-P1-3: Establish shared list rows and async feedback primitives
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** P1-1
 
@@ -230,16 +230,16 @@ primitives; it is not a replacement global styling system.
 
 ### Acceptance criteria
 
-- [ ] The migrated lists have exactly one rounded bordered outer surface;
+- [x] The migrated lists have exactly one rounded bordered outer surface;
   inner rows are transparent, square, and divider-separated.
-- [ ] Entity text remains safely truncated/wrapped for long localized names;
+- [x] Entity text remains safely truncated/wrapped for long localized names;
   rows do not create horizontal overflow at 320 px.
-- [ ] Retry remains a native button with its existing accessible label and a
+- [x] Retry remains a native button with its existing accessible label and a
   44 px minimum target; interactive rows and actions expose the local
   `:focus-visible` ring.
-- [ ] Loading, success-with-data, success-without-data, and error are
+- [x] Loading, success-with-data, success-without-data, and error are
   distinguishable rendered states.
-- [ ] No new dependency, global store, or duplicate surface CSS is introduced.
+- [x] No new dependency, global store, or duplicate surface CSS is introduced.
 
 ### Verification
 
