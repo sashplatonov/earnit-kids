@@ -374,7 +374,7 @@ no listener on port 5001.
 
 ## TASK-045: Prove cross-layer Telegram parent invitation behavior
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** TASK-044
 
