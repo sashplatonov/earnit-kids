@@ -164,8 +164,10 @@
             {#each filteredItems as item (item.id)}
                 <TelegramEntityRow interactive={canEdit} archived={item.isActive === false}>
                     <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span>
-                    <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(item.name) })} on:click={() => edit(item)}><span class="title">{stripLeadingEmoji(item.name)}</span></button>
-                    <span slot="metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {stripLeadingEmoji(item.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span>
+                    <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(item.name) })} on:click={() => edit(item)}>
+                        <span class="title">{stripLeadingEmoji(item.name)}</span>
+                        <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {stripLeadingEmoji(item.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span>
+                    </button>
                     <svelte:fragment slot="interactive">
                     {#if canEdit}
                         <button class="row-action grant" type="button" disabled={item.isActive === false || grantingId != null} on:click|stopPropagation={() => confirmGrant = item}><TelegramIcon name="award" size={16} label={$i18n.t('app.telegram.rewards.grantShort')} /></button>
