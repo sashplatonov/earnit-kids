@@ -142,11 +142,11 @@
                     <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: template.title, group: template.groupName, semantic: template.semanticGraphicKey ?? null })} size={20} label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')} /></span>
                     <button slot="title" class="row-main" type="button" aria-label={stripEmoji(template.title)} on:click={() => openDetails(template)}>
                         <span class="title">{template.title}</span>
+                        <span class="row-metadata">
+                            <span class="meta"><TelegramCoin size={13} /><span>{amountLabel(template).amount}</span> · <span>{stripEmoji(template.groupName || '')}</span></span>
+                            <span class="meta">{freqLabel(template)}</span>
+                        </span>
                     </button>
-                    <span slot="metadata" class="row-metadata">
-                        <span class="meta"><TelegramCoin size={13} /><span>{amountLabel(template).amount}</span> · <span>{stripEmoji(template.groupName || '')}</span></span>
-                        <span class="meta">{freqLabel(template)}</span>
-                    </span>
                     <svelte:fragment slot="interactive">
                         {#if !bulkMode}
                             {#if isAdded(template)}

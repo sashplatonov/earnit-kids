@@ -35,7 +35,7 @@ async function expectCatalogRow(
     await expect(row.getByRole('button', { name: title })).toBeVisible();
     await expect(row.getByText(amount, { exact: true })).toBeVisible();
     await expect(row.getByText(group, { exact: true })).toBeVisible();
-    await expect(row.locator('.entity-meta')).toContainText(frequency);
+    await expect(row.locator('.row-main .row-metadata')).toContainText(frequency);
     const action = row.getByRole('button', { name: actionName });
     await expect(action).toBeVisible();
     expect(await action.evaluate((node) => {
@@ -133,6 +133,12 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     );
     await expect(taskRow).not.toHaveClass(/has-selection/);
     await expect(taskRow.locator('.entity-selection')).toHaveCount(0);
+    await expect(taskRow.locator('.row-main .row-metadata')).toHaveCount(1);
+    expect(await taskRow.evaluate((row) => {
+        const title = row.querySelector('.title')?.getBoundingClientRect();
+        const metadata = row.querySelector('.row-main .row-metadata')?.getBoundingClientRect();
+        return title != null && metadata != null && metadata.top - title.bottom <= 2;
+    })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     await taskRow.getByRole('button', { name: /Очень длинное каталожное задание/ }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
