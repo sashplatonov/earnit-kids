@@ -65,8 +65,8 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ requests: [
-            { id: 15, taskName: 'Read this very long task title without clipping', coins: 20, status: 'pending', childNickname: 'Alex' },
-            { id: 16, itemName: 'Game reward', amount: 50, requestType: 'shop_purchase', status: 'pending', childNickname: 'Sam' },
+            { id: 15, taskName: 'Read this very long task title without clipping', coins: 20, status: 'pending', childNickname: 'Alex', createdAt: '2026-08-16T09:00:00Z' },
+            { id: 16, itemName: 'Game reward', amount: 50, requestType: 'shop_purchase', status: 'pending', childNickname: 'Sam', createdAt: '2026-08-15T09:00:00Z' },
         ], history: [], friends: [] }),
     }));
     await page.route('**/api/history?**', (route) => route.fulfill({
@@ -143,6 +143,14 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(activityList.getByRole('heading', { name: 'Read completed' })).toBeVisible();
     const approveButton = requestRows.nth(0).getByRole('button', { name: /Approve request|Одобрить заявку/ });
     const rejectButton = requestRows.nth(0).getByRole('button', { name: /Reject request|Отклонить заявку/ });
+    for (const button of [approveButton, rejectButton]) {
+        expect(await button.evaluate((node) => {
+            const rect = node.getBoundingClientRect();
+            return rect.width >= 44 && rect.height >= 44;
+        })).toBeTruthy();
+    }
+    await expect(requestRows.nth(0).getByText('+20')).toBeVisible();
+    await expect(requestRows.nth(0).locator('time')).toHaveCount(1);
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     for (let tab = 0; tab < 40; tab += 1) {
         if (await page.evaluate(() => document.activeElement?.getAttribute('aria-label')?.match(/Approve request|Одобрить заявку/))) break;

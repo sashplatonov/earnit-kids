@@ -217,7 +217,7 @@ git commit -m "refactor(web): Align Telegram task and reward rows with catalog"
 
 ## TASK-P1-3: Align history, activity, and request rows without losing status actions
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-P1-1, TASK-P1-2
 

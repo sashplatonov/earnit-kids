@@ -66,7 +66,7 @@
     .heading { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:0 .2rem; }
     h2 { margin:0 0 .65rem; color:#18243d; }
     .attention-actions { display:flex; gap:.35rem; flex-wrap:wrap; justify-content:flex-end; }
-    .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.25rem; min-height:2.25rem; padding:.3rem .45rem; border-radius:.55rem; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
+    .attention-actions button { display:inline-flex; align-items:center; justify-content:center; gap:.25rem; min-width:2.75rem; min-height:2.75rem; padding:.3rem .45rem; border-radius:.55rem; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
     .attention-actions button:disabled { cursor:wait; opacity:.6; }
     .attention-actions button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .approve { border:1px solid #cce9d8; background:#eaf7ef; color:#17884b; }

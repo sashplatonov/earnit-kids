@@ -13,11 +13,16 @@ test('child activity shows child-readable history on mobile', async ({ page }) =
     await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ role: 'child', familyId: 'family-1' }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', childId: 10, tasks: [], shop: [], requests: [] }) }));
-    await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ id: 3, title: 'Read', amount: 20, createdAt: '2026-08-13T10:00:00Z' }], total: 1, page: 1, limit: 20 }) }));
+    await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ id: 3, title: 'A very long activity title that remains readable on a narrow viewport', amount: 20, createdAt: '2026-08-13T10:00:00Z' }, { id: 4, title: 'Spent coins', amount: -7, type: 'spend', createdAt: '2026-08-12T10:00:00Z' }], total: 2, page: 1, limit: 20 }) }));
 
     await page.goto('/telegram');
     await page.getByRole('tab', { name: /Activity|Активность/ }).click();
-    await expect(page.getByText('Read')).toBeVisible();
+    await expect(page.getByText('A very long activity title that remains readable on a narrow viewport')).toBeVisible();
+    await expect(page.getByText('+20')).toBeVisible();
+    await expect(page.getByText('-7')).toBeVisible();
     await expect(page.locator('section[aria-label="History"], section[aria-label="История"]')).toBeVisible();
+    const list = page.locator('.list-surface');
+    await expect(list.locator(':scope > .entity-row')).toHaveCount(2);
+    await expect(list.locator('.history-time')).toHaveCount(2);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });

@@ -103,7 +103,7 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     let cancelled = false;
-    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [], shop: [], requests: [{ id: 7, taskId: 1, taskName: '🏠 Clean room', requestType: 'task_completion', coins: 20, status: cancelled ? 'cancelled' : 'pending', createdAt: '2026-08-16T09:00:00Z' }, { id: 8, itemId: 2, itemName: '🎁 Game time', requestType: 'shop_purchase', coins: 30, status: 'approved', createdAt: '2026-08-15T09:00:00Z' }] }) }));
+    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [], shop: [], requests: [{ id: 7, taskId: 1, taskName: '🏠 A very long pending request title that remains readable', requestType: 'task_completion', coins: 20, status: cancelled ? 'cancelled' : 'pending', createdAt: '2026-08-16T09:00:00Z' }, { id: 8, itemId: 2, itemName: '🎁 Game time', requestType: 'shop_purchase', coins: 30, status: 'approved', createdAt: '2026-08-15T09:00:00Z' }] }) }));
     await page.route('**/api/requests/7**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }));
 
     await page.goto('/telegram');
@@ -114,12 +114,15 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     const requestList = page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]').locator('.list-surface');
     await expect(requestList).toBeVisible();
     await expectCompactList(requestList, 2);
-    await expect(requestList.getByRole('heading', { name: 'Clean room' })).toBeVisible();
+    await expect(requestList.getByRole('heading', { name: 'A very long pending request title that remains readable' })).toBeVisible();
     await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
     await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
     await expect(requestList.locator('.entity-row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
     await expect(requestList.locator('.entity-row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
     await expect(requestList.getByText('Ожидает')).toBeVisible();
+    await expect(requestList.getByText('+20')).toBeVisible();
+    await expect(requestList.getByText('-30')).toBeVisible();
+    await expect(requestList.locator('time')).toHaveCount(2);
     expect(await requestList.evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
         && getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)')).toBeTruthy();
     await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toBeVisible();
