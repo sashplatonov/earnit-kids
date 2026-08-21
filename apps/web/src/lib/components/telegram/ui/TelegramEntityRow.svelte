@@ -32,7 +32,7 @@
     .entity-actions:empty, .entity-meta:empty, .entity-trailing:empty { display:none; }
     .entity-interactive { display:flex; min-width:0; flex:0 0 auto; align-items:center; gap:.15rem; }
     .archived { opacity:.6; }
-    :global(.entity-row .row-main) { display:flex; align-items:flex-start; width:100%; min-width:0; min-height:2.5rem; box-sizing:border-box; padding:.2rem 0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+    :global(.entity-row .row-main) { display:flex; align-items:flex-start; width:100%; min-width:0; box-sizing:border-box; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
     :global(.entity-row .entity-title .title) { display:-webkit-box; overflow:hidden; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; }
     :global(.entity-row .entity-meta .meta) { display:flex; align-items:center; gap:.3rem; min-width:0; margin-top:.05rem; color:#66718a; font-size:.7rem; }
     :global(.entity-row .entity-meta .meta--last) { color:#8a93a8; font-size:.7rem; }
