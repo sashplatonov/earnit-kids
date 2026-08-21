@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 const usePreviewServer = process.env.PLAYWRIGHT_USE_PREVIEW === 'true';
 const baseURL = usePreviewServer
-    ? 'http://127.0.0.1:4174'
+    ? 'http://e2e.localhost:4174'
     : (process.env.PLAYWRIGHT_BASE_URL ?? process.env.APP_URL ?? 'http://localhost:5001');
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
@@ -26,7 +26,7 @@ export default defineConfig({
     },
     webServer: usePreviewServer
         ? {
-            command: 'APP_URL=http://127.0.0.1:4174 PUBLIC_BASE_URL=http://127.0.0.1:4174 npm run build && APP_URL=http://127.0.0.1:4174 PUBLIC_BASE_URL=http://127.0.0.1:4174 npm run preview -- --host 127.0.0.1 --port 4174',
+            command: 'APP_URL=http://e2e.localhost:4174 PUBLIC_BASE_URL=http://e2e.localhost:4174 npm run build && APP_URL=http://e2e.localhost:4174 PUBLIC_BASE_URL=http://e2e.localhost:4174 npm run preview -- --host 127.0.0.1 --port 4174',
             url: 'http://127.0.0.1:4174',
             reuseExistingServer: false,
             timeout: 120_000,

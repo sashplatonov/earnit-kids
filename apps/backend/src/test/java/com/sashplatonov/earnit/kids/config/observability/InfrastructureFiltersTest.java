@@ -35,6 +35,7 @@ class InfrastructureFiltersTest {
         ContainerResponseContext response = mock(ContainerResponseContext.class);
         MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
         when(response.getHeaders()).thenReturn(headers);
+        when(request.getHeaderString("X-Forwarded-Proto")).thenReturn("https");
 
         filter.filter(request, response);
 

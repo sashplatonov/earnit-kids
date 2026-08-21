@@ -15,12 +15,12 @@ test('Mini App reconciles stale child action from the server snapshot', async ({
     await page.route('**/api/data**', (route) => {
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, childId: 10, balance: 10, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 5, isActive: true }], shop: [], requests: [] }) });
     });
-    await page.route('**/api/tasks/1/request', (route) => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ errorCode: 'STALE_STATE', detail: 'Task already requested' }) }));
+    await page.route('**/api/tasks/1/request**', (route) => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ errorCode: 'STALE_STATE', detail: 'Task already requested' }) }));
 
     await page.goto('/telegram');
     await page.locator('section[aria-labelledby="child-tasks-title"] .check').first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('button', { name: /Send request|Отправить заявку/ }).click();
-    await expect(page.getByRole('alert')).toContainText(/changed|Не удалось выполнить запрос/);
+    await expect(page.getByRole('alert')).toContainText(/changed|изменилось|Не удалось выполнить запрос/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });

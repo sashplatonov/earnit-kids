@@ -65,7 +65,9 @@ export const handle: Handle = async ({ event, resolve }) => {
         transformPageChunk: ({ html }) => html.replace('<html lang="ru">', `<html lang="${event.locals.locale}">`),
     });
 
+    const shouldSendHsts = event.url.protocol === 'https:' || process.env.DEPLOYMENT_ENV === 'production';
     Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+        if (key === 'strict-transport-security' && !shouldSendHsts) return;
         if (!response.headers.has(key)) {
             response.headers.set(key, value);
         }

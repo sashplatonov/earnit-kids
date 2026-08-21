@@ -52,6 +52,7 @@ services:
     environment:
       # Backend (explicit overrides so shell vars don't shadow .env)
       QUARKUS_HTTP_PORT: ${BACKEND_INTERNAL_PORT}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:4174,http://localhost:4174,http://e2e.localhost:4174}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5001}
       APP_URL: ${APP_URL:-http://localhost:5001}
       GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-http://localhost:5001/api/login-google/callback}
@@ -73,6 +74,10 @@ services:
       - earnit_kids_base_data:/work/data/catalog
     expose:
       - "${BACKEND_INTERNAL_PORT}"
+    # EXPLAIN: Host-run web preview and Playwright proxy through localhost;
+    # keep the development API reachable without exposing it beyond loopback.
+    ports:
+      - "127.0.0.1:${BACKEND_INTERNAL_PORT}:${BACKEND_INTERNAL_PORT}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${BACKEND_INTERNAL_PORT}/q/health/ready || exit 1"]
       interval: 30s

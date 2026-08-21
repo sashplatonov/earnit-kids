@@ -541,7 +541,7 @@ git commit -m "refactor(web): Share Telegram bottom sheets"
 
 ## TASK-P3-1: Retire duplicate Mini App presentation paths and run final gates
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P3  
 **Depends on:** P2-1, P2-2, P2-3, P2-4
 
@@ -588,15 +588,15 @@ are internal presentation refactors and preserve public component behaviour.
 
 ### Acceptance criteria
 
-- [ ] Searches find no duplicate implementation of migrated request status
+- [x] Searches find no duplicate implementation of migrated request status
   mapping, tab keyboard navigation, shared list/row geometry, or sheet shell.
-- [ ] No dead imports, commented-out alternatives, broad `any`, TypeScript or
+- [x] No dead imports, commented-out alternatives, broad `any`, TypeScript or
   ESLint suppressions, or new dependencies were introduced.
-- [ ] Parent and child journeys, including stale-state reconciliation and
+- [x] Parent and child journeys, including stale-state reconciliation and
   child activity/request switching, still pass their existing E2E coverage.
-- [ ] The production build succeeds and the Mini App remains responsive and
+- [x] The production build succeeds and the Mini App remains responsive and
   keyboard accessible at compact mobile widths.
-- [ ] Local verification is not presented as remote CI, deployed Mini App, or
+- [x] Local verification is not presented as remote CI, deployed Mini App, or
   physical Telegram-client validation.
 
 ### Verification

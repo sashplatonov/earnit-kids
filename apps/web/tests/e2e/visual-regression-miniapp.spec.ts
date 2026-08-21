@@ -143,11 +143,11 @@ test('request and task lists keep one surface and usable geometry at narrow widt
     ], requests: childRequests };
 
     for (const width of [320, 375, 430]) {
-        await mock(page, 'parent', { ...parentFixture, requests: [] }, width, { requests: parentRequests, history: [], friends: [] });
+        await mock(page, 'parent', parentFixture, width, { requests: parentRequests, history: [], friends: [] });
         await page.getByRole('tab', { name: /Home|Главная/ }).click();
-        const parentList = page.locator('section[aria-labelledby="parent-home-title"] .items');
+        const parentList = page.locator('section[aria-labelledby="parent-home-title"] .list-surface');
         await expect(parentList).toBeVisible();
-        await expect(parentList.locator('.request-card')).toHaveCount(2);
+        await expect(parentList.locator('.row')).toHaveCount(2);
         await page.keyboard.press('Tab');
         expect(await parentList.evaluate((node) => {
             const rows = [...node.children];
@@ -165,16 +165,17 @@ test('request and task lists keep one surface and usable geometry at narrow widt
                 })
                 && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px');
         })).toBeTruthy();
-        for (const row of await parentList.locator('.request-card').all()) {
+        for (const row of await parentList.locator('.row').all()) {
             const geometry = await row.evaluate((node) => {
                 const rowRect = node.getBoundingClientRect();
-                const mainRect = node.querySelector('.card-main')!.getBoundingClientRect();
-                const actionsRect = node.querySelector('.attention-actions')!.getBoundingClientRect();
+                const mainRect = node.querySelector('.entity-content')!.getBoundingClientRect();
+                const actionsRect = node.querySelector('.entity-actions')!.getBoundingClientRect();
                 return { rowRect, mainRect, actionsRect };
             });
-            expect(geometry.actionsRect.top).toBeGreaterThanOrEqual(geometry.mainRect.bottom);
-            expect(Math.abs(geometry.mainRect.left - geometry.rowRect.left)).toBeLessThan(1);
-            expect(Math.abs(geometry.mainRect.right - geometry.rowRect.right)).toBeLessThan(1);
+            expect(geometry.actionsRect.top).toBeGreaterThanOrEqual(geometry.rowRect.top);
+            expect(geometry.actionsRect.bottom).toBeLessThanOrEqual(geometry.rowRect.bottom);
+            expect(geometry.mainRect.left).toBeGreaterThanOrEqual(geometry.rowRect.left);
+            expect(geometry.mainRect.right).toBeLessThanOrEqual(geometry.rowRect.right);
             for (const action of await row.locator('.attention-actions button').all()) {
                 await action.focus();
                 await expect(action).toBeFocused();
@@ -186,7 +187,7 @@ test('request and task lists keep one surface and usable geometry at narrow widt
 
         await mock(page, 'child', { ...childFixture, requests: [] }, width, { requests: childRequests, history: [], friends: [] });
         await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
-        const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list');
+        const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list-surface');
         await expect(taskList).toBeVisible();
         await expect(taskList.locator('.row')).toHaveCount(4);
         expect(await taskList.evaluate((node) => {
@@ -219,12 +220,12 @@ test('request and task lists keep one surface and usable geometry at narrow widt
 
         await page.getByRole('tab', { name: /Activity|Активность/ }).click();
         await page.getByRole('tab', { name: /Requests|Заявки/ }).click();
-        const requestList = page.locator('section[aria-labelledby="child-requests-title"] .items');
+        const requestList = page.locator('section.panel .list-surface');
         await expect(requestList).toBeVisible();
-        await expect(requestList.locator('.request-row')).toHaveCount(2);
+        await expect(requestList.locator('.row')).toHaveCount(2);
         await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
-        await expect(requestList.locator('.request-row').first().getByLabel(/Task request|Заявка на задание/)).toBeVisible();
-        await expect(requestList.locator('.request-row').nth(1).getByLabel(/Reward request|Заявка на награду/)).toBeVisible();
+        await expect(requestList.locator('.row').first().getByLabel(/Task request|Заявка на задание/)).toBeVisible();
+        await expect(requestList.locator('.row').nth(1).getByLabel(/Reward request|Заявка на награду/)).toBeVisible();
         expect(await requestList.evaluate((node) => {
             const rows = [...node.children];
             const surface = getComputedStyle(node);

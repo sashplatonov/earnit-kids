@@ -11,6 +11,8 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramConfirmModal from './TelegramConfirmModal.svelte';
     import TelegramTabBar from './ui/TelegramTabBar.svelte';
+    import TelegramAsyncState from './ui/TelegramAsyncState.svelte';
+    import type { TelegramAsyncState as AsyncState } from './ui/telegramUi';
     import type { TelegramTab } from './ui/telegramTabBar';
     import { parseTelegramWorkspaceContext, type ParentTab } from './telegramWorkspaceContext';
 
@@ -55,10 +57,8 @@
 
     <TelegramTabBar tabs={tabs} selected={view} idPrefix="parent" ariaLabel={$i18n.t('app.telegram.shell.workspace')} onSelect={selectView} />
     <div aria-labelledby={`parent-tab-${view}`} id={`parent-panel-${view}`} role="tabpanel" tabindex="0">
-        {#if loading}
-            <p class="state" role="status">{$i18n.t('app.telegram.shell.loading')}</p>
-        {:else if error}
-            <section class="state state--error" role="alert"><p>{error}</p><button type="button" on:click={retry}><TelegramIcon name="refresh" size={18} label={$i18n.t('app.telegram.shell.retry')} />{$i18n.t('app.telegram.shell.retry')}</button></section>
+        {#if loading || error}
+            <TelegramAsyncState state={(loading ? 'loading' : 'error') as AsyncState} loadingLabel={$i18n.t('app.telegram.shell.loading')} errorMessage={error} retryLabel={$i18n.t('app.telegram.shell.retry')} onRetry={retry} />
         {:else if view === 'home'}
             <TelegramParentHome initialContext={context} />
         {:else if view === 'tasks'}
@@ -80,8 +80,6 @@
 <style>
     .parent-workspace { display: flex; flex-direction: column; width: 100%; max-width: 48rem; min-height: 100vh; margin: 0 auto; padding: calc(.75rem + env(safe-area-inset-top)) 1rem 2rem; }
     [role="tabpanel"] { flex: 1 1 auto; min-height: 0; }
-    .state { padding: 2rem 1rem; text-align: center; color: #5c6780; }
-    .state--error { color: #a33b3b; }
     .site-link { display: flex; justify-content: center; margin-top: 1.25rem; }
     .site-link a { display: inline-flex; align-items: center; gap: .3rem; color: #8a93a8; font-size: .78rem; text-decoration: none; }
     .site-link a:hover { color: #3867d6; }

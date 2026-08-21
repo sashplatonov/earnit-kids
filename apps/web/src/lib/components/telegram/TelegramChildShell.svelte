@@ -16,6 +16,8 @@
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramTabBar from './ui/TelegramTabBar.svelte';
+    import TelegramAsyncState from './ui/TelegramAsyncState.svelte';
+    import type { TelegramAsyncState as AsyncState } from './ui/telegramUi';
     import type { TelegramTab } from './ui/telegramTabBar';
     import { parseTelegramWorkspaceContext, type ActivityTab, type ChildTab } from './telegramWorkspaceContext';
 
@@ -41,6 +43,10 @@
         { id: 'tasks', icon: 'task', label: $i18n.t('app.telegram.childShell.tasks') },
         { id: 'rewards', icon: 'reward', label: $i18n.t('app.telegram.childShell.rewards') },
         { id: 'activity', icon: 'activity', label: $i18n.t('app.telegram.childShell.activity') },
+    ] satisfies readonly TelegramTab[];
+    $: activityTabs = [
+        { id: 'history', icon: 'history', label: $i18n.t('app.telegram.history.history') },
+        { id: 'requests', icon: 'request', label: $i18n.t('app.telegram.childShell.requests') },
     ] satisfies readonly TelegramTab[];
 
     onMount(async () => {
@@ -105,19 +111,14 @@
     <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} loading={loading || Boolean(error)} />
     <TelegramTabBar tabs={tabs} selected={view} idPrefix="child" ariaLabel={$i18n.t('app.telegram.childShell.workspace')} onSelect={selectView} />
     <div aria-labelledby={`child-tab-${view}`} id={`child-panel-${view}`} class="tab-panel" role="tabpanel" tabindex="0">
-        {#if loading}
-            <div class="panel-skeleton" aria-hidden="true"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div>
-        {:else if error}
-            <section class="state" role="alert"><p>{error}</p><button type="button" on:click={retry} disabled={refreshing}><TelegramIcon name="refresh" size={18} label={refreshing ? $i18n.t('app.telegram.childShell.refreshingWorkspace') : $i18n.t('app.telegram.childShell.retry')} />{refreshing ? $i18n.t('app.telegram.childShell.refreshing') : $i18n.t('app.telegram.childShell.retry')}</button></section>
+        {#if loading || error}
+            <TelegramAsyncState state={(loading ? 'loading' : 'error') as AsyncState} loadingLabel={$i18n.t('app.telegram.childShell.loading')} errorMessage={error} retryLabel={refreshing ? $i18n.t('app.telegram.childShell.refreshing') : $i18n.t('app.telegram.childShell.retry')} onRetry={retry} />
         {:else if view === 'tasks'}
             <TelegramChildTasks />
         {:else if view === 'rewards'}
             <TelegramChildRewards />
         {:else}
-            <div class="activity-switch" role="tablist" aria-label={$i18n.t('app.telegram.childShell.activity')}>
-                <button aria-selected={activityView === 'history'} class:active={activityView === 'history'} id="child-activity-tab-history" role="tab" tabindex={activityView === 'history' ? 0 : -1} type="button" on:click={() => selectActivityView('history')}><TelegramIcon name="history" size={20} label={$i18n.t('app.telegram.history.history')} /><span>{$i18n.t('app.telegram.history.history')}</span></button>
-                <button aria-selected={activityView === 'requests'} class:active={activityView === 'requests'} id="child-activity-tab-requests" role="tab" tabindex={activityView === 'requests' ? 0 : -1} type="button" on:click={() => selectActivityView('requests')}><TelegramIcon name="request" size={20} label={$i18n.t('app.telegram.childShell.requests')} /><span>{$i18n.t('app.telegram.childShell.requests')}</span></button>
-            </div>
+            <TelegramTabBar tabs={activityTabs} selected={activityView} idPrefix="child-activity" ariaLabel={$i18n.t('app.telegram.childShell.activity')} fixedOnMobile={false} onSelect={selectActivityView} />
             {#if activityView === 'requests'}
                 <TelegramChildRequestList cancellingIds={cancellingIds} cancelError={cancelError} onCancel={handleCancel} />
             {:else}
@@ -134,7 +135,7 @@
 </main>
 
 <style>
-    .child-workspace { box-sizing:border-box; display:flex; flex-direction:column; width:100%; max-width:48rem; min-height:100vh; margin:0 auto; padding:calc(.75rem + env(safe-area-inset-top)) 1rem calc(2rem + env(safe-area-inset-bottom)); } .state { padding:2rem 1rem; color:#66718a; text-align:center; } button { min-height:2.75rem; margin-top:1rem; padding:.6rem .85rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; } .exit-preview { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; margin:0 0 .5rem; padding:.3rem .6rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; } @keyframes skeleton-pulse { 0%,100% { opacity:.55; } 50% { opacity:1; } } @media (prefers-reduced-motion: reduce) { .panel-skeleton .skeleton-line { animation:none; } } .tab-panel { flex:1 1 auto; min-height:0; } .activity-switch { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.25rem; margin-bottom:.75rem; } .activity-switch button { margin-top:0; background:#fff; color:#33415f; border:1px solid #dfe4ee; border-radius:.75rem; display:inline-flex; align-items:center; justify-content:center; gap:.2rem; padding-inline:.25rem; white-space:nowrap; } .activity-switch button.active { background:#fff; color:#2854ba; font-weight:750; border-color:#b9c0ff; } .panel-skeleton { display:flex; flex-direction:column; gap:.75rem; padding:1rem 0; } .panel-skeleton .skeleton-line { height:4.5rem; border-radius:.8rem; background:#e8eaf1; animation:skeleton-pulse 1.3s ease-in-out infinite; } .site-link { display:flex; justify-content:center; flex-shrink:0; margin-top:1.25rem; } .site-link a { display:inline-flex; align-items:center; gap:.3rem; color:#8a93a8; font-size:.78rem; text-decoration:none; } .site-link a:hover { color:#3867d6; } .site-link a:focus-visible { outline:3px solid #80aaff; outline-offset:2px; border-radius:.3rem; }
+    .child-workspace { box-sizing:border-box; display:flex; flex-direction:column; width:100%; max-width:48rem; min-height:100vh; margin:0 auto; padding:calc(.75rem + env(safe-area-inset-top)) 1rem calc(2rem + env(safe-area-inset-bottom)); } .exit-preview { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; margin:0 0 .5rem; padding:.3rem .6rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; } .tab-panel { flex:1 1 auto; min-height:0; } .site-link { display:flex; justify-content:center; flex-shrink:0; margin-top:1.25rem; } .site-link a { display:inline-flex; align-items:center; gap:.3rem; color:#8a93a8; font-size:.78rem; text-decoration:none; } .site-link a:hover { color:#3867d6; } .site-link a:focus-visible { outline:3px solid #80aaff; outline-offset:2px; border-radius:.3rem; }
     @media (max-width:700px) { .child-workspace { padding:.65rem .75rem calc(5.75rem + env(safe-area-inset-bottom)); } }
     .exit-preview { min-height:2.75rem; }
 </style>

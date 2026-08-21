@@ -5,6 +5,8 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 
+import java.net.URI;
+
 @Provider
 public class SecurityHeadersFilter implements ContainerResponseFilter {
     @Override
@@ -14,7 +16,18 @@ public class SecurityHeadersFilter implements ContainerResponseFilter {
         response.getHeaders().putSingle("X-XSS-Protection", "1; mode=block");
         response.getHeaders().putSingle("Referrer-Policy", "no-referrer");
         response.getHeaders().putSingle("Cross-Origin-Resource-Policy", "same-site");
-        response.getHeaders().putSingle(
-            "Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+        if (isHttps(request)) {
+            response.getHeaders().putSingle(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+        }
+    }
+
+    private boolean isHttps(ContainerRequestContext request) {
+        String forwardedProto = request.getHeaderString("X-Forwarded-Proto");
+        if (forwardedProto != null && !forwardedProto.isBlank()) {
+            return "https".equalsIgnoreCase(forwardedProto.trim());
+        }
+        URI requestUri = request.getUriInfo().getRequestUri();
+        return requestUri != null && "https".equalsIgnoreCase(requestUri.getScheme());
     }
 }

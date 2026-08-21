@@ -14,7 +14,7 @@ const PERIODS = [
 ] as const;
 
 async function registerAdmin(page: Parameters<typeof registerParent>[0], prefix: string) {
-    await registerParent(page, uniqueEmail(prefix), undefined, { heading: null });
+    await registerParent(page, uniqueEmail(prefix));
 }
 
 test('admin Statistics stays usable at compact mobile width', async ({ page }) => {

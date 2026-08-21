@@ -16,6 +16,7 @@
     import { formatLastUsedTime } from './telegramLastUsed';
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
+    import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
 
     const i18n = useI18n();
 
@@ -193,8 +194,7 @@
 <TelegramGroupManager open={groupEditorOpen} kind="tasks" onClose={() => groupEditorOpen = false} on:save={saveGroups} on:deleteGroup={handleDeleteGroup} />
 
 {#if confirmComplete}
-    <div class="sheet-backdrop" role="presentation" on:click={() => confirmComplete = null}></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="task-complete-title" tabindex="-1">
+    <TelegramBottomSheet open labelledBy="task-complete-title" busy={completingId != null} onClose={() => confirmComplete = null}>
         <h2 id="task-complete-title">{$i18n.t('app.telegram.tasks.completeShort')}</h2>
         <div class="complete-row">
             <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: confirmComplete.name, group: confirmComplete.groupName, semantic: confirmComplete.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
@@ -206,7 +206,7 @@
             <button class="cancel" type="button" on:click={() => confirmComplete = null}>{$i18n.t('app.telegram.tasks.cancel')}</button>
             <button class="primary" type="button" disabled={completingId != null} on:click={() => confirmComplete && void completeForChild(confirmComplete)}>{$i18n.t('app.telegram.tasks.completeShort')}</button>
         </div>
-    </div>
+    </TelegramBottomSheet>
 {/if}
 
 <style>
@@ -229,9 +229,6 @@
     .menu button.danger { color:#c63c42; }
     .menu button:disabled { opacity:.5; cursor:not-allowed; }
     .menu-divider { height:1px; margin:.25rem 0; background:#edf0f5; }
-    .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
-    .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
-    .sheet h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
     .complete-row { display:flex; align-items:center; gap:.6rem; padding:.4rem 0; }
     .complete-row .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
     .complete-row .grow { flex:1; min-width:0; }
