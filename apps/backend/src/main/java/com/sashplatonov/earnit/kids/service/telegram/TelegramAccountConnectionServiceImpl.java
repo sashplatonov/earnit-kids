@@ -84,6 +84,7 @@ public class TelegramAccountConnectionServiceImpl implements TelegramAccountConn
             });
     }
 
+
     private TelegramAccountConnectionResponse connectionResponse(ConnectionContext context, boolean miniAppEnabled) {
         boolean telegramConnected = identities.findActiveParentByParentAccountId(context.parentAccountId())
             .filter(identity -> context.familyDbId().equals(identity.getFamilyId()))

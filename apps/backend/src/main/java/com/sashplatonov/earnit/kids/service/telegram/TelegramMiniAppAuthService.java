@@ -121,7 +121,7 @@ public class TelegramMiniAppAuthService {
         }
         return OperationResult.success(new AuthPayload(
             family.getFamilyId(), parent.getEmail(), "admin", null, null, false,
-            membership.getPermission().name(), null, false));
+            membership.getPermission().name(), null, false, parent.getId()));
     }
 
     private OperationResult<AuthPayload> authenticateChild(TelegramIdentityEntity identity, FamilyEntity family) {

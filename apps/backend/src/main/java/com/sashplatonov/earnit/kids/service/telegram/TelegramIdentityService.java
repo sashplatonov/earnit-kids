@@ -6,6 +6,10 @@ import java.util.Optional;
 public interface TelegramIdentityService {
     Optional<TelegramIdentity> findActiveByTelegramUserId(long telegramUserId);
     TelegramIdentity linkParent(Integer familyId, long telegramUserId, Integer parentAccountId, String actor, Instant now);
+    default TelegramIdentity linkParent(Integer familyId, long telegramUserId, Integer parentAccountId,
+                                        String actor, String username, String displayName, Instant now) {
+        return linkParent(familyId, telegramUserId, parentAccountId, actor, now);
+    }
     boolean unlink(long telegramUserId, String actor, Instant now);
     TelegramChildInvitationToken issueChildInvitation(Integer familyId, Integer childId, String issuedBy, Instant expiresAt, Instant now);
     boolean revokeChildInvitation(Integer familyId, Integer invitationId, String actor, Instant now);
@@ -18,7 +22,12 @@ public interface TelegramIdentityService {
 
     void markReplyKeyboardVersion(long telegramUserId, int version);
 
-    record TelegramIdentity(Integer id, Integer familyId, Integer childId, long telegramUserId, String role) { }
+    record TelegramIdentity(Integer id, Integer familyId, Integer childId, long telegramUserId, String role,
+                            Integer parentAccountId) {
+        public TelegramIdentity(Integer id, Integer familyId, Integer childId, long telegramUserId, String role) {
+            this(id, familyId, childId, telegramUserId, role, null);
+        }
+    }
 
     record TelegramChildInvitationToken(String token, Integer invitationId) { }
 

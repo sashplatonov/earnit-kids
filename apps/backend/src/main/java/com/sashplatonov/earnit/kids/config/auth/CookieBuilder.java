@@ -29,6 +29,16 @@ public class CookieBuilder {
                                          Integer childId,
                                          boolean isSuperAdmin,
                                          String permission) {
+        return buildAuthCookies(email, role, familyId, childId, isSuperAdmin, permission, null);
+    }
+
+    public List<String> buildAuthCookies(String email,
+                                         String role,
+                                         String familyId,
+                                         Integer childId,
+                                         boolean isSuperAdmin,
+                                         String permission,
+                                         Integer parentAccountId) {
         var csrfToken = jwtService.generateCsrfToken();
         var payload = buildAuthPayload(
             email,
@@ -37,7 +47,8 @@ public class CookieBuilder {
             childId,
             csrfToken,
             isSuperAdmin,
-            permission
+            permission,
+            parentAccountId
         );
         var helperMaxAge = Math.max(
             appConfig.auth().sessionTtlSeconds(),
@@ -81,7 +92,7 @@ public class CookieBuilder {
 
     private Map<String, Object> buildAuthPayload(String email, String role, String familyId,
                                                  Integer childId, String csrfToken, boolean isSuperAdmin,
-                                                 String permission) {
+                                                 String permission, Integer parentAccountId) {
         var payload = new LinkedHashMap<String, Object>();
         payload.put("email", email);
         payload.put("role", role);
@@ -89,6 +100,9 @@ public class CookieBuilder {
         payload.put("csrfToken", csrfToken);
         payload.put("isSuperAdmin", isSuperAdmin);
         payload.put("permission", permission);
+        if (parentAccountId != null) {
+            payload.put("parentAccountId", parentAccountId);
+        }
         if (childId != null) {
             payload.put("childId", childId);
         }

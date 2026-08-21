@@ -70,6 +70,7 @@ public class TelegramIdentityServiceImpl implements TelegramIdentityService {
         return identity(created);
     }
 
+
     @Override
     public Optional<TelegramIdentity> findActiveByTelegramUserId(long telegramUserId) {
         return identities.findActiveByTelegramUserId(telegramUserId).map(TelegramIdentityServiceImpl::identity);
@@ -195,7 +196,8 @@ public class TelegramIdentityServiceImpl implements TelegramIdentityService {
 
     private static TelegramIdentity identity(TelegramIdentityEntity identity) {
         return new TelegramIdentity(
-            identity.getId(), identity.getFamilyId(), identity.getChildId(), identity.getTelegramUserId(), identity.getRole());
+            identity.getId(), identity.getFamilyId(), identity.getChildId(), identity.getTelegramUserId(),
+            identity.getRole(), identity.getParentAccountId());
     }
 
     private static void requireFutureExpiry(Instant expiresAt, Instant now) {

@@ -11,8 +11,15 @@ public record AuthPayload(
     boolean isSuperAdmin,
     String permission,
     List<FamilyChoice> familyChoices,
-    boolean selectionRequired
+    boolean selectionRequired,
+    Integer parentAccountId
 ) {
+    public AuthPayload(String familyId, String email, String role, Integer childId, String childName,
+                       boolean isSuperAdmin, String permission, List<FamilyChoice> familyChoices,
+                       boolean selectionRequired) {
+        this(familyId, email, role, childId, childName, isSuperAdmin, permission,
+            familyChoices, selectionRequired, null);
+    }
     public AuthPayload {
         familyChoices = familyChoices == null ? List.of() : List.copyOf(familyChoices);
     }

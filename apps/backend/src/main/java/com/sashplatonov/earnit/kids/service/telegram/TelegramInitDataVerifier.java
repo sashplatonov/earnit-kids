@@ -49,11 +49,13 @@ public class TelegramInitDataVerifier {
             if (!isFresh(authDate)) {
                 return Optional.empty();
             }
-            long userId = userId(values);
+            JsonNode user = user(values);
+            long userId = userId(user);
             if (userId < 0) {
                 return Optional.empty();
             }
-            return Optional.of(new VerifiedInitData(userId, Instant.ofEpochSecond(authDate)));
+            return Optional.of(new VerifiedInitData(userId, Instant.ofEpochSecond(authDate),
+                text(user, "username"), displayName(user)));
         } catch (Exception exception) {
             return Optional.empty();
         }
@@ -86,10 +88,17 @@ public class TelegramInitDataVerifier {
         return authDate >= 0 && age >= 0 && age <= config.initDataMaxAgeSeconds();
     }
 
-    private long userId(Map<String, String> values) throws Exception {
+    private JsonNode user(Map<String, String> values) throws Exception {
         JsonNode user = userReader.readTree(values.get("user"));
-        return user != null && user.has("id") && user.get("id").canConvertToLong()
-            ? user.get("id").longValue() : -1;
+        return user;
+    }
+
+    private long userId(JsonNode user) { return user != null && user.has("id") && user.get("id").canConvertToLong()
+        ? user.get("id").longValue() : -1; }
+    private String text(JsonNode node, String field) { return node != null && node.hasNonNull(field) ? node.get(field).asText() : null; }
+    private String displayName(JsonNode node) {
+        String first = text(node, "first_name"); String last = text(node, "last_name");
+        return first == null ? last : last == null ? first : first + " " + last;
     }
 
     private Map<String, String> parse(String rawInitData) {
@@ -125,5 +134,22 @@ public class TelegramInitDataVerifier {
         return java.util.HexFormat.of().formatHex(value);
     }
 
-    public record VerifiedInitData(long telegramUserId, Instant authenticatedAt) { }
+    public record VerifiedInitData(long telegramUserId, Instant authenticatedAt,
+                                   String telegramUsername, String telegramDisplayName) {
+        public VerifiedInitData(long telegramUserId, Instant authenticatedAt) {
+            this(telegramUserId, authenticatedAt, null, null);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof VerifiedInitData value
+                && telegramUserId == value.telegramUserId
+                && authenticatedAt.equals(value.authenticatedAt);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(telegramUserId, authenticatedAt);
+        }
+    }
 }

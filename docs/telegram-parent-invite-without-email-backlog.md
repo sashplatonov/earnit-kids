@@ -117,7 +117,7 @@ git commit -m "feat(backend): Persist Telegram parent profiles"
 
 ## TASK-042: Accept a named Telegram invitation without email
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-041
 

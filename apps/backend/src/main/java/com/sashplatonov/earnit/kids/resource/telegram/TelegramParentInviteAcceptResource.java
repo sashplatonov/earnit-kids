@@ -50,14 +50,16 @@ public class TelegramParentInviteAcceptResource {
         if (!featureGate.isEnabled()) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return switch (invitations.accept(request.token(), request.initData(), request.email(), timeProvider.now())) {
+        return switch (invitations.accept(request.token(), request.initData(), null, timeProvider.now())) {
             case OperationResult.Success<TelegramIdentityService.TelegramIdentity> success -> {
                 var identity = success.value();
                 String familyId = families.get().findFamilyIdByDbId(identity.familyId()).orElse("family-" + identity.familyId());
                 Response.ResponseBuilder response = Response.ok(AuthResponse.success("admin", familyId));
-                cookieBuilder.buildAuthCookies(
-                    request.email(), "admin", familyId, null, false, "editor")
-                    .forEach(cookie -> response.header("Set-Cookie", cookie));
+                var cookies = identity.parentAccountId() == null
+                    ? cookieBuilder.buildAuthCookies(request.legacyEmail(), "admin", familyId, null, false, "editor")
+                    : cookieBuilder.buildAuthCookies(null, "admin", familyId, null, false, "editor",
+                        identity.parentAccountId());
+                cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
                 yield response.build();
             }
             case OperationResult.Failure<TelegramIdentityService.TelegramIdentity> failure ->

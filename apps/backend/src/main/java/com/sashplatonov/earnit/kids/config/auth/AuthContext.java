@@ -9,8 +9,13 @@ public record AuthContext(
     String email,
     String csrfToken,
     boolean isSuperAdmin,
-    String permission
+    String permission,
+    Integer parentAccountId
 ) {
+    public AuthContext(String familyId, Integer childId, String role, String email, String csrfToken,
+                       boolean isSuperAdmin, String permission) {
+        this(familyId, childId, role, email, csrfToken, isSuperAdmin, permission, null);
+    }
     public static AuthContext fromPayload(Map<String, Object> payload, String cookieCsrf) {
         String familyId = toStringValue(payload.get("familyId"));
         Integer childId = toInteger(payload.get("childId"));
@@ -19,7 +24,8 @@ public record AuthContext(
         String csrf = cookieCsrf != null ? cookieCsrf : toStringValue(payload.get("csrfToken"));
         boolean isSuperAdmin = Boolean.TRUE.equals(payload.get("isSuperAdmin"));
         String permission = toStringValue(payload.get("permission"));
-        return new AuthContext(familyId, childId, role, email, csrf, isSuperAdmin, permission);
+        Integer parentAccountId = toInteger(payload.get("parentAccountId"));
+        return new AuthContext(familyId, childId, role, email, csrf, isSuperAdmin, permission, parentAccountId);
     }
 
     public boolean isAdmin() {

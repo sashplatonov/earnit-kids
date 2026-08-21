@@ -51,6 +51,7 @@ class TelegramParentInvitationServiceImplTest {
             .secretDigest("digest")
             .expiresAt(NOW.plusSeconds(900))
             .issuedBy("parent@example.test")
+            .parentName("Maria Example")
             .createdAt(NOW)
             .build();
     }
@@ -78,6 +79,26 @@ class TelegramParentInvitationServiceImplTest {
         OperationResult<TelegramLinkLaunchResponse> result = service.invite("family-1", "parent@example.test", NOW);
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
+    }
+
+    @Test
+    void invite_rejectsBlankName() {
+        assertThat(service.invite("family-1", "  ", "parent@example.test", NOW))
+            .isInstanceOf(OperationResult.Failure.class);
+    }
+
+    @Test
+    void accept_createsEmaillessNamedParent() {
+        when(verifier.verify("signed-data")).thenReturn(Optional.of(
+            new TelegramInitDataVerifier.VerifiedInitData(77L, NOW, "maria", "Maria Example")));
+        when(identityService.findActiveByTelegramUserId(77L)).thenReturn(Optional.empty());
+        when(invitations.findByDigestForUpdate(anyString())).thenReturn(Optional.of(invitation()));
+        when(identityService.linkParent(any(), anyLong(), any(), anyString(), eq(NOW))).thenReturn(
+            new TelegramIdentityService.TelegramIdentity(3, 7, null, 77L, "parent", 9));
+
+        assertThat(service.accept("pi_token", "signed-data", NOW)).isInstanceOf(OperationResult.Success.class);
+        verify(parents).persist(any(ParentAccountEntity.class));
+        verify(identityService).linkParent(eq(7), eq(77L), any(), eq("Maria Example"), eq(NOW));
     }
 
     @Test

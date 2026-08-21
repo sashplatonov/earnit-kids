@@ -6,6 +6,10 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 
 public interface TelegramAccountConnectionService {
     OperationResult<TelegramAccountConnectionResponse> connection(String familyId, String email);
+    default OperationResult<TelegramAccountConnectionResponse> connectionByParentId(String familyId,
+                                                                                     Integer parentAccountId) {
+        return connection(familyId, null);
+    }
 
     OperationResult<TelegramLinkLaunchResponse> start(String familyId, String email);
 

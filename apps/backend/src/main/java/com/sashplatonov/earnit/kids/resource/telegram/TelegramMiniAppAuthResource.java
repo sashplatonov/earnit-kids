@@ -56,10 +56,12 @@ public class TelegramMiniAppAuthResource {
                     payload.childId() == null
                         ? AuthResponse.success(payload.role(), payload.familyId())
                         : AuthResponse.childSuccess(payload.familyId(), payload.childId(), payload.childName()));
-                cookieBuilder.buildAuthCookies(
-                    payload.email(), payload.role(), payload.familyId(), payload.childId(),
-                    payload.isSuperAdmin(), payload.permission())
-                    .forEach(cookie -> response.header("Set-Cookie", cookie));
+                var cookies = payload.parentAccountId() == null
+                    ? cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                        payload.childId(), payload.isSuperAdmin(), payload.permission())
+                    : cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                        payload.childId(), payload.isSuperAdmin(), payload.permission(), payload.parentAccountId());
+                cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
                 yield response.build();
             }
             case OperationResult.Failure<AuthPayload> failure -> Response.status(Response.Status.UNAUTHORIZED)

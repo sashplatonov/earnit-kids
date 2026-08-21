@@ -40,6 +40,7 @@ public class AccountServiceImpl implements AccountService {
             family.get().getEmail(), emailLinked, telegramLinked));
     }
 
+
     @Override
     @Transactional
     public OperationResult<Void> changeEmail(String familyId, String currentEmail, String newEmail) {
