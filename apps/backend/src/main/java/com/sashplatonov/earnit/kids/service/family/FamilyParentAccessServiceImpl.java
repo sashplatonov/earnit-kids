@@ -5,10 +5,12 @@ import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
+import com.sashplatonov.earnit.kids.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
+import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -39,6 +41,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     private final FamilyRepository familyRepository;
     private final ParentAccountRepository parentAccountRepository;
     private final FamilyParentMembershipRepository membershipRepository;
+    private final TelegramIdentityRepository telegramIdentityRepository;
 
     @Override
     @Transactional
@@ -63,8 +66,15 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
                 parent -> parent,
                 (left, right) -> left,
                 LinkedHashMap::new));
+        Map<Integer, TelegramIdentityEntity> identitiesByParentId = telegramIdentityRepository
+            .findActiveParentsByFamilyAndParentAccountIds(familyOpt.get().getId(), parentIds).stream()
+            .collect(java.util.stream.Collectors.toMap(
+                TelegramIdentityEntity::getParentAccountId,
+                identity -> identity,
+                (left, right) -> left,
+                LinkedHashMap::new));
         var dtos = memberships.stream()
-            .map(m -> toDto(m, parentsById.get(m.getParentAccountId())))
+            .map(m -> toDto(m, parentsById.get(m.getParentAccountId()), identitiesByParentId.get(m.getParentAccountId())))
             .toList();
         return OperationResult.success(dtos);
     }
@@ -120,7 +130,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
         log.info("Added parent membership: email={}, familyId={}, permission={}", email, familyId, permission);
 
-        return OperationResult.success(toDto(membership, parent));
+        return OperationResult.success(toDto(membership, parent, null));
     }
 
     @Override
@@ -162,7 +172,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
         log.info("Updated parent membership: id={}, permission={}", membershipId, permission);
 
-        return OperationResult.success(toDto(membership, parent));
+        return OperationResult.success(toDto(membership, parent, null));
     }
 
     @Override
@@ -242,11 +252,18 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 
-    private ParentMembershipDto toDto(FamilyParentMembershipEntity membership, ParentAccountEntity parent) {
-        String email = parent != null ? parent.getEmail() : "unknown";
+    private ParentMembershipDto toDto(
+        FamilyParentMembershipEntity membership,
+        ParentAccountEntity parent,
+        TelegramIdentityEntity identity) {
+        String email = parent != null ? parent.getEmail() : null;
         return new ParentMembershipDto(
             membership.getId(),
             email,
+            membership.getDisplayName(),
+            Optional.ofNullable(identity).map(TelegramIdentityEntity::getTelegramUserId).orElse(null),
+            Optional.ofNullable(identity).map(TelegramIdentityEntity::getTelegramUsername).orElse(null),
+            Optional.ofNullable(identity).map(TelegramIdentityEntity::getTelegramDisplayName).orElse(null),
             membership.getPermission(),
             membership.getStatus()
         );
@@ -285,7 +302,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
         log.info("Set parent membership active={}: id={}, familyId={}", active, membershipId, familyId);
 
-        return OperationResult.success(toDto(membership, parent));
+        return OperationResult.success(toDto(membership, parent, null));
     }
 
     @Override
@@ -335,6 +352,6 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
         log.info("Transferred family admin: targetMembershipId={}, familyId={}", membershipId, familyId);
 
-        return OperationResult.success(toDto(target, parent));
+        return OperationResult.success(toDto(target, parent, null));
     }
 }

@@ -4,10 +4,12 @@ import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.domain.model.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.domain.model.MembershipStatus;
 import com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity;
+import com.sashplatonov.earnit.kids.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.repository.FamilyRepository;
 import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
+import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,12 +36,14 @@ class FamilyParentAccessServiceImplTest {
     @Mock FamilyRepository familyRepository;
     @Mock ParentAccountRepository parentAccountRepository;
     @Mock FamilyParentMembershipRepository membershipRepository;
+    @Mock TelegramIdentityRepository telegramIdentityRepository;
 
     private FamilyParentAccessServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new FamilyParentAccessServiceImpl(familyRepository, parentAccountRepository, membershipRepository);
+        service = new FamilyParentAccessServiceImpl(
+            familyRepository, parentAccountRepository, membershipRepository, telegramIdentityRepository);
     }
 
     @Test
@@ -53,6 +57,8 @@ class FamilyParentAccessServiceImplTest {
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
         when(membershipRepository.findByFamilyIdIncludingInactive(7)).thenReturn(List.of(first, second));
         when(parentAccountRepository.findByIdList(List.of(1, 2))).thenReturn(List.of(parent1, parent2));
+        when(telegramIdentityRepository.findActiveParentsByFamilyAndParentAccountIds(7, List.of(1, 2)))
+            .thenReturn(List.of());
 
         OperationResult<List<ParentMembershipDto>> result = service.listMemberships("fam-1");
 
@@ -63,6 +69,36 @@ class FamilyParentAccessServiceImplTest {
                 org.assertj.core.groups.Tuple.tuple("alice@test.com", FamilyParentMembershipEntity.Permission.editor),
                 org.assertj.core.groups.Tuple.tuple("bob@test.com", FamilyParentMembershipEntity.Permission.viewer));
         verify(parentAccountRepository).findByIdList(List.of(1, 2));
+    }
+
+    @Test
+    void listMemberships_mapsNamedTelegramParentAndIgnoresInactiveOrOtherFamilyIdentities() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity legacy = membership(11, 7, 1, FamilyParentMembershipEntity.Permission.editor);
+        FamilyParentMembershipEntity telegram = membership(12, 7, 2, FamilyParentMembershipEntity.Permission.viewer);
+        telegram.setDisplayName("Alex Parent");
+        ParentAccountEntity legacyParent = parent(1, "alice@test.com");
+        ParentAccountEntity telegramParent = ParentAccountEntity.builder()
+            .id(2).email(null).passwordHash("").verified(false).build();
+        TelegramIdentityEntity identity = TelegramIdentityEntity.builder()
+            .id(21).familyId(7).parentAccountId(2).telegramUserId(700L)
+            .telegramUsername("alex").telegramDisplayName("Alex P").role("parent").active(true).build();
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(membershipRepository.findByFamilyIdIncludingInactive(7)).thenReturn(List.of(legacy, telegram));
+        when(parentAccountRepository.findByIdList(List.of(1, 2))).thenReturn(List.of(legacyParent, telegramParent));
+        when(telegramIdentityRepository.findActiveParentsByFamilyAndParentAccountIds(7, List.of(1, 2)))
+            .thenReturn(List.of(identity));
+
+        var result = service.listMemberships("fam-1");
+
+        assertThat(((OperationResult.Success<List<ParentMembershipDto>>) result).value())
+            .extracting(ParentMembershipDto::email, ParentMembershipDto::displayName,
+                ParentMembershipDto::telegramUserId, ParentMembershipDto::telegramUsername,
+                ParentMembershipDto::telegramDisplayName)
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple("alice@test.com", null, null, null, null),
+                org.assertj.core.groups.Tuple.tuple(null, "Alex Parent", 700L, "alex", "Alex P"));
     }
 
     @Test

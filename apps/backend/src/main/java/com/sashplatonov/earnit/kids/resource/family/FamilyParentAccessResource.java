@@ -128,7 +128,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
 
     @GET
     @Path("/parents")
-    @Operation(summary = "List parent memberships for the active family")
+    @Operation(summary = "List parent memberships and Telegram profiles for the active family")
     @APIResponses({
         @APIResponse(responseCode = "200", description = "Membership list returned",
             content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),

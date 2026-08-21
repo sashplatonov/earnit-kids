@@ -218,7 +218,7 @@ git commit -m "feat(backend): Link invited parents by Telegram"
 
 ## TASK-043: Return named Telegram parents in the canonical membership list
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-041, TASK-042
 
