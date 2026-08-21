@@ -177,6 +177,7 @@
 
 <style>
     .catalog { width:100%; }
+    :global(.catalog .entity-row .row-main) { min-height:0; }
     .action-row { display:flex; align-items:center; gap:.4rem; margin-bottom:.4rem; }
     .bulk-toggle { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; border:0; border-radius:.5rem; background:transparent; color:#3867d6; cursor:pointer; }
     .bulk-toggle:hover { background:#f2f5ff; }
