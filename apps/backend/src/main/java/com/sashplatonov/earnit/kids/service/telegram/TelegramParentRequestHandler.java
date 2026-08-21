@@ -17,8 +17,7 @@ final class TelegramParentRequestHandler {
                        JsonNode callback,
                        TelegramQuickActionService quickActions,
                        TelegramBotApiClient apiClient,
-                       TelegramMenuBuilder menuBuilder,
-                       String miniAppUrl) throws Exception {
+                       TelegramMenuBuilder menuBuilder) throws Exception {
         String[] parts = data.split("\\.", -1);
         if (parts.length != 5 && parts.length != 6) {
             return;
@@ -34,7 +33,7 @@ final class TelegramParentRequestHandler {
             ? quickActions.approveRequest(telegramUserId, childId, requestId)
             : quickActions.rejectRequest(telegramUserId, childId, requestId);
         editResult(callback, result, approved, requestId, childId, telegramUserId,
-            quickActions, apiClient, menuBuilder, miniAppUrl, queueContext, data);
+            quickActions, apiClient, menuBuilder, queueContext, data);
     }
 
     private static void editResult(JsonNode callback,
@@ -46,7 +45,6 @@ final class TelegramParentRequestHandler {
                                    TelegramQuickActionService quickActions,
                                    TelegramBotApiClient apiClient,
                                    TelegramMenuBuilder menuBuilder,
-                                   String miniAppUrl,
                                    boolean queueContext,
                                    String retryData) throws Exception {
         long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
@@ -56,7 +54,7 @@ final class TelegramParentRequestHandler {
         }
         if (result instanceof OperationResult.Success<TelegramQuickActionResponse> success) {
             if (queueContext) {
-                editQueueAdvance(callback, success.value(), apiClient, menuBuilder, miniAppUrl);
+                editQueueAdvance(callback, success.value(), apiClient, menuBuilder);
             } else {
                 apiClient.editMessageText(chatId, messageId,
                     decisionText(success.value(), approved, requestId), List.of());
@@ -75,8 +73,7 @@ final class TelegramParentRequestHandler {
     private static void editQueueAdvance(JsonNode callback,
                                          TelegramQuickActionResponse view,
                                          TelegramBotApiClient apiClient,
-                                         TelegramMenuBuilder menuBuilder,
-                                         String miniAppUrl) throws Exception {
+                                         TelegramMenuBuilder menuBuilder) throws Exception {
         long chatId = callback.path("message").path("chat").path("id").asLong(Long.MIN_VALUE);
         long messageId = callback.path("message").path("message_id").asLong(Long.MIN_VALUE);
         if (chatId == Long.MIN_VALUE || messageId == Long.MIN_VALUE) {
@@ -87,8 +84,7 @@ final class TelegramParentRequestHandler {
             apiClient.editMessageText(chatId, messageId, queueTextFor(view), queue);
             return;
         }
-        apiClient.editMessageText(chatId, messageId, TelegramCopy.emptyRequests(),
-            menuBuilder.parentRequestsEmpty(view, miniAppUrl));
+        apiClient.editMessageText(chatId, messageId, TelegramCopy.emptyRequests(), List.of());
     }
 
     private static String queueTextFor(TelegramQuickActionResponse view) {

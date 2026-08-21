@@ -137,12 +137,6 @@ public class TelegramMenuBuilder {
         return List.copyOf(buttons);
     }
 
-    public List<TelegramBotApiClient.InlineButton> parentRequestsEmpty(TelegramQuickActionResponse view,
-                                                                        String miniAppUrl) {
-        return List.of(
-            webApp(TelegramCopy.OPEN_APP, miniAppUrl));
-    }
-
     public List<TelegramBotApiClient.InlineButton> recent(TelegramQuickActionResponse view,
                                                             String miniAppUrl) {
         List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();

@@ -179,13 +179,10 @@ class TelegramMenuBuilderTest {
     }
 
     @Test
-    void parentRequestsEmptyStateHasMiniAppOnly() {
+    void parentRequestsEmptyStateHasNoInlineActions() {
         TelegramQuickActionResponse view = view();
 
         assertThat(menuBuilder().parentRequestQueue(view, null)).isEmpty();
-        assertThat(menuBuilder().parentRequestsEmpty(view, "https://example.test/telegram"))
-            .extracting(TelegramBotApiClient.InlineButton::text)
-            .containsExactly("📱 Открыть приложение");
         assertThat(TelegramMenuFlow.navigationText("requests-child-1", view))
             .isEqualTo("✅ Нет запросов, ожидающих решения");
     }

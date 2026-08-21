@@ -36,7 +36,6 @@ public final class TelegramBotEmoji {
     @Deprecated public static final String DONE = TASKS;
     @Deprecated public static final String REWARD = REWARDS;
     @Deprecated public static final String REQUEST = REQUESTS;
-    @Deprecated public static final String OPEN_APP = MINI_APP;
 
     private TelegramBotEmoji() {
     }

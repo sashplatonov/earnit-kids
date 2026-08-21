@@ -13,7 +13,6 @@ public final class TelegramCopy {
     public static final String RECENT = TelegramBotEmoji.RECENT + " Последние";
     public static final String SWITCH_CHILD = TelegramBotEmoji.CHILD + " Выбрать ребёнка";
     public static final String ADD_CHILD_MINI_APP = TelegramBotEmoji.ADD + " Добавить ребёнка → Mini App";
-    public static final String OPEN_APP = TelegramBotEmoji.MINI_APP + " Открыть приложение";
     public static final String APPROVE = TelegramBotEmoji.APPROVE + " Одобрить";
     public static final String REJECT = TelegramBotEmoji.REJECT + " Отклонить";
     public static final String NEXT = TelegramBotEmoji.NEXT + " Следующий";

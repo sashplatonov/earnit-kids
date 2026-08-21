@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 class TelegramBotServiceImplTest {
     @Test
-    void startSendsOnlyTheMiniAppEntryKeyboard() throws Exception {
+    void startSendsNoInlineKeyboardForUnlinkedUser() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
@@ -38,8 +38,7 @@ class TelegramBotServiceImplTest {
         service.handleUpdate(new ObjectMapper().readTree(
             "{\"update_id\":10,\"message\":{\"chat\":{\"id\":44},\"text\":\"/start abc\"}}"));
 
-        verify(apiClient).sendMessage(44L, "Open EarnIt Kids to continue.",
-            List.of(new TelegramBotApiClient.InlineButton("Open Mini App", "https://example.test/telegram")));
+        verify(apiClient).sendMessage(44L, "Open EarnIt Kids to continue.", List.of());
     }
 
     @Test
@@ -121,7 +120,7 @@ class TelegramBotServiceImplTest {
     }
 
     @Test
-    void unlinkedStartStillSendsTheMiniAppEntryKeyboard() throws Exception {
+    void unlinkedStartSendsNoInlineKeyboard() throws Exception {
         TelegramIdentityService identities = mock(TelegramIdentityService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
         TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
@@ -139,8 +138,7 @@ class TelegramBotServiceImplTest {
             {"update_id":26,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
             """));
 
-        verify(apiClient).sendMessage(44L, "Open EarnIt Kids to continue.",
-            List.of(new TelegramBotApiClient.InlineButton("Open Mini App", "https://example.test/telegram")));
+        verify(apiClient).sendMessage(44L, "Open EarnIt Kids to continue.", List.of());
     }
 
     @Test
@@ -577,10 +575,7 @@ class TelegramBotServiceImplTest {
         when(identities.recordWebhookUpdate(31L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(config.miniAppUrl()).thenReturn(Optional.of("https://example.test/telegram"));
         when(quickActions.rejectRequest(77L, 3, 19L)).thenReturn(OperationResult.success(after));
-        List<TelegramBotApiClient.InlineButton> emptyButtons = List.of(
-            TelegramBotApiClient.InlineButton.webApp(TelegramCopy.OPEN_APP, "https://example.test/telegram"));
         when(menuBuilder.parentRequestQueue(after, null)).thenReturn(List.of());
-        when(menuBuilder.parentRequestsEmpty(after, "https://example.test/telegram")).thenReturn(emptyButtons);
         TelegramBotServiceImpl service = new TelegramBotServiceImpl(
             identities, apiClient, callbacks, config, () -> Instant.parse("2026-08-13T12:00:00Z"),
             quickActions, menuBuilder);
@@ -591,7 +586,7 @@ class TelegramBotServiceImplTest {
             """));
 
         verify(apiClient).editMessageText(44L, 19L,
-            "✅ Нет запросов, ожидающих решения", emptyButtons);
+            "✅ Нет запросов, ожидающих решения", List.of());
     }
 
     @Test

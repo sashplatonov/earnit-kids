@@ -107,9 +107,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
 
     private void handleStartCommand(long chatId, long telegramUserId) throws Exception {
         String miniAppUrl = config.miniAppUrl().orElse("");
-        if (miniAppUrl.isBlank()) {
-            return;
-        }
         String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
         if (quickActions != null && menuBuilder != null && telegramUserId != Long.MIN_VALUE) {
             var view = quickActions.load(telegramUserId, null);
@@ -133,14 +130,12 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                     apiClient.sendMessage(chatId, "No children yet",
                         menuBuilder.parentNoChildren(miniAppUrl));
                 } else {
-                    apiClient.sendMessage(chatId, START_TEXT,
-                        List.of(new TelegramBotApiClient.InlineButton("Open Mini App", miniAppUrl)));
+                    apiClient.sendMessage(chatId, START_TEXT, List.of());
                 }
             }
             return;
         }
-        apiClient.sendMessage(chatId, START_TEXT,
-            List.of(new TelegramBotApiClient.InlineButton("Open Mini App", miniAppUrl)));
+        apiClient.sendMessage(chatId, START_TEXT, List.of());
     }
 
     private void handleCallback(JsonNode callback) throws Exception {
@@ -166,9 +161,9 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                 });
         } else if (data.startsWith("task.request.") || data.startsWith("reward.request.")) {
                 handleChildQuickAction(data, telegramUserId, callback);
-            } else if (data.startsWith("parent.request.")) {
-                TelegramParentRequestHandler.handle(telegramUserId, data, callback,
-                    quickActions, apiClient, menuBuilder, config.miniAppUrl().orElse(""));
+        } else if (data.startsWith("parent.request.")) {
+            TelegramParentRequestHandler.handle(telegramUserId, data, callback,
+                    quickActions, apiClient, menuBuilder);
         } else if (data.startsWith("mutate.")) {
             callbacks.consumeMutation(data.substring("mutate.".length()), telegramUserId);
         }

@@ -38,7 +38,7 @@ final class TelegramMenuFlow {
         if (base.startsWith("requests-next-")) {
             String currentId = base.substring("requests-next-".length());
             List<TelegramBotApiClient.InlineButton> queue = menuBuilder.parentRequestQueue(view, currentId);
-            return queue.isEmpty() ? menuBuilder.parentRequestsEmpty(view, miniAppUrl) : queue;
+            return queue;
         }
         return switch (base) {
             case "child", "switch" -> childMenu(view, publicSiteUrl, menuBuilder);
@@ -76,7 +76,7 @@ final class TelegramMenuFlow {
             return List.of();
         }
         List<TelegramBotApiClient.InlineButton> queue = menuBuilder.parentRequestQueue(view, null);
-        return queue.isEmpty() ? menuBuilder.parentRequestsEmpty(view, miniAppUrl) : queue;
+        return queue;
     }
 
     private static List<TelegramBotApiClient.InlineButton> coinsMenu(TelegramQuickActionResponse view,
