@@ -2,9 +2,10 @@
     import { telegramUi } from './telegramUi';
 
     export let interactive = false;
+    export let archived = false;
 </script>
 
-<div class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
+<div class:archived class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
     <div class="entity-icon"><slot name="icon" /></div>
     <div class="entity-content">
         <div class="entity-heading">
@@ -14,7 +15,7 @@
         <div class="entity-meta"><slot name="metadata" /></div>
         <div class="entity-actions"><slot name="actions" /></div>
     </div>
-    {#if interactive}<slot name="interactive" />{/if}
+    {#if interactive}<div class="entity-interactive"><slot name="interactive" /></div>{/if}
 </div>
 
 <style>
@@ -23,12 +24,19 @@
     .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; margin-top:.2rem; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
     .entity-content { display:flex; flex:1; min-width:0; flex-direction:column; gap:.25rem; }
     .entity-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; min-width:0; }
-    .entity-title { flex:1; min-width:0; color:#18243d; font-size:.95rem; font-weight:600; line-height:1.3; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
+    .entity-title { display:flex; flex:1; align-items:stretch; min-width:0; min-height:2.75rem; color:#18243d; font-size:.95rem; font-weight:600; line-height:1.3; overflow:hidden; overflow-wrap:anywhere; }
     .entity-title :global(h3), .entity-title :global(p) { margin:0; }
     .entity-trailing { display:flex; flex:0 0 auto; min-width:0; flex-direction:column; align-items:flex-end; gap:.15rem; }
     .entity-meta { min-width:0; color:#8a93a8; font-size:.75rem; line-height:1.3; overflow-wrap:anywhere; }
     .entity-actions { display:flex; align-items:center; justify-content:space-between; gap:.5rem; min-width:0; }
     .entity-actions:empty, .entity-meta:empty, .entity-trailing:empty { display:none; }
+    .entity-interactive { display:flex; flex:0 0 auto; align-items:center; gap:.25rem; }
+    .archived { opacity:.6; }
+    :global(.entity-row .row-main) { display:flex; flex:1 0 auto; align-items:stretch; width:100%; min-width:2.75rem; min-height:2.75rem; height:2.75rem; box-sizing:border-box; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+    :global(.entity-row .entity-meta .meta) { display:flex; align-items:center; gap:.3rem; margin-top:.15rem; color:#66718a; font-size:.8rem; }
+    :global(.entity-row .entity-meta .meta--last) { color:#8a93a8; font-size:.75rem; }
+    :global(.entity-row .row-action) { display:grid; place-items:center; width:2.75rem; height:2.75rem; min-width:2.75rem; min-height:2.75rem; box-sizing:border-box; border:0; border-radius:.5rem; background:transparent; cursor:pointer; }
+    :global(.entity-row .row-action:disabled) { opacity:.5; cursor:not-allowed; }
     :global(.entity-row button:focus-visible), :global(.entity-row a:focus-visible) { outline:3px solid var(--telegram-focus); outline-offset:2px; }
     @media (max-width:370px) {
         .entity-heading { flex-direction:column; }

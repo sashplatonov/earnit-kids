@@ -17,12 +17,12 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, childId: 10, balance: 10, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 2, groupName: 'Home', isActive: true }, { id: 2, name: 'A long task title that remains reachable on a narrow mobile viewport', coins: 2, groupName: 'School', isActive: true }, { id: 3, name: 'Pack', coins: 2, groupName: 'School', isActive: true }], shop: [{ id: 4, name: 'Ice cream', price: 5, groupName: 'Fun', isActive: true }], requests: [] }) }));
     await page.goto('/telegram');
     await expect(page.locator('.group-subnav .chip')).toHaveCount(3);
-    const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list');
-    await expect(taskList.locator('.row')).toHaveCount(3);
+    const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list-surface');
+    await expect(taskList.locator('.entity-row')).toHaveCount(3);
     await expect(taskList.getByText('A long task title that remains reachable on a narrow mobile viewport')).toBeVisible();
     expect(await taskList.evaluate((node) => {
         const rows = [...node.children];
-        return rows.every((row) => row.classList.contains('row'))
+        return rows.every((row) => row.classList.contains('entity-row'))
             && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px')
             && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)');
     })).toBeTruthy();
@@ -35,11 +35,11 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
         return Math.round(rect.height) < 80 && Math.round(window.innerHeight - rect.bottom) === 0;
     })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
-    for (const button of await taskList.locator('.row-main, .check').all()) expect(await button.evaluate((node) => Math.min(node.getBoundingClientRect().width, node.getBoundingClientRect().height) >= 44)).toBeTruthy();
+    for (const button of await taskList.locator('.row-action').all()) expect(await button.evaluate((node) => Math.min(node.getBoundingClientRect().width, node.getBoundingClientRect().height) >= 44)).toBeTruthy();
     await page.locator('#child-tab-rewards').click();
     await expect(page.locator('#child-panel-rewards')).toBeVisible();
-    await expect(page.locator('section[aria-labelledby="child-rewards-title"] .list')).toBeVisible();
-    await expect(page.locator('section[aria-labelledby="child-rewards-title"] .list')).toHaveCSS('border-style', 'solid');
+    await expect(page.locator('section[aria-labelledby="child-rewards-title"] .list-surface')).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="child-rewards-title"] .list-surface')).toHaveCSS('border-style', 'solid');
     await page.locator('#child-tab-tasks').click();
     const firstRowTrigger = taskList.locator('.row-main').first();
     await firstRowTrigger.focus();
@@ -54,6 +54,6 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     await page.locator('#child-tab-activity').click();
     await page.locator('#child-activity-tab-history').click();
     await expect(page.locator('#child-panel-activity .list-surface')).toBeVisible();
-    await expect(page.locator('#child-panel-activity .list-surface .row')).toHaveCount(1);
+    await expect(page.locator('#child-panel-activity .list-surface .entity-row')).toHaveCount(1);
     await expect(page.locator('#child-panel-activity .list-surface')).toHaveCSS('border-style', 'solid');
 });

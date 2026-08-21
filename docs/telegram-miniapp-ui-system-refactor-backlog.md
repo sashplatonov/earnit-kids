@@ -327,7 +327,7 @@ git commit -m "refactor(web): Unify request and activity UI"
 
 ## TASK-P2-2: Compose task and reward lists from one entity-row family
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** P1-3
 

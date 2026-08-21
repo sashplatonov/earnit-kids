@@ -30,9 +30,9 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await expect(page.locator('#child-tab-activity')).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tabpanel', { name: /Activity|Активность/ })).toBeVisible();
     await page.locator('#child-tab-tasks').click();
-    const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list');
+    const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list-surface');
     await expect(taskList).toBeVisible();
-    await expect(taskList.locator('.row')).toHaveCount(2);
+    await expect(taskList.locator('.entity-row')).toHaveCount(2);
     await expect(taskList.getByText('A very long task title that must remain reachable on a narrow mobile viewport')).toBeVisible();
     expect(await taskList.evaluate((node) => {
         const rows = [...node.children];
@@ -89,12 +89,12 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await expect(page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]')).toBeVisible();
     const requestList = page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]').locator('.list-surface');
     await expect(requestList).toBeVisible();
-    await expect(requestList.locator('.row')).toHaveCount(2);
+    await expect(requestList.locator('.entity-row')).toHaveCount(2);
     await expect(requestList.getByRole('heading', { name: 'Clean room' })).toBeVisible();
     await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
     await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
-    await expect(requestList.locator('.row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
-    await expect(requestList.locator('.row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
+    await expect(requestList.locator('.entity-row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
+    await expect(requestList.locator('.entity-row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
     expect(await requestList.evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
         && getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)')).toBeTruthy();
     await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toBeVisible();

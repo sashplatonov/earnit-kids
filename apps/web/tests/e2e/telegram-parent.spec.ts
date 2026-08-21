@@ -78,14 +78,14 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('heading', { name: /Family|Семья/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Add child|Добавить ребёнка/ })).toBeVisible();
     await page.getByRole('tab', { name: /Home|Главная/ }).click();
-    const requestRows = page.locator('.home .list-surface').first().locator('.row');
+    const requestRows = page.locator('.home .list-surface').first().locator('.entity-row');
     await expect(requestRows).toHaveCount(2);
     await expect(page.locator('.home .list-surface').first()).toHaveCSS('border-style', 'solid');
     await expect(requestRows.nth(0)).toHaveCSS('border-bottom-width', '1px');
     await expect(requestRows.nth(1)).toHaveCSS('border-bottom-width', '0px');
     const activityList = page.locator('.home .list-surface').nth(1);
     await expect(activityList).toBeVisible();
-    await expect(activityList.locator('.row')).toHaveCount(1);
+    await expect(activityList.locator('.entity-row')).toHaveCount(1);
     await expect(activityList.getByRole('heading', { name: 'Read completed' })).toBeVisible();
     const approveButton = requestRows.nth(0).getByRole('button', { name: /Approve request|Одобрить заявку/ });
     const rejectButton = requestRows.nth(0).getByRole('button', { name: /Reject request|Отклонить заявку/ });

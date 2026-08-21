@@ -14,6 +14,8 @@
     import TelegramParentCatalog from './TelegramParentCatalog.svelte';
     import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
     import { formatLastUsedTime } from './telegramLastUsed';
+    import TelegramListSurface from './ui/TelegramListSurface.svelte';
+    import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
 
     const i18n = useI18n();
 
@@ -150,21 +152,17 @@
         {#if selectedGroup && !filteredTasks.length}
             <p class="muted empty-group">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>
         {:else}
-        <div class="list" aria-label={$i18n.t('app.telegram.tasks.title')}>
+        <TelegramListSurface label={$i18n.t('app.telegram.tasks.title')}>
             {#each filteredTasks as task (task.id)}
-                <div class:archived={task.isActive === false} class="row">
-                    <button class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} on:click={() => edit(task)}>
-                        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
-                        <span class="entity-text">
-                            <span class="title">{stripLeadingEmoji(task.name)}</span>
-                            <span class="meta"><TelegramCoin size={13} />{task.coins} · {stripLeadingEmoji(task.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>
-                            {#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}
-                        </span>
-                    </button>
+                <TelegramEntityRow interactive={canEdit} archived={task.isActive === false}>
+                    <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
+                    <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} on:click={() => edit(task)}><span class="title">{stripLeadingEmoji(task.name)}</span></button>
+                    <span slot="metadata"><span class="meta"><TelegramCoin size={13} />{task.coins} · {stripLeadingEmoji(task.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>{#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}</span>
+                    <svelte:fragment slot="interactive">
                     {#if canEdit}
-                        <button class="check" type="button" aria-label={$i18n.t('app.telegram.tasks.completeShort')} disabled={task.isActive === false || completingId != null} on:click|stopPropagation={() => confirmComplete = task}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} /></button>
+                        <button class="row-action check" type="button" aria-label={$i18n.t('app.telegram.tasks.completeShort')} disabled={task.isActive === false || completingId != null} on:click|stopPropagation={() => confirmComplete = task}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} /></button>
                         <div class="menu-wrap">
-                            <button class="more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })} aria-haspopup="menu" aria-expanded={openMenuId === task.id} on:click|stopPropagation={(event) => toggleMenu(task.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
+                            <button class="row-action more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })} aria-haspopup="menu" aria-expanded={openMenuId === task.id} on:click|stopPropagation={(event) => toggleMenu(task.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
                             {#if openMenuId === task.id}
                                 <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })}>
                                     <button role="menuitem" type="button" on:click={() => edit(task)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.tasks.edit')} /><span>{$i18n.t('app.telegram.tasks.edit')}</span></button>
@@ -175,9 +173,10 @@
                             {/if}
                         </div>
                     {/if}
-                </div>
+                    </svelte:fragment>
+                </TelegramEntityRow>
             {/each}
-        </div>
+        </TelegramListSurface>
         {/if}
     {/if}
 
@@ -218,17 +217,8 @@
     .add { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-width:2.75rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
     .catalog { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
-    .list { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
     .empty-group { padding:1rem 0; text-align:center; }
-    .row { display:flex; align-items:stretch; gap:.25rem; min-height:4rem; border-bottom:1px solid #edf0f5; }
-    .row:last-child { border-bottom:0; }
-    .row.archived { opacity:.6; }
-    .row-main { display:flex; align-items:stretch; gap:.6rem; flex:1; min-width:0; padding:.5rem 0; border:0; background:transparent; text-align:left; cursor:pointer; }
-    .entity-icon { display:grid; place-items:center; width:2.25rem; height:2.25rem; flex:0 0 auto; margin-top:.2rem; border-radius:.65rem; background:#eef0ff; color:#5b63e9; }
-    .entity-text { flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
-    .title { display:block; color:#18243d; font-size:.95rem; font-weight:600; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
-    .meta { display:flex; align-items:center; gap:.3rem; margin-top:.15rem; color:#66718a; font-size:.8rem; }
-    .meta--last { color:#8a93a8; font-size:.75rem; }
+
     .more { width:2.75rem; height:2.75rem; flex:0 0 auto; display:grid; place-items:center; border:0; background:transparent; color:#66718a; cursor:pointer; }
     .check { width:2.75rem; height:2.75rem; flex:0 0 auto; align-self:center; display:grid; place-items:center; box-sizing:border-box; aspect-ratio:1/1; border:1px solid #cbd3e2; border-radius:.5rem; background:#fff; color:#17884b; font-weight:900; cursor:pointer; }
     .check:disabled { opacity:.5; cursor:not-allowed; }
