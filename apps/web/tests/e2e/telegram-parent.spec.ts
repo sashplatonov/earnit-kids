@@ -21,6 +21,30 @@ async function expectCompactList(list: import('@playwright/test').Locator, count
     })).toBeTruthy();
 }
 
+async function expectCatalogRow(
+    list: import('@playwright/test').Locator,
+    title: RegExp,
+    amount: string,
+    group: string,
+    frequency: RegExp,
+    actionName: RegExp,
+) {
+    const row = list.locator(':scope > .entity-row').first();
+    await expect(row).toHaveAttribute('role', 'listitem');
+    await expect(row.locator('.entity-icon')).toHaveCount(1);
+    await expect(row.getByRole('button', { name: title })).toBeVisible();
+    await expect(row.getByText(amount, { exact: true })).toBeVisible();
+    await expect(row.getByText(group, { exact: true })).toBeVisible();
+    await expect(row.locator('.entity-meta')).toContainText(frequency);
+    const action = row.getByRole('button', { name: actionName });
+    await expect(action).toBeVisible();
+    expect(await action.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        return rect.width >= 44 && rect.height >= 44;
+    })).toBeTruthy();
+    return row;
+}
+
 test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.addInitScript(() => {
@@ -96,15 +120,65 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
     await page.locator('button.catalog').first().click();
-    const catalog = page.locator('.catalog .list');
-    await expect(catalog).toBeVisible();
-    await expect(catalog.locator(':scope > .row')).toHaveCount(1);
-    await expect(catalog.locator('.entity-icon')).toHaveCount(1);
-    await expect(catalog.locator('.entity-text')).toHaveCSS('min-width', '0px');
-    await expect(catalog.getByText('Очень длинное каталожное задание для узкого экрана')).toBeVisible();
-    await expect(catalog.getByRole('button', { name: /Add|Добавить/ })).toBeVisible();
+    const taskCatalog = page.getByRole('list', { name: /Task catalog|Каталог заданий/ });
+    await expect(taskCatalog).toBeVisible();
+    await expect(taskCatalog.locator(':scope > .entity-row')).toHaveCount(1);
+    const taskRow = await expectCatalogRow(
+        taskCatalog,
+        /Очень длинное каталожное задание для узкого экрана/,
+        '25',
+        'Дом',
+        /раз в неделю/,
+        /Add|Добавить/,
+    );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    await taskRow.getByRole('button', { name: /Очень длинное каталожное задание/ }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog').getByRole('heading', { name: /Очень длинное каталожное задание/ })).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /Done|Готово/ }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(taskRow.getByRole('button', { name: /Add|Добавить/ })).toBeVisible();
+
+    const bulkToggle = page.getByRole('button', { name: /Select several|Выбрать несколько/ });
+    await bulkToggle.focus();
+    await expect(bulkToggle).toBeFocused();
+    await page.keyboard.press('Enter');
+    const taskCheckbox = taskRow.getByRole('checkbox', { name: /Очень длинное каталожное задание/ });
+    await expect(taskCheckbox).toBeVisible();
+    await taskCheckbox.focus();
+    await expect(taskCheckbox).toBeFocused();
+    await taskCheckbox.check();
+    await expect(page.getByText(/Selected: 1|Выбрано: 1/)).toBeVisible();
+    await bulkToggle.focus();
+    await page.keyboard.press('Enter');
+    await expect(taskRow.getByRole('button', { name: /Add|Добавить/ })).toBeVisible();
+    await taskRow.getByRole('button', { name: /Очень длинное каталожное задание/ }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /Done|Готово/ }).click();
     await page.getByRole('button', { name: /Back|Назад/ }).click();
+
+    await page.getByRole('tab', { name: /Rewards|Награды/ }).click();
+    await page.locator('button.catalog').first().click();
+    const rewardCatalog = page.getByRole('list', { name: /Reward catalog|Каталог наград/ });
+    await expect(rewardCatalog).toBeVisible();
+    await expect(rewardCatalog.locator(':scope > .entity-row')).toHaveCount(1);
+    const rewardRow = await expectCatalogRow(
+        rewardCatalog,
+        /Каталожная награда с длинным названием/,
+        '40',
+        'Отдых',
+        /раз в неделю/,
+        /Add|Добавить/,
+    );
+    await rewardRow.getByRole('button', { name: /Каталожная награда с длинным названием/ }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog').getByRole('heading', { name: /Каталожная награда/ })).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /Done|Готово/ }).click();
+    await expect(rewardRow.getByRole('button', { name: /Add|Добавить/ })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+
+    await page.getByRole('button', { name: /Back|Назад/ }).click();
+    await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
     const addTask = page.getByRole('button', { name: /Add task|Добавить задание/ });
     await addTask.click();
     await expect(page.getByRole('dialog')).toBeVisible();

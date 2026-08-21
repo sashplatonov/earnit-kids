@@ -33,7 +33,7 @@ mobile layout implementation.
 
 ## TASK-CAT-ROW-1: Characterize shared catalog row behaviour
 
-**Status:** TODO
+**Status:** IN_PROGRESS
 **Priority:** P1  
 **Depends on:** -
 
@@ -110,6 +110,15 @@ implementation details that are deliberately being removed.
 ```bash
 cd apps/web && PLAYWRIGHT_USE_PREVIEW=true npm run test:e2e -- telegram-parent.spec.ts
 ```
+
+### CHECKPOINT
+
+- completed: Replaced the catalog task assertions with shared list/row contract checks and added reward-catalog, details, and bulk keyboard coverage.
+- remaining: Make the catalog render the asserted `list-surface`/`entity-row` contract in TASK-CAT-ROW-2, then rerun this focused E2E.
+- changed files: `apps/web/tests/e2e/telegram-parent.spec.ts`
+- current test/verification status: Focused Playwright run is blocked because the current catalog still renders legacy `.list`/`.row`; no production changes were made in this task.
+- confirmed blockers: The required shared catalog DOM does not exist until the separately scoped migration task.
+- next exact action: Resume TASK-CAT-ROW-1 after the catalog migration and rerun `PLAYWRIGHT_USE_PREVIEW=true npm run test:e2e -- telegram-parent.spec.ts`.
 
 ### Commit
 
