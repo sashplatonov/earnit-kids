@@ -139,7 +139,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('dialog')).toBeHidden();
     await expect(taskRow.getByRole('button', { name: /Add|Добавить/ })).toBeVisible();
 
-    const bulkToggle = page.getByRole('button', { name: /Select several|Выбрать несколько/ });
+    const bulkToggle = page.locator('button.bulk-toggle');
     await bulkToggle.focus();
     await expect(bulkToggle).toBeFocused();
     await page.keyboard.press('Enter');

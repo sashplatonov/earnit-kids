@@ -33,7 +33,7 @@ mobile layout implementation.
 
 ## TASK-CAT-ROW-1: Characterize shared catalog row behaviour
 
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** -
 
@@ -129,7 +129,7 @@ git commit -m "test(web): characterize shared Telegram catalog rows"
 
 ## TASK-CAT-ROW-2: Migrate both catalogs to the shared item block
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** TASK-CAT-ROW-1
 

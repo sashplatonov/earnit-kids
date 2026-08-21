@@ -6,7 +6,8 @@
     export let compact = false;
 </script>
 
-<div class:archived class:compact class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
+<div class:archived class:compact class:has-selection={Boolean($$slots.selection)} class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
+    {#if $$slots.selection}<div class="entity-selection"><slot name="selection" /></div>{/if}
     <div class="entity-icon"><slot name="icon" /></div>
     <div class="entity-content">
         <div class="entity-heading">
@@ -21,8 +22,10 @@
 
 <style>
     .entity-row { display:grid; grid-template-columns:1.75rem minmax(0,1fr) auto; align-items:center; gap:.35rem; width:100%; box-sizing:border-box; min-width:0; min-height:2.5rem; padding:.2rem 0; border-bottom:1px solid var(--telegram-divider); background:transparent; }
+    .entity-row.has-selection { grid-template-columns:2.75rem 1.75rem minmax(0,1fr) auto; }
     .entity-row:last-child { border-bottom:0; }
     .entity-icon { display:grid; place-items:center; width:1.75rem; height:1.75rem; flex:0 0 auto; margin-top:.2rem; border-radius:.5rem; background:#eef0ff; color:#5b63e9; }
+    .entity-selection { display:flex; align-items:center; justify-content:center; width:2.75rem; min-width:0; min-height:2.75rem; }
     .entity-content { display:flex; min-width:0; flex-direction:column; gap:0; }
     .entity-heading { display:flex; align-items:flex-start; gap:.35rem; min-width:0; }
     .entity-title { display:flex; flex:1; min-width:0; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; overflow:hidden; overflow-wrap:anywhere; }
@@ -49,6 +52,7 @@
     :global(.entity-row button:focus-visible), :global(.entity-row a:focus-visible) { outline:3px solid var(--telegram-focus); outline-offset:2px; }
     @media (max-width:370px) {
         .entity-row { grid-template-columns:1.75rem minmax(0,1fr) auto; gap:.3rem; }
+        .entity-row.has-selection { grid-template-columns:2.75rem 1.75rem minmax(0,1fr) auto; }
         .entity-interactive { gap:0; }
     }
 </style>

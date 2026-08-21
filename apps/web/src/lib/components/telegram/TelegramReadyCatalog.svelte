@@ -22,6 +22,8 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';
     import TelegramCatalogFilters from './TelegramCatalogFilters.svelte';
+    import TelegramListSurface from './ui/TelegramListSurface.svelte';
+    import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
 
     export let kind: 'task' | 'reward' = 'task';
 
@@ -127,32 +129,36 @@
             <button class="reset" type="button" on:click={() => { query = ''; filters = { ...EMPTY_FILTERS }; selectedGroup = ''; }}>{$i18n.t('app.telegram.readyCatalog.reset')}</button>
         </div>
     {:else}
-        <div class="list" aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')}>
+        <TelegramListSurface label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')}>
             {#each filtered as template (template.id)}
-                <div class="row">
-                    {#if bulkMode}
-                        <label class="check-wrap">
+                <TelegramEntityRow interactive>
+                    <svelte:fragment slot="selection">
+                        {#if bulkMode}
+                            <label class="check-wrap">
                             <input class="check" type="checkbox" checked={selectedIds.includes(template.id)} aria-label={stripEmoji(template.title)} on:change={() => toggleSelect(template.id)} />
-                        </label>
-                    {/if}
-                    <button class="row-main" type="button" aria-label={stripEmoji(template.title)} on:click={() => openDetails(template)}>
-                        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: template.title, group: template.groupName, semantic: template.semanticGraphicKey ?? null })} size={20} label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')} /></span>
-                        <span class="entity-text">
-                            <span class="title">{template.title}</span>
-                            <span class="meta"><TelegramCoin size={13} />{amountLabel(template).amount} · {stripEmoji(template.groupName || '')}</span>
-                            <span class="meta">{freqLabel(template)}</span>
-                        </span>
-                    </button>
-                    {#if !bulkMode}
-                        {#if isAdded(template)}
-                            <button class="added" type="button" disabled><TelegramIcon name="check" size={16} label={$i18n.t('app.telegram.readyCatalog.added')} /></button>
-                        {:else}
-                            <button class="add" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.add')} on:click={() => addOne(template)}><TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.add')} /></button>
+                            </label>
                         {/if}
-                    {/if}
-                </div>
+                    </svelte:fragment>
+                    <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: template.title, group: template.groupName, semantic: template.semanticGraphicKey ?? null })} size={20} label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')} /></span>
+                    <button slot="title" class="row-main" type="button" aria-label={stripEmoji(template.title)} on:click={() => openDetails(template)}>
+                        <span class="title">{template.title}</span>
+                    </button>
+                    <span slot="metadata" class="row-metadata">
+                        <span class="meta"><TelegramCoin size={13} /><span>{amountLabel(template).amount}</span> · <span>{stripEmoji(template.groupName || '')}</span></span>
+                        <span class="meta">{freqLabel(template)}</span>
+                    </span>
+                    <svelte:fragment slot="interactive">
+                        {#if !bulkMode}
+                            {#if isAdded(template)}
+                                <button class="row-action added" type="button" disabled><TelegramIcon name="check" size={16} label={$i18n.t('app.telegram.readyCatalog.added')} /></button>
+                            {:else}
+                                <button class="row-action add" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.add')} on:click={() => addOne(template)}><TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.add')} /></button>
+                            {/if}
+                        {/if}
+                    </svelte:fragment>
+                </TelegramEntityRow>
             {/each}
-        </div>
+        </TelegramListSurface>
     {/if}
 
     {#if bulkMode && selectedIds.length > 0}
@@ -179,22 +185,14 @@
     .filter-btn { display:flex; align-items:center; justify-content:center; gap:.35rem; min-height:2rem; padding:0 .5rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#566176; font:inherit; font-weight:700; font-size:.75rem; cursor:pointer; min-width:0; }
     .filter-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .filter-btn.active { color:#2854ba; border-color:#c4c8ff; background:#f7f7ff; }
-    .list { border:1px solid #e6e9f0; border-radius:.7rem; background:#fff; padding:0 .4rem; }
-    .row { display:flex; align-items:center; gap:.35rem; min-height:2.5rem; border-bottom:1px solid #edf0f5; }
-    .row:last-child { border-bottom:0; }
-    .check-wrap { width:2rem; height:100%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .check-wrap { width:2.75rem; min-height:2.75rem; flex:0 0 auto; display:flex; align-items:center; justify-content:center; cursor:pointer; }
     .check { appearance:none; -webkit-appearance:none; width:1.375rem; height:1.375rem; margin:0; flex:0 0 auto; border:1.5px solid #b9c1cf; border-radius:.4rem; background:#fff; display:grid; place-content:center; cursor:pointer; }
     .check::before { content:""; width:.5rem; height:.3rem; border-left:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(-45deg) scale(0); transform-origin:center; }
     .check:checked { background:#3867d6; border-color:#3867d6; }
     .check:checked::before { transform:rotate(-45deg) scale(1); }
     .check:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
-    .row-main { display:flex; align-items:flex-start; gap:.45rem; flex:1; min-width:0; min-height:2.5rem; padding:.2rem 0; border:0; background:transparent; text-align:left; cursor:pointer; }
-    .entity-icon { display:grid; place-items:center; width:1.75rem; height:1.75rem; flex:0 0 auto; border-radius:.5rem; background:#eef0ff; color:#5b63e9; }
-    .entity-text { min-width:0; }
-    .title { display:block; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
-    .meta { display:block; margin-top:.05rem; color:#66718a; font-size:.7rem; }
-    .add { width:1.5rem; height:1.5rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #3867d6; border-radius:.4rem; background:#3867d6; color:#fff; cursor:pointer; }
-    .added { width:1.5rem; height:1.5rem; flex:0 0 auto; display:grid; place-items:center; border:1px solid #cbe8d7; border-radius:.4rem; background:#eaf7ef; color:#168552; cursor:default; }
+    .add { border:1px solid #3867d6; background:#3867d6; color:#fff; }
+    .added { border:1px solid #cbe8d7; background:#eaf7ef; color:#168552; cursor:default; }
     .empty { padding:2rem 1rem; text-align:center; }
     .empty-title { margin:0; color:#18243d; font-weight:700; }
     .empty-hint { margin:.3rem 0 0; color:#66718a; font-size:.85rem; }
