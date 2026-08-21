@@ -189,7 +189,7 @@
 
 <style>
     .catalog-screen { width:100%; }
-    .header { display:flex; align-items:center; gap:.5rem; margin-bottom:.4rem; }
+    .header { display:flex; align-items:center; gap:.5rem; margin-bottom:.4rem; padding:.55rem .35rem; border:1px solid #e3e9f8; border-radius:.7rem; background:#fff; }
     .back { display:inline-flex; align-items:center; justify-content:center; gap:.3rem; min-width:2.25rem; min-height:2.25rem; padding:.3rem .4rem; border:0; border-radius:.6rem; background:transparent; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; flex:0 0 auto; }
     .title-block { flex:1; min-width:0; }
     .title-block h1 { margin:0; color:#18243d; font-size:1.05rem; line-height:1.2; }
