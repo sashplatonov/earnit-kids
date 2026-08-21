@@ -56,7 +56,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await page.route('**/api/history?**', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ items: [], total: 0, page: 1, limit: 10 }),
+        body: JSON.stringify({ items: [{ id: 21, type: 'earn', description: 'Read completed', amount: 20, createdAt: '2026-08-16T09:00:00Z' }], total: 1, page: 1, limit: 10 }),
     }));
 
     await page.goto('/telegram');
@@ -78,11 +78,15 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('heading', { name: /Family|Семья/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Add child|Добавить ребёнка/ })).toBeVisible();
     await page.getByRole('tab', { name: /Home|Главная/ }).click();
-    const requestRows = page.locator('.home .list .row');
+    const requestRows = page.locator('.home .list-surface').first().locator('.row');
     await expect(requestRows).toHaveCount(2);
-    await expect(page.locator('.home .list')).toHaveCSS('border-style', 'solid');
+    await expect(page.locator('.home .list-surface').first()).toHaveCSS('border-style', 'solid');
     await expect(requestRows.nth(0)).toHaveCSS('border-bottom-width', '1px');
     await expect(requestRows.nth(1)).toHaveCSS('border-bottom-width', '0px');
+    const activityList = page.locator('.home .list-surface').nth(1);
+    await expect(activityList).toBeVisible();
+    await expect(activityList.locator('.row')).toHaveCount(1);
+    await expect(activityList.getByRole('heading', { name: 'Read completed' })).toBeVisible();
     const approveButton = requestRows.nth(0).getByRole('button', { name: /Approve request|Одобрить заявку/ });
     const rejectButton = requestRows.nth(0).getByRole('button', { name: /Reject request|Отклонить заявку/ });
     await page.locator('body').click({ position: { x: 1, y: 1 } });

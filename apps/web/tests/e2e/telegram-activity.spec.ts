@@ -16,8 +16,8 @@ test('child activity shows child-readable history on mobile', async ({ page }) =
     await page.route('**/api/history?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ id: 3, title: 'Read', amount: 20, createdAt: '2026-08-13T10:00:00Z' }], total: 1, page: 1, limit: 20 }) }));
 
     await page.goto('/telegram');
-    await page.getByRole('tab', { name: 'Activity' }).click();
+    await page.getByRole('tab', { name: /Activity|Активность/ }).click();
     await expect(page.getByText('Read')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
+    await expect(page.locator('section[aria-label="History"], section[aria-label="История"]')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });

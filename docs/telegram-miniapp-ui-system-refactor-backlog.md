@@ -258,7 +258,7 @@ git commit -m "refactor(web): Add Telegram list primitives"
 
 ## TASK-P2-1: Complete the request and activity migration to shared UI
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** P1-2, P1-3
 
