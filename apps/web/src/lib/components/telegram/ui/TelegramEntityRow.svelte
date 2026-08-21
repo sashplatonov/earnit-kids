@@ -43,7 +43,7 @@
     .archived { opacity:.6; }
     :global(.entity-row .row-main) { display:flex; flex-direction:column; align-items:flex-start; width:100%; min-width:0; box-sizing:border-box; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
     :global(.entity-row .entity-title .title) { display:-webkit-box; overflow:hidden; min-width:0; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; }
-    :global(.entity-row .entity-title h3) { display:-webkit-box; overflow:hidden; min-width:0; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; }
+    :global(.entity-row .entity-title h3) { display:-webkit-box; overflow:hidden; min-width:0; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:#18243d; font-size:.8rem; font-weight:700; line-height:1.2; }
     :global(.entity-row .entity-meta .meta) { display:flex; align-items:center; gap:.3rem; min-width:0; margin-top:.05rem; color:#66718a; font-size:.7rem; }
     :global(.entity-row .entity-meta .meta--last) { color:#8a93a8; font-size:.7rem; }
     :global(.entity-row .row-metadata) { display:flex; flex-direction:column; gap:0; width:100%; min-width:0; margin-top:.05rem; color:#8a93a8; font-size:.7rem; line-height:1.2; }
