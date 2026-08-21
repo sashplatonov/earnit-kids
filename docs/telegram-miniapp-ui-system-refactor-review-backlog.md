@@ -204,7 +204,7 @@ git commit -m "fix(web): Compact inline Telegram tabs"
 
 ## TASK-P3-1: Remove legacy portal claims from active web architecture docs
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P3
 **Depends on:** P1-1
 
