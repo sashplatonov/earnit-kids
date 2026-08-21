@@ -53,7 +53,15 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     await expect(taskList.locator('.check').first()).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
     await page.locator('#child-tab-activity').click();
     await page.locator('#child-activity-tab-history').click();
+    const activityTabs = page.locator('#child-activity-tab-history').locator('..');
     await expect(page.locator('#child-panel-activity .list-surface')).toBeVisible();
     await expect(page.locator('#child-panel-activity .list-surface .entity-row')).toHaveCount(1);
     await expect(page.locator('#child-panel-activity .list-surface')).toHaveCSS('border-style', 'solid');
+    expect(await activityTabs.evaluate((tabs) => {
+        const list = tabs.parentElement?.querySelector('.list-surface');
+        const marginBottom = Number.parseFloat(getComputedStyle(tabs).marginBottom);
+        return list != null
+            && marginBottom < 16
+            && list.getBoundingClientRect().top - tabs.getBoundingClientRect().bottom < 20;
+    })).toBeTruthy();
 });

@@ -127,7 +127,7 @@ git commit -m "fix(auth): Remove legacy post-login route"
 
 ## TASK-P2-1: Keep child Activity sub-navigation compact on mobile
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** -
 
