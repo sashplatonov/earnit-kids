@@ -1,40 +1,32 @@
 <script lang="ts">
-    import type { Request } from '$lib/stores/app';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
-    import { getTelegramEntityIcon, stripLeadingEmoji } from './telegramEntityIcons';
-    import { requestKind } from './telegramRequestKind';
+    import { stripLeadingEmoji } from './telegramEntityIcons';
+    import type { TelegramRequestPresentation } from './telegramRequestPresentation';
     import { formatLastUsedTime } from './telegramLastUsed';
 
-    export let request: Request;
-    export let kindLabel: string;
-    export let statusLabel: string;
-    export let statusTone: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'neutral' = 'neutral';
-    export let meta: string;
+    export let presentation: TelegramRequestPresentation;
     export let locale: string = 'en';
 
-    $: title = stripLeadingEmoji(request.taskName || request.itemName || request.title || kindLabel);
-    $: entityIcon = getTelegramEntityIcon({ kind: requestKind(request), title: request.taskName || request.itemName || request.title || '', group: request.taskGroup || request.itemGroup || request.groupName });
-    $: isRewardRequest = requestKind(request) === 'reward';
-    $: amount = Math.abs(request.coins ?? request.amount ?? 0);
+    $: title = stripLeadingEmoji(presentation.title);
 </script>
 
-<article class="request-row">
+<article class="request-row row">
     <span class="entity-graphic" aria-hidden="true">
-        <span class="entity-icon"><TelegramIcon name={entityIcon} size={20} label={kindLabel} /></span>
+        <span class="entity-icon"><TelegramIcon name={presentation.entityIcon} size={20} label={presentation.kindLabel} /></span>
     </span>
     <div class="content">
         <div class="content-header">
             <h3>{title}</h3>
             <div class="side">
-                <span class="status-chip status-chip--{statusTone}">{statusLabel}</span>
-                {#if request.createdAt}<time datetime={request.createdAt}>{formatLastUsedTime(request.createdAt, locale as 'en' | 'ru')}</time>{/if}
+                <span class="status-chip status-chip--{presentation.statusTone}">{presentation.statusLabel}</span>
+                {#if presentation.createdAt}<time datetime={presentation.createdAt}>{formatLastUsedTime(presentation.createdAt, locale as 'en' | 'ru')}</time>{/if}
             </div>
         </div>
-        <p class="meta">{meta}</p>
+        <p class="meta">{presentation.metadata}</p>
         <div class="content-footer">
-            <p class="amount" class:spend={isRewardRequest}><TelegramCoin size={13} />{isRewardRequest ? '-' : '+'}{amount}</p>
-            {#if statusTone === 'pending'}
+            <p class="amount" class:spend={presentation.isReward}><TelegramCoin size={13} />{presentation.amountSign}{presentation.amount}</p>
+            {#if presentation.statusTone === 'pending'}
                 <div class="request-actions"><slot /></div>
             {/if}
         </div>

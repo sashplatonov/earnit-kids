@@ -3,7 +3,7 @@
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRequestRow from './TelegramRequestRow.svelte';
-    import { requestKind } from './telegramRequestKind';
+    import { presentRequest, sortRequestPresentations } from './telegramRequestPresentation';
 
     const i18n = useI18n();
 
@@ -14,45 +14,28 @@
     export let cancellingIds: Array<string | number> = [];
     export let onCancel: (request: Request) => void = () => {};
 
-    function statusTone(status: string): 'pending' | 'approved' | 'rejected' | 'cancelled' | 'neutral' {
-        if (status === 'approved') return 'approved';
-        if (status === 'rejected') return 'rejected';
-        if (status === 'cancelled') return 'cancelled';
-        if (status === 'pending') return 'pending';
-        return 'neutral';
-    }
-
-    function statusLabel(status: string): string {
-        if (status === 'approved') return $i18n.t('app.telegram.childRequests.statusApproved');
-        if (status === 'rejected') return $i18n.t('app.telegram.childRequests.statusRejected');
-        if (status === 'cancelled') return $i18n.t('app.telegram.childRequests.statusCancelled');
-        return $i18n.t('app.telegram.childRequests.statusPending');
-    }
-
-    function kindLabel(request: Request): string {
-        return requestKind(request) === 'reward'
+    const translator = {
+        kindLabel: (kind: 'task' | 'reward') => kind === 'reward'
             ? $i18n.t('app.telegram.childRequests.rewardRequest')
-            : $i18n.t('app.telegram.childRequests.taskRequest');
-    }
-
-    function meta(request: Request): string {
-        const group = request.taskGroup || request.itemGroup || request.groupName;
-        return group ? `${group} · ${kindLabel(request)}` : kindLabel(request);
-    }
+            : $i18n.t('app.telegram.childRequests.taskRequest'),
+        statusLabel: (status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'unknown') => status === 'approved'
+            ? $i18n.t('app.telegram.childRequests.statusApproved')
+            : status === 'rejected'
+                ? $i18n.t('app.telegram.childRequests.statusRejected')
+                : status === 'cancelled'
+                    ? $i18n.t('app.telegram.childRequests.statusCancelled')
+                    : $i18n.t('app.telegram.childRequests.statusPending'),
+        metadata: (request: Request, _kind: 'task' | 'reward', kindLabel: string) => {
+            const group = request.taskGroup || request.itemGroup || request.groupName;
+            return group ? `${group} · ${kindLabel}` : kindLabel;
+        },
+    };
 
     function isCancelling(request: Request): boolean {
         return cancellingIds.some((id) => String(id) === String(request.id));
     }
 
-    // Pending first, then resolved; within each group sort by createdAt DESC.
-    $: sortedRequests = [...$appStore.requests].sort((a, b) => {
-        const aPending = a.status === 'pending';
-        const bPending = b.status === 'pending';
-        if (aPending !== bPending) return aPending ? -1 : 1;
-        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bTime - aTime;
-    });
+    $: sortedRequests = sortRequestPresentations($appStore.requests.map((request) => presentRequest(request, translator)));
 
     const PAGE_SIZE = 10;
     let visibleCount = PAGE_SIZE;
@@ -71,8 +54,8 @@
     {:else if !sortedRequests.length}
         <div class="state-empty"><TelegramIcon name="checkCircle" size={18} label={$i18n.t('app.telegram.childRequests.title')} /><span>{$i18n.t('app.telegram.childRequests.empty')}</span></div>
     {:else}
-        <div class="items">{#each visibleRequests as request (request.id)}<TelegramRequestRow request={request} kindLabel={kindLabel(request)} statusLabel={statusLabel(request.status)} statusTone={statusTone(request.status)} meta={meta(request)} locale={$i18n.locale}>
-            <button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(request)} on:click={() => onCancel(request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>
+        <div class="items">{#each visibleRequests as presentation (presentation.request.id)}<TelegramRequestRow {presentation} locale={$i18n.locale}>
+            <button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(presentation.request)} on:click={() => onCancel(presentation.request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>
         </TelegramRequestRow>{/each}</div>
         {#if hasMore}<button class="load-more" type="button" on:click={showMore}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.childRequests.showMore')} />{$i18n.t('app.telegram.childRequests.showMore')}</button>{/if}
     {/if}

@@ -118,7 +118,7 @@ git commit -m "test(web): Characterize Telegram UI contracts"
 
 ## TASK-P1-2: Centralize request presentation semantics
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** P1-1
 
