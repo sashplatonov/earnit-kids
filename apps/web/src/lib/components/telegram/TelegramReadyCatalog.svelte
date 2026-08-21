@@ -131,7 +131,7 @@
     {:else}
         <TelegramListSurface label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')}>
             {#each filtered as template (template.id)}
-                <TelegramEntityRow interactive>
+                <TelegramEntityRow interactive hasSelection={bulkMode}>
                     <svelte:fragment slot="selection">
                         {#if bulkMode}
                             <label class="check-wrap">

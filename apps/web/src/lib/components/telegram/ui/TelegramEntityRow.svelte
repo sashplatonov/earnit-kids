@@ -4,9 +4,10 @@
     export let interactive = false;
     export let archived = false;
     export let compact = false;
+    export let hasSelection = false;
 </script>
 
-<div class:archived class:compact class:has-selection={Boolean($$slots.selection)} class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
+<div class:archived class:compact class:has-selection={hasSelection} class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
     {#if $$slots.selection}<div class="entity-selection"><slot name="selection" /></div>{/if}
     <div class="entity-icon"><slot name="icon" /></div>
     <div class="entity-content">

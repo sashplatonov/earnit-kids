@@ -131,6 +131,10 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         /раз в неделю/,
         /Add|Добавить/,
     );
+    expect(await taskRow.evaluate((row) => {
+        const list = row.parentElement;
+        return Boolean(list) && !row.classList.contains('has-selection');
+    })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     await taskRow.getByRole('button', { name: /Очень длинное каталожное задание/ }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
