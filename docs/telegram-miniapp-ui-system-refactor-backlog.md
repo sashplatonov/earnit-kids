@@ -398,7 +398,7 @@ git commit -m "refactor(web): Reuse Telegram entity rows"
 
 ## TASK-P2-3: Consolidate Mini App workspace navigation and feedback
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** P1-3
 
