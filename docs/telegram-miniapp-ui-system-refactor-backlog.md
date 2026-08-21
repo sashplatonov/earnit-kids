@@ -50,7 +50,7 @@ while removing repeated markup, CSS values, and presentation decisions.
 
 ## TASK-P1-1: Characterize the current cross-role Mini App contracts
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** -
 

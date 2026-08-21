@@ -20,6 +20,12 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await expect(page.getByRole('heading', { name: /(?:Hi|Привет), Mia!/ })).toBeVisible();
     const taskTab = page.locator('#child-tab-tasks');
     await expect(taskTab).toHaveAttribute('aria-selected', 'true');
+    await taskTab.press('ArrowRight');
+    await expect(page.locator('#child-tab-rewards')).toBeFocused();
+    await expect(page.locator('#child-tab-rewards')).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('Home');
+    await expect(taskTab).toBeFocused();
+    await expect(taskTab).toHaveAttribute('aria-selected', 'true');
     await taskTab.press('End');
     await expect(page.locator('#child-tab-activity')).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tabpanel', { name: /Activity|Активность/ })).toBeVisible();
@@ -80,8 +86,8 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await expect(page.getByRole('heading', { name: 'Привет, Mia!' })).toBeVisible();
     await page.getByRole('tab', { name: 'Активность' }).click();
     await page.getByRole('tab', { name: 'Заявки' }).click();
-    await expect(page.getByRole('heading', { name: 'Мои заявки' })).toBeVisible();
-    const requestList = page.locator('section[aria-labelledby="child-requests-title"] .items');
+    await expect(page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]')).toBeVisible();
+    const requestList = page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]').locator('.items');
     await expect(requestList).toBeVisible();
     await expect(requestList.locator('.request-row')).toHaveCount(2);
     await expect(requestList.getByRole('heading', { name: 'Clean room' })).toBeVisible();
@@ -89,7 +95,7 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
     await expect(requestList.locator('.request-row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
     await expect(requestList.locator('.request-row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
-    expect(await requestList.evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
+    expect(await requestList.locator('..').evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
         && getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)')).toBeTruthy();
     await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toBeVisible();
     expect(await page.getByRole('button', { name: 'Отменить эту заявку' }).evaluate((node) => {
@@ -120,5 +126,5 @@ test('child requests deep-link opens Activity with Requests subsection selected'
     await expect(page.getByRole('heading', { name: 'Привет, Mia!' })).toBeVisible();
     await expect(page.locator('#child-tab-activity')).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tab', { name: 'Заявки' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Мои заявки' })).toBeVisible();
+    await expect(page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]')).toBeVisible();
 });

@@ -13,7 +13,7 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ role: 'child', familyId: 'family-1' }) }));
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
-    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 1, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 2, groupName: 'Home', isActive: true }, { id: 2, name: 'A long task title that remains reachable on a narrow mobile viewport', coins: 2, groupName: 'School', isActive: true }, { id: 3, name: 'Pack', coins: 2, groupName: 'School', isActive: true }], shop: [], requests: [] }) }));
+    await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 10, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 2, groupName: 'Home', isActive: true }, { id: 2, name: 'A long task title that remains reachable on a narrow mobile viewport', coins: 2, groupName: 'School', isActive: true }, { id: 3, name: 'Pack', coins: 2, groupName: 'School', isActive: true }], shop: [{ id: 4, name: 'Ice cream', price: 5, groupName: 'Fun', isActive: true }], requests: [] }) }));
     await page.goto('/telegram');
     await expect(page.locator('.group-subnav .chip')).toHaveCount(3);
     const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list');
@@ -35,8 +35,15 @@ test('child Mini App keeps safe mobile geometry with multiple groups', async ({ 
     })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     for (const button of await taskList.locator('.row-main, .check').all()) expect(await button.evaluate((node) => Math.min(node.getBoundingClientRect().width, node.getBoundingClientRect().height) >= 44)).toBeTruthy();
+    await page.locator('#child-tab-rewards').click();
+    await expect(page.locator('#child-panel-rewards')).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="child-rewards-title"] .list')).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="child-rewards-title"] .list')).toHaveCSS('border-style', 'solid');
+    await page.locator('#child-tab-tasks').click();
     const firstRowTrigger = taskList.locator('.row-main').first();
     await firstRowTrigger.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
     await expect(firstRowTrigger).toHaveCSS('outline-width', '3px');
     await expect(firstRowTrigger).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
     await page.keyboard.press('Tab');
