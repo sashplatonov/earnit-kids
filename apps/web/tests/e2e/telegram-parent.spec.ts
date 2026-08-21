@@ -65,6 +65,20 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('tab', { name: /Tasks|Задания/ })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Rewards|Награды/ })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Family|Семья/ })).toBeVisible();
+    await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
+    const addTask = page.getByRole('button', { name: /Add task|Добавить задание/ });
+    await addTask.click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.locator('#task-name')).toBeFocused();
+    expect(await page.locator('.sheet').evaluate((node) => {
+        const style = getComputedStyle(node);
+        const rect = node.getBoundingClientRect();
+        return style.overflowY === 'auto' && rect.bottom <= window.innerHeight;
+    })).toBeTruthy();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(addTask).toBeFocused();
+    await page.getByRole('tab', { name: /Home|Главная/ }).click();
     await expect(page.getByRole('tab', { name: /Home|Главная/ })).toHaveAccessibleName(/Home|Главная.*\(2\)/);
     await page.getByRole('tab', { name: /Home|Главная/ }).focus();
     await page.keyboard.press('ArrowRight');

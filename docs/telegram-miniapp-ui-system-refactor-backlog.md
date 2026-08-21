@@ -468,7 +468,7 @@ git commit -m "refactor(web): Unify Telegram workspace tabs"
 
 ## TASK-P2-4: Introduce an accessible shared bottom-sheet shell
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** P1-3
 

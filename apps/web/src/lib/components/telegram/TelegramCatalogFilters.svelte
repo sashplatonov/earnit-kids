@@ -2,6 +2,7 @@
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
     import type { CatalogFilters, AgeFilter, DifficultyFilter, FrequencyFilter } from '$lib/telegram/services/catalogFilter';
+    import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
 
     export let open = false;
     export let filters: CatalogFilters;
@@ -36,8 +37,7 @@
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="catalog-filter-title" tabindex="-1">
+    <TelegramBottomSheet open={open} labelledBy="catalog-filter-title" {onClose}>
         <h2 id="catalog-filter-title">{$i18n.t('app.telegram.readyCatalog.filters')}</h2>
 
         <div class="section">
@@ -73,12 +73,10 @@
         </div>
 
         <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.readyCatalog.done')}</button>
-    </div>
+    </TelegramBottomSheet>
 {/if}
 
 <style>
-    .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
-    .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); max-height:80vh; overflow-y:auto; }
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
     h3 { margin:1rem 0 .4rem; color:#33415f; font-size:.85rem; font-weight:700; }
     .pills { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.5rem; }

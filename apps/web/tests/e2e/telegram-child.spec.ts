@@ -61,6 +61,10 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await taskList.locator('.check').first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.locator('#request-note')).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByRole('button', { name: /Send request|Отправить заявку/ })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#request-note')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
     await expect(taskList.locator('.check').first()).toBeFocused();

@@ -8,6 +8,7 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGraphicsPicker from './TelegramGraphicsPicker.svelte';
     import TelegramGroupPicker from './TelegramGroupPicker.svelte';
+    import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
 
     export let open = false;
     export let task: Task | null = null;
@@ -75,8 +76,7 @@
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="task-form-title" tabindex="-1">
+    <TelegramBottomSheet open={open} labelledBy="task-form-title" {onClose}>
         <h2 id="task-form-title">{isEdit ? $i18n.t('app.telegram.taskForm.editTitle') : $i18n.t('app.telegram.taskForm.addTitle')}</h2>
 
         <label for="task-name">{$i18n.t('app.telegram.taskForm.nameLabel')}</label>
@@ -110,15 +110,13 @@
 
         <button class="primary" type="button" on:click={save}>{$i18n.t('app.telegram.taskForm.save')}</button>
         <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.taskForm.cancel')}</button>
-    </div>
+    </TelegramBottomSheet>
 {/if}
 
 <TelegramGraphicsPicker open={graphicOpen} title={$i18n.t('app.telegram.taskForm.graphicLabel')} initial={icon} onSelect={(key) => icon = key} onClose={() => graphicOpen = false} />
 <TelegramGroupPicker open={groupPickerOpen} groups={suggestions} selected={groupName} title={$i18n.t('app.telegram.groupPicker.title')} onSelect={(group) => groupName = group} onClose={() => groupPickerOpen = false} />
 
 <style>
-    .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
-    .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
     label { display:block; margin:.6rem 0 .3rem; color:#33415f; font-weight:600; font-size:.85rem; }
     .input { box-sizing:border-box; width:100%; min-height:2.75rem; padding:.6rem .7rem; border:1px solid #cfd6e4; border-radius:.7rem; font:inherit; }
