@@ -252,7 +252,7 @@
                     return;
                 }
 
-                location.assign($i18n.href('/app'));
+                location.assign($i18n.href('/telegram'));
                 return;
             }
 
@@ -282,7 +282,7 @@
             const result = await selectFamily(pendingLoginEmail, choice.familyId);
 
             if (result.ok) {
-                location.assign($i18n.href('/app'));
+                location.assign($i18n.href('/telegram'));
                 return;
             }
 
@@ -304,7 +304,7 @@
         clearMessages();
 
         try {
-            const redirectTo = $i18n.href('/app');
+            const redirectTo = $i18n.href('/telegram');
             const loginUrl = await requestGoogleLoginUrl(fetch, redirectTo);
             location.assign(loginUrl);
             return;

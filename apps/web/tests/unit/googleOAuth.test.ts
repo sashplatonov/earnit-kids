@@ -18,10 +18,10 @@ describe('requestGoogleLoginUrl', () => {
             .fn<typeof fetch>()
             .mockResolvedValue(jsonResponse({ url: 'https://accounts.google.com/o/oauth2/v2/auth?state=token' }));
 
-        const url = await requestGoogleLoginUrl(fetchMock, '/en/app');
+        const url = await requestGoogleLoginUrl(fetchMock, '/en/telegram');
 
         expect(url).toBe('https://accounts.google.com/o/oauth2/v2/auth?state=token');
-        expect(fetchMock).toHaveBeenCalledWith('/api/login-google/url?redirect_to=%2Fen%2Fapp', {
+        expect(fetchMock).toHaveBeenCalledWith('/api/login-google/url?redirect_to=%2Fen%2Ftelegram', {
             credentials: 'same-origin',
             cache: 'no-store',
         });
@@ -32,18 +32,18 @@ describe('requestGoogleLoginUrl', () => {
             .fn<typeof fetch>()
             .mockResolvedValue(jsonResponse({ error: 'Google sign-in is not configured' }, 400));
 
-        await expect(requestGoogleLoginUrl(fetchMock, '/ru/app')).rejects.toThrow('Google sign-in is not configured');
+        await expect(requestGoogleLoginUrl(fetchMock, '/ru/telegram')).rejects.toThrow('Google sign-in is not configured');
     });
 
     it('maps missing payload urls to a stable unavailable error', async () => {
         const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ ok: true }));
 
-        await expect(requestGoogleLoginUrl(fetchMock, '/en/app')).rejects.toThrow(GOOGLE_LOGIN_URL_UNAVAILABLE);
+        await expect(requestGoogleLoginUrl(fetchMock, '/en/telegram')).rejects.toThrow(GOOGLE_LOGIN_URL_UNAVAILABLE);
     });
 
     it('maps fetch failures to a stable network error', async () => {
         const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new Error('offline'));
 
-        await expect(requestGoogleLoginUrl(fetchMock, '/en/app')).rejects.toThrow(GOOGLE_LOGIN_NETWORK_ERROR);
+        await expect(requestGoogleLoginUrl(fetchMock, '/en/telegram')).rejects.toThrow(GOOGLE_LOGIN_NETWORK_ERROR);
     });
 });

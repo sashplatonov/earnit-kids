@@ -178,11 +178,11 @@ public class AuthGoogleResource {
             if (path == null || path.isBlank()) {
                 return "/login";
             }
-            if ("/app".equals(path)) {
+            if ("/telegram".equals(path)) {
                 return "/login";
             }
-            if (path.endsWith("/app")) {
-                return path.substring(0, path.length() - 4) + "/login";
+            if (path.endsWith("/telegram")) {
+                return path.substring(0, path.length() - 9) + "/login";
             }
         } catch (IllegalArgumentException ignored) {
         }

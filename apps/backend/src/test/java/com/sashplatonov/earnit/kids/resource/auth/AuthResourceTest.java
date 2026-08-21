@@ -299,7 +299,7 @@ class AuthResourceTest {
             jwtService,
             java.util.Optional.of("https://app.example.com"));
 
-        Response response = googleResource.loginGoogleUrl(null, "/en/app");
+        Response response = googleResource.loginGoogleUrl(null, "/en/telegram");
 
         assertThat(response.getStatus()).isEqualTo(200);
         List<?> cookies = response.getHeaders().get("Set-Cookie");
@@ -307,7 +307,7 @@ class AuthResourceTest {
         assertThat(String.valueOf(cookies.get(0))).contains("oauth_state=");
         Map<String, Object> statePayload = jwtService.verifyToken(extractCookieValue(response, "oauth_state"))
             .orElseThrow();
-        assertThat(statePayload.get("redirect")).isEqualTo("https://app.example.com/en/app");
+        assertThat(statePayload.get("redirect")).isEqualTo("https://app.example.com/en/telegram");
         Map<?, ?> payload = (Map<?, ?>) response.getEntity();
         assertThat(payload.containsKey("url")).isTrue();
         assertThat(String.valueOf(payload.get("url"))).contains("https://accounts.google.com/o/oauth2/v2/auth");
@@ -345,7 +345,7 @@ class AuthResourceTest {
             testJwtService(),
             java.util.Optional.of("https://app.example.com"));
 
-        Response response = googleResource.loginGoogleUrl(null, "/en/app");
+        Response response = googleResource.loginGoogleUrl(null, "/en/telegram");
 
         Map<?, ?> payload = (Map<?, ?>) response.getEntity();
         assertThat(String.valueOf(payload.get("url")))
@@ -372,7 +372,7 @@ class AuthResourceTest {
             jwtService,
             java.util.Optional.of("https://app.example.com"));
 
-        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/app"), 300);
+        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/telegram"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
             .thenReturn(java.util.Optional.of(new GoogleTokenResponse(null, null, null, null, null, "google-id-token")));
         when(authService.authenticateAdminWithGoogle("google-id-token"))
@@ -386,7 +386,7 @@ class AuthResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(303);
         assertThat(response.getLocation().toString())
-            .isEqualTo("https://app.example.com/en/app?error=authentication_failed");
+            .isEqualTo("https://app.example.com/en/telegram?error=authentication_failed");
     }
 
     @Test
@@ -409,7 +409,7 @@ class AuthResourceTest {
             jwtService,
             java.util.Optional.of("https://app.example.com"));
 
-        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/app"), 300);
+        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/telegram"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
             .thenReturn(java.util.Optional.of(new GoogleTokenResponse(null, null, null, null, null, "google-id-token")));
         when(authService.authenticateAdminWithGoogle("google-id-token"))
@@ -423,7 +423,7 @@ class AuthResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(303);
         assertThat(response.getLocation().toString())
-            .isEqualTo("https://app.example.com/en/app?error=authentication_failed");
+            .isEqualTo("https://app.example.com/en/telegram?error=authentication_failed");
     }
 
     @Test
@@ -446,7 +446,7 @@ class AuthResourceTest {
             jwtService,
             java.util.Optional.of("https://app.example.com"));
 
-        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/ru/app"), 300);
+        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/ru/telegram"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
             .thenReturn(java.util.Optional.of(new GoogleTokenResponse(null, null, null, null, null, "google-id-token")));
         when(authService.authenticateAdminWithGoogle("google-id-token"))
