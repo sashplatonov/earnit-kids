@@ -20,7 +20,6 @@
     let message = '';
     let verifiedRole = '';
     let parentInviteToken = '';
-    let inviteEmail = '';
     let inviteBusy = false;
 
     async function errorCode(response: Response): Promise<string | null> {
@@ -101,16 +100,15 @@
     }
 
     async function submitParentInvite(): Promise<void> {
-        if (!inviteEmail.trim() || inviteBusy) return;
+        if (inviteBusy) return;
         inviteBusy = true;
         message = '';
         const telegram = initializeTelegramWebApp();
         const initData = telegram?.initData ?? '';
-        const result = await acceptParentTelegramInvite(parentInviteToken, inviteEmail.trim(), initData);
+        const result = await acceptParentTelegramInvite(parentInviteToken, initData);
         inviteBusy = false;
         if (result.ok) {
             parentInviteToken = '';
-            inviteEmail = '';
             state = 'loading';
             await authenticate();
         } else {
@@ -147,9 +145,8 @@
                 <p class="telegram-hint">{$i18n.t('app.telegram.entry.childHint')}</p>
             {:else if state === 'parent-invite'}
                 <p>{$i18n.t('app.telegram.entry.parentInviteHint')}</p>
-                <input class="telegram-input" type="email" bind:value={inviteEmail} placeholder="name@example.com" />
                 <button class="telegram-action" type="button" disabled={inviteBusy} on:click={() => void submitParentInvite()}>{$i18n.t('app.telegram.entry.acceptInvite')}</button>
-                {#if message}<p class="telegram-hint">{message}</p>{/if}
+                {#if message}<p class="telegram-hint" role="alert">{message}</p>{/if}
             {:else}
                 <p>{message || $i18n.t('app.telegram.entry.resolveError')}</p>
                 <TelegramActionButton icon="refresh" label={$i18n.t('app.telegram.entry.tryAgain')} on:click={() => void authenticate()} />
@@ -211,15 +208,9 @@
         cursor: pointer;
     }
 
-    .telegram-input {
-        box-sizing: border-box;
-        width: 100%;
-        min-height: 2.75rem;
-        margin-top: 1.25rem;
-        padding: 0.6rem 0.8rem;
-        border: 1px solid #cfd6e4;
-        border-radius: 0.75rem;
-        font: inherit;
+    .telegram-action:focus-visible {
+        outline: 3px solid #80aaff;
+        outline-offset: 2px;
     }
 
     .telegram-hint {

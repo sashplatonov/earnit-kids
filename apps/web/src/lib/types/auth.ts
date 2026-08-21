@@ -9,7 +9,11 @@ export interface FamilyChoice {
 
 export interface ParentMembership {
     id: number;
-    email: string;
+    email: string | null;
+    displayName: string | null;
+    telegramUserId: number | null;
+    telegramUsername: string | null;
+    telegramDisplayName: string | null;
     permission: MembershipPermission;
     status: string;
 }

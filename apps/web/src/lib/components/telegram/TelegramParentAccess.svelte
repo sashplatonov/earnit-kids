@@ -23,6 +23,7 @@
     let error = '';
     let view: 'list' | 'choose' | 'email' | 'telegram' = 'list';
     let email = '';
+    let parentName = '';
     let busy = false;
     let inviteLink = '';
     let copied = false;
@@ -69,14 +70,31 @@
     }
 
     async function createTelegramLink() {
+        const normalizedName = parentName.trim();
+        if (!normalizedName) {
+            error = $i18n.t('app.telegram.parents.nameRequired');
+            return;
+        }
         busy = true; error = '';
-        const result = await createParentTelegramInvite();
+        const result = await createParentTelegramInvite(normalizedName);
         busy = false;
         if (result?.launchUrl) {
             inviteLink = result.launchUrl;
         } else {
             error = $i18n.t('app.telegram.parents.error');
         }
+    }
+
+    function displayLabel(parent: ParentMembership): string {
+        return parent.displayName?.trim() || parent.email?.trim() || parent.telegramDisplayName?.trim()
+            || (parent.telegramUsername ? `@${parent.telegramUsername}` : '')
+            || $i18n.t('app.telegram.parents.unknownParent');
+    }
+
+    function telegramLabel(parent: ParentMembership): string {
+        if (parent.telegramDisplayName?.trim()) return parent.telegramDisplayName.trim();
+        if (parent.telegramUsername?.trim()) return `@${parent.telegramUsername.trim()}`;
+        return $i18n.t('app.telegram.parents.telegramIdentity');
     }
 
     async function copyLink() {
@@ -96,8 +114,8 @@
                 ? $i18n.t('app.telegram.parents.deactivateTitle')
                 : $i18n.t('app.telegram.parents.reactivateTitle'),
             description: deactivating
-                ? $i18n.t('app.telegram.parents.deactivateDescription', { email: parent.email })
-                : $i18n.t('app.telegram.parents.reactivateDescription', { email: parent.email }),
+                ? $i18n.t('app.telegram.parents.deactivateDescription', { name: displayLabel(parent) })
+                : $i18n.t('app.telegram.parents.reactivateDescription', { name: displayLabel(parent) }),
             confirmLabel: deactivating
                 ? $i18n.t('app.telegram.parents.deactivate')
                 : $i18n.t('app.telegram.parents.reactivate'),
@@ -122,7 +140,7 @@
         if (actionBusy) return;
         const confirmed = await confirmAction({
             title: $i18n.t('app.telegram.parents.transferTitle'),
-            description: $i18n.t('app.telegram.parents.transferDescription', { email: parent.email }),
+            description: $i18n.t('app.telegram.parents.transferDescription', { name: displayLabel(parent) }),
             confirmLabel: $i18n.t('app.telegram.parents.transfer'),
             cancelLabel: $i18n.t('app.telegram.tasks.cancel'),
             tone: 'danger',
@@ -158,7 +176,10 @@
                             <div class="row" class:inactive={parent.status === 'inactive'}>
                                 <span class="setting-icon"><TelegramIcon name="users" size={18} label={$i18n.t('app.telegram.roles.parents')} /></span>
                                 <span class="grow">
-                                    <span class="setting-title">{parent.email}</span>
+                                    <span class="setting-title">{displayLabel(parent)}</span>
+                                    {#if parent.telegramUserId !== null}
+                                        <span class="telegram-label">{telegramLabel(parent)}</span>
+                                    {/if}
                                     <span class="chip" class:chip-admin={parent.permission === 'family_admin'} class:chip-pending={parent.status === 'pending'}>{permissionLabel(parent)}</span>
                                 </span>
                                 {#if isAdmin && parent.permission !== 'family_admin'}
@@ -201,6 +222,10 @@
         {:else}
             <p class="confirm-meta">{$i18n.t('app.telegram.parents.telegramHint')}</p>
             {#if !inviteLink}
+                <label for="parent-telegram-name">{$i18n.t('app.telegram.parents.nameLabel')}</label>
+                <input id="parent-telegram-name" class="input" type="text" bind:value={parentName}
+                    aria-describedby="parent-telegram-name-hint" autocomplete="name" required />
+                <p id="parent-telegram-name-hint" class="field-hint">{$i18n.t('app.telegram.parents.nameHint')}</p>
                 <button class="primary" type="button" disabled={busy} on:click={createTelegramLink}>{$i18n.t('app.telegram.parents.createLink')}</button>
             {:else}
                 <p class="confirm-meta"><strong>{$i18n.t('app.telegram.parents.linkReady')}</strong></p>
@@ -227,6 +252,7 @@
     .grow { flex:1; min-width:0; }
     .setting-icon { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; color:#5b63e9; }
     .setting-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+    .telegram-label { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#66718a; font-size:.8rem; }
     .chip { display:inline-flex; align-items:center; gap:.25rem; padding:.15rem .45rem; border-radius:999px; font-size:.72rem; font-weight:700; margin-top:.2rem; background:#f1f3f7; color:#66718a; }
     .chip-admin { background:#eaf7ef; color:#17884b; }
     .chip-pending { background:#fff4e6; color:#b66d21; }
@@ -241,6 +267,7 @@
     label { display:block; margin:.6rem 0 .3rem; color:#33415f; font-weight:600; font-size:.85rem; }
     .input { box-sizing:border-box; width:100%; min-height:2.75rem; padding:.6rem .7rem; border:1px solid #cfd6e4; border-radius:.7rem; font:inherit; }
     .confirm-meta { margin:.25rem 0 .9rem; color:#66718a; font-size:.9rem; line-height:1.45; }
+    .field-hint { margin:.35rem 0 0; color:#66718a; font-size:.8rem; line-height:1.35; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
     .primary { width:100%; min-height:2.75rem; margin-top:.9rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; }

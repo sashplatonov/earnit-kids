@@ -285,7 +285,7 @@ git commit -m "feat(backend): Expose Telegram parent profiles"
 
 ## TASK-044: Redesign the Telegram parent invitation Mini App flow
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-042, TASK-043
 
@@ -365,6 +365,12 @@ cd apps/web && npm run test:e2e -- telegram-auth.spec.ts
 git add apps/web/src/lib/services/api.ts apps/web/src/lib/types/auth.ts apps/web/src/lib/components/telegram/TelegramParentAccess.svelte apps/web/src/routes/telegram/+page.svelte apps/web/src/lib/i18n/messages/en/app.ts apps/web/src/lib/i18n/messages/ru/app.ts apps/web/tests/e2e/telegram-auth.spec.ts
 git commit -m "feat(web): Invite parents through Telegram"
 ```
+
+Implemented in this session. Verification: `npm run lint`, `npm run test`,
+`npm run build`, and the focused `telegram-auth.spec.ts` parent-invitation test
+passed. The full E2E file was also attempted; its preview-server run is blocked by
+the existing `/public/index.html`/backend session setup, while the default run has
+no listener on port 5001.
 
 ## TASK-045: Prove cross-layer Telegram parent invitation behavior
 

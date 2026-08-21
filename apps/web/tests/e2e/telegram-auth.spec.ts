@@ -83,6 +83,45 @@ test('unlinked Telegram identity gets a safe parent-link and child-invitation ha
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
+test('a Telegram parent invitation is accepted with signed init data only', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.addInitScript(() => {
+        (window as Window & { Telegram?: unknown }).Telegram = {
+            WebApp: {
+                initData: 'signed-parent-invite-data',
+                initDataUnsafe: { start_param: 'pi_one-time-token' },
+                ready: () => {},
+                expand: () => {},
+            },
+        };
+    });
+    let acceptHit = false;
+    await page.route('**/api/telegram/parents/invite/accept', async (route) => {
+        acceptHit = true;
+        expect(route.request().postDataJSON()).toEqual({
+            token: 'pi_one-time-token',
+            initData: 'signed-parent-invite-data',
+        });
+        await route.fulfill({ status: 204 });
+    });
+    await page.route('**/api/telegram/auth/exchange', (route) => {
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ role: 'admin', familyId: 'family-1' }),
+        });
+    });
+
+    await page.goto('/en/telegram');
+
+    const acceptButton = page.getByRole('button', { name: /Accept invitation|Принять приглашение/ });
+    await expect(acceptButton).toBeVisible();
+    await expect(page.locator('input')).toHaveCount(0);
+    await acceptButton.click();
+    await expect.poll(() => acceptHit).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
 test('Telegram Mini App completes a one-time parent link before exchanging its session', async ({ page }) => {
     await page.addInitScript(() => {
         (window as Window & { Telegram?: unknown }).Telegram = {
