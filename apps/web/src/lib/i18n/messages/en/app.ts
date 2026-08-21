@@ -297,7 +297,7 @@ export const appMessages = {
             statusCancelled: 'Cancelled',
             taskRequest: 'Task request',
             rewardRequest: 'Reward request',
-            cancel: 'Cancel request',
+            cancel: 'Cancel',
             cancelAria: 'Cancel this request',
             cancelConfirmTitle: 'Cancel this request?',
             cancelConfirmDescription: 'The request will be cancelled and your parent will not review it.',

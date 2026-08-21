@@ -55,7 +55,7 @@
         <TelegramAsyncState state={asyncState} loadingLabel={$i18n.t('app.telegram.childRequests.loading')} emptyLabel={$i18n.t('app.telegram.childRequests.empty')} errorMessage={error} retryLabel={$i18n.t('app.telegram.childRequests.retry')} onRetry={onRetry} />
     {:else}
         <TelegramListSurface label={$i18n.t('app.telegram.childRequests.title')}>{#each visibleRequests as presentation (presentation.request.id)}<TelegramRequestRow {presentation} locale={$i18n.locale} actionsInTrailing={presentation.status === 'pending'}>
-            {#if presentation.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(presentation.request)} on:click={() => onCancel(presentation.request)}><TelegramIcon name="delete" size={18} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}
+            {#if presentation.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(presentation.request)} on:click={() => onCancel(presentation.request)}><TelegramIcon name="delete" size={14} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}
         </TelegramRequestRow>{/each}</TelegramListSurface>
         {#if hasMore}<button class="load-more" type="button" on:click={showMore}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.childRequests.showMore')} />{$i18n.t('app.telegram.childRequests.showMore')}</button>{/if}
     {/if}
@@ -63,7 +63,7 @@
 </section>
 
 <style>
-    .cancel { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-width:2.75rem; min-height:2.75rem; padding:.3rem .5rem; border:1px solid #f3cfd2; border-radius:.55rem; background:#fff0f1; color:#c63c42; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; }
+    .cancel { display:inline-flex; align-items:center; justify-content:center; gap:.25rem; padding:.2rem .55rem; border:1px solid #f3cfd2; border-radius:999px; background:#fff0f1; color:#c63c42; font:inherit; font-size:.7rem; font-weight:800; line-height:normal; white-space:nowrap; cursor:pointer; }
     .cancel:disabled { cursor:wait; opacity:.6; }
     .error { color:#a33b3b; font-size:.9rem; margin:.6rem 0 0; }
     .load-more { width:100%; min-height:2.75rem; margin-top:.75rem; padding:.5rem .7rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }

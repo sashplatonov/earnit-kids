@@ -297,7 +297,7 @@ export const appMessages = {
             statusCancelled: 'Отменено',
             taskRequest: 'Заявка на задание',
             rewardRequest: 'Заявка на награду',
-            cancel: 'Отменить заявку',
+            cancel: 'Отменить',
             cancelAria: 'Отменить эту заявку',
             cancelConfirmTitle: 'Отменить заявку?',
             cancelConfirmDescription: 'Заявка будет отменена, и родитель её не увидит.',

@@ -13,7 +13,7 @@
     $: title = stripLeadingEmoji(presentation.title);
 </script>
 
-<TelegramEntityRow>
+<TelegramEntityRow hasTrailingActions={actionsInTrailing}>
     <span slot="icon" aria-hidden="true"><TelegramIcon name={presentation.entityIcon} size={20} label={presentation.kindLabel} /></span>
     <h3 slot="title">{title}</h3>
     <div class="request-status" slot="trailing">
@@ -31,7 +31,7 @@
 </TelegramEntityRow>
 
 <style>
-    .request-status { display:flex; align-items:flex-end; gap:.35rem; min-width:0; flex-direction:column; }
+    .request-status { position:relative; display:flex; align-items:flex-end; gap:.35rem; min-width:0; flex-direction:column; }
     .status-chip { display:inline-flex; align-items:center; max-width:100%; padding:.2rem .55rem; border-radius:999px; font-size:.7rem; font-weight:800; white-space:nowrap; }
     .status-chip--pending { background:#fff5df; color:#98721d; }
     .status-chip--approved { background:#eaf7ef; color:#17884b; }
@@ -44,7 +44,7 @@
     .amount { display:flex; align-items:center; gap:.25rem; margin:0; color:#237b3c; font-weight:700; font-size:.8rem; }
     .amount.spend { color:#a33b3b; }
     .request-actions, .trailing-actions { display:flex; flex:0 1 auto; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; gap:.35rem; min-width:0; }
-    .trailing-actions { width:100%; }
+    .trailing-actions { position:absolute; top:calc(100% + .15rem); right:0; width:max-content; }
     :global(.request-actions button) { min-width:2.75rem; min-height:2.75rem; }
     @media (max-width:370px) {
         .request-actions { flex-basis:100%; justify-content:flex-start; }

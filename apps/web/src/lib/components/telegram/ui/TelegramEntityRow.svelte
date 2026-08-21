@@ -5,9 +5,10 @@
     export let archived = false;
     export let compact = false;
     export let hasSelection = false;
+    export let hasTrailingActions = false;
 </script>
 
-<div class:archived class:compact class:has-selection={hasSelection} class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
+<div class:archived class:compact class:has-selection={hasSelection} class:has-trailing-actions={hasTrailingActions} class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
     {#if $$slots.selection}<div class="entity-selection"><slot name="selection" /></div>{/if}
     <div class="entity-icon"><slot name="icon" /></div>
     <div class="entity-content">
@@ -37,6 +38,7 @@
     .compact .entity-meta { line-height:1.1; }
     .entity-actions { display:flex; align-items:center; justify-content:space-between; gap:.5rem; min-width:0; }
     .entity-actions:empty, .entity-meta:empty, .entity-trailing:empty { display:none; }
+    .has-trailing-actions .entity-meta { padding-right:7rem; }
     .entity-interactive { display:flex; min-width:0; flex:0 0 auto; align-items:center; gap:.15rem; }
     .archived { opacity:.6; }
     :global(.entity-row .row-main) { display:flex; flex-direction:column; align-items:flex-start; width:100%; min-width:0; box-sizing:border-box; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
