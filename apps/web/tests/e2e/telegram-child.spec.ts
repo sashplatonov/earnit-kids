@@ -5,6 +5,21 @@ test.beforeEach(async ({ page }) => {
     await preserveTelegramFixture(page);
 });
 
+async function expectCompactList(list: import('@playwright/test').Locator, count: number) {
+    await expect(list).toBeVisible();
+    await expect(list.locator(':scope > .entity-row')).toHaveCount(count);
+    expect(await list.evaluate((node) => {
+        const rows = [...node.children];
+        return rows.every((row) => row.classList.contains('entity-row'))
+            && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px')
+            && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)')
+            && rows.every((row) => [...row.querySelectorAll('*')].every((child) => {
+                const style = getComputedStyle(child);
+                return !(style.borderStyle !== 'none' && style.borderRadius !== '0px' && style.backgroundColor === 'rgb(255, 255, 255)');
+            }));
+    })).toBeTruthy();
+}
+
 test('child Mini App opens tasks first and requests a grouped task', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.addInitScript(() => {
@@ -32,13 +47,11 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await page.locator('#child-tab-tasks').click();
     const taskList = page.locator('section[aria-labelledby="child-tasks-title"] .list-surface');
     await expect(taskList).toBeVisible();
-    await expect(taskList.locator('.entity-row')).toHaveCount(2);
+    await expectCompactList(taskList, 2);
     await expect(taskList.getByText('A very long task title that must remain reachable on a narrow mobile viewport')).toBeVisible();
     expect(await taskList.evaluate((node) => {
         const rows = [...node.children];
-        return rows.every((row) => row.classList.contains('row'))
-            && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px')
-            && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)');
+        return rows.every((row) => row.classList.contains('entity-row'));
     })).toBeTruthy();
     expect(await taskList.locator('.check').first().evaluate((node) => {
         const rect = node.getBoundingClientRect();
@@ -57,6 +70,9 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await expect(rowTrigger).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
     await page.locator('#child-tab-rewards').click();
     await expect(page.locator('#child-panel-rewards')).toBeVisible();
+    const rewardList = page.locator('section[aria-labelledby="child-rewards-title"] .list-surface');
+    await expectCompactList(rewardList, 1);
+    await expect(rewardList.getByText('Game time')).toBeVisible();
     await page.locator('#child-tab-tasks').click();
     await taskList.locator('.check').first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -93,12 +109,13 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await expect(page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]')).toBeVisible();
     const requestList = page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]').locator('.list-surface');
     await expect(requestList).toBeVisible();
-    await expect(requestList.locator('.entity-row')).toHaveCount(2);
+    await expectCompactList(requestList, 2);
     await expect(requestList.getByRole('heading', { name: 'Clean room' })).toBeVisible();
     await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
     await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
     await expect(requestList.locator('.entity-row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
     await expect(requestList.locator('.entity-row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
+    await expect(requestList.getByText('Ожидает')).toBeVisible();
     expect(await requestList.evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
         && getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)')).toBeTruthy();
     await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toBeVisible();

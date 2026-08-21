@@ -5,6 +5,21 @@ test.beforeEach(async ({ page }) => {
     await preserveTelegramFixture(page);
 });
 
+async function expectCompactList(list: import('@playwright/test').Locator, count: number) {
+    await expect(list).toBeVisible();
+    await expect(list.locator(':scope > .entity-row')).toHaveCount(count);
+    expect(await list.evaluate((node) => {
+        const rows = [...node.children];
+        return rows.every((row) => row.classList.contains('entity-row'))
+            && rows.slice(0, -1).every((row) => getComputedStyle(row).borderBottomWidth === '1px')
+            && rows.every((row) => getComputedStyle(row).backgroundColor === 'rgba(0, 0, 0, 0)')
+            && rows.every((row) => [...row.querySelectorAll('*')].every((child) => {
+                const style = getComputedStyle(child);
+                return !(style.borderStyle !== 'none' && style.borderRadius !== '0px' && style.backgroundColor === 'rgb(255, 255, 255)');
+            }));
+    })).toBeTruthy();
+}
+
 test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.addInitScript(() => {
@@ -20,7 +35,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await page.route('**/api/base-data', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ tasks: [], products: [] }),
+        body: JSON.stringify({ tasks: [], products: [], catalog: { tasks: [{ id: 'catalog-task', title: 'Очень длинное каталожное задание для узкого экрана', coins: 25, groupName: 'Дом', groupKey: 'home', frequencyPeriod: 'daily' }], rewards: [{ id: 'catalog-reward', title: 'Каталожная награда с длинным названием', price: 40, groupName: 'Отдых', groupKey: 'fun' }] } }),
     }));
     await page.route('**/api/data**', (route) => route.fulfill({
         status: 200,
@@ -66,6 +81,16 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('tab', { name: /Rewards|Награды/ })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Family|Семья/ })).toBeVisible();
     await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
+    await page.locator('button.catalog').first().click();
+    const catalog = page.locator('.catalog .list');
+    await expect(catalog).toBeVisible();
+    await expect(catalog.locator(':scope > .row')).toHaveCount(1);
+    await expect(catalog.locator('.entity-icon')).toHaveCount(1);
+    await expect(catalog.locator('.entity-text')).toHaveCSS('min-width', '0px');
+    await expect(catalog.getByText('Очень длинное каталожное задание для узкого экрана')).toBeVisible();
+    await expect(catalog.getByRole('button', { name: /Add|Добавить/ })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    await page.getByRole('button', { name: /Back|Назад/ }).click();
     const addTask = page.getByRole('button', { name: /Add task|Добавить задание/ });
     await addTask.click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -92,8 +117,9 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('heading', { name: /Family|Семья/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Add child|Добавить ребёнка/ })).toBeVisible();
     await page.getByRole('tab', { name: /Home|Главная/ }).click();
-    const requestRows = page.locator('.home .list-surface').first().locator('.entity-row');
-    await expect(requestRows).toHaveCount(2);
+    const requestList = page.locator('.home .list-surface').first();
+    await expectCompactList(requestList, 2);
+    const requestRows = requestList.locator('.entity-row');
     await expect(page.locator('.home .list-surface').first()).toHaveCSS('border-style', 'solid');
     await expect(requestRows.nth(0)).toHaveCSS('border-bottom-width', '1px');
     await expect(requestRows.nth(1)).toHaveCSS('border-bottom-width', '0px');
