@@ -155,7 +155,7 @@
         {:else}
         <TelegramListSurface label={$i18n.t('app.telegram.tasks.title')}>
             {#each filteredTasks as task (task.id)}
-                <TelegramEntityRow interactive={canEdit} archived={task.isActive === false}>
+                <TelegramEntityRow interactive={canEdit} archived={task.isActive === false} compact>
                     <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
                     <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} on:click={() => edit(task)}><span class="title">{stripLeadingEmoji(task.name)}</span></button>
                     <span slot="metadata"><span class="meta"><TelegramCoin size={13} />{task.coins} · {stripLeadingEmoji(task.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>{#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}</span>

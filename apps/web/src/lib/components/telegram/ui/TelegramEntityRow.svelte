@@ -3,9 +3,10 @@
 
     export let interactive = false;
     export let archived = false;
+    export let compact = false;
 </script>
 
-<div class:archived class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
+<div class:archived class:compact class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
     <div class="entity-icon"><slot name="icon" /></div>
     <div class="entity-content">
         <div class="entity-heading">
@@ -28,6 +29,7 @@
     .entity-title :global(h3), .entity-title :global(p) { margin:0; }
     .entity-trailing { display:flex; flex:0 0 auto; min-width:0; flex-direction:column; align-items:flex-end; gap:.15rem; }
     .entity-meta { display:flex; min-width:0; flex-direction:column; gap:0; color:#8a93a8; font-size:.7rem; line-height:1.2; overflow-wrap:anywhere; }
+    .compact .entity-meta { line-height:1.1; }
     .entity-actions { display:flex; align-items:center; justify-content:space-between; gap:.5rem; min-width:0; }
     .entity-actions:empty, .entity-meta:empty, .entity-trailing:empty { display:none; }
     .entity-interactive { display:flex; min-width:0; flex:0 0 auto; align-items:center; gap:.15rem; }
@@ -36,6 +38,7 @@
     :global(.entity-row .entity-title .title) { display:-webkit-box; overflow:hidden; min-width:0; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; }
     :global(.entity-row .entity-meta .meta) { display:flex; align-items:center; gap:.3rem; min-width:0; margin-top:.05rem; color:#66718a; font-size:.7rem; }
     :global(.entity-row .entity-meta .meta--last) { color:#8a93a8; font-size:.7rem; }
+    :global(.entity-row.compact .entity-meta .meta) { margin-top:0; }
     :global(.entity-row .row-action) { display:grid; place-items:center; width:2.75rem; height:2.75rem; min-width:2.75rem; min-height:2.75rem; box-sizing:border-box; border:0; border-radius:.5rem; background:transparent; cursor:pointer; }
     :global(.entity-row .row-action:disabled) { opacity:.5; cursor:not-allowed; }
     :global(.entity-row button:focus-visible), :global(.entity-row a:focus-visible) { outline:3px solid var(--telegram-focus); outline-offset:2px; }

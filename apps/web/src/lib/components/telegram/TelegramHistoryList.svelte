@@ -40,7 +40,7 @@
 <style>
     .load-more { width:100%; min-height:2.75rem; margin-top:.75rem; padding:.5rem .7rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
     .load-more:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
-    :global(.history-title) { display:-webkit-box; overflow:hidden; min-width:0; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:#18243d; font-size:.85rem; font-weight:600; line-height:1.2; }
+    :global(.history-title) { display:-webkit-box; overflow:hidden; min-width:0; max-block-size:2.4em; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:#18243d; font-size:.85rem; font-weight:700; line-height:1.2; }
     :global(.history-time) { display:block; }
     :global(.history-amount) { display:inline-flex; align-items:center; justify-content:flex-end; gap:.25rem; min-width:3.2rem; color:#237b3c; white-space:nowrap; }
     :global(.history-amount.spend) { color:#a33b3b; }
