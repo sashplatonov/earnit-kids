@@ -23,8 +23,8 @@
     .entity-row:last-child { border-bottom:0; }
     .entity-icon { display:grid; place-items:center; width:1.75rem; height:1.75rem; flex:0 0 auto; margin-top:.2rem; border-radius:.5rem; background:#eef0ff; color:#5b63e9; }
     .entity-content { display:flex; min-width:0; flex-direction:column; gap:0; }
-    .entity-heading { display:block; min-width:0; }
-    .entity-title { display:flex; min-width:0; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; overflow:hidden; overflow-wrap:anywhere; }
+    .entity-heading { display:flex; align-items:flex-start; gap:.35rem; min-width:0; }
+    .entity-title { display:flex; flex:1; min-width:0; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; overflow:hidden; overflow-wrap:anywhere; }
     .entity-title :global(h3), .entity-title :global(p) { margin:0; }
     .entity-trailing { display:flex; flex:0 0 auto; min-width:0; flex-direction:column; align-items:flex-end; gap:.15rem; }
     .entity-meta { display:flex; min-width:0; flex-direction:column; gap:0; color:#8a93a8; font-size:.7rem; line-height:1.2; overflow-wrap:anywhere; }
