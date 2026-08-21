@@ -58,6 +58,9 @@ public class FamilyParentMembershipEntity extends CreatedAtEntity {
     @Column(name = "invited_by_email")
     private String invitedByEmail;
 
+    @Column(name = "display_name")
+    private String displayName;
+
     @Column(name = "invited_at")
     private Instant invitedAt;
 }

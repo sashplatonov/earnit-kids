@@ -25,5 +25,6 @@ public class TelegramParentInvitationEntity {
     @Column(name = "revoked_at") private Instant revokedAt;
     @Column(name = "consumed_at") private Instant consumedAt;
     @Column(name = "issued_by", nullable = false) private String issuedBy;
+    @Column(name = "parent_name") private String parentName;
     @Column(name = "created_at", nullable = false, updatable = false) private Instant createdAt;
 }

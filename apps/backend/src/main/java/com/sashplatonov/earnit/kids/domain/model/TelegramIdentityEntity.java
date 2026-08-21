@@ -27,6 +27,8 @@ public class TelegramIdentityEntity {
     @Column(name = "parent_account_id") private Integer parentAccountId;
     @Column(name = "child_id") private Integer childId;
     @Column(name = "telegram_user_id", nullable = false) private Long telegramUserId;
+    @Column(name = "telegram_username") private String telegramUsername;
+    @Column(name = "telegram_display_name") private String telegramDisplayName;
     @Column(nullable = false) private String role;
     @Builder.Default
     @Column(name = "is_active", nullable = false) private boolean active = true;

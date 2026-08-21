@@ -30,7 +30,7 @@ public class ParentAccountEntity extends CreatedAtEntity {
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", unique = true)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
