@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -93,12 +94,27 @@ class TelegramParentInvitationServiceImplTest {
             new TelegramInitDataVerifier.VerifiedInitData(77L, NOW, "maria", "Maria Example")));
         when(identityService.findActiveByTelegramUserId(77L)).thenReturn(Optional.empty());
         when(invitations.findByDigestForUpdate(anyString())).thenReturn(Optional.of(invitation()));
-        when(identityService.linkParent(any(), anyLong(), any(), anyString(), eq(NOW))).thenReturn(
+        when(identityService.linkParent(any(), anyLong(), any(), anyString(), any(), any(), eq(NOW))).thenReturn(
             new TelegramIdentityService.TelegramIdentity(3, 7, null, 77L, "parent", 9));
 
         assertThat(service.accept("pi_token", "signed-data", NOW)).isInstanceOf(OperationResult.Success.class);
         verify(parents).persist(any(ParentAccountEntity.class));
-        verify(identityService).linkParent(eq(7), eq(77L), any(), eq("Maria Example"), eq(NOW));
+        verify(identityService).linkParent(
+            eq(7), eq(77L), any(), eq("Maria Example"), eq("maria"), eq("Maria Example"), eq(NOW));
+    }
+
+    @Test
+    void accept_keepsMissingTelegramProfileFieldsNull() {
+        when(verifier.verify("signed-data")).thenReturn(Optional.of(
+            new TelegramInitDataVerifier.VerifiedInitData(77L, NOW)));
+        when(identityService.findActiveByTelegramUserId(77L)).thenReturn(Optional.empty());
+        when(invitations.findByDigestForUpdate(anyString())).thenReturn(Optional.of(invitation()));
+        when(identityService.linkParent(any(), anyLong(), any(), anyString(), any(), any(), eq(NOW))).thenReturn(
+            new TelegramIdentityService.TelegramIdentity(3, 7, null, 77L, "parent", 9));
+
+        assertThat(service.accept("pi_token", "signed-data", NOW)).isInstanceOf(OperationResult.Success.class);
+
+        verify(identityService).linkParent(eq(7), eq(77L), any(), eq("Maria Example"), isNull(), isNull(), eq(NOW));
     }
 
     @Test

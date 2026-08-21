@@ -26,7 +26,7 @@ test('the Telegram SDK loaded at the public root starts the Mini App auth flow',
 
     await page.goto('/?tgWebAppStartParam=sdk-pairing-token');
 
-    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Switch child|Выбрать ребёнка/ })).toBeVisible();
 });
 
 test('a Telegram Main Mini App launch from the public root is handed off to the auth gate', async ({ page }) => {
@@ -49,8 +49,8 @@ test('a Telegram Main Mini App launch from the public root is handed off to the 
 
     await page.goto('/?tgWebAppStartParam=opaque-pairing-token');
 
-    await expect(page).toHaveURL(/\/en\/telegram\?tgWebAppStartParam=opaque-pairing-token$/);
-    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
+    await expect(page).toHaveURL(/\/ru\/telegram\?tgWebAppStartParam=opaque-pairing-token$/);
+    await expect(page.getByRole('button', { name: /Switch child|Выбрать ребёнка/ })).toBeVisible();
 });
 
 test('non-Telegram browser gets a compact handoff state', async ({ page }) => {
@@ -58,7 +58,7 @@ test('non-Telegram browser gets a compact handoff state', async ({ page }) => {
 
     await expect(page.locator('script[src="https://telegram.org/js/telegram-web-app.js"]')).toHaveCount(1);
     await expect(page.getByRole('heading', { name: 'EarnIt Kids' })).toBeVisible();
-    await expect(page.getByText('Open this page inside Telegram to continue.')).toBeVisible();
+    await expect(page.getByText(/Open this page inside Telegram|Откройте эту страницу внутри Telegram/)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
@@ -77,9 +77,9 @@ test('unlinked Telegram identity gets a safe parent-link and child-invitation ha
 
     await page.goto('/telegram');
 
-    await expect(page.getByText('This Telegram account is not linked to a family yet.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Sign in as a parent to link it' })).toHaveAttribute('href', '/login');
-    await expect(page.getByText('For a child account, ask a parent to send an invitation.')).toBeVisible();
+    await expect(page.getByText(/This Telegram account is not linked|Этот Telegram-аккаунт ещё не привязан/)).toBeVisible();
+    await expect(page.getByRole('link', { name: /Sign in as a parent|Войдите как родитель/ })).toHaveAttribute('href', '/login');
+    await expect(page.getByText(/For a child account|Для ребёнка попросите родителя/)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
@@ -119,7 +119,7 @@ test('a Telegram parent invitation is accepted with signed init data only', asyn
     await expect(page.locator('input')).toHaveCount(0);
     await acceptButton.click();
     await expect.poll(() => acceptHit).toBe(true);
-    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Switch child|Выбрать ребёнка/ })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
@@ -186,7 +186,7 @@ test('Telegram parent access creates a named invite and reloads the canonical Te
     await expect(page.getByRole('dialog', { name: /Parents|Родители/ })).toHaveCount(0);
     await page.getByRole('button', { name: /Parents|Родители/ }).click();
     await expect(page.getByText('Maria Example').first()).toBeVisible();
-    await expect(page.getByText('Maria Example')).toHaveCount(2);
+    await expect(page.getByText('@maria_example')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
@@ -216,7 +216,7 @@ test('Telegram Mini App completes a one-time parent link before exchanging its s
 
     await page.goto('/telegram');
 
-    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Switch child|Выбрать ребёнка/ })).toBeVisible();
 });
 
 test('a child-invite token is sent through the exchange without a parent self-link', async ({ page }) => {
@@ -267,5 +267,5 @@ test('a consumed pairing token still opens the Mini App for its now-linked Teleg
 
     await page.goto('/telegram');
 
-    await expect(page.getByRole('button', { name: 'Switch child' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Switch child|Выбрать ребёнка/ })).toBeVisible();
 });

@@ -109,8 +109,8 @@ class TelegramCrossChannelIntegrationTest {
         assertThat(parent.email()).isNull();
         assertThat(parent.displayName()).isEqualTo("Maria Example");
         assertThat(parent.telegramUserId()).isEqualTo(telegramUserId);
-        assertThat(parent.telegramUsername()).isNull();
-        assertThat(parent.telegramDisplayName()).isNull();
+        assertThat(parent.telegramUsername()).isEqualTo("maria_example");
+        assertThat(parent.telegramDisplayName()).isEqualTo("Maria Example");
 
         var otherFamilyParents = parentAccess.listMemberships(otherFamilyId);
         assertThat(otherFamilyParents).isInstanceOf(OperationResult.Success.class);

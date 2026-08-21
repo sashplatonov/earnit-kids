@@ -44,7 +44,7 @@
         return /^[0-9a-fA-F]+$/.test(value);
     }
 
-    async function authenticate(): Promise<void> {
+    async function authenticate(skipParentInvite = false): Promise<void> {
         const telegram = initializeTelegramWebApp();
         if (!telegram) {
             state = 'non-telegram';
@@ -60,7 +60,7 @@
             const rawStartParam = telegram.initDataUnsafe?.start_param
                 ?? new URLSearchParams(window.location.search).get('tgWebAppStartParam');
             const parentInvite = rawStartParam?.startsWith('pi_') ? rawStartParam : '';
-            if (parentInvite) {
+            if (parentInvite && !skipParentInvite) {
                 parentInviteToken = parentInvite;
                 state = 'parent-invite';
                 return;
@@ -110,7 +110,7 @@
         if (result.ok) {
             parentInviteToken = '';
             state = 'loading';
-            await authenticate();
+            await authenticate(true);
         } else {
             state = 'parent-invite';
             message = result.error || $i18n.t('app.telegram.parents.error');

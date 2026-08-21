@@ -92,8 +92,8 @@
     }
 
     function telegramLabel(parent: ParentMembership): string {
-        if (parent.telegramDisplayName?.trim()) return parent.telegramDisplayName.trim();
         if (parent.telegramUsername?.trim()) return `@${parent.telegramUsername.trim()}`;
+        if (parent.telegramDisplayName?.trim()) return parent.telegramDisplayName.trim();
         return $i18n.t('app.telegram.parents.telegramIdentity');
     }
 

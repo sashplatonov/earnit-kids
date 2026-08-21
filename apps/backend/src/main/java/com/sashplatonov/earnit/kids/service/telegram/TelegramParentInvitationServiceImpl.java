@@ -114,7 +114,7 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
         invitation.setConsumedAt(now);
         var identity = identityService.linkParent(
             invitation.getFamilyId(), verified.telegramUserId(), parent.getId(),
-            invitation.getParentName(), now);
+            invitation.getParentName(), verified.telegramUsername(), verified.telegramDisplayName(), now);
         return OperationResult.success(identity);
     }
 
