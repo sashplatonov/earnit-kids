@@ -9,7 +9,7 @@
 </script>
 
 <div class:archived class:compact class:has-selection={hasSelection} class:has-trailing-actions={hasTrailingActions} class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
-    {#if $$slots.selection}<div class="entity-selection"><slot name="selection" /></div>{/if}
+    {#if hasSelection && $$slots.selection}<div class="entity-selection"><slot name="selection" /></div>{/if}
     <div class="entity-icon"><slot name="icon" /></div>
     <div class="entity-content">
         <div class="entity-heading">
