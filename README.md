@@ -94,25 +94,24 @@ Assumptions:
 
 ## 🔐 Environment Variables
 
-The full reference lives in root `.env.example`. The table below lists the variables most developers touch first.
+The root `.env.example` is the canonical Compose contract. Required local-stack inputs come first; the remaining sections are optional integrations, tuning, and direct-backend or maintenance settings.
 
 | Variable | Scope | Example | Purpose |
 | --- | --- | --- | --- |
 | `APP_URL` | Web + Compose | `http://localhost:3000` | Public origin used by the web edge and backend CORS; independent of published ports |
 | `WEB_PORT` | Compose | `3000` | Host port published for the web service; the container always listens on `3000` |
 | `BACKEND_INTERNAL_PORT` | Backend + Compose | `8080` | Internal Quarkus HTTP port |
-| `JWT_SECRET` | Backend | `local-dev-secret-change-in-prod` | Compatibility JWT signing secret |
+| `JWT_SECRET` | Backend | `local-dev-secret-change-in-prod` | Local JWT signing secret |
 | `DB_HOST` | Backend + maintenance scripts | `db` | Compose service host for PostgreSQL |
 | `DB_INTERNAL_PORT` | Backend + Compose | `5432` | PostgreSQL port inside the Compose network |
 | `DB_HOST_PORT` | Compose | `5432` | Host port published for PostgreSQL |
 | `DB_NAME` | Backend + DB | `earnit_kids` | Database name |
 | `DB_USER` | Backend + DB | `postgres` | Database username |
 | `DB_PASSWORD` | Backend + DB | `change-me` | Database password |
-| `DATABASE_URL` | Backend | `jdbc:postgresql://localhost:5432/earnit_kids` | Direct JDBC URL for non-Compose backend runs; Compose supplies its own service URL |
-| `SUPER_ADMIN_EMAIL` | Backend bootstrap | `admin@example.com` | Optional super-admin bootstrap account |
-| `SUPER_ADMIN_PASSWORD` | Backend bootstrap | `change-me` | Optional super-admin bootstrap password |
-| `ENABLE_EMAIL_VERIFICATION` | Backend feature flag | `false` | Toggle email verification flow |
-| `ENABLE_PASSWORD_RECOVERY` | Backend feature flag | `false` | Toggle forgot/reset password flow |
+| `DATABASE_URL` | Direct backend | `jdbc:postgresql://localhost:5432/earnit_kids` | Optional JDBC URL for non-Compose backend runs |
+| `DB_PORT` | Maintenance scripts | `5432` | Optional host database port for backend scripts |
+| `GOOGLE_AUTH_CLIENT_ID` | Backend OAuth | — | Optional Google OAuth client ID |
+| `TELEGRAM_BOT_TOKEN` | Backend Telegram | — | Optional Telegram bot credential |
 | `JAVA_XMX` | Native Docker build | `2500m` | Native image builder memory cap |
 
 Telegram backup credentials and schedule are configured from the super-admin panel, not from the env examples.

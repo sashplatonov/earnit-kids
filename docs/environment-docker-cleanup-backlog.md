@@ -464,7 +464,7 @@ git commit -m "refactor(web): remove browser New Relic configuration"
 
 ## TASK-ENV-009: Publish a priority-ordered environment example
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** TASK-ENV-003, TASK-ENV-004, TASK-ENV-006, TASK-ENV-008
 
