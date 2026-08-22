@@ -261,7 +261,7 @@ export const appMessages = {
             neverUsed: 'Ещё не использовалось',
         },
         childTasks: {
-            tasksToday: 'Задания · Сегодня',
+            tasksToday: 'Задания',
             done: '{completed} / {limit} выполнено',
             available: '{count} доступно',
             sendingRequest: 'Отправляем заявку…',
