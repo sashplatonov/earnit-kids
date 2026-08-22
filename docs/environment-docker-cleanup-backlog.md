@@ -10,10 +10,10 @@ Make the checked-in environment examples and both Docker Compose modes describe 
 - `docker-compose.yml` and `docker-compose.native.yml` own container wiring. They must pass only the runtime values required by the web edge, Quarkus, PostgreSQL, and build stages; application code retains its documented compatibility fallbacks for direct local runs.
 - `apps/backend/.env.example` is a standalone backend-oriented reference, not an alternative Compose source. Keep only properties that Quarkus or backend maintenance scripts actually consume.
 - Remove obsolete mobile push/FCM/VAPID and Clarity configuration references rather than retaining inert feature flags. Do not restore the removed push API, schema, or client functionality as part of this cleanup.
-- Preserve supported operational settings such as Telegram, Google Identity, database, cache, New Relic, and native build configuration when a current consumer exists, even if the default value is normally sufficient.
+- Preserve supported operational settings such as Telegram, Google OAuth, database, cache, New Relic, and native build configuration when a current consumer exists, even if the default value is normally sufficient.
 - `APP_URL` remains the public origin, not a duplicate of a port setting. The Compose host port is configurable through `WEB_PORT`; the web process keeps its fixed container port (`3000`) in Compose and Dockerfile wiring, so `WEB_INTERNAL_PORT` is not an operator-facing setting.
 - Browser New Relic settings use the `VITE_` prefix only because `apps/web/src/lib/observability/newrelic.ts` consumes them through `import.meta.env`. Do not rename them to non-`VITE_` values and silently disable client instrumentation; remove the browser integration and its build arguments as one bounded task if it is no longer a product requirement.
-- The legacy super-admin authority, email verification/password recovery, and Google OAuth are separate authentication and authorization surfaces. Their removal must cover routes, UI, JWT/session contracts, configuration, tests, translations, and persisted columns where applicable, while retaining the Telegram dashboard and its Telegram-ID-based authorization.
+- The legacy super-admin authority and email verification/password recovery are separate authentication and authorization surfaces. Their removal must cover routes, UI, JWT/session contracts, configuration, tests, translations, and persisted columns where applicable, while retaining the Telegram dashboard, its Telegram-ID-based authorization, and the supported Google OAuth integration.
 
 ## Recommended implementation order
 
@@ -25,9 +25,8 @@ Make the checked-in environment examples and both Docker Compose modes describe 
 | 4 | TASK-ENV-004 | P1 | TASK-ENV-001 | Remove the legacy super-admin authorization surface before deleting its configuration. |
 | 5 | TASK-ENV-005 | P1 | TASK-ENV-004 | Remove email verification and password-recovery persistence before removing their API and UI flows. |
 | 6 | TASK-ENV-006 | P1 | TASK-ENV-005 | Remove the remaining legacy email-auth auxiliary endpoints, UI, and feature flags. |
-| 7 | TASK-ENV-007 | P1 | TASK-ENV-006 | Remove Google OAuth as a separate external authentication integration. |
-| 8 | TASK-ENV-008 | P2 | TASK-ENV-007 | Retire browser New Relic instrumentation so no Vite-prefixed public build configuration remains. |
-| 9 | TASK-ENV-009 | P2 | TASK-ENV-003, TASK-ENV-004, TASK-ENV-006, TASK-ENV-007, TASK-ENV-008 | Publish the final example in priority-ordered, clearly optional groups. |
+| 7 | TASK-ENV-008 | P2 | TASK-ENV-006 | Retire browser New Relic instrumentation so no Vite-prefixed public build configuration remains. |
+| 8 | TASK-ENV-009 | P2 | TASK-ENV-003, TASK-ENV-004, TASK-ENV-006, TASK-ENV-008 | Publish the final example in priority-ordered, clearly optional groups. |
 
 ## TASK-ENV-001: Reduce environment examples and Compose wiring to live contracts
 
@@ -382,7 +381,7 @@ Remove the flows end-to-end rather than leaving permanently false flags or UI br
 ### Out of scope
 
 - Parent sign-in, registration, child magic links, password change for an authenticated parent, or Telegram authentication.
-- Google OAuth removal, which is TASK-ENV-007.
+- Google OAuth, which remains a supported parent-login integration.
 
 ### Acceptance criteria
 
@@ -405,72 +404,11 @@ git add .env.example apps/backend/.env.example docker-compose.yml docker-compose
 git commit -m "refactor(auth): remove legacy recovery flows"
 ```
 
-## TASK-ENV-007: Remove legacy Google OAuth authentication
-
-**Status:** TODO
-**Priority:** P1
-**Depends on:** TASK-ENV-006
-
-**Exact scope:**
-
-Remove Google OAuth configuration and the parent-login integration from backend and web. Parent email/password authentication remains the only browser login method.
-
-**Files:**
-
-- Delete `apps/backend/src/main/java/com/sashplatonov/earnit/kids/resource/auth/AuthGoogleResource.java`, `service/google/GoogleOAuthService.java`, `GoogleIdentityVerifier.java`, `GoogleIdentity.java`, `GoogleTokenResponse.java`, and `dto/request/GoogleLoginRequest.java` when no other consumer remains.
-- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/AppConfig.java`, `service/auth/AuthSupportService.java`, `service/auth/AuthService.java`, `AuthServiceImpl.java`, `AuthResource.java`, and `application.properties`.
-- Delete `apps/web/src/lib/auth/googleOAuth.ts`; modify `apps/web/src/routes/login/+page.svelte`, auth messages, and `apps/web/tests/unit/googleOAuth.test.ts`.
-- Modify `.env.example`, `apps/backend/.env.example`, `docker-compose.yml`, `docker-compose.native.yml`, and operator documentation.
-- Search anchors: `GOOGLE_AUTH_`, `googleEnabled`, `/api/login-google`, and `GoogleOAuthService`.
-
-**Goal:**
-
-No Google client secret, redirect URI, OAuth callback, or Google sign-in control remains in the shipped application.
-
-### Architectural decision
-
-Google OAuth is removed as an external identity boundary, not merely disabled. Do not leave a dormant callback URL, feature flag, or public client identifier that could revive an incomplete flow.
-
-### Required changes
-
-1. Remove backend OAuth endpoints, state/callback handling, token exchange/identity verification, configuration mapping, login configuration fields, tests, and OpenAPI operations.
-2. Remove web Google login requests, callback-state handling, controls, translations, tests, and any login-panel state used only by Google.
-3. Delete all `GOOGLE_AUTH_*` example and Compose variables, including redirect URI interpolation, and remove active documentation references.
-4. Confirm ordinary login/config responses remain deterministic without Google-specific optional fields.
-
-### Out of scope
-
-- Parent credential authentication, Telegram Mini App identity, or any future OAuth provider.
-- Credential rotation in existing Google Cloud projects.
-
-### Acceptance criteria
-
-- No runtime route under `/api/login-google` or Google callback route is published.
-- The login page has no Google control, pending state, error copy, or redirect handling.
-- No active source, example, Compose file, or maintained document contains `GOOGLE_AUTH_` or Google OAuth client credentials.
-- Existing parent login and registration tests pass without provider-specific branches.
-
-### Targeted validation
-
-```bash
-cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify
-cd ../web && npm run lint && npm run test && npm run build
-cd ../.. && ! rg -n "GOOGLE_AUTH_|login-google|GoogleOAuthService|googleEnabled" .env.example apps/backend/.env.example docker-compose.yml docker-compose.native.yml apps/backend/src/main apps/web/src
-git diff --check
-```
-
-### Commit
-
-```bash
-git add .env.example apps/backend/.env.example docker-compose.yml docker-compose.native.yml apps/backend apps/web README.md
-git commit -m "refactor(auth): remove legacy Google sign-in"
-```
-
 ## TASK-ENV-008: Retire browser New Relic instrumentation
 
 **Status:** TODO
 **Priority:** P2
-**Depends on:** TASK-ENV-007
+**Depends on:** TASK-ENV-006
 
 **Exact scope:**
 
@@ -528,7 +466,7 @@ git commit -m "refactor(web): remove browser New Relic configuration"
 
 **Status:** TODO
 **Priority:** P2
-**Depends on:** TASK-ENV-003, TASK-ENV-004, TASK-ENV-006, TASK-ENV-007, TASK-ENV-008
+**Depends on:** TASK-ENV-003, TASK-ENV-004, TASK-ENV-006, TASK-ENV-008
 
 **Exact scope:**
 
@@ -552,7 +490,7 @@ The root example is a curated Compose contract, not a dump of every property def
 ### Required changes
 
 1. Put required/public stack inputs first: public origin, host port, JWT secret, and database connection/credentials required by the selected Compose profile.
-2. Follow with clearly labelled optional groups in operational order: Telegram, monitoring, cache/performance tuning, and native build-only settings.
+2. Follow with clearly labelled optional groups in operational order: Google OAuth, Telegram, monitoring, cache/performance tuning, and native build-only settings.
 3. Add concise comments that state an option's owning runtime and when an operator should set it; mark empty optional values explicitly rather than presenting them as mandatory blanks.
 4. Ensure all names reflect completed removal tasks and no duplicate/legacy section remains.
 
@@ -565,7 +503,7 @@ The root example is a curated Compose contract, not a dump of every property def
 
 - The first section contains only the minimum required local Compose inputs and distinguishes `APP_URL` from `WEB_PORT`.
 - Every nonessential group is headed and marked optional with a concise operational purpose.
-- The final example has no removed super-admin, verification/recovery, Google OAuth, browser New Relic, push/FCM/VAPID, Clarity, or internal-web-port variables.
+- The final example has no removed super-admin, verification/recovery, browser New Relic, push/FCM/VAPID, Clarity, or internal-web-port variables, while retaining a documented optional Google OAuth group.
 - Both Compose modes render successfully from the final example.
 
 ### Targeted validation
