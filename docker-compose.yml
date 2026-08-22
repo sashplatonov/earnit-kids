@@ -6,11 +6,6 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args:
-        VITE_NEW_RELIC_BROWSER_ENABLED: ${VITE_NEW_RELIC_BROWSER_ENABLED:-false}
-        VITE_NEW_RELIC_BROWSER_INFO: ${VITE_NEW_RELIC_BROWSER_INFO:-}
-        VITE_NEW_RELIC_BROWSER_INIT: ${VITE_NEW_RELIC_BROWSER_INIT:-}
-        VITE_NEW_RELIC_BROWSER_LOADER_CONFIG: ${VITE_NEW_RELIC_BROWSER_LOADER_CONFIG:-}
     env_file:
       - .env
     environment:

@@ -190,7 +190,7 @@ Verification tip:
 - SvelteKit migration backlog: [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md)
 - Analytics daily quest backlog: [docs/analytics-daily-quest-backlog.md](docs/analytics-daily-quest-backlog.md)
 - New Relic monitoring: [docs/monitoring/newrelic.md](docs/monitoring/newrelic.md)
-- Browser agent config stays separate from backend OTLP metrics env vars; see the monitoring doc for the split contract.
+- Backend New Relic Java agent and OTLP metrics remain separate; see the monitoring doc for the runtime contract.
 - Frontend architecture: [apps/web/docs/ARCHITECTURE.md](apps/web/docs/ARCHITECTURE.md)
 - Backend architecture: [apps/backend/docs/ARCHITECTURE.md](apps/backend/docs/ARCHITECTURE.md)
 

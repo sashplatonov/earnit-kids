@@ -153,14 +153,6 @@ function translate(payload: I18nPayload, key: MessageKey, variables?: Translatio
     }
 
     if (typeof english === 'string') {
-        if (payload.locale !== DEFAULT_LOCALE && import.meta.env.DEV) {
-            void import('$lib/logging/clientLogger').then(({ logClientWarn }) => {
-                logClientWarn('i18n.missing_translation', 'Missing locale translation', {
-                    locale: payload.locale,
-                    key,
-                });
-            });
-        }
         return interpolate(english, variables);
     }
 

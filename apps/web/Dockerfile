@@ -3,11 +3,6 @@
 FROM node:24-alpine AS build
 WORKDIR /workspace/web
 
-ARG VITE_NEW_RELIC_BROWSER_ENABLED
-ARG VITE_NEW_RELIC_BROWSER_INFO
-ARG VITE_NEW_RELIC_BROWSER_INIT
-ARG VITE_NEW_RELIC_BROWSER_LOADER_CONFIG
-
 COPY apps/web/package*.json ./
 RUN --mount=type=cache,target=/root/.npm,sharing=locked npm ci
 

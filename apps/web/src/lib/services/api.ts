@@ -6,7 +6,6 @@
 import { normalizeAuthResponse, normalizeChild } from './serverContract';
 import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } from '$lib/types/auth';
 import type { Child } from '$lib/stores/app';
-import { logClientError } from '$lib/logging/clientLogger';
 
 
 function getCsrfToken(): string {
@@ -67,8 +66,7 @@ async function postJson<T = unknown>(url: string, body: unknown): Promise<T | nu
             body: JSON.stringify(body),
         });
         return res.ok ? parseJsonSafe<T>(res) : null;
-    } catch (err) {
-        logClientError('api.post_failed', 'POST request failed', { url, error: err });
+    } catch {
         return null;
     }
 }
@@ -140,8 +138,7 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
             errorCode: extractProblemCode(data),
             status: res.status,
         };
-    } catch (err) {
-        logClientError('api.post_failed', 'POST request failed', { url, error: err });
+    } catch {
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',
@@ -170,8 +167,7 @@ async function putJsonResult<T = unknown>(url: string, body: unknown): Promise<A
             errorCode: extractProblemCode(data),
             status: res.status,
         };
-    } catch (err) {
-        logClientError('api.put_failed', 'PUT request failed', { url, error: err });
+    } catch {
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',
@@ -201,8 +197,7 @@ export async function postJsonResultWithValidation<T = unknown>(url: string, bod
             status: res.status,
             validationErrors: extractValidationErrors(data),
         };
-    } catch (err) {
-        logClientError('api.post_failed', 'POST request failed', { url, error: err });
+    } catch {
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',
@@ -234,8 +229,7 @@ export async function postJsonAfterPendingSave<T = unknown>(url: string, body: u
     try {
         await flushPendingCrudSave();
         return postJson<T>(url, body);
-    } catch (err) {
-        logClientError('api.pending_save_failed', 'Pending save failed before POST request', { url, error: err });
+    } catch {
         return null;
     }
 }
@@ -244,8 +238,7 @@ export async function postJsonResultAfterPendingSave<T = unknown>(url: string, b
     try {
         await flushPendingCrudSave();
         return postJsonResult<T>(url, body);
-    } catch (err) {
-        logClientError('api.pending_save_failed', 'Pending save failed before POST request', { url, error: err });
+    } catch {
         return {
             ok: false,
             error: 'Не удалось сохранить последние изменения. Попробуйте еще раз.',
@@ -255,7 +248,7 @@ export async function postJsonResultAfterPendingSave<T = unknown>(url: string, b
     }
 }
 
-async function postBoolean(url: string, body: unknown, errorMsg?: string): Promise<boolean> {
+async function postBoolean(url: string, body: unknown): Promise<boolean> {
     try {
         const res = await fetchWithCsrf(url, {
             method: 'POST',
@@ -263,8 +256,7 @@ async function postBoolean(url: string, body: unknown, errorMsg?: string): Promi
             body: JSON.stringify(body),
         });
         return res.ok;
-    } catch (err) {
-        if (errorMsg) logClientError('api.post_boolean_failed', errorMsg, { url, error: err });
+    } catch {
         return false;
     }
 }
@@ -283,8 +275,7 @@ async function deleteJsonResult<T = unknown>(url: string): Promise<ApiActionResu
             errorCode: extractProblemCode(data),
             status: res.status,
         };
-    } catch (err) {
-        logClientError('api.delete_failed', 'DELETE request failed', { url, error: err });
+    } catch {
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',
@@ -305,25 +296,23 @@ async function fetchGet<T = unknown>(url: string): Promise<T | null> {
     try {
         const res = await fetchWithCsrf(url);
         return res.ok ? await parseJsonSafe<T>(res) : null;
-    } catch (err) {
-        logClientError('api.get_failed', 'GET request failed', { url, error: err });
+    } catch {
         return null;
     }
 }
 
-async function deleteResource(url: string, errorMsg?: string): Promise<boolean> {
+async function deleteResource(url: string): Promise<boolean> {
     try {
         const res = await fetchWithCsrf(url, { method: 'DELETE' });
         return res.ok;
-    } catch (err) {
-        if (errorMsg) logClientError('api.delete_resource_failed', errorMsg, { url, error: err });
+    } catch {
         return false;
     }
 }
 
-async function deleteResourceAfterPendingSave(url: string, errorMsg?: string): Promise<boolean> {
+async function deleteResourceAfterPendingSave(url: string): Promise<boolean> {
     await flushPendingCrudSave();
-    return deleteResource(url, errorMsg);
+    return deleteResource(url);
 }
 
 type ChildLinkPayload = {
@@ -350,8 +339,7 @@ export async function loadDataFromServer(childId?: string | number | null) {
     try {
         const res = await fetchWithCsrf(`/api/data${q}`);
         return res.ok ? await parseJsonSafe(res) : null;
-    } catch (err) {
-        logClientError('api.load_data_failed', 'Failed to load from server', { error: err, childId });
+    } catch {
         return null;
     }
 }
@@ -361,8 +349,7 @@ export async function loadDataDetailsFromServer(childId?: string | number | null
     try {
         const res = await fetchWithCsrf(`/api/data/details${q}`);
         return res.ok ? await parseJsonSafe(res) : null;
-    } catch (err) {
-        logClientError('api.load_data_details_failed', 'Failed to load detail data from server', { error: err, childId });
+    } catch {
         return null;
     }
 }
@@ -386,13 +373,12 @@ export async function saveDataToServer(data: unknown, options: { keepalive?: boo
         });
         if (!res.ok) return null;
         return await parseJsonSafe(res);
-    } catch (err) {
-        logClientError('api.save_data_failed', 'Failed to save to server', { error: err });
+    } catch {
         return null;
     }
 }
 
-export const logout = () => postBoolean('/api/logout', {}, 'Logout failed');
+export const logout = () => postBoolean('/api/logout', {});
 
 export const loginWithEmail = (email: string, password: string) =>
     postAuthJson('/api/login', { email, password });
@@ -443,8 +429,7 @@ export async function loadParentMemberships(): Promise<ApiActionResult<ParentMem
             errorCode: extractProblemCode(data),
             status: res.status,
         };
-    } catch (err) {
-        logClientError('api.parent_memberships_failed', 'GET request failed', { url: '/api/parents', error: err });
+    } catch {
         return {
             ok: false,
             error: 'Сеть недоступна. Попробуйте еще раз.',
@@ -573,8 +558,7 @@ export async function fetchRequestsFromServer(page = 1, limit = 50): Promise<Rec
     try {
         const res = await fetchWithCsrf(`/api/requests?page=${page}&limit=${limit}`);
         return res.ok ? await parseJsonSafe<Record<string, unknown>>(res) : null;
-    } catch (err) {
-        logClientError('api.fetch_requests_failed', 'Failed to fetch requests', { error: err });
+    } catch {
         return null;
     }
 }
@@ -587,11 +571,11 @@ export const rejectRequest = (requestId: unknown, childId?: unknown) =>
     postJsonAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}/reject${buildChildQuery(childId)}`, {});
 
 export const deleteRequest = (requestId: unknown, childId?: unknown) =>
-    deleteResourceAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}${buildChildQuery(childId)}`, 'Delete request failed');
+    deleteResourceAfterPendingSave(`/api/requests/${encodeURIComponent(String(requestId))}${buildChildQuery(childId)}`);
 
 
 export const deleteHistoryItem = (historyId: unknown, childId?: unknown) =>
-    deleteResourceAfterPendingSave(`/api/history/${encodeURIComponent(String(historyId))}${buildChildQuery(childId)}`, 'Delete history failed');
+    deleteResourceAfterPendingSave(`/api/history/${encodeURIComponent(String(historyId))}${buildChildQuery(childId)}`);
 
 
 /** Award or deduct coins for a child. Maps to POST /api/balance/adjust. */
@@ -612,7 +596,7 @@ export const adminAddChild = (name: string) =>
 
 /** Delete a child profile. */
 export const adminDeleteChild = (childId: unknown) =>
-    deleteResource(`/api/children/${encodeURIComponent(String(childId))}`, 'Delete child failed');
+    deleteResource(`/api/children/${encodeURIComponent(String(childId))}`);
 
 /** Deactivate or reactivate a child profile without deleting data. */
 export const adminSetChildActive = (childId: unknown, active: boolean) =>
@@ -697,4 +681,4 @@ export const searchFriend = async (query: string) => {
 };
 
 export const addFriend = (friendId: unknown) =>
-    postBoolean('/api/add-friend', { friendId }, 'Add friend failed');
+    postBoolean('/api/add-friend', { friendId });

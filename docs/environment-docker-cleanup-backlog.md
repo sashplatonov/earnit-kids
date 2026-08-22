@@ -406,7 +406,7 @@ git commit -m "refactor(auth): remove legacy recovery flows"
 
 ## TASK-ENV-008: Retire browser New Relic instrumentation
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** TASK-ENV-006
 
