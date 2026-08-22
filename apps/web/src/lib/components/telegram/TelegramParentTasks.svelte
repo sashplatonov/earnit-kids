@@ -163,7 +163,7 @@
                     <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
                     <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} on:click={() => edit(task)}>
                         <span class="title">{stripLeadingEmoji(task.name)}</span>
-                        <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{task.coins} · {stripLeadingEmoji(task.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>{#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}</span>
+                        <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{task.coins} · {task.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}</span>
                     </button>
                     <svelte:fragment slot="interactive">
                     {#if canEdit}
@@ -204,7 +204,7 @@
         <h2 id="task-complete-title">{$i18n.t('app.telegram.tasks.completeShort')}</h2>
         <div class="complete-row">
             <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: confirmComplete.name, group: confirmComplete.groupName, semantic: confirmComplete.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
-            <span class="grow"><span class="title">{stripLeadingEmoji(confirmComplete.name)}</span><span class="meta"><TelegramCoin size={13} />{confirmComplete.coins} · {stripLeadingEmoji(confirmComplete.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span></span>
+            <span class="grow"><span class="title">{stripLeadingEmoji(confirmComplete.name)}</span><span class="meta"><TelegramCoin size={13} />{confirmComplete.coins} · {confirmComplete.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span></span>
         </div>
         <div class="delta"><span>{$i18n.t('app.telegram.tasks.completeChild')}</span><b>{$appStore.childNickname || $i18n.t('app.telegram.header.child')}</b></div>
         <div class="delta"><span>{$i18n.t('app.telegram.tasks.completeAward')}</span><b class="award">+{confirmComplete.coins} <TelegramCoin size={13} /></b></div>

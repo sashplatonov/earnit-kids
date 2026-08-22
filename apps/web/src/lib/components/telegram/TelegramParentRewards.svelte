@@ -170,7 +170,7 @@
                     <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span>
                     <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(item.name) })} on:click={() => edit(item)}>
                         <span class="title">{stripLeadingEmoji(item.name)}</span>
-                        <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {stripLeadingEmoji(item.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span>
+                        <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {item.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span>
                     </button>
                     <svelte:fragment slot="interactive">
                     {#if canEdit}
@@ -211,7 +211,7 @@
         <h2 id="reward-grant-title">{$i18n.t('app.telegram.rewards.grantShort')}</h2>
         <div class="grant-row">
             <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: confirmGrant.name, group: confirmGrant.groupName, semantic: confirmGrant.icon ?? null })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span>
-            <span class="grow"><span class="title">{stripLeadingEmoji(confirmGrant.name)}</span><span class="meta"><TelegramCoin size={13} />{confirmGrant.price} · {stripLeadingEmoji(confirmGrant.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span></span>
+            <span class="grow"><span class="title">{stripLeadingEmoji(confirmGrant.name)}</span><span class="meta"><TelegramCoin size={13} />{confirmGrant.price} · {confirmGrant.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span></span>
         </div>
         <div class="delta"><span>{$i18n.t('app.telegram.rewards.grantChild')}</span><b>{$appStore.childNickname || $i18n.t('app.telegram.header.child')}</b></div>
         <div class="delta"><span>{$i18n.t('app.telegram.rewards.grantBalance')}</span><b>{$appStore.balance} → {Math.max(0, ($appStore.balance ?? 0) - (confirmGrant.price ?? 0))}</b></div>

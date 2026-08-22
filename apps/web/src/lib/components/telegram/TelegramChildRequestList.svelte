@@ -28,9 +28,9 @@
                 : status === 'cancelled'
                     ? $i18n.t('app.telegram.childRequests.statusCancelled')
                     : $i18n.t('app.telegram.childRequests.statusPending'),
-        metadata: (request: Request, _kind: 'task' | 'reward', kindLabel: string) => {
+        metadata: (request: Request, _kind: 'task' | 'reward', _kindLabel: string) => {
             const group = request.taskGroup || request.itemGroup || request.groupName;
-            return group ? `${group} · ${kindLabel}` : kindLabel;
+            return group || '';
         },
     };
 
