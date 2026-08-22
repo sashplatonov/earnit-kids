@@ -16,10 +16,9 @@ services:
     environment:
       # Web edge
       PORT: ${WEB_INTERNAL_PORT}
+      # Backend is reached over the Compose network, not the host loopback.
       BACKEND_URL: http://backend:${BACKEND_INTERNAL_PORT}
       APP_URL: ${APP_URL}
-      FRONTEND_URL: ${APP_URL}
-      PUBLIC_BASE_URL: ${APP_URL}
 
     depends_on:
       backend:
@@ -50,12 +49,12 @@ services:
     env_file:
       - .env
     environment:
-      # Backend (explicit overrides so shell vars don't shadow .env)
+      # Backend service contract; the container listens on the internal port.
       QUARKUS_HTTP_PORT: ${BACKEND_INTERNAL_PORT}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:4174,http://localhost:4174,http://e2e.localhost:4174}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5001}
-      APP_URL: ${APP_URL:-http://localhost:5001}
-      GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-http://localhost:5001/api/login-google/callback}
+      FRONTEND_URL: ${APP_URL}
+      APP_URL: ${APP_URL}
+      GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-${APP_URL}/api/login-google/callback}
       JWT_SECRET: ${JWT_SECRET}
       SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}

@@ -16,10 +16,9 @@ services:
     environment:
       # Web edge
       PORT: ${WEB_INTERNAL_PORT}
+      # Backend is reached over the Compose network, not the host loopback.
       BACKEND_URL: http://backend:${BACKEND_INTERNAL_PORT}
       APP_URL: ${APP_URL}
-      FRONTEND_URL: ${APP_URL}
-      PUBLIC_BASE_URL: ${APP_URL}
     depends_on:
       backend:
         condition: service_started
@@ -47,16 +46,24 @@ services:
     env_file:
       - .env
     environment:
-      # Backend
+      # Backend service contract; the container listens on the internal port.
       QUARKUS_HTTP_PORT: ${BACKEND_INTERNAL_PORT}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:4174,http://localhost:4174,http://e2e.localhost:4174}
       FRONTEND_URL: ${APP_URL}
-      APP_URL: ${APP_URL:-http://localhost:5001}
-      GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-http://localhost:5001/api/login-google/callback}
+      APP_URL: ${APP_URL}
+      GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-${APP_URL}/api/login-google/callback}
       JWT_SECRET: ${JWT_SECRET}
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL}
+      DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:-development}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-earnit-kids-backend}
+      NEW_RELIC_AGENT_ENABLED: ${NEW_RELIC_AGENT_ENABLED:-false}
       NEW_RELIC_METRICS_ENABLED: ${NEW_RELIC_METRICS_ENABLED:-false}
       NEW_RELIC_OTLP_METRICS_ENDPOINT: ${NEW_RELIC_OTLP_METRICS_ENDPOINT:-https://otlp.nr-data.net}
       NEW_RELIC_OTLP_METRICS_PROTOCOL: ${NEW_RELIC_OTLP_METRICS_PROTOCOL:-http/protobuf}
+      NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED: ${NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED:-false}
+      NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED: ${NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED:-10000}
+      NEW_RELIC_APPLICATION_LOGGING_LOCAL_DECORATING_ENABLED: ${NEW_RELIC_APPLICATION_LOGGING_LOCAL_DECORATING_ENABLED:-false}
       DATABASE_URL: jdbc:postgresql://${DB_HOST}:${DB_INTERNAL_PORT}/${DB_NAME}
       DATA_DIR: /work/data/catalog
     volumes:
