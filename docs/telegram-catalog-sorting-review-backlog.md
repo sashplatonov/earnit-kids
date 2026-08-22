@@ -202,7 +202,7 @@ git commit -m "fix(web): enlarge catalog sort touch targets"
 
 ## P2-2: Add cross-role sorting browser regression coverage
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** P0-1, P1-1, P2-1
 
