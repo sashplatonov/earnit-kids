@@ -29,7 +29,7 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 20, groupName: 'Today', isActive: true }, { id: 2, name: 'A very long task title that must remain reachable on a narrow mobile viewport', coins: 10, groupName: 'Today', isActive: true }], shop: [{ id: 2, name: 'Game time', price: 50, groupName: 'Fun', isActive: true }], requests: [] }) }));
-    await page.route('**/api/tasks/1/request', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ balance: 40, requests: [{ id: 7, taskId: 1, requestType: 'task_completion', status: 'pending' }] }) }));
+    await page.route('**/api/tasks/2/request', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ balance: 40, requests: [{ id: 7, taskId: 2, requestType: 'task_completion', status: 'pending' }] }) }));
 
     await page.goto('/telegram');
     await expect(page.getByRole('heading', { name: /(?:Hi|Привет), Mia!/ })).toBeVisible();
@@ -76,7 +76,7 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await expectCompactList(rewardList, 1);
     await expect(rewardList.getByText('Game time')).toBeVisible();
     await expect(rewardList.getByText('Fun')).toBeVisible();
-    await expect(rewardList.locator('.check')).toBeDisabled();
+    await expect(rewardList.locator('.grant')).toBeDisabled();
     await page.locator('#child-tab-tasks').click();
     await taskList.locator('.check').first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
