@@ -19,6 +19,8 @@
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
     import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
+    import TelegramSortControl from './TelegramSortControl.svelte';
+    import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
 
     const i18n = useI18n();
 
@@ -27,10 +29,11 @@
     $: groups = orderGroups(rawGroups, currentChild?.shopGroupOrder);
     $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
     let selectedGroup = '';
+    let sortMode: CatalogSortMode = 'group';
     let catalogOpen = false;
-    $: filteredItems = selectedGroup
+    $: filteredItems = sortCatalogItems(selectedGroup
         ? $shopItems.filter((item) => item.groupName === selectedGroup)
-        : $shopItems;
+        : $shopItems, sortMode, groups, (item) => item.groupName ?? '', (item) => item.price);
     $: canEdit = $appStore.permission !== 'viewer';
     let groupMessage = '';
     let groupEditorOpen = false;
@@ -157,6 +160,7 @@
             allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')}
             onSelect={(group) => selectedGroup = group}
         />
+        <TelegramSortControl mode={sortMode} onChange={(mode) => sortMode = mode} />
         {#if selectedGroup && !filteredItems.length}
             <p class="muted empty-group">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>
         {:else}
