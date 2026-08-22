@@ -22,12 +22,17 @@ npm run test:e2e
 
 ## Environment Variables
 
-- `BACKEND_ORIGIN`: backend base URL. Default: `http://localhost:8080`
-- `BACKEND_URL`: legacy-compatible alias for the backend base URL used by Docker Compose.
+- `BACKEND_ORIGIN`: preferred backend base URL. Default: `http://localhost:8080`
+- `BACKEND_URL`: compatibility alias for the backend base URL, used by existing Compose/runtime wiring.
+- `APP_URL`: preferred public origin for generated links and proxy context. Default: `http://localhost:3000`
+- `FRONTEND_URL` and `PUBLIC_BASE_URL`: compatibility aliases for the public origin.
+- `TELEGRAM_MINI_APP_URL`: optional Telegram deep-link override; `PUBLIC_TELEGRAM_MINI_APP_URL` remains a compatibility alias.
 - `SESSION_PATH`: server-side session snapshot endpoint. Default: `/api/page-data/session`
 - `WS_PATH`: backend websocket path reserved for the migration seam. Default: `/ws`
 - `DEV_PORT`: local dev port for SvelteKit. Default: `4173`
 - `PREVIEW_PORT`: local preview port for SvelteKit and Playwright. Default: `4174`
+
+Compose owns the web container's `PORT` and injects the service-DNS backend URL; operators normally only need the variables retained in the root `.env.example`.
 
 ## Current Scope
 

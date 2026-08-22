@@ -56,9 +56,10 @@ docker compose -f docker-compose.native.yml down
 
 Assumptions:
 
-- Root `.env` contains local-safe defaults.
+- Copy `.env.example` to `.env`; it contains local-safe defaults for both Compose stacks.
 - If `3000` or `5432` are already taken, override `WEB_PORT` or `DB_HOST_PORT` at launch time.
 - Default `docker-compose.yml` is the JVM stack. `docker-compose.native.yml` is the native stack.
+- Containers reach PostgreSQL through the Compose service name `db` and its internal port `5432`; `DB_HOST_PORT` is only the host-published port.
 
 [↩ Back to toc](#table-of-contents)
 
@@ -102,11 +103,13 @@ The full reference lives in root `.env.example`. The table below lists the varia
 | `WEB_INTERNAL_PORT` | Web + Compose | `3000` | Internal Node port inside the web container |
 | `BACKEND_INTERNAL_PORT` | Backend + Compose | `8080` | Internal Quarkus HTTP port |
 | `JWT_SECRET` | Backend | `local-dev-secret-change-in-prod` | Compatibility JWT signing secret |
+| `DB_HOST` | Backend + maintenance scripts | `db` | Compose service host for PostgreSQL |
+| `DB_INTERNAL_PORT` | Backend + Compose | `5432` | PostgreSQL port inside the Compose network |
 | `DB_HOST_PORT` | Compose | `5432` | Host port published for PostgreSQL |
 | `DB_NAME` | Backend + DB | `earnit_kids` | Database name |
 | `DB_USER` | Backend + DB | `postgres` | Database username |
 | `DB_PASSWORD` | Backend + DB | `change-me` | Database password |
-| `DATABASE_URL` | Backend | `jdbc:postgresql://localhost:5432/earnit_kids` | Direct JDBC URL for non-Compose backend runs |
+| `DATABASE_URL` | Backend | `jdbc:postgresql://localhost:5432/earnit_kids` | Direct JDBC URL for non-Compose backend runs; Compose supplies its own service URL |
 | `SUPER_ADMIN_EMAIL` | Backend bootstrap | `admin@example.com` | Optional super-admin bootstrap account |
 | `SUPER_ADMIN_PASSWORD` | Backend bootstrap | `change-me` | Optional super-admin bootstrap password |
 | `ENABLE_EMAIL_VERIFICATION` | Backend feature flag | `false` | Toggle email verification flow |

@@ -89,7 +89,7 @@ git commit -m "refactor(docker): remove stale environment wiring"
 
 ## TASK-ENV-002: Remove stale environment documentation and align operator references
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** TASK-ENV-001
 

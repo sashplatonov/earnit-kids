@@ -129,10 +129,12 @@ Server-side config is resolved through `src/lib/server/config.ts`.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `BACKEND_ORIGIN` | `http://localhost:8080` | Preferred backend origin for the edge proxy |
-| `BACKEND_URL` | `http://localhost:8080` | Backward-compatible alias used in Compose/runtime wiring |
-| `APP_URL` | `http://localhost:3000` | Public origin for the web runtime |
-| `FRONTEND_URL` | `http://localhost:3000` | Alias for public origin when injected by backend or proxy workflows |
-| `PUBLIC_BASE_URL` | `http://localhost:3000` | Additional alias for public origin |
+| `BACKEND_URL` | `http://localhost:8080` | Compatibility alias used by existing Compose/runtime wiring |
+| `APP_URL` | `http://localhost:3000` | Preferred public origin for the web runtime and generated links |
+| `FRONTEND_URL` | `http://localhost:3000` | Compatibility alias for the public origin |
+| `PUBLIC_BASE_URL` | `http://localhost:3000` | Compatibility alias for the public origin |
+| `TELEGRAM_MINI_APP_URL` | — | Optional Telegram deep-link override |
+| `PUBLIC_TELEGRAM_MINI_APP_URL` | — | Compatibility alias for the Telegram deep-link override |
 | `SESSION_PATH` | `/api/page-data/session` | Session snapshot route |
 | `WS_PATH` | `/ws` | WebSocket path forwarded by the edge |
 | `DEV_PORT` | `4173` | Local SvelteKit dev port |
