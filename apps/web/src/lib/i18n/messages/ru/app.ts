@@ -280,6 +280,7 @@ export const appMessages = {
             rewardRequestSent: 'Заявка на награду отправлена на одобрение.',
             rewardChanged: 'Награда изменилась. Список обновлён.',
             askForReward: 'Попросить награду',
+            progress: '{current} / {target}',
             moreToGo: 'осталось {count}',
             missing: 'Не хватает {count}',
             nextGoal: 'Следующая цель',
