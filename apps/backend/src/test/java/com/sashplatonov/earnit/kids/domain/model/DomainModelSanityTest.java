@@ -3,35 +3,19 @@ package com.sashplatonov.earnit.kids.domain.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DomainModelSanityTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
-    void familyEntity_tokenLifecycle_mutatesAsExpected() {
+    void familyEntity_builderAndSetters_applyExpectedDefaults() {
         FamilyEntity family = FamilyEntity.builder()
             .familyId("fam-1")
             .email("a@test.com")
             .adminPassword("secret")
-            .verificationToken("v-token")
-            .verified(false)
             .build();
-
-        family.verify();
-        assertThat(family.isVerified()).isTrue();
-        assertThat(family.getVerificationToken()).isNull();
-
-        Instant expiresAt = Instant.now().plusSeconds(60);
-        family.setResetToken("r-token", expiresAt);
-        assertThat(family.getResetToken()).isEqualTo("r-token");
-        assertThat(family.getResetTokenExpiresAt()).isEqualTo(expiresAt);
-
-        family.clearResetToken();
-        assertThat(family.getResetToken()).isNull();
-        assertThat(family.getResetTokenExpiresAt()).isNull();
+        assertThat(family.getFamilyId()).isEqualTo("fam-1");
     }
 
     @Test

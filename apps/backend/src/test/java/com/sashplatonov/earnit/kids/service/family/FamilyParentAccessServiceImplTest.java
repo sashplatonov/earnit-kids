@@ -79,7 +79,7 @@ class FamilyParentAccessServiceImplTest {
         telegram.setDisplayName("Alex Parent");
         ParentAccountEntity legacyParent = parent(1, "alice@test.com");
         ParentAccountEntity telegramParent = ParentAccountEntity.builder()
-            .id(2).email(null).passwordHash("").verified(false).build();
+            .id(2).email(null).passwordHash("").build();
         TelegramIdentityEntity identity = TelegramIdentityEntity.builder()
             .id(21).familyId(7).parentAccountId(2).telegramUserId(700L)
             .telegramUsername("alex").telegramDisplayName("Alex P").role("parent").active(true).build();
@@ -153,7 +153,6 @@ class FamilyParentAccessServiceImplTest {
             .familyId("fam-1")
             .email("owner@test.com")
             .adminPassword("hash")
-            .verified(true)
             .build();
 
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
@@ -398,7 +397,6 @@ class FamilyParentAccessServiceImplTest {
             .id(id)
             .email(email)
             .passwordHash("hash")
-            .verified(true)
             .build();
     }
 

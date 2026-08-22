@@ -17,6 +17,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
+
 @Entity
 @Table(name = "families")
 @Getter
@@ -44,20 +45,8 @@ public class FamilyEntity extends CreatedAtEntity {
     @Builder.Default
     private boolean blocked = false;
 
-    @Column(name = "is_verified")
-    private boolean verified;
-
-    @Column(name = "verification_token")
-    private String verificationToken;
-
     @Column(name = "last_selected_child_id")
     private Integer lastSelectedChildId;
-
-    @Column(name = "reset_token")
-    private String resetToken;
-
-    @Column(name = "reset_token_expires_at")
-    private Instant resetTokenExpiresAt;
 
     @Column(name = "rules")
     private String rules;
@@ -70,18 +59,4 @@ public class FamilyEntity extends CreatedAtEntity {
     @Column(name = "last_activity")
     private Instant lastActivity;
 
-    public void verify() {
-        this.verified = true;
-        this.verificationToken = null;
-    }
-
-    public void setResetToken(String token, Instant expiresAt) {
-        this.resetToken = token;
-        this.resetTokenExpiresAt = expiresAt;
-    }
-
-    public void clearResetToken() {
-        this.resetToken = null;
-        this.resetTokenExpiresAt = null;
-    }
 }

@@ -15,7 +15,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
-import java.time.temporal.ChronoUnit;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
@@ -34,17 +33,13 @@ class AuthLifecycleService {
             return OperationResult.failure(BackendMessages.message("auth.weakParentPassword"));
         }
 
-        boolean verificationEnabled = supportService.isEmailVerificationEnabled();
         String familyId = "fam_" + supportService.generateHexToken(16);
-        String verificationToken = verificationEnabled ? supportService.generateHexToken(32) : null;
         String hashedPassword = supportService.hashPassword(adminPassword);
 
         try {
             var parent = ParentAccountEntity.builder()
                 .email(email)
                 .passwordHash(hashedPassword)
-                .verified(!verificationEnabled)
-                .verificationToken(verificationToken)
                 .build();
             parentAccountRepository.persistAndFlush(parent);
 
@@ -52,8 +47,6 @@ class AuthLifecycleService {
                 .familyId(familyId)
                 .email(email)
                 .adminPassword(hashedPassword)
-                .verified(!verificationEnabled)
-                .verificationToken(verificationToken)
                 .build();
             familyRepository.persistAndFlush(family);
 
@@ -73,18 +66,7 @@ class AuthLifecycleService {
     }
 
     OperationResult<Void> forgotPassword(String email) {
-        if (!supportService.isPasswordRecoveryEnabled()) {
-            return OperationResult.failure(BackendMessages.message("auth.passwordRecoveryDisabled"));
-        }
-
-        var familyOpt = familyRepository.findByEmail(email);
-        if (familyOpt.isPresent()) {
-            var token = supportService.generateHexToken(32);
-            var expiresAt = supportService.now().plus(1, ChronoUnit.HOURS);
-            familyRepository.setResetToken(familyOpt.get().getFamilyId(), token, expiresAt);
-        }
-
-        return OperationResult.success(null);
+        return OperationResult.failure(BackendMessages.message("auth.passwordRecoveryDisabled"));
     }
 
     OperationResult<Void> changeAdminPassword(String familyId, String oldPassword, String newPassword) {
@@ -122,34 +104,10 @@ class AuthLifecycleService {
             return OperationResult.failure(BackendMessages.message("auth.weakPassword"));
         }
 
-        var familyOpt = familyRepository.findByResetToken(token);
-        if (familyOpt.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("auth.invalidOrExpiredResetLink"));
-        }
-
-        var family = familyOpt.get();
-        if (!family.getEmail().equalsIgnoreCase(email)) {
-            return OperationResult.failure(BackendMessages.message("auth.invalidOrExpiredResetLink"));
-        }
-
-        String newHash = supportService.hashPassword(newPassword);
-        familyRepository.updatePassword(family.getFamilyId(), newHash);
-        familyRepository.clearResetToken(family.getFamilyId());
-        return OperationResult.success(null);
+        return OperationResult.failure(BackendMessages.message("auth.invalidOrExpiredResetLink"));
     }
 
     OperationResult<Void> verifyEmail(String email, String token) {
-        var familyOpt = familyRepository.findByVerificationToken(token);
-        if (familyOpt.isEmpty()) {
-            return OperationResult.failure(BackendMessages.message("auth.invalidVerificationToken"));
-        }
-
-        var family = familyOpt.get();
-        if (!family.getEmail().equalsIgnoreCase(email)) {
-            return OperationResult.failure(BackendMessages.message("auth.invalidVerificationToken"));
-        }
-
-        familyRepository.verifyFamily(family.getFamilyId());
-        return OperationResult.success(null);
+        return OperationResult.failure(BackendMessages.message("auth.invalidVerificationToken"));
     }
 }

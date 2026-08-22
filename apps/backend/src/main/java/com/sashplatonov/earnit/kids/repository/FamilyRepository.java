@@ -10,7 +10,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
-import java.time.Instant;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -40,8 +39,7 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     @Transactional
-    public Optional<FamilyEntity> create(String familyId, String email, String adminPassword,
-                                         boolean isVerified, String verificationToken) {
+    public Optional<FamilyEntity> create(String familyId, String email, String adminPassword) {
         if (count("email = ?1", email) > 0) {
             return Optional.empty();
         }
@@ -49,8 +47,6 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
             .familyId(familyId)
             .email(email)
             .adminPassword(adminPassword)
-            .verified(isVerified)
-            .verificationToken(verificationToken)
             .build();
         persistAndFlush(entity);
         return Optional.of(entity);
@@ -156,55 +152,6 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
             return false;
         }
         opt.get().setRules(rules);
-        return true;
-    }
-
-    @Transactional
-    public boolean verifyFamily(String familyId) {
-        Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) {
-            return false;
-        }
-        opt.get().verify();
-        return true;
-    }
-
-    public Optional<FamilyEntity> findByVerificationToken(String token) {
-        return recordQuery(
-            "family.findByVerificationToken",
-            () -> find("verificationToken = ?1", token).firstResultOptional(),
-            "token",
-            token
-        );
-    }
-
-    @Transactional
-    public boolean setResetToken(String familyId, String token, Instant expiresAt) {
-        Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) {
-            return false;
-        }
-        opt.get().setResetToken(token, expiresAt);
-        return true;
-    }
-
-    public Optional<FamilyEntity> findByResetToken(String token) {
-        return recordQuery(
-            "family.findByResetToken",
-            () -> find("resetToken = ?1 AND resetTokenExpiresAt > ?2", token, timeProvider.now())
-                .firstResultOptional(),
-            "token",
-            token
-        );
-    }
-
-    @Transactional
-    public boolean clearResetToken(String familyId) {
-        Optional<FamilyEntity> opt = findByFamilyId(familyId);
-        if (opt.isEmpty()) {
-            return false;
-        }
-        opt.get().clearResetToken();
         return true;
     }
 

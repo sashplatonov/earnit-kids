@@ -293,7 +293,7 @@ git commit -m "refactor(backend): remove legacy super-admin access"
 
 ## TASK-ENV-005: Drop legacy verification and reset-token persistence
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-ENV-004
 

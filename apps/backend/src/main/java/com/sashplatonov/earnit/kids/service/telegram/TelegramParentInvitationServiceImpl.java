@@ -94,7 +94,7 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
         Optional<ParentAccountEntity> existing = Optional.empty();
         ParentAccountEntity parent = existing.orElseGet(() -> {
             var created = ParentAccountEntity.builder()
-                .email(null).passwordHash("").verified(false).build();
+                .email(null).passwordHash("").build();
             parents.persist(created);
             return created;
         });
@@ -144,7 +144,7 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
         String normalized = email.trim().toLowerCase(java.util.Locale.ROOT);
         var existing = parents.findByEmail(normalized);
         var parent = existing.orElseGet(() -> {
-            var created = ParentAccountEntity.builder().email(normalized).passwordHash("").verified(false).build();
+            var created = ParentAccountEntity.builder().email(normalized).passwordHash("").build();
             parents.persist(created);
             return created;
         });

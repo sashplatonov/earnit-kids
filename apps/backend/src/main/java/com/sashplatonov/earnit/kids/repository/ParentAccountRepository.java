@@ -15,14 +15,6 @@ public class ParentAccountRepository implements PanacheRepositoryBase<ParentAcco
         return find("email = ?1", email).firstResultOptional();
     }
 
-    public Optional<ParentAccountEntity> findByVerificationToken(String token) {
-        return find("verificationToken = ?1", token).firstResultOptional();
-    }
-
-    public Optional<ParentAccountEntity> findByResetToken(String token) {
-        return find("resetToken = ?1", token).firstResultOptional();
-    }
-
     public List<ParentAccountEntity> findByIdList(List<Integer> ids) {
         return find("id in ?1", ids).list();
     }

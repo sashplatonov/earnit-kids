@@ -353,21 +353,6 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void registerFamily_emailVerificationEnabled_generatesHexVerificationToken() {
-        AuthServiceImpl serviceWithVerification = createAuthService(
-            TestConfigFactory.appConfig(false, null, true, true));
-        when(parentAccountRepository.findByEmail("verify@test.com")).thenReturn(Optional.empty());
-        doNothing().when(parentAccountRepository).persistAndFlush(any());
-        doNothing().when(familyRepository).persistAndFlush(any());
-        doNothing().when(membershipRepository).persistAndFlush(any());
-
-        OperationResult<AuthPayload> result = serviceWithVerification.registerFamily("verify@test.com", "strong123");
-
-        assertThat(result).isInstanceOf(OperationResult.Success.class);
-        verify(parentAccountRepository).persistAndFlush(argThat(p -> p.getVerificationToken() != null));
-    }
-
-    @Test
     void registerFamily_existingEmail_returnsFailure() {
         var existing = mockParentAccount("exists@test.com", "password", false, true);
         when(parentAccountRepository.findByEmail("exists@test.com")).thenReturn(Optional.of(existing));
@@ -389,45 +374,6 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void resetPassword_validToken_updatesPassword() {
-        FamilyEntity family = mock(FamilyEntity.class);
-        when(family.getFamilyId()).thenReturn("fam_1");
-        when(family.getEmail()).thenReturn("user@test.com");
-        when(familyRepository.findByResetToken("validtoken")).thenReturn(Optional.of(family));
-        when(familyRepository.updatePassword(eq("fam_1"), anyString())).thenReturn(true);
-        when(familyRepository.clearResetToken("fam_1")).thenReturn(true);
-
-        OperationResult<Void> result = authService.resetPassword("user@test.com", "validtoken", "newpass123");
-
-        assertThat(result).isInstanceOf(OperationResult.Success.class);
-        verify(familyRepository).updatePassword(eq("fam_1"), argThat(hash -> hash.startsWith("$argon2")));
-    }
-
-    @Test
-    void resetPassword_invalidToken_returnsFailure() {
-        when(familyRepository.findByResetToken("bad")).thenReturn(Optional.empty());
-
-        OperationResult<Void> result = authService.resetPassword("user@test.com", "bad", "newpass123");
-
-        assertThat(result).isInstanceOf(OperationResult.Failure.class);
-    }
-
-    @Test
-    void authenticateAdmin_unverifiedParentWithVerificationEnabled_returnsFailure() {
-        AuthServiceImpl serviceWithVerification = createAuthService(
-            TestConfigFactory.appConfig(false, null, true, true));
-        var parent = mockParentAccount("user@test.com", "password123", false, false);
-        when(parentAccountRepository.findByEmail("user@test.com")).thenReturn(Optional.of(parent));
-
-        OperationResult<AuthPayload> result = serviceWithVerification.authenticateAdmin("user@test.com", "password123");
-
-        assertThat(result).isInstanceOf(OperationResult.Failure.class);
-        OperationResult.Failure<?> failure3 = (OperationResult.Failure<?>) result;
-        assertThat(failure3.message())
-            .contains("Email is not verified");
-    }
-
-    @Test
     void authenticateAdmin_superAdminEmailNotFound_returnsFailure() {
         when(parentAccountRepository.findByEmail("admin@test.com")).thenReturn(Optional.empty());
 
@@ -444,58 +390,6 @@ class AuthServiceImplTest {
         OperationResult<Void> result = noRecoveryService.forgotPassword("user@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
-    }
-
-    @Test
-    void forgotPassword_missingFamily_returnsSuccessToAvoidDisclosure() {
-        when(familyRepository.findByEmail("nobody@test.com")).thenReturn(Optional.empty());
-
-        OperationResult<Void> result = authService.forgotPassword("nobody@test.com");
-
-        assertThat(result).isInstanceOf(OperationResult.Success.class);
-    }
-
-    @Test
-    void forgotPassword_matchingFamily_generatesHexResetTokenAndExpiry() {
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, true);
-        when(familyRepository.findByEmail("user@test.com")).thenReturn(Optional.of(family));
-        when(familyRepository.setResetToken(eq("fam_1"), anyString(), any())).thenReturn(true);
-
-        OperationResult<Void> result = authService.forgotPassword("user@test.com");
-
-        assertThat(result).isInstanceOf(OperationResult.Success.class);
-        verify(familyRepository).setResetToken(
-            eq("fam_1"),
-            argThat(token -> token.matches("[0-9a-f]{64}")),
-            eq(FIXED_NOW.plus(1, ChronoUnit.HOURS)));
-    }
-
-    @Test
-    void verifyEmail_validToken_returnsSuccess() {
-        FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, false);
-        when(familyRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(family));
-        when(familyRepository.verifyFamily("fam_1")).thenReturn(true);
-
-        OperationResult<Void> result = authService.verifyEmail("user@test.com", "vtoken");
-
-        assertThat(result).isInstanceOf(OperationResult.Success.class);
-    }
-
-    @Test
-    void verifyEmail_invalidToken_returnsFailure() {
-        when(familyRepository.findByVerificationToken("bad")).thenReturn(Optional.empty());
-
-        assertThat(authService.verifyEmail("user@test.com", "bad"))
-            .isInstanceOf(OperationResult.Failure.class);
-    }
-
-    @Test
-    void verifyEmail_emailMismatch_returnsFailure() {
-        FamilyEntity family = mockFamily("fam_1", "other@test.com", "password123", false, false);
-        when(familyRepository.findByVerificationToken("vtoken")).thenReturn(Optional.of(family));
-
-        assertThat(authService.verifyEmail("user@test.com", "vtoken"))
-            .isInstanceOf(OperationResult.Failure.class);
     }
 
     @Test
@@ -608,7 +502,6 @@ class AuthServiceImplTest {
         when(entity.getEmail()).thenReturn(email);
         when(entity.getAdminPassword()).thenReturn(password);
         when(entity.isBlocked()).thenReturn(blocked);
-        when(entity.isVerified()).thenReturn(verified);
         return entity;
     }
 
@@ -627,7 +520,6 @@ class AuthServiceImplTest {
         when(entity.getEmail()).thenReturn(email);
         when(entity.getPasswordHash()).thenReturn(password);
         when(entity.isBlocked()).thenReturn(blocked);
-        when(entity.isVerified()).thenReturn(verified);
         return entity;
     }
 

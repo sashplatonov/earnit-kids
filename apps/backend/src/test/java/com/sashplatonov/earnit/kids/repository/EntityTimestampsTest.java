@@ -31,7 +31,7 @@ class EntityTimestampsTest {
         String familyId = "fam_timestamp_" + System.nanoTime();
         String email = familyId + "@test.com";
 
-        FamilyEntity family = familyRepository.create(familyId, email, "secret123", true, null)
+        FamilyEntity family = familyRepository.create(familyId, email, "secret123")
             .orElseThrow();
 
         // Flush and reload so createdAt goes through H2 rounding (microsecond precision)
@@ -71,7 +71,6 @@ class EntityTimestampsTest {
             .familyId(familyId)
             .email(email)
             .adminPassword("secret123")
-            .verified(true)
             .createdAt(SENTINEL_CREATED_AT)
             .build();
 
@@ -90,7 +89,7 @@ class EntityTimestampsTest {
         String familyId = "fam_history_rewrite_" + System.nanoTime();
         String email = familyId + "@test.com";
 
-        FamilyEntity family = familyRepository.create(familyId, email, "secret123", true, null)
+        FamilyEntity family = familyRepository.create(familyId, email, "secret123")
             .orElseThrow();
         var child = childRepository.createChild(family.getId(), "Alice").orElseThrow();
 

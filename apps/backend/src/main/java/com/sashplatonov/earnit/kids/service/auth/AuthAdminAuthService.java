@@ -28,10 +28,6 @@ class AuthAdminAuthService {
             return OperationResult.failure(BackendMessages.message("auth.accountBlocked"));
         }
 
-        if (supportService.isEmailVerificationEnabled() && !parent.isVerified()) {
-            return OperationResult.failure(BackendMessages.message("auth.emailNotVerified"));
-        }
-
         String storedPassword = parent.getPasswordHash();
         if (!supportService.isPasswordValid(email, password, storedPassword)) {
             return OperationResult.failure(BackendMessages.message("auth.invalidPassword"));

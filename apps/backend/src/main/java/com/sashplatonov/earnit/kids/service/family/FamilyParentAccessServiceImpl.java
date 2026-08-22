@@ -107,7 +107,6 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             var newParent = ParentAccountEntity.builder()
                 .email(email)
                 .passwordHash("")
-                .verified(false)
                 .build();
             parentAccountRepository.persist(newParent);
             return newParent;

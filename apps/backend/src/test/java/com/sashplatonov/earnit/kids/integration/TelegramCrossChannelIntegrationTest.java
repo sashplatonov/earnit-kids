@@ -76,9 +76,9 @@ class TelegramCrossChannelIntegrationTest {
         Instant now = Instant.now();
         String token = signedInitData(telegramUserId, now);
 
-        FamilyEntity family = families.create(familyId, familyId + "@example.test", "secret123", true, null)
+        FamilyEntity family = families.create(familyId, familyId + "@example.test", "secret123")
             .orElseThrow();
-        families.create(otherFamilyId, otherFamilyId + "@example.test", "secret123", true, null).orElseThrow();
+        families.create(otherFamilyId, otherFamilyId + "@example.test", "secret123").orElseThrow();
 
         String invitationToken = "pi_integration_parent_invite";
         invitations.persist(TelegramParentInvitationEntity.builder()
@@ -170,7 +170,7 @@ class TelegramCrossChannelIntegrationTest {
         long parentTelegramId = 90000001L;
         long childTelegramId = 90000002L;
 
-        FamilyEntity family = families.create(familyId, email, "secret123", true, null).orElseThrow();
+        FamilyEntity family = families.create(familyId, email, "secret123").orElseThrow();
         ChildEntity child = children.createChild(family.getId(), "Mia").orElseThrow();
         tasks.upsertTask(new TaskUpsertCommand(
             family.getId(), child.getId(), taskId,
@@ -184,7 +184,6 @@ class TelegramCrossChannelIntegrationTest {
         var parentAccount = com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.builder()
             .email("integration-test")
             .passwordHash("")
-            .verified(false)
             .build();
         parents.persist(parentAccount);
         TelegramIdentityService.TelegramIdentity parent = identities.linkParent(
@@ -272,7 +271,7 @@ class TelegramCrossChannelIntegrationTest {
         long parentTelegramId = 90000011L;
         long childTelegramId = 90000012L;
 
-        FamilyEntity family = families.create(familyId, email, "secret123", true, null).orElseThrow();
+        FamilyEntity family = families.create(familyId, email, "secret123").orElseThrow();
         ChildEntity child = children.createChild(family.getId(), "Mia").orElseThrow();
         tasks.upsertTask(new TaskUpsertCommand(
             family.getId(), child.getId(), taskId,
@@ -282,7 +281,6 @@ class TelegramCrossChannelIntegrationTest {
         var parentAccount = com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.builder()
             .email("resolved-" + familyId)
             .passwordHash("")
-            .verified(false)
             .build();
         parents.persist(parentAccount);
         TelegramIdentityService.TelegramIdentity parent = identities.linkParent(

@@ -44,7 +44,7 @@ class RepositorySmokeTest {
     void repositoriesSupportBasicLifecycle() throws Exception {
         String familyId = "fam_repo_test";
         String email = "repo@test.com";
-        Optional<FamilyEntity> createdFamily = familyRepository.create(familyId, email, "secret123", false, "verify-token");
+        Optional<FamilyEntity> createdFamily = familyRepository.create(familyId, email, "secret123");
         assertThat(createdFamily).isPresent();
 
         FamilyEntity family = createdFamily.get();
@@ -62,12 +62,6 @@ class RepositorySmokeTest {
         assertThat(familyRepository.updatePassword(familyId, "new-secret")).isTrue();
         assertThat(familyRepository.updateLastActivity(familyId)).isTrue();
         assertThat(familyRepository.updateLastSelectedChild(familyId, null)).isTrue();
-        assertThat(familyRepository.setResetToken(familyId, "reset-token", Instant.now().plusSeconds(3600))).isTrue();
-        assertThat(familyRepository.findByResetToken("reset-token")).isPresent();
-        assertThat(familyRepository.clearResetToken(familyId)).isTrue();
-        assertThat(familyRepository.findByResetToken("reset-token")).isEmpty();
-        assertThat(familyRepository.verifyFamily(familyId)).isTrue();
-        assertThat(familyRepository.findByVerificationToken("verify-token")).isEmpty();
         assertThat(familyRepository.setBlocked(familyId, true)).isTrue();
         assertThat(familyRepository.setBlocked(familyId, false)).isTrue();
 
@@ -247,14 +241,6 @@ class RepositorySmokeTest {
             "IDX_REQUESTS_FAMILY_CHILD_TASK_STATUS_CREATED",
             "IDX_REQUESTS_FAMILY_CHILD_ITEM_STATUS_CREATED"
         );
-        assertThat(indexNamesForTable("FAMILIES")).contains(
-            "IDX_FAMILIES_VERIFICATION_TOKEN",
-            "IDX_FAMILIES_RESET_TOKEN_EXPIRES_AT"
-        );
-        assertThat(indexNamesForTable("PARENT_ACCOUNTS")).contains(
-            "IDX_PARENT_ACCOUNTS_VERIFICATION_TOKEN",
-            "IDX_PARENT_ACCOUNTS_RESET_TOKEN_EXPIRES_AT"
-        );
         assertThat(indexNamesForTable("FAMILY_PARENT_MEMBERSHIPS")).contains(
             "IDX_MEMBERSHIPS_PARENT_STATUS_FAMILY",
             "IDX_MEMBERSHIPS_FAMILY_STATUS_PERMISSION"
@@ -314,9 +300,6 @@ class RepositorySmokeTest {
         assertThat(familyRepository.updatePassword("missing-family", "x")).isFalse();
         assertThat(familyRepository.updateLastActivity("missing-family")).isFalse();
         assertThat(familyRepository.updateLastSelectedChild("missing-family", 1)).isFalse();
-        assertThat(familyRepository.verifyFamily("missing-family")).isFalse();
-        assertThat(familyRepository.setResetToken("missing-family", "x", Instant.now())).isFalse();
-        assertThat(familyRepository.clearResetToken("missing-family")).isFalse();
         assertThat(familyRepository.setBlocked("missing-family", true)).isFalse();
 
         assertThat(childRepository.updateBalance(999999, 1)).isFalse();

@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.time.Instant;
 
 @Entity
 @Table(name = "parent_accounts")
@@ -36,37 +35,9 @@ public class ParentAccountEntity extends CreatedAtEntity {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "is_verified")
-    @Builder.Default
-    private boolean verified = true;
-
-    @Column(name = "verification_token")
-    private String verificationToken;
-
-    @Column(name = "reset_token")
-    private String resetToken;
-
-    @Column(name = "reset_token_expires_at")
-    private Instant resetTokenExpiresAt;
-
     @Column(name = "is_blocked")
     @Builder.Default
     private boolean blocked = false;
-
-    public void verify() {
-        this.verified = true;
-        this.verificationToken = null;
-    }
-
-    public void setResetToken(String token, Instant expiresAt) {
-        this.resetToken = token;
-        this.resetTokenExpiresAt = expiresAt;
-    }
-
-    public void clearResetToken() {
-        this.resetToken = null;
-        this.resetTokenExpiresAt = null;
-    }
 
     public boolean isBlocked() {
         return blocked;

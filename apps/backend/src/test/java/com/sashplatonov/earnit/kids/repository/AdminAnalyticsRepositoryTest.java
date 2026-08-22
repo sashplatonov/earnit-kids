@@ -95,7 +95,7 @@ class AdminAnalyticsRepositoryTest {
     private FamilyEntity seedFamily() {
         String familyId = "fam_admin_analytics_" + System.nanoTime();
         Optional<FamilyEntity> created = familyRepository.create(familyId,
-            familyId + "@test.com", "secret123", false, "verify-" + familyId);
+            familyId + "@test.com", "secret123");
         assertThat(created).isPresent();
         return created.get();
     }
