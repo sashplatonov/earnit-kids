@@ -1,0 +1,212 @@
+package com.sashplatonov.earnit.kids.family.application.action;
+
+import com.sashplatonov.earnit.kids.family.domain.model.child.ChildEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.catalog.ShopItemEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.catalog.TaskEntity;
+import com.sashplatonov.earnit.kids.family.api.response.FamilyDataResponse;
+import com.sashplatonov.earnit.kids.family.api.response.ImportValidationErrorItem;
+import com.sashplatonov.earnit.kids.family.api.response.ImportValidationErrorResponse;
+import com.sashplatonov.earnit.kids.exception.ImportValidationException;
+import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.child.ChildRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.history.HistoryRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.request.PurchaseRequestRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.ShopItemRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.TaskRepository;
+import com.sashplatonov.earnit.kids.util.OperationResult;
+
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Objects;
+import java.util.List;
+import java.util.Optional;
+
+import com.sashplatonov.earnit.kids.family.application.FamilyService;
+import com.sashplatonov.earnit.kids.family.application.membership.ChildOwnershipService;
+final class FamilyActionSupportService {
+
+    private final FamilyRepository familyRepository;
+    private final ChildRepository childRepository;
+    private final TaskRepository taskRepository;
+    private final ShopItemRepository shopItemRepository;
+    private final HistoryRepository historyRepository;
+    private final PurchaseRequestRepository purchaseRequestRepository;
+    private final FamilyService familyService;
+    private final ChildOwnershipService childOwnershipService;
+
+    FamilyActionSupportService(FamilyRepository familyRepository,
+                               ChildRepository childRepository,
+                               TaskRepository taskRepository,
+                               ShopItemRepository shopItemRepository,
+                               HistoryRepository historyRepository,
+                               PurchaseRequestRepository purchaseRequestRepository,
+                               FamilyService familyService) {
+        this(familyRepository, childRepository, taskRepository, shopItemRepository, historyRepository,
+            purchaseRequestRepository, familyService, new ChildOwnershipService(childRepository));
+    }
+
+    FamilyActionSupportService(FamilyRepository familyRepository,
+                               ChildRepository childRepository,
+                               TaskRepository taskRepository,
+                               ShopItemRepository shopItemRepository,
+                               HistoryRepository historyRepository,
+                               PurchaseRequestRepository purchaseRequestRepository,
+                               FamilyService familyService,
+                               ChildOwnershipService childOwnershipService) {
+        this.familyRepository = familyRepository;
+        this.childRepository = childRepository;
+        this.taskRepository = taskRepository;
+        this.shopItemRepository = shopItemRepository;
+        this.historyRepository = historyRepository;
+        this.purchaseRequestRepository = purchaseRequestRepository;
+        this.familyService = familyService;
+        this.childOwnershipService = childOwnershipService;
+    }
+
+    Optional<Integer> getFamilyDbId(String familyId) {
+        return familyRepository.getDbId(familyId);
+    }
+
+    OperationResult<Integer> requireFamilyDbId(String familyId) {
+        return getFamilyDbId(familyId)
+            .<OperationResult<Integer>>map(OperationResult::success)
+            .orElseGet(() -> OperationResult.failure("FAMILY_NOT_FOUND",
+                com.sashplatonov.earnit.kids.i18n.BackendMessages.message("family.familyNotFound")));
+    }
+
+    Optional<ChildEntity> findFamilyChild(int familyDbId, int childId) {
+        return childOwnershipService.findFamilyChild(familyDbId, childId);
+    }
+
+    Optional<ChildEntity> findFamilyChildForUpdate(int familyDbId, int childId) {
+        return childRepository.findByIdForUpdate(childId)
+            .filter(child -> Objects.equals(child.getFamilyDbId(), familyDbId));
+    }
+
+    boolean isInactive(ChildEntity child) {
+        return !com.sashplatonov.earnit.kids.family.domain.model.child.ChildStatus.ACTIVE.name()
+            .equals(child.getStatus());
+    }
+
+    long dailyRewardSpend(int childId, java.time.Instant since) {
+        return historyRepository.sumRewardSpendSince(childId, since);
+    }
+
+    Instant startOfFamilyDay(int familyDbId, Instant now) {
+        ZoneId zoneId;
+        try {
+            zoneId = ZoneId.of(familyRepository.getTimezone(familyDbId).orElse("UTC"));
+        } catch (DateTimeException ignored) {
+            zoneId = ZoneId.of("UTC");
+        }
+        return now.atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant();
+    }
+
+    Optional<TaskEntity> findActiveTask(int familyDbId, int childId, long taskId) {
+        return taskRepository.find(
+            "familyId = ?1 AND childId = ?2 AND taskId = ?3 AND deleted = false AND active = true",
+            familyDbId,
+            childId,
+            taskId
+        ).firstResultOptional();
+    }
+
+    Optional<ShopItemEntity> findActiveItem(int familyDbId, int childId, long itemId) {
+        return shopItemRepository.find(
+            "familyId = ?1 AND childId = ?2 AND itemId = ?3 AND deleted = false AND active = true",
+            familyDbId,
+            childId,
+            itemId
+        ).firstResultOptional();
+    }
+
+    Optional<PurchaseRequestEntity> findFamilyRequest(int familyDbId, long requestId) {
+        return purchaseRequestRepository.findByIdOptional(requestId)
+            .filter(request -> request.getFamilyId() == familyDbId);
+    }
+
+    Optional<PurchaseRequestEntity> findFamilyRequestForUpdate(int familyDbId, long requestId) {
+        return purchaseRequestRepository.findByIdForUpdate(requestId)
+            .filter(request -> request.getFamilyId() == familyDbId);
+    }
+
+    Optional<HistoryEntryEntity> findHistoryEntry(int familyDbId, int childId, long historyEntryId) {
+        return historyRepository.find(
+            "familyId = ?1 AND childId = ?2 AND externalId = ?3",
+            familyDbId,
+            childId,
+            historyEntryId
+        ).firstResultOptional();
+    }
+
+    List<TaskEntity> findTaskEntities(int familyDbId, int childId) {
+        return taskRepository.find("familyId = ?1 AND childId = ?2", familyDbId, childId).list();
+    }
+
+    int resolveResponseChildId(int familyDbId, Integer currentChildId, int fallbackChildId) {
+        if (currentChildId != null && findFamilyChild(familyDbId, currentChildId).isPresent()) {
+            return currentChildId;
+        }
+        return fallbackChildId;
+    }
+
+    OperationResult<FamilyDataResponse> loadFamilyData(String familyId, Integer childId, boolean isAdmin) {
+        return familyService.loadFamilyData(familyId, childId, isAdmin);
+    }
+
+    FamilyDataResponse loadRefreshedFamilyData(String familyId, Integer childId, boolean isAdmin) {
+        OperationResult<FamilyDataResponse> result = familyService.loadFamilyData(familyId, childId, isAdmin);
+        return switch (result) {
+            case OperationResult.Success<FamilyDataResponse> success -> success.value();
+            case OperationResult.Failure<FamilyDataResponse> failure ->
+                throw new IllegalStateException("Failed to reload family data after import: " + failure.message());
+        };
+    }
+
+    int requireImportFamilyDbId(String familyId) {
+        return familyRepository.getDbId(familyId)
+            .orElseThrow(() -> new ImportValidationException(ImportValidationErrorResponse.of(
+                BackendMessages.message("family.familyNotFound"),
+                List.of(new ImportValidationErrorItem(
+                    0,
+                    "familyId",
+                    BackendMessages.message("family.familyNotFound")
+                ))
+            )));
+    }
+
+    void requireImportChild(int familyDbId, int childId) {
+        if (findFamilyChild(familyDbId, childId).isEmpty()) {
+            throw new ImportValidationException(ImportValidationErrorResponse.of(
+                BackendMessages.message("family.childNotFound"),
+                List.of(new ImportValidationErrorItem(
+                    0,
+                    "childId",
+                    BackendMessages.message("family.childNotFound")
+                ))
+            ));
+        }
+    }
+
+    long nextTaskBusinessId(int familyDbId, int childId) {
+        return taskRepository.find("familyId = ?1 AND childId = ?2", familyDbId, childId)
+            .list()
+            .stream()
+            .map(TaskEntity::getTaskId)
+            .max(Long::compareTo)
+            .orElse(0L) + 1;
+    }
+
+    long nextShopItemBusinessId(int familyDbId, int childId) {
+        return shopItemRepository.find("familyId = ?1 AND childId = ?2", familyDbId, childId)
+            .list()
+            .stream()
+            .map(ShopItemEntity::getItemId)
+            .max(Long::compareTo)
+            .orElse(0L) + 1;
+    }
+}

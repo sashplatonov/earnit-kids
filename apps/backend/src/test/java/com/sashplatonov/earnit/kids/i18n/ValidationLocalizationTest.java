@@ -1,7 +1,7 @@
 package com.sashplatonov.earnit.kids.i18n;
 
-import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.identity.api.request.LoginRequest;
+import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.exception.ConstraintViolationExceptionMapper;
 import com.sashplatonov.earnit.kids.i18n.RequestLocaleHolder;
 import io.quarkus.test.junit.QuarkusTest;

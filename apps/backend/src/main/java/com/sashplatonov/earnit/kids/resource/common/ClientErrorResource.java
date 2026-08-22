@@ -1,6 +1,6 @@
 package com.sashplatonov.earnit.kids.resource.common;
 
-import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.shared.api.response.SimpleResponse;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;

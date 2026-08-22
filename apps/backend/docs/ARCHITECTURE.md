@@ -25,19 +25,79 @@
 
 ## 📦 Package Structure
 
-Top-level packages under `src/main/java/com/sashplatonov/earnit/kids/`:
+The production source uses semantic modules for feature ownership and keeps
+only genuinely cross-cutting packages at the service root:
 
-- `resource/`: JAX-RS HTTP resources
-- `service/`: business orchestration and transactions
-- `repository/`: persistence access and query helpers
-- `domain/model/`: JPA entities
-- `dto/request/`: validated inbound request records
-- `dto/response/`: outbound response records
-- `config/`: auth, headers, JWT, filters, config mappings
-- `exception/`: exception mappers and API error translation
-- `util/`: cross-cutting helper types such as `OperationResult`
+```text
+com.sashplatonov.earnit.kids/
+  identity/{api,application,domain,infrastructure}
+  family/{api,application,domain,infrastructure}
+  admin/{api,application,infrastructure}
+  telegram/
+    api/{resource,request,response}
+    application/{auth,bot,callback,connection,identity,invitation,notification}
+    config/
+    domain/model/
+    infrastructure/persistence/
+  platform/{api,application,domain,infrastructure,realtime}
+  shared/api/response/
+  config/ exception/ i18n/ util/
+  dto/response/ resource/common/ service/event/
+```
 
-[↩ Back to toc](#table-of-contents)
+`identity`, `family`, `admin`, `telegram`, and `platform` own their API,
+application, domain, and infrastructure code as shown above. The final root
+packages are limited to security/configuration, exception and locale support,
+dependency-free utilities, shared response contracts, and a small set of
+cross-feature compatibility types. No Telegram or admin production class is
+owned by the obsolete global feature packages.
+
+The package map changes Java ownership and imports only. REST routes, JSON,
+CDI, persistence, migrations, callback encoding, signed init-data, cookies,
+and CSRF contracts remain unchanged.
+
+Boundary ownership decisions:
+
+- `identity` owns authentication/session lifecycle, parent accounts, Google
+  sign-in, and identity-only token utilities. Cookie/JWT filters remain in
+  root `config` as transport/security infrastructure.
+- `family` owns family, child, membership, notification preference, friend,
+  task, shop, request, and history state and their APIs. Telegram calls these
+  established business services rather than duplicating ownership or balance
+  rules.
+- `telegram` owns Telegram identity, invitations, callbacks, delivery, audit,
+  and webhook-update state; its resources, orchestration, entities, and
+  repositories stay separated by API, application, domain, and infrastructure
+  layers.
+- `admin` owns super-admin HTTP, application, and analytics query
+  infrastructure. It is not a Telegram integration.
+- `platform` owns database health/base data, outbox publishing, HTTP metrics,
+  UI and application logs, push, WebSocket delivery, and operational
+  diagnostics. Root `exception`, `i18n`, and dependency-free `util` remain
+  genuinely cross-cutting.
+
+The existing thin `FamilyServiceImpl` facade remains a compatibility boundary.
+The bounded `TelegramQuickActionServiceImpl`,
+`TelegramAccountConnectionServiceImpl`, and `TelegramOutboxProcessor` also
+remain intact. The only confirmed SRP extractions are the multi-metric admin
+analytics repository and the multi-workflow family and Telegram Bot resources.
+
+### Characterized observable contracts
+
+The pre-move test safety net covers the following public boundaries:
+
+| Boundary | Characterization | Existing focused coverage |
+| --- | --- | --- |
+| Identity | Successful and rejected parent/child login, family selection, session cookies, logout, password and auth configuration responses | `identity/api/resource/auth/AuthResourceTest`, `config/auth/*Test` |
+| Family | Family-scoped reads and mutations, validation failures, child ownership, parent membership permissions, and websocket response behavior | `family/api/resource/*Test`, `family/application/*Test` |
+| Admin | Super-admin authorization, period normalization, invalid input status, and dashboard response contract | `admin/api/resource/AdminDashboardResourceTest`, `admin/application/*Test` |
+| Telegram auth | Feature gating, signed init-data authentication, scoped session creation, and rejected verification | `telegram/api/resource/TelegramMiniAppAuthResourceTest`, `telegram/application/auth/TelegramMiniAppAuthServiceTest`, `telegram/application/identity/TelegramInitDataVerifierTest` |
+| Telegram webhook and callbacks | Webhook route/secret, duplicate update suppression, invalid or expired callback rejection, and callback acknowledgement before processing failures | `telegram/api/resource/TelegramWebhookResourceTest`, `telegram/infrastructure/persistence/TelegramWebhookUpdateRepositoryTest`, `telegram/application/bot/TelegramBotServiceImplTest`, `telegram/application/callback/TelegramCallbackServiceTest` |
+| Cross-channel state | Web and Telegram share family ownership, request status, balances, history, and outbox state across fresh reads | `integration/TelegramCrossChannelIntegrationTest` |
+| Platform errors | Stable expected error mapping and operational filter/readiness contracts | `platform/api/ClientErrorResourceTest`, `config/observability/*Test` |
+
+These tests intentionally assert paths, statuses, payload fields, ownership,
+and state transitions rather than current Java package names.
 
 ## 🧩 Layer Responsibilities
 
@@ -58,6 +118,13 @@ Current split notes:
 
 - Dashboard query uses a thin facade plus `FamilyDashboardScopeLoader`, `FamilyDashboardCatalogLoader`, `FamilyDashboardHydrator`, `FamilyDashboardMapper`, and `FamilyDashboardResponseAssembler`.
 - Auth uses a thin facade plus `AuthSupportService`, `AuthMembershipService`, `AuthAdminAuthService`, `AuthChildAuthService`, and `AuthLifecycleService`.
+- Telegram Bot update dispatch, callbacks, identity, invitations, account
+  connections, and notifications are separate application subdomains under
+  `telegram/application/`.
+- Admin analytics is split into metric-specific repositories under
+  `admin/infrastructure/persistence/`, consumed by admin application services.
+- Platform owns WebSocket delivery, push and UI logging, database health,
+  HTTP metrics, and operational diagnostics under its semantic layers.
 - File size, method count, and cyclomatic complexity guardrails now live in Checkstyle, while class-level design debt checks are enforced through PMD for the refactored facade classes.
 
 [↩ Back to toc](#table-of-contents)

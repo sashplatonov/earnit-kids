@@ -1,0 +1,83 @@
+package com.sashplatonov.earnit.kids.family.domain.model.child;
+
+import com.sashplatonov.earnit.kids.platform.domain.persistence.CreatedAtEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Entity
+@Table(name = "children")
+@Getter
+@Setter
+@SuperBuilder
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChildEntity extends CreatedAtEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @Column(name = "family_id", nullable = false)
+    private Integer familyDbId;
+
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "token", unique = true)
+    private String token;
+
+    @Column(name = "balance")
+    @Builder.Default
+    private int balance = 0;
+
+    @Column(name = "monthly_limit")
+    @Builder.Default
+    private int monthlyLimit = 10000;
+
+    @Column(name = "daily_coin_limit")
+    @Builder.Default
+    private int dailyCoinLimit = 0;
+
+    @Column(name = "daily_reward_limit")
+    @Builder.Default
+    private int dailyRewardLimit = 0;
+
+    @Column(name = "theme")
+    @Builder.Default
+    private String theme = "ocean";
+
+    @Column(name = "task_group_order")
+    private String taskGroupOrder;
+
+    @Column(name = "shop_group_order")
+    private String shopGroupOrder;
+
+    @Column(name = "child_task_group_order")
+    private String childTaskGroupOrder;
+
+    @Column(name = "child_shop_group_order")
+    private String childShopGroupOrder;
+
+    @Column(name = "hidden_task_groups")
+    private String hiddenTaskGroups;
+
+    @Column(name = "hidden_shop_groups")
+    private String hiddenShopGroups;
+
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private String status = ChildStatus.ACTIVE.name();
+}

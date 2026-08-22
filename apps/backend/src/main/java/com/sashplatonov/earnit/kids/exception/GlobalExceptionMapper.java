@@ -3,7 +3,7 @@ package com.sashplatonov.earnit.kids.exception;
 import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.config.observability.RequestPathNormalizer;
 import com.sashplatonov.earnit.kids.config.observability.TraceFilter;
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;

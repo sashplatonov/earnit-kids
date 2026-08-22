@@ -1,6 +1,6 @@
 package com.sashplatonov.earnit.kids.exception;
 
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Response;

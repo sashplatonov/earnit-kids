@@ -1,7 +1,7 @@
 package com.sashplatonov.earnit.kids.util;
 
-import com.sashplatonov.earnit.kids.dto.response.ErrorResponse;
-import com.sashplatonov.earnit.kids.dto.response.SimpleResponse;
+import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.shared.api.response.SimpleResponse;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 

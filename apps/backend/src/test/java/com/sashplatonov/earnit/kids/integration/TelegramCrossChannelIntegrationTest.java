@@ -1,31 +1,31 @@
 package com.sashplatonov.earnit.kids.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventType;
-import com.sashplatonov.earnit.kids.domain.model.ChildEntity;
-import com.sashplatonov.earnit.kids.domain.model.FamilyEntity;
-import com.sashplatonov.earnit.kids.domain.model.HistoryEntryType;
-import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestStatus;
-import com.sashplatonov.earnit.kids.domain.model.PurchaseRequestEntity;
-import com.sashplatonov.earnit.kids.domain.model.TelegramParentInvitationEntity;
-import com.sashplatonov.earnit.kids.repository.ApplicationOutboxEventRepository;
-import com.sashplatonov.earnit.kids.repository.ChildRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyRepository;
-import com.sashplatonov.earnit.kids.repository.HistoryRepository;
-import com.sashplatonov.earnit.kids.repository.PurchaseRequestRepository;
-import com.sashplatonov.earnit.kids.repository.TaskRepository;
-import com.sashplatonov.earnit.kids.repository.TelegramDeliveryRepository;
-import com.sashplatonov.earnit.kids.repository.FamilyParentMembershipRepository;
-import com.sashplatonov.earnit.kids.repository.TelegramIdentityRepository;
-import com.sashplatonov.earnit.kids.repository.TelegramParentInvitationRepository;
-import com.sashplatonov.earnit.kids.repository.command.TaskContentCommand;
-import com.sashplatonov.earnit.kids.repository.command.TaskUpsertCommand;
-import com.sashplatonov.earnit.kids.service.family.action.FamilyActionService;
-import com.sashplatonov.earnit.kids.service.family.FamilyParentAccessService;
-import com.sashplatonov.earnit.kids.service.telegram.TelegramDeliveryPlanner;
-import com.sashplatonov.earnit.kids.service.telegram.TelegramIdentityService;
-import com.sashplatonov.earnit.kids.service.telegram.TelegramParentInvitationService;
-import com.sashplatonov.earnit.kids.service.telegram.TelegramQuickActionService;
+import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventType;
+import com.sashplatonov.earnit.kids.family.domain.model.child.ChildEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryType;
+import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestEntity;
+import com.sashplatonov.earnit.kids.telegram.domain.model.TelegramParentInvitationEntity;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.outbox.ApplicationOutboxEventRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.child.ChildRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.history.HistoryRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.request.PurchaseRequestRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.TaskRepository;
+import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramDeliveryRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
+import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramIdentityRepository;
+import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramParentInvitationRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.TaskContentCommand;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.TaskUpsertCommand;
+import com.sashplatonov.earnit.kids.family.application.action.FamilyActionService;
+import com.sashplatonov.earnit.kids.family.application.membership.FamilyParentAccessService;
+import com.sashplatonov.earnit.kids.telegram.application.notification.TelegramDeliveryPlanner;
+import com.sashplatonov.earnit.kids.telegram.application.identity.TelegramIdentityService;
+import com.sashplatonov.earnit.kids.telegram.application.invitation.TelegramParentInvitationService;
+import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramQuickActionService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -60,7 +60,7 @@ class TelegramCrossChannelIntegrationTest {
     @Inject TelegramQuickActionService quickActions;
     @Inject FamilyActionService webActions;
     @Inject TelegramDeliveryPlanner planner;
-    @Inject com.sashplatonov.earnit.kids.repository.ParentAccountRepository parents;
+    @Inject com.sashplatonov.earnit.kids.identity.infrastructure.persistence.ParentAccountRepository parents;
     @Inject FamilyParentMembershipRepository memberships;
     @Inject TelegramIdentityRepository telegramIdentities;
     @Inject TelegramParentInvitationRepository invitations;
@@ -104,7 +104,7 @@ class TelegramCrossChannelIntegrationTest {
 
         var listed = parentAccess.listMemberships(familyId);
         assertThat(listed).isInstanceOf(OperationResult.Success.class);
-        var parent = ((OperationResult.Success<java.util.List<com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto>>) listed)
+        var parent = ((OperationResult.Success<java.util.List<com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto>>) listed)
             .value().getFirst();
         assertThat(parent.email()).isNull();
         assertThat(parent.displayName()).isEqualTo("Maria Example");
@@ -114,7 +114,7 @@ class TelegramCrossChannelIntegrationTest {
 
         var otherFamilyParents = parentAccess.listMemberships(otherFamilyId);
         assertThat(otherFamilyParents).isInstanceOf(OperationResult.Success.class);
-        assertThat(((OperationResult.Success<java.util.List<com.sashplatonov.earnit.kids.dto.response.ParentMembershipDto>>) otherFamilyParents)
+        assertThat(((OperationResult.Success<java.util.List<com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto>>) otherFamilyParents)
             .value()).isEmpty();
         assertThat(parentAccess.updateMembership(parent.id(),
             "viewer", otherFamilyId)).isInstanceOf(OperationResult.Failure.class);
@@ -181,7 +181,7 @@ class TelegramCrossChannelIntegrationTest {
             new TaskContentCommand("Put toys away", 10, "Home", "", "before bed", "tidy the room"),
             new ObjectMapper().readTree("{\"period\":\"day\"}"), 100, true, false));
 
-        var parentAccount = com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.builder()
+        var parentAccount = com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity.builder()
             .email("integration-test")
             .passwordHash("")
             .build();
@@ -278,7 +278,7 @@ class TelegramCrossChannelIntegrationTest {
             new TaskContentCommand("Read", 20, "School", "", "after dinner", "read ten pages"),
             new ObjectMapper().readTree("{\"period\":\"day\"}"), 100, true, false));
 
-        var parentAccount = com.sashplatonov.earnit.kids.domain.model.ParentAccountEntity.builder()
+        var parentAccount = com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity.builder()
             .email("resolved-" + familyId)
             .passwordHash("")
             .build();
@@ -307,7 +307,7 @@ class TelegramCrossChannelIntegrationTest {
             .findFirst().orElseThrow();
         assertThat(resolvedEvent.getRequestId()).isEqualTo(request.getId());
         assertThat(resolvedEvent.getResolutionStatus()).isEqualTo(
-            com.sashplatonov.earnit.kids.domain.model.RequestResolutionStatus.approved);
+            com.sashplatonov.earnit.kids.family.domain.model.request.RequestResolutionStatus.approved);
 
         // EXPLAIN: The outbox processor is not running in this test, so the
         // EXPLAIN: request-created message was never actually sent. REQUEST_RESOLVED

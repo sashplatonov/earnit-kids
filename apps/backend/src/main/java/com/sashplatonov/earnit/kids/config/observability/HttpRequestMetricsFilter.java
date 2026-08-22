@@ -1,8 +1,8 @@
 package com.sashplatonov.earnit.kids.config.observability;
 
-import com.sashplatonov.earnit.kids.service.http.HttpRequestMetricsRegistry;
-import com.sashplatonov.earnit.kids.service.http.HttpResponsePayloadEstimator;
-import com.sashplatonov.earnit.kids.service.observability.SlowOperationDiagnostics;
+import com.sashplatonov.earnit.kids.platform.application.http.HttpRequestMetricsRegistry;
+import com.sashplatonov.earnit.kids.platform.infrastructure.http.HttpResponsePayloadEstimator;
+import com.sashplatonov.earnit.kids.platform.application.observability.SlowOperationDiagnostics;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;

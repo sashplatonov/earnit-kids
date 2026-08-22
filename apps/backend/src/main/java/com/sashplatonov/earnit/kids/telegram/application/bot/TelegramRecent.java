@@ -1,0 +1,62 @@
+package com.sashplatonov.earnit.kids.telegram.application.bot;
+
+import com.sashplatonov.earnit.kids.family.api.response.HistoryEntryDto;
+import com.sashplatonov.earnit.kids.telegram.api.response.TelegramQuickActionResponse;
+import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryType;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+
+final class TelegramRecent {
+    private static final String[] MONTHS = {
+        "января", "февраля", "марта", "апреля", "мая", "июня",
+        "июля", "августа", "сентября", "октября", "ноября", "декабря"
+    };
+
+    private TelegramRecent() {
+    }
+
+    static String format(TelegramQuickActionResponse view, Instant now) {
+        String header = TelegramBotEmoji.RECENT + " Последние события · " + view.childName();
+        List<HistoryEntryDto> history = view.history();
+        if (history.isEmpty()) {
+            return header + "\n\n" + TelegramCopy.emptyRecent();
+        }
+        StringBuilder builder = new StringBuilder(header);
+        history.stream().limit(5).forEach(entry -> builder.append("\n\n").append(row(entry, now)));
+        return builder.toString();
+    }
+
+    static String row(HistoryEntryDto entry, Instant now) {
+        boolean earning = entry.type() != HistoryEntryType.spend;
+        return TelegramCoinCopy.delta(entry.amount(), earning, false) + " · " + title(entry)
+            + "\n" + formatDate(entry.createdAt(), now);
+    }
+
+    private static String title(HistoryEntryDto entry) {
+        return entry.title() != null ? entry.title()
+            : entry.taskName() != null ? entry.taskName()
+            : entry.itemName() != null ? entry.itemName() : "Событие";
+    }
+
+    private static String formatDate(String createdAt, Instant now) {
+        try {
+            LocalDateTime time = LocalDateTime.ofInstant(Instant.parse(createdAt), ZoneOffset.UTC);
+            LocalDate day = time.toLocalDate();
+            LocalDate today = LocalDate.ofInstant(now, ZoneOffset.UTC);
+            String clock = String.format("%02d:%02d", time.getHour(), time.getMinute());
+            if (day.equals(today)) {
+                return "Сегодня, " + clock;
+            }
+            if (day.equals(today.minusDays(1))) {
+                return "Вчера, " + clock;
+            }
+            return time.getDayOfMonth() + " " + MONTHS[time.getMonthValue() - 1] + ", " + clock;
+        } catch (RuntimeException exception) {
+            return "";
+        }
+    }
+}

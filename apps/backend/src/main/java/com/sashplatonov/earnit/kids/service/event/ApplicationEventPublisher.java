@@ -1,9 +1,9 @@
 package com.sashplatonov.earnit.kids.service.event;
 
-import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventEntity;
-import com.sashplatonov.earnit.kids.domain.model.ApplicationOutboxEventType;
-import com.sashplatonov.earnit.kids.domain.model.RequestResolutionStatus;
-import com.sashplatonov.earnit.kids.repository.ApplicationOutboxEventRepository;
+import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventType;
+import com.sashplatonov.earnit.kids.family.domain.model.request.RequestResolutionStatus;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.outbox.ApplicationOutboxEventRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
