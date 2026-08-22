@@ -262,7 +262,7 @@ export const appMessages = {
         },
         childTasks: {
             tasksToday: 'Задания',
-            done: '{completed} / {limit} выполнено',
+            done: '{completed} / {limit}',
             available: '{count} доступно',
             sendingRequest: 'Отправляем заявку…',
             requestSent: 'Заявка отправлена. Родитель её рассмотрит.',

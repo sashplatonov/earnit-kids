@@ -262,7 +262,7 @@ export const appMessages = {
         },
         childTasks: {
             tasksToday: 'Tasks',
-            done: '{completed} / {limit} done',
+            done: '{completed} / {limit}',
             available: '{count} available',
             sendingRequest: 'Sending request…',
             requestSent: 'Request sent. Your parent will review it.',
