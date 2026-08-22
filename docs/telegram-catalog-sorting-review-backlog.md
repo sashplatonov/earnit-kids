@@ -144,7 +144,7 @@ git commit -m "fix(web): preserve child catalog group ordering"
 
 ## P2-1: Make the sort mode controls touch-accessible
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** P1-1
 
