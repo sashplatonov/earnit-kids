@@ -98,9 +98,8 @@ The full reference lives in root `.env.example`. The table below lists the varia
 
 | Variable | Scope | Example | Purpose |
 | --- | --- | --- | --- |
-| `APP_URL` | Web + Compose | `http://localhost:3000` | Public origin used by the web edge and backend CORS |
-| `WEB_PORT` | Compose | `3000` | Host port published for the web service |
-| `WEB_INTERNAL_PORT` | Web + Compose | `3000` | Internal Node port inside the web container |
+| `APP_URL` | Web + Compose | `http://localhost:3000` | Public origin used by the web edge and backend CORS; independent of published ports |
+| `WEB_PORT` | Compose | `3000` | Host port published for the web service; the container always listens on `3000` |
 | `BACKEND_INTERNAL_PORT` | Backend + Compose | `8080` | Internal Quarkus HTTP port |
 | `JWT_SECRET` | Backend | `local-dev-secret-change-in-prod` | Compatibility JWT signing secret |
 | `DB_HOST` | Backend + maintenance scripts | `db` | Compose service host for PostgreSQL |
