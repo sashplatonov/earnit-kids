@@ -65,10 +65,6 @@ class AuthLifecycleService {
         }
     }
 
-    OperationResult<Void> forgotPassword(String email) {
-        return OperationResult.failure(BackendMessages.message("auth.passwordRecoveryDisabled"));
-    }
-
     OperationResult<Void> changeAdminPassword(String familyId, String oldPassword, String newPassword) {
         if (familyId == null || familyId.isBlank()) {
             return OperationResult.failure(BackendMessages.message("auth.familyNotFound"));
@@ -99,15 +95,4 @@ class AuthLifecycleService {
         return OperationResult.success(null);
     }
 
-    OperationResult<Void> resetPassword(String email, String token, String newPassword) {
-        if (!supportService.isValidPassword(newPassword)) {
-            return OperationResult.failure(BackendMessages.message("auth.weakPassword"));
-        }
-
-        return OperationResult.failure(BackendMessages.message("auth.invalidOrExpiredResetLink"));
-    }
-
-    OperationResult<Void> verifyEmail(String email, String token) {
-        return OperationResult.failure(BackendMessages.message("auth.invalidVerificationToken"));
-    }
 }

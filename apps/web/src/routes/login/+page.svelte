@@ -7,12 +7,10 @@
     import type { FamilyChoice } from '$lib/types/auth';
     import type { PageData } from './$types';
 
-    type ActivePanel = 'login' | 'register' | 'forgot' | 'choose-family';
+    type ActivePanel = 'login' | 'register' | 'choose-family';
     type ResponsePayload = Record<string, unknown>;
 
     interface AuthConfig {
-        emailVerificationEnabled: boolean;
-        passwordRecoveryEnabled: boolean;
         googleEnabled?: boolean;
         googleClientId?: string | null;
     }
@@ -26,12 +24,9 @@
     let loginPassword = '';
     let regEmail = '';
     let regPassword = '';
-    let forgotEmail = '';
     let errorMsg = '';
     let successMsg = '';
     let submitting: ActivePanel | null = null;
-    let emailVerificationEnabled = true;
-    let passwordRecoveryEnabled = true;
     let googleAuthEnabled = false;
     let showLoginPassword = false;
     let showRegisterPassword = false;
@@ -172,12 +167,6 @@
     function showRegisterPanel() {
         activePanel = 'register';
         showRegisterPassword = false;
-        clearMessages();
-        clearChooserState();
-    }
-
-    function showForgotPanel() {
-        activePanel = 'forgot';
         clearMessages();
         clearChooserState();
     }
@@ -351,11 +340,7 @@
             const { response, body } = await postJson('/api/register', { email, password });
 
             if (response.ok) {
-                if (emailVerificationEnabled) {
-                    showSuccess($i18n.t('auth.login.registerSuccessVerify'));
-                } else {
-                    showSuccess($i18n.t('auth.login.registerSuccessDirect'));
-                }
+                showSuccess($i18n.t('auth.login.registerSuccessDirect'));
 
                 submitting = null;
 
@@ -375,39 +360,6 @@
         }
     }
 
-    async function handleRecover() {
-        const email = forgotEmail.trim();
-
-        if (!email || !email.includes('@')) {
-            showError($i18n.t('auth.login.recoverEmailInvalid'));
-            return;
-        }
-
-        submitting = 'forgot';
-        clearMessages();
-
-        try {
-            const { response, body } = await postJson('/api/forgot-password', { email });
-
-            if (response.ok) {
-                showSuccess($i18n.t('auth.login.recoverSuccess'));
-                submitting = null;
-
-                window.setTimeout(() => {
-                    showLoginPanel();
-                    loginEmail = email;
-                    loginEmailInput?.focus();
-                }, 3000);
-                return;
-            }
-
-            showError(readMessage(body, $i18n.t('auth.login.recoverError')));
-        } catch {
-            showError($i18n.t('auth.login.loginNetworkError'));
-        } finally {
-            submitting = null;
-        }
-    }
 
     onMount(() => {
         const searchParams = new URLSearchParams(window.location.search);
@@ -441,14 +393,6 @@
                 }
 
                 const config = (await response.json()) as Partial<AuthConfig>;
-
-                if (typeof config.emailVerificationEnabled === 'boolean') {
-                    emailVerificationEnabled = config.emailVerificationEnabled;
-                }
-
-                if (typeof config.passwordRecoveryEnabled === 'boolean') {
-                    passwordRecoveryEnabled = config.passwordRecoveryEnabled;
-                }
 
                 if (config.googleEnabled === true) {
                     googleAuthEnabled = true;
@@ -1038,7 +982,7 @@
         flex-wrap: wrap;
     }
 
-    .form-links a {
+    .form-links .link-btn {
         color: var(--accent);
         text-decoration: none;
         font-weight: 700;
@@ -1268,8 +1212,6 @@
                                 {submitting === 'login' ? $i18n.t('auth.login.loginSubmitting') : $i18n.t('auth.login.loginSubmit')}
                             </button>
                             <div class="form-links">
-                                <a href={$i18n.href('/login')} on:click|preventDefault={showForgotPanel}>{$i18n.t('auth.login.forgotLink')}</a>
-                                <span style="color: var(--muted); font-size: 0.85rem;">или</span>
                                 <button type="button" class="link-btn" on:click={showRegisterPanel}>{$i18n.t('auth.login.familyCta')}</button>
                             </div>
                         </div>
@@ -1306,34 +1248,6 @@
                             </button>
                             <button type="button" class="btn-secondary" on:click={showLoginPanel}>
                                 {$i18n.t('auth.login.registerBackToLogin')}
-                            </button>
-                        </div>
-                    {:else}
-                        <div aria-label={$i18n.t('auth.login.forgotAria')}>
-                            <p class="hero-subtitle" style="margin-bottom: 1rem;">
-                                {#if passwordRecoveryEnabled}
-                                    {$i18n.t('auth.login.forgotIntroEnabled')}
-                                {:else}
-                                    {$i18n.t('auth.login.forgotIntroDisabled')}
-                                {/if}
-                            </p>
-                            <div class="form-grid">
-                                <input
-                                    bind:value={forgotEmail}
-                                    type="email"
-                                    class="input-field"
-                                    placeholder={$i18n.t('auth.login.forgotEmailPlaceholder')}
-                                    autocomplete="email"
-                                    autocapitalize="none"
-                                    spellcheck="false"
-                                    on:keydown={(event) => event.key === 'Enter' && handleRecover()}
-                                />
-                            </div>
-                            <button class="btn-login" on:click={handleRecover} disabled={submitting === 'forgot'}>
-                                {submitting === 'forgot' ? $i18n.t('auth.login.forgotSubmitting') : $i18n.t('auth.login.forgotSubmit')}
-                            </button>
-                            <button type="button" class="btn-secondary" on:click={showLoginPanel}>
-                                {$i18n.t('auth.login.forgotBackToLogin')}
                             </button>
                         </div>
                     {/if}

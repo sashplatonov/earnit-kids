@@ -17,10 +17,6 @@ public interface AppConfig {
     @WithDefault("false")
     boolean production();
 
-    EmailVerification emailVerification();
-
-    PasswordRecovery passwordRecovery();
-
     Google google();
 
     interface Auth {
@@ -30,18 +26,6 @@ public interface AppConfig {
 
         @WithDefault("7776000")
         int refreshTokenTtlSeconds();
-    }
-
-    interface EmailVerification {
-
-        @WithDefault("true")
-        boolean enabled();
-    }
-
-    interface PasswordRecovery {
-
-        @WithDefault("true")
-        boolean enabled();
     }
 
     interface Google {

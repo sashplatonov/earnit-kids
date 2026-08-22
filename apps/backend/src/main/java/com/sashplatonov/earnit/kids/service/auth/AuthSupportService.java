@@ -4,7 +4,6 @@ import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.auth.PasswordHasher;
 import com.sashplatonov.earnit.kids.repository.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
-import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ class AuthSupportService {
     private final PasswordHasher passwordHasher;
     private final ParentAccountRepository parentAccountRepository;
     private final SecureTokenGenerator secureTokenGenerator;
-    private final TimeProvider timeProvider;
 
     boolean isValidPassword(String password) {
         if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
@@ -57,18 +55,6 @@ class AuthSupportService {
         return appConfig.google().clientId()
             .map(String::trim)
             .filter(value -> !value.isEmpty());
-    }
-
-    boolean isEmailVerificationEnabled() {
-        return appConfig.emailVerification().enabled();
-    }
-
-    boolean isPasswordRecoveryEnabled() {
-        return appConfig.passwordRecovery().enabled();
-    }
-
-    java.time.Instant now() {
-        return timeProvider.now();
     }
 
     private boolean verifyArgon2Password(String email, String password, String storedPassword) {

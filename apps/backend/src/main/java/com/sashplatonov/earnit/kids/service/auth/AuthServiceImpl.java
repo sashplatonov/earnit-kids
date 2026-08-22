@@ -42,25 +42,9 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public OperationResult<Void> forgotPassword(String email) {
-        return backendKpiMetrics.recordResult("auth", "forgot_password", () -> lifecycleService.forgotPassword(email));
-    }
-
-    @Override
     public OperationResult<Void> changeAdminPassword(String familyId, String oldPassword, String newPassword) {
         return backendKpiMetrics.recordResult("auth", "change_admin_password", () ->
             lifecycleService.changeAdminPassword(familyId, oldPassword, newPassword));
-    }
-
-    @Override
-    public OperationResult<Void> resetPassword(String email, String token, String newPassword) {
-        return backendKpiMetrics.recordResult("auth", "reset_password", () ->
-            lifecycleService.resetPassword(email, token, newPassword));
-    }
-
-    @Override
-    public OperationResult<Void> verifyEmail(String email, String token) {
-        return backendKpiMetrics.recordResult("auth", "verify_email", () -> lifecycleService.verifyEmail(email, token));
     }
 
     @Override

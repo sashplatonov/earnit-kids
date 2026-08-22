@@ -89,16 +89,6 @@ class ReadinessChecksTest {
             }
 
             @Override
-            public EmailVerification emailVerification() {
-                return base.emailVerification();
-            }
-
-            @Override
-            public PasswordRecovery passwordRecovery() {
-                return base.passwordRecovery();
-            }
-
-            @Override
             public Google google() {
                 return base.google();
             }

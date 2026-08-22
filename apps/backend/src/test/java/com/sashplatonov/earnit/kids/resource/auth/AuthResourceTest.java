@@ -7,14 +7,11 @@ import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.config.auth.CookieBuilder;
 import com.sashplatonov.earnit.kids.config.auth.JwtService;
 import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
-import com.sashplatonov.earnit.kids.dto.request.ForgotPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.GoogleLoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.RegisterRequest;
-import com.sashplatonov.earnit.kids.dto.request.ResetPasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.SelectFamilyRequest;
-import com.sashplatonov.earnit.kids.dto.request.VerifyEmailRequest;
 import com.sashplatonov.earnit.kids.dto.response.AuthConfigResponse;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.service.google.GoogleOAuthService;
@@ -47,14 +44,12 @@ class AuthResourceTest {
     @Mock CookieBuilder cookieBuilder;
 
     private AuthResource resource;
-    private AuthRecoveryResource recoveryResource;
     private AppConfig appConfig;
 
     @BeforeEach
     void setUp() {
         appConfig = TestConfigFactory.appConfig(false, null, true, true);
         resource = new AuthResource(authService, cookieBuilder, appConfig);
-        recoveryResource = new AuthRecoveryResource(authService);
     }
 
     @Test
@@ -197,20 +192,12 @@ class AuthResourceTest {
     }
 
     @Test
-    void forgotPassword_anyEmail_returnsOk() {
-        Response response = recoveryResource.forgotPassword(new ForgotPasswordRequest("a@test.com"));
-
-        assertThat(response.getStatus()).isEqualTo(200);
-        verify(authService).forgotPassword("a@test.com");
-    }
-
-    @Test
     void changePassword_missingAdminContext_returnsUnauthorized() {
         ChangePasswordRequest request = new ChangePasswordRequest("1", "2");
-        Response unauthorized = recoveryResource.changePassword(contextWithAuth(null), request);
+        Response unauthorized = resource.changePassword(contextWithAuth(null), request);
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        Response childUnauthorized = recoveryResource.changePassword(contextWithAuth(childAuth(10)), request);
+        Response childUnauthorized = resource.changePassword(contextWithAuth(childAuth(10)), request);
         assertThat(childUnauthorized.getStatus()).isEqualTo(401);
     }
 
@@ -219,31 +206,17 @@ class AuthResourceTest {
         when(authService.changeAdminPassword("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.success(null));
 
-        Response ok = recoveryResource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
+        Response ok = resource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
         assertThat(ok.getStatus()).isEqualTo(200);
 
         when(authService.changeAdminPassword("fam-1", "old", "newpass"))
             .thenReturn(OperationResult.failure("bad"));
-        Response bad = recoveryResource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
+        Response bad = resource.changePassword(contextWithAuth(adminAuth()), new ChangePasswordRequest("old", "newpass"));
         assertThat(bad.getStatus()).isEqualTo(400);
     }
 
     @Test
-    void resetPasswordAndVerifyEmail_successfulServiceResults_returnOk() {
-        when(authService.resetPassword("a@test.com", "token", "newpass"))
-            .thenReturn(OperationResult.success(null));
-        when(authService.verifyEmail("a@test.com", "token"))
-            .thenReturn(OperationResult.success(null));
-
-        Response reset = recoveryResource.resetPassword(new ResetPasswordRequest("a@test.com", "token", "newpass"));
-        Response verify = recoveryResource.verifyEmail(new VerifyEmailRequest("a@test.com", "token"));
-
-        assertThat(reset.getStatus()).isEqualTo(200);
-        assertThat(verify.getStatus()).isEqualTo(200);
-    }
-
-    @Test
-    void authConfig_featureFlagsConfigured_returnsResponse() {
+    void authConfig_returnsGoogleConfiguration() {
         Response response = resource.authConfig();
 
         assertThat(response.getStatus()).isEqualTo(200);

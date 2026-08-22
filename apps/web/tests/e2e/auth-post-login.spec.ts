@@ -5,7 +5,7 @@ test('registration hands off to password login, which opens the localized Telegr
     await page.route('**/api/auth-config', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ emailVerificationEnabled: false, passwordRecoveryEnabled: true, googleEnabled: false }),
+        body: JSON.stringify({ googleEnabled: false }),
     }));
     await page.route('**/api/register', (route) => route.fulfill({
         status: 200,

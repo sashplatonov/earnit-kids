@@ -34,9 +34,7 @@ const LEGACY_ALIAS_MAP: Record<string, string> = {
     '/features': '/features/tasks',
     '/index.html': '/',
     '/login.html': '/login',
-    '/reset-password.html': '/reset-password',
     '/super-admin.html': '/super-admin',
-    '/verify.html': '/verify',
 };
 
 function normalisePath(pathname: string): string {
@@ -158,7 +156,7 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'errors'];
     }
 
-    if (internalPath === '/login' || internalPath === '/verify' || internalPath === '/reset-password') {
+    if (internalPath === '/login') {
         return ['common', 'public', 'auth', 'errors'];
     }
 

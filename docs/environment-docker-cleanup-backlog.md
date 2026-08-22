@@ -348,7 +348,7 @@ git commit -m "refactor(backend): drop legacy email auth state"
 
 ## TASK-ENV-006: Remove email verification and password recovery flows
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-ENV-005
 

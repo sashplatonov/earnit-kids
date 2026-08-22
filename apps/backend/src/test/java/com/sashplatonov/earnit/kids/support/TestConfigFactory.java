@@ -14,28 +14,28 @@ public final class TestConfigFactory {
 
     public static AppConfig appConfig(boolean production,
                                       String superAdminEmail,
-                                      boolean emailVerificationEnabled,
-                                      boolean passwordRecoveryEnabled) {
+                                      boolean unusedFlagOne,
+                                      boolean unusedFlagTwo) {
         return appConfig(
             production,
             superAdminEmail,
-            emailVerificationEnabled,
-            passwordRecoveryEnabled,
+            unusedFlagOne,
+            unusedFlagTwo,
             false,
             null);
     }
 
     public static AppConfig appConfig(boolean production,
                                       String superAdminEmail,
-                                      boolean emailVerificationEnabled,
-                                      boolean passwordRecoveryEnabled,
+                                      boolean unusedFlagOne,
+                                      boolean unusedFlagTwo,
                                       boolean googleEnabled,
                                       String googleClientId) {
         return appConfig(
             production,
             superAdminEmail,
-            emailVerificationEnabled,
-            passwordRecoveryEnabled,
+            unusedFlagOne,
+            unusedFlagTwo,
             googleEnabled,
             googleClientId,
             null);
@@ -43,16 +43,16 @@ public final class TestConfigFactory {
 
     public static AppConfig appConfig(boolean production,
                                       String superAdminEmail,
-                                      boolean emailVerificationEnabled,
-                                      boolean passwordRecoveryEnabled,
+                                      boolean unusedFlagOne,
+                                      boolean unusedFlagTwo,
                                       boolean googleEnabled,
                                       String googleClientId,
                                       String googleClientSecret) {
         return appConfig(
             production,
             superAdminEmail,
-            emailVerificationEnabled,
-            passwordRecoveryEnabled,
+            unusedFlagOne,
+            unusedFlagTwo,
             googleEnabled,
             googleClientId,
             googleClientSecret,
@@ -63,8 +63,8 @@ public final class TestConfigFactory {
 
     public static AppConfig appConfig(boolean production,
                                       String superAdminEmail,
-                                      boolean emailVerificationEnabled,
-                                      boolean passwordRecoveryEnabled,
+                                      boolean unusedFlagOne,
+                                      boolean unusedFlagTwo,
                                       boolean googleEnabled,
                                       String googleClientId,
                                       String googleClientSecret,
@@ -90,16 +90,6 @@ public final class TestConfigFactory {
             @Override
             public boolean production() {
                 return production;
-            }
-
-            @Override
-            public EmailVerification emailVerification() {
-                return () -> emailVerificationEnabled;
-            }
-
-            @Override
-            public PasswordRecovery passwordRecovery() {
-                return () -> passwordRecoveryEnabled;
             }
 
             @Override

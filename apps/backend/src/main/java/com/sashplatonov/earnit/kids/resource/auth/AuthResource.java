@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.auth.AuthContext;
 import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.config.auth.CookieBuilder;
+import com.sashplatonov.earnit.kids.dto.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.dto.request.GoogleLoginRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginChildRequest;
 import com.sashplatonov.earnit.kids.dto.request.LoginRequest;
@@ -34,6 +35,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -196,10 +198,42 @@ public class AuthResource {
         String googleClientId = configuredGoogleOAuthClientId();
 
         return Response.ok(new AuthConfigResponse(
-            appConfig.emailVerification().enabled(),
-            appConfig.passwordRecovery().enabled(),
             googleClientId != null,
             googleClientId))
+            .build();
+    }
+
+    @POST
+    @Path("/change-password")
+    @Operation(summary = "Change the authenticated admin password")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Password updated",
+            content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
+        @APIResponse(responseCode = "400", description = "Password change failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "401", description = "Admin authentication required",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response changePassword(@Context ContainerRequestContext ctx,
+                                   @RequestBody(required = true, description = "Current and new parent password")
+                                   @Valid ChangePasswordRequest request) {
+        AuthContext auth = getAuth(ctx);
+        if (auth == null || !auth.isAdmin()) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
+                .build();
+        }
+
+        OperationResult<Void> result = authService.changeAdminPassword(
+            auth.familyId(), request.oldPassword(), request.newPassword());
+
+        if (result instanceof OperationResult.Success<?>) {
+            return Response.ok(SimpleResponse.ok()).build();
+        }
+
+        OperationResult.Failure<Void> failure = (OperationResult.Failure<Void>) result;
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse.of(failure.message(), "PASSWORD_CHANGE_FAILED", 400))
             .build();
     }
 

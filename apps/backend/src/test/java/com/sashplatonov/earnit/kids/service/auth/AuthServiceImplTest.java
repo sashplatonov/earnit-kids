@@ -383,16 +383,6 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void forgotPassword_recoveryDisabled_returnsFailure() {
-        AuthServiceImpl noRecoveryService = createAuthService(
-            TestConfigFactory.appConfig(false, null, false, false));
-
-        OperationResult<Void> result = noRecoveryService.forgotPassword("user@test.com");
-
-        assertThat(result).isInstanceOf(OperationResult.Failure.class);
-    }
-
-    @Test
     void changeAdminPassword_validOldPassword_updatesPassword() {
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "oldpassword", false, true);
         when(familyRepository.findById("fam_1")).thenReturn(Optional.of(family));
@@ -464,8 +454,7 @@ class AuthServiceImplTest {
             config,
             passwordHasher,
             parentAccountRepository,
-            TOKEN_GENERATOR,
-            TestConfigFactory.timeProvider(FIXED_NOW)
+            TOKEN_GENERATOR
         );
         membershipService = new AuthMembershipService(
             familyRepository,

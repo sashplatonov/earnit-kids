@@ -39,7 +39,6 @@ export const commonMessages = {
         install: 'Установить',
         backToLogin: 'Вернуться ко входу',
         askSupport: 'Попросить помощь',
-        resetPassword: 'Восстановить пароль',
         allArticles: 'Все статьи',
     },
     status: {
