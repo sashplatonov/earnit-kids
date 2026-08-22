@@ -13,10 +13,14 @@
     import { formatLastUsedTime } from './telegramLastUsed';
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
+    import TelegramSortControl from './TelegramSortControl.svelte';
+    import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
+    import { getEffectiveGroupOrder, orderGroups } from '$lib/telegram/services/groupOrder';
 
     const i18n = useI18n();
 
     let selectedGroup = '';
+    let sortMode: CatalogSortMode = 'group';
     let selected: { id: number | string; title: string } | null = null;
     let busy = false;
     let status: 'idle' | 'pending' | 'success' | 'error' | 'stale' = 'idle';
@@ -28,7 +32,8 @@
     $: progressPercent = summary.limitCount > 0 ? Math.min(100, Math.round((summary.completedCount / summary.limitCount) * 100)) : 0;
     $: pendingIds = $appStore.requests.filter((request) => request.requestType !== 'shop_purchase' && request.status === 'pending').map((request) => request.taskId).filter((id): id is string | number => id != null);
     $: rawGroups = [...new Set(visibleTasks.filter((task) => task.isActive !== false).map((task) => task.groupName?.trim()).filter((group): group is string => Boolean(group)))];
-    $: items = selectedGroup ? visibleTasks.filter((task) => task.isActive !== false && task.groupName?.trim() === selectedGroup) : visibleTasks.filter((task) => task.isActive !== false);
+    $: orderedGroups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'tasks', false));
+    $: items = sortCatalogItems(selectedGroup ? visibleTasks.filter((task) => task.isActive !== false && task.groupName?.trim() === selectedGroup) : visibleTasks.filter((task) => task.isActive !== false), sortMode, orderedGroups, (task) => task.groupName?.trim() ?? '', (task) => task.coins);
     const isPending = (id: number | string) => pendingIds.some((pendingId) => String(pendingId) === String(id));
     const isLimitReached = (task: { periodProgress?: { available?: boolean } | null }) => task.periodProgress?.available === false;
     async function submit(note: string | null) {
@@ -41,6 +46,8 @@
         else { status = 'error'; message = result.error; selected = null; }
     }
 </script>
+
+{#if visibleTasks.length > 1}<TelegramSortControl mode={sortMode} onChange={(mode) => sortMode = mode} />{/if}
 
 <section aria-labelledby="child-tasks-title"><div class="heading"><h2 id="child-tasks-title">{$i18n.t('app.telegram.childTasks.tasksToday')}</h2><span>{summary.trackedCount > 0 ? $i18n.t('app.telegram.childTasks.done', { completed: summary.completedCount, limit: summary.limitCount }) : $i18n.t('app.telegram.childTasks.available', { count: visibleTasks.length })}</span></div>{#if summary.trackedCount > 0}<div class="today-progress" role="progressbar" aria-valuemin="0" aria-valuemax={summary.limitCount} aria-valuenow={summary.completedCount} aria-label={$i18n.t('app.telegram.childTasks.todayProgress')}><span style={`width: ${progressPercent}%`}></span></div>{/if}<TelegramGroupSubnav groups={rawGroups} selected={selectedGroup} kind="tasks" allLabel={$i18n.t('app.telegram.groupSubnav.all')} moreLabel={$i18n.t('app.telegram.groupSubnav.more')} allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')} onSelect={(group) => selectedGroup = group} />{#if selectedGroup && !items.length}<p class="empty">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>{:else if !items.length}<p class="empty">{$i18n.t('app.telegram.childTasks.noTasks')}</p>{:else}<TelegramListSurface label={$i18n.t('app.telegram.childTasks.tasksToday')}>{#each items as task (task.id)}<TelegramEntityRow interactive><span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.childTasks.tasksToday')} /></span><button slot="title" class="row-main" type="button" aria-label={stripLeadingEmoji(task.name)} on:click={() => { selected = { id: task.id, title: task.name }; status = 'idle'; }}><span class="title">{stripLeadingEmoji(task.name)}</span><span class="row-metadata"><span class="meta"><TelegramCoin size={13} />+{task.coins} · {stripLeadingEmoji(task.groupName || $i18n.t('app.telegram.tasks.ungrouped'))}</span>{#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}</span></button><button slot="interactive" class="row-action check" type="button" aria-label={$i18n.t('app.telegram.childTasks.request')} disabled={isPending(task.id) || isLimitReached(task)} on:click={() => { selected = { id: task.id, title: task.name }; status = 'idle'; }}><TelegramIcon name={isPending(task.id) ? 'refresh' : 'done'} size={16} label={isPending(task.id) ? $i18n.t('app.telegram.childTasks.pending') : $i18n.t('app.telegram.childTasks.request')} /></button></TelegramEntityRow>{/each}</TelegramListSurface>{/if}<TelegramActionStatus state={status} message={message} /></section>
 <TelegramRequestSheet open={selected !== null} title={selected?.title ?? ''} bind:busy on:close={() => selected = null} on:submit={(event) => submit(event.detail)} />

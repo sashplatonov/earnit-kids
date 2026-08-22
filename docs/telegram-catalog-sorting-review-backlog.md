@@ -83,7 +83,7 @@ git commit -m "test(web): repair child reward action assertion"
 
 ## P1-1: Preserve default group ordering in child catalog lists
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** -
 
