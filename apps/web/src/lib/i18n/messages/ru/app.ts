@@ -568,7 +568,7 @@ export const appMessages = {
             close: 'Закрыть',
             emptyGroup: 'В этой группе пока ничего нет',
         },
-        sort: { title: 'Сортировка списка', groups: 'Группы', coins: 'Монеты ↑' },
+        sort: { title: 'Сортировка списка', groups: 'Группы', coins: 'Монеты ↑', tasksShown: 'Показано {count} заданий', rewardsShown: 'Показано {count} наград' },
         groupPicker: {
             title: 'Выберите группу',
             search: 'Поиск по группам',

@@ -19,7 +19,7 @@
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
     import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
-    import TelegramSortControl from './TelegramSortControl.svelte';
+    import TelegramCatalogToolbar from './TelegramCatalogToolbar.svelte';
     import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
 
     const i18n = useI18n();
@@ -160,7 +160,7 @@
             allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')}
             onSelect={(group) => selectedGroup = group}
         />
-        <TelegramSortControl mode={sortMode} onChange={(mode) => sortMode = mode} />
+        <TelegramCatalogToolbar count={filteredItems.length} countLabel={$i18n.t('app.telegram.sort.rewardsShown')} mode={sortMode} onChange={(mode) => sortMode = mode} />
         {#if selectedGroup && !filteredItems.length}
             <p class="muted empty-group">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>
         {:else}
