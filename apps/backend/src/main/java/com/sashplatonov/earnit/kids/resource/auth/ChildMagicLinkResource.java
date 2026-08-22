@@ -65,7 +65,7 @@ public class ChildMagicLinkResource {
     private Response successResponse(AuthPayload payload, ContainerRequestContext request) {
         var cookies = cookieBuilder.buildAuthCookies(
             payload.email(), payload.role(), payload.familyId(), payload.childId(),
-            payload.isSuperAdmin(), payload.permission());
+            payload.permission());
         URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/", request));
         Response.ResponseBuilder response = Response.seeOther(locationUri)
             .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")

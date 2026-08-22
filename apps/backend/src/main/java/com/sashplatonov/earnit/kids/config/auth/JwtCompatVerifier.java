@@ -42,11 +42,6 @@ public class JwtCompatVerifier {
         var payloadCsrfToken = toStringValue(resolvedPayload.get("csrfToken"));
 
         var role = toStringValue(resolvedPayload.get("role"));
-        var isSuperAdmin = Boolean.TRUE.equals(resolvedPayload.get("isSuperAdmin"));
-        if (isSuperAdmin && "admin".equals(role)) {
-            role = "super_admin";
-        }
-
         var permission = toStringValue(resolvedPayload.get("permission"));
 
         return new SessionPageDataResponse(

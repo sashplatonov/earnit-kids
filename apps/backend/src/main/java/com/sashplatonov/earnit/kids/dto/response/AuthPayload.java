@@ -8,16 +8,21 @@ public record AuthPayload(
     String role,
     Integer childId,
     String childName,
-    boolean isSuperAdmin,
     String permission,
     List<FamilyChoice> familyChoices,
     boolean selectionRequired,
     Integer parentAccountId
 ) {
     public AuthPayload(String familyId, String email, String role, Integer childId, String childName,
-                       boolean isSuperAdmin, String permission, List<FamilyChoice> familyChoices,
+                       boolean ignoredLegacyFlag, String permission, List<FamilyChoice> familyChoices,
                        boolean selectionRequired) {
-        this(familyId, email, role, childId, childName, isSuperAdmin, permission,
+        this(familyId, email, role, childId, childName, permission, familyChoices, selectionRequired, null);
+    }
+
+    public AuthPayload(String familyId, String email, String role, Integer childId, String childName,
+                       String permission, List<FamilyChoice> familyChoices,
+                       boolean selectionRequired) {
+        this(familyId, email, role, childId, childName, permission,
             familyChoices, selectionRequired, null);
     }
     public AuthPayload {

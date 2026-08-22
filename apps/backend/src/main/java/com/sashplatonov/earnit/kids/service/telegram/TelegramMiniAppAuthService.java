@@ -92,7 +92,6 @@ public class TelegramMiniAppAuthService {
                 "admin",
                 null,
                 null,
-                false,
                 "family_admin",
                 null,
                 false);
@@ -120,7 +119,7 @@ public class TelegramMiniAppAuthService {
             return failed();
         }
         return OperationResult.success(new AuthPayload(
-            family.getFamilyId(), parent.getEmail(), "admin", null, null, false,
+            family.getFamilyId(), parent.getEmail(), "admin", null, null,
             membership.getPermission().name(), null, false, parent.getId()));
     }
 
@@ -134,7 +133,7 @@ public class TelegramMiniAppAuthService {
         }
         return OperationResult.success(new AuthPayload(
             family.getFamilyId(), family.getEmail(), "child", child.getId(), child.getName(),
-            false, "child", null, false));
+            "child", null, false));
     }
 
     private OperationResult<AuthPayload> failed() {

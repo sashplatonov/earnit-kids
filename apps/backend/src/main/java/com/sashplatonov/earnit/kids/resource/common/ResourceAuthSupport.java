@@ -44,14 +44,6 @@ public abstract class ResourceAuthSupport {
         return auth;
     }
 
-    protected AuthContext requireSuperAdmin(ContainerRequestContext ctx) {
-        AuthContext auth = requireAuth(ctx);
-        if (!auth.isSuperAdmin()) {
-            throw new WebApplicationException(forbidden());
-        }
-        return auth;
-    }
-
     protected Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)
             .entity(ErrorResponse.unauthorized(BackendMessages.message("errors.unauthorized")))
@@ -77,14 +69,6 @@ public abstract class ResourceAuthSupport {
     protected Response requireAdminOrUnauthorized(ContainerRequestContext ctx) {
         AuthContext auth = authContext(ctx);
         return auth == null || !auth.isAdmin() ? unauthorized() : null;
-    }
-
-    protected Response requireSuperAdminResponse(ContainerRequestContext ctx) {
-        AuthContext auth = authContext(ctx);
-        if (auth == null) {
-            return unauthorized();
-        }
-        return auth.isSuperAdmin() ? null : forbidden();
     }
 
     protected OperationResult<Integer> resolveEffectiveChildId(AuthContext auth, Integer childId) {

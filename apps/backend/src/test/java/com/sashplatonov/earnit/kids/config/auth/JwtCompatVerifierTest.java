@@ -113,7 +113,7 @@ class JwtCompatVerifierTest {
     }
 
     @Test
-    void readSession_isSuperAdminTrue_upgradesRoleToSuperAdmin() {
+    void readSession_legacyAuthorityClaim_doesNotUpgradeRole() {
         String token = JwtCompatVerifier.sign(Map.of(
             "familyId", "fam-1",
             "role", "admin",
@@ -125,18 +125,17 @@ class JwtCompatVerifierTest {
         SessionPageDataResponse response = verifier.readSession("app_auth=" + token + "; csrf_token=cookie-csrf");
 
         assertThat(response.authenticated()).isTrue();
-        assertThat(response.role()).isEqualTo("super_admin");
+        assertThat(response.role()).isEqualTo("admin");
         assertThat(response.email()).isEqualTo("super@test.com");
     }
 
     @Test
-    void readSession_isSuperAdminFalse_keepsAdminRole() {
+    void readSession_withoutLegacyAuthority_keepsAdminRole() {
         String token = JwtCompatVerifier.sign(Map.of(
             "familyId", "fam-1",
             "role", "admin",
             "email", "regular@test.com",
-            "csrfToken", "csrf-123",
-            "isSuperAdmin", false
+            "csrfToken", "csrf-123"
         ), "test-secret-key-for-unit-tests", 120, TestConfigFactory.timeProvider(FIXED_NOW));
 
         SessionPageDataResponse response = verifier.readSession("app_auth=" + token + "; csrf_token=cookie-csrf");

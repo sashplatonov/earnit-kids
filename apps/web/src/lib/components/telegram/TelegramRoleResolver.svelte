@@ -10,7 +10,7 @@
     let viewAsChild = false;
 </script>
 
-{#if (role === 'parent' || role === 'admin' || role === 'super_admin') && !viewAsChild}
+{#if (role === 'parent' || role === 'admin') && !viewAsChild}
     <TelegramParentShell {publicOrigin} onViewAsChild={() => viewAsChild = true} />
 {:else}
     <TelegramChildShell {publicOrigin} onExitPreview={() => viewAsChild = false} />

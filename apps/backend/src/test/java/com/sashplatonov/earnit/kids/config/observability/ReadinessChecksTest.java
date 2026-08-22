@@ -89,11 +89,6 @@ class ReadinessChecksTest {
             }
 
             @Override
-            public SuperAdmin superAdmin() {
-                return base.superAdmin();
-            }
-
-            @Override
             public EmailVerification emailVerification() {
                 return base.emailVerification();
             }

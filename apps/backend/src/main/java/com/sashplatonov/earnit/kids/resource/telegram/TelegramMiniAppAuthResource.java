@@ -45,9 +45,8 @@ public class TelegramMiniAppAuthResource {
         return switch (authService.authenticate(request.initData(), request.token())) {
             case OperationResult.Success<AuthPayload> success -> {
                 AuthPayload payload = success.value();
-                LOG.infof("Telegram auth exchange success: role=%s, familyId=%s, "
-                    + "isSuperAdmin=%s, permission=%s",
-                    payload.role(), payload.familyId(), payload.isSuperAdmin(), payload.permission());
+                LOG.infof("Telegram auth exchange success: role=%s, familyId=%s, permission=%s",
+                    payload.role(), payload.familyId(), payload.permission());
                 if (featureGate.hasRolloutRestriction() && !featureGate.isMiniAppEnabled(payload.familyId())) {
                     LOG.warnf("Mini app disabled for familyId=%s due to rollout restriction", payload.familyId());
                     yield Response.status(Response.Status.NOT_FOUND).build();
@@ -58,9 +57,9 @@ public class TelegramMiniAppAuthResource {
                         : AuthResponse.childSuccess(payload.familyId(), payload.childId(), payload.childName()));
                 var cookies = payload.parentAccountId() == null
                     ? cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
-                        payload.childId(), payload.isSuperAdmin(), payload.permission())
+                        payload.childId(), payload.permission())
                     : cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
-                        payload.childId(), payload.isSuperAdmin(), payload.permission(), payload.parentAccountId());
+                        payload.childId(), payload.permission(), payload.parentAccountId());
                 cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
                 yield response.build();
             }

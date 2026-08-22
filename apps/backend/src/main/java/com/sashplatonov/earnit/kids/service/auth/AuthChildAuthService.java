@@ -39,6 +39,6 @@ class AuthChildAuthService {
 
         return OperationResult.success(
             new AuthPayload(family.getFamilyId(), family.getEmail(), "child",
-                child.getId(), child.getName(), false, "child", null, false));
+                child.getId(), child.getName(), "child", null, false));
     }
 }

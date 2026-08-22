@@ -281,7 +281,7 @@ export function buildInitialState(data: Record<string, unknown>, baseData: Recor
     const normalizedBaseData = normalizeBaseData(baseData);
     const normalizedCatalog = normalizeCatalog(baseData.catalog as Record<string, unknown> | undefined);
     const role = typeof normalized.role === 'string' ? normalized.role : null;
-    const isAdmin = parseBoolean(normalized.isAdmin) || role === 'admin' || role === 'parent' || role === 'super_admin';
+    const isAdmin = parseBoolean(normalized.isAdmin) || role === 'admin' || role === 'parent';
     return {
         isAdmin,
         role: role ?? (isAdmin ? 'admin' : null),

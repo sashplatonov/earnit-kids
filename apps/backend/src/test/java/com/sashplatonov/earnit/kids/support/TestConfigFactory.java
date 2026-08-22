@@ -93,11 +93,6 @@ public final class TestConfigFactory {
             }
 
             @Override
-            public SuperAdmin superAdmin() {
-                return () -> Optional.ofNullable(superAdminEmail);
-            }
-
-            @Override
             public EmailVerification emailVerification() {
                 return () -> emailVerificationEnabled;
             }

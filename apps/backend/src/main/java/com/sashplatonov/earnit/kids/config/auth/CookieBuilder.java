@@ -23,20 +23,28 @@ public class CookieBuilder {
     private final JwtService jwtService;
     private final AppConfig appConfig;
 
-    public List<String> buildAuthCookies(String email,
-                                         String role,
-                                         String familyId,
-                                         Integer childId,
-                                         boolean isSuperAdmin,
-                                         String permission) {
-        return buildAuthCookies(email, role, familyId, childId, isSuperAdmin, permission, null);
+    public List<String> buildAuthCookies(String email, String role, String familyId, Integer childId,
+                                         boolean ignoredLegacyFlag, String permission) {
+        return buildAuthCookies(email, role, familyId, childId, permission, null);
+    }
+
+    public List<String> buildAuthCookies(String email, String role, String familyId, Integer childId,
+                                         boolean ignoredLegacyFlag, String permission, Integer parentAccountId) {
+        return buildAuthCookies(email, role, familyId, childId, permission, parentAccountId);
     }
 
     public List<String> buildAuthCookies(String email,
                                          String role,
                                          String familyId,
                                          Integer childId,
-                                         boolean isSuperAdmin,
+                                         String permission) {
+        return buildAuthCookies(email, role, familyId, childId, permission, null);
+    }
+
+    public List<String> buildAuthCookies(String email,
+                                         String role,
+                                         String familyId,
+                                         Integer childId,
                                          String permission,
                                          Integer parentAccountId) {
         var csrfToken = jwtService.generateCsrfToken();
@@ -46,7 +54,6 @@ public class CookieBuilder {
             familyId,
             childId,
             csrfToken,
-            isSuperAdmin,
             permission,
             parentAccountId
         );
@@ -91,14 +98,13 @@ public class CookieBuilder {
     }
 
     private Map<String, Object> buildAuthPayload(String email, String role, String familyId,
-                                                 Integer childId, String csrfToken, boolean isSuperAdmin,
+                                                 Integer childId, String csrfToken,
                                                  String permission, Integer parentAccountId) {
         var payload = new LinkedHashMap<String, Object>();
         payload.put("email", email);
         payload.put("role", role);
         payload.put("familyId", familyId);
         payload.put("csrfToken", csrfToken);
-        payload.put("isSuperAdmin", isSuperAdmin);
         payload.put("permission", permission);
         if (parentAccountId != null) {
             payload.put("parentAccountId", parentAccountId);

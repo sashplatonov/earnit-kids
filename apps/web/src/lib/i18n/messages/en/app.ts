@@ -43,7 +43,6 @@ export const appMessages = {
         loginError: 'Could not sign out',
         logout: 'Sign out',
         moreAria: 'Additional sections',
-        superAdmin: 'Super admin',
         shareButton: 'Share site',
         shareButtonHint: 'Share the EarnIt Kids public site',
         shareCopied: 'Link copied to clipboard',

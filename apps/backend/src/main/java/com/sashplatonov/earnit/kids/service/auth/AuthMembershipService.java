@@ -36,7 +36,7 @@ class AuthMembershipService {
         }
 
         return OperationResult.success(
-            new AuthPayload(null, email, "admin", null, null, false, null, choices, true));
+            new AuthPayload(null, email, "admin", null, null, null, choices, true));
     }
 
     OperationResult<AuthPayload> selectFamily(String email, String familyId) {
@@ -65,10 +65,9 @@ class AuthMembershipService {
 
         var membership = membershipOpt.get();
         familyRepository.updateLastActivity(family.getFamilyId());
-        boolean isSuperAdmin = supportService.isSuperAdminEmail(email);
         String permission = membership.getPermission().name();
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), email, "admin", null, null, isSuperAdmin, permission, null, false));
+            new AuthPayload(family.getFamilyId(), email, "admin", null, null, permission, null, false));
     }
 
     private List<AuthPayload.FamilyChoice> buildFamilyChoices(List<FamilyParentMembershipEntity> memberships) {
@@ -102,9 +101,8 @@ class AuthMembershipService {
         }
 
         familyRepository.updateLastActivity(family.getFamilyId());
-        boolean isSuperAdmin = supportService.isSuperAdminEmail(email);
         String permission = membership.getPermission().name();
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), email, "admin", null, null, isSuperAdmin, permission, null, false));
+            new AuthPayload(family.getFamilyId(), email, "admin", null, null, permission, null, false));
     }
 }

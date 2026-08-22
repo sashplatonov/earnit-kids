@@ -8,13 +8,22 @@ public record AuthContext(
     String role,
     String email,
     String csrfToken,
-    boolean isSuperAdmin,
     String permission,
     Integer parentAccountId
 ) {
     public AuthContext(String familyId, Integer childId, String role, String email, String csrfToken,
-                       boolean isSuperAdmin, String permission) {
-        this(familyId, childId, role, email, csrfToken, isSuperAdmin, permission, null);
+                       boolean ignoredLegacyFlag, String permission) {
+        this(familyId, childId, role, email, csrfToken, permission, null);
+    }
+
+    public AuthContext(String familyId, Integer childId, String role, String email, String csrfToken,
+                       boolean ignoredLegacyFlag, String permission, Integer parentAccountId) {
+        this(familyId, childId, role, email, csrfToken, permission, parentAccountId);
+    }
+
+    public AuthContext(String familyId, Integer childId, String role, String email, String csrfToken,
+                       String permission) {
+        this(familyId, childId, role, email, csrfToken, permission, null);
     }
     public static AuthContext fromPayload(Map<String, Object> payload, String cookieCsrf) {
         String familyId = toStringValue(payload.get("familyId"));
@@ -22,10 +31,9 @@ public record AuthContext(
         String role = toStringValue(payload.get("role"));
         String email = toStringValue(payload.get("email"));
         String csrf = cookieCsrf != null ? cookieCsrf : toStringValue(payload.get("csrfToken"));
-        boolean isSuperAdmin = Boolean.TRUE.equals(payload.get("isSuperAdmin"));
         String permission = toStringValue(payload.get("permission"));
         Integer parentAccountId = toInteger(payload.get("parentAccountId"));
-        return new AuthContext(familyId, childId, role, email, csrf, isSuperAdmin, permission, parentAccountId);
+        return new AuthContext(familyId, childId, role, email, csrf, permission, parentAccountId);
     }
 
     public boolean isAdmin() {
@@ -34,10 +42,6 @@ public record AuthContext(
 
     public boolean isChild() {
         return "child".equals(role);
-    }
-
-    public boolean isSuperAdmin() {
-        return isSuperAdmin;
     }
 
     public boolean isFamilyAdmin() {
@@ -53,11 +57,11 @@ public record AuthContext(
     }
 
     public boolean canEditFamilyData() {
-        return isSuperAdmin || isFamilyAdmin() || isEditor();
+        return isFamilyAdmin() || isEditor();
     }
 
     public boolean canManageMemberships() {
-        return isSuperAdmin || isFamilyAdmin();
+        return isFamilyAdmin();
     }
 
     private static Integer toInteger(Object value) {

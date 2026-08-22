@@ -35,7 +35,7 @@ class TelegramMiniAppAuthResourceTest {
         when(gate.isEnabled()).thenReturn(true);
         when(authService.authenticate("valid-data", null)).thenReturn(OperationResult.success(
             new AuthPayload("family-1", "parent@example.test", "admin", null, null, false, "family_admin", null, false)));
-        when(cookies.buildAuthCookies("parent@example.test", "admin", "family-1", null, false, "family_admin"))
+        when(cookies.buildAuthCookies("parent@example.test", "admin", "family-1", null, "family_admin"))
             .thenReturn(List.of("app_auth=signed; Path=/"));
         TelegramMiniAppAuthResource resource = new TelegramMiniAppAuthResource(gate, authService, cookies);
 

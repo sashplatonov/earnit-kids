@@ -42,7 +42,7 @@ class TelegramParentInviteAcceptResourceTest {
         when(invitations.accept(any(), any(), any(), any())).thenReturn(OperationResult.success(
             new TelegramIdentityService.TelegramIdentity(7, 3, null, 700L, "admin")));
         when(families.findFamilyIdByDbId(3)).thenReturn(Optional.of("family-3"));
-        when(cookies.buildAuthCookies("mail@test", "admin", "family-3", null, false, "editor"))
+        when(cookies.buildAuthCookies("mail@test", "admin", "family-3", null, "editor"))
             .thenReturn(List.of("app_auth=token"));
         TelegramParentInviteAcceptResource resource = new TelegramParentInviteAcceptResource(
             invitations, gate, cookies, families, () -> Instant.parse("2026-08-20T12:00:00Z"));

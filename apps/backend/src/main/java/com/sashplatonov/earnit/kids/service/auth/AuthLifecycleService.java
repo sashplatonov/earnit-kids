@@ -66,7 +66,7 @@ class AuthLifecycleService {
             membershipRepository.persistAndFlush(membership);
 
             return OperationResult.success(
-                new AuthPayload(familyId, email, "admin", null, null, false, "family_admin", null, false));
+                new AuthPayload(familyId, email, "admin", null, null, "family_admin", null, false));
         } catch (Exception ex) {
             return OperationResult.failure(BackendMessages.message("auth.registrationFailed"));
         }

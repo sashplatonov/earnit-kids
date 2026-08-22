@@ -43,7 +43,6 @@ export const appMessages = {
         loginError: 'Не удалось выйти',
         logout: 'Выйти',
         moreAria: 'Дополнительные разделы',
-        superAdmin: 'Супер админка',
         shareButton: 'Поделиться сайтом',
         shareButtonHint: 'Поделиться публичным сайтом EarnIt Kids',
         shareCopied: 'Ссылка скопирована в буфер обмена',

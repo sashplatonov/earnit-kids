@@ -106,7 +106,7 @@ public class AuthResource {
         }
         var cookies = cookieBuilder.buildAuthCookies(
             payload.email(), payload.role(), payload.familyId(),
-            payload.childId(), payload.isSuperAdmin(), payload.permission());
+            payload.childId(), payload.permission());
 
         Response.ResponseBuilder response = Response.ok(
             AuthResponse.success(payload.role(), payload.familyId()));
@@ -136,7 +136,7 @@ public class AuthResource {
     private Response childSuccessResponse(AuthPayload payload) {
         var cookies = cookieBuilder.buildAuthCookies(
             payload.email(), payload.role(), payload.familyId(),
-            payload.childId(), payload.isSuperAdmin(), payload.permission());
+            payload.childId(), payload.permission());
 
         Response.ResponseBuilder response = Response.ok(
             AuthResponse.childSuccess(payload.familyId(), payload.childId(), payload.childName()));
@@ -179,7 +179,7 @@ public class AuthResource {
     private Response registrationSuccessResponse(AuthPayload payload) {
         var cookies = cookieBuilder.buildAuthCookies(
             payload.email(), payload.role(), payload.familyId(),
-            null, payload.isSuperAdmin(), payload.permission());
+            null, payload.permission());
 
         Response.ResponseBuilder response = Response.status(Response.Status.CREATED)
             .entity(AuthResponse.success(payload.role(), payload.familyId()));
@@ -265,7 +265,7 @@ public class AuthResource {
     private Response familySelectionSuccessResponse(AuthPayload payload) {
         var cookies = cookieBuilder.buildAuthCookies(
             payload.email(), payload.role(), payload.familyId(),
-            payload.childId(), payload.isSuperAdmin(), payload.permission());
+            payload.childId(), payload.permission());
 
         Response.ResponseBuilder response = Response.ok(
             AuthResponse.success(payload.role(), payload.familyId()));

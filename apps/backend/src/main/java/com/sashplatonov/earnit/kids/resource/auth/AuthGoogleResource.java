@@ -126,7 +126,7 @@ public class AuthGoogleResource {
             }
             var cookies = cookieBuilder.buildAuthCookies(
                 payload.email(), payload.role(), payload.familyId(),
-                payload.childId(), payload.isSuperAdmin(), payload.permission());
+                payload.childId(), payload.permission());
 
             Response.ResponseBuilder rb = Response.seeOther(
                 URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));

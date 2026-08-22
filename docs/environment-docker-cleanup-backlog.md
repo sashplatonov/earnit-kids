@@ -228,7 +228,7 @@ git commit -m "refactor(docker): remove configurable web container port"
 
 ## TASK-ENV-004: Remove the legacy super-admin authority surface
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-ENV-001
 

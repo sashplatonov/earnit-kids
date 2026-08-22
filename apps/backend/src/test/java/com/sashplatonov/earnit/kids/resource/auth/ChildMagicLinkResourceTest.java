@@ -34,7 +34,7 @@ class ChildMagicLinkResourceTest {
     void loginByToken_validToken_redirectsToRootAndSetsCookies() {
         AuthPayload payload = new AuthPayload("fam-1", "c@test.com", "child", 10, "Kid", false, "child", null, false);
         when(authService.authenticateChild("token")).thenReturn(OperationResult.success(payload));
-        when(cookieBuilder.buildAuthCookies("c@test.com", "child", "fam-1", 10, false, "child"))
+        when(cookieBuilder.buildAuthCookies("c@test.com", "child", "fam-1", 10, "child"))
             .thenReturn(List.of("cookie-1", "cookie-2"));
 
         Response response = resource.loginByToken(request, "token");

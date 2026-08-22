@@ -22,13 +22,6 @@ class AuthSupportService {
     private final SecureTokenGenerator secureTokenGenerator;
     private final TimeProvider timeProvider;
 
-    boolean isSuperAdminEmail(String email) {
-        return appConfig.superAdmin().email()
-            .filter(value -> !value.isBlank())
-            .map(configuredEmail -> configuredEmail.equals(email))
-            .orElse(false);
-    }
-
     boolean isValidPassword(String password) {
         if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
             return false;

@@ -18,7 +18,6 @@ class ResourceAuthSupportTest {
 
     private static final AuthContext ADMIN = new AuthContext("fam-1", null, "admin", "a@b.c", "csrf", false, "family_admin");
     private static final AuthContext CHILD = new AuthContext("fam-1", 5, "child", "c@b.c", "csrf", false, null);
-    private static final AuthContext SUPER = new AuthContext("fam-1", null, "admin", "s@b.c", "csrf", true, "family_admin");
 
     private final TestSupport support = new TestSupport();
 
@@ -70,18 +69,6 @@ class ResourceAuthSupportTest {
     @Test
     void requireChild_withChildRole_returnsAuth() {
         assertThat(support.requireChild(contextWithAuth(CHILD))).isEqualTo(CHILD);
-    }
-
-    @Test
-    void requireSuperAdmin_withAdminRole_throws403() {
-        assertThatThrownBy(() -> support.requireSuperAdmin(contextWithAuth(ADMIN)))
-            .isInstanceOf(WebApplicationException.class)
-            .satisfies(ex -> assertThat(((WebApplicationException) ex).getResponse().getStatus()).isEqualTo(403));
-    }
-
-    @Test
-    void requireSuperAdmin_withSuperAdmin_returnsAuth() {
-        assertThat(support.requireSuperAdmin(contextWithAuth(SUPER))).isEqualTo(SUPER);
     }
 
     @Test

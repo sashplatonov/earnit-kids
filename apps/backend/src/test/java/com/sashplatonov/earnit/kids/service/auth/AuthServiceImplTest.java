@@ -81,27 +81,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void authenticateAdmin_superAdminEmailWithValidFamilyPassword_returnsAdminPayloadWithIsSuperAdmin() {
-        var parent = mockParentAccount("admin@test.com", "password123", false, true);
-        var membership = mockMembership(1, 1, "family_admin");
-        FamilyEntity family = mockFamily("fam_1", "admin@test.com", "password123", false, true);
-
-        when(parentAccountRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(parent));
-        when(membershipRepository.findByParentAccountId(1)).thenReturn(List.of(membership));
-        when(familyRepository.findByDbId(1)).thenReturn(Optional.of(family));
-        when(familyRepository.updateLastActivity("fam_1")).thenReturn(true);
-
-        OperationResult<AuthPayload> result = authService.authenticateAdmin("admin@test.com", "password123");
-
-        assertThat(result).isInstanceOf(OperationResult.Success.class);
-        AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
-        assertThat(payload.role()).isEqualTo("admin");
-        assertThat(payload.familyId()).isEqualTo("fam_1");
-        assertThat(payload.isSuperAdmin()).isTrue();
-    }
-
-    @Test
-    void authenticateAdmin_nonSuperAdminEmail_returnsAdminPayloadWithIsSuperAdminFalse() {
+    void authenticateAdmin_returnsFamilyAdminPayloadWithoutLegacyAuthority() {
         var parent = mockParentAccount("user@test.com", "password123", false, true);
         var membership = mockMembership(1, 1, "family_admin");
         FamilyEntity family = mockFamily("fam_1", "user@test.com", "password123", false, true);
@@ -116,7 +96,7 @@ class AuthServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         AuthPayload payload = ((OperationResult.Success<AuthPayload>) result).value();
         assertThat(payload.role()).isEqualTo("admin");
-        assertThat(payload.isSuperAdmin()).isFalse();
+        assertThat(payload.permission()).isEqualTo("family_admin");
     }
 
 

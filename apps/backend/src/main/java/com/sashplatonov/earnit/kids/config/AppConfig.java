@@ -17,8 +17,6 @@ public interface AppConfig {
     @WithDefault("false")
     boolean production();
 
-    SuperAdmin superAdmin();
-
     EmailVerification emailVerification();
 
     PasswordRecovery passwordRecovery();
@@ -32,11 +30,6 @@ public interface AppConfig {
 
         @WithDefault("7776000")
         int refreshTokenTtlSeconds();
-    }
-
-    interface SuperAdmin {
-
-        Optional<String> email();
     }
 
     interface EmailVerification {

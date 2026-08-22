@@ -56,8 +56,8 @@ public class TelegramParentInviteAcceptResource {
                 String familyId = families.get().findFamilyIdByDbId(identity.familyId()).orElse("family-" + identity.familyId());
                 Response.ResponseBuilder response = Response.ok(AuthResponse.success("admin", familyId));
                 var cookies = identity.parentAccountId() == null
-                    ? cookieBuilder.buildAuthCookies(request.legacyEmail(), "admin", familyId, null, false, "editor")
-                    : cookieBuilder.buildAuthCookies(null, "admin", familyId, null, false, "editor",
+                    ? cookieBuilder.buildAuthCookies(request.legacyEmail(), "admin", familyId, null, "editor")
+                    : cookieBuilder.buildAuthCookies(null, "admin", familyId, null, "editor",
                         identity.parentAccountId());
                 cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
                 yield response.build();
