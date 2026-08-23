@@ -2,9 +2,9 @@ const SW_VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
 const CACHE_NAME = `earnit-static-${SW_VERSION}`;
 const ASSETS_TO_CACHE = [
     '/manifest.json',
-    '/img/favicon-32x32.png',
-    '/img/icon-192.png',
-    '/img/icon-512.png'
+    '/public/favicon-32x32.png',
+    '/public/apple-touch-icon.png',
+    '/public/assets/icons/app-icon.png'
 ];
 
 const cacheInstall = async () => {
@@ -81,8 +81,8 @@ self.addEventListener('push', (event) => {
     const title = payload.title || 'EarnIt Kids';
     const options = {
         body: payload.body || 'Новое уведомление',
-        icon: '/img/favicon-32x32.png',
-        badge: '/img/favicon-32x32.png',
+        icon: '/public/favicon-32x32.png',
+        badge: '/public/favicon-32x32.png',
         data: payload.data || {},
         tag: payload.data?.eventType || 'push',
         renotify: true

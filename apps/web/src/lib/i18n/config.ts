@@ -18,8 +18,6 @@ const BYPASS_PREFIXES = [
     '/robots.txt',
     '/sitemap.xml',
     '/sw.js',
-    '/favicon.ico',
-    '/apple-touch-icon',
     '/.well-known',
     '/public',
     '/how',
