@@ -160,7 +160,8 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'public', 'auth', 'errors'];
     }
 
-    if (internalPath === '/telegram' || internalPath.startsWith('/telegram/')) {
+    if (internalPath === '/telegram' || internalPath.startsWith('/telegram/')
+        || internalPath === '/workspace' || internalPath.startsWith('/workspace/')) {
         return ['common', 'app', 'tasks', 'admin', 'errors'];
     }
 

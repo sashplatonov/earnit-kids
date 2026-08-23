@@ -1,6 +1,8 @@
 <script lang="ts">
     import { appStore, type Child } from '$lib/stores/app';
     import { adminIssueChildMagicLink, adminRevokeChildMagicLink, adminGetChildMagicLinkStatus } from '$lib/services/api';
+    import { useI18n } from '$lib/i18n/context';
+    const i18n = useI18n();
     let busy: string | number | null = null;
     let issuedLink = '';
     let issuedFor = '';
@@ -10,17 +12,17 @@
         busy = child.id; message = '';
         const result = await adminIssueChildMagicLink(child.id);
         busy = null;
-        if (result?.link) { issuedLink = result.link; issuedFor = child.nickname; message = 'Copy this one-time link now. It will not be shown again.'; }
-        else message = 'The child link could not be issued.';
+        if (result?.link) { issuedLink = result.link; issuedFor = child.nickname; message = $i18n.t('app.workspaceAccess.copyHint'); }
+        else message = $i18n.t('app.workspaceAccess.issueError');
     }
-    async function revoke(child: Child): Promise<void> { busy = child.id; message = (await adminRevokeChildMagicLink(child.id)) ? 'Child link revoked.' : 'The child link could not be revoked.'; busy = null; }
-    async function status(child: Child): Promise<void> { busy = child.id; const value = await adminGetChildMagicLinkStatus(child.id); message = value ? 'A child link is pending.' : 'No active child link.'; busy = null; }
-    async function copy(): Promise<void> { try { await navigator.clipboard.writeText(issuedLink); message = 'Link copied.'; } catch { message = 'Copy failed. Use the browser copy action.'; } }
+    async function revoke(child: Child): Promise<void> { busy = child.id; message = (await adminRevokeChildMagicLink(child.id)) ? $i18n.t('app.workspaceAccess.linkRevoked') : $i18n.t('app.workspaceAccess.revokeError'); busy = null; }
+    async function status(child: Child): Promise<void> { busy = child.id; const value = await adminGetChildMagicLinkStatus(child.id); message = value ? $i18n.t('app.workspaceAccess.linkPending') : $i18n.t('app.workspaceAccess.noActiveLink'); busy = null; }
+    async function copy(): Promise<void> { try { await navigator.clipboard.writeText(issuedLink); message = $i18n.t('app.workspaceAccess.linkCopied'); } catch { message = $i18n.t('app.workspaceAccess.copyError'); } }
 </script>
 
-<section class="child-links" aria-labelledby="child-links-heading"><p class="eyebrow">Child access</p><h2 id="child-links-heading">One-time child links</h2><p class="hint">Links expire and can be revoked. The token is shown only after issue.</p>
-    {#each $appStore.children as child (child.id)}<div class="child-row"><strong>{child.nickname}</strong><div class="actions"><button type="button" disabled={busy === child.id} on:click={() => issue(child)}>Issue</button><button type="button" class="secondary" disabled={busy === child.id} on:click={() => status(child)}>Status</button><button type="button" class="danger" disabled={busy === child.id} on:click={() => revoke(child)}>Revoke</button></div></div>{/each}
-    {#if issuedLink}<div class="issued" role="status"><strong>Link for {issuedFor}</strong><button type="button" on:click={copy}>Copy one-time link</button></div>{/if}
+<section class="child-links" aria-labelledby="child-links-heading"><p class="eyebrow">{$i18n.t('app.workspaceAccess.childEyebrow')}</p><h2 id="child-links-heading">{$i18n.t('app.workspaceAccess.childTitle')}</h2><p class="hint">{$i18n.t('app.workspaceAccess.childHint')}</p>
+    {#each $appStore.children as child (child.id)}<div class="child-row"><strong>{child.nickname}</strong><div class="actions"><button type="button" disabled={busy === child.id} on:click={() => issue(child)}>{$i18n.t('app.workspaceAccess.issue')}</button><button type="button" class="secondary" disabled={busy === child.id} on:click={() => status(child)}>{$i18n.t('app.workspaceAccess.status')}</button><button type="button" class="danger" disabled={busy === child.id} on:click={() => revoke(child)}>{$i18n.t('app.workspaceAccess.revoke')}</button></div></div>{/each}
+    {#if issuedLink}<div class="issued" role="status"><strong>{$i18n.t('app.workspaceAccess.linkFor', { name: issuedFor })}</strong><button type="button" on:click={copy}>{$i18n.t('app.workspaceAccess.copyLink')}</button></div>{/if}
     {#if message}<p class="message" role="status" aria-live="polite">{message}</p>{/if}
 </section>
 

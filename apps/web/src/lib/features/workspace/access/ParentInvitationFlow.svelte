@@ -7,6 +7,7 @@
         type ApiActionResult,
     } from '$lib/services/api';
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
+    import { useI18n } from '$lib/i18n/context';
 
     export let showTelegramInvite = false;
     export let onTelegramInvite: () => void = () => {};
@@ -18,6 +19,7 @@
     let busy = false;
     let error = '';
     let status = '';
+    const i18n = useI18n();
 
     export async function reload(): Promise<void> {
         loading = true;
@@ -32,11 +34,12 @@
 
     function label(parent: ParentMembership): string {
         return parent.displayName?.trim() || parent.email?.trim() || parent.telegramDisplayName?.trim()
-            || (parent.telegramUsername ? `@${parent.telegramUsername}` : 'Unknown parent');
+            || (parent.telegramUsername ? `@${parent.telegramUsername}` : $i18n.t('app.workspaceAccess.unknownParent'));
     }
 
     function permissionLabel(value: MembershipPermission): string {
-        return value === 'family_admin' ? 'Family admin' : value === 'editor' ? 'Editor' : 'Viewer';
+        return value === 'family_admin' ? $i18n.t('app.workspaceAccess.familyAdmin')
+            : value === 'editor' ? $i18n.t('app.workspaceAccess.editor') : $i18n.t('app.workspaceAccess.viewer');
     }
 
     async function run(action: Promise<ApiActionResult<unknown>>, success: string): Promise<void> {
@@ -51,30 +54,30 @@
     }
 
     async function invite(): Promise<void> {
-        if (!email.trim()) { error = 'Enter an email address.'; return; }
-        await run(addParentMembership({ email: email.trim(), permission }), 'Invitation sent.');
+        if (!email.trim()) { error = $i18n.t('app.workspaceAccess.emailRequired'); return; }
+        await run(addParentMembership({ email: email.trim(), permission }), $i18n.t('app.workspaceAccess.invitationSent'));
         if (!error) email = '';
     }
 </script>
 
 <section class="access-flow" aria-labelledby="parent-access-heading">
     <div class="heading-row">
-        <div><p class="eyebrow">Workspace access</p><h2 id="parent-access-heading">Parents and invitations</h2></div>
-        <span class="badge">Server-authorized</span>
+        <div><p class="eyebrow">{$i18n.t('app.workspaceAccess.eyebrow')}</p><h2 id="parent-access-heading">{$i18n.t('app.workspaceAccess.title')}</h2></div>
+        <span class="badge">{$i18n.t('app.workspaceAccess.serverAuthorized')}</span>
     </div>
-    <p class="hint">Pending invitations are not active members until the recipient accepts them.</p>
+    <p class="hint">{$i18n.t('app.workspaceAccess.pendingHint')}</p>
 
-    {#if loading}<p class="hint" aria-live="polite">Loading access…</p>
-    {:else if parents.length === 0}<p class="empty">No parent memberships yet.</p>
+    {#if loading}<p class="hint" aria-live="polite">{$i18n.t('app.workspaceAccess.loading')}</p>
+    {:else if parents.length === 0}<p class="empty">{$i18n.t('app.workspaceAccess.empty')}</p>
     {:else}
-        <div class="members" role="list" aria-label="Parent memberships">
+        <div class="members" role="list" aria-label={$i18n.t('app.workspaceAccess.memberships')}>
             {#each parents as parent (parent.id)}
                 <div class="member" role="listitem">
                     <div class="member-main"><strong>{label(parent)}</strong><span>{parent.email ?? 'Telegram only'} · {permissionLabel(parent.permission)}</span></div>
                     <span class:pending={parent.status === 'pending'} class="state">{parent.status}</span>
                     {#if parent.status === 'pending'}
-                        <button type="button" disabled={busy} on:click={() => run(resendParentInvitation(parent.id), 'Invitation resent.')}>Resend</button>
-                        <button type="button" class="quiet-danger" disabled={busy} on:click={() => run(revokeParentInvitation(parent.id), 'Invitation revoked.')}>Revoke</button>
+                        <button type="button" disabled={busy} on:click={() => run(resendParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationResent'))}>{$i18n.t('app.workspaceAccess.resend')}</button>
+                        <button type="button" class="quiet-danger" disabled={busy} on:click={() => run(revokeParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationRevoked'))}>{$i18n.t('app.workspaceAccess.revoke')}</button>
                     {/if}
                 </div>
             {/each}
@@ -82,13 +85,13 @@
     {/if}
 
     <div class="invite-form" aria-label="Invite a parent">
-        <label for="workspace-parent-email">Parent email</label>
+        <label for="workspace-parent-email">{$i18n.t('app.workspaceAccess.emailLabel')}</label>
         <div class="invite-controls">
-            <input id="workspace-parent-email" type="email" autocomplete="email" bind:value={email} placeholder="name@example.com" disabled={busy} />
-            <select bind:value={permission} aria-label="Parent permission" disabled={busy}>
-                <option value="editor">Editor</option><option value="viewer">Viewer</option>
+            <input id="workspace-parent-email" type="email" autocomplete="email" bind:value={email} placeholder={$i18n.t('app.workspaceAccess.emailPlaceholder')} disabled={busy} />
+            <select bind:value={permission} aria-label={$i18n.t('app.workspaceAccess.permission')} disabled={busy}>
+                <option value="editor">{$i18n.t('app.workspaceAccess.editor')}</option><option value="viewer">{$i18n.t('app.workspaceAccess.viewer')}</option>
             </select>
-            <button type="button" disabled={busy} on:click={invite}>{busy ? 'Saving…' : 'Send invite'}</button>
+            <button type="button" disabled={busy} on:click={invite}>{busy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.workspaceAccess.sendInvite')}</button>
         </div>
     </div>
     {#if showTelegramInvite}<button class="secondary" type="button" on:click={onTelegramInvite}>Invite through Telegram</button>{/if}
