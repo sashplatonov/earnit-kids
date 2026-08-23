@@ -31,16 +31,16 @@ button,input{font:inherit}
 .skip-link:focus{transform:none}
 
 .site-header{position:sticky;top:0;z-index:30;background:rgba(247,248,251,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(221,227,235,.9)}
-.header-row{display:flex;align-items:center;gap:16px;min-height:70px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:850;white-space:nowrap;letter-spacing:-.02em}
+.site-header .container{max-width:1280px}
+.header-row{display:flex;align-items:center;gap:12px;min-height:70px}
+.brand{display:flex;flex:0 0 auto;align-items:center;gap:10px;font-weight:850;white-space:nowrap;letter-spacing:-.02em}
 .brand img{width:38px;height:38px;border-radius:12px}
-.tabs{display:flex;gap:3px;overflow-x:auto;padding:6px;background:#eef2f7;border:1px solid #e1e6ed;border-radius:13px;margin-left:auto;scrollbar-width:none}
+.tabs{display:flex;flex:1 1 0;min-width:0;justify-content:flex-start;gap:3px;overflow-x:auto;padding:6px;background:#eef2f7;border:1px solid #e1e6ed;border-radius:13px;margin-left:0;scrollbar-width:none;overscroll-behavior-x:contain}
 .tabs::-webkit-scrollbar{display:none}
-.tab{white-space:nowrap;padding:8px 11px;border-radius:9px;color:#5b6678;font-size:13px;font-weight:750}
+.tab{display:flex;align-items:center;justify-content:center;min-height:44px;white-space:nowrap;padding:8px 11px;border-radius:9px;color:#5b6678;font-size:13px;font-weight:750}
 .tab:hover{color:var(--blue);background:#f9fbff}
 .tab.active{color:var(--blue);background:#fff;box-shadow:0 1px 4px rgba(37,61,97,.09)}
-.header-cta{margin-left:3px}
-.browser-cta{white-space:nowrap}
+.header-cta{flex:0 0 auto;margin-left:0;padding-inline:13px;white-space:nowrap}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 15px;border-radius:12px;border:1px solid transparent;font-weight:800;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}
 .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -123,11 +123,14 @@ h3{font-size:19px}
 .mobile-cta{display:none}
 .public-access-status{margin:0}
 
-@media(max-width:900px){
+@media(max-width:1210px){
   .container{width:min(calc(100% - 26px),var(--max))}
   .header-row{flex-wrap:wrap;gap:8px;padding:8px 0}
-  .tabs{order:3;width:100%;margin-left:0}
+  .tabs{order:3;flex:1 0 100%;width:100%;flex-wrap:wrap;overflow:visible;margin-left:0}
+  .tab{flex:1 1 120px;text-align:center}
   .header-cta{margin-left:auto}
+}
+@media(max-width:900px){
   .hero-grid,.split{grid-template-columns:1fr}
   .hero-card{max-width:560px}
   .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -138,8 +141,8 @@ h3{font-size:19px}
   .header-row{padding:7px 0 6px}
   .brand{font-size:15px}.brand img{width:32px;height:32px;border-radius:10px}
   .header-cta{display:none}
-  .tabs{gap:2px;padding:4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
-  .tab{flex:0 0 auto;scroll-snap-align:start;padding:7px 9px;font-size:12px}
+  .tabs{gap:2px;padding:4px}
+  .tab{flex:1 1 calc(33.333% - 2px);min-height:44px;padding:7px 6px;font-size:12px;line-height:1.2;white-space:normal}
   .hero{padding:23px 0 26px}.hero-grid{gap:17px}
   .eyebrow{font-size:11px;margin-bottom:10px}
   h1{font-size:clamp(33px,10vw,41px)}
@@ -162,13 +165,14 @@ h3{font-size:19px}
   .miniapp-carousel{width:100%;padding:0 30px}
   .carousel-slide img{height:285px;border-radius:12px}
   .carousel-arrow{top:125px;width:31px;height:31px;font-size:21px}.carousel-prev{left:0}.carousel-next{right:0}
-  .footer{padding:24px 0 78px}.footer-row{flex-direction:column;align-items:flex-start;gap:7px;padding-top:16px}
+  main{padding-bottom:120px}
+  .footer{padding:24px 0 130px}.footer-row{flex-direction:column;align-items:flex-start;gap:7px;padding-top:16px}
   .mobile-cta{display:flex;position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:50;min-height:48px;border-radius:14px;box-shadow:0 10px 30px rgba(29,79,185,.25)}
   .mobile-browser-cta{display:flex;bottom:max(62px,calc(env(safe-area-inset-bottom) + 54px));box-shadow:0 5px 18px rgba(32,46,76,.15)}
 }
 @media(max-width:380px){
   .container{width:calc(100% - 16px)}
-  .tab{font-size:11px;padding:7px 8px}
+  .tab{font-size:11px;padding:7px 5px}
   h1{font-size:31px}
   .metric-row{grid-template-columns:1fr}
   .metric{display:flex;align-items:baseline;gap:6px}
