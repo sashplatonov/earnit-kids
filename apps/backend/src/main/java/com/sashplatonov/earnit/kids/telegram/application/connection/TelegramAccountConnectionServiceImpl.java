@@ -61,20 +61,6 @@ public class TelegramAccountConnectionServiceImpl implements TelegramAccountConn
                                          TelegramInitDataVerifier verifier,
                                          TelegramConfig config,
                                          SecureTokenGenerator tokens,
-                                         TimeProvider timeProvider) {
-        this(families, parents, memberships, identities, challenges, audits, verifier, config, tokens,
-            timeProvider, null);
-    }
-
-    TelegramAccountConnectionServiceImpl(FamilyRepository families,
-                                         ParentAccountRepository parents,
-                                         FamilyParentMembershipRepository memberships,
-                                         TelegramIdentityRepository identities,
-                                         TelegramParentLinkChallengeRepository challenges,
-                                         TelegramSecurityAuditEventRepository audits,
-                                         TelegramInitDataVerifier verifier,
-                                         TelegramConfig config,
-                                         SecureTokenGenerator tokens,
                                          TimeProvider timeProvider,
                                          TelegramFeatureGate featureGate) {
         this.families = families;
