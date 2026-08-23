@@ -85,7 +85,7 @@
         max-width: min(28rem, calc(100vw - 2rem));
         padding: 0.75rem 1rem;
         color: #2b211b;
-        background: #fff8ee;
+        background: #f8fafc;
         border: 1px solid #d9b88e;
         border-radius: 0.75rem;
         box-shadow: 0 0.5rem 1.5rem rgb(43 33 27 / 18%);

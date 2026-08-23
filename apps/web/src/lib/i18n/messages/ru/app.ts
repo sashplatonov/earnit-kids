@@ -119,7 +119,7 @@ export const appMessages = {
     },
     telegram: {
         shell: {
-            workspace: 'Рабочее пространство родителя',
+            workspace: 'Моя семья',
             loadError: 'Не удалось загрузить семью. Попробуйте ещё раз.',
             refreshError: 'Не удалось обновить семью. Попробуйте ещё раз.',
             loading: 'Загружаем семью…',
@@ -132,7 +132,7 @@ export const appMessages = {
             publicSiteAria: 'Открыть сайт EarnIt Kids',
         },
         childShell: {
-            workspace: 'Рабочее пространство ребёнка',
+            workspace: 'Мой маршрут',
             loadError: 'Не удалось загрузить пространство. Попробуйте ещё раз.',
             refreshError: 'Не удалось обновить пространство.',
             activityError: 'Не удалось загрузить активность.',

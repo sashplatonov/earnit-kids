@@ -5,8 +5,8 @@
     "start_url": "/workspace",
     "scope": "/workspace",
     "display": "standalone",
-    "background_color": "#fff8ee",
-    "theme_color": "#fff3e0",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
     "orientation": "portrait",
     "lang": "ru",
     "icons": [

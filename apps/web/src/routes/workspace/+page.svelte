@@ -11,12 +11,24 @@
     });
 </script>
 
-<svelte:head><title>EarnIt Kids · Рабочее пространство</title></svelte:head>
+<svelte:head>
+    <title>EarnIt Kids · {data.role === 'child' ? 'Мой маршрут' : 'Моя семья'}</title>
+</svelte:head>
 
 <WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} showBrowserPush={false} />
 
 <style>
     :global(body.workspace-page) {
+        --color-bg: #f8fafc;
+        --color-bg-light: #f1f5fd;
+        --color-bg-card: #ffffff;
+        --color-bg-hover: #eef4ff;
+        --color-text-high-contrast: #0f172a;
+        --color-text-strong: #18243d;
+        --color-text-soft: #33415f;
+        --color-text-muted: #66718a;
+        --color-border-strong: #dfe7f5;
+        background: #f8fafc;
         padding-top: 0 !important;
     }
 </style>
