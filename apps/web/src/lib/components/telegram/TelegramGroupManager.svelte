@@ -251,7 +251,7 @@
             </div>
         {/if}
 
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.groupManager.close')}</button>
+        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.close')} />{$i18n.t('app.telegram.groupManager.close')}</button>
     </div>
 {/if}
 
@@ -272,8 +272,8 @@
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
 
-        <button class="primary" type="button" on:click={saveGroup}>{$i18n.t('app.telegram.groupManager.save')}</button>
-        <button class="close" type="button" on:click={() => formOpen = false}>{$i18n.t('app.telegram.groupManager.cancel')}</button>
+        <button class="primary" type="button" on:click={saveGroup}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupManager.save')} />{$i18n.t('app.telegram.groupManager.save')}</button>
+        <button class="close" type="button" on:click={() => formOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
     </div>
 {/if}
 
@@ -289,7 +289,7 @@
             {/each}
             <button class="sheet-item" type="button" on:click={() => confirmMoveTarget(null)}>{$i18n.t('app.telegram.groupManager.leaveUngrouped')}</button>
         </div>
-        <button class="close" type="button" on:click={() => moveTargetOpen = false}>{$i18n.t('app.telegram.groupManager.cancel')}</button>
+        <button class="close" type="button" on:click={() => moveTargetOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
     </div>
 {/if}
 
@@ -309,8 +309,8 @@
                 </div>
             {/each}
         </div>
-        <button class="primary" type="button" on:click={saveReorder}>{$i18n.t('app.telegram.groupManager.done')}</button>
-        <button class="close" type="button" on:click={() => reorderOpen = false}>{$i18n.t('app.telegram.groupManager.cancel')}</button>
+        <button class="primary" type="button" on:click={saveReorder}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupManager.done')} />{$i18n.t('app.telegram.groupManager.done')}</button>
+        <button class="close" type="button" on:click={() => reorderOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
     </div>
 {/if}
 
@@ -339,13 +339,13 @@
     .reorder-btn { width:2.75rem; height:2.75rem; display:grid; place-items:center; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#66718a; cursor:pointer; }
     .reorder-btn:disabled { opacity:.4; cursor:not-allowed; }
     .muted { color:#66718a; }
-    .close { width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .close { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #f1c7ca; border-radius:.7rem; background:#fff7f7; color:#a84a50; font:inherit; font-weight:600; cursor:pointer; }
     label { display:block; margin:.6rem 0 .3rem; color:#33415f; font-weight:600; font-size:.85rem; }
     .input { width:100%; min-height:2.75rem; padding:.5rem .7rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#18243d; font:inherit; }
     .field { display:flex; align-items:center; gap:.6rem; width:100%; min-height:2.75rem; padding:.4rem .6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#18243d; font:inherit; cursor:pointer; }
     .gico { display:grid; place-items:center; width:2rem; height:2rem; flex:0 0 auto; border-radius:.55rem; background:#eef0ff; color:#5b63e9; }
     .grow { flex:1; min-width:0; text-align:left; }
-    .primary { width:100%; min-height:2.75rem; margin-top:.75rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:750; cursor:pointer; }
+    .primary { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.75rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:750; cursor:pointer; }
     .error { color:#c63c42; font-size:.85rem; margin:.4rem 0 0; }
     .sheet-item { display:flex; align-items:center; width:100%; min-height:2.75rem; padding:0 .6rem; border:0; border-bottom:1px solid #edf0f5; border-radius:0; background:#fff; color:#18243d; font:inherit; font-weight:600; text-align:left; cursor:pointer; }
     .sheet-item:last-child { border-bottom:0; }

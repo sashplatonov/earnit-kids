@@ -97,25 +97,25 @@
                     <p class="confirm-title">{$i18n.t('app.telegram.emailSettings.unlinkConfirm')}</p>
                     <p class="confirm-meta">{$i18n.t('app.telegram.emailSettings.unlinkDescription')}</p>
                     <button class="deactivate" type="button" disabled={busy} on:click={submitUnlink}>{$i18n.t('app.telegram.emailSettings.unlinkConfirmLabel')}</button>
-                    <button class="close" type="button" disabled={busy} on:click={() => confirmUnlink = false}>{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+                    <button class="close" type="button" disabled={busy} on:click={() => confirmUnlink = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
                 </div>
             {/if}
         {:else if view === 'change'}
             <label for="email-new">{$i18n.t('app.telegram.emailSettings.newEmailLabel')}</label>
             <input id="email-new" class="input" type="email" bind:value={newEmail} placeholder="name@example.com" />
             <button class="primary" type="button" disabled={busy} on:click={submitChange}>{$i18n.t('app.telegram.emailSettings.continue')}</button>
-            <button class="close" type="button" on:click={() => { view = 'main'; error = ''; }}>{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+            <button class="close" type="button" on:click={() => { view = 'main'; error = ''; }}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
         {:else}
             <label for="password-current">{$i18n.t('app.telegram.emailSettings.currentPasswordLabel')}</label>
             <input id="password-current" class="input" type="password" bind:value={currentPassword} />
             <label for="password-new">{$i18n.t('app.telegram.emailSettings.newPasswordLabel')}</label>
             <input id="password-new" class="input" type="password" bind:value={newPassword} />
             <button class="primary" type="button" disabled={busy} on:click={submitPassword}>{$i18n.t('app.telegram.emailSettings.changePassword')}</button>
-            <button class="close" type="button" on:click={() => { view = 'main'; error = ''; }}>{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+            <button class="close" type="button" on:click={() => { view = 'main'; error = ''; }}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
         {/if}
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 
@@ -140,5 +140,5 @@
     .error { margin:.6rem 0 0; color:#a33b3b; }
     .primary { width:100%; min-height:2.75rem; margin-top:.9rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
     .deactivate { width:100%; min-height:2.75rem; border:0; border-radius:.7rem; background:#c63c42; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
-    .close { width:100%; min-height:2.75rem; margin-top:.5rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .close { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.5rem; border:1px solid #f1c7ca; border-radius:.7rem; background:#fff7f7; color:#a84a50; font:inherit; font-weight:600; cursor:pointer; }
 </style>

@@ -45,7 +45,7 @@
 
         <p class="hint">{$i18n.t('app.telegram.myAccount.hint')}</p>
         {#if error}<p class="error" role="alert">{error}</p>{/if}
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 
@@ -67,5 +67,5 @@
     .badge-active { background:#eaf7ef; color:#17884b; }
     .hint { margin:.7rem 0 0; color:#8a93a8; font-size:.8rem; line-height:1.4; }
     .error { color:#a33b3b; }
-    .close { width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .close { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #f1c7ca; border-radius:.7rem; background:#fff7f7; color:#a84a50; font:inherit; font-weight:600; cursor:pointer; }
 </style>

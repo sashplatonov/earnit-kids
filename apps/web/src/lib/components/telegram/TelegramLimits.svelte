@@ -104,8 +104,8 @@
         {#if error}<p class="error" role="alert">{error}</p>{/if}
         {#if saved}<p class="saved" role="status">{$i18n.t('app.telegram.limits.saved')}</p>{/if}
 
-        <button class="primary" type="button" disabled={busy} on:click={save}>{$i18n.t('app.telegram.limits.save')}</button>
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+        <button class="primary" type="button" disabled={busy} on:click={save}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.limits.save')} />{$i18n.t('app.telegram.limits.save')}</button>
+        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
     </div>
 {/if}
 
@@ -131,7 +131,7 @@
     .stepper-value { min-height:2.75rem; border:1px solid #cfd6e4; border-radius:.7rem; background:#fff; color:#18243d; font:inherit; font-weight:700; text-align:center; }
     .error { margin:.6rem 0 0; color:#a33b3b; }
     .saved { margin:.6rem 0 0; color:#17884b; }
-    .primary { width:100%; min-height:2.75rem; margin-top:.9rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
+    .primary { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.9rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
     .primary:disabled { cursor:wait; opacity:.6; }
-    .close { width:100%; min-height:2.75rem; margin-top:.5rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .close { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.5rem; border:1px solid #f1c7ca; border-radius:.7rem; background:#fff7f7; color:#a84a50; font:inherit; font-weight:600; cursor:pointer; }
 </style>

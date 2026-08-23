@@ -103,6 +103,7 @@ import {
 export const telegramIconMap = {
     approve: Check,
     reject: X,
+    close: X,
     done: Check,
     check: Check,
     requestReward: Gift,

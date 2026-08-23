@@ -63,7 +63,7 @@
             {/each}
         </div>
         {#if error}<p class="error" role="alert">{error}</p>{/if}
-        <button class="close" type="button" on:click={() => open = false} disabled={switching}>{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" on:click={() => open = false} disabled={switching}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 
@@ -89,5 +89,5 @@
     .badge { display:block; margin-top:.1rem; color:#3867d6; font-size:.72rem; font-weight:700; }
     .child-balance { display:inline-flex; align-items:center; gap:.3rem; color:#573d00; font-weight:700; white-space:nowrap; }
     .error { margin:.6rem 0 0; color:#a33b3b; }
-    .close { width:100%; min-height:2.75rem; margin-top:.75rem; border:1px solid #dfe4ee; border-radius:.75rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .close { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.75rem; border:1px solid #f1c7ca; border-radius:.75rem; background:#fff7f7; color:#a84a50; font:inherit; font-weight:600; cursor:pointer; }
 </style>
