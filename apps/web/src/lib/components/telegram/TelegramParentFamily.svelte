@@ -23,6 +23,8 @@
 
     const i18n = useI18n();
 
+    export let browserPushEnabled = true;
+
     let inviteOpen = false;
     let newChildName = '';
     let addChildBusy = false;
@@ -206,7 +208,7 @@
 </div>
 
 <TelegramParentAccess open={accessOpen} onClose={() => accessOpen = false} />
-<TelegramNotifications open={notificationsOpen} onClose={() => notificationsOpen = false} />
+<TelegramNotifications open={notificationsOpen} onClose={() => notificationsOpen = false} {browserPushEnabled} />
 <TelegramMyAccount open={myAccountOpen} onClose={() => myAccountOpen = false} onOpenEmail={() => { myAccountOpen = false; emailSettingsOpen = true; }} />
 <TelegramEmailSettings open={emailSettingsOpen} onClose={() => emailSettingsOpen = false} />
 <TelegramImport open={importOpen} onClose={() => importOpen = false} />

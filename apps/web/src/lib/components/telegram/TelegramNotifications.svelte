@@ -12,6 +12,7 @@
 
     export let open = false;
     export let onClose: () => void = () => {};
+    export let browserPushEnabled = true;
 
     const i18n = useI18n();
 
@@ -140,7 +141,7 @@
     <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="notifications-title" tabindex="-1">
         <h2 id="notifications-title">{$i18n.t('app.telegram.notifications.title')}</h2>
-        <BrowserPushControls enabled={false} />
+        <BrowserPushControls enabled={browserPushEnabled} />
 
         {#if loading}
             <p class="muted">{$i18n.t('app.telegram.shell.loading')}</p>

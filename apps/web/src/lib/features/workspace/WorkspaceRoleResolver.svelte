@@ -11,6 +11,7 @@
     export let showBrowserPush = true;
     export let showSessionActions = false;
     export let showAccessPanel = false;
+    export let browserPushEnabled = true;
 
     let viewAsChild = false;
 
@@ -21,7 +22,7 @@
 
 {#if showSessionActions}<WorkspaceSessionActions />{/if}
 {#if resolveWorkspaceRole(role) === 'parent' && !viewAsChild}
-    <ParentWorkspaceShell {publicOrigin} {showAccessPanel} onViewAsChild={showChildPreview} />
+    <ParentWorkspaceShell {publicOrigin} {showAccessPanel} {browserPushEnabled} onViewAsChild={showChildPreview} />
 {:else}
     <ChildWorkspaceShell {publicOrigin} onExitPreview={() => viewAsChild = false} />
 {/if}
