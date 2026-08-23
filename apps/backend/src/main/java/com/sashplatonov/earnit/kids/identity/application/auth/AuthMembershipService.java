@@ -32,7 +32,7 @@ class AuthMembershipService {
 
         List<AuthPayload.FamilyChoice> choices = buildFamilyChoices(memberships);
         if (memberships.size() == 1) {
-            return authenticateWithMembership(email, memberships.get(0));
+            return authenticateWithMembership(email, parent, memberships.get(0));
         }
 
         return OperationResult.success(
@@ -92,7 +92,7 @@ class AuthMembershipService {
         return choices;
     }
 
-    private OperationResult<AuthPayload> authenticateWithMembership(String email,
+    private OperationResult<AuthPayload> authenticateWithMembership(String email, ParentAccountEntity parent,
                                                                     FamilyParentMembershipEntity membership) {
         var familyOpt = familyRepository.findByDbId(membership.getFamilyId());
         if (familyOpt.isEmpty()) {
@@ -107,6 +107,7 @@ class AuthMembershipService {
         familyRepository.updateLastActivity(family.getFamilyId());
         String permission = membership.getPermission().name();
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), email, "admin", null, null, permission, null, false));
+                new AuthPayload(family.getFamilyId(), email, "admin", null, null, permission, null, false,
+                    parent.getId()));
     }
 }

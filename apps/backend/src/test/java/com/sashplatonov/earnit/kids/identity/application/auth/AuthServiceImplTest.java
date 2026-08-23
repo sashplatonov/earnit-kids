@@ -350,6 +350,7 @@ class AuthServiceImplTest {
         assertThat(loginResult).isInstanceOf(OperationResult.Success.class);
         AuthPayload payload = ((OperationResult.Success<AuthPayload>) loginResult).value();
         assertThat(payload.role()).isEqualTo("admin");
+        assertThat(payload.parentAccountId()).isEqualTo(1);
     }
 
     @Test
