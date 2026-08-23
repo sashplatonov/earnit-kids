@@ -6,4 +6,4 @@
 
 </script>
 
-<WorkspaceRoleResolver {role} {publicOrigin} allowPreview showBrowserPush={false} browserPushEnabled={false} />
+<WorkspaceRoleResolver {role} {publicOrigin} allowPreview showBrowserPush={false} />

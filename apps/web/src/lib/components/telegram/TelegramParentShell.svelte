@@ -20,7 +20,6 @@
 
     export let publicOrigin = '';
     export let onViewAsChild: () => void = () => {};
-    export let browserPushEnabled = true;
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
@@ -68,7 +67,7 @@
         {:else if view === 'rewards'}
             <TelegramParentRewards />
         {:else}
-            <TelegramParentFamily {browserPushEnabled} />
+            <TelegramParentFamily />
         {/if}
     </div>
     <TelegramConfirmModal />
