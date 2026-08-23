@@ -6,7 +6,6 @@
     import { acceptParentTelegramInvite } from '$lib/services/api';
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
     import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
-    import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
 
     const i18n = useI18n();
 
@@ -94,7 +93,7 @@
 {:else}
     <main class="telegram-page" aria-live="polite">
         <div class="telegram-card">
-            <div class="telegram-mark" aria-hidden="true"><TelegramCoin size={44} /></div>
+            <img class="telegram-mark" src="/img/public/app-icon.png" alt="" width="88" height="88" />
             <h1>EarnIt Kids</h1>
             {#if state === 'loading'}
                 <p>{$i18n.t('app.telegram.entry.checkingSession')}</p>
@@ -138,8 +137,11 @@
     }
 
     .telegram-mark {
-        display: grid;
-        place-items: center;
+        width: 5.5rem;
+        height: 5.5rem;
+        margin: 0 auto 0.5rem;
+        border-radius: 1.35rem;
+        box-shadow: 0 0.65rem 1.25rem rgb(39 95 214 / 15%);
     }
 
     h1 {
