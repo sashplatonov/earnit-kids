@@ -15,7 +15,6 @@ import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.Telegram
 import com.sashplatonov.earnit.kids.util.ServiceResults;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
-import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -40,7 +39,6 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
     private TelegramInitDataVerifier verifier;
     private TelegramConfig config;
     private SecureTokenGenerator tokens;
-    private TimeProvider timeProvider;
 
     TelegramParentInvitationServiceImpl() {
     }
@@ -53,8 +51,7 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
                                         TelegramIdentityService identityService,
                                         TelegramInitDataVerifier verifier,
                                         TelegramConfig config,
-                                        SecureTokenGenerator tokens,
-                                        TimeProvider timeProvider) {
+                                        SecureTokenGenerator tokens) {
         this.families = families;
         this.invitations = invitations;
         this.parents = parents;
@@ -63,7 +60,6 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
         this.verifier = verifier;
         this.config = config;
         this.tokens = tokens;
-        this.timeProvider = timeProvider;
     }
 
     @Override

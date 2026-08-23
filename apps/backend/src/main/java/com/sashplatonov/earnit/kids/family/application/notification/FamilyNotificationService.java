@@ -8,4 +8,6 @@ public interface FamilyNotificationService {
 
     OperationResult<Void> setPreference(String familyId, String scope, Integer childId,
                                         String key, boolean enabled);
+
+    boolean isEnabled(int familyDbId, String scope, String key, Integer childId);
 }

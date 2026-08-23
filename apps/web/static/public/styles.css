@@ -40,6 +40,7 @@ button,input{font:inherit}
 .tab:hover{color:var(--blue);background:#f9fbff}
 .tab.active{color:var(--blue);background:#fff;box-shadow:0 1px 4px rgba(37,61,97,.09)}
 .header-cta{margin-left:3px}
+.browser-cta{white-space:nowrap}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 15px;border-radius:12px;border:1px solid transparent;font-weight:800;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}
 .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -120,6 +121,7 @@ h3{font-size:19px}
 .footer-brand{display:flex;align-items:center;gap:8px;color:var(--text);font-weight:800}
 .footer-brand img{width:30px;height:30px;border-radius:9px}
 .mobile-cta{display:none}
+.public-access-status{margin:0}
 
 @media(max-width:900px){
   .container{width:min(calc(100% - 26px),var(--max))}
@@ -162,6 +164,7 @@ h3{font-size:19px}
   .carousel-arrow{top:125px;width:31px;height:31px;font-size:21px}.carousel-prev{left:0}.carousel-next{right:0}
   .footer{padding:24px 0 78px}.footer-row{flex-direction:column;align-items:flex-start;gap:7px;padding-top:16px}
   .mobile-cta{display:flex;position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:50;min-height:48px;border-radius:14px;box-shadow:0 10px 30px rgba(29,79,185,.25)}
+  .mobile-browser-cta{display:flex;bottom:max(62px,calc(env(safe-area-inset-bottom) + 54px));box-shadow:0 5px 18px rgba(32,46,76,.15)}
 }
 @media(max-width:380px){
   .container{width:calc(100% - 16px)}

@@ -38,4 +38,16 @@ class PublicOriginResolverTest {
         assertThat(new PublicOriginResolver(null).resolveAbsoluteAppUri("dashboard", context))
             .isEqualTo("https://app.test/dashboard");
     }
+
+    @Test
+    void validateLocalContinuation_acceptsApplicationPathsAndRejectsForeignForms() {
+        PublicOriginResolver resolver = new PublicOriginResolver("https://app.test");
+
+        assertThat(resolver.validateLocalContinuation("/workspace")).contains("/workspace");
+        assertThat(resolver.validateLocalContinuation("/en/telegram?tab=history")).contains("/en/telegram?tab=history");
+        assertThat(resolver.validateLocalContinuation("https://attacker.example")).isEmpty();
+        assertThat(resolver.validateLocalContinuation("//attacker.example")).isEmpty();
+        assertThat(resolver.validateLocalContinuation("/%2f%2fattacker.example")).isEmpty();
+        assertThat(resolver.validateLocalContinuation("/bad\npath")).isEmpty();
+    }
 }

@@ -59,14 +59,16 @@ public class ChildMagicLinkResource {
         return OperationResultResponses.toResponse(result, payload -> successResponse(payload, request),
             ignored -> Response.seeOther(
                 URI.create(publicOriginResolver.toAbsoluteRedirect("/login.html?error=invalid_token", request)))
+                .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+                .header("Pragma", "no-cache")
                 .build());
     }
 
     private Response successResponse(AuthPayload payload, ContainerRequestContext request) {
-        var cookies = cookieBuilder.buildAuthCookies(
+        var cookies = cookieBuilder.buildRotatedAuthCookies(
             payload.email(), payload.role(), payload.familyId(), payload.childId(),
             payload.permission());
-        URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/", request));
+        URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/workspace", request));
         Response.ResponseBuilder response = Response.seeOther(locationUri)
             .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
             .header("Pragma", "no-cache")

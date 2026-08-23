@@ -1,11 +1,8 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
-    import {
-        completeTelegramAccountLink,
-        exchangeTelegramInitData,
-        initializeTelegramWebApp,
-    } from '$lib/services/telegram';
+    import { initializeTelegramWebApp } from '$lib/services/telegram';
+    import { bootstrapTelegramWorkspace } from '$lib/features/telegram/TelegramWorkspaceBootstrap';
     import { acceptParentTelegramInvite } from '$lib/services/api';
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
     import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
@@ -22,28 +19,11 @@
     let parentInviteToken = '';
     let inviteBusy = false;
 
-    async function errorCode(response: Response): Promise<string | null> {
-        try {
-            const payload: unknown = await response.clone().json();
-            if (payload && typeof payload === 'object'
-                && typeof (payload as { errorCode?: unknown }).errorCode === 'string') {
-                return (payload as { errorCode: string }).errorCode;
-            }
-        } catch {
-            // The endpoint may intentionally return an empty unavailable response.
-        }
-        return null;
-    }
-
     // EXPLAIN: Pairing tokens are hex strings (SecureTokenGenerator). The public
     // EXPLAIN: site deep link passes a short command (e.g. "home") as startapp,
     // EXPLAIN: which is not a pairing token — skip the pairing attempt for
     // EXPLAIN: non-hex values so the user still lands in the Mini App and logs
     // EXPLAIN: in normally.
-    function isHexToken(value: string): boolean {
-        return /^[0-9a-fA-F]+$/.test(value);
-    }
-
     async function authenticate(skipParentInvite = false): Promise<void> {
         const telegram = initializeTelegramWebApp();
         if (!telegram) {
@@ -65,34 +45,17 @@
                 state = 'parent-invite';
                 return;
             }
-            const pairingToken = rawStartParam && isHexToken(rawStartParam) ? rawStartParam : '';
-            let pairingFailed = false;
-            const childInviteToken = rawStartParam?.startsWith('ci_') ? rawStartParam : '';
-            if (pairingToken && !childInviteToken) {
-                const pairing = await completeTelegramAccountLink(pairingToken, telegram.initData);
-                pairingFailed = !pairing.ok;
-            }
-            const response = await exchangeTelegramInitData(telegram.initData, childInviteToken || null);
-            if (response.ok) {
+            const result = await bootstrapTelegramWorkspace();
+            if (result.state === 'ready') {
                 state = 'ready';
-                try {
-                    const payload = await response.clone().json() as { role?: unknown };
-                    verifiedRole = typeof payload.role === 'string' ? payload.role : '';
-                } catch {
-                    verifiedRole = '';
-                }
+                verifiedRole = result.role ?? '';
                 return;
             }
-            const code = await errorCode(response);
-            state = response.status === 404
-                ? 'unavailable'
-                : pairingFailed ? 'retry'
-                    : code === 'TELEGRAM_IDENTITY_UNLINKED' ? 'unlinked' : 'retry';
-            message = response.status === 404
+            state = result.state === 'unavailable'
+                ? 'unavailable' : result.state === 'unlinked' ? 'unlinked' : result.state === 'non-telegram' ? 'non-telegram' : 'retry';
+            message = result.state === 'unavailable'
                 ? $i18n.t('app.telegram.entry.unavailable')
-                : pairingFailed
-                    ? $i18n.t('app.telegram.entry.linkingError')
-                    : $i18n.t('app.telegram.entry.verifyError');
+                : $i18n.t('app.telegram.entry.verifyError');
         } catch {
             state = 'retry';
             message = $i18n.t('app.telegram.entry.networkError');

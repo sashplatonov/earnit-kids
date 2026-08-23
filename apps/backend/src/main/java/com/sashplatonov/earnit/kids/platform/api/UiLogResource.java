@@ -17,24 +17,24 @@ public class UiLogResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response receive(UiLogMessage msg) {
-        if (msg == null || msg.message == null) {
+        if (msg == null || msg.message() == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        String level = (msg.level != null) ? msg.level.toLowerCase() : "info";
+        String level = (msg.level() != null) ? msg.level().toLowerCase() : "info";
         switch (level) {
             case "debug":
-                LOG.debug(msg.message);
+                LOG.debug(msg.message());
                 break;
             case "warn":
-                LOG.warn(msg.message);
+                LOG.warn(msg.message());
                 break;
             case "error":
-                LOG.error(msg.message);
+                LOG.error(msg.message());
                 break;
             case "info":
             default:
-                LOG.info(msg.message);
+                LOG.info(msg.message());
                 break;
         }
         return Response.ok().build();

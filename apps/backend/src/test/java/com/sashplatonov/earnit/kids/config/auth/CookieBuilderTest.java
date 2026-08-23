@@ -95,7 +95,7 @@ class CookieBuilderTest {
 
         List<String> cookies = builder.buildLogoutCookies();
 
-        assertThat(cookies).hasSize(6);
+        assertThat(cookies).hasSize(7);
         assertThat(cookies).allSatisfy(cookie -> assertThat(cookie).contains("Max-Age=0"));
     }
 }

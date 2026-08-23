@@ -246,7 +246,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(rejectButton).toHaveCSS('outline-width', '3px');
     await expect(rejectButton).toHaveCSS('outline-color', 'rgb(128, 170, 255)');
     await approveButton.click();
-    await expect(page.getByRole('alert')).toContainText(/This request could not be updated|Не удалось обновить заявку/);
+    await expect(page.getByRole('alert').filter({ hasText: /This request could not be updated|Не удалось обновить заявку/ })).toBeVisible();
     await requestRows.nth(1).getByRole('button', { name: /Reject request|Отклонить заявку/ }).click();
     const mobileNav = await page.getByRole('tablist').evaluate((node) => {
         const style = getComputedStyle(node);

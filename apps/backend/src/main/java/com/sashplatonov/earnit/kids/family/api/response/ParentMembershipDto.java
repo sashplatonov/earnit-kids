@@ -20,13 +20,23 @@ public record ParentMembershipDto(
     @Schema(description = "Membership permission")
     FamilyParentMembershipEntity.Permission permission,
     @Schema(description = "Membership status")
-    MembershipStatus status
+    MembershipStatus status,
+    @Schema(description = "Pending invitation status")
+    String invitationStatus
 ) {
     public ParentMembershipDto(
         Integer id,
         String email,
         FamilyParentMembershipEntity.Permission permission,
         MembershipStatus status) {
-        this(id, email, null, null, null, null, permission, status);
+        this(id, email, null, null, null, null, permission, status, null);
+    }
+
+    public ParentMembershipDto(
+        Integer id, String email, String displayName, Long telegramUserId,
+        String telegramUsername, String telegramDisplayName,
+        FamilyParentMembershipEntity.Permission permission, MembershipStatus status) {
+        this(id, email, displayName, telegramUserId, telegramUsername, telegramDisplayName,
+            permission, status, null);
     }
 }

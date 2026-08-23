@@ -43,6 +43,7 @@ class TelegramDeliveryPlannerTest {
         when(families.findFamilyIdByDbId(2)).thenReturn(Optional.of("family-2"));
         when(identities.findActiveChild(3)).thenReturn(Optional.of(identity));
         when(deliveries.findByEventAndRecipient(1L, 4)).thenReturn(Optional.empty());
+        when(events.allTransportsTerminal(1L)).thenReturn(true);
         when(deliveries.findByEvent(1L)).thenAnswer(invocation -> List.of(created.get()));
         org.mockito.Mockito.doAnswer(invocation -> { created.set(invocation.getArgument(0)); return null; }).when(deliveries).persist(org.mockito.ArgumentMatchers.any(TelegramDeliveryEntity.class));
 

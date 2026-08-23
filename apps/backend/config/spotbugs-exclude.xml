@@ -1,7 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
     <Match>
-        <Bug pattern="UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"/>
-        <Class name="com.sashplatonov.earnit.kids.api.UiLogMessage"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.identity.api.resource.auth.AuthGoogleResource"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.identity.api.resource.auth.AuthResource"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.platform.webpush.WebPushOutboxProcessor"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.platform.webpush.WebPushService"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.telegram.api.resource.TelegramMiniAppAuthResource"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.telegram.api.resource.TelegramParentInviteAcceptResource"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.telegram.application.auth.TelegramMiniAppAuthService"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.telegram.application.callback.TelegramMutationCallbackOperations"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="com.sashplatonov.earnit.kids.telegram.application.invitation.TelegramChildInvitationOperations"/>
     </Match>
 </FindBugsFilter>

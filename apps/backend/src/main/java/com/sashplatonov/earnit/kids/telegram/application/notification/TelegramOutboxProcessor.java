@@ -179,8 +179,7 @@ public class TelegramOutboxProcessor {
     }
 
     private void markEventComplete(ApplicationOutboxEventEntity event, Instant now) {
-        if (events.findById(event.getId()) != null
-            && deliveries.findByEvent(event.getId()).stream().allMatch(this::isTerminal)) {
+        if (events.findById(event.getId()) != null && events.allTransportsTerminal(event.getId())) {
             event.setPlanningStatus("COMPLETE");
             event.setPlanningCompletedAt(now);
         }

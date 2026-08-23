@@ -59,8 +59,12 @@ public class TelegramDeliveryPlanner {
             } else {
                 planned += planRecipients(event, now, notificationsEnabled);
             }
-            event.setPlanningCompletedAt(now);
-            event.setPlanningStatus(status(event));
+            if (events.allTransportsTerminal(event.getId())) {
+                event.setPlanningCompletedAt(now);
+                event.setPlanningStatus(status(event));
+            } else {
+                event.setPlanningStatus("PLANNED");
+            }
         }
         return planned;
     }

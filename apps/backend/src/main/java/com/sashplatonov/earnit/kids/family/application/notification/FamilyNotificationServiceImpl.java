@@ -112,6 +112,14 @@ public class FamilyNotificationServiceImpl implements FamilyNotificationService 
         return OperationResult.success(null);
     }
 
+    @Override
+    public boolean isEnabled(int familyDbId, String scope, String key, Integer childId) {
+        Map<String, Boolean> defaults = SCOPE_PARENT.equals(scope) ? PARENT_DEFAULTS : CHILD_DEFAULTS;
+        boolean fallback = defaults.getOrDefault(key, false);
+        return preferences.findOne(familyDbId, scope, childId, key)
+            .map(FamilyNotificationPreferenceEntity::isEnabled).orElse(fallback);
+    }
+
     private static NotificationPreferenceDto preference(String key, boolean fallback, Boolean stored) {
         return new NotificationPreferenceDto(key, stored != null ? stored : fallback);
     }

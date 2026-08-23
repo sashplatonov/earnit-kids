@@ -2,16 +2,20 @@ package com.sashplatonov.earnit.kids.family.application.membership;
 
 import com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
+import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationTokenHasher;
+import com.sashplatonov.earnit.kids.family.domain.model.invitation.ParentEmailInvitationEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.MembershipStatus;
 import com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.telegram.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.invitation.ParentEmailInvitationRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.identity.infrastructure.persistence.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramIdentityRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.platform.security.SecurityAuditWriter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -19,8 +23,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.security.SecureRandom;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,11 +43,17 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     private static final String ERROR_NOT_AUTHORIZED = "PARENT_MEMBERSHIP_FORBIDDEN";
     private static final String ERROR_LAST_ADMIN = "PARENT_LAST_ADMIN";
     private static final String ERROR_ADMIN_DELETE_FORBIDDEN = "PARENT_ADMIN_DELETE_FORBIDDEN";
+    private static final String ERROR_INVALID_EMAIL = "PARENT_INVALID_EMAIL";
+    private static final String ERROR_PENDING_INVITATION = "PARENT_INVITATION_EXISTS";
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final FamilyRepository familyRepository;
     private final ParentAccountRepository parentAccountRepository;
     private final FamilyParentMembershipRepository membershipRepository;
     private final TelegramIdentityRepository telegramIdentityRepository;
+    private final ParentEmailInvitationRepository invitationRepository;
+    private final SecurityAuditWriter securityAuditWriter;
+    private final ParentInvitationTokenHasher tokenHasher;
 
     @Override
     @Transactional
@@ -53,7 +65,10 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
         var memberships = membershipRepository.findByFamilyIdIncludingInactive(familyOpt.get().getId());
         if (memberships.isEmpty()) {
-            return OperationResult.success(List.of());
+            var invitations = invitationRepository.findPendingByFamily(familyOpt.get().getId()).stream()
+                .map(this::toInvitationDto)
+                .toList();
+            return OperationResult.success(invitations);
         }
 
         var parentIds = memberships.stream()
@@ -75,7 +90,10 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
                 LinkedHashMap::new));
         var dtos = memberships.stream()
             .map(m -> toDto(m, parentsById.get(m.getParentAccountId()), identitiesByParentId.get(m.getParentAccountId())))
-            .toList();
+            .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+        invitationRepository.findPendingByFamily(familyOpt.get().getId()).stream()
+            .map(this::toInvitationDto)
+            .forEach(dtos::add);
         return OperationResult.success(dtos);
     }
 
@@ -90,11 +108,17 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
         var family = familyOpt.get();
         Integer familyDbId = family.getId();
-        if (family.getEmail() != null && family.getEmail().equalsIgnoreCase(email)) {
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null) {
+            return failure(ERROR_INVALID_EMAIL, "parentAccess.invalidEmail");
+        }
+        if (family.getEmail() != null && family.getEmail().equalsIgnoreCase(normalizedEmail)) {
+            securityAuditWriter.write(familyDbId, null, invitedByEmail, normalizedEmail,
+                "parent_invitation_rejected", ERROR_PRIMARY_ADMIN);
             return failure(ERROR_PRIMARY_ADMIN, "parentAccess.primaryAdminAlreadyHasAccess");
         }
 
-        var existingParent = parentAccountRepository.findByEmail(email);
+        var existingParent = parentAccountRepository.findByEmail(normalizedEmail);
         if (existingParent.isPresent()) {
             var existingMembership = membershipRepository.findByParentAndFamily(
                 existingParent.get().getId(), familyDbId);
@@ -103,33 +127,37 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             }
         }
 
-        ParentAccountEntity parent = existingParent.orElseGet(() -> {
-            var newParent = ParentAccountEntity.builder()
-                .email(email)
-                .passwordHash("")
-                .build();
-            parentAccountRepository.persist(newParent);
-            return newParent;
-        });
-
         var permOpt = parsePermission(permission);
         if (permOpt.isEmpty()) {
             return failure(ERROR_INVALID_PERMISSION, "parentAccess.invalidPermission");
         }
 
-        var membership = FamilyParentMembershipEntity.builder()
-            .parentAccountId(parent.getId())
+        if (invitationRepository.findPending(familyDbId, normalizedEmail).isPresent()) {
+            securityAuditWriter.write(familyDbId, null, invitedByEmail, normalizedEmail,
+                "parent_invitation_rejected", ERROR_PENDING_INVITATION);
+            return failure(ERROR_PENDING_INVITATION, "parentAccess.invitationAlreadyExists");
+        }
+
+        byte[] rawToken = new byte[32];
+        RANDOM.nextBytes(rawToken);
+        String rawTokenValue = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(rawToken);
+        var invitation = ParentEmailInvitationEntity.builder()
             .familyId(familyDbId)
+            .normalizedEmail(normalizedEmail)
             .permission(permOpt.get())
-            .status(MembershipStatus.active)
             .invitedByEmail(invitedByEmail)
-            .invitedAt(Instant.now())
+            .tokenDigest(tokenHasher.digest(rawTokenValue, tokenHasher.activeKeyId()))
+            .tokenDigestKeyId(tokenHasher.activeKeyId())
+            .expiresAt(Instant.now().plusSeconds(7 * 24 * 60 * 60))
             .build();
-        membershipRepository.persist(membership);
+        invitationRepository.persist(invitation);
 
-        log.info("Added parent membership: email={}, familyId={}, permission={}", email, familyId, permission);
+        securityAuditWriter.write(familyDbId, null, invitedByEmail, normalizedEmail,
+            "parent_invitation_created", "CREATED");
+        log.info("Created parent invitation: familyId={}, permission={}", familyId, permission);
 
-        return OperationResult.success(toDto(membership, parent, null));
+        return OperationResult.success(new ParentMembershipDto(null, normalizedEmail, null, null, null, null,
+            permOpt.get(), null, ParentEmailInvitationEntity.Status.pending.name()));
     }
 
     @Override
@@ -247,6 +275,15 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         return OperationResult.failure(errorCode, BackendMessages.message(messageKey));
     }
 
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        String normalized = email.trim().toLowerCase(Locale.ROOT);
+        return normalized.length() <= 320 && normalized.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+            ? normalized : null;
+    }
+
     private ParentMembershipDto toDto(
         FamilyParentMembershipEntity membership,
         ParentAccountEntity parent,
@@ -262,6 +299,11 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             membership.getPermission(),
             membership.getStatus()
         );
+    }
+
+    private ParentMembershipDto toInvitationDto(ParentEmailInvitationEntity invitation) {
+        return new ParentMembershipDto(null, invitation.getNormalizedEmail(), null, null, null, null,
+            invitation.getPermission(), null, invitation.getStatus().name());
     }
 
     @Override

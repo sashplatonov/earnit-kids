@@ -148,6 +148,17 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
     }
 }
 
+async function getJsonResult<T = unknown>(url: string): Promise<ApiActionResult<T>> {
+    try {
+        const res = await fetchWithCsrf(url);
+        const data = await parseJsonSafe<T | ProblemDetails>(res);
+        if (res.ok) return { ok: true, data: data as T | null };
+        return { ok: false, error: extractProblemMessage(data), errorCode: extractProblemCode(data), status: res.status };
+    } catch {
+        return { ok: false, error: 'Сеть недоступна. Попробуйте еще раз.', errorCode: null, status: 0 };
+    }
+}
+
 async function putJsonResult<T = unknown>(url: string, body: unknown): Promise<ApiActionResult<T>> {
     try {
         const res = await fetchWithCsrf(url, {
@@ -442,6 +453,12 @@ export async function loadParentMemberships(): Promise<ApiActionResult<ParentMem
 export const addParentMembership = (body: { email: string; permission: MembershipPermission }) =>
     postJsonResult<ParentMembership>('/api/parents', body);
 
+export const resendParentInvitation = (invitationId: number) =>
+    postJsonResult<void>(`/api/parents/invitations/${encodeURIComponent(String(invitationId))}/resend`, {});
+
+export const revokeParentInvitation = (invitationId: number) =>
+    postJsonResult<void>(`/api/parents/invitations/${encodeURIComponent(String(invitationId))}/revoke`, {});
+
 export const updateParentMembership = (membershipId: number, body: { permission: MembershipPermission }) =>
     putJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}`, body);
 
@@ -610,17 +627,17 @@ export async function adminGetInactiveChildren(): Promise<Child[]> {
     return (payload ?? []).map((child) => normalizeChild(child) as unknown as Child);
 }
 
-/** Get the current login link/token for a child. */
-export async function adminGetChildLink(childId: unknown) {
-    const payload = await fetchGet<ChildLinkPayload>(`/api/children/${encodeURIComponent(String(childId))}/link`);
+/** Issue a one-time child magic link; its token is returned only once. */
+export async function adminIssueChildMagicLink(childId: unknown) {
+    const payload = await postJson<ChildLinkPayload>(`/api/children/${encodeURIComponent(String(childId))}/magic-link`, {});
     return normalizeChildLink(payload);
 }
 
-/** Regenerate the login token for a child. */
-export async function adminRegenerateChildLink(childId: unknown) {
-    const payload = await postJson<ChildLinkPayload>(`/api/children/${encodeURIComponent(String(childId))}/regenerate-token`, {});
-    return normalizeChildLink(payload);
-}
+export const adminRevokeChildMagicLink = (childId: unknown) =>
+    deleteResource(`/api/children/${encodeURIComponent(String(childId))}/magic-link`);
+
+export const adminGetChildMagicLinkStatus = (childId: unknown) =>
+    fetchGet(`/api/children/${encodeURIComponent(String(childId))}/magic-link`);
 
 /** Save child spending/coin limits. Maps to POST /api/children/{id}/settings. */
 export const adminSaveLimits = (childId: unknown, limits: { name: string; dailyCoinLimit?: number; monthlyLimit?: number; dailyRewardLimit?: number }) =>
@@ -656,11 +673,16 @@ export async function adminUnlinkChildTelegram(childId: unknown): Promise<boolea
 }
 
 
-export const registerPushTokenOnServer = (payload: unknown) =>
-    postJson('/api/push/register', payload);
+export type BrowserPushSubscription = { endpoint: string; p256dh: string; auth: string };
+export type BrowserPushPublicKey = { publicKey: string };
 
-export const unregisterPushTokenOnServer = (payload: unknown) =>
-    postJson('/api/push/unregister', payload);
+export const loadBrowserPushPublicKey = () => getJsonResult<BrowserPushPublicKey>('/api/push/vapid-public-key');
+
+export const registerBrowserPushSubscription = (subscription: BrowserPushSubscription) =>
+    postJsonResult<void>('/api/push/register', subscription);
+
+export const unregisterBrowserPushSubscription = (subscription: BrowserPushSubscription) =>
+    postJsonResult<void>('/api/push/unregister', subscription);
 
 
 export async function loadAnalyticsData(childId?: unknown, timeframe = 'month') {

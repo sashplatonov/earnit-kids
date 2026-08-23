@@ -18,6 +18,16 @@ public class ApplicationOutboxEventRepository implements PanacheRepositoryBase<A
         return findByIdOptional(eventId).map(e -> e.getPlanningCompletedAt() != null).orElse(false);
     }
 
+    public boolean allTransportsTerminal(Long eventId) {
+        long telegramPending = getEntityManager().createQuery(
+            "select count(d) from TelegramDeliveryEntity d where d.eventId = :event and d.status = 'PENDING'", Long.class)
+            .setParameter("event", eventId).getSingleResult();
+        long webPushPending = getEntityManager().createQuery(
+            "select count(d) from WebPushDeliveryEntity d where d.eventId = :event and d.status = 'PENDING'", Long.class)
+            .setParameter("event", eventId).getSingleResult();
+        return telegramPending == 0 && webPushPending == 0;
+    }
+
     public int deleteEligible(Instant cutoff, int batchSize) {
         var rows = find("planningCompletedAt is not null and planningCompletedAt < ?1 "
                 + "and id not in (select d.eventId from TelegramDeliveryEntity d "

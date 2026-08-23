@@ -48,6 +48,12 @@ export const appMessages = {
         shareCopied: 'Link copied to clipboard',
         shareFailed: 'Could not share the link',
     },
+    sessionActions: {
+        label: 'Workspace session',
+        logout: 'Sign out',
+        pending: 'Signing out...',
+        error: 'Could not sign out. Try again.',
+    },
     friends: {
         minSearchToast: 'Enter at least 3 characters',
         noResultsToast: 'No matches found',
@@ -407,6 +413,12 @@ export const appMessages = {
         },
         notifications: {
             title: 'Notifications',
+            browserPush: {
+                title: 'Browser notifications', enable: 'Enable', disable: 'Disable',
+                unsupported: 'Browser notifications are unavailable here.', default: 'Enable notifications when you want timely updates.',
+                granted: 'Notifications are allowed.', denied: 'Notifications are blocked in browser settings.', pending: 'Updating notification settings…',
+                error: 'Could not update notifications. Try again.', subscribed: 'Notifications are enabled.', unsubscribed: 'Notifications are disabled.',
+            },
             parent: 'Parent',
             child: 'Child: {name}',
             loadError: 'Could not load notifications. Try again.',

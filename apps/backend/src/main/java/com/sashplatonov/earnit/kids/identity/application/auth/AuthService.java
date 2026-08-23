@@ -15,5 +15,10 @@ public interface AuthService {
 
     OperationResult<Void> changeAdminPassword(String familyId, String oldPassword, String newPassword);
 
-    OperationResult<AuthPayload> selectFamily(String email, String familyId);
+    OperationResult<AuthPayload> selectFamily(Integer parentAccountId, String familyId);
+
+    @Deprecated
+    default OperationResult<AuthPayload> selectFamily(String ignoredEmail, String familyId) {
+        return selectFamily((Integer) null, familyId);
+    }
 }

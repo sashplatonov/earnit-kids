@@ -14,6 +14,7 @@
   "include": [
     "scripts/**/*.d.ts",
     "scripts/**/*.d.mts",
+    "static/**/*.d.ts",
     "src/**/*.d.ts",
     "src/**/*.ts",
     "src/**/*.svelte",

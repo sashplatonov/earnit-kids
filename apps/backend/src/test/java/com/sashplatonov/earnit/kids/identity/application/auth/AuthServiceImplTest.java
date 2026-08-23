@@ -439,10 +439,10 @@ class AuthServiceImplTest {
         var parent = mockParentAccount("user@test.com", "password123", false, true);
         FamilyEntity blockedFamily = mockFamily("fam_blocked", "other@test.com", "password123", true, true);
 
-        when(parentAccountRepository.findByEmail("user@test.com")).thenReturn(Optional.of(parent));
+        when(parentAccountRepository.findByIdOptional(1)).thenReturn(Optional.of(parent));
         when(familyRepository.findById("fam_blocked")).thenReturn(Optional.of(blockedFamily));
 
-        OperationResult<AuthPayload> result = authService.selectFamily("user@test.com", "fam_blocked");
+        OperationResult<AuthPayload> result = authService.selectFamily(1, "fam_blocked");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<AuthPayload>) result).message())

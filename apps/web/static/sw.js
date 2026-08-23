@@ -1,7 +1,6 @@
 const SW_VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
-const CACHE_NAME = `coin-shop-${SW_VERSION}`;
+const CACHE_NAME = `earnit-static-${SW_VERSION}`;
 const ASSETS_TO_CACHE = [
-    '/',
     '/manifest.json',
     '/img/favicon-32x32.png',
     '/img/icon-192.png',
@@ -9,7 +8,6 @@ const ASSETS_TO_CACHE = [
 ];
 
 const cacheInstall = async () => {
-    await self.skipWaiting();
     const cache = await caches.open(CACHE_NAME);
     try {
         await cache.addAll(ASSETS_TO_CACHE);
@@ -32,35 +30,20 @@ self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
     const requestUrl = new URL(event.request.url);
 
-    if (requestUrl.pathname === '/sw.js' || requestUrl.pathname === '/manifest.json') {
-        return;
-    }
-
-    if (event.request.url.includes('/api/')) {
-        event.respondWith(
-            fetch(event.request).catch(() => new Response(JSON.stringify({ error: 'Вы находитесь оффлайн. Данные недоступны.' }), {
-                status: 503,
-                headers: { 'Content-Type': 'application/json' }
-            }))
-        );
-        return;
-    }
+    if (requestUrl.origin !== self.location.origin || requestUrl.pathname.startsWith('/api/') || requestUrl.pathname.startsWith('/invite/parent/') || requestUrl.pathname.startsWith('/login-child/') || requestUrl.pathname.startsWith('/oauth/')) return;
 
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request)
                 .then((response) => {
-                    if (response.status === 200) {
-                        const copy = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-                    }
                     return response;
                 })
-                .catch(() => caches.match(event.request))
+                .catch(() => new Response('<!doctype html><title>Offline</title><main>You are offline. Protected data is unavailable.</main>', { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }))
         );
         return;
     }
 
+    if (!['style', 'script', 'image', 'font'].includes(event.request.destination)) return;
     event.respondWith(
         caches.match(event.request)
             .then((response) => response || fetch(event.request).then((fetchResponse) => {
@@ -112,10 +95,15 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-            for (const client of clientList) {
-                if ('focus' in client) return client.focus();
-            }
-            return self.clients.openWindow('/');
+            const rawTarget = event.notification.data?.url || event.notification.data?.deepLink || '/workspace';
+            let target = '/workspace';
+            try {
+                const targetUrl = new URL(rawTarget, self.location.origin);
+                if (targetUrl.origin === self.location.origin && !targetUrl.pathname.startsWith('/api/')) target = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
+            } catch { /* keep safe fallback */ }
+            const client = clientList.find((candidate) => new URL(candidate.url).origin === self.location.origin);
+            if (client) { void client.focus(); return client.navigate(target); }
+            return self.clients.openWindow(target);
         })
     );
 });

@@ -169,24 +169,19 @@ test('Telegram parent access creates a named invite and reloads the canonical Te
     });
 
     await page.goto('/telegram');
+    await expect(page.getByRole('region', { name: 'Family access' })).toHaveCount(0);
     const familyTab = page.getByRole('tab', { name: /Family|Семья/ });
     await expect(familyTab).toBeVisible();
     await familyTab.click();
     await page.getByRole('button', { name: /Parents|Родители/ }).click();
-    await page.getByRole('button', { name: /Add parent|Добавить родителя/ }).click();
-    await page.getByRole('button', { name: /By Telegram|Через Telegram/ }).click();
-    await page.getByLabel(/Parent name|Имя родителя/).fill('Maria Example');
-    await page.getByRole('button', { name: /Create link|Создать ссылку/ }).click();
-    await expect(page.getByText(/Link ready|Ссылка готова/)).toBeVisible();
-
-    await page.getByRole('button', { name: /Create new|Создать новую/ }).click();
-    await page.getByRole('button', { name: /Cancel|Отмена/ }).click();
-    await page.getByRole('button', { name: /Cancel|Отмена/ }).click();
-    await page.getByRole('button', { name: /Close|Закрыть/ }).click();
-    await expect(page.getByRole('dialog', { name: /Parents|Родители/ })).toHaveCount(0);
-    await page.getByRole('button', { name: /Parents|Родители/ }).click();
+    const parentDialog = page.getByRole('dialog', { name: /Parents|Родители/ });
+    const telegramInvite = parentDialog.getByRole('region', { name: /Via Telegram|Через Telegram/ });
+    await telegramInvite.getByRole('button', { name: /Create link|Создать ссылку/ }).click();
+    await telegramInvite.getByLabel(/Parent name|Имя родителя/).fill('Maria Example');
+    await telegramInvite.getByRole('button', { name: /Create link|Создать ссылку/ }).click();
+    await expect(telegramInvite.getByRole('status')).toContainText(/Link ready|Ссылка готова/);
     await expect(page.getByText('Maria Example').first()).toBeVisible();
-    await expect(page.getByText('@maria_example')).toBeVisible();
+    await expect(telegramInvite.getByRole('button', { name: /Copy link|Копировать ссылку/ })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 

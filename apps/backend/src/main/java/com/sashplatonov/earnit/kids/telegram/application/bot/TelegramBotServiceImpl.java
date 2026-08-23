@@ -8,6 +8,7 @@ import com.sashplatonov.earnit.kids.telegram.application.identity.TelegramIdenti
 import com.sashplatonov.earnit.kids.telegram.config.TelegramConfig;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
@@ -17,6 +18,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
     private final TelegramMessageUpdateHandler messageHandler;
     private final TelegramCallbackUpdateHandler callbackHandler;
 
+    @Inject
     public TelegramBotServiceImpl(TelegramIdentityService identities,
                                   TelegramBotApiClient apiClient,
                                   TelegramCallbackService callbacks,
@@ -33,13 +35,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                                   TelegramQuickActionService quickActions,
                                   TelegramMenuBuilder menuBuilder) {
         this(identities, apiClient, callbacks, config, timeProvider, quickActions, menuBuilder, null, null);
-    }
-
-    TelegramBotServiceImpl() {
-        this.identities = null;
-        this.timeProvider = null;
-        this.messageHandler = null;
-        this.callbackHandler = null;
     }
 
     TelegramBotServiceImpl(TelegramIdentityService identities,

@@ -18,6 +18,7 @@
     export let data: PageData;
 
     const i18n = useI18n();
+    $: continueTo = data.continueTo ?? $i18n.href('/telegram');
 
     let activePanel: ActivePanel = 'login';
     let loginEmail = '';
@@ -241,7 +242,7 @@
                     return;
                 }
 
-                location.assign($i18n.href('/telegram'));
+                location.assign(continueTo);
                 return;
             }
 
@@ -271,7 +272,7 @@
             const result = await selectFamily(pendingLoginEmail, choice.familyId);
 
             if (result.ok) {
-                location.assign($i18n.href('/telegram'));
+                location.assign(continueTo);
                 return;
             }
 
@@ -293,7 +294,7 @@
         clearMessages();
 
         try {
-            const redirectTo = $i18n.href('/telegram');
+            const redirectTo = continueTo;
             const loginUrl = await requestGoogleLoginUrl(fetch, redirectTo);
             location.assign(loginUrl);
             return;

@@ -27,7 +27,8 @@
     export let onExitPreview: () => void = () => {};
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
-    const context = new URLSearchParams(window.location.search).get('context') ?? '';
+    const context = typeof window === 'undefined'
+        ? '' : new URLSearchParams(window.location.search).get('context') ?? '';
     const workspaceContext = parseTelegramWorkspaceContext(context);
     let loading = true;
     let error = '';

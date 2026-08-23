@@ -4,8 +4,12 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.UriInfo;
 
 import java.net.URI;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 public final class PublicOriginResolver {
+    private static final Pattern UNSAFE_ENCODED_CONTINUATION = Pattern.compile(
+        "%(?:25|2f|3a|40|5c|00|0a|0d)", Pattern.CASE_INSENSITIVE);
     private final String configuredAppUrl;
 
     public PublicOriginResolver(String configuredAppUrl) {
@@ -23,6 +27,35 @@ public final class PublicOriginResolver {
             return normalizedRedirect;
         }
         return origin + normalizedRedirect;
+    }
+
+    public Optional<String> validateLocalContinuation(String redirect) {
+        if (!hasSafeContinuationSyntax(redirect)) {
+            return Optional.empty();
+        }
+
+        try {
+            URI uri = URI.create(redirect);
+            if (!hasLocalUriParts(uri)) {
+                return Optional.empty();
+            }
+            return Optional.of(redirect);
+        } catch (IllegalArgumentException ignored) {
+            return Optional.empty();
+        }
+    }
+
+    private static boolean hasSafeContinuationSyntax(String redirect) {
+        return redirect != null && !redirect.isBlank() && redirect.indexOf('\\') < 0
+            && !containsControlCharacter(redirect)
+            && !UNSAFE_ENCODED_CONTINUATION.matcher(redirect).find()
+            && redirect.startsWith("/");
+    }
+
+    private static boolean hasLocalUriParts(URI uri) {
+        return uri.getScheme() == null && uri.getRawAuthority() == null && uri.getRawFragment() == null
+            && uri.getRawPath() != null && uri.getRawPath().startsWith("/")
+            && !uri.getRawPath().startsWith("/" + "/");
     }
 
     public String resolveAbsoluteAppUri(String path, ContainerRequestContext requestContext) {
@@ -128,5 +161,9 @@ public final class PublicOriginResolver {
     private static boolean isDefaultPort(String scheme, int port) {
         return ("http".equalsIgnoreCase(scheme) && port == 80)
             || ("https".equalsIgnoreCase(scheme) && port == 443);
+    }
+
+    private static boolean containsControlCharacter(String value) {
+        return value.chars().anyMatch(character -> character < 0x20 || character == 0x7f);
     }
 }

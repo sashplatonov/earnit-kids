@@ -3,10 +3,13 @@ package com.sashplatonov.earnit.kids.family.application.membership;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.MembershipStatus;
+import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationTokenHasher;
 import com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.telegram.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.invitation.ParentEmailInvitationRepository;
+import com.sashplatonov.earnit.kids.platform.security.SecurityAuditWriter;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.identity.infrastructure.persistence.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramIdentityRepository;
@@ -37,13 +40,17 @@ class FamilyParentAccessServiceImplTest {
     @Mock ParentAccountRepository parentAccountRepository;
     @Mock FamilyParentMembershipRepository membershipRepository;
     @Mock TelegramIdentityRepository telegramIdentityRepository;
+    @Mock ParentEmailInvitationRepository invitationRepository;
+    @Mock SecurityAuditWriter securityAuditWriter;
 
     private FamilyParentAccessServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new FamilyParentAccessServiceImpl(
-            familyRepository, parentAccountRepository, membershipRepository, telegramIdentityRepository);
+            familyRepository, parentAccountRepository, membershipRepository, telegramIdentityRepository,
+            invitationRepository, securityAuditWriter,
+            new ParentInvitationTokenHasher("active", "active-secret", null, null));
     }
 
     @Test
@@ -189,20 +196,21 @@ class FamilyParentAccessServiceImplTest {
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
         when(parentAccountRepository.findByEmail("parent@test.com")).thenReturn(Optional.of(parent));
         doAnswer(invocation -> {
-            FamilyParentMembershipEntity entity = invocation.getArgument(0);
+            com.sashplatonov.earnit.kids.family.domain.model.invitation.ParentEmailInvitationEntity entity = invocation.getArgument(0);
             entity.setId(42);
             return null;
-        }).when(membershipRepository).persist(any(FamilyParentMembershipEntity.class));
+        }).when(invitationRepository).persist(any(com.sashplatonov.earnit.kids.family.domain.model.invitation.ParentEmailInvitationEntity.class));
 
         OperationResult<ParentMembershipDto> result = service.addMembership(
             "fam-1", "parent@test.com", "family_admin", "invite@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         ParentMembershipDto dto = ((OperationResult.Success<ParentMembershipDto>) result).value();
-        assertThat(dto.id()).isEqualTo(42);
+        assertThat(dto.id()).isNull();
         assertThat(dto.email()).isEqualTo("parent@test.com");
         assertThat(dto.permission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
-        assertThat(dto.status()).isEqualTo(MembershipStatus.active);
+        assertThat(dto.status()).isNull();
+        assertThat(dto.invitationStatus()).isEqualTo("pending");
     }
 
     @Test

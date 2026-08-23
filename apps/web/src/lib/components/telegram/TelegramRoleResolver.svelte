@@ -1,17 +1,9 @@
 <script lang="ts">
-    import TelegramParentShell from './TelegramParentShell.svelte';
-    import TelegramChildShell from './TelegramChildShell.svelte';
+    import WorkspaceRoleResolver from '$lib/features/workspace/WorkspaceRoleResolver.svelte';
 
     export let role: string;
     export let publicOrigin = '';
 
-    // EXPLAIN: A parent can preview the child experience. When viewAsChild is
-    // EXPLAIN: true, the child shell is rendered instead of the parent shell.
-    let viewAsChild = false;
 </script>
 
-{#if (role === 'parent' || role === 'admin') && !viewAsChild}
-    <TelegramParentShell {publicOrigin} onViewAsChild={() => viewAsChild = true} />
-{:else}
-    <TelegramChildShell {publicOrigin} onExitPreview={() => viewAsChild = false} />
-{/if}
+<WorkspaceRoleResolver {role} {publicOrigin} allowPreview showBrowserPush={false} />

@@ -156,11 +156,4 @@ public class AdminActivationAnalyticsRepository {
         return result != null ? Math.toIntExact(result) : 0;
     }
 
-    private int countTotalFamilies() {
-        return Math.toIntExact(
-            entityManager.createQuery(
-                "SELECT COUNT(f) FROM FamilyEntity f", Long.class)
-                .getSingleResult()
-        );
-    }
 }

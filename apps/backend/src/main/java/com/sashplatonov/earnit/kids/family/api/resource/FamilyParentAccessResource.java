@@ -9,6 +9,8 @@ import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.shared.api.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.family.application.membership.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.family.application.FamilyService;
+import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationService;
+import com.sashplatonov.earnit.kids.family.application.invitation.ChildMagicLinkInvitationService;
 import com.sashplatonov.earnit.kids.platform.realtime.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
@@ -44,14 +46,19 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 public class FamilyParentAccessResource extends FamilyResourceSupport {
 
     @Inject
+    ParentInvitationService parentInvitationService;
+
+    @Inject
+    ChildMagicLinkInvitationService childMagicLinkInvitationService;
+
+    @Inject
     public FamilyParentAccessResource(FamilyService familyService,
                                       WebSocketNotificationService webSocketNotificationService,
                                       FamilyParentAccessService familyParentAccessService) {
         super(familyService, webSocketNotificationService, familyParentAccessService);
     }
 
-    @GET
-    @Path("/children/{childId}/link")
+    @Deprecated
     @Operation(summary = "Return the current login token for a child")
     @APIResponses({
         @APIResponse(responseCode = "200", description = "Token returned",
@@ -74,8 +81,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
             failure -> Response.Status.NOT_FOUND.getStatusCode(), "CHILD_NOT_FOUND");
     }
 
-    @POST
-    @Path("/children/{childId}/regenerate-token")
+    @Deprecated
     @Operation(summary = "Regenerate the login token for a child")
     @APIResponses({
         @APIResponse(responseCode = "200", description = "New token returned",
@@ -96,6 +102,32 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
         OperationResult<String> result = familyService.regenerateChildToken(auth.familyId(), childId);
         return OperationResultResponses.toMappedOk(result, TokenResponse::new,
             failure -> Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "TOKEN_REGENERATION_FAILED");
+    }
+
+    @POST
+    @Path("/children/{childId}/magic-link")
+    public Response issueChildMagicLink(@Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) return unauthorized();
+        return OperationResultResponses.toMappedOk(
+            childMagicLinkInvitationService.issue(auth.familyId(), childId), TokenResponse::new);
+    }
+
+    @DELETE
+    @Path("/children/{childId}/magic-link")
+    public Response revokeChildMagicLink(@Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) return unauthorized();
+        return toVoidResponse(childMagicLinkInvitationService.revoke(auth.familyId(), childId));
+    }
+
+    @GET
+    @Path("/children/{childId}/magic-link")
+    public Response childMagicLinkStatus(@Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships()) return unauthorized();
+        return OperationResultResponses.toMappedOk(
+            childMagicLinkInvitationService.status(auth.familyId(), childId), value -> value);
     }
 
     @POST
@@ -163,10 +195,33 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
             return unauthorized();
         }
 
-        var result = familyParentAccessService.addMembership(
-            auth.familyId(), request.email(), request.permission(), auth.email());
+        var result = parentInvitationService == null
+            ? familyParentAccessService.addMembership(auth.familyId(), request.email(), request.permission(), auth.email())
+            : parentInvitationService.create(auth.familyId(), request.email(), request.permission(), auth.email());
 
         return OperationResultResponses.toCreated(result);
+    }
+
+    @POST
+    @Path("/parents/invitations/{invitationId}/revoke")
+    public Response revokeInvitation(@Context ContainerRequestContext ctx,
+                                     @PathParam("invitationId") int invitationId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships() || parentInvitationService == null) {
+            return unauthorized();
+        }
+        return toVoidResponse(parentInvitationService.revoke(auth.familyId(), invitationId, auth.email()));
+    }
+
+    @POST
+    @Path("/parents/invitations/{invitationId}/resend")
+    public Response resendInvitation(@Context ContainerRequestContext ctx,
+                                     @PathParam("invitationId") int invitationId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canManageMemberships() || parentInvitationService == null) {
+            return unauthorized();
+        }
+        return toVoidResponse(parentInvitationService.resend(auth.familyId(), invitationId, auth.email()));
     }
 
     @PUT

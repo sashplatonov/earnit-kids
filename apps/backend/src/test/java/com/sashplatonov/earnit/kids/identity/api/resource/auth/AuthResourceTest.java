@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -280,10 +281,41 @@ class AuthResourceTest {
         assertThat(String.valueOf(cookies.get(0))).contains("oauth_state=");
         Map<String, Object> statePayload = jwtService.verifyToken(extractCookieValue(response, "oauth_state"))
             .orElseThrow();
-        assertThat(statePayload.get("redirect")).isEqualTo("https://app.example.com/en/telegram");
+        assertThat(statePayload.get("redirect")).isEqualTo("/en/telegram");
         Map<?, ?> payload = (Map<?, ?>) response.getEntity();
         assertThat(payload.containsKey("url")).isTrue();
         assertThat(String.valueOf(payload.get("url"))).contains("https://accounts.google.com/o/oauth2/v2/auth");
+    }
+
+    @Test
+    void loginGoogleUrl_rejectsInvalidContinuationsBeforeSigningState() {
+        AppConfig config = TestConfigFactory.appConfig(false, null, true, true, true,
+            "google-client-id", "google-client-secret");
+        AuthGoogleResource googleResource = new AuthGoogleResource(
+            authService, cookieBuilder, config, new GoogleOAuthService(config, new ObjectMapper()),
+            testJwtService(), java.util.Optional.of("https://app.example.com"));
+
+        Stream.of("https://attacker.example", "//attacker.example", "/%2f%2fattacker.example", "/bad\npath")
+            .forEach(redirect -> {
+                Response response = googleResource.loginGoogleUrl(null, redirect);
+                assertThat(response.getStatus()).isEqualTo(400);
+                assertThat(response.getHeaders().get("Set-Cookie")).isNull();
+            });
+    }
+
+    @Test
+    void loginGoogleUrl_workspaceRemainsLocalContinuation() {
+        AppConfig config = TestConfigFactory.appConfig(false, null, true, true, true,
+            "google-client-id", "google-client-secret");
+        JwtService jwtService = testJwtService();
+        AuthGoogleResource googleResource = new AuthGoogleResource(
+            authService, cookieBuilder, config, new GoogleOAuthService(config, new ObjectMapper()),
+            jwtService, java.util.Optional.of("https://app.example.com"));
+
+        Response response = googleResource.loginGoogleUrl(null, "/workspace");
+
+        assertThat(jwtService.verifyToken(extractCookieValue(response, "oauth_state")).orElseThrow())
+            .containsEntry("redirect", "/workspace");
     }
 
     @Test
@@ -345,7 +377,7 @@ class AuthResourceTest {
             jwtService,
             java.util.Optional.of("https://app.example.com"));
 
-        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/telegram"), 300);
+        String state = jwtService.signToken(Map.of("redirect", "/en/telegram?from=public"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
             .thenReturn(java.util.Optional.of(new GoogleTokenResponse(null, null, null, null, null, "google-id-token")));
         when(authService.authenticateAdminWithGoogle("google-id-token"))
@@ -359,7 +391,7 @@ class AuthResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(303);
         assertThat(response.getLocation().toString())
-            .isEqualTo("https://app.example.com/en/telegram?error=authentication_failed");
+            .isEqualTo("https://app.example.com/en/telegram?from=public&error=authentication_failed");
     }
 
     @Test
@@ -382,7 +414,7 @@ class AuthResourceTest {
             jwtService,
             java.util.Optional.of("https://app.example.com"));
 
-        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/en/telegram"), 300);
+        String state = jwtService.signToken(Map.of("redirect", "/en/telegram"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
             .thenReturn(java.util.Optional.of(new GoogleTokenResponse(null, null, null, null, null, "google-id-token")));
         when(authService.authenticateAdminWithGoogle("google-id-token"))
@@ -419,7 +451,7 @@ class AuthResourceTest {
             jwtService,
             java.util.Optional.of("https://app.example.com"));
 
-        String state = jwtService.signToken(Map.of("redirect", "https://app.example.com/ru/telegram"), 300);
+        String state = jwtService.signToken(Map.of("redirect", "/ru/telegram"), 300);
         when(googleOAuthService.exchangeCode("valid-code", "https://app.example.com/api/login-google/callback"))
             .thenReturn(java.util.Optional.of(new GoogleTokenResponse(null, null, null, null, null, "google-id-token")));
         when(authService.authenticateAdminWithGoogle("google-id-token"))

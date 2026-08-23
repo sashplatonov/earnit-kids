@@ -48,8 +48,14 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public OperationResult<AuthPayload> selectFamily(String email, String familyId) {
+    public OperationResult<AuthPayload> selectFamily(Integer parentAccountId, String familyId) {
         return backendKpiMetrics.recordResult("auth", "select_family", () ->
-            membershipService.selectFamily(email, familyId));
+            membershipService.selectFamily(parentAccountId, familyId));
+    }
+
+    @Deprecated
+    @Override
+    public OperationResult<AuthPayload> selectFamily(String ignoredEmail, String familyId) {
+        return selectFamily((Integer) null, familyId);
     }
 }

@@ -36,11 +36,14 @@ class AuthMembershipService {
         }
 
         return OperationResult.success(
-            new AuthPayload(null, email, "admin", null, null, null, choices, true));
+            new AuthPayload(null, email, "admin", null, null, null, choices, true, parent.getId()));
     }
 
-    OperationResult<AuthPayload> selectFamily(String email, String familyId) {
-        var parentOpt = parentAccountRepository.findByEmail(email);
+    OperationResult<AuthPayload> selectFamily(Integer parentAccountId, String familyId) {
+        if (parentAccountId == null) {
+            return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
+        }
+        var parentOpt = parentAccountRepository.findByIdOptional(parentAccountId);
         if (parentOpt.isEmpty()) {
             return OperationResult.failure(BackendMessages.message("auth.invalidCredentials"));
         }
@@ -67,7 +70,8 @@ class AuthMembershipService {
         familyRepository.updateLastActivity(family.getFamilyId());
         String permission = membership.getPermission().name();
         return OperationResult.success(
-            new AuthPayload(family.getFamilyId(), email, "admin", null, null, permission, null, false));
+            new AuthPayload(family.getFamilyId(), parent.getEmail(), "admin", null, null, permission, null, false,
+                parent.getId()));
     }
 
     private List<AuthPayload.FamilyChoice> buildFamilyChoices(List<FamilyParentMembershipEntity> memberships) {

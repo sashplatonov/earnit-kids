@@ -19,6 +19,7 @@ public class CookieBuilder {
     public static final String CSRF_COOKIE_NAME = "csrf_token";
     public static final String FAMILY_COOKIE_NAME = "family_id";
     public static final String CHILD_COOKIE_NAME = "child_id";
+    public static final String FAMILY_SELECTION_COOKIE_NAME = "family_selection";
 
     private final JwtService jwtService;
     private final AppConfig appConfig;
@@ -82,6 +83,13 @@ public class CookieBuilder {
         return cookies;
     }
 
+    public List<String> buildRotatedAuthCookies(String email, String role, String familyId, Integer childId,
+                                                String permission) {
+        var cookies = new ArrayList<>(buildLogoutCookies());
+        cookies.addAll(buildAuthCookies(email, role, familyId, childId, permission));
+        return cookies;
+    }
+
     public String buildSessionCookie(Map<String, Object> payload) {
         return buildSignedCookie(AUTH_COOKIE_NAME, payload, appConfig.auth().sessionTtlSeconds());
     }
@@ -93,8 +101,34 @@ public class CookieBuilder {
             ROLE_COOKIE_NAME + "=; Max-Age=0; Path=/; SameSite=Strict",
             FAMILY_COOKIE_NAME + "=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict",
             CHILD_COOKIE_NAME + "=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict",
-            CSRF_COOKIE_NAME + "=; Max-Age=0; Path=/; SameSite=Strict"
+            CSRF_COOKIE_NAME + "=; Max-Age=0; Path=/; SameSite=Strict",
+            FAMILY_SELECTION_COOKIE_NAME + "=; Max-Age=0; Path=/; SameSite=Lax"
         );
+    }
+
+    public String buildFamilySelectionCookie(Integer parentAccountId) {
+        var payload = new LinkedHashMap<String, Object>();
+        payload.put("parentAccountId", parentAccountId);
+        return FAMILY_SELECTION_COOKIE_NAME + "="
+            + jwtService.signToken(payload, 10 * 60L)
+            + "; Max-Age=600; Path=/; " + secureSegment() + "SameSite=Lax";
+    }
+
+    public String clearFamilySelectionCookie() {
+        return FAMILY_SELECTION_COOKIE_NAME + "=; Max-Age=0; Path=/; SameSite=Lax";
+    }
+
+    public Integer readFamilySelectionParentId(String cookieHeader) {
+        if (cookieHeader == null) return null;
+        for (String part : cookieHeader.split(";")) {
+            String[] pair = part.trim().split("=", 2);
+            if (pair.length == 2 && FAMILY_SELECTION_COOKIE_NAME.equals(pair[0])) {
+                var payload = jwtService.verifyToken(pair[1]);
+                if (payload.isEmpty() || !(payload.get().get("parentAccountId") instanceof Number id)) return null;
+                return id.intValue();
+            }
+        }
+        return null;
     }
 
     private Map<String, Object> buildAuthPayload(String email, String role, String familyId,
@@ -106,6 +140,7 @@ public class CookieBuilder {
         payload.put("familyId", familyId);
         payload.put("csrfToken", csrfToken);
         payload.put("permission", permission);
+        payload.put("sessionId", java.util.UUID.randomUUID().toString());
         if (parentAccountId != null) {
             payload.put("parentAccountId", parentAccountId);
         }

@@ -8,6 +8,7 @@ import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.identity.application.auth.AuthService;
 import com.sashplatonov.earnit.kids.identity.application.google.GoogleOAuthService;
+import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.PublicOriginResolver;
 import jakarta.inject.Inject;
@@ -28,6 +29,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 
 @Path("/api")
@@ -40,6 +42,9 @@ public class AuthGoogleResource {
     private final GoogleOAuthService googleOAuthService;
     private final JwtService jwtService;
     private final PublicOriginResolver publicOriginResolver;
+
+    @Inject
+    ParentInvitationService parentInvitationService;
 
     @Inject
     public AuthGoogleResource(AuthService authService,
@@ -60,7 +65,9 @@ public class AuthGoogleResource {
     @Path("/login-google/url")
     @Operation(summary = "Build Google authorization URL for server-side OAuth flow")
     public Response loginGoogleUrl(@Context ContainerRequestContext request,
-                                   @QueryParam("redirect_to") String redirectTo) {
+                                   @QueryParam("redirect_to") String redirectTo,
+                                   @CookieParam("invite_flow") String inviteFlow,
+                                   @CookieParam("invite_continuation") Integer continuationId) {
         if (configuredGoogleOAuthClientId() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(ErrorResponse.of(
@@ -70,8 +77,18 @@ public class AuthGoogleResource {
         }
 
         String callbackUri = configuredGoogleCallbackUri(request);
-        String redirectValue = publicOriginResolver.toAbsoluteRedirect(redirectTo, request);
-        var payload = Map.<String, Object>of("redirect", redirectValue);
+        String redirectValue = publicOriginResolver.validateLocalContinuation(redirectTo)
+            .orElse(null);
+        if (redirectValue == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ErrorResponse.of("Invalid OAuth continuation", "INVALID_REDIRECT", 400))
+                .build();
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("redirect", redirectValue);
+        if (inviteFlow != null && continuationId != null) {
+            payload.put("continuationId", continuationId);
+        }
         String stateToken = jwtService.signToken(payload, 300);
         String authUrl = googleOAuthService.buildAuthorizationUrl(callbackUri, stateToken);
 
@@ -84,13 +101,18 @@ public class AuthGoogleResource {
         return rb.build();
     }
 
+    public Response loginGoogleUrl(ContainerRequestContext request, String redirectTo) {
+        return loginGoogleUrl(request, redirectTo, null, null);
+    }
+
     @GET
     @Path("/login-google/callback")
     @Operation(summary = "Handle Google OAuth2 authorization code callback and start session")
     public Response loginGoogleCallback(@Context ContainerRequestContext request,
                                         @QueryParam("code") String code,
                                         @QueryParam("state") String state,
-                                        @CookieParam("oauth_state") String oauthStateCookie) {
+                                        @CookieParam("oauth_state") String oauthStateCookie,
+                                        @CookieParam("invite_flow") String inviteFlow) {
         String redirectTarget = "/";
         if (oauthStateCookie == null || state == null || !state.equals(oauthStateCookie)) {
             redirectTarget = "/?error=oauth_state_mismatch";
@@ -100,14 +122,14 @@ public class AuthGoogleResource {
 
         var verified = jwtService.verifyToken(state);
         if (verified.isPresent() && verified.get().get("redirect") instanceof String r) {
-            redirectTarget = r;
+            redirectTarget = publicOriginResolver.validateLocalContinuation(r).orElse("/");
         }
 
         String callbackUri = configuredGoogleCallbackUri(request);
         var tokenRespOpt = googleOAuthService.exchangeCode(code, callbackUri);
         if (tokenRespOpt.isEmpty() || tokenRespOpt.get().id_token() == null) {
             String abs = publicOriginResolver.toAbsoluteRedirect(
-                redirectTarget + "?error=google_exchange_failed", request);
+                appendError(redirectTarget, "google_exchange_failed"), request);
             return Response.seeOther(URI.create(abs)).build();
         }
 
@@ -115,6 +137,13 @@ public class AuthGoogleResource {
         OperationResult<AuthPayload> result = authService.authenticateAdminWithGoogle(idToken);
         if (result instanceof OperationResult.Success<AuthPayload> s) {
             AuthPayload payload = s.value();
+            Object continuationValue = verified.map(data -> data.get("continuationId")).orElse(null);
+            if (continuationValue instanceof Number continuationId && parentInvitationService != null
+                && (inviteFlow == null || !parentInvitationService.consumeOAuth(
+                    continuationId.intValue(), inviteFlow, payload.email()))) {
+                return Response.seeOther(URI.create(publicOriginResolver.toAbsoluteRedirect(
+                    appendError(redirectTarget, "invitation_flow_invalid"), request))).build();
+            }
             if (payload.selectionRequired() && payload.familyChoices() != null) {
                 String chooserCookie = buildPendingChooserCookie(payload);
                 Response.ResponseBuilder rb = Response.seeOther(
@@ -136,7 +165,12 @@ public class AuthGoogleResource {
         }
         return Response.seeOther(
             URI.create(publicOriginResolver.toAbsoluteRedirect(
-                redirectTarget + "?error=authentication_failed", request))).build();
+                appendError(redirectTarget, "authentication_failed"), request))).build();
+    }
+
+    public Response loginGoogleCallback(ContainerRequestContext request, String code, String state,
+                                        String oauthStateCookie) {
+        return loginGoogleCallback(request, code, state, oauthStateCookie, null);
     }
 
     private String configuredGoogleOAuthClientId() {
@@ -188,6 +222,10 @@ public class AuthGoogleResource {
         }
 
         return "/login";
+    }
+
+    private String appendError(String redirectTarget, String error) {
+        return redirectTarget + (redirectTarget.contains("?") ? "&" : "?") + "error=" + error;
     }
 
     private String buildPendingChooserCookie(AuthPayload payload) {

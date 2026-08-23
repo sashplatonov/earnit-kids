@@ -8,6 +8,7 @@
     } from '$lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
     import type { TelegramIconName } from './telegramIconMap';
+    import BrowserPushControls from '$lib/features/workspace/notifications/BrowserPushControls.svelte';
 
     export let open = false;
     export let onClose: () => void = () => {};
@@ -139,6 +140,7 @@
     <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="notifications-title" tabindex="-1">
         <h2 id="notifications-title">{$i18n.t('app.telegram.notifications.title')}</h2>
+        <BrowserPushControls enabled={false} />
 
         {#if loading}
             <p class="muted">{$i18n.t('app.telegram.shell.loading')}</p>

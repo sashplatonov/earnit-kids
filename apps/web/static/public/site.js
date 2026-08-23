@@ -1,10 +1,51 @@
 
-(function () {
-  const cfg = window.EARNIT_CONFIG || {};
+export const GOOGLE_WORKSPACE_FALLBACK = "/login?continue=%2Fworkspace";
+
+function isUsableAuthorizationUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "accounts.google.com";
+  } catch {
+    return false;
+  }
+}
+
+export async function requestBrowserWorkspaceUrl(fetchImpl, config = {}) {
+  let authConfig;
+
+  try {
+    const configResponse = await fetchImpl("/api/auth-config", {
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    if (!configResponse.ok) throw new Error("config unavailable");
+    authConfig = await configResponse.json();
+  } catch {
+    throw new Error("unavailable");
+  }
+
+  if (authConfig?.googleEnabled !== true) throw new Error("unavailable");
+
+  try {
+    const response = await fetchImpl(`/api/login-google/url?redirect_to=${encodeURIComponent(config.redirectTo || "/workspace")}`, {
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    const body = await response.json().catch(() => ({}));
+    if (response.ok && typeof body.url === "string" && isUsableAuthorizationUrl(body.url)) return body.url;
+  } catch {
+    // Keep the local login fallback available when OAuth startup is offline.
+  }
+
+  throw new Error("unavailable");
+}
+
+export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
+  const cfg = windowRef.EARNIT_CONFIG || {};
   const url = String(cfg.telegramMiniAppUrl || "");
   const configured = url && url !== "#" && !/REPLACE_WITH_/i.test(url);
 
-  document.querySelectorAll("[data-miniapp-link]").forEach((link) => {
+  documentRef.querySelectorAll("[data-miniapp-link]").forEach((link) => {
     if (configured) {
       link.href = url;
     } else {
@@ -18,7 +59,34 @@
     }
   });
 
-  const tabs = document.querySelector(".tabs");
+  const status = documentRef.createElement("p");
+  status.className = "public-access-status sr-only";
+  status.setAttribute("aria-live", "polite");
+  status.setAttribute("role", "status");
+  documentRef.body.append(status);
+
+  documentRef.querySelectorAll("[data-browser-workspace-link]").forEach((link) => {
+    link.addEventListener("click", async (event) => {
+      if (link.dataset.browserFallback === "true") return;
+
+      event.preventDefault();
+      status.textContent = "";
+      link.setAttribute("aria-busy", "true");
+      try {
+        windowRef.location.assign(await requestBrowserWorkspaceUrl(fetchImpl, { redirectTo: "/workspace" }));
+      } catch {
+        link.href = GOOGLE_WORKSPACE_FALLBACK;
+        link.dataset.browserFallback = "true";
+        status.textContent = documentRef.documentElement.lang === "en"
+          ? "Google sign-in is temporarily unavailable. Use the browser sign-in link to try again."
+          : "Вход через Google временно недоступен. Используйте ссылку для входа в браузере и попробуйте ещё раз.";
+      } finally {
+        link.removeAttribute("aria-busy");
+      }
+    });
+  });
+
+  const tabs = documentRef.querySelector(".tabs");
   const activeTab = tabs && tabs.querySelector(".tab.active");
   if (tabs && activeTab && window.matchMedia("(max-width: 640px)").matches) {
     requestAnimationFrame(() => {
@@ -27,7 +95,7 @@
     });
   }
 
-  document.querySelectorAll("[data-carousel]").forEach((carousel) => {
+  documentRef.querySelectorAll("[data-carousel]").forEach((carousel) => {
     const track = carousel.querySelector(".carousel-track");
     const slides = Array.from(carousel.querySelectorAll(".carousel-slide"));
     const dots = Array.from(carousel.querySelectorAll(".carousel-dot"));
@@ -76,4 +144,8 @@
 
     render();
   });
-})();
+}
+
+if (typeof window !== "undefined" && typeof document !== "undefined") {
+  enhancePublicSite(document, window, window.fetch.bind(window));
+}

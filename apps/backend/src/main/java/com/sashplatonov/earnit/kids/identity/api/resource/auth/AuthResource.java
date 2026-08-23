@@ -31,6 +31,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -104,7 +105,11 @@ public class AuthResource {
                 .map(fc -> new AuthResponse.FamilyChoice(
                     fc.familyId(), fc.familyName(), fc.permission(), fc.blocked()))
                 .toList();
-            return Response.ok(AuthResponse.selectionRequired(choices)).build();
+            Response.ResponseBuilder response = Response.ok(AuthResponse.selectionRequired(choices));
+            if (payload.parentAccountId() != null) {
+                response.header("Set-Cookie", cookieBuilder.buildFamilySelectionCookie(payload.parentAccountId()));
+            }
+            return response.build();
         }
         var cookies = cookieBuilder.buildAuthCookies(
             payload.email(), payload.role(), payload.familyId(),
@@ -285,10 +290,12 @@ public class AuthResource {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Response selectFamily(
+        @HeaderParam("Cookie") String cookieHeader,
         @RequestBody(required = true, description = "Family selection payload")
         @Valid SelectFamilyRequest request) {
+        Integer parentAccountId = cookieBuilder.readFamilySelectionParentId(cookieHeader);
         OperationResult<AuthPayload> result = authService.selectFamily(
-            request.email(), request.familyId());
+            parentAccountId, request.familyId());
 
         return OperationResultResponses.toResponse(result, this::familySelectionSuccessResponse,
             failure -> Response.status(Response.Status.BAD_REQUEST)
@@ -296,14 +303,28 @@ public class AuthResource {
                 .build());
     }
 
+    @Deprecated
+    public Response selectFamily(SelectFamilyRequest request) {
+        OperationResult<AuthPayload> result = authService.selectFamily(request.email(), request.familyId());
+        return OperationResultResponses.toResponse(result, this::familySelectionSuccessResponse,
+            failure -> Response.status(Response.Status.BAD_REQUEST)
+                .entity(ErrorResponse.of(failure.message(), "FAMILY_SELECTION_FAILED", 400))
+                .build());
+    }
+
     private Response familySelectionSuccessResponse(AuthPayload payload) {
-        var cookies = cookieBuilder.buildAuthCookies(
-            payload.email(), payload.role(), payload.familyId(),
-            payload.childId(), payload.permission());
+        var cookies = payload.parentAccountId() == null
+            ? cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                payload.childId(), payload.permission())
+            : cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                payload.childId(), payload.permission(), payload.parentAccountId());
 
         Response.ResponseBuilder response = Response.ok(
             AuthResponse.success(payload.role(), payload.familyId()));
         cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
+        if (payload.parentAccountId() != null) {
+            response.header("Set-Cookie", cookieBuilder.clearFamilySelectionCookie());
+        }
         return response.build();
     }
 }
