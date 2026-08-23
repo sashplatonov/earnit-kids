@@ -501,6 +501,8 @@ export type AccountConnection = {
     email: string;
     emailLinked: boolean;
     telegramLinked: boolean;
+    telegramUsername: string | null;
+    telegramDisplayName: string | null;
 };
 
 /** Load the parent account connection overview (email + telegram). */

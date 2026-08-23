@@ -28,6 +28,12 @@
         if (at <= 1) return email;
         return `${email[0]}***${email.slice(at)}`;
     }
+
+    function telegramName(): string {
+        if (!account) return '';
+        return account.telegramDisplayName?.trim()
+            || (account.telegramUsername ? `@${account.telegramUsername}` : '');
+    }
 </script>
 
 {#if open}
@@ -37,13 +43,12 @@
 
         <h3 class="sheet-subtitle">{$i18n.t('app.telegram.myAccount.linkedAccounts')}</h3>
         <div class="flat">
-            <div class="row"><span class="setting-icon"><TelegramIcon name="send" size={18} label={$i18n.t('app.telegram.myAccount.telegram')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.myAccount.telegram')}</span></span><span class:badge-active={account?.telegramLinked} class="manage-badge">{account?.telegramLinked ? $i18n.t('app.telegram.myAccount.linked') : $i18n.t('app.telegram.myAccount.notLinked')}</span></div>
+            <div class="row"><span class="setting-icon"><TelegramIcon name="send" size={18} label={$i18n.t('app.telegram.myAccount.telegram')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.myAccount.telegram')}</span>{#if account?.telegramLinked && telegramName()}<span class="setting-meta">{telegramName()}</span>{/if}</span><span class:badge-active={account?.telegramLinked} class="manage-badge">{account?.telegramLinked ? $i18n.t('app.telegram.myAccount.linked') : $i18n.t('app.telegram.myAccount.notLinked')}</span></div>
             {#if account?.emailLinked}
                 <button class="row" type="button" on:click={onOpenEmail}><span class="setting-icon"><TelegramIcon name="mail" size={18} label={$i18n.t('app.telegram.myAccount.email')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.myAccount.email')}</span><span class="setting-meta">{account ? $i18n.t('app.telegram.myAccount.emailMeta', { email: maskEmail(account.email), status: $i18n.t('app.telegram.myAccount.linked') }) : ''}</span></span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.myAccount.openEmail')} /></button>
             {/if}
         </div>
 
-        <p class="hint">{$i18n.t('app.telegram.myAccount.hint')}</p>
         {#if error}<p class="error" role="alert">{error}</p>{/if}
         <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
@@ -65,7 +70,6 @@
     .setting-meta { display:block; margin-top:.1rem; color:#66718a; font-size:.78rem; }
     .manage-badge { padding:.2rem .55rem; border-radius:999px; background:#f1f3f7; color:#66718a; font-size:.78rem; font-weight:700; white-space:nowrap; }
     .badge-active { background:#eaf7ef; color:#17884b; }
-    .hint { margin:.7rem 0 0; color:#8a93a8; font-size:.8rem; line-height:1.4; }
     .error { color:#a33b3b; }
     .close { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #f1c7ca; border-radius:.7rem; background:#fff7f7; color:#a84a50; font:inherit; font-weight:600; cursor:pointer; }
 </style>

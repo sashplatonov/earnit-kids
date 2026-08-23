@@ -511,7 +511,6 @@ export const appMessages = {
             notLinked: 'Not linked',
             openEmail: 'Open email settings',
             emailMeta: '{email} · {status}',
-            hint: 'Email actions, including change, unlink and password, live inside the Email section.',
         },
         emailSettings: {
             title: 'Email',

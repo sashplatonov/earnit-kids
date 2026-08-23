@@ -31,13 +31,17 @@ public class AccountServiceImpl implements AccountService {
         OperationResult<TelegramAccountConnectionResponse> telegram = telegramConnections.connection(familyId, email);
         boolean telegramLinked = telegram instanceof OperationResult.Success<TelegramAccountConnectionResponse> success
             && success.value().telegramConnected();
+        String telegramUsername = telegram instanceof OperationResult.Success<TelegramAccountConnectionResponse> success
+            ? success.value().telegramUsername() : null;
+        String telegramDisplayName = telegram instanceof OperationResult.Success<TelegramAccountConnectionResponse> success
+            ? success.value().telegramDisplayName() : null;
         Optional<FamilyEntity> family = families.findById(familyId);
         if (family.isEmpty()) {
             return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
         }
         boolean emailLinked = family.get().getEmail() != null && !family.get().getEmail().isBlank();
         return OperationResult.success(new AccountConnectionResponse(
-            family.get().getEmail(), emailLinked, telegramLinked));
+            family.get().getEmail(), emailLinked, telegramLinked, telegramUsername, telegramDisplayName));
     }
 
 

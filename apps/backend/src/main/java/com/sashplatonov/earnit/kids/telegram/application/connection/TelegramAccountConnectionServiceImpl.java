@@ -90,13 +90,16 @@ public class TelegramAccountConnectionServiceImpl implements TelegramAccountConn
 
 
     private TelegramAccountConnectionResponse connectionResponse(ConnectionContext context, boolean miniAppEnabled) {
-        boolean telegramConnected = identities.findActiveParentByParentAccountId(context.parentAccountId())
-            .filter(identity -> context.familyDbId().equals(identity.getFamilyId()))
-            .isPresent();
+        var identity = identities.findActiveParentByParentAccountId(context.parentAccountId())
+            .filter(candidate -> context.familyDbId().equals(candidate.getFamilyId()))
+            .orElse(null);
+        boolean telegramConnected = identity != null;
         LOG.infof("Telegram connection result: parentAccountId=%s, familyDbId=%s, telegramConnected=%s",
             context.parentAccountId(), context.familyDbId(), telegramConnected);
         return new TelegramAccountConnectionResponse(
-            context.email(), true, telegramConnected, miniAppEnabled ? miniAppUrl().orElse(null) : null);
+            context.email(), true, telegramConnected, miniAppEnabled ? miniAppUrl().orElse(null) : null,
+            identity == null ? null : identity.getTelegramUsername(),
+            identity == null ? null : identity.getTelegramDisplayName());
     }
 
     @Override

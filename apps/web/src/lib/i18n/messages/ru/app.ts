@@ -511,7 +511,6 @@ export const appMessages = {
             notLinked: 'Не привязан',
             openEmail: 'Открыть настройки email',
             emailMeta: '{email} · {status}',
-            hint: 'Действия с email, включая смену, отвязку и пароль, находятся внутри раздела Email.',
         },
         emailSettings: {
             title: 'Email',
