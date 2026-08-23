@@ -111,9 +111,11 @@ public class AuthResource {
             }
             return response.build();
         }
-        var cookies = cookieBuilder.buildAuthCookies(
-            payload.email(), payload.role(), payload.familyId(),
-            payload.childId(), payload.permission());
+        var cookies = payload.parentAccountId() == null
+            ? cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                payload.childId(), payload.permission())
+            : cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                payload.childId(), payload.permission(), payload.parentAccountId());
 
         Response.ResponseBuilder response = Response.ok(
             AuthResponse.success(payload.role(), payload.familyId()));
@@ -184,9 +186,11 @@ public class AuthResource {
     }
 
     private Response registrationSuccessResponse(AuthPayload payload) {
-        var cookies = cookieBuilder.buildAuthCookies(
-            payload.email(), payload.role(), payload.familyId(),
-            null, payload.permission());
+        var cookies = payload.parentAccountId() == null
+            ? cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                null, payload.permission())
+            : cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                null, payload.permission(), payload.parentAccountId());
 
         Response.ResponseBuilder response = Response.status(Response.Status.CREATED)
             .entity(AuthResponse.success(payload.role(), payload.familyId()));

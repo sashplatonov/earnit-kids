@@ -4,6 +4,8 @@
         loadParentMemberships,
         resendParentInvitation,
         revokeParentInvitation,
+        deactivateParentMembership,
+        reactivateParentMembership,
         type ApiActionResult,
     } from '$lib/services/api';
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
@@ -68,11 +70,7 @@
 </script>
 
 <section class="access-flow" aria-labelledby="parent-access-heading">
-    <div class="heading-row">
-        <div><p class="eyebrow">{$i18n.t('app.workspaceAccess.eyebrow')}</p><h2 id="parent-access-heading">{$i18n.t('app.workspaceAccess.title')}</h2></div>
-        <span class="badge">{$i18n.t('app.workspaceAccess.serverAuthorized')}</span>
-    </div>
-    <p class="hint">{$i18n.t('app.workspaceAccess.pendingHint')}</p>
+    <h2 id="parent-access-heading">{$i18n.t('app.workspaceAccess.title')}</h2>
 
     {#if loading}<p class="hint" aria-live="polite">{$i18n.t('app.workspaceAccess.loading')}</p>
     {:else if parents.length === 0}<p class="empty">{$i18n.t('app.workspaceAccess.empty')}</p>
@@ -87,6 +85,10 @@
                             <button type="button" class="secondary" disabled={busy} on:click={() => run(resendParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationResent'))}><TelegramIcon name="send" size={17} />{$i18n.t('app.workspaceAccess.resend')}</button>
                             <button type="button" class="quiet-danger" disabled={busy} on:click={() => run(revokeParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationRevoked'))}><TelegramIcon name="unlink" size={17} />{$i18n.t('app.workspaceAccess.revoke')}</button>
                         </div>
+                    {:else if parent.status === 'active'}
+                        <button class="icon-action deactivate" type="button" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.deactivateParent')} title={$i18n.t('app.workspaceAccess.deactivateParent')} on:click={() => run(deactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentDeactivated'))}><TelegramIcon name="pause" size={19} /></button>
+                    {:else if parent.status === 'inactive'}
+                        <button class="icon-action reactivate" type="button" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.reactivateParent')} title={$i18n.t('app.workspaceAccess.reactivateParent')} on:click={() => run(reactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentReactivated'))}><TelegramIcon name="play" size={19} /></button>
                     {/if}
                 </div>
             {/each}
@@ -110,10 +112,8 @@
 
 <style>
     .access-flow { display:grid; gap:.8rem; color:#18243d; }
-    .heading-row { display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; }
-    .eyebrow { margin:0 0 .2rem; color:#3867d6; font-size:.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
     h2 { margin:0; font-size:1.2rem; } .hint,.empty { margin:0; color:#66718a; line-height:1.45; }
-    .badge,.state { display:inline-flex; align-items:center; min-height:1.7rem; padding:.2rem .5rem; border-radius:99px; background:#eef2ff; color:#3867d6; font-size:.72rem; font-weight:700; }
+    .state { display:inline-flex; align-items:center; min-height:1.7rem; padding:.2rem .5rem; border-radius:99px; background:#eef2ff; color:#3867d6; font-size:.72rem; font-weight:700; }
     .state { background:#e8f7ef; color:#187847; } .state.pending { background:#fff1dc; color:#a96720; } .state.inactive { background:#eef1f5; color:#66718a; }
     .members { display:grid; }
     .member { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:.5rem; padding:.8rem 0; border-bottom:1px solid #edf0f5; } .member:last-child{border-bottom:0}
@@ -122,5 +122,7 @@
     label { color:#33415f; font-size:.82rem; font-weight:700; } .invite-controls { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:.45rem; }
     input,select,button { box-sizing:border-box; min-height:2.75rem; border:1px solid #cfd6e4; border-radius:.65rem; padding:.5rem .65rem; font:inherit; } button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border:0; background:#3867d6; color:#fff; font-weight:700; cursor:pointer; } button:disabled{opacity:.55;cursor:wait}
     .quiet-danger { background:#fff5f5; border:1px solid #f0caca; color:#a33b3b; } .secondary { background:#fff; border:1px solid #cfd6e4; color:#33415f; } .error{margin:0;color:#a33b3b}.success{margin:0;color:#17884b} button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #80aaff;outline-offset:2px}
-    @media(max-width:520px){.heading-row{display:grid}.invite-controls{grid-template-columns:1fr}.invite-controls button{width:100%}.member-actions button{flex:1}.badge{justify-self:start}}
+    .icon-action { width:2.75rem; padding:0; border:1px solid #cfd6e4; background:#fff; color:#33415f; }
+    .icon-action.deactivate { border-color:#f0caca; background:#fff5f5; color:#a33b3b; } .icon-action.reactivate { border-color:#b9e1c8; background:#f2fff5; color:#17884b; }
+    @media(max-width:520px){.invite-controls{grid-template-columns:1fr}.invite-controls button{width:100%}.member-actions button{flex:1}}
 </style>

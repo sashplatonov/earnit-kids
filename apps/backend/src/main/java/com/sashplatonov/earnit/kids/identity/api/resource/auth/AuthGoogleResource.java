@@ -153,9 +153,11 @@ public class AuthGoogleResource {
                 rb.header("Set-Cookie", "oauth_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict");
                 return rb.build();
             }
-            var cookies = cookieBuilder.buildAuthCookies(
-                payload.email(), payload.role(), payload.familyId(),
-                payload.childId(), payload.permission());
+            var cookies = payload.parentAccountId() == null
+                ? cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                    payload.childId(), payload.permission())
+                : cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
+                    payload.childId(), payload.permission(), payload.parentAccountId());
 
             Response.ResponseBuilder rb = Response.seeOther(
                 URI.create(publicOriginResolver.toAbsoluteRedirect(redirectTarget, request)));

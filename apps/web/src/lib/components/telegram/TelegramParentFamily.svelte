@@ -10,6 +10,9 @@
         adminGetChildTelegram,
         adminCreateChildTelegramInvite,
         adminUnlinkChildTelegram,
+        adminGetChildMagicLinkStatus,
+        adminIssueChildMagicLink,
+        adminRevokeChildMagicLink,
         type ChildTelegramConnection,
     } from '$lib/services/api';
     import TelegramCoin from './TelegramCoin.svelte';
@@ -48,6 +51,11 @@
     let inviteLink = '';
     let inviteBusy = false;
     let copied = false;
+    let magicLink = '';
+    let magicLinkPending = false;
+    let magicLinkBusy = false;
+    let magicLinkError = '';
+    let magicLinkCopied = false;
 
     onMount(() => {
         void loadInactive();
@@ -106,9 +114,14 @@
         inviteView = false;
         inviteLink = '';
         copied = false;
+        magicLink = '';
+        magicLinkPending = false;
+        magicLinkError = '';
+        magicLinkCopied = false;
         telegram = null;
         manageChild = child;
         void loadTelegram(child.id);
+        void loadMagicLinkStatus(child.id);
     }
 
     async function loadTelegram(childId: string | number) {
@@ -142,6 +155,47 @@
         if (ok) await loadTelegram(manageChild.id);
         else telegramError = $i18n.t('app.telegram.family.telegramError');
         telegramBusy = false;
+    }
+
+    async function loadMagicLinkStatus(childId: string | number) {
+        const links = await adminGetChildMagicLinkStatus(childId);
+        magicLinkPending = Array.isArray(links) && links.some((link) => (
+            typeof link === 'object' && link !== null && 'status' in link
+            && String(link.status).toLowerCase() === 'pending'
+        ));
+    }
+
+    async function createMagicLink() {
+        if (!manageChild) return;
+        magicLinkBusy = true;
+        magicLinkError = '';
+        const result = await adminIssueChildMagicLink(manageChild.id);
+        magicLinkBusy = false;
+        if (result?.link) {
+            magicLink = result.link;
+            magicLinkPending = true;
+        } else magicLinkError = $i18n.t('app.telegram.family.magicLinkError');
+    }
+
+    async function revokeMagicLink() {
+        if (!manageChild) return;
+        magicLinkBusy = true;
+        magicLinkError = '';
+        const ok = await adminRevokeChildMagicLink(manageChild.id);
+        magicLinkBusy = false;
+        if (ok) {
+            magicLink = '';
+            magicLinkPending = false;
+        } else magicLinkError = $i18n.t('app.telegram.family.magicLinkError');
+    }
+
+    async function copyMagicLink() {
+        try {
+            await navigator.clipboard.writeText(magicLink);
+            magicLinkCopied = true;
+        } catch {
+            magicLinkCopied = false;
+        }
     }
 </script>
 
@@ -220,6 +274,20 @@
             <div class="setting"><span class="setting-icon"><TelegramIcon name="send" size={20} label={$i18n.t('app.telegram.family.telegram')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.telegram')}</span><span class="setting-meta">{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></span><span class="manage-badge" class:badge-active={telegram?.linked}>{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></div>
             <button class="setting" type="button" on:click={() => { limitsChild = manageChild; manageChild = null; limitsOpen = true; }}><span class="setting-icon"><TelegramIcon name="gauge" size={20} label={$i18n.t('app.telegram.family.limits')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.limits')}</span><span class="setting-meta">{$i18n.t('app.telegram.family.limitsMeta')}</span></span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         </div>
+
+        <section class="magic-link" aria-labelledby="child-magic-link-title">
+            <h3 id="child-magic-link-title" class="sheet-subtitle">{$i18n.t('app.telegram.family.magicLinkTitle')}</h3>
+            <p class="confirm-meta">{$i18n.t('app.telegram.family.magicLinkHint')}</p>
+            {#if magicLink}
+                <button class="reactivate-full" type="button" on:click={copyMagicLink}><TelegramIcon name="copy" size={18} />{magicLinkCopied ? $i18n.t('app.telegram.family.copied') : $i18n.t('app.telegram.family.copyLink')}</button>
+            {:else}
+                <button class="reactivate-full" type="button" disabled={magicLinkBusy} on:click={createMagicLink}><TelegramIcon name="key" size={18} />{magicLinkBusy ? $i18n.t('app.telegram.family.creating') : $i18n.t('app.telegram.family.createMagicLink')}</button>
+            {/if}
+            {#if magicLinkPending}
+                <button class="deactivate" type="button" disabled={magicLinkBusy} on:click={revokeMagicLink}><TelegramIcon name="unlink" size={18} />{$i18n.t('app.telegram.family.revokeMagicLink')}</button>
+            {/if}
+            {#if magicLinkError}<p class="error" role="alert">{magicLinkError}</p>{/if}
+        </section>
 
         {#if inviteView}
             <div class="invite-block">
@@ -331,6 +399,8 @@
     .telegram-actions { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
     .telegram-actions .reactivate-full, .telegram-actions .deactivate { margin-top:0; }
     .invite-block { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #edf0f5; }
+    .magic-link { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #edf0f5; }
+    .magic-link .sheet-subtitle { margin:0 0 .4rem; }
     .invite-block .manage-meta { margin-top:.5rem; }
     .invite-actions { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
 </style>

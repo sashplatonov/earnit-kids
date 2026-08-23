@@ -208,7 +208,7 @@
                 <button class="mode" type="button" on:click={() => screen = 'tasks'}><span class="setting-icon"><TelegramIcon name="task" size={20} label={$i18n.t('app.telegram.import.kindTasks')} /></span><span class="grow">{$i18n.t('app.telegram.import.kindTasks')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.import.kindTasks')} /></button>
                 <button class="mode" type="button" on:click={() => screen = 'shop'}><span class="setting-icon"><TelegramIcon name="reward" size={20} label={$i18n.t('app.telegram.import.kindRewards')} /></span><span class="grow">{$i18n.t('app.telegram.import.kindRewards')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.import.kindRewards')} /></button>
             </div>
-            <button class="dismiss" type="button" on:click={onClose}>
+            <button class="close" type="button" on:click={onClose}>
                 <TelegramIcon name="close" size={17} label={$i18n.t('app.telegram.import.close')} />
                 {$i18n.t('app.telegram.import.close')}
             </button>
@@ -284,7 +284,7 @@
             </button>
             <div class="button-row">
                 <button class="close" type="button" on:click={() => screen = 'pick'}>{$i18n.t('app.telegram.import.back')}</button>
-                <button class="dismiss" type="button" on:click={onClose}>
+                <button class="close" type="button" on:click={onClose}>
                     <TelegramIcon name="close" size={17} label={$i18n.t('app.telegram.import.close')} />
                     {$i18n.t('app.telegram.import.close')}
                 </button>
@@ -326,10 +326,7 @@
     .primary { width:100%; min-height:2.75rem; margin-top:.9rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
     .primary:disabled { cursor:not-allowed; opacity:.55; }
     .button-row { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-top:.5rem; }
-    .close { min-height:2.75rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
-    .dismiss { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.75rem; padding:0 1rem; border:1px solid #5361e8; border-radius:.7rem; background:#5361e8; color:#fff; font:inherit; font-weight:700; cursor:pointer; box-shadow:0 .35rem .8rem rgb(83 97 232 / 22%); }
-    .dismiss:hover { background:#4653d8; border-color:#4653d8; }
-    .dismiss:active { transform:translateY(1px); }
-    .dismiss:focus-visible, .close:focus-visible { outline:3px solid rgb(83 97 232 / 35%); outline-offset:2px; }
-    @media (prefers-reduced-motion: reduce) { .dismiss:active { transform:none; } }
+    .close { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; min-height:2.75rem; margin-top:.6rem; border:1px solid #f1c7ca; border-radius:.7rem; background:#fff7f7; color:#a84a50; font:inherit; font-weight:600; cursor:pointer; }
+    .button-row .close { margin-top:0; }
+    .close:focus-visible { outline:3px solid rgb(168 74 80 / 35%); outline-offset:2px; }
 </style>
