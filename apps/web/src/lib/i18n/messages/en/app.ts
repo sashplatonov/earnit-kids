@@ -59,6 +59,7 @@ export const appMessages = {
         pendingHint: 'Pending invitations are not active members until the recipient accepts them.', loading: 'Loading access…',
         empty: 'No parent memberships yet.', memberships: 'Parent memberships', unknownParent: 'Unknown parent',
         familyAdmin: 'Family admin', editor: 'Editor', viewer: 'Viewer', emailLabel: 'Parent email',
+        active: 'Access active', pending: 'Awaiting acceptance', inactive: 'Access paused',
         emailPlaceholder: 'name@example.com', emailRequired: 'Enter an email address.', permission: 'Parent permission',
         saving: 'Saving…', sendInvite: 'Send invite', invitationSent: 'Invitation sent.', invitationResent: 'Invitation resent.',
         invitationRevoked: 'Invitation revoked.', resend: 'Resend', revoke: 'Revoke', childEyebrow: 'Child access',

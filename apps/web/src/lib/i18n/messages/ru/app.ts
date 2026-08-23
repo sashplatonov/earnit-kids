@@ -59,6 +59,7 @@ export const appMessages = {
         pendingHint: 'Приглашённый родитель получит доступ после принятия приглашения.', loading: 'Загружаем доступ…',
         empty: 'Приглашённых родителей пока нет.', memberships: 'Доступ родителей', unknownParent: 'Неизвестный родитель',
         familyAdmin: 'Администратор семьи', editor: 'Редактор', viewer: 'Просмотр', emailLabel: 'Email родителя',
+        active: 'Доступ открыт', pending: 'Ожидает принятия', inactive: 'Доступ приостановлен',
         emailPlaceholder: 'name@example.com', emailRequired: 'Введите email адрес.', permission: 'Права родителя',
         saving: 'Сохраняем…', sendInvite: 'Отправить приглашение', invitationSent: 'Приглашение отправлено.', invitationResent: 'Приглашение отправлено повторно.',
         invitationRevoked: 'Приглашение отменено.', resend: 'Повторить', revoke: 'Отозвать', childEyebrow: 'Доступ ребёнка',
