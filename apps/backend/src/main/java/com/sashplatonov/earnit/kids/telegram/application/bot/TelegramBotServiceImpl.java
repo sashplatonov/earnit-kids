@@ -18,13 +18,32 @@ public class TelegramBotServiceImpl implements TelegramBotService {
     private final TelegramMessageUpdateHandler messageHandler;
     private final TelegramCallbackUpdateHandler callbackHandler;
 
-    @Inject
     public TelegramBotServiceImpl(TelegramIdentityService identities,
                                   TelegramBotApiClient apiClient,
                                   TelegramCallbackService callbacks,
                                   TelegramConfig config,
                                   TimeProvider timeProvider) {
         this(identities, apiClient, callbacks, config, timeProvider, null, null, null, null);
+    }
+
+    @Inject
+    public TelegramBotServiceImpl(TelegramIdentityService identities,
+                                  TelegramBotApiClient apiClient,
+                                  TelegramCallbackService callbacks,
+                                  TelegramConfig config,
+                                  TimeProvider timeProvider,
+                                  TelegramQuickActionService quickActions,
+                                  TelegramMenuBuilder menuBuilder,
+                                  TelegramFeatureGate featureGate,
+                                  FamilyRepository families) {
+        this.identities = identities;
+        this.timeProvider = timeProvider;
+        TelegramReplyKeyboardNavigator navigator =
+            new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient);
+        this.messageHandler = new TelegramMessageUpdateHandler(identities, apiClient, config,
+            quickActions, menuBuilder, featureGate, families, navigator);
+        this.callbackHandler = new TelegramCallbackUpdateHandler(identities, apiClient, callbacks,
+            config, quickActions, menuBuilder, featureGate, families);
     }
 
     public TelegramBotServiceImpl(TelegramIdentityService identities,
@@ -35,25 +54,6 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                                   TelegramQuickActionService quickActions,
                                   TelegramMenuBuilder menuBuilder) {
         this(identities, apiClient, callbacks, config, timeProvider, quickActions, menuBuilder, null, null);
-    }
-
-    TelegramBotServiceImpl(TelegramIdentityService identities,
-                           TelegramBotApiClient apiClient,
-                           TelegramCallbackService callbacks,
-                           TelegramConfig config,
-                           TimeProvider timeProvider,
-                           TelegramQuickActionService quickActions,
-                           TelegramMenuBuilder menuBuilder,
-                           TelegramFeatureGate featureGate,
-                           FamilyRepository families) {
-        this.identities = identities;
-        this.timeProvider = timeProvider;
-        TelegramReplyKeyboardNavigator navigator =
-            new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient);
-        this.messageHandler = new TelegramMessageUpdateHandler(identities, apiClient, config,
-            quickActions, menuBuilder, featureGate, families, navigator);
-        this.callbackHandler = new TelegramCallbackUpdateHandler(identities, apiClient, callbacks,
-            config, quickActions, menuBuilder, featureGate, families);
     }
 
     @Override
