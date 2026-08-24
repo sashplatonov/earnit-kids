@@ -87,7 +87,7 @@ git commit -m "style(web): define statistics surface system"
 
 ## STAT-UI-002: Align Statistics header and period segment
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-001
 
