@@ -110,6 +110,11 @@ export const adminMessages = {
             '90d': '90 дней',
             all: 'Всё время',
         },
+        overview: {
+            signalTitle: 'Главный сигнал',
+            shopStateTitle: 'Состояние монет',
+            rewardReceived: 'Получили награду',
+        },
         kpis: {
             totalFamilies: 'Всего семей',
             totalChildren: 'Всего детей',

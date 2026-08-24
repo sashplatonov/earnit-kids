@@ -261,13 +261,6 @@
 {:else}
     <main class="dashboard-container">
         <header class="dashboard-header">
-            <button class="back-btn" type="button" on:click={() => {
-                // eslint-disable-next-line svelte/no-navigation-without-resolve
-                goto('/telegram');
-            }}>
-                <TelegramIcon name="back" size={18} label={t('back')} />
-                <span>{t('back')}</span>
-            </button>
             <h1>{t('title')}</h1>
             <p class="subtitle">{t('subtitle')}</p>
         </header>
@@ -383,10 +376,13 @@
                         <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
                     </div>
                 {:else}
-                <h2 class="section-title">{t('tabs.overview')}</h2>
                 {#if buildCoinInsight()}
-                    <div class="overview-signal insight" role="status">{buildCoinInsight()}</div>
+                    <div class="overview-signal insight" role="status">
+                        <strong>{t('overview.signalTitle')}</strong>
+                        <span>{buildCoinInsight()}</span>
+                    </div>
                 {/if}
+                <h2 class="section-title">{t('tabs.overview')}</h2>
 
                 <div class="kpis">
                     <div class="kpi">
@@ -418,6 +414,7 @@
                 </div>
 
                 {#if coinEconomy?.coins?.earned != null || coinEconomy?.coins?.spent != null || rewards?.metrics?.issuedCount != null}
+                    <h2 class="section-title shop-state-title">{t('overview.shopStateTitle')}</h2>
                     <div class="metric-list overview-shop-state">
                         {#if coinEconomy?.coins?.earned != null}
                             <div class="metric">
@@ -425,7 +422,7 @@
                                     <strong>{t('kpis.coinsEarned')}</strong>
                                     <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                                 </div>
-                                <div class="metric-value">{formatValue(coinEconomy.coins.earned)} 🪙</div>
+                                <div class="metric-value">{formatValue(coinEconomy.coins.earned)} <TelegramIcon name="coin" size={18} /></div>
                             </div>
                         {/if}
                         {#if coinEconomy?.coins?.spent != null}
@@ -434,13 +431,13 @@
                                     <strong>{t('kpis.coinsSpent')}</strong>
                                     <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                                 </div>
-                                <div class="metric-value">{formatValue(coinEconomy.coins.spent)} 🪙</div>
+                                <div class="metric-value">{formatValue(coinEconomy.coins.spent)} <TelegramIcon name="coin" size={18} /></div>
                             </div>
                         {/if}
                         {#if rewards?.metrics?.issuedCount != null}
                             <div class="metric">
                                 <div>
-                                    <strong>{t('kpis.rewardsReceived')}</strong>
+                                    <strong>{t('overview.rewardReceived')}</strong>
                                     <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                                 </div>
                                 <div class="metric-value">{formatValue(rewards.metrics.issuedCount)}</div>
@@ -981,53 +978,39 @@
 <style>
     :global(.dashboard-container) {
         --dashboard-surface: #fff;
-        --dashboard-line: #e2e6ef;
-        --dashboard-shadow: 0 2px 10px rgba(34, 44, 80, 0.06);
-        padding: 16px;
+        --dashboard-line: #dfe4ee;
+        --dashboard-shadow: none;
+        padding: 12px 16px 0;
         max-width: 800px;
         margin: 0 auto;
         width: 100%;
         overflow-x: clip;
         padding-bottom: calc(92px + env(safe-area-inset-bottom));
-        background: #eceff6;
+        background: #fff;
         min-height: 100dvh;
     }
 
     .dashboard-header {
-        margin-bottom: 16px;
+        margin-bottom: 14px;
         position: relative;
     }
 
-    .back-btn {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        background: transparent;
-        border: 0;
-        color: var(--primary, #5c6fe7);
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        min-height: 44px;
-        padding: 0 2px;
-        margin-bottom: 4px;
-    }
-
     .dashboard-header h1 {
-        font-size: 25px;
+        font-size: 22px;
         line-height: 1.1;
         margin: 0;
-        font-weight: 750;
+        font-weight: 800;
+        letter-spacing: -0.02em;
     }
 
     .subtitle {
-        font-size: 12px;
-        color: var(--muted, #8791a6);
-        margin: 4px 0 0;
+        font-size: 13px;
+        color: #78849f;
+        margin: 5px 0 0;
     }
 
     .toolbar {
-        margin: 0 0 14px;
+        margin: 0 0 8px;
     }
 
     .segment {
@@ -1035,9 +1018,9 @@
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 3px;
-        background: #e4e8f1;
+        background: #f1f4f9;
         padding: 4px;
-        border-radius: 15px;
+        border-radius: 14px;
     }
 
     .seg {
@@ -1046,18 +1029,18 @@
         border-radius: 11px;
         min-height: 44px;
         padding: 8px 3px;
-        color: #687289;
+        color: #687491;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 700;
         white-space: nowrap;
         cursor: pointer;
     }
 
     .seg.active {
         background: #fff;
-        color: #4456d8;
+        color: #6274e8;
         font-weight: 750;
-        box-shadow: 0 2px 5px rgba(30, 40, 70, 0.12);
+        box-shadow: 0 2px 5px rgba(30, 40, 70, 0.1);
     }
 
     .updated {
@@ -1114,8 +1097,7 @@
     .activity-subtab:focus-visible,
     .info:focus-visible,
     .tooltip-close:focus-visible,
-    .retry-btn:focus-visible,
-    .back-btn:focus-visible {
+    .retry-btn:focus-visible {
         outline: 3px solid #273fd0;
         outline-offset: 2px;
     }
@@ -1184,33 +1166,33 @@
     }
 
     .section-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1a1d23;
-        margin: 16px 0 8px;
+        font-size: 16px;
+        font-weight: 800;
+        color: #1b2338;
+        margin: 13px 0 8px;
     }
 
     .kpis {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
 
     .kpi {
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
-        border-radius: 18px;
+        border-radius: 16px;
         box-shadow: var(--dashboard-shadow);
-        padding: 13px;
-        min-height: 92px;
+        padding: 13px 14px;
+        min-height: 96px;
         display: flex;
         flex-direction: column;
     }
 
     .kpi-label {
-        font-size: 11px;
-        color: var(--muted, #8791a6);
+        font-size: 12px;
+        color: #77839e;
         line-height: 1.25;
     }
 
@@ -1237,15 +1219,15 @@
     }
 
     .kpi-value {
-        font-size: 23px;
+        font-size: 28px;
         font-weight: 820;
-        margin-top: 6px;
+        margin-top: 5px;
         letter-spacing: -0.03em;
     }
 
     .kpi-foot {
-        font-size: 10px;
-        color: #99a1b1;
+        font-size: 11px;
+        color: #7f8ba5;
         margin-top: 4px;
     }
 
@@ -1461,27 +1443,39 @@
     }
 
     .insight {
-        margin-top: 9px;
-        padding: 9px 10px;
-        border-radius: 11px;
-        background: var(--orangeSoft, #fff5e3);
-        color: var(--orange, #805717);
-        font-size: 11px;
-        line-height: 1.35;
+        margin: 10px 0 0;
+        padding: 13px 13px;
+        border: 1px solid #f0dca1;
+        border-radius: 16px;
+        background: #fffaf0;
+        color: #856c22;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .insight strong,
+    .insight span {
+        display: block;
+    }
+
+    .insight strong {
+        margin-bottom: 3px;
+        font-size: 14px;
+        font-weight: 800;
     }
 
     .overview-signal {
-        margin: 0 0 10px;
+        margin: 0 0 13px;
     }
 
     .overview-shop-state {
-        margin-top: 8px;
+        margin-top: 0;
     }
 
     .metric-list {
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
-        border-radius: 18px;
+        border-radius: 17px;
         box-shadow: var(--dashboard-shadow);
         overflow: hidden;
     }
@@ -1520,7 +1514,7 @@
     .metric-value {
         text-align: right;
         font-weight: 800;
-        font-size: 14px;
+        font-size: 16px;
     }
 
     .funnel {

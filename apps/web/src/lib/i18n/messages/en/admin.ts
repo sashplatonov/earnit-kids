@@ -110,6 +110,11 @@ export const adminMessages = {
             '90d': '90 days',
             all: 'All time',
         },
+        overview: {
+            signalTitle: 'Main signal',
+            shopStateTitle: 'Coin economy',
+            rewardReceived: 'Rewards received',
+        },
         kpis: {
             totalFamilies: 'Total families',
             totalChildren: 'Total children',
