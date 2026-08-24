@@ -294,7 +294,7 @@ git commit -m "feat(web): parent profile detail card with separate account boxes
 
 ## TASK-005: Change-role flow with role cards
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** TASK-001
 

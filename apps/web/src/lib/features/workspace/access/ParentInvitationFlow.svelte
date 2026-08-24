@@ -7,6 +7,7 @@
         deactivateParentMembership,
         reactivateParentMembership,
         createParentTelegramInvite,
+        updateParentMembership,
         type ApiActionResult,
     } from '$lib/services/api';
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
@@ -31,6 +32,40 @@
     let wizardBusy = false;
     let wizardError = '';
     let wizardCopied = false;
+
+    // Change-role sheet state
+    let roleEditOpen = false;
+    let roleEditParent: ParentMembership | null = null;
+    let roleEditValue: MembershipPermission = 'editor';
+    let roleEditBusy = false;
+    let roleEditError = '';
+
+    function openRoleEdit(parent: ParentMembership): void {
+        roleEditParent = parent;
+        roleEditValue = parent.permission;
+        roleEditBusy = false;
+        roleEditError = '';
+        roleEditOpen = true;
+    }
+
+    function closeRoleEdit(): void {
+        roleEditOpen = false;
+        roleEditError = '';
+        roleEditBusy = false;
+        roleEditParent = null;
+    }
+
+    async function submitRoleEdit(): Promise<void> {
+        if (!roleEditParent) return;
+        roleEditBusy = true;
+        roleEditError = '';
+        const result = await updateParentMembership(roleEditParent.id, { permission: roleEditValue });
+        roleEditBusy = false;
+        if (!result.ok) { roleEditError = result.error; return; }
+        closeRoleEdit();
+        status = $i18n.t('app.parentAccess.saveButton');
+        await reload();
+    }
 
     function openWizard(): void {
         wizardOpen = true;
@@ -156,9 +191,9 @@
                         {:else if parent.permission === 'family_admin'}
                             <button type="button" class="icon-btn disabled" aria-label={$i18n.t('app.telegram.parents.adminDeactivateTip')} disabled><TelegramIcon name="pause" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.adminDeactivateTip')}</span></button>
                             <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.transferTitle')}><TelegramIcon name="refresh" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.transferTitle')}</span></button>
-                        {:else if parent.status === 'active'}
+{:else if parent.status === 'active'}
                             <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.deactivateParent')} on:click={() => run(deactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentDeactivated'))}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.deactivateParent')}</span></button>
-                            <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.changeRole')}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
+                            <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={(e) => { e.stopPropagation(); openRoleEdit(parent); }}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
                         {:else if parent.status === 'inactive'}
                             <button type="button" class="icon-btn ok" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.reactivateParent')} on:click={() => run(reactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentReactivated'))}><TelegramIcon name="play" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.reactivateParent')}</span></button>
                         {/if}
@@ -271,6 +306,34 @@
             </div>
         {/if}
         {#if wizardError}<p class="error" role="alert">{wizardError}</p>{/if}
+    </div>
+{/if}
+
+{#if roleEditOpen && roleEditParent}
+    <div class="sheet-backdrop" role="presentation" on:click={closeRoleEdit}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="role-edit-title" tabindex="-1">
+        <h2 id="role-edit-title">{$i18n.t('app.telegram.parents.changeRole')}</h2>
+        <p class="screen-sub">{label(roleEditParent)}</p>
+        <div class="stack">
+            <div>
+                <span class="label">{$i18n.t('app.workspaceAccess.permission')}</span>
+                <div class="role-grid">
+                    <button type="button" class:active={roleEditValue === 'editor'} class="role-card" on:click={() => roleEditValue = 'editor'}>
+                        <span class="role-icon"><TelegramIcon name="pencilLine" size={18} /></span>
+                        <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleEditor')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleEditorDesc')}</span></span>
+                    </button>
+                    <button type="button" class:active={roleEditValue === 'viewer'} class="role-card" on:click={() => roleEditValue = 'viewer'}>
+                        <span class="role-icon"><TelegramIcon name="eye" size={18} /></span>
+                        <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleViewer')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleViewerDesc')}</span></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {#if roleEditError}<p class="error" role="alert">{roleEditError}</p>{/if}
+        <div class="action-grid">
+            <button type="button" class="cancel" disabled={roleEditBusy} on:click={closeRoleEdit}><TelegramIcon name="close" size={16} />{$i18n.t('app.parentAccess.cancelButton')}</button>
+            <button type="button" class="btn" disabled={roleEditBusy} on:click={submitRoleEdit}>{roleEditBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.parentAccess.saveButton')}</button>
+        </div>
     </div>
 {/if}
 
