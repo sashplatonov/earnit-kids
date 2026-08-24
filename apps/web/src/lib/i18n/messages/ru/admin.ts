@@ -209,6 +209,7 @@ export const adminMessages = {
                 title: 'Монет за задание',
                 desc: 'медиана одобренных выполнений',
             },
+            completionSignal: 'Дети выполняют медианно {value} заданий за выбранный период.',
         },
         funnel: {
             registered: 'Зарегистрировались',

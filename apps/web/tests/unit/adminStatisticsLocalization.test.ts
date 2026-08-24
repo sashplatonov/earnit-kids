@@ -28,6 +28,8 @@ describe('admin Statistics localization', () => {
         expect(ruAdminMessages.dashboard.tooltips.close).toBe('Закрыть пояснение');
         expect(enAdminMessages.dashboard.rewards.rankingsEmpty).toBe('Not enough reward preference data for this period.');
         expect(ruAdminMessages.dashboard.rewards.rankingsEmpty).toBe('Недостаточно данных о выборе наград за этот период.');
+        expect(enAdminMessages.dashboard.tasks.completionSignal).toContain('{value}');
+        expect(ruAdminMessages.dashboard.tasks.completionSignal).toContain('{value}');
     });
 
     it('formats dashboard numbers and update time using the active locale', () => {

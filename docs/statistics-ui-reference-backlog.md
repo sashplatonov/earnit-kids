@@ -368,7 +368,7 @@ git commit -m "feat(web): compose statistics rewards panel"
 
 ## STAT-UI-007: Compose the Tasks panel like the reference
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-001
 

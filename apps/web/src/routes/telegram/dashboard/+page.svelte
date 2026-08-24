@@ -672,6 +672,11 @@
                         {/each}
                     </div>
                 {/if}
+                {#if taskEconomy?.taskMetrics?.medianCompletionsPerChild > 0}
+                    <div class="insight" role="status">
+                        {t('tasks.completionSignal', { value: formatValue(taskEconomy.taskMetrics.medianCompletionsPerChild) })}
+                    </div>
+                {/if}
                 {/if}
             </div>
 

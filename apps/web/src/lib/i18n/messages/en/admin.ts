@@ -209,6 +209,7 @@ export const adminMessages = {
                 title: 'Coins per task',
                 desc: 'median of approved completions',
             },
+            completionSignal: 'Children complete a median of {value} tasks in the selected period.',
         },
         funnel: {
             registered: 'Registered',
