@@ -100,7 +100,7 @@ git commit -m "refactor(web): compact parent list with icon actions and identity
 
 ## TASK-002: 3-step new-parent wizard (Profile → Account → Done)
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** TASK-001
 

@@ -6,23 +6,80 @@
         revokeParentInvitation,
         deactivateParentMembership,
         reactivateParentMembership,
+        createParentTelegramInvite,
         type ApiActionResult,
     } from '$lib/services/api';
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
 
-    export let showTelegramInvite = false;
-    export let onTelegramInvite: () => void = () => {};
-
     let parents: ParentMembership[] = [];
-    let email = '';
-    let permission: MembershipPermission = 'editor';
     let loading = true;
     let busy = false;
     let error = '';
     let status = '';
     const i18n = useI18n();
+
+    // Wizard state
+    let wizardOpen = false;
+    let wizardStep: 1 | 2 | 3 = 1;
+    let wizardName = '';
+    let wizardRole: MembershipPermission = 'editor';
+    let wizardMethod: 'email' | 'telegram' = 'email';
+    let wizardEmail = '';
+    let wizardLink = '';
+    let wizardBusy = false;
+    let wizardError = '';
+    let wizardCopied = false;
+
+    function openWizard(): void {
+        wizardOpen = true;
+        wizardStep = 1;
+        wizardName = '';
+        wizardRole = 'editor';
+        wizardMethod = 'email';
+        wizardEmail = '';
+        wizardLink = '';
+        wizardBusy = false;
+        wizardError = '';
+        wizardCopied = false;
+    }
+
+    function closeWizard(): void {
+        wizardOpen = false;
+        wizardError = '';
+        wizardBusy = false;
+    }
+
+    async function copyWizardLink(): Promise<void> {
+        try { await navigator.clipboard.writeText(wizardLink); wizardCopied = true; } catch { wizardCopied = false; }
+    }
+
+    $: wizardNameValid = wizardName.trim().length > 0;
+    $: wizardEmailValid = wizardEmail.trim().length > 0;
+
+    async function submitWizard(): Promise<void> {
+        wizardBusy = true;
+        wizardError = '';
+        if (wizardMethod === 'email') {
+            if (!wizardEmail.trim()) {
+                wizardError = $i18n.t('app.workspaceAccess.emailRequired');
+                wizardBusy = false;
+                return;
+            }
+            const result = await addParentMembership({ email: wizardEmail.trim(), permission: wizardRole });
+            wizardBusy = false;
+            if (!result.ok) { wizardError = result.error; return; }
+            wizardStep = 3;
+            status = $i18n.t('app.workspaceAccess.invitationSent');
+            await reload();
+        } else {
+            const result = await createParentTelegramInvite(wizardName.trim());
+            wizardBusy = false;
+            if (result?.launchUrl) { wizardLink = result.launchUrl; wizardStep = 3; await reload(); }
+            else wizardError = $i18n.t('app.telegram.parents.error');
+        }
+    }
 
     export async function reload(): Promise<void> {
         loading = true;
@@ -62,12 +119,6 @@
         if (!result.ok) { error = result.error; return; }
         status = success;
         await reload();
-    }
-
-    async function invite(): Promise<void> {
-        if (!email.trim()) { error = $i18n.t('app.workspaceAccess.emailRequired'); return; }
-        await run(addParentMembership({ email: email.trim(), permission }), $i18n.t('app.workspaceAccess.invitationSent'));
-        if (!error) email = '';
     }
 </script>
 
@@ -116,20 +167,106 @@
         {#if hasAdmin}<p class="note">{$i18n.t('app.telegram.parents.adminProtectionNote')}</p>{/if}
     {/if}
 
-    <div class="invite-form" aria-label="Invite a parent">
-        <label for="workspace-parent-email">{$i18n.t('app.workspaceAccess.emailLabel')}</label>
-        <div class="invite-controls">
-            <input id="workspace-parent-email" type="email" autocomplete="email" bind:value={email} placeholder={$i18n.t('app.workspaceAccess.emailPlaceholder')} disabled={busy} />
-            <select bind:value={permission} aria-label={$i18n.t('app.workspaceAccess.permission')} disabled={busy}>
-                <option value="editor">{$i18n.t('app.workspaceAccess.editor')}</option><option value="viewer">{$i18n.t('app.workspaceAccess.viewer')}</option>
-            </select>
-            <button type="button" disabled={busy} on:click={invite}><TelegramIcon name="mail" size={18} />{busy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.workspaceAccess.sendInvite')}</button>
-        </div>
-    </div>
-    {#if showTelegramInvite}<button class="secondary" type="button" on:click={onTelegramInvite}>Invite through Telegram</button>{/if}
+    <button type="button" class="btn add-parent" on:click={openWizard}><TelegramIcon name="add" size={18} />{$i18n.t('app.telegram.parents.addParent')}</button>
     {#if error}<p class="error" role="alert">{error}</p>{/if}
     {#if status}<p class="success" role="status" aria-live="polite">{status}</p>{/if}
 </section>
+
+{#if wizardOpen}
+    <div class="sheet-backdrop" role="presentation" on:click={closeWizard}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="parent-wizard-title" tabindex="-1">
+        <h2 id="parent-wizard-title">{$i18n.t('app.telegram.parents.addTitle')}</h2>
+
+        <div class="stepper" role="list" aria-label={$i18n.t('app.telegram.parents.wizardStep1')}>
+            <span class:active={wizardStep === 1} class="step" role="listitem">1. {$i18n.t('app.telegram.parents.wizardStep1')}</span>
+            <span class:active={wizardStep === 2} class="step" role="listitem">2. {$i18n.t('app.telegram.parents.wizardStep2')}</span>
+            <span class:active={wizardStep === 3} class="step" role="listitem">3. {$i18n.t('app.telegram.parents.wizardStep3')}</span>
+        </div>
+
+        {#if wizardStep === 1}
+            <p class="screen-sub">{$i18n.t('app.telegram.parents.profileStep')}</p>
+            <div class="stack">
+                <div>
+                    <label for="parent-wizard-name">{$i18n.t('app.telegram.parents.parentName')}</label>
+                    <input id="parent-wizard-name" class="input" type="text" autocomplete="name" bind:value={wizardName} disabled={wizardBusy} />
+                </div>
+                <div>
+                    <span class="label">{$i18n.t('app.workspaceAccess.permission')}</span>
+                    <div class="role-grid">
+                        <button type="button" class:active={wizardRole === 'editor'} class="role-card" on:click={() => wizardRole = 'editor'}>
+                            <span class="role-icon"><TelegramIcon name="pencilLine" size={18} /></span>
+                            <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleEditor')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleEditorDesc')}</span></span>
+                        </button>
+                        <button type="button" class:active={wizardRole === 'viewer'} class="role-card" on:click={() => wizardRole = 'viewer'}>
+                            <span class="role-icon"><TelegramIcon name="eye" size={18} /></span>
+                            <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleViewer')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleViewerDesc')}</span></span>
+                        </button>
+                    </div>
+                </div>
+                <p class="warn">{$i18n.t('app.telegram.parents.adminRoleNotSelectable')}</p>
+            </div>
+            <div class="action-grid">
+                <button type="button" class="cancel" on:click={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.cancel')}</button>
+                <button type="button" class="btn" disabled={!wizardNameValid || wizardBusy} on:click={() => wizardStep = 2}><TelegramIcon name="arrowRight" size={16} />{$i18n.t('app.telegram.parents.next')}</button>
+            </div>
+        {:else if wizardStep === 2}
+            <p class="screen-sub">{$i18n.t('app.telegram.parents.accountStep')}</p>
+            <div class="tabs" role="tablist" aria-label={$i18n.t('app.telegram.parents.methodEmail')}>
+                <button type="button" class:active={wizardMethod === 'email'} class="tab" role="tab" aria-selected={wizardMethod === 'email'} on:click={() => wizardMethod = 'email'}><TelegramIcon name="mail" size={16} />{$i18n.t('app.telegram.parents.methodEmail')}</button>
+                <button type="button" class:active={wizardMethod === 'telegram'} class="tab" role="tab" aria-selected={wizardMethod === 'telegram'} on:click={() => wizardMethod = 'telegram'}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.methodTelegram')}</button>
+            </div>
+            {#if wizardMethod === 'email'}
+                <div class="stack">
+                    <div><label class="label" for="parent-wizard-email">{$i18n.t('app.telegram.parents.emailLabel')}</label><input id="parent-wizard-email" class="input" type="email" autocomplete="email" bind:value={wizardEmail} placeholder={$i18n.t('app.workspaceAccess.emailPlaceholder')} disabled={wizardBusy} /></div>
+                    <p class="info">{$i18n.t('app.workspaceAccess.pendingHint')}</p>
+                </div>
+                <div class="action-grid">
+                    <button type="button" class="ghost" disabled={wizardBusy} on:click={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
+                    <button type="button" class="btn" disabled={!wizardEmailValid || wizardBusy} on:click={submitWizard}><TelegramIcon name="add" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createParent')}</button>
+                </div>
+            {:else}
+                <div class="stack">
+                    <div><label class="label" for="parent-wizard-name-ro">{$i18n.t('app.telegram.parents.nameLabel')}</label><input id="parent-wizard-name-ro" class="input" type="text" value={wizardName} readonly disabled /></div>
+                    <p class="info">{$i18n.t('app.telegram.parents.telegramHint')}</p>
+                    <p class="warn">{$i18n.t('app.telegram.parents.telegramWarn')}</p>
+                </div>
+                <div class="action-grid">
+                    <button type="button" class="ghost" disabled={wizardBusy} on:click={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
+                    <button type="button" class="btn" disabled={wizardBusy} on:click={submitWizard}><TelegramIcon name="link" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createLink')}</button>
+                </div>
+            {/if}
+        {:else if wizardStep === 3}
+            <p class="screen-sub">{$i18n.t('app.telegram.parents.doneStep')}</p>
+            {#if wizardMethod === 'email'}
+                <div class="preview">
+                    <div class="preview-head">
+                        <div class="avatar">{wizardName.trim().charAt(0).toUpperCase() || $i18n.t('app.telegram.parents.unknownParent').charAt(0)}</div>
+                        <div class="preview-main"><div class="preview-name">{wizardName.trim()}</div><div class="preview-role">{wizardRole === 'editor' ? $i18n.t('app.telegram.parents.roleEditor') : $i18n.t('app.telegram.parents.roleViewer')}</div></div>
+                        <span class="state pending">{$i18n.t('app.workspaceAccess.pending')}</span>
+                    </div>
+                    <div class="account-grid">
+                        <div class="box"><div class="box-title">{$i18n.t('app.telegram.parents.emailLabel')}</div><div class="box-value">{wizardEmail.trim()}</div></div>
+                    </div>
+                </div>
+                <p class="success" role="status" aria-live="polite">{$i18n.t('app.workspaceAccess.invitationSent')}</p>
+            {:else}
+                <div class="link-card">
+                    <div class="label">{$i18n.t('app.telegram.parents.linkReady')}</div>
+                    <div class="link-box">
+                        <div class="link-value">{wizardLink}</div>
+                        <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.copyLink')} on:click={copyWizardLink}><TelegramIcon name="copy" size={19} /></button>
+                    </div>
+                    <p class="small">{$i18n.t('app.telegram.parents.linkExpiryHint')}</p>
+                    {#if wizardCopied}<p class="success" role="status" aria-live="polite">{$i18n.t('app.telegram.parents.copied')}</p>{/if}
+                </div>
+            {/if}
+            <div class="action-grid one">
+                <button type="button" class="cancel" on:click={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.cancel')}</button>
+            </div>
+        {/if}
+        {#if wizardError}<p class="error" role="alert">{wizardError}</p>{/if}
+    </div>
+{/if}
 
 <style>
     .access-flow { display:grid; gap:.8rem; color:#18243d; }
@@ -156,9 +293,59 @@
     .icon-btn .tip { display:none; position:absolute; right:0; top:3rem; z-index:10; background:#172036; color:#fff; padding:.4rem .5rem; border-radius:.5rem; font-size:.68rem; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.14); }
     .icon-btn:hover .tip { display:block; }
     .note { margin:0; font-size:.72rem; line-height:1.45; background:#f7f9fc; color:#66718a; border-radius:.75rem; padding:.6rem .7rem; }
-    label { color:#33415f; font-size:.82rem; font-weight:700; } .invite-controls { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:.45rem; }
-    input,select,button { box-sizing:border-box; min-height:2.75rem; border:1px solid #cfd6e4; border-radius:.65rem; padding:.5rem .65rem; font:inherit; } button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border:0; background:#3867d6; color:#fff; font-weight:700; cursor:pointer; } button:disabled{opacity:.55;cursor:wait}
-    .secondary { background:#fff; border:1px solid #cfd6e4; color:#33415f; } .error{margin:0;color:#a33b3b}.success{margin:0;color:#17884b} button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #80aaff;outline-offset:2px}
+    .btn.add-parent { width:100%; min-height:2.75rem; }
+    .error{margin:0;color:#a33b3b}.success{margin:0;color:#17884b} button:focus-visible,input:focus-visible{outline:3px solid #80aaff;outline-offset:2px}
+
+    .sheet-backdrop{position:fixed;inset:0;z-index:40;background:rgb(15 24 45 / 35%)}
+    .sheet{position:fixed;inset:auto 0 0;z-index:41;display:grid;gap:.9rem;padding:1rem max(1rem,env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom));border-radius:1.1rem 1.1rem 0 0;background:#fff;box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%);max-height:88dvh;overflow:auto}
+    .sheet h2{margin:0;color:#18243d;font-size:1.15rem}
+    .screen-sub{margin:0;color:#66718a;font-size:.78rem;line-height:1.4}
+    .stepper{display:flex;gap:.4rem;flex-wrap:wrap}
+    .step{padding:.35rem .55rem;border-radius:999px;font-size:.68rem;background:#f6f8fc;border:1px solid #dfe4ef;color:#65718a}
+    .step.active{background:#eef2ff;border-color:#cad5ff;color:#3867d6}
+    .stack{display:grid;gap:.6rem}
+    .label{color:#33415f;font-size:.82rem;font-weight:700}
+    label{display:block;margin-bottom:.35rem;color:#33415f;font-size:.82rem;font-weight:700}
+    .input{box-sizing:border-box;width:100%;min-height:2.75rem;padding:.5rem .65rem;border:1px solid #cfd6e4;border-radius:.65rem;font:inherit}
+    .input:disabled{opacity:.55}
+    .role-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+    .role-card{display:flex;gap:.55rem;align-items:center;min-width:0;padding:.6rem;border:1px solid #dfe4ef;border-radius:.8rem;background:#fff;text-align:left;color:#18243d}
+    .role-card.active{border-color:#9baef0;background:#eef2ff}
+    .role-icon{display:inline-flex;flex:0 0 auto;color:#5b63e9}
+    .role-text{display:grid;gap:.1rem;min-width:0}
+    .role-name{font-size:.82rem;font-weight:800}
+    .role-desc{font-size:.68rem;color:#66718a;line-height:1.25}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;padding:.3rem;background:#f4f6fb;border-radius:.75rem}
+    .tab{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:2.5rem;border:0;border-radius:.55rem;background:transparent;font:inherit;font-weight:800;color:#68738d;padding:0 .5rem;cursor:pointer}
+    .tab.active{background:#fff;color:#18243d;box-shadow:0 2px 8px rgb(34 44 80 / 8%)}
+    .warn,.info{font-size:.74rem;line-height:1.45;border-radius:.75rem;padding:.55rem .65rem}
+    .warn{background:#fff8e6;color:#7e6512;border:1px solid #f0e1a6}
+    .info{background:#eef3ff;color:#5164b8;border:1px solid #d8e0ff}
+    .small{font-size:.7rem;color:#66718a;line-height:1.35;margin:.6rem 0 0}
+    .action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+    .action-grid.one{grid-template-columns:1fr}
+    .btn,.ghost,.cancel{min-height:2.75rem;border-radius:.7rem;padding:.5rem .7rem;border:1px solid #dfe4ef;font:inherit;font-weight:700;cursor:pointer}
+    .btn{background:#3867d6;border-color:#3867d6;color:#fff}
+    .btn:disabled{opacity:.55;cursor:wait}
+    .ghost{background:#fff;color:#33415f}
+    .cancel{background:#fff7f7;border-color:#efcccc;color:#a84a4a}
+    .preview{border:1px solid #dfe4ef;border-radius:1rem;background:#fff;overflow:hidden}
+    .preview-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.6rem;padding:.75rem .85rem;background:#fbfcff}
+    .preview .avatar{width:2.4rem;height:2.4rem}
+    .preview-main{min-width:0}
+    .preview-name{font-size:.9rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .preview-role{font-size:.72rem;color:#66718a;margin-top:.15rem}
+    .account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid #dfe4ef}
+    .box{padding:.7rem .85rem;min-width:0}
+    .box-title{font-size:.66rem;color:#66718a;margin-bottom:.35rem}
+    .box-value{font-size:.82rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .link-card{border:1px solid #dfe4ef;border-radius:.9rem;padding:.75rem;background:#fbfcff}
+    .link-card .label{display:block;margin-bottom:.5rem;color:#33415f;font-size:.78rem;font-weight:700}
+    .link-box{display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:.5rem}
+    .link-value{height:2.625rem;border:1px solid #dfe4ef;border-radius:.65rem;background:#fff;display:flex;align-items:center;padding:0 .6rem;font-size:.74rem;color:#46516c;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .link-box .icon-btn{width:42px;height:42px;padding:0;border-radius:.65rem;border:1px solid #dfe4ef;background:#fff;color:#42506e;display:grid;place-items:center;cursor:pointer}
+
     @media(max-width:640px){ .parent-row { grid-template-columns:auto minmax(0,1fr); } .row-actions { grid-column:2; justify-content:end; } .id.email,.id.tg { max-width:100%; } }
-    @media(max-width:520px){.invite-controls{grid-template-columns:1fr}.invite-controls button{width:100%}}
+    @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%} }
+    @media (min-width: 700px) {.sheet{inset:50% auto auto 50%;width:min(38rem,calc(100% - 3rem));max-height:min(82dvh,46rem);padding:1.4rem;border-radius:1.25rem;box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%);transform:translate(-50%,-50%)}}
 </style>
