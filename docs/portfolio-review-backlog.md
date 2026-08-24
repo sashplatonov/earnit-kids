@@ -204,7 +204,7 @@ ci(security): scan repository history before publication
 
 ## PORT-003: Throttle public bearer-token and authentication entrypoints
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** -
 
