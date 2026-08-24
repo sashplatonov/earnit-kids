@@ -337,8 +337,13 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
             return unauthorized();
         }
 
-        return toResponse(familyParentAccessService.transferAdmin(
-            membershipId, auth.familyId(), auth.parentAccountId(), auth.email()));
+        return OperationResultResponses.toMappedOk(
+            familyParentAccessService.transferAdmin(
+                membershipId, auth.familyId(), auth.parentAccountId(), auth.email()),
+            dto -> dto,
+            failure -> "PARENT_TRANSFER_REQUEST_PENDING_EXISTS".equals(failure.errorCode())
+                ? Response.Status.CONFLICT.getStatusCode()
+                : Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     @POST

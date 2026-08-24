@@ -185,6 +185,8 @@ git commit -m "fix(backend): allow viewer parents to accept or decline admin tra
 
 ## REVIEW-004: Add REST integration tests for transfer request/accept/decline/cancel endpoints
 
+**Status:** DONE
+
 **Priority:** P2
 **Depends on:** REVIEW-001, REVIEW-003
 
