@@ -12,7 +12,7 @@
     <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="parent-access-title" tabindex="-1">
         <h2 id="parent-access-title">{$i18n.t('app.telegram.parents.title')}</h2>
-        <ParentAccessPanel />
+        <ParentAccessPanel embedded />
         <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}

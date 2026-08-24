@@ -18,6 +18,8 @@
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
 
+    export let hideTitle = false;
+
     let parents: ParentMembership[] = [];
     let loading = true;
     let busy = false;
@@ -267,6 +269,15 @@
         return parent.displayName?.trim() || accountLabel(parent);
     }
 
+    function shouldShowEmail(parent: ParentMembership): boolean {
+        return Boolean(parent.email?.trim() && parent.email.trim() !== label(parent));
+    }
+
+    function shouldShowTelegram(parent: ParentMembership): boolean {
+        const telegram = telegramLabel(parent);
+        return Boolean(telegram && telegram !== label(parent));
+    }
+
     function telegramLabel(parent: ParentMembership): string {
         const displayName = parent.telegramDisplayName?.trim();
         const username = parent.telegramUsername?.trim();
@@ -300,7 +311,10 @@
 </script>
 
 <section class="access-flow" aria-labelledby="parent-access-heading">
-    <h2 id="parent-access-heading">{$i18n.t('app.workspaceAccess.title')}</h2>
+    <div class="access-header">
+        {#if !hideTitle}<h2 id="parent-access-heading">{$i18n.t('app.workspaceAccess.title')}</h2>{:else}<span id="parent-access-heading" class="sr-only">{$i18n.t('app.workspaceAccess.title')}</span>{/if}
+        <button type="button" class="btn add-parent" on:click={openWizard}><TelegramIcon name="add" size={18} />{$i18n.t('app.telegram.parents.addParent')}</button>
+    </div>
 
     {#if loading}<p class="hint" aria-live="polite">{$i18n.t('app.workspaceAccess.loading')}</p>
     {:else if parents.length === 0}<p class="empty">{$i18n.t('app.workspaceAccess.empty')}</p>
@@ -311,16 +325,15 @@
                     <div class="avatar">{label(parent).charAt(0).toUpperCase()}</div>
                     <div class="row-main">
                         <div class="topline">
-                            <strong class="name">{accountLabel(parent)}</strong>
+                            <strong class="name" title={label(parent)}>{label(parent)}</strong>
                             <span class:pending={parent.status === 'pending'} class:inactive={parent.status === 'inactive'} class:transfer={parent.transferRequestStatus === 'pending'} class="state">{parent.transferRequestStatus === 'pending' ? $i18n.t('app.telegram.parents.transferPending') : statusLabel(parent.status)}</span>
                         </div>
-                        {#if parent.displayName?.trim()}<div class="parent-name"><span class="meta-label">{$i18n.t('app.workspaceAccess.parentNameLabel')}:</span> {parent.displayName}</div>{/if}
                         <div class="row-role">{permissionLabel(parent.permission)}</div>
                         <div class="ids">
-                            {#if parent.email}
+                            {#if shouldShowEmail(parent)}
                                 <span class="id email"><span class="icon"><TelegramIcon name="mail" size={14} /></span><span class="text">{parent.email}</span></span>
                             {/if}
-                            {#if parent.telegramUserId != null || parent.telegramUsername || parent.telegramDisplayName}
+                            {#if shouldShowTelegram(parent)}
                                 <span class="id tg"><span class="icon"><TelegramIcon name="send" size={14} /></span><span class="text"><span class="meta-label">{$i18n.t('app.workspaceAccess.telegramLabel')}:</span> {telegramLabel(parent)}</span></span>
                             {/if}
                         </div>
@@ -355,7 +368,6 @@
         {#if hasAdmin}<p class="note">{$i18n.t('app.telegram.parents.adminProtectionNote')}</p>{/if}
     {/if}
 
-    <button type="button" class="btn add-parent" on:click={openWizard}><TelegramIcon name="add" size={18} />{$i18n.t('app.telegram.parents.addParent')}</button>
     {#if error}<p class="error" role="alert">{error}</p>{/if}
     {#if status}<p class="success" role="status" aria-live="polite">{status}</p>{/if}
 </section>
@@ -558,7 +570,8 @@
 {/if}
 
 <style>
-    .access-flow { display:grid; gap:.8rem; color:#18243d; }
+    .access-flow { display:grid; gap:.75rem; color:#18243d; }
+    .access-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
     h2 { margin:0; font-size:1.2rem; } .hint,.empty { margin:0; color:#66718a; line-height:1.45; }
     .state { display:inline-flex; align-items:center; min-height:1.7rem; padding:.2rem .5rem; border-radius:99px; background:#eef2ff; color:#3867d6; font-size:.72rem; font-weight:700; }
     .state { background:#e8f7ef; color:#187847; } .state.pending { background:#fff1dc; color:#a96720; } .state.inactive { background:#eef1f5; color:#66718a; } .state.transfer { background:#eef3ff; color:#4d63b9; }
@@ -576,21 +589,20 @@
     .preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;border-top:1px solid #dfe4ef;padding:.7rem .85rem}
     .ok-btn{background:#17884b;border-color:#17884b}
     .parents-list { display:grid; gap:0; overflow:hidden; }
-    .parent-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; align-items:center; padding:.85rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
+    .parent-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; align-items:center; padding:.75rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
     .parent-row:last-child { border-bottom:0; }
     .avatar { width:2.625rem; height:2.625rem; border-radius:.75rem; background:#eef2ff; color:#4d67d7; display:grid; place-items:center; font-weight:800; }
     .row-main { min-width:0; }
     .topline { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; min-width:0; }
     .name { font-size:.95rem; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .row-role { color:#66718a; font-size:.72rem; margin-top:.15rem; }
-    .parent-name { color:#33415f; font-size:.76rem; line-height:1.3; margin-top:.25rem; }
+    .row-role { color:#66718a; font-size:.75rem; margin-top:.18rem; }
     .meta-label { color:#7a8498; }
-    .ids { display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.5rem; }
-    .id { display:inline-flex; align-items:center; gap:.4rem; max-width:100%; padding:.3rem .5rem; border:1px solid #dfe4ef; border-radius:99px; background:#fafbfe; color:#51607a; font-size:.72rem; }
+    .ids { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.4rem; }
+    .id { display:inline-flex; align-items:center; gap:.35rem; max-width:100%; padding:.22rem .45rem; border:1px solid #dfe4ef; border-radius:99px; background:#fafbfe; color:#51607a; font-size:.72rem; }
     .id.email { max-width:20rem; } .id.tg { max-width:15rem; }
     .id .icon { display:inline-flex; flex:0 0 auto; } .id .text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-    .row-actions { display:grid; grid-template-columns:42px 42px; gap:.5rem; align-items:center; }
-    .icon-btn { width:42px; height:42px; padding:0; border-radius:.75rem; border:1px solid #dfe4ef; background:#fff; color:#42506e; display:grid; place-items:center; position:relative; cursor:pointer; }
+    .row-actions { display:grid; grid-template-columns:44px 44px; gap:.5rem; align-items:center; }
+    .icon-btn { width:44px; height:44px; padding:0; border-radius:.75rem; border:1px solid #dfe4ef; background:#fff; color:#42506e; display:grid; place-items:center; position:relative; cursor:pointer; }
     .icon-btn:hover:not(.disabled) { background:#f8faff; }
     .icon-btn.danger { border-color:#efc9c9; background:#fff5f5; color:#b74d4d; }
     .icon-btn.ok { border-color:#b9e1c8; background:#f2fff5; color:#17884b; }
@@ -598,7 +610,7 @@
     .icon-btn .tip { display:none; position:absolute; right:0; top:3rem; z-index:10; background:#172036; color:#fff; padding:.4rem .5rem; border-radius:.5rem; font-size:.68rem; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.14); }
     .icon-btn:hover .tip { display:block; }
     .note { margin:0; font-size:.72rem; line-height:1.45; background:#f7f9fc; color:#66718a; border-radius:.75rem; padding:.6rem .7rem; }
-    .btn.add-parent { width:100%; min-height:2.75rem; }
+    .btn.add-parent { min-height:2.75rem; white-space:nowrap; }
     .error{margin:0;color:#a33b3b}.success{margin:0;color:#17884b} button:focus-visible,input:focus-visible{outline:3px solid #80aaff;outline-offset:2px}
 
     .sheet-backdrop{position:fixed;inset:0;z-index:40;background:rgb(15 24 45 / 35%)}
@@ -652,7 +664,8 @@
     .qr{width:94px;height:94px;flex:0 0 auto;border:1px solid #dfe4ef;border-radius:.75rem;background:linear-gradient(90deg,#172036 10px,transparent 10px) 0 0/24px 24px,linear-gradient(#172036 10px,transparent 10px) 0 0/24px 24px,#fff}
     .qr-row .small{margin:0;flex:1;min-width:0}
 
-    @media(max-width:640px){ .parent-row { grid-template-columns:auto minmax(0,1fr); } .row-actions { grid-column:2; justify-content:end; } .id.email,.id.tg { max-width:100%; } }
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:640px){ .access-header{align-items:stretch;flex-direction:column;gap:.5rem}.access-header .add-parent{width:100%}.parent-row { grid-template-columns:auto minmax(0,1fr); } .row-actions { grid-column:2; justify-content:start; margin-top:.1rem; } .id.email,.id.tg { max-width:100%; } }
     @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%}.preview-actions{grid-template-columns:1fr} }
     @media (min-width: 700px) {.sheet{inset:50% auto auto 50%;width:min(38rem,calc(100% - 3rem));max-height:min(82dvh,46rem);padding:1.4rem;border-radius:1.25rem;box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%);transform:translate(-50%,-50%)}}
 </style>
