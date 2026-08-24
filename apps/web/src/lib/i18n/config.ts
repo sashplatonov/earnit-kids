@@ -154,7 +154,7 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'errors'];
     }
 
-    if (internalPath === '/login') {
+    if (internalPath === '/login' || internalPath === '/select-family') {
         return ['common', 'public', 'auth', 'errors'];
     }
 

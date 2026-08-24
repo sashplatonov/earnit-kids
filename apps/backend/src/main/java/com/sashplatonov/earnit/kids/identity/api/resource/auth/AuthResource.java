@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.config.AppConfig;
 import com.sashplatonov.earnit.kids.config.auth.AuthContext;
 import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.config.auth.CookieBuilder;
+import com.sashplatonov.earnit.kids.config.auth.JwtService;
 import com.sashplatonov.earnit.kids.identity.api.request.ChangePasswordRequest;
 import com.sashplatonov.earnit.kids.identity.api.request.GoogleLoginRequest;
 import com.sashplatonov.earnit.kids.identity.api.request.LoginChildRequest;
@@ -20,6 +21,8 @@ import com.sashplatonov.earnit.kids.identity.application.auth.AuthService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -48,14 +51,17 @@ public class AuthResource {
     private final AuthService authService;
     private final CookieBuilder cookieBuilder;
     private final AppConfig appConfig;
+    private final JwtService jwtService;
 
     @Inject
     public AuthResource(AuthService authService,
                         CookieBuilder cookieBuilder,
-                        AppConfig appConfig) {
+                        AppConfig appConfig,
+                        JwtService jwtService) {
         this.authService = authService;
         this.cookieBuilder = cookieBuilder;
         this.appConfig = appConfig;
+        this.jwtService = jwtService;
     }
 
     @POST
@@ -298,6 +304,14 @@ public class AuthResource {
         @RequestBody(required = true, description = "Family selection payload")
         @Valid SelectFamilyRequest request) {
         Integer parentAccountId = cookieBuilder.readFamilySelectionParentId(cookieHeader);
+        var context = readPendingChooserContext(cookieHeader);
+        if (parentAccountId == null || context.isEmpty()
+            || !(context.get().get("parentAccountId") instanceof Number contextParentId)
+            || contextParentId.intValue() != parentAccountId) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(ErrorResponse.of("Family selection has expired", "FAMILY_SELECTION_EXPIRED", 400))
+                .build();
+        }
         OperationResult<AuthPayload> result = authService.selectFamily(
             parentAccountId, request.familyId());
 
@@ -328,7 +342,56 @@ public class AuthResource {
         cookies.forEach(cookie -> response.header("Set-Cookie", cookie));
         if (payload.parentAccountId() != null) {
             response.header("Set-Cookie", cookieBuilder.clearFamilySelectionCookie());
+            response.header("Set-Cookie", clearPendingChooserCookie());
         }
         return response.build();
+    }
+
+    @GET
+    @Path("/select-family")
+    @Operation(summary = "Read the short-lived server-owned family selection context")
+    public Response familySelectionContext(@HeaderParam("Cookie") String cookieHeader) {
+        var context = readPendingChooserContext(cookieHeader);
+        if (context.isEmpty()) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                .entity(ErrorResponse.of("Family selection has expired", "FAMILY_SELECTION_EXPIRED", 401))
+                .build();
+        }
+
+        List<AuthResponse.FamilyChoice> choices = new ArrayList<>();
+        Object rawChoices = context.get().get("choices");
+        if (rawChoices instanceof List<?> list) {
+            for (Object rawChoice : list) {
+                if (!(rawChoice instanceof Map<?, ?> choice)
+                    || !(choice.get("familyId") instanceof String familyId)
+                    || !(choice.get("familyName") instanceof String familyName)
+                    || !(choice.get("permission") instanceof String permission)
+                    || !(choice.get("blocked") instanceof Boolean blocked)) {
+                    return Response.status(Response.Status.UNAUTHORIZED).build();
+                }
+                choices.add(new AuthResponse.FamilyChoice(familyId, familyName, permission, blocked));
+            }
+        }
+        if (choices.isEmpty()) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        return Response.ok(AuthResponse.selectionRequired(choices)).build();
+    }
+
+    private java.util.Optional<Map<String, Object>> readPendingChooserContext(String cookieHeader) {
+        if (cookieHeader == null) {
+            return java.util.Optional.empty();
+        }
+        for (String part : cookieHeader.split(";")) {
+            String[] pair = part.trim().split("=", 2);
+            if (pair.length == 2 && "pending_family_chooser".equals(pair[0])) {
+                return jwtService.verifyToken(pair[1]);
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    private String clearPendingChooserCookie() {
+        return "pending_family_chooser=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax";
     }
 }

@@ -46,11 +46,13 @@ class AuthResourceTest {
 
     private AuthResource resource;
     private AppConfig appConfig;
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
         appConfig = TestConfigFactory.appConfig(false, null, true, true);
-        resource = new AuthResource(authService, cookieBuilder, appConfig);
+        jwtService = testJwtService();
+        resource = new AuthResource(authService, cookieBuilder, appConfig, jwtService);
     }
 
     @Test
@@ -146,6 +148,25 @@ class AuthResourceTest {
     }
 
     @Test
+    void familySelectionContext_signedPendingCookie_returnsChoices() {
+        String pending = jwtService.signToken(Map.of(
+            "parentAccountId", 42,
+            "choices", List.of(Map.of(
+                "familyId", "fam-1",
+                "familyName", "Family One",
+                "permission", "family_admin",
+                "blocked", false))), 300);
+
+        Response response = resource.familySelectionContext("pending_family_chooser=" + pending);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        var entity = (com.sashplatonov.earnit.kids.dto.response.AuthResponse) response.getEntity();
+        assertThat(entity.selectionRequired()).isTrue();
+        assertThat(entity.familyChoices()).hasSize(1);
+        assertThat(entity.familyChoices().getFirst().familyId()).isEqualTo("fam-1");
+    }
+
+    @Test
     void loginChild_validToken_returnsCookies() {
         AuthPayload payload = new AuthPayload("fam-1", "a@test.com", "child", 10, "Kid", false, "child", null, false);
         when(authService.authenticateChild("token")).thenReturn(OperationResult.success(payload));
@@ -229,7 +250,8 @@ class AuthResourceTest {
         resource = new AuthResource(
             authService,
             cookieBuilder,
-            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id", "google-client-secret"));
+            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id", "google-client-secret"),
+            jwtService);
 
         Response response = resource.authConfig();
 
@@ -244,7 +266,8 @@ class AuthResourceTest {
         resource = new AuthResource(
             authService,
             cookieBuilder,
-            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id"));
+            TestConfigFactory.appConfig(false, null, true, true, true, "google-client-id"),
+            jwtService);
 
         Response response = resource.authConfig();
 
@@ -477,7 +500,7 @@ class AuthResourceTest {
             state);
 
         assertThat(response.getStatus()).isEqualTo(303);
-        assertThat(response.getLocation().toString()).isEqualTo("https://app.example.com/ru/login");
+        assertThat(response.getLocation().toString()).isEqualTo("https://app.example.com/select-family");
         assertThat(String.valueOf(response.getHeaders().get("Set-Cookie"))).contains("pending_family_chooser=");
     }
 

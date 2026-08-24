@@ -26,10 +26,9 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Path("/api")
@@ -148,8 +147,11 @@ public class AuthGoogleResource {
                 String chooserCookie = buildPendingChooserCookie(payload);
                 Response.ResponseBuilder rb = Response.seeOther(
                     URI.create(publicOriginResolver.toAbsoluteRedirect(
-                        deriveLoginRedirectTarget(redirectTarget), request)));
+                        "/select-family", request)));
                 rb.header("Set-Cookie", chooserCookie);
+                if (payload.parentAccountId() != null) {
+                    rb.header("Set-Cookie", cookieBuilder.buildFamilySelectionCookie(payload.parentAccountId()));
+                }
                 rb.header("Set-Cookie", "oauth_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict");
                 return rb.build();
             }
@@ -231,17 +233,19 @@ public class AuthGoogleResource {
     }
 
     private String buildPendingChooserCookie(AuthPayload payload) {
-        String raw = payload.email() + "\n" + payload.familyChoices().stream()
-            .map(choice -> choice.familyId()
-                + "|" + choice.familyName()
-                + "|" + choice.permission()
-                + "|" + choice.blocked())
-            .reduce((left, right) -> left + "\n" + right)
-            .orElse("");
-        String encoded = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+        var choices = new ArrayList<Map<String, Object>>();
+        payload.familyChoices().forEach(choice -> choices.add(Map.of(
+            "familyId", choice.familyId(),
+            "familyName", choice.familyName(),
+            "permission", choice.permission(),
+            "blocked", choice.blocked())));
+        Map<String, Object> context = new HashMap<>();
+        context.put("email", payload.email());
+        context.put("parentAccountId", payload.parentAccountId());
+        context.put("choices", choices);
+        String encoded = jwtService.signToken(context, 300);
         String secureSegment = appConfig.production() ? "Secure; " : "";
         return "pending_family_chooser=" + encoded + "; Max-Age=300; Path=/; "
-            + secureSegment + "SameSite=Lax";
+            + "HttpOnly; " + secureSegment + "SameSite=Lax";
     }
 }
