@@ -22,4 +22,14 @@ public record AdminAnalyticsPeriod(String value, Instant start) {
             default -> throw new IllegalArgumentException("Unsupported analytics period: " + normalized);
         };
     }
+
+    @Override
+    public boolean equals(Object object) {
+        return object instanceof AdminAnalyticsPeriod other && value.equals(other.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
 }

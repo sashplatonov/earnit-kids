@@ -21,6 +21,14 @@ class AdminAnalyticsPeriodTest {
     }
 
     @Test
+    void usesThePeriodValueAsTheAnalyticsCacheKey() {
+        AdminAnalyticsPeriod first = AdminAnalyticsPeriod.parse("30d", NOW);
+        AdminAnalyticsPeriod refreshed = AdminAnalyticsPeriod.parse("30d", NOW.plusSeconds(60));
+
+        assertThat(first).isEqualTo(refreshed).hasSameHashCodeAs(refreshed);
+    }
+
+    @Test
     void rejectsUnsupportedValuesInsteadOfUsingLifetime() {
         assertThatThrownBy(() -> AdminAnalyticsPeriod.parse("lifetime", NOW))
             .isInstanceOf(IllegalArgumentException.class);

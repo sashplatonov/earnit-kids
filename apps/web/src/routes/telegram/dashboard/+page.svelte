@@ -65,8 +65,6 @@
 
     // Redirect non-admins to the Telegram Mini App home
     onMount(() => {
-        periodLoading = false;
-        document.body.classList.remove('admin-loading');
         if (!isAdmin) {
             // eslint-disable-next-line svelte/no-navigation-without-resolve
             goto('/telegram', { replaceState: true });
@@ -115,12 +113,25 @@
         document.getElementById(`activity-subtab-${nextSubtab.id}`)?.focus();
     }
 
+    async function navigateToPeriod(period: string) {
+        try {
+            // eslint-disable-next-line svelte/no-navigation-without-resolve
+            await goto(`/telegram/dashboard?period=${period}`, { replaceState: true });
+        } catch (error) {
+            console.error('Statistics period navigation failed:', error);
+        } finally {
+            // EXPLAIN: Query-only navigation retains this component, so onMount
+            // does not run again to clear the loading state.
+            periodLoading = false;
+            document.body.classList.remove('admin-loading');
+        }
+    }
+
     function changePeriod(period: string) {
         if (period === selectedPeriod || periodLoading) return;
         periodLoading = true;
         document.body.classList.add('admin-loading');
-        // eslint-disable-next-line svelte/no-navigation-without-resolve
-        goto(`/telegram/dashboard?period=${period}`, { replaceState: true });
+        void navigateToPeriod(period);
     }
 
     function sectionUnavailable(section: string): boolean {
@@ -131,8 +142,7 @@
         if (periodLoading) return;
         periodLoading = true;
         document.body.classList.add('admin-loading');
-        // eslint-disable-next-line svelte/no-navigation-without-resolve
-        goto(`/telegram/dashboard?period=${selectedPeriod}`, { replaceState: true });
+        void navigateToPeriod(selectedPeriod);
     }
 
     // EXPLAIN: Trend bar helpers for ADM-14

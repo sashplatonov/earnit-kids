@@ -74,6 +74,8 @@ test('admin Statistics stays usable at compact mobile width', async ({ page }) =
         await control.click();
         await expect(page).toHaveURL(new RegExp(`/telegram/dashboard\\?period=${period.wireValue}$`));
         await expect(control).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.locator('.period-loading')).toHaveCount(0);
+        await expect(control).toBeEnabled();
         expect((await control.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     }
 
