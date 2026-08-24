@@ -116,10 +116,11 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             ParentMembershipDto dto = dtos.get(i);
             if (dto.id() != null && (dto.id().equals(request.getActorMembershipId())
                 || dto.id().equals(request.getTargetMembershipId()))) {
+                String role = dto.id().equals(request.getActorMembershipId()) ? "actor" : "target";
                 dtos.set(i, new ParentMembershipDto(
                     dto.id(), dto.email(), dto.displayName(), dto.telegramUserId(),
                     dto.telegramUsername(), dto.telegramDisplayName(), dto.permission(), dto.status(),
-                    dto.invitationStatus(), "pending", actorName, targetName, request.getId()));
+                    dto.invitationStatus(), "pending", actorName, targetName, request.getId(), role));
             }
         }
     }
@@ -361,7 +362,8 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             transferStatus,
             actorName,
             targetName,
-            transferRequestId
+            transferRequestId,
+            "target"
         );
     }
 

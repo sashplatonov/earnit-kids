@@ -21,6 +21,7 @@ export interface ParentMembership {
     transferRequestActorName?: string | null;
     transferRequestTargetName?: string | null;
     transferRequestId?: number | null;
+    transferRequestRole?: 'actor' | 'target' | null;
 }
 
 export interface AuthResponseSnapshot {

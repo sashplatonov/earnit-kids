@@ -157,6 +157,10 @@ class FamilyParentAccessServiceImplTest {
             .transferRequestActorName()).isEqualTo("actor@test.com");
         assertThat(dtos.stream().filter(dto -> dto.id().equals(11)).findFirst().orElseThrow()
             .transferRequestTargetName()).isEqualTo("target@test.com");
+        assertThat(dtos.stream().filter(dto -> dto.id().equals(12)).findFirst().orElseThrow()
+            .transferRequestRole()).isEqualTo("actor");
+        assertThat(dtos.stream().filter(dto -> dto.id().equals(11)).findFirst().orElseThrow()
+            .transferRequestRole()).isEqualTo("target");
     }
 
     @Test
