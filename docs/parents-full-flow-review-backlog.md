@@ -226,43 +226,14 @@ git commit -m "test(backend): add resource-level integration tests for admin tra
 
 ## REVIEW-005: Complete ARIA tablist pattern in the wizard Account step
 
+**Status:** DONE
+
 **Priority:** P2
 **Depends on:** -
 
 ### Outcome
 
 The Email/Telegram tabs in wizard step 2 follow the full WAI-ARIA tablist pattern: tabs have `id` and `aria-controls`, tab panels have `role="tabpanel"`, `id`, and `aria-labelledby`.
-
-### Files
-
-- `apps/web/src/lib/features/workspace/access/ParentInvitationFlow.svelte`
-
-### Work
-
-1. Add `id="wizard-tab-email"` and `id="wizard-tab-telegram"` to the two tab buttons. Add `aria-controls="wizard-panel-email"` / `aria-controls="wizard-panel-telegram"`.
-2. Wrap the Email tab content block in `<div id="wizard-panel-email" role="tabpanel" aria-labelledby="wizard-tab-email" tabindex="0">...</div>`.
-3. Wrap the Telegram tab content block in `<div id="wizard-panel-telegram" role="tabpanel" aria-labelledby="wizard-tab-telegram" tabindex="0" hidden={wizardMethod !== 'telegram'}>...</div>`. Alternatively, use `class:hidden` consistent with the existing approach.
-4. Add ArrowLeft/ArrowRight keyboard handling on the tablist to move focus between tabs (the WAI-ARIA tabs pattern). Add `tabindex={wizardMethod === 'email' ? 0 : -1}` / `tabindex={wizardMethod === 'telegram' ? 0 : -1}` for roving tabindex.
-
-### Acceptance criteria
-
-- A screen reader announces the tablist with two tabs and their associated panels.
-- ArrowLeft/ArrowRight moves focus between tabs when the tablist is focused.
-- The active tab is focusable (`tabindex=0`); the inactive tab is not (`tabindex=-1`).
-- `npm run lint` passes with no new warnings.
-
-### Verification
-
-```bash
-cd apps/web && npm run lint && npm run build
-```
-
-### Commit
-
-```bash
-git add apps/web/src/lib/features/workspace/access/ParentInvitationFlow.svelte
-git commit -m "fix(web): complete ARIA tablist pattern in wizard account step"
-```
 
 ---
 

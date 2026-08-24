@@ -165,6 +165,27 @@
         wizardBusy = false;
     }
 
+    function selectWizardMethod(method: 'email' | 'telegram'): void {
+        wizardMethod = method;
+    }
+
+    function onWizardTabsKeydown(event: KeyboardEvent): void {
+        if (wizardMethod !== 'email' && wizardMethod !== 'telegram') return;
+        const tabs = ['email', 'telegram'] as const;
+        const index = tabs.indexOf(wizardMethod);
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            const next = tabs[(index + 1) % tabs.length];
+            selectWizardMethod(next);
+            document.getElementById(next === 'email' ? 'wizard-tab-email' : 'wizard-tab-telegram')?.focus();
+        } else if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            const prev = tabs[(index - 1 + tabs.length) % tabs.length];
+            selectWizardMethod(prev);
+            document.getElementById(prev === 'email' ? 'wizard-tab-email' : 'wizard-tab-telegram')?.focus();
+        }
+    }
+
     async function copyWizardLink(): Promise<void> {
         try { await navigator.clipboard.writeText(wizardLink); wizardCopied = true; } catch { wizardCopied = false; }
     }
@@ -337,11 +358,12 @@
             </div>
         {:else if wizardStep === 2}
             <p class="screen-sub">{$i18n.t('app.telegram.parents.accountStep')}</p>
-            <div class="tabs" role="tablist" aria-label={$i18n.t('app.telegram.parents.methodEmail')}>
-                <button type="button" class:active={wizardMethod === 'email'} class="tab" role="tab" aria-selected={wizardMethod === 'email'} on:click={() => wizardMethod = 'email'}><TelegramIcon name="mail" size={16} />{$i18n.t('app.telegram.parents.methodEmail')}</button>
-                <button type="button" class:active={wizardMethod === 'telegram'} class="tab" role="tab" aria-selected={wizardMethod === 'telegram'} on:click={() => wizardMethod = 'telegram'}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.methodTelegram')}</button>
+            <div class="tabs" role="tablist" aria-label={$i18n.t('app.telegram.parents.methodEmail')} tabindex="0" on:keydown={onWizardTabsKeydown}>
+                <button type="button" id="wizard-tab-email" class:active={wizardMethod === 'email'} class="tab" role="tab" aria-selected={wizardMethod === 'email'} aria-controls="wizard-panel-email" tabindex={wizardMethod === 'email' ? 0 : -1} on:click={() => selectWizardMethod('email')}><TelegramIcon name="mail" size={16} />{$i18n.t('app.telegram.parents.methodEmail')}</button>
+                <button type="button" id="wizard-tab-telegram" class:active={wizardMethod === 'telegram'} class="tab" role="tab" aria-selected={wizardMethod === 'telegram'} aria-controls="wizard-panel-telegram" tabindex={wizardMethod === 'telegram' ? 0 : -1} on:click={() => selectWizardMethod('telegram')}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.methodTelegram')}</button>
             </div>
             {#if wizardMethod === 'email'}
+                <div id="wizard-panel-email" role="tabpanel" aria-labelledby="wizard-tab-email" tabindex="0">
                 <div class="stack">
                     <div><label class="label" for="parent-wizard-email">{$i18n.t('app.telegram.parents.emailLabel')}</label><input id="parent-wizard-email" class="input" type="email" autocomplete="email" bind:value={wizardEmail} placeholder={$i18n.t('app.workspaceAccess.emailPlaceholder')} disabled={wizardBusy} /></div>
                     <p class="info">{$i18n.t('app.workspaceAccess.pendingHint')}</p>
@@ -350,7 +372,9 @@
                     <button type="button" class="ghost" disabled={wizardBusy} on:click={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
                     <button type="button" class="btn" disabled={!wizardEmailValid || wizardBusy} on:click={submitWizard}><TelegramIcon name="add" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createParent')}</button>
                 </div>
+                </div>
             {:else}
+                <div id="wizard-panel-telegram" role="tabpanel" aria-labelledby="wizard-tab-telegram" tabindex="0">
                 <div class="stack">
                     <div><label class="label" for="parent-wizard-name-ro">{$i18n.t('app.telegram.parents.nameLabel')}</label><input id="parent-wizard-name-ro" class="input" type="text" value={wizardName} readonly disabled /></div>
                     <p class="info">{$i18n.t('app.telegram.parents.telegramHint')}</p>
@@ -359,6 +383,7 @@
                 <div class="action-grid">
                     <button type="button" class="ghost" disabled={wizardBusy} on:click={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
                     <button type="button" class="btn" disabled={wizardBusy} on:click={submitWizard}><TelegramIcon name="link" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createLink')}</button>
+                </div>
                 </div>
             {/if}
         {:else if wizardStep === 3}
