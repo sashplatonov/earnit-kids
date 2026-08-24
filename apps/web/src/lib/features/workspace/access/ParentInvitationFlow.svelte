@@ -19,6 +19,7 @@
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
 
     export let hideTitle = false;
+    export let compact = false;
 
     let parents: ParentMembership[] = [];
     let loading = true;
@@ -310,10 +311,10 @@
     }
 </script>
 
-<section class="access-flow" aria-labelledby="parent-access-heading">
+<section class:compact class="access-flow" aria-labelledby="parent-access-heading">
     <div class="access-header">
         {#if !hideTitle}<h2 id="parent-access-heading">{$i18n.t('app.workspaceAccess.title')}</h2>{:else}<span id="parent-access-heading" class="sr-only">{$i18n.t('app.workspaceAccess.title')}</span>{/if}
-        <button type="button" class="btn add-parent" on:click={openWizard}><TelegramIcon name="add" size={18} />{$i18n.t('app.telegram.parents.addParent')}</button>
+        <button type="button" class="btn add-parent" aria-label={$i18n.t('app.telegram.parents.addParent')} on:click={openWizard}><TelegramIcon name="add" size={18} /><span class="add-parent-label">{$i18n.t('app.telegram.parents.addParent')}</span></button>
     </div>
 
     {#if loading}<p class="hint" aria-live="polite">{$i18n.t('app.workspaceAccess.loading')}</p>
@@ -571,6 +572,7 @@
 
 <style>
     .access-flow { display:grid; gap:.75rem; color:#18243d; }
+    .access-flow.compact { gap:.5rem; }
     .access-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
     h2 { margin:0; font-size:1.2rem; } .hint,.empty { margin:0; color:#66718a; line-height:1.45; }
     .state { display:inline-flex; align-items:center; min-height:1.7rem; padding:.2rem .5rem; border-radius:99px; background:#eef2ff; color:#3867d6; font-size:.72rem; font-weight:700; }
@@ -665,6 +667,14 @@
     .qr-row .small{margin:0;flex:1;min-width:0}
 
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .access-flow.compact .access-header{justify-content:flex-end}
+    .access-flow.compact .add-parent{width:44px;min-height:44px;padding:0;border-radius:.75rem}
+    .access-flow.compact .add-parent-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .access-flow.compact .parent-row{padding:.55rem 0;gap:.6rem}
+    .access-flow.compact .avatar{width:2.5rem;height:2.5rem}
+    .access-flow.compact .ids{margin-top:.25rem}
+    .access-flow.compact .note{padding:.45rem .55rem}
+    @media(max-width:640px){.access-flow.compact .access-header{align-items:center;flex-direction:row}.access-flow.compact .parent-row{grid-template-columns:auto minmax(0,1fr) auto}.access-flow.compact .row-actions{grid-column:3;justify-content:end;margin-top:0}.access-flow.compact .row-actions{grid-template-columns:44px 44px}.access-flow.compact .icon-btn{width:44px;height:44px}}
     @media(max-width:640px){ .access-header{align-items:stretch;flex-direction:column;gap:.5rem}.access-header .add-parent{width:100%}.parent-row { grid-template-columns:auto minmax(0,1fr); } .row-actions { grid-column:2; justify-content:start; margin-top:.1rem; } .id.email,.id.tg { max-width:100%; } }
     @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%}.preview-actions{grid-template-columns:1fr} }
     @media (min-width: 700px) {.sheet{inset:50% auto auto 50%;width:min(38rem,calc(100% - 3rem));max-height:min(82dvh,46rem);padding:1.4rem;border-radius:1.25rem;box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%);transform:translate(-50%,-50%)}}
