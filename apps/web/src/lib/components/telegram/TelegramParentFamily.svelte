@@ -47,7 +47,6 @@
     let telegram: ChildTelegramConnection | null = null;
     let telegramBusy = false;
     let telegramError = '';
-    let inviteView = false;
     let inviteLink = '';
     let inviteBusy = false;
     let copied = false;
@@ -111,7 +110,6 @@
     function openManage(child: Child) {
         statusError = '';
         telegramError = '';
-        inviteView = false;
         inviteLink = '';
         copied = false;
         magicLink = '';
@@ -132,6 +130,8 @@
         if (!manageChild) return;
         inviteBusy = true;
         telegramError = '';
+        inviteLink = '';
+        copied = false;
         const result = await adminCreateChildTelegramInvite(manageChild.id);
         inviteBusy = false;
         if (result) inviteLink = result.launchUrl;
@@ -289,30 +289,25 @@
             {#if magicLinkError}<p class="error" role="alert">{magicLinkError}</p>{/if}
         </section>
 
-        {#if inviteView}
-            <div class="invite-block">
-                <p class="confirm-meta">{$i18n.t('app.telegram.family.childTelegramTitle')}</p>
-                <p class="confirm-meta">{$i18n.t('app.telegram.family.childTelegramHint', { name: manageChild.nickname })}</p>
-                {#if !inviteLink}
-                    <button class="reactivate-full" type="button" disabled={inviteBusy} on:click={createInvite}><TelegramIcon name="link" size={18} label={$i18n.t('app.telegram.family.createTelegramLink')} />{$i18n.t('app.telegram.family.createTelegramLink')}</button>
-                {:else}
-                    <p class="manage-meta"><strong>{$i18n.t('app.telegram.family.linkReady')}</strong></p>
-                    <div class="invite-actions">
-                        <button class="reactivate-full" type="button" on:click={copyInvite}><TelegramIcon name="copy" size={18} label={$i18n.t('app.telegram.family.copyLink')} />{copied ? $i18n.t('app.telegram.family.copied') : $i18n.t('app.telegram.family.copyLink')}</button>
-                        <button class="close" type="button" on:click={() => { inviteLink = ''; copied = false; }}><TelegramIcon name="refresh" size={16} label={$i18n.t('app.telegram.family.createNew')} />{$i18n.t('app.telegram.family.createNew')}</button>
-                    </div>
-                {/if}
-            </div>
-        {:else}
-            {#if telegram?.linked}
+        <section class="magic-link" aria-labelledby="child-telegram-title">
+            <h3 id="child-telegram-title" class="sheet-subtitle">{$i18n.t('app.telegram.family.childTelegramTitle')}</h3>
+            <p class="confirm-meta">{$i18n.t('app.telegram.family.childTelegramHint', { name: manageChild.nickname })}</p>
+            {#if inviteLink}
+                <p class="manage-meta"><strong>{$i18n.t('app.telegram.family.linkReady')}</strong></p>
+                <div class="invite-actions">
+                    <button class="reactivate-full" type="button" on:click={copyInvite}><TelegramIcon name="copy" size={18} label={$i18n.t('app.telegram.family.copyLink')} />{copied ? $i18n.t('app.telegram.family.copied') : $i18n.t('app.telegram.family.copyLink')}</button>
+                    <button class="close" type="button" on:click={() => { inviteLink = ''; copied = false; }}><TelegramIcon name="refresh" size={16} label={$i18n.t('app.telegram.family.createNew')} />{$i18n.t('app.telegram.family.createNew')}</button>
+                </div>
+            {:else if telegram?.linked}
                 <div class="telegram-actions">
-                    <button class="reactivate-full" type="button" on:click={() => { inviteView = true; inviteLink = ''; copied = false; }}><TelegramIcon name="send" size={18} label={$i18n.t('app.telegram.family.relinkTelegram')} />{$i18n.t('app.telegram.family.relinkTelegram')}</button>
+                    <button class="reactivate-full" type="button" disabled={inviteBusy} on:click={createInvite}><TelegramIcon name="send" size={18} label={$i18n.t('app.telegram.family.relinkTelegram')} />{$i18n.t('app.telegram.family.relinkTelegram')}</button>
                     <button class="deactivate" type="button" disabled={telegramBusy} on:click={unlinkTelegram}><TelegramIcon name="unlink" size={18} label={$i18n.t('app.telegram.family.unlinkTelegram')} />{$i18n.t('app.telegram.family.unlinkTelegram')}</button>
                 </div>
             {:else}
-                <button class="reactivate-full" type="button" on:click={() => { inviteView = true; }}><TelegramIcon name="send" size={18} label={$i18n.t('app.telegram.family.linkTelegram')} />{$i18n.t('app.telegram.family.linkTelegram')}</button>
+                <button class="reactivate-full" type="button" disabled={inviteBusy} on:click={createInvite}><TelegramIcon name="send" size={18} label={$i18n.t('app.telegram.family.linkTelegram')} />{inviteBusy ? $i18n.t('app.telegram.family.creating') : $i18n.t('app.telegram.family.linkTelegram')}</button>
             {/if}
-        {/if}
+            {#if telegramError}<p class="error" role="alert">{telegramError}</p>{/if}
+        </section>
 
         <h3 class="sheet-subtitle">{$i18n.t('app.telegram.family.status')}</h3>
         <div class="manage-status"><span class="manage-label">{$i18n.t('app.telegram.family.visibleInAppAndBot')}</span><span class:badge-active={manageChild.status !== 'INACTIVE'} class="manage-badge">{manageChild.status === 'INACTIVE' ? $i18n.t('app.telegram.family.inactive') : $i18n.t('app.telegram.family.active')}</span></div>
@@ -398,9 +393,7 @@
     .sheet-subtitle { margin:1rem 0 .4rem; color:#4d5870; font-size:.85rem; }
     .telegram-actions { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
     .telegram-actions .reactivate-full, .telegram-actions .deactivate { margin-top:0; }
-    .invite-block { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #edf0f5; }
     .magic-link { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #edf0f5; }
     .magic-link .sheet-subtitle { margin:0 0 .4rem; }
-    .invite-block .manage-meta { margin-top:.5rem; }
     .invite-actions { display:grid; grid-template-columns:minmax(0,1fr); gap:.6rem; }
 </style>
