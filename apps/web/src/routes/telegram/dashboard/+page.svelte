@@ -853,104 +853,113 @@
                     </div>
                 {/if}
 
-                <h2 class="section-title">{t('sections.parentNeeds')}</h2>
-                {#if sectionUnavailable('parentBehavior')}
-                    <div class="empty-state" role="status">
-                        <b>{t('empty.sectionUnavailableTitle')}</b>
-                        <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
-                    </div>
-                {:else}
-                <div class="metric-list">
-                    <div class="metric">
-                        <div>
-                            <strong>{t('parent.catalogUsage.title')}</strong>
-                            <small>{t('parent.catalogUsage.desc')}</small>
-                        </div>
-                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCatalogPercent ?? '—'}%</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <strong>{t('parent.customContent.title')}</strong>
-                            <small>{t('parent.customContent.desc')}</small>
-                        </div>
-                        <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCustomContentPercent ?? '—'}%</div>
-                    </div>
-                </div>
-                {/if}
+                {#if activeActivitySubtab === 'needs'}
+                    <div
+                        id="panel-activity-needs"
+                        class="activity-panel"
+                        role="tabpanel"
+                        aria-labelledby="activity-subtab-needs"
+                    >
+                        <h2 class="section-title">{t('sections.parentNeeds')}</h2>
+                        {#if sectionUnavailable('parentBehavior')}
+                            <div class="empty-state" role="status">
+                                <b>{t('empty.sectionUnavailableTitle')}</b>
+                                <small>{t('empty.sectionUnavailableDesc')}</small>
+                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                            </div>
+                        {:else}
+                            <div class="metric-list">
+                                <div class="metric">
+                                    <div>
+                                        <strong>{t('parent.catalogUsage.title')}</strong>
+                                        <small>{t('parent.catalogUsage.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCatalogPercent ?? '—'}%</div>
+                                </div>
+                                <div class="metric">
+                                    <div>
+                                        <strong>{t('parent.customContent.title')}</strong>
+                                        <small>{t('parent.customContent.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{parentBehavior?.parentBehaviorMetrics?.familiesUsingCustomContentPercent ?? '—'}%</div>
+                                </div>
+                            </div>
 
-                <h2 class="section-title">{t('sections.parentCycle')}</h2>
-                <div class="metric-list">
-                    <div class="metric">
-                        <div>
-                            <div class="metric-title">
-                                <strong>{t('parent.decisionTime.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={(event) => toggleTooltip('decisionTime', event)}>i</button>
+                            <h3 class="section-title">{t('sections.parentCycle')}</h3>
+                            <div class="metric-list">
+                                <div class="metric">
+                                    <div>
+                                        <div class="metric-title">
+                                            <strong>{t('parent.decisionTime.title')}</strong>
+                                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={(event) => toggleTooltip('decisionTime', event)}>i</button>
+                                        </div>
+                                        <small>{t('parent.decisionTime.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours)} {t('units.hours')}</div>
+                                </div>
+                                <div class="metric">
+                                    <div>
+                                        <div class="metric-title">
+                                            <strong>{t('parent.pendingBacklog.title')}</strong>
+                                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={(event) => toggleTooltip('pendingBacklog', event)}>i</button>
+                                        </div>
+                                        <small>{t('parent.pendingBacklog.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.pendingRequestsCount)}</div>
+                                </div>
+                                <div class="metric">
+                                    <div>
+                                        <strong>{t('parent.familiesWithPending.title')}</strong>
+                                        <small>{t('parent.familiesWithPending.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.familiesWithPendingRequests)}</div>
+                                </div>
                             </div>
-                            <small>{t('parent.decisionTime.desc')}</small>
-                        </div>
-                        <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.medianApprovalDelayHours)} {t('units.hours')}</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <div class="metric-title">
-                                <strong>{t('parent.pendingBacklog.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={(event) => toggleTooltip('pendingBacklog', event)}>i</button>
-                            </div>
-                            <small>{t('parent.pendingBacklog.desc')}</small>
-                        </div>
-                        <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.pendingRequestsCount)}</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <strong>{t('parent.familiesWithPending.title')}</strong>
-                            <small>{t('parent.familiesWithPending.desc')}</small>
-                        </div>
-                        <div class="metric-value">{formatValue(parentBehavior?.parentBehaviorMetrics?.familiesWithPendingRequests)}</div>
-                    </div>
-                </div>
+                        {/if}
 
-                <h2 class="section-title">{t('sections.childNeeds')}</h2>
-                {#if sectionUnavailable('childBehavior')}
-                    <div class="empty-state" role="status">
-                        <b>{t('empty.sectionUnavailableTitle')}</b>
-                        <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
-                    </div>
-                {:else}
-                <div class="metric-list">
-                    <div class="metric">
-                        <div>
-                            <strong>{t('child.activeDays.title')}</strong>
-                            <small>{t('child.activeDays.desc')}</small>
-                        </div>
-                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.medianActiveDaysPerChild)}</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <strong>{t('child.tasksBeforeReward.title')}</strong>
-                            <small>{t('child.tasksBeforeReward.desc')}</small>
-                        </div>
-                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.medianTasksBeforeReward)}</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <div class="metric-title">
-                                <strong>{t('child.earningNotSpending.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}>i</button>
+                        <h2 class="section-title">{t('sections.childNeeds')}</h2>
+                        {#if sectionUnavailable('childBehavior')}
+                            <div class="empty-state" role="status">
+                                <b>{t('empty.sectionUnavailableTitle')}</b>
+                                <small>{t('empty.sectionUnavailableDesc')}</small>
+                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
                             </div>
-                            <small>{t('child.earningNotSpending.desc')}</small>
-                        </div>
-                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending, true)}</div>
+                        {:else}
+                            <div class="metric-list">
+                                <div class="metric">
+                                    <div>
+                                        <strong>{t('child.activeDays.title')}</strong>
+                                        <small>{t('child.activeDays.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.medianActiveDaysPerChild)}</div>
+                                </div>
+                                <div class="metric">
+                                    <div>
+                                        <strong>{t('child.tasksBeforeReward.title')}</strong>
+                                        <small>{t('child.tasksBeforeReward.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.medianTasksBeforeReward)}</div>
+                                </div>
+                                <div class="metric">
+                                    <div>
+                                        <div class="metric-title">
+                                            <strong>{t('child.earningNotSpending.title')}</strong>
+                                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}>i</button>
+                                        </div>
+                                        <small>{t('child.earningNotSpending.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenEarningNotSpending, true)}</div>
+                                </div>
+                                <div class="metric">
+                                    <div>
+                                        <strong>{t('child.requestedNotReceived.title')}</strong>
+                                        <small>{t('child.requestedNotReceived.desc')}</small>
+                                    </div>
+                                    <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenRequestedNotReceived, true)}</div>
+                                </div>
+                            </div>
+                        {/if}
                     </div>
-                    <div class="metric">
-                        <div>
-                            <strong>{t('child.requestedNotReceived.title')}</strong>
-                            <small>{t('child.requestedNotReceived.desc')}</small>
-                        </div>
-                        <div class="metric-value">{formatValue(childBehavior?.childBehaviorMetrics?.percentChildrenRequestedNotReceived, true)}</div>
-                    </div>
-                </div>
                 {/if}
             </div>
         </div>

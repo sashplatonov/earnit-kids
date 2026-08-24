@@ -592,7 +592,7 @@ git commit -m "feat(web): compose statistics retention view"
 
 ## STAT-UI-011: Isolate the Needs Activity view
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-008
 
