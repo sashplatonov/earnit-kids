@@ -588,6 +588,45 @@ class FamilyParentAccessServiceImplTest {
             .isEqualTo("PARENT_MEMBERSHIP_FORBIDDEN");
     }
 
+    @Test
+    void cancelTransferRequest_byActor_setsCancelled() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyAdminTransferRequestEntity request = request(50, 7, 12, 11);
+        ParentAccountEntity targetParent = parent(2, "target@test.com");
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+        when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
+
+        OperationResult<ParentMembershipDto> result = service.cancelTransferRequest(50, "fam-1", 1, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        assertThat(request.getStatus()).isEqualTo(FamilyAdminTransferRequestEntity.Status.cancelled);
+        assertThat(request.getCancelledAt()).isNotNull();
+        assertThat(actor.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
+    }
+
+    @Test
+    void cancelTransferRequest_wrongCaller_isRejected() {
+        FamilyEntity family = mockFamily(7);
+        FamilyAdminTransferRequestEntity request = request(50, 7, 12, 11);
+        FamilyParentMembershipEntity nonActor = membership(13, 7, 3, FamilyParentMembershipEntity.Permission.editor);
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(3, 7)).thenReturn(Optional.of(nonActor));
+
+        OperationResult<ParentMembershipDto> result = service.cancelTransferRequest(50, "fam-1", 3, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
+            .isEqualTo("PARENT_MEMBERSHIP_FORBIDDEN");
+    }
+
     private static FamilyAdminTransferRequestEntity request(int id, int familyId, int actorId, int targetId) {
         return FamilyAdminTransferRequestEntity.builder()
             .id(id).familyId(familyId).actorMembershipId(actorId).targetMembershipId(targetId)

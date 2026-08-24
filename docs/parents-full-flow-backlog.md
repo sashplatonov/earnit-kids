@@ -485,7 +485,7 @@ git commit -m "feat(backend): approval-based admin transfer with request/accept/
 
 ## TASK-008: Frontend admin-transfer flow (select → pending → approval → complete)
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** TASK-007, TASK-001
 

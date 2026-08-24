@@ -471,6 +471,15 @@ export const reactivateParentMembership = (membershipId: number) =>
 export const transferParentAdmin = (membershipId: number) =>
     postJsonResult<ParentMembership>(`/api/parents/${encodeURIComponent(String(membershipId))}/transfer-admin`, {});
 
+export const acceptAdminTransfer = (requestId: number) =>
+    postJsonResult<ParentMembership>(`/api/parents/transfer-requests/${encodeURIComponent(String(requestId))}/accept`, {});
+
+export const declineAdminTransfer = (requestId: number) =>
+    postJsonResult<ParentMembership>(`/api/parents/transfer-requests/${encodeURIComponent(String(requestId))}/decline`, {});
+
+export const cancelAdminTransfer = (requestId: number) =>
+    postJsonResult<ParentMembership>(`/api/parents/transfer-requests/${encodeURIComponent(String(requestId))}/cancel`, {});
+
 export async function removeParentMembership(membershipId: number): Promise<ApiActionResult<void>> {
     return deleteJsonResult<void>(`/api/parents/${encodeURIComponent(String(membershipId))}`);
 }

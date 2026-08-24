@@ -16,6 +16,11 @@ export interface ParentMembership {
     telegramDisplayName: string | null;
     permission: MembershipPermission;
     status: string;
+    invitationStatus?: string | null;
+    transferRequestStatus?: string | null;
+    transferRequestActorName?: string | null;
+    transferRequestTargetName?: string | null;
+    transferRequestId?: number | null;
 }
 
 export interface AuthResponseSnapshot {

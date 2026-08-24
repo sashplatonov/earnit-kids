@@ -8,6 +8,11 @@
         reactivateParentMembership,
         createParentTelegramInvite,
         updateParentMembership,
+        transferParentAdmin,
+        acceptAdminTransfer,
+        declineAdminTransfer,
+        cancelAdminTransfer,
+        getAccountConnection,
         type ApiActionResult,
     } from '$lib/services/api';
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
@@ -20,6 +25,15 @@
     let error = '';
     let status = '';
     const i18n = useI18n();
+
+    // Current account email used to detect whether this parent is a transfer target.
+    let currentEmail: string | null = null;
+
+    // Admin-transfer sheet state
+    let transferOpen = false;
+    let transferTarget: ParentMembership | null = null;
+    let transferBusy = false;
+    let transferError = '';
 
     // Wizard state
     let wizardOpen = false;
@@ -53,6 +67,80 @@
         roleEditError = '';
         roleEditBusy = false;
         roleEditParent = null;
+    }
+
+    // Eligible parents are active, confirmed (non-pending) non-admin memberships.
+    function transferEligible(): ParentMembership[] {
+        return parents.filter((p) =>
+            p.status === 'active'
+            && p.permission !== 'family_admin'
+            && p.transferRequestStatus !== 'pending'
+            && p.invitationStatus !== 'pending');
+    }
+
+    // Pending-invitation parents appear as disabled cards in the transfer sheet.
+    function transferDisabled(): ParentMembership[] {
+        return parents.filter((p) =>
+            p.status !== 'active'
+            && p.permission !== 'family_admin'
+            && p.transferRequestStatus !== 'pending'
+            && (p.invitationStatus === 'pending' || p.status === 'pending'));
+    }
+
+    function openTransfer(parent: ParentMembership): void {
+        transferTarget = parent;
+        transferBusy = false;
+        transferError = '';
+        transferOpen = true;
+    }
+
+    function closeTransfer(): void {
+        transferOpen = false;
+        transferTarget = null;
+        transferError = '';
+        transferBusy = false;
+    }
+
+    async function submitTransfer(): Promise<void> {
+        if (!transferTarget) return;
+        transferBusy = true;
+        transferError = '';
+        const result = await transferParentAdmin(transferTarget.id);
+        transferBusy = false;
+        if (!result.ok) { transferError = result.error; return; }
+        closeTransfer();
+        status = $i18n.t('app.telegram.parents.transferRequested');
+        await reload();
+    }
+
+    // Which parent row carries the pending transfer (actor or target).
+    $: pendingTransferRow = parents.find((p) => p.transferRequestStatus === 'pending') ?? null;
+
+    // True when the current account is the target of a pending transfer (approval sheet).
+    $: isTransferTarget = (pendingTransferRow?.transferRequestTargetName?.trim() ?? '')
+            && (pendingTransferRow?.email?.trim().toLowerCase() ?? '') === (currentEmail?.trim().toLowerCase() ?? '');
+
+    async function cancelPendingTransfer(): Promise<void> {
+        const requestId = pendingTransferRow?.transferRequestId;
+        if (requestId == null) return;
+        await run(cancelAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferCancelled'));
+    }
+
+    async function acceptPendingTransfer(): Promise<void> {
+        const requestId = pendingTransferRow?.transferRequestId;
+        if (requestId == null) return;
+        await run(acceptAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferAccepted'));
+    }
+
+    async function declinePendingTransfer(): Promise<void> {
+        const requestId = pendingTransferRow?.transferRequestId;
+        if (requestId == null) return;
+        await run(declineAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferDeclined'));
+    }
+
+    async function loadCurrentEmail(): Promise<void> {
+        const account = await getAccountConnection();
+        currentEmail = account?.email ?? null;
     }
 
     async function submitRoleEdit(): Promise<void> {
@@ -128,6 +216,7 @@
     }
 
     void reload();
+    void loadCurrentEmail();
 
     function label(parent: ParentMembership): string {
         return parent.displayName?.trim() || parent.email?.trim() || parent.telegramDisplayName?.trim()
@@ -172,7 +261,7 @@
                     <div class="row-main">
                         <div class="topline">
                             <strong class="name">{label(parent)}</strong>
-                            <span class:pending={parent.status === 'pending'} class:inactive={parent.status === 'inactive'} class="state">{statusLabel(parent.status)}</span>
+                            <span class:pending={parent.status === 'pending'} class:inactive={parent.status === 'inactive'} class:transfer={parent.transferRequestStatus === 'pending'} class="state">{parent.transferRequestStatus === 'pending' ? $i18n.t('app.telegram.parents.transferPending') : statusLabel(parent.status)}</span>
                         </div>
                         <div class="row-role">{permissionLabel(parent.permission)}</div>
                         <div class="ids">
@@ -189,11 +278,21 @@
                             <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.resend')} on:click={() => run(resendParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationResent'))}><TelegramIcon name="send" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.resend')}</span></button>
                             <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.revoke')} on:click={() => run(revokeParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationRevoked'))}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.revoke')}</span></button>
                         {:else if parent.permission === 'family_admin'}
-                            <button type="button" class="icon-btn disabled" aria-label={$i18n.t('app.telegram.parents.adminDeactivateTip')} disabled><TelegramIcon name="pause" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.adminDeactivateTip')}</span></button>
-                            <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.transferTitle')}><TelegramIcon name="refresh" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.transferTitle')}</span></button>
+                            {#if parent.transferRequestStatus === 'pending'}
+                                <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.telegram.parents.cancelRequest')} on:click={cancelPendingTransfer}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.cancelRequest')}</span></button>
+                                <button type="button" class="icon-btn disabled" aria-label={$i18n.t('app.telegram.parents.adminDeactivateTip')} disabled><TelegramIcon name="pause" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.adminDeactivateTip')}</span></button>
+                            {:else}
+                                <button type="button" class="icon-btn disabled" aria-label={$i18n.t('app.telegram.parents.adminDeactivateTip')} disabled><TelegramIcon name="pause" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.adminDeactivateTip')}</span></button>
+                                <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.transferTitle')} on:click={() => openTransfer(parent)}><TelegramIcon name="refresh" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.transferTitle')}</span></button>
+                            {/if}
 {:else if parent.status === 'active'}
-                            <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.deactivateParent')} on:click={() => run(deactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentDeactivated'))}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.deactivateParent')}</span></button>
-                            <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={(e) => { e.stopPropagation(); openRoleEdit(parent); }}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
+                            {#if parent.transferRequestStatus === 'pending'}
+                                <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.telegram.parents.cancelRequest')} on:click={cancelPendingTransfer}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.cancelRequest')}</span></button>
+                                <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={(e) => { e.stopPropagation(); openRoleEdit(parent); }}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
+                            {:else}
+                                <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.deactivateParent')} on:click={() => run(deactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentDeactivated'))}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.deactivateParent')}</span></button>
+                                <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={(e) => { e.stopPropagation(); openRoleEdit(parent); }}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
+                            {/if}
                         {:else if parent.status === 'inactive'}
                             <button type="button" class="icon-btn ok" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.reactivateParent')} on:click={() => run(reactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentReactivated'))}><TelegramIcon name="play" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.reactivateParent')}</span></button>
                         {/if}
@@ -337,11 +436,89 @@
     </div>
 {/if}
 
+{#if transferOpen}
+    <div class="sheet-backdrop" role="presentation" on:click={closeTransfer}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="transfer-title" tabindex="-1">
+        <h2 id="transfer-title">{$i18n.t('app.telegram.parents.transferTitle')}</h2>
+        <p class="screen-sub">{$i18n.t('app.telegram.parents.transferSelectSub')}</p>
+        <p class="warn">{$i18n.t('app.telegram.parents.transferWarn')}</p>
+        <div class="stack">
+            {#if transferEligible().length === 0 && transferDisabled().length === 0}
+                <p class="empty">{$i18n.t('app.workspaceAccess.empty')}</p>
+            {:else}
+                {#each transferEligible() as candidate (candidate.id)}
+                    <div class="eligible-card">
+                        <div class="eligible-row">
+                            <div class="eligible-main">
+                                <div class="avatar">{label(candidate).charAt(0).toUpperCase()}</div>
+                                <div class="main"><div class="name">{label(candidate)}</div><div class="role">{$i18n.t('app.telegram.parents.transferEligible')}</div></div>
+                            </div>
+                            <button type="button" class="btn select-btn" disabled={transferBusy} on:click={() => transferTarget = candidate}><TelegramIcon name="check" size={16} />{$i18n.t('app.telegram.parents.transferSelect')}</button>
+                        </div>
+                    </div>
+                {/each}
+                {#each transferDisabled() as candidate (candidate.id)}
+                    <div class="eligible-card disabled-card">
+                        <div class="eligible-row">
+                            <div class="eligible-main">
+                                <div class="avatar">{label(candidate).charAt(0).toUpperCase()}</div>
+                                <div class="main"><div class="name">{label(candidate)}</div><div class="role">{$i18n.t('app.telegram.parents.transferIneligible')}</div></div>
+                            </div>
+                            <button type="button" class="disabled-btn" disabled><TelegramIcon name="shield" size={16} />{$i18n.t('app.telegram.parents.transferUnavailable')}</button>
+                        </div>
+                    </div>
+                {/each}
+            {/if}
+        </div>
+        {#if transferError}<p class="error" role="alert">{transferError}</p>{/if}
+        <div class="action-grid">
+            <button type="button" class="cancel" disabled={transferBusy} on:click={closeTransfer}><TelegramIcon name="close" size={16} />{$i18n.t('app.parentAccess.cancelButton')}</button>
+            <button type="button" class="btn" disabled={!transferTarget || transferBusy} on:click={submitTransfer}>{transferBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.sendRequest')}</button>
+        </div>
+    </div>
+{/if}
+
+{#if isTransferTarget && pendingTransferRow}
+    <div class="sheet-backdrop" role="presentation" on:click={() => {}}></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="transfer-approve-title" tabindex="-1">
+        <h2 id="transfer-approve-title">{$i18n.t('app.telegram.parents.acceptAdmin')}</h2>
+        <div class="preview">
+            <div class="preview-head">
+                <div class="avatar">{label(pendingTransferRow).charAt(0).toUpperCase()}</div>
+                <div class="preview-main"><div class="preview-name">{label(pendingTransferRow)}</div><div class="preview-role">{$i18n.t('app.telegram.parents.becomesAdminAfterConfirm')}</div></div>
+                <span class="state transfer">{$i18n.t('app.telegram.parents.transferRequestBadge')}</span>
+            </div>
+            <div class="account-grid">
+                <div class="box"><div class="box-title">{$i18n.t('app.telegram.parents.transferFrom')}</div><div class="box-value">{pendingTransferRow.transferRequestActorName ?? $i18n.t('app.workspaceAccess.unknownParent')}</div><div class="box-sub">{$i18n.t('app.telegram.parents.transferFromSub')}</div></div>
+                <div class="box"><div class="box-title">{$i18n.t('app.telegram.parents.transferWhen')}</div><div class="box-value">{$i18n.t('app.telegram.parents.transferWhenValue')}</div><div class="box-sub">{$i18n.t('app.telegram.parents.transferWhenSub')}</div></div>
+            </div>
+            <div class="preview-actions">
+                <button type="button" class="cancel" disabled={busy} on:click={declinePendingTransfer}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.declineAdmin')}</button>
+                <button type="button" class="btn ok-btn" disabled={busy} on:click={acceptPendingTransfer}>{busy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.acceptAdmin')}</button>
+            </div>
+        </div>
+        <p class="warn">{$i18n.t('app.telegram.parents.transferConfirmWarn')}</p>
+    </div>
+{/if}
+
 <style>
     .access-flow { display:grid; gap:.8rem; color:#18243d; }
     h2 { margin:0; font-size:1.2rem; } .hint,.empty { margin:0; color:#66718a; line-height:1.45; }
     .state { display:inline-flex; align-items:center; min-height:1.7rem; padding:.2rem .5rem; border-radius:99px; background:#eef2ff; color:#3867d6; font-size:.72rem; font-weight:700; }
-    .state { background:#e8f7ef; color:#187847; } .state.pending { background:#fff1dc; color:#a96720; } .state.inactive { background:#eef1f5; color:#66718a; }
+    .state { background:#e8f7ef; color:#187847; } .state.pending { background:#fff1dc; color:#a96720; } .state.inactive { background:#eef1f5; color:#66718a; } .state.transfer { background:#eef3ff; color:#4d63b9; }
+    .eligible-card{display:grid;border:1px solid #dfe4ef;border-radius:.9rem;background:#fff;overflow:hidden}
+    .eligible-card.disabled-card{background:#f6f8fc;border-color:#e3e8f0}
+    .eligible-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.65rem .7rem}
+    .eligible-main{display:flex;align-items:center;gap:.6rem;min-width:0}
+    .eligible-main .avatar{width:2.4rem;height:2.4rem}
+    .eligible-main .main{min-width:0}
+    .eligible-main .name{font-size:.85rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .eligible-main .role{font-size:.7rem;color:#66718a;margin-top:.1rem}
+    .select-btn{min-height:2.3rem;padding:.35rem .6rem;display:inline-flex;align-items:center;gap:.35rem;font-size:.74rem;border-radius:.6rem;background:#3867d6;border-color:#3867d6;color:#fff;font-weight:700;border:1px solid transparent;cursor:pointer}
+    .disabled-btn{min-height:2.3rem;padding:.35rem .6rem;display:inline-flex;align-items:center;gap:.35rem;font-size:.74rem;border-radius:.6rem;background:#eef1f5;border:1px solid #dfe4ef;color:#99a2b4;cursor:not-allowed}
+    .box-sub{font-size:.66rem;color:#66718a;margin-top:.3rem}
+    .preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;border-top:1px solid #dfe4ef;padding:.7rem .85rem}
+    .ok-btn{background:#17884b;border-color:#17884b}
     .parents-list { display:grid; gap:.6rem; }
     .parent-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; align-items:center; padding:.75rem; border:1px solid #dfe4ef; border-radius:1rem; background:#fff; }
     .avatar { width:2.625rem; height:2.625rem; border-radius:.75rem; background:#eef2ff; color:#4d67d7; display:grid; place-items:center; font-weight:800; }
@@ -417,6 +594,6 @@
     .qr-row .small{margin:0;flex:1;min-width:0}
 
     @media(max-width:640px){ .parent-row { grid-template-columns:auto minmax(0,1fr); } .row-actions { grid-column:2; justify-content:end; } .id.email,.id.tg { max-width:100%; } }
-    @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%} }
+    @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%}.preview-actions{grid-template-columns:1fr} }
     @media (min-width: 700px) {.sheet{inset:50% auto auto 50%;width:min(38rem,calc(100% - 3rem));max-height:min(82dvh,46rem);padding:1.4rem;border-radius:1.25rem;box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%);transform:translate(-50%,-50%)}}
 </style>

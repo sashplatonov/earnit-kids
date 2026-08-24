@@ -396,4 +396,32 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
                 ? Response.Status.FORBIDDEN.getStatusCode()
                 : Response.Status.BAD_REQUEST.getStatusCode());
     }
+
+    @POST
+    @Path("/parents/transfer-requests/{requestId}/cancel")
+    @Operation(summary = "Cancel a pending admin transfer request by the actor parent")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Transfer request cancelled",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "403", description = "Caller is not the request actor",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "400", description = "Cancel failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response cancelTransferRequest(@Context ContainerRequestContext ctx,
+                                          @Parameter(required = true, description = "Transfer request id")
+                                          @PathParam("requestId") int requestId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        return OperationResultResponses.toMappedOk(
+            familyParentAccessService.cancelTransferRequest(
+                requestId, auth.familyId(), auth.parentAccountId(), auth.email()),
+            dto -> dto,
+            failure -> "PARENT_MEMBERSHIP_FORBIDDEN".equals(failure.errorCode())
+                ? Response.Status.FORBIDDEN.getStatusCode()
+                : Response.Status.BAD_REQUEST.getStatusCode());
+    }
 }

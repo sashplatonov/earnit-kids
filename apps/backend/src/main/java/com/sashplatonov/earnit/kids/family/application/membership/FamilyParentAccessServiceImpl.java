@@ -119,7 +119,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
                 dtos.set(i, new ParentMembershipDto(
                     dto.id(), dto.email(), dto.displayName(), dto.telegramUserId(),
                     dto.telegramUsername(), dto.telegramDisplayName(), dto.permission(), dto.status(),
-                    dto.invitationStatus(), "pending", actorName, targetName));
+                    dto.invitationStatus(), "pending", actorName, targetName, request.getId()));
             }
         }
     }
@@ -346,7 +346,8 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         ParentAccountEntity parent,
         String transferStatus,
         String actorName,
-        String targetName) {
+        String targetName,
+        Integer transferRequestId) {
         return new ParentMembershipDto(
             membership.getId(),
             parent != null ? parent.getEmail() : null,
@@ -359,7 +360,8 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             null,
             transferStatus,
             actorName,
-            targetName
+            targetName,
+            transferRequestId
         );
     }
 
@@ -470,7 +472,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         return OperationResult.success(toTransferDto(
             target, parent, "pending",
             membershipName(actorMembership, parentAccountRepository),
-            membershipName(target, parentAccountRepository)));
+            membershipName(target, parentAccountRepository), request.getId()));
     }
 
     @Override
@@ -582,6 +584,53 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
                 request.setStatus(FamilyAdminTransferRequestEntity.Status.cancelled);
                 request.setCancelledAt(Instant.now());
             });
+    }
+
+    @Override
+    @Transactional
+    public OperationResult<ParentMembershipDto> cancelTransferRequest(
+        Integer requestId, String familyId, Integer actorParentAccountId, String actorEmail) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var requestOpt = transferRequestRepository.findByIdOptional(requestId);
+        if (requestOpt.isEmpty()) {
+            return failure(ERROR_TRANSFER_NOT_FOUND, "parentAccess.transferRequestNotFound");
+        }
+        var request = requestOpt.get();
+        Integer familyDbId = familyOpt.get().getId();
+        if (!request.getFamilyId().equals(familyDbId)) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        var actorMembershipOpt = FamilyParentActorResolver.resolve(
+            familyDbId, actorParentAccountId, actorEmail, parentAccountRepository, membershipRepository);
+        if (actorMembershipOpt.isEmpty()) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+        var actorMembership = actorMembershipOpt.get();
+        if (!actorMembership.getId().equals(request.getActorMembershipId())) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        if (request.getStatus() != FamilyAdminTransferRequestEntity.Status.pending) {
+            return failure(ERROR_TRANSFER_NOT_PENDING, "parentAccess.transferRequestNotPending");
+        }
+
+        request.setStatus(FamilyAdminTransferRequestEntity.Status.cancelled);
+        request.setCancelledAt(Instant.now());
+
+        var targetOpt = membershipRepository.findByIdOptional(request.getTargetMembershipId());
+        var parent = targetOpt.isPresent()
+            ? parentAccountRepository.findByIdOptional(targetOpt.get().getParentAccountId()).orElse(null)
+            : null;
+
+        log.info("Cancelled admin transfer request: id={}, targetMembershipId={}, familyId={}",
+            requestId, request.getTargetMembershipId(), familyId);
+
+        return OperationResult.success(toDto(targetOpt.orElse(null), parent, null));
     }
 
     private String membershipName(FamilyParentMembershipEntity membership,

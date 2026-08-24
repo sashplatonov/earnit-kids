@@ -28,14 +28,16 @@ public record ParentMembershipDto(
     @Schema(description = "Display name of the admin-transfer request actor")
     String transferRequestActorName,
     @Schema(description = "Display name of the admin-transfer request target")
-    String transferRequestTargetName
+    String transferRequestTargetName,
+    @Schema(description = "Id of the pending admin-transfer request involving this membership")
+    Integer transferRequestId
 ) {
     public ParentMembershipDto(
         Integer id,
         String email,
         FamilyParentMembershipEntity.Permission permission,
         MembershipStatus status) {
-        this(id, email, null, null, null, null, permission, status, null, null, null, null);
+        this(id, email, null, null, null, null, permission, status, null, null, null, null, null);
     }
 
     public ParentMembershipDto(
@@ -43,7 +45,7 @@ public record ParentMembershipDto(
         String telegramUsername, String telegramDisplayName,
         FamilyParentMembershipEntity.Permission permission, MembershipStatus status) {
         this(id, email, displayName, telegramUserId, telegramUsername, telegramDisplayName,
-            permission, status, null, null, null, null);
+            permission, status, null, null, null, null, null);
     }
 
     public ParentMembershipDto(
@@ -52,6 +54,6 @@ public record ParentMembershipDto(
         FamilyParentMembershipEntity.Permission permission, MembershipStatus status,
         String invitationStatus) {
         this(id, email, displayName, telegramUserId, telegramUsername, telegramDisplayName,
-            permission, status, invitationStatus, null, null, null);
+            permission, status, invitationStatus, null, null, null, null);
     }
 }

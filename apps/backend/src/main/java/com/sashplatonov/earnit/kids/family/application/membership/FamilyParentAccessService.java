@@ -32,4 +32,7 @@ public interface FamilyParentAccessService {
 
     OperationResult<ParentMembershipDto> declineTransferRequest(
         Integer requestId, String familyId, Integer actorParentAccountId, String actorEmail);
+
+    OperationResult<ParentMembershipDto> cancelTransferRequest(
+        Integer requestId, String familyId, Integer actorParentAccountId, String actorEmail);
 }
