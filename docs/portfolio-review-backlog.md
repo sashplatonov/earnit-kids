@@ -412,7 +412,7 @@ test(backend): prove family isolation and coin concurrency
 
 ## PORT-006: Rewrite the README as a hiring-manager portfolio page
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** PORT-001, PORT-002
 

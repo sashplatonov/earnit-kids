@@ -1,196 +1,130 @@
 # EarnIt Kids
 
-<a name="top"></a>
+EarnIt Kids is a family reward workspace: parents define tasks and rewards,
+children complete approved work, and both sides see the same family-scoped
+state. The web app provides the browser workspace and public entrypoints;
+Telegram is an optional Mini App and bot adapter over the same backend domain.
 
-## Table of Contents
-- [🧭 Overview](#-overview)
-- [⚙️ Tech Stack](#️-tech-stack)
-- [🚀 Quick Start](#-quick-start)
-- [📁 Project Structure](#-project-structure)
-- [🔐 Environment Variables](#-environment-variables)
-- [🛠️ Local Commands](#️-local-commands)
-- [🐳 Docker Modes](#-docker-modes)
-- [📚 Detailed Docs](#-detailed-docs)
+This repository is a Senior Java portfolio project. The interesting part is
+the boundary work: authorization is enforced by the server, Telegram input is
+cryptographically verified, state-changing actions are transactional, and
+external notifications are persisted before delivery.
 
-## 🧭 Overview
+## Architecture
 
-EarnIt Kids is a full-stack family coin shop for parents and children.
+```mermaid
+flowchart LR
+    Browser[Browser workspace\nSvelteKit 2] --> Edge[Same-origin\nSvelteKit routes]
+    Telegram[Telegram Mini App / bot\noptional adapter] --> API
+    Edge --> API[Quarkus REST API\nJava 25]
+    API --> Domain[Family domain\nidentity, family, admin, telegram]
+    Domain --> DB[(PostgreSQL\nFlyway migrations)]
+    Domain --> Outbox[(Transactional outbox)]
+    Outbox --> Providers[Telegram / Web Push\noptional providers]
+```
 
-- `apps/web/` serves the SvelteKit web experience, public pages, same-origin proxy endpoints, and health checks.
-- `apps/backend/` serves the Quarkus API, authentication, family data flows, admin tooling, and Flyway migrations.
-- `mobile/` contains Capacitor packaging and mobile platform assets.
+The active runtime is a modular Quarkus monolith behind a SvelteKit edge.
+PostgreSQL is authoritative; Flyway owns schema evolution. Telegram does not
+duplicate family or balance rules: it authenticates a Telegram identity and
+calls the same family application services as the web path.
 
-The current production path is SvelteKit + Quarkus. Legacy pre-SvelteKit frontend code is no longer part of the active runtime.
+## Product surfaces
 
-[↩ Back to toc](#table-of-contents)
+| Surface | What it demonstrates |
+| --- | --- |
+| [Parent workspace](apps/web/static/public/assets/screenshots/parent-home.png) | Review requests, award coins, inspect history, and switch family areas |
+| [Task management](apps/web/static/public/assets/screenshots/parent-tasks.png) | Parent-owned task catalog with groups and coin values |
+| [Child Today view](apps/web/static/public/assets/screenshots/child-today.png) | Child-scoped work and explicit completion states |
+| [Telegram Mini App](apps/web/static/public/assets/screenshots/miniapp-home.png) | The same family workflow hosted inside Telegram |
 
-## ⚙️ Tech Stack
+Screenshots use demo data. No production account, family, child, payment, or
+credential data is part of the public assets.
 
-- Frontend: SvelteKit 2, Vite, TypeScript, Vitest, Playwright, adapter-node
-- Backend: Quarkus 3, Java 25, JAX-RS, Hibernate ORM, Flyway, SmallRye OpenAPI
-- Database: PostgreSQL 18 for local Docker, H2 for selected tests
-- Delivery: Docker Compose with separate JVM and native backend modes
+## Engineering decisions with evidence
 
-[↩ Back to toc](#table-of-contents)
+- **Family-scoped authorization.** Sessions carry the active family and role;
+  services and repositories validate family/child ownership server-side. See
+  [`AuthFilter`](apps/backend/src/main/java/com/sashplatonov/earnit/kids/config/auth/AuthFilter.java),
+  [`FamilyActionSupportService`](apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/application/action/FamilyActionSupportService.java),
+  and the [backend authorization contract](apps/backend/docs/ARCHITECTURE.md#-authentication-and-authorization).
+- **Verified Telegram admission.** Telegram `initData` is checked for a valid
+  signature and age before a Mini App session is created. See
+  [`TelegramInitDataVerifier`](apps/backend/src/main/java/com/sashplatonov/earnit/kids/telegram/application/identity/TelegramInitDataVerifier.java)
+  and its [characterization test](apps/backend/src/test/java/com/sashplatonov/earnit/kids/telegram/application/identity/TelegramInitDataVerifierTest.java).
+- **Transactional state plus delivery boundary.** Domain changes publish an
+  application outbox record in the same transaction; workers claim records and
+  deliver them later. See
+  [`ApplicationEventPublisher`](apps/backend/src/main/java/com/sashplatonov/earnit/kids/service/event/ApplicationEventPublisher.java),
+  [`ApplicationOutboxEventEntity`](apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/outbox/ApplicationOutboxEventEntity.java),
+  and [`TelegramOutboxProcessor`](apps/backend/src/main/java/com/sashplatonov/earnit/kids/telegram/application/notification/TelegramOutboxProcessor.java).
+- **Concurrency protection at the persistence boundary.** Pessimistic locks
+  protect coin mutations, pending requests, callbacks, invitations, and
+  delivery claims instead of relying on browser ordering. See
+  [`ChildRepository`](apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/child/ChildRepository.java)
+  and the [backend verification map](apps/backend/docs/ARCHITECTURE.md#-scope).
+- **Database evolution is explicit.** Production and test migration chains are
+  maintained with Flyway; repository predicates and indexes remain visible in
+  the [backend architecture guide](apps/backend/docs/ARCHITECTURE.md#️-database-overview).
+- **Operational observability is backend-owned.** Health checks, structured
+  logs, trace correlation, HTTP metrics, and optional New Relic export are
+  implemented as runtime contracts, documented in the
+  [monitoring runbook](docs/monitoring/newrelic.md).
 
-## 🚀 Quick Start
+## Stack
 
-Run the JVM-based local stack from the repository root:
+- **Backend:** Java 25, Quarkus 3, JAX-RS, Hibernate ORM, Flyway, SmallRye Health/OpenAPI
+- **Web:** SvelteKit 2, TypeScript, Vite, Vitest, Playwright, adapter-node
+- **Data:** PostgreSQL 18 locally; H2 is used for selected fast tests
+- **Delivery:** Docker Compose with JVM and native-image backend modes
+
+## Local start and verification
+
+From the repository root, run these five commands:
 
 ```bash
+cp .env.example .env
 docker compose --profile db up -d --build
+docker compose ps
+(cd apps/backend && ./mvnw -B -ntp verify)
+(cd apps/web && npm ci && npm run lint && npm run test && npm run build)
 ```
 
-Run the native-image local stack from the repository root:
+The default local stack starts without Google or Telegram credentials. Those
+integrations are disabled until their feature flags and provider settings are
+configured. The web/backend path remains usable with the safe local defaults.
 
-```bash
-docker compose -f docker-compose.native.yml --profile db up -d --build
-```
-
-Stop the stacks:
-
-```bash
-docker compose down
-docker compose -f docker-compose.native.yml down
-```
-
-Assumptions:
-
-- Copy `.env.example` to `.env`; it contains local-safe defaults for both Compose stacks.
-- If `3000` or `5432` are already taken, override `WEB_PORT` or `DB_HOST_PORT` at launch time.
-- Default `docker-compose.yml` is the JVM stack. `docker-compose.native.yml` is the native stack.
-- Containers reach PostgreSQL through the Compose service name `db` and its internal port `5432`; `DB_HOST_PORT` is only the host-published port.
-
-[↩ Back to toc](#table-of-contents)
-
-## 📁 Project Structure
-
-```text
-.
-├── apps/
-│   ├── backend/
-│   │   ├── config/
-│   │   ├── scripts/
-│   │   └── src/
-│   └── web/
-│       ├── data/
-│       ├── scripts/
-│       ├── src/
-│       ├── static/
-│       └── tests/
-├── docs/
-├── mobile/
-├── docker-compose.yml
-└── docker-compose.native.yml
-```
-
-- `apps/backend/src/main/java/`: REST resources, services, repositories, entities, DTOs, config
-- `apps/backend/src/main/resources/db/migration/`: Flyway migrations for PostgreSQL
-- `apps/web/src/routes/`: SvelteKit routes and edge endpoints
-- `apps/web/src/lib/`: components, stores, services, server helpers, shared types
-- `apps/web/tests/`: unit and E2E test coverage
-
-[↩ Back to toc](#table-of-contents)
-
-## 🔐 Environment Variables
-
-The root `.env.example` is the canonical Compose contract. Required local-stack inputs come first; the remaining sections are optional integrations, tuning, and direct-backend or maintenance settings.
-
-| Variable | Scope | Example | Purpose |
-| --- | --- | --- | --- |
-| `APP_URL` | Web + Compose | `http://localhost:3000` | Public origin used by the web edge and backend CORS; independent of published ports |
-| `WEB_PORT` | Compose | `3000` | Host port published for the web service; the container always listens on `3000` |
-| `BACKEND_INTERNAL_PORT` | Backend + Compose | `8080` | Internal Quarkus HTTP port |
-| `JWT_SECRET` | Backend | `local-dev-secret-change-in-prod` | Local JWT signing secret |
-| `DB_HOST` | Backend + maintenance scripts | `db` | Compose service host for PostgreSQL |
-| `DB_INTERNAL_PORT` | Backend + Compose | `5432` | PostgreSQL port inside the Compose network |
-| `DB_HOST_PORT` | Compose | `5432` | Host port published for PostgreSQL |
-| `DB_NAME` | Backend + DB | `earnit_kids` | Database name |
-| `DB_USER` | Backend + DB | `postgres` | Database username |
-| `DB_PASSWORD` | Backend + DB | `change-me` | Database password |
-| `DATABASE_URL` | Direct backend | `jdbc:postgresql://localhost:5432/earnit_kids` | Optional JDBC URL for non-Compose backend runs |
-| `DB_PORT` | Maintenance scripts | `5432` | Optional host database port for backend scripts |
-| `GOOGLE_AUTH_CLIENT_ID` | Backend OAuth | — | Optional Google OAuth client ID |
-| `TELEGRAM_BOT_TOKEN` | Backend Telegram | — | Optional Telegram bot credential |
-| `JAVA_XMX` | Native Docker build | `2500m` | Native image builder memory cap |
-
-Telegram backup credentials and schedule are configured from the super-admin panel, not from the env examples.
-
-[↩ Back to toc](#table-of-contents)
-
-## 🛠️ Local Commands
-
-Backend validation:
-
-```bash
-export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
-export PATH="$JAVA_HOME/bin:$PATH"
-cd apps/backend
-./mvnw verify
-```
-
-Backend dev mode:
-
-```bash
-export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
-export PATH="$JAVA_HOME/bin:$PATH"
-cd apps/backend
-./mvnw quarkus:dev
-```
-
-Web validation:
-
-```bash
-cd apps/web
-npm install
-npm run lint
-npm run test
-npm run test:coverage
-npm run build
-```
-
-Useful local URLs:
+Useful local endpoints:
 
 - Web: `http://localhost:3000`
 - Backend health: `http://localhost:8080/q/health`
 - Backend OpenAPI: `http://localhost:8080/api/openapi.yaml`
-- Backend Swagger UI: `http://localhost:8080/q/swagger-ui`
 
-[↩ Back to toc](#table-of-contents)
+## Repository map
 
-## 🐳 Docker Modes
+```text
+apps/backend/   Quarkus API, domain services, persistence, migrations
+apps/web/       SvelteKit public pages, workspace, Telegram surface, tests
+mobile/         Capacitor packaging around the web runtime
+docs/           Operations and monitoring runbooks
+```
 
-`docker-compose.yml`
+For deeper contracts, read the [backend architecture](apps/backend/docs/ARCHITECTURE.md),
+[web architecture](apps/web/docs/ARCHITECTURE.md), and
+[Web/Telegram operations runbook](docs/operations/web-miniapp-access.md).
 
-- Web: `apps/web/Dockerfile`
-- Backend: `apps/backend/Dockerfile.jvm`
-- Best for fast local iteration and debugging
+## Privacy and release boundaries
 
-`docker-compose.native.yml`
+The repository contains demo screenshots and local-safe fixtures only. Never
+commit `.env`, OAuth or Telegram credentials, VAPID private keys, or Android
+signing material. Release signing keys and provider secrets belong in the
+deployment secret manager. A local build proves source and test behavior; it
+does not prove provider delivery, a deployed configuration, or an official
+Telegram client launch.
 
-- Web: `apps/web/Dockerfile`
-- Backend: `apps/backend/Dockerfile`
-- Best for validating native-image packaging
+## Contributing
 
-Verification tip:
-
-- After Compose changes, run `docker compose config` or `docker compose -f docker-compose.native.yml config` before rebuilding.
-
-[↩ Back to toc](#table-of-contents)
-
-## 📚 Detailed Docs
-
-- Root system view: [docs/architecture.md](docs/architecture.md)
-- Docker operations: [docs/docker-ops.md](docs/docker-ops.md)
-- Testing guide: [docs/testing.md](docs/testing.md)
-- I18n contract: [docs/i18n-contract.md](docs/i18n-contract.md)
-- I18n string inventory: [docs/i18n-string-inventory.md](docs/i18n-string-inventory.md)
-- I18n backlog: [docs/i18n-backlog.md](docs/i18n-backlog.md)
-- SvelteKit migration backlog: [docs/migration-backlog-sveltekit.md](docs/migration-backlog-sveltekit.md)
-- Analytics daily quest backlog: [docs/analytics-daily-quest-backlog.md](docs/analytics-daily-quest-backlog.md)
-- New Relic monitoring: [docs/monitoring/newrelic.md](docs/monitoring/newrelic.md)
-- Backend New Relic Java agent and OTLP metrics remain separate; see the monitoring doc for the runtime contract.
-- Frontend architecture: [apps/web/docs/ARCHITECTURE.md](apps/web/docs/ARCHITECTURE.md)
-- Backend architecture: [apps/backend/docs/ARCHITECTURE.md](apps/backend/docs/ARCHITECTURE.md)
-
-[↑ Back to top](#top)
+Keep changes scoped to one concern, preserve the family authorization boundary,
+and add a focused test for behavior changes. Before opening a change, run the
+backend `verify` gate and the web lint, test, and production build commands
+above. Keep migrations sequential and update the relevant architecture or
+operations document when a runtime contract changes.
