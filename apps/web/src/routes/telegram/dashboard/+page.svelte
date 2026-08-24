@@ -308,27 +308,27 @@
 
         {#if dashboardStatus === 'unavailable'}
             <div class="empty-state" role="status">
-                <span class="empty-ico" aria-hidden="true">⚠️</span>
+                <span class="empty-ico" aria-hidden="true"><TelegramIcon name="alert" size={18} /></span>
                 <b>{t('empty.unavailableTitle')}</b>
                 <small>{t('empty.unavailableDesc')}</small>
                 <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
             </div>
         {:else if sectionUnavailable('overview')}
             <div class="empty-state" role="status">
-                <span class="empty-ico" aria-hidden="true">⚠️</span>
+                <span class="empty-ico" aria-hidden="true"><TelegramIcon name="alert" size={18} /></span>
                 <b>{t('empty.sectionUnavailableTitle')}</b>
                 <small>{t('empty.sectionUnavailableDesc')}</small>
                 <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
             </div>
         {:else if (overview?.overview?.totalFamilies ?? 0) === 0}
             <div class="empty-state" role="status">
-                <span class="empty-ico" aria-hidden="true">📭</span>
+                <span class="empty-ico" aria-hidden="true"><TelegramIcon name="box" size={18} /></span>
                 <b>{t('empty.title')}</b>
                 <small>{t('empty.desc')}</small>
             </div>
         {:else if (overview?.overview?.activeFamilies ?? 0) === 0}
             <div class="empty-state" role="status">
-                <span class="empty-ico" aria-hidden="true">📉</span>
+                <span class="empty-ico" aria-hidden="true"><TelegramIcon name="activity" size={18} /></span>
                 <b>{t('empty.noActivityTitle')}</b>
                 <small>{t('empty.noActivityDesc')}</small>
             </div>
@@ -393,7 +393,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('kpis.activeFamilies')}</div>
-                            <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={(event) => toggleTooltip('activeFamilies', event)}>i</button>
+                            <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={(event) => toggleTooltip('activeFamilies', event)}><TelegramIcon name="help" size={15} /></button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeFamilies)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
@@ -406,7 +406,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('kpis.activeChildren')}</div>
-                            <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={(event) => toggleTooltip('activeChildren', event)}>i</button>
+                            <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={(event) => toggleTooltip('activeChildren', event)}><TelegramIcon name="help" size={15} /></button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeChildren)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
@@ -482,7 +482,7 @@
                     <div class="coin-health-heading">
                         <div>
                             <strong>{t('coins.spendEarn.label')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={(event) => toggleTooltip('spendEarn', event)}>i</button>
+                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={(event) => toggleTooltip('spendEarn', event)}><TelegramIcon name="help" size={14} /></button>
                             <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                         </div>
                         <b>{formatValue(coinEconomy?.coins?.spendRate, true)}</b>
@@ -500,17 +500,17 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.medianBalance.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={(event) => toggleTooltip('medianBalance', event)}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={(event) => toggleTooltip('medianBalance', event)}><TelegramIcon name="help" size={14} /></button>
                             </div>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(coinEconomy?.balances?.medianBalance)} 🪙</div>
+                        <div class="metric-value">{formatValue(coinEconomy?.balances?.medianBalance)} <TelegramIcon name="coin" size={16} /></div>
                     </div>
                     <div class="metric">
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.timeToFirstReward.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={(event) => toggleTooltip('timeToFirstReward', event)}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={(event) => toggleTooltip('timeToFirstReward', event)}><TelegramIcon name="help" size={14} /></button>
                             </div>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
@@ -520,7 +520,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.earningNotSpending.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}>i</button>
+                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}><TelegramIcon name="help" size={14} /></button>
                             </div>
                             <small>{t('metrics.earningNotSpending.desc')}</small>
                         </div>
@@ -567,14 +567,14 @@
                             <strong>{t('rewards.medianPrice.title')}</strong>
                             <small>{t('rewards.medianPrice.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(rewards?.metrics?.medianPrice)} 🪙</div>
+                        <div class="metric-value">{formatValue(rewards?.metrics?.medianPrice)} <TelegramIcon name="coin" size={16} /></div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('rewards.selectedPrice.title')}</strong>
                             <small>{t('rewards.selectedPrice.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(rewards?.metrics?.selectedPrice)} 🪙</div>
+                        <div class="metric-value">{formatValue(rewards?.metrics?.selectedPrice)} <TelegramIcon name="coin" size={16} /></div>
                     </div>
                     <div class="metric">
                         <div>
@@ -590,7 +590,7 @@
                     <div class="rows">
                         {#each rewards.rankings as rank (rank.category)}
                             <div class="rank">
-                                <div class="rank-icon">🎁</div>
+                                <div class="rank-icon" aria-hidden="true"><TelegramIcon name="gift" size={18} /></div>
                                 <div class="rank-content">
                                     <b>{rank.category}</b>
                                     <small>{rank.count} · {rank.percent}%</small>
@@ -630,7 +630,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('tasks.approvalRate.label')}</div>
-                            <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={(event) => toggleTooltip('approvalRate', event)}>i</button>
+                            <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={(event) => toggleTooltip('approvalRate', event)}><TelegramIcon name="help" size={15} /></button>
                         </div>
                         <div class="kpi-value">{formatValue(taskEconomy?.taskMetrics?.approvalRate, true)}</div>
                         <div class="kpi-foot">{t('tasks.approvedByParents')}</div>
@@ -658,7 +658,7 @@
                             <strong>{t('tasks.coinsPerTask.title')}</strong>
                             <small>{t('tasks.coinsPerTask.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(taskEconomy?.taskMetrics?.medianCoinsPerTask)} 🪙</div>
+                        <div class="metric-value">{formatValue(taskEconomy?.taskMetrics?.medianCoinsPerTask)} <TelegramIcon name="coin" size={16} /></div>
                     </div>
                 </div>
 
@@ -667,7 +667,7 @@
                     <div class="rows">
                         {#each taskEconomy.topPatterns as pattern, i (pattern.groupName)}
                             <div class="rank">
-                                <div class="rank-icon">{pattern.icon || '✅'}</div>
+                                <div class="rank-icon" aria-hidden="true"><TelegramIcon name="task" size={18} /></div>
                                 <div class="rank-content">
                                     <b>{pattern.groupName}</b>
                                     <small>{pattern.count} · {pattern.percent}%</small>
@@ -788,7 +788,7 @@
                                 <div>
                                     <div class="metric-title">
                                         <strong>{t('retention.active7d.title')}</strong>
-                                        <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={(event) => toggleTooltip('active7d', event)}>i</button>
+                                        <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={(event) => toggleTooltip('active7d', event)}><TelegramIcon name="help" size={14} /></button>
                                     </div>
                                     <small>{t('retention.active7d.desc')}</small>
                                 </div>
@@ -798,7 +798,7 @@
                                 <div>
                                     <div class="metric-title">
                                         <strong>{t('retention.active30d.title')}</strong>
-                                        <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={(event) => toggleTooltip('active30d', event)}>i</button>
+                                        <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={(event) => toggleTooltip('active30d', event)}><TelegramIcon name="help" size={14} /></button>
                                     </div>
                                     <small>{t('retention.active30d.desc')}</small>
                                 </div>
@@ -888,7 +888,7 @@
                                     <div>
                                         <div class="metric-title">
                                             <strong>{t('parent.decisionTime.title')}</strong>
-                                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={(event) => toggleTooltip('decisionTime', event)}>i</button>
+                                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={(event) => toggleTooltip('decisionTime', event)}><TelegramIcon name="help" size={14} /></button>
                                         </div>
                                         <small>{t('parent.decisionTime.desc')}</small>
                                     </div>
@@ -898,7 +898,7 @@
                                     <div>
                                         <div class="metric-title">
                                             <strong>{t('parent.pendingBacklog.title')}</strong>
-                                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={(event) => toggleTooltip('pendingBacklog', event)}>i</button>
+                                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={(event) => toggleTooltip('pendingBacklog', event)}><TelegramIcon name="help" size={14} /></button>
                                         </div>
                                         <small>{t('parent.pendingBacklog.desc')}</small>
                                     </div>
@@ -941,7 +941,7 @@
                                     <div>
                                         <div class="metric-title">
                                             <strong>{t('child.earningNotSpending.title')}</strong>
-                                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}>i</button>
+                                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}><TelegramIcon name="help" size={14} /></button>
                                         </div>
                                         <small>{t('child.earningNotSpending.desc')}</small>
                                     </div>
@@ -965,7 +965,7 @@
             <div class="tooltip-box" role="dialog" aria-label={tooltipContent[activeTooltip].title}>
                 <div class="tooltip-head">
                     <b>{tooltipContent[activeTooltip].title}</b>
-                    <button bind:this={tooltipCloseButton} class="tooltip-close" type="button" aria-label={t('tooltips.close')} on:click={closeTooltip}>×</button>
+                    <button bind:this={tooltipCloseButton} class="tooltip-close" type="button" aria-label={t('tooltips.close')} on:click={closeTooltip}><TelegramIcon name="close" size={15} /></button>
                 </div>
                 <p>{tooltipContent[activeTooltip].body}</p>
             </div>
@@ -1169,23 +1169,23 @@
         font-size: 16px;
         font-weight: 800;
         color: #1b2338;
-        margin: 13px 0 8px;
+        margin: 11px 0 7px;
     }
 
     .kpis {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 14px;
+        gap: 6px;
+        margin-bottom: 10px;
     }
 
     .kpi {
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
-        border-radius: 18px;
+        border-radius: 14px;
         box-shadow: var(--dashboard-shadow);
-        padding: 13px 14px;
-        min-height: 96px;
+        padding: 10px 11px;
+        min-height: 84px;
         display: flex;
         flex-direction: column;
     }
@@ -1208,14 +1208,22 @@
         height: 44px;
         flex-shrink: 0;
         border: 0;
-        border-radius: 50%;
-        background: var(--soft, #eef0ff);
+        border-radius: 8px;
+        background: transparent;
         color: var(--primary, #5e6fec);
-        font-size: 12px;
-        font-weight: 800;
         display: grid;
         place-items: center;
         cursor: pointer;
+    }
+
+    .info :global(svg),
+    .mini-info :global(svg) {
+        padding: 4px;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        background: var(--soft, #eef0ff);
+        transition: background 0.15s, color 0.15s;
     }
 
     .kpi-value {
@@ -1237,13 +1245,13 @@
         bottom: calc(78px + env(safe-area-inset-bottom));
         left: 50%;
         transform: translateX(-50%);
-        width: min(340px, calc(100vw - 24px));
+        width: min(320px, calc(100vw - 24px));
         background: #202633;
         color: #fff;
-        border-radius: 13px;
-        padding: 11px 12px;
-        font-size: 11px;
-        line-height: 1.45;
+        border-radius: 12px;
+        padding: 10px 11px;
+        font-size: 12px;
+        line-height: 1.4;
         box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
         z-index: 100;
     }
@@ -1253,11 +1261,11 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
 
     .tooltip-head b {
-        font-size: 12px;
+        font-size: 11px;
         color: #ccd2ff;
     }
 
@@ -1273,7 +1281,6 @@
         border: 0;
         background: transparent;
         color: #ccd2ff;
-        font-size: 16px;
         line-height: 1;
         cursor: pointer;
         padding: 0;
@@ -1284,7 +1291,7 @@
         border: 1px solid var(--dashboard-line);
         border-radius: 18px;
         box-shadow: var(--dashboard-shadow);
-        padding: 4px 14px;
+        padding: 2px 11px;
     }
 
     .rank {
@@ -1292,7 +1299,7 @@
         grid-template-columns: 28px minmax(0, 1fr) auto;
         gap: 8px;
         align-items: center;
-        padding: 10px 0;
+        padding: 8px 0;
         border-bottom: 1px solid var(--line, #e5e8f0);
     }
 
@@ -1301,7 +1308,7 @@
     }
 
     .rank-icon {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .rank-content b {
@@ -1325,7 +1332,7 @@
         border: 1px solid var(--dashboard-line);
         border-radius: 18px;
         box-shadow: var(--dashboard-shadow);
-        padding: 13px;
+        padding: 10px;
     }
 
     .coin-cards {
@@ -1337,9 +1344,9 @@
 
     .coin-card {
         min-width: 0;
-        padding: 13px;
+        padding: 10px;
         border: 1px solid var(--dashboard-line);
-        border-radius: 18px;
+        border-radius: 14px;
         box-shadow: var(--dashboard-shadow);
     }
 
@@ -1420,11 +1427,9 @@
         width: 44px;
         height: 44px;
         border: 0;
-        border-radius: 50%;
-        background: #f0f2f7;
+        border-radius: 8px;
+        background: transparent;
         color: var(--muted, #8791a6);
-        font-size: 10px;
-        font-weight: 600;
         align-items: center;
         justify-content: center;
         cursor: pointer;
@@ -1434,8 +1439,12 @@
     }
 
     .mini-info:hover {
-        background: var(--soft, #eef0ff);
         color: var(--primary, #5e6fec);
+    }
+
+    .mini-info:hover :global(svg),
+    .info:hover :global(svg) {
+        background: #e5e8ff;
     }
 
     .mini-info:focus-visible {
@@ -1445,9 +1454,9 @@
 
     .insight {
         margin: 10px 0 0;
-        padding: 11px 12px;
+        padding: 9px 10px;
         border: 1px solid #f0dfa7;
-        border-radius: 18px;
+        border-radius: 12px;
         background: #fff8e8;
         color: #7a6618;
         font-size: 12px;
@@ -1476,7 +1485,7 @@
     .metric-list {
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
-        border-radius: 18px;
+        border-radius: 14px;
         box-shadow: var(--dashboard-shadow);
         overflow: hidden;
     }
@@ -1486,7 +1495,7 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 10px;
         align-items: center;
-        padding: 13px 14px;
+        padding: 10px 11px;
         border-bottom: 1px solid var(--dashboard-line);
     }
 
@@ -1529,7 +1538,7 @@
         border: 1px solid var(--dashboard-line);
         border-radius: 18px;
         box-shadow: var(--dashboard-shadow);
-        padding: 13px;
+        padding: 10px;
     }
 
     .step {
@@ -1671,7 +1680,7 @@
     }
 
     .empty-note {
-        padding: 14px;
+        padding: 11px;
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
         border-radius: 18px;
@@ -1686,7 +1695,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 14px;
+        padding: 10px 11px;
         margin: 6px 0 12px;
         background: var(--dashboard-surface);
         border: 1px dashed #cbd2e0;

@@ -146,6 +146,7 @@ export const telegramIconMap = {
     users: Users,
     coin: Coins,
     checkCircle: CircleCheck,
+    help: CircleQuestionMark,
     alert: TriangleAlert,
     box: Package,
     desk: Table,
