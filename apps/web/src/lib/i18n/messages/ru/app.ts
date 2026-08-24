@@ -58,7 +58,7 @@ export const appMessages = {
         eyebrow: 'Доступ к рабочему пространству', title: 'Родители и приглашения', serverAuthorized: 'Проверено сервером',
         pendingHint: 'Приглашённый родитель получит доступ после принятия приглашения.', loading: 'Загружаем доступ…',
         empty: 'Приглашённых родителей пока нет.', memberships: 'Доступ родителей', unknownParent: 'Неизвестный родитель',
-        familyAdmin: 'Администратор семьи', editor: 'Редактор', viewer: 'Просмотр', emailLabel: 'Email родителя',
+        familyAdmin: 'Администратор семьи', editor: 'Редактор', viewer: 'Просмотр', emailLabel: 'Email родителя', parentNameLabel: 'Имя', telegramLabel: 'Telegram',
         active: 'Доступ открыт', pending: 'Ожидает принятия', inactive: 'Доступ приостановлен',
         deactivateParent: 'Отключить доступ родителя', reactivateParent: 'Включить доступ родителя', parentDeactivated: 'Доступ родителя отключён.', parentReactivated: 'Доступ родителя включён.',
         emailPlaceholder: 'name@example.com', emailRequired: 'Введите email адрес.', permission: 'Права родителя',

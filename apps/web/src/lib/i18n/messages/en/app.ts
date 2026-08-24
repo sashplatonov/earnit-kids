@@ -58,7 +58,7 @@ export const appMessages = {
         eyebrow: 'Workspace access', title: 'Parents and invitations', serverAuthorized: 'Server-authorized',
         pendingHint: 'Pending invitations are not active members until the recipient accepts them.', loading: 'Loading access…',
         empty: 'No parent memberships yet.', memberships: 'Parent memberships', unknownParent: 'Unknown parent',
-        familyAdmin: 'Family admin', editor: 'Editor', viewer: 'Viewer', emailLabel: 'Parent email',
+        familyAdmin: 'Family admin', editor: 'Editor', viewer: 'Viewer', emailLabel: 'Parent email', parentNameLabel: 'Name', telegramLabel: 'Telegram',
         active: 'Access active', pending: 'Awaiting acceptance', inactive: 'Access paused',
         deactivateParent: 'Deactivate parent access', reactivateParent: 'Reactivate parent access', parentDeactivated: 'Parent access deactivated.', parentReactivated: 'Parent access reactivated.',
         emailPlaceholder: 'name@example.com', emailRequired: 'Enter an email address.', permission: 'Parent permission',

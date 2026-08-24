@@ -258,9 +258,22 @@
 
     void reload();
 
-    function label(parent: ParentMembership): string {
-        return parent.displayName?.trim() || parent.email?.trim() || parent.telegramDisplayName?.trim()
+    function accountLabel(parent: ParentMembership): string {
+        return parent.email?.trim() || parent.telegramDisplayName?.trim()
             || (parent.telegramUsername ? `@${parent.telegramUsername}` : $i18n.t('app.workspaceAccess.unknownParent'));
+    }
+
+    function label(parent: ParentMembership): string {
+        return parent.displayName?.trim() || accountLabel(parent);
+    }
+
+    function telegramLabel(parent: ParentMembership): string {
+        const displayName = parent.telegramDisplayName?.trim();
+        const username = parent.telegramUsername?.trim();
+        if (displayName && username) return `${displayName} · @${username}`;
+        if (displayName) return displayName;
+        if (username) return `@${username}`;
+        return parent.telegramUserId == null ? '' : `ID ${parent.telegramUserId}`;
     }
 
     function permissionLabel(value: MembershipPermission): string {
@@ -300,16 +313,17 @@
                     <div class="avatar">{label(parent).charAt(0).toUpperCase()}</div>
                     <div class="row-main">
                         <div class="topline">
-                            <strong class="name">{label(parent)}</strong>
+                            <strong class="name">{accountLabel(parent)}</strong>
                             <span class:pending={parent.status === 'pending'} class:inactive={parent.status === 'inactive'} class:transfer={parent.transferRequestStatus === 'pending'} class="state">{parent.transferRequestStatus === 'pending' ? $i18n.t('app.telegram.parents.transferPending') : statusLabel(parent.status)}</span>
                         </div>
+                        {#if parent.displayName?.trim()}<div class="parent-name"><span class="meta-label">{$i18n.t('app.workspaceAccess.parentNameLabel')}:</span> {parent.displayName}</div>{/if}
                         <div class="row-role">{permissionLabel(parent.permission)}</div>
                         <div class="ids">
                             {#if parent.email}
                                 <span class="id email"><span class="icon"><TelegramIcon name="mail" size={14} /></span><span class="text">{parent.email}</span></span>
                             {/if}
-                            {#if parent.telegramUsername}
-                                <span class="id tg"><span class="icon"><TelegramIcon name="send" size={14} /></span><span class="text">@{parent.telegramUsername}</span></span>
+                            {#if parent.telegramUserId != null || parent.telegramUsername || parent.telegramDisplayName}
+                                <span class="id tg"><span class="icon"><TelegramIcon name="send" size={14} /></span><span class="text"><span class="meta-label">{$i18n.t('app.workspaceAccess.telegramLabel')}:</span> {telegramLabel(parent)}</span></span>
                             {/if}
                         </div>
                     </div>
@@ -563,13 +577,16 @@
     .box-sub{font-size:.66rem;color:#66718a;margin-top:.3rem}
     .preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;border-top:1px solid #dfe4ef;padding:.7rem .85rem}
     .ok-btn{background:#17884b;border-color:#17884b}
-    .parents-list { display:grid; gap:.6rem; }
-    .parent-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; align-items:center; padding:.75rem; border:1px solid #dfe4ef; border-radius:1rem; background:#fff; }
+    .parents-list { display:grid; gap:0; overflow:hidden; }
+    .parent-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; align-items:center; padding:.85rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
+    .parent-row:last-child { border-bottom:0; }
     .avatar { width:2.625rem; height:2.625rem; border-radius:.75rem; background:#eef2ff; color:#4d67d7; display:grid; place-items:center; font-weight:800; }
     .row-main { min-width:0; }
     .topline { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; min-width:0; }
     .name { font-size:.95rem; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .row-role { color:#66718a; font-size:.72rem; margin-top:.15rem; }
+    .parent-name { color:#33415f; font-size:.76rem; line-height:1.3; margin-top:.25rem; }
+    .meta-label { color:#7a8498; }
     .ids { display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.5rem; }
     .id { display:inline-flex; align-items:center; gap:.4rem; max-width:100%; padding:.3rem .5rem; border:1px solid #dfe4ef; border-radius:99px; background:#fafbfe; color:#51607a; font-size:.72rem; }
     .id.email { max-width:20rem; } .id.tg { max-width:15rem; }
