@@ -415,7 +415,7 @@ git commit -m "feat(backend): admin-transfer request schema and entity"
 
 ## TASK-007: Admin-transfer request/accept/decline backend
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** TASK-006
 

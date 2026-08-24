@@ -320,9 +320,9 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
 
     @POST
     @Path("/parents/{membershipId}/transfer-admin")
-    @Operation(summary = "Transfer family admin ownership to another parent")
+    @Operation(summary = "Create a pending admin-transfer request for another parent")
     @APIResponses({
-        @APIResponse(responseCode = "200", description = "Admin transferred",
+        @APIResponse(responseCode = "200", description = "Transfer request created",
             content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
         @APIResponse(responseCode = "400", description = "Transfer failed",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -339,5 +339,61 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
 
         return toResponse(familyParentAccessService.transferAdmin(
             membershipId, auth.familyId(), auth.parentAccountId(), auth.email()));
+    }
+
+    @POST
+    @Path("/parents/transfer-requests/{requestId}/accept")
+    @Operation(summary = "Accept a pending admin transfer request as the target parent")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Transfer request accepted",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "403", description = "Caller is not the request target",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "400", description = "Accept failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response acceptTransferRequest(@Context ContainerRequestContext ctx,
+                                          @Parameter(required = true, description = "Transfer request id")
+                                          @PathParam("requestId") int requestId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        return OperationResultResponses.toMappedOk(
+            familyParentAccessService.acceptTransferRequest(
+                requestId, auth.familyId(), auth.parentAccountId(), auth.email()),
+            dto -> dto,
+            failure -> "PARENT_MEMBERSHIP_FORBIDDEN".equals(failure.errorCode())
+                ? Response.Status.FORBIDDEN.getStatusCode()
+                : Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @POST
+    @Path("/parents/transfer-requests/{requestId}/decline")
+    @Operation(summary = "Decline an admin transfer request having the target parent")
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Transfer request declined",
+            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+        @APIResponse(responseCode = "403", description = "Caller is not the request target",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = "400", description = "Decline failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public Response declineTransferRequest(@Context ContainerRequestContext ctx,
+                                         @Parameter(required = true, description = "Transfer request id")
+                                         @PathParam("requestId") int requestId) {
+        var auth = getAuthOrFail(ctx);
+        if (auth == null || !auth.canEditFamilyData()) {
+            return unauthorized();
+        }
+
+        return OperationResultResponses.toMappedOk(
+            familyParentAccessService.declineTransferRequest(
+                requestId, auth.familyId(), auth.parentAccountId(), auth.email()),
+            dto -> dto,
+            failure -> "PARENT_MEMBERSHIP_FORBIDDEN".equals(failure.errorCode())
+                ? Response.Status.FORBIDDEN.getStatusCode()
+                : Response.Status.BAD_REQUEST.getStatusCode());
     }
 }

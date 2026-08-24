@@ -22,14 +22,20 @@ public record ParentMembershipDto(
     @Schema(description = "Membership status")
     MembershipStatus status,
     @Schema(description = "Pending invitation status")
-    String invitationStatus
+    String invitationStatus,
+    @Schema(description = "Pending admin-transfer request status for this membership")
+    String transferRequestStatus,
+    @Schema(description = "Display name of the admin-transfer request actor")
+    String transferRequestActorName,
+    @Schema(description = "Display name of the admin-transfer request target")
+    String transferRequestTargetName
 ) {
     public ParentMembershipDto(
         Integer id,
         String email,
         FamilyParentMembershipEntity.Permission permission,
         MembershipStatus status) {
-        this(id, email, null, null, null, null, permission, status, null);
+        this(id, email, null, null, null, null, permission, status, null, null, null, null);
     }
 
     public ParentMembershipDto(
@@ -37,6 +43,15 @@ public record ParentMembershipDto(
         String telegramUsername, String telegramDisplayName,
         FamilyParentMembershipEntity.Permission permission, MembershipStatus status) {
         this(id, email, displayName, telegramUserId, telegramUsername, telegramDisplayName,
-            permission, status, null);
+            permission, status, null, null, null, null);
+    }
+
+    public ParentMembershipDto(
+        Integer id, String email, String displayName, Long telegramUserId,
+        String telegramUsername, String telegramDisplayName,
+        FamilyParentMembershipEntity.Permission permission, MembershipStatus status,
+        String invitationStatus) {
+        this(id, email, displayName, telegramUserId, telegramUsername, telegramDisplayName,
+            permission, status, invitationStatus, null, null, null);
     }
 }

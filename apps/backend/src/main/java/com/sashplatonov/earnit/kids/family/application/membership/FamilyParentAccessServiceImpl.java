@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.family.application.membership;
 
 import com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto;
+import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyAdminTransferRequestEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationTokenHasher;
 import com.sashplatonov.earnit.kids.family.domain.model.invitation.ParentEmailInvitationEntity;
@@ -9,6 +10,7 @@ import com.sashplatonov.earnit.kids.family.domain.model.membership.MembershipSta
 import com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.telegram.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyAdminTransferRequestRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.invitation.ParentEmailInvitationRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
@@ -45,11 +47,15 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     private static final String ERROR_ADMIN_DELETE_FORBIDDEN = "PARENT_ADMIN_DELETE_FORBIDDEN";
     private static final String ERROR_INVALID_EMAIL = "PARENT_INVALID_EMAIL";
     private static final String ERROR_PENDING_INVITATION = "PARENT_INVITATION_EXISTS";
+    private static final String ERROR_TRANSFER_NOT_FOUND = "PARENT_TRANSFER_REQUEST_NOT_FOUND";
+    private static final String ERROR_TRANSFER_NOT_PENDING = "PARENT_TRANSFER_REQUEST_NOT_PENDING";
+    private static final String ERROR_TRANSFER_PENDING_EXISTS = "PARENT_TRANSFER_REQUEST_PENDING_EXISTS";
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final FamilyRepository familyRepository;
     private final ParentAccountRepository parentAccountRepository;
     private final FamilyParentMembershipRepository membershipRepository;
+    private final FamilyAdminTransferRequestRepository transferRequestRepository;
     private final TelegramIdentityRepository telegramIdentityRepository;
     private final ParentEmailInvitationRepository invitationRepository;
     private final SecurityAuditWriter securityAuditWriter;
@@ -89,12 +95,46 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
                 (left, right) -> left,
                 LinkedHashMap::new));
         var dtos = memberships.stream()
-            .map(m -> toDto(m, parentsById.get(m.getParentAccountId()), identitiesByParentId.get(m.getParentAccountId())))
+            .map(m -> toDto(m, parentsById.get(m.getParentAccountId()),
+                identitiesByParentId.get(m.getParentAccountId())))
             .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+        transferRequestRepository.findPendingByFamily(familyOpt.get().getId()).ifPresent(request ->
+            enrichWithPendingTransferRequest(dtos, request, parentsById));
         invitationRepository.findPendingByFamily(familyOpt.get().getId()).stream()
             .map(this::toInvitationDto)
             .forEach(dtos::add);
         return OperationResult.success(dtos);
+    }
+
+    private void enrichWithPendingTransferRequest(
+        List<ParentMembershipDto> dtos,
+        FamilyAdminTransferRequestEntity request,
+        Map<Integer, ParentAccountEntity> parentsById) {
+        String actorName = membershipName(request.getActorMembershipId(), parentsById);
+        String targetName = membershipName(request.getTargetMembershipId(), parentsById);
+        for (int i = 0; i < dtos.size(); i++) {
+            ParentMembershipDto dto = dtos.get(i);
+            if (dto.id() != null && (dto.id().equals(request.getActorMembershipId())
+                || dto.id().equals(request.getTargetMembershipId()))) {
+                dtos.set(i, new ParentMembershipDto(
+                    dto.id(), dto.email(), dto.displayName(), dto.telegramUserId(),
+                    dto.telegramUsername(), dto.telegramDisplayName(), dto.permission(), dto.status(),
+                    dto.invitationStatus(), "pending", actorName, targetName));
+            }
+        }
+    }
+
+    private String membershipName(Integer membershipId, Map<Integer, ParentAccountEntity> parentsById) {
+        return membershipRepository.findByIdOptional(membershipId)
+            .map(m -> {
+                if (m.getDisplayName() != null && !m.getDisplayName().isBlank()) {
+                    return m.getDisplayName();
+                }
+                return Optional.ofNullable(parentsById.get(m.getParentAccountId()))
+                    .map(ParentAccountEntity::getEmail)
+                    .orElse(null);
+            })
+            .orElse(null);
     }
 
     @Override
@@ -301,6 +341,28 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         );
     }
 
+    private ParentMembershipDto toTransferDto(
+        FamilyParentMembershipEntity membership,
+        ParentAccountEntity parent,
+        String transferStatus,
+        String actorName,
+        String targetName) {
+        return new ParentMembershipDto(
+            membership.getId(),
+            parent != null ? parent.getEmail() : null,
+            membership.getDisplayName(),
+            null,
+            null,
+            null,
+            membership.getPermission(),
+            membership.getStatus(),
+            null,
+            transferStatus,
+            actorName,
+            targetName
+        );
+    }
+
     private ParentMembershipDto toInvitationDto(ParentEmailInvitationEntity invitation) {
         return new ParentMembershipDto(null, invitation.getNormalizedEmail(), null, null, null, null,
             invitation.getPermission(), null, invitation.getStatus().name());
@@ -347,12 +409,20 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     @Transactional
     public OperationResult<ParentMembershipDto> transferAdmin(
         Integer membershipId, String familyId, Integer actorParentAccountId, String actorEmail) {
+        // EXPLAIN: transferAdmin now creates a pending approval-based transfer request instead of promoting instantly.
+        return createTransferRequest(membershipId, familyId, actorParentAccountId, actorEmail);
+    }
+
+    @Override
+    @Transactional
+    public OperationResult<ParentMembershipDto> createTransferRequest(
+        Integer targetMembershipId, String familyId, Integer actorParentAccountId, String actorEmail) {
         var familyOpt = resolveFamily(familyId);
         if (familyOpt.isEmpty()) {
             return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
         }
 
-        var membershipOpt = membershipRepository.findByIdOptional(membershipId);
+        var membershipOpt = membershipRepository.findByIdOptional(targetMembershipId);
         if (membershipOpt.isEmpty()) {
             return failure(ERROR_MEMBERSHIP_NOT_FOUND, "parentAccess.membershipNotFound");
         }
@@ -380,13 +450,150 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             return failure(ERROR_ADMIN_DELETE_FORBIDDEN, "parentAccess.cannotRemoveAdmin");
         }
 
-        actorMembership.setPermission(FamilyParentMembershipEntity.Permission.editor);
-        target.setPermission(FamilyParentMembershipEntity.Permission.family_admin);
+        if (transferRequestRepository.findPendingByFamily(familyDbId).isPresent()) {
+            return failure(ERROR_TRANSFER_PENDING_EXISTS, "parentAccess.transferRequestPendingExists");
+        }
+
+        var request = FamilyAdminTransferRequestEntity.builder()
+            .familyId(familyDbId)
+            .actorMembershipId(actorMembership.getId())
+            .targetMembershipId(target.getId())
+            .status(FamilyAdminTransferRequestEntity.Status.pending)
+            .build();
+        transferRequestRepository.persist(request);
 
         var parent = parentAccountRepository.findByIdOptional(target.getParentAccountId()).orElse(null);
 
-        log.info("Transferred family admin: targetMembershipId={}, familyId={}", membershipId, familyId);
+        log.info("Created admin transfer request: targetMembershipId={}, familyId={}",
+            targetMembershipId, familyId);
+
+        return OperationResult.success(toTransferDto(
+            target, parent, "pending",
+            membershipName(actorMembership, parentAccountRepository),
+            membershipName(target, parentAccountRepository)));
+    }
+
+    @Override
+    @Transactional
+    public OperationResult<ParentMembershipDto> acceptTransferRequest(
+        Integer requestId, String familyId, Integer actorParentAccountId, String actorEmail) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var requestOpt = transferRequestRepository.findByIdOptional(requestId);
+        if (requestOpt.isEmpty()) {
+            return failure(ERROR_TRANSFER_NOT_FOUND, "parentAccess.transferRequestNotFound");
+        }
+        var request = requestOpt.get();
+        Integer familyDbId = familyOpt.get().getId();
+        if (!request.getFamilyId().equals(familyDbId)) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        var actorMembershipOpt = FamilyParentActorResolver.resolve(
+            familyDbId, actorParentAccountId, actorEmail, parentAccountRepository, membershipRepository);
+        if (actorMembershipOpt.isEmpty()) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+        var actorMembership = actorMembershipOpt.get();
+        if (!actorMembership.getId().equals(request.getTargetMembershipId())) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        if (request.getStatus() != FamilyAdminTransferRequestEntity.Status.pending) {
+            return failure(ERROR_TRANSFER_NOT_PENDING, "parentAccess.transferRequestNotPending");
+        }
+
+        var targetOpt = membershipRepository.findByIdOptional(request.getTargetMembershipId());
+        var actorRequestMembershipOpt = membershipRepository.findByIdOptional(request.getActorMembershipId());
+        if (targetOpt.isEmpty() || actorRequestMembershipOpt.isEmpty()) {
+            return failure(ERROR_MEMBERSHIP_NOT_FOUND, "parentAccess.membershipNotFound");
+        }
+        var target = targetOpt.get();
+        var originalActor = actorRequestMembershipOpt.get();
+
+        target.setPermission(FamilyParentMembershipEntity.Permission.family_admin);
+        originalActor.setPermission(FamilyParentMembershipEntity.Permission.editor);
+        request.setStatus(FamilyAdminTransferRequestEntity.Status.accepted);
+        request.setRespondedAt(Instant.now());
+
+        cancelOtherPending(familyDbId, requestId);
+        var parent = parentAccountRepository.findByIdOptional(target.getParentAccountId()).orElse(null);
+
+        log.info("Accepted admin transfer request: id={}, targetMembershipId={}, familyId={}",
+            requestId, request.getTargetMembershipId(), familyId);
 
         return OperationResult.success(toDto(target, parent, null));
+    }
+
+    @Override
+    @Transactional
+    public OperationResult<ParentMembershipDto> declineTransferRequest(
+        Integer requestId, String familyId, Integer actorParentAccountId, String actorEmail) {
+        var familyOpt = resolveFamily(familyId);
+        if (familyOpt.isEmpty()) {
+            return failure(ERROR_FAMILY_NOT_FOUND, "family.familyNotFound");
+        }
+
+        var requestOpt = transferRequestRepository.findByIdOptional(requestId);
+        if (requestOpt.isEmpty()) {
+            return failure(ERROR_TRANSFER_NOT_FOUND, "parentAccess.transferRequestNotFound");
+        }
+        var request = requestOpt.get();
+        Integer familyDbId = familyOpt.get().getId();
+        if (!request.getFamilyId().equals(familyDbId)) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        var actorMembershipOpt = FamilyParentActorResolver.resolve(
+            familyDbId, actorParentAccountId, actorEmail, parentAccountRepository, membershipRepository);
+        if (actorMembershipOpt.isEmpty()) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+        var actorMembership = actorMembershipOpt.get();
+        if (!actorMembership.getId().equals(request.getTargetMembershipId())) {
+            return failure(ERROR_NOT_AUTHORIZED, "parentAccess.notAuthorized");
+        }
+
+        if (request.getStatus() != FamilyAdminTransferRequestEntity.Status.pending) {
+            return failure(ERROR_TRANSFER_NOT_PENDING, "parentAccess.transferRequestNotPending");
+        }
+
+        request.setStatus(FamilyAdminTransferRequestEntity.Status.declined);
+        request.setRespondedAt(Instant.now());
+
+        var targetOpt = membershipRepository.findByIdOptional(request.getTargetMembershipId());
+        var parent = targetOpt.isPresent()
+            ? parentAccountRepository.findByIdOptional(targetOpt.get().getParentAccountId()).orElse(null)
+            : null;
+
+        log.info("Declined admin transfer request: id={}, targetMembershipId={}, familyId={}",
+            requestId, request.getTargetMembershipId(), familyId);
+
+        return OperationResult.success(toDto(targetOpt.orElse(null), parent, null));
+    }
+
+    private void cancelOtherPending(Integer familyDbId, Integer excludeRequestId) {
+        transferRequestRepository.findPendingByFamilyAll(familyDbId).stream()
+            .filter(request -> !request.getId().equals(excludeRequestId))
+            .forEach(request -> {
+                request.setStatus(FamilyAdminTransferRequestEntity.Status.cancelled);
+                request.setCancelledAt(Instant.now());
+            });
+    }
+
+    private String membershipName(FamilyParentMembershipEntity membership,
+                                  ParentAccountRepository repository) {
+        if (membership == null) {
+            return null;
+        }
+        if (membership.getDisplayName() != null && !membership.getDisplayName().isBlank()) {
+            return membership.getDisplayName();
+        }
+        return repository.findByIdOptional(membership.getParentAccountId())
+            .map(ParentAccountEntity::getEmail)
+            .orElse(null);
     }
 }

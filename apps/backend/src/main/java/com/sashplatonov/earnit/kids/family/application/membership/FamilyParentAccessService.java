@@ -23,4 +23,13 @@ public interface FamilyParentAccessService {
 
     OperationResult<ParentMembershipDto> transferAdmin(
         Integer membershipId, String familyId, Integer actorParentAccountId, String actorEmail);
+
+    OperationResult<ParentMembershipDto> createTransferRequest(
+        Integer targetMembershipId, String familyId, Integer actorParentAccountId, String actorEmail);
+
+    OperationResult<ParentMembershipDto> acceptTransferRequest(
+        Integer requestId, String familyId, Integer actorParentAccountId, String actorEmail);
+
+    OperationResult<ParentMembershipDto> declineTransferRequest(
+        Integer requestId, String familyId, Integer actorParentAccountId, String actorEmail);
 }

@@ -1,12 +1,14 @@
 package com.sashplatonov.earnit.kids.family.application.membership;
 
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyAdminTransferRequestEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.MembershipStatus;
 import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationTokenHasher;
 import com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.telegram.domain.model.TelegramIdentityEntity;
 import com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyAdminTransferRequestRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.invitation.ParentEmailInvitationRepository;
 import com.sashplatonov.earnit.kids.platform.security.SecurityAuditWriter;
@@ -39,6 +41,7 @@ class FamilyParentAccessServiceImplTest {
     @Mock FamilyRepository familyRepository;
     @Mock ParentAccountRepository parentAccountRepository;
     @Mock FamilyParentMembershipRepository membershipRepository;
+    @Mock FamilyAdminTransferRequestRepository transferRequestRepository;
     @Mock TelegramIdentityRepository telegramIdentityRepository;
     @Mock ParentEmailInvitationRepository invitationRepository;
     @Mock SecurityAuditWriter securityAuditWriter;
@@ -48,8 +51,8 @@ class FamilyParentAccessServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new FamilyParentAccessServiceImpl(
-            familyRepository, parentAccountRepository, membershipRepository, telegramIdentityRepository,
-            invitationRepository, securityAuditWriter,
+            familyRepository, parentAccountRepository, membershipRepository, transferRequestRepository,
+            telegramIdentityRepository, invitationRepository, securityAuditWriter,
             new ParentInvitationTokenHasher("active", "active-secret", null, null));
     }
 
@@ -66,6 +69,7 @@ class FamilyParentAccessServiceImplTest {
         when(parentAccountRepository.findByIdList(List.of(1, 2))).thenReturn(List.of(parent1, parent2));
         when(telegramIdentityRepository.findActiveParentsByFamilyAndParentAccountIds(7, List.of(1, 2)))
             .thenReturn(List.of());
+        when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.empty());
 
         OperationResult<List<ParentMembershipDto>> result = service.listMemberships("fam-1");
 
@@ -96,6 +100,7 @@ class FamilyParentAccessServiceImplTest {
         when(parentAccountRepository.findByIdList(List.of(1, 2))).thenReturn(List.of(legacyParent, telegramParent));
         when(telegramIdentityRepository.findActiveParentsByFamilyAndParentAccountIds(7, List.of(1, 2)))
             .thenReturn(List.of(identity));
+        when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.empty());
 
         var result = service.listMemberships("fam-1");
 
@@ -120,6 +125,38 @@ class FamilyParentAccessServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         assertThat(((OperationResult.Success<List<ParentMembershipDto>>) result).value()).isEmpty();
         verify(parentAccountRepository, org.mockito.Mockito.never()).findByIdList(any());
+    }
+
+    @Test
+    void listMemberships_pendingTransfer_enrichesActorAndTargetRows() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        ParentAccountEntity actorParent = parent(1, "actor@test.com");
+        ParentAccountEntity targetParent = parent(2, "target@test.com");
+        FamilyAdminTransferRequestEntity request = request(50, 7, 12, 11);
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(membershipRepository.findByFamilyIdIncludingInactive(7)).thenReturn(List.of(actor, target));
+        when(parentAccountRepository.findByIdList(List.of(1, 2))).thenReturn(List.of(actorParent, targetParent));
+        when(telegramIdentityRepository.findActiveParentsByFamilyAndParentAccountIds(7, List.of(1, 2)))
+            .thenReturn(List.of());
+        when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByIdOptional(12)).thenReturn(Optional.of(actor));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+
+        OperationResult<List<ParentMembershipDto>> result = service.listMemberships("fam-1");
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        List<ParentMembershipDto> dtos = ((OperationResult.Success<List<ParentMembershipDto>>) result).value();
+        assertThat(dtos).hasSize(2);
+        assertThat(dtos).allSatisfy(dto ->
+            assertThat(dto.transferRequestStatus()).isEqualTo("pending"));
+        assertThat(dtos).extracting(ParentMembershipDto::id).containsExactlyInAnyOrder(12, 11);
+        assertThat(dtos.stream().filter(dto -> dto.id().equals(12)).findFirst().orElseThrow()
+            .transferRequestActorName()).isEqualTo("actor@test.com");
+        assertThat(dtos.stream().filter(dto -> dto.id().equals(11)).findFirst().orElseThrow()
+            .transferRequestTargetName()).isEqualTo("target@test.com");
     }
 
     @Test
@@ -336,7 +373,7 @@ class FamilyParentAccessServiceImplTest {
     }
 
     @Test
-    void transferAdmin_promotesTargetAndDemotesActor() {
+    void createTransferRequest_createsPendingRequestWithoutPermissionChange() {
         FamilyEntity family = mockFamily(7);
         FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
         FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
@@ -347,17 +384,23 @@ class FamilyParentAccessServiceImplTest {
         when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
         when(parentAccountRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(actorParent));
         when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
+        when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.empty());
         when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
 
-        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", null, "admin@test.com");
+        OperationResult<ParentMembershipDto> result = service.createTransferRequest(11, "fam-1", null, "admin@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        assertThat(target.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
-        assertThat(actor.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.editor);
+        assertThat(target.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.editor);
+        assertThat(actor.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
+        ParentMembershipDto dto = ((OperationResult.Success<ParentMembershipDto>) result).value();
+        assertThat(dto.transferRequestStatus()).isEqualTo("pending");
+        var captor = org.mockito.ArgumentCaptor.forClass(FamilyAdminTransferRequestEntity.class);
+        verify(transferRequestRepository).persist(captor.capture());
+        assertThat(captor.getValue().getTargetMembershipId()).isEqualTo(11);
     }
 
     @Test
-    void transferAdmin_telegramOnlyAdminUsesAccountIdWithoutEmailLookup() {
+    void createTransferRequest_telegramOnlyAdminUsesAccountIdWithoutEmailLookup() {
         FamilyEntity family = mockFamily(7);
         FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
         FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
@@ -366,17 +409,19 @@ class FamilyParentAccessServiceImplTest {
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
         when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
         when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
+        when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.empty());
         when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
 
-        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", 1, null);
+        OperationResult<ParentMembershipDto> result = service.createTransferRequest(11, "fam-1", 1, null);
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        assertThat(target.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
         verify(parentAccountRepository, org.mockito.Mockito.never()).findByEmail(any());
+        var captor = org.mockito.ArgumentCaptor.forClass(FamilyAdminTransferRequestEntity.class);
+        verify(transferRequestRepository).persist(captor.capture());
     }
 
     @Test
-    void transferAdmin_nonAdminActor_isRejected() {
+    void createTransferRequest_nonAdminActor_isRejected() {
         FamilyEntity family = mockFamily(7);
         FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
         FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.editor);
@@ -387,11 +432,166 @@ class FamilyParentAccessServiceImplTest {
         when(parentAccountRepository.findByEmail("editor@test.com")).thenReturn(Optional.of(actorParent));
         when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
 
-        OperationResult<ParentMembershipDto> result = service.transferAdmin(11, "fam-1", null, "editor@test.com");
+        OperationResult<ParentMembershipDto> result = service.createTransferRequest(11, "fam-1", null, "editor@test.com");
 
         assertThat(result).isInstanceOf(OperationResult.Failure.class);
         assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
             .isEqualTo("PARENT_ADMIN_DELETE_FORBIDDEN");
+    }
+
+    @Test
+    void createTransferRequest_secondPendingRequest_returnsConflict() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        ParentAccountEntity actorParent = parent(1, "admin@test.com");
+        FamilyAdminTransferRequestEntity existing = FamilyAdminTransferRequestEntity.builder()
+            .id(50).familyId(7).actorMembershipId(12).targetMembershipId(13)
+            .status(FamilyAdminTransferRequestEntity.Status.pending).build();
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+        when(parentAccountRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(actorParent));
+        when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
+        when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.of(existing));
+
+        OperationResult<ParentMembershipDto> result = service.createTransferRequest(11, "fam-1", null, "admin@test.com");
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
+            .isEqualTo("PARENT_TRANSFER_REQUEST_PENDING_EXISTS");
+        verify(transferRequestRepository, org.mockito.Mockito.never())
+            .persist(any(FamilyAdminTransferRequestEntity.class));
+    }
+    @Test
+    void acceptTransferRequest_promotesTargetAndDemotesActor() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyParentMembershipEntity actorMembership = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        FamilyAdminTransferRequestEntity request = request(50, 7, 12, 11);
+        ParentAccountEntity targetParent = parent(2, "target@test.com");
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(2, 7)).thenReturn(Optional.of(target));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+        when(membershipRepository.findByIdOptional(12)).thenReturn(Optional.of(actorMembership));
+        when(transferRequestRepository.findPendingByFamilyAll(7)).thenReturn(List.of(request));
+        when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
+
+        OperationResult<ParentMembershipDto> result = service.acceptTransferRequest(50, "fam-1", 2, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        assertThat(target.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.family_admin);
+        assertThat(actorMembership.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.editor);
+        assertThat(request.getStatus()).isEqualTo(FamilyAdminTransferRequestEntity.Status.accepted);
+        assertThat(request.getRespondedAt()).isNotNull();
+    }
+
+    @Test
+    void acceptTransferRequest_wrongCaller_isRejected() {
+        FamilyEntity family = mockFamily(7);
+        FamilyAdminTransferRequestEntity request = FamilyAdminTransferRequestEntity.builder()
+            .id(50).familyId(7).actorMembershipId(12).targetMembershipId(11)
+            .status(FamilyAdminTransferRequestEntity.Status.pending).build();
+        FamilyParentMembershipEntity nonTarget = membership(13, 7, 3, FamilyParentMembershipEntity.Permission.editor);
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(3, 7)).thenReturn(Optional.of(nonTarget));
+
+        OperationResult<ParentMembershipDto> result = service.acceptTransferRequest(50, "fam-1", 3, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
+            .isEqualTo("PARENT_MEMBERSHIP_FORBIDDEN");
+    }
+
+    @Test
+    void acceptTransferRequest_nonPending_isRejected() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyAdminTransferRequestEntity request = FamilyAdminTransferRequestEntity.builder()
+            .id(50).familyId(7).actorMembershipId(12).targetMembershipId(11)
+            .status(FamilyAdminTransferRequestEntity.Status.declined).build();
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(2, 7)).thenReturn(Optional.of(target));
+
+        OperationResult<ParentMembershipDto> result = service.acceptTransferRequest(50, "fam-1", 2, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
+            .isEqualTo("PARENT_TRANSFER_REQUEST_NOT_PENDING");
+    }
+
+    @Test
+    void acceptTransferRequest_cancelsOtherPendingRequests() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyParentMembershipEntity actorMembership = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        FamilyAdminTransferRequestEntity request = request(50, 7, 12, 11);
+        FamilyAdminTransferRequestEntity other = request(51, 7, 14, 15);
+        ParentAccountEntity targetParent = parent(2, "target@test.com");
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(2, 7)).thenReturn(Optional.of(target));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+        when(membershipRepository.findByIdOptional(12)).thenReturn(Optional.of(actorMembership));
+        when(transferRequestRepository.findPendingByFamilyAll(7)).thenReturn(List.of(request, other));
+        when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
+
+        OperationResult<ParentMembershipDto> result = service.acceptTransferRequest(50, "fam-1", 2, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        assertThat(other.getStatus()).isEqualTo(FamilyAdminTransferRequestEntity.Status.cancelled);
+        assertThat(other.getCancelledAt()).isNotNull();
+    }
+
+    @Test
+    void declineTransferRequest_byTarget_setsDeclined() {
+        FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyAdminTransferRequestEntity request = request(50, 7, 12, 11);
+        ParentAccountEntity targetParent = parent(2, "target@test.com");
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(2, 7)).thenReturn(Optional.of(target));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+        when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
+
+        OperationResult<ParentMembershipDto> result = service.declineTransferRequest(50, "fam-1", 2, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        assertThat(request.getStatus()).isEqualTo(FamilyAdminTransferRequestEntity.Status.declined);
+        assertThat(request.getRespondedAt()).isNotNull();
+        assertThat(target.getPermission()).isEqualTo(FamilyParentMembershipEntity.Permission.editor);
+    }
+
+    @Test
+    void declineTransferRequest_wrongCaller_isRejected() {
+        FamilyEntity family = mockFamily(7);
+        FamilyAdminTransferRequestEntity request = request(50, 7, 12, 11);
+        FamilyParentMembershipEntity nonTarget = membership(13, 7, 3, FamilyParentMembershipEntity.Permission.editor);
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(transferRequestRepository.findByIdOptional(50)).thenReturn(Optional.of(request));
+        when(membershipRepository.findByParentAndFamily(3, 7)).thenReturn(Optional.of(nonTarget));
+
+        OperationResult<ParentMembershipDto> result = service.declineTransferRequest(50, "fam-1", 3, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Failure.class);
+        assertThat(((OperationResult.Failure<ParentMembershipDto>) result).errorCode())
+            .isEqualTo("PARENT_MEMBERSHIP_FORBIDDEN");
+    }
+
+    private static FamilyAdminTransferRequestEntity request(int id, int familyId, int actorId, int targetId) {
+        return FamilyAdminTransferRequestEntity.builder()
+            .id(id).familyId(familyId).actorMembershipId(actorId).targetMembershipId(targetId)
+            .status(FamilyAdminTransferRequestEntity.Status.pending).build();
     }
 
     private static FamilyEntity mockFamily(int id) {

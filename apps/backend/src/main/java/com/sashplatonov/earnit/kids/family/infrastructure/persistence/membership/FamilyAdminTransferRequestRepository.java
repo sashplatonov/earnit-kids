@@ -23,4 +23,8 @@ public class FamilyAdminTransferRequestRepository
         return find("targetMembershipId = ?1 AND status = 'pending'", targetMembershipId)
             .firstResultOptional();
     }
+
+    public List<FamilyAdminTransferRequestEntity> findPendingByFamilyAll(Integer familyId) {
+        return find("familyId = ?1 AND status = 'pending'", familyId).list();
+    }
 }
