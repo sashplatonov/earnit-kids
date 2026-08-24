@@ -43,11 +43,23 @@ Follow this guide to publish the Capacitor shell on Google Play and to test with
 3. Android will verify the domain against `assetlinks.json`; place the real `sha256_cert_fingerprints` there before upload.
 
 ## 4. Signing & build flavor
-1. Create or reuse a keystore:
-   - Run `keytool -genkeypair -v -keystore release.keystore -alias coins -keyalg RSA -keysize 2048 -validity 10000`.  
-   - Store keystore files securely.  
-2. Update `android/app/build.gradle` with your signing config and reference it in the `release` block.  
-3. Keep `minSdkVersion`/`targetSdkVersion` aligned with Google Play requirements (currently min 26, target latest stable).
+Android signing material is release infrastructure and must stay outside Git.
+The keystore previously tracked in this repository is compromised and must not
+be reused for any release. Generate a replacement key through the approved
+release process and rotate the Play Console signing configuration before
+publishing.
+
+1. Supply the replacement keystore through a CI secret manager or a local path
+   ignored by Git. The release environment must provide the keystore, its store
+   password, the signing alias, and its key password without committing any of
+   those values or a private-machine path.
+2. Configure `android/app/build.gradle` to read those external inputs and use
+   them only for the `release` build type. Keep the public Gradle/build
+   configuration free of credentials and keystore files.
+3. Store the replacement keystore securely and restrict access to the release
+   maintainers and CI job that publishes the app.
+4. Keep `minSdkVersion`/`targetSdkVersion` aligned with Google Play requirements
+   (currently min 26, target latest stable).
 
 ## 5. Test without Google Play account
 1. Build a debug APK: `./gradlew assembleDebug` (or use Android Studio Run).  

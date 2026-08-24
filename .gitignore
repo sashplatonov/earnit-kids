@@ -46,6 +46,11 @@ mobile/node_modules/
 android/
 ios/
 build/
+*.keystore
+*.jks
+release-key.properties
+key.properties
+signing.properties
 
 # IDE / Editor
 .idea/

@@ -76,7 +76,7 @@ auditable, and document evidence that already exists in the codebase.
 
 ## PORT-001: Purge and rotate the tracked Android signing keystore
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0  
 **Depends on:** -
 
