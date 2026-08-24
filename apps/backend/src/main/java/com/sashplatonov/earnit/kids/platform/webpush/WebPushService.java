@@ -59,7 +59,7 @@ public class WebPushService {
         String actorType = auth.isChild() ? "child" : "parent";
         Integer parentId = auth.isChild() ? null : auth.parentAccountId();
         Integer childId = auth.isChild() ? auth.childId() : null;
-        if ((auth.isChild() && childId == null) || (!auth.isChild() && parentId == null)) throw new SecurityException("actor");
+        if (auth.isChild() && childId == null) throw new SecurityException("actor");
         WebPushSubscriptionEntity entity = subscriptions.findByEndpoint(request.endpoint()).orElse(null);
         if (entity == null) {
             entity = WebPushSubscriptionEntity.builder().familyId(familyId).endpoint(request.endpoint())

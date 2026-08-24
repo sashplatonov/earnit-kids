@@ -51,4 +51,23 @@ class WebPushServiceTest {
             .isInstanceOf(IllegalArgumentException.class);
         verify(subscriptions, never()).persist(any(WebPushSubscriptionEntity.class));
     }
+
+    @Test
+    void parentWithoutParentAccountIdIsAccepted() {
+        when(families.getDbId("family-1")).thenReturn(Optional.of(7));
+        when(subscriptions.findByEndpoint("https://push.example/sub")).thenReturn(Optional.empty());
+        // EXPLAIN: A web (non-Telegram) parent session may not carry parentAccountId
+        // EXPLAIN: in the auth cookie; registration must not 403 for this case.
+        AuthContext auth = new AuthContext("family-1", null, "admin", "parent@example.com", "csrf",
+            "family_admin", null);
+
+        service.register(auth, new WebPushSubscriptionRequest("https://push.example/sub", "public-key", "auth"));
+
+        ArgumentCaptor<WebPushSubscriptionEntity> captor = ArgumentCaptor.forClass(WebPushSubscriptionEntity.class);
+        verify(subscriptions).persist(captor.capture());
+        WebPushSubscriptionEntity subscription = captor.getValue();
+        assertThat(subscription.getFamilyId()).isEqualTo(7);
+        assertThat(subscription.getParentAccountId()).isNull();
+        assertThat(subscription.getActorType()).isEqualTo("parent");
+    }
 }

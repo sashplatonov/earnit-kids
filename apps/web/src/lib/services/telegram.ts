@@ -10,6 +10,10 @@ type TelegramWebApp = {
 type TelegramGlobal = { WebApp?: TelegramWebApp };
 
 let initialized = false;
+export function isTelegramMiniApp(): boolean {
+    if (typeof window === 'undefined') return false;
+    return Boolean((window as Window & { Telegram?: TelegramGlobal }).Telegram?.WebApp);
+}
 
 export function initializeTelegramWebApp(): TelegramWebApp | null {
     if (typeof window === 'undefined') {
