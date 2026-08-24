@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.family.application.action;
 
 import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryType;
+import com.sashplatonov.earnit.kids.family.domain.model.history.LedgerReason;
 import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.family.domain.model.catalog.ShopItemEntity;
@@ -25,6 +26,8 @@ final class FamilyActionHistoryFactory {
             .childId(childId)
             .externalId(nextExternalId())
             .type(HistoryEntryType.earn)
+            .reason(LedgerReason.TASK_REWARD)
+            .delta(task.getCoins())
             .amount(task.getCoins())
             .description(task.getName())
             .moneyAmount(0)
@@ -41,6 +44,8 @@ final class FamilyActionHistoryFactory {
             .childId(childId)
             .externalId(nextExternalId())
             .type(HistoryEntryType.spend)
+            .reason(LedgerReason.REWARD_PURCHASE)
+            .delta(-item.getPrice())
             .amount(item.getPrice())
             .description(item.getName())
             .moneyAmount(item.getMoneyLimit() != null ? item.getMoneyLimit() : 0)
@@ -62,6 +67,8 @@ final class FamilyActionHistoryFactory {
                 .childId(request.getChildId())
                 .externalId(nextExternalId())
                 .type(HistoryEntryType.spend)
+                .reason(LedgerReason.REWARD_PURCHASE)
+                .delta(-request.getCoins())
                 .amount(request.getCoins())
                 .description(item.map(ShopItemEntity::getName).orElse(request.getTaskName()))
                 .moneyAmount(request.getMoneyAmount())
@@ -77,6 +84,8 @@ final class FamilyActionHistoryFactory {
             .childId(request.getChildId())
             .externalId(nextExternalId())
             .type(HistoryEntryType.earn)
+            .reason(LedgerReason.TASK_REWARD)
+            .delta(request.getCoins())
             .amount(request.getCoins())
             .description(task.map(TaskEntity::getName).orElse(request.getTaskName()))
             .moneyAmount(0)
@@ -98,9 +107,33 @@ final class FamilyActionHistoryFactory {
             .childId(childId)
             .externalId(nextExternalId())
             .type(amount > 0 ? HistoryEntryType.earn : HistoryEntryType.spend)
+            .reason(LedgerReason.MANUAL_ADJUSTMENT)
+            .delta(amount)
             .amount(Math.abs(amount))
             .description(normalizedDescription)
             .moneyAmount(0)
+            .createdAt(now())
+            .build();
+    }
+
+    HistoryEntryEntity buildReversalHistory(int familyDbId, int childId, HistoryEntryEntity original) {
+        int originalDelta = original.getDelta() != 0
+            ? original.getDelta()
+            : original.getType() == HistoryEntryType.earn
+                ? Math.abs(original.getAmount())
+                : -Math.abs(original.getAmount());
+        int reversalDelta = -originalDelta;
+        return HistoryEntryEntity.builder()
+            .familyId(familyDbId)
+            .childId(childId)
+            .externalId(nextExternalId())
+            .type(reversalDelta >= 0 ? HistoryEntryType.earn : HistoryEntryType.spend)
+            .reason(LedgerReason.REVERSAL)
+            .delta(reversalDelta)
+            .amount(Math.abs(reversalDelta))
+            .description("Reversal: " + (original.getDescription() != null ? original.getDescription() : "history entry"))
+            .moneyAmount(0)
+            .reversesEntryId(original.getId())
             .createdAt(now())
             .build();
     }

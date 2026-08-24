@@ -117,11 +117,20 @@ final class FamilyActionBalanceService {
             return OperationResult.failure(BackendMessages.message("history.entryNotFound"));
         }
 
-        int delta = historyEntry.get().getType() == HistoryEntryType.earn
-            ? -historyEntry.get().getAmount()
-            : historyEntry.get().getAmount();
+        if (historyRepository.hasReversal(historyEntry.get().getId())) {
+            return OperationResult.failure(BackendMessages.message("history.entryAlreadyReversed"));
+        }
+        int originalDelta = historyEntry.get().getDelta() != 0
+            ? historyEntry.get().getDelta()
+            : historyEntry.get().getType() == HistoryEntryType.earn
+                ? Math.abs(historyEntry.get().getAmount())
+                : -Math.abs(historyEntry.get().getAmount());
+        int delta = -originalDelta;
+        if (child.get().getBalance() + delta < 0) {
+            return OperationResult.failure(BackendMessages.message("balance.insufficient"));
+        }
         child.get().setBalance(child.get().getBalance() + delta);
-        historyRepository.delete(historyEntry.get());
+        historyRepository.persist(historyFactory.buildReversalHistory(familyDbId, childId, historyEntry.get()));
         return supportService.loadFamilyData(familyId, childId, true);
     }
 
@@ -144,6 +153,10 @@ final class FamilyActionBalanceService {
         }
         if (supportService.isInactive(child.get())) {
             return OperationResult.failure(BackendMessages.message("family.childInactive"));
+        }
+
+        if (child.get().getBalance() + amount < 0) {
+            return OperationResult.failure(BackendMessages.message("balance.insufficient"));
         }
 
         child.get().setBalance(child.get().getBalance() + amount);

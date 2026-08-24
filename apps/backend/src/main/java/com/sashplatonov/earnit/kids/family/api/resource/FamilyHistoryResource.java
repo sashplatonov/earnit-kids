@@ -31,7 +31,7 @@ public class FamilyHistoryResource extends FamilyCommandResourceSupport {
         super(action, family, websocket, parentAccess);
     }
     @DELETE @Path("/history/{historyEntryId}")
-    @Operation(summary = "Delete a history entry and reverse the child balance")
+    @Operation(summary = "Reverse a history entry without deleting its audit record")
     public Response deleteHistoryEntry(@Context ContainerRequestContext ctx, @PathParam("historyEntryId") long historyEntryId,
                                        @QueryParam("childId") Integer childId) {
         var auth = getAuthOrFail(ctx);

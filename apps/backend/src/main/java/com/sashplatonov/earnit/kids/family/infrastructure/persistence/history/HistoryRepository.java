@@ -68,6 +68,10 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         return query.getSingleResult();
     }
 
+    public boolean hasReversal(long historyEntryId) {
+        return count("reversesEntryId = ?1", historyEntryId) > 0;
+    }
+
     public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
         return slowOperationDiagnostics.recordQuery(
             "family-data.getHistoryForFamily",
@@ -374,6 +378,9 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
         target.setChildId(source.getChildId());
         target.setExternalId(source.getExternalId());
         target.setType(source.getType());
+        target.setReason(source.getReason());
+        target.setDelta(source.getDelta());
+        target.setReversesEntryId(source.getReversesEntryId());
         target.setAmount(source.getAmount());
         target.setDescription(source.getDescription());
         target.setMoneyAmount(source.getMoneyAmount());

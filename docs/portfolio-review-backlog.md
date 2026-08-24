@@ -272,7 +272,7 @@ fix(security): throttle public authentication entrypoints
 
 ## PORT-004: Make coin history append-only and enforce the balance invariant
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** -
 

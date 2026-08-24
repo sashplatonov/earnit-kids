@@ -548,7 +548,7 @@ class FamilyActionServiceImplTest {
     }
 
     @Test
-    void deleteHistoryEntry_reversesBalanceAndDeletesHistory() {
+    void deleteHistoryEntry_reversesBalanceAndAppendsReversal() {
         ChildEntity child = child(10, 1, "Alice", 20);
         HistoryEntryEntity historyEntry = HistoryEntryEntity.builder()
             .id(1L)
@@ -577,7 +577,7 @@ class FamilyActionServiceImplTest {
 
         assertThat(successValue(result)).isEqualTo(payload);
         assertThat(child.getBalance()).isEqualTo(15);
-        verify(historyRepository).delete(historyEntry);
+        verify(historyRepository).persist(org.mockito.ArgumentMatchers.any(HistoryEntryEntity.class));
         verify(familyService).loadFamilyData("fam-1", 10, true);
     }
 
