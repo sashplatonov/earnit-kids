@@ -166,7 +166,7 @@
         {:else}
         <TelegramListSurface label={$i18n.t('app.telegram.rewards.title')}>
             {#each filteredItems as item (item.id)}
-                <TelegramEntityRow interactive={canEdit} archived={item.isActive === false}>
+                <TelegramEntityRow interactive={canEdit} archived={item.isActive === false} compact>
                     <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span>
                     <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(item.name) })} on:click={() => edit(item)}>
                         <span class="title">{stripLeadingEmoji(item.name)}</span>

@@ -121,7 +121,11 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         const list = row.parentElement?.getBoundingClientRect();
         const rowRect = row.getBoundingClientRect();
         const actionRect = row.querySelector('.entity-interactive')?.getBoundingClientRect();
-        return list != null && actionRect != null && rowRect.right <= list.right && actionRect.right <= list.right;
+        return row.classList.contains('compact')
+            && list != null
+            && actionRect != null
+            && rowRect.right <= list.right
+            && actionRect.right <= list.right;
     })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     await page.getByRole('tab', { name: /Tasks|Задания/ }).click();

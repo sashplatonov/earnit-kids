@@ -591,7 +591,7 @@
     .preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;border-top:1px solid #dfe4ef;padding:.7rem .85rem}
     .ok-btn{background:#17884b;border-color:#17884b}
     .parents-list { display:grid; gap:0; overflow:hidden; }
-    .parent-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; align-items:center; padding:.75rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
+    .parent-row { display:grid; grid-template-columns:2.625rem minmax(0,1fr) 5.75rem; gap:.75rem; align-items:center; padding:.75rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
     .parent-row:last-child { border-bottom:0; }
     .avatar { width:2.625rem; height:2.625rem; border-radius:.75rem; background:#eef2ff; color:#4d67d7; display:grid; place-items:center; font-weight:800; }
     .row-main { min-width:0; }
@@ -603,7 +603,7 @@
     .id { display:inline-flex; align-items:center; gap:.35rem; max-width:100%; padding:.22rem .45rem; border:1px solid #dfe4ef; border-radius:99px; background:#fafbfe; color:#51607a; font-size:.72rem; }
     .id.email { max-width:20rem; } .id.tg { max-width:15rem; }
     .id .icon { display:inline-flex; flex:0 0 auto; } .id .text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-    .row-actions { display:grid; grid-template-columns:44px 44px; gap:.5rem; align-items:center; }
+    .row-actions { display:grid; grid-template-columns:repeat(2,44px); justify-content:end; gap:.5rem; align-items:center; width:5.75rem; }
     .icon-btn { width:44px; height:44px; padding:0; border-radius:.75rem; border:1px solid #dfe4ef; background:#fff; color:#42506e; display:grid; place-items:center; position:relative; cursor:pointer; }
     .icon-btn:hover:not(.disabled) { background:#f8faff; }
     .icon-btn.danger { border-color:#efc9c9; background:#fff5f5; color:#b74d4d; }
@@ -667,15 +667,15 @@
     .qr-row .small{margin:0;flex:1;min-width:0}
 
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    .access-flow.compact .access-header{justify-content:flex-end}
+    .access-flow.compact .access-header{justify-content:space-between}
     .access-flow.compact .add-parent{width:44px;min-height:44px;padding:0;border-radius:.75rem}
     .access-flow.compact .add-parent-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    .access-flow.compact .parent-row{padding:.55rem 0;gap:.6rem}
+    .access-flow.compact .parent-row{grid-template-columns:2.5rem minmax(0,1fr) 5.75rem;padding:.55rem 0;gap:.6rem}
     .access-flow.compact .avatar{width:2.5rem;height:2.5rem}
     .access-flow.compact .ids{margin-top:.25rem}
     .access-flow.compact .note{padding:.45rem .55rem}
-    @media(max-width:640px){.access-flow.compact .access-header{align-items:center;flex-direction:row}.access-flow.compact .parent-row{grid-template-columns:auto minmax(0,1fr) auto}.access-flow.compact .row-actions{grid-column:3;justify-content:end;margin-top:0}.access-flow.compact .row-actions{grid-template-columns:44px 44px}.access-flow.compact .icon-btn{width:44px;height:44px}}
-    @media(max-width:640px){ .access-header{align-items:stretch;flex-direction:column;gap:.5rem}.access-header .add-parent{width:100%}.parent-row { grid-template-columns:auto minmax(0,1fr); } .row-actions { grid-column:2; justify-content:start; margin-top:.1rem; } .id.email,.id.tg { max-width:100%; } }
+    @media(max-width:640px){.access-flow.compact .access-header{align-items:center;flex-direction:row}.access-flow.compact .row-actions{grid-column:3;justify-content:end;margin-top:0}.access-flow.compact .icon-btn{width:44px;height:44px}}
+    @media(max-width:640px){ .access-header{align-items:stretch;flex-direction:column;gap:.5rem}.access-header .add-parent{width:100%}.parent-row { grid-template-columns:2.5rem minmax(0,1fr) 5.75rem; gap:.6rem; } .row-actions { grid-column:3; justify-content:end; margin-top:0; } .id.email,.id.tg { max-width:100%; } }
     @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%}.preview-actions{grid-template-columns:1fr} }
     @media (min-width: 700px) {.sheet{inset:50% auto auto 50%;width:min(38rem,calc(100% - 3rem));max-height:min(82dvh,46rem);padding:1.4rem;border-radius:1.25rem;box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%);transform:translate(-50%,-50%)}}
 </style>
