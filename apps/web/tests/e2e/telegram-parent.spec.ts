@@ -117,6 +117,12 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(rewardList.getByText(/A very long parent reward title/)).toBeVisible();
     await expect(rewardList.getByText('Fun')).toBeVisible();
     await expect(rewardList.getByRole('button', { name: /Grant|Выдать/ })).toBeDisabled();
+    expect(await rewardList.locator(':scope > .entity-row').evaluate((row) => {
+        const list = row.parentElement?.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
+        const actionRect = row.querySelector('.entity-interactive')?.getBoundingClientRect();
+        return list != null && actionRect != null && rowRect.right <= list.right && actionRect.right <= list.right;
+    })).toBeTruthy();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
     await page.locator('button.catalog').first().click();

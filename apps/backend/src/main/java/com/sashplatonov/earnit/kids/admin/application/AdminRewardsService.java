@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.admin.application;
 
 import com.sashplatonov.earnit.kids.dto.response.AdminRewardsResponse;
 import com.sashplatonov.earnit.kids.admin.infrastructure.persistence.AdminRewardAnalyticsRepository;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -18,6 +19,7 @@ public class AdminRewardsService {
     @Inject
     AdminRewardAnalyticsRepository repository;
 
+    @CacheResult(cacheName = "admin-rewards")
     public AdminRewardsResponse getRewardsAnalytics(AdminAnalyticsPeriod period) {
         Instant periodStart = period.start();
         Instant now = Instant.now();

@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.admin.application;
 
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
 import com.sashplatonov.earnit.kids.admin.infrastructure.persistence.AdminTaskAnalyticsRepository;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -17,6 +18,7 @@ public class AdminTaskEconomyService {
         this.repository = repository;
     }
 
+    @CacheResult(cacheName = "admin-task-economy")
     public AdminTasksResponse getTaskEconomy(AdminAnalyticsPeriod period) {
         Instant periodStart = period.start();
         AdminTasksResponse.TaskMetrics metrics = repository.getTaskMetrics(periodStart);

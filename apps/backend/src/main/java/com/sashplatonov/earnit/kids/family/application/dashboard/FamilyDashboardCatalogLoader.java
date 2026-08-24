@@ -12,6 +12,7 @@ import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.Sh
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.TaskRepository;
 import com.sashplatonov.earnit.kids.family.application.action.FrequencyWindowService;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,8 @@ public class FamilyDashboardCatalogLoader {
     private final FamilyDashboardMapper mapper;
     private final ObjectMapper objectMapper;
 
-    FamilyDashboardCatalogContext loadCatalogContext(int familyDbId, int childId) {
+    @CacheResult(cacheName = "family-dashboard-catalog")
+    public FamilyDashboardCatalogContext loadCatalogContext(int familyDbId, int childId) {
         Map<Long, String> lastCompletedAtByTaskId = loadLatestHistoryTimestamps(childId, HistoryEntryType.earn);
         Map<Long, String> lastPurchasedAtByItemId = loadLatestHistoryTimestamps(childId, HistoryEntryType.spend);
         ZoneId zoneId = resolveZone(familyDbId);

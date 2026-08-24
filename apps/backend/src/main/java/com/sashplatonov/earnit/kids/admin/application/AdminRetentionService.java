@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.admin.application;
 
 import com.sashplatonov.earnit.kids.dto.response.AdminRetentionResponse;
 import com.sashplatonov.earnit.kids.admin.infrastructure.persistence.AdminRetentionRepository;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -18,6 +19,7 @@ public class AdminRetentionService {
     @Inject
     AdminRetentionRepository repository;
 
+    @CacheResult(cacheName = "admin-retention")
     public AdminRetentionResponse getRetention(AdminAnalyticsPeriod period) {
         Instant periodStart = period.start();
         Instant now = Instant.now();

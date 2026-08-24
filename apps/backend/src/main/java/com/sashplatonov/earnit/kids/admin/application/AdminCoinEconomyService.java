@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.admin.application;
 
 import com.sashplatonov.earnit.kids.dto.response.AdminCoinEconomyResponse;
 import com.sashplatonov.earnit.kids.admin.infrastructure.persistence.AdminCoinEconomyRepository;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -19,6 +20,7 @@ public class AdminCoinEconomyService {
     @Inject
     AdminCoinEconomyRepository repository;
 
+    @CacheResult(cacheName = "admin-coin-economy")
     public AdminCoinEconomyResponse getCoinEconomy(AdminAnalyticsPeriod period) {
         Instant periodStart = period.start();
         LOG.infof("Fetching coin economy for period starting: %s", periodStart);
