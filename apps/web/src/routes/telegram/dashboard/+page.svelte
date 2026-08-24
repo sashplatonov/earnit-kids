@@ -531,32 +531,6 @@
                     </div>
                 </div>
 
-                <h2 class="section-title">{t('sections.trends')}</h2>
-                {#if trendsStatus === 'unavailable'}
-                    <div class="empty-state" role="status">
-                        <b>{t('empty.sectionUnavailableTitle')}</b>
-                        <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
-                    </div>
-                {:else if trends?.points && trends.points.length > 0}
-                    <div class="trend trend-coins">
-                        <div class="trend-head">
-                            <b>{t('trends.earnedSpent.title')}</b>
-                            <small>{t('trends.earnedSpent.desc')}</small>
-                        </div>
-                        <div class="bars">
-                            {#each trends.points as point (point.date)}
-                                <div class="bar-col" title="{point.date}: {point.coinsEarned} / {point.coinsSpent}">
-                                    <div class="bar earned" style="height: {barHeight(point.coinsEarned, maxCoins)}%"></div>
-                                    <div class="bar spent" style="height: {barHeight(point.coinsSpent, maxCoins)}%"></div>
-                                    <small class="bar-label">{point.date.slice(5)}</small>
-                                </div>
-                            {/each}
-                        </div>
-                    </div>
-                {:else}
-                    <div class="empty-note">{t('trends.empty')}</div>
-                {/if}
                 {/if}
             </div>
 
@@ -783,76 +757,100 @@
                     </div>
                 {/if}
 
-                <h2 class="section-title">{t('sections.retention')}</h2>
-                {#if sectionUnavailable('retention')}
-                    <div class="empty-state" role="status">
-                        <b>{t('empty.sectionUnavailableTitle')}</b>
-                        <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
-                    </div>
-                {:else}
-                <div class="metric-list">
-                    <div class="metric">
-                        <div>
-                            <strong>{t('retention.newFamilies.title')}</strong>
-                            <small>{t('retention.newFamilies.desc')}</small>
-                        </div>
-                        <div class="metric-value">{retention?.retentionMetrics?.newFamilies ?? '—'}</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <strong>{t('retention.returningFamilies.title')}</strong>
-                            <small>{t('retention.returningFamilies.desc')}</small>
-                        </div>
-                        <div class="metric-value">{retention?.retentionMetrics?.returningFamilies ?? '—'}</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <div class="metric-title">
-                                <strong>{t('retention.active7d.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={(event) => toggleTooltip('active7d', event)}>i</button>
+                {#if activeActivitySubtab === 'retention'}
+                    <div
+                        id="panel-activity-retention"
+                        class="activity-panel"
+                        role="tabpanel"
+                        aria-labelledby="activity-subtab-retention"
+                    >
+                        <h2 class="section-title">{t('sections.retention')}</h2>
+                        {#if sectionUnavailable('retention')}
+                            <div class="empty-state" role="status">
+                                <b>{t('empty.sectionUnavailableTitle')}</b>
+                                <small>{t('empty.sectionUnavailableDesc')}</small>
+                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
                             </div>
-                            <small>{t('retention.active7d.desc')}</small>
-                        </div>
-                        <div class="metric-value">{retention?.retentionMetrics?.active7d ?? '—'}</div>
-                    </div>
-                    <div class="metric">
-                        <div>
-                            <div class="metric-title">
-                                <strong>{t('retention.active30d.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={(event) => toggleTooltip('active30d', event)}>i</button>
-                            </div>
-                            <small>{t('retention.active30d.desc')}</small>
-                        </div>
-                        <div class="metric-value">{retention?.retentionMetrics?.active30d ?? '—'}</div>
-                    </div>
-                </div>
-                {/if}
-
-                <h2 class="section-title">{t('sections.trends')}</h2>
-                {#if trendsStatus === 'unavailable'}
-                    <div class="empty-state" role="status">
-                        <b>{t('empty.sectionUnavailableTitle')}</b>
-                        <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
-                    </div>
-                {:else if trends?.points && trends.points.length > 0}
-                    <div class="trend">
-                        <div class="trend-head">
-                            <b>{t('trends.activeFamilies.title')}</b>
-                            <small>{t('trends.activeFamilies.desc')}</small>
-                        </div>
-                        <div class="bars">
-                            {#each trends.points as point (point.date)}
-                                <div class="bar-col" title="{point.date}: {point.activeFamilies}">
-                                    <div class="bar" style="height: {barHeight(point.activeFamilies, maxActiveFamilies)}%"></div>
-                                    <small class="bar-label">{point.date.slice(5)}</small>
+                        {:else}
+                        <div class="metric-list">
+                            <div class="metric">
+                                <div>
+                                    <strong>{t('retention.newFamilies.title')}</strong>
+                                    <small>{t('retention.newFamilies.desc')}</small>
                                 </div>
-                            {/each}
+                                <div class="metric-value">{retention?.retentionMetrics?.newFamilies ?? '—'}</div>
+                            </div>
+                            <div class="metric">
+                                <div>
+                                    <strong>{t('retention.returningFamilies.title')}</strong>
+                                    <small>{t('retention.returningFamilies.desc')}</small>
+                                </div>
+                                <div class="metric-value">{retention?.retentionMetrics?.returningFamilies ?? '—'}</div>
+                            </div>
+                            <div class="metric">
+                                <div>
+                                    <div class="metric-title">
+                                        <strong>{t('retention.active7d.title')}</strong>
+                                        <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={(event) => toggleTooltip('active7d', event)}>i</button>
+                                    </div>
+                                    <small>{t('retention.active7d.desc')}</small>
+                                </div>
+                                <div class="metric-value">{retention?.retentionMetrics?.active7d ?? '—'}</div>
+                            </div>
+                            <div class="metric">
+                                <div>
+                                    <div class="metric-title">
+                                        <strong>{t('retention.active30d.title')}</strong>
+                                        <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={(event) => toggleTooltip('active30d', event)}>i</button>
+                                    </div>
+                                    <small>{t('retention.active30d.desc')}</small>
+                                </div>
+                                <div class="metric-value">{retention?.retentionMetrics?.active30d ?? '—'}</div>
+                            </div>
                         </div>
+                        {/if}
+
+                        <h2 class="section-title">{t('sections.trends')}</h2>
+                        {#if trendsStatus === 'unavailable'}
+                            <div class="empty-state" role="status">
+                                <b>{t('empty.sectionUnavailableTitle')}</b>
+                                <small>{t('empty.sectionUnavailableDesc')}</small>
+                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                            </div>
+                        {:else if trends?.points && trends.points.length > 0}
+                            <div class="trend">
+                                <div class="trend-head">
+                                    <b>{t('trends.activeFamilies.title')}</b>
+                                    <small>{t('trends.activeFamilies.desc')}</small>
+                                </div>
+                                <div class="bars">
+                                    {#each trends.points as point (point.date)}
+                                        <div class="bar-col" title="{point.date}: {point.activeFamilies}">
+                                            <div class="bar" style="height: {barHeight(point.activeFamilies, maxActiveFamilies)}%"></div>
+                                            <small class="bar-label">{point.date.slice(5)}</small>
+                                        </div>
+                                    {/each}
+                                </div>
+                            </div>
+                            <div class="trend trend-coins">
+                                <div class="trend-head">
+                                    <b>{t('trends.earnedSpent.title')}</b>
+                                    <small>{t('trends.earnedSpent.desc')}</small>
+                                </div>
+                                <div class="bars">
+                                    {#each trends.points as point (point.date)}
+                                        <div class="bar-col" title="{point.date}: {point.coinsEarned} / {point.coinsSpent}">
+                                            <div class="bar earned" style="height: {barHeight(point.coinsEarned, maxCoins)}%"></div>
+                                            <div class="bar spent" style="height: {barHeight(point.coinsSpent, maxCoins)}%"></div>
+                                            <small class="bar-label">{point.date.slice(5)}</small>
+                                        </div>
+                                    {/each}
+                                </div>
+                            </div>
+                        {:else}
+                            <div class="empty-note">{t('trends.empty')}</div>
+                        {/if}
                     </div>
-                {:else}
-                    <div class="empty-note">{t('trends.empty')}</div>
                 {/if}
 
                 <h2 class="section-title">{t('sections.parentNeeds')}</h2>

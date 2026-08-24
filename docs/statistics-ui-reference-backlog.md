@@ -537,7 +537,7 @@ git commit -m "feat(web): compose statistics activation view"
 
 ## STAT-UI-010: Isolate the Retention Activity view
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-008
 
