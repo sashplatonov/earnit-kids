@@ -137,6 +137,8 @@ git commit -m "fix(web): identify transfer target by role field instead of email
 
 ## REVIEW-003: Allow viewer-permission parents to accept/decline admin transfers
 
+**Status:** DONE
+
 **Priority:** P1
 **Depends on:** -
 

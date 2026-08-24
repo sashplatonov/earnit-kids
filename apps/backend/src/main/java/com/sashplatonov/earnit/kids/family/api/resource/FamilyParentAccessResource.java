@@ -356,7 +356,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
                                           @Parameter(required = true, description = "Transfer request id")
                                           @PathParam("requestId") int requestId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
+        if (auth == null || auth.parentAccountId() == null) {
             return unauthorized();
         }
 
@@ -384,7 +384,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
                                          @Parameter(required = true, description = "Transfer request id")
                                          @PathParam("requestId") int requestId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
+        if (auth == null || auth.parentAccountId() == null) {
             return unauthorized();
         }
 
@@ -412,7 +412,7 @@ public class FamilyParentAccessResource extends FamilyResourceSupport {
                                           @Parameter(required = true, description = "Transfer request id")
                                           @PathParam("requestId") int requestId) {
         var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
+        if (auth == null || auth.parentAccountId() == null) {
             return unauthorized();
         }
 
