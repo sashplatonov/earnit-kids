@@ -4,6 +4,7 @@
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import { goto } from '$app/navigation';
+    import { navigating } from '$app/stores';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
     import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
 
@@ -59,9 +60,11 @@
     type ActivitySubtabId = typeof activitySubtabs[number]['id'];
 
     let activeActivitySubtab: ActivitySubtabId = 'activation';
+    let periodLoading = false;
 
     // Redirect non-admins to the Telegram Mini App home
     onMount(() => {
+        periodLoading = false;
         document.body.classList.remove('admin-loading');
         if (!isAdmin) {
             // eslint-disable-next-line svelte/no-navigation-without-resolve
@@ -112,7 +115,8 @@
     }
 
     function changePeriod(period: string) {
-        if (period === selectedPeriod) return;
+        if (period === selectedPeriod || periodLoading) return;
+        periodLoading = true;
         document.body.classList.add('admin-loading');
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         goto(`/telegram/dashboard?period=${period}`, { replaceState: true });
@@ -123,6 +127,8 @@
     }
 
     function retry() {
+        if (periodLoading) return;
+        periodLoading = true;
         document.body.classList.add('admin-loading');
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         goto(`/telegram/dashboard?period=${selectedPeriod}`, { replaceState: true });
@@ -267,7 +273,7 @@
         <p>{t('redirecting')}</p>
     </div>
 {:else}
-    <main class="dashboard-container">
+    <main class="dashboard-container" aria-busy={periodLoading || $navigating !== null}>
         <header class="dashboard-header">
             <h1>{t('title')}</h1>
             <p class="subtitle">{t('subtitle')}</p>
@@ -278,6 +284,7 @@
             <div class="segment">
                 <button type="button"
                     class="seg" 
+                    disabled={periodLoading}
                     class:active={selectedPeriod === '7d'}
                     aria-pressed={selectedPeriod === '7d'}
                     on:click={() => changePeriod('7d')}
@@ -286,6 +293,7 @@
                 </button>
                 <button type="button"
                     class="seg" 
+                    disabled={periodLoading}
                     class:active={selectedPeriod === '30d'}
                     aria-pressed={selectedPeriod === '30d'}
                     on:click={() => changePeriod('30d')}
@@ -294,6 +302,7 @@
                 </button>
                 <button type="button"
                     class="seg" 
+                    disabled={periodLoading}
                     class:active={selectedPeriod === '90d'}
                     aria-pressed={selectedPeriod === '90d'}
                     on:click={() => changePeriod('90d')}
@@ -302,6 +311,7 @@
                 </button>
                 <button type="button"
                     class="seg" 
+                    disabled={periodLoading}
                     class:active={selectedPeriod === 'all'}
                     aria-pressed={selectedPeriod === 'all'}
                     on:click={() => changePeriod('all')}
@@ -313,6 +323,13 @@
                 {t('updatedAt', { time: $i18n.formatDate(new Date(), { hour: '2-digit', minute: '2-digit' }) })}
             </div>
         </div>
+
+        {#if periodLoading || $navigating !== null}
+            <div class="period-loading" role="status" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>{t('loading')}</span>
+            </div>
+        {/if}
 
         {#if dashboardStatus === 'unavailable'}
             <div class="empty-state" role="status">
@@ -1061,6 +1078,40 @@
         color: var(--muted, #8791a6);
         font-size: 10px;
         white-space: nowrap;
+    }
+
+    .period-loading {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 32px;
+        margin: 0 0 8px;
+        padding: 0 10px;
+        border: 1px solid #dfe4ee;
+        border-radius: 10px;
+        background: #fff;
+        color: #56627c;
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+    .spinner {
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+        border: 2px solid #d9def0;
+        border-top-color: var(--primary, #5e6fec);
+        border-radius: 50%;
+        animation: dashboard-spin .7s linear infinite;
+    }
+
+    @keyframes dashboard-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .seg:disabled {
+        cursor: wait;
+        opacity: .65;
     }
 
     .tabs-wrap {

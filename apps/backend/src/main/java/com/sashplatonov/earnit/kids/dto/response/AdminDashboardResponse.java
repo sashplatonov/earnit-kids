@@ -21,6 +21,7 @@ public class AdminDashboardResponse {
     private AdminActivationFunnelResponse activation;
     private AdminRetentionResponse activity;
     private AdminRewardsResponse rewards;
+    private AdminTrendsResponse trends;
     private String updatedAt;
     private List<String> unavailableSections;
 }

@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.dto.response.AdminParentBehaviorResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminRetentionResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminRewardsResponse;
 import com.sashplatonov.earnit.kids.dto.response.AdminTasksResponse;
+import com.sashplatonov.earnit.kids.dto.response.AdminTrendsResponse;
 import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -48,6 +49,9 @@ public class AdminDashboardService {
     @Inject
     AdminRewardsService rewardsService;
 
+    @Inject
+    AdminTrendsService trendsService;
+
     @CacheResult(cacheName = "admin-dashboard")
     public AdminDashboardResponse getDashboard(AdminAnalyticsPeriod period) {
         List<String> unavailableSections = new ArrayList<>();
@@ -59,6 +63,7 @@ public class AdminDashboardService {
         AdminActivationFunnelResponse activation = null;
         AdminRetentionResponse activity = null;
         AdminRewardsResponse rewards = null;
+        AdminTrendsResponse trends = null;
 
         try {
             overview = overviewService.getOverview(period);
@@ -100,6 +105,11 @@ public class AdminDashboardService {
         } catch (RuntimeException exception) {
             unavailableSections.add("rewards");
         }
+        try {
+            trends = trendsService.getTrends(period);
+        } catch (RuntimeException exception) {
+            unavailableSections.add("trends");
+        }
 
         return AdminDashboardResponse.builder()
             .overview(overview == null ? null : overview.getOverview())
@@ -110,6 +120,7 @@ public class AdminDashboardService {
             .activation(activation)
             .activity(activity)
             .rewards(rewards)
+            .trends(trends)
             .updatedAt(ISO_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC)))
             .unavailableSections(List.copyOf(unavailableSections))
             .build();

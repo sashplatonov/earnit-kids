@@ -86,6 +86,7 @@ export const adminMessages = {
         title: 'Statistics',
         subtitle: 'All families · aggregated data',
         redirecting: 'Redirecting...',
+        loading: 'Loading statistics…',
         back: 'Back',
         updatedAt: '{time}',
         aria: {

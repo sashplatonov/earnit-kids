@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.admin.application;
 
 import com.sashplatonov.earnit.kids.dto.response.AdminTrendsResponse;
 import com.sashplatonov.earnit.kids.admin.infrastructure.persistence.AdminTrendsRepository;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -18,6 +19,7 @@ public class AdminTrendsService {
     @Inject
     AdminTrendsRepository repository;
 
+    @CacheResult(cacheName = "admin-trends")
     public AdminTrendsResponse getTrends(AdminAnalyticsPeriod period) {
         Instant periodStart = period.start();
         Instant now = Instant.now();

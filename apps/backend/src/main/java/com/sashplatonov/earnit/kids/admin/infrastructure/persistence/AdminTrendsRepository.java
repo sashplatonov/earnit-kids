@@ -31,7 +31,8 @@ public class AdminTrendsRepository {
             SELECT FUNCTION('DATE', h.createdAt) as day,
                    COALESCE(SUM(CASE WHEN h.type = :earn THEN h.amount ELSE 0 END), 0) as earned,
                    COALESCE(SUM(CASE WHEN h.type = :spend THEN ABS(h.amount) ELSE 0 END), 0) as spent,
-                   COALESCE(SUM(CASE WHEN h.type = :taskType THEN 1 ELSE 0 END), 0) as tasks
+                   COALESCE(SUM(CASE WHEN h.type = :taskType THEN 1 ELSE 0 END), 0) as tasks,
+                   COUNT(DISTINCT h.familyId) as families
             FROM HistoryEntryEntity h
             WHERE h.createdAt >= :periodStart
             GROUP BY FUNCTION('DATE', h.createdAt)
@@ -41,17 +42,6 @@ public class AdminTrendsRepository {
             .setParameter("earn", HistoryEntryType.earn)
             .setParameter("spend", HistoryEntryType.spend)
             .setParameter("taskType", HistoryEntryType.TASK_COMPLETED)
-            .setParameter("periodStart", periodStart)
-            .getResultList();
-
-        String familiesSql = """
-            SELECT FUNCTION('DATE', h.createdAt) as day, COUNT(DISTINCT h.familyId) as families
-            FROM HistoryEntryEntity h
-            WHERE h.createdAt >= :periodStart
-            GROUP BY FUNCTION('DATE', h.createdAt)
-            ORDER BY day
-            """;
-        var familyResults = entityManager.createQuery(familiesSql, Object[].class)
             .setParameter("periodStart", periodStart)
             .getResultList();
 
@@ -77,6 +67,7 @@ public class AdminTrendsRepository {
             long earned = ((Number) row[1]).longValue();
             long spent = ((Number) row[2]).longValue();
             long tasks = ((Number) row[3]).longValue();
+            long families = ((Number) row[4]).longValue();
             byDay.computeIfAbsent(day, d -> AdminTrendsResponse.TrendPoint.builder()
                     .date(d.toLocalDate().toString())
                     .activeFamilies(0)
@@ -89,20 +80,7 @@ public class AdminTrendsRepository {
             point.setCoinsEarned(point.getCoinsEarned() + earned);
             point.setCoinsSpent(point.getCoinsSpent() + spent);
             point.setTaskCompletions(point.getTaskCompletions() + tasks);
-        }
-
-        for (Object[] row : familyResults) {
-            java.sql.Date day = (java.sql.Date) row[0];
-            long families = ((Number) row[1]).longValue();
-            byDay.computeIfAbsent(day, d -> AdminTrendsResponse.TrendPoint.builder()
-                    .date(d.toLocalDate().toString())
-                    .activeFamilies(0)
-                    .coinsEarned(0)
-                    .coinsSpent(0)
-                    .rewardRedemptions(0)
-                    .taskCompletions(0)
-                    .build());
-            byDay.get(day).setActiveFamilies((int) families);
+            point.setActiveFamilies(families);
         }
 
         for (Object[] row : rewardResults) {
