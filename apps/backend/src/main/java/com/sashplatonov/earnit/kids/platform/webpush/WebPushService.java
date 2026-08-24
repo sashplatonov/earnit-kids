@@ -4,7 +4,9 @@ import com.sashplatonov.earnit.kids.config.auth.AuthContext;
 import com.sashplatonov.earnit.kids.family.application.notification.FamilyNotificationService;
 import com.sashplatonov.earnit.kids.family.domain.model.outbox.*;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.outbox.ApplicationOutboxEventRepository;
+import com.sashplatonov.earnit.kids.identity.infrastructure.persistence.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.platform.security.SecurityAuditWriter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -27,14 +29,17 @@ public class WebPushService {
     private final SecurityAuditWriter audits;
     private final WebPushConfig config;
     private final WebPushProtocolAdapter protocol;
+    private final ParentAccountRepository parentAccounts;
+    private final FamilyParentMembershipRepository memberships;
 
     @Inject
     public WebPushService(WebPushSubscriptionRepository subscriptions, WebPushDeliveryRepository deliveries,
                           FamilyRepository families, FamilyNotificationService preferences,
-                          SecurityAuditWriter audits, WebPushConfig config, WebPushProtocolAdapter protocol) {
+                          SecurityAuditWriter audits, WebPushConfig config, WebPushProtocolAdapter protocol,
+                          ParentAccountRepository parentAccounts, FamilyParentMembershipRepository memberships) {
         this.subscriptions = subscriptions; this.deliveries = deliveries; this.families = families;
         this.preferences = preferences; this.audits = audits; this.config = config;
-        this.protocol = protocol;
+        this.protocol = protocol; this.parentAccounts = parentAccounts; this.memberships = memberships;
     }
 
     // EXPLAIN: Keeps focused service tests independent from the protocol adapter.
@@ -42,7 +47,7 @@ public class WebPushService {
                    FamilyRepository families, FamilyNotificationService preferences,
                    SecurityAuditWriter audits, WebPushConfig config) {
         this(subscriptions, deliveries, families, preferences, audits, config,
-            new WebPushJavaAdapter(config));
+            new WebPushJavaAdapter(config), null, null);
     }
 
     public Optional<String> publicVapidKey() {
@@ -57,9 +62,10 @@ public class WebPushService {
         int familyId = families.getDbId(auth.familyId()).orElseThrow(() -> new IllegalArgumentException("family"));
         validate(request);
         String actorType = auth.isChild() ? "child" : "parent";
-        Integer parentId = auth.isChild() ? null : auth.parentAccountId();
         Integer childId = auth.isChild() ? auth.childId() : null;
         if (auth.isChild() && childId == null) throw new SecurityException("actor");
+        Integer parentId = auth.isChild() ? null : resolveParentAccountId(auth, familyId);
+        if (!auth.isChild() && parentId == null) throw new SecurityException("actor");
         WebPushSubscriptionEntity entity = subscriptions.findByEndpoint(request.endpoint()).orElse(null);
         if (entity == null) {
             entity = WebPushSubscriptionEntity.builder().familyId(familyId).endpoint(request.endpoint())
@@ -71,16 +77,28 @@ public class WebPushService {
             entity.setChildId(childId); entity.setP256dhKey(request.p256dh()); entity.setAuthKey(request.auth());
             entity.setUpdatedAt(Instant.now());
         }
-        audits.write(familyId, auth.parentAccountId(), auth.email(), null, "web_push_subscription", "REGISTERED");
+        audits.write(familyId, parentId, auth.email(), null, "web_push_subscription", "REGISTERED");
+    }
+
+    private Integer resolveParentAccountId(AuthContext auth, int familyDbId) {
+        return Optional.ofNullable(auth.parentAccountId())
+            .map(id -> memberships.findByParentAndFamily(id, familyDbId))
+            .orElseGet(() -> Optional.ofNullable(auth.email())
+                .filter(email -> !email.isBlank())
+                .flatMap(parentAccounts::findByEmail)
+                .flatMap(parent -> memberships.findByParentAndFamily(parent.getId(), familyDbId)))
+            .map(membership -> membership.getParentAccountId())
+            .orElse(null);
     }
 
     @Transactional
     public void unregister(AuthContext auth, WebPushSubscriptionRequest request) {
         int familyId = families.getDbId(auth.familyId()).orElseThrow(() -> new IllegalArgumentException("family"));
         validate(request);
+        Integer parentId = auth.isChild() ? null : resolveParentAccountId(auth, familyId);
         subscriptions.deleteForActor(request.endpoint(), familyId, auth.isChild() ? "child" : "parent",
-            auth.isChild() ? null : auth.parentAccountId(), auth.isChild() ? auth.childId() : null);
-        audits.write(familyId, auth.parentAccountId(), auth.email(), null, "web_push_subscription", "REMOVED");
+            parentId, auth.isChild() ? auth.childId() : null);
+        audits.write(familyId, parentId, auth.email(), null, "web_push_subscription", "REMOVED");
     }
 
     @Transactional
