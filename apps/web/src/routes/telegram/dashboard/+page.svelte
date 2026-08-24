@@ -350,6 +350,10 @@
                     </div>
                 {:else}
                 <h2 class="section-title">{t('tabs.overview')}</h2>
+                {#if buildCoinInsight()}
+                    <div class="overview-signal insight" role="status">{buildCoinInsight()}</div>
+                {/if}
+
                 <div class="kpis">
                     <div class="kpi">
                         <div class="kpi-label">{t('kpis.totalFamilies')}</div>
@@ -378,6 +382,38 @@
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
                     </div>
                 </div>
+
+                {#if coinEconomy?.coins?.earned != null || coinEconomy?.coins?.spent != null || rewards?.metrics?.issuedCount != null}
+                    <div class="metric-list overview-shop-state">
+                        {#if coinEconomy?.coins?.earned != null}
+                            <div class="metric">
+                                <div>
+                                    <strong>{t('kpis.coinsEarned')}</strong>
+                                    <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
+                                </div>
+                                <div class="metric-value">{formatValue(coinEconomy.coins.earned)} 🪙</div>
+                            </div>
+                        {/if}
+                        {#if coinEconomy?.coins?.spent != null}
+                            <div class="metric">
+                                <div>
+                                    <strong>{t('kpis.coinsSpent')}</strong>
+                                    <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
+                                </div>
+                                <div class="metric-value">{formatValue(coinEconomy.coins.spent)} 🪙</div>
+                            </div>
+                        {/if}
+                        {#if rewards?.metrics?.issuedCount != null}
+                            <div class="metric">
+                                <div>
+                                    <strong>{t('kpis.rewardsReceived')}</strong>
+                                    <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
+                                </div>
+                                <div class="metric-value">{formatValue(rewards.metrics.issuedCount)}</div>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
 
                 {/if}
             </div>
@@ -1268,6 +1304,14 @@
         color: var(--orange, #805717);
         font-size: 11px;
         line-height: 1.35;
+    }
+
+    .overview-signal {
+        margin: 0 0 10px;
+    }
+
+    .overview-shop-state {
+        margin-top: 8px;
     }
 
     .metric-list {

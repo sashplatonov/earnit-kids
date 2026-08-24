@@ -32,7 +32,7 @@ Make `/telegram/dashboard` closely match `docs/statistics-all-screens-period-but
 
 ## STAT-UI-001: Define shared Statistics surfaces and spacing
 
-**Status:** DONE  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** -
 
@@ -197,7 +197,7 @@ git commit -m "style(web): align statistics tab navigation"
 
 ## STAT-UI-004: Compose the Overview panel like the reference
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-001
 
