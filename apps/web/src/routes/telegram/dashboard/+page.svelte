@@ -849,14 +849,17 @@
 
 <style>
     :global(.dashboard-container) {
-        padding: 14px;
+        --dashboard-surface: #fff;
+        --dashboard-line: #e2e6ef;
+        --dashboard-shadow: 0 2px 10px rgba(34, 44, 80, 0.06);
+        padding: 16px;
         max-width: 800px;
         margin: 0 auto;
         width: 100%;
         overflow-x: clip;
-        padding-bottom: calc(78px + env(safe-area-inset-bottom));
-        background: var(--bg, #f6f7fb);
-        min-height: 100vh;
+        padding-bottom: calc(92px + env(safe-area-inset-bottom));
+        background: #eceff6;
+        min-height: 100dvh;
     }
 
     .dashboard-header {
@@ -1033,10 +1036,11 @@
     }
 
     .kpi {
-        background: #fff;
-        border: 1px solid var(--line, #e5e8f0);
-        border-radius: 15px;
-        padding: 12px;
+        background: var(--dashboard-surface);
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
+        padding: 13px;
         min-height: 92px;
         display: flex;
         flex-direction: column;
@@ -1131,10 +1135,11 @@
     }
 
     .rows {
-        background: #fff;
-        border: 1px solid var(--line, #e5e8f0);
-        border-radius: 15px;
-        padding: 4px 12px;
+        background: var(--dashboard-surface);
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
+        padding: 4px 14px;
     }
 
     .rank {
@@ -1171,10 +1176,11 @@
     }
 
     .compare {
-        background: #fff;
-        border: 1px solid var(--line, #e5e8f0);
-        border-radius: 15px;
-        padding: 12px;
+        background: var(--dashboard-surface);
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
+        padding: 13px;
     }
 
     .compare-top {
@@ -1266,9 +1272,10 @@
     }
 
     .metric-list {
-        background: #fff;
-        border: 1px solid var(--line, #e5e8f0);
-        border-radius: 15px;
+        background: var(--dashboard-surface);
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
         overflow: hidden;
     }
 
@@ -1277,8 +1284,8 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 10px;
         align-items: center;
-        padding: 11px 12px;
-        border-bottom: 1px solid var(--line, #e5e8f0);
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--dashboard-line);
     }
 
     .metric:last-child {
@@ -1310,10 +1317,11 @@
     }
 
     .funnel {
-        background: #fff;
-        border: 1px solid var(--line, #e5e8f0);
-        border-radius: 15px;
-        padding: 12px;
+        background: var(--dashboard-surface);
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
+        padding: 13px;
     }
 
     .step {
@@ -1348,10 +1356,11 @@
     }
 
     .trend {
-        background: #fff;
-        border: 1px solid var(--line, #e5e8f0);
-        border-radius: 15px;
-        padding: 12px;
+        background: var(--dashboard-surface);
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
+        padding: 13px;
         margin-bottom: 10px;
     }
 
@@ -1410,12 +1419,14 @@
     }
 
     .empty-note {
-        padding: 12px;
-        background: #fff;
-        border: 1px solid var(--line, #e5e8f0);
-        border-radius: 15px;
+        padding: 14px;
+        background: var(--dashboard-surface);
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
         color: var(--muted, #8791a6);
         font-size: 12px;
+        line-height: 1.35;
         text-align: center;
     }
 
@@ -1423,11 +1434,12 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 9px 12px;
-        margin: 4px 0 10px;
-        background: #fff;
-        border: 1px dashed #ccd2df;
-        border-radius: 12px;
+        padding: 12px 14px;
+        margin: 6px 0 12px;
+        background: var(--dashboard-surface);
+        border: 1px dashed #cbd2e0;
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
         min-height: 76px;
         text-align: left;
     }
@@ -1445,10 +1457,11 @@
 
     .empty-state b {
         font-size: 12px;
-        white-space: nowrap;
+        min-width: 0;
     }
 
     .empty-state small {
+        min-width: 0;
         color: var(--muted, #8791a6);
         font-size: 11px;
         line-height: 1.3;
