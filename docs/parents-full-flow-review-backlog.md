@@ -288,6 +288,8 @@ git commit -m "fix(web): restore focus to triggering button after closing parent
 
 ## REVIEW-007: Eliminate redundant membership lookups in `enrichWithPendingTransferRequest`
 
+**Status:** DONE
+
 **Priority:** P2
 **Depends on:** -
 

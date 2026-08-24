@@ -94,12 +94,18 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
                 identity -> identity,
                 (left, right) -> left,
                 LinkedHashMap::new));
+        Map<Integer, FamilyParentMembershipEntity> membershipsById = memberships.stream()
+            .collect(java.util.stream.Collectors.toMap(
+                FamilyParentMembershipEntity::getId,
+                m -> m,
+                (left, right) -> left,
+                LinkedHashMap::new));
         var dtos = memberships.stream()
             .map(m -> toDto(m, parentsById.get(m.getParentAccountId()),
                 identitiesByParentId.get(m.getParentAccountId())))
             .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
         transferRequestRepository.findPendingByFamily(familyOpt.get().getId()).ifPresent(request ->
-            enrichWithPendingTransferRequest(dtos, request, parentsById));
+            enrichWithPendingTransferRequest(dtos, request, membershipsById, parentsById));
         invitationRepository.findPendingByFamily(familyOpt.get().getId()).stream()
             .map(this::toInvitationDto)
             .forEach(dtos::add);
@@ -109,9 +115,10 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     private void enrichWithPendingTransferRequest(
         List<ParentMembershipDto> dtos,
         FamilyAdminTransferRequestEntity request,
+        Map<Integer, FamilyParentMembershipEntity> membershipsById,
         Map<Integer, ParentAccountEntity> parentsById) {
-        String actorName = membershipName(request.getActorMembershipId(), parentsById);
-        String targetName = membershipName(request.getTargetMembershipId(), parentsById);
+        String actorName = membershipName(request.getActorMembershipId(), membershipsById, parentsById);
+        String targetName = membershipName(request.getTargetMembershipId(), membershipsById, parentsById);
         for (int i = 0; i < dtos.size(); i++) {
             ParentMembershipDto dto = dtos.get(i);
             if (dto.id() != null && (dto.id().equals(request.getActorMembershipId())
@@ -125,16 +132,19 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         }
     }
 
-    private String membershipName(Integer membershipId, Map<Integer, ParentAccountEntity> parentsById) {
-        return membershipRepository.findByIdOptional(membershipId)
-            .map(m -> {
-                if (m.getDisplayName() != null && !m.getDisplayName().isBlank()) {
-                    return m.getDisplayName();
-                }
-                return Optional.ofNullable(parentsById.get(m.getParentAccountId()))
-                    .map(ParentAccountEntity::getEmail)
-                    .orElse(null);
-            })
+    private String membershipName(
+        Integer membershipId,
+        Map<Integer, FamilyParentMembershipEntity> membershipsById,
+        Map<Integer, ParentAccountEntity> parentsById) {
+        FamilyParentMembershipEntity membership = membershipsById.get(membershipId);
+        if (membership == null) {
+            return null;
+        }
+        if (membership.getDisplayName() != null && !membership.getDisplayName().isBlank()) {
+            return membership.getDisplayName();
+        }
+        return Optional.ofNullable(parentsById.get(membership.getParentAccountId()))
+            .map(ParentAccountEntity::getEmail)
             .orElse(null);
     }
 

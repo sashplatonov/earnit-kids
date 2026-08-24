@@ -142,8 +142,6 @@ class FamilyParentAccessServiceImplTest {
         when(telegramIdentityRepository.findActiveParentsByFamilyAndParentAccountIds(7, List.of(1, 2)))
             .thenReturn(List.of());
         when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.of(request));
-        when(membershipRepository.findByIdOptional(12)).thenReturn(Optional.of(actor));
-        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
 
         OperationResult<List<ParentMembershipDto>> result = service.listMemberships("fam-1");
 
@@ -161,6 +159,7 @@ class FamilyParentAccessServiceImplTest {
             .transferRequestRole()).isEqualTo("actor");
         assertThat(dtos.stream().filter(dto -> dto.id().equals(11)).findFirst().orElseThrow()
             .transferRequestRole()).isEqualTo("target");
+        verify(membershipRepository, org.mockito.Mockito.never()).findByIdOptional(any());
     }
 
     @Test
