@@ -1,0 +1,11 @@
+title = "EarnIt Kids publication secret policy"
+
+# Keep this list intentionally small. In particular, private-key file types
+# must never be allowlisted.
+# Local pre-commit check: gitleaks protect --staged --redact
+
+[[rules]]
+id = "private-key-file"
+description = "Private signing-key files are not publishable repository content."
+path = '''(?i)(^|/)[^/]+\.(keystore|jks)$'''
+regex = '''(?s).+'''

@@ -141,7 +141,7 @@ chore(security): remove tracked Android signing material
 
 ## PORT-002: Scan the complete repository and its history for publication secrets
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** PORT-001
 
