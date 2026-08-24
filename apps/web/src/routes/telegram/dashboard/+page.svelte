@@ -1182,7 +1182,7 @@
     .kpi {
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
-        border-radius: 16px;
+        border-radius: 18px;
         box-shadow: var(--dashboard-shadow);
         padding: 13px 14px;
         min-height: 96px;
@@ -1219,9 +1219,10 @@
     }
 
     .kpi-value {
-        font-size: 28px;
+        font-size: 27px;
         font-weight: 820;
         margin-top: 5px;
+        line-height: 1;
         letter-spacing: -0.03em;
     }
 
@@ -1444,12 +1445,12 @@
 
     .insight {
         margin: 10px 0 0;
-        padding: 13px 13px;
-        border: 1px solid #f0dca1;
-        border-radius: 16px;
-        background: #fffaf0;
-        color: #856c22;
-        font-size: 13px;
+        padding: 11px 12px;
+        border: 1px solid #f0dfa7;
+        border-radius: 18px;
+        background: #fff8e8;
+        color: #7a6618;
+        font-size: 12px;
         line-height: 1.4;
     }
 
@@ -1459,8 +1460,8 @@
     }
 
     .insight strong {
-        margin-bottom: 3px;
-        font-size: 14px;
+        margin-bottom: 4px;
+        font-size: 13px;
         font-weight: 800;
     }
 
@@ -1475,7 +1476,7 @@
     .metric-list {
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
-        border-radius: 17px;
+        border-radius: 18px;
         box-shadow: var(--dashboard-shadow);
         overflow: hidden;
     }
@@ -1494,7 +1495,7 @@
     }
 
     .metric strong {
-        font-size: 14px;
+        font-size: 13px;
         display: block;
     }
 
@@ -1508,13 +1509,19 @@
         display: block;
         color: var(--muted, #8791a6);
         font-size: 11px;
-        margin-top: 2px;
+        margin-top: 4px;
     }
 
     .metric-value {
         text-align: right;
         font-weight: 800;
-        font-size: 16px;
+        font-size: 18px;
+        white-space: nowrap;
+    }
+
+    .metric-value :global(svg) {
+        display: inline-block;
+        vertical-align: -4px;
     }
 
     .funnel {
