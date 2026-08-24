@@ -705,7 +705,7 @@ git commit -m "test(web): cover statistics reference interactions"
 
 ## STAT-UI-013: Add reviewed Statistics visual baselines
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** STAT-UI-012
 

@@ -95,6 +95,42 @@ test('admin Statistics stays usable at compact mobile width', async ({ page }) =
     await expect(page.locator('.tabs-wrap')).toHaveCSS('position', 'fixed');
 });
 
+test('admin Statistics matches the reviewed mobile visual baselines', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 667 });
+    await registerAdmin(page, 'admin.statistics.visual');
+    await page.goto('/telegram/dashboard?period=30d');
+    await expect(page.getByRole('heading', { name: 'Статистика' })).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+
+    const primaryTabs = page.getByRole('tablist', { name: 'Разделы статистики' }).getByRole('tab');
+    const activityTabs = page.getByRole('tablist', { name: 'Подразделы активности' }).getByRole('tab');
+    const updated = page.locator('.updated');
+
+    async function expectVisualBaseline(tabIndex: number, snapshot: string, activityTabIndex?: number) {
+        await primaryTabs.nth(tabIndex).click();
+        await expect(primaryTabs.nth(tabIndex)).toHaveAttribute('aria-selected', 'true');
+        if (activityTabIndex !== undefined) {
+            await activityTabs.nth(activityTabIndex).click();
+            await expect(activityTabs.nth(activityTabIndex)).toHaveAttribute('aria-selected', 'true');
+        }
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page).toHaveScreenshot(snapshot, {
+            animations: 'disabled',
+            fullPage: false,
+            mask: [updated],
+            maskColor: '#f5f6fa',
+        });
+    }
+
+    await expectVisualBaseline(0, 'statistics-overview.png');
+    await expectVisualBaseline(1, 'statistics-coins.png');
+    await expectVisualBaseline(2, 'statistics-rewards.png');
+    await expectVisualBaseline(3, 'statistics-tasks.png');
+    await expectVisualBaseline(4, 'statistics-activity-activation.png', 0);
+    await expectVisualBaseline(4, 'statistics-activity-retention.png', 1);
+    await expectVisualBaseline(4, 'statistics-activity-needs.png', 2);
+});
+
 test('admin Statistics keeps localized tooltip and desktop navigation accessible', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await registerAdmin(page, 'admin.statistics.desktop');
