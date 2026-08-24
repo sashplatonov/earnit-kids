@@ -15,6 +15,11 @@ const PERIODS = [
 
 async function registerAdmin(page: Parameters<typeof registerParent>[0], prefix: string) {
     await registerParent(page, uniqueEmail(prefix));
+    await page.context().addCookies([{
+        name: 'e2e_session',
+        value: 'parent',
+        url: new URL(page.url()).origin,
+    }]);
 }
 
 test('admin Statistics stays usable at compact mobile width', async ({ page }) => {
@@ -28,6 +33,42 @@ test('admin Statistics stays usable at compact mobile width', async ({ page }) =
     await expect(page.getByRole('tab')).toHaveCount(5);
     await expect(page.locator('[role="tab"] svg')).toHaveCount(5);
 
+    const primaryTabs = page.getByRole('tablist', { name: 'Разделы статистики' }).getByRole('tab');
+    const primaryPanels = ['overview', 'coins', 'rewards', 'tasks', 'activity'];
+    for (const [index, panel] of primaryPanels.entries()) {
+        await primaryTabs.nth(index).click();
+        await expect(primaryTabs.nth(index)).toHaveAttribute('aria-selected', 'true');
+        await expect(page.locator(`#panel-${panel}`)).toBeVisible();
+    }
+
+    await primaryTabs.first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(primaryTabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#panel-coins')).toBeVisible();
+    await page.keyboard.press('Home');
+    await expect(primaryTabs.first()).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('End');
+    await expect(primaryTabs.nth(4)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#panel-activity')).toBeVisible();
+
+    const activityTabs = page.getByRole('tablist', { name: 'Подразделы активности' }).getByRole('tab');
+    const activityPanels = ['activation', 'retention', 'needs'];
+    for (const [index, panel] of activityPanels.entries()) {
+        await activityTabs.nth(index).click();
+        await expect(activityTabs.nth(index)).toHaveAttribute('aria-selected', 'true');
+        await expect(page.locator(`#panel-activity-${panel}`)).toBeVisible();
+    }
+
+    const activityUrl = page.url();
+    await activityTabs.first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(activityTabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('End');
+    await expect(activityTabs.nth(2)).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('Home');
+    await expect(activityTabs.first()).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(activityUrl);
+
     for (const period of PERIODS) {
         const control = page.getByRole('button', { name: period.label, exact: true });
         await control.click();
@@ -36,13 +77,10 @@ test('admin Statistics stays usable at compact mobile width', async ({ page }) =
         expect((await control.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     }
 
-    const tabs = page.getByRole('tab');
-    await tabs.first().focus();
-    await page.keyboard.press('ArrowRight');
-    await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
-    await expect(page.locator('#panel-coins')).toBeVisible();
-
-    for (const tab of await tabs.all()) {
+    for (const tab of await primaryTabs.all()) {
+        expect((await tab.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    }
+    for (const tab of await activityTabs.all()) {
         expect((await tab.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     }
 
@@ -91,7 +129,7 @@ test('admin Statistics keeps localized tooltip and desktop navigation accessible
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(tooltipTrigger).toBeFocused();
 
-    const tabs = page.getByRole('tab');
+    const tabs = page.getByRole('tablist', { name: 'Разделы статистики' }).getByRole('tab');
     await tabs.first().focus();
     await page.keyboard.press('End');
     await expect(tabs.nth(4)).toHaveAttribute('aria-selected', 'true');

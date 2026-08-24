@@ -647,7 +647,7 @@ git commit -m "feat(web): compose statistics needs view"
 
 ## STAT-UI-012: Cover reference-critical Statistics interactions
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** STAT-UI-004, STAT-UI-005, STAT-UI-006, STAT-UI-007, STAT-UI-009, STAT-UI-010, STAT-UI-011
 
