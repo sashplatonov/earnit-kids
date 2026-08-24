@@ -15,6 +15,7 @@ import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.jboss.logging.Logger;
 
 import com.sashplatonov.earnit.kids.admin.application.AdminAccessService;
@@ -67,6 +68,7 @@ public class TelegramMiniAppAuthService {
         return authenticate(rawInitData, null);
     }
 
+    @Transactional
     public OperationResult<AuthPayload> authenticate(String rawInitData, String pairingToken) {
         var verified = verifier.verify(rawInitData);
         LOG.debug("Verification result: " + verified);
@@ -84,6 +86,7 @@ public class TelegramMiniAppAuthService {
             LOG.warnf("No active Telegram identity found for userId=%d", verified.get().telegramUserId());
             return OperationResult.failure("TELEGRAM_IDENTITY_UNLINKED", AUTH_FAILED);
         }
+        refreshTelegramProfile(identity, verified.get());
         var family = identity.getFamilyId() == null ? null : families.findByDbId(identity.getFamilyId()).orElse(null);
         if (family == null || family.isBlocked()) {
             LOG.warnf("Family not found or blocked for familyId=%s", identity.getFamilyId());
@@ -120,6 +123,16 @@ public class TelegramMiniAppAuthService {
             return authenticateParent(identity, family);
         }
         return authenticateChild(identity, family);
+    }
+
+    private void refreshTelegramProfile(TelegramIdentityEntity identity,
+                                        TelegramInitDataVerifier.VerifiedInitData verified) {
+        if (verified.telegramUsername() != null && !verified.telegramUsername().isBlank()) {
+            identity.setTelegramUsername(verified.telegramUsername());
+        }
+        if (verified.telegramDisplayName() != null && !verified.telegramDisplayName().isBlank()) {
+            identity.setTelegramDisplayName(verified.telegramDisplayName());
+        }
     }
 
     private OperationResult<AuthPayload> authenticateParent(TelegramIdentityEntity identity, FamilyEntity family) {

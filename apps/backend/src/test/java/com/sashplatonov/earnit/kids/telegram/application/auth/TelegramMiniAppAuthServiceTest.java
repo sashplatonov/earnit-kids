@@ -50,6 +50,29 @@ class TelegramMiniAppAuthServiceTest {
     }
 
     @Test
+    void refreshesTheLinkedParentsTelegramProfileFromVerifiedInitData() {
+        TelegramInitDataVerifier verifier = mock(TelegramInitDataVerifier.class);
+        TelegramIdentityRepository identities = mock(TelegramIdentityRepository.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        ChildRepository children = mock(ChildRepository.class);
+        ParentAccountRepository parents = mock(ParentAccountRepository.class);
+        FamilyParentMembershipRepository memberships = mock(FamilyParentMembershipRepository.class);
+        TelegramIdentityEntity parentIdentity = identity("parent", null);
+        when(verifier.verify("parent-data")).thenReturn(Optional.of(
+            new TelegramInitDataVerifier.VerifiedInitData(77L, Instant.parse("2026-08-13T12:00:00Z"),
+                "maria_example", "Maria Example")));
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(parentIdentity));
+        when(families.findByDbId(1)).thenReturn(Optional.of(family()));
+        when(parents.findByIdOptional(4)).thenReturn(Optional.of(parent()));
+        when(memberships.findByParentAndFamily(4, 1)).thenReturn(Optional.of(membership()));
+
+        service(verifier, identities, families, children, parents, memberships).authenticate("parent-data");
+
+        assertThat(parentIdentity.getTelegramUsername()).isEqualTo("maria_example");
+        assertThat(parentIdentity.getTelegramDisplayName()).isEqualTo("Maria Example");
+    }
+
+    @Test
     void authenticatesLinkedChildOnlyWithinItsFamily() {
         TelegramInitDataVerifier verifier = mock(TelegramInitDataVerifier.class);
         TelegramIdentityRepository identities = mock(TelegramIdentityRepository.class);

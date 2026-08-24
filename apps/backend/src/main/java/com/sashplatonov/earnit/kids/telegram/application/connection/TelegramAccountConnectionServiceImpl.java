@@ -157,6 +157,8 @@ public class TelegramAccountConnectionServiceImpl implements TelegramAccountConn
             .familyId(family.getId())
             .parentAccountId(parent.getId())
             .telegramUserId(verified.telegramUserId())
+            .telegramUsername(verified.telegramUsername())
+            .telegramDisplayName(verified.telegramDisplayName())
             .role("parent")
             .active(true)
             .linkedAt(now)

@@ -101,7 +101,7 @@ class TelegramAccountConnectionServiceImplTest {
         TelegramParentLinkChallengeEntity challenge = TelegramParentLinkChallengeEntity.builder()
             .parentAccountId(4).familyId(1).secretDigest("digest").expiresAt(NOW.plusSeconds(60)).createdAt(NOW).build();
         when(verifier.verify("verified-init-data")).thenReturn(Optional.of(
-            new TelegramInitDataVerifier.VerifiedInitData(77L, NOW)));
+            new TelegramInitDataVerifier.VerifiedInitData(77L, NOW, "maria_example", "Maria Example")));
         when(challenges.findByDigestForUpdate(any())).thenReturn(Optional.of(challenge));
         when(families.findByDbId(1)).thenReturn(Optional.of(family()));
         when(parents.findByIdForUpdate(4)).thenReturn(Optional.of(parent()));
@@ -113,9 +113,13 @@ class TelegramAccountConnectionServiceImplTest {
         OperationResult<Void> result = service.complete("raw-token", "verified-init-data");
 
         assertThat(result).isInstanceOf(OperationResult.Success.class);
-        verify(identities).persist(org.mockito.ArgumentMatchers.<TelegramIdentityEntity>argThat(identity ->
-            identity.getParentAccountId().equals(4) && identity.getFamilyId().equals(1)
-                && identity.getTelegramUserId().equals(77L)));
+        ArgumentCaptor<TelegramIdentityEntity> identity = ArgumentCaptor.forClass(TelegramIdentityEntity.class);
+        verify(identities).persist(identity.capture());
+        assertThat(identity.getValue().getParentAccountId()).isEqualTo(4);
+        assertThat(identity.getValue().getFamilyId()).isEqualTo(1);
+        assertThat(identity.getValue().getTelegramUserId()).isEqualTo(77L);
+        assertThat(identity.getValue().getTelegramUsername()).isEqualTo("maria_example");
+        assertThat(identity.getValue().getTelegramDisplayName()).isEqualTo("Maria Example");
         assertThat(challenge.getConsumedAt()).isEqualTo(NOW);
         verify(audits).persist(org.mockito.ArgumentMatchers.<TelegramSecurityAuditEventEntity>any());
     }
