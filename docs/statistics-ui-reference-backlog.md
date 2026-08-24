@@ -142,7 +142,7 @@ git commit -m "style(web): align statistics period selector"
 
 ## STAT-UI-003: Align fixed five-tab navigation
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-001
 
