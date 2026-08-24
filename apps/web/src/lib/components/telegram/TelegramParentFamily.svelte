@@ -245,8 +245,6 @@
 
     {#if inactiveChildren.length}
         <div class="inactive-notice">
-            <strong>{$i18n.t('app.telegram.family.inactiveNotice')}</strong>
-            <p>{$i18n.t('app.telegram.family.inactiveNoticeHint')}</p>
             {#each inactiveChildren as child (child.id)}
                 <div class="inactive-row">
                     <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
@@ -377,14 +375,12 @@
     .error { color:#a33b3b; }
     .childrow-wrap .childrow { flex:1; min-width:0; border-bottom:0; }
     .childrow-more { display:grid; place-items:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border:0; background:transparent; color:#66718a; cursor:pointer; }
-    .inactive-notice { margin-top:.6rem; padding:.7rem .8rem; border:1px solid #f0d98e; border-radius:.9rem; background:#fffaf0; color:#806b2a; }
-    .inactive-notice strong { display:block; font-size:.8rem; }
-    .inactive-notice p { margin:.15rem 0 .45rem; font-size:.78rem; line-height:1.3; }
-    .inactive-row { display:flex; align-items:center; gap:.6rem; min-height:3.25rem; padding:.4rem 0; border-top:1px solid #f1e4bb; }
+    .inactive-notice { margin-top:.6rem; padding:.15rem .8rem; border:1px solid #e2e6ef; border-radius:.9rem; background:#f7f8fc; color:#66718a; }
+    .inactive-row { display:flex; align-items:center; gap:.6rem; min-height:3.25rem; padding:.4rem 0; }
     .inactive-row:last-child { border-bottom:0; }
     .inactive-row .avatar { opacity:.55; }
     .inactive-meta { display:block; margin-top:.1rem; color:#8a93a8; font-size:.72rem; }
-    .reactivate { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; padding:.3rem .7rem; border:1px solid #3867d6; border-radius:.6rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; }
+    .reactivate { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; gap:.35rem; min-height:2.75rem; padding:.3rem .7rem; border:1px solid #3867d6; border-radius:.7rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; white-space:nowrap; cursor:pointer; }
     .reactivate:disabled { cursor:wait; opacity:.6; }
     .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }
     .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }

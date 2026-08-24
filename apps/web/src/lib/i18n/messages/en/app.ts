@@ -161,8 +161,6 @@ export const appMessages = {
             notifications: 'Notifications',
             viewAsChild: 'View as child',
             inactiveChildren: 'Inactive children',
-            inactiveNotice: 'There is an inactive child',
-            inactiveNoticeHint: 'Reactivate the profile if the child should participate in tasks and rewards again.',
             inactiveMeta: 'Inactive',
             status: 'Status',
             active: 'Active',

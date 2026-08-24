@@ -161,8 +161,6 @@ export const appMessages = {
             notifications: 'Уведомления',
             viewAsChild: 'Посмотреть как ребёнок',
             inactiveChildren: 'Неактивные дети',
-            inactiveNotice: 'Есть неактивный ребёнок',
-            inactiveNoticeHint: 'Активируйте профиль, если он снова должен участвовать в заданиях и наградах.',
             inactiveMeta: 'Неактивна',
             status: 'Статус',
             active: 'Активен',
