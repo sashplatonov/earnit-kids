@@ -574,6 +574,9 @@ export const appMessages = {
             transfer: 'Сделать админом',
             transferTitle: 'Передать админство',
             transferDescription: 'Сделать {name} администратором семьи? Вы перестанете быть админом.',
+            changeRole: 'Изменить роль',
+            adminDeactivateTip: 'Администратора нельзя деактивировать',
+            adminProtectionNote: 'Администратора нельзя деактивировать. Сначала нужно передать админство другому активному родителю.',
         },
         limits: {
             title: 'Лимиты',

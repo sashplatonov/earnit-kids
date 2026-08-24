@@ -574,6 +574,9 @@ export const appMessages = {
             transfer: 'Make admin',
             transferTitle: 'Transfer admin',
             transferDescription: 'Make {name} the family admin? You will no longer be the admin.',
+            changeRole: 'Change role',
+            adminDeactivateTip: 'The admin cannot be deactivated',
+            adminProtectionNote: 'The admin cannot be deactivated. First transfer admin rights to another active parent.',
         },
         limits: {
             title: 'Limits',
