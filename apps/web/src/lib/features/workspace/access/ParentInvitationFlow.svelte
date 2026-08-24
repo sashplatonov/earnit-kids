@@ -25,6 +25,27 @@
     let status = '';
     const i18n = useI18n();
 
+    // Focus management: remember the element that opened a sheet so we can restore focus on close.
+    let lastFocused: HTMLElement | null = null;
+    function captureLastFocused(): HTMLElement | null {
+        const el = document.activeElement;
+        return el instanceof HTMLElement ? el : null;
+    }
+    function restoreFocus(): void {
+        lastFocused?.focus();
+        lastFocused = null;
+    }
+    // Auto-focus the element the action is bound to when it mounts (sheet container).
+    function focusOnMount(node: HTMLElement): void {
+        node.focus();
+    }
+    // Focus the transfer-approval accept button, remembering the previously focused element so
+    // focus can be restored after the sheet closes.
+    function focusAccept(node: HTMLElement): void {
+        if (lastFocused === null) lastFocused = captureLastFocused();
+        node.focus();
+    }
+
     // Admin-transfer sheet state
     let transferOpen = false;
     let transferTarget: ParentMembership | null = null;
@@ -51,6 +72,7 @@
     let roleEditError = '';
 
     function openRoleEdit(parent: ParentMembership): void {
+        lastFocused = captureLastFocused();
         roleEditParent = parent;
         roleEditValue = parent.permission;
         roleEditBusy = false;
@@ -63,6 +85,7 @@
         roleEditError = '';
         roleEditBusy = false;
         roleEditParent = null;
+        restoreFocus();
     }
 
     // Eligible parents are active, confirmed (non-pending) non-admin memberships.
@@ -84,6 +107,7 @@
     }
 
     function openTransfer(parent: ParentMembership): void {
+        lastFocused = captureLastFocused();
         transferTarget = parent;
         transferBusy = false;
         transferError = '';
@@ -95,6 +119,7 @@
         transferTarget = null;
         transferError = '';
         transferBusy = false;
+        restoreFocus();
     }
 
     async function submitTransfer(): Promise<void> {
@@ -126,12 +151,14 @@
         const requestId = pendingTransferTargetRow?.transferRequestId;
         if (requestId == null) return;
         await run(acceptAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferAccepted'));
+        restoreFocus();
     }
 
     async function declinePendingTransfer(): Promise<void> {
         const requestId = pendingTransferTargetRow?.transferRequestId;
         if (requestId == null) return;
         await run(declineAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferDeclined'));
+        restoreFocus();
     }
 
     async function submitRoleEdit(): Promise<void> {
@@ -147,6 +174,7 @@
     }
 
     function openWizard(): void {
+        lastFocused = captureLastFocused();
         wizardOpen = true;
         wizardStep = 1;
         wizardName = '';
@@ -163,6 +191,7 @@
         wizardOpen = false;
         wizardError = '';
         wizardBusy = false;
+        restoreFocus();
     }
 
     function selectWizardMethod(method: 'email' | 'telegram'): void {
@@ -321,7 +350,7 @@
 
 {#if wizardOpen}
     <div class="sheet-backdrop" role="presentation" on:click={closeWizard}></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="parent-wizard-title" tabindex="-1">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="parent-wizard-title" tabindex="-1" use:focusOnMount>
         <h2 id="parent-wizard-title">{$i18n.t('app.telegram.parents.addTitle')}</h2>
 
         <div class="stepper" role="list" aria-label={$i18n.t('app.telegram.parents.wizardStep1')}>
@@ -425,7 +454,7 @@
 
 {#if roleEditOpen && roleEditParent}
     <div class="sheet-backdrop" role="presentation" on:click={closeRoleEdit}></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="role-edit-title" tabindex="-1">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="role-edit-title" tabindex="-1" use:focusOnMount>
         <h2 id="role-edit-title">{$i18n.t('app.telegram.parents.changeRole')}</h2>
         <p class="screen-sub">{label(roleEditParent)}</p>
         <div class="stack">
@@ -453,7 +482,7 @@
 
 {#if transferOpen}
     <div class="sheet-backdrop" role="presentation" on:click={closeTransfer}></div>
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="transfer-title" tabindex="-1">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="transfer-title" tabindex="-1" use:focusOnMount>
         <h2 id="transfer-title">{$i18n.t('app.telegram.parents.transferTitle')}</h2>
         <p class="screen-sub">{$i18n.t('app.telegram.parents.transferSelectSub')}</p>
         <p class="warn">{$i18n.t('app.telegram.parents.transferWarn')}</p>
@@ -509,7 +538,7 @@
             </div>
             <div class="preview-actions">
                 <button type="button" class="cancel" disabled={busy} on:click={declinePendingTransfer}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.declineAdmin')}</button>
-                <button type="button" class="btn ok-btn" disabled={busy} on:click={acceptPendingTransfer}>{busy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.acceptAdmin')}</button>
+                <button type="button" class="btn ok-btn" disabled={busy} on:click={acceptPendingTransfer} use:focusAccept>{busy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.acceptAdmin')}</button>
             </div>
         </div>
         <p class="warn">{$i18n.t('app.telegram.parents.transferConfirmWarn')}</p>

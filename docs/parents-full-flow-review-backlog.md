@@ -239,6 +239,8 @@ The Email/Telegram tabs in wizard step 2 follow the full WAI-ARIA tablist patter
 
 ## REVIEW-006: Restore focus to the triggering button after closing wizard/role-edit/transfer sheets
 
+**Status:** DONE
+
 **Priority:** P2
 **Depends on:** -
 
