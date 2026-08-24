@@ -282,8 +282,8 @@ class TelegramMenuBuilderTest {
 
         assertThat(TelegramRecent.format(view, Instant.parse("2026-08-14T10:00:00Z")))
             .isEqualTo("📜 Последние события · Alex\n\n"
-                + "🟢 🟡 +1 · Утренний старт\nСегодня, 06:00\n\n"
-                + "🔴 🟡 -2 · Королева настолки\n12 августа, 20:15");
+                + "🟢 +1🟡 · Утренний старт\nСегодня, 06:00\n\n"
+                + "🔴 -2🟡 · Королева настолки\n12 августа, 20:15");
     }
 
     private TelegramQuickActionResponse view() {

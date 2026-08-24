@@ -32,8 +32,15 @@ final class TelegramRecent {
 
     static String row(HistoryEntryDto entry, Instant now) {
         boolean earning = entry.type() != HistoryEntryType.spend;
-        return TelegramCoinCopy.delta(entry.amount(), earning, false) + " · " + title(entry)
+        return historyDelta(entry.amount(), earning) + " · " + title(entry)
             + "\n" + formatDate(entry.createdAt(), now);
+    }
+
+    private static String historyDelta(int amount, boolean earning) {
+        int absoluteAmount = Math.abs(amount);
+        String marker = earning ? TelegramBotEmoji.COINS_EARNED : TelegramBotEmoji.COINS_SPENT;
+        String sign = earning ? "+" : "-";
+        return marker + " " + sign + absoluteAmount + TelegramBotEmoji.COINS;
     }
 
     private static String title(HistoryEntryDto entry) {
