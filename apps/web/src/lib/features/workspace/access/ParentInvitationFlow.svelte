@@ -12,7 +12,6 @@
         acceptAdminTransfer,
         declineAdminTransfer,
         cancelAdminTransfer,
-        getAccountConnection,
         type ApiActionResult,
     } from '$lib/services/api';
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
@@ -25,9 +24,6 @@
     let error = '';
     let status = '';
     const i18n = useI18n();
-
-    // Current account email used to detect whether this parent is a transfer target.
-    let currentEmail: string | null = null;
 
     // Admin-transfer sheet state
     let transferOpen = false;
@@ -113,34 +109,29 @@
         await reload();
     }
 
-    // Which parent row carries the pending transfer (actor or target).
-    $: pendingTransferRow = parents.find((p) => p.transferRequestStatus === 'pending') ?? null;
-
     // True when the current account is the target of a pending transfer (approval sheet).
-    $: isTransferTarget = (pendingTransferRow?.transferRequestTargetName?.trim() ?? '')
-            && (pendingTransferRow?.email?.trim().toLowerCase() ?? '') === (currentEmail?.trim().toLowerCase() ?? '');
+    $: isTransferTarget = parents.some((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'target');
+
+    // Precise row identification: the target row drives the approval sheet, the actor row the cancel action.
+    $: pendingTransferTargetRow = parents.find((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'target') ?? null;
+    $: pendingTransferActorRow = parents.find((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'actor') ?? null;
 
     async function cancelPendingTransfer(): Promise<void> {
-        const requestId = pendingTransferRow?.transferRequestId;
+        const requestId = pendingTransferActorRow?.transferRequestId;
         if (requestId == null) return;
         await run(cancelAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferCancelled'));
     }
 
     async function acceptPendingTransfer(): Promise<void> {
-        const requestId = pendingTransferRow?.transferRequestId;
+        const requestId = pendingTransferTargetRow?.transferRequestId;
         if (requestId == null) return;
         await run(acceptAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferAccepted'));
     }
 
     async function declinePendingTransfer(): Promise<void> {
-        const requestId = pendingTransferRow?.transferRequestId;
+        const requestId = pendingTransferTargetRow?.transferRequestId;
         if (requestId == null) return;
         await run(declineAdminTransfer(requestId), $i18n.t('app.telegram.parents.transferDeclined'));
-    }
-
-    async function loadCurrentEmail(): Promise<void> {
-        const account = await getAccountConnection();
-        currentEmail = account?.email ?? null;
     }
 
     async function submitRoleEdit(): Promise<void> {
@@ -216,7 +207,6 @@
     }
 
     void reload();
-    void loadCurrentEmail();
 
     function label(parent: ParentMembership): string {
         return parent.displayName?.trim() || parent.email?.trim() || parent.telegramDisplayName?.trim()
@@ -285,8 +275,8 @@
                                 <button type="button" class="icon-btn disabled" aria-label={$i18n.t('app.telegram.parents.adminDeactivateTip')} disabled><TelegramIcon name="pause" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.adminDeactivateTip')}</span></button>
                                 <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.transferTitle')} on:click={() => openTransfer(parent)}><TelegramIcon name="refresh" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.transferTitle')}</span></button>
                             {/if}
-{:else if parent.status === 'active'}
-                            {#if parent.transferRequestStatus === 'pending'}
+                        {:else if parent.status === 'active'}
+                            {#if parent.transferRequestStatus === 'pending' && parent.transferRequestRole === 'actor'}
                                 <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.telegram.parents.cancelRequest')} on:click={cancelPendingTransfer}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.cancelRequest')}</span></button>
                                 <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={(e) => { e.stopPropagation(); openRoleEdit(parent); }}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
                             {:else}
@@ -478,18 +468,18 @@
     </div>
 {/if}
 
-{#if isTransferTarget && pendingTransferRow}
+{#if isTransferTarget && pendingTransferTargetRow}
     <div class="sheet-backdrop" role="presentation" on:click={() => {}}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="transfer-approve-title" tabindex="-1">
         <h2 id="transfer-approve-title">{$i18n.t('app.telegram.parents.acceptAdmin')}</h2>
         <div class="preview">
             <div class="preview-head">
-                <div class="avatar">{label(pendingTransferRow).charAt(0).toUpperCase()}</div>
-                <div class="preview-main"><div class="preview-name">{label(pendingTransferRow)}</div><div class="preview-role">{$i18n.t('app.telegram.parents.becomesAdminAfterConfirm')}</div></div>
+                <div class="avatar">{label(pendingTransferTargetRow).charAt(0).toUpperCase()}</div>
+                <div class="preview-main"><div class="preview-name">{label(pendingTransferTargetRow)}</div><div class="preview-role">{$i18n.t('app.telegram.parents.becomesAdminAfterConfirm')}</div></div>
                 <span class="state transfer">{$i18n.t('app.telegram.parents.transferRequestBadge')}</span>
             </div>
             <div class="account-grid">
-                <div class="box"><div class="box-title">{$i18n.t('app.telegram.parents.transferFrom')}</div><div class="box-value">{pendingTransferRow.transferRequestActorName ?? $i18n.t('app.workspaceAccess.unknownParent')}</div><div class="box-sub">{$i18n.t('app.telegram.parents.transferFromSub')}</div></div>
+                <div class="box"><div class="box-title">{$i18n.t('app.telegram.parents.transferFrom')}</div><div class="box-value">{pendingTransferTargetRow.transferRequestActorName ?? $i18n.t('app.workspaceAccess.unknownParent')}</div><div class="box-sub">{$i18n.t('app.telegram.parents.transferFromSub')}</div></div>
                 <div class="box"><div class="box-title">{$i18n.t('app.telegram.parents.transferWhen')}</div><div class="box-value">{$i18n.t('app.telegram.parents.transferWhenValue')}</div><div class="box-sub">{$i18n.t('app.telegram.parents.transferWhenSub')}</div></div>
             </div>
             <div class="preview-actions">

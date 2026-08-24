@@ -83,6 +83,8 @@ git commit -m "fix(backend): add transferRequestRole to ParentMembershipDto for 
 
 ## REVIEW-002: Frontend approval sheet uses `transferRequestRole` instead of email comparison
 
+**Status:** DONE
+
 **Priority:** P1
 **Depends on:** REVIEW-001
 
