@@ -434,26 +434,30 @@
                     </div>
                 {:else}
                 <h2 class="section-title">{t('sections.coinEconomy')}</h2>
-                <div class="compare">
-                    <div class="compare-top">
-                        <div class="number-block">
-                            <span>{t('coins.earned')}</span>
-                            <b>{formatValue(coinEconomy?.coins?.earned)}</b>
+                <div class="coin-cards">
+                    <div class="coin-card coin-card-earned">
+                        <span>{t('coins.earned')}</span>
+                        <b>{formatValue(coinEconomy?.coins?.earned)}</b>
+                        <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
+                    </div>
+                    <div class="coin-card coin-card-spent">
+                        <span>{t('coins.spent')}</span>
+                        <b>{formatValue(coinEconomy?.coins?.spent)}</b>
+                        <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
+                    </div>
+                </div>
+
+                <div class="compare coin-health">
+                    <div class="coin-health-heading">
+                        <div>
+                            <strong>{t('coins.spendEarn.label')}</strong>
+                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={(event) => toggleTooltip('spendEarn', event)}>i</button>
+                            <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                         </div>
-                        <div class="number-block">
-                            <span>{t('coins.spent')}</span>
-                            <b>{formatValue(coinEconomy?.coins?.spent)}</b>
-                        </div>
+                        <b>{formatValue(coinEconomy?.coins?.spendRate, true)}</b>
                     </div>
                     <div class="bar">
                         <div class="bar-fill" style="width: {coinEconomy?.coins?.spendRate ?? 0}%"></div>
-                    </div>
-                    <div class="bar-label">
-                        <span>
-                            {t('coins.spendEarn.label')} 
-                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={(event) => toggleTooltip('spendEarn', event)}>i</button>
-                        </span>
-                        <b>{formatValue(coinEconomy?.coins?.spendRate, true)}</b>
                     </div>
                     {#if buildCoinInsight()}
                         <div class="insight">{buildCoinInsight()}</div>
@@ -492,6 +496,33 @@
                         <div class="metric-value">{formatValue(coinEconomy?.balances?.zeroBalancePercent, true)}</div>
                     </div>
                 </div>
+
+                <h2 class="section-title">{t('sections.trends')}</h2>
+                {#if trendsStatus === 'unavailable'}
+                    <div class="empty-state" role="status">
+                        <b>{t('empty.sectionUnavailableTitle')}</b>
+                        <small>{t('empty.sectionUnavailableDesc')}</small>
+                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                    </div>
+                {:else if trends?.points && trends.points.length > 0}
+                    <div class="trend trend-coins">
+                        <div class="trend-head">
+                            <b>{t('trends.earnedSpent.title')}</b>
+                            <small>{t('trends.earnedSpent.desc')}</small>
+                        </div>
+                        <div class="bars">
+                            {#each trends.points as point (point.date)}
+                                <div class="bar-col" title="{point.date}: {point.coinsEarned} / {point.coinsSpent}">
+                                    <div class="bar earned" style="height: {barHeight(point.coinsEarned, maxCoins)}%"></div>
+                                    <div class="bar spent" style="height: {barHeight(point.coinsSpent, maxCoins)}%"></div>
+                                    <small class="bar-label">{point.date.slice(5)}</small>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {:else}
+                    <div class="empty-note">{t('trends.empty')}</div>
+                {/if}
                 {/if}
             </div>
 
@@ -743,21 +774,6 @@
                             {#each trends.points as point (point.date)}
                                 <div class="bar-col" title="{point.date}: {point.activeFamilies}">
                                     <div class="bar" style="height: {barHeight(point.activeFamilies, maxActiveFamilies)}%"></div>
-                                    <small class="bar-label">{point.date.slice(5)}</small>
-                                </div>
-                            {/each}
-                        </div>
-                    </div>
-                    <div class="trend">
-                        <div class="trend-head">
-                            <b>{t('trends.earnedSpent.title')}</b>
-                            <small>{t('trends.earnedSpent.desc')}</small>
-                        </div>
-                        <div class="bars">
-                            {#each trends.points as point (point.date)}
-                                <div class="bar-col" title="{point.date}: {point.coinsEarned} / {point.coinsSpent}">
-                                    <div class="bar earned" style="height: {barHeight(point.coinsEarned, maxCoins)}%"></div>
-                                    <div class="bar spent" style="height: {barHeight(point.coinsSpent, maxCoins)}%"></div>
                                     <small class="bar-label">{point.date.slice(5)}</small>
                                 </div>
                             {/each}
@@ -1218,27 +1234,68 @@
         padding: 13px;
     }
 
-    .compare-top {
+    .coin-cards {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
+        margin-bottom: 8px;
     }
 
-    .number-block {
-        padding: 8px;
-        border-radius: 11px;
-        background: #f8f9fc;
+    .coin-card {
+        min-width: 0;
+        padding: 13px;
+        border: 1px solid var(--dashboard-line);
+        border-radius: 18px;
+        box-shadow: var(--dashboard-shadow);
     }
 
-    .number-block span {
-        font-size: 11px;
-        color: var(--muted, #8791a6);
-    }
-
-    .number-block b {
-        font-size: 20px;
+    .coin-card span,
+    .coin-card small {
         display: block;
-        margin-top: 3px;
+        color: var(--muted, #8791a6);
+        font-size: 11px;
+    }
+
+    .coin-card b {
+        display: block;
+        margin: 5px 0 3px;
+        font-size: 23px;
+        letter-spacing: -0.03em;
+    }
+
+    .coin-card-earned {
+        background: #f1f3ff;
+    }
+
+    .coin-card-spent {
+        background: #fff5e8;
+    }
+
+    .coin-health {
+        margin-bottom: 8px;
+    }
+
+    .coin-health-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .coin-health-heading strong {
+        display: block;
+        font-size: 13px;
+    }
+
+    .coin-health-heading small {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted, #8791a6);
+        font-size: 11px;
+    }
+
+    .coin-health-heading > b {
+        font-size: 16px;
     }
 
     .bar {
@@ -1262,10 +1319,6 @@
         font-size: 10px;
         color: var(--muted, #8791a6);
         margin-top: 5px;
-    }
-
-    .bar-label b {
-        font-size: 12px;
     }
 
     .mini-info {
@@ -1405,6 +1458,10 @@
         box-shadow: var(--dashboard-shadow);
         padding: 13px;
         margin-bottom: 10px;
+    }
+
+    .trend-coins {
+        margin-bottom: 0;
     }
 
     .trend-head {

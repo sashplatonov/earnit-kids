@@ -254,7 +254,7 @@ git commit -m "feat(web): compose statistics overview"
 
 ## STAT-UI-005: Compose the Coins panel like the reference
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-001
 
