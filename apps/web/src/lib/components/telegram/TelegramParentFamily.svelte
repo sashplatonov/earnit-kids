@@ -204,7 +204,7 @@
 
     {#if $appStore.isAdmin}
         <a href="/telegram/dashboard" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; padding: 0.75rem 1rem; border: 1px solid var(--primary, #5c6fe7); border-radius: 8px; margin-bottom: 1rem; background: rgba(92,111,231,0.05);">
-            <strong style="color: var(--primary, #5c6fe7); font-size: 1rem;">📊 {$i18n.t('admin.settings.dashboardTitle')}</strong>
+            <strong style="display: inline-flex; align-items: center; gap: 6px; color: var(--primary, #5c6fe7); font-size: 1rem;"><TelegramIcon name="statistics" size={18} />{$i18n.t('admin.settings.dashboardTitle')}</strong>
         </a>
     {/if}
 

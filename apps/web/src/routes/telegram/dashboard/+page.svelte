@@ -5,6 +5,7 @@
     import { appStore } from '$lib/stores/app';
     import { goto } from '$app/navigation';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
+    import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
 
     const i18n = useI18n();
 
@@ -170,6 +171,13 @@
         if (val === null || val === undefined) return '—';
         if (typeof val === 'number' && val === 0) return '0';
         return isPercent ? `${val}%` : typeof val === 'number' ? $i18n.formatNumber(val) : val;
+    }
+
+    function formatWholeValue(val: number | string | null | undefined): string {
+        if (val === null || val === undefined) return '—';
+        if (typeof val === 'number') return $i18n.formatNumber(Math.round(val));
+        const numericValue = Number(val);
+        return Number.isFinite(numericValue) ? $i18n.formatNumber(Math.round(numericValue)) : val;
     }
 
     // EXPLAIN: ADM-22 dynamic product insight hints derived from transparent metrics
@@ -351,7 +359,11 @@
                         on:keydown={(event) => handleTabKeydown(event, tab.id as TabId)}
                     >
                         <span class="tab-ico" aria-hidden="true">
-                            <TelegramIcon name={tab.icon} size={17} strokeWidth={2} />
+                            {#if tab.id === 'coins'}
+                                <TelegramCoin size={17} />
+                            {:else}
+                                <TelegramIcon name={tab.icon} size={17} strokeWidth={2} />
+                            {/if}
                         </span>
                         <span class="tab-label">{tab.label}</span>
                     </button>
@@ -422,7 +434,7 @@
                                     <strong>{t('kpis.coinsEarned')}</strong>
                                     <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                                 </div>
-                                <div class="metric-value">{formatValue(coinEconomy.coins.earned)} <TelegramIcon name="coin" size={18} /></div>
+                                <div class="metric-value">{formatValue(coinEconomy.coins.earned)} <TelegramCoin size={17} /></div>
                             </div>
                         {/if}
                         {#if coinEconomy?.coins?.spent != null}
@@ -431,7 +443,7 @@
                                     <strong>{t('kpis.coinsSpent')}</strong>
                                     <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                                 </div>
-                                <div class="metric-value">{formatValue(coinEconomy.coins.spent)} <TelegramIcon name="coin" size={18} /></div>
+                                <div class="metric-value">{formatValue(coinEconomy.coins.spent)} <TelegramCoin size={17} /></div>
                             </div>
                         {/if}
                         {#if rewards?.metrics?.issuedCount != null}
@@ -468,12 +480,12 @@
                 <div class="coin-cards">
                     <div class="coin-card coin-card-earned">
                         <span>{t('coins.earned')}</span>
-                        <b>{formatValue(coinEconomy?.coins?.earned)}</b>
+                        <b>{formatValue(coinEconomy?.coins?.earned)} <TelegramCoin size={18} /></b>
                         <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                     </div>
                     <div class="coin-card coin-card-spent">
                         <span>{t('coins.spent')}</span>
-                        <b>{formatValue(coinEconomy?.coins?.spent)}</b>
+                        <b>{formatValue(coinEconomy?.coins?.spent)} <TelegramCoin size={18} /></b>
                         <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                     </div>
                 </div>
@@ -504,7 +516,7 @@
                             </div>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(coinEconomy?.balances?.medianBalance)} <TelegramIcon name="coin" size={16} /></div>
+                        <div class="metric-value">{formatValue(coinEconomy?.balances?.medianBalance)} <TelegramCoin size={16} /></div>
                     </div>
                     <div class="metric">
                         <div>
@@ -514,7 +526,7 @@
                             </div>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(data.coinEconomy?.balances?.timeToFirstReward)} {t('units.days')}</div>
+                        <div class="metric-value">{formatWholeValue(data.coinEconomy?.balances?.timeToFirstReward)} {t('units.days')}</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -567,14 +579,14 @@
                             <strong>{t('rewards.medianPrice.title')}</strong>
                             <small>{t('rewards.medianPrice.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(rewards?.metrics?.medianPrice)} <TelegramIcon name="coin" size={16} /></div>
+                        <div class="metric-value">{formatValue(rewards?.metrics?.medianPrice)} <TelegramCoin size={16} /></div>
                     </div>
                     <div class="metric">
                         <div>
                             <strong>{t('rewards.selectedPrice.title')}</strong>
                             <small>{t('rewards.selectedPrice.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(rewards?.metrics?.selectedPrice)} <TelegramIcon name="coin" size={16} /></div>
+                        <div class="metric-value">{formatValue(rewards?.metrics?.selectedPrice)} <TelegramCoin size={16} /></div>
                     </div>
                     <div class="metric">
                         <div>
@@ -658,7 +670,7 @@
                             <strong>{t('tasks.coinsPerTask.title')}</strong>
                             <small>{t('tasks.coinsPerTask.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatValue(taskEconomy?.taskMetrics?.medianCoinsPerTask)} <TelegramIcon name="coin" size={16} /></div>
+                        <div class="metric-value">{formatValue(taskEconomy?.taskMetrics?.medianCoinsPerTask)} <TelegramCoin size={16} /></div>
                     </div>
                 </div>
 
@@ -1180,18 +1192,20 @@
     }
 
     .kpi {
+        position: relative;
         background: var(--dashboard-surface);
         border: 1px solid var(--dashboard-line);
         border-radius: 14px;
         box-shadow: var(--dashboard-shadow);
-        padding: 10px 11px;
-        min-height: 84px;
+        padding: 9px 10px 8px;
+        min-height: 76px;
         display: flex;
         flex-direction: column;
     }
 
     .kpi-label {
-        font-size: 12px;
+        max-width: calc(100% - 28px);
+        font-size: 11px;
         color: #77839e;
         line-height: 1.25;
     }
@@ -1203,7 +1217,9 @@
     }
 
     .info {
-        margin-left: auto;
+        position: absolute;
+        top: 3px;
+        right: 3px;
         width: 44px;
         height: 44px;
         flex-shrink: 0;
@@ -1227,17 +1243,17 @@
     }
 
     .kpi-value {
-        font-size: 27px;
+        font-size: 24px;
         font-weight: 820;
-        margin-top: 5px;
+        margin-top: 3px;
         line-height: 1;
         letter-spacing: -0.03em;
     }
 
     .kpi-foot {
-        font-size: 11px;
+        font-size: 10px;
         color: #7f8ba5;
-        margin-top: 4px;
+        margin-top: 3px;
     }
 
     .tooltip-box {
@@ -1362,6 +1378,11 @@
         margin: 5px 0 3px;
         font-size: 23px;
         letter-spacing: -0.03em;
+    }
+
+    .coin-card b :global(svg) {
+        display: inline-block;
+        vertical-align: -2px;
     }
 
     .coin-card-earned {
