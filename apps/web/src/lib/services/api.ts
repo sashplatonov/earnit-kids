@@ -402,6 +402,8 @@ export type TelegramAccountConnection = {
     emailConnected: boolean;
     telegramConnected: boolean;
     miniAppUrl: string | null;
+    telegramUsername: string | null;
+    telegramDisplayName: string | null;
 };
 
 type TelegramLinkLaunch = { launchUrl: string };

@@ -270,10 +270,8 @@
     function telegramLabel(parent: ParentMembership): string {
         const displayName = parent.telegramDisplayName?.trim();
         const username = parent.telegramUsername?.trim();
-        if (displayName && username) return `${displayName} · @${username}`;
-        if (displayName) return displayName;
         if (username) return `@${username}`;
-        return parent.telegramUserId == null ? '' : `ID ${parent.telegramUserId}`;
+        return displayName || '';
     }
 
     function permissionLabel(value: MembershipPermission): string {

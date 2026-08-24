@@ -1,6 +1,6 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
-    import { getAccountConnection, type AccountConnection } from '$lib/services/api';
+    import { getAccountConnection, getTelegramAccountConnection, type AccountConnection } from '$lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
 
     export let open = false;
@@ -18,7 +18,18 @@
     async function reload() {
         loading = true;
         error = '';
-        account = await getAccountConnection();
+        const [accountConnection, telegramConnection] = await Promise.all([
+            getAccountConnection(),
+            getTelegramAccountConnection(),
+        ]);
+        account = accountConnection
+            ? {
+                ...accountConnection,
+                telegramLinked: telegramConnection?.telegramConnected ?? accountConnection.telegramLinked,
+                telegramUsername: telegramConnection?.telegramUsername ?? accountConnection.telegramUsername,
+                telegramDisplayName: telegramConnection?.telegramDisplayName ?? accountConnection.telegramDisplayName,
+            }
+            : null;
         if (!account) error = $i18n.t('app.telegram.emailSettings.error');
         loading = false;
     }
@@ -33,8 +44,7 @@
         if (!account) return '';
         const displayName = account.telegramDisplayName?.trim();
         const username = account.telegramUsername?.trim();
-        if (displayName && username) return `${displayName} · @${username}`;
-        return displayName || (username ? `@${username}` : '');
+        return username ? `@${username}` : displayName || '';
     }
 </script>
 
