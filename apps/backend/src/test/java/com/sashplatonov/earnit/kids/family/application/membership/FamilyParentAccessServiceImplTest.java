@@ -403,8 +403,36 @@ class FamilyParentAccessServiceImplTest {
     }
 
     @Test
-    void createTransferRequest_telegramOnlyAdminUsesAccountIdWithoutEmailLookup() {
+    void createTransferRequest_includesTelegramIdentityInResponse() {
         FamilyEntity family = mockFamily(7);
+        FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
+        FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
+        ParentAccountEntity actorParent = parent(1, "admin@test.com");
+        ParentAccountEntity targetParent = ParentAccountEntity.builder()
+            .id(2).email(null).passwordHash("").build();
+        TelegramIdentityEntity identity = TelegramIdentityEntity.builder()
+            .id(21).familyId(7).parentAccountId(2).telegramUserId(700L)
+            .telegramUsername("targettg").telegramDisplayName("Target TG").role("parent").active(true).build();
+
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+        when(membershipRepository.findByIdOptional(11)).thenReturn(Optional.of(target));
+        when(parentAccountRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(actorParent));
+        when(membershipRepository.findByParentAndFamily(1, 7)).thenReturn(Optional.of(actor));
+        when(transferRequestRepository.findPendingByFamily(7)).thenReturn(Optional.empty());
+        when(parentAccountRepository.findByIdOptional(2)).thenReturn(Optional.of(targetParent));
+        when(telegramIdentityRepository.findActiveParentByParentAccountId(2)).thenReturn(Optional.of(identity));
+
+        ParentMembershipDto dto = ((OperationResult.Success<ParentMembershipDto>) service
+            .createTransferRequest(11, "fam-1", null, "admin@test.com")).value();
+
+        assertThat(dto.transferRequestRole()).isEqualTo("target");
+        assertThat(dto.telegramUserId()).isEqualTo(700L);
+        assertThat(dto.telegramUsername()).isEqualTo("targettg");
+        assertThat(dto.telegramDisplayName()).isEqualTo("Target TG");
+    }
+
+    @Test
+    void createTransferRequest_telegramOnlyAdminUsesAccountIdWithoutEmailLookup() {        FamilyEntity family = mockFamily(7);
         FamilyParentMembershipEntity target = membership(11, 7, 2, FamilyParentMembershipEntity.Permission.editor);
         FamilyParentMembershipEntity actor = membership(12, 7, 1, FamilyParentMembershipEntity.Permission.family_admin);
         ParentAccountEntity targetParent = parent(2, "target@test.com");

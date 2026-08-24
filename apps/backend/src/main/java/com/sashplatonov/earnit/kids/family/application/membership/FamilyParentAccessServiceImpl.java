@@ -355,6 +355,7 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
     private ParentMembershipDto toTransferDto(
         FamilyParentMembershipEntity membership,
         ParentAccountEntity parent,
+        TelegramIdentityEntity identity,
         String transferStatus,
         String actorName,
         String targetName,
@@ -363,9 +364,9 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
             membership.getId(),
             parent != null ? parent.getEmail() : null,
             membership.getDisplayName(),
-            null,
-            null,
-            null,
+            Optional.ofNullable(identity).map(TelegramIdentityEntity::getTelegramUserId).orElse(null),
+            Optional.ofNullable(identity).map(TelegramIdentityEntity::getTelegramUsername).orElse(null),
+            Optional.ofNullable(identity).map(TelegramIdentityEntity::getTelegramDisplayName).orElse(null),
             membership.getPermission(),
             membership.getStatus(),
             null,
@@ -477,12 +478,14 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         transferRequestRepository.persist(request);
 
         var parent = parentAccountRepository.findByIdOptional(target.getParentAccountId()).orElse(null);
+        var identity = telegramIdentityRepository.findActiveParentByParentAccountId(target.getParentAccountId())
+            .orElse(null);
 
         log.info("Created admin transfer request: targetMembershipId={}, familyId={}",
             targetMembershipId, familyId);
 
         return OperationResult.success(toTransferDto(
-            target, parent, "pending",
+            target, parent, identity, "pending",
             membershipName(actorMembership, parentAccountRepository),
             membershipName(target, parentAccountRepository), request.getId()));
     }
@@ -535,11 +538,13 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
 
         cancelOtherPending(familyDbId, requestId);
         var parent = parentAccountRepository.findByIdOptional(target.getParentAccountId()).orElse(null);
+        var identity = telegramIdentityRepository.findActiveParentByParentAccountId(target.getParentAccountId())
+            .orElse(null);
 
         log.info("Accepted admin transfer request: id={}, targetMembershipId={}, familyId={}",
             requestId, request.getTargetMembershipId(), familyId);
 
-        return OperationResult.success(toDto(target, parent, null));
+        return OperationResult.success(toDto(target, parent, identity));
     }
 
     @Override
@@ -582,11 +587,15 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         var parent = targetOpt.isPresent()
             ? parentAccountRepository.findByIdOptional(targetOpt.get().getParentAccountId()).orElse(null)
             : null;
+        var identity = targetOpt.isPresent()
+            ? telegramIdentityRepository.findActiveParentByParentAccountId(
+                targetOpt.get().getParentAccountId()).orElse(null)
+            : null;
 
         log.info("Declined admin transfer request: id={}, targetMembershipId={}, familyId={}",
             requestId, request.getTargetMembershipId(), familyId);
 
-        return OperationResult.success(toDto(targetOpt.orElse(null), parent, null));
+        return OperationResult.success(toDto(targetOpt.orElse(null), parent, identity));
     }
 
     private void cancelOtherPending(Integer familyDbId, Integer excludeRequestId) {
@@ -638,11 +647,15 @@ public class FamilyParentAccessServiceImpl implements FamilyParentAccessService 
         var parent = targetOpt.isPresent()
             ? parentAccountRepository.findByIdOptional(targetOpt.get().getParentAccountId()).orElse(null)
             : null;
+        var identity = targetOpt.isPresent()
+            ? telegramIdentityRepository.findActiveParentByParentAccountId(
+                targetOpt.get().getParentAccountId()).orElse(null)
+            : null;
 
         log.info("Cancelled admin transfer request: id={}, targetMembershipId={}, familyId={}",
             requestId, request.getTargetMembershipId(), familyId);
 
-        return OperationResult.success(toDto(targetOpt.orElse(null), parent, null));
+        return OperationResult.success(toDto(targetOpt.orElse(null), parent, identity));
     }
 
     private String membershipName(FamilyParentMembershipEntity membership,

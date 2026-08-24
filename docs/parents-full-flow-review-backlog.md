@@ -330,6 +330,8 @@ git commit -m "perf(backend): reuse loaded memberships in transfer request enric
 
 ## REVIEW-008: Include Telegram identity in transfer mutation response DTOs
 
+**Status:** DONE
+
 **Priority:** P3
 **Depends on:** -
 
