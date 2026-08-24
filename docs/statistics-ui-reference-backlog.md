@@ -482,7 +482,7 @@ git commit -m "feat(web): add statistics activity navigation"
 
 ## STAT-UI-009: Isolate the Activation Activity view
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-008
 

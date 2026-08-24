@@ -731,7 +731,7 @@
                             class:active={activeActivitySubtab === subtab.id}
                             role="tab"
                             aria-selected={activeActivitySubtab === subtab.id}
-                            aria-controls="panel-activity"
+                            aria-controls={`panel-activity-${subtab.id}`}
                             tabindex={activeActivitySubtab === subtab.id ? 0 : -1}
                             on:click={() => switchActivitySubtab(subtab.id)}
                             on:keydown={(event) => handleActivitySubtabKeydown(event, subtab.id)}
@@ -739,35 +739,47 @@
                     {/each}
                 </div>
 
-                <h2 class="section-title">{t('sections.activation')}</h2>
-                {#if sectionUnavailable('activation')}
-                    <div class="empty-state" role="status">
-                        <b>{t('empty.sectionUnavailableTitle')}</b>
-                        <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
-                    </div>
-                {:else if activationFunnel?.stages && activationFunnel.stages.length > 0}
-                    <div class="funnel">
-                        {#each activationFunnel.stages as stage (stage.key)}
-                            <div class="step">
-                                <div class="step-line">
-                                    <b>{stage.label}</b>
-                                    <span>{stage.count} · {stage.percentFromPrevious}%</span>
-                                </div>
-                                <div class="track">
-                                    <div class="fill" style="width: {stage.percentFromInitial}%"></div>
+                {#if activeActivitySubtab === 'activation'}
+                    <div
+                        id="panel-activity-activation"
+                        class="activity-panel"
+                        role="tabpanel"
+                        aria-labelledby="activity-subtab-activation"
+                    >
+                        <h2 class="section-title">{t('sections.activation')}</h2>
+                        {#if sectionUnavailable('activation')}
+                            <div class="empty-state" role="status">
+                                <b>{t('empty.sectionUnavailableTitle')}</b>
+                                <small>{t('empty.sectionUnavailableDesc')}</small>
+                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                            </div>
+                        {:else if activationFunnel?.stages && activationFunnel.stages.length > 0}
+                            <div class="funnel">
+                                {#each activationFunnel.stages as stage (stage.key)}
+                                    <div class="step">
+                                        <div class="step-line">
+                                            <b>{stage.label}</b>
+                                            <span class="step-metrics">
+                                                <span class="step-count">{stage.count}</span>
+                                                <span class="step-percent">{stage.percentFromPrevious}%</span>
+                                            </span>
+                                        </div>
+                                        <div class="track">
+                                            <div class="fill" style="width: {stage.percentFromInitial}%"></div>
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="funnel">
+                                <div class="empty-state funnel-empty" role="status">
+                                    <div>
+                                        <b>{t('funnel.noData')}</b>
+                                        <small>{t('funnel.noDataDesc')}</small>
+                                    </div>
                                 </div>
                             </div>
-                        {/each}
-                    </div>
-                {:else}
-                    <div class="funnel">
-                        <div class="empty-state" style="min-height: 76px; display: flex; align-items: center; justify-content: center; text-align: center; border: 1px dashed var(--line, #e5e8f0); border-radius: 14px; background: #fff; padding: 12px;">
-                            <div style="text-align: center;">
-                                <b>{t('funnel.noData')}</b>
-                                <small style="display: block; color: var(--muted, #8791a6); margin-top: 4px;">{t('funnel.noDataDesc')}</small>
-                            </div>
-                        </div>
+                        {/if}
                     </div>
                 {/if}
 
@@ -1522,12 +1534,35 @@
 
     .step-line {
         display: flex;
+        align-items: baseline;
+        gap: 10px;
         justify-content: space-between;
+        min-width: 0;
         font-size: 12px;
     }
 
     .step-line b {
+        min-width: 0;
         font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .step-metrics {
+        display: inline-flex;
+        flex: 0 0 auto;
+        gap: 6px;
+        color: var(--muted, #8791a6);
+        white-space: nowrap;
+    }
+
+    .step-count {
+        color: var(--text, #20283d);
+        font-weight: 750;
+    }
+
+    .step-percent {
+        min-width: 3.5em;
+        text-align: right;
     }
 
     .track {
@@ -1541,6 +1576,23 @@
     .fill {
         height: 100%;
         background: var(--primary, #5e6fec);
+    }
+
+    .funnel-empty {
+        min-height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border: 1px dashed var(--dashboard-line);
+        border-radius: 14px;
+        padding: 12px;
+    }
+
+    .funnel-empty small {
+        display: block;
+        color: var(--muted, #8791a6);
+        margin-top: 4px;
     }
 
     .trend {
