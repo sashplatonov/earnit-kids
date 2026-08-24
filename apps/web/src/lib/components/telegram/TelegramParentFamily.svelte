@@ -202,16 +202,24 @@
 <div class="family">
     <h1 id="family-title">{$i18n.t('app.telegram.family.title')}</h1>
 
-    {#if $appStore.isAdmin}
-        <a href="/telegram/dashboard" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; padding: 0.75rem 1rem; border: 1px solid var(--primary, #5c6fe7); border-radius: 8px; margin-bottom: 1rem; background: rgba(92,111,231,0.05);">
-            <strong style="display: inline-flex; align-items: center; gap: 6px; color: var(--primary, #5c6fe7); font-size: 1rem;"><TelegramIcon name="statistics" size={18} />{$i18n.t('admin.settings.dashboardTitle')}</strong>
-        </a>
-    {/if}
+    <div class="quick-actions">
+        {#if $appStore.isAdmin}
+            <a class="quick-action" href="/telegram/dashboard">
+                <span class="setting-icon"><TelegramIcon name="statistics" size={20} label={$i18n.t('admin.settings.dashboardTitle')} /></span>
+                <span><strong>{$i18n.t('admin.settings.dashboardTitle')}</strong><small>{$i18n.t('app.telegram.family.statisticsMeta')}</small></span>
+            </a>
+        {/if}
+        <button class="quick-action" type="button" aria-expanded={inviteOpen} on:click={() => inviteOpen = !inviteOpen}>
+            <span class="setting-icon"><TelegramIcon name="addChild" size={20} label={$i18n.t('app.telegram.family.addChild')} /></span>
+            <span><strong>{$i18n.t('app.telegram.family.addChild')}</strong><small>{$i18n.t('app.telegram.family.addChildMeta')}</small></span>
+        </button>
+    </div>
 
+    <h2 class="section-title">{$i18n.t('app.telegram.family.children')}</h2>
     {#if !$appStore.children.length}
         <p class="muted">{$i18n.t('app.telegram.family.noChildren')}</p>
     {:else}
-        <div class="flat">
+        <div class="children-list">
             {#each $appStore.children as child (child.id)}
                 <div class="childrow-wrap">
                     <button class:current={$appStore.currentChildId == child.id} class="childrow" type="button" disabled={switching} on:click={() => { select(child.id); openManage(child); }} aria-pressed={$appStore.currentChildId == child.id}>
@@ -225,8 +233,6 @@
         </div>
     {/if}
 
-    <button class="add-child" type="button" aria-expanded={inviteOpen} on:click={() => inviteOpen = !inviteOpen}><TelegramIcon name="addChild" size={20} label={$i18n.t('app.telegram.family.addChild')} /><span>{$i18n.t('app.telegram.family.addChild')}</span></button>
-
     {#if inviteOpen}
         <div class="invite">
             <p class="muted">{$i18n.t('app.telegram.family.addChildNameHint')}</p>
@@ -238,12 +244,13 @@
     {#if switchError}<p class="error" role="alert">{switchError}</p>{/if}
 
     {#if inactiveChildren.length}
-        <h2 class="section-title">{$i18n.t('app.telegram.family.inactiveChildren')} · {inactiveChildren.length}</h2>
-        <div class="flat">
+        <div class="inactive-notice">
+            <strong>{$i18n.t('app.telegram.family.inactiveNotice')}</strong>
+            <p>{$i18n.t('app.telegram.family.inactiveNoticeHint')}</p>
             {#each inactiveChildren as child (child.id)}
                 <div class="inactive-row">
                     <span class="avatar">{child.nickname.charAt(0).toUpperCase()}</span>
-                    <span class="grow"><span class="name">{child.nickname}</span></span>
+                    <span class="grow"><span class="name">{child.nickname}</span><span class="inactive-meta">{$i18n.t('app.telegram.family.inactiveMeta')}</span></span>
                     <button class="reactivate" type="button" disabled={statusBusy} on:click={() => applyStatus(child, true)}><TelegramIcon name="play" size={16} label={$i18n.t('app.telegram.family.reactivate')} />{$i18n.t('app.telegram.family.reactivate')}</button>
                 </div>
             {/each}
@@ -252,10 +259,10 @@
 
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
-        <button class="setting" type="button" on:click={() => importOpen = true}><span class="setting-icon"><TelegramIcon name="upload" size={20} label={$i18n.t('app.telegram.import.title')} /></span><span class="grow">{$i18n.t('app.telegram.import.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => accessOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => importOpen = true}><span class="setting-icon"><TelegramIcon name="upload" size={20} label={$i18n.t('app.telegram.import.title')} /></span><span class="grow">{$i18n.t('app.telegram.import.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
     </div>
 </div>
 
@@ -337,7 +344,15 @@
     .family { width:100%; }
     h1 { margin:0 0 .5rem; color:#18243d; font-size:1.35rem; }
     .section-title { margin:.9rem 0 .45rem; color:#18243d; font-size:1rem; }
-    .flat { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
+    .quick-actions { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.5rem; margin-bottom:.85rem; }
+    .quick-action { display:flex; align-items:center; gap:.6rem; min-width:0; min-height:3.8rem; padding:.55rem .7rem; border:1px solid #dfe4ee; border-radius:.9rem; background:#fff; color:#18243d; font:inherit; text-align:left; text-decoration:none; cursor:pointer; }
+    .quick-action:hover { border-color:#b9c0ff; background:#fafbff; }
+    .quick-action:only-child { grid-column:1 / -1; }
+    .quick-action strong, .quick-action small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .quick-action strong { font-size:.86rem; }
+    .quick-action small { margin-top:.12rem; color:#8a93a8; font-size:.68rem; }
+    .children-list { display:grid; gap:.5rem; }
+    .childrow-wrap { display:flex; align-items:center; padding:0 .7rem; border:1px solid #dfe4ee; border-radius:.9rem; background:#fff; }
     .childrow { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3.25rem; padding:.4rem 0; border:0; border-bottom:1px solid #edf0f5; background:transparent; color:#33415f; font:inherit; text-align:left; cursor:pointer; }
     .childrow:last-child { border-bottom:0; }
     .childrow.current { color:#18243d; }
@@ -346,7 +361,6 @@
     .name { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
     .badge { display:inline-flex; align-items:center; gap:.2rem; margin-top:.15rem; color:#3867d6; font-size:.72rem; font-weight:700; }
     .balance { display:inline-flex; align-items:center; gap:.3rem; color:#573d00; font-weight:700; white-space:nowrap; }
-    .add-child { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; width:100%; min-height:2.75rem; margin-top:.6rem; padding:.5rem .7rem; border:1px solid #3867d6; border-radius:.75rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .invite { margin-top:.6rem; padding:.7rem; border:1px solid #e6e9f0; border-radius:.75rem; background:#fff; }
     .invite .muted { margin:0 0 .5rem; color:#66718a; font-size:.85rem; line-height:1.4; }
@@ -361,13 +375,15 @@
     .setting .grow { font-weight:600; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
-    .childrow-wrap { display:flex; align-items:center; border-bottom:1px solid #edf0f5; }
-    .childrow-wrap:last-child { border-bottom:0; }
     .childrow-wrap .childrow { flex:1; min-width:0; border-bottom:0; }
     .childrow-more { display:grid; place-items:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border:0; background:transparent; color:#66718a; cursor:pointer; }
-    .inactive-row { display:flex; align-items:center; gap:.6rem; min-height:3.25rem; padding:.4rem 0; border-bottom:1px solid #edf0f5; }
+    .inactive-notice { margin-top:.6rem; padding:.7rem .8rem; border:1px solid #f0d98e; border-radius:.9rem; background:#fffaf0; color:#806b2a; }
+    .inactive-notice strong { display:block; font-size:.8rem; }
+    .inactive-notice p { margin:.15rem 0 .45rem; font-size:.78rem; line-height:1.3; }
+    .inactive-row { display:flex; align-items:center; gap:.6rem; min-height:3.25rem; padding:.4rem 0; border-top:1px solid #f1e4bb; }
     .inactive-row:last-child { border-bottom:0; }
     .inactive-row .avatar { opacity:.55; }
+    .inactive-meta { display:block; margin-top:.1rem; color:#8a93a8; font-size:.72rem; }
     .reactivate { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; padding:.3rem .7rem; border:1px solid #3867d6; border-radius:.6rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; }
     .reactivate:disabled { cursor:wait; opacity:.6; }
     .sheet-backdrop { position:fixed; inset:0; z-index:40; background:rgb(15 24 45 / 35%); }

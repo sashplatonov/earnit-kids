@@ -137,6 +137,8 @@ export const appMessages = {
         family: {
             title: 'Семья',
             children: 'Дети',
+            statisticsMeta: 'активность семьи',
+            addChildMeta: 'новый профиль',
             noChildren: 'Детей пока нет.',
             currentChild: 'Текущий ребёнок',
             addChild: 'Добавить ребёнка',
@@ -158,6 +160,9 @@ export const appMessages = {
             notifications: 'Уведомления',
             viewAsChild: 'Посмотреть как ребёнок',
             inactiveChildren: 'Неактивные дети',
+            inactiveNotice: 'Есть неактивный ребёнок',
+            inactiveNoticeHint: 'Активируйте профиль, если он снова должен участвовать в заданиях и наградах.',
+            inactiveMeta: 'Неактивна',
             status: 'Статус',
             active: 'Активен',
             inactive: 'Неактивен',
