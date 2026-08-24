@@ -104,7 +104,6 @@ Useful local endpoints:
 ```text
 apps/backend/   Quarkus API, domain services, persistence, migrations
 apps/web/       SvelteKit public pages, workspace, Telegram surface, tests
-mobile/         Capacitor packaging around the web runtime
 docs/           Operations and monitoring runbooks
 ```
 
@@ -115,11 +114,10 @@ For deeper contracts, read the [backend architecture](apps/backend/docs/ARCHITEC
 ## Privacy and release boundaries
 
 The repository contains demo screenshots and local-safe fixtures only. Never
-commit `.env`, OAuth or Telegram credentials, VAPID private keys, or Android
-signing material. Release signing keys and provider secrets belong in the
-deployment secret manager. A local build proves source and test behavior; it
-does not prove provider delivery, a deployed configuration, or an official
-Telegram client launch.
+commit `.env`, OAuth or Telegram credentials, or VAPID private keys. Provider
+secrets belong in the deployment secret manager. A local build proves source
+and test behavior; it does not prove provider delivery, a deployed
+configuration, or an official Telegram client launch.
 
 ## Contributing
 

@@ -3,13 +3,12 @@
 
 ## Project Structure
 
-Monorepo with three active app directories:
+Monorepo with two active app directories:
 
 ```
 apps/
 ├── backend/   — Quarkus 3 + Java 25 REST API (JAX-RS, Hibernate, Flyway)
 ├── web/       — SvelteKit 2 + TypeScript frontend (adapter-node)
-mobile/        — Capacitor packaging around the web runtime
 docs/          — Architecture, i18n, migration, and ops docs
 ```
 
@@ -17,7 +16,6 @@ docs/          — Architecture, i18n, migration, and ops docs
 | --- | --- | --- |
 | `apps/backend` | REST API, auth, business logic, DB migrations | `resource/`, `service/`, `repository/`, `domain/model/`, `dto/`, `config/` |
 | `apps/web` | SSR frontend, public pages, app shell, edge proxy | `src/routes/`, `src/lib/components/`, `src/lib/services/`, `src/lib/stores/` |
-| `mobile` | Capacitor iOS/Android packaging | `apps-mobile/mobile/`, `assets/` |
 
 ## Build, Test & Dev Commands
 
@@ -72,7 +70,7 @@ docker compose down
 ```
 <type>(<scope>): <short description>
 ```
-Types: `feat|fix|refactor|test|docs|chore|style|perf`. Scopes: `backend|web|mobile|docker|i18n|docs`.
+Types: `feat|fix|refactor|test|docs|chore|style|perf`. Scopes: `backend|web|docker|i18n|docs`.
 
 **PR checklist:** `mvnw verify` passes, `npm run lint && npm run test && npm run build` passes, E2E if UI changed, no `.bak`/debug files, migrations sequential, new env vars in `.env.example`.
 

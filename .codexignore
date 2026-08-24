@@ -1,6 +1,5 @@
 # Dependencies and build artifacts
 node_modules/
-mobile/node_modules/
 apps/backend/target/
 dist/
 coverage/
