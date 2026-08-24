@@ -354,7 +354,7 @@ git commit -m "feat(web): change-role sheet with Editor/Viewer cards"
 
 ## TASK-006: Admin-transfer request schema and entity
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** -
 
