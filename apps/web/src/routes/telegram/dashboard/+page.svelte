@@ -7,6 +7,7 @@
     import { navigating } from '$app/stores';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
     import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
+    import TelegramParentReturn from '$lib/components/telegram/TelegramParentReturn.svelte';
 
     const i18n = useI18n();
 
@@ -274,6 +275,7 @@
     </div>
 {:else}
     <main class="dashboard-container" aria-busy={periodLoading || $navigating !== null}>
+        <TelegramParentReturn href="/telegram" />
         <header class="dashboard-header">
             <h1>{t('title')}</h1>
             <p class="subtitle">{t('subtitle')}</p>

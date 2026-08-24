@@ -15,6 +15,7 @@
     import { loadTelegramHistory } from '$lib/services/telegramActivity';
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
+    import TelegramParentReturn from './TelegramParentReturn.svelte';
     import TelegramTabBar from './ui/TelegramTabBar.svelte';
     import TelegramAsyncState from './ui/TelegramAsyncState.svelte';
     import type { TelegramAsyncState as AsyncState } from './ui/telegramUi';
@@ -24,7 +25,7 @@
     const i18n = useI18n();
 
     export let publicOrigin = '';
-    export let onExitPreview: () => void = () => {};
+    export let onExitPreview: (() => void) | null = null;
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
@@ -106,9 +107,7 @@
 
 <svelte:window on:visibilitychange={onVisibility} />
 <main class="child-workspace" aria-labelledby="child-workspace-title">
-    {#if onExitPreview}
-        <button class="exit-preview" type="button" on:click={onExitPreview}><TelegramIcon name="back" size={16} label={$i18n.t('app.telegram.childShell.exitPreview')} /><span>{$i18n.t('app.telegram.childShell.exitPreview')}</span></button>
-    {/if}
+    {#if onExitPreview}<TelegramParentReturn onClick={onExitPreview} />{/if}
     <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} loading={loading || Boolean(error)} />
     <TelegramTabBar tabs={tabs} selected={view} idPrefix="child" ariaLabel={$i18n.t('app.telegram.childShell.workspace')} onSelect={selectView} />
     <div aria-labelledby={`child-tab-${view}`} id={`child-panel-${view}`} class="tab-panel" role="tabpanel" tabindex="0">
@@ -136,7 +135,6 @@
 </main>
 
 <style>
-    .child-workspace { box-sizing:border-box; display:flex; flex-direction:column; width:100%; max-width:48rem; min-height:100vh; margin:0 auto; padding:calc(.75rem + env(safe-area-inset-top)) 1rem calc(2rem + env(safe-area-inset-bottom)); } .exit-preview { display:inline-flex; align-items:center; gap:.35rem; min-height:2.25rem; margin:0 0 .5rem; padding:.3rem .6rem; border:1px solid #dfe4ee; border-radius:.6rem; background:#fff; color:#3867d6; font:inherit; font-weight:700; cursor:pointer; } .tab-panel { flex:1 1 auto; min-height:0; } .site-link { display:flex; justify-content:center; flex-shrink:0; margin-top:1.25rem; } .site-link a { display:inline-flex; align-items:center; gap:.3rem; color:#8a93a8; font-size:.78rem; text-decoration:none; } .site-link a:hover { color:#3867d6; } .site-link a:focus-visible { outline:3px solid #80aaff; outline-offset:2px; border-radius:.3rem; }
+    .child-workspace { box-sizing:border-box; display:flex; flex-direction:column; width:100%; max-width:48rem; min-height:100vh; margin:0 auto; padding:calc(.75rem + env(safe-area-inset-top)) 1rem calc(2rem + env(safe-area-inset-bottom)); } .tab-panel { flex:1 1 auto; min-height:0; } .site-link { display:flex; justify-content:center; flex-shrink:0; margin-top:1.25rem; } .site-link a { display:inline-flex; align-items:center; gap:.3rem; color:#8a93a8; font-size:.78rem; text-decoration:none; } .site-link a:hover { color:#3867d6; } .site-link a:focus-visible { outline:3px solid #80aaff; outline-offset:2px; border-radius:.3rem; }
     @media (max-width:700px) { .child-workspace { padding:.65rem .75rem calc(5.75rem + env(safe-area-inset-bottom)); } }
-    .exit-preview { min-height:2.75rem; }
 </style>

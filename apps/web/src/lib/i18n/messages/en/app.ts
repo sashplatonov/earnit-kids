@@ -106,6 +106,7 @@ export const appMessages = {
         cancelButton: 'Cancel',
     },
     telegram: {
+        parentReturn: 'Back to parent',
         shell: {
             workspace: 'My family',
             loadError: 'Could not load your family. Try again.',

@@ -21,7 +21,9 @@
 {#if showSessionActions}<WorkspaceSessionActions />{/if}
 {#if resolveWorkspaceRole(role) === 'parent' && !viewAsChild}
     <ParentWorkspaceShell {publicOrigin} {showAccessPanel} onViewAsChild={showChildPreview} />
-{:else}
+{:else if viewAsChild}
     <ChildWorkspaceShell {publicOrigin} onExitPreview={() => viewAsChild = false} />
+{:else}
+    <ChildWorkspaceShell {publicOrigin} />
 {/if}
 {#if showBrowserPush}<BrowserPushControls />{/if}
