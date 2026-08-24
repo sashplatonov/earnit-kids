@@ -310,7 +310,7 @@ git commit -m "feat(web): compose statistics coins panel"
 
 ## STAT-UI-006: Compose the Rewards panel like the reference
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-001
 

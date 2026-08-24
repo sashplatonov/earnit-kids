@@ -26,6 +26,8 @@ describe('admin Statistics localization', () => {
         expect(ruAdminMessages.dashboard.aria.tabs).toBe('Разделы статистики');
         expect(enAdminMessages.dashboard.tooltips.close).toBe('Close explanation');
         expect(ruAdminMessages.dashboard.tooltips.close).toBe('Закрыть пояснение');
+        expect(enAdminMessages.dashboard.rewards.rankingsEmpty).toBe('Not enough reward preference data for this period.');
+        expect(ruAdminMessages.dashboard.rewards.rankingsEmpty).toBe('Недостаточно данных о выборе наград за этот период.');
     });
 
     it('formats dashboard numbers and update time using the active locale', () => {

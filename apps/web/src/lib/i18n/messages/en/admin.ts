@@ -177,6 +177,7 @@ export const adminMessages = {
         rewards: {
             prices: 'Prices',
             whatChildrenPick: 'What children pick',
+            rankingsEmpty: 'Not enough reward preference data for this period.',
             medianPrice: {
                 title: 'Median price',
                 desc: 'active rewards',

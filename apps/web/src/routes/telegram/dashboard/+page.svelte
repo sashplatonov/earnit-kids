@@ -581,18 +581,22 @@
                 </div>
 
                 <h2 class="section-title">{t('rewards.whatChildrenPick')}</h2>
-                <div class="rows">
-                    {#each rewards?.rankings ?? [] as rank (rank.category)}
-                        <div class="rank">
-                            <div class="rank-icon">🎁</div>
-                            <div class="rank-content">
-                                <b>{rank.category}</b>
-                                <small>{rank.count} · {rank.percent}%</small>
+                {#if rewards?.rankings && rewards.rankings.length > 0}
+                    <div class="rows">
+                        {#each rewards.rankings as rank (rank.category)}
+                            <div class="rank">
+                                <div class="rank-icon">🎁</div>
+                                <div class="rank-content">
+                                    <b>{rank.category}</b>
+                                    <small>{rank.count} · {rank.percent}%</small>
+                                </div>
+                                <div class="rank-val">#{rank.rank}</div>
                             </div>
-                            <div class="rank-val">#{rank.rank}</div>
-                        </div>
-                    {/each}
-                </div>
+                        {/each}
+                    </div>
+                {:else}
+                    <div class="empty-note">{t('rewards.rankingsEmpty')}</div>
+                {/if}
                 {/if}
             </div>
 
