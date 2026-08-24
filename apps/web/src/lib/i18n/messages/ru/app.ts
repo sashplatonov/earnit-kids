@@ -102,21 +102,7 @@ export const appMessages = {
         save: 'Добавить',
     },
     parentAccess: {
-        badge: 'Доступ родителей',
-        title: 'Управление доступом родителей',
-        description: 'Приглашайте родителей в эту семью и обновляйте уровни доступа.',
-        readOnlyTitle: 'Только просмотр',
-        readOnlyText: 'Ваш уровень доступа не позволяет редактировать родителей в семье.',
-        loading: 'Загружаем доступ родителей...',
-        empty: 'Дополнительных родителей пока нет.',
-        loadError: 'Не удалось загрузить доступ родителей',
-        emailLabel: 'Email родителя',
-        emailPlaceholder: 'name@example.com',
-        emailRequired: 'Введите email родителя',
-        permissionLabel: 'Доступ',
-        inviteButton: 'Пригласить родителя',
         saveButton: 'Сохранить изменения',
-        removeButton: 'Удалить',
         cancelButton: 'Отмена',
     },
     telegram: {
@@ -419,18 +405,7 @@ export const appMessages = {
             parentInviteHint: 'Вас пригласили стать родителем в семье. Примите приглашение через свой Telegram.',
             acceptInvite: 'Принять приглашение',
         },
-        roles: {
-            title: 'Роли и доступы',
-            parents: 'Родители',
-            children: 'Дети',
-            owner: 'Владелец',
-            admin: 'Админ',
-            permissionViewer: 'Просмотр',
-            permissionEditor: 'Редактор',
-            permissionFamilyAdmin: 'Админ семьи',
-            pending: 'Ожидает',
-            loadError: 'Не удалось загрузить роли. Попробуйте ещё раз.',
-        },
+
         notifications: {
             title: 'Уведомления',
             browserPush: {

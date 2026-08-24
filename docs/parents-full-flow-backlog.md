@@ -552,7 +552,7 @@ git commit -m "feat(web): admin-transfer approval flow (select, pending, accept/
 
 ## TASK-009: Remove dead code and unused i18n keys
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** TASK-001, TASK-002, TASK-008
 

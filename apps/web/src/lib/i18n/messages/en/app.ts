@@ -102,21 +102,7 @@ export const appMessages = {
         save: 'Add',
     },
     parentAccess: {
-        badge: 'Parent access',
-        title: 'Manage parent access',
-        description: 'Invite parents to this family and keep access levels up to date.',
-        readOnlyTitle: 'Read-only access',
-        readOnlyText: 'Your access level does not allow editing parent memberships.',
-        loading: 'Loading parent access...',
-        empty: 'No extra parent memberships yet.',
-        loadError: 'Could not load parent access',
-        emailLabel: 'Parent email',
-        emailPlaceholder: 'name@example.com',
-        emailRequired: 'Enter a parent email address',
-        permissionLabel: 'Permission',
-        inviteButton: 'Invite parent',
         saveButton: 'Save changes',
-        removeButton: 'Remove',
         cancelButton: 'Cancel',
     },
     telegram: {
@@ -419,18 +405,7 @@ export const appMessages = {
             parentInviteHint: 'You\u2019ve been invited to join a family as a parent. Accept to join with your Telegram account.',
             acceptInvite: 'Accept invitation',
         },
-        roles: {
-            title: 'Roles and access',
-            parents: 'Parents',
-            children: 'Children',
-            owner: 'Owner',
-            admin: 'Admin',
-            permissionViewer: 'Viewer',
-            permissionEditor: 'Editor',
-            permissionFamilyAdmin: 'Family admin',
-            pending: 'Pending',
-            loadError: 'Could not load roles. Try again.',
-        },
+
         notifications: {
             title: 'Notifications',
             browserPush: {
