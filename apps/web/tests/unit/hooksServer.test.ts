@@ -39,4 +39,25 @@ describe('hooks.server handleError', () => {
             traceId: 'trace-123',
         }));
     });
+
+    it('does not log expected unknown-route 404 responses as server errors', () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        const result = handleError({
+            error: new Error('Not found: /wp-login.php'),
+            event: {
+                request: {
+                    method: 'GET',
+                    headers: new Headers(),
+                },
+                route: { id: null },
+                url: new URL('https://example.com/en/wp-login.php'),
+            },
+            message: 'Not Found',
+            status: 404,
+        } as never);
+
+        expect(result).toEqual({ message: 'Not Found' });
+        expect(consoleError).not.toHaveBeenCalled();
+    });
 });

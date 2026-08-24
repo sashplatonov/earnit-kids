@@ -77,6 +77,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 export const handleError: HandleServerError = ({ error, event, message, status }) => {
+    // EXPLAIN: Unknown public URLs are expected on an internet-facing edge
+    // (for example, automated probes for WordPress or Tomcat endpoints). They
+    // are already rendered by +error.svelte, so logging their stack traces as
+    // server errors creates false alerts without adding diagnostic value.
+    if (status === 404) {
+        return { message };
+    }
+
     console.error('SvelteKit server error', {
         method: event.request.method,
         url: event.url.toString(),
