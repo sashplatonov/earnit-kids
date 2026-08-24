@@ -90,6 +90,7 @@ export const adminMessages = {
         updatedAt: '{time}',
         aria: {
             tabs: 'Statistics tabs',
+            activitySubtabs: 'Activity views',
         },
         tabs: {
             overview: 'Overview',
@@ -97,6 +98,11 @@ export const adminMessages = {
             rewards: 'Rewards',
             tasks: 'Tasks',
             activity: 'Activity',
+        },
+        activityTabs: {
+            activation: 'Activation',
+            retention: 'Retention',
+            needs: 'Needs',
         },
         periods: {
             '7d': '7 days',

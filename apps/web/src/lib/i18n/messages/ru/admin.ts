@@ -90,6 +90,7 @@ export const adminMessages = {
         updatedAt: '{time}',
         aria: {
             tabs: 'Разделы статистики',
+            activitySubtabs: 'Подразделы активности',
         },
         tabs: {
             overview: 'Обзор',
@@ -97,6 +98,11 @@ export const adminMessages = {
             rewards: 'Награды',
             tasks: 'Задания',
             activity: 'Активность',
+        },
+        activityTabs: {
+            activation: 'Активация',
+            retention: 'Удержание',
+            needs: 'Потребности',
         },
         periods: {
             '7d': '7 дней',

@@ -24,6 +24,18 @@ describe('admin Statistics localization', () => {
         expect(ruAdminMessages.dashboard.title).toBe('Статистика');
         expect(enAdminMessages.dashboard.aria.tabs).toBe('Statistics tabs');
         expect(ruAdminMessages.dashboard.aria.tabs).toBe('Разделы статистики');
+        expect(enAdminMessages.dashboard.aria.activitySubtabs).toBe('Activity views');
+        expect(ruAdminMessages.dashboard.aria.activitySubtabs).toBe('Подразделы активности');
+        expect(enAdminMessages.dashboard.activityTabs).toEqual({
+            activation: 'Activation',
+            retention: 'Retention',
+            needs: 'Needs',
+        });
+        expect(ruAdminMessages.dashboard.activityTabs).toEqual({
+            activation: 'Активация',
+            retention: 'Удержание',
+            needs: 'Потребности',
+        });
         expect(enAdminMessages.dashboard.tooltips.close).toBe('Close explanation');
         expect(ruAdminMessages.dashboard.tooltips.close).toBe('Закрыть пояснение');
         expect(enAdminMessages.dashboard.rewards.rankingsEmpty).toBe('Not enough reward preference data for this period.');

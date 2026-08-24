@@ -49,6 +49,16 @@
 
     let activeTab: TabId = 'overview';
 
+    const activitySubtabs = [
+        { id: 'activation', label: t('activityTabs.activation') },
+        { id: 'retention', label: t('activityTabs.retention') },
+        { id: 'needs', label: t('activityTabs.needs') },
+    ] as const;
+
+    type ActivitySubtabId = typeof activitySubtabs[number]['id'];
+
+    let activeActivitySubtab: ActivitySubtabId = 'activation';
+
     // Redirect non-admins to the Telegram Mini App home
     onMount(() => {
         document.body.classList.remove('admin-loading');
@@ -74,6 +84,30 @@
         const nextTab = tabs[nextIndex];
         activeTab = nextTab.id;
         document.getElementById(`tab-${nextTab.id}`)?.focus();
+    }
+
+    function switchActivitySubtab(subtabId: ActivitySubtabId) {
+        activeActivitySubtab = subtabId;
+    }
+
+    function handleActivitySubtabKeydown(event: KeyboardEvent, subtabId: ActivitySubtabId) {
+        if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+            event.preventDefault();
+            switchActivitySubtab(subtabId);
+            return;
+        }
+
+        const currentIndex = activitySubtabs.findIndex((subtab) => subtab.id === subtabId);
+        let nextIndex = currentIndex;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % activitySubtabs.length;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + activitySubtabs.length) % activitySubtabs.length;
+        if (event.key === 'Home') nextIndex = 0;
+        if (event.key === 'End') nextIndex = activitySubtabs.length - 1;
+        if (nextIndex === currentIndex) return;
+        event.preventDefault();
+        const nextSubtab = activitySubtabs[nextIndex];
+        switchActivitySubtab(nextSubtab.id);
+        document.getElementById(`activity-subtab-${nextSubtab.id}`)?.focus();
     }
 
     function changePeriod(period: string) {
@@ -688,6 +722,23 @@
                 role="tabpanel"
                 aria-labelledby="tab-activity"
             >
+                <div class="activity-subtabs" role="tablist" aria-label={t('aria.activitySubtabs')}>
+                    {#each activitySubtabs as subtab (subtab.id)}
+                        <button
+                            type="button"
+                            id={`activity-subtab-${subtab.id}`}
+                            class="activity-subtab"
+                            class:active={activeActivitySubtab === subtab.id}
+                            role="tab"
+                            aria-selected={activeActivitySubtab === subtab.id}
+                            aria-controls="panel-activity"
+                            tabindex={activeActivitySubtab === subtab.id ? 0 : -1}
+                            on:click={() => switchActivitySubtab(subtab.id)}
+                            on:keydown={(event) => handleActivitySubtabKeydown(event, subtab.id)}
+                        >{subtab.label}</button>
+                    {/each}
+                </div>
+
                 <h2 class="section-title">{t('sections.activation')}</h2>
                 {#if sectionUnavailable('activation')}
                     <div class="empty-state" role="status">
@@ -1041,6 +1092,7 @@
 
     .tab:focus-visible,
     .seg:focus-visible,
+    .activity-subtab:focus-visible,
     .info:focus-visible,
     .tooltip-close:focus-visible,
     .retry-btn:focus-visible,
@@ -1067,6 +1119,37 @@
         background: var(--primary, #5e6fec);
         color: #fff;
         border-color: var(--primary, #5e6fec);
+    }
+
+    .activity-subtabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 3px;
+        margin: 4px 0 14px;
+        padding: 4px;
+        background: #e4e8f1;
+        border-radius: 15px;
+    }
+
+    .activity-subtab {
+        min-width: 0;
+        min-height: 44px;
+        padding: 8px 6px;
+        border: 0;
+        border-radius: 11px;
+        background: transparent;
+        color: #687289;
+        font-size: 12px;
+        font-weight: 650;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .activity-subtab.active {
+        background: #fff;
+        color: #4456d8;
+        font-weight: 750;
+        box-shadow: 0 2px 5px rgba(30, 40, 70, 0.12);
     }
 
     .tab-panels {

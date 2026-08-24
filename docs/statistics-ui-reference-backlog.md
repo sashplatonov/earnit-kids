@@ -425,7 +425,7 @@ git commit -m "feat(web): compose statistics tasks panel"
 
 ## STAT-UI-008: Add accessible Activity subtab navigation
 
-**Status:** TODO  
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** STAT-UI-002, STAT-UI-003
 
