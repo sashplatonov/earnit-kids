@@ -318,6 +318,22 @@ class FamilyCommandResourceTest {
     }
 
     @Test
+    void purchaseItem_childSession_isUnauthorized() {
+        Response response = shopResource.purchaseItem(contextWithAuth(childAuth(10)), 2001L, 10);
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(familyActionService, never()).purchaseItem(anyString(), anyInt(), anyLong());
+    }
+
+    @Test
+    void approveRequest_childSession_isUnauthorized() {
+        Response response = requestResource.approveRequest(contextWithAuth(childAuth(10)), 2001L, 10);
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(familyActionService, never()).approveRequest(anyString(), any(), anyLong());
+    }
+
+    @Test
     void bulkTaskAction_adminDelegatesToActionServiceAndNotifiesFamily() {
         BulkTaskActionRequest request = new BulkTaskActionRequest(10, BulkActionType.delete, List.of(1001L, 1002L), null);
         FamilyDataResponse payload = new FamilyDataResponse(0, null, List.of(), List.of(), List.of(), List.of(),

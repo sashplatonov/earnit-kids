@@ -346,7 +346,7 @@ feat(backend): make coin history auditable
 
 ## PORT-005: Add real database proof for tenant isolation and concurrent mutations
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** PORT-004
 
