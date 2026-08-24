@@ -596,7 +596,9 @@ export const appMessages = {
             back: 'Back',
             cancel: 'Cancel',
             telegramWarn: 'Before sending the link, make sure you are sending it to the right person. The link is single-use and should have a limited validity.',
-            linkExpiryHint: 'The link is valid for 24 hours and can be used once.',
+            linkExpiryNote: 'The link is valid for 24 hours and can be used once.',
+            openInTelegram: 'Open in Telegram',
+            close: 'Close',
         },
         limits: {
             title: 'Limits',

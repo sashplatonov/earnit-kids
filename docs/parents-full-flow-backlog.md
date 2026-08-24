@@ -173,7 +173,7 @@ git commit -m "feat(web): 3-step new-parent wizard with Email/Telegram method ch
 
 ## TASK-003: Telegram link screen with QR and Open-in-Telegram
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** TASK-002
 

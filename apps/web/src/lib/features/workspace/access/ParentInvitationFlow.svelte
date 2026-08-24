@@ -55,6 +55,8 @@
         try { await navigator.clipboard.writeText(wizardLink); wizardCopied = true; } catch { wizardCopied = false; }
     }
 
+    function openWizardLink(): void { window.open(wizardLink, '_blank', 'noopener'); }
+
     $: wizardNameValid = wizardName.trim().length > 0;
     $: wizardEmailValid = wizardEmail.trim().length > 0;
 
@@ -256,12 +258,16 @@
                         <div class="link-value">{wizardLink}</div>
                         <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.copyLink')} on:click={copyWizardLink}><TelegramIcon name="copy" size={19} /></button>
                     </div>
-                    <p class="small">{$i18n.t('app.telegram.parents.linkExpiryHint')}</p>
+                    <div class="qr-row">
+                        <div class="qr" aria-hidden="true"></div>
+                        <p class="small">{$i18n.t('app.telegram.parents.linkExpiryNote')}</p>
+                    </div>
                     {#if wizardCopied}<p class="success" role="status" aria-live="polite">{$i18n.t('app.telegram.parents.copied')}</p>{/if}
                 </div>
             {/if}
-            <div class="action-grid one">
-                <button type="button" class="cancel" on:click={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.cancel')}</button>
+            <div class="action-grid">
+                <button type="button" class="cancel" on:click={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.close')}</button>
+                <button type="button" class="btn" on:click={openWizardLink}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.openInTelegram')}</button>
             </div>
         {/if}
         {#if wizardError}<p class="error" role="alert">{wizardError}</p>{/if}
@@ -323,7 +329,6 @@
     .info{background:#eef3ff;color:#5164b8;border:1px solid #d8e0ff}
     .small{font-size:.7rem;color:#66718a;line-height:1.35;margin:.6rem 0 0}
     .action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
-    .action-grid.one{grid-template-columns:1fr}
     .btn,.ghost,.cancel{min-height:2.75rem;border-radius:.7rem;padding:.5rem .7rem;border:1px solid #dfe4ef;font:inherit;font-weight:700;cursor:pointer}
     .btn{background:#3867d6;border-color:#3867d6;color:#fff}
     .btn:disabled{opacity:.55;cursor:wait}
@@ -344,6 +349,9 @@
     .link-box{display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:.5rem}
     .link-value{height:2.625rem;border:1px solid #dfe4ef;border-radius:.65rem;background:#fff;display:flex;align-items:center;padding:0 .6rem;font-size:.74rem;color:#46516c;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .link-box .icon-btn{width:42px;height:42px;padding:0;border-radius:.65rem;border:1px solid #dfe4ef;background:#fff;color:#42506e;display:grid;place-items:center;cursor:pointer}
+    .qr-row{display:flex;gap:.75rem;align-items:center;margin-top:.75rem}
+    .qr{width:94px;height:94px;flex:0 0 auto;border:1px solid #dfe4ef;border-radius:.75rem;background:linear-gradient(90deg,#172036 10px,transparent 10px) 0 0/24px 24px,linear-gradient(#172036 10px,transparent 10px) 0 0/24px 24px,#fff}
+    .qr-row .small{margin:0;flex:1;min-width:0}
 
     @media(max-width:640px){ .parent-row { grid-template-columns:auto minmax(0,1fr); } .row-actions { grid-column:2; justify-content:end; } .id.email,.id.tg { max-width:100%; } }
     @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%} }
