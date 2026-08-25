@@ -131,18 +131,14 @@ final class TelegramParentRequestHandler {
       return TelegramOutcomeCopy.parentRejected();
     }
     var request = view.requests().stream().filter(value -> value.id() == requestId).findFirst();
-    String title = request.map(TelegramParentRequestHandler::title).orElse(null);
+    String title = request.map(value -> TelegramViewSupport.requestTitle(value, view.locale())).orElse(
+        new TelegramMessageResolver().text(view.locale(), "telegram.request.request"));
     int delta = request.map(value -> value.coins()).orElse(0);
     return TelegramOutcomeCopy.parentApproved(
-        title == null ? "Запрос" : title,
+        title,
         delta,
         view.balance(),
         request.map(value -> !value.requestType().isPurchase()).orElse(true));
   }
 
-  private static String title(RequestDto request) {
-    return request.title() != null
-        ? request.title()
-        : request.taskName() != null ? request.taskName() : request.itemName();
-  }
 }

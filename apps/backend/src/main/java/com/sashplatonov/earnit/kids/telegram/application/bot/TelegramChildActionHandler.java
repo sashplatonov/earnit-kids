@@ -22,7 +22,8 @@ final class TelegramChildActionHandler {
     void task(long telegramUserId, long taskId, JsonNode callback) {
         quickActions.load(telegramUserId, null).ifPresent(view -> {
             String taskName = view.tasks().stream()
-                .filter(task -> task.id() == taskId).map(task -> task.name()).findFirst().orElse(null);
+                .filter(task -> task.id() == taskId).map(task -> task.name()).filter(name -> name != null)
+                .findFirst().orElse(null);
             OperationResult<TelegramQuickActionResponse> result =
                 quickActions.requestTask(telegramUserId, view.childId(), taskId);
             try {
@@ -76,9 +77,11 @@ final class TelegramChildActionHandler {
             return;
         }
         boolean success = result instanceof OperationResult.Success<TelegramQuickActionResponse>;
+      String fallbackTaskName = new TelegramMessageResolver().text(
+          TelegramLocaleContext.current(), "telegram.request.task");
       String text =
           success
-              ? TelegramOutcomeCopy.waiting(taskName == null ? "Task" : taskName)
+              ? TelegramOutcomeCopy.waiting(taskName == null ? fallbackTaskName : taskName)
               : TelegramOutcomeCopy.error();
         List<TelegramBotApiClient.InlineButton> buttons = success
             ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);
