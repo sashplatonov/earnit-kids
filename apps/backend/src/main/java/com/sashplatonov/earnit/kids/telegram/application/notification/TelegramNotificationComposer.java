@@ -29,10 +29,10 @@ import java.util.function.Supplier;
 public class TelegramNotificationComposer {
     private final Supplier<ChildRepository> children;
     private final Supplier<PurchaseRequestRepository> requests;
-    private final ShopItemRepository shopItems;
-    private final TelegramCallbackService callbacks;
-    private final TelegramChildOutcomeText outcomeText;
-    private final FamilyRepository families;
+    private final Supplier<ShopItemRepository> shopItems;
+    private final Supplier<TelegramCallbackService> callbacks;
+    private final Supplier<TelegramChildOutcomeText> outcomeText;
+    private final Supplier<FamilyRepository> families;
 
     @Inject
     public TelegramNotificationComposer(ChildRepository children,
@@ -43,10 +43,10 @@ public class TelegramNotificationComposer {
                                         FamilyRepository families) {
         this.children = () -> children;
         this.requests = () -> requests;
-        this.shopItems = shopItems;
-        this.callbacks = callbacks;
-        this.outcomeText = outcomeText;
-        this.families = families;
+        this.shopItems = () -> shopItems;
+        this.callbacks = callbacks == null ? null : () -> callbacks;
+        this.outcomeText = () -> outcomeText;
+        this.families = families == null ? null : () -> families;
     }
 
     TelegramNotificationComposer(ChildRepository children,
@@ -74,7 +74,7 @@ public class TelegramNotificationComposer {
 
     @SuppressWarnings("unchecked")
     private <T> T withFamilyLocale(ApplicationOutboxEventEntity event, java.util.function.Supplier<T> action) {
-        FamilyLocale locale = families == null ? FamilyLocale.ru : families.findByDbId(event.getFamilyId())
+        FamilyLocale locale = families == null ? FamilyLocale.ru : families.get().findByDbId(event.getFamilyId())
             .map(value -> value.getLocale() == null ? FamilyLocale.en : value.getLocale())
             .orElse(FamilyLocale.en);
         final Object[] result = new Object[1];
@@ -110,7 +110,7 @@ public class TelegramNotificationComposer {
     }
 
     private TelegramBotApiClient.InlineButton nav(String label, String action) {
-        return TelegramBotApiClient.InlineButton.callback(label, callbacks.signNavigation(action));
+        return TelegramBotApiClient.InlineButton.callback(label, callbacks.get().signNavigation(action));
     }
 
     private String requestText(ApplicationOutboxEventEntity event) {
@@ -125,7 +125,7 @@ public class TelegramNotificationComposer {
     }
 
     private String childOutcomeText(ApplicationOutboxEventEntity event) {
-        return outcomeText.text(event);
+        return outcomeText.get().text(event);
     }
 
     private boolean isRequestEvent(ApplicationOutboxEventType type) {
@@ -152,7 +152,7 @@ public class TelegramNotificationComposer {
             return request.getTaskName();
         }
         if (request.getItemId() != null) {
-            return shopItems.findByIdOptional(request.getItemId())
+            return shopItems.get().findByIdOptional(request.getItemId())
                 .map(ShopItemEntity::getName)
                 .orElse(null);
         }
