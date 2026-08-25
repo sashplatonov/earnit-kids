@@ -20,6 +20,7 @@
 
     export let publicOrigin = '';
     export let onViewAsChild: () => void = () => {};
+    export let showSessionActions = false;
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
@@ -56,7 +57,7 @@
 <main class="parent-workspace" aria-label={$i18n.t('app.telegram.shell.workspace')}>
     <TelegramParentHeader onViewAsChild={onViewAsChild} />
 
-    <TelegramTabBar tabs={tabs} selected={view} idPrefix="parent" ariaLabel={$i18n.t('app.telegram.shell.workspace')} onSelect={selectView} />
+    <TelegramTabBar tabs={tabs} selected={view} idPrefix="parent" ariaLabel={$i18n.t('app.telegram.shell.workspace')} onSelect={selectView} {showSessionActions} />
     <div aria-labelledby={`parent-tab-${view}`} id={`parent-panel-${view}`} role="tabpanel" tabindex="0">
         {#if loading || error}
             <TelegramAsyncState state={(loading ? 'loading' : 'error') as AsyncState} loadingLabel={$i18n.t('app.telegram.shell.loading')} errorMessage={error} retryLabel={$i18n.t('app.telegram.shell.retry')} onRetry={retry} />

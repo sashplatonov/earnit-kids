@@ -26,6 +26,7 @@
 
     export let publicOrigin = '';
     export let onExitPreview: (() => void) | null = null;
+    export let showSessionActions = false;
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
@@ -109,7 +110,7 @@
 <main class="child-workspace" aria-labelledby="child-workspace-title">
     {#if onExitPreview}<TelegramParentReturn onClick={onExitPreview} />{/if}
     <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} loading={loading || Boolean(error)} />
-    <TelegramTabBar tabs={tabs} selected={view} idPrefix="child" ariaLabel={$i18n.t('app.telegram.childShell.workspace')} onSelect={selectView} />
+    <TelegramTabBar tabs={tabs} selected={view} idPrefix="child" ariaLabel={$i18n.t('app.telegram.childShell.workspace')} onSelect={selectView} {showSessionActions} />
     <div aria-labelledby={`child-tab-${view}`} id={`child-panel-${view}`} class="tab-panel" role="tabpanel" tabindex="0">
         {#if loading || error}
             <TelegramAsyncState state={(loading ? 'loading' : 'error') as AsyncState} loadingLabel={$i18n.t('app.telegram.childShell.loading')} errorMessage={error} retryLabel={refreshing ? $i18n.t('app.telegram.childShell.refreshing') : $i18n.t('app.telegram.childShell.retry')} onRetry={retry} />

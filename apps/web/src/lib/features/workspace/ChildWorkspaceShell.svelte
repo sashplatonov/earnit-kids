@@ -3,6 +3,7 @@
 
     export let publicOrigin = '';
     export let onExitPreview: () => void = () => {};
+    export let showSessionActions = false;
 </script>
 
-<TelegramChildShell {publicOrigin} {onExitPreview} />
+<TelegramChildShell {publicOrigin} {onExitPreview} {showSessionActions} />

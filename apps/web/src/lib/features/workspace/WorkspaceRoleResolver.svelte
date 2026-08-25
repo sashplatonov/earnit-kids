@@ -3,7 +3,6 @@
     import ChildWorkspaceShell from './ChildWorkspaceShell.svelte';
     import { resolveWorkspaceRole } from './workspaceRoleResolver';
     import BrowserPushControls from './notifications/BrowserPushControls.svelte';
-    import WorkspaceSessionActions from './WorkspaceSessionActions.svelte';
 
     export let role = '';
     export let publicOrigin = '';
@@ -18,12 +17,11 @@
     }
 </script>
 
-{#if showSessionActions}<WorkspaceSessionActions />{/if}
 {#if resolveWorkspaceRole(role) === 'parent' && !viewAsChild}
-    <ParentWorkspaceShell {publicOrigin} {showAccessPanel} onViewAsChild={showChildPreview} />
+    <ParentWorkspaceShell {publicOrigin} {showAccessPanel} {showSessionActions} onViewAsChild={showChildPreview} />
 {:else if viewAsChild}
-    <ChildWorkspaceShell {publicOrigin} onExitPreview={() => viewAsChild = false} />
+    <ChildWorkspaceShell {publicOrigin} {showSessionActions} onExitPreview={() => viewAsChild = false} />
 {:else}
-    <ChildWorkspaceShell {publicOrigin} />
+    <ChildWorkspaceShell {publicOrigin} {showSessionActions} />
 {/if}
 {#if showBrowserPush}<BrowserPushControls />{/if}

@@ -39,6 +39,8 @@ test('an authenticated parent can sign out with one pending request', async ({ p
     const logoutButton = page.locator('button.logout');
 
     await expect(logoutButton).toBeVisible();
+    await expect(page.locator('.tabs-shell button.logout')).toBeVisible();
+    await expect(page.locator('.session-actions:not(.session-actions-inline)')).toHaveCount(0);
     await expect(page.locator('.workspace-parent')).toBeVisible();
     let requestCount = 0;
     await page.route('**/api/logout', async (route) => {
@@ -83,6 +85,6 @@ test('an authenticated child sees the child workspace and browser sign out', asy
     await authenticate(page, 'child');
     await page.goto('/workspace');
 
-    await expect(page.getByRole('button', { name: /sign out|выйти/i })).toBeVisible();
+    await expect(page.locator('.tabs-shell button.logout')).toBeVisible();
     await expect(page.locator('.child-workspace')).toBeVisible();
 });

@@ -5,11 +5,12 @@
     export let publicOrigin = '';
     export let onViewAsChild: () => void = () => {};
     export let showAccessPanel = false;
+    export let showSessionActions = false;
 </script>
 
 <div class="workspace-parent">
     {#if showAccessPanel}<ParentAccessPanel />{/if}
-    <TelegramParentShell {publicOrigin} {onViewAsChild} />
+    <TelegramParentShell {publicOrigin} {onViewAsChild} {showSessionActions} />
 </div>
 
 <style>.workspace-parent{display:grid;gap:1rem;min-width:0}@media(max-width:520px){.workspace-parent{gap:.75rem}}</style>
