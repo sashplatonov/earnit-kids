@@ -233,7 +233,7 @@ git commit -m "fix(i18n): Localize Telegram delivery paths"
 
 ## I18N-REV-003: Keep family-language updates recoverable in the shared selector
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** I18N-REV-001
 

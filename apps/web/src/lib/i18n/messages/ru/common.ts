@@ -12,6 +12,8 @@ export const commonMessages = {
             en: 'Переключить на английский',
             ru: 'Переключить на русский',
         },
+        updateFailed: 'Не удалось изменить язык семьи.',
+        retry: 'Повторить',
     },
     navigation: {
         publicAria: 'Публичная навигация',

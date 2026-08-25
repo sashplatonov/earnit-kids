@@ -182,6 +182,9 @@ async function putJsonResult<T = unknown>(url: string, body: unknown): Promise<A
     }
 }
 
+export const updateFamilyLocale = (locale: string) =>
+    putJsonResult<void>('/api/family/locale', { locale });
+
 export async function postJsonResultWithValidation<T = unknown>(url: string, body: unknown): Promise<ImportActionResult<T>> {
     try {
         const res = await fetchWithCsrf(url, {

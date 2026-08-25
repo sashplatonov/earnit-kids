@@ -2,12 +2,14 @@
     import { page } from '$app/stores';
     import { LOCALES, LOCALE_COOKIE_NAME, type Locale } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
-    import { fetchWithCsrf } from '$lib/services/api';
+    import { updateFamilyLocale } from '$lib/services/api';
 
     export let compact: boolean = false;
     export let familyManaged: boolean = false;
     export let readOnly: boolean = false;
     let busy = false;
+    let failedLocale: Locale | null = null;
+    let retryButton: HTMLButtonElement;
 
     const i18n = useI18n();
 
@@ -15,12 +17,16 @@
         if (familyManaged && !readOnly) {
             if (busy) return;
             busy = true;
-            await fetchWithCsrf('/api/family/locale', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ locale: nextLocale }),
-            });
-            location.reload();
+            failedLocale = null;
+            const result = await updateFamilyLocale(nextLocale);
+            if (result.ok) {
+                location.reload();
+            } else {
+                failedLocale = nextLocale;
+                busy = false;
+                await Promise.resolve();
+                retryButton?.focus();
+            }
             return;
         }
 
@@ -60,6 +66,18 @@
             </button>
         {/each}
     </div>
+    {#if failedLocale}
+        <div class="locale-switcher__error" role="alert">
+            <span>{$i18n.t('common.locale.updateFailed')}</span>
+            <button
+                bind:this={retryButton}
+                class="locale-switcher__retry"
+                type="button"
+                disabled={busy}
+                on:click={() => failedLocale && handleChange(failedLocale)}
+            >{$i18n.t('common.locale.retry')}</button>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -118,5 +136,22 @@
         border-radius: 0.1rem;
         box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14);
         flex: 0 0 auto;
+    }
+
+    .locale-switcher__error {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .locale-switcher__retry {
+        min-height: 44px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: underline;
+        cursor: pointer;
     }
 </style>
