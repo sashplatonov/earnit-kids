@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.telegram.application.bot;
 
 import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestStatus;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.api.response.RequestDto;
 import com.sashplatonov.earnit.kids.family.api.response.TaskDto;
 import com.sashplatonov.earnit.kids.telegram.api.response.TelegramQuickActionResponse;
@@ -25,10 +26,11 @@ final class TelegramViewSupport {
             .toList();
     }
 
-    static String requestTitle(RequestDto request) {
+    static String requestTitle(RequestDto request, FamilyLocale locale) {
         return request.title() != null ? request.title()
             : request.taskName() != null ? request.taskName()
-            : request.itemName() != null ? request.itemName() : "Запрос";
+            : request.itemName() != null ? request.itemName()
+            : new TelegramMessageResolver().text(locale, "telegram.request.request");
     }
 
     static int nextQueueIndex(List<RequestDto> pending, String currentRequestId) {

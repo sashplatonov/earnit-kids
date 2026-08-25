@@ -108,7 +108,7 @@ final class TelegramParentRequestHandler {
     RequestDto request = pending.get(0);
     return TelegramCopy.requestQueueText(
         view.childName(),
-        TelegramViewSupport.requestTitle(request),
+        TelegramViewSupport.requestTitle(request, view.locale()),
         request.coins(),
         !request.requestType().isPurchase(),
         1,

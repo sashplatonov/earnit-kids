@@ -43,7 +43,7 @@ final class TelegramMenuText {
             return TelegramOutcomeCopy.emptyRequests();
         }
         RequestDto request = pending.get(index);
-        return TelegramCopy.requestQueueText(view.childName(), TelegramViewSupport.requestTitle(request),
+        return TelegramCopy.requestQueueText(view.childName(), TelegramViewSupport.requestTitle(request, view.locale()),
             request.coins(), !request.requestType().isPurchase(), index + 1, pending.size());
     }
 

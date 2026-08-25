@@ -265,7 +265,7 @@ class TelegramMenuBuilderTest {
             .extracting(TelegramBotApiClient.InlineButton::text)
             .containsExactly("📱 Полная история");
         assertThat(TelegramRecent.format(empty, Instant.parse("2026-08-14T10:00:00Z")))
-            .isEqualTo("📜 Последние события · Alex\n\n✅ Пока нет событий");
+            .isEqualTo("🕘 Последние события · Alex\n\n✅ Пока нет событий");
     }
 
     @Test
@@ -281,16 +281,30 @@ class TelegramMenuBuilderTest {
             List.of(earn, spend));
 
         assertThat(TelegramRecent.format(view, Instant.parse("2026-08-14T10:00:00Z")))
-            .isEqualTo("📜 Последние события · Alex\n\n"
+            .isEqualTo("🕘 Последние события · Alex\n\n"
                 + "🟢 +1🟡 · Утренний старт\nСегодня, 06:00\n\n"
                 + "🔴 -2🟡 · Королева настолки\n12 августа, 20:15");
+    }
+
+    @Test
+    void recentUsesRecipientLocaleForCatalogCopy() {
+        TelegramQuickActionResponse view = new TelegramQuickActionResponse(
+            "family", "parent", 1, "Alex", 42, List.of(), List.of(), List.of(), List.of(),
+            List.of(new HistoryEntryDto(1L, HistoryEntryType.earn, 1, null, null, 0, null,
+                7L, "Morning task", null, null, null, null, "2026-08-14T06:00:00Z", 1)),
+            com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.en);
+
+        assertThat(TelegramRecent.format(view, Instant.parse("2026-08-14T10:00:00Z")))
+            .contains("Recent events · Alex", "Today, 06:00", "Morning task")
+            .doesNotContain("Сегодня", "августа", "Событие");
     }
 
     private TelegramQuickActionResponse view() {
         return new TelegramQuickActionResponse(
             "family", "parent", 1, "Alex", 42,
             List.of(new ChildDto(1, "Alex", 42, 100, 0, "ocean", List.of(), List.of(), List.of(), List.of())),
-            List.of(), List.of(), List.of(), List.of());
+            List.of(), List.of(), List.of(), List.of(),
+            com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru);
     }
 
     private TelegramMenuBuilder menuBuilder() {
