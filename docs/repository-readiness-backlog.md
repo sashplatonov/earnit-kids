@@ -286,7 +286,7 @@ git commit -m "fix(security): enforce browser security headers"
 
 ## TASK-RR-005: Make web-to-backend diagnostics structured and privacy-safe
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** TASK-RR-002
 

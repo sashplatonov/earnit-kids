@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import type { SessionSnapshot } from '$lib/types/session';
 import { loadAppConfig } from '$lib/server/config';
+import { emitDiagnostic, requestTraceId, safeErrorClass } from './diagnostics';
 
 const GUEST_SESSION: SessionSnapshot = { authenticated: false };
 
@@ -30,6 +31,7 @@ export async function resolveSessionSnapshot(event: RequestEvent): Promise<Sessi
     const config = event.locals.appConfig ?? loadAppConfig();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const traceId = requestTraceId(event.request);
 
     try {
         const response = await fetch(`${config.backendOrigin}${config.sessionPath}`, {
@@ -39,19 +41,14 @@ export async function resolveSessionSnapshot(event: RequestEvent): Promise<Sessi
         });
 
         if (!response.ok) {
-            console.warn('[session] Backend session endpoint returned non-OK status:', response.status);
+            emitDiagnostic({ severity: 'warn', code: 'web.session_failure', route: config.sessionPath, status: response.status, category: 'upstream_status', traceId });
             return GUEST_SESSION;
         }
 
         const session = (await response.json()) as SessionSnapshot;
-        console.info('[session] Resolved session:', {
-            authenticated: session.authenticated,
-            role: session.role,
-            familyId: session.familyId,
-        });
         return session;
     } catch (e) {
-        console.warn('[session] Failed to resolve session snapshot:', e);
+        emitDiagnostic({ severity: 'warn', code: 'web.session_failure', route: config.sessionPath, category: 'upstream_unavailable', traceId, errorClass: safeErrorClass(e) });
         return GUEST_SESSION;
     } finally {
         clearTimeout(timeoutId);

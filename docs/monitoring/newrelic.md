@@ -1,5 +1,22 @@
 # New Relic monitoring
 
+## Diagnostic event contract
+
+The server is authoritative for operational logs. The web tier emits only
+bounded exceptional events: `severity`, `eventCode`, route template, HTTP
+`status`, failure `category`, `traceId`, optional `durationMs`, and a safe
+`errorClass`. Query strings, URLs, headers, cookies, authorization values,
+family scope, roles, payloads, exception messages, and user-agent data are not
+logged. Newlines are removed and free-text fields are length-limited.
+
+Alert on `web.proxy_failure`/`web.session_failure` upstream-unavailable events
+and elevated `web.server_error` render failures. Successful session and
+bootstrap requests produce no info-level diagnostic event. Local container
+stdout and test-captured logs prove only local behavior; deployed telemetry
+requires verification in the configured New Relic account. Retain logs under
+the deployment's approved policy and treat trace IDs as operational metadata,
+not customer identifiers.
+
 EarnIt Kids keeps New Relic observability on the backend. The JVM agent owns
 backend APM and application-log forwarding; Quarkus Micrometer exports backend
 metrics over OTLP/HTTP. The web app does not embed a New Relic Browser agent or

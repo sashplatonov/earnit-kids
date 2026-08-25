@@ -11,6 +11,7 @@ import {
 } from '$lib/i18n';
 import { loadAppConfig } from '$lib/server/config';
 import { resolveSessionSnapshot } from '$lib/server/session';
+import { emitDiagnostic } from '$lib/server/diagnostics';
 
 const SECURITY_HEADERS = {
     'cross-origin-resource-policy': 'same-site',
@@ -83,24 +84,14 @@ export const handleError: HandleServerError = ({ error, event, message, status }
         return { message };
     }
 
-    console.error('SvelteKit server error', {
-        method: event.request.method,
-        url: event.url.toString(),
-        path: event.url.pathname,
-        search: event.url.search,
-        routeId: event.route.id ?? null,
+    emitDiagnostic({
+        severity: 'error',
+        code: 'web.server_error',
+        route: event.route.id ?? event.url.pathname,
         status,
-        message,
-        referer: event.request.headers.get('referer'),
-        userAgent: event.request.headers.get('user-agent'),
-        traceId: event.request.headers.get('x-trace-id'),
-        error: error instanceof Error
-            ? {
-                name: error.name,
-                message: error.message,
-                stack: error.stack,
-            }
-            : String(error),
+        category: 'render',
+        traceId: event.request.headers.get('x-trace-id') ?? 'missing',
+        errorClass: error instanceof Error ? error.name : 'UnknownError',
     });
 
     return { message };

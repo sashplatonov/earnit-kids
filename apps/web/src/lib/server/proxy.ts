@@ -1,6 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { loadAppConfig } from '$lib/server/config';
+import { emitDiagnostic, requestTraceId, safeErrorClass } from './diagnostics';
 
 const BODYLESS_METHODS = new Set(['GET', 'HEAD']);
 const EXCLUDED_REQUEST_HEADERS = new Set([
@@ -47,10 +48,12 @@ export async function proxyToBackend(event: RequestEvent): Promise<Response> {
     const targetUrl = new URL(`${event.url.pathname}${event.url.search}`, config.backendOrigin);
     const proxiedHeaders = cloneHeaders(event.request.headers, EXCLUDED_REQUEST_HEADERS);
     const locale = event.locals.locale ?? DEFAULT_LOCALE;
+    const traceId = requestTraceId(event.request);
 
     applyPublicRequestContext(proxiedHeaders, config.publicOrigin);
     proxiedHeaders.set('accept-language', locale);
     proxiedHeaders.set('x-app-locale', locale);
+    proxiedHeaders.set('x-trace-id', traceId);
 
     const requestInit: RequestInit & { duplex?: 'half' } = {
         method: event.request.method,
@@ -63,30 +66,28 @@ export async function proxyToBackend(event: RequestEvent): Promise<Response> {
         requestInit.duplex = 'half';
     }
 
-    const response = await fetch(targetUrl, requestInit);
-
-    // EXPLAIN: Log /api/data responses to debug admin dashboard visibility —
-    // EXPLAIN: the isAdmin field in the JSON determines whether the Dashboard
-    // EXPLAIN: card is shown in Settings. This server-side log appears in the
-    // EXPLAIN: web container stdout, not dependent on the UI-log forwarder.
-    if (event.url.pathname === '/api/data' && response.ok) {
-        try {
-            const cloned = response.clone();
-            const body = await cloned.text();
-            const parsed = body ? JSON.parse(body) : {};
-            console.info('[proxy] /api/data response:', {
-                isAdmin: parsed.isAdmin,
-                role: parsed.role ?? null,
-                familyId: parsed.familyId ?? null,
-            });
-        } catch {
-            // ignore parse errors — don't break the proxy
-        }
+    let response: Response;
+    try {
+        response = await fetch(targetUrl, requestInit);
+    } catch (error) {
+        emitDiagnostic({
+            severity: 'error',
+            code: 'web.proxy_failure',
+            route: event.url.pathname,
+            category: 'upstream_unavailable',
+            traceId,
+            errorClass: safeErrorClass(error),
+        });
+        throw error;
     }
 
     return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
-        headers: cloneHeaders(response.headers, EXCLUDED_RESPONSE_HEADERS),
+        headers: (() => {
+            const headers = cloneHeaders(response.headers, EXCLUDED_RESPONSE_HEADERS);
+            headers.set('x-trace-id', response.headers.get('x-trace-id') ?? traceId);
+            return headers;
+        })(),
     });
 }

@@ -24,7 +24,6 @@ export async function initializeFromServer(): Promise<boolean> {
     }
     const record = data as Record<string, unknown>;
     const isAdmin = record.isAdmin === true || record.isAdmin === 'true' || record.isAdmin === 1;
-    console.info('[bootstrap] /api/data isAdmin field:', record.isAdmin, 'derived isAdmin:', isAdmin, 'role:', record.role);
     const baseData = isAdmin
         ? ((await loadBaseData()) as { tasks: unknown[]; products: unknown[] }) ?? { tasks: [], products: [] }
         : { tasks: [], products: [] };
