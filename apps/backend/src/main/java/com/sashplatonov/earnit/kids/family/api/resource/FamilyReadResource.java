@@ -9,6 +9,7 @@ import com.sashplatonov.earnit.kids.family.application.FamilyService;
 import com.sashplatonov.earnit.kids.family.api.request.UpdateFamilyLocaleRequest;
 import com.sashplatonov.earnit.kids.family.api.response.FamilyLocaleResponse;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.i18n.BackendLocaleSupport;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
@@ -113,10 +114,11 @@ public class FamilyReadResource extends ResourceAuthSupport {
     if (auth == null || !auth.isFamilyAdmin()) {
       return unauthorized();
     }
-    String locale = BackendLocaleSupport.normalizeLocale(request == null ? null : request.locale()) == null
+    String requestedLocale = request == null ? null : request.locale();
+    String normalizedLocale = BackendLocaleSupport.normalizeLocale(requestedLocale) == null
         ? null
-        : BackendLocaleSupport.toLanguageTag(
-            BackendLocaleSupport.normalizeLocale(request.locale()));
+        : BackendLocaleSupport.toLanguageTag(BackendLocaleSupport.normalizeLocale(requestedLocale));
+    FamilyLocale locale = FamilyLocale.fromLanguageTag(normalizedLocale);
     if (locale == null) {
       return badRequest("Unsupported locale");
     }
@@ -129,8 +131,8 @@ public class FamilyReadResource extends ResourceAuthSupport {
   }
 
   private static FamilyLocaleResponse toLocaleResponse(FamilyEntity family, boolean familyAdmin) {
-    String locale = family.getLocale();
-    return new FamilyLocaleResponse(locale == null ? "en" : locale, familyAdmin && locale == null);
+    FamilyLocale locale = family.getLocale();
+    return new FamilyLocaleResponse(locale == null ? "en" : locale.name(), familyAdmin && locale == null);
   }
 
   @GET

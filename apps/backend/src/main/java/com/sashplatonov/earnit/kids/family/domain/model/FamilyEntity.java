@@ -4,6 +4,8 @@ import com.sashplatonov.earnit.kids.platform.domain.persistence.CreatedAtEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -57,8 +59,9 @@ public class FamilyEntity extends CreatedAtEntity {
     @Builder.Default
     private String timezone = "UTC";
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "locale", length = 8)
-    private String locale;
+    private FamilyLocale locale;
 
     @CreationTimestamp
     @Column(name = "last_activity")

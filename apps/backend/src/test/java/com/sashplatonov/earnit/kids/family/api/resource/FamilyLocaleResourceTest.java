@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.family.api.resource;
 import com.sashplatonov.earnit.kids.config.auth.AuthContext;
 import com.sashplatonov.earnit.kids.family.api.request.UpdateFamilyLocaleRequest;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import org.junit.jupiter.api.Test;
@@ -19,8 +20,8 @@ class FamilyLocaleResourceTest {
         var familyRepository = mock(FamilyRepository.class);
         var family = FamilyEntity.builder().familyId("fam-1").locale(null).build();
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
-        when(familyRepository.updateLocale("fam-1", "ru")).thenAnswer(invocation -> {
-            family.setLocale("ru");
+        when(familyRepository.updateLocale("fam-1", FamilyLocale.ru)).thenAnswer(invocation -> {
+            family.setLocale(FamilyLocale.ru);
             return true;
         });
 

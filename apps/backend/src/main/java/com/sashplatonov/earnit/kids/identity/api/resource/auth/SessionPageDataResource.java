@@ -56,7 +56,7 @@ public class SessionPageDataResource {
                 resp.email(),
                 resp.csrfToken(),
                 resp.permission(),
-                family.getLocale() == null ? "en" : family.getLocale(),
+                family.getLocale() == null ? "en" : family.getLocale().name(),
                 family.getLocale() == null && "family_admin".equals(resp.permission())
             )).build())
             .orElseGet(() -> Response.ok(resp).build());

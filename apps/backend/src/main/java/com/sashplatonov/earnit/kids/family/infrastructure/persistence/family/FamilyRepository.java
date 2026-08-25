@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.family.infrastructure.persistence.family;
 
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.platform.application.observability.SlowOperationDiagnostics;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
@@ -155,7 +156,7 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
     }
 
     @Transactional
-    public boolean updateLocale(String familyId, String locale) {
+    public boolean updateLocale(String familyId, FamilyLocale locale) {
         Optional<FamilyEntity> opt = findByFamilyId(familyId);
         if (opt.isEmpty()) {
             return false;
