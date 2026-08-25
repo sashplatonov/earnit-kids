@@ -5,6 +5,16 @@ test.beforeEach(async ({ page }) => {
     await preserveTelegramFixture(page);
 });
 
+test('Telegram auth surface is available from the browser entry point', async ({ page }) => {
+    const telegramScript = page.waitForRequest('https://telegram.org/js/telegram-web-app.js');
+
+    await page.goto('/telegram');
+
+    await expect(page.locator('script[src="https://telegram.org/js/telegram-web-app.js"]')).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'EarnIt Kids' })).toBeVisible();
+    expect((await telegramScript).url()).toBe('https://telegram.org/js/telegram-web-app.js');
+});
+
 test('the Telegram SDK loaded at the public root starts the Mini App auth flow', async ({ page }) => {
     await page.unroute('https://telegram.org/js/telegram-web-app.js');
     await page.route('https://telegram.org/js/telegram-web-app.js', (route) => route.fulfill({

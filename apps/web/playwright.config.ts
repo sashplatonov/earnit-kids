@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 const usePreviewServer = process.env.PLAYWRIGHT_USE_PREVIEW === 'true';
 const baseURL = usePreviewServer
-    ? 'http://e2e.localhost:4174'
+    ? 'http://127.0.0.1:4174'
     : (process.env.PLAYWRIGHT_BASE_URL ?? process.env.APP_URL ?? 'http://localhost:5001');
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
@@ -11,11 +11,16 @@ export default defineConfig({
     timeout: 30_000,
     fullyParallel: false,
     workers: 1,
-    reporter: 'line',
+    reporter: process.env.CI
+        ? [['line'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
+        : 'line',
+    outputDir: 'test-results',
     use: {
         baseURL,
         headless: true,
         serviceWorkers: 'allow',
+        screenshot: 'only-on-failure',
+        trace: 'retain-on-failure',
         // Default to Russian locale for the existing tests; allow override with PLAYWRIGHT_LOCALE
         locale: process.env.PLAYWRIGHT_LOCALE ?? 'ru-RU',
         ...(chromiumExecutablePath ? {

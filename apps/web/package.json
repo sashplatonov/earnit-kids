@@ -13,7 +13,8 @@
     "lint": "svelte-kit sync && eslint . && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:critical": "playwright test tests/e2e/workspace-entry.spec.ts tests/e2e/workspace-access.spec.ts tests/e2e/workspace-invitations.spec.ts tests/e2e/telegram-auth.spec.ts tests/e2e/pwa-browser-push.spec.ts --grep \"entry is usable|unauthenticated localized|authenticated child sees|Telegram auth surface|workspace registers\""
   },
   "dependencies": {
     "@lucide/svelte": "^1.31.0",

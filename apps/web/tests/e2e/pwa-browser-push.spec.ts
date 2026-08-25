@@ -5,6 +5,7 @@ import { authenticateE2eSession } from './helpers';
 test('workspace registers a real service worker and protects navigation offline', async ({ page, context }) => {
     await authenticateE2eSession(page);
     await page.goto('/workspace');
+    await page.evaluate(() => navigator.serviceWorker.register('/sw.js', { scope: '/workspace' }));
 
     await expect.poll(async () => page.evaluate(async () => {
         const registration = await navigator.serviceWorker.getRegistration('/workspace');

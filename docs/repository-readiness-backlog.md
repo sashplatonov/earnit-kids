@@ -353,7 +353,7 @@ git commit -m "fix(observability): sanitize web diagnostics"
 
 ## TASK-RR-006: Run deterministic browser critical paths in CI
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** TASK-RR-002
 
