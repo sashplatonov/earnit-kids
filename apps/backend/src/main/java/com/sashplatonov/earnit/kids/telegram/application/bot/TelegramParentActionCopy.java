@@ -5,14 +5,12 @@ public final class TelegramParentActionCopy {
     }
 
     public static String taskCompleted(int delta, int balance) {
-        return TelegramBotEmoji.CELEBRATE + " Родитель выполнил задание за тебя\n\n"
-            + TelegramCoinCopy.delta(delta, true, true)
-            + "\nБаланс: " + balance;
+        return TelegramMessageResolverHolder.text("telegram.outcome.parentTaskCompleted", java.util.Map.of(
+            "coins", TelegramCoinCopy.delta(delta, true, true), "balance", balance));
     }
 
     public static String rewardGranted(int delta, int balance) {
-        return TelegramBotEmoji.CELEBRATE + " Родитель выдал награду\n\n"
-            + TelegramCoinCopy.delta(delta, false, true)
-            + "\nБаланс: " + balance;
+        return TelegramMessageResolverHolder.text("telegram.outcome.parentRewardGranted", java.util.Map.of(
+            "coins", TelegramCoinCopy.delta(delta, false, true), "balance", balance));
     }
 }

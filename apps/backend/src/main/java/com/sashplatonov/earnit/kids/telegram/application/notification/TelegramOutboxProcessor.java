@@ -211,7 +211,7 @@ public class TelegramOutboxProcessor {
       api.editMessageText(
           delivery.getChatId(),
           delivery.getMessageId(),
-          TelegramRequestResolutionText.resolvedTextFor(recheck.get()),
+          composer.resolvedText(event, recheck.get()),
           List.of());
       if (observability != null) {
         observability.outbox("edited");

@@ -47,25 +47,20 @@ public final class TelegramOutcomeCopy {
   }
 
   public static String childTaskApproved(String title, int delta, int balance) {
-    return TelegramBotEmoji.CELEBRATE
-        + " "
-        + title
-        + " одобрен\n\n"
-        + TelegramCoinCopy.delta(delta, true, true)
-        + "\nБаланс: "
-        + balance;
+    return TelegramMessageResolverHolder.text("telegram.outcome.childTaskApproved", Map.of(
+        "title", title, "coins", TelegramCoinCopy.delta(delta, true, true), "balance", balance));
   }
 
   public static String childRewardApproved(String title) {
-    return TelegramBotEmoji.CELEBRATE + " Награда одобрена\n\n" + title;
+    return TelegramMessageResolverHolder.text("telegram.outcome.childRewardApproved", Map.of("title", title));
   }
 
   public static String childTaskRejected(String title) {
-    return TelegramBotEmoji.DECLINE + " " + title + " не одобрен";
+    return TelegramMessageResolverHolder.text("telegram.outcome.childTaskRejected", Map.of("title", title));
   }
 
   public static String childRewardRejected(String title) {
-    return TelegramBotEmoji.DECLINE + " Награда не одобрена\n\n" + title;
+    return TelegramMessageResolverHolder.text("telegram.outcome.childRewardRejected", Map.of("title", title));
   }
 
   public static String emptyRequests() {

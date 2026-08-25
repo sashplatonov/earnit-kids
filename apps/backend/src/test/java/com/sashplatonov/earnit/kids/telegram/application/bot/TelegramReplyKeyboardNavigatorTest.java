@@ -26,13 +26,13 @@ class TelegramReplyKeyboardNavigatorTest {
         TelegramConfig config = config();
         TelegramQuickActionResponse view = parentView();
         List<TelegramBotApiClient.InlineButton> buttons = List.of(
-            TelegramBotApiClient.InlineButton.callback(TelegramCopy.APPROVE, "approve"),
-            TelegramBotApiClient.InlineButton.callback(TelegramCopy.REJECT, "reject"));
+            TelegramBotApiClient.InlineButton.callback(TelegramCopy.approve(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru), "approve"),
+            TelegramBotApiClient.InlineButton.callback(TelegramCopy.reject(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru), "reject"));
         when(quickActions.load(77L, null)).thenReturn(Optional.of(view));
         when(menuBuilder.parentRequestQueue(view, null)).thenReturn(buttons);
 
         navigator(quickActions, menuBuilder, config, apiClient).handle(
-            message(TelegramCopy.NAV_REQUESTS), 44L, 77L);
+            message(TelegramCopy.requests(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru)), 44L, 77L);
 
         verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.requestQueueText(
             "Alex", "Morning task", 2, true, 1, 1)), eq(buttons));
@@ -51,7 +51,7 @@ class TelegramReplyKeyboardNavigatorTest {
         when(menuBuilder.parentCoins(view, "https://mini.example.test")).thenReturn(buttons);
 
         navigator(quickActions, menuBuilder, config, apiClient).handle(
-            message(TelegramCopy.NAV_COINS), 44L, 77L);
+            message(TelegramCopy.coins(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru)), 44L, 77L);
 
         verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.parentCoins("Alex", 20)), eq(buttons));
     }
@@ -69,7 +69,7 @@ class TelegramReplyKeyboardNavigatorTest {
         when(menuBuilder.parentChildPicker(view, "https://site.example.test")).thenReturn(buttons);
 
         navigator(quickActions, menuBuilder, config, apiClient).handle(
-            message(TelegramCopy.NAV_SELECT_CHILD), 44L, 77L);
+            message(TelegramCopy.switchChild(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru)), 44L, 77L);
 
         verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.chooseChildTitle()), eq(buttons));
     }

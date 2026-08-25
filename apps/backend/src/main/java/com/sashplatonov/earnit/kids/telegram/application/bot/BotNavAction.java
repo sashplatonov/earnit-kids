@@ -3,26 +3,20 @@ package com.sashplatonov.earnit.kids.telegram.application.bot;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 
 public enum BotNavAction {
-    REQUESTS("requests", TelegramCopy.NAV_REQUESTS),
-    COINS("coins", TelegramCopy.NAV_COINS),
-    RECENT("recent", TelegramCopy.NAV_RECENT),
-    SELECT_CHILD("switch", TelegramCopy.NAV_SELECT_CHILD),
-    OPEN_SITE("site", TelegramCopy.NAV_OPEN_SITE);
+    REQUESTS("requests"),
+    COINS("coins"),
+    RECENT("recent"),
+    SELECT_CHILD("switch"),
+    OPEN_SITE("site");
 
     private final String actionCode;
-    private final String label;
 
-    BotNavAction(String actionCode, String label) {
+    BotNavAction(String actionCode) {
         this.actionCode = actionCode;
-        this.label = label;
     }
 
     public String actionCode() {
         return actionCode;
-    }
-
-    public String label() {
-        return label;
     }
 
     public static java.util.Optional<BotNavAction> fromLabel(String label) {
@@ -30,7 +24,7 @@ public enum BotNavAction {
             return java.util.Optional.empty();
         }
         for (BotNavAction nav : values()) {
-            if (nav.label.equals(label) || nav.localizedLabel(FamilyLocale.en).equals(label)
+            if (nav.localizedLabel(FamilyLocale.en).equals(label)
                     || nav.localizedLabel(FamilyLocale.ru).equals(label)) {
                 return java.util.Optional.of(nav);
             }

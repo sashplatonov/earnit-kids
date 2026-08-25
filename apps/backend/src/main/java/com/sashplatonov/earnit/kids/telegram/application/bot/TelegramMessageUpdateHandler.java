@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.telegram.application.bot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.telegram.api.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramFeatureGate;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramFeatureSupport;
@@ -11,8 +12,6 @@ import com.sashplatonov.earnit.kids.telegram.config.TelegramConfig;
 import java.util.List;
 
 final class TelegramMessageUpdateHandler {
-    private static final String START_TEXT = "Open EarnIt Kids to continue.";
-
     private final TelegramIdentityService identities;
     private final TelegramBotApiClient apiClient;
     private final TelegramConfig config;
@@ -80,13 +79,26 @@ final class TelegramMessageUpdateHandler {
                 var parent = identities.findActiveByTelegramUserId(telegramUserId)
                     .filter(identity -> "parent".equals(identity.role()));
                 if (parent.isPresent()) {
-                    apiClient.sendMessage(chatId, "No children yet", menuBuilder.parentNoChildren(miniAppUrl));
+                    FamilyLocale locale = familyLocale(parent.get().familyId());
+                    TelegramLocaleContext.with(locale, () -> apiClient.sendMessage(chatId,
+                        TelegramMessageResolverHolder.text("telegram.start.noChildren"),
+                        menuBuilder.parentNoChildren(miniAppUrl)));
                 } else {
-                    apiClient.sendMessage(chatId, START_TEXT, List.of());
+                    TelegramLocaleContext.with(FamilyLocale.en, () -> apiClient.sendMessage(chatId,
+                        TelegramMessageResolverHolder.text("telegram.start.unlinked"), List.of()));
                 }
             }
             return;
         }
-        apiClient.sendMessage(chatId, START_TEXT, List.of());
+        TelegramLocaleContext.with(FamilyLocale.en, () -> apiClient.sendMessage(chatId,
+            TelegramMessageResolverHolder.text("telegram.start.unlinked"), List.of()));
+    }
+
+    private FamilyLocale familyLocale(Integer familyId) {
+        if (families == null) {
+            return FamilyLocale.ru;
+        }
+        return families.findByDbId(familyId).map(value -> value.getLocale() == null ? FamilyLocale.en : value.getLocale())
+            .orElse(FamilyLocale.en);
     }
 }

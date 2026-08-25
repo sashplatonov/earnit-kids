@@ -7,9 +7,8 @@ public final class TelegramCopy {
   private TelegramCopy() {}
 
   private static final TelegramMessageResolver MESSAGES = new TelegramMessageResolver();
-  private static String text(String key, String fallback) {
-    String value = MESSAGES.text(TelegramLocaleContext.current(), key);
-    return value.equals(key) ? fallback : value;
+  private static String text(String key) {
+    return MESSAGES.text(TelegramLocaleContext.current(), key);
   }
   public static String myTasks(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.tasks"); }
   public static String rewards(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.rewards"); }
@@ -30,32 +29,6 @@ public final class TelegramCopy {
   static String allTasks(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.action.allTasks"); }
   static String allRewards(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.action.allRewards"); }
   static String confirm(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.action.confirm"); }
-
-  public static final String MY_TASKS = TelegramBotEmoji.TASKS + " Мои задания";
-  public static final String REWARDS = TelegramBotEmoji.REWARDS + " Награды";
-  public static final String REQUESTS = TelegramBotEmoji.REQUESTS + " Запросы";
-  public static final String COINS = TelegramBotEmoji.COINS + " Монеты";
-  public static final String RECENT = TelegramBotEmoji.RECENT + " Последние";
-  public static final String SWITCH_CHILD = TelegramBotEmoji.CHILD + " Выбрать ребёнка";
-  public static final String ADD_CHILD_MINI_APP =
-      TelegramBotEmoji.ADD + " Добавить ребёнка → Mini App";
-  public static final String APPROVE = TelegramBotEmoji.APPROVE + " Одобрить";
-  public static final String REJECT = TelegramBotEmoji.REJECT + " Отклонить";
-  public static final String NEXT = TelegramBotEmoji.NEXT + " Следующий";
-  public static final String CUSTOM_AMOUNT = TelegramBotEmoji.CUSTOM + " Другая сумма";
-  public static final String FULL_HISTORY = TelegramBotEmoji.MINI_APP + " Полная история";
-  public static final String ALL_TASKS = TelegramBotEmoji.MINI_APP + " Все задания";
-  public static final String ALL_REWARDS = TelegramBotEmoji.MINI_APP + " Все награды";
-  public static final String RETRY = TelegramBotEmoji.REFRESH + " Повторить";
-  public static final String CONFIRM = TelegramBotEmoji.APPROVE + " Подтвердить";
-  public static final String CANCEL = TelegramBotEmoji.REJECT + " Отмена";
-  public static final String SHARE_SITE = TelegramBotEmoji.LINK + " Сайт";
-
-  public static final String NAV_REQUESTS = TelegramBotEmoji.REQUESTS + " Запросы";
-  public static final String NAV_COINS = TelegramBotEmoji.COINS + " Монеты";
-  public static final String NAV_RECENT = TelegramBotEmoji.RECENT + " Последние";
-  public static final String NAV_SELECT_CHILD = TelegramBotEmoji.CHILD + " Выбрать ребёнка";
-  public static final String NAV_OPEN_SITE = TelegramBotEmoji.SITE + " Сайт";
 
   public static String coinAdd(int amount) {
     return TelegramBotEmoji.COINS + " +" + amount;
@@ -98,12 +71,12 @@ public final class TelegramCopy {
         + TelegramBotEmoji.COINS
         + " " + MESSAGES.text(TelegramLocaleContext.current(), "telegram.home.balance", Map.of("balance", balance))
         + "\n\n"
-        + TelegramBotEmoji.ADD + " " + text("telegram.coins.add", "Добавить монеты") + "\n"
-        + TelegramBotEmoji.REMOVE + " " + text("telegram.coins.remove", "Снять монеты");
+        + TelegramBotEmoji.ADD + " " + text("telegram.coins.add") + "\n"
+        + TelegramBotEmoji.REMOVE + " " + text("telegram.coins.remove");
   }
 
   public static String coinApplied(int delta, int balance) {
-    String verb = delta > 0 ? text("telegram.coins.added", "Добавлено") : text("telegram.coins.removed", "Снято");
+    String verb = delta > 0 ? text("telegram.coins.added") : text("telegram.coins.removed");
     return TelegramBotEmoji.SUCCESS
         + " "
         + verb
@@ -144,15 +117,10 @@ public final class TelegramCopy {
 
   public static String requestNotification(
       String childName, String title, int coins, boolean task) {
-    String lead = task ? " выполнила:" : " хочет награду:";
-    return TelegramBotEmoji.CHILD
-        + " "
-        + childName
-        + lead
-        + "\n\n"
-        + title
-        + "\n"
-        + TelegramCoinCopy.delta(coins, task, true);
+    String key = task ? "telegram.notification.taskRequest" : "telegram.notification.rewardRequest";
+    return MESSAGES.text(TelegramLocaleContext.current(), key,
+        Map.of("child", childName, "title", title,
+            "coins", TelegramCoinCopy.delta(coins, task, true)));
   }
 
   public static String coinsLine(int n) {
@@ -163,14 +131,14 @@ public final class TelegramCopy {
     int abs = Math.abs(n) % 100;
     int last = abs % 10;
     if (abs > 10 && abs < 20) {
-      return text("telegram.coins.plural", "монет");
+      return text("telegram.coins.plural");
     }
     if (last == 1) {
-      return text("telegram.coins.one", "монета");
+      return text("telegram.coins.one");
     }
     if (last >= 2 && last <= 4) {
-      return text("telegram.coins.few", "монеты");
+      return text("telegram.coins.few");
     }
-    return text("telegram.coins.plural", "монет");
+    return text("telegram.coins.plural");
   }
 }

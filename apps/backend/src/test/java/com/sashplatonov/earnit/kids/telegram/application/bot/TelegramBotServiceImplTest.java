@@ -176,10 +176,10 @@ class TelegramBotServiceImplTest {
             eq("👋 Alex\n🟡 20 монет"),
             argThat((TelegramReplyKeyboard kb) ->
                 kb.rows().size() == 2
-                && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.MY_TASKS)
-                && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.REWARDS)
+                && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.myTasks(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
+                && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.rewards(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
                 && kb.rows().get(1).buttons().size() == 1
-                && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.NAV_RECENT)
+                && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.recent(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
             )
         );
     }
@@ -261,10 +261,10 @@ class TelegramBotServiceImplTest {
             eq("👧 Alex\n🟡 20 монет\n\n✅ Сейчас ничего не требует внимания"),
             argThat((TelegramReplyKeyboard kb) ->
                 kb.rows().size() == 2
-                && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.NAV_REQUESTS)
-                && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.NAV_COINS)
-                && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.NAV_RECENT)
-                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.NAV_SELECT_CHILD)
+                && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.requests(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
+                && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.coins(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
+                && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.recent(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
+                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.switchChild(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
             )
         );
     }
@@ -293,7 +293,7 @@ class TelegramBotServiceImplTest {
             {"update_id":19,"message":{"chat":{"id":44},"from":{"id":77},"text":"/start"}}
             """));
 
-        verify(apiClient).sendMessage(44L, "No children yet", addChild);
+        verify(apiClient).sendMessage(44L, "Детей пока нет", addChild);
     }
 
     @Test
@@ -670,7 +670,7 @@ class TelegramBotServiceImplTest {
         // EXPLAIN: 🌐 Сайт is a plain text button (KeyboardButton has no `url`
         // EXPLAIN: field), so the bot answers with one inline URL button using
         // EXPLAIN: the same heading as the tapped button.
-        verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.NAV_OPEN_SITE), any());
+        verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.site(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru)), any());
         verify(apiClient, never()).sendMessageWithReplyKeyboard(any(Long.class), any(String.class), any());
     }
 

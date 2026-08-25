@@ -59,7 +59,7 @@ final class TelegramMenuText {
         if (tasks.isEmpty()) {
             return TelegramOutcomeCopy.emptyTasks();
         }
-        StringBuilder builder = new StringBuilder(TelegramCopy.MY_TASKS);
+        StringBuilder builder = new StringBuilder(TelegramCopy.myTasks(view.locale()));
         for (TaskDto task : tasks) {
             builder.append("\n\n").append(TelegramBotEmoji.TASK_DONE).append(" ").append(task.name())
                 .append("\n").append(TelegramCoinCopy.delta(task.coins(), true, false));
@@ -76,8 +76,10 @@ final class TelegramMenuText {
         if (affordable.isEmpty() && !hasUnavailable) {
             return TelegramOutcomeCopy.emptyRewards();
         }
-        StringBuilder builder = new StringBuilder(TelegramCopy.REWARDS)
-            .append("\n").append(TelegramBotEmoji.COINS).append(" Баланс: ").append(view.balance());
+        StringBuilder builder = new StringBuilder(TelegramCopy.rewards(view.locale()))
+            .append("\n").append(TelegramBotEmoji.COINS).append(" ")
+            .append(TelegramMessageResolverHolder.text("telegram.notification.balance",
+                java.util.Map.of("balance", view.balance())));
         for (ShopItemDto reward : affordable) {
             builder.append("\n\n").append(TelegramBotEmoji.REWARDS).append(" ").append(reward.name())
                 .append("\n").append(TelegramCoinCopy.delta(reward.price(), false, false));
@@ -85,10 +87,10 @@ final class TelegramMenuText {
         view.rewards().stream()
             .filter(reward -> reward.price() > view.balance())
             .min(Comparator.comparingInt(reward -> reward.price() - view.balance()))
-            .ifPresent(goal -> builder.append("\n\n").append(TelegramBotEmoji.INFO).append(" Следующая цель:\n")
-                .append(goal.name()).append(" · ").append(goal.price()).append("\n")
-                .append("Не хватает ").append(goal.price() - view.balance()).append(" ")
-                .append(TelegramCopy.moneta(goal.price() - view.balance())));
+            .ifPresent(goal -> builder.append("\n\n").append(
+                TelegramMessageResolverHolder.text("telegram.home.nextGoal", java.util.Map.of("name", goal.name(),
+                    "price", goal.price(), "missing", goal.price() - view.balance(),
+                    "coins", TelegramCopy.moneta(goal.price() - view.balance())))));
         return builder.toString();
     }
 

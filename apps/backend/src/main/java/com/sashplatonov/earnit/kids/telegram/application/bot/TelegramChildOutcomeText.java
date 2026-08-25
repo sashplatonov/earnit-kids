@@ -78,25 +78,25 @@ public class TelegramChildOutcomeText {
   private String generic(ApplicationOutboxEventEntity event) {
     String action =
         switch (event.getEventType()) {
-          case TASK_REQUEST_CREATED -> "New task request";
-          case REWARD_REQUEST_CREATED -> "New reward request";
-          case TASK_APPROVED -> TelegramBotEmoji.DONE + " Task approved";
-          case TASK_REJECTED -> TelegramBotEmoji.REJECT + " Task rejected";
-          case REWARD_PURCHASED -> TelegramBotEmoji.REWARD + " Reward purchased";
-          case REWARD_APPROVED -> TelegramBotEmoji.REWARD + " Reward approved";
-          case REWARD_REJECTED -> TelegramBotEmoji.REJECT + " Reward rejected";
-          case BALANCE_ADJUSTED -> TelegramBotEmoji.COINS + " Parent adjusted balance";
-          case REQUEST_RESOLVED -> "Request resolved";
+          case TASK_REQUEST_CREATED -> "telegram.notification.taskRequestGeneric";
+          case REWARD_REQUEST_CREATED -> "telegram.notification.rewardRequestGeneric";
+          case TASK_APPROVED -> "telegram.notification.taskApproved";
+          case TASK_REJECTED -> "telegram.notification.taskRejected";
+          case REWARD_PURCHASED -> "telegram.notification.rewardPurchased";
+          case REWARD_APPROVED -> "telegram.notification.rewardApproved";
+          case REWARD_REJECTED -> "telegram.notification.rewardRejected";
+          case BALANCE_ADJUSTED -> "telegram.notification.balanceAdjusted";
+          case REQUEST_RESOLVED -> "telegram.notification.requestResolved";
         };
+    action = TelegramMessageResolverHolder.text(action);
     if (event.getResultingBalance() == null || event.getCoinDelta() == 0) {
       return action;
     }
     return action
         + "\n"
         + TelegramCoinCopy.delta(event.getCoinDelta(), event.getCoinDelta() > 0, true)
-        + "\nBalance: "
-        + event.getResultingBalance()
-        + " "
-        + TelegramBotEmoji.COINS;
+        + "\n"
+        + TelegramMessageResolverHolder.text("telegram.notification.balance",
+            java.util.Map.of("balance", event.getResultingBalance()));
   }
 }

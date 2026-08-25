@@ -26,4 +26,21 @@ class TelegramMessageResolverTest {
     assertThat(resolver.text(FamilyLocale.ru, "telegram.missing")).isEqualTo(
         "⚠️ Это сообщение временно недоступно");
   }
+
+  @Test
+  void resolvesInteractiveAndOutcomeCopyForTheRecipientFamily() throws Exception {
+    String[] english = new String[1];
+    TelegramLocaleContext.with(FamilyLocale.en, () -> english[0] =
+        TelegramCopy.requestNotification("Alex", "Homework", 2, true)
+            + "\n" + TelegramCopy.approve(FamilyLocale.en)
+            + "\n" + TelegramOutcomeCopy.childTaskApproved("Homework", 2, 12));
+    String[] russian = new String[1];
+    TelegramLocaleContext.with(FamilyLocale.ru, () -> russian[0] =
+        TelegramCopy.requestNotification("Alex", "Домашнее задание", 2, true)
+            + "\n" + TelegramCopy.approve(FamilyLocale.ru)
+            + "\n" + TelegramOutcomeCopy.childTaskApproved("Домашнее задание", 2, 12));
+
+    assertThat(english[0]).contains("completed", "Approve", "approved").doesNotContain("Одобрить", "одобрен");
+    assertThat(russian[0]).contains("выполнила", "Одобрить", "одобрен").doesNotContain("completed", "Approve");
+  }
 }

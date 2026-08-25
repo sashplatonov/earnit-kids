@@ -138,7 +138,7 @@ git commit -m "fix(i18n): Validate supported family locale tags"
 
 ## I18N-REV-002: Resolve every Telegram Bot delivery and reply label per family locale
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-REV-001
 
