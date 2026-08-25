@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.family.infrastructure.persistence;
 import com.sashplatonov.earnit.kids.platform.domain.persistence.CreatedAtEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryType;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.child.ChildRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.history.HistoryRepository;
@@ -125,6 +126,48 @@ class EntityTimestampsTest {
             );
     }
 
+    @Test
+    @Transactional
+    void historyReplacementNormalizesMissingDeltasAndPreservesExplicitDelta() {
+        String familyId = "fam_history_delta_" + System.nanoTime();
+        FamilyEntity family = familyRepository.create(familyId, familyId + "@test.com", "secret123")
+            .orElseThrow();
+        var child = childRepository.createChild(family.getId(), "Alice").orElseThrow();
+
+        historyRepository.replaceHistory(family.getId(), child.getId(), List.of(
+            historyEntry(family.getId(), child.getId(), 2001L, HistoryEntryType.earn, 5, 0),
+            historyEntry(family.getId(), child.getId(), 2002L, HistoryEntryType.spend, 3, 0),
+            historyEntry(family.getId(), child.getId(), 2003L, HistoryEntryType.earn, 7, 42)
+        ));
+        entityManager.flush();
+        entityManager.clear();
+
+        historyRepository.replaceHistory(family.getId(), child.getId(), List.of(
+            historyEntry(family.getId(), child.getId(), 2001L, HistoryEntryType.earn, 6, 0),
+            historyEntry(family.getId(), child.getId(), 2002L, HistoryEntryType.spend, 4, 0),
+            historyEntry(family.getId(), child.getId(), 2003L, HistoryEntryType.earn, 8, 42)
+        ));
+        entityManager.flush();
+        entityManager.clear();
+
+        List<HistoryEntryEntity> history = historyRepository.getHistoryForFamily(family.getId(), 10, 0);
+        assertThat(history)
+            .extracting(HistoryEntryEntity::getExternalId, HistoryEntryEntity::getDelta)
+            .containsExactlyInAnyOrder(
+                org.assertj.core.groups.Tuple.tuple(2001L, 6),
+                org.assertj.core.groups.Tuple.tuple(2002L, -4),
+                org.assertj.core.groups.Tuple.tuple(2003L, 42)
+            );
+
+        historyRepository.upsertHistoryEntry(
+            historyEntry(family.getId(), child.getId(), 2001L, HistoryEntryType.earn, 9, 0));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(historyRepository.find("familyId = ?1 AND externalId = ?2", family.getId(), 2001L)
+            .firstResult().getDelta()).isEqualTo(9);
+    }
+
     private void overwriteCreatedAt(FamilyEntity entity, Instant createdAt) throws Exception {
         Field createdAtField = CreatedAtEntity.class.getDeclaredField("createdAt");
         createdAtField.setAccessible(true);
@@ -141,6 +184,18 @@ class EntityTimestampsTest {
             .amount(amount)
             .description(description)
             .createdAt(createdAt)
+            .build();
+    }
+
+    private HistoryEntryEntity historyEntry(int familyDbId, int childId, long externalId,
+                                            HistoryEntryType type, int amount, int delta) {
+        return HistoryEntryEntity.builder()
+            .familyId(familyDbId)
+            .childId(childId)
+            .externalId(externalId)
+            .type(type)
+            .amount(amount)
+            .delta(delta)
             .build();
     }
 }

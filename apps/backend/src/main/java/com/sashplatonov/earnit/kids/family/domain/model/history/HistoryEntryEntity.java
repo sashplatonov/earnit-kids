@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.AllArgsConstructor;
@@ -75,6 +76,7 @@ public class HistoryEntryEntity extends CreatedAtEntity {
     private String comment;
 
     @PrePersist
+    @PreUpdate
     void initializeLedgerFields() {
         if (reason == null) {
             reason = LedgerReason.MANUAL_ADJUSTMENT;
