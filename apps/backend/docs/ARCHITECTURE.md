@@ -72,9 +72,9 @@ Boundary ownership decisions:
 - `admin` owns super-admin HTTP, application, and analytics query
   infrastructure. It is not a Telegram integration.
 - `platform` owns database health/base data, outbox publishing, HTTP metrics,
-  UI and application logs, push, WebSocket delivery, and operational
-  diagnostics. Root `exception`, `i18n`, and dependency-free `util` remain
-  genuinely cross-cutting.
+  bounded application diagnostics, push, WebSocket delivery, and structured
+  operational logging. Root `exception`, `i18n`, and dependency-free `util`
+  remain genuinely cross-cutting.
 
 The existing thin `FamilyServiceImpl` facade remains a compatibility boundary.
 The bounded `TelegramQuickActionServiceImpl`,
@@ -123,8 +123,10 @@ Current split notes:
   `telegram/application/`.
 - Admin analytics is split into metric-specific repositories under
   `admin/infrastructure/persistence/`, consumed by admin application services.
-- Platform owns WebSocket delivery, push and UI logging, database health,
-  HTTP metrics, and operational diagnostics under its semantic layers.
+- Platform owns WebSocket delivery, push, database health, HTTP metrics, and
+  bounded operational diagnostics under its semantic layers. Application logs
+  are structured stdout collected by the deployment logging platform; the
+  backend does not expose a local log-file feed through the family API.
 - File size, method count, and cyclomatic complexity guardrails now live in Checkstyle, while class-level design debt checks are enforced through PMD for the refactored facade classes.
 
 [↩ Back to toc](#table-of-contents)

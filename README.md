@@ -5,10 +5,11 @@ children complete approved work, and both sides see the same family-scoped
 state. The web app provides the browser workspace and public entrypoints;
 Telegram is an optional Mini App and bot adapter over the same backend domain.
 
-This repository is a Senior Java portfolio project. The interesting part is
-the boundary work: authorization is enforced by the server, Telegram input is
-cryptographically verified, state-changing actions are transactional, and
-external notifications are persisted before delivery.
+The system keeps authorization and family ownership on the server, verifies
+Telegram input cryptographically, makes state-changing actions transactional,
+and persists external notifications before delivery. These boundaries are
+shared by the browser and Telegram entrypoints rather than implemented as
+separate business rules.
 
 ## Architecture
 
@@ -117,7 +118,10 @@ The repository contains demo screenshots and local-safe fixtures only. Never
 commit `.env`, OAuth or Telegram credentials, or VAPID private keys. Provider
 secrets belong in the deployment secret manager. A local build proves source
 and test behavior; it does not prove provider delivery, a deployed
-configuration, or an official Telegram client launch.
+configuration, or an official Telegram client launch. The web edge and API
+apply baseline browser protections, including Content Security Policy and
+Permissions Policy; deployment-specific headers and provider settings must be
+checked at the public origin.
 
 ## Contributing
 

@@ -9,6 +9,7 @@
 - [🔌 API Integration Pattern](#-api-integration-pattern)
 - [🧩 Component Conventions](#-component-conventions)
 - [🎨 Styling Approach](#-styling-approach)
+- [🛡️ Security and Diagnostics](#️-security-and-diagnostics)
 - [🌱 Environment Variables](#-environment-variables)
 - [🧪 Verification](#-verification)
 
@@ -119,6 +120,22 @@ Practical guidance:
 - Keep touch targets large for child-facing actions.
 - Preserve semantic structure and labels for accessibility.
 - Let the relevant Telegram shell own layout rhythm; keep workspace components focused on content.
+
+[↩ Back to toc](#table-of-contents)
+
+## 🛡️ Security and Diagnostics
+
+The SvelteKit edge applies the browser security-header contract to rendered
+responses and the custom preview server applies the same contract to proxied
+responses. Content Security Policy and Permissions Policy are explicit; HSTS
+is emitted only for HTTPS or the production deployment environment.
+
+Server-side failures use bounded diagnostic events with a stable event code,
+route template, status/category, trace ID, and safe timing/error fields. The
+edge forwards the trace ID across the backend boundary and never treats raw
+console arguments, request bodies, cookies, or query strings as operational
+log data. Structured backend stdout and deployment logging are documented in
+the [monitoring runbook](../../../docs/monitoring/newrelic.md).
 
 [↩ Back to toc](#table-of-contents)
 

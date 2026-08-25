@@ -30,6 +30,11 @@ Family and permission selection is server-authorized. Browser state, a request
 body, a supplied `familyId`, or another person's email is presentation/input
 data only and cannot broaden the active family context.
 
+The web edge and backend apply the shared browser security baseline: CSP,
+Permissions Policy, frame protection, MIME sniffing protection, restrictive
+referrer handling, and HTTPS-gated HSTS. Verify these headers at the deployed
+origin because local source and build checks do not prove the public edge.
+
 ## Configuration
 
 Set the values in the deployment environment; use `.env.example` as the
@@ -131,7 +136,8 @@ permission, an authenticated session, and a reachable push provider.
    from the official Telegram client with a test identity and check both parent
    and child authorization boundaries.
 8. Confirm database migrations, outbox/retention worker health, structured
-   backend errors, and alerting for failed mail, Telegram, and push delivery.
+   backend errors, bounded web diagnostics, security headers, and alerting for
+   failed mail, Telegram, and push delivery.
 9. Run the local quality gates below, then run the deployment smoke checks
    above. Record provider responses, client/device, timestamp, and deployment
    revision separately from local test output.
