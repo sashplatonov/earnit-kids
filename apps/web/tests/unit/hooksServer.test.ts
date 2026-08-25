@@ -28,15 +28,14 @@ describe('hooks.server handleError', () => {
         } as never);
 
         expect(result).toEqual({ message: 'Server exploded' });
-        expect(consoleError).toHaveBeenCalledWith('SvelteKit server error', expect.objectContaining({
-            method: 'POST',
-            url: 'https://example.com/public/index.html',
-            path: '/public/index.html',
-            search: '',
-            routeId: '/public/index.html',
+        expect(consoleError).toHaveBeenCalledWith(JSON.stringify({
+            severity: 'error',
+            eventCode: 'web.server_error',
+            route: '/public/index.html',
             status: 500,
-            message: 'Server exploded',
+            category: 'render',
             traceId: 'trace-123',
+            errorClass: 'Error',
         }));
     });
 

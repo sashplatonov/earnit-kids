@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
+    import type { MessageKey } from '$lib/i18n';
     import { appStore, type Task } from '$lib/stores/app';
     import type { ShopItem } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
@@ -211,6 +212,7 @@
     }
 
     $: currentGraphic = getSemanticGraphic(groupIcon);
+    $: currentGraphicLabel = $i18n.t(`app.telegram.graphics.labels.${currentGraphic.key}` as MessageKey);
 </script>
 
 <svelte:window on:click={() => openMenuId = null} on:keydown={handleWindowKeydown} />
@@ -229,7 +231,7 @@
             <div class="list" role="list">
                 {#each orderedGroups as group (group)}
                     <div class="row" class:archived={hiddenGroups.includes(group)} role="listitem">
-                        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: kind === 'tasks' ? 'task' : 'reward', group })} size={20} label={group} /></span>
+                        <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: kind === 'tasks' ? 'task' : 'reward', group })} size={20} label={$i18n.t('app.telegram.groupManager.groupIcon', { name: group })} /></span>
                         <span class="entity-text">
                             <span class="title">{group}</span>
                             <span class="meta">{plural(countFor(group))}</span>
@@ -265,8 +267,8 @@
 
         <label for="group-graphic">{$i18n.t('app.telegram.taskForm.graphicLabel')}</label>
         <button class="field" id="group-graphic" type="button" on:click={() => graphicOpen = true}>
-            <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphic.label} /></span>
-            <span class="grow">{currentGraphic.label}</span>
+            <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphicLabel} /></span>
+            <span class="grow">{currentGraphicLabel}</span>
             <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
         </button>
 
@@ -300,7 +302,7 @@
         <div class="list" role="list">
             {#each reorderDraft as group, index (group)}
                 <div class="row" role="listitem">
-                    <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: kind === 'tasks' ? 'task' : 'reward', group })} size={20} label={group} /></span>
+                    <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: kind === 'tasks' ? 'task' : 'reward', group })} size={20} label={$i18n.t('app.telegram.groupManager.groupIcon', { name: group })} /></span>
                     <span class="entity-text"><span class="title">{group}</span></span>
                     <div class="reorder-actions">
                         <button class="reorder-btn" type="button" aria-label={$i18n.t('app.telegram.groupManager.moveUp')} disabled={index === 0} on:click={() => moveReorder(index, -1)}><TelegramIcon name="arrowUp" size={18} label={$i18n.t('app.telegram.groupManager.moveUp')} /></button>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
+    import type { MessageKey } from '$lib/i18n';
     import { appStore, type Task } from '$lib/stores/app';
     import { scheduleSave } from '$lib/services/save';
     import { buildTaskPayload } from '$lib/services/taskPayload';
@@ -30,6 +31,7 @@
 
     $: isEdit = task != null;
     $: currentGraphic = getSemanticGraphic(icon);
+    $: currentGraphicLabel = $i18n.t(`app.telegram.graphics.labels.${currentGraphic.key}` as MessageKey);
     $: suggestions = [...new Set(groupSuggestions.filter(Boolean))];
 
     $: if (open && task) {
@@ -84,8 +86,8 @@
 
         <label for="task-graphic">{$i18n.t('app.telegram.taskForm.graphicLabel')}</label>
         <button class="field" id="task-graphic" type="button" on:click={() => graphicOpen = true}>
-            <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphic.label} /></span>
-            <span class="grow">{currentGraphic.label}</span>
+            <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphicLabel} /></span>
+            <span class="grow">{currentGraphicLabel}</span>
             <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
         </button>
 

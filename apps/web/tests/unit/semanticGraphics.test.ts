@@ -23,22 +23,22 @@ describe('semantic graphics library', () => {
         }
     });
 
-    it('contains a deterministic fallback and no emoji labels', () => {
+    it('contains a deterministic fallback and stable catalog keys', () => {
         expect(isSemanticGraphicKey(OTHER_GRAPHIC_KEY)).toBe(true);
         for (const graphic of SEMANTIC_GRAPHICS) {
-            expect(graphic.label).not.toMatch(/\p{Extended_Pictographic}/u);
+            expect(graphic.key).not.toMatch(/\p{Extended_Pictographic}/u);
         }
     });
 
     it('resolves unknown keys to the fallback graphic', () => {
         const fallback = getSemanticGraphic('does-not-exist');
         expect(fallback.key).toBe(OTHER_GRAPHIC_KEY);
-        expect(fallback.label).toBe('Другое');
+        expect(fallback.category).toBe('general');
     });
 
     it('resolves known keys exactly', () => {
         expect(getSemanticGraphic('sunrise').key).toBe('sunrise');
-        expect(getSemanticGraphic('sunrise').label).toBe('Утро');
+        expect(getSemanticGraphic('sunrise').category).toBe('routine');
     });
 
     it('returns category members in canonical order', () => {

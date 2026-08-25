@@ -40,7 +40,7 @@
         <div class="flat">
             {#each filtered as group (group)}
                 <button type="button" class="pick" class:active={selected === group} on:click={() => choose(group)}>
-                    <span class="gico"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', group })} size={20} label={group} /></span>
+                    <span class="gico"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', group })} size={20} label={$i18n.t('app.telegram.groupManager.groupIcon', { name: group })} /></span>
                     <span class="grow">{group}</span>
                     {#if selected === group}<TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupPicker.selected')} />{/if}
                 </button>

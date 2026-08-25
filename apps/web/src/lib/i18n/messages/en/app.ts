@@ -468,6 +468,8 @@ export const appMessages = {
             search: 'Search',
             recent: 'Recent',
             selected: 'Selected',
+            categories: { general: 'General', routine: 'Routine', learning: 'Learning', home: 'Home', activity: 'Sport', fun: 'Rewards and leisure', money: 'Coins and progress' },
+            labels: { circleDot: 'Other', star: 'Star', target: 'Goal', checkCircle: 'Check mark', calendar: 'Calendar', clock: 'Clock', sunrise: 'Morning', moon: 'Evening', bed: 'Sleep', brush: 'Teeth', shower: 'Shower / hygiene', shirt: 'Clothes', utensils: 'Food', droplet: 'Water', book: 'Reading', pencil: 'Writing', pencilLine: 'Pencil', calculator: 'Math', school: 'School', languages: 'Language', music: 'Music', flask: 'Science', home: 'Home', sparkles: 'Cleaning', box: 'Tidiness', cookingPot: 'Dishes', table: 'Table', sprout: 'Plants', paw: 'Pet', dumbbell: 'Sport', footprints: 'Running', bike: 'Bicycle', volleyball: 'Ball', gift: 'Gift', dice: 'Board game', users: 'Family', heart: 'Shared time', film: 'Movie', gamepad: 'Games', palette: 'Creativity', penTool: 'Drawing', blocks: 'Construction', treePine: 'Park', iceCream: 'Ice cream', cake: 'Dessert', car: 'Trip', coin: 'Coin', piggy: 'Piggy bank', award: 'Reward', trophy: 'Trophy', medal: 'Medal' },
         },
         confirm: { title: 'Confirm action', cancel: 'Cancel', confirm: 'Confirm' },
         taskForm: {
@@ -663,6 +665,7 @@ export const appMessages = {
             close: 'Close',
         },
         groupManager: {
+            groupIcon: '{name} group icon',
             taskTitle: 'Task groups',
             rewardTitle: 'Reward groups',
             newGroup: 'New group',

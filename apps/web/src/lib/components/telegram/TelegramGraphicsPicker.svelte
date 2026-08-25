@@ -1,5 +1,6 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
+    import type { MessageKey } from '$lib/i18n';
     import {
         SEMANTIC_GRAPHIC_CATEGORIES,
         SEMANTIC_GRAPHICS,
@@ -46,12 +47,12 @@
             .filter((graphic): graphic is SemanticGraphic => graphic !== undefined);
     }
     $: filteredRecent = normalizedQuery
-        ? recentGraphics.filter((graphic) => graphic.label.toLowerCase().includes(normalizedQuery))
+        ? recentGraphics.filter((graphic) => graphicLabel(graphic.key).toLowerCase().includes(normalizedQuery))
         : recentGraphics;
 
     function visible(graphics: readonly SemanticGraphic[]): readonly SemanticGraphic[] {
         return normalizedQuery
-            ? graphics.filter((graphic) => graphic.label.toLowerCase().includes(normalizedQuery))
+            ? graphics.filter((graphic) => graphicLabel(graphic.key).toLowerCase().includes(normalizedQuery))
             : graphics;
     }
 
@@ -60,6 +61,9 @@
         onSelect(key);
         onClose();
     }
+
+    function graphicLabel(key: string): string { return $i18n.t(`app.telegram.graphics.labels.${key}` as MessageKey); }
+    function categoryLabel(key: string): string { return $i18n.t(`app.telegram.graphics.categories.${key}` as MessageKey); }
 </script>
 
 {#if open}
@@ -71,10 +75,10 @@
         {#if filteredRecent.length}
             <h3 class="picker-subtitle">{$i18n.t('app.telegram.graphics.recent')}</h3>
             <div class="group">
-                {#each filteredRecent as graphic (graphic.key + graphic.label)}
+                {#each filteredRecent as graphic (graphic.key)}
                     <button class:selected={graphic.key === initial} type="button" on:click={() => choose(graphic.key)}>
-                        <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphic.label} /></span>
-                        <span class="grow"><span class="glabel">{graphic.label}</span></span>
+                        <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphicLabel(graphic.key)} /></span>
+                        <span class="grow"><span class="glabel">{graphicLabel(graphic.key)}</span></span>
                         {#if graphic.key === initial}<span class="badge">{$i18n.t('app.telegram.graphics.selected')}</span>{/if}
                     </button>
                 {/each}
@@ -83,12 +87,12 @@
 
         {#each SEMANTIC_GRAPHIC_CATEGORIES as category (category.key)}
             {#if visible(getGraphicsForCategory(category.key)).length}
-                <h3 class="picker-subtitle">{category.label}</h3>
+                <h3 class="picker-subtitle">{categoryLabel(category.key)}</h3>
                 <div class="group">
-                    {#each visible(getGraphicsForCategory(category.key)) as graphic (category.key + graphic.label)}
+                    {#each visible(getGraphicsForCategory(category.key)) as graphic (graphic.key)}
                         <button class:selected={graphic.key === initial} type="button" on:click={() => choose(graphic.key)}>
-                            <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphic.label} /></span>
-                            <span class="grow"><span class="glabel">{graphic.label}</span></span>
+                            <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphicLabel(graphic.key)} /></span>
+                            <span class="grow"><span class="glabel">{graphicLabel(graphic.key)}</span></span>
                             {#if graphic.key === initial}<span class="badge">{$i18n.t('app.telegram.graphics.selected')}</span>{/if}
                         </button>
                     {/each}

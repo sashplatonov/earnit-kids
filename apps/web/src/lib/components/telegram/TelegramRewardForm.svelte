@@ -1,5 +1,6 @@
 <script lang="ts">
     import { useI18n } from '$lib/i18n/context';
+    import type { MessageKey } from '$lib/i18n';
     import type { ShopItem } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
     import { scheduleSave } from '$lib/services/save';
@@ -29,6 +30,7 @@
 
     $: isEdit = item != null;
     $: currentGraphic = getSemanticGraphic(icon);
+    $: currentGraphicLabel = $i18n.t(`app.telegram.graphics.labels.${currentGraphic.key}` as MessageKey);
 
     $: if (open && item) {
         title = item.name ?? '';
@@ -81,8 +83,8 @@
 
         <label for="reward-graphic">{$i18n.t('app.telegram.rewardForm.graphicLabel')}</label>
         <button class="field" id="reward-graphic" type="button" on:click={() => graphicOpen = true}>
-            <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphic.label} /></span>
-            <span class="grow">{currentGraphic.label}</span>
+            <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphicLabel} /></span>
+            <span class="grow">{currentGraphicLabel}</span>
             <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
         </button>
 

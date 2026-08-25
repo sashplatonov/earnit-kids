@@ -468,6 +468,8 @@ export const appMessages = {
             search: 'Поиск',
             recent: 'Недавние',
             selected: 'Выбрано',
+            categories: { general: 'Общее', routine: 'Распорядок', learning: 'Учёба', home: 'Дом', activity: 'Спорт', fun: 'Награды и досуг', money: 'Монеты и прогресс' },
+            labels: { circleDot: 'Другое', star: 'Звезда', target: 'Цель', checkCircle: 'Галочка', calendar: 'Календарь', clock: 'Часы', sunrise: 'Утро', moon: 'Вечер', bed: 'Сон', brush: 'Зубы', shower: 'Душ / гигиена', shirt: 'Одежда', utensils: 'Еда', droplet: 'Вода', book: 'Чтение', pencil: 'Письмо', pencilLine: 'Карандаш', calculator: 'Математика', school: 'Школа', languages: 'Язык', music: 'Музыка', flask: 'Наука', home: 'Дом', sparkles: 'Уборка', box: 'Порядок', cookingPot: 'Посуда', table: 'Стол', sprout: 'Растения', paw: 'Питомец', dumbbell: 'Спорт', footprints: 'Бег', bike: 'Велосипед', volleyball: 'Мяч', gift: 'Подарок', dice: 'Настольная игра', users: 'Семья', heart: 'Совместное время', film: 'Кино', gamepad: 'Игры', palette: 'Творчество', penTool: 'Рисование', blocks: 'Конструктор', treePine: 'Парк', iceCream: 'Мороженое', cake: 'Десерт', car: 'Поездка', coin: 'Монета', piggy: 'Копилка', award: 'Награда', trophy: 'Кубок', medal: 'Медаль' },
         },
         confirm: { title: 'Подтвердите действие', cancel: 'Отмена', confirm: 'Подтвердить' },
         taskForm: {
@@ -663,6 +665,7 @@ export const appMessages = {
             close: 'Закрыть',
         },
         groupManager: {
+            groupIcon: 'Значок группы {name}',
             taskTitle: 'Группы заданий',
             rewardTitle: 'Группы наград',
             newGroup: 'Новая группа',
