@@ -551,7 +551,7 @@
 <style>
     .access-flow { display:grid; gap:.75rem; color:#18243d; }
     .access-flow.compact { gap:.5rem; }
-    .access-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+    .access-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;min-width:0}
     h2 { margin:0; font-size:1.2rem; } .hint,.empty { margin:0; color:#66718a; line-height:1.45; }
     .state { display:inline-flex; align-items:center; min-height:1.7rem; padding:.2rem .5rem; border-radius:99px; background:#eef2ff; color:#3867d6; font-size:.72rem; font-weight:700; }
     .state { background:#e8f7ef; color:#187847; } .state.pending { background:#fff1dc; color:#a96720; } .state.inactive { background:#eef1f5; color:#66718a; } .state.transfer { background:#eef3ff; color:#4d63b9; }
@@ -569,7 +569,7 @@
     .preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;border-top:1px solid #dfe4ef;padding:.7rem .85rem}
     .ok-btn{background:#17884b;border-color:#17884b}
     :global(.parents-list) { display:grid; gap:0; overflow:hidden; }
-    :global(.parent-row) { display:grid; grid-template-columns:2.625rem minmax(0,1fr) 5.75rem; gap:.75rem; align-items:center; padding:.75rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
+    :global(.parent-row) { display:grid; grid-template-columns:2.625rem minmax(0,1fr) auto; gap:.75rem; align-items:center; min-width:0; padding:.75rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
     :global(.parent-row:last-child) { border-bottom:0; }
     :global(.avatar) { width:2.625rem; height:2.625rem; border-radius:.75rem; background:#eef2ff; color:#4d67d7; display:grid; place-items:center; font-weight:800; }
     :global(.row-main) { min-width:0; }
@@ -581,7 +581,7 @@
     :global(.id) { display:inline-flex; align-items:center; gap:.35rem; max-width:100%; padding:.22rem .45rem; border:1px solid #dfe4ef; border-radius:99px; background:#fafbfe; color:#51607a; font-size:.72rem; }
     .id.email { max-width:20rem; } .id.tg { max-width:15rem; }
     .id .icon { display:inline-flex; flex:0 0 auto; } .id .text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-    .row-actions { display:grid; grid-template-columns:repeat(2,44px); justify-content:end; gap:.5rem; align-items:center; width:5.75rem; }
+    .row-actions { display:grid; grid-template-columns:repeat(2,44px); justify-content:end; gap:.5rem; align-items:center; width:auto; }
     .icon-btn { width:44px; height:44px; padding:0; border-radius:.75rem; border:1px solid #dfe4ef; background:#fff; color:#42506e; display:grid; place-items:center; position:relative; cursor:pointer; }
     .icon-btn:hover:not(.disabled) { background:#f8faff; }
     .icon-btn.danger { border-color:#efc9c9; background:#fff5f5; color:#b74d4d; }
@@ -590,7 +590,7 @@
     .icon-btn .tip { display:none; position:absolute; right:0; top:3rem; z-index:10; background:#172036; color:#fff; padding:.4rem .5rem; border-radius:.5rem; font-size:.68rem; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.14); }
     .icon-btn:hover .tip { display:block; }
     .note { margin:0; font-size:.72rem; line-height:1.45; background:#f7f9fc; color:#66718a; border-radius:.75rem; padding:.6rem .7rem; }
-    .btn.add-parent { min-height:2.75rem; white-space:nowrap; }
+    .btn.add-parent { flex:0 0 auto; min-height:2.75rem; white-space:nowrap; }
     .error{margin:0;color:#a33b3b}.success{margin:0;color:#17884b} button:focus-visible,input:focus-visible{outline:3px solid #80aaff;outline-offset:2px}
 
     .sheet-backdrop{position:fixed;inset:0;z-index:40;background:rgb(15 24 45 / 35%)}
@@ -648,7 +648,7 @@
     .access-flow.compact .access-header{justify-content:space-between}
     .access-flow.compact .add-parent{width:44px;min-height:44px;padding:0;border-radius:.75rem}
     .access-flow.compact .add-parent-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    .access-flow.compact .parent-row{grid-template-columns:2.5rem minmax(0,1fr) 5.75rem;padding:.55rem 0;gap:.6rem}
+    .access-flow.compact .parent-row{grid-template-columns:2.5rem minmax(0,1fr) auto;padding:.55rem 0;gap:.6rem}
     .access-flow.compact .avatar{width:2.5rem;height:2.5rem}
     .access-flow.compact .ids{margin-top:.25rem}
     .access-flow.compact .note{padding:.45rem .55rem}

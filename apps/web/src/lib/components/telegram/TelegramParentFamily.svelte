@@ -343,9 +343,10 @@
     h1 { margin:0 0 .5rem; color:#18243d; font-size:1.35rem; }
     .section-title { margin:.9rem 0 .45rem; color:#18243d; font-size:1rem; }
     .quick-actions { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.5rem; margin-bottom:.85rem; }
-    .quick-action { display:flex; align-items:center; gap:.6rem; min-width:0; min-height:3.8rem; padding:.55rem .7rem; border:1px solid #dfe4ee; border-radius:.9rem; background:#fff; color:#18243d; font:inherit; text-align:left; text-decoration:none; cursor:pointer; }
+    .quick-action { box-sizing:border-box; display:flex; align-items:center; gap:.6rem; min-width:0; min-height:3.8rem; padding:.55rem .7rem; border:1px solid #dfe4ee; border-radius:.9rem; background:#fff; color:#18243d; font:inherit; text-align:left; text-decoration:none; cursor:pointer; }
     .quick-action:hover { border-color:#b9c0ff; background:#fafbff; }
     .quick-action:only-child { grid-column:1 / -1; }
+    .quick-action > span:last-child { min-width:0; }
     .quick-action strong, .quick-action small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .quick-action strong { font-size:.86rem; }
     .quick-action small { margin-top:.12rem; color:#8a93a8; font-size:.68rem; }
@@ -365,6 +366,7 @@
     .invite-input { box-sizing:border-box; width:100%; min-height:2.5rem; margin-bottom:.5rem; padding:.5rem .7rem; border:1px solid #cfd6e4; border-radius:.6rem; font:inherit; }
     .invite button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.75rem; padding:.45rem .7rem; border:1px solid #3867d6; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; cursor:pointer; }
     .invite button:disabled { cursor:wait; opacity:.6; }
+    @media (max-width:360px) { .quick-actions { grid-template-columns:1fr; } }
     .settings { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
     .setting { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3rem; padding:.35rem 0; border:0; border-bottom:1px solid #edf0f5; background:transparent; color:#33415f; font:inherit; text-align:left; }
     .setting:last-child { border-bottom:0; }

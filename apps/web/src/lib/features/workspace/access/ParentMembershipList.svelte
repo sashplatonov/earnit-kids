@@ -61,6 +61,8 @@
     .row-main { min-width: 0; flex: 1; }
     .topline, .ids, .row-actions { display: flex; align-items: center; gap: .4rem; }
     .topline { justify-content: space-between; }
+    .topline .name { min-width: 0; flex: 1 1 auto; }
+    .state { flex: 0 0 auto; white-space: nowrap; }
     .name, .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .row-role, .ids { color: #66718a; font-size: .78rem; }
     .row-actions { flex-shrink: 0; }
