@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import WorkspaceRoleResolver from '$lib/features/workspace/WorkspaceRoleResolver.svelte';
+    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
     import type { PageData } from './$types';
 
     export let data: PageData;
@@ -15,7 +16,15 @@
     <title>EarnIt Kids · {data.role === 'child' ? 'Мой маршрут' : 'Моя семья'}</title>
 </svelte:head>
 
-<WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} showSessionActions />
+    {#if data.session?.languageSetupRequired && data.session.permission === 'family_admin'}
+        <main class="language-setup" aria-labelledby="language-setup-title">
+            <h1 id="language-setup-title">Choose your family language</h1>
+            <p>This language will be used by every family member.</p>
+            <LocaleSwitcher familyManaged />
+        </main>
+    {:else}
+        <WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} showSessionActions />
+    {/if}
 
 <style>
     :global(body.workspace-page) {

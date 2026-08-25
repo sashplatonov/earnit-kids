@@ -3,6 +3,7 @@ package com.sashplatonov.earnit.kids.telegram.application.auth;
 import com.sashplatonov.earnit.kids.admin.application.AdminAccessService;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.child.ChildRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
@@ -139,7 +140,8 @@ public class TelegramMiniAppAuthService {
         identity.getTelegramUserId());
     String adminEmail = resolveAdminEmail(identity, family);
     AuthPayload adminPayload =
-        new AuthPayload(family.getFamilyId(), adminEmail, "admin", null, null, "family_admin", null, false);
+        new AuthPayload(family.getFamilyId(), adminEmail, "admin", null, null, "family_admin", null, false,
+            null, familyLocale(family), family.getLocale() == null);
     return OperationResult.success(adminPayload);
   }
 
@@ -176,7 +178,8 @@ public class TelegramMiniAppAuthService {
             membership.getPermission().name(),
             null,
             false,
-            parent.getId()));
+            parent.getId(), familyLocale(family),
+            family.getLocale() == null && "family_admin".equals(membership.getPermission().name())));
   }
 
   private OperationResult<AuthPayload> authenticateChild(
@@ -197,11 +200,16 @@ public class TelegramMiniAppAuthService {
             child.getName(),
             "child",
             null,
-            false));
+            false, null, familyLocale(family), false));
   }
 
   private OperationResult<AuthPayload> failed() {
     return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
+  }
+
+  private String familyLocale(FamilyEntity family) {
+    FamilyLocale locale = family.getLocale();
+    return locale == null ? "en" : locale.name();
   }
 
   private String resolveAdminEmail(TelegramIdentityEntity identity, FamilyEntity family) {

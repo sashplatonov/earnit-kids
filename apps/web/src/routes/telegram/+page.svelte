@@ -1,17 +1,19 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { useI18n } from '$lib/i18n/context';
+    import { updateI18n, useI18n } from '$lib/i18n/context';
+    import { getI18nPayloadForPath } from '$lib/i18n';
     import { initializeTelegramWebApp } from '$lib/services/telegram';
     import { bootstrapTelegramWorkspace } from '$lib/features/telegram/TelegramWorkspaceBootstrap';
     import { acceptParentTelegramInvite } from '$lib/services/api';
     import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
     import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
+    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
 
     const i18n = useI18n();
 
     export let data: { publicOrigin?: string };
 
-    type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram' | 'parent-invite';
+    type State = 'loading' | 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram' | 'parent-invite' | 'language-setup';
     let state: State = 'loading';
     let message = '';
     let verifiedRole = '';
@@ -48,6 +50,12 @@
             if (result.state === 'ready') {
                 state = 'ready';
                 verifiedRole = result.role ?? '';
+                if (result.locale) {
+                    updateI18n(i18n, getI18nPayloadForPath('/telegram', result.locale));
+                }
+                if (result.languageSetupRequired && result.role === 'admin') {
+                    state = 'language-setup';
+                }
                 return;
             }
             state = result.state === 'unavailable'
@@ -109,6 +117,9 @@
                 <p>{$i18n.t('app.telegram.entry.parentInviteHint')}</p>
                 <button class="telegram-action" type="button" disabled={inviteBusy} on:click={() => void submitParentInvite()}>{$i18n.t('app.telegram.entry.acceptInvite')}</button>
                 {#if message}<p class="telegram-hint" role="alert">{message}</p>{/if}
+            {:else if state === 'language-setup'}
+                <p>{$i18n.t('app.telegram.entry.checkingSession')}</p>
+                <LocaleSwitcher familyManaged />
             {:else}
                 <p>{message || $i18n.t('app.telegram.entry.resolveError')}</p>
                 <TelegramActionButton icon="refresh" label={$i18n.t('app.telegram.entry.tryAgain')} on:click={() => void authenticate()} />

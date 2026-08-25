@@ -29,25 +29,24 @@ export const handle: Handle = async ({ event, resolve }) => {
     const cookieLocale = normalizeLocale(event.cookies.get(LOCALE_COOKIE_NAME));
     const headerLocale = resolveLocaleFromAcceptLanguage(event.request.headers.get('accept-language'));
 
-    // EXPLAIN: The Telegram Mini App is a Russian-only surface served at a bare
-    // EXPLAIN: URL (no locale prefix). The public marketing site is a static
-    // EXPLAIN: HTML site in static/public/ and is not routed through SvelteKit.
+    // EXPLAIN: The Telegram Mini App is served at a bare URL (no locale prefix).
+    // The public marketing site is a static HTML site in static/public/.
     const isTelegramMiniApp = internalPath === '/telegram' || internalPath.startsWith('/telegram/');
-    const resolvedLocale = isTelegramMiniApp ? 'ru' : localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
+    const resolvedLocale = localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
 
     event.locals.locale = resolvedLocale;
 
-    // EXPLAIN: The Mini App is Russian-only; serve it under the canonical /ru
-    // EXPLAIN: prefix even when a request carries another locale in the path.
-    if (isTelegramMiniApp && localeFromPath && localeFromPath !== 'ru') {
-        throw redirect(302, `${localizePath(internalPath, 'ru')}${event.url.search}`);
-    }
-
-    if (shouldCanonicalizePath(event.url.pathname)) {
-        throw redirect(302, `${localizePath(event.url.pathname, resolvedLocale)}${event.url.search}`);
-    }
-
     event.locals.session = await resolveSessionSnapshot(event);
+    const familyLocale = event.locals.session.authenticated ? normalizeLocale(event.locals.session.locale) : null;
+    event.locals.locale = familyLocale ?? resolvedLocale;
+
+    if (!isTelegramMiniApp && shouldCanonicalizePath(event.url.pathname)) {
+        throw redirect(302, `${localizePath(event.url.pathname, event.locals.locale)}${event.url.search}`);
+    }
+
+    if (!isTelegramMiniApp && familyLocale && localeFromPath && localeFromPath !== familyLocale) {
+        throw redirect(302, `${localizePath(internalPath, familyLocale)}${event.url.search}`);
+    }
 
     if (localeFromPath && cookieLocale !== localeFromPath) {
         event.cookies.set(LOCALE_COOKIE_NAME, localeFromPath, {

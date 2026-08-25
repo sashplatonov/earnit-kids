@@ -33,4 +33,6 @@ export interface AuthResponseSnapshot {
     error: string | null;
     selectionRequired: boolean;
     familyChoices: FamilyChoice[] | null;
+    locale: 'en' | 'ru' | null;
+    languageSetupRequired: boolean;
 }

@@ -9,6 +9,8 @@ export type TelegramBootstrapState = 'ready' | 'retry' | 'unavailable' | 'unlink
 export type TelegramBootstrapResult = {
     state: TelegramBootstrapState;
     role?: string;
+    locale?: 'en' | 'ru';
+    languageSetupRequired?: boolean;
     message?: string;
 };
 
@@ -39,8 +41,13 @@ export async function bootstrapTelegramWorkspace(): Promise<TelegramBootstrapRes
     }
 
     try {
-        const payload = await response.clone().json() as { role?: unknown };
-        return { state: 'ready', role: typeof payload.role === 'string' ? payload.role : '' };
+        const payload = await response.clone().json() as { role?: unknown; locale?: unknown; languageSetupRequired?: unknown };
+        return {
+            state: 'ready',
+            role: typeof payload.role === 'string' ? payload.role : '',
+            locale: payload.locale === 'ru' ? 'ru' : 'en',
+            languageSetupRequired: payload.languageSetupRequired === true,
+        };
     } catch {
         return { state: 'ready', role: '' };
     }

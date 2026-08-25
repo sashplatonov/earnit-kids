@@ -12,7 +12,9 @@ public record AuthResponse(
     String childName,
     String error,
     boolean selectionRequired,
-    List<FamilyChoice> familyChoices
+    List<FamilyChoice> familyChoices,
+    String locale,
+    boolean languageSetupRequired
 ) {
     public AuthResponse {
         familyChoices = familyChoices == null ? List.of() : List.copyOf(familyChoices);
@@ -26,18 +28,28 @@ public record AuthResponse(
     ) {}
 
     public static AuthResponse success(String role, String familyId) {
-        return new AuthResponse(true, role, familyId, null, null, null, false, null);
+        return success(role, familyId, null, false);
+    }
+
+    public static AuthResponse success(String role, String familyId, String locale, boolean languageSetupRequired) {
+        return new AuthResponse(true, role, familyId, null, null, null, false, null, locale, languageSetupRequired);
     }
 
     public static AuthResponse childSuccess(String familyId, int childId, String childName) {
-        return new AuthResponse(true, null, familyId, childId, childName, null, false, null);
+        return childSuccess(familyId, childId, childName, null, false);
+    }
+
+    public static AuthResponse childSuccess(String familyId, int childId, String childName,
+                                           String locale, boolean languageSetupRequired) {
+        return new AuthResponse(true, null, familyId, childId, childName, null, false, null,
+            locale, languageSetupRequired);
     }
 
     public static AuthResponse selectionRequired(List<FamilyChoice> choices) {
-        return new AuthResponse(true, null, null, null, null, null, true, choices);
+        return new AuthResponse(true, null, null, null, null, null, true, choices, null, false);
     }
 
     public static AuthResponse failure(String error) {
-        return new AuthResponse(false, null, null, null, null, error, false, null);
+        return new AuthResponse(false, null, null, null, null, error, false, null, null, false);
     }
 }

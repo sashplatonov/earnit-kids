@@ -8,5 +8,7 @@ export interface SessionSnapshot {
     childName?: string | null;
     email?: string | null;
     permission?: MembershipPermission | null;
+    locale?: 'en' | 'ru' | null;
+    languageSetupRequired?: boolean;
     [key: string]: unknown;
 }

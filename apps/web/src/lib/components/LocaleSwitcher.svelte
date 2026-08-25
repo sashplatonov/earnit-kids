@@ -2,13 +2,28 @@
     import { page } from '$app/stores';
     import { LOCALES, LOCALE_COOKIE_NAME, type Locale } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
+    import { fetchWithCsrf } from '$lib/services/api';
 
     export let compact: boolean = false;
+    export let familyManaged: boolean = false;
+    let busy = false;
 
     const i18n = useI18n();
 
-    function handleChange(event: Event) {
+    async function handleChange(event: Event) {
         const nextLocale = (event.currentTarget as HTMLSelectElement).value as Locale;
+        if (familyManaged) {
+            if (busy) return;
+            busy = true;
+            await fetchWithCsrf('/api/family/locale', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ locale: nextLocale }),
+            });
+            location.reload();
+            return;
+        }
+
         const nextPath = $i18n.swapLocale($page.url.pathname, nextLocale);
 
         document.cookie = `${LOCALE_COOKIE_NAME}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;

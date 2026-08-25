@@ -53,8 +53,9 @@ public class TelegramMiniAppAuthResource {
                 }
                 Response.ResponseBuilder response = Response.ok(
                     payload.childId() == null
-                        ? AuthResponse.success(payload.role(), payload.familyId())
-                        : AuthResponse.childSuccess(payload.familyId(), payload.childId(), payload.childName()));
+                        ? AuthResponse.success(payload.role(), payload.familyId(), payload.locale(), payload.languageSetupRequired())
+                        : AuthResponse.childSuccess(payload.familyId(), payload.childId(), payload.childName(),
+                            payload.locale(), payload.languageSetupRequired()));
                 var cookies = payload.parentAccountId() == null
                     ? cookieBuilder.buildAuthCookies(payload.email(), payload.role(), payload.familyId(),
                         payload.childId(), payload.permission())

@@ -38,7 +38,7 @@ export function normalizeServerError(payload: unknown, status = 0): NormalizedSe
         errorCode,
         params: isRecord(value.params) ? value.params : {},
         traceId: typeof value.traceId === 'string' ? value.traceId : null,
-        messageKey: (errorCode && SERVER_ERROR_MESSAGE_KEYS[errorCode]) ?? 'common.errors.generic',
+        messageKey: (errorCode ? SERVER_ERROR_MESSAGE_KEYS[errorCode] : undefined) ?? 'common.errors.generic',
     };
 }
 
@@ -313,6 +313,8 @@ export function normalizeAuthResponse(data: Record<string, unknown> = {}): AuthR
         familyChoices: Array.isArray(data.familyChoices)
             ? data.familyChoices.map(choice => normalizeFamilyChoice(choice as Record<string, unknown>))
             : null,
+        locale: data.locale === 'ru' ? 'ru' : data.locale === 'en' ? 'en' : null,
+        languageSetupRequired: parseBoolean(data.languageSetupRequired),
     };
 }
 

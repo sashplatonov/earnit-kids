@@ -218,7 +218,7 @@ git commit -m "refactor(backend): Standardize localized error contracts"
 
 ## I18N-004: Resolve the family language across web and Telegram bootstrap
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-002
 
