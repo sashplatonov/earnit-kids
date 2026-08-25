@@ -101,7 +101,7 @@ git commit -m "fix(security): purge retired signing material"
 
 ## TASK-RR-002: Restore the ledger invariant verification gate
 
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P0  
 **Depends on:** -
 
@@ -160,15 +160,6 @@ cd apps/backend && JAVA_HOME="/Users/sash/.sdkman/candidates/java/25.0.2-amzn" .
 git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/history/HistoryRepository.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/history/HistoryEntryEntity.java apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/EntityTimestampsTest.java
 git commit -m "fix(backend): preserve ledger deltas during history replacement"
 ```
-
-### CHECKPOINT
-
-- completed: Added entity lifecycle normalization for insert and update; added H2 coverage for replacement/upsert defaults and explicit deltas.
-- remaining: Run a clean backend `verify` after the pre-existing SpotBugs finding in `PublicAuthRateLimitFilter` is resolved by TASK-RR-007; then mark this task `DONE`.
-- changed files: `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/history/HistoryEntryEntity.java`; `apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/EntityTimestampsTest.java`.
-- current test/verification status: Targeted `EntityTimestampsTest` passes (4 tests); backend `verify` runs 621 tests successfully and passes JaCoCo/PMD, but fails SpotBugs on pre-existing `PublicAuthRateLimitFilter` `EI_EXPOSE_REP2`.
-- confirmed blockers: `TASK-RR-007` scope; no blocker in the ledger implementation.
-- next exact action: Resume `TASK-RR-002` after the SpotBugs blocker is fixed, rerun the required `verify`, and update status/state in the same commit.
 
 ## TASK-RR-003: Make security scanning release-blocking and auditable
 
