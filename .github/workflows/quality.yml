@@ -148,6 +148,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.0
 
+      - name: Validate security scan policy
+        run: |
+          set -euo pipefail
+          test -f .gitleaks.toml
+          grep -Fq "GITLEAKS_VERSION: 8.30.1" .github/workflows/quality.yml
+          grep -Fq "GITLEAKS_VERSION: 8.30.1" .github/workflows/publication.yml
+          grep -Fq "severity: HIGH,CRITICAL" .github/workflows/quality.yml
+          grep -Fq "scanners: vuln,secret,misconfig" .github/workflows/quality.yml
+
+      - name: Run repository security scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: json
+          output: trivy-repository-report.json
+          scanners: vuln,secret,misconfig
+          ignore-unfixed: true
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          skip-dirs: .git,.mvn,target,node_modules,build,dist,.svelte-kit,coverage,test-results,.vite
+          cache-dir: ${{ runner.temp }}/.trivy-cache
+
+      - name: Upload Trivy reports
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: trivy-security-reports
+          path: |
+            trivy-repository-report.json
+            trivy-backend-report.json
+            trivy-frontend-report.json
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 9
+
       - name: Run backend security scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:

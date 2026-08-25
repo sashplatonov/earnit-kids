@@ -163,7 +163,7 @@ git commit -m "fix(backend): preserve ledger deltas during history replacement"
 
 ## TASK-RR-003: Make security scanning release-blocking and auditable
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** TASK-RR-001
 
