@@ -67,7 +67,7 @@
     .row-role, .ids { color: #66718a; font-size: .78rem; }
     .row-actions { flex-shrink: 0; }
     .icon-btn { min-width: 44px; min-height: 44px; }
-    .avatar { width: 2.625rem; height: 2.625rem; border-radius: .75rem; background: #eef2ff; color: #4d67d7; display: grid; place-items: center; font-weight: 800; }
+    .avatar { width: 2.625rem; height: 2.625rem; border-radius: .75rem; background: #eef0ff; color: #5b63e9; display: grid; place-items: center; font-weight: 800; }
     .state { display: inline-flex; align-items: center; min-height: 1.7rem; padding: .2rem .5rem; border-radius: 99px; background: #e8f7ef; color: #187847; font-size: .72rem; font-weight: 700; }
     .state.pending { background: #fff1dc; color: #a96720; }
     .state.inactive { background: #eef1f5; color: #66718a; }
@@ -75,7 +75,11 @@
     .id { display: inline-flex; align-items: center; gap: .35rem; max-width: 100%; padding: .22rem .45rem; border: 1px solid #dfe4ef; border-radius: 99px; background: #fafbfe; color: #51607a; font-size: .72rem; }
     .id .icon { display: inline-flex; flex: 0 0 auto; }
     .id .text { min-width: 0; }
-    .icon-btn.danger { border-color: #efc9c9; background: #fff5f5; color: #b74d4d; }
-    .icon-btn.ok { border-color: #b9e1c8; background: #f2fff5; color: #17884b; }
+    .icon-btn { border-color: transparent; background: #f1f3f7; color: #42506e; transition: background-color .16s ease, opacity .16s ease; }
+    .icon-btn:hover:not(:disabled) { background: #e8ecf4; }
+    .icon-btn:active:not(:disabled) { opacity: .78; }
+    .icon-btn:focus-visible { outline: 3px solid #80aaff; outline-offset: 2px; }
+    .icon-btn.danger { border-color: #f1d6d8; background: #fff5f5; color: #b74d4d; }
+    .icon-btn.ok { border-color: #b9e1c8; background: #f7fff9; color: #17884b; }
     .note { margin: 0; color: #66718a; font-size: .8rem; }
 </style>
