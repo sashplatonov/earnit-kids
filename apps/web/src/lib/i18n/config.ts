@@ -112,7 +112,7 @@ export function stripLocaleFromPath(pathname: string): string {
 
 export function localizePath(pathname: string, locale: Locale): string {
     const normalized = stripLocaleFromPath(pathname);
-    return normalized === '/' ? `/${locale}/` : `/${locale}${normalized}`;
+    return normalized === '/' ? `/${locale}` : `/${locale}${normalized}`;
 }
 
 export function swapPathLocale(pathname: string, locale: Locale): string {

@@ -417,8 +417,10 @@ git commit -m "feat(web): Localize workspace experience"
 ### Targeted validation
 
 ```bash
-cd apps/web && npm run lint && npm run test && npm run build && npm run test:e2e -- tests/e2e/public-i18n.spec.ts
+cd apps/web && npm run lint && npm run test && npm run build && PLAYWRIGHT_USE_PREVIEW=true npm run test:e2e -- tests/e2e/public-i18n.spec.ts
 ```
+
+**Execution note (2026-08-25):** The Public E2E command owns its preview server via `PLAYWRIGHT_USE_PREVIEW=true`. A macOS `bootstrap_check_in ... Permission denied` failure occurs before Playwright starts and cannot be fixed in application code; it requires the test process to run outside the Codex macOS sandbox.
 
 ### Commit
 
