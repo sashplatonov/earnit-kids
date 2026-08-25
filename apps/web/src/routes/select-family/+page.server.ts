@@ -16,6 +16,6 @@ export const load: PageServerLoad = async ({ fetch, locals }) => {
             }> }).familyChoices ?? []
             : [],
         expired: !response.ok,
-        i18n: getI18nPayloadForPath('/select-family', locals.locale),
+        i18n: await getI18nPayloadForPath('/select-family', locals.locale),
     };
 };

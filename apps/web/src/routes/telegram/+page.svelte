@@ -51,7 +51,7 @@
                 state = 'ready';
                 verifiedRole = result.role ?? '';
                 if (result.locale) {
-                    updateI18n(i18n, getI18nPayloadForPath('/telegram', result.locale));
+                    updateI18n(i18n, await getI18nPayloadForPath('/telegram', result.locale));
                 }
                 if (result.languageSetupRequired && result.role === 'admin') {
                     state = 'language-setup';

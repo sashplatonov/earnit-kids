@@ -271,7 +271,7 @@ git commit -m "feat(i18n): Resolve family language"
 
 ## I18N-005: Harden the SvelteKit translation platform
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-001
 

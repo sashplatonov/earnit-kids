@@ -6,6 +6,9 @@ import {
     formatDateTime,
     formatMoneyLike,
     formatNumber,
+    formatPercentage,
+    formatPlural,
+    formatRelativeTime,
     formatShortDate,
     getPluralCategory,
 } from '../../src/lib/i18n';
@@ -48,5 +51,12 @@ describe('i18n formatters', () => {
         expect(formatShortDate('en', '2024-01-02T03:04:05.000Z')).toContain('2024');
         expect(formatShortDate('ru', '2024-01-02T03:04:05.000Z')).toContain('2024');
         expect(formatDateTime('en', '2024-01-02T03:04:05.000Z')).toContain('2024');
+    });
+
+    it('uses locale-aware percentage, relative-time, and plural helpers', () => {
+        expect(formatPercentage('en', 25)).toBe('25%');
+        expect(formatPlural('ru', 1, { one: 'день', few: 'дня', many: 'дней', other: 'дня' })).toBe('день');
+        expect(formatPlural('ru', 5, { one: 'день', few: 'дня', many: 'дней', other: 'дня' })).toBe('дней');
+        expect(formatRelativeTime('en', -1, 'day')).toBe('yesterday');
     });
 });

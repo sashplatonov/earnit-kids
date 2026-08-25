@@ -7,6 +7,10 @@ export const commonMessages = {
         switchLabel: 'Сменить язык',
         en: 'English',
         ru: 'Русский',
+        select: {
+            en: 'Переключить на английский',
+            ru: 'Переключить на русский',
+        },
     },
     navigation: {
         publicAria: 'Публичная навигация',

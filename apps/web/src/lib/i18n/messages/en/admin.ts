@@ -400,22 +400,32 @@ export const adminMessages = {
         noTasks: 'No tasks for the selected age.',
         frequencyDay: {
             one: '{limit} time per day',
+            few: '{limit} times per day',
+            many: '{limit} times per day',
             other: '{limit} times per day',
         },
         frequencyWeek: {
             one: '{limit} time per week',
+            few: '{limit} times per week',
+            many: '{limit} times per week',
             other: '{limit} times per week',
         },
         frequencyMonth: {
             one: '{limit} time per month',
+            few: '{limit} times per month',
+            many: '{limit} times per month',
             other: '{limit} times per month',
         },
         frequencyYear: {
             one: '{limit} time per year',
+            few: '{limit} times per year',
+            many: '{limit} times per year',
             other: '{limit} times per year',
         },
         frequencySeason: {
             one: '{limit} time per season',
+            few: '{limit} times per season',
+            many: '{limit} times per season',
             other: '{limit} times per season',
         },
         frequencyFallback: '{limit} times per period',

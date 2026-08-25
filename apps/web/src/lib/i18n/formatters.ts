@@ -65,3 +65,15 @@ export function formatCoins(locale: Locale, value: number): string {
     const label = labels[category as keyof typeof labels] ?? labels.other;
     return `${formatNumber(locale, value)} ${label}`;
 }
+
+export function formatPercentage(locale: Locale, value: number, maximumFractionDigits = 0): string {
+    return formatNumber(locale, value / 100, { style: 'percent', maximumFractionDigits });
+}
+
+export function formatRelativeTime(locale: Locale, value: number, unit: Intl.RelativeTimeFormatUnit): string {
+    return new Intl.RelativeTimeFormat(getIntlLocale(locale), { numeric: 'auto' }).format(value, unit);
+}
+
+export function formatPlural<T>(locale: Locale, value: number, forms: Partial<Record<Intl.LDMLPluralRule, T>> & { other: T }): T {
+    return forms[getPluralCategory(locale, value)] ?? forms.other;
+}
