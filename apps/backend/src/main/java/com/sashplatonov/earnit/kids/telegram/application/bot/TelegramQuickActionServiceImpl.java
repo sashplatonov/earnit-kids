@@ -4,6 +4,7 @@ import com.sashplatonov.earnit.kids.family.api.response.FamilyDataResponse;
 import com.sashplatonov.earnit.kids.family.application.FamilyService;
 import com.sashplatonov.earnit.kids.family.application.action.FamilyActionService;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.telegram.api.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.telegram.application.identity.TelegramIdentityService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -47,8 +48,7 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
                                       familyData(familyId, childId, false)
                                           .map(
                                               data ->
-                                                  response(
-                                                      familyId, identity.role(), childId, data)));
+                                                  response(familyId, identity.role(), childId, data)));
                         }
                         Optional<FamilyDataResponse> overview =
                             familyData(familyId, selectedChildId, true);
@@ -189,6 +189,8 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
 
   private TelegramQuickActionResponse response(
       String familyId, String role, int childId, FamilyDataResponse data) {
+    FamilyLocale locale = families.get().findById(familyId).map(value -> value.getLocale())
+        .map(value -> value == null ? FamilyLocale.en : value).orElse(FamilyLocale.en);
     return new TelegramQuickActionResponse(
         familyId,
         role,
@@ -199,7 +201,7 @@ public class TelegramQuickActionServiceImpl implements TelegramQuickActionServic
         data.tasks().stream().filter(value -> value.isActive()).limit(MAX_ITEMS + 1).toList(),
         data.shop().stream().filter(value -> value.isActive()).limit(MAX_ITEMS + 1).toList(),
         data.requests().stream().limit(MAX_ITEMS).toList(),
-        data.history().stream().limit(MAX_ITEMS).toList());
+        data.history().stream().limit(MAX_ITEMS).toList(), locale);
   }
 
   @FunctionalInterface

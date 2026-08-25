@@ -492,7 +492,7 @@ git commit -m "feat(web): Localize Telegram Mini App"
 
 ## I18N-009: Localize Telegram Bot menus and recipient delivery
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-002, I18N-005
 
@@ -537,8 +537,8 @@ cd apps/backend && ./mvnw -B -ntp -Dtest=TelegramBotServiceImplTest,TelegramMenu
 ### Commit
 
 ```bash
-git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/telegram apps/backend/src/main/resources/telegram_messages*.properties apps/backend/src/test/java/com/sashplatonov/earnit/kids/telegram apps/backend/src/test/java/com/sashplatonov/earnit/kids/integration/TelegramCrossChannelIntegrationTest.java
-git commit -m "feat(backend): Localize Telegram delivery"
+git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/telegram apps/backend/src/main/resources/telegram_messages*.properties apps/backend/src/test/java/com/sashplatonov/earnit/kids/telegram apps/backend/src/test/java/com/sashplatonov/earnit/kids/integration/TelegramCrossChannelIntegrationTest.java docs/internationalization-backlog.md docs/.backlog-execution-state.md
+git commit -m "feat(i18n): Localize Telegram bot delivery"
 ```
 
 [↑ Back to top](#top)

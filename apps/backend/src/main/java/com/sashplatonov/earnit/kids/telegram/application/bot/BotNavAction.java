@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.telegram.application.bot;
 
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
+
 public enum BotNavAction {
     REQUESTS("requests", TelegramCopy.NAV_REQUESTS),
     COINS("coins", TelegramCopy.NAV_COINS),
@@ -28,10 +30,21 @@ public enum BotNavAction {
             return java.util.Optional.empty();
         }
         for (BotNavAction nav : values()) {
-            if (nav.label.equals(label)) {
+            if (nav.label.equals(label) || nav.localizedLabel(FamilyLocale.en).equals(label)
+                    || nav.localizedLabel(FamilyLocale.ru).equals(label)) {
                 return java.util.Optional.of(nav);
             }
         }
         return java.util.Optional.empty();
+    }
+
+    private String localizedLabel(FamilyLocale locale) {
+        return switch (this) {
+            case REQUESTS -> TelegramCopy.requests(locale);
+            case COINS -> TelegramCopy.coins(locale);
+            case RECENT -> TelegramCopy.recent(locale);
+            case SELECT_CHILD -> TelegramCopy.switchChild(locale);
+            case OPEN_SITE -> TelegramCopy.site(locale);
+        };
     }
 }

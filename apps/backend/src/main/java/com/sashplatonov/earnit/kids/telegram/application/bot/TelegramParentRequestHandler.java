@@ -33,11 +33,17 @@ final class TelegramParentRequestHandler {
         approved
             ? quickActions.approveRequest(telegramUserId, childId, requestId)
             : quickActions.rejectRequest(telegramUserId, childId, requestId);
-    editResult(
-        callback,
-        result,
-        new TelegramParentRequestDetails(approved, requestId, childId, telegramUserId, queueContext, data),
-        new TelegramParentRequestDependencies(quickActions, apiClient, menuBuilder));
+    TelegramQuickActionResponse localizedView = result instanceof OperationResult.Success<TelegramQuickActionResponse> success
+        ? success.value() : quickActions.load(telegramUserId, childId).orElse(null);
+    try {
+      TelegramLocaleContext.with(localizedView == null
+          ? com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.en : localizedView.locale(), () ->
+          editResult(callback, result,
+              new TelegramParentRequestDetails(approved, requestId, childId, telegramUserId, queueContext, data),
+              new TelegramParentRequestDependencies(quickActions, apiClient, menuBuilder)));
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception);
+    }
   }
 
   private static void editResult(

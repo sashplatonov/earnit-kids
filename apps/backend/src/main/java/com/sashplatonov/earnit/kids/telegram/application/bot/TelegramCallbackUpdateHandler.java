@@ -121,12 +121,14 @@ final class TelegramCallbackUpdateHandler {
         .ifPresent(
             view -> {
               try {
-                apiClient.editMessageText(
-                    chatId,
-                    messageId,
-                    TelegramMenuFlow.navigationText(verified.action(), view),
-                    TelegramMenuFlow.navigationMenu(
-                        verified.action(), view, miniAppUrl, publicSiteUrl, menuBuilder));
+                TelegramLocaleContext.with(view.locale(), () -> {
+                  apiClient.editMessageText(
+                      chatId,
+                      messageId,
+                      TelegramMenuFlow.navigationText(verified.action(), view),
+                      TelegramMenuFlow.navigationMenu(
+                          verified.action(), view, miniAppUrl, publicSiteUrl, menuBuilder));
+                });
               } catch (Exception exception) {
                 throw new IllegalStateException(exception);
               }

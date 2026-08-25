@@ -1,48 +1,49 @@
 package com.sashplatonov.earnit.kids.telegram.application.bot;
 
 import com.sashplatonov.earnit.kids.family.domain.model.request.RequestResolutionStatus;
+import java.util.Map;
 
 public final class TelegramOutcomeCopy {
   private TelegramOutcomeCopy() {}
 
   public static String parentApproved(String title, int delta, int balance, boolean task) {
-    String result = TelegramBotEmoji.SUCCESS + " Одобрено\n\n" + title;
+    String result = TelegramMessageResolverHolder.text("telegram.outcome.approved") + "\n\n" + title;
     if (delta != 0) {
       result += "\n" + TelegramCoinCopy.delta(delta, task, true);
     }
-    result += "\nБаланс: " + balance;
+    result += "\n" + TelegramMessageResolverHolder.text("telegram.notification.balance", Map.of("balance", balance));
     return result;
   }
 
   public static String parentRejected() {
-    return TelegramBotEmoji.REJECT + " Отклонено";
+    return TelegramMessageResolverHolder.text("telegram.outcome.rejected");
   }
 
   public static String stale() {
-    return TelegramBotEmoji.INFO + " Этот запрос уже обработан";
+    return TelegramMessageResolverHolder.text("telegram.outcome.stale");
   }
 
   public static String requestResolved(String title, RequestResolutionStatus status) {
     String statusLine =
         switch (status) {
-          case approved -> TelegramBotEmoji.SUCCESS + " Одобрено";
-          case rejected -> TelegramBotEmoji.DECLINE + " Отклонено";
-          case cancelled -> TelegramBotEmoji.CANCEL + " Отменено";
-          case deleted -> TelegramBotEmoji.DELETE + " Удалено";
+          case approved -> TelegramMessageResolverHolder.text("telegram.outcome.approved");
+          case rejected -> TelegramMessageResolverHolder.text("telegram.outcome.rejected");
+          case cancelled -> TelegramMessageResolverHolder.text("telegram.outcome.cancelled");
+          case deleted -> TelegramMessageResolverHolder.text("telegram.outcome.deleted");
         };
     return title == null || title.isBlank() ? statusLine : title + "\n" + statusLine;
   }
 
   public static String error() {
-    return TelegramBotEmoji.ERROR + " Не удалось выполнить действие\nПопробуйте ещё раз";
+    return TelegramMessageResolverHolder.text("telegram.outcome.error");
   }
 
   public static String waiting(String taskName) {
-    return TelegramBotEmoji.WAITING + " " + taskName + "\nЖдём решения родителя";
+    return TelegramBotEmoji.WAITING + " " + taskName + "\n" + TelegramMessageResolverHolder.text("telegram.outcome.waiting");
   }
 
   public static String rewardWaiting() {
-    return TelegramBotEmoji.WAITING + " Заявка отправлена родителю";
+    return TelegramMessageResolverHolder.text("telegram.outcome.sent");
   }
 
   public static String childTaskApproved(String title, int delta, int balance) {
@@ -68,18 +69,18 @@ public final class TelegramOutcomeCopy {
   }
 
   public static String emptyRequests() {
-    return TelegramBotEmoji.SUCCESS + " Нет запросов, ожидающих решения";
+    return TelegramMessageResolverHolder.text("telegram.outcome.noRequests");
   }
 
   public static String emptyTasks() {
-    return TelegramBotEmoji.SUCCESS + " На сегодня активных заданий нет";
+    return TelegramMessageResolverHolder.text("telegram.outcome.noTasks");
   }
 
   public static String emptyRewards() {
-    return TelegramBotEmoji.REWARDS + " Сейчас нет доступных наград";
+    return TelegramMessageResolverHolder.text("telegram.outcome.noRewards");
   }
 
   public static String emptyRecent() {
-    return TelegramBotEmoji.SUCCESS + " Пока нет событий";
+    return TelegramMessageResolverHolder.text("telegram.outcome.noRecent");
   }
 }

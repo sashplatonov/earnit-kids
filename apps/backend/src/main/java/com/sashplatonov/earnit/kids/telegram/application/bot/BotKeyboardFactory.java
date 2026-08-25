@@ -10,18 +10,18 @@ public class BotKeyboardFactory {
 
     public TelegramReplyKeyboard parentMain() {
         var rows = new java.util.ArrayList<TelegramReplyKeyboard.Row>();
-        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.NAV_REQUESTS, TelegramCopy.NAV_COINS));
-        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.NAV_RECENT, TelegramCopy.NAV_SELECT_CHILD));
+        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.requests(TelegramLocaleContext.current()), TelegramCopy.coins(TelegramLocaleContext.current())));
+        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.recent(TelegramLocaleContext.current()), TelegramCopy.switchChild(TelegramLocaleContext.current())));
         if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
-            rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.NAV_OPEN_SITE));
+            rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.site(TelegramLocaleContext.current())));
         }
         return TelegramReplyKeyboard.persistent(rows);
     }
 
     public TelegramReplyKeyboard childMain() {
         var rows = java.util.List.of(
-            new TelegramReplyKeyboard.Row(TelegramCopy.MY_TASKS, TelegramCopy.REWARDS),
-            new TelegramReplyKeyboard.Row(TelegramCopy.NAV_RECENT)
+            new TelegramReplyKeyboard.Row(TelegramCopy.myTasks(TelegramLocaleContext.current()), TelegramCopy.rewards(TelegramLocaleContext.current())),
+            new TelegramReplyKeyboard.Row(TelegramCopy.recent(TelegramLocaleContext.current()))
         );
         return TelegramReplyKeyboard.persistent(rows);
     }

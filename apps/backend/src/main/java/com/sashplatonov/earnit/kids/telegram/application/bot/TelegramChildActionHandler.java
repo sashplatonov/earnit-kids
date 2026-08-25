@@ -25,7 +25,12 @@ final class TelegramChildActionHandler {
                 .filter(task -> task.id() == taskId).map(task -> task.name()).findFirst().orElse(null);
             OperationResult<TelegramQuickActionResponse> result =
                 quickActions.requestTask(telegramUserId, view.childId(), taskId);
-            editTaskRequestResult(callback, result, taskName, "task.request." + taskId);
+            try {
+                TelegramLocaleContext.with(view.locale(), () ->
+                    editTaskRequestResult(callback, result, taskName, "task.request." + taskId));
+            } catch (Exception exception) {
+                throw new IllegalStateException(exception);
+            }
         });
     }
 
@@ -33,7 +38,12 @@ final class TelegramChildActionHandler {
         quickActions.load(telegramUserId, null).ifPresent(view -> {
             OperationResult<TelegramQuickActionResponse> result =
                 quickActions.requestReward(telegramUserId, view.childId(), rewardId);
-            editRewardRequestResult(callback, result, "reward.request." + rewardId);
+            try {
+                TelegramLocaleContext.with(view.locale(), () ->
+                    editRewardRequestResult(callback, result, "reward.request." + rewardId));
+            } catch (Exception exception) {
+                throw new IllegalStateException(exception);
+            }
         });
     }
 
@@ -68,7 +78,7 @@ final class TelegramChildActionHandler {
         boolean success = result instanceof OperationResult.Success<TelegramQuickActionResponse>;
       String text =
           success
-              ? TelegramOutcomeCopy.waiting(taskName == null ? "Задание" : taskName)
+              ? TelegramOutcomeCopy.waiting(taskName == null ? "Task" : taskName)
               : TelegramOutcomeCopy.error();
         List<TelegramBotApiClient.InlineButton> buttons = success
             ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);

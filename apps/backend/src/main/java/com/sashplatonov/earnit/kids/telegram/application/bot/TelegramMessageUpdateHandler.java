@@ -64,16 +64,18 @@ final class TelegramMessageUpdateHandler {
             var view = quickActions.load(telegramUserId, null);
             if (view.isPresent()) {
                 TelegramQuickActionResponse loaded = view.get();
-                String homeText = TelegramMenuFlow.startText(loaded);
-                BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl);
-                TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
-                    ? kb.childMain() : kb.parentMain();
-                int keyboardVersion = config.replyKeyboardVersion();
-                if (identities.needsReplyKeyboardReset(telegramUserId, keyboardVersion)) {
-                    apiClient.removeReplyKeyboard(chatId);
-                    identities.markReplyKeyboardVersion(telegramUserId, keyboardVersion);
-                }
-                apiClient.sendMessageWithReplyKeyboard(chatId, homeText, replyKeyboard);
+                TelegramLocaleContext.with(loaded.locale(), () -> {
+                    String homeText = TelegramMenuFlow.startText(loaded);
+                    BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl);
+                    TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
+                        ? kb.childMain() : kb.parentMain();
+                    int keyboardVersion = config.replyKeyboardVersion();
+                    if (identities.needsReplyKeyboardReset(telegramUserId, keyboardVersion)) {
+                        apiClient.removeReplyKeyboard(chatId);
+                        identities.markReplyKeyboardVersion(telegramUserId, keyboardVersion);
+                    }
+                    apiClient.sendMessageWithReplyKeyboard(chatId, homeText, replyKeyboard);
+                });
             } else {
                 var parent = identities.findActiveByTelegramUserId(telegramUserId)
                     .filter(identity -> "parent".equals(identity.role()));

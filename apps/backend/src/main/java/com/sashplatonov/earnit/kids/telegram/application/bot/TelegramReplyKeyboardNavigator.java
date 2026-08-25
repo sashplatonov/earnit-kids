@@ -44,8 +44,8 @@ public class TelegramReplyKeyboardNavigator {
         if (publicSiteUrl.isEmpty()) {
             return;
         }
-        apiClient.get().sendMessage(chatId, TelegramCopy.NAV_OPEN_SITE,
-            java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.NAV_OPEN_SITE, publicSiteUrl, null)));
+        apiClient.get().sendMessage(chatId, TelegramCopy.site(TelegramLocaleContext.current()),
+            java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.site(TelegramLocaleContext.current()), publicSiteUrl, null)));
     }
 
     private void navigateByAction(long chatId, long telegramUserId, String action) throws Exception {
@@ -53,19 +53,21 @@ public class TelegramReplyKeyboardNavigator {
             return;
         }
         String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
-        quickActions.load(telegramUserId, TelegramMenuFlow.selectedChildId(action))
+            quickActions.load(telegramUserId, TelegramMenuFlow.selectedChildId(action))
             .ifPresent(view -> {
                 try {
-                    String navText = TelegramMenuFlow.navigationText(action, view);
-                    if ("parent".equals(view.role())) {
-                        List<TelegramBotApiClient.InlineButton> inlineButtons =
-                            TelegramMenuFlow.navigationMenu(action, view, config.miniAppUrl().orElse(""),
-                                publicSiteUrl, menuBuilder);
-                        apiClient.get().sendMessage(chatId, navText, inlineButtons);
-                    } else {
-                        TelegramReplyKeyboard replyKeyboard = new BotKeyboardFactory(null).childMain();
-                        apiClient.get().sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
-                    }
+                    TelegramLocaleContext.with(view.locale(), () -> {
+                        String navText = TelegramMenuFlow.navigationText(action, view);
+                        if ("parent".equals(view.role())) {
+                            List<TelegramBotApiClient.InlineButton> inlineButtons =
+                                TelegramMenuFlow.navigationMenu(action, view, config.miniAppUrl().orElse(""),
+                                    publicSiteUrl, menuBuilder);
+                            apiClient.get().sendMessage(chatId, navText, inlineButtons);
+                        } else {
+                            TelegramReplyKeyboard replyKeyboard = new BotKeyboardFactory(null).childMain();
+                            apiClient.get().sendMessageWithReplyKeyboard(chatId, navText, replyKeyboard);
+                        }
+                    });
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }

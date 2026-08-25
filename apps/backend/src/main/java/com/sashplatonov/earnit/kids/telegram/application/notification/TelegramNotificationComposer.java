@@ -6,6 +6,7 @@ import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramBotApiClien
 import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramCoinCopy;
 import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramChildOutcomeText;
 import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramBotEmoji;
+import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramLocaleContext;
 
 import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventType;
@@ -15,6 +16,8 @@ import com.sashplatonov.earnit.kids.family.domain.model.catalog.ShopItemEntity;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.child.ChildRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.request.PurchaseRequestRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.catalog.ShopItemRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -29,18 +32,21 @@ public class TelegramNotificationComposer {
     private final ShopItemRepository shopItems;
     private final TelegramCallbackService callbacks;
     private final TelegramChildOutcomeText outcomeText;
+    private final FamilyRepository families;
 
     @Inject
     public TelegramNotificationComposer(ChildRepository children,
                                         PurchaseRequestRepository requests,
                                         ShopItemRepository shopItems,
                                         TelegramCallbackService callbacks,
-                                        TelegramChildOutcomeText outcomeText) {
+                                        TelegramChildOutcomeText outcomeText,
+                                        FamilyRepository families) {
         this.children = () -> children;
         this.requests = () -> requests;
         this.shopItems = shopItems;
         this.callbacks = callbacks;
         this.outcomeText = outcomeText;
+        this.families = families;
     }
 
     TelegramNotificationComposer(ChildRepository children,
@@ -48,25 +54,36 @@ public class TelegramNotificationComposer {
                                  ShopItemRepository shopItems,
                                  TelegramCallbackService callbacks) {
         this(children, requests, shopItems, callbacks,
-            new TelegramChildOutcomeText(requests, shopItems));
+            new TelegramChildOutcomeText(requests, shopItems), null);
     }
 
     public List<TelegramBotApiClient.InlineButton> buttons(ApplicationOutboxEventEntity event) {
-        if (isRequestEvent(event.getEventType())) {
-            return requestButtons(event);
-        }
-        return childOutcomeButtons(event.getEventType());
+        return withFamilyLocale(event, () -> isRequestEvent(event.getEventType())
+            ? requestButtons(event) : childOutcomeButtons(event.getEventType()));
     }
 
     public String text(ApplicationOutboxEventEntity event) {
-        if (isRequestEvent(event.getEventType())) {
-            return requestText(event);
-        }
-        return childOutcomeText(event);
+        return withFamilyLocale(event, () -> isRequestEvent(event.getEventType())
+            ? requestText(event) : childOutcomeText(event));
     }
 
     public String resolvedText(ApplicationOutboxEventEntity event) {
-        return TelegramOutcomeCopy.requestResolved(event.getResolutionTitle(), event.getResolutionStatus());
+        return withFamilyLocale(event, () -> TelegramOutcomeCopy.requestResolved(
+            event.getResolutionTitle(), event.getResolutionStatus()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T withFamilyLocale(ApplicationOutboxEventEntity event, java.util.function.Supplier<T> action) {
+        FamilyLocale locale = families == null ? FamilyLocale.ru : families.findByDbId(event.getFamilyId())
+            .map(value -> value.getLocale() == null ? FamilyLocale.en : value.getLocale())
+            .orElse(FamilyLocale.en);
+        final Object[] result = new Object[1];
+        try {
+            TelegramLocaleContext.with(locale, () -> result[0] = action.get());
+        } catch (Exception exception) {
+            throw new IllegalStateException(exception);
+        }
+        return (T) result[0];
     }
 
     private List<TelegramBotApiClient.InlineButton> requestButtons(ApplicationOutboxEventEntity event) {
@@ -75,8 +92,8 @@ public class TelegramNotificationComposer {
         }
         String target = event.getChildId() + "." + event.getRequestId();
         return List.of(
-            TelegramBotApiClient.InlineButton.callback(TelegramCopy.APPROVE, "parent.request.approve." + target),
-            TelegramBotApiClient.InlineButton.callback(TelegramCopy.REJECT, "parent.request.reject." + target));
+            TelegramBotApiClient.InlineButton.callback(TelegramCopy.approve(com.sashplatonov.earnit.kids.telegram.application.bot.TelegramLocaleContext.current()), "parent.request.approve." + target),
+            TelegramBotApiClient.InlineButton.callback(TelegramCopy.reject(com.sashplatonov.earnit.kids.telegram.application.bot.TelegramLocaleContext.current()), "parent.request.reject." + target));
     }
 
     private List<TelegramBotApiClient.InlineButton> childOutcomeButtons(ApplicationOutboxEventType type) {
@@ -85,9 +102,9 @@ public class TelegramNotificationComposer {
         }
         return switch (type) {
             case TASK_APPROVED, REWARD_APPROVED ->
-                List.of(nav(TelegramCopy.MY_TASKS, "tasks"), nav(TelegramCopy.REWARDS, "rewards"));
-            case TASK_REJECTED -> List.of(nav(TelegramCopy.MY_TASKS, "tasks"));
-            case REWARD_REJECTED -> List.of(nav(TelegramCopy.REWARDS, "rewards"));
+                List.of(nav(TelegramCopy.myTasks(TelegramLocaleContext.current()), "tasks"), nav(TelegramCopy.rewards(TelegramLocaleContext.current()), "rewards"));
+            case TASK_REJECTED -> List.of(nav(TelegramCopy.myTasks(TelegramLocaleContext.current()), "tasks"));
+            case REWARD_REJECTED -> List.of(nav(TelegramCopy.rewards(TelegramLocaleContext.current()), "rewards"));
             default -> List.of();
         };
     }

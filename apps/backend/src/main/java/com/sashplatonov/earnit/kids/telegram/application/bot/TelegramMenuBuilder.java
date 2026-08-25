@@ -30,16 +30,16 @@ public class TelegramMenuBuilder {
                         TelegramCopy.chooseChild(child.name(), child.balance()),
                         "child-" + child.id(), null)));
     if (buttons.isEmpty()) {
-      buttons.add(callback(TelegramCopy.ADD_CHILD_MINI_APP, "noop"));
+      buttons.add(callback(TelegramCopy.addChild(TelegramLocaleContext.current()), "noop"));
     }
     if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
-      buttons.add(url(TelegramCopy.SHARE_SITE, publicSiteUrl, "picker-row-4"));
+      buttons.add(url(TelegramCopy.shareSite(TelegramLocaleContext.current()), publicSiteUrl, "picker-row-4"));
     }
     return List.copyOf(buttons);
   }
 
   public List<TelegramBotApiClient.InlineButton> parentNoChildren(String miniAppUrl) {
-    return List.of(webApp(TelegramCopy.ADD_CHILD_MINI_APP, miniAppUrl));
+    return List.of(webApp(TelegramCopy.addChild(TelegramLocaleContext.current()), miniAppUrl));
   }
 
   public List<TelegramBotApiClient.InlineButton> parentCoins(
@@ -69,7 +69,7 @@ public class TelegramMenuBuilder {
             TelegramCopy.coinRemove(10),
             "coins-confirm-remove-10-child-" + view.childId(),
             "coins-row-4"),
-        webApp(TelegramCopy.CUSTOM_AMOUNT, TelegramDeepLink.coins(miniAppUrl), "coins-row-5"));
+        webApp(TelegramCopy.customAmount(TelegramLocaleContext.current()), TelegramDeepLink.coins(miniAppUrl), "coins-row-5"));
   }
 
   public List<TelegramBotApiClient.InlineButton> parentCoinConfirmation(
@@ -79,18 +79,18 @@ public class TelegramMenuBuilder {
     String target = "-child-" + view.childId();
     return List.of(
         navigation(
-            TelegramCopy.CONFIRM,
+            TelegramCopy.confirm(TelegramLocaleContext.current()),
             "coins-apply-" + direction + "-" + amount + target,
             "confirm-row-1"));
   }
 
   public List<TelegramBotApiClient.InlineButton> parentRequestRetry(
       TelegramQuickActionResponse view, String retryData) {
-    return List.of(callback(TelegramCopy.RETRY, retryData));
+    return List.of(callback(TelegramCopy.retry(TelegramLocaleContext.current()), retryData));
   }
 
   public List<TelegramBotApiClient.InlineButton> childRetry(String retryData) {
-    return List.of(callback(TelegramCopy.RETRY, retryData));
+    return List.of(callback(TelegramCopy.retry(TelegramLocaleContext.current()), retryData));
   }
 
   public List<TelegramBotApiClient.InlineButton> coinRetry(
@@ -99,7 +99,7 @@ public class TelegramMenuBuilder {
     int amount = Math.abs(delta);
     return List.of(
         navigation(
-            TelegramCopy.RETRY,
+            TelegramCopy.retry(TelegramLocaleContext.current()),
             "coins-apply-" + direction + "-" + amount + "-child-" + view.childId(),
             "retry-row-1"));
   }
@@ -115,7 +115,7 @@ public class TelegramMenuBuilder {
                 buttons.add(
                     callback(TelegramCopy.doneTask(task.name()), "task.request." + task.id())));
     if (view.tasks().size() > 5) {
-      buttons.add(webApp(TelegramCopy.ALL_TASKS, TelegramDeepLink.tasks(miniAppUrl)));
+      buttons.add(webApp(TelegramCopy.allTasks(TelegramLocaleContext.current()), TelegramDeepLink.tasks(miniAppUrl)));
     }
     return List.copyOf(buttons);
   }
@@ -134,7 +134,7 @@ public class TelegramMenuBuilder {
     long affordableRewards =
         view.rewards().stream().filter(reward -> reward.price() <= view.balance()).count();
     if (affordableRewards > 3 || view.rewards().size() > 4) {
-      buttons.add(webApp(TelegramCopy.ALL_REWARDS, TelegramDeepLink.rewards(miniAppUrl)));
+      buttons.add(webApp(TelegramCopy.allRewards(TelegramLocaleContext.current()), TelegramDeepLink.rewards(miniAppUrl)));
     }
     return List.copyOf(buttons);
   }
@@ -158,12 +158,12 @@ public class TelegramMenuBuilder {
     int total = pending.size();
     String target = request.childId() + "." + request.id() + ".queue";
     List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
-    buttons.add(callback(TelegramCopy.APPROVE, "parent.request.approve." + target, "queue-row-1"));
-    buttons.add(callback(TelegramCopy.REJECT, "parent.request.reject." + target, "queue-row-1"));
+    buttons.add(callback(TelegramCopy.approve(TelegramLocaleContext.current()), "parent.request.approve." + target, "queue-row-1"));
+    buttons.add(callback(TelegramCopy.reject(TelegramLocaleContext.current()), "parent.request.reject." + target, "queue-row-1"));
     if (index + 1 < total) {
       buttons.add(
           parentNavigation(
-              TelegramCopy.NEXT, "requests-next-" + request.id(), view, "queue-row-2"));
+              TelegramCopy.next(TelegramLocaleContext.current()), "requests-next-" + request.id(), view, "queue-row-2"));
     }
     return List.copyOf(buttons);
   }
@@ -172,7 +172,7 @@ public class TelegramMenuBuilder {
       TelegramQuickActionResponse view, String miniAppUrl) {
     List<TelegramBotApiClient.InlineButton> buttons = new ArrayList<>();
     if ("parent".equals(view.role())) {
-      buttons.add(webApp(TelegramCopy.FULL_HISTORY, TelegramDeepLink.history(miniAppUrl)));
+      buttons.add(webApp(TelegramCopy.fullHistory(TelegramLocaleContext.current()), TelegramDeepLink.history(miniAppUrl)));
     }
     return List.copyOf(buttons);
   }
