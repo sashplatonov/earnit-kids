@@ -9,6 +9,7 @@
 - [🗄️ Database Overview](#️-database-overview)
 - [🔐 Authentication and Authorization](#-authentication-and-authorization)
 - [🧾 API Versioning Strategy](#-api-versioning-strategy)
+- [🌍 Localization and API boundary](#-localization-and-api-boundary)
 - [📘 Runtime API Docs](#-runtime-api-docs)
 - [🧪 Verification](#-verification)
 
@@ -209,6 +210,22 @@ The current API surface is intentionally unversioned under `/api/*`.
 - Future breaking changes should introduce `/api/v2/*` in parallel instead of rewriting existing routes in place.
 
 [↩ Back to toc](#table-of-contents)
+
+## 🌍 Localization and API boundary
+
+The backend owns locale normalization, request-locale handling, Bean
+Validation bundles, and server-generated Telegram delivery text. Supported
+values are normalized to `en` or `ru`; `en-US`/`ru-RU` resolve to their base
+language and unsupported values resolve to `en`. A family locale is the one
+source of truth for authenticated family surfaces and bot delivery; do not
+persist personal parent, child, or Telegram locales.
+
+REST errors remain language-neutral at the domain boundary. The stable error
+payload contains `errorCode`, safe `params`, `traceId`, and the existing
+RFC-7807 fields. A bounded localized `detail` may remain temporarily for old
+clients, but new clients must not use it as logic input. Never localize API
+enums or display labels, expose exception/SQL data, or turn user-created task,
+reward, and catalog values into translation keys. See [ADR 0001](../../../docs/adr/0001-internationalization-strategy.md).
 
 ## 📘 Runtime API Docs
 

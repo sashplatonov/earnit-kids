@@ -7,6 +7,7 @@
 - [🗺️ Routing Structure](#️-routing-structure)
 - [🧠 State Management](#-state-management)
 - [🔌 API Integration Pattern](#-api-integration-pattern)
+- [🌍 Localization](#-localization)
 - [🧩 Component Conventions](#-component-conventions)
 - [🎨 Styling Approach](#-styling-approach)
 - [🛡️ Security and Diagnostics](#️-security-and-diagnostics)
@@ -87,6 +88,22 @@ Current convention:
 - Use a shared confirm modal for destructive actions instead of the native `confirm(...)` API.
 
 [↩ Back to toc](#table-of-contents)
+
+## 🌍 Localization
+
+The web catalog is typed, SSR-safe, and owned by the web application; keep it
+instead of adding another i18n runtime. Public pages use `/{locale}/...` and
+resolve locale as URL, cookie, `Accept-Language`, then `en`. Authenticated
+workspace and Telegram Mini App pages use the saved family locale, which wins
+over every client hint; an unconfigured family uses `en` for non-admin access
+until its administrator completes setup. Normalize `en-US`/`ru-RU` to `en`/`ru`
+and map unsupported values to `en`.
+
+Future locale work must add lazy catalog-domain loading, locale-parity
+validation, typed interpolation contracts, and `Intl.PluralRules`/
+`Intl.DateTimeFormat` coverage. Keep user-created task, reward, and catalog
+values as text data, never translation keys. Public URL and API error details
+are defined in [ADR 0001](../../../docs/adr/0001-internationalization-strategy.md).
 
 ## 🧩 Component Conventions
 

@@ -78,6 +78,18 @@ credential data is part of the public assets.
 - **Data:** PostgreSQL 18 locally; H2 is used for selected fast tests
 - **Delivery:** Docker Compose with JVM and native-image backend modes
 
+## Internationalization
+
+EarnIt Kids supports `en` and `ru` initially. Public pages are visitor-owned
+and use `/{locale}/...` canonical URLs, resolved in this order: URL, cookie,
+`Accept-Language`, then `en`. Authenticated workspace, Telegram Mini App, and
+Telegram Bot presentation use one normalized family locale (`en` or `ru`)
+chosen by a family administrator; it overrides browser and Telegram hints.
+Unconfigured families fall back to `en` for non-administrators while their
+administrator completes setup. See [ADR 0001](docs/adr/0001-internationalization-strategy.md)
+for the API error contract, translation ownership, normalization rules, and
+the extension workflow for future locales.
+
 ## Local start and verification
 
 From the repository root, run these five commands:
