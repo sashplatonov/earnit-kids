@@ -3,7 +3,7 @@
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
-    import { goto } from '$app/navigation';
+    import { afterNavigate, goto } from '$app/navigation';
     import { navigating } from '$app/stores';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
     import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
@@ -18,23 +18,45 @@
         return $i18n.t(`admin.dashboard.${key}` as MessageKey, variables);
     }
 
+    type NumberMetrics = Record<string, number | undefined>;
+    type Ranking = { category: string; count: number; percent: number; rank: number };
+    type TaskPattern = { groupName: string; count: number; percent: number };
+    type FunnelStage = { key: string; label: string; count: number; percentFromPrevious: number; percentFromInitial: number };
+    type TrendPoint = { date: string; activeFamilies: number; coinsEarned: number; coinsSpent: number };
+    type AnalyticsSectionData = {
+        coins?: NumberMetrics;
+        balances?: NumberMetrics;
+        metrics?: NumberMetrics;
+        taskMetrics?: NumberMetrics;
+        parentBehaviorMetrics?: NumberMetrics;
+        childBehaviorMetrics?: NumberMetrics;
+        retentionMetrics?: NumberMetrics;
+        rankings?: Ranking[];
+        topPatterns?: TaskPattern[];
+        stages?: FunnelStage[];
+        points?: TrendPoint[];
+    };
+
     // EXPLAIN: Server authorization is authoritative on direct dashboard
     // navigations; the store is populated later by the Mini App bootstrap.
     $: isAdmin = data.isAdmin === true || $appStore.isAdmin;
 
     export let data;
-    $: overview = data.overview;
-    $: coinEconomy = data.coinEconomy;
-    $: taskEconomy = data.taskEconomy;
-    $: parentBehavior = data.parentBehavior;
-    $: childBehavior = data.childBehavior;
-    $: activationFunnel = data.activationFunnel;
-    $: retention = data.retention;
-    $: rewards = data.rewards;
-    $: trends = data.trends;
-    $: dashboardStatus = data.dashboardStatus ?? (overview == null ? 'unavailable' : 'available');
-    $: trendsStatus = data.trendsStatus ?? (trends == null ? 'unavailable' : 'available');
-    $: unavailableSections = data.unavailableSections ?? [];
+    let overview = data.overview;
+    let coinEconomy: AnalyticsSectionData | null = data.coinEconomy;
+    let taskEconomy: AnalyticsSectionData | null = data.taskEconomy;
+    let parentBehavior: AnalyticsSectionData | null = data.parentBehavior;
+    let childBehavior: AnalyticsSectionData | null = data.childBehavior;
+    let activationFunnel: AnalyticsSectionData | null = data.activationFunnel;
+    let retention: AnalyticsSectionData | null = data.retention;
+    let rewards: AnalyticsSectionData | null = data.rewards;
+    let trends: AnalyticsSectionData | null = data.trends;
+    let dashboardStatus = data.dashboardStatus ?? (overview == null ? 'unavailable' : 'available');
+    let trendsStatus: 'available' | 'unavailable' = data.trendsStatus ?? (trends == null ? 'unavailable' : 'available');
+    let unavailableSections = data.unavailableSections ?? [];
+
+    let loadedSections: string[] = [];
+    let loadingSections: string[] = [];
 
     // EXPLAIN: The selected period comes from the URL (?period=...) and is
     // EXPLAIN: resolved server-side, so changing it reloads real data.
@@ -66,6 +88,17 @@
     let activeActivitySubtab: ActivitySubtabId = 'activation';
     let periodLoading = false;
 
+    const analyticsEndpoints: Record<string, string> = {
+        coinEconomy: '/api/admin/analytics/coin-economy',
+        tasks: '/api/admin/analytics/task-economy',
+        parentBehavior: '/api/admin/analytics/parent-behavior',
+        childBehavior: '/api/admin/analytics/child-behavior',
+        activation: '/api/admin/analytics/activation-funnel',
+        retention: '/api/admin/analytics/retention',
+        rewards: '/api/admin/analytics/rewards',
+        trends: '/api/admin/analytics/trends',
+    };
+
     // Redirect non-admins to the Telegram Mini App home
     onMount(() => {
         if (!isAdmin) {
@@ -74,8 +107,29 @@
         }
     });
 
+    afterNavigate(() => {
+        overview = data.overview;
+        coinEconomy = data.coinEconomy;
+        taskEconomy = data.taskEconomy;
+        parentBehavior = data.parentBehavior;
+        childBehavior = data.childBehavior;
+        activationFunnel = data.activationFunnel;
+        retention = data.retention;
+        rewards = data.rewards;
+        trends = data.trends;
+        dashboardStatus = data.dashboardStatus ?? (overview == null ? 'unavailable' : 'available');
+        trendsStatus = data.trendsStatus ?? (trends == null ? 'unavailable' : 'available');
+        unavailableSections = data.unavailableSections ?? [];
+        loadedSections = [];
+        loadingSections = [];
+    });
+
     function switchTab(tabId: TabId) {
         activeTab = tabId;
+        if (tabId === 'coins') void loadSections(['coinEconomy', 'childBehavior']);
+        if (tabId === 'rewards') void loadSections(['rewards']);
+        if (tabId === 'tasks') void loadSections(['tasks']);
+        if (tabId === 'activity') void loadSections(['activation']);
     }
 
     function handleTabKeydown(event: KeyboardEvent, tabId: TabId) {
@@ -94,6 +148,9 @@
 
     function switchActivitySubtab(subtabId: ActivitySubtabId) {
         activeActivitySubtab = subtabId;
+        if (subtabId === 'activation') void loadSections(['activation']);
+        if (subtabId === 'retention') void loadSections(['retention', 'trends']);
+        if (subtabId === 'needs') void loadSections(['parentBehavior', 'childBehavior']);
     }
 
     function handleActivitySubtabKeydown(event: KeyboardEvent, subtabId: ActivitySubtabId) {
@@ -139,6 +196,47 @@
 
     function sectionUnavailable(section: string): boolean {
         return unavailableSections.includes(section);
+    }
+
+    async function loadSections(sections: string[]): Promise<void> {
+        const pending = sections.filter((section) =>
+            !loadedSections.includes(section) && !loadingSections.includes(section));
+        if (pending.length === 0) return;
+
+        loadingSections = [...loadingSections, ...pending];
+        await Promise.all(pending.map((section) => loadSection(section)));
+    }
+
+    async function loadSection(section: string): Promise<void> {
+        const endpoint = analyticsEndpoints[section];
+        const hasPeriod = section !== 'activation';
+        try {
+            const response = await fetch(`${endpoint}${hasPeriod ? `?period=${selectedPeriod}` : ''}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const payload: AnalyticsSectionData = await response.json();
+            applySection(section, payload);
+            loadedSections = [...loadedSections, section];
+        } catch (error) {
+            console.error(`Admin analytics ${section} fetch failed:`, error);
+            unavailableSections = [...new Set([...unavailableSections, section])];
+            if (section === 'trends') trendsStatus = 'unavailable';
+        } finally {
+            loadingSections = loadingSections.filter((item) => item !== section);
+        }
+    }
+
+    function applySection(section: string, payload: AnalyticsSectionData): void {
+        if (section === 'coinEconomy') coinEconomy = payload;
+        if (section === 'tasks') taskEconomy = payload;
+        if (section === 'parentBehavior') parentBehavior = payload;
+        if (section === 'childBehavior') childBehavior = payload;
+        if (section === 'activation') activationFunnel = payload;
+        if (section === 'retention') retention = payload;
+        if (section === 'rewards') rewards = payload;
+        if (section === 'trends') {
+            trends = payload;
+            trendsStatus = 'available';
+        }
     }
 
     function retry() {
@@ -286,7 +384,7 @@
         <p>{t('redirecting')}</p>
     </div>
 {:else}
-    <main class="dashboard-container" aria-busy={periodLoading || $navigating !== null}>
+    <main class="dashboard-container" aria-busy={periodLoading || loadingSections.length > 0 || $navigating !== null}>
         <TelegramParentReturn href="/telegram" />
         <header class="dashboard-header">
             <h1>{t('title')}</h1>
@@ -344,6 +442,13 @@
             onSelect={(tabId) => switchTab(tabId as TabId)}
             onKeydown={(event, tabId) => handleTabKeydown(event, tabId as TabId)}
         />
+
+        {#if loadingSections.length > 0}
+            <div class="section-loading" role="status" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>{t('loading')}</span>
+            </div>
+        {/if}
 
         <!-- Tab panels -->
         <div class="tab-panels">
@@ -500,7 +605,7 @@
                             </div>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
-                        <div class="metric-value">{formatWholeValue(data.coinEconomy?.balances?.timeToFirstReward)} {t('units.days')}</div>
+                        <div class="metric-value">{formatWholeValue(coinEconomy?.balances?.timeToFirstReward)} {t('units.days')}</div>
                     </div>
                     <div class="metric">
                         <div>
@@ -663,9 +768,9 @@
                         {/each}
                     </div>
                 {/if}
-                {#if taskEconomy?.taskMetrics?.medianCompletionsPerChild > 0}
+                {#if (taskEconomy?.taskMetrics?.medianCompletionsPerChild ?? 0) > 0}
                     <div class="insight" role="status">
-                        {t('tasks.completionSignal', { value: formatValue(taskEconomy.taskMetrics.medianCompletionsPerChild) })}
+                        {t('tasks.completionSignal', { value: formatValue(taskEconomy?.taskMetrics?.medianCompletionsPerChild) })}
                     </div>
                 {/if}
                 {/if}
@@ -978,6 +1083,16 @@
     .dashboard-header {
         margin-bottom: 14px;
         position: relative;
+    }
+
+    .section-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 40px;
+        color: #66718a;
+        font-size: 13px;
     }
 
     .dashboard-header h1 {

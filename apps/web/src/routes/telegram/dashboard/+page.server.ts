@@ -19,55 +19,41 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
     const rawPeriod = url.searchParams.get('period') ?? '30d';
     const period = ['7d', '30d', '90d', 'all'].includes(rawPeriod) ? rawPeriod : '30d';
 
-    // Fetch the complete Statistics payload in one request. The backend keeps
-    // EXPLAIN: individual sections resilient, so a failed aggregate is marked
-    // EXPLAIN: unavailable without blanking sections that did load.
+    // EXPLAIN: Render the first visible tab without waiting for every expensive
+    // analytics aggregate. The client requests the remaining tab data only when
+    // the administrator opens it.
     let overview = null;
-    let coinEconomy = null;
-    let taskEconomy = null;
-    let parentBehavior = null;
-    let childBehavior = null;
-    let activationFunnel = null;
-    let retention = null;
-    let rewards = null;
-    let trends = null;
+    const coinEconomy = null;
+    const taskEconomy = null;
+    const parentBehavior = null;
+    const childBehavior = null;
+    const activationFunnel = null;
+    const retention = null;
+    const rewards = null;
+    const trends = null;
     let dashboardStatus: 'available' | 'partial' | 'unavailable' = 'unavailable';
-    let trendsStatus: 'available' | 'unavailable' = 'unavailable';
+    const trendsStatus: 'available' | 'unavailable' = 'unavailable';
     let unavailableSections: string[] = [];
 
     try {
-        const dashboardRes = await fetch(`/api/admin/dashboard?period=${period}`);
-        if (!dashboardRes.ok) {
-            console.error('Admin dashboard fetch failed:', `HTTP ${dashboardRes.status}`);
+        const overviewRes = await fetch(`/api/admin/analytics/overview?period=${period}`);
+        if (!overviewRes.ok) {
+            console.error('Admin overview fetch failed:', `HTTP ${overviewRes.status}`);
         } else {
             try {
-                const dashboard = await dashboardRes.json();
-                unavailableSections = Array.isArray(dashboard.unavailableSections)
-                    ? dashboard.unavailableSections
-                    : [];
-                overview = { overview: dashboard.overview };
-                coinEconomy = dashboard.unavailableSections?.includes('coinEconomy') ? null : dashboard.coinEconomy;
-                taskEconomy = dashboard.unavailableSections?.includes('tasks') ? null : dashboard.tasks;
-                parentBehavior = dashboard.unavailableSections?.includes('parentBehavior') ? null : dashboard.parentSignals;
-                childBehavior = dashboard.unavailableSections?.includes('childBehavior') ? null : dashboard.childSignals;
-                activationFunnel = dashboard.unavailableSections?.includes('activation') ? null : dashboard.activation;
-                retention = dashboard.unavailableSections?.includes('retention') ? null : dashboard.activity;
-                rewards = dashboard.unavailableSections?.includes('rewards') ? null : dashboard.rewards;
-                trends = dashboard.unavailableSections?.includes('trends') ? null : dashboard.trends;
-                trendsStatus = trends == null ? 'unavailable' : 'available';
-                if (dashboard.overview == null) unavailableSections = [...new Set([...unavailableSections, 'overview'])];
-                const dashboardSections = ['overview', 'coinEconomy', 'tasks', 'parentBehavior', 'childBehavior', 'activation', 'retention', 'rewards'];
-                const unavailableDashboardSections = unavailableSections.filter((section) => section !== 'trends');
-                dashboardStatus = dashboardSections.every((section) => unavailableSections.includes(section))
-                    ? 'unavailable'
-                    : unavailableDashboardSections.length === 0 ? 'available' : 'partial';
+                overview = await overviewRes.json();
+                if (overview?.overview == null) {
+                    unavailableSections = ['overview'];
+                } else {
+                    dashboardStatus = 'available';
+                }
             } catch (e) {
-                console.error('Failed to parse admin dashboard response:', e);
+                console.error('Failed to parse admin overview response:', e);
                 dashboardStatus = 'unavailable';
             }
         }
     } catch (e) {
-        console.error('Admin dashboard fetch failed:', e);
+        console.error('Admin overview fetch failed:', e);
     }
 
     return {
