@@ -38,7 +38,7 @@ Make EarnIt Kids a secure, maintainable, and operationally clear public reposito
 
 ## TASK-RR-001: Purge and rotate Android signing material
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0  
 **Depends on:** -
 

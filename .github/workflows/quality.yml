@@ -369,3 +369,32 @@ jobs:
           path: gitleaks-fast.sarif
           if-no-files-found: ignore
           retention-days: 3
+
+  secret-scan-regression:
+    name: Secret-scan rule regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+
+      - name: Prove private-key rule catches a fixture
+        env:
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          set -euo pipefail
+          fixture_dir="$(mktemp -d)"
+          # A non-secret placeholder proves the path rule fires without a real key.
+          printf 'fixture-only: not a real signing key\n' > "$fixture_dir/fixture.keystore"
+          cp .gitleaks.toml "$fixture_dir/.gitleaks.toml"
+          if docker run --rm \
+            -v "$fixture_dir:/repo" \
+            "zricethezav/gitleaks:v${GITLEAKS_VERSION}" \
+            dir /repo --redact --config /repo/.gitleaks.toml \
+            >/dev/null 2>&1; then
+            echo "::error::gitleaks did not flag the .keystore fixture; private-key rule is not enforced."
+            exit 1
+          fi
+          echo "gitleaks correctly rejected the .keystore fixture."
+          rm -rf "$fixture_dir"
