@@ -408,6 +408,7 @@ export const appMessages = {
             groupedRewards: 'Grouped rewards',
         },
         entry: {
+            title: 'EarnIt Kids · Telegram',
             checkingSession: 'Checking your Telegram session…',
             openInsideTelegram: 'Open this page inside Telegram to continue.',
             unavailable: 'Telegram access is not enabled for this environment yet.',
@@ -468,6 +469,7 @@ export const appMessages = {
             recent: 'Recent',
             selected: 'Selected',
         },
+        confirm: { title: 'Confirm action', cancel: 'Cancel', confirm: 'Confirm' },
         taskForm: {
             addTitle: 'New task',
             editTitle: 'Edit task',
@@ -824,6 +826,7 @@ export const appMessages = {
             errorMoneyNegative: 'coin limit must not be negative',
             errorDuplicateTitle: 'duplicate task title',
             errorDuplicateName: 'duplicate reward name',
+            errorLine: 'Row {row}: {field} — {message}',
         },
     },
 } as const;

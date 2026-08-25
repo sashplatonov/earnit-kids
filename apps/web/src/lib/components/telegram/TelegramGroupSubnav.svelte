@@ -6,9 +6,9 @@
     export let groups: string[] = [];
     export let selected = '';
     export let kind: GroupUsageKind = 'tasks';
-    export let allLabel = 'Все';
-    export let moreLabel = 'Ещё';
-    export let allGroupsTitle = 'Все группы';
+    export let allLabel = '';
+    export let moreLabel = '';
+    export let allGroupsTitle = '';
     export let onSelect: (group: string) => void = () => {};
 
     const i18n = useI18n();

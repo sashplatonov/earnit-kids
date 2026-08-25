@@ -5,6 +5,7 @@
  */
 import type { CatalogTaskTemplate, Task } from '$lib/stores/app';
 import type { CatalogRewardTemplate, ShopItem } from '$lib/telegram/stores/types';
+import type { Locale } from '$lib/i18n';
 
 export type CatalogKind = 'task' | 'reward';
 
@@ -145,17 +146,16 @@ export function stripEmoji(value: string): string {
 }
 
 /** Format a frequency pair into a short Russian label. */
-export function formatFrequency(limit: number | null | undefined, period: string | null | undefined): string {
+export function formatFrequency(limit: number | null | undefined, period: string | null | undefined, locale: Locale = 'ru'): string {
     const resolvedLimit = limit ?? 1;
     const resolvedPeriod = period ?? 'week';
-    const periodLabel: Record<string, string> = {
-        day: 'день',
-        week: 'неделю',
-        month: 'месяц',
-        year: 'год',
+    const periodLabel: Record<Locale, Record<string, string>> = {
+        en: { day: 'day', week: 'week', month: 'month', year: 'year' },
+        ru: { day: 'день', week: 'неделю', month: 'месяц', year: 'год' },
     };
-    const label = periodLabel[resolvedPeriod] ?? 'неделю';
-    if (resolvedLimit == null || resolvedLimit === 0) return `Без лимита`;
+    const label = periodLabel[locale][resolvedPeriod] ?? periodLabel[locale].week;
+    if (resolvedLimit == null || resolvedLimit === 0) return locale === 'ru' ? 'Без лимита' : 'Unlimited';
+    if (locale === 'en') return `${resolvedLimit} time${resolvedLimit === 1 ? '' : 's'} per ${label}`;
     if (resolvedLimit === 1) return `1 раз в ${label}`;
     if (resolvedLimit === 2) return `2 раза в ${label}`;
     return `${resolvedLimit} раз в ${label}`;

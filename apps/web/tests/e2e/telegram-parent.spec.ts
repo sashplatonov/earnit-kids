@@ -138,7 +138,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         /Очень длинное каталожное задание для узкого экрана/,
         '25',
         'Дом',
-        /раз в неделю/,
+        /(?:раз в неделю|times? per week)/,
         /Add|Добавить/,
     );
     await expect(taskRow).not.toHaveClass(/has-selection/);
@@ -185,7 +185,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
         /Каталожная награда с длинным названием/,
         '40',
         'Отдых',
-        /раз в неделю/,
+        /(?:раз в неделю|times? per week)/,
         /Add|Добавить/,
     );
     await rewardRow.getByRole('button', { name: /Каталожная награда с длинным названием/ }).click();

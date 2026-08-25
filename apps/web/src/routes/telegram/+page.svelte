@@ -93,7 +93,7 @@
 </script>
 
 <svelte:head>
-    <title>EarnIt Kids · Telegram</title>
+    <title>{$i18n.t('app.telegram.entry.title')}</title>
 </svelte:head>
 
 {#if state === 'ready' && verifiedRole}

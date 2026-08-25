@@ -408,6 +408,7 @@ export const appMessages = {
             groupedRewards: 'Награды по группам',
         },
         entry: {
+            title: 'EarnIt Kids · Telegram',
             checkingSession: 'Проверяем сессию Telegram…',
             openInsideTelegram: 'Откройте эту страницу внутри Telegram, чтобы продолжить.',
             unavailable: 'Telegram пока не включён для этого окружения.',
@@ -468,6 +469,7 @@ export const appMessages = {
             recent: 'Недавние',
             selected: 'Выбрано',
         },
+        confirm: { title: 'Подтвердите действие', cancel: 'Отмена', confirm: 'Подтвердить' },
         taskForm: {
             addTitle: 'Новое задание',
             editTitle: 'Изменить задание',
@@ -824,6 +826,7 @@ export const appMessages = {
             errorMoneyNegative: 'Лимит монет не должен быть отрицательным',
             errorDuplicateTitle: 'Дубликат названия задания',
             errorDuplicateName: 'Дубликат названия награды',
+            errorLine: 'Строка {row}: {field} — {message}',
         },
     },
 } as const;

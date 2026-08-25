@@ -433,7 +433,7 @@ git commit -m "feat(web): Localize public site routes"
 
 ## I18N-008: Localize the Telegram Mini App
 
-**Status:** TODO
+**Status:** BLOCKED
 **Priority:** P1
 **Depends on:** I18N-003, I18N-004, I18N-005
 
@@ -479,6 +479,15 @@ cd apps/web && npm run lint && npm run test && npm run build && npm run test:e2e
 git add apps/web/src/routes/telegram apps/web/src/lib/{components/telegram,features/telegram,telegram,services,i18n} apps/web/tests/e2e
 git commit -m "feat(web): Localize Telegram Mini App"
 ```
+
+### CHECKPOINT (2026-08-25)
+
+- Completed: family-locale-aware Telegram metadata, localized confirmation and CSV error presentation, shared date/frequency formatting, neutral group-navigation defaults, and EN/RU-compatible Mini App E2E expectations.
+- Remaining: remove the remaining hard-coded semantic-graphic and catalog-group presentation labels from Telegram helpers and move them into the shared catalog.
+- Changed files: Telegram entry/dashboard metadata, Telegram confirmation/import/group/catalog components, Telegram date/frequency helpers, EN/RU app catalogs, and `tests/e2e/telegram-parent.spec.ts`.
+- Verification: lint passed with 46 pre-existing warnings; targeted unit tests passed 29/29; build passed; focused Telegram E2E passed 19/19. Full Vitest is blocked by the pre-existing `hooksServer.test.ts` diagnostic expectation mismatch (211/212).
+- Confirmed blocker: required full Vitest gate is outside this task's changed files and currently fails on the existing server-diagnostic contract expectation.
+- Next exact action: resume `I18N-008` by cataloging semantic graphic/group labels, then rerun full Vitest before changing status to `DONE`.
 
 [↑ Back to top](#top)
 

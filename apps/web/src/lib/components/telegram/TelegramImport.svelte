@@ -264,7 +264,7 @@
                     <div class="errors-block">
                         <p class="errors-title">{$i18n.t('app.telegram.import.errorsTitle')}</p>
                         {#each allErrors as item (item.row + '-' + item.field + '-' + item.message)}
-                            <p class="error-line">Строка {item.row}: {item.field} — {translateError(item.message)}</p>
+                            <p class="error-line">{$i18n.t('app.telegram.import.errorLine', { row: item.row, field: item.field, message: translateError(item.message) })}</p>
                         {/each}
                     </div>
                 {/if}

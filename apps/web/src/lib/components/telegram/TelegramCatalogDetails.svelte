@@ -20,7 +20,7 @@
     $: amount = template != null
         ? (kind === 'task' ? (template as CatalogTaskTemplate).coins : (template as CatalogRewardTemplate).price)
         : 0;
-    $: freq = template != null ? formatFrequency(template.frequencyLimit, template.frequencyPeriod) : '';
+    $: freq = template != null ? formatFrequency(template.frequencyLimit, template.frequencyPeriod, $i18n.locale) : '';
     $: ageRange = template != null
         ? $i18n.t('app.telegram.readyCatalog.ageRange', { min: template.minAge ?? 6, max: template.maxAge ?? 14 })
         : '';

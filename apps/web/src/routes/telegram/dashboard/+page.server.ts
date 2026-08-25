@@ -3,7 +3,8 @@ import { isAdminRole } from '$lib/auth/roles';
 import type { Actions, PageServerLoad } from './$types';
 
 // EXPLAIN: The admin dashboard lives inside the Telegram Mini App block
-// EXPLAIN: (/telegram/*), a Russian-only bare surface with no locale prefix.
+// EXPLAIN: (/telegram/*), a bare surface whose family locale is resolved by
+// the authenticated Mini App bootstrap.
 // EXPLAIN: Auth is resolved from the same trusted session cookie as the rest
 // EXPLAIN: of the app; the backend enforces admin privilege on every analytics
 // EXPLAIN: endpoint (returns 401/403), so this redirect is only a UX shortcut.

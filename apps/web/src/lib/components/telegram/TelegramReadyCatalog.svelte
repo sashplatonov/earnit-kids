@@ -85,7 +85,7 @@
         return { amount, coins: amount };
     }
     function freqLabel(template: CatalogTaskTemplate | CatalogRewardTemplate): string {
-        return formatFrequency(template.frequencyLimit, template.frequencyPeriod);
+        return formatFrequency(template.frequencyLimit, template.frequencyPeriod, $i18n.locale);
     }
 
     onMount(() => {

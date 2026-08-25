@@ -1,5 +1,6 @@
 <script lang="ts">
     import { modalStore } from '$lib/stores/modal';
+    import { useI18n } from '$lib/i18n/context';
     import type { ConfirmTone } from '$lib/services/confirm';
     import TelegramIcon from '../telegram/TelegramIcon.svelte';
 
@@ -18,6 +19,7 @@
     $: tone = modalData.tone ?? 'neutral';
 
     let pending = false;
+    const i18n = useI18n();
 
     function close() {
         modalStore.close();
@@ -55,21 +57,21 @@
 {#if isOpen}
 <div class="sheet-backdrop" role="presentation" on:click={() => void cancel()} on:keydown={handleKeydown}></div>
 <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="confirm-title" tabindex="-1">
-    <h2 id="confirm-title">{modalData.title ?? 'Подтвердите действие'}</h2>
+    <h2 id="confirm-title">{modalData.title ?? $i18n.t('app.telegram.confirm.title')}</h2>
     {#if modalData.description}
         <p class="confirm-description">{modalData.description}</p>
     {/if}
 
     <div class="confirm-actions">
         <button class="confirm-cancel" type="button" on:click={() => void cancel()} disabled={pending}>
-            {modalData.cancelLabel ?? 'Отмена'}
+            {modalData.cancelLabel ?? $i18n.t('app.telegram.confirm.cancel')}
         </button>
         <button class="confirm-confirm" class:confirm-confirm--danger={tone === 'danger'} type="button" on:click={() => void confirm()} disabled={pending}>
-            {modalData.confirmLabel ?? 'Подтвердить'}
+            {modalData.confirmLabel ?? $i18n.t('app.telegram.confirm.confirm')}
         </button>
     </div>
 
-    <button class="close" type="button" on:click={() => void cancel()}>Закрыть</button>
+    <button class="close" type="button" on:click={() => void cancel()}>{$i18n.t('app.telegram.header.close')}</button>
 </div>
 {/if}
 
