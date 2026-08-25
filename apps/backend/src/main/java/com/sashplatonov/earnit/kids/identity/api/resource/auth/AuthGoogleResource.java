@@ -227,25 +227,25 @@ public class AuthGoogleResource {
 
     private String deriveLoginRedirectTarget(String redirectTarget) {
         if (redirectTarget == null || redirectTarget.isBlank()) {
-            return "/login";
+            return "/public/index.html";
         }
 
         try {
             URI uri = URI.create(redirectTarget);
             String path = uri.getPath();
             if (path == null || path.isBlank()) {
-                return "/login";
+                return "/public/index.html";
             }
             if ("/telegram".equals(path)) {
-                return "/login";
+                return "/public/index.html";
             }
             if (path.endsWith("/telegram")) {
-                return path.substring(0, path.length() - 9) + "/login";
+                return "/public/index.html";
             }
         } catch (IllegalArgumentException ignored) {
         }
 
-        return "/login";
+        return "/public/index.html";
     }
 
     private String appendError(String redirectTarget, String error) {

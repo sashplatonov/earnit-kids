@@ -35,7 +35,6 @@ export {
     normalizeLocale,
     resolveLocaleFromAcceptLanguage,
     resolveDomainsForPath,
-    resolveLegacyAlias,
     shouldCanonicalizePath,
     splitLocaleFromPath,
     stripLocaleFromPath,

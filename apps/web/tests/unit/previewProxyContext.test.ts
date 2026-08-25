@@ -28,8 +28,8 @@ describe('resolveProxyContext', () => {
 
 describe('buildProxyReferer', () => {
     it('rewrites referer to the configured public origin while preserving path and query', () => {
-        expect(buildProxyReferer('http://127.0.0.1:4176/login.html?tab=register', 'http://localhost:5001')).toBe(
-            'http://localhost:5001/login.html?tab=register'
+        expect(buildProxyReferer('http://127.0.0.1:4176/public/index.html', 'http://localhost:5001')).toBe(
+            'http://localhost:5001/public/index.html'
         );
     });
 

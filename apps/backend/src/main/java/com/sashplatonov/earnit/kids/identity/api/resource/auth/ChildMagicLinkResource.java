@@ -58,7 +58,7 @@ public class ChildMagicLinkResource {
 
         return OperationResultResponses.toResponse(result, payload -> successResponse(payload, request),
             ignored -> Response.seeOther(
-                URI.create(publicOriginResolver.toAbsoluteRedirect("/login.html?error=invalid_token", request)))
+                URI.create(publicOriginResolver.toAbsoluteRedirect("/public/index.html?error=invalid_token", request)))
                 .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
                 .header("Pragma", "no-cache")
                 .build());

@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+import { authenticateE2eSession } from './helpers';
+
 test('workspace registers a real service worker and protects navigation offline', async ({ page, context }) => {
+    await authenticateE2eSession(page);
     await page.goto('/workspace');
 
     await expect.poll(async () => page.evaluate(async () => {
@@ -19,6 +22,7 @@ test('workspace registers a real service worker and protects navigation offline'
 });
 
 test('service-worker cache excludes protected, invitation, and OAuth routes', async ({ page }) => {
+    await authenticateE2eSession(page);
     await page.goto('/workspace');
     await expect.poll(async () => page.evaluate(async () => (await navigator.serviceWorker.getRegistration('/workspace'))?.active?.state ?? null)).toBe('activated');
 

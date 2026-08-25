@@ -15,13 +15,13 @@ describe('hooks.server handleError', () => {
                 request: {
                     method: 'POST',
                     headers: new Headers({
-                        referer: 'https://example.com/login',
+                        referer: 'https://example.com/public/index.html',
                         'user-agent': 'Vitest Browser',
                         'x-trace-id': 'trace-123',
                     }),
                 },
-                route: { id: '/login' },
-                url: new URL('https://example.com/en/login?mode=register'),
+                route: { id: '/public/index.html' },
+                url: new URL('https://example.com/public/index.html'),
             },
             message: 'Server exploded',
             status: 500,
@@ -30,10 +30,10 @@ describe('hooks.server handleError', () => {
         expect(result).toEqual({ message: 'Server exploded' });
         expect(consoleError).toHaveBeenCalledWith('SvelteKit server error', expect.objectContaining({
             method: 'POST',
-            url: 'https://example.com/en/login?mode=register',
-            path: '/en/login',
-            search: '?mode=register',
-            routeId: '/login',
+            url: 'https://example.com/public/index.html',
+            path: '/public/index.html',
+            search: '',
+            routeId: '/public/index.html',
             status: 500,
             message: 'Server exploded',
             traceId: 'trace-123',

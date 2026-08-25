@@ -26,15 +26,6 @@ const BYPASS_PREFIXES = [
     '/faq',
 ] as const;
 
-const LEGACY_ALIAS_MAP: Record<string, string> = {
-    '/about.html': '/about',
-    '/faq.html': '/faq',
-    '/features': '/features/tasks',
-    '/index.html': '/',
-    '/login.html': '/login',
-    '/super-admin.html': '/super-admin',
-};
-
 function normalisePath(pathname: string): string {
     if (!pathname || pathname === '/') {
         return '/';
@@ -126,10 +117,6 @@ export function swapPathLocale(pathname: string, locale: Locale): string {
 export function isBypassedLocalePath(pathname: string): boolean {
     const normalized = normalisePath(pathname);
     return BYPASS_PREFIXES.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`));
-}
-
-export function resolveLegacyAlias(pathname: string): string | null {
-    return LEGACY_ALIAS_MAP[normalisePath(pathname)] ?? null;
 }
 
 export function shouldCanonicalizePath(pathname: string): boolean {

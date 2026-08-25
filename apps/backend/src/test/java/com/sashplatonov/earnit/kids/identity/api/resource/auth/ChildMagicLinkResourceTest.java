@@ -45,12 +45,12 @@ class ChildMagicLinkResourceTest {
     }
 
     @Test
-    void loginByToken_invalidToken_redirectsToLogin() {
+    void loginByToken_invalidToken_redirectsToPublicSite() {
         when(authService.authenticateChild("bad")).thenReturn(OperationResult.failure("bad"));
 
         Response response = resource.loginByToken(request, "bad");
 
         assertThat(response.getStatus()).isEqualTo(303);
-        assertThat(response.getLocation().toString()).isEqualTo("/login.html?error=invalid_token");
+        assertThat(response.getLocation().toString()).isEqualTo("/public/index.html?error=invalid_token");
     }
 }

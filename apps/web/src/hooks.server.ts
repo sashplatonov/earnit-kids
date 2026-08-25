@@ -5,7 +5,6 @@ import {
     LOCALE_COOKIE_NAME,
     localizePath,
     normalizeLocale,
-    resolveLegacyAlias,
     resolveLocaleFromAcceptLanguage,
     shouldCanonicalizePath,
     splitLocaleFromPath,
@@ -40,11 +39,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     // EXPLAIN: prefix even when a request carries another locale in the path.
     if (isTelegramMiniApp && localeFromPath && localeFromPath !== 'ru') {
         throw redirect(302, `${localizePath(internalPath, 'ru')}${event.url.search}`);
-    }
-
-    const legacyAliasTarget = resolveLegacyAlias(internalPath);
-    if (legacyAliasTarget) {
-        throw redirect(302, `${localizePath(legacyAliasTarget, resolvedLocale)}${event.url.search}`);
     }
 
     if (shouldCanonicalizePath(event.url.pathname)) {
