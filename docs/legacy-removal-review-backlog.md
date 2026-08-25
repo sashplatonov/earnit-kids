@@ -142,7 +142,7 @@ git commit -m "fix(auth): keep public Google entry actionable"
 
 ## LRR-003: Restore browser logout in workspace
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 

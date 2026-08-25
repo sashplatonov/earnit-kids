@@ -54,7 +54,7 @@ test('an authenticated parent can sign out with one pending request', async ({ p
     await expect(logoutButton).toBeDisabled();
     await logoutButton.dispatchEvent('click');
 
-    await expect(page.getByRole('link', { name: /войти в браузер|продолжить с google|sign in/i }).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/public\/index\.html$/);
     expect(navigationCount).toBeGreaterThan(0);
     expect(requestCount).toBe(1);
 });

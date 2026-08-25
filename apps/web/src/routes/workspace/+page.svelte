@@ -15,7 +15,7 @@
     <title>EarnIt Kids · {data.role === 'child' ? 'Мой маршрут' : 'Моя семья'}</title>
 </svelte:head>
 
-<WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} />
+<WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} showSessionActions />
 
 <style>
     :global(body.workspace-page) {
