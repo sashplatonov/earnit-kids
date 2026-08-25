@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
 
       - name: Scan repository filesystem
         uses: aquasecurity/trivy-action@v0.36.0
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout complete history
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
