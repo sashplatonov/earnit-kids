@@ -240,7 +240,7 @@ git commit -m "fix(i18n): Localize Telegram site replies"
 
 ## I18N-FOLLOWUP-003: Format the Mini App coin limit with the family locale
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** -
 

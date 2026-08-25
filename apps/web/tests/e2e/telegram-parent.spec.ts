@@ -5,6 +5,69 @@ test.beforeEach(async ({ page }) => {
     await preserveTelegramFixture(page);
 });
 
+test('localized coin adjustment keeps the family number format on a narrow viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'language', { configurable: true, value: 'en-US' });
+        Object.defineProperty(navigator, 'languages', { configurable: true, value: ['en-US'] });
+        (window as Window & { Telegram?: unknown }).Telegram = {
+            WebApp: { initData: 'signed-init-data', ready: () => {}, expand: () => {} },
+        };
+    });
+
+    let familyLocale: 'en' | 'ru' = 'en';
+    await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ role: 'parent', familyId: 'family-1', locale: familyLocale }),
+    }));
+    await page.route('**/api/base-data', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ tasks: [], products: [] }),
+    }));
+    await page.route('**/api/data**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ isAdmin: true, balance: 42, childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 42 }], tasks: [], shop: [], requests: [] }),
+    }));
+    await page.route('**/api/data/details**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ requests: [], history: [], friends: [] }),
+    }));
+    await page.route('**/api/history?**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ items: [], total: 0, page: 1, limit: 10 }),
+    }));
+
+    for (const locale of ['en', 'ru'] as const) {
+        familyLocale = locale;
+        await page.goto('/telegram');
+        const copy = locale === 'en'
+            ? { addCoins: 'Add coins', alert: 'Amount cannot exceed', cancel: 'Cancel', save: 'Save' }
+            : { addCoins: 'Начислить', alert: 'Сумма не может превышать', cancel: 'Отмена', save: 'Сохранить' };
+        await page.getByRole('button', { name: new RegExp(copy.addCoins) }).click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        const amountInput = page.locator('#coin-amount');
+        await amountInput.fill('1000001');
+        await expect(amountInput).toHaveValue('1000001');
+        await amountInput.press('Enter');
+        const alert = page.locator('#coin-adjust-error');
+        await expect(alert).toContainText(copy.alert);
+        await expect(alert).toContainText(/1(?:[,\.\s\u00a0\u202f])000(?:[,\.\s\u00a0\u202f])000/);
+        await expect(page.getByRole('button', { name: new RegExp(copy.cancel) })).toBeVisible();
+        await expect(page.getByRole('button', { name: new RegExp(copy.save) })).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+        for (const button of await page.locator('.actions button').all()) {
+            const rect = await button.boundingBox();
+            expect(rect?.width).toBeGreaterThanOrEqual(44);
+            expect(rect?.height).toBeGreaterThanOrEqual(44);
+        }
+    }
+});
+
 async function expectCompactList(list: import('@playwright/test').Locator, count: number) {
     await expect(list).toBeVisible();
     await expect(list.locator(':scope > .entity-row')).toHaveCount(count);

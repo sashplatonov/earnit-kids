@@ -21,10 +21,11 @@
     }
     function submit() {
         if (busy) return;
+        const rawAmount = String(amount);
         const value = Number(amount);
-        if (!amount.trim()) { localError = $i18n.t('app.telegram.coinAdjust.enterAmount'); return; }
+        if (!rawAmount.trim()) { localError = $i18n.t('app.telegram.coinAdjust.enterAmount'); return; }
         if (!Number.isInteger(value) || value === 0) { localError = $i18n.t('app.telegram.coinAdjust.nonZeroWhole'); return; }
-        if (Math.abs(value) > MAX_ADJUST) { localError = $i18n.t('app.telegram.coinAdjust.amountTooBig', { max: MAX_ADJUST.toLocaleString() }); return; }
+        if (Math.abs(value) > MAX_ADJUST) { localError = $i18n.t('app.telegram.coinAdjust.amountTooBig', { max: $i18n.formatNumber(MAX_ADJUST) }); return; }
         localError = '';
         dispatch('adjust', { amount: value, note: note.trim() || null });
     }
