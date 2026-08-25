@@ -132,9 +132,8 @@ export function shouldCanonicalizePath(pathname: string): boolean {
 export function resolveDomainsForPath(pathname: string): MessageDomain[] {
     const internalPath = stripLocaleFromPath(pathname);
 
-    // EXPLAIN: The public marketing site is a static HTML site in /public/*
-    // EXPLAIN: and is not served by SvelteKit. These bare URLs redirect there
-    // EXPLAIN: via hooks.server.ts, so they never reach the i18n domain resolver.
+    // EXPLAIN: Public pages are SSR routes under /{locale}; /public/* remains
+    // a noindex compatibility surface and does not need a catalog payload.
     if (
         internalPath === '/'
         || internalPath === '/how'
@@ -144,6 +143,11 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         || internalPath === '/faq'
     ) {
         return ['common', 'errors'];
+    }
+
+    if (internalPath === '/' || internalPath === '/about' || internalPath === '/faq'
+        || internalPath === '/features/tasks' || internalPath === '/features/shop') {
+        return ['common', 'public', 'errors'];
     }
 
     if (internalPath === '/login' || internalPath === '/select-family') {

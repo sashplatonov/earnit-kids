@@ -378,7 +378,7 @@ git commit -m "feat(web): Localize workspace experience"
 
 ## I18N-007: Localize public pages and multilingual SEO
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-005
 

@@ -18,5 +18,5 @@
         <a href={$i18n.href('/faq')}>{$i18n.t('common.navigation.faq')}</a>
     </nav>
     <LocaleSwitcher compact={true} />
-    <a class="public-top-nav-cta" href="/public/index.html">{$i18n.t('common.actions.login')} →</a>
+    <a class="public-top-nav-cta" href="/api/login-google/start?continue=%2Fworkspace">{$i18n.t('common.actions.login')} →</a>
 </header>

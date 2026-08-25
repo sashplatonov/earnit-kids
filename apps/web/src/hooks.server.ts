@@ -30,7 +30,8 @@ export const handle: Handle = async ({ event, resolve }) => {
     const headerLocale = resolveLocaleFromAcceptLanguage(event.request.headers.get('accept-language'));
 
     // EXPLAIN: The Telegram Mini App is served at a bare URL (no locale prefix).
-    // The public marketing site is a static HTML site in static/public/.
+    // Legacy static public pages remain available as noindex compatibility paths;
+    // canonical public content is served by SSR locale routes.
     const isTelegramMiniApp = internalPath === '/telegram' || internalPath.startsWith('/telegram/');
     const resolvedLocale = localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
 

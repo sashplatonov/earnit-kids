@@ -14,7 +14,7 @@ describe('root page server load', () => {
     it('keeps the public root for authenticated users', async () => {
         await expect(load(makeEvent('/', true))).rejects.toMatchObject({
             status: 302,
-            location: '/public/index.html',
+            location: '/en/',
         });
     });
 
