@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.identity.api.resource.auth;
 
 import com.sashplatonov.earnit.kids.config.auth.JwtCompatVerifier;
 import com.sashplatonov.earnit.kids.dto.response.SessionPageDataResponse;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -26,6 +27,9 @@ public class SessionPageDataResource {
     private final JwtCompatVerifier jwtCompatVerifier;
 
     @Inject
+    FamilyRepository familyRepository;
+
+    @Inject
     public SessionPageDataResource(JwtCompatVerifier jwtCompatVerifier) {
         this.jwtCompatVerifier = jwtCompatVerifier;
     }
@@ -40,6 +44,21 @@ public class SessionPageDataResource {
         var resp = jwtCompatVerifier.readSession(cookieHeader);
         LOG.debugf("Session snapshot: authenticated=%s, role=%s, familyId=%s",
             resp.authenticated(), resp.role(), resp.familyId());
-        return Response.ok(resp).build();
+        if (!resp.authenticated() || familyRepository == null) {
+            return Response.ok(resp).build();
+        }
+        return familyRepository.findById(resp.familyId())
+            .map(family -> Response.ok(new SessionPageDataResponse(
+                true,
+                resp.role(),
+                resp.familyId(),
+                resp.childId(),
+                resp.email(),
+                resp.csrfToken(),
+                resp.permission(),
+                family.getLocale() == null ? "en" : family.getLocale(),
+                family.getLocale() == null && "family_admin".equals(resp.permission())
+            )).build())
+            .orElseGet(() -> Response.ok(resp).build());
     }
 }

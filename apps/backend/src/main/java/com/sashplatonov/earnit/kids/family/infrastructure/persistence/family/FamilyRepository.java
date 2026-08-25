@@ -154,6 +154,16 @@ public class FamilyRepository implements PanacheRepositoryBase<FamilyEntity, Int
         return true;
     }
 
+    @Transactional
+    public boolean updateLocale(String familyId, String locale) {
+        Optional<FamilyEntity> opt = findByFamilyId(familyId);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        opt.get().setLocale(locale);
+        return true;
+    }
+
     public Optional<FamilyEntity> findByDbId(int dbId) {
         return recordQuery(
             "family.findByDbId",

@@ -6,6 +6,11 @@ import com.sashplatonov.earnit.kids.family.api.response.FamilyDashboardShellResp
 import com.sashplatonov.earnit.kids.family.api.response.PaginatedHistory;
 import com.sashplatonov.earnit.kids.family.api.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.family.application.FamilyService;
+import com.sashplatonov.earnit.kids.family.api.request.UpdateFamilyLocaleRequest;
+import com.sashplatonov.earnit.kids.family.api.response.FamilyLocaleResponse;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.i18n.BackendLocaleSupport;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
 import com.sashplatonov.earnit.kids.platform.application.database.BaseDataService;
 import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
@@ -16,6 +21,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -42,6 +49,9 @@ public class FamilyReadResource extends ResourceAuthSupport {
   private static final Logger LOG = Logger.getLogger(FamilyReadResource.class);
   private final Supplier<FamilyService> familyService;
   private final BaseDataService baseDataService;
+
+  @Inject
+  FamilyRepository familyRepository;
 
   @Inject
   public FamilyReadResource(FamilyService familyService, BaseDataService baseDataService) {
@@ -79,6 +89,48 @@ public class FamilyReadResource extends ResourceAuthSupport {
         familyService.get().loadFamilyShellData(auth.familyId(), effectiveChildId, auth.isAdmin());
 
     return OperationResultResponses.toOk(result);
+  }
+
+  @GET
+  @Path("/family/locale")
+  @Operation(summary = "Read the active family's language")
+  public Response getFamilyLocale(@Context ContainerRequestContext ctx) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null) {
+      return unauthorized();
+    }
+    return familyRepository.findById(auth.familyId())
+        .map(family -> Response.ok(toLocaleResponse(family, auth.isFamilyAdmin())).build())
+        .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
+  }
+
+  @PUT
+  @Path("/family/locale")
+  @Operation(summary = "Set the active family's language")
+  public Response updateFamilyLocale(
+      @Context ContainerRequestContext ctx, @Valid UpdateFamilyLocaleRequest request) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.isFamilyAdmin()) {
+      return unauthorized();
+    }
+    String locale = BackendLocaleSupport.normalizeLocale(request == null ? null : request.locale()) == null
+        ? null
+        : BackendLocaleSupport.toLanguageTag(
+            BackendLocaleSupport.normalizeLocale(request.locale()));
+    if (locale == null) {
+      return badRequest("Unsupported locale");
+    }
+    if (!familyRepository.updateLocale(auth.familyId(), locale)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+    return familyRepository.findById(auth.familyId())
+        .map(family -> Response.ok(toLocaleResponse(family, true)).build())
+        .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
+  }
+
+  private static FamilyLocaleResponse toLocaleResponse(FamilyEntity family, boolean familyAdmin) {
+    String locale = family.getLocale();
+    return new FamilyLocaleResponse(locale == null ? "en" : locale, familyAdmin && locale == null);
   }
 
   @GET

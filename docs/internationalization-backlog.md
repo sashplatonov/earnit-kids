@@ -110,7 +110,7 @@ git commit -m "docs(i18n): Record localization strategy"
 
 ## I18N-002: Configure one family language at administrator onboarding
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-001
 

@@ -57,6 +57,9 @@ public class FamilyEntity extends CreatedAtEntity {
     @Builder.Default
     private String timezone = "UTC";
 
+    @Column(name = "locale", length = 8)
+    private String locale;
+
     @CreationTimestamp
     @Column(name = "last_activity")
     private Instant lastActivity;
