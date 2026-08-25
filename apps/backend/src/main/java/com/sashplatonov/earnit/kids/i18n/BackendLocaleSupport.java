@@ -55,10 +55,10 @@ public final class BackendLocaleSupport {
         }
 
         String normalizedValue = value.trim().toLowerCase(Locale.ROOT);
-        if (normalizedValue.startsWith("ru")) {
+        if (normalizedValue.equals("ru") || normalizedValue.equals("ru-ru")) {
             return RUSSIAN;
         }
-        if (normalizedValue.startsWith("en")) {
+        if (normalizedValue.equals("en") || normalizedValue.equals("en-us")) {
             return ENGLISH;
         }
         return null;

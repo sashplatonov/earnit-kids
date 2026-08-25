@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { loadAppConfig } from '../../src/lib/server/config';
-import { shouldCanonicalizePath } from '../../src/lib/i18n/config';
+import { normalizeLocale, shouldCanonicalizePath } from '../../src/lib/i18n/config';
+
+describe('locale normalization', () => {
+    it.each([
+        ['en', 'en'],
+        ['en-US', 'en'],
+        ['ru', 'ru'],
+        ['ru-RU', 'ru'],
+    ])('normalizes supported tag %s', (input, expected) => {
+        expect(normalizeLocale(input)).toBe(expected);
+    });
+
+    it.each(['english', 'russian', 'enough', 'ruble', 'xx-YY'])('rejects unsupported tag %s', (input) => {
+        expect(normalizeLocale(input)).toBeNull();
+    });
+});
 
 describe('locale path handling', () => {
     it('keeps bare app entry points stable for client bootstrap', () => {

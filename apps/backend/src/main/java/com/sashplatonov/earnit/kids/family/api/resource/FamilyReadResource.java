@@ -32,6 +32,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.function.Supplier;
+import java.util.Map;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -120,7 +121,10 @@ public class FamilyReadResource extends ResourceAuthSupport {
         : BackendLocaleSupport.toLanguageTag(BackendLocaleSupport.normalizeLocale(requestedLocale));
     FamilyLocale locale = FamilyLocale.fromLanguageTag(normalizedLocale);
     if (locale == null) {
-      return badRequest("Unsupported locale");
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(ErrorResponse.of(
+              "Unsupported locale", "UNSUPPORTED_LOCALE", 400, Map.of("field", "locale"), null))
+          .build();
     }
     if (!familyRepository.updateLocale(auth.familyId(), locale)) {
       return Response.status(Response.Status.NOT_FOUND).build();

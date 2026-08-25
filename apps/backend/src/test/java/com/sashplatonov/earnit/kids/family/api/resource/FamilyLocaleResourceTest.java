@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.family.api.request.UpdateFamilyLocaleRequest
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import org.junit.jupiter.api.Test;
 
@@ -36,11 +37,18 @@ class FamilyLocaleResourceTest {
     void unsupportedLocaleIsRejected() {
         var familyRepository = mock(FamilyRepository.class);
         var auth = familyAdmin();
+        var family = FamilyEntity.builder().familyId("fam-1").locale(FamilyLocale.ru).build();
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
         var resource = resource(familyRepository, auth);
 
-        var response = resource.updateFamilyLocale(context(auth), new UpdateFamilyLocaleRequest("xx-YY"));
+        var response = resource.updateFamilyLocale(context(auth), new UpdateFamilyLocaleRequest("russian"));
 
         assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getEntity()).isEqualTo(new ErrorResponse(
+            "urn:earnit-kids:problem:unsupported-locale", "Bad Request", 400,
+            "Unsupported locale", "UNSUPPORTED_LOCALE", java.util.Map.of("field", "locale"), null));
+        assertThat(family.getLocale()).isEqualTo(FamilyLocale.ru);
+        org.mockito.Mockito.verify(familyRepository, org.mockito.Mockito.never()).updateLocale("fam-1", FamilyLocale.en);
     }
 
     @Test

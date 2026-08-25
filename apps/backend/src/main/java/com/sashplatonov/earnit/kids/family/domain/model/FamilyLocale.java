@@ -11,10 +11,10 @@ public enum FamilyLocale {
             return null;
         }
         String language = value.trim().toLowerCase(Locale.ROOT);
-        if (language.startsWith("en")) {
+        if (language.equals("en") || language.equals("en-us")) {
             return en;
         }
-        if (language.startsWith("ru")) {
+        if (language.equals("ru") || language.equals("ru-ru")) {
             return ru;
         }
         return null;

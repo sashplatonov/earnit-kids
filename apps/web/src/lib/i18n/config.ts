@@ -51,11 +51,11 @@ export function normalizeLocale(value: string | null | undefined): Locale | null
     }
 
     const normalized = value.trim().toLowerCase();
-    if (normalized.startsWith('ru')) {
+    if (normalized === 'ru' || normalized === 'ru-ru') {
         return 'ru';
     }
 
-    if (normalized.startsWith('en')) {
+    if (normalized === 'en' || normalized === 'en-us') {
         return 'en';
     }
 
