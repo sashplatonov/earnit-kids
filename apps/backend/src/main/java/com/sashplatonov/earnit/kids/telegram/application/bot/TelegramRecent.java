@@ -23,7 +23,7 @@ final class TelegramRecent {
         String header = TelegramBotEmoji.RECENT + " Последние события · " + view.childName();
         List<HistoryEntryDto> history = view.history();
         if (history.isEmpty()) {
-            return header + "\n\n" + TelegramCopy.emptyRecent();
+            return header + "\n\n" + TelegramOutcomeCopy.emptyRecent();
         }
         StringBuilder builder = new StringBuilder(header);
         history.stream().limit(5).forEach(entry -> builder.append("\n\n").append(row(entry, now)));

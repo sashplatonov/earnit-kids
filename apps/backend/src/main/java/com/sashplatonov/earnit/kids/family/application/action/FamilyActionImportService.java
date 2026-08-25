@@ -90,7 +90,8 @@ final class FamilyActionImportService {
                 row.moneyLimit(),
                 row.isActive() == null || row.isActive(),
                 false,
-                trimToNull(row.icon())
+                trimToNull(row.icon()),
+                null
             ));
         }
 

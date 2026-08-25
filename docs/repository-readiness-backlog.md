@@ -413,7 +413,7 @@ git commit -m "test(web): run critical browser flows in ci"
 
 ## TASK-RR-007: Restore a zero-warning backend static-quality baseline
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** TASK-RR-002
 
@@ -434,6 +434,14 @@ The backend complies with its checked-in static rules at source level and the mo
 ### Outcome
 
 Warnings such as unused/star imports, missing braces, line length, parameter count, method count, and cyclomatic complexity are eliminated through code improvements rather than accepted as normal output.
+
+### CHECKPOINT
+
+- completed: Captured the 332-warning `validate` baseline and resolved all reported Checkstyle findings through source-level hygiene and bounded collaborator extraction across authentication, rate limiting, family orchestration/membership/resources, admin analytics, Web Push, and Telegram flows/configuration.
+- changed files: Warning-reported backend Java sources under `apps/backend/src/main/java`, focused tests and endpoint tests, plus the explicit `ClientErrorMessage` legacy-contract allowlist; no analyzer configuration, excludes, or coverage thresholds changed.
+- current test/verification status: `mvn -B -ntp validate` reports zero Checkstyle warnings; focused family/Telegram tests pass 90/90; full `mvn -B -ntp verify` passes 621/621 tests, JaCoCo, PMD, and SpotBugs.
+- confirmed blockers: None.
+- next exact action: Continue with `TASK-RR-008`.
 
 ### Architectural decision
 

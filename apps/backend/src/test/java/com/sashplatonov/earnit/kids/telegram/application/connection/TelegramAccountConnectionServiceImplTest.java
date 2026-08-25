@@ -53,8 +53,8 @@ class TelegramAccountConnectionServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new TelegramAccountConnectionServiceImpl(
-            families, parents, memberships, identities, challenges, audits, verifier, config,
-            new SecureTokenGenerator(), timeProvider, featureGate);
+            families, parents, memberships, identities, challenges, audits, verifier,
+            new TelegramAccountRuntime(config, featureGate), new SecureTokenGenerator(), timeProvider);
     }
 
     @Test

@@ -113,10 +113,10 @@ class RepositorySmokeTest {
             OBJECT_MAPPER.readTree("{\"period\":\"week\",\"limit\":2}"), 150, true, false))).isTrue();
         assertThat(shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
             familyDbId, child1.getId(), itemExternalId, "Toy", 7, "Fun",
-            OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false, false))).isTrue();
+            OBJECT_MAPPER.readTree("{\"period\":\"week\"}"), "comment", 50, false, false, null, null))).isTrue();
         assertThat(shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(
             familyDbId, child1.getId(), itemExternalId, "Toy updated", 8, "Fun",
-            OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, true, false))).isTrue();
+            OBJECT_MAPPER.readTree("{\"period\":\"month\",\"limit\":1}"), "comment2", 55, true, false, null, null))).isTrue();
 
         assertThat(taskRepository.getTasks(child1.getId())).isNotEmpty();
         assertThat(shopItemRepository.getShopItems(child1.getId())).isNotEmpty();

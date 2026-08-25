@@ -1,17 +1,16 @@
 package com.sashplatonov.earnit.kids.family.api.resource;
-
+import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.family.api.request.AddParentMembershipRequest;
 import com.sashplatonov.earnit.kids.family.api.request.UpdateParentMembershipRequest;
 import com.sashplatonov.earnit.kids.family.api.request.UpdatePreferenceRequest;
-import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto;
-import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
-import com.sashplatonov.earnit.kids.shared.api.response.SimpleResponse;
-import com.sashplatonov.earnit.kids.family.application.membership.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.family.application.FamilyService;
-import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationService;
 import com.sashplatonov.earnit.kids.family.application.invitation.ChildMagicLinkInvitationService;
+import com.sashplatonov.earnit.kids.family.application.invitation.ParentInvitationService;
+import com.sashplatonov.earnit.kids.family.application.membership.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.platform.realtime.WebSocketNotificationService;
+import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
+import com.sashplatonov.earnit.kids.shared.api.response.SimpleResponse;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.OperationResultResponses;
 import jakarta.inject.Inject;
@@ -37,396 +36,342 @@ import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-
-
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Family", description = "Family membership and access endpoints")
 public class FamilyParentAccessResource extends FamilyResourceSupport {
-
-    @Inject
-    ParentInvitationService parentInvitationService;
-
-    @Inject
-    ChildMagicLinkInvitationService childMagicLinkInvitationService;
-
-    @Inject
-    public FamilyParentAccessResource(FamilyService familyService,
-                                      WebSocketNotificationService webSocketNotificationService,
-                                      FamilyParentAccessService familyParentAccessService) {
-        super(familyService, webSocketNotificationService, familyParentAccessService);
+  @Inject ParentInvitationService parentInvitationService;
+  @Inject ChildMagicLinkInvitationService childMagicLinkInvitationService;
+  @Inject
+  public FamilyParentAccessResource(
+      FamilyService familyService,
+      WebSocketNotificationService webSocketNotificationService,
+      FamilyParentAccessService familyParentAccessService) {
+    super(familyService, webSocketNotificationService, familyParentAccessService);
+  }
+  @Deprecated
+  @Operation(summary = "Return the current login token for a child")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Token returned",
+        content = @Content(schema = @Schema(implementation = TokenResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "404",
+        description = "Child not found",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response getChildLink(
+      @Context ContainerRequestContext ctx,
+      @Parameter(required = true, description = "Child id to inspect") @PathParam("childId")
+          int childId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.isAdmin()) {
+      return unauthorized();
     }
-
-    @Deprecated
-    @Operation(summary = "Return the current login token for a child")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Token returned",
-            content = @Content(schema = @Schema(implementation = TokenResponse.class))),
-        @APIResponse(responseCode = "401", description = "Admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "404", description = "Child not found",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response getChildLink(@Context ContainerRequestContext ctx,
-                                 @Parameter(required = true, description = "Child id to inspect")
-                                 @PathParam("childId") int childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.isAdmin()) {
-            return unauthorized();
-        }
-
-        OperationResult<String> result = familyService.getChildLoginLink(auth.familyId(), childId);
-        return OperationResultResponses.toMappedOk(result, TokenResponse::new,
-            failure -> Response.Status.NOT_FOUND.getStatusCode(), "CHILD_NOT_FOUND");
+    OperationResult<String> result = familyService.getChildLoginLink(auth.familyId(), childId);
+    return OperationResultResponses.toMappedOk(
+        result,
+        TokenResponse::new,
+        failure -> Response.Status.NOT_FOUND.getStatusCode(),
+        "CHILD_NOT_FOUND");
+  }
+  @Deprecated
+  @Operation(summary = "Regenerate the login token for a child")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "New token returned",
+        content = @Content(schema = @Schema(implementation = TokenResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "500",
+        description = "Token could not be regenerated",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response regenerateChildToken(
+      @Context ContainerRequestContext ctx,
+      @Parameter(required = true, description = "Child id to update") @PathParam("childId")
+          int childId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canEditFamilyData()) {
+      return unauthorized();
     }
-
-    @Deprecated
-    @Operation(summary = "Regenerate the login token for a child")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "New token returned",
-            content = @Content(schema = @Schema(implementation = TokenResponse.class))),
-        @APIResponse(responseCode = "401", description = "Admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "500", description = "Token could not be regenerated",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response regenerateChildToken(@Context ContainerRequestContext ctx,
-                                         @Parameter(required = true, description = "Child id to update")
-                                         @PathParam("childId") int childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
-            return unauthorized();
-        }
-
-        OperationResult<String> result = familyService.regenerateChildToken(auth.familyId(), childId);
-        return OperationResultResponses.toMappedOk(result, TokenResponse::new,
-            failure -> Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "TOKEN_REGENERATION_FAILED");
+    OperationResult<String> result = familyService.regenerateChildToken(auth.familyId(), childId);
+    return OperationResultResponses.toMappedOk(
+        result,
+        TokenResponse::new,
+        failure -> Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+        "TOKEN_REGENERATION_FAILED");
+  }
+  @POST
+  @Path("/children/{childId}/magic-link")
+  public Response issueChildMagicLink(
+      @Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @POST
-    @Path("/children/{childId}/magic-link")
-    public Response issueChildMagicLink(@Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) return unauthorized();
-        return OperationResultResponses.toMappedOk(
-            childMagicLinkInvitationService.issue(auth.familyId(), childId), TokenResponse::new);
+    return OperationResultResponses.toMappedOk(
+        childMagicLinkInvitationService.issue(auth.familyId(), childId), TokenResponse::new);
+  }
+  @DELETE
+  @Path("/children/{childId}/magic-link")
+  public Response revokeChildMagicLink(
+      @Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @DELETE
-    @Path("/children/{childId}/magic-link")
-    public Response revokeChildMagicLink(@Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) return unauthorized();
-        return toVoidResponse(childMagicLinkInvitationService.revoke(auth.familyId(), childId));
+    return toVoidResponse(childMagicLinkInvitationService.revoke(auth.familyId(), childId));
+  }
+  @GET
+  @Path("/children/{childId}/magic-link")
+  public Response childMagicLinkStatus(
+      @Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @GET
-    @Path("/children/{childId}/magic-link")
-    public Response childMagicLinkStatus(@Context ContainerRequestContext ctx, @PathParam("childId") int childId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) return unauthorized();
-        return OperationResultResponses.toMappedOk(
-            childMagicLinkInvitationService.status(auth.familyId(), childId), value -> value);
+    return OperationResultResponses.toMappedOk(
+        childMagicLinkInvitationService.status(auth.familyId(), childId), value -> value);
+  }
+  @POST
+  @Path("/preferences")
+  @Operation(summary = "Update a persisted family preference")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Preference updated",
+        content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
+    @APIResponse(
+        responseCode = "400",
+        description = "Preference update failed",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response updatePreference(
+      @Context ContainerRequestContext ctx,
+      @RequestBody(required = true, description = "Preference update payload") @Valid
+          UpdatePreferenceRequest request) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canEditFamilyData()) {
+      return unauthorized();
     }
-
-    @POST
-    @Path("/preferences")
-    @Operation(summary = "Update a persisted family preference")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Preference updated",
-            content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
-        @APIResponse(responseCode = "400", description = "Preference update failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response updatePreference(@Context ContainerRequestContext ctx,
-                                     @RequestBody(required = true, description = "Preference update payload")
-                                     @Valid UpdatePreferenceRequest request) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canEditFamilyData()) {
-            return unauthorized();
-        }
-
-        if (request.key() == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity(ErrorResponse.of("Key is required", "BAD_REQUEST", 400))
-                .build();
-        }
-
-        return toVoidResponse(familyService.updatePreference(auth.familyId(), request.key(), request.value()));
+    if (request.key() == null) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(ErrorResponse.of("Key is required", "BAD_REQUEST", 400))
+          .build();
     }
-
-    @GET
-    @Path("/parents")
-    @Operation(summary = "List parent memberships and Telegram profiles for the active family")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Membership list returned",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "401", description = "Family admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response listParents(@Context ContainerRequestContext ctx) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) {
-            return unauthorized();
-        }
-
-        return toResponse(familyParentAccessService.listMemberships(auth.familyId()));
+    return toVoidResponse(
+        familyService.updatePreference(auth.familyId(), request.key(), request.value()));
+  }
+  @GET
+  @Path("/parents")
+  @Operation(summary = "List parent memberships and Telegram profiles for the active family")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Membership list returned",
+        content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Family admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response listParents(@Context ContainerRequestContext ctx) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @POST
-    @Path("/parents")
-    @Operation(summary = "Add a parent membership to the active family")
-    @APIResponses({
-        @APIResponse(responseCode = "201", description = "Membership created",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "400", description = "Membership creation failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Family admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response addParent(@Context ContainerRequestContext ctx,
-                              @RequestBody(required = true, description = "Add parent membership payload")
-                              @NotNull @Valid AddParentMembershipRequest request) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) {
-            return unauthorized();
-        }
-
-        var result = parentInvitationService == null
-            ? familyParentAccessService.addMembership(auth.familyId(), request.email(), request.permission(), auth.email())
-            : parentInvitationService.create(auth.familyId(), request.email(), request.permission(), auth.email());
-
-        return OperationResultResponses.toCreated(result);
+    return toResponse(familyParentAccessService.listMemberships(auth.familyId()));
+  }
+  @POST
+  @Path("/parents")
+  @Operation(summary = "Add a parent membership to the active family")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "201",
+        description = "Membership created",
+        content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+    @APIResponse(
+        responseCode = "400",
+        description = "Membership creation failed",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Family admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response addParent(
+      @Context ContainerRequestContext ctx,
+      @RequestBody(required = true, description = "Add parent membership payload") @NotNull @Valid
+          AddParentMembershipRequest request) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @POST
-    @Path("/parents/invitations/{invitationId}/revoke")
-    public Response revokeInvitation(@Context ContainerRequestContext ctx,
-                                     @PathParam("invitationId") int invitationId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships() || parentInvitationService == null) {
-            return unauthorized();
-        }
-        return toVoidResponse(parentInvitationService.revoke(auth.familyId(), invitationId, auth.email()));
+    var result =
+        parentInvitationService == null
+            ? familyParentAccessService.addMembership(
+                auth.familyId(), request.email(), request.permission(), auth.email())
+            : parentInvitationService.create(
+                auth.familyId(), request.email(), request.permission(), auth.email());
+    return OperationResultResponses.toCreated(result);
+  }
+  @POST
+  @Path("/parents/invitations/{invitationId}/revoke")
+  public Response revokeInvitation(
+      @Context ContainerRequestContext ctx, @PathParam("invitationId") int invitationId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships() || parentInvitationService == null) {
+      return unauthorized();
     }
-
-    @POST
-    @Path("/parents/invitations/{invitationId}/resend")
-    public Response resendInvitation(@Context ContainerRequestContext ctx,
-                                     @PathParam("invitationId") int invitationId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships() || parentInvitationService == null) {
-            return unauthorized();
-        }
-        return toVoidResponse(parentInvitationService.resend(auth.familyId(), invitationId, auth.email()));
+    return toVoidResponse(
+        parentInvitationService.revoke(auth.familyId(), invitationId, auth.email()));
+  }
+  @POST
+  @Path("/parents/invitations/{invitationId}/resend")
+  public Response resendInvitation(
+      @Context ContainerRequestContext ctx, @PathParam("invitationId") int invitationId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships() || parentInvitationService == null) {
+      return unauthorized();
     }
-
-    @PUT
-    @Path("/parents/{membershipId}")
-    @Operation(summary = "Update a parent membership permission")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Membership updated",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "400", description = "Update failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Family admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response updateParent(@Context ContainerRequestContext ctx,
-                                 @Parameter(required = true, description = "Membership id to update")
-                                 @PathParam("membershipId") int membershipId,
-                                 @RequestBody(required = true, description = "Update permission payload")
-                                 @NotNull @Valid UpdateParentMembershipRequest request) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) {
-            return unauthorized();
-        }
-
-        return toResponse(familyParentAccessService.updateMembership(
+    return toVoidResponse(
+        parentInvitationService.resend(auth.familyId(), invitationId, auth.email()));
+  }
+  @PUT
+  @Path("/parents/{membershipId}")
+  @Operation(summary = "Update a parent membership permission")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Membership updated",
+        content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+    @APIResponse(
+        responseCode = "400",
+        description = "Update failed",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Family admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response updateParent(
+      @Context ContainerRequestContext ctx,
+      @Parameter(required = true, description = "Membership id to update")
+          @PathParam("membershipId")
+          int membershipId,
+      @RequestBody(required = true, description = "Update permission payload") @NotNull @Valid
+          UpdateParentMembershipRequest request) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
+    }
+    return toResponse(
+        familyParentAccessService.updateMembership(
             membershipId, request.permission(), auth.familyId()));
+  }
+  @DELETE
+  @Path("/parents/{membershipId}")
+  @Operation(summary = "Remove a parent membership from the active family")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Membership removed",
+        content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
+    @APIResponse(
+        responseCode = "400",
+        description = "Removal failed",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Family admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response removeParent(
+      @Context ContainerRequestContext ctx,
+      @Parameter(required = true, description = "Membership id to remove")
+          @PathParam("membershipId")
+          int membershipId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @DELETE
-    @Path("/parents/{membershipId}")
-    @Operation(summary = "Remove a parent membership from the active family")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Membership removed",
-            content = @Content(schema = @Schema(implementation = SimpleResponse.class))),
-        @APIResponse(responseCode = "400", description = "Removal failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Family admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response removeParent(@Context ContainerRequestContext ctx,
-                                 @Parameter(required = true, description = "Membership id to remove")
-                                 @PathParam("membershipId") int membershipId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) {
-            return unauthorized();
-        }
-
-        return toVoidResponse(familyParentAccessService.removeMembership(
+    return toVoidResponse(
+        familyParentAccessService.removeMembership(
             membershipId, auth.familyId(), auth.parentAccountId(), auth.email()));
+  }
+  @POST
+  @Path("/parents/{membershipId}/deactivate")
+  @Operation(summary = "Deactivate a parent membership without deleting data")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Membership deactivated",
+        content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+    @APIResponse(
+        responseCode = "400",
+        description = "Deactivation failed",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Family admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response deactivateParent(
+      @Context ContainerRequestContext ctx,
+      @Parameter(required = true, description = "Membership id to deactivate")
+          @PathParam("membershipId")
+          int membershipId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @POST
-    @Path("/parents/{membershipId}/deactivate")
-    @Operation(summary = "Deactivate a parent membership without deleting data")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Membership deactivated",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "400", description = "Deactivation failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Family admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response deactivateParent(@Context ContainerRequestContext ctx,
-                                     @Parameter(required = true, description = "Membership id to deactivate")
-                                     @PathParam("membershipId") int membershipId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) {
-            return unauthorized();
-        }
-
-        return toResponse(familyParentAccessService.setMembershipActive(
+    return toResponse(
+        familyParentAccessService.setMembershipActive(
             membershipId, false, auth.familyId(), auth.parentAccountId(), auth.email()));
+  }
+  @POST
+  @Path("/parents/{membershipId}/reactivate")
+  @Operation(summary = "Reactivate a deactivated parent membership")
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Membership reactivated",
+        content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
+    @APIResponse(
+        responseCode = "400",
+        description = "Reactivation failed",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @APIResponse(
+        responseCode = "401",
+        description = "Family admin authentication required",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public Response reactivateParent(
+      @Context ContainerRequestContext ctx,
+      @Parameter(required = true, description = "Membership id to reactivate")
+          @PathParam("membershipId")
+          int membershipId) {
+    var auth = getAuthOrFail(ctx);
+    if (auth == null || !auth.canManageMemberships()) {
+      return unauthorized();
     }
-
-    @POST
-    @Path("/parents/{membershipId}/reactivate")
-    @Operation(summary = "Reactivate a deactivated parent membership")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Membership reactivated",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "400", description = "Reactivation failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Family admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response reactivateParent(@Context ContainerRequestContext ctx,
-                                     @Parameter(required = true, description = "Membership id to reactivate")
-                                     @PathParam("membershipId") int membershipId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) {
-            return unauthorized();
-        }
-
-        return toResponse(familyParentAccessService.setMembershipActive(
+    return toResponse(
+        familyParentAccessService.setMembershipActive(
             membershipId, true, auth.familyId(), auth.parentAccountId(), auth.email()));
-    }
-
-    @POST
-    @Path("/parents/{membershipId}/transfer-admin")
-    @Operation(summary = "Create a pending admin-transfer request for another parent")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Transfer request created",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "400", description = "Transfer failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "401", description = "Family admin authentication required",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response transferAdmin(@Context ContainerRequestContext ctx,
-                                  @Parameter(required = true, description = "Membership id to promote to admin")
-                                  @PathParam("membershipId") int membershipId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || !auth.canManageMemberships()) {
-            return unauthorized();
-        }
-
-        return OperationResultResponses.toMappedOk(
-            familyParentAccessService.transferAdmin(
-                membershipId, auth.familyId(), auth.parentAccountId(), auth.email()),
-            dto -> dto,
-            failure -> "PARENT_TRANSFER_REQUEST_PENDING_EXISTS".equals(failure.errorCode())
-                ? Response.Status.CONFLICT.getStatusCode()
-                : Response.Status.BAD_REQUEST.getStatusCode());
-    }
-
-    @POST
-    @Path("/parents/transfer-requests/{requestId}/accept")
-    @Operation(summary = "Accept a pending admin transfer request as the target parent")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Transfer request accepted",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "403", description = "Caller is not the request target",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "400", description = "Accept failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response acceptTransferRequest(@Context ContainerRequestContext ctx,
-                                          @Parameter(required = true, description = "Transfer request id")
-                                          @PathParam("requestId") int requestId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || auth.parentAccountId() == null) {
-            return unauthorized();
-        }
-
-        return OperationResultResponses.toMappedOk(
-            familyParentAccessService.acceptTransferRequest(
-                requestId, auth.familyId(), auth.parentAccountId(), auth.email()),
-            dto -> dto,
-            failure -> "PARENT_MEMBERSHIP_FORBIDDEN".equals(failure.errorCode())
-                ? Response.Status.FORBIDDEN.getStatusCode()
-                : Response.Status.BAD_REQUEST.getStatusCode());
-    }
-
-    @POST
-    @Path("/parents/transfer-requests/{requestId}/decline")
-    @Operation(summary = "Decline an admin transfer request having the target parent")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Transfer request declined",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "403", description = "Caller is not the request target",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "400", description = "Decline failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response declineTransferRequest(@Context ContainerRequestContext ctx,
-                                         @Parameter(required = true, description = "Transfer request id")
-                                         @PathParam("requestId") int requestId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || auth.parentAccountId() == null) {
-            return unauthorized();
-        }
-
-        return OperationResultResponses.toMappedOk(
-            familyParentAccessService.declineTransferRequest(
-                requestId, auth.familyId(), auth.parentAccountId(), auth.email()),
-            dto -> dto,
-            failure -> "PARENT_MEMBERSHIP_FORBIDDEN".equals(failure.errorCode())
-                ? Response.Status.FORBIDDEN.getStatusCode()
-                : Response.Status.BAD_REQUEST.getStatusCode());
-    }
-
-    @POST
-    @Path("/parents/transfer-requests/{requestId}/cancel")
-    @Operation(summary = "Cancel a pending admin transfer request by the actor parent")
-    @APIResponses({
-        @APIResponse(responseCode = "200", description = "Transfer request cancelled",
-            content = @Content(schema = @Schema(implementation = ParentMembershipDto.class))),
-        @APIResponse(responseCode = "403", description = "Caller is not the request actor",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @APIResponse(responseCode = "400", description = "Cancel failed",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    public Response cancelTransferRequest(@Context ContainerRequestContext ctx,
-                                          @Parameter(required = true, description = "Transfer request id")
-                                          @PathParam("requestId") int requestId) {
-        var auth = getAuthOrFail(ctx);
-        if (auth == null || auth.parentAccountId() == null) {
-            return unauthorized();
-        }
-
-        return OperationResultResponses.toMappedOk(
-            familyParentAccessService.cancelTransferRequest(
-                requestId, auth.familyId(), auth.parentAccountId(), auth.email()),
-            dto -> dto,
-            failure -> "PARENT_MEMBERSHIP_FORBIDDEN".equals(failure.errorCode())
-                ? Response.Status.FORBIDDEN.getStatusCode()
-                : Response.Status.BAD_REQUEST.getStatusCode());
-    }
+  }
 }

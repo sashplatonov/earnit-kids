@@ -102,15 +102,6 @@ class AdminAccessServiceTest {
             @Override public int callbackTtlSeconds() { return 300; }
             @Override public int callbackMenuVersion() { return 1; }
             @Override public int replyKeyboardVersion() { return 1; }
-            @Override public boolean retentionEnabled() { return true; }
-            @Override public String retentionPollInterval() { return "24h"; }
-            @Override public int inviteRetentionDays() { return 30; }
-            @Override public int callbackRetentionDays() { return 30; }
-            @Override public int webhookUpdateRetentionDays() { return 30; }
-            @Override public int deliveryRetentionDays() { return 30; }
-            @Override public int outboxRetentionDays() { return 30; }
-            @Override public int auditRetentionDays() { return 365; }
-            @Override public int retentionBatchSize() { return 100; }
         };
     }
 }

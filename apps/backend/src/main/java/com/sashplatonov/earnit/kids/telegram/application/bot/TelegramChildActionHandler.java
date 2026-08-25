@@ -46,7 +46,7 @@ final class TelegramChildActionHandler {
             return;
         }
         boolean success = result instanceof OperationResult.Success<TelegramQuickActionResponse>;
-        String text = success ? TelegramCopy.rewardWaiting() : TelegramCopy.error();
+        String text = success ? TelegramOutcomeCopy.rewardWaiting() : TelegramOutcomeCopy.error();
         List<TelegramBotApiClient.InlineButton> buttons = success
             ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);
         try {
@@ -66,7 +66,10 @@ final class TelegramChildActionHandler {
             return;
         }
         boolean success = result instanceof OperationResult.Success<TelegramQuickActionResponse>;
-        String text = success ? TelegramCopy.waiting(taskName == null ? "Задание" : taskName) : TelegramCopy.error();
+      String text =
+          success
+              ? TelegramOutcomeCopy.waiting(taskName == null ? "Задание" : taskName)
+              : TelegramOutcomeCopy.error();
         List<TelegramBotApiClient.InlineButton> buttons = success
             ? menuBuilder.backToMain() : menuBuilder.childRetry(retryData);
         try {

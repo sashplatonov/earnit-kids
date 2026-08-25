@@ -39,8 +39,8 @@ class RelatedEntityHydratorTest {
     void hydrateMissingHistoryEntries_entriesAlreadyInMap_doesNotFetch() {
         HistoryEntryEntity entry = earnEntry(100L);
         Map<Long, TaskDto> taskMap = new LinkedHashMap<>();
-        taskMap.put(100L, new TaskDto(100L, "Chores", 10, "Home", null, null, null, null, null,
-            true, 5, null, null));
+        taskMap.put(100L, new TaskDto(100L, "Chores", 10, "Home", null, null, null, null, null, null,
+            true, 5, null, null, null));
 
         hydrator.hydrateMissingHistoryEntries(42, 5, List.of(entry), taskMap, new LinkedHashMap<>());
 

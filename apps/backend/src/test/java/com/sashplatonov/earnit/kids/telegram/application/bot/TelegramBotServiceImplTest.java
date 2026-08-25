@@ -426,7 +426,7 @@ class TelegramBotServiceImplTest {
         TelegramQuickActionResponse view = new TelegramQuickActionResponse(
             "family", "child", 3, "Alex", 20, List.of(),
             List.of(new com.sashplatonov.earnit.kids.family.api.response.TaskDto(
-                3_000_000_000L, "Утренний старт", 1, null, null, null, null, null, null, true, 3, null, null)),
+                3_000_000_000L, "Утренний старт", 1, null, null, null, null, null, null, null, true, 3, null, null, null)),
             List.of(), List.of(), List.of());
         when(identities.recordWebhookUpdate(14L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
         when(quickActions.load(77L, null)).thenReturn(Optional.of(view));

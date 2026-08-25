@@ -2,297 +2,282 @@ package com.sashplatonov.earnit.kids.family.infrastructure.persistence.history;
 
 import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.history.HistoryEntryType;
-import com.sashplatonov.earnit.kids.platform.infrastructure.persistence.PanachePagination;
 import com.sashplatonov.earnit.kids.platform.application.observability.SlowOperationDiagnostics;
+import com.sashplatonov.earnit.kids.platform.infrastructure.persistence.PanachePagination;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.HashMap;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEntity, Long> {
 
-    @PersistenceContext
-    EntityManager entityManager;
-    private final SlowOperationDiagnostics slowOperationDiagnostics;
+  @PersistenceContext EntityManager entityManager;
+  private final SlowOperationDiagnostics slowOperationDiagnostics;
 
-    public Map<Long, Instant> loadLatestTimestampsByRelatedId(int childId, HistoryEntryType type) {
-        var query = entityManager.createQuery(
-            "SELECT new " + HistoryRelatedTimestamp.class.getName() +
-            "(h.relatedId, MAX(h.createdAt)) FROM HistoryEntryEntity h " +
-            "WHERE h.childId = ?1 AND h.type = ?2 AND h.relatedId IS NOT NULL " +
-            "GROUP BY h.relatedId", HistoryRelatedTimestamp.class);
-        query.setParameter(1, childId);
-        query.setParameter(2, type);
-        return query.getResultList().stream()
-            .filter(row -> row.timestamp() != null)
-            .collect(Collectors.toMap(
-                HistoryRelatedTimestamp::relatedId,
-                HistoryRelatedTimestamp::timestamp
-            ));
-    }
+  public Map<Long, Instant> loadLatestTimestampsByRelatedId(int childId, HistoryEntryType type) {
+    var query =
+        entityManager.createQuery(
+            "SELECT new "
+                + HistoryRelatedTimestamp.class.getName()
+                + "(h.relatedId, MAX(h.createdAt)) FROM HistoryEntryEntity h "
+                + "WHERE h.childId = ?1 AND h.type = ?2 AND h.relatedId IS NOT NULL "
+                + "GROUP BY h.relatedId",
+            HistoryRelatedTimestamp.class);
+    query.setParameter(1, childId);
+    query.setParameter(2, type);
+    return query.getResultList().stream()
+        .filter(row -> row.timestamp() != null)
+        .collect(
+            Collectors.toMap(
+                HistoryRelatedTimestamp::relatedId, HistoryRelatedTimestamp::timestamp));
+  }
 
-    public List<HistoryEntryEntity> getHistory(int childId, int limit, int offset) {
-        return slowOperationDiagnostics.recordQuery(
-            "family-data.getHistory",
-            () -> PanachePagination.page(find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId), limit, offset),
-            "childId",
-            String.valueOf(childId),
-            "limit",
-            String.valueOf(limit),
-            "offset",
-            String.valueOf(offset)
-        );
-    }
+  public List<HistoryEntryEntity> getHistory(int childId, int limit, int offset) {
+    return slowOperationDiagnostics.recordQuery(
+        "family-data.getHistory",
+        () ->
+            PanachePagination.page(
+                find("childId = ?1 ORDER BY createdAt DESC, id DESC", childId), limit, offset),
+        "childId",
+        String.valueOf(childId),
+        "limit",
+        String.valueOf(limit),
+        "offset",
+        String.valueOf(offset));
+  }
 
-    public long sumRewardSpendSince(int childId, Instant since) {
-        var query = entityManager.createQuery(
-            "SELECT COALESCE(SUM(ABS(h.amount)), 0) FROM HistoryEntryEntity h " +
-            "WHERE h.childId = ?1 AND h.type = ?2 AND h.createdAt >= ?3",
+  public long sumRewardSpendSince(int childId, Instant since) {
+    var query =
+        entityManager.createQuery(
+            "SELECT COALESCE(SUM(ABS(h.amount)), 0) FROM HistoryEntryEntity h "
+                + "WHERE h.childId = ?1 AND h.type = ?2 AND h.createdAt >= ?3",
             Long.class);
-        query.setParameter(1, childId);
-        query.setParameter(2, HistoryEntryType.spend);
-        query.setParameter(3, since);
-        return query.getSingleResult();
+    query.setParameter(1, childId);
+    query.setParameter(2, HistoryEntryType.spend);
+    query.setParameter(3, since);
+    return query.getSingleResult();
+  }
+
+  public boolean hasReversal(long historyEntryId) {
+    return count("reversesEntryId = ?1", historyEntryId) > 0;
+  }
+
+  public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
+    return slowOperationDiagnostics.recordQuery(
+        "family-data.getHistoryForFamily",
+        () ->
+            PanachePagination.page(
+                find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId), limit, offset),
+        "familyDbId",
+        String.valueOf(familyDbId),
+        "limit",
+        String.valueOf(limit),
+        "offset",
+        String.valueOf(offset));
+  }
+
+  public int getHistoryCount(int childId) {
+    return slowOperationDiagnostics.recordQuery(
+        "family-data.getHistoryCount",
+        () -> (int) count("childId = ?1", childId),
+        "childId",
+        String.valueOf(childId));
+  }
+
+  public HistoryPeriodSummary summarizePeriod(
+      int familyDbId, Integer childId, Instant from, Instant to) {
+    var jpql =
+        new StringBuilder(
+            "SELECT new "
+                + HistoryTypeTotal.class.getName()
+                + "(h.type, SUM(h.amount)) "
+                + "FROM HistoryEntryEntity h "
+                + "WHERE h.familyId = :familyDbId AND h.createdAt >= :from AND h.createdAt < :to");
+    if (childId != null) {
+      jpql.append(" AND h.childId = :childId");
+    }
+    jpql.append(" GROUP BY h.type");
+
+    var query = entityManager.createQuery(jpql.toString(), HistoryTypeTotal.class);
+    query.setParameter("familyDbId", familyDbId);
+    query.setParameter("from", from);
+    query.setParameter("to", to);
+    if (childId != null) {
+      query.setParameter("childId", childId);
     }
 
-    public boolean hasReversal(long historyEntryId) {
-        return count("reversesEntryId = ?1", historyEntryId) > 0;
+    int earned = 0;
+    int spent = 0;
+    for (var row : query.getResultList()) {
+      int amount = Math.toIntExact(row.amount());
+      if (row.type() == HistoryEntryType.earn) {
+        earned = amount;
+      } else if (row.type() == HistoryEntryType.spend) {
+        spent = amount;
+      }
     }
+    return new HistoryPeriodSummary(earned, spent);
+  }
 
-    public List<HistoryEntryEntity> getHistoryForFamily(int familyDbId, int limit, int offset) {
-        return slowOperationDiagnostics.recordQuery(
-            "family-data.getHistoryForFamily",
-            () -> PanachePagination.page(find("familyId = ?1 ORDER BY createdAt DESC, id DESC", familyDbId), limit, offset),
-            "familyDbId",
-            String.valueOf(familyDbId),
-            "limit",
-            String.valueOf(limit),
-            "offset",
-            String.valueOf(offset)
-        );
+  public List<HistoryRankedAggregate> topTasksInPeriod(
+      int familyDbId, Integer childId, Instant from, Instant to) {
+    return rankedAggregatesInPeriod(familyDbId, childId, HistoryEntryType.earn, from, to);
+  }
+
+  public List<HistoryRankedAggregate> topItemsInPeriod(
+      int familyDbId, Integer childId, Instant from, Instant to) {
+    return rankedAggregatesInPeriod(familyDbId, childId, HistoryEntryType.spend, from, to);
+  }
+
+  private List<HistoryRankedAggregate> rankedAggregatesInPeriod(
+      int familyDbId, Integer childId, HistoryEntryType type, Instant from, Instant to) {
+    var jpql =
+        new StringBuilder(
+            "SELECT new "
+                + HistoryRankedAggregate.class.getName()
+                + "(h.relatedId, SUM(h.amount), COUNT(h.id)) FROM HistoryEntryEntity h "
+                + "WHERE h.familyId = :familyDbId AND h.type = :type AND h.relatedId IS NOT NULL "
+                + "AND h.createdAt >= :from AND h.createdAt < :to");
+    if (childId != null) {
+      jpql.append(" AND h.childId = :childId");
     }
+    jpql.append(" GROUP BY h.relatedId ORDER BY SUM(h.amount) DESC");
 
-    public int getHistoryCount(int childId) {
-        return slowOperationDiagnostics.recordQuery(
-            "family-data.getHistoryCount",
-            () -> (int) count("childId = ?1", childId),
-            "childId",
-            String.valueOf(childId)
-        );
+    var query = entityManager.createQuery(jpql.toString(), HistoryRankedAggregate.class);
+    query.setParameter("familyDbId", familyDbId);
+    query.setParameter("type", type);
+    query.setParameter("from", from);
+    query.setParameter("to", to);
+    if (childId != null) {
+      query.setParameter("childId", childId);
     }
+    return query.getResultList();
+  }
 
-    public HistoryPeriodSummary summarizePeriod(int familyDbId, Integer childId, Instant from, Instant to) {
-        var jpql = new StringBuilder(
-            "SELECT new " + HistoryTypeTotal.class.getName() + "(h.type, SUM(h.amount)) " +
-            "FROM HistoryEntryEntity h " +
-            "WHERE h.familyId = :familyDbId AND h.createdAt >= :from AND h.createdAt < :to");
-        if (childId != null) {
-            jpql.append(" AND h.childId = :childId");
-        }
-        jpql.append(" GROUP BY h.type");
-
-        var query = entityManager.createQuery(jpql.toString(), HistoryTypeTotal.class);
-        query.setParameter("familyDbId", familyDbId);
-        query.setParameter("from", from);
-        query.setParameter("to", to);
-        if (childId != null) {
-            query.setParameter("childId", childId);
-        }
-
-        int earned = 0;
-        int spent = 0;
-        for (var row : query.getResultList()) {
-            int amount = Math.toIntExact(row.amount());
-            if (row.type() == HistoryEntryType.earn) {
-                earned = amount;
-            } else if (row.type() == HistoryEntryType.spend) {
-                spent = amount;
-            }
-        }
-        return new HistoryPeriodSummary(earned, spent);
+  public List<HistoryDailyAggregate> dailyTrendInPeriod(
+      int familyDbId, Integer childId, Instant from, Instant to) {
+    var jpql =
+        new StringBuilder(
+            "SELECT new "
+                + HistoryDailyAggregate.class.getName()
+                + "(CAST(h.createdAt AS LocalDate), h.type, SUM(h.amount)) "
+                + "FROM HistoryEntryEntity h "
+                + "WHERE h.familyId = :familyDbId AND h.createdAt >= :from AND h.createdAt < :to");
+    if (childId != null) {
+      jpql.append(" AND h.childId = :childId");
     }
+    jpql.append(
+        " GROUP BY CAST(h.createdAt AS LocalDate), h.type "
+            + "ORDER BY CAST(h.createdAt AS LocalDate) ASC");
 
-    public List<HistoryRankedAggregate> topTasksInPeriod(
-        int familyDbId,
-        Integer childId,
-        Instant from,
-        Instant to
-    ) {
-        return rankedAggregatesInPeriod(familyDbId, childId, HistoryEntryType.earn, from, to);
+    var query = entityManager.createQuery(jpql.toString(), HistoryDailyAggregate.class);
+    query.setParameter("familyDbId", familyDbId);
+    query.setParameter("from", from);
+    query.setParameter("to", to);
+    if (childId != null) {
+      query.setParameter("childId", childId);
     }
+    return query.getResultList();
+  }
 
-    public List<HistoryRankedAggregate> topItemsInPeriod(
-        int familyDbId,
-        Integer childId,
-        Instant from,
-        Instant to
-    ) {
-        return rankedAggregatesInPeriod(familyDbId, childId, HistoryEntryType.spend, from, to);
+  public long countTaskEarnsInWindow(
+      int familyDbId, int childId, long taskId, Instant startInclusive, Instant endExclusive) {
+    return count(
+        "familyId = ?1 AND childId = ?2 AND relatedId = ?3"
+            + " AND type = ?4 AND createdAt >= ?5 AND createdAt < ?6",
+        familyDbId,
+        childId,
+        taskId,
+        HistoryEntryType.earn,
+        startInclusive,
+        endExclusive);
+  }
+
+  public Map<Long, Long> countTaskEarnsInWindowByTask(
+      int familyDbId, int childId, Instant startInclusive, Instant endExclusive) {
+    var query =
+        entityManager.createQuery(
+            "SELECT new "
+                + HistoryRelatedCount.class.getName()
+                + "(h.relatedId, COUNT(h.id)) FROM HistoryEntryEntity h "
+                + "WHERE h.familyId = ?1 AND h.childId = ?2 AND h.type = ?3 "
+                + "AND h.relatedId IS NOT NULL AND h.createdAt >= ?4 AND h.createdAt < ?5 "
+                + "GROUP BY h.relatedId",
+            HistoryRelatedCount.class);
+    query.setParameter(1, familyDbId);
+    query.setParameter(2, childId);
+    query.setParameter(3, HistoryEntryType.earn);
+    query.setParameter(4, startInclusive);
+    query.setParameter(5, endExclusive);
+    Map<Long, Long> counts = new HashMap<>();
+    for (HistoryRelatedCount row : query.getResultList()) {
+      counts.put(row.relatedId(), row.count());
     }
+    return counts;
+  }
 
-    private List<HistoryRankedAggregate> rankedAggregatesInPeriod(
-        int familyDbId,
-        Integer childId,
-        HistoryEntryType type,
-        Instant from,
-        Instant to
-    ) {
-        var jpql = new StringBuilder(
-            "SELECT new " + HistoryRankedAggregate.class.getName() +
-            "(h.relatedId, SUM(h.amount), COUNT(h.id)) FROM HistoryEntryEntity h " +
-            "WHERE h.familyId = :familyDbId AND h.type = :type AND h.relatedId IS NOT NULL " +
-            "AND h.createdAt >= :from AND h.createdAt < :to");
-        if (childId != null) {
-            jpql.append(" AND h.childId = :childId");
-        }
-        jpql.append(" GROUP BY h.relatedId ORDER BY SUM(h.amount) DESC");
+  public long countShopPurchasesInWindow(
+      int familyDbId, int childId, long itemId, Instant startInclusive, Instant endExclusive) {
+    return count(
+        "familyId = ?1 AND childId = ?2 AND relatedId = ?3"
+            + " AND type = ?4 AND createdAt >= ?5 AND createdAt < ?6",
+        familyDbId,
+        childId,
+        itemId,
+        HistoryEntryType.spend,
+        startInclusive,
+        endExclusive);
+  }
 
-        var query = entityManager.createQuery(jpql.toString(), HistoryRankedAggregate.class);
-        query.setParameter("familyDbId", familyDbId);
-        query.setParameter("type", type);
-        query.setParameter("from", from);
-        query.setParameter("to", to);
-        if (childId != null) {
-            query.setParameter("childId", childId);
-        }
-        return query.getResultList();
+  public Map<Long, Long> countShopPurchasesInWindowByItem(
+      int familyDbId, int childId, Instant startInclusive, Instant endExclusive) {
+    var query =
+        entityManager.createQuery(
+            "SELECT new "
+                + HistoryRelatedCount.class.getName()
+                + "(h.relatedId, COUNT(h.id)) FROM HistoryEntryEntity h "
+                + "WHERE h.familyId = ?1 AND h.childId = ?2 AND h.type = ?3 "
+                + "AND h.relatedId IS NOT NULL AND h.createdAt >= ?4 AND h.createdAt < ?5 "
+                + "GROUP BY h.relatedId",
+            HistoryRelatedCount.class);
+    query.setParameter(1, familyDbId);
+    query.setParameter(2, childId);
+    query.setParameter(3, HistoryEntryType.spend);
+    query.setParameter(4, startInclusive);
+    query.setParameter(5, endExclusive);
+    Map<Long, Long> counts = new HashMap<>();
+    for (HistoryRelatedCount row : query.getResultList()) {
+      counts.put(row.relatedId(), row.count());
     }
+    return counts;
+  }
 
-    public List<HistoryDailyAggregate> dailyTrendInPeriod(
-        int familyDbId,
-        Integer childId,
-        Instant from,
-        Instant to
-    ) {
-        var jpql = new StringBuilder(
-            "SELECT new " + HistoryDailyAggregate.class.getName() +
-            "(CAST(h.createdAt AS LocalDate), h.type, SUM(h.amount)) " +
-            "FROM HistoryEntryEntity h " +
-            "WHERE h.familyId = :familyDbId AND h.createdAt >= :from AND h.createdAt < :to");
-        if (childId != null) {
-            jpql.append(" AND h.childId = :childId");
-        }
-        jpql.append(" GROUP BY CAST(h.createdAt AS LocalDate), h.type " +
-            "ORDER BY CAST(h.createdAt AS LocalDate) ASC");
-
-        var query = entityManager.createQuery(jpql.toString(), HistoryDailyAggregate.class);
-        query.setParameter("familyDbId", familyDbId);
-        query.setParameter("from", from);
-        query.setParameter("to", to);
-        if (childId != null) {
-            query.setParameter("childId", childId);
-        }
-        return query.getResultList();
-    }
-
-    public long countTaskEarnsInWindow(
-        int familyDbId,
-        int childId,
-        long taskId,
-        Instant startInclusive,
-        Instant endExclusive
-    ) {
-        return count(
-            "familyId = ?1 AND childId = ?2 AND relatedId = ?3"
-                + " AND type = ?4 AND createdAt >= ?5 AND createdAt < ?6",
-            familyDbId,
-            childId,
-            taskId,
-            HistoryEntryType.earn,
-            startInclusive,
-            endExclusive
-        );
-    }
-
-    public Map<Long, Long> countTaskEarnsInWindowByTask(
-        int familyDbId,
-        int childId,
-        Instant startInclusive,
-        Instant endExclusive
-    ) {
-        var query = entityManager.createQuery(
-            "SELECT new " + HistoryRelatedCount.class.getName() +
-            "(h.relatedId, COUNT(h.id)) FROM HistoryEntryEntity h " +
-                "WHERE h.familyId = ?1 AND h.childId = ?2 AND h.type = ?3 " +
-                "AND h.relatedId IS NOT NULL AND h.createdAt >= ?4 AND h.createdAt < ?5 " +
-                "GROUP BY h.relatedId",
-            HistoryRelatedCount.class
-        );
-        query.setParameter(1, familyDbId);
-        query.setParameter(2, childId);
-        query.setParameter(3, HistoryEntryType.earn);
-        query.setParameter(4, startInclusive);
-        query.setParameter(5, endExclusive);
-        Map<Long, Long> counts = new HashMap<>();
-        for (HistoryRelatedCount row : query.getResultList()) {
-            counts.put(row.relatedId(), row.count());
-        }
-        return counts;
-    }
-
-    public long countShopPurchasesInWindow(
-        int familyDbId,
-        int childId,
-        long itemId,
-        Instant startInclusive,
-        Instant endExclusive
-    ) {
-        return count(
-            "familyId = ?1 AND childId = ?2 AND relatedId = ?3"
-                + " AND type = ?4 AND createdAt >= ?5 AND createdAt < ?6",
-            familyDbId,
-            childId,
-            itemId,
-            HistoryEntryType.spend,
-            startInclusive,
-            endExclusive
-        );
-    }
-
-    public Map<Long, Long> countShopPurchasesInWindowByItem(
-        int familyDbId,
-        int childId,
-        Instant startInclusive,
-        Instant endExclusive
-    ) {
-        var query = entityManager.createQuery(
-            "SELECT new " + HistoryRelatedCount.class.getName() +
-            "(h.relatedId, COUNT(h.id)) FROM HistoryEntryEntity h " +
-                "WHERE h.familyId = ?1 AND h.childId = ?2 AND h.type = ?3 " +
-                "AND h.relatedId IS NOT NULL AND h.createdAt >= ?4 AND h.createdAt < ?5 " +
-                "GROUP BY h.relatedId",
-            HistoryRelatedCount.class
-        );
-        query.setParameter(1, familyDbId);
-        query.setParameter(2, childId);
-        query.setParameter(3, HistoryEntryType.spend);
-        query.setParameter(4, startInclusive);
-        query.setParameter(5, endExclusive);
-        Map<Long, Long> counts = new HashMap<>();
-        for (HistoryRelatedCount row : query.getResultList()) {
-            counts.put(row.relatedId(), row.count());
-        }
-        return counts;
-    }
-
-    @Transactional
-    public boolean addHistory(int familyDbId, int childId, long externalId, HistoryEntryType type,
-                              int amount, String description, int moneyAmount,
-                              Long relatedId, String groupName, String comment) {
-        persist(HistoryEntryEntity.builder()
+  @Transactional
+  public boolean addHistory(
+      int familyDbId,
+      int childId,
+      long externalId,
+      HistoryEntryType type,
+      int amount,
+      String description,
+      int moneyAmount,
+      Long relatedId,
+      String groupName,
+      String comment) {
+    persist(
+        HistoryEntryEntity.builder()
             .familyId(familyDbId)
             .childId(childId)
             .externalId(externalId)
@@ -304,88 +289,91 @@ public class HistoryRepository implements PanacheRepositoryBase<HistoryEntryEnti
             .groupName(groupName)
             .comment(comment)
             .build());
-        return true;
+    return true;
+  }
+
+  @Transactional
+  public void replaceHistory(int familyDbId, int childId, List<HistoryEntryEntity> entries) {
+    List<HistoryEntryEntity> existingEntries =
+        list("familyId = ?1 AND childId = ?2", familyDbId, childId);
+    if (entries.isEmpty()) {
+      delete("familyId = ?1 AND childId = ?2", familyDbId, childId);
+      return;
     }
 
-    @Transactional
-    public void replaceHistory(int familyDbId, int childId, List<HistoryEntryEntity> entries) {
-        List<HistoryEntryEntity> existingEntries = list("familyId = ?1 AND childId = ?2", familyDbId, childId);
-        if (entries.isEmpty()) {
-            delete("familyId = ?1 AND childId = ?2", familyDbId, childId);
-            return;
-        }
-
-        Map<Long, HistoryEntryEntity> existingByExternalId = existingEntries.stream()
+    Map<Long, HistoryEntryEntity> existingByExternalId =
+        existingEntries.stream()
             .filter(entry -> entry.getExternalId() != null)
-            .collect(Collectors.toMap(
-                HistoryEntryEntity::getExternalId,
-                entry -> entry,
-                (left, right) -> left,
-                HashMap::new
-            ));
-        Set<Long> incomingExternalIds = entries.stream()
+            .collect(
+                Collectors.toMap(
+                    HistoryEntryEntity::getExternalId,
+                    entry -> entry,
+                    (left, right) -> left,
+                    HashMap::new));
+    Set<Long> incomingExternalIds =
+        entries.stream()
             .map(HistoryEntryEntity::getExternalId)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
-        for (HistoryEntryEntity existing : existingEntries) {
-            Long externalId = existing.getExternalId();
-            if (externalId == null || !incomingExternalIds.contains(externalId)) {
-                deleteById(existing.getId());
-            }
-        }
-
-        for (HistoryEntryEntity entry : entries) {
-            Long externalId = entry.getExternalId();
-            if (externalId == null) {
-                persist(entry);
-                continue;
-            }
-
-            HistoryEntryEntity current = existingByExternalId.get(externalId);
-            if (current == null) {
-                persist(entry);
-                continue;
-            }
-
-            copyHistoryEntry(entry, current);
-        }
+    for (HistoryEntryEntity existing : existingEntries) {
+      Long externalId = existing.getExternalId();
+      if (externalId == null || !incomingExternalIds.contains(externalId)) {
+        deleteById(existing.getId());
+      }
     }
 
-    @Transactional
-    public void upsertHistoryEntry(HistoryEntryEntity entry) {
-        if (entry.getExternalId() == null) {
-            persist(entry);
-            return;
-        }
+    for (HistoryEntryEntity entry : entries) {
+      Long externalId = entry.getExternalId();
+      if (externalId == null) {
+        persist(entry);
+        continue;
+      }
 
-        List<HistoryEntryEntity> existingEntries = list(
+      HistoryEntryEntity current = existingByExternalId.get(externalId);
+      if (current == null) {
+        persist(entry);
+        continue;
+      }
+
+      copyHistoryEntry(entry, current);
+    }
+  }
+
+  @Transactional
+  public void upsertHistoryEntry(HistoryEntryEntity entry) {
+    if (entry.getExternalId() == null) {
+      persist(entry);
+      return;
+    }
+
+    List<HistoryEntryEntity> existingEntries =
+        list(
             "familyId = ?1 AND childId = ?2 AND externalId = ?3",
             entry.getFamilyId(),
             entry.getChildId(),
-            entry.getExternalId()
-        );
-        if (existingEntries.isEmpty()) {
-            persist(entry);
-            return;
-        }
-
-        copyHistoryEntry(entry, existingEntries.getFirst());
+            entry.getExternalId());
+    if (existingEntries.isEmpty()) {
+      persist(entry);
+      return;
     }
 
-    private void copyHistoryEntry(HistoryEntryEntity source, HistoryEntryEntity target) {
-        target.setFamilyId(source.getFamilyId());
-        target.setChildId(source.getChildId());
-        target.setExternalId(source.getExternalId());
-        target.setType(source.getType());
-        target.setReason(source.getReason());
-        target.setDelta(source.getDelta());
-        target.setReversesEntryId(source.getReversesEntryId());
-        target.setAmount(source.getAmount());
-        target.setDescription(source.getDescription());
-        target.setMoneyAmount(source.getMoneyAmount());
-        target.setRelatedId(source.getRelatedId());
-        target.setGroupName(source.getGroupName());
-        target.setComment(source.getComment());
-    }
+    copyHistoryEntry(entry, existingEntries.getFirst());
+  }
+
+  private void copyHistoryEntry(HistoryEntryEntity source, HistoryEntryEntity target) {
+    target.setFamilyId(source.getFamilyId());
+    target.setChildId(source.getChildId());
+    target.setExternalId(source.getExternalId());
+    target.setType(source.getType());
+    target.setReason(source.getReason());
+    target.setDelta(source.getDelta());
+    target.setReversesEntryId(source.getReversesEntryId());
+    target.setAmount(source.getAmount());
+    target.setDescription(source.getDescription());
+    target.setMoneyAmount(source.getMoneyAmount());
+    target.setRelatedId(source.getRelatedId());
+    target.setGroupName(source.getGroupName());
+    target.setComment(source.getComment());
+  }
 }

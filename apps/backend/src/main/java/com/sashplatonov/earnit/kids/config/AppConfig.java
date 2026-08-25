@@ -19,6 +19,7 @@ public interface AppConfig {
 
     Google google();
 
+
     interface Auth {
 
         @WithDefault("2592000")

@@ -135,9 +135,9 @@ class FamilyActionConcurrencyTest {
         long itemId = 52001L;
         long otherItemId = 52002L;
         shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(familyDbId, child.getId(), itemId,
-            "Item", 10, "Fun", OBJECT_MAPPER.createObjectNode(), "", 0, true, false));
+            "Item", 10, "Fun", OBJECT_MAPPER.createObjectNode(), "", 0, true, false, null, null));
         shopItemRepository.upsertShopItem(new ShopItemUpsertCommand(otherFamilyDbId, otherChild.getId(), otherItemId,
-            "Other item", 10, "Fun", OBJECT_MAPPER.createObjectNode(), "", 0, true, false));
+            "Other item", 10, "Fun", OBJECT_MAPPER.createObjectNode(), "", 0, true, false, null, null));
 
         purchaseRequestRepository.createRequest(familyDbId, child.getId(), 53001L, null, "Item", itemId,
             10, PurchaseRequestType.shop_purchase, 0);

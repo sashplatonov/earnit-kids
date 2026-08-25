@@ -104,7 +104,7 @@ class TelegramMenuBuilderTest {
             "family", "child", 1, "Alex", 42, List.of(),
             java.util.stream.LongStream.range(1, 7)
                 .mapToObj(id -> new com.sashplatonov.earnit.kids.family.api.response.TaskDto(
-                    id, "Task " + id, 5, null, null, null, null, null, null, true, 1, null, null))
+                    id, "Task " + id, 5, null, null, null, null, null, null, null, true, 1, null, null, null))
                 .toList(), List.of(), List.of(), List.of());
 
         assertThat(menuBuilder().childTasks(view, "https://example.test/telegram"))
@@ -117,9 +117,9 @@ class TelegramMenuBuilderTest {
     @Test
     void pendingTaskDoesNotExposeAnActiveDoneAction() {
         TaskDto available = new TaskDto(
-            1L, "Утренний старт", 1, null, null, null, null, null, null, true, 1, null, null);
+            1L, "Утренний старт", 1, null, null, null, null, null, null, null, true, 1, null, null, null);
         TaskDto pendingTask = new TaskDto(
-            2L, "Книжная искра", 2, null, null, null, null, null, null, true, 1, null, null);
+            2L, "Книжная искра", 2, null, null, null, null, null, null, null, true, 1, null, null, null);
         RequestDto pending = new RequestDto(19L, 2L, "Книжная искра", null, null, "Книжная искра",
             null, null, null, null, 2, PurchaseRequestStatus.pending, PurchaseRequestType.earn, 0,
             "2026-08-13T12:00:00Z", 1, null, null, null, null);

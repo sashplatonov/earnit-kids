@@ -1,6 +1,6 @@
 package com.sashplatonov.earnit.kids.telegram.application.notification;
 
-import com.sashplatonov.earnit.kids.telegram.config.TelegramConfig;
+import com.sashplatonov.earnit.kids.telegram.config.TelegramRetentionConfig;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.outbox.ApplicationOutboxEventRepository;
 import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramCallbackActionRepository;
 import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramChildInvitationRepository;
@@ -26,7 +26,7 @@ public class TelegramRetentionService {
     private TelegramDeliveryRepository deliveries;
     private ApplicationOutboxEventRepository outboxEvents;
     private TelegramSecurityAuditEventRepository auditEvents;
-    private TelegramConfig config;
+    private TelegramRetentionConfig config;
 
     TelegramRetentionService() {
     }
@@ -38,7 +38,7 @@ public class TelegramRetentionService {
                              TelegramDeliveryRepository deliveries,
                              ApplicationOutboxEventRepository outboxEvents,
                              TelegramSecurityAuditEventRepository auditEvents,
-                             TelegramConfig config) {
+                             TelegramRetentionConfig config) {
         this.invitations = invitations;
         this.callbacks = callbacks;
         this.webhookUpdates = webhookUpdates;

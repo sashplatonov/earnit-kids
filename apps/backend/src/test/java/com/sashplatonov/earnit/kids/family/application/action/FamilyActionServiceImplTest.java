@@ -82,7 +82,7 @@ class FamilyActionServiceImplTest {
             historyRepository,
             purchaseRequestRepository,
             familyService,
-            TestConfigFactory.timeProvider(FIXED_NOW),
+            new FamilyActionRuntime(TestConfigFactory.timeProvider(FIXED_NOW), null),
             new FrequencyWindowService(),
             backendKpiMetrics
         );

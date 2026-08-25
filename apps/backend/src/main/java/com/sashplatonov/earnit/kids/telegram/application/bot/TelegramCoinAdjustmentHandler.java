@@ -34,7 +34,7 @@ final class TelegramCoinAdjustmentHandler {
             buttons = menuBuilder.parentCoins(view, miniAppUrl);
         } else {
             TelegramQuickActionResponse snapshot = quickActions.load(telegramUserId, childId).orElse(null);
-            text = TelegramCopy.error();
+            text = TelegramOutcomeCopy.error();
             buttons = snapshot != null ? menuBuilder.coinRetry(snapshot, delta) : menuBuilder.backToMain();
         }
         try {

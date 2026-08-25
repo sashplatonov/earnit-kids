@@ -37,6 +37,7 @@ class ModuleBoundaryTest {
         "dto.response.HttpMetricsResponse",
         "dto.response.SessionPageDataResponse",
         "dto.response.TokenResponse",
+        "resource.common.ClientErrorMessage",
         "resource.common.ClientErrorResource",
         "resource.common.ResourceAuthSupport",
         "service.event.ApplicationEventPublisher"
@@ -68,6 +69,7 @@ class ModuleBoundaryTest {
                 "dto/response/HttpMetricsResponse.java",
                 "dto/response/SessionPageDataResponse.java",
                 "dto/response/TokenResponse.java",
+                "resource/common/ClientErrorMessage.java",
                 "resource/common/ClientErrorResource.java",
                 "resource/common/ResourceAuthSupport.java",
                 "service/event/ApplicationEventPublisher.java"

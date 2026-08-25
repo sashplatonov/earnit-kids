@@ -6,5 +6,4 @@ public record ClientErrorMessage(
     Integer status,
     String category,
     String traceId,
-    String errorClass
-) { }
+    String errorClass) {}

@@ -32,8 +32,8 @@ class HistoryDtoMapperTest {
     @Test
     void toDto_earnEntryWithRelatedTask_resolvesTaskDetails() {
         HistoryEntryEntity entry = entry(HistoryEntryType.earn, 100L, "did chores");
-        TaskDto task = new TaskDto(100L, "Chores", 10, "Home", null, null, null, null, null,
-            true, 5, null, null);
+        TaskDto task = new TaskDto(100L, "Chores", 10, "Home", null, null, null, null, null, null,
+            true, 5, null, null, null);
         Map<Long, TaskDto> taskMap = Map.of(100L, task);
 
         HistoryEntryDto dto = mapper.toDto(entry, taskMap, Map.of());

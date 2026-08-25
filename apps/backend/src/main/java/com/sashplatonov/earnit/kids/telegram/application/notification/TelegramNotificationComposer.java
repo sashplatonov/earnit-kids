@@ -1,6 +1,7 @@
 package com.sashplatonov.earnit.kids.telegram.application.notification;
 import com.sashplatonov.earnit.kids.telegram.application.callback.TelegramCallbackService;
 import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramCopy;
+import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramOutcomeCopy;
 import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramBotApiClient;
 import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramCoinCopy;
 import com.sashplatonov.earnit.kids.telegram.application.bot.TelegramChildOutcomeText;
@@ -65,7 +66,7 @@ public class TelegramNotificationComposer {
     }
 
     public String resolvedText(ApplicationOutboxEventEntity event) {
-        return TelegramCopy.requestResolved(event.getResolutionTitle(), event.getResolutionStatus());
+        return TelegramOutcomeCopy.requestResolved(event.getResolutionTitle(), event.getResolutionStatus());
     }
 
     private List<TelegramBotApiClient.InlineButton> requestButtons(ApplicationOutboxEventEntity event) {

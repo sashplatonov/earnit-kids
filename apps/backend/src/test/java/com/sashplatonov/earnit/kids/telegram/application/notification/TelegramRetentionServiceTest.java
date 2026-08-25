@@ -1,6 +1,6 @@
 package com.sashplatonov.earnit.kids.telegram.application.notification;
 
-import com.sashplatonov.earnit.kids.telegram.config.TelegramConfig;
+import com.sashplatonov.earnit.kids.telegram.config.TelegramRetentionConfig;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.outbox.ApplicationOutboxEventRepository;
 import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramCallbackActionRepository;
 import com.sashplatonov.earnit.kids.telegram.infrastructure.persistence.TelegramChildInvitationRepository;
@@ -28,7 +28,7 @@ class TelegramRetentionServiceTest {
     private final TelegramDeliveryRepository deliveries = mock(TelegramDeliveryRepository.class);
     private final ApplicationOutboxEventRepository outboxEvents = mock(ApplicationOutboxEventRepository.class);
     private final TelegramSecurityAuditEventRepository auditEvents = mock(TelegramSecurityAuditEventRepository.class);
-    private final TelegramConfig config = mock(TelegramConfig.class);
+    private final TelegramRetentionConfig config = mock(TelegramRetentionConfig.class);
     private TelegramRetentionService service;
 
     @BeforeEach

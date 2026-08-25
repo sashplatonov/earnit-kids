@@ -21,6 +21,6 @@ public final class TelegramRequestResolutionText {
             case cancelled -> RequestResolutionStatus.cancelled;
             case pending -> throw new IllegalStateException("Pending request has no resolution status");
         };
-        return TelegramCopy.requestResolved(request.getTaskName(), status);
+        return TelegramOutcomeCopy.requestResolved(request.getTaskName(), status);
     }
 }

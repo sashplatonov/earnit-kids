@@ -1,20 +1,18 @@
 package com.sashplatonov.earnit.kids.family.application.notification;
 
-import com.sashplatonov.earnit.kids.family.domain.model.child.ChildEntity;
-import com.sashplatonov.earnit.kids.family.domain.model.notification.FamilyNotificationPreferenceEntity;
-import com.sashplatonov.earnit.kids.family.domain.model.child.ChildStatus;
 import com.sashplatonov.earnit.kids.family.api.response.ChildNotificationSettingsDto;
 import com.sashplatonov.earnit.kids.family.api.response.FamilyNotificationSettingsResponse;
 import com.sashplatonov.earnit.kids.family.api.response.NotificationPreferenceDto;
-import com.sashplatonov.earnit.kids.family.infrastructure.persistence.child.ChildRepository;
-import com.sashplatonov.earnit.kids.family.infrastructure.persistence.notification.FamilyNotificationPreferenceRepository;
-import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.family.application.membership.ChildOwnershipService;
-import com.sashplatonov.earnit.kids.util.ServiceResults;
+import com.sashplatonov.earnit.kids.family.domain.model.child.ChildStatus;
+import com.sashplatonov.earnit.kids.family.domain.model.notification.FamilyNotificationPreferenceEntity;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.child.ChildRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.notification.FamilyNotificationPreferenceRepository;
 import com.sashplatonov.earnit.kids.util.OperationResult;
+import com.sashplatonov.earnit.kids.util.ServiceResults;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,105 +20,138 @@ import java.util.Optional;
 
 @ApplicationScoped
 public class FamilyNotificationServiceImpl implements FamilyNotificationService {
-    private static final String SCOPE_PARENT = "parent";
-    private static final String SCOPE_CHILD = "child";
+  private static final String SCOPE_PARENT = "parent";
+  private static final String SCOPE_CHILD = "child";
 
-    private static final Map<String, Boolean> PARENT_DEFAULTS = new LinkedHashMap<>(Map.of(
-        "taskMarkedDone", true,
-        "rewardRequested", true,
-        "balanceChanged", false,
-        "parentInviteAccepted", true,
-        "childTelegramLinked", true
-    ));
+  private static final Map<String, Boolean> PARENT_DEFAULTS =
+      new LinkedHashMap<>(
+          Map.of(
+              "taskMarkedDone", true,
+              "rewardRequested", true,
+              "balanceChanged", false,
+              "parentInviteAccepted", true,
+              "childTelegramLinked", true));
 
-    private static final Map<String, Boolean> CHILD_DEFAULTS = new LinkedHashMap<>(Map.of(
-        "taskApproved", true,
-        "taskRejected", true,
-        "rewardApproved", true,
-        "rewardRejected", true,
-        "newTasks", true,
-        "rewardAvailable", false
-    ));
+  private static final Map<String, Boolean> CHILD_DEFAULTS =
+      new LinkedHashMap<>(
+          Map.of(
+              "taskApproved", true,
+              "taskRejected", true,
+              "rewardApproved", true,
+              "rewardRejected", true,
+              "newTasks", true,
+              "rewardAvailable", false));
 
-    @Inject private FamilyRepository families;
-    @Inject private ChildRepository children;
-    @Inject private FamilyNotificationPreferenceRepository preferences;
-    @Inject private ChildOwnershipService childOwnershipService;
+  @Inject private FamilyRepository families;
+  @Inject private ChildRepository children;
+  @Inject private FamilyNotificationPreferenceRepository preferences;
+  @Inject private ChildOwnershipService childOwnershipService;
 
-    FamilyNotificationServiceImpl() {
+  FamilyNotificationServiceImpl() {}
+
+  @Override
+  public OperationResult<FamilyNotificationSettingsResponse> getSettings(String familyId) {
+    Optional<Integer> dbIdOpt = families.getDbId(familyId);
+    if (dbIdOpt.isEmpty()) {
+      return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+    }
+    int familyDbId = dbIdOpt.get();
+
+    Map<String, Boolean> stored = new LinkedHashMap<>();
+    for (FamilyNotificationPreferenceEntity entity : preferences.findByFamily(familyDbId)) {
+      stored.put(
+          entity.getScope() + ":" + entity.getChildId() + ":" + entity.getPrefKey(),
+          entity.isEnabled());
     }
 
-    @Override
-    public OperationResult<FamilyNotificationSettingsResponse> getSettings(String familyId) {
-        Optional<Integer> dbIdOpt = families.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
-        int familyDbId = dbIdOpt.get();
-
-        Map<String, Boolean> stored = new LinkedHashMap<>();
-        for (FamilyNotificationPreferenceEntity entity : preferences.findByFamily(familyDbId)) {
-            stored.put(entity.getScope() + ":" + entity.getChildId() + ":" + entity.getPrefKey(),
-                entity.isEnabled());
-        }
-
-        List<NotificationPreferenceDto> parent = PARENT_DEFAULTS.entrySet().stream()
-            .map(entry -> preference(entry.getKey(), entry.getValue(), stored.get(SCOPE_PARENT + ":null:" + entry.getKey())))
+    List<NotificationPreferenceDto> parent =
+        PARENT_DEFAULTS.entrySet().stream()
+            .map(
+                entry ->
+                    preference(
+                        entry.getKey(),
+                        entry.getValue(),
+                        stored.get(SCOPE_PARENT + ":null:" + entry.getKey())))
             .toList();
 
-        List<ChildNotificationSettingsDto> childrenSettings = children.getActiveChildren(familyDbId).stream()
-            .map(child -> new ChildNotificationSettingsDto(
-                child.getId(),
-                child.getName(),
-                CHILD_DEFAULTS.entrySet().stream()
-                    .map(entry -> preference(entry.getKey(), entry.getValue(),
-                        stored.get(SCOPE_CHILD + ":" + child.getId() + ":" + entry.getKey())))
-                    .toList()))
+    List<ChildNotificationSettingsDto> childrenSettings =
+        children.getActiveChildren(familyDbId).stream()
+            .map(
+                child ->
+                    new ChildNotificationSettingsDto(
+                        child.getId(),
+                        child.getName(),
+                        CHILD_DEFAULTS.entrySet().stream()
+                            .map(
+                                entry ->
+                                    preference(
+                                        entry.getKey(),
+                                        entry.getValue(),
+                                        stored.get(
+                                            SCOPE_CHILD
+                                                + ":"
+                                                + child.getId()
+                                                + ":"
+                                                + entry.getKey())))
+                            .toList()))
             .toList();
 
-        return OperationResult.success(new FamilyNotificationSettingsResponse(parent, childrenSettings));
+    return OperationResult.success(
+        new FamilyNotificationSettingsResponse(parent, childrenSettings));
+  }
+
+  @Override
+  public OperationResult<Void> setPreference(
+      String familyId, String scope, Integer childId, String key, boolean enabled) {
+    Optional<Integer> dbIdOpt = families.getDbId(familyId);
+    if (dbIdOpt.isEmpty()) {
+      return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
+    }
+    int familyDbId = dbIdOpt.get();
+
+    if (SCOPE_PARENT.equals(scope)) {
+      if (!PARENT_DEFAULTS.containsKey(key)) {
+        return ServiceResults.failure(
+            "UNKNOWN_PREFERENCE",
+            "family.unknownSetting",
+            Map.of("key", key == null ? "null" : key));
+      }
+      childId = null;
+    } else if (SCOPE_CHILD.equals(scope)) {
+      if (!CHILD_DEFAULTS.containsKey(key)) {
+        return ServiceResults.failure(
+            "UNKNOWN_PREFERENCE",
+            "family.unknownSetting",
+            Map.of("key", key == null ? "null" : key));
+      }
+      if (childId == null
+          || childOwnershipService
+              .findFamilyChild(familyDbId, childId)
+              .filter(child -> ChildStatus.ACTIVE.name().equals(child.getStatus()))
+              .isEmpty()) {
+        return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
+      }
+    } else {
+      return ServiceResults.failure(
+          "INVALID_SCOPE", "family.unknownSetting", Map.of("key", "scope"));
     }
 
-    @Override
-    public OperationResult<Void> setPreference(String familyId, String scope, Integer childId,
-                                               String key, boolean enabled) {
-        Optional<Integer> dbIdOpt = families.getDbId(familyId);
-        if (dbIdOpt.isEmpty()) {
-            return ServiceResults.failure("FAMILY_NOT_FOUND", "family.familyNotFound");
-        }
-        int familyDbId = dbIdOpt.get();
+    preferences.setEnabled(familyDbId, scope, childId, key, enabled);
+    return OperationResult.success(null);
+  }
 
-        if (SCOPE_PARENT.equals(scope)) {
-            if (!PARENT_DEFAULTS.containsKey(key)) {
-                return ServiceResults.failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
-            }
-            childId = null;
-        } else if (SCOPE_CHILD.equals(scope)) {
-            if (!CHILD_DEFAULTS.containsKey(key)) {
-                return ServiceResults.failure("UNKNOWN_PREFERENCE", "family.unknownSetting", Map.of("key", key == null ? "null" : key));
-            }
-            if (childId == null || childOwnershipService.findFamilyChild(familyDbId, childId)
-                .filter(child -> ChildStatus.ACTIVE.name().equals(child.getStatus()))
-                .isEmpty()) {
-                return ServiceResults.failure("CHILD_NOT_FOUND", "family.childNotFound");
-            }
-        } else {
-            return ServiceResults.failure("INVALID_SCOPE", "family.unknownSetting", Map.of("key", "scope"));
-        }
+  @Override
+  public boolean isEnabled(int familyDbId, String scope, String key, Integer childId) {
+    Map<String, Boolean> defaults = SCOPE_PARENT.equals(scope) ? PARENT_DEFAULTS : CHILD_DEFAULTS;
+    boolean fallback = defaults.getOrDefault(key, false);
+    return preferences
+        .findOne(familyDbId, scope, childId, key)
+        .map(FamilyNotificationPreferenceEntity::isEnabled)
+        .orElse(fallback);
+  }
 
-        preferences.setEnabled(familyDbId, scope, childId, key, enabled);
-        return OperationResult.success(null);
-    }
-
-    @Override
-    public boolean isEnabled(int familyDbId, String scope, String key, Integer childId) {
-        Map<String, Boolean> defaults = SCOPE_PARENT.equals(scope) ? PARENT_DEFAULTS : CHILD_DEFAULTS;
-        boolean fallback = defaults.getOrDefault(key, false);
-        return preferences.findOne(familyDbId, scope, childId, key)
-            .map(FamilyNotificationPreferenceEntity::isEnabled).orElse(fallback);
-    }
-
-    private static NotificationPreferenceDto preference(String key, boolean fallback, Boolean stored) {
-        return new NotificationPreferenceDto(key, stored != null ? stored : fallback);
-    }
+  private static NotificationPreferenceDto preference(
+      String key, boolean fallback, Boolean stored) {
+    return new NotificationPreferenceDto(key, stored != null ? stored : fallback);
+  }
 }

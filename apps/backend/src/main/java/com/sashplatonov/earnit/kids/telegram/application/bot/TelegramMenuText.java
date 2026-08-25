@@ -40,7 +40,7 @@ final class TelegramMenuText {
         List<RequestDto> pending = TelegramViewSupport.pendingRequests(view);
         int index = TelegramViewSupport.nextQueueIndex(pending, currentId);
         if (index >= pending.size()) {
-            return TelegramCopy.emptyRequests();
+            return TelegramOutcomeCopy.emptyRequests();
         }
         RequestDto request = pending.get(index);
         return TelegramCopy.requestQueueText(view.childName(), TelegramViewSupport.requestTitle(request),
@@ -57,7 +57,7 @@ final class TelegramMenuText {
     private static String tasksText(TelegramQuickActionResponse view) {
         List<TaskDto> tasks = TelegramViewSupport.orderedTasks(view);
         if (tasks.isEmpty()) {
-            return TelegramCopy.emptyTasks();
+            return TelegramOutcomeCopy.emptyTasks();
         }
         StringBuilder builder = new StringBuilder(TelegramCopy.MY_TASKS);
         for (TaskDto task : tasks) {
@@ -74,7 +74,7 @@ final class TelegramMenuText {
             .toList();
         boolean hasUnavailable = view.rewards().stream().anyMatch(reward -> reward.price() > view.balance());
         if (affordable.isEmpty() && !hasUnavailable) {
-            return TelegramCopy.emptyRewards();
+            return TelegramOutcomeCopy.emptyRewards();
         }
         StringBuilder builder = new StringBuilder(TelegramCopy.REWARDS)
             .append("\n").append(TelegramBotEmoji.COINS).append(" Баланс: ").append(view.balance());

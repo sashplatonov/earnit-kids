@@ -5,12 +5,14 @@ import com.sashplatonov.earnit.kids.config.auth.AuthFilter;
 import com.sashplatonov.earnit.kids.family.application.membership.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.family.application.FamilyService;
 import com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto;
+import com.sashplatonov.earnit.kids.family.api.response.ChildDto;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.MembershipStatus;
 import com.sashplatonov.earnit.kids.platform.realtime.WebSocketNotificationService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,10 +32,16 @@ class FamilyParentAccessResourceTest {
     @Mock FamilyParentAccessService familyParentAccessService;
 
     private FamilyParentAccessResource resource;
+    private FamilyParentTransferResource transferResource;
+    private FamilyInactiveChildrenResource inactiveChildrenResource;
 
     @BeforeEach
     void setUp() {
         resource = new FamilyParentAccessResource(
+            familyService, webSocketNotificationService, familyParentAccessService);
+        transferResource = new FamilyParentTransferResource(
+            familyService, webSocketNotificationService, familyParentAccessService);
+        inactiveChildrenResource = new FamilyInactiveChildrenResource(
             familyService, webSocketNotificationService, familyParentAccessService);
     }
 
@@ -48,7 +56,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.transferAdmin(7, "fam-1", 42, null))
             .thenReturn(OperationResult.success(dto(7, FamilyParentMembershipEntity.Permission.editor)));
 
-        try (Response response = resource.transferAdmin(contextWithAuth(
+        try (Response response = transferResource.transferAdmin(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "family_admin", 42)), 7)) {
             assertThat(response.getStatus()).isEqualTo(200);
         }
@@ -58,7 +66,7 @@ class FamilyParentAccessResourceTest {
 
     @Test
     void transferAdmin_nonAdminParent_isUnauthorized() {
-        try (Response response = resource.transferAdmin(contextWithAuth(
+        try (Response response = transferResource.transferAdmin(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "editor", 42)), 7)) {
             assertThat(response.getStatus()).isEqualTo(401);
         }
@@ -69,7 +77,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.transferAdmin(7, "fam-1", 42, null))
             .thenReturn(OperationResult.failure("PARENT_TRANSFER_REQUEST_PENDING_EXISTS", "pending"));
 
-        try (Response response = resource.transferAdmin(contextWithAuth(
+        try (Response response = transferResource.transferAdmin(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "family_admin", 42)), 7)) {
             assertThat(response.getStatus()).isEqualTo(409);
         }
@@ -80,7 +88,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.transferAdmin(7, "fam-1", 42, null))
             .thenReturn(OperationResult.failure("PARENT_NOT_AUTHORIZED", "nope"));
 
-        try (Response response = resource.transferAdmin(contextWithAuth(
+        try (Response response = transferResource.transferAdmin(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "family_admin", 42)), 7)) {
             assertThat(response.getStatus()).isEqualTo(400);
         }
@@ -88,7 +96,7 @@ class FamilyParentAccessResourceTest {
 
     @Test
     void transferAdmin_missingAuthContext_isUnauthorized() {
-        try (Response response = resource.transferAdmin(contextWithAuth(null), 7)) {
+        try (Response response = transferResource.transferAdmin(contextWithAuth(null), 7)) {
             assertThat(response.getStatus()).isEqualTo(401);
         }
     }
@@ -98,7 +106,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.acceptTransferRequest(99, "fam-1", 42, null))
             .thenReturn(OperationResult.success(dto(7, FamilyParentMembershipEntity.Permission.family_admin)));
 
-        try (Response response = resource.acceptTransferRequest(contextWithAuth(
+        try (Response response = transferResource.acceptTransferRequest(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "viewer", 42)), 99)) {
             assertThat(response.getStatus()).isEqualTo(200);
         }
@@ -109,7 +117,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.acceptTransferRequest(99, "fam-1", 42, null))
             .thenReturn(OperationResult.failure("PARENT_MEMBERSHIP_FORBIDDEN", "forbidden"));
 
-        try (Response response = resource.acceptTransferRequest(contextWithAuth(
+        try (Response response = transferResource.acceptTransferRequest(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "viewer", 42)), 99)) {
             assertThat(response.getStatus()).isEqualTo(403);
         }
@@ -117,7 +125,7 @@ class FamilyParentAccessResourceTest {
 
     @Test
     void acceptTransferRequest_missingParentAccount_isUnauthorized() {
-        try (Response response = resource.acceptTransferRequest(contextWithAuth(
+        try (Response response = transferResource.acceptTransferRequest(contextWithAuth(
             new AuthContext("fam-1", null, "admin", "a@b.c", "csrf", false, "viewer", null)), 99)) {
             assertThat(response.getStatus()).isEqualTo(401);
         }
@@ -125,7 +133,7 @@ class FamilyParentAccessResourceTest {
 
     @Test
     void acceptTransferRequest_missingAuthContext_isUnauthorized() {
-        try (Response response = resource.acceptTransferRequest(contextWithAuth(null), 99)) {
+        try (Response response = transferResource.acceptTransferRequest(contextWithAuth(null), 99)) {
             assertThat(response.getStatus()).isEqualTo(401);
         }
     }
@@ -135,7 +143,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.declineTransferRequest(99, "fam-1", 42, null))
             .thenReturn(OperationResult.success(dto(7, FamilyParentMembershipEntity.Permission.editor)));
 
-        try (Response response = resource.declineTransferRequest(contextWithAuth(
+        try (Response response = transferResource.declineTransferRequest(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "viewer", 42)), 99)) {
             assertThat(response.getStatus()).isEqualTo(200);
         }
@@ -146,7 +154,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.declineTransferRequest(99, "fam-1", 42, null))
             .thenReturn(OperationResult.failure("PARENT_MEMBERSHIP_FORBIDDEN", "forbidden"));
 
-        try (Response response = resource.declineTransferRequest(contextWithAuth(
+        try (Response response = transferResource.declineTransferRequest(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "viewer", 42)), 99)) {
             assertThat(response.getStatus()).isEqualTo(403);
         }
@@ -157,7 +165,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.cancelTransferRequest(99, "fam-1", 42, null))
             .thenReturn(OperationResult.success(dto(7, FamilyParentMembershipEntity.Permission.family_admin)));
 
-        try (Response response = resource.cancelTransferRequest(contextWithAuth(
+        try (Response response = transferResource.cancelTransferRequest(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "family_admin", 42)), 99)) {
             assertThat(response.getStatus()).isEqualTo(200);
         }
@@ -168,7 +176,7 @@ class FamilyParentAccessResourceTest {
         when(familyParentAccessService.cancelTransferRequest(99, "fam-1", 42, null))
             .thenReturn(OperationResult.failure("PARENT_MEMBERSHIP_FORBIDDEN", "forbidden"));
 
-        try (Response response = resource.cancelTransferRequest(contextWithAuth(
+        try (Response response = transferResource.cancelTransferRequest(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "editor", 42)), 99)) {
             assertThat(response.getStatus()).isEqualTo(403);
         }
@@ -178,6 +186,26 @@ class FamilyParentAccessResourceTest {
     void removeParent_withoutMembershipPermission_isUnauthorized() {
         try (Response response = resource.removeParent(contextWithAuth(
             new AuthContext("fam-1", null, "admin", null, "csrf", false, "editor", 42)), 7)) {
+            assertThat(response.getStatus()).isEqualTo(401);
+        }
+    }
+
+    @Test
+    void listInactiveChildren_admin_returns200() {
+        when(familyService.listInactiveChildren("fam-1"))
+            .thenReturn(OperationResult.success(List.of(
+                new ChildDto(7, "Alice", 10, 0, 0, "default", List.of(), List.of(), List.of(), List.of()))));
+
+        try (Response response = inactiveChildrenResource.listInactiveChildren(contextWithAuth(
+            new AuthContext("fam-1", null, "admin", null, "csrf", false, "family_admin", 42)))) {
+            assertThat(response.getStatus()).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void listInactiveChildren_nonAdmin_isUnauthorized() {
+        try (Response response = inactiveChildrenResource.listInactiveChildren(contextWithAuth(
+            new AuthContext("fam-1", null, "parent", null, "csrf", false, "editor", 42)))) {
             assertThat(response.getStatus()).isEqualTo(401);
         }
     }
