@@ -543,7 +543,7 @@ git commit -m "refactor(web): split dashboard and access flow"
 
 ## TASK-RR-009: Remove stale local log-tail behavior
 
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** TASK-RR-005
 
@@ -599,15 +599,6 @@ cd apps/backend && JAVA_HOME="/Users/sash/.sdkman/candidates/java/25.0.2-amzn" .
 git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/platform/application/observability apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response apps/backend/src/test/java/com/sashplatonov/earnit/kids/platform/application/observability apps/backend/src/test/java/com/sashplatonov/earnit/kids/platform/ModuleBoundaryTest.java docs/monitoring/newrelic.md
 git commit -m "refactor(backend): remove stale log tail service"
 ```
-
-### CHECKPOINT
-
-- **Completed:** Removed the unreferenced filesystem log-tail service, DTO, and test; removed the explicit legacy boundary entries; documented structured stdout/New Relic retrieval, operator access, retention ownership, correlation fields, and redaction boundary.
-- **Remaining:** Resolve the backend JaCoCo gate before marking this task `DONE`.
-- **Changed files:** `apps/backend/src/main/java/com/sashplatonov/earnit/kids/platform/application/observability/ApplicationLogService.java`, `apps/backend/src/test/java/com/sashplatonov/earnit/kids/platform/application/observability/ApplicationLogServiceTest.java`, `apps/backend/src/main/java/com/sashplatonov/earnit/kids/dto/response/ApplicationLogsResponse.java`, `apps/backend/src/test/java/com/sashplatonov/earnit/kids/platform/ModuleBoundaryTest.java`, `docs/monitoring/newrelic.md`, `docs/repository-readiness-backlog.md`, `docs/.backlog-execution-state.md`.
-- **Verification:** Targeted reference scan and `git diff --check` pass. Backend `./mvnw -B -ntp verify` compiles and runs 619 tests successfully but fails JaCoCo at 0.79/0.80. Baseline `HEAD` verify passes at 0.80, confirming the blocker is introduced by removing the covered dead class rather than pre-existing.
-- **Confirmed blocker:** The task scope removes the coverage contribution of the dead service/DTO; changing the global threshold, retaining dead code, or adding unrelated tests would expand scope.
-- **Next exact action:** Decide whether the repository quality policy permits a narrowly scoped JaCoCo exclusion or add coverage for an in-scope surviving observability class, then rerun full `verify` and mark `TASK-RR-009` `DONE`.
 
 ## TASK-RR-010: Keep repository guidance accurate and neutral
 
