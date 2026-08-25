@@ -9,11 +9,11 @@ async function authenticate(page: Page, role: 'parent' | 'child') {
     ]);
 }
 
-test('normal browser workspace access preserves a local login continuation', async ({ page }) => {
+test('normal browser workspace access preserves the detected locale in its continuation', async ({ page }) => {
     await page.goto('/workspace');
 
-    await expect(page).toHaveURL(/\/(?:en|ru)\/login\?continue=%2F(?:en|ru)%2Fworkspace$/);
-    await expect(page.getByRole('heading', { name: /sign in|вход для родителей и детей/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/public\/index\.html\?continue=%2F(?:en|ru)%2Fworkspace$/);
+    await expect(page.getByRole('heading', { name: /Чтобы не повторять одно и то же|without repeating/i })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 

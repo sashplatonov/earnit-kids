@@ -194,7 +194,7 @@ git commit -m "fix(web): restore workspace sign out"
 
 ## LRR-004: Repair public, workspace, and Mini App E2E coverage
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** LRR-001, LRR-002, LRR-003
 

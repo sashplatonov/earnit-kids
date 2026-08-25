@@ -78,7 +78,7 @@ test('unlinked Telegram identity gets a safe parent-link and child-invitation ha
     await page.goto('/telegram');
 
     await expect(page.getByText(/This Telegram account is not linked|Этот Telegram-аккаунт ещё не привязан/)).toBeVisible();
-    await expect(page.getByRole('link', { name: /Sign in as a parent|Войдите как родитель/ })).toHaveAttribute('href', '/login');
+    await expect(page.getByRole('link', { name: /Sign in as a parent|Войдите как родитель/ })).toHaveAttribute('href', '/public/index.html');
     await expect(page.getByText(/For a child account|Для ребёнка попросите родителя/)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
@@ -175,13 +175,15 @@ test('Telegram parent access creates a named invite and reloads the canonical Te
     await familyTab.click();
     await page.getByRole('button', { name: /Parents|Родители/ }).click();
     const parentDialog = page.getByRole('dialog', { name: /Parents|Родители/ });
-    const telegramInvite = parentDialog.getByRole('region', { name: /Via Telegram|Через Telegram/ });
-    await telegramInvite.getByRole('button', { name: /Create link|Создать ссылку/ }).click();
-    await telegramInvite.getByLabel(/Parent name|Имя родителя/).fill('Maria Example');
-    await telegramInvite.getByRole('button', { name: /Create link|Создать ссылку/ }).click();
-    await expect(telegramInvite.getByRole('status')).toContainText(/Link ready|Ссылка готова/);
+    await parentDialog.getByRole('button', { name: /Add parent|Добавить родителя/ }).click();
+    const wizardDialog = page.getByRole('dialog', { name: /Add parent|Добавить родителя/ });
+    await wizardDialog.getByLabel(/Parent name|Имя родителя/).fill('Maria Example');
+    await wizardDialog.getByRole('button', { name: /Next|Далее/ }).click();
+    await wizardDialog.getByRole('tab', { name: /Telegram/ }).click();
+    await wizardDialog.locator('#wizard-panel-telegram').getByRole('button', { name: /Create link|Создать ссылку/ }).dispatchEvent('click');
+    await expect(wizardDialog.getByText(/Link ready|Ссылка готова/)).toBeVisible();
     await expect(page.getByText('Maria Example').first()).toBeVisible();
-    await expect(telegramInvite.getByRole('button', { name: /Copy link|Копировать ссылку/ })).toBeVisible();
+    await expect(wizardDialog.getByRole('button', { name: /Copy link|Копировать ссылку/ })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 

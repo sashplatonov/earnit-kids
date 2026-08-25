@@ -106,3 +106,13 @@ test('unauthenticated localized workspace access preserves its local continuatio
         await expect(page).toHaveURL(new RegExp(`/public/index\\.html\\?continue=%2F${locale}%2Fworkspace$`));
     }
 });
+
+test('legacy login routes stay absent from the production build', async ({ page }) => {
+    for (const legacyRoute of ['/login', '/ru/login', '/login.html']) {
+        const response = await page.goto(legacyRoute);
+
+        expect(response?.status()).toBe(404);
+        await expect(page.getByRole('heading', { name: /sign in|вход для родителей и детей/i })).toHaveCount(0);
+        await expect(page.getByText(/Продолжить с Google|Continue with Google/)).toHaveCount(0);
+    }
+});
