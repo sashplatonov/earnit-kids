@@ -56,7 +56,7 @@ test('localized coin adjustment keeps the family number format on a narrow viewp
         await amountInput.press('Enter');
         const alert = page.locator('#coin-adjust-error');
         await expect(alert).toContainText(copy.alert);
-        await expect(alert).toContainText(/1(?:[,\.\s\u00a0\u202f])000(?:[,\.\s\u00a0\u202f])000/);
+        await expect(alert).toContainText(/1(?:[,\s\u00a0\u202f])000(?:[,\s\u00a0\u202f])000/);
         await expect(page.getByRole('button', { name: new RegExp(copy.cancel) })).toBeVisible();
         await expect(page.getByRole('button', { name: new RegExp(copy.save) })).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
@@ -329,4 +329,64 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     expect(mobileNav).toEqual({ position: 'fixed', bottom: 0, width: 320 });
     expect(await page.locator('.parent-workspace').evaluate((node) => node.getBoundingClientRect().width)).toBeGreaterThan(300);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
+test('parent catalog uses localized server templates for task and reward groups', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.addInitScript(() => {
+        (window as Window & { Telegram?: unknown }).Telegram = {
+            WebApp: { initData: 'signed-init-data', ready: () => {}, expand: () => {} },
+        };
+    });
+
+    let locale: 'en' | 'ru' = 'en';
+    await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ role: 'parent', familyId: 'family-1', locale }),
+    }));
+    await page.route('**/api/base-data', (route) => {
+        const copy = locale === 'en'
+            ? { task: 'Complete a morning goal', taskGroup: 'Morning & Evening', reward: 'Choose a family game', rewardGroup: 'Family Time' }
+            : { task: 'Умыться утром', taskGroup: 'Утро и вечер', reward: 'Выбрать игру всей семьёй', rewardGroup: 'Время с семьёй' };
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ tasks: [], products: [], catalog: {
+                tasks: [{ id: `task-${locale}`, title: copy.task, coins: 5, groupName: copy.taskGroup, groupKey: 'morning', frequencyLimit: 1, frequencyPeriod: 'day' }],
+                rewards: [{ id: `reward-${locale}`, title: copy.reward, price: 8, groupName: copy.rewardGroup, groupKey: 'family', frequencyLimit: 1, frequencyPeriod: 'day' }],
+            } }),
+        });
+    });
+    await page.route('**/api/data**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ isAdmin: true, balance: 0, childId: null, children: [], tasks: [], shop: [], requests: [] }),
+    }));
+
+    for (const nextLocale of ['en', 'ru'] as const) {
+        locale = nextLocale;
+        await page.goto('/telegram');
+        const copy = nextLocale === 'en'
+            ? { task: 'Complete a morning goal', taskGroup: 'Morning & Evening', reward: 'Choose a family game', rewardGroup: 'Family Time', tasks: /Tasks/, rewards: /Rewards/, add: /Add/, cancel: /Cancel/ }
+            : { task: 'Умыться утром', taskGroup: 'Утро и вечер', reward: 'Выбрать игру всей семьёй', rewardGroup: 'Время с семьёй', tasks: /Задания/, rewards: /Награды/, add: /Добавить/, cancel: /Отмена/ };
+
+        await page.getByRole('tab', { name: copy.tasks }).click();
+        await page.locator('button.catalog').first().click();
+        const taskCatalog = page.getByRole('list', { name: /Task catalog|Каталог заданий/ });
+        await expect(taskCatalog.getByText(copy.task, { exact: true })).toBeVisible();
+        await expect(taskCatalog.getByText(copy.taskGroup, { exact: true })).toBeVisible();
+        await taskCatalog.getByRole('button', { name: copy.add }).click({ force: true });
+        await expect(page.getByRole('dialog').getByRole('button', { name: new RegExp(copy.taskGroup) })).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+        await page.getByRole('dialog').getByRole('button', { name: copy.cancel }).click();
+        await page.locator('button.back').click();
+
+        await page.getByRole('tab', { name: copy.rewards }).click();
+        await page.locator('button.catalog').first().click();
+        const rewardCatalog = page.getByRole('list', { name: /Reward catalog|Каталог наград/ });
+        await expect(rewardCatalog.getByText(copy.reward, { exact: true })).toBeVisible();
+        await expect(rewardCatalog.getByText(copy.rewardGroup, { exact: true })).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    }
 });

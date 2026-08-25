@@ -142,11 +142,20 @@ describe('isAlreadyAdded', () => {
 });
 
 describe('mapGroupKeyToFamily', () => {
-    it('maps a known built-in group key to an existing family group', () => {
-        expect(mapGroupKeyToFamily('morning', ['Утро и вечер'])).toBe('Утро и вечер');
+    it('matches the localized server label for both catalog locales', () => {
+        expect(mapGroupKeyToFamily('morning', ['Morning & Evening'], 'Morning & Evening', 'task')).toBe('Morning & Evening');
+        expect(mapGroupKeyToFamily('morning', ['Утро и вечер'], 'Утро и вечер', 'task')).toBe('Утро и вечер');
     });
-    it('returns null when the family group does not exist yet', () => {
-        expect(mapGroupKeyToFamily('morning', [])).toBeNull();
+    it('reuses a legacy Russian built-in group without relabeling it', () => {
+        expect(mapGroupKeyToFamily('creativity', ['Творчество'], 'Creativity & Games', 'reward')).toBe('Творчество');
+    });
+    it('does not match another catalog kind or a missing family group', () => {
+        expect(mapGroupKeyToFamily('morning', ['Morning & Evening'], 'Утро и вечер', 'reward')).toBeNull();
+        expect(mapGroupKeyToFamily('morning', [], 'Morning & Evening', 'task')).toBeNull();
+    });
+    it('does not translate or rename a custom group', () => {
+        expect(mapGroupKeyToFamily('morning', ['Morning & Evening', 'My mornings'], 'Morning & Evening', 'task')).toBe('Morning & Evening');
+        expect(mapGroupKeyToFamily('morning', ['My mornings'], 'Morning & Evening', 'task')).toBeNull();
     });
 });
 

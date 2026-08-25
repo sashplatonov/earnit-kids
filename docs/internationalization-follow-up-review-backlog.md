@@ -167,7 +167,7 @@ git commit -m "feat(i18n): Localize ready catalog content"
 
 ## I18N-FOLLOWUP-005: Use localized catalog groups throughout the parent Mini App
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-FOLLOWUP-004
 

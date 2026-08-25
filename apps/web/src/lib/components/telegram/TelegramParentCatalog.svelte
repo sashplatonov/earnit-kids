@@ -41,7 +41,7 @@
     }
 
     function addOne(template: CatalogTaskTemplate | CatalogRewardTemplate) {
-        const mapped = mapGroupKeyToFamily(template.groupKey, familyGroups);
+        const mapped = mapGroupKeyToFamily(template.groupKey, familyGroups, template.groupName, kind);
         if (mapped) {
             commitAdd([template], mapped);
         } else {
@@ -52,7 +52,7 @@
     }
 
     function addMany(templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>) {
-        const mapped = mapGroupKeyToFamily(templates[0]?.groupKey, familyGroups);
+        const mapped = mapGroupKeyToFamily(templates[0]?.groupKey, familyGroups, templates[0]?.groupName, kind);
         if (mapped) {
             commitAdd(templates, mapped);
         } else {

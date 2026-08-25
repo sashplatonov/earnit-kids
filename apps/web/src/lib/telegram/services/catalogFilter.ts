@@ -161,31 +161,38 @@ export function formatFrequency(limit: number | null | undefined, period: string
     return `${resolvedLimit} раз в ${label}`;
 }
 
-/** Map a catalog groupKey to a family group name, or null if no mapping. */
+/**
+ * Resolve a built-in catalog group against persisted family groups.
+ *
+ * The catalog label is the canonical localized value. Legacy aliases are only
+ * used to reuse an already persisted built-in group and never rename it.
+ */
 export function mapGroupKeyToFamily(
     groupKey: string | undefined,
-    familyGroups: readonly string[]
+    familyGroups: readonly string[],
+    catalogGroupName: string | undefined,
+    kind: CatalogKind = 'task'
 ): string | null {
     if (!groupKey) return null;
-    // Built-in semantic groups auto-create on first use; map by known key.
-    const known: Record<string, string> = {
-        morning: 'Утро и вечер',
-        study: 'Учёба',
-        home: 'Дом и порядок',
-        independence: 'Самостоятельность',
-        health: 'Движение и здоровье',
-        emotions: 'Общение и эмоции',
-        habits: 'Полезные привычки',
-        creativity: 'Творчество',
-        family: 'Время с семьёй',
-        privileges: 'Выбор и привилегии',
-        joys: 'Маленькие радости',
-        outings: 'Прогулки и развлечения',
-        purchases: 'Покупки',
-        biggoals: 'Большие цели',
+    const localizedName = catalogGroupName?.trim();
+    if (localizedName && familyGroups.includes(localizedName)) return localizedName;
+
+    // These aliases cover built-in groups persisted before catalog localization.
+    // They are match-only fallbacks; the catalog label remains the create choice.
+    const legacyAliases: Record<CatalogKind, Record<string, string[]>> = {
+        task: {
+            morning: ['Утро и вечер'], study: ['Учёба'], home: ['Дом и порядок'],
+            independence: ['Самостоятельность'], health: ['Движение и здоровье'],
+            emotions: ['Общение и эмоции'], habits: ['Полезные привычки'], creativity: ['Творчество'],
+        },
+        reward: {
+            family: ['Время с семьёй'], privileges: ['Выбор и привилегии'], joys: ['Маленькие радости'],
+            outings: ['Прогулки и развлечения'], purchases: ['Покупки'], biggoals: ['Большие цели'],
+            creativity: ['Творчество'],
+        },
     };
-    const mapped = known[groupKey];
-    if (mapped && familyGroups.includes(mapped)) return mapped;
+    const mapped = legacyAliases[kind][groupKey]?.find((alias) => familyGroups.includes(alias));
+    if (mapped) return mapped;
     return null;
 }
 
