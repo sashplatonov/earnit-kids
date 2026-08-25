@@ -22,6 +22,26 @@ backend APM and application-log forwarding; Quarkus Micrometer exports backend
 metrics over OTLP/HTTP. The web app does not embed a New Relic Browser agent or
 read public browser-monitoring build settings.
 
+## Supported log retrieval path
+
+The supported operator path is the backend container's structured stdout, which
+is collected by the deployment logging platform and optionally forwarded by the
+New Relic JVM agent. Operators retrieve logs from that platform using the
+deployment's authenticated operator access; the Quarkus process does not own a
+log file or expose application logs through the family API. Metrics and health
+endpoints remain the supported paths for aggregate service state and readiness.
+
+The deployment owner defines retention and deletion under the approved logging
+policy. This repository does not promise a local log retention period. Local
+stdout and test-captured logs validate only local behavior; New Relic retention,
+availability, and access must be verified in the configured account.
+
+Operational correlation uses the bounded diagnostic fields `severity`,
+`eventCode`, route template, HTTP `status`, failure `category`, `traceId`,
+optional `durationMs`, and safe `errorClass`. Secrets, authorization data,
+cookies, family scope, roles, payloads, query strings, and unbounded exception
+text are excluded by the diagnostic contract.
+
 ## Backend runtime settings
 
 - `NEW_RELIC_AGENT_ENABLED` enables the Java agent.
