@@ -15,9 +15,6 @@ import { emitDiagnostic } from '$lib/server/diagnostics';
 
 const SECURITY_HEADERS = {
     'cross-origin-resource-policy': 'same-site',
-    // EXPLAIN: Keep document execution first-party, while allowing the Telegram
-    // SDK and the Google Fonts assets explicitly required by app.html.
-    'content-security-policy': "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://telegram.org; style-src 'self' https://fonts.googleapis.com; style-src-attr 'none'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://t.me; connect-src 'self'; worker-src 'self'; manifest-src 'self'",
     'permissions-policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=() ',
     'referrer-policy': 'no-referrer',
     'x-frame-options': 'DENY',

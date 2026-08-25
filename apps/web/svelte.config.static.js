@@ -10,6 +10,24 @@ const config = {
             precompress: false,
             strict: false,
         }),
+        csp: {
+            mode: 'auto',
+            directives: {
+                'default-src': ['self'],
+                'base-uri': ['self'],
+                'object-src': ['none'],
+                'frame-ancestors': ['none'],
+                'form-action': ['self'],
+                'script-src': ['self', 'https://telegram.org'],
+                'style-src': ['self', 'https://fonts.googleapis.com'],
+                'style-src-attr': ['unsafe-inline'],
+                'font-src': ['self', 'https://fonts.gstatic.com'],
+                'img-src': ['self', 'data:', 'https://t.me'],
+                'connect-src': ['self'],
+                'worker-src': ['self'],
+                'manifest-src': ['self'],
+            },
+        },
     },
 };
 

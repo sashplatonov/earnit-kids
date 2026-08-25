@@ -97,7 +97,9 @@ function isWebSocketRoute(pathname) {
 
 function setSecurityHeaders(res) {
     res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://telegram.org; style-src 'self' https://fonts.googleapis.com; style-src-attr 'none'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://t.me; connect-src 'self'; worker-src 'self'; manifest-src 'self' ");
+    // SvelteKit emits the page CSP with a per-response nonce. Do not replace
+    // it here with a static policy, otherwise the Mini App bootstrap script
+    // and dynamically rendered styles are blocked in Telegram WebView.
     res.setHeader('Permissions-Policy', 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Frame-Options', 'DENY');
