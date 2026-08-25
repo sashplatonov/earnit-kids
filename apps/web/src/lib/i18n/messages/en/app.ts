@@ -22,6 +22,8 @@ export const appMessages = {
         catalogTitle: 'Catalog',
     },
     shell: {
+        parentWorkspaceTitle: 'My family',
+        childWorkspaceTitle: 'My journey',
         pullToRefresh: 'Pull to refresh',
         offlineBanner: 'You are offline. History stays available and new actions will be sent once the connection is back.',
         parentBadge: 'Parent',
@@ -53,6 +55,18 @@ export const appMessages = {
         logout: 'Sign out',
         pending: 'Signing out...',
         error: 'Could not sign out. Try again.',
+    },
+    familyLocale: {
+        setupTitle: 'Choose your family language',
+        setupDescription: 'This language will be used by every family member.',
+    },
+    pwaUpdate: {
+        ariaLabel: 'Application update',
+        available: 'Update available',
+        error: 'The update could not be activated. Try again.',
+        updating: 'Updating…',
+        description: 'A newer version of EarnIt Kids is ready.',
+        button: 'Update',
     },
     workspaceAccess: {
         eyebrow: 'Workspace access', title: 'Parents and invitations', serverAuthorized: 'Server-authorized',

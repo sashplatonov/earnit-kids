@@ -326,7 +326,7 @@ git commit -m "feat(web): Harden translation catalogs"
 
 ## I18N-006: Localize authenticated workspace and responsive web UI
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-004, I18N-005
 

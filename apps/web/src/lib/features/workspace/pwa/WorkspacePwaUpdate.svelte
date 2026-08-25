@@ -1,6 +1,9 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { PWA_UPDATE_AVAILABLE_EVENT } from './registerServiceWorker';
+    import { useI18n } from '$lib/i18n/context';
+
+    const i18n = useI18n();
 
     let registration: ServiceWorkerRegistration | null = null;
     let updating = false;
@@ -56,19 +59,19 @@
 </script>
 
 {#if registration?.waiting}
-    <aside class="update-notice" aria-live="polite" aria-label="Application update">
+    <aside class="update-notice" aria-live="polite" aria-label={$i18n.t('app.pwaUpdate.ariaLabel')}>
         <div class="update-copy">
-            <strong>Update available</strong>
+            <strong>{$i18n.t('app.pwaUpdate.available')}</strong>
             {#if updateError}
-                <span role="status">The update could not be activated. Try again.</span>
+                <span role="status">{$i18n.t('app.pwaUpdate.error')}</span>
             {:else if updating}
-                <span role="status">Updating…</span>
+                <span role="status">{$i18n.t('app.pwaUpdate.updating')}</span>
             {:else}
-                <span>A newer version of EarnIt Kids is ready.</span>
+                <span>{$i18n.t('app.pwaUpdate.description')}</span>
             {/if}
         </div>
-        <button type="button" on:click={activateUpdate} disabled={updating} aria-label="Update EarnIt Kids">
-            {updating ? 'Updating…' : 'Update'}
+        <button type="button" on:click={activateUpdate} disabled={updating} aria-label={$i18n.t('app.pwaUpdate.button')}>
+            {updating ? $i18n.t('app.pwaUpdate.updating') : $i18n.t('app.pwaUpdate.button')}
         </button>
     </aside>
 {/if}

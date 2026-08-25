@@ -2,9 +2,11 @@
     import { onMount } from 'svelte';
     import WorkspaceRoleResolver from '$lib/features/workspace/WorkspaceRoleResolver.svelte';
     import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
+    import { useI18n } from '$lib/i18n/context';
     import type { PageData } from './$types';
 
     export let data: PageData;
+    const i18n = useI18n();
 
     onMount(() => {
         document.body.classList.add('workspace-page');
@@ -13,17 +15,17 @@
 </script>
 
 <svelte:head>
-    <title>EarnIt Kids · {data.role === 'child' ? 'Мой маршрут' : 'Моя семья'}</title>
+    <title>EarnIt Kids · {$i18n.t(data.role === 'child' ? 'app.shell.childWorkspaceTitle' : 'app.shell.parentWorkspaceTitle')}</title>
 </svelte:head>
 
     {#if data.session?.languageSetupRequired && data.session.permission === 'family_admin'}
         <main class="language-setup" aria-labelledby="language-setup-title">
-            <h1 id="language-setup-title">Choose your family language</h1>
-            <p>This language will be used by every family member.</p>
+            <h1 id="language-setup-title">{$i18n.t('app.familyLocale.setupTitle')}</h1>
+            <p>{$i18n.t('app.familyLocale.setupDescription')}</p>
             <LocaleSwitcher familyManaged />
         </main>
     {:else}
-        <WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} showSessionActions />
+        <WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} showSessionActions showFamilyLocale familyAdmin={data.session?.permission === 'family_admin'} />
     {/if}
 
 <style>

@@ -1,4 +1,20 @@
 export const authMessages = {
+    invitation: {
+        title: 'Accept parent invitation',
+        eyebrow: 'Family workspace',
+        heading: 'You’ve been invited to join a family',
+        accepted: 'Invitation accepted. Opening your workspace…',
+        checking: 'Checking invitation…',
+        accepting: 'Accepting…',
+        accept: 'Accept invitation',
+        signInHint: 'Sign in with the Google account that received this invitation.',
+        continueGoogle: 'Continue with Google',
+        googleUnavailable: 'Google sign-in is currently unavailable.',
+        signInInvitedAccount: 'Sign in with the invited Google account before accepting this invitation.',
+        expired: 'This invitation has expired or was revoked. Ask the family admin for a new link.',
+        acceptError: 'This invitation could not be accepted. Ask the family admin for a new link.',
+        genericError: 'This invitation link could not be opened. Try again or ask the family admin for a new link.',
+    },
     login: {
         metaTitle: 'EarnIt Kids | Sign in and family setup',
         metaDescription: 'Sign in to EarnIt Kids and set up roles, tasks, and rewards without a long onboarding flow.',

@@ -4,6 +4,7 @@
  */
 
 import { normalizeAuthResponse, normalizeChild } from './serverContract';
+import { translateClient } from '$lib/i18n/context';
 import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } from '$lib/types/auth';
 import type { Child } from '$lib/stores/app';
 
@@ -20,7 +21,6 @@ function getCsrfToken(): string {
 type FetchOptions = RequestInit & { body?: BodyInit };
 
 type ProblemDetails = {
-    detail?: unknown;
     title?: unknown;
     errorCode?: unknown;
     errors?: Array<{ row?: unknown; field?: unknown; message?: unknown }>;
@@ -72,18 +72,12 @@ async function postJson<T = unknown>(url: string, body: unknown): Promise<T | nu
 }
 
 function extractProblemMessage(payload: unknown): string {
-    if (!payload || typeof payload !== 'object') {
-        return 'Не удалось выполнить запрос';
-    }
+    void payload;
+    return translateClient('common.errors.generic');
+}
 
-    const problem = payload as ProblemDetails;
-    if (typeof problem.detail === 'string' && problem.detail.trim()) {
-        return problem.detail;
-    }
-    if (typeof problem.title === 'string' && problem.title.trim()) {
-        return problem.title;
-    }
-    return 'Не удалось выполнить запрос';
+function networkError(): string {
+    return translateClient('common.errors.network');
 }
 
 function extractProblemCode(payload: unknown): string | null {
@@ -141,7 +135,7 @@ async function postJsonResult<T = unknown>(url: string, body: unknown): Promise<
     } catch {
         return {
             ok: false,
-            error: 'Сеть недоступна. Попробуйте еще раз.',
+            error: networkError(),
             errorCode: null,
             status: 0,
         };
@@ -155,7 +149,7 @@ async function getJsonResult<T = unknown>(url: string): Promise<ApiActionResult<
         if (res.ok) return { ok: true, data: data as T | null };
         return { ok: false, error: extractProblemMessage(data), errorCode: extractProblemCode(data), status: res.status };
     } catch {
-        return { ok: false, error: 'Сеть недоступна. Попробуйте еще раз.', errorCode: null, status: 0 };
+        return { ok: false, error: networkError(), errorCode: null, status: 0 };
     }
 }
 
@@ -181,7 +175,7 @@ async function putJsonResult<T = unknown>(url: string, body: unknown): Promise<A
     } catch {
         return {
             ok: false,
-            error: 'Сеть недоступна. Попробуйте еще раз.',
+            error: networkError(),
             errorCode: null,
             status: 0,
         };
@@ -211,7 +205,7 @@ export async function postJsonResultWithValidation<T = unknown>(url: string, bod
     } catch {
         return {
             ok: false,
-            error: 'Сеть недоступна. Попробуйте еще раз.',
+            error: networkError(),
             errorCode: null,
             status: 0,
         };
@@ -252,7 +246,7 @@ export async function postJsonResultAfterPendingSave<T = unknown>(url: string, b
     } catch {
         return {
             ok: false,
-            error: 'Не удалось сохранить последние изменения. Попробуйте еще раз.',
+            error: translateClient('common.errors.generic'),
             errorCode: null,
             status: 0,
         };
@@ -289,7 +283,7 @@ async function deleteJsonResult<T = unknown>(url: string): Promise<ApiActionResu
     } catch {
         return {
             ok: false,
-            error: 'Сеть недоступна. Попробуйте еще раз.',
+            error: networkError(),
             errorCode: null,
             status: 0,
         };
@@ -445,7 +439,7 @@ export async function loadParentMemberships(): Promise<ApiActionResult<ParentMem
     } catch {
         return {
             ok: false,
-            error: 'Сеть недоступна. Попробуйте еще раз.',
+            error: networkError(),
             errorCode: null,
             status: 0,
         };

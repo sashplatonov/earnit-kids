@@ -4,6 +4,7 @@ export const commonMessages = {
     },
     locale: {
         label: 'Language',
+        familyLabel: 'Family language',
         switchLabel: 'Switch language',
         en: 'English',
         ru: 'Russian',
@@ -58,6 +59,7 @@ export const commonMessages = {
     printError: 'Could not open the print view.',
     errors: {
         generic: 'Something went wrong.',
+        network: 'The network is unavailable. Try again.',
         unexpectedRoute: 'Unexpected route error',
         routeNotFound: 'Route not found',
         backToHome: 'Back to home',

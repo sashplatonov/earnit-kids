@@ -6,12 +6,13 @@
 
     export let compact: boolean = false;
     export let familyManaged: boolean = false;
+    export let readOnly: boolean = false;
     let busy = false;
 
     const i18n = useI18n();
 
     async function handleChange(nextLocale: Locale) {
-        if (familyManaged) {
+        if (familyManaged && !readOnly) {
             if (busy) return;
             busy = true;
             await fetchWithCsrf('/api/family/locale', {
@@ -31,7 +32,7 @@
 </script>
 
 <div class="locale-switcher" class:locale-switcher--compact={compact} role="group" aria-label={$i18n.t('common.locale.switchLabel')}>
-    <span class="locale-switcher__label">{$i18n.t('common.locale.label')}</span>
+    <span class="locale-switcher__label">{$i18n.t(familyManaged ? 'common.locale.familyLabel' : 'common.locale.label')}</span>
     <div class="locale-switcher__options">
         {#each LOCALES as locale (locale)}
             <button
@@ -40,7 +41,7 @@
                 type="button"
                 aria-label={$i18n.t(`common.locale.select.${locale}`)}
                 aria-pressed={$i18n.locale === locale}
-                disabled={busy || $i18n.locale === locale}
+                disabled={busy || readOnly || $i18n.locale === locale}
                 on:click={() => handleChange(locale)}
             >
                 <svg class="locale-switcher__flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false">

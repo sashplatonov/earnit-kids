@@ -4,6 +4,7 @@ export const commonMessages = {
     },
     locale: {
         label: 'Язык',
+        familyLabel: 'Язык семьи',
         switchLabel: 'Сменить язык',
         en: 'English',
         ru: 'Русский',
@@ -58,6 +59,7 @@ export const commonMessages = {
     printError: 'Не удалось открыть страницу печати.',
     errors: {
         generic: 'Что-то пошло не так.',
+        network: 'Сеть недоступна. Попробуйте ещё раз.',
         unexpectedRoute: 'Неожиданная ошибка маршрута',
         routeNotFound: 'Маршрут не найден',
         backToHome: 'Вернуться на главную',

@@ -2,8 +2,10 @@
     import { onMount } from 'svelte';
     import { requestGoogleLoginUrl } from '$lib/auth/googleOAuth';
     import type { PageData } from './$types';
+    import { useI18n } from '$lib/i18n/context';
 
     export let data: PageData;
+    const i18n = useI18n();
 
     let loading = true;
     let accepting = false;
@@ -13,7 +15,7 @@
 
     onMount(() => {
         const params = new URLSearchParams(window.location.search);
-        error = params.get('error') ?? '';
+        error = params.has('error') ? $i18n.t('auth.invitation.genericError') : '';
         state = params.get('state') ?? '';
         loading = false;
     });
@@ -24,7 +26,7 @@
         try {
             window.location.assign(await requestGoogleLoginUrl(fetch, '/invite/parent'));
         } catch {
-            error = 'Google sign-in is currently unavailable.';
+            error = $i18n.t('auth.invitation.googleUnavailable');
             loading = false;
         }
     }
@@ -42,36 +44,36 @@
             return;
         }
         error = response.status === 401
-            ? 'Sign in with the invited Google account before accepting this invitation.'
+            ? $i18n.t('auth.invitation.signInInvitedAccount')
             : response.status === 404 || response.status === 410
-                ? 'This invitation has expired or was revoked. Ask the family admin for a new link.'
-                : 'This invitation could not be accepted. Ask the family admin for a new link.';
+                ? $i18n.t('auth.invitation.expired')
+                : $i18n.t('auth.invitation.acceptError');
         accepting = false;
     }
 </script>
 
 <svelte:head>
-    <title>Accept parent invitation</title>
+    <title>{$i18n.t('auth.invitation.title')}</title>
     <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <main class="invitation-page" data-testid="parent-invitation">
     <section class="invitation-card" aria-labelledby="invitation-title">
-        <p class="eyebrow">Family workspace</p>
-        <h1 id="invitation-title">You’ve been invited to join a family</h1>
-        {#if state === 'accepted'}<p class="success" role="status">Invitation accepted. Opening your workspace…</p>{/if}
+        <p class="eyebrow">{$i18n.t('auth.invitation.eyebrow')}</p>
+        <h1 id="invitation-title">{$i18n.t('auth.invitation.heading')}</h1>
+        {#if state === 'accepted'}<p class="success" role="status">{$i18n.t('auth.invitation.accepted')}</p>{/if}
         {#if error}
             <p class="error" role="alert">{error}</p>
         {/if}
         {#if loading}
-            <p aria-live="polite">Checking invitation…</p>
+            <p aria-live="polite">{$i18n.t('auth.invitation.checking')}</p>
         {:else if signedIn}
             <button type="button" disabled={accepting} on:click={accept}>
-                {accepting ? 'Accepting…' : 'Accept invitation'}
+                {accepting ? $i18n.t('auth.invitation.accepting') : $i18n.t('auth.invitation.accept')}
             </button>
         {:else}
-            <p>Sign in with the Google account that received this invitation.</p>
-            <button type="button" on:click={signIn}>Continue with Google</button>
+            <p>{$i18n.t('auth.invitation.signInHint')}</p>
+            <button type="button" on:click={signIn}>{$i18n.t('auth.invitation.continueGoogle')}</button>
         {/if}
     </section>
 </main>

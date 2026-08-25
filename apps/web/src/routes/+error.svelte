@@ -12,15 +12,15 @@
 <div class="error-shell">
     <section class="panel">
         <p class="eyebrow">{page.status}</p>
-        <h1>Страница не найдена</h1>
-        <p class="error-text">Похоже, этой страницы больше нет или адрес набран с ошибкой.</p>
+        <h1>{$i18n.t('errors.page.notFound')}</h1>
+        <p class="error-text">{$i18n.t('errors.page.description')}</p>
 
-        <a class="cta-link" href="/">На главную</a>
+        <a class="cta-link" href={$i18n.href('/')}>{$i18n.t('common.errors.backToHome')}</a>
 
-        <nav class="error-links" aria-label="Популярные страницы">
-            <a href="/how">Как работает</a>
-            <a href="/tasks">Задания</a>
-            <a href="/rewards">Награды</a>
+        <nav class="error-links" aria-label={$i18n.t('errors.page.linksAria')}>
+            <a href={$i18n.href('/how')}>{$i18n.t('common.navigation.how')}</a>
+            <a href={$i18n.href('/tasks')}>{$i18n.t('common.navigation.tasks')}</a>
+            <a href={$i18n.href('/rewards')}>{$i18n.t('common.navigation.rewards')}</a>
         </nav>
     </section>
 </div>
