@@ -15,7 +15,7 @@ import java.net.URI;
 @Provider
 @Priority(Priorities.AUTHENTICATION - 100)
 public class PublicAuthRateLimitFilter implements ContainerRequestFilter {
-    private final InboundRateLimiter limiter;
+    private final RateLimitAcquirer limiter;
     private final boolean enabled;
     private final int childLimit;
     private final long childWindowSeconds;
@@ -42,7 +42,7 @@ public class PublicAuthRateLimitFilter implements ContainerRequestFilter {
         @ConfigProperty(name = "app.security.rate-limit.oauth-callback.window-seconds", defaultValue = "60") long oauthCallbackWindowSeconds,
         @ConfigProperty(name = "app.security.rate-limit.telegram.max-requests", defaultValue = "10") int telegramLimit,
         @ConfigProperty(name = "app.security.rate-limit.telegram.window-seconds", defaultValue = "60") long telegramWindowSeconds) {
-        this.limiter = limiter;
+        this.limiter = limiter::tryAcquire;
         this.enabled = enabled;
         this.childLimit = childLimit;
         this.childWindowSeconds = childWindowSeconds;
