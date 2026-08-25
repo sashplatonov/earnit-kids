@@ -22,7 +22,7 @@ Remove the retired browser login UI without breaking public Google entry, browse
 
 ## LRR-001: Complete multi-family Google OAuth without legacy login
 
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 
@@ -77,14 +77,12 @@ cd apps/web && PLAYWRIGHT_USE_PREVIEW=true npm run test:e2e -- tests/e2e/workspa
 git commit -m "fix(auth): complete multi-family Google sign-in"
 ```
 
-### CHECKPOINT
+### Verification completion
 
-- completed: Signed pending family context, `/select-family` server read contract, browser selector, and backend regression coverage.
-- remaining: Complete the required workspace-entry E2E gate after LRR-002 updates its public Google CTA expectations and locale-aware continuation assertion.
-- changed files: AuthGoogleResource.java, AuthResource.java, SelectFamilyRequest.java, AuthResourceTest.java, apps/web/src/lib/i18n/config.ts, apps/web/src/routes/select-family/+page.server.ts, apps/web/src/routes/select-family/+page.svelte.
-- current verification: `./mvnw -B -ntp -Dtest=AuthResourceTest test` passes (24/24); `npm run lint` passes; `git diff --check` passes; targeted E2E has 1 passed and 3 failures outside this task scope.
-- confirmed blocker: `workspace-entry.spec.ts` still expects the removed `Продолжить с Google` CTA and `/workspace` continuation; those contracts belong to LRR-002/LRR-004.
-- next exact action: Execute LRR-002, then rerun `PLAYWRIGHT_USE_PREVIEW=true npm run test:e2e -- tests/e2e/workspace-entry.spec.ts` before completing LRR-001.
+- Signed pending family context, `/select-family` server read contract, browser selector, and backend regression coverage are complete.
+- `./mvnw -B -ntp -Dtest=AuthResourceTest test` passes (24/24).
+- `npm run lint` passes.
+- `PLAYWRIGHT_USE_PREVIEW=true npm run test:e2e -- tests/e2e/workspace-entry.spec.ts` passes (4/4).
 
 ## LRR-002: Keep public Google entry actionable without the legacy page
 
