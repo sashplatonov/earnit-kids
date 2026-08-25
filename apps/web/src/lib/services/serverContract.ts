@@ -1,6 +1,46 @@
 /** Server contract normalization — replaces legacy server-contract.js */
 
 import type { AuthResponseSnapshot, FamilyChoice, MembershipPermission } from '$lib/types/auth';
+import type { MessageKey } from '$lib/i18n';
+
+export type NormalizedServerError = {
+    type: string;
+    title: string;
+    status: number;
+    detail: string | null;
+    errorCode: string | null;
+    params: Record<string, unknown>;
+    traceId: string | null;
+    messageKey: MessageKey;
+};
+
+const SERVER_ERROR_MESSAGE_KEYS: Record<string, MessageKey> = {
+    VALIDATION_ERROR: 'common.errors.generic',
+    UNAUTHORIZED: 'common.errors.generic',
+    FORBIDDEN: 'common.errors.generic',
+    INTERNAL_ERROR: 'common.errors.generic',
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function normalizeServerError(payload: unknown, status = 0): NormalizedServerError {
+    const value = isRecord(payload) ? payload : {};
+    const errorCode = typeof value.errorCode === 'string' && value.errorCode.trim()
+        ? value.errorCode.trim()
+        : null;
+    return {
+        type: typeof value.type === 'string' ? value.type : 'about:blank',
+        title: typeof value.title === 'string' ? value.title : '',
+        status: typeof value.status === 'number' ? value.status : status,
+        detail: typeof value.detail === 'string' ? value.detail : null,
+        errorCode,
+        params: isRecord(value.params) ? value.params : {},
+        traceId: typeof value.traceId === 'string' ? value.traceId : null,
+        messageKey: (errorCode && SERVER_ERROR_MESSAGE_KEYS[errorCode]) ?? 'common.errors.generic',
+    };
+}
 
 export function getGroupName(entity: Record<string, unknown> | null | undefined): string | null {
     return (entity?.groupName ?? entity?.group ?? entity?.category ?? null) as string | null;

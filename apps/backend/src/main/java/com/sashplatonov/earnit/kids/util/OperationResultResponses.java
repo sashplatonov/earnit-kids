@@ -102,13 +102,14 @@ public final class OperationResultResponses {
 
     private static Response failureResponse(OperationResult.Failure<?> failure, int status) {
         return Response.status(status)
-            .entity(ErrorResponse.of(failure.message(), errorCodeOrBadRequest(failure.errorCode()), status))
+            .entity(ErrorResponse.of(failure.message(), errorCodeOrBadRequest(failure.errorCode()), status,
+                failure.params(), null))
             .build();
     }
 
     private static Response failureResponse(OperationResult.Failure<?> failure, int status, String errorCode) {
         return Response.status(status)
-            .entity(ErrorResponse.of(failure.message(), errorCode, status))
+            .entity(ErrorResponse.of(failure.message(), errorCode, status, failure.params(), null))
             .build();
     }
 }

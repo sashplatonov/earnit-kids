@@ -164,7 +164,7 @@ git commit -m "feat(backend): Configure family language"
 
 ## I18N-003: Normalize REST errors to stable codes and parameters
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-002
 

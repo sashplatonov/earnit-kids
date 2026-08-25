@@ -34,6 +34,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
             int status = webApplicationException.getResponse().getStatus();
             logWebApplicationFailure(status, exception);
             return webApplicationException.getResponse().hasEntity()
+                && webApplicationException.getResponse().getEntity() instanceof ErrorResponse
                 ? webApplicationException.getResponse()
                 : Response.status(status)
                     .entity(ErrorResponse.of(statusDetail(status), statusCode(status), status, traceId()))

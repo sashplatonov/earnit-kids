@@ -8,12 +8,22 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
+
 @Provider
 @Slf4j
 public class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
 
     @Override
     public Response toResponse(ConstraintViolationException exception) {
+        var violations = exception.getConstraintViolations().stream()
+            .map(violation -> Map.<String, Object>of(
+                "field", violation.getPropertyPath().toString(),
+                "code", violation.getConstraintDescriptor() == null
+                    ? "UNKNOWN"
+                    : violation.getConstraintDescriptor().getAnnotation().annotationType().getSimpleName()
+            ))
+            .toList();
         var message = exception.getConstraintViolations().stream()
             .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
             .reduce((left, right) -> left + "; " + right)
@@ -22,7 +32,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
         log.error("Validation failed: {}", message, exception);
 
         return Response.status(Response.Status.BAD_REQUEST)
-            .entity(ErrorResponse.of(message, "VALIDATION_ERROR", 400))
+            .entity(ErrorResponse.of(message, "VALIDATION_ERROR", 400, Map.of("violations", violations), null))
             .build();
     }
 }

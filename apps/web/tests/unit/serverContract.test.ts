@@ -5,6 +5,7 @@ import {
     normalizeChild,
     normalizeHistoryEntry,
     normalizeRequest,
+    normalizeServerError,
     normalizeShopItem,
     normalizeTask,
 } from '../../src/lib/services/serverContract';
@@ -236,5 +237,28 @@ describe('normalizeAuthResponse', () => {
             { familyId: 'f-1', familyName: 'Winter House', permission: 'viewer', blocked: false },
             { familyId: 'f-2', familyName: 'Summer House', permission: 'family_admin', blocked: true },
         ]);
+    });
+});
+
+describe('normalizeServerError', () => {
+    it('preserves structured fields and falls back safely for newer codes', () => {
+        expect(normalizeServerError({
+            type: 'urn:earnit-kids:problem:new-code',
+            title: 'Bad request',
+            status: 400,
+            detail: 'legacy detail',
+            errorCode: 'NEW_CODE',
+            params: { field: 'email' },
+            traceId: 'trace-1',
+        })).toEqual({
+            type: 'urn:earnit-kids:problem:new-code',
+            title: 'Bad request',
+            status: 400,
+            detail: 'legacy detail',
+            errorCode: 'NEW_CODE',
+            params: { field: 'email' },
+            traceId: 'trace-1',
+            messageKey: 'common.errors.generic',
+        });
     });
 });

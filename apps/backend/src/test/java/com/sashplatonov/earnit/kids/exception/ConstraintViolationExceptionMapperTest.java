@@ -30,5 +30,7 @@ class ConstraintViolationExceptionMapperTest {
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(String.valueOf(response.getEntity())).contains("VALIDATION_ERROR");
         assertThat(String.valueOf(response.getEntity())).contains("email: must be valid");
+        assertThat(((com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse) response.getEntity()).params())
+            .containsKey("violations");
     }
 }
