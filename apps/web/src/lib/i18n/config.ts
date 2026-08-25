@@ -24,6 +24,11 @@ const BYPASS_PREFIXES = [
     '/tasks',
     '/parents',
     '/faq',
+    // App surfaces own their host-specific locale handling. Canonicalizing
+    // these bare entry points here would redirect a Telegram WebView before
+    // its Mini App bootstrap can run.
+    '/telegram',
+    '/workspace',
 ] as const;
 
 function normalisePath(pathname: string): string {

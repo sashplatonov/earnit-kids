@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { loadAppConfig } from '../../src/lib/server/config';
+import { shouldCanonicalizePath } from '../../src/lib/i18n/config';
+
+describe('locale path handling', () => {
+    it('keeps bare app entry points stable for client bootstrap', () => {
+        expect(shouldCanonicalizePath('/telegram')).toBe(false);
+        expect(shouldCanonicalizePath('/workspace')).toBe(false);
+    });
+});
 
 describe('loadAppConfig', () => {
     it('returns the migration defaults', () => {
