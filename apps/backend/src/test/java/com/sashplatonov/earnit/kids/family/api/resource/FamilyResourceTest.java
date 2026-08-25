@@ -44,6 +44,9 @@ import com.sashplatonov.earnit.kids.family.api.response.ParentMembershipDto;
 import com.sashplatonov.earnit.kids.dto.response.TokenResponse;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.MembershipStatus;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.platform.application.database.BaseDataService;
 import com.sashplatonov.earnit.kids.family.application.action.FamilyActionService;
 import com.sashplatonov.earnit.kids.family.application.membership.FamilyParentAccessService;
@@ -60,6 +63,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,6 +82,7 @@ class FamilyCommandResourceTest {
     @Mock FamilyActionService familyActionService;
     @Mock FamilyService familyService;
     @Mock BaseDataService baseDataService;
+    @Mock FamilyRepository familyRepository;
     @Mock WebSocketNotificationService webSocketNotificationService;
     @Mock FamilyParentAccessService familyParentAccessService;
 
@@ -105,6 +110,7 @@ class FamilyCommandResourceTest {
         historyResource = new FamilyHistoryResource(familyActionService, familyService, webSocketNotificationService, familyParentAccessService);
         balanceResource = new FamilyBalanceResource(familyActionService, familyService, webSocketNotificationService, familyParentAccessService);
         readResource = new FamilyReadResource(familyService, baseDataService);
+        readResource.familyRepository = familyRepository;
         childResource = new FamilyChildSettingsResource(familyService, webSocketNotificationService, familyParentAccessService);
         socialResource = new FamilySocialResource(familyService, webSocketNotificationService, familyParentAccessService);
         parentResource = new FamilyParentAccessResource(familyService, webSocketNotificationService, familyParentAccessService);
@@ -178,9 +184,26 @@ class FamilyCommandResourceTest {
         Response unauthorized = readResource.getBaseData(contextWithAuth(null));
         assertThat(unauthorized.getStatus()).isEqualTo(401);
 
-        when(baseDataService.getBaseData()).thenReturn(Map.of("tasks", List.of()));
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(FamilyEntity.builder()
+            .familyId("fam-1").locale(FamilyLocale.en).build()));
+        when(baseDataService.getBaseData(FamilyLocale.en)).thenReturn(Map.of("tasks", List.of()));
         Response ok = readResource.getBaseData(contextWithAuth(adminAuth()));
         assertThat(ok.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void getBaseData_usesPersistedFamilyLocaleAndDefaultsNullToEnglish() {
+        when(baseDataService.getBaseData(FamilyLocale.ru)).thenReturn(Map.of("locale", "ru"));
+        when(baseDataService.getBaseData(FamilyLocale.en)).thenReturn(Map.of("locale", "en"));
+        FamilyEntity family = FamilyEntity.builder().familyId("fam-1").locale(FamilyLocale.ru).build();
+        when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
+
+        assertThat(readResource.getBaseData(contextWithAuth(adminAuth())).getEntity())
+            .isEqualTo(Map.of("locale", "ru"));
+
+        family.setLocale(null);
+        assertThat(readResource.getBaseData(contextWithAuth(adminAuth())).getEntity())
+            .isEqualTo(Map.of("locale", "en"));
     }
 
     @Test

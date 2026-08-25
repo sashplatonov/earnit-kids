@@ -280,6 +280,14 @@ public class FamilyReadResource extends ResourceAuthSupport {
       return unauthorized();
     }
 
-    return Response.ok(baseDataService.getBaseData()).build();
+    var family = familyRepository.findById(auth.familyId());
+    if (family.isEmpty()) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+    FamilyLocale locale = family.get().getLocale();
+    if (locale == null) {
+      locale = FamilyLocale.en;
+    }
+    return Response.ok(baseDataService.getBaseData(locale)).build();
   }
 }

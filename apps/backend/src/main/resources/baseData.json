@@ -364,10 +364,19 @@
         "tasks": [
             {
                 "id": "ct-6-8-1",
-                "title": "🌅 Умыться, одеться и причесаться",
-                "comment": "",
+                "title": {
+                    "en": "🌅 Complete a morning & evening goal (ct-6-8-1)",
+                    "ru": "🌅 Умыться, одеться и причесаться"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "morning",
-                "groupName": "Утро и вечер",
+                "groupName": {
+                    "en": "Morning & Evening",
+                    "ru": "Утро и вечер"
+                },
                 "semanticGraphicKey": "sunrise",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -383,10 +392,19 @@
             },
             {
                 "id": "ct-6-8-2",
-                "title": "🪥 Почистить зубы утром и вечером",
-                "comment": "",
+                "title": {
+                    "en": "🪥 Complete a morning & evening goal (ct-6-8-2)",
+                    "ru": "🪥 Почистить зубы утром и вечером"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "morning",
-                "groupName": "Утро и вечер",
+                "groupName": {
+                    "en": "Morning & Evening",
+                    "ru": "Утро и вечер"
+                },
                 "semanticGraphicKey": "sunrise",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -402,10 +420,19 @@
             },
             {
                 "id": "ct-6-8-3",
-                "title": "🛏️ Заправить кровать утром",
-                "comment": "",
+                "title": {
+                    "en": "🛏️ Complete a morning & evening goal (ct-6-8-3)",
+                    "ru": "🛏️ Заправить кровать утром"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "morning",
-                "groupName": "Утро и вечер",
+                "groupName": {
+                    "en": "Morning & Evening",
+                    "ru": "Утро и вечер"
+                },
                 "semanticGraphicKey": "sunrise",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -421,10 +448,19 @@
             },
             {
                 "id": "ct-6-8-4",
-                "title": "🎒 Собрать вещи на завтра вместе со списком",
-                "comment": "",
+                "title": {
+                    "en": "🎒 Complete a independence goal (ct-6-8-4)",
+                    "ru": "🎒 Собрать вещи на завтра вместе со списком"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "independence",
-                "groupName": "Самостоятельность",
+                "groupName": {
+                    "en": "Independence",
+                    "ru": "Самостоятельность"
+                },
                 "semanticGraphicKey": "box",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -440,10 +476,19 @@
             },
             {
                 "id": "ct-6-8-5",
-                "title": "👕 Убрать свою одежду на место",
-                "comment": "",
+                "title": {
+                    "en": "👕 Complete a home & order goal (ct-6-8-5)",
+                    "ru": "👕 Убрать свою одежду на место"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -459,10 +504,19 @@
             },
             {
                 "id": "ct-6-8-6",
-                "title": "🧸 Убрать игрушки после игры",
-                "comment": "",
+                "title": {
+                    "en": "🧸 Complete a home & order goal (ct-6-8-6)",
+                    "ru": "🧸 Убрать игрушки после игры"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -478,10 +532,19 @@
             },
             {
                 "id": "ct-6-8-7",
-                "title": "🧽 Убрать свой стол или рабочее место",
-                "comment": "",
+                "title": {
+                    "en": "🧽 Complete a home & order goal (ct-6-8-7)",
+                    "ru": "🧽 Убрать свой стол или рабочее место"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -497,10 +560,19 @@
             },
             {
                 "id": "ct-6-8-8",
-                "title": "🍽️ Убрать за собой посуду после еды",
-                "comment": "",
+                "title": {
+                    "en": "🍽️ Complete a home & order goal (ct-6-8-8)",
+                    "ru": "🍽️ Убрать за собой посуду после еды"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "day",
@@ -516,10 +588,19 @@
             },
             {
                 "id": "ct-6-8-9",
-                "title": "🌱 Полить одно домашнее растение",
-                "comment": "",
+                "title": {
+                    "en": "🌱 Complete a home & order goal (ct-6-8-9)",
+                    "ru": "🌱 Полить одно домашнее растение"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -535,10 +616,19 @@
             },
             {
                 "id": "ct-6-8-10",
-                "title": "📖 Почитать книгу 10 минут",
-                "comment": "",
+                "title": {
+                    "en": "📖 Complete a learning goal (ct-6-8-10)",
+                    "ru": "📖 Почитать книгу 10 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -554,10 +644,19 @@
             },
             {
                 "id": "ct-6-8-11",
-                "title": "🔤 Повторить буквы или слова 10 минут",
-                "comment": "",
+                "title": {
+                    "en": "🔤 Complete a learning goal (ct-6-8-11)",
+                    "ru": "🔤 Повторить буквы или слова 10 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -573,10 +672,19 @@
             },
             {
                 "id": "ct-6-8-12",
-                "title": "🔢 Позаниматься математикой 10 минут",
-                "comment": "",
+                "title": {
+                    "en": "🔢 Complete a learning goal (ct-6-8-12)",
+                    "ru": "🔢 Позаниматься математикой 10 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -592,10 +700,19 @@
             },
             {
                 "id": "ct-6-8-13",
-                "title": "✍️ Написать 5 аккуратных строк",
-                "comment": "",
+                "title": {
+                    "en": "✍️ Complete a learning goal (ct-6-8-13)",
+                    "ru": "✍️ Написать 5 аккуратных строк"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -611,10 +728,19 @@
             },
             {
                 "id": "ct-6-8-14",
-                "title": "🇷🇸 Выучить 1-3 слова по-сербски",
-                "comment": "",
+                "title": {
+                    "en": "🇷🇸 Complete a learning goal (ct-6-8-14)",
+                    "ru": "🇷🇸 Выучить 1-3 слова по-сербски"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -630,10 +756,19 @@
             },
             {
                 "id": "ct-6-8-15",
-                "title": "🎨 Порисовать или сделать поделку 15 минут",
-                "comment": "",
+                "title": {
+                    "en": "🎨 Complete a creativity & games goal (ct-6-8-15)",
+                    "ru": "🎨 Порисовать или сделать поделку 15 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "creativity",
-                "groupName": "Творчество",
+                "groupName": {
+                    "en": "Creativity & Games",
+                    "ru": "Творчество"
+                },
                 "semanticGraphicKey": "palette",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -649,10 +784,19 @@
             },
             {
                 "id": "ct-6-8-16",
-                "title": "🧘 Сделать зарядку или растяжку 5 минут",
-                "comment": "",
+                "title": {
+                    "en": "🧘 Complete a movement & health goal (ct-6-8-16)",
+                    "ru": "🧘 Сделать зарядку или растяжку 5 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "health",
-                "groupName": "Движение и здоровье",
+                "groupName": {
+                    "en": "Movement & Health",
+                    "ru": "Движение и здоровье"
+                },
                 "semanticGraphicKey": "dumbbell",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -668,10 +812,19 @@
             },
             {
                 "id": "ct-6-8-17",
-                "title": "🚶 Погулять на улице 20 минут",
-                "comment": "",
+                "title": {
+                    "en": "🚶 Complete a movement & health goal (ct-6-8-17)",
+                    "ru": "🚶 Погулять на улице 20 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "health",
-                "groupName": "Движение и здоровье",
+                "groupName": {
+                    "en": "Movement & Health",
+                    "ru": "Движение и здоровье"
+                },
                 "semanticGraphicKey": "dumbbell",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -687,10 +840,19 @@
             },
             {
                 "id": "ct-6-8-18",
-                "title": "💧 Выпить стакан воды утром",
-                "comment": "",
+                "title": {
+                    "en": "💧 Complete a healthy habits goal (ct-6-8-18)",
+                    "ru": "💧 Выпить стакан воды утром"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "habits",
-                "groupName": "Полезные привычки",
+                "groupName": {
+                    "en": "Healthy Habits",
+                    "ru": "Полезные привычки"
+                },
                 "semanticGraphicKey": "sparkles",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -706,10 +868,19 @@
             },
             {
                 "id": "ct-6-8-19",
-                "title": "🗣️ Сказать словами, что чувствуешь",
-                "comment": "",
+                "title": {
+                    "en": "🗣️ Complete a communication & emotions goal (ct-6-8-19)",
+                    "ru": "🗣️ Сказать словами, что чувствуешь"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -725,10 +896,19 @@
             },
             {
                 "id": "ct-6-8-20",
-                "title": "🤝 Попросить прощения и помочь исправить ошибку",
-                "comment": "",
+                "title": {
+                    "en": "🤝 Complete a communication & emotions goal (ct-6-8-20)",
+                    "ru": "🤝 Попросить прощения и помочь исправить ошибку"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -744,10 +924,19 @@
             },
             {
                 "id": "ct-6-8-21",
-                "title": "⏱️ Помогать по дому 10 минут",
-                "comment": "",
+                "title": {
+                    "en": "⏱️ Complete a home & order goal (ct-6-8-21)",
+                    "ru": "⏱️ Помогать по дому 10 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -763,10 +952,19 @@
             },
             {
                 "id": "ct-6-8-22",
-                "title": "📚 Прочитать короткую историю и рассказать, что произошло",
-                "comment": "",
+                "title": {
+                    "en": "📚 Complete a learning goal (ct-6-8-22)",
+                    "ru": "📚 Прочитать короткую историю и рассказать, что произошло"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -782,10 +980,19 @@
             },
             {
                 "id": "ct-6-8-23",
-                "title": "👟 Самостоятельно подготовиться к прогулке",
-                "comment": "",
+                "title": {
+                    "en": "👟 Complete a independence goal (ct-6-8-23)",
+                    "ru": "👟 Самостоятельно подготовиться к прогулке"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "independence",
-                "groupName": "Самостоятельность",
+                "groupName": {
+                    "en": "Independence",
+                    "ru": "Самостоятельность"
+                },
                 "semanticGraphicKey": "box",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -801,10 +1008,19 @@
             },
             {
                 "id": "ct-6-8-24",
-                "title": "🧺 Разобрать одну небольшую зону со своими вещами",
-                "comment": "",
+                "title": {
+                    "en": "🧺 Complete a home & order goal (ct-6-8-24)",
+                    "ru": "🧺 Разобрать одну небольшую зону со своими вещами"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -820,10 +1036,19 @@
             },
             {
                 "id": "ct-9-11-1",
-                "title": "🌅 Собраться утром без повторных напоминаний",
-                "comment": "",
+                "title": {
+                    "en": "🌅 Complete a morning & evening goal (ct-9-11-1)",
+                    "ru": "🌅 Собраться утром без повторных напоминаний"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "morning",
-                "groupName": "Утро и вечер",
+                "groupName": {
+                    "en": "Morning & Evening",
+                    "ru": "Утро и вечер"
+                },
                 "semanticGraphicKey": "sunrise",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -839,10 +1064,19 @@
             },
             {
                 "id": "ct-9-11-2",
-                "title": "🪥 Почистить зубы утром и вечером",
-                "comment": "",
+                "title": {
+                    "en": "🪥 Complete a morning & evening goal (ct-9-11-2)",
+                    "ru": "🪥 Почистить зубы утром и вечером"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "morning",
-                "groupName": "Утро и вечер",
+                "groupName": {
+                    "en": "Morning & Evening",
+                    "ru": "Утро и вечер"
+                },
                 "semanticGraphicKey": "sunrise",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -858,10 +1092,19 @@
             },
             {
                 "id": "ct-9-11-3",
-                "title": "🎒 Самостоятельно проверить школьный рюкзак",
-                "comment": "",
+                "title": {
+                    "en": "🎒 Complete a independence goal (ct-9-11-3)",
+                    "ru": "🎒 Самостоятельно проверить школьный рюкзак"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "independence",
-                "groupName": "Самостоятельность",
+                "groupName": {
+                    "en": "Independence",
+                    "ru": "Самостоятельность"
+                },
                 "semanticGraphicKey": "box",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -877,10 +1120,19 @@
             },
             {
                 "id": "ct-9-11-4",
-                "title": "🛏️ Заправить кровать утром",
-                "comment": "",
+                "title": {
+                    "en": "🛏️ Complete a morning & evening goal (ct-9-11-4)",
+                    "ru": "🛏️ Заправить кровать утром"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "morning",
-                "groupName": "Утро и вечер",
+                "groupName": {
+                    "en": "Morning & Evening",
+                    "ru": "Утро и вечер"
+                },
                 "semanticGraphicKey": "sunrise",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -896,10 +1148,19 @@
             },
             {
                 "id": "ct-9-11-5",
-                "title": "👕 Разобрать одежду после прогулки или школы",
-                "comment": "",
+                "title": {
+                    "en": "👕 Complete a home & order goal (ct-9-11-5)",
+                    "ru": "👕 Разобрать одежду после прогулки или школы"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -915,10 +1176,19 @@
             },
             {
                 "id": "ct-9-11-6",
-                "title": "🧽 Убрать свой стол или рабочее место",
-                "comment": "",
+                "title": {
+                    "en": "🧽 Complete a home & order goal (ct-9-11-6)",
+                    "ru": "🧽 Убрать свой стол или рабочее место"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -934,10 +1204,19 @@
             },
             {
                 "id": "ct-9-11-7",
-                "title": "🍽️ Убрать за собой посуду и протереть место после еды",
-                "comment": "",
+                "title": {
+                    "en": "🍽️ Complete a home & order goal (ct-9-11-7)",
+                    "ru": "🍽️ Убрать за собой посуду и протереть место после еды"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -953,10 +1232,19 @@
             },
             {
                 "id": "ct-9-11-8",
-                "title": "🧺 Разобрать одну зону со своими вещами",
-                "comment": "",
+                "title": {
+                    "en": "🧺 Complete a home & order goal (ct-9-11-8)",
+                    "ru": "🧺 Разобрать одну зону со своими вещами"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -972,10 +1260,19 @@
             },
             {
                 "id": "ct-9-11-9",
-                "title": "⏱️ Помогать по дому 15 минут",
-                "comment": "",
+                "title": {
+                    "en": "⏱️ Complete a home & order goal (ct-9-11-9)",
+                    "ru": "⏱️ Помогать по дому 15 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -991,10 +1288,19 @@
             },
             {
                 "id": "ct-9-11-10",
-                "title": "🗑️ Вынести мусор",
-                "comment": "",
+                "title": {
+                    "en": "🗑️ Complete a home & order goal (ct-9-11-10)",
+                    "ru": "🗑️ Вынести мусор"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -1010,10 +1316,19 @@
             },
             {
                 "id": "ct-9-11-11",
-                "title": "📖 Почитать книгу 20 минут",
-                "comment": "",
+                "title": {
+                    "en": "📖 Complete a learning goal (ct-9-11-11)",
+                    "ru": "📖 Почитать книгу 20 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1029,10 +1344,19 @@
             },
             {
                 "id": "ct-9-11-12",
-                "title": "📚 Прочитать главу и рассказать, что произошло",
-                "comment": "",
+                "title": {
+                    "en": "📚 Complete a learning goal (ct-9-11-12)",
+                    "ru": "📚 Прочитать главу и рассказать, что произошло"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -1048,10 +1372,19 @@
             },
             {
                 "id": "ct-9-11-13",
-                "title": "🔢 Позаниматься математикой 15 минут",
-                "comment": "",
+                "title": {
+                    "en": "🔢 Complete a learning goal (ct-9-11-13)",
+                    "ru": "🔢 Позаниматься математикой 15 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1067,10 +1400,19 @@
             },
             {
                 "id": "ct-9-11-14",
-                "title": "✍️ Сделать письменное задание аккуратно без спешки",
-                "comment": "",
+                "title": {
+                    "en": "✍️ Complete a learning goal (ct-9-11-14)",
+                    "ru": "✍️ Сделать письменное задание аккуратно без спешки"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1086,10 +1428,19 @@
             },
             {
                 "id": "ct-9-11-15",
-                "title": "🇷🇸 Выучить 3-5 слов по-сербски",
-                "comment": "",
+                "title": {
+                    "en": "🇷🇸 Complete a learning goal (ct-9-11-15)",
+                    "ru": "🇷🇸 Выучить 3-5 слов по-сербски"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1105,10 +1456,19 @@
             },
             {
                 "id": "ct-9-11-16",
-                "title": "🧠 Повторить школьную тему 15 минут",
-                "comment": "",
+                "title": {
+                    "en": "🧠 Complete a learning goal (ct-9-11-16)",
+                    "ru": "🧠 Повторить школьную тему 15 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1124,10 +1484,19 @@
             },
             {
                 "id": "ct-9-11-17",
-                "title": "🧘 Сделать зарядку или растяжку 7 минут",
-                "comment": "",
+                "title": {
+                    "en": "🧘 Complete a movement & health goal (ct-9-11-17)",
+                    "ru": "🧘 Сделать зарядку или растяжку 7 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "health",
-                "groupName": "Движение и здоровье",
+                "groupName": {
+                    "en": "Movement & Health",
+                    "ru": "Движение и здоровье"
+                },
                 "semanticGraphicKey": "dumbbell",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1143,10 +1512,19 @@
             },
             {
                 "id": "ct-9-11-18",
-                "title": "🚶 Погулять или активно подвигаться 30 минут",
-                "comment": "",
+                "title": {
+                    "en": "🚶 Complete a movement & health goal (ct-9-11-18)",
+                    "ru": "🚶 Погулять или активно подвигаться 30 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "health",
-                "groupName": "Движение и здоровье",
+                "groupName": {
+                    "en": "Movement & Health",
+                    "ru": "Движение и здоровье"
+                },
                 "semanticGraphicKey": "dumbbell",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1162,10 +1540,19 @@
             },
             {
                 "id": "ct-9-11-19",
-                "title": "🗣️ Сказать словами, что чувствуешь и чего хочешь",
-                "comment": "",
+                "title": {
+                    "en": "🗣️ Complete a communication & emotions goal (ct-9-11-19)",
+                    "ru": "🗣️ Сказать словами, что чувствуешь и чего хочешь"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1181,10 +1568,19 @@
             },
             {
                 "id": "ct-9-11-20",
-                "title": "🧯 Остановиться и успокоиться, когда злюсь",
-                "comment": "",
+                "title": {
+                    "en": "🧯 Complete a communication & emotions goal (ct-9-11-20)",
+                    "ru": "🧯 Остановиться и успокоиться, когда злюсь"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1200,10 +1596,19 @@
             },
             {
                 "id": "ct-9-11-21",
-                "title": "🪄 Признать ошибку и помочь всё исправить",
-                "comment": "",
+                "title": {
+                    "en": "🪄 Complete a communication & emotions goal (ct-9-11-21)",
+                    "ru": "🪄 Признать ошибку и помочь всё исправить"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1219,10 +1624,19 @@
             },
             {
                 "id": "ct-9-11-22",
-                "title": "🤝 Решить спор словами без крика и драки",
-                "comment": "",
+                "title": {
+                    "en": "🤝 Complete a communication & emotions goal (ct-9-11-22)",
+                    "ru": "🤝 Решить спор словами без крика и драки"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1238,10 +1652,19 @@
             },
             {
                 "id": "ct-9-11-23",
-                "title": "📵 Провести 30 минут без телефона или планшета",
-                "comment": "",
+                "title": {
+                    "en": "📵 Complete a healthy habits goal (ct-9-11-23)",
+                    "ru": "📵 Провести 30 минут без телефона или планшета"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "habits",
-                "groupName": "Полезные привычки",
+                "groupName": {
+                    "en": "Healthy Habits",
+                    "ru": "Полезные привычки"
+                },
                 "semanticGraphicKey": "sparkles",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1257,10 +1680,19 @@
             },
             {
                 "id": "ct-9-11-24",
-                "title": "💧 Выпить достаточно воды в течение дня",
-                "comment": "",
+                "title": {
+                    "en": "💧 Complete a healthy habits goal (ct-9-11-24)",
+                    "ru": "💧 Выпить достаточно воды в течение дня"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "habits",
-                "groupName": "Полезные привычки",
+                "groupName": {
+                    "en": "Healthy Habits",
+                    "ru": "Полезные привычки"
+                },
                 "semanticGraphicKey": "sparkles",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1276,10 +1708,19 @@
             },
             {
                 "id": "ct-12-14-1",
-                "title": "🌅 Собраться утром и выйти вовремя без напоминаний",
-                "comment": "",
+                "title": {
+                    "en": "🌅 Complete a morning & evening goal (ct-12-14-1)",
+                    "ru": "🌅 Собраться утром и выйти вовремя без напоминаний"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "morning",
-                "groupName": "Утро и вечер",
+                "groupName": {
+                    "en": "Morning & Evening",
+                    "ru": "Утро и вечер"
+                },
                 "semanticGraphicKey": "sunrise",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1295,10 +1736,19 @@
             },
             {
                 "id": "ct-12-14-2",
-                "title": "🎒 Самостоятельно подготовить всё для школы на завтра",
-                "comment": "",
+                "title": {
+                    "en": "🎒 Complete a independence goal (ct-12-14-2)",
+                    "ru": "🎒 Самостоятельно подготовить всё для школы на завтра"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "independence",
-                "groupName": "Самостоятельность",
+                "groupName": {
+                    "en": "Independence",
+                    "ru": "Самостоятельность"
+                },
                 "semanticGraphicKey": "box",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1314,10 +1764,19 @@
             },
             {
                 "id": "ct-12-14-3",
-                "title": "🛏️ Поддерживать порядок в своей комнате 15 минут",
-                "comment": "",
+                "title": {
+                    "en": "🛏️ Complete a home & order goal (ct-12-14-3)",
+                    "ru": "🛏️ Поддерживать порядок в своей комнате 15 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1333,10 +1792,19 @@
             },
             {
                 "id": "ct-12-14-4",
-                "title": "👕 Разобрать чистую одежду и убрать её по местам",
-                "comment": "",
+                "title": {
+                    "en": "👕 Complete a home & order goal (ct-12-14-4)",
+                    "ru": "👕 Разобрать чистую одежду и убрать её по местам"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -1352,10 +1820,19 @@
             },
             {
                 "id": "ct-12-14-5",
-                "title": "🧺 Разобрать одну зону со своими вещами",
-                "comment": "",
+                "title": {
+                    "en": "🧺 Complete a home & order goal (ct-12-14-5)",
+                    "ru": "🧺 Разобрать одну зону со своими вещами"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -1371,10 +1848,19 @@
             },
             {
                 "id": "ct-12-14-6",
-                "title": "⏱️ Помогать по дому 20 минут",
-                "comment": "",
+                "title": {
+                    "en": "⏱️ Complete a home & order goal (ct-12-14-6)",
+                    "ru": "⏱️ Помогать по дому 20 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1390,10 +1876,19 @@
             },
             {
                 "id": "ct-12-14-7",
-                "title": "🍽️ Помочь накрыть на стол и убрать после еды",
-                "comment": "",
+                "title": {
+                    "en": "🍽️ Complete a home & order goal (ct-12-14-7)",
+                    "ru": "🍽️ Помочь накрыть на стол и убрать после еды"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1409,10 +1904,19 @@
             },
             {
                 "id": "ct-12-14-8",
-                "title": "🗑️ Вынести мусор без напоминания",
-                "comment": "",
+                "title": {
+                    "en": "🗑️ Complete a home & order goal (ct-12-14-8)",
+                    "ru": "🗑️ Вынести мусор без напоминания"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -1428,10 +1932,19 @@
             },
             {
                 "id": "ct-12-14-9",
-                "title": "🧹 Пропылесосить одну комнату",
-                "comment": "",
+                "title": {
+                    "en": "🧹 Complete a home & order goal (ct-12-14-9)",
+                    "ru": "🧹 Пропылесосить одну комнату"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "home",
-                "groupName": "Дом и порядок",
+                "groupName": {
+                    "en": "Home & Order",
+                    "ru": "Дом и порядок"
+                },
                 "semanticGraphicKey": "home",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -1447,10 +1960,19 @@
             },
             {
                 "id": "ct-12-14-10",
-                "title": "📖 Почитать книгу 25 минут",
-                "comment": "",
+                "title": {
+                    "en": "📖 Complete a learning goal (ct-12-14-10)",
+                    "ru": "📖 Почитать книгу 25 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1466,10 +1988,19 @@
             },
             {
                 "id": "ct-12-14-11",
-                "title": "📚 Прочитать главу и кратко пересказать главное",
-                "comment": "",
+                "title": {
+                    "en": "📚 Complete a learning goal (ct-12-14-11)",
+                    "ru": "📚 Прочитать главу и кратко пересказать главное"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 3,
                 "frequencyPeriod": "week",
@@ -1485,10 +2016,19 @@
             },
             {
                 "id": "ct-12-14-12",
-                "title": "🔢 Позаниматься математикой 20 минут",
-                "comment": "",
+                "title": {
+                    "en": "🔢 Complete a learning goal (ct-12-14-12)",
+                    "ru": "🔢 Позаниматься математикой 20 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1504,10 +2044,19 @@
             },
             {
                 "id": "ct-12-14-13",
-                "title": "🧠 Повторить сложную школьную тему 20 минут",
-                "comment": "",
+                "title": {
+                    "en": "🧠 Complete a learning goal (ct-12-14-13)",
+                    "ru": "🧠 Повторить сложную школьную тему 20 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1523,10 +2072,19 @@
             },
             {
                 "id": "ct-12-14-14",
-                "title": "🇷🇸 Выучить 5 новых слов по-сербски",
-                "comment": "",
+                "title": {
+                    "en": "🇷🇸 Complete a learning goal (ct-12-14-14)",
+                    "ru": "🇷🇸 Выучить 5 новых слов по-сербски"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "study",
-                "groupName": "Учёба",
+                "groupName": {
+                    "en": "Learning",
+                    "ru": "Учёба"
+                },
                 "semanticGraphicKey": "book",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1542,10 +2100,19 @@
             },
             {
                 "id": "ct-12-14-15",
-                "title": "📝 Спланировать домашние задания и отметить выполненное",
-                "comment": "",
+                "title": {
+                    "en": "📝 Complete a independence goal (ct-12-14-15)",
+                    "ru": "📝 Спланировать домашние задания и отметить выполненное"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "independence",
-                "groupName": "Самостоятельность",
+                "groupName": {
+                    "en": "Independence",
+                    "ru": "Самостоятельность"
+                },
                 "semanticGraphicKey": "box",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1561,10 +2128,19 @@
             },
             {
                 "id": "ct-12-14-16",
-                "title": "📵 Провести 1 час без телефона или соцсетей",
-                "comment": "",
+                "title": {
+                    "en": "📵 Complete a healthy habits goal (ct-12-14-16)",
+                    "ru": "📵 Провести 1 час без телефона или соцсетей"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "habits",
-                "groupName": "Полезные привычки",
+                "groupName": {
+                    "en": "Healthy Habits",
+                    "ru": "Полезные привычки"
+                },
                 "semanticGraphicKey": "sparkles",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1580,10 +2156,19 @@
             },
             {
                 "id": "ct-12-14-17",
-                "title": "🧘 Сделать тренировку, зарядку или растяжку 15 минут",
-                "comment": "",
+                "title": {
+                    "en": "🧘 Complete a movement & health goal (ct-12-14-17)",
+                    "ru": "🧘 Сделать тренировку, зарядку или растяжку 15 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "health",
-                "groupName": "Движение и здоровье",
+                "groupName": {
+                    "en": "Movement & Health",
+                    "ru": "Движение и здоровье"
+                },
                 "semanticGraphicKey": "dumbbell",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1599,10 +2184,19 @@
             },
             {
                 "id": "ct-12-14-18",
-                "title": "🚶 Погулять или активно подвигаться 45 минут",
-                "comment": "",
+                "title": {
+                    "en": "🚶 Complete a movement & health goal (ct-12-14-18)",
+                    "ru": "🚶 Погулять или активно подвигаться 45 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "health",
-                "groupName": "Движение и здоровье",
+                "groupName": {
+                    "en": "Movement & Health",
+                    "ru": "Движение и здоровье"
+                },
                 "semanticGraphicKey": "dumbbell",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1618,10 +2212,19 @@
             },
             {
                 "id": "ct-12-14-19",
-                "title": "🗣️ Спокойно объяснить, что не устраивает и чего хочешь",
-                "comment": "",
+                "title": {
+                    "en": "🗣️ Complete a communication & emotions goal (ct-12-14-19)",
+                    "ru": "🗣️ Спокойно объяснить, что не устраивает и чего хочешь"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1637,10 +2240,19 @@
             },
             {
                 "id": "ct-12-14-20",
-                "title": "🧯 Взять паузу и успокоиться вместо крика",
-                "comment": "",
+                "title": {
+                    "en": "🧯 Complete a communication & emotions goal (ct-12-14-20)",
+                    "ru": "🧯 Взять паузу и успокоиться вместо крика"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1656,10 +2268,19 @@
             },
             {
                 "id": "ct-12-14-21",
-                "title": "🪄 Признать свою ошибку и предложить, как её исправить",
-                "comment": "",
+                "title": {
+                    "en": "🪄 Complete a communication & emotions goal (ct-12-14-21)",
+                    "ru": "🪄 Признать свою ошибку и предложить, как её исправить"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1675,10 +2296,19 @@
             },
             {
                 "id": "ct-12-14-22",
-                "title": "🤝 Договориться о спорном вопросе без оскорблений",
-                "comment": "",
+                "title": {
+                    "en": "🤝 Complete a communication & emotions goal (ct-12-14-22)",
+                    "ru": "🤝 Договориться о спорном вопросе без оскорблений"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "emotions",
-                "groupName": "Общение и эмоции",
+                "groupName": {
+                    "en": "Communication & Emotions",
+                    "ru": "Общение и эмоции"
+                },
                 "semanticGraphicKey": "heart",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1694,10 +2324,19 @@
             },
             {
                 "id": "ct-12-14-23",
-                "title": "💳 Записать свои расходы за день",
-                "comment": "",
+                "title": {
+                    "en": "💳 Complete a independence goal (ct-12-14-23)",
+                    "ru": "💳 Записать свои расходы за день"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "independence",
-                "groupName": "Самостоятельность",
+                "groupName": {
+                    "en": "Independence",
+                    "ru": "Самостоятельность"
+                },
                 "semanticGraphicKey": "box",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1713,10 +2352,19 @@
             },
             {
                 "id": "ct-12-14-24",
-                "title": "🍳 Приготовить простой завтрак или перекус",
-                "comment": "",
+                "title": {
+                    "en": "🍳 Complete a independence goal (ct-12-14-24)",
+                    "ru": "🍳 Приготовить простой завтрак или перекус"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "independence",
-                "groupName": "Самостоятельность",
+                "groupName": {
+                    "en": "Independence",
+                    "ru": "Самостоятельность"
+                },
                 "semanticGraphicKey": "box",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -1734,10 +2382,19 @@
         "rewards": [
             {
                 "id": "cr-6-8-1",
-                "title": "🎲 Выбрать настольную игру на вечер",
-                "comment": "",
+                "title": {
+                    "en": "🎲 Choose a family time goal (cr-6-8-1)",
+                    "ru": "🎲 Выбрать настольную игру на вечер"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -1753,10 +2410,19 @@
             },
             {
                 "id": "cr-6-8-2",
-                "title": "🧸 Поиграть с мамой или папой 20 минут",
-                "comment": "",
+                "title": {
+                    "en": "🧸 Choose a family time goal (cr-6-8-2)",
+                    "ru": "🧸 Поиграть с мамой или папой 20 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -1772,10 +2438,19 @@
             },
             {
                 "id": "cr-6-8-3",
-                "title": "🏰 Построить крепость из подушек и поиграть",
-                "comment": "",
+                "title": {
+                    "en": "🏰 Choose a creativity & games goal (cr-6-8-3)",
+                    "ru": "🏰 Построить крепость из подушек и поиграть"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "creativity",
-                "groupName": "Творчество и игры",
+                "groupName": {
+                    "en": "Creativity & Games",
+                    "ru": "Творчество и игры"
+                },
                 "semanticGraphicKey": "palette",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -1791,10 +2466,19 @@
             },
             {
                 "id": "cr-6-8-4",
-                "title": "🧁 Приготовить простой десерт вместе с родителем",
-                "comment": "",
+                "title": {
+                    "en": "🧁 Choose a family time goal (cr-6-8-4)",
+                    "ru": "🧁 Приготовить простой десерт вместе с родителем"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -1810,10 +2494,19 @@
             },
             {
                 "id": "cr-6-8-5",
-                "title": "🚶 Выбрать маршрут прогулки",
-                "comment": "",
+                "title": {
+                    "en": "🚶 Choose a choices & privileges goal (cr-6-8-5)",
+                    "ru": "🚶 Выбрать маршрут прогулки"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -1829,10 +2522,19 @@
             },
             {
                 "id": "cr-6-8-6",
-                "title": "🍽️ Выбрать ужин из вариантов",
-                "comment": "",
+                "title": {
+                    "en": "🍽️ Choose a choices & privileges goal (cr-6-8-6)",
+                    "ru": "🍽️ Выбрать ужин из вариантов"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -1848,10 +2550,19 @@
             },
             {
                 "id": "cr-6-8-7",
-                "title": "🎬 Выбрать семейный мультфильм или фильм",
-                "comment": "",
+                "title": {
+                    "en": "🎬 Choose a choices & privileges goal (cr-6-8-7)",
+                    "ru": "🎬 Выбрать семейный мультфильм или фильм"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -1867,10 +2578,19 @@
             },
             {
                 "id": "cr-6-8-8",
-                "title": "🎵 Выбрать музыку в машине",
-                "comment": "",
+                "title": {
+                    "en": "🎵 Choose a choices & privileges goal (cr-6-8-8)",
+                    "ru": "🎵 Выбрать музыку в машине"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -1886,10 +2606,19 @@
             },
             {
                 "id": "cr-6-8-9",
-                "title": "🛁 Принять ванну с пеной и игрушками",
-                "comment": "",
+                "title": {
+                    "en": "🛁 Choose a small joys goal (cr-6-8-9)",
+                    "ru": "🛁 Принять ванну с пеной и игрушками"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "joys",
-                "groupName": "Маленькие радости",
+                "groupName": {
+                    "en": "Small Joys",
+                    "ru": "Маленькие радости"
+                },
                 "semanticGraphicKey": "iceCream",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -1905,10 +2634,19 @@
             },
             {
                 "id": "cr-6-8-10",
-                "title": "🎨 Порисовать с родителем 20 минут",
-                "comment": "",
+                "title": {
+                    "en": "🎨 Choose a family time goal (cr-6-8-10)",
+                    "ru": "🎨 Порисовать с родителем 20 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -1924,10 +2662,19 @@
             },
             {
                 "id": "cr-6-8-11",
-                "title": "🍦 Получить одно мороженое",
-                "comment": "",
+                "title": {
+                    "en": "🍦 Choose a small joys goal (cr-6-8-11)",
+                    "ru": "🍦 Получить одно мороженое"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "joys",
-                "groupName": "Маленькие радости",
+                "groupName": {
+                    "en": "Small Joys",
+                    "ru": "Маленькие радости"
+                },
                 "semanticGraphicKey": "iceCream",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -1943,10 +2690,19 @@
             },
             {
                 "id": "cr-6-8-12",
-                "title": "🧁 Выбрать небольшой десерт",
-                "comment": "",
+                "title": {
+                    "en": "🧁 Choose a small joys goal (cr-6-8-12)",
+                    "ru": "🧁 Выбрать небольшой десерт"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "joys",
-                "groupName": "Маленькие радости",
+                "groupName": {
+                    "en": "Small Joys",
+                    "ru": "Маленькие радости"
+                },
                 "semanticGraphicKey": "iceCream",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -1962,10 +2718,19 @@
             },
             {
                 "id": "cr-6-8-13",
-                "title": "🛝 Сходить на новую детскую площадку",
-                "comment": "",
+                "title": {
+                    "en": "🛝 Choose a outings & entertainment goal (cr-6-8-13)",
+                    "ru": "🛝 Сходить на новую детскую площадку"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -1981,10 +2746,19 @@
             },
             {
                 "id": "cr-6-8-14",
-                "title": "🎡 Сходить в игровую зону",
-                "comment": "",
+                "title": {
+                    "en": "🎡 Choose a outings & entertainment goal (cr-6-8-14)",
+                    "ru": "🎡 Сходить в игровую зону"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2000,10 +2774,19 @@
             },
             {
                 "id": "cr-6-8-15",
-                "title": "🎳 Сходить в боулинг с семьёй",
-                "comment": "",
+                "title": {
+                    "en": "🎳 Choose a outings & entertainment goal (cr-6-8-15)",
+                    "ru": "🎳 Сходить в боулинг с семьёй"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2019,10 +2802,19 @@
             },
             {
                 "id": "cr-6-8-16",
-                "title": "🎬 Сходить в кино",
-                "comment": "",
+                "title": {
+                    "en": "🎬 Choose a outings & entertainment goal (cr-6-8-16)",
+                    "ru": "🎬 Сходить в кино"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2038,10 +2830,19 @@
             },
             {
                 "id": "cr-6-8-17",
-                "title": "🏊 Сходить в бассейн",
-                "comment": "",
+                "title": {
+                    "en": "🏊 Choose a outings & entertainment goal (cr-6-8-17)",
+                    "ru": "🏊 Сходить в бассейн"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2057,10 +2858,19 @@
             },
             {
                 "id": "cr-6-8-18",
-                "title": "📚 Выбрать новую книгу",
-                "comment": "",
+                "title": {
+                    "en": "📚 Choose a shopping goal (cr-6-8-18)",
+                    "ru": "📚 Выбрать новую книгу"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2076,10 +2886,19 @@
             },
             {
                 "id": "cr-6-8-19",
-                "title": "🧩 Получить небольшой набор для творчества или пазл",
-                "comment": "",
+                "title": {
+                    "en": "🧩 Choose a shopping goal (cr-6-8-19)",
+                    "ru": "🧩 Получить небольшой набор для творчества или пазл"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2095,10 +2914,19 @@
             },
             {
                 "id": "cr-6-8-20",
-                "title": "🧸 Купить маленькую игрушку",
-                "comment": "",
+                "title": {
+                    "en": "🧸 Choose a shopping goal (cr-6-8-20)",
+                    "ru": "🧸 Купить маленькую игрушку"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2114,10 +2942,19 @@
             },
             {
                 "id": "cr-6-8-21",
-                "title": "🍓 Выбрать любимые ягоды или фрукты в магазине",
-                "comment": "",
+                "title": {
+                    "en": "🍓 Choose a small joys goal (cr-6-8-21)",
+                    "ru": "🍓 Выбрать любимые ягоды или фрукты в магазине"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "joys",
-                "groupName": "Маленькие радости",
+                "groupName": {
+                    "en": "Small Joys",
+                    "ru": "Маленькие радости"
+                },
                 "semanticGraphicKey": "iceCream",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2133,10 +2970,19 @@
             },
             {
                 "id": "cr-6-8-22",
-                "title": "🎈 Устроить семейный мини-пикник",
-                "comment": "",
+                "title": {
+                    "en": "🎈 Choose a family time goal (cr-6-8-22)",
+                    "ru": "🎈 Устроить семейный мини-пикник"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2152,10 +2998,19 @@
             },
             {
                 "id": "cr-9-11-1",
-                "title": "🎲 Выбрать настольную игру на вечер",
-                "comment": "",
+                "title": {
+                    "en": "🎲 Choose a family time goal (cr-9-11-1)",
+                    "ru": "🎲 Выбрать настольную игру на вечер"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "day",
@@ -2171,10 +3026,19 @@
             },
             {
                 "id": "cr-9-11-2",
-                "title": "🧸 Поиграть с мамой или папой 30 минут",
-                "comment": "",
+                "title": {
+                    "en": "🧸 Choose a family time goal (cr-9-11-2)",
+                    "ru": "🧸 Поиграть с мамой или папой 30 минут"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2190,10 +3054,19 @@
             },
             {
                 "id": "cr-9-11-3",
-                "title": "🎬 Выбрать семейный фильм на вечер",
-                "comment": "",
+                "title": {
+                    "en": "🎬 Choose a choices & privileges goal (cr-9-11-3)",
+                    "ru": "🎬 Выбрать семейный фильм на вечер"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2209,10 +3082,19 @@
             },
             {
                 "id": "cr-9-11-4",
-                "title": "🍽️ Выбрать ужин из вариантов",
-                "comment": "",
+                "title": {
+                    "en": "🍽️ Choose a choices & privileges goal (cr-9-11-4)",
+                    "ru": "🍽️ Выбрать ужин из вариантов"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2228,10 +3110,19 @@
             },
             {
                 "id": "cr-9-11-5",
-                "title": "🚶 Выбрать маршрут прогулки или место для прогулки",
-                "comment": "",
+                "title": {
+                    "en": "🚶 Choose a choices & privileges goal (cr-9-11-5)",
+                    "ru": "🚶 Выбрать маршрут прогулки или место для прогулки"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2247,10 +3138,19 @@
             },
             {
                 "id": "cr-9-11-6",
-                "title": "🎵 Выбрать музыку в машине или дома",
-                "comment": "",
+                "title": {
+                    "en": "🎵 Choose a choices & privileges goal (cr-9-11-6)",
+                    "ru": "🎵 Выбрать музыку в машине или дома"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2266,10 +3166,19 @@
             },
             {
                 "id": "cr-9-11-7",
-                "title": "🧁 Приготовить десерт вместе с родителем",
-                "comment": "",
+                "title": {
+                    "en": "🧁 Choose a family time goal (cr-9-11-7)",
+                    "ru": "🧁 Приготовить десерт вместе с родителем"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2285,10 +3194,19 @@
             },
             {
                 "id": "cr-9-11-8",
-                "title": "🎨 Сделать творческий проект вместе с родителем",
-                "comment": "",
+                "title": {
+                    "en": "🎨 Choose a family time goal (cr-9-11-8)",
+                    "ru": "🎨 Сделать творческий проект вместе с родителем"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2304,10 +3222,19 @@
             },
             {
                 "id": "cr-9-11-9",
-                "title": "🍦 Получить одно мороженое",
-                "comment": "",
+                "title": {
+                    "en": "🍦 Choose a small joys goal (cr-9-11-9)",
+                    "ru": "🍦 Получить одно мороженое"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "joys",
-                "groupName": "Маленькие радости",
+                "groupName": {
+                    "en": "Small Joys",
+                    "ru": "Маленькие радости"
+                },
                 "semanticGraphicKey": "iceCream",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2323,10 +3250,19 @@
             },
             {
                 "id": "cr-9-11-10",
-                "title": "☕ Сходить с родителем в кафе за напитком или десертом",
-                "comment": "",
+                "title": {
+                    "en": "☕ Choose a small joys goal (cr-9-11-10)",
+                    "ru": "☕ Сходить с родителем в кафе за напитком или десертом"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "joys",
-                "groupName": "Маленькие радости",
+                "groupName": {
+                    "en": "Small Joys",
+                    "ru": "Маленькие радости"
+                },
                 "semanticGraphicKey": "iceCream",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2342,10 +3278,19 @@
             },
             {
                 "id": "cr-9-11-11",
-                "title": "🎬 Сходить в кино",
-                "comment": "",
+                "title": {
+                    "en": "🎬 Choose a outings & entertainment goal (cr-9-11-11)",
+                    "ru": "🎬 Сходить в кино"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2361,10 +3306,19 @@
             },
             {
                 "id": "cr-9-11-12",
-                "title": "🎳 Сходить в боулинг",
-                "comment": "",
+                "title": {
+                    "en": "🎳 Choose a outings & entertainment goal (cr-9-11-12)",
+                    "ru": "🎳 Сходить в боулинг"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2380,10 +3334,19 @@
             },
             {
                 "id": "cr-9-11-13",
-                "title": "🏊 Сходить в бассейн",
-                "comment": "",
+                "title": {
+                    "en": "🏊 Choose a outings & entertainment goal (cr-9-11-13)",
+                    "ru": "🏊 Сходить в бассейн"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2399,10 +3362,19 @@
             },
             {
                 "id": "cr-9-11-14",
-                "title": "🎡 Сходить в игровую зону или парк аттракционов",
-                "comment": "",
+                "title": {
+                    "en": "🎡 Choose a outings & entertainment goal (cr-9-11-14)",
+                    "ru": "🎡 Сходить в игровую зону или парк аттракционов"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2418,10 +3390,19 @@
             },
             {
                 "id": "cr-9-11-15",
-                "title": "📚 Выбрать новую книгу или комикс",
-                "comment": "",
+                "title": {
+                    "en": "📚 Choose a shopping goal (cr-9-11-15)",
+                    "ru": "📚 Выбрать новую книгу или комикс"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2437,10 +3418,19 @@
             },
             {
                 "id": "cr-9-11-16",
-                "title": "🎧 Купить недорогой аксессуар для хобби",
-                "comment": "",
+                "title": {
+                    "en": "🎧 Choose a shopping goal (cr-9-11-16)",
+                    "ru": "🎧 Купить недорогой аксессуар для хобби"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2456,10 +3446,19 @@
             },
             {
                 "id": "cr-9-11-17",
-                "title": "✨ Купить маленький аксессуар",
-                "comment": "",
+                "title": {
+                    "en": "✨ Choose a shopping goal (cr-9-11-17)",
+                    "ru": "✨ Купить маленький аксессуар"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2475,10 +3474,19 @@
             },
             {
                 "id": "cr-9-11-18",
-                "title": "📦 Сделать один небольшой онлайн-заказ",
-                "comment": "",
+                "title": {
+                    "en": "📦 Choose a shopping goal (cr-9-11-18)",
+                    "ru": "📦 Сделать один небольшой онлайн-заказ"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2494,10 +3502,19 @@
             },
             {
                 "id": "cr-9-11-19",
-                "title": "🎮 Получить 30 дополнительных минут игры",
-                "comment": "",
+                "title": {
+                    "en": "🎮 Choose a choices & privileges goal (cr-9-11-19)",
+                    "ru": "🎮 Получить 30 дополнительных минут игры"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2513,10 +3530,19 @@
             },
             {
                 "id": "cr-9-11-20",
-                "title": "🛌 Лечь спать на 30 минут позже в выходной",
-                "comment": "",
+                "title": {
+                    "en": "🛌 Choose a choices & privileges goal (cr-9-11-20)",
+                    "ru": "🛌 Лечь спать на 30 минут позже в выходной"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2532,10 +3558,19 @@
             },
             {
                 "id": "cr-9-11-21",
-                "title": "👫 Пригласить друга домой или на прогулку",
-                "comment": "",
+                "title": {
+                    "en": "👫 Choose a outings & entertainment goal (cr-9-11-21)",
+                    "ru": "👫 Пригласить друга домой или на прогулку"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2551,10 +3586,19 @@
             },
             {
                 "id": "cr-9-11-22",
-                "title": "🍕 Выбрать семейную доставку из согласованных вариантов",
-                "comment": "",
+                "title": {
+                    "en": "🍕 Choose a choices & privileges goal (cr-9-11-22)",
+                    "ru": "🍕 Выбрать семейную доставку из согласованных вариантов"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2570,10 +3614,19 @@
             },
             {
                 "id": "cr-12-14-1",
-                "title": "🎬 Выбрать семейный фильм на вечер",
-                "comment": "",
+                "title": {
+                    "en": "🎬 Choose a choices & privileges goal (cr-12-14-1)",
+                    "ru": "🎬 Выбрать семейный фильм на вечер"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2589,10 +3642,19 @@
             },
             {
                 "id": "cr-12-14-2",
-                "title": "🎲 Выбрать настольную игру или карточную игру на вечер",
-                "comment": "",
+                "title": {
+                    "en": "🎲 Choose a family time goal (cr-12-14-2)",
+                    "ru": "🎲 Выбрать настольную игру или карточную игру на вечер"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2608,10 +3670,19 @@
             },
             {
                 "id": "cr-12-14-3",
-                "title": "☕ Сходить с родителем в кафе и поговорить вдвоём",
-                "comment": "",
+                "title": {
+                    "en": "☕ Choose a family time goal (cr-12-14-3)",
+                    "ru": "☕ Сходить с родителем в кафе и поговорить вдвоём"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "family",
-                "groupName": "Время с семьёй",
+                "groupName": {
+                    "en": "Family Time",
+                    "ru": "Время с семьёй"
+                },
                 "semanticGraphicKey": "users",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2627,10 +3698,19 @@
             },
             {
                 "id": "cr-12-14-4",
-                "title": "🍽️ Выбрать ужин или доставку из согласованных вариантов",
-                "comment": "",
+                "title": {
+                    "en": "🍽️ Choose a choices & privileges goal (cr-12-14-4)",
+                    "ru": "🍽️ Выбрать ужин или доставку из согласованных вариантов"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2646,10 +3726,19 @@
             },
             {
                 "id": "cr-12-14-5",
-                "title": "🚶 Выбрать место для семейной прогулки",
-                "comment": "",
+                "title": {
+                    "en": "🚶 Choose a choices & privileges goal (cr-12-14-5)",
+                    "ru": "🚶 Выбрать место для семейной прогулки"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2665,10 +3754,19 @@
             },
             {
                 "id": "cr-12-14-6",
-                "title": "🎵 Выбрать музыку в машине или дома",
-                "comment": "",
+                "title": {
+                    "en": "🎵 Choose a choices & privileges goal (cr-12-14-6)",
+                    "ru": "🎵 Выбрать музыку в машине или дома"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2684,10 +3782,19 @@
             },
             {
                 "id": "cr-12-14-7",
-                "title": "🛌 Лечь спать на 45 минут позже в выходной",
-                "comment": "",
+                "title": {
+                    "en": "🛌 Choose a choices & privileges goal (cr-12-14-7)",
+                    "ru": "🛌 Лечь спать на 45 минут позже в выходной"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2703,10 +3810,19 @@
             },
             {
                 "id": "cr-12-14-8",
-                "title": "🎮 Получить 45 дополнительных минут игры",
-                "comment": "",
+                "title": {
+                    "en": "🎮 Choose a choices & privileges goal (cr-12-14-8)",
+                    "ru": "🎮 Получить 45 дополнительных минут игры"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2722,10 +3838,19 @@
             },
             {
                 "id": "cr-12-14-9",
-                "title": "📱 Получить 45 дополнительных минут экранного времени",
-                "comment": "",
+                "title": {
+                    "en": "📱 Choose a choices & privileges goal (cr-12-14-9)",
+                    "ru": "📱 Получить 45 дополнительных минут экранного времени"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "week",
@@ -2741,10 +3866,19 @@
             },
             {
                 "id": "cr-12-14-10",
-                "title": "👫 Пригласить друга домой или на совместную прогулку",
-                "comment": "",
+                "title": {
+                    "en": "👫 Choose a outings & entertainment goal (cr-12-14-10)",
+                    "ru": "👫 Пригласить друга домой или на совместную прогулку"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2760,10 +3894,19 @@
             },
             {
                 "id": "cr-12-14-11",
-                "title": "🎬 Сходить в кино",
-                "comment": "",
+                "title": {
+                    "en": "🎬 Choose a outings & entertainment goal (cr-12-14-11)",
+                    "ru": "🎬 Сходить в кино"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2779,10 +3922,19 @@
             },
             {
                 "id": "cr-12-14-12",
-                "title": "🎳 Сходить в боулинг",
-                "comment": "",
+                "title": {
+                    "en": "🎳 Choose a outings & entertainment goal (cr-12-14-12)",
+                    "ru": "🎳 Сходить в боулинг"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2798,10 +3950,19 @@
             },
             {
                 "id": "cr-12-14-13",
-                "title": "🏊 Сходить в бассейн",
-                "comment": "",
+                "title": {
+                    "en": "🏊 Choose a outings & entertainment goal (cr-12-14-13)",
+                    "ru": "🏊 Сходить в бассейн"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 2,
                 "frequencyPeriod": "month",
@@ -2817,10 +3978,19 @@
             },
             {
                 "id": "cr-12-14-14",
-                "title": "🎧 Купить недорогой аксессуар для хобби или техники",
-                "comment": "",
+                "title": {
+                    "en": "🎧 Choose a shopping goal (cr-12-14-14)",
+                    "ru": "🎧 Купить недорогой аксессуар для хобби или техники"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2836,10 +4006,19 @@
             },
             {
                 "id": "cr-12-14-15",
-                "title": "📚 Купить книгу, комикс или мангу",
-                "comment": "",
+                "title": {
+                    "en": "📚 Choose a shopping goal (cr-12-14-15)",
+                    "ru": "📚 Купить книгу, комикс или мангу"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2855,10 +4034,19 @@
             },
             {
                 "id": "cr-12-14-16",
-                "title": "✨ Купить небольшой аксессуар или косметику",
-                "comment": "",
+                "title": {
+                    "en": "✨ Choose a shopping goal (cr-12-14-16)",
+                    "ru": "✨ Купить небольшой аксессуар или косметику"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2874,10 +4062,19 @@
             },
             {
                 "id": "cr-12-14-17",
-                "title": "👕 Купить одну вещь из одежды в согласованном бюджете",
-                "comment": "",
+                "title": {
+                    "en": "👕 Choose a shopping goal (cr-12-14-17)",
+                    "ru": "👕 Купить одну вещь из одежды в согласованном бюджете"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2893,10 +4090,19 @@
             },
             {
                 "id": "cr-12-14-18",
-                "title": "📦 Сделать один онлайн-заказ в согласованном бюджете",
-                "comment": "",
+                "title": {
+                    "en": "📦 Choose a shopping goal (cr-12-14-18)",
+                    "ru": "📦 Сделать один онлайн-заказ в согласованном бюджете"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "purchases",
-                "groupName": "Покупки",
+                "groupName": {
+                    "en": "Shopping",
+                    "ru": "Покупки"
+                },
                 "semanticGraphicKey": "gift",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2912,10 +4118,19 @@
             },
             {
                 "id": "cr-12-14-19",
-                "title": "🍔 Выбрать кафе или фастфуд для семейного выхода",
-                "comment": "",
+                "title": {
+                    "en": "🍔 Choose a outings & entertainment goal (cr-12-14-19)",
+                    "ru": "🍔 Выбрать кафе или фастфуд для семейного выхода"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "outings",
-                "groupName": "Прогулки и развлечения",
+                "groupName": {
+                    "en": "Outings & Entertainment",
+                    "ru": "Прогулки и развлечения"
+                },
                 "semanticGraphicKey": "treePine",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",
@@ -2931,10 +4146,19 @@
             },
             {
                 "id": "cr-12-14-20",
-                "title": "🎟️ Сходить на концерт, выставку или мероприятие по интересам",
-                "comment": "",
+                "title": {
+                    "en": "🎟️ Choose a big goals goal (cr-12-14-20)",
+                    "ru": "🎟️ Сходить на концерт, выставку или мероприятие по интересам"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "biggoals",
-                "groupName": "Большие цели",
+                "groupName": {
+                    "en": "Big Goals",
+                    "ru": "Большие цели"
+                },
                 "semanticGraphicKey": "trophy",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2950,10 +4174,19 @@
             },
             {
                 "id": "cr-12-14-21",
-                "title": "🎧 Купить большую желанную вещь",
-                "comment": "",
+                "title": {
+                    "en": "🎧 Choose a big goals goal (cr-12-14-21)",
+                    "ru": "🎧 Купить большую желанную вещь"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "biggoals",
-                "groupName": "Большие цели",
+                "groupName": {
+                    "en": "Big Goals",
+                    "ru": "Большие цели"
+                },
                 "semanticGraphicKey": "trophy",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "week",
@@ -2969,10 +4202,19 @@
             },
             {
                 "id": "cr-12-14-22",
-                "title": "🎯 Получить бюджет на небольшую самостоятельную покупку",
-                "comment": "",
+                "title": {
+                    "en": "🎯 Choose a choices & privileges goal (cr-12-14-22)",
+                    "ru": "🎯 Получить бюджет на небольшую самостоятельную покупку"
+                },
+                "comment": {
+                    "en": "",
+                    "ru": ""
+                },
                 "groupKey": "privileges",
-                "groupName": "Выбор и привилегии",
+                "groupName": {
+                    "en": "Choices & Privileges",
+                    "ru": "Выбор и привилегии"
+                },
                 "semanticGraphicKey": "star",
                 "frequencyLimit": 1,
                 "frequencyPeriod": "month",

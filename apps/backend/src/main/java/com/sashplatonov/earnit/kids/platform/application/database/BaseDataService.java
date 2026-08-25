@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.cache.CacheInvalidateAll;
 import io.quarkus.cache.CacheResult;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.util.TimeProvider;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -76,6 +78,10 @@ public class BaseDataService {
             }
             return Map.copyOf(baseData);
         }
+    }
+
+    public Map<String, Object> getBaseData(FamilyLocale locale) {
+        return projectCatalog(getBaseData(), locale == null ? FamilyLocale.en : locale);
     }
 
     @CacheInvalidateAll(cacheName = "base-data")
@@ -147,6 +153,57 @@ public class BaseDataService {
         normalized.putIfAbsent("tasks", List.of());
         normalized.replaceAll((key, value) -> value instanceof List<?> list ? List.copyOf(list) : value);
         return Map.copyOf(normalized);
+    }
+
+    private Map<String, Object> projectCatalog(Map<String, Object> source, FamilyLocale locale) {
+        Map<String, Object> projected = new LinkedHashMap<>(source);
+        Object catalogValue = source.get("catalog");
+        if (!(catalogValue instanceof Map<?, ?> catalog)) {
+            return Map.copyOf(projected);
+        }
+
+        Map<String, Object> projectedCatalog = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : catalog.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof List<?> items) {
+                projectedCatalog.put(String.valueOf(entry.getKey()), items.stream()
+                    .map(item -> projectCatalogItem(item, locale))
+                    .toList());
+            } else {
+                projectedCatalog.put(String.valueOf(entry.getKey()), value);
+            }
+        }
+        projected.put("catalog", Map.copyOf(projectedCatalog));
+        return Map.copyOf(projected);
+    }
+
+    private Object projectCatalogItem(Object item, FamilyLocale locale) {
+        if (!(item instanceof Map<?, ?> rawItem)) {
+            return item;
+        }
+        Map<String, Object> projected = new LinkedHashMap<>();
+        rawItem.forEach((key, value) -> projected.put(String.valueOf(key), value));
+        for (String field : List.of("title", "comment", "groupName")) {
+            if (projected.containsKey(field)) {
+                projected.put(field, projectLocalizedValue(projected.get(field), locale));
+            }
+        }
+        return Map.copyOf(projected);
+    }
+
+    private Object projectLocalizedValue(Object value, FamilyLocale locale) {
+        if (!(value instanceof Map<?, ?> variants)) {
+            return value;
+        }
+        Object selected = variants.get(locale.name());
+        if (selected != null) {
+            return selected;
+        }
+        Object english = variants.get(FamilyLocale.en.name());
+        if (english != null) {
+            return english;
+        }
+        return variants.get(FamilyLocale.ru.name());
     }
 
     private boolean isCacheExpired() {
