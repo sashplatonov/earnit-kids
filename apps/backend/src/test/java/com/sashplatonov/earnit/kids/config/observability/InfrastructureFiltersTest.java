@@ -45,6 +45,12 @@ class InfrastructureFiltersTest {
         assertThat(headers).containsEntry("Referrer-Policy", List.of("no-referrer"));
         assertThat(headers).containsEntry("Cross-Origin-Resource-Policy", List.of("same-site"));
         assertThat(headers).containsEntry(
+            "Content-Security-Policy",
+            List.of("default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'"));
+        assertThat(headers).containsEntry(
+            "Permissions-Policy",
+            List.of("accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"));
+        assertThat(headers).containsEntry(
             "Strict-Transport-Security",
             List.of("max-age=31536000; includeSubDomains")
         );

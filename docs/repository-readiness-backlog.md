@@ -224,7 +224,7 @@ git commit -m "ci(security): enforce release security scanning"
 
 ## TASK-RR-004: Establish a strict browser security-header contract
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** TASK-RR-002
 

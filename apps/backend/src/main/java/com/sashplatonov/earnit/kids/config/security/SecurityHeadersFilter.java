@@ -16,6 +16,12 @@ public class SecurityHeadersFilter implements ContainerResponseFilter {
         response.getHeaders().putSingle("X-XSS-Protection", "1; mode=block");
         response.getHeaders().putSingle("Referrer-Policy", "no-referrer");
         response.getHeaders().putSingle("Cross-Origin-Resource-Policy", "same-site");
+        response.getHeaders().putSingle(
+            "Content-Security-Policy",
+            "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'");
+        response.getHeaders().putSingle(
+            "Permissions-Policy",
+            "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
         if (isHttps(request)) {
             response.getHeaders().putSingle(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains");

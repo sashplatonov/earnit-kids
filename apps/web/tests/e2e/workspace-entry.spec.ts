@@ -2,6 +2,27 @@ import { expect, test, type Route } from '@playwright/test';
 
 const publicPages = ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html'];
 
+test('production entry points expose the browser security contract', async ({ page, request }) => {
+    const publicResponse = await page.goto('/public/index.html');
+    const publicCsp = publicResponse?.headers()['content-security-policy'] ?? '';
+    expect(publicCsp).toContain("default-src 'self'");
+    expect(publicCsp).toContain('script-src \'self\' https://telegram.org');
+    expect(publicCsp).not.toContain('*');
+    expect(publicCsp).not.toContain('unsafe-inline');
+    expect(publicResponse?.headers()['permissions-policy']).toContain('camera=()');
+    expect(publicResponse?.headers()['x-content-type-options']).toBe('nosniff');
+    expect(publicResponse?.headers()['x-frame-options']).toBe('DENY');
+    expect(publicResponse?.headers()['referrer-policy']).toBe('no-referrer');
+
+    const workspaceResponse = await page.goto('/ru/workspace');
+    expect(workspaceResponse?.headers()['content-security-policy']).toContain("frame-ancestors 'none'");
+    expect(workspaceResponse?.headers()['permissions-policy']).toContain('microphone=()');
+
+    const apiResponse = await request.get('/api/page-data/session');
+    expect(apiResponse.headers()['content-security-policy']).toContain("object-src 'none'");
+    expect(apiResponse.headers()['permissions-policy']).toContain('geolocation=()');
+});
+
 test('public pages keep both access choices usable at the compact mobile width', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.route('**/public/config.js', (route) => route.fulfill({

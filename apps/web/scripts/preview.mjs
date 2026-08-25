@@ -97,6 +97,8 @@ function isWebSocketRoute(pathname) {
 
 function setSecurityHeaders(res) {
     res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://telegram.org; style-src 'self' https://fonts.googleapis.com; style-src-attr 'none'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://t.me; connect-src 'self'; worker-src 'self'; manifest-src 'self' ");
+    res.setHeader('Permissions-Policy', 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-Content-Type-Options', 'nosniff');

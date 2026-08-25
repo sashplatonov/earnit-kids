@@ -9,24 +9,15 @@
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet" />
         <link rel="stylesheet" href="/css/style.css?v=20260502-child-switcher-fix" />
         <link rel="stylesheet" href="/css/public-top-nav.css?v=20260502-child-switcher-fix" />
-        <style>
-            body:has(#app) { padding-top: 0 !important; }
-            /* Critical mobile shell layout: reserve bottom nav space before external CSS loads to prevent CLS */
-            .parent-workspace, .child-workspace { box-sizing: border-box; min-height: 100vh; }
-            @media (max-width: 700px) {
-                .parent-workspace, .child-workspace { padding-bottom: calc(5.75rem + env(safe-area-inset-bottom)); }
-                .tabs { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; display: grid; gap: 0; margin: 0; padding: .3rem .35rem calc(.3rem + env(safe-area-inset-bottom)); border-top: 1px solid #dfe4ee; background: rgb(255 255 255 / .96); box-shadow: 0 -8px 24px rgb(24 36 61 / .08); }
-                .tabs button { min-height: 3rem; }
-            }
-        </style>
         <link rel="icon" href="/public/favicon.svg" type="image/svg+xml" />
         <link rel="alternate icon" type="image/png" sizes="32x32" href="/public/favicon-32x32.png" />
         <link rel="apple-touch-icon" href="/public/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2563eb" />
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://telegram.org; style-src 'self' https://fonts.googleapis.com; style-src-attr 'none'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://t.me; connect-src 'self'; worker-src 'self'; manifest-src 'self'" />
         %sveltekit.head%
     </head>
     <body data-sveltekit-preload-data="hover">
-        <div style="display: contents">%sveltekit.body%</div>
+        <div class="app-content">%sveltekit.body%</div>
     </body>
 </html>
