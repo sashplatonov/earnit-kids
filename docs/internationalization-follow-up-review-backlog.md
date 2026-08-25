@@ -162,7 +162,7 @@ git commit -m "fix(i18n): Localize Telegram callback outcomes"
 
 ## I18N-FOLLOWUP-002: Localize Telegram reply-keyboard site responses per recipient
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** I18N-FOLLOWUP-001
 

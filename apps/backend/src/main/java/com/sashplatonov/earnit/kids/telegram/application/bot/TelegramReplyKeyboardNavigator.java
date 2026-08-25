@@ -1,9 +1,11 @@
 package com.sashplatonov.earnit.kids.telegram.application.bot;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramFeatureSupport;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.telegram.config.TelegramConfig;
 
+import java.net.URI;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -29,7 +31,7 @@ public class TelegramReplyKeyboardNavigator {
         BotNavAction.fromLabel(label).ifPresent(action -> {
             try {
                 if (action == BotNavAction.OPEN_SITE) {
-                    sendSiteLink(chatId);
+                    sendSiteLink(chatId, telegramUserId);
                 } else {
                     navigateByAction(chatId, telegramUserId, action.actionCode());
                 }
@@ -39,13 +41,36 @@ public class TelegramReplyKeyboardNavigator {
         });
     }
 
-    private void sendSiteLink(long chatId) throws Exception {
-        String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+    private void sendSiteLink(long chatId, long telegramUserId) throws Exception {
+        String configuredUrl = config.publicSiteUrl().orElse("").trim();
+        if (!isHttpUrl(configuredUrl)) {
+            return;
+        }
+        String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(configuredUrl);
         if (publicSiteUrl.isEmpty()) {
             return;
         }
-        apiClient.get().sendMessage(chatId, TelegramCopy.site(TelegramLocaleContext.current()),
-            java.util.List.of(TelegramBotApiClient.InlineButton.url(TelegramCopy.site(TelegramLocaleContext.current()), publicSiteUrl, null)));
+        FamilyLocale locale = quickActions == null
+            ? FamilyLocale.en
+            : quickActions.load(telegramUserId, null).map(view -> view.locale()).orElse(FamilyLocale.en);
+        TelegramLocaleContext.with(locale, () -> {
+            String siteLabel = TelegramCopy.site(locale);
+            apiClient.get().sendMessage(chatId, siteLabel,
+                java.util.List.of(TelegramBotApiClient.InlineButton.url(siteLabel, publicSiteUrl, null)));
+        });
+    }
+
+    private boolean isHttpUrl(String value) {
+        if (value.isEmpty()) {
+            return false;
+        }
+        try {
+            URI uri = URI.create(value);
+            return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
+                && uri.getHost() != null;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
     }
 
     private void navigateByAction(long chatId, long telegramUserId, String action) throws Exception {

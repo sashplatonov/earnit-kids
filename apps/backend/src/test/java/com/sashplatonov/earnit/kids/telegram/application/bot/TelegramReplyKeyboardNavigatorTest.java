@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestS
 import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.family.api.response.RequestDto;
 import com.sashplatonov.earnit.kids.telegram.api.response.TelegramQuickActionResponse;
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -74,6 +75,77 @@ class TelegramReplyKeyboardNavigatorTest {
         verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.chooseChildTitle()), eq(buttons));
     }
 
+    @Test
+    void englishSiteReplyUsesFamilyLocaleForMessageAndButton() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramConfig config = config();
+        when(config.publicSiteUrl()).thenReturn(Optional.of(" https://site.example.test/path "));
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view(FamilyLocale.en)));
+
+        navigator(quickActions, null, config, apiClient).handle(
+            message(TelegramCopy.site(FamilyLocale.en)), 44L, 77L);
+
+        String label = TelegramCopy.site(FamilyLocale.en);
+        verify(apiClient).sendMessage(eq(44L), eq(label), eq(List.of(
+            TelegramBotApiClient.InlineButton.url(label, "https://site.example.test", null))));
+    }
+
+    @Test
+    void russianSiteReplyUsesFamilyLocaleForMessageAndButton() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view(FamilyLocale.ru)));
+
+        navigator(quickActions, null, config(), apiClient).handle(
+            message(TelegramCopy.site(FamilyLocale.ru)), 44L, 77L);
+
+        String label = TelegramCopy.site(FamilyLocale.ru);
+        verify(apiClient).sendMessage(eq(44L), eq(label), eq(List.of(
+            TelegramBotApiClient.InlineButton.url(label, "https://site.example.test", null))));
+    }
+
+    @Test
+    void englishSiteLabelStillRoutesToRussianFamily() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view(FamilyLocale.ru)));
+
+        navigator(quickActions, null, config(), apiClient).handle(
+            message(TelegramCopy.site(FamilyLocale.en)), 44L, 77L);
+
+        String label = TelegramCopy.site(FamilyLocale.ru);
+        verify(apiClient).sendMessage(eq(44L), eq(label), eq(List.of(
+            TelegramBotApiClient.InlineButton.url(label, "https://site.example.test", null))));
+    }
+
+    @Test
+    void unresolvedFamilyUsesNeutralEnglishSiteCopy() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        when(quickActions.load(77L, null)).thenReturn(Optional.empty());
+
+        navigator(quickActions, null, config(), apiClient).handle(
+            message(TelegramCopy.site(FamilyLocale.ru)), 44L, 77L);
+
+        String label = TelegramCopy.site(FamilyLocale.en);
+        verify(apiClient).sendMessage(eq(44L), eq(label), eq(List.of(
+            TelegramBotApiClient.InlineButton.url(label, "https://site.example.test", null))));
+    }
+
+    @Test
+    void invalidPublicSiteConfigurationDoesNotSendLink() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramConfig config = config();
+        when(config.publicSiteUrl()).thenReturn(Optional.of("not a URL"));
+
+        navigator(quickActions, null, config, apiClient).handle(
+            message(TelegramCopy.site(FamilyLocale.en)), 44L, 77L);
+
+        org.mockito.Mockito.verifyNoInteractions(apiClient, quickActions);
+    }
+
     private static TelegramReplyKeyboardNavigator navigator(TelegramQuickActionService quickActions,
                                                               TelegramMenuBuilder menuBuilder,
                                                               TelegramConfig config,
@@ -89,11 +161,15 @@ class TelegramReplyKeyboardNavigatorTest {
     }
 
     private static TelegramQuickActionResponse parentView() {
+        return view(FamilyLocale.ru);
+    }
+
+    private static TelegramQuickActionResponse view(FamilyLocale locale) {
         RequestDto request = new RequestDto(19L, 2L, "Morning task", null, null, null,
             null, null, null, null, 2, PurchaseRequestStatus.pending, PurchaseRequestType.earn,
             0, "2026-08-20T19:51:00Z", 1, null, null, null, null);
         return new TelegramQuickActionResponse("family", "parent", 1, "Alex", 20,
-            List.of(), List.of(), List.of(), List.of(request), List.of());
+            List.of(), List.of(), List.of(), List.of(request), List.of(), locale);
     }
 
     private static JsonNode message(String text) {
