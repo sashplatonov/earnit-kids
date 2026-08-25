@@ -1,8 +1,0 @@
-**/target/**
-**/node_modules/**
-**/.next/**
-**/dist/**
-**/build/**
-**/*.lock
-.env.production
-apps/backend/target/
