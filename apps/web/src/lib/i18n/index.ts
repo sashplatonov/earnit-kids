@@ -13,7 +13,6 @@ import { errorMessages as enErrorMessages } from './messages/en/errors';
 import type { appMessages as enAppMessages } from './messages/en/app';
 import type { adminMessages as enAdminMessages } from './messages/en/admin';
 import type { authMessages as enAuthMessages } from './messages/en/auth';
-import type { publicMessages as enPublicMessages } from './messages/en/public';
 import type { tasksMessages as enTasksMessages } from './messages/en/tasks';
 
 export { DEFAULT_LOCALE, LOCALES } from './config';
@@ -61,7 +60,6 @@ type PathKeys<T> = {
 
 export type EnglishCatalog = {
     common: typeof enCommonMessages;
-    public: typeof enPublicMessages;
     auth: typeof enAuthMessages;
     app: typeof enAppMessages;
     admin: typeof enAdminMessages;
@@ -281,7 +279,7 @@ function catalogIssues(base: MessageTree, localized: MessageTree, locale: Locale
 
 export async function validateCatalogs(): Promise<string[]> {
     const issues: string[] = [];
-    for (const domain of ['common', 'public', 'auth', 'app', 'admin', 'tasks', 'errors'] as MessageDomain[]) {
+    for (const domain of ['common', 'auth', 'app', 'admin', 'tasks', 'errors'] as MessageDomain[]) {
         const english = await loadEnglishDomain(domain);
         const russian = await importDomain('ru', domain);
         issues.push(...catalogIssues(english, russian, 'ru', domain));

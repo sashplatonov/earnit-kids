@@ -3,7 +3,7 @@ export const DEFAULT_LOCALE = 'en';
 export const LOCALE_COOKIE_NAME = 'locale';
 
 export type Locale = (typeof LOCALES)[number];
-export type MessageDomain = 'common' | 'public' | 'auth' | 'app' | 'tasks' | 'admin' | 'errors';
+export type MessageDomain = 'common' | 'auth' | 'app' | 'tasks' | 'admin' | 'errors';
 
 const LOCALE_SET = new Set<string>(LOCALES);
 
@@ -132,8 +132,8 @@ export function shouldCanonicalizePath(pathname: string): boolean {
 export function resolveDomainsForPath(pathname: string): MessageDomain[] {
     const internalPath = stripLocaleFromPath(pathname);
 
-    // EXPLAIN: Public pages are SSR routes under /{locale}; /public/* remains
-    // a noindex compatibility surface and does not need a catalog payload.
+    // EXPLAIN: The public marketing pages are static HTML and do not use the
+    // SvelteKit catalog payload.
     if (
         internalPath === '/how'
         || internalPath === '/tasks'
@@ -144,13 +144,8 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'errors'];
     }
 
-    if (internalPath === '/' || internalPath === '/about' || internalPath === '/faq'
-        || internalPath === '/features/tasks' || internalPath === '/features/shop') {
-        return ['common', 'public', 'errors'];
-    }
-
     if (internalPath === '/login' || internalPath === '/select-family' || internalPath === '/invite/parent') {
-        return ['common', 'public', 'auth', 'errors'];
+        return ['common', 'auth', 'errors'];
     }
 
     if (internalPath === '/telegram' || internalPath.startsWith('/telegram/')

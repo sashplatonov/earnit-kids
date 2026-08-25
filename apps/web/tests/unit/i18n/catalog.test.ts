@@ -15,7 +15,7 @@ describe('translation catalogs', () => {
     it('loads only the domains required by a route', async () => {
         const payload = await getI18nPayloadForPath('/en/select-family', 'en');
 
-        expect(payload.domains).toEqual(['common', 'public', 'auth', 'errors']);
+        expect(payload.domains).toEqual(['common', 'auth', 'errors']);
         expect(payload.messages.tasks).toBeUndefined();
         expect(payload.messages.app).toBeUndefined();
     });

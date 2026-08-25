@@ -1,4 +1,4 @@
-/* SvelteKit-specific overrides — visual styles live in /css/style.css and /css/public-top-nav.css */
+/* SvelteKit-specific overrides — visual styles live in /css/style.css. */
 
 body:has(#app) { padding-top: 0 !important; }
 
