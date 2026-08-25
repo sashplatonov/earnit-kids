@@ -223,7 +223,7 @@
 {/if}
 
 <style>
-    .rewards { width:100%; }
+    .rewards { box-sizing:border-box; width:100%; max-width:100%; min-width:0; }
     .page-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.45rem; }
     h1 { margin:0; color:#18243d; font-size:1.35rem; }
     .header-actions { display:flex; align-items:center; gap:.25rem; }
