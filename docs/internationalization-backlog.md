@@ -43,6 +43,7 @@ Deliver a production-ready, SSR-safe English and Russian experience for the publ
 - API/domain errors are stable codes plus machine-readable parameters and trace ID. A temporary localized `detail` remains only for backward-compatible REST clients during migration; web maps codes to frontend catalog copy, while bot and other server-generated messages use backend bundles. Logs stay developer-facing English and never derive from localized presentation text.
 - UI translations live in the web catalog; Telegram Bot messages and server-generated delivery text live in backend resource bundles. No shared frontend/backend translation package, translation microservice, database translation table, runtime translation service, or automatic translation of user content is introduced. System-owned presets, if introduced later, use stable keys until a real editable-content requirement justifies translation tables.
 - Catalogs must not contain untrusted HTML. Interpolate user values as text; escape Telegram HTML/Markdown at the API boundary and keep callback data stable identifiers independent of translated labels.
+- Java locale decisions and internal DTOs use FamilyLocale exclusively; do not introduce "en"/"ru" string literals for locale selection. Convert the enum to its wire representation only at the HTTP/JSON boundary, and parse external language tags into the enum at the input boundary.
 
 [↑ Back to top](#top)
 

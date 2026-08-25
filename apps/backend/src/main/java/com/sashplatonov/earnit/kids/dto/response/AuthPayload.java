@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.dto.response;
 
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import java.util.List;
 
 public record AuthPayload(
@@ -12,7 +13,7 @@ public record AuthPayload(
     List<FamilyChoice> familyChoices,
     boolean selectionRequired,
     Integer parentAccountId,
-    String locale,
+    FamilyLocale locale,
     boolean languageSetupRequired
 ) {
     public AuthPayload(String familyId, String email, String role, Integer childId, String childName,

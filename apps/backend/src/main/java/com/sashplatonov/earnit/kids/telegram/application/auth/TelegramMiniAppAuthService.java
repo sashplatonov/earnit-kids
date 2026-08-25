@@ -207,9 +207,9 @@ public class TelegramMiniAppAuthService {
     return OperationResult.failure("TELEGRAM_AUTH_FAILED", AUTH_FAILED);
   }
 
-  private String familyLocale(FamilyEntity family) {
+  private FamilyLocale familyLocale(FamilyEntity family) {
     FamilyLocale locale = family.getLocale();
-    return locale == null ? "en" : locale.name();
+    return locale == null ? FamilyLocale.en : locale;
   }
 
   private String resolveAdminEmail(TelegramIdentityEntity identity, FamilyEntity family) {

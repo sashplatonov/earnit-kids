@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.dto.response;
 
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public record AuthResponse(
     String error,
     boolean selectionRequired,
     List<FamilyChoice> familyChoices,
-    String locale,
+    FamilyLocale locale,
     boolean languageSetupRequired
 ) {
     public AuthResponse {
@@ -31,7 +32,7 @@ public record AuthResponse(
         return success(role, familyId, null, false);
     }
 
-    public static AuthResponse success(String role, String familyId, String locale, boolean languageSetupRequired) {
+    public static AuthResponse success(String role, String familyId, FamilyLocale locale, boolean languageSetupRequired) {
         return new AuthResponse(true, role, familyId, null, null, null, false, null, locale, languageSetupRequired);
     }
 
@@ -40,7 +41,7 @@ public record AuthResponse(
     }
 
     public static AuthResponse childSuccess(String familyId, int childId, String childName,
-                                           String locale, boolean languageSetupRequired) {
+                                           FamilyLocale locale, boolean languageSetupRequired) {
         return new AuthResponse(true, null, familyId, childId, childName, null, false, null,
             locale, languageSetupRequired);
     }
