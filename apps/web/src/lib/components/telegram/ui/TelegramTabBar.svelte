@@ -49,6 +49,7 @@
     @media (max-width:700px) {
         .tabs-shell { display:block; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
         .tabs--inline { position:static; z-index:auto; }
+        .tabs--inline { margin-bottom:.25rem; }
         .tabs--fixed { position:fixed; z-index:20; right:0; bottom:0; left:0; gap:0; margin:0; padding:.3rem .35rem calc(.3rem + env(safe-area-inset-bottom)); border-top:1px solid #dfe4ee; background:rgb(255 255 255 / 96%); box-shadow:0 -8px 24px rgb(24 36 61 / 8%); }
         .tabs--fixed button { min-height:3rem; flex-direction:column; gap:.2rem; border:0; border-radius:.65rem; font-size:.7rem; }
         .tabs-shell :global(.session-actions-inline) { display:none; }

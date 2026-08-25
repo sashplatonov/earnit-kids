@@ -38,6 +38,7 @@ test.beforeEach(async ({ page }) => {
             requests: [],
         }),
     }));
+    await page.route(/\/api\/data\/details(?:\?|$)/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
 });
 
 test('catalog sort choices are touch-sized and do not overflow narrow screens', async ({ page }) => {
@@ -45,9 +46,9 @@ test('catalog sort choices are touch-sized and do not overflow narrow screens', 
         await page.setViewportSize({ width, height: 568 });
         await page.goto('/telegram');
 
-        const control = page.getByRole('group', { name: 'Сортировка списка' });
-        const groups = control.getByRole('button', { name: 'Группы' });
-        const coins = control.getByRole('button', { name: 'Монеты ↑' });
+        const control = page.getByRole('group', { name: /Сортировка списка|List sorting/ });
+        const groups = control.getByRole('button', { name: /Группы|Groups/ });
+        const coins = control.getByRole('button', { name: /Монеты|Coins/ });
         await expect(control).toBeVisible();
 
         for (const button of [groups, coins]) {

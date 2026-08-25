@@ -135,8 +135,7 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
     // EXPLAIN: Public pages are SSR routes under /{locale}; /public/* remains
     // a noindex compatibility surface and does not need a catalog payload.
     if (
-        internalPath === '/'
-        || internalPath === '/how'
+        internalPath === '/how'
         || internalPath === '/tasks'
         || internalPath === '/rewards'
         || internalPath === '/parents'
@@ -150,7 +149,7 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'public', 'errors'];
     }
 
-    if (internalPath === '/login' || internalPath === '/select-family') {
+    if (internalPath === '/login' || internalPath === '/select-family' || internalPath === '/invite/parent') {
         return ['common', 'public', 'auth', 'errors'];
     }
 
@@ -164,10 +163,11 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
 
 export function buildAlternatePaths(pathname: string): Record<Locale | 'x-default', string> {
     const internalPath = stripLocaleFromPath(pathname);
+    const localizedHome = (locale: Locale) => `${localizePath(internalPath, locale)}/`;
 
     return {
-        en: localizePath(internalPath, 'en'),
-        ru: localizePath(internalPath, 'ru'),
-        'x-default': localizePath(internalPath, DEFAULT_LOCALE),
+        en: internalPath === '/' ? localizedHome('en') : localizePath(internalPath, 'en'),
+        ru: internalPath === '/' ? localizedHome('ru') : localizePath(internalPath, 'ru'),
+        'x-default': internalPath === '/' ? localizedHome(DEFAULT_LOCALE) : localizePath(internalPath, DEFAULT_LOCALE),
     };
 }

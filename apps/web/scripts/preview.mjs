@@ -202,6 +202,16 @@ const server = createServer((req, res) => {
             const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
             const pathname = url.pathname;
 
+            if (pathname.startsWith('/public/') || pathname.startsWith('/api/')) {
+                res.setHeader('Content-Security-Policy', "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://telegram.org; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://t.me; connect-src 'self'; worker-src 'self'; manifest-src 'self'");
+            }
+
+            if (pathname === '/login' || pathname === '/ru/login' || pathname === '/login.html') {
+                res.statusCode = 404;
+                res.end();
+                return;
+            }
+
             if (pathname === '/healthz') {
                 writeJson(res, {
                     status: 'ok',

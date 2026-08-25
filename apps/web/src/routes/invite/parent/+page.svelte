@@ -15,7 +15,9 @@
 
     onMount(() => {
         const params = new URLSearchParams(window.location.search);
-        error = params.has('error') ? $i18n.t('auth.invitation.genericError') : '';
+        error = params.get('error') === 'expired'
+            ? $i18n.t('auth.invitation.expired')
+            : params.has('error') ? $i18n.t('auth.invitation.genericError') : '';
         state = params.get('state') ?? '';
         loading = false;
     });

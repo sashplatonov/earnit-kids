@@ -220,7 +220,7 @@ test('parent Mini App is server-role scoped and mobile-safe', async ({ page }) =
     await expect(page.getByRole('tab', { name: /Home|Главная/ })).toHaveAttribute('aria-selected', 'true');
     await page.getByRole('tab', { name: /Tasks|Задания/ }).press('End');
     await expect(page.getByRole('tab', { name: /Family|Семья/ })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: /Family|Семья/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Family', exact: true }).or(page.getByRole('heading', { name: 'Семья', exact: true }))).toBeVisible();
     await expect(page.getByRole('button', { name: /Add child|Добавить ребёнка/ })).toBeVisible();
     await page.getByRole('tab', { name: /Home|Главная/ }).click();
     const requestList = page.locator('.home .list-surface').first();

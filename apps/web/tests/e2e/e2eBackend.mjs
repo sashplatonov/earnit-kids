@@ -4,6 +4,12 @@ const server = createServer((request, response) => {
     const cookies = request.headers.cookie ?? '';
     const session = cookies.match(/(?:^|;\s*)e2e_session=([^;]+)/)?.[1];
 
+    if (request.url === '/api/register' && request.method === 'POST') {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({ ok: true }));
+        return;
+    }
+
     if (session === 'parent' && request.method === 'GET' && request.url?.startsWith('/api/admin/analytics/overview')) {
         response.writeHead(200, { 'Content-Type': 'application/json' });
         response.end(JSON.stringify({
@@ -41,6 +47,15 @@ const server = createServer((request, response) => {
         }
         response.writeHead(403);
         response.end();
+        return;
+    }
+
+    if (session === 'parent' && request.method === 'GET' && request.url?.startsWith('/api/admin/analytics/')) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({
+            coins: {}, balances: {}, metrics: {}, taskMetrics: {}, parentBehaviorMetrics: {},
+            childBehaviorMetrics: {}, retentionMetrics: {}, rankings: [], topPatterns: [], stages: [], points: [],
+        }));
         return;
     }
 

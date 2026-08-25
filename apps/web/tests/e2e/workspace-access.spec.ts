@@ -22,7 +22,7 @@ test('parent invitation failure is safe and does not enumerate family data', asy
     await page.goto('/invite/parent?error=expired');
 
     await expect(page.getByTestId('parent-invitation')).toBeVisible();
-    await expect(page.getByRole('alert')).toContainText(/expired|истёк/i);
+    await expect(page.getByRole('alert')).toContainText(/expired|истек|истёк/i);
     await expect(page.getByTestId('parent-invitation')).not.toContainText(/family id|@/i);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });

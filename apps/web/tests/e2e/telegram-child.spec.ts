@@ -31,6 +31,7 @@ test('child Mini App opens tasks first and requests a grouped task', async ({ pa
     await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [{ id: 1, name: 'Read', coins: 20, groupName: 'Today', isActive: true }, { id: 2, name: 'A very long task title that must remain reachable on a narrow mobile viewport', coins: 10, groupName: 'Today', isActive: true }], shop: [{ id: 2, name: 'Game time', price: 50, groupName: 'Fun', isActive: true }], requests: [] }) }));
     await page.route('**/api/tasks/2/request', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ balance: 40, requests: [{ id: 7, taskId: 2, requestType: 'task_completion', status: 'pending' }] }) }));
 
+    await page.route(/\/api\/data\/details(?:\?|$)/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     await page.goto('/telegram');
     await expect(page.getByRole('heading', { name: /(?:Hi|Привет), Mia!/ })).toBeVisible();
     const taskTab = page.locator('#child-tab-tasks');
@@ -106,10 +107,11 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [], shop: [], requests: [{ id: 7, taskId: 1, taskName: '🏠 A very long pending request title that remains readable', requestType: 'task_completion', coins: 20, status: cancelled ? 'cancelled' : 'pending', createdAt: '2026-08-16T09:00:00Z' }, { id: 8, itemId: 2, itemName: '🎁 Game time', requestType: 'shop_purchase', coins: 30, status: 'approved', createdAt: '2026-08-15T09:00:00Z' }] }) }));
     await page.route('**/api/requests/7**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }));
 
+    await page.route(/\/api\/data\/details(?:\?|$)/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     await page.goto('/telegram');
-    await expect(page.getByRole('heading', { name: 'Привет, Mia!' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Активность' }).click();
-    await page.getByRole('tab', { name: 'Заявки' }).click();
+    await expect(page.getByRole('heading', { name: /(?:Hi|Привет), Mia!/ })).toBeVisible();
+    await page.getByRole('tab', { name: /Активность|Activity/ }).click();
+    await page.getByRole('tab', { name: /Заявки|Requests/ }).click();
     await expect(page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]')).toBeVisible();
     const requestList = page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]').locator('.list-surface');
     await expect(requestList).toBeVisible();
@@ -117,25 +119,25 @@ test('child can cancel a pending request from Activity → Requests', async ({ p
     await expect(requestList.getByRole('heading', { name: 'A very long pending request title that remains readable' })).toBeVisible();
     await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
     await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
-    await expect(requestList.locator('.entity-row').nth(0).locator('svg[aria-label="Заявка на задание"]')).toBeVisible();
-    await expect(requestList.locator('.entity-row').nth(1).locator('svg[aria-label="Заявка на награду"]')).toBeVisible();
-    await expect(requestList.getByText('Ожидает')).toBeVisible();
+    await expect(requestList.locator('.entity-row').nth(0).locator('svg[aria-label="Заявка на задание"], svg[aria-label="Task request"]')).toBeVisible();
+    await expect(requestList.locator('.entity-row').nth(1).locator('svg[aria-label="Заявка на награду"], svg[aria-label="Reward request"]')).toBeVisible();
+    await expect(requestList.getByText(/Ожидает|Pending/)).toBeVisible();
     await expect(requestList.getByText('+20')).toBeVisible();
     await expect(requestList.getByText('-30')).toBeVisible();
     await expect(requestList.locator('time')).toHaveCount(2);
     expect(await requestList.evaluate((node) => getComputedStyle(node).borderTopWidth === '1px'
         && getComputedStyle(node).backgroundColor === 'rgb(255, 255, 255)')).toBeTruthy();
-    await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toBeVisible();
-    expect(await page.getByRole('button', { name: 'Отменить эту заявку' }).evaluate((node) => {
+    await expect(page.getByRole('button', { name: /Отменить эту заявку|Cancel this request/ })).toBeVisible();
+    expect(await page.getByRole('button', { name: /Отменить эту заявку|Cancel this request/ }).evaluate((node) => {
         const rect = node.getBoundingClientRect();
         return rect.width >= 44 && rect.height >= 44;
     })).toBeTruthy();
-    await page.getByRole('button', { name: 'Отменить эту заявку' }).click();
+    await page.getByRole('button', { name: /Отменить эту заявку|Cancel this request/ }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     cancelled = true;
-    await page.getByRole('button', { name: 'Отменить заявку' }).click();
-    await expect(page.getByText('Отменено')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Отменить эту заявку' })).toHaveCount(0);
+    await page.getByRole('button', { name: /Отменить заявку|Cancel request/ }).click();
+    await expect(page.getByText(/Отменено|Cancelled/)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Отменить эту заявку|Cancel this request/ })).toHaveCount(0);
     await expect(requestList.getByRole('heading', { name: 'Game time' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
@@ -150,9 +152,10 @@ test('child requests deep-link opens Activity with Requests subsection selected'
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     await page.route('**/api/data**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isAdmin: false, balance: 40, childNickname: 'Mia', tasks: [], shop: [], requests: [] }) }));
 
+    await page.route(/\/api\/data\/details(?:\?|$)/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     await page.goto('/telegram?context=requests');
-    await expect(page.getByRole('heading', { name: 'Привет, Mia!' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /(?:Hi|Привет), Mia!/ })).toBeVisible();
     await expect(page.locator('#child-tab-activity')).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('tab', { name: 'Заявки' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: /Заявки|Requests/ })).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('section[aria-label="Мои заявки"], section[aria-label="My requests"]')).toBeVisible();
 });
