@@ -16,4 +16,14 @@ class TelegramMessageResolverTest {
     assertThat(resolver.text(FamilyLocale.ru, "telegram.request.queue",
         Map.of("index", 2, "total", 4))).isEqualTo("🎯 Запрос 2 из 4");
   }
+
+  @Test
+  void hidesUnknownKeysWithLocalizedFallback() {
+    TelegramMessageResolver resolver = new TelegramMessageResolver();
+
+    assertThat(resolver.text(FamilyLocale.en, "telegram.missing")).isEqualTo(
+        "⚠️ This message is temporarily unavailable");
+    assertThat(resolver.text(FamilyLocale.ru, "telegram.missing")).isEqualTo(
+        "⚠️ Это сообщение временно недоступно");
+  }
 }

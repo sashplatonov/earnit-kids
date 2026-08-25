@@ -12,7 +12,7 @@ public final class TelegramMessageResolver {
   public String text(FamilyLocale locale, String key, Map<String, ?> parameters) {
     Locale javaLocale = locale == FamilyLocale.ru ? Locale.forLanguageTag("ru") : Locale.ENGLISH;
     ResourceBundle bundle = ResourceBundle.getBundle(BASE_NAME, javaLocale);
-    String template = bundle.containsKey(key) ? bundle.getString(key) : key;
+    String template = bundle.containsKey(key) ? bundle.getString(key) : bundle.getString("telegram.error.unavailable");
     String formatted = template;
     for (Map.Entry<String, ?> parameter : parameters.entrySet()) {
       formatted = formatted.replace("{" + parameter.getKey() + "}", String.valueOf(parameter.getValue()));

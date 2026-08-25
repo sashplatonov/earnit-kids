@@ -227,6 +227,14 @@ clients, but new clients must not use it as logic input. Never localize API
 enums or display labels, expose exception/SQL data, or turn user-created task,
 reward, and catalog values into translation keys. See [ADR 0001](../../../docs/adr/0001-internationalization-strategy.md).
 
+Server-generated copy belongs in `messages*.properties` or
+`telegram_messages*.properties`, not in service logic. Keep named placeholders
+identical across `en` and `ru`; `TelegramCatalogContractTest` and the focused
+resolver tests enforce that contract. Unknown Telegram keys use a localized
+generic fallback so a backend/frontend skew cannot expose a raw key. Local
+tests do not prove deployment cache invalidation or Telegram client/device
+rendering; verify those manually during release.
+
 ## 📘 Runtime API Docs
 
 OpenAPI is generated at runtime from Quarkus annotations.

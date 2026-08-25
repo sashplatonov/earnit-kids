@@ -90,6 +90,23 @@ administrator completes setup. See [ADR 0001](docs/adr/0001-internationalization
 for the API error contract, translation ownership, normalization rules, and
 the extension workflow for future locales.
 
+### Adding or changing localized copy
+
+Put browser-owned copy in the typed catalogs under `apps/web/src/lib/i18n/`;
+put backend validation/API copy in `apps/backend/src/main/resources/messages*.properties`;
+put Telegram bot copy in `telegram_messages*.properties`. Keep keys stable,
+preserve named placeholders in every locale, and review English and Russian
+together. Run the focused catalog checks before the normal backend and web
+gates. A future locale such as `sr` must add the same keys and placeholder
+contracts, register normalization/fallback support, and add focused coverage.
+Unsupported or temporarily skewed translations use the controlled English or
+generic fallback; raw keys and error codes must never be shown to users.
+
+Local checks do not prove deployment cache invalidation, Telegram client
+rendering, or physical-device behavior. Release verification must separately
+exercise those manual checks after deployment, including cache-busting of the
+web server and a real Telegram client.
+
 ## Local start and verification
 
 From the repository root, run these five commands:

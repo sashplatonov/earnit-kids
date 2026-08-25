@@ -105,6 +105,14 @@ validation, typed interpolation contracts, and `Intl.PluralRules`/
 values as text data, never translation keys. Public URL and API error details
 are defined in [ADR 0001](../../../docs/adr/0001-internationalization-strategy.md).
 
+When changing copy, update the typed web catalog or the owning backend
+resource bundle, keep named placeholders identical across locales, and run
+the focused catalog/unit checks plus the public and Mini App E2E checks. Add a
+new locale by copying the complete key and placeholder contract, registering
+normalization and controlled fallback, then adding parity coverage. Local
+checks do not cover deployment cache invalidation or real Telegram/device
+rendering; those remain release checks.
+
 ## 🧩 Component Conventions
 
 The component tree is role-aware and intentionally organized around the active public and Telegram surfaces.

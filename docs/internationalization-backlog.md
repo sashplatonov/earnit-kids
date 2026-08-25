@@ -545,7 +545,7 @@ git commit -m "feat(i18n): Localize Telegram bot delivery"
 
 ## I18N-010: Enforce localization regression coverage and contributor workflow
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** I18N-003, I18N-006, I18N-007, I18N-008, I18N-009
 
