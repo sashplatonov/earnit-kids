@@ -8,6 +8,9 @@
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
     import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
     import TelegramParentReturn from '$lib/components/telegram/TelegramParentReturn.svelte';
+    import DashboardPeriodControl from '$lib/features/telegram/dashboard/DashboardPeriodControl.svelte';
+    import DashboardTabNavigation from '$lib/features/telegram/dashboard/DashboardTabNavigation.svelte';
+    import DashboardTooltip from '$lib/features/telegram/dashboard/DashboardTooltip.svelte';
 
     const i18n = useI18n();
 
@@ -157,7 +160,6 @@
     // EXPLAIN: ADM-21 tap-accessible tooltip state
     let activeTooltip: string | null = null;
     let tooltipTrigger: HTMLButtonElement | null = null;
-    let tooltipCloseButton: HTMLButtonElement | null = null;
 
     async function toggleTooltip(key: string, event: MouseEvent) {
         const trigger = event.currentTarget as HTMLButtonElement;
@@ -168,7 +170,7 @@
         tooltipTrigger = trigger;
         activeTooltip = key;
         await tick();
-        tooltipCloseButton?.focus();
+        document.querySelector<HTMLButtonElement>('.tooltip-close')?.focus();
     }
 
     async function closeTooltip() {
@@ -291,50 +293,14 @@
             <p class="subtitle">{t('subtitle')}</p>
         </header>
 
-        <!-- Period selector toolbar -->
-        <div class="toolbar">
-            <div class="segment">
-                <button type="button"
-                    class="seg" 
-                    disabled={periodLoading}
-                    class:active={selectedPeriod === '7d'}
-                    aria-pressed={selectedPeriod === '7d'}
-                    on:click={() => changePeriod('7d')}
-                >
-                    {t('periods.7d')}
-                </button>
-                <button type="button"
-                    class="seg" 
-                    disabled={periodLoading}
-                    class:active={selectedPeriod === '30d'}
-                    aria-pressed={selectedPeriod === '30d'}
-                    on:click={() => changePeriod('30d')}
-                >
-                    {t('periods.30d')}
-                </button>
-                <button type="button"
-                    class="seg" 
-                    disabled={periodLoading}
-                    class:active={selectedPeriod === '90d'}
-                    aria-pressed={selectedPeriod === '90d'}
-                    on:click={() => changePeriod('90d')}
-                >
-                    {t('periods.90d')}
-                </button>
-                <button type="button"
-                    class="seg" 
-                    disabled={periodLoading}
-                    class:active={selectedPeriod === 'all'}
-                    aria-pressed={selectedPeriod === 'all'}
-                    on:click={() => changePeriod('all')}
-                >
-                    {t('periods.all')}
-                </button>
-            </div>
-            <div class="updated">
-                {t('updatedAt', { time: $i18n.formatDate(new Date(), { hour: '2-digit', minute: '2-digit' }) })}
-            </div>
-        </div>
+        <DashboardPeriodControl
+            selectedPeriod={selectedPeriod}
+            loading={periodLoading}
+            updatedAt={t('updatedAt', { time: $i18n.formatDate(new Date(), { hour: '2-digit', minute: '2-digit' }) })}
+            onChange={changePeriod}
+        >
+            <span slot="label" let:period>{t(`periods.${period}`)}</span>
+        </DashboardPeriodControl>
 
         {#if periodLoading || $navigating !== null}
             <div class="period-loading" role="status" aria-live="polite">
@@ -371,34 +337,13 @@
             </div>
         {/if}
 
-        <!-- Tab navigation -->
-        <div class="tabs-wrap">
-            <div class="tabs" role="tablist" aria-label={t('aria.tabs')}>
-                {#each tabs as tab (tab.id)}
-                    <button
-                        type="button"
-                        id={`tab-${tab.id}`}
-                        class="tab"
-                        class:active={activeTab === tab.id}
-                        role="tab"
-                        aria-selected={activeTab === tab.id}
-                        aria-controls={`panel-${tab.id}`}
-                        tabindex={activeTab === tab.id ? 0 : -1}
-                        on:click={() => switchTab(tab.id as TabId)}
-                        on:keydown={(event) => handleTabKeydown(event, tab.id as TabId)}
-                    >
-                        <span class="tab-ico" aria-hidden="true">
-                            {#if tab.id === 'coins'}
-                                <TelegramCoin size={17} />
-                            {:else}
-                                <TelegramIcon name={tab.icon} size={17} strokeWidth={2} />
-                            {/if}
-                        </span>
-                        <span class="tab-label">{tab.label}</span>
-                    </button>
-                {/each}
-            </div>
-        </div>
+        <DashboardTabNavigation
+            {tabs}
+            activeTab={activeTab}
+            ariaLabel={t('aria.tabs')}
+            onSelect={(tabId) => switchTab(tabId as TabId)}
+            onKeydown={(event, tabId) => handleTabKeydown(event, tabId as TabId)}
+        />
 
         <!-- Tab panels -->
         <div class="tab-panels">
@@ -1002,21 +947,20 @@
             </div>
         </div>
 
-        {#if activeTooltip && tooltipContent[activeTooltip]}
-            <div class="tooltip-box" role="dialog" aria-label={tooltipContent[activeTooltip].title}>
-                <div class="tooltip-head">
-                    <b>{tooltipContent[activeTooltip].title}</b>
-                    <button bind:this={tooltipCloseButton} class="tooltip-close" type="button" aria-label={t('tooltips.close')} on:click={closeTooltip}><TelegramIcon name="close" size={15} /></button>
-                </div>
-                <p>{tooltipContent[activeTooltip].body}</p>
-            </div>
-        {/if}
+        <DashboardTooltip
+            {activeTooltip}
+            content={tooltipContent}
+            close={closeTooltip}
+            closeLabel={t('tooltips.close')}
+        />
 </main>
 {/if}
 
 <svelte:window on:keydown={handleTooltipKeydown} />
 
 <style>
+    /* Dashboard controls and tooltip presentation live in focused feature components. */
+    :global(.toolbar), :global(.segment), :global(.seg), :global(.updated), :global(.tabs-wrap), :global(.tabs), :global(.tab), :global(.tab-ico), :global(.tab-label), :global(.tooltip-box), :global(.tooltip-head), :global(.tooltip-close) { }
     :global(.dashboard-container) {
         --dashboard-surface: #fff;
         --dashboard-line: #dfe4ee;

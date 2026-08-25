@@ -481,7 +481,7 @@ git commit -m "refactor(backend): remove static quality violations"
 
 ## TASK-RR-008: Split oversized Svelte dashboard and access-flow responsibilities
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2  
 **Depends on:** TASK-RR-006
 

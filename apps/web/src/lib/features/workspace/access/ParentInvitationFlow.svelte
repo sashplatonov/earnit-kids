@@ -17,6 +17,7 @@
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
+    import ParentMembershipList from './ParentMembershipList.svelte';
 
     export let hideTitle = false;
     export let compact = false;
@@ -309,6 +310,14 @@
         status = success;
         await reload();
     }
+
+    function handleMembershipAction(action: string, parent: ParentMembership): void {
+        if (action === 'resend') void run(resendParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationResent'));
+        if (action === 'revoke') void run(revokeParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationRevoked'));
+        if (action === 'deactivate') void run(deactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentDeactivated'));
+        if (action === 'reactivate') void run(reactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentReactivated'));
+        if (action === 'cancel-transfer') void cancelPendingTransfer();
+    }
 </script>
 
 <section class:compact class="access-flow" aria-labelledby="parent-access-heading">
@@ -320,53 +329,22 @@
     {#if loading}<p class="hint" aria-live="polite">{$i18n.t('app.workspaceAccess.loading')}</p>
     {:else if parents.length === 0}<p class="empty">{$i18n.t('app.workspaceAccess.empty')}</p>
     {:else}
-        <div class="parents-list" role="list" aria-label={$i18n.t('app.workspaceAccess.memberships')}>
-            {#each parents as parent (parent.id)}
-                <div class="parent-row" role="listitem">
-                    <div class="avatar">{label(parent).charAt(0).toUpperCase()}</div>
-                    <div class="row-main">
-                        <div class="topline">
-                            <strong class="name" title={label(parent)}>{label(parent)}</strong>
-                            <span class:pending={parent.status === 'pending'} class:inactive={parent.status === 'inactive'} class:transfer={parent.transferRequestStatus === 'pending'} class="state">{parent.transferRequestStatus === 'pending' ? $i18n.t('app.telegram.parents.transferPending') : statusLabel(parent.status)}</span>
-                        </div>
-                        <div class="row-role">{permissionLabel(parent.permission)}</div>
-                        <div class="ids">
-                            {#if shouldShowEmail(parent)}
-                                <span class="id email"><span class="icon"><TelegramIcon name="mail" size={14} /></span><span class="text">{parent.email}</span></span>
-                            {/if}
-                            {#if shouldShowTelegram(parent)}
-                                <span class="id tg"><span class="icon"><TelegramIcon name="send" size={14} /></span><span class="text"><span class="meta-label">{$i18n.t('app.workspaceAccess.telegramLabel')}:</span> {telegramLabel(parent)}</span></span>
-                            {/if}
-                        </div>
-                    </div>
-                    <div class="row-actions">
-                        {#if parent.status === 'pending'}
-                            <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.resend')} on:click={() => run(resendParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationResent'))}><TelegramIcon name="send" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.resend')}</span></button>
-                            <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.revoke')} on:click={() => run(revokeParentInvitation(parent.id), $i18n.t('app.workspaceAccess.invitationRevoked'))}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.revoke')}</span></button>
-                        {:else if parent.permission === 'family_admin'}
-                            {#if parent.transferRequestStatus === 'pending'}
-                                <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.telegram.parents.cancelRequest')} on:click={cancelPendingTransfer}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.cancelRequest')}</span></button>
-                                <button type="button" class="icon-btn disabled" aria-label={$i18n.t('app.telegram.parents.adminDeactivateTip')} disabled><TelegramIcon name="pause" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.adminDeactivateTip')}</span></button>
-                            {:else}
-                                <button type="button" class="icon-btn disabled" aria-label={$i18n.t('app.telegram.parents.adminDeactivateTip')} disabled><TelegramIcon name="pause" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.adminDeactivateTip')}</span></button>
-                                <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.transferTitle')} on:click={() => openTransfer(parent)}><TelegramIcon name="refresh" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.transferTitle')}</span></button>
-                            {/if}
-                        {:else if parent.status === 'active'}
-                            {#if parent.transferRequestStatus === 'pending' && parent.transferRequestRole === 'actor'}
-                                <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.telegram.parents.cancelRequest')} on:click={cancelPendingTransfer}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.cancelRequest')}</span></button>
-                                <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={(e) => { e.stopPropagation(); openRoleEdit(parent); }}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
-                            {:else}
-                                <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.deactivateParent')} on:click={() => run(deactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentDeactivated'))}><TelegramIcon name="unlink" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.deactivateParent')}</span></button>
-                                <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={(e) => { e.stopPropagation(); openRoleEdit(parent); }}><TelegramIcon name="pencil" size={19} /><span class="tip">{$i18n.t('app.telegram.parents.changeRole')}</span></button>
-                            {/if}
-                        {:else if parent.status === 'inactive'}
-                            <button type="button" class="icon-btn ok" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.reactivateParent')} on:click={() => run(reactivateParentMembership(parent.id), $i18n.t('app.workspaceAccess.parentReactivated'))}><TelegramIcon name="play" size={19} /><span class="tip">{$i18n.t('app.workspaceAccess.reactivateParent')}</span></button>
-                        {/if}
-                    </div>
-                </div>
-            {/each}
-        </div>
-        {#if hasAdmin}<p class="note">{$i18n.t('app.telegram.parents.adminProtectionNote')}</p>{/if}
+        <ParentMembershipList
+            {parents}
+            {busy}
+            {hasAdmin}
+            {label}
+            {permissionLabel}
+            {statusLabel}
+            {shouldShowEmail}
+            {shouldShowTelegram}
+            {telegramLabel}
+            onAction={handleMembershipAction}
+            onTransfer={openTransfer}
+            onRoleEdit={openRoleEdit}
+        >
+            <span slot="admin-note">{$i18n.t('app.telegram.parents.adminProtectionNote')}</span>
+        </ParentMembershipList>
     {/if}
 
     {#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -590,17 +568,17 @@
     .box-sub{font-size:.66rem;color:#66718a;margin-top:.3rem}
     .preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;border-top:1px solid #dfe4ef;padding:.7rem .85rem}
     .ok-btn{background:#17884b;border-color:#17884b}
-    .parents-list { display:grid; gap:0; overflow:hidden; }
-    .parent-row { display:grid; grid-template-columns:2.625rem minmax(0,1fr) 5.75rem; gap:.75rem; align-items:center; padding:.75rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
-    .parent-row:last-child { border-bottom:0; }
-    .avatar { width:2.625rem; height:2.625rem; border-radius:.75rem; background:#eef2ff; color:#4d67d7; display:grid; place-items:center; font-weight:800; }
-    .row-main { min-width:0; }
-    .topline { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; min-width:0; }
-    .name { font-size:.95rem; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .row-role { color:#66718a; font-size:.75rem; margin-top:.18rem; }
-    .meta-label { color:#7a8498; }
-    .ids { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.4rem; }
-    .id { display:inline-flex; align-items:center; gap:.35rem; max-width:100%; padding:.22rem .45rem; border:1px solid #dfe4ef; border-radius:99px; background:#fafbfe; color:#51607a; font-size:.72rem; }
+    :global(.parents-list) { display:grid; gap:0; overflow:hidden; }
+    :global(.parent-row) { display:grid; grid-template-columns:2.625rem minmax(0,1fr) 5.75rem; gap:.75rem; align-items:center; padding:.75rem 0; border:0; border-bottom:1px solid #e5e9f1; background:transparent; }
+    :global(.parent-row:last-child) { border-bottom:0; }
+    :global(.avatar) { width:2.625rem; height:2.625rem; border-radius:.75rem; background:#eef2ff; color:#4d67d7; display:grid; place-items:center; font-weight:800; }
+    :global(.row-main) { min-width:0; }
+    :global(.topline) { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; min-width:0; }
+    :global(.name) { font-size:.95rem; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    :global(.row-role) { color:#66718a; font-size:.75rem; margin-top:.18rem; }
+    :global(.meta-label) { color:#7a8498; }
+    :global(.ids) { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.4rem; }
+    :global(.id) { display:inline-flex; align-items:center; gap:.35rem; max-width:100%; padding:.22rem .45rem; border:1px solid #dfe4ef; border-radius:99px; background:#fafbfe; color:#51607a; font-size:.72rem; }
     .id.email { max-width:20rem; } .id.tg { max-width:15rem; }
     .id .icon { display:inline-flex; flex:0 0 auto; } .id .text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
     .row-actions { display:grid; grid-template-columns:repeat(2,44px); justify-content:end; gap:.5rem; align-items:center; width:5.75rem; }
