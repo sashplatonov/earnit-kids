@@ -100,6 +100,26 @@ public class AuthGoogleResource {
         return rb.build();
     }
 
+    @GET
+    @Path("/login-google/start")
+    @Operation(summary = "Redirect browser to Google authorization")
+    public Response loginGoogleStart(@Context ContainerRequestContext request,
+                                     @QueryParam("continue") String redirectTo,
+                                     @CookieParam("invite_flow") String inviteFlow,
+                                     @CookieParam("invite_continuation") Integer continuationId) {
+        Response authorization = loginGoogleUrl(request, redirectTo, inviteFlow, continuationId);
+        if (authorization.getStatus() != Response.Status.OK.getStatusCode()) {
+            String fallback = publicOriginResolver.toAbsoluteRedirect(
+                "/public/index.html?error=google_start_failed", request);
+            return Response.seeOther(URI.create(fallback)).build();
+        }
+
+        Map<?, ?> entity = (Map<?, ?>) authorization.getEntity();
+        Response.ResponseBuilder redirect = Response.seeOther(URI.create(String.valueOf(entity.get("url"))));
+        authorization.getHeaders().get("Set-Cookie").forEach(cookie -> redirect.header("Set-Cookie", cookie));
+        return redirect.build();
+    }
+
     public Response loginGoogleUrl(ContainerRequestContext request, String redirectTo) {
         return loginGoogleUrl(request, redirectTo, null, null);
     }

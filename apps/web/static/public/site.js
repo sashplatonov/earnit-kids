@@ -1,5 +1,6 @@
 
-export const GOOGLE_WORKSPACE_FALLBACK = "/login?continue=%2Fworkspace";
+export const GOOGLE_WORKSPACE_FALLBACK = "/public/index.html";
+const GOOGLE_WORKSPACE_START = "/api/login-google/start?continue=%2Fworkspace";
 
 function isUsableAuthorizationUrl(value) {
   try {
@@ -65,6 +66,12 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
   status.setAttribute("role", "status");
   documentRef.body.append(status);
 
+  if (new URL(windowRef.location.href).searchParams.get("error")) {
+    status.textContent = documentRef.documentElement.lang === "en"
+      ? "Google sign-in is temporarily unavailable. Use the browser sign-in link to try again."
+      : "Вход через Google временно недоступен. Используйте ссылку для входа в браузере и попробуйте ещё раз.";
+  }
+
   documentRef.querySelectorAll("[data-browser-workspace-link]").forEach((link) => {
     link.addEventListener("click", async (event) => {
       if (link.dataset.browserFallback === "true") return;
@@ -75,8 +82,7 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
       try {
         windowRef.location.assign(await requestBrowserWorkspaceUrl(fetchImpl, { redirectTo: "/workspace" }));
       } catch {
-        link.href = GOOGLE_WORKSPACE_FALLBACK;
-        link.dataset.browserFallback = "true";
+        link.href = GOOGLE_WORKSPACE_START;
         status.textContent = documentRef.documentElement.lang === "en"
           ? "Google sign-in is temporarily unavailable. Use the browser sign-in link to try again."
           : "Вход через Google временно недоступен. Используйте ссылку для входа в браузере и попробуйте ещё раз.";

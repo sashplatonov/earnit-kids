@@ -86,7 +86,7 @@ git commit -m "fix(auth): complete multi-family Google sign-in"
 
 ## LRR-002: Keep public Google entry actionable without the legacy page
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 

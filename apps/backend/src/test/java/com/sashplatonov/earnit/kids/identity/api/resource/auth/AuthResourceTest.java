@@ -342,6 +342,24 @@ class AuthResourceTest {
     }
 
     @Test
+    void loginGoogleStart_redirectsToAuthorizationUrlAndKeepsStateCookie() {
+        AppConfig config = TestConfigFactory.appConfig(false, null, true, true, true,
+            "google-client-id", "google-client-secret");
+        JwtService jwtService = testJwtService();
+        AuthGoogleResource googleResource = new AuthGoogleResource(
+            authService, cookieBuilder, config, new GoogleOAuthService(config, new ObjectMapper()),
+            jwtService, java.util.Optional.of("https://app.example.com"));
+
+        Response response = googleResource.loginGoogleStart(null, "/workspace", null, null);
+
+        assertThat(response.getStatus()).isEqualTo(303);
+        assertThat(response.getLocation().toString()).startsWith("https://accounts.google.com/o/oauth2/v2/auth");
+        assertThat(String.valueOf(response.getHeaders().get("Set-Cookie"))).contains("oauth_state=");
+        assertThat(jwtService.verifyToken(extractCookieValue(response, "oauth_state")).orElseThrow())
+            .containsEntry("redirect", "/workspace");
+    }
+
+    @Test
     void loginGoogleUrl_prefersExplicitRedirectUriEnv() {
         AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,

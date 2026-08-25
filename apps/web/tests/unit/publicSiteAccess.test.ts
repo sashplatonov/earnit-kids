@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { GOOGLE_WORKSPACE_FALLBACK, requestBrowserWorkspaceUrl } from '../../static/public/site.js';
-import { resolveContinuePath } from '../../src/routes/login/continue';
 
 function jsonResponse(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -13,7 +12,7 @@ describe('public site browser access', () => {
             .mockResolvedValueOnce(jsonResponse({ url: 'https://accounts.google.com/o/oauth2/auth?state=signed' }));
 
         await expect(requestBrowserWorkspaceUrl(fetchMock, { redirectTo: '/workspace' })).resolves.toContain('accounts.google.com');
-        expect(GOOGLE_WORKSPACE_FALLBACK).toBe('/login?continue=%2Fworkspace');
+        expect(GOOGLE_WORKSPACE_FALLBACK).toBe('/public/index.html');
         expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/login-google/url?redirect_to=%2Fworkspace', {
             credentials: 'same-origin',
             cache: 'no-store',
@@ -40,9 +39,4 @@ describe('public site browser access', () => {
         await expect(requestBrowserWorkspaceUrl(fetchMock)).rejects.toThrow('unavailable');
     });
 
-    it('localizes safe login continuations and rejects foreign targets', () => {
-        expect(resolveContinuePath('/workspace', 'ru')).toBe('/ru/workspace');
-        expect(resolveContinuePath('//foreign.example/workspace', 'ru')).toBeNull();
-        expect(resolveContinuePath('https://foreign.example/workspace', 'ru')).toBeNull();
-    });
 });

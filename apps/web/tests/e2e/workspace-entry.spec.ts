@@ -21,6 +21,7 @@ test('public pages keep both access choices usable at the compact mobile width',
             await expect(link).toHaveCSS('min-height', /^(44px|48px)$/);
         }
         await expect(telegramLinks.first()).toHaveAttribute('href', 'https://t.me/earnit_test_bot?startapp=public-entry');
+        await expect(browserLinks.first()).toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     }
 });
@@ -48,7 +49,7 @@ test('public Google entry uses same-origin startup and preserves the local works
     await page.goto('/public/index.html');
     const publicOrigin = new URL(page.url()).origin;
     const oauthRequest = page.waitForRequest('**/api/login-google/url**');
-    await page.getByRole('link', { name: 'Продолжить с Google' }).first().click();
+    await page.getByRole('link', { name: 'Войти как родитель' }).first().click();
     const oauthRequestUrl = (await oauthRequest).url();
 
     expect(new URL(oauthRequestUrl).origin).toBe(publicOrigin);
@@ -82,17 +83,26 @@ test('public Google entry keeps its local fallback for disabled, failed, and inv
     for (const testCase of cases) {
         currentCase = testCase;
         await page.goto('/public/index.html');
-        const browserLink = page.getByRole('link', { name: 'Продолжить с Google' }).first();
+        const browserLink = page.getByRole('link', { name: 'Войти как родитель' }).first();
         await browserLink.click();
         await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
-        await expect(browserLink).toHaveAttribute('href', '/login?continue=%2Fworkspace');
+        await expect(browserLink).toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
         await browserLink.click();
-        await expect(page).toHaveURL(/\/login\?continue=%2Fworkspace$/);
+        await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
     }
 });
 
-test('unauthenticated workspace access stays on a local login continuation', async ({ page }) => {
-    await page.goto('/workspace');
+test('public native Google entry remains a real anchor when JavaScript is unavailable', async ({ page }) => {
+    await page.goto('/public/index.html');
 
-    await expect(page).toHaveURL(/\/(?:en|ru)\/login\?continue=%2F(?:en%2F|ru%2F)?workspace$/);
+    await expect(page.locator('[data-browser-workspace-link]').first())
+        .toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
+});
+
+test('unauthenticated localized workspace access preserves its local continuation', async ({ page }) => {
+    for (const locale of ['en', 'ru']) {
+        await page.goto(`/${locale}/workspace`);
+
+        await expect(page).toHaveURL(new RegExp(`/public/index\\.html\\?continue=%2F${locale}%2Fworkspace$`));
+    }
 });
